@@ -3,7 +3,6 @@
 ## Objective functions
 
 ```@docs
-AbstractPortfolioOptimiser
 port_variance
 port_return
 sharpe_ratio
@@ -32,21 +31,22 @@ ret_model
 ```
 
 ## Efficient Frontier
-```@docs
-EfficientSemiVar
-```
 
 ### Mean-var
 
 ### Mean-semivar
 
+```@docs
+EfficientSemiVar
+```
+
 ### Critical Value at Risk (CVaR)
 
 ### Critical Drawdown at Risk (CDaR)
 
-## Hierarchical portfolio
+## Hierarchical Risk Parity Optimisation
 
-## Black-Litterman
+## Black-Litterman Optimisation
 
 ## Critical line algorithm
 
