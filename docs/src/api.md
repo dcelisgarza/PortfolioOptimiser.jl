@@ -13,7 +13,7 @@ semi_ret
 transaction_cost
 ex_ante_tracking_error
 ex_post_tracking_error
-logarithmic_barrier_objective
+logarithmic_barrier
 kelly_objective
 ```
 

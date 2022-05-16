@@ -57,7 +57,7 @@ s = \\dfrac{\\mu - r}{\\sigma},
 
 where ``\\mu`` the portfolio's return (see [`port_return`](@ref)), and ``\\sigma`` the portfolio's standard deviation (see [`port_variance`](@ref)). Generally speaking, the greater the Sharpe ratio the better the portfolio. 
 !!! note
-    The Sharpe ratio penalises large swings in both directions, so assets that tend to have large increases in value are disproportionally penalised by this measure. The Sortino ratio has the same formula but uses an adjusted covariance matrix that accounts only for the negative fluctuations in value. `SemiVar()` and `ExpSemiVar()` in `AbstractRiskModel`](@ref) implement this adjustment, and [`AbstractMeanSemiVar`](@ref) portfolios use it in their optimisations.
+    The Sharpe ratio penalises large swings in both directions, so assets that tend to have large increases in value are disproportionally penalised by this measure. The Sortino ratio has the same formula but uses an adjusted covariance matrix that accounts only for the negative fluctuations in value. `SemiVar()` and `ExpSemiVar()` in [`AbstractRiskModel`](@ref) implement this adjustment on the covariance matrix. The Mean-Semivariance portfolios in [`AbstractMeanSemiVar`](@ref) use it in their optimisations.
 """
 function sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 0.02)
     μ = port_return(w, mean_ret)
@@ -92,7 +92,7 @@ end
 quadratic_utility(w, mean_ret, cov_mtx, risk_aversion = 1)
 ```
 
-Calculates the quadratic utility given weights `w`, mean returns `mean_ret`, covariance matrix `cov_mtx` and risk aversion `risk_aversion`. Increasing `risk_aversion` decreases risk. 
+Calculates the quadratic utility given the weights `w`, mean returns `mean_ret`, covariance matrix `cov_mtx` and risk aversion `risk_aversion`. Increasing `risk_aversion` decreases risk. 
 
 The quadratic utility ``Q``, is defined as:
 
@@ -121,7 +121,10 @@ Historical semi returns ``\\mathrm{R_b}``, are defined as:
 \\mathrm{R_b} = \\dfrac{\\mathrm{R} - b}{\\sqrt{N}}\\,
 ```
 
-where ``\\mathrm{R}`` are historical returns, ``b`` is the benchmark, and ``N`` is the number of historical entries (not the number of assets). The value of `benchmark` should correspond to the frequency of historical returns, i.e. if using daily returns `benchmark` should be a reasonable value for daily returns.
+where ``\\mathrm{R}`` are historical returns, ``b`` is the benchmark, and ``N`` is the number of historical entries (not the number of assets). 
+
+!!! note
+    The value of `benchmark` should correspond to the frequency of historical returns, i.e. if using daily returns, `benchmark` should be a reasonable value for daily returns.
 """
 function semi_ret(returns, benchmark = 0)
     samples = size(returns, 1)
@@ -139,7 +142,7 @@ end
 transaction_cost(w, w_prev, k = 0.001)
 ```
 
-Simple transaction cost model. Sums all the weight absolute changes and multiplies by a fraction `k`. Simulates a fixed percentage commision from a broker.
+Simple transaction cost model. Sums all the absolute changes in weight and multiplies by a constant `k`. Simulates a fixed percentage commision from a broker.
 
 The transacion cost ``C``, is defined as:
 
@@ -163,7 +166,7 @@ C = k \\lvert \\bm{w} - \\bm{w}_{\\mathrm{prev}} \\rvert
             extra_constraints = extra_constraints,
         )
     ```
-    L2-norms must be turned into constraints of type `MOI.NormTwoCones`. More information on how to do this can be found in [JuMP Vector Cones](https://jump.dev/JuMP.jl/stable/moi/manual/standard_form/#Vector-cones).
+    Similarly L2-norms must be turned into constraints of type `MOI.NormTwoCone`. More information on how to do this can be found in [JuMP Vector Cones](https://jump.dev/JuMP.jl/stable/moi/manual/standard_form/#Vector-cones).
 """
 function transaction_cost(w, w_prev, k = 0.001)
     return k * norm(w - w_prev, 1)
@@ -194,15 +197,15 @@ end
 ex_post_tracking_error(w, returns, ret_bmk)
 ```
 
-Compute the square of the ex-post tracking error from the given weights `w`, historical returns `returns`, and benchmark returns `ret_bmk`.
+Compute the square of the ex-post tracking error from the weights `w`, historical returns `returns`, and benchmark returns `ret_bmk`.
 
 The ex-post tracking error ``\\mathrm{Err}``, is defined as:
 
 ```math
 \\begin{aligned}
-    x &= \\mathrm{R} \\bm{w} - \\bm{R}_b  \\\\
-    \\mu &= \\dfrac{1}{N} \\sum\\limits^N x \\\\
-    \\mathrm{Err} &= (x - \\mu) \\cdot (x - \\mu) = Var(r - r_b)\\,,
+    \\bm{x} &= \\mathrm{R} \\bm{w} - \\bm{R}_b  \\\\
+    \\mu &= \\dfrac{1}{N} \\sum\\limits_{i=1}^N x_i \\\\
+    \\mathrm{Err} &= (\\bm{x} - \\mu) \\cdot (\\bm{x} - \\mu) = Var(r - r_b)\\,,
 \\end{aligned}
 ```
 
@@ -217,10 +220,10 @@ end
 
 """
 ```
-logarithmic_barrier_objective(w, cov_mtx, k = 0.1)
+logarithmic_barrier(w, cov_mtx, k = 0.1)
 ```
 
-Compute the logarithmic barrier adjusted by `k`, from the given weights `w`, covariance matrix `cov_mtx`.
+Compute the logarithmic barrier adjusted by `k`, from the weights `w`, and covariance matrix `cov_mtx`.
 
 The logarithmic barrier ``L``, is defined as:
 
@@ -230,7 +233,8 @@ L = \\bm{w}^T\\, \\Sigma\\, \\bm{w} - k \\sum\\limits_i \\ln( w_i )\\,,
 
 where ``\\sigma^2 = \\bm{w}^T\\, \\Sigma\\, \\bm{w}`` (see [`port_variance`](@ref)), ``k`` the adjustment constant, and ``w_i`` the weight of the ``i``'th asset.
 """
-function logarithmic_barrier_objective(w, cov_mtx, k = 0.1)
+function logarithmic_barrier(w, cov_mtx, k = 0.1)
+    # Add eps() to avoid log(0) divergence.
     log_sum = sum(log.(w .+ eps()))
     var = dot(w, cov_mtx, w)
     return var - k * log_sum
@@ -241,12 +245,12 @@ end
 kelly_objective(w, mean_ret, cov_mtx, k = 3)
 ```
 
-Compute a Kelly objective from adjusted by `k`, from the given weights `w`, mean returns `mean_ret`, and covariance matrix `cov_mtx`.
+Compute a Kelly objective from adjusted by `k`, from the weights `w`, mean returns `mean_ret`, and covariance matrix `cov_mtx`.
 
 The Kelly objective ``K``, is defined as:
 
 ```math
-K = \\bm{w}^T\\, \\Sigma\\, \\bm{w} - \\dfrac{k}{2} \\bm{w} \\cdot \\bm{E} \\,,
+K = \\bm{w}^T\\, \\Sigma\\, \\bm{w} - \\dfrac{1}{2} k \\bm{w} \\cdot \\bm{E} \\,,
 ```
 
 where ``\\sigma^2 = \\bm{w}^T\\, \\Sigma\\, \\bm{w}`` (see [`port_variance`](@ref)), ``k`` is the adjustment constant, ``\\bm{w}`` the weights, and ``\\bm{E}`` the mean returns.

@@ -17,7 +17,7 @@ Returns a tuple of an [`Allocation`](@ref) structure and remaining money after a
 !!! note
     Short positions have negative weights and shares.
 
-- `type`: Concrete [`AbstractAllocation`](@ref) type.
+- `type`: Allocation algorithm to use, can be `Lazy()`, `Greedy()` or `LP()` (see [`AbstractAllocation`](@ref)).
 - `portfolio`: Portfolio [`AbstractPortfolioOptimiser`](@ref).
 - `latest_prices`: Vector of latest prices, entries should be in the same order as `portfolio.tickers`.
 - `investment`: value to be invested in the portfolio.

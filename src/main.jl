@@ -1,7 +1,6 @@
 using Statistics, StatsBase, PortfolioOptimiser
 using CSV, DataFrames, TimeSeries, LinearAlgebra, JuMP, Ipopt, ECOS
 
-
 # Reading in the data; preparing expected returns and a risk model
 df = CSV.read("./test/assets/stock_prices.csv", DataFrame)
 tickers = names(df)[2:end]
@@ -25,10 +24,10 @@ ef = EfficientFrontier(
     names(df)[2:end],
     mu,
     S;
-    extra_vars=[:(z[1:($n)])],
-    extra_constraints=[
+    extra_vars = [:(z[1:($n)])],
+    extra_constraints = [
         :([$k * (model[:w] - $prev_weights); model[:z]] in MOI.NormOneCone($(n + n))),
-    ]
+    ],
     # extra_obj_terms = [quote
     #     L2_reg(model[:w], 0.05)
     # end],
@@ -39,7 +38,7 @@ display(ef.weights)
 display(sum([k * ef.model[:w][i] - k * prev_weights[i] for i in 1:length(prev_weights)]))
 max_sharpe!(ef)
 
-function mean_barrier_objective(w, cov_matrix, k=0.1)
+function mean_barrier_objective(w, cov_matrix, k = 0.1)
     mean_sum = sum(w) / length(w)
     var = dot(w, cov_matrix, w)
     return var - k * mean_sum
@@ -57,15 +56,15 @@ obj_params = [ef.cov_mtx, 0.001]
 custom_optimiser!(ef, mean_barrier_objective, obj_params)
 
 # Now try with a convex objective from  Kolm et al (2014)
-function logarithmic_barrier_objective(w::T...) where {T}
+function logarithmic_barrier(w::T...) where {T}
     cov_mtx = obj_params[1]
     k = obj_params[2]
     w = [i for i in w]
-    PortfolioOptimiser.logarithmic_barrier_objective(w, cov_mtx, k)
+    PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
 end
 ef = EfficientFrontier(names(df)[2:end], mu, S)
 obj_params = [ef.cov_mtx, 0.001]
-custom_nloptimiser!(ef, logarithmic_barrier_objective, obj_params)
+custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 
 # Kelly objective with weight bounds on zeroth asset
 lower_bounds, upper_bounds = 0.01, 0.3
@@ -73,10 +72,10 @@ ef = EfficientFrontier(
     names(df)[2:end],
     mu,
     S;
-    extra_constraints=[
+    extra_constraints = [
         :(model[:w][1] >= $lower_bounds),
         :(model[:w][1] <= $upper_bounds),
-    ]
+    ],
 )
 obj_params = [ef.mean_ret, ef.cov_mtx, 1000]
 custom_optimiser!(ef, kelly_objective, obj_params)
@@ -120,7 +119,7 @@ ef = EfficientFrontier(
     names(df)[2:end],
     mu,
     S;
-    extra_constraints=[:(model[:w][1] == 0.1)]
+    extra_constraints = [:(model[:w][1] == 0.1)],
     # extra_obj_terms = [quote
     #     L2_reg(model[:w], 1000)
     # end],
@@ -175,20 +174,20 @@ testweights = [
     0.045720677583482,
     0.060915769268832,
 ]
-isapprox(ef.weights, testweights, rtol=1e-1)
+isapprox(ef.weights, testweights, rtol = 1e-1)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.09713251002640265, 0.14588119846495262, 0.5287350997800682
-isapprox(mu, mutest, rtol=1e-2)
-isapprox(sigma, sigmatest, rtol=1e-2)
-isapprox(sr, srtest, rtol=1e-1)
+isapprox(mu, mutest, rtol = 1e-2)
+isapprox(sigma, sigmatest, rtol = 1e-2)
+isapprox(sr, srtest, rtol = 1e-1)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [1, 3, 3, 2, 46, 30, 9, 13, 12, 22, 21, 83, 8, 25, 6, 3, 20, 4, 10]
 round.(lpAlloc.shares) == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [21, 8, 20, 8, 10, 45, 3, 3, 1, 12, 3, 4, 6, 3, 13, 24, 20, 29, 83]
 rmsd(Int.(round.(gAlloc.shares)), testshares) < 1
 
@@ -201,8 +200,8 @@ delta ≈ deltatest
 
 # In the order of the dataframes, the
 mcapsdf = DataFrame(
-    ticker=names(df)[2:end],
-    mcap=[
+    ticker = names(df)[2:end],
+    mcap = [
         927e9,
         1.19e12,
         574e9,
@@ -265,11 +264,11 @@ picking =
 bl = BlackLitterman(
     mcapsdf[!, 1],
     S;
-    rf=0,
-    tau=0.01,
-    pi=prior, # either a vector, `nothing`, `:equal`, or `:market`
-    Q=views,
-    P=picking
+    rf = 0,
+    tau = 0.01,
+    pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+    Q = views,
+    P = picking,
 )
 testpost_ret = [
     0.058404059186963
@@ -343,20 +342,20 @@ testweights = [
     0.0,
     0.0,
 ]
-isapprox(ef.weights, testweights, rtol=1e-5)
+isapprox(ef.weights, testweights, rtol = 1e-5)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.08173248653446699, 0.2193583713684134, 0.2814229798906876
-isapprox(mu, mutest, rtol=1e-5)
-isapprox(sigma, sigmatest, rtol=1e-5)
-isapprox(sr, srtest, rtol=1e-5)
+isapprox(mu, mutest, rtol = 1e-5)
+isapprox(sigma, sigmatest, rtol = 1e-5)
+isapprox(sr, srtest, rtol = 1e-5)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [2, 4, 32, 232]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [231, 2, 4, 19]
 gAlloc.shares == testshares
 
@@ -384,20 +383,20 @@ testweights = [
     0.0,
     0.116553681308117,
 ]
-isapprox(ef.weights, testweights, rtol=1e-4)
+isapprox(ef.weights, testweights, rtol = 1e-4)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.011450350358250433, 0.1223065907437908, -0.06990342539805944
-isapprox(mu, mutest, rtol=1e-4)
-isapprox(sigma, sigmatest, rtol=1e-6)
-isapprox(sr, srtest, rtol=1e-3)
+isapprox(mu, mutest, rtol = 1e-4)
+isapprox(sigma, sigmatest, rtol = 1e-6)
+isapprox(sr, srtest, rtol = 1e-3)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [2, 1, 2, 26, 16, 82, 16, 2, 54, 20]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [81, 54, 16, 16, 20, 25, 2, 2, 3, 1]
 gAlloc.shares == testshares
 
@@ -424,20 +423,20 @@ testweights = [
     0.0,
     0.0,
 ]
-isapprox(ef.weights, testweights, rtol=1e-5)
+isapprox(ef.weights, testweights, rtol = 1e-5)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.0850569180412342, 0.2324517001148201, 0.27987284244038296
-isapprox(mu, mutest, rtol=1e-6)
-isapprox(sigma, sigmatest, rtol=1e-6)
-isapprox(sr, srtest, rtol=1e-6)
+isapprox(mu, mutest, rtol = 1e-6)
+isapprox(sigma, sigmatest, rtol = 1e-6)
+isapprox(sr, srtest, rtol = 1e-6)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [1, 3, 20, 276]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [265, 1, 3, 19]
 gAlloc.shares == testshares
 
@@ -464,20 +463,20 @@ testweights = [
     2.800793056420930e-02,
     3.151541000000000e-10,
 ]
-isapprox(ef.weights, testweights, rtol=1e-4)
+isapprox(ef.weights, testweights, rtol = 1e-4)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.07528445695449039, 0.1999999998533396, 0.2764222849751529
-isapprox(mu, mutest, rtol=1e-8)
-isapprox(sigma, sigmatest, rtol=1e-6)
-isapprox(sr, srtest, rtol=1e-6)
+isapprox(mu, mutest, rtol = 1e-8)
+isapprox(sigma, sigmatest, rtol = 1e-6)
+isapprox(sr, srtest, rtol = 1e-6)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [3, 4, 13, 176, 8, 2]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [176, 2, 5, 9, 3, 16, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 gAlloc.shares == testshares
 
@@ -504,20 +503,20 @@ testweights = [
     0.054312631384705,
     0.0,
 ]
-isapprox(ef.weights, testweights, rtol=1e-4)
+isapprox(ef.weights, testweights, rtol = 1e-4)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.07, 0.18628889663990178, 0.26840032284184107
-isapprox(mu, mutest, rtol=1e-6)
-isapprox(sigma, sigmatest, rtol=1e-7)
-isapprox(sr, srtest, rtol=1e-6)
+isapprox(mu, mutest, rtol = 1e-6)
+isapprox(sigma, sigmatest, rtol = 1e-7)
+isapprox(sr, srtest, rtol = 1e-6)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [2, 2, 5, 13, 143, 15, 11, 5]
 rmsd(Int.(lpAlloc.shares), testshares) <= 1
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [142, 2, 14, 5, 5, 11, 2, 13]
 gAlloc.shares == testshares
 
@@ -526,8 +525,8 @@ ef = EfficientFrontier(
     names(df)[2:end],
     bl.post_ret,
     S,
-    market_neutral=true,
-    weight_bounds=(-1, 1),
+    market_neutral = true,
+    weight_bounds = (-1, 1),
 )
 max_sharpe!(ef)
 testweights = [
@@ -552,20 +551,20 @@ testweights = [
     0.418910257437251,
     -1.0,
 ]
-isapprox(ef.weights, testweights, rtol=1e-7)
+isapprox(ef.weights, testweights, rtol = 1e-7)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.23339921135959843, 0.3472734444465163, 0.6144990778080186
-isapprox(mu, mutest, rtol=1e-7)
-isapprox(sigma, sigmatest, rtol=1e-7)
-isapprox(sr, srtest, rtol=1e-9)
+isapprox(mu, mutest, rtol = 1e-7)
+isapprox(sigma, sigmatest, rtol = 1e-7)
+isapprox(sr, srtest, rtol = 1e-9)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [3, 5, 3, 2, 7, 58, 12, 3, 25, 12, -29, -358, -2, -30, -24, -74, -2, -169]
 rmsd(Int.(lpAlloc.shares), testshares) <= 1
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [3, 58, 11, 27, 12, 5, 7, 3, 4, 4, -168, -29, -357, -30, -24, -2, -73, -2, -1]
 gAlloc.shares == testshares
 
@@ -573,8 +572,8 @@ ef = EfficientFrontier(
     names(df)[2:end],
     bl.post_ret,
     S,
-    market_neutral=true,
-    weight_bounds=(-1, 1),
+    market_neutral = true,
+    weight_bounds = (-1, 1),
 )
 min_volatility!(ef)
 testweights = [
@@ -599,20 +598,20 @@ testweights = [
     -0.064209856959109,
     0.123162679289201,
 ]
-isapprox(ef.weights, testweights, rtol=1e-6)
+isapprox(ef.weights, testweights, rtol = 1e-6)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.007547970562401391, 0.12111738873121844, -0.10280959297456398
-isapprox(mu, mutest, rtol=1e-6)
-isapprox(sigma, sigmatest, rtol=1e-14)
-isapprox(sr, srtest, rtol=1e-6)
+isapprox(mu, mutest, rtol = 1e-6)
+isapprox(sigma, sigmatest, rtol = 1e-14)
+isapprox(sr, srtest, rtol = 1e-6)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [2, 1, 2, 37, 15, 4, 72, 17, 1, 3, 1, 51, 19, -10, -3, -12, -28, -6]
 rmsd(Int.(lpAlloc.shares), testshares) <= 0.5
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [72, 51, 17, 15, 19, 37, 2, 2, 3, 4, 1, 1, 1, -6, -12, -3, -10, -28]
 gAlloc.shares == testshares
 
@@ -639,21 +638,21 @@ testweights = [
     0.813003978147871,
     -1.0,
 ]
-isapprox(ef.weights, testweights, rtol=1e-5)
+isapprox(ef.weights, testweights, rtol = 1e-5)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.30865288246835887, 0.492856336854342, 0.585673472944849
-isapprox(mu, mutest, rtol=1e-5)
-isapprox(sigma, sigmatest, rtol=1e-5)
-isapprox(sr, srtest, rtol=1e-6)
+isapprox(mu, mutest, rtol = 1e-5)
+isapprox(sigma, sigmatest, rtol = 1e-5)
+isapprox(sr, srtest, rtol = 1e-6)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares =
     [2, 6, 4, 44, 81, 11, 6, 12, 18, -54, -771, -4, -23, -219, -40, -126, -15, -12, -169]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares =
     [3, 79, 17, 5, 9, 3, 11, 14, 5, -771, -168, -54, -218, -13, -14, -23, -40, -126, -4]
 gAlloc.shares == testshares
@@ -681,20 +680,20 @@ testweights = [
     2.662917880916170e-01,
     -9.435022527286794e-01,
 ]
-isapprox(ef.weights, testweights, rtol=1e-5)
+isapprox(ef.weights, testweights, rtol = 1e-5)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.1435925344169654, 0.19999999989333053, 0.6179626724144157
-isapprox(mu, mutest, rtol=1e-6)
-isapprox(sigma, sigmatest, rtol=1e-6)
-isapprox(sr, srtest, rtol=1e-7)
+isapprox(mu, mutest, rtol = 1e-6)
+isapprox(sigma, sigmatest, rtol = 1e-6)
+isapprox(sr, srtest, rtol = 1e-7)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [3, 6, 3, 2, 6, 58, 2, 2, 6, 1, 1, 1, 14, 16, -13, -162, -45, -7, -159]
 rmsd(lpAlloc.shares, testshares) <= 0.5
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [2, 15, 57, 6, 1, 5, 13, 3, 6, 1, 1, 1, 2, -158, -13, -160, -45, -7]
 gAlloc.shares == testshares
 
@@ -721,29 +720,29 @@ testweights = [
     1.298148468599680e-01,
     -4.599489862074102e-01,
 ]
-isapprox(ef.weights, testweights, rtol=1e-4)
+isapprox(ef.weights, testweights, rtol = 1e-4)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.06999999999999999, 0.09749810496318828, 0.5128304803347528
-isapprox(mu, mutest, rtol=1e-8)
-isapprox(sigma, sigmatest, rtol=1e-8)
-isapprox(sr, srtest, rtol=1e-8)
+isapprox(mu, mutest, rtol = 1e-8)
+isapprox(sigma, sigmatest, rtol = 1e-8)
+isapprox(sr, srtest, rtol = 1e-8)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [3, 6, 3, 2, 6, 58, 2, 2, 6, 1, 1, 1, 14, 16, -6, -79, -22, -4, -78]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [2, 15, 57, 6, 1, 5, 13, 3, 6, 1, 1, 1, 2, -77, -6, -78, -22, -4]
 gAlloc.shares == testshares
 
 ## Mean semivar
-ef = EfficientSemiVar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark=0)
+ef = EfficientSemiVar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark = 0)
 max_sortino!(ef)
 mumax, varmax, smax = portfolio_performance(ef)
 
-ef = EfficientSemiVar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark=0)
+ef = EfficientSemiVar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark = 0)
 min_semivar!(ef)
 
 testweights = [
@@ -768,20 +767,20 @@ testweights = [
     1.032235721000000e-07,
     1.257588839643445e-01,
 ]
-isapprox(ef.weights, testweights, rtol=1e-1)
+isapprox(ef.weights, testweights, rtol = 1e-1)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.011139799284510227, 0.08497381732464267, -0.1042697738485651
-isapprox(mu, mutest, atol=1e-2)
-isapprox(sigma, sigmatest, rtol=1e-3)
-isapprox(sr, srtest, atol=1e-1)
+isapprox(mu, mutest, atol = 1e-2)
+isapprox(sigma, sigmatest, rtol = 1e-3)
+isapprox(sr, srtest, atol = 1e-1)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [3, 1, 1, 2, 15, 87, 13, 4, 3, 65, 22]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [86, 64, 21, 15, 13, 3, 3, 3, 1, 1, 1]
 gAlloc.shares == testshares
 
@@ -808,20 +807,20 @@ testweights = [
     5.000000000000000e-16,
     1.300000000000000e-15,
 ]
-isapprox(ef.weights, testweights, rtol=1e-3)
+isapprox(ef.weights, testweights, rtol = 1e-3)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.091419219703374, 0.1829724238719523, 0.39032777831786586
-isapprox(mu, mutest, rtol=1e-3)
-isapprox(sigma, sigmatest, rtol=1e-3)
-isapprox(sr, srtest, rtol=1e-4)
+isapprox(mu, mutest, rtol = 1e-3)
+isapprox(sigma, sigmatest, rtol = 1e-3)
+isapprox(sr, srtest, rtol = 1e-4)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [334]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [334, 1]
 gAlloc.shares == testshares
 
@@ -848,20 +847,20 @@ testweights = [
     8.870790761308990e-02,
     2.002169627000000e-07,
 ]
-isapprox(ef.weights, testweights, rtol=1e-2)
+isapprox(ef.weights, testweights, rtol = 1e-2)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.06959704494304779, 0.1300556974853854, 0.38135234289617415
-isapprox(mu, mutest, rtol=1e-3)
-isapprox(sigma, sigmatest, rtol=1e-3)
-isapprox(sr, srtest, rtol=1e-3)
+isapprox(mu, mutest, rtol = 1e-3)
+isapprox(sigma, sigmatest, rtol = 1e-3)
+isapprox(sr, srtest, rtol = 1e-3)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [3, 3, 2, 135, 7, 17, 8]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [135, 3, 8, 3, 17, 6, 2, 6, 1, 1]
 gAlloc.shares == testshares
 
@@ -888,20 +887,20 @@ testweights = [
     3.430088268500000e-06,
     1.661143469400000e-05,
 ]
-isapprox(ef.weights, testweights, rtol=1e-2)
+isapprox(ef.weights, testweights, rtol = 1e-2)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.09000090563810152, 0.17811334827609804, 0.393013248673487
-isapprox(mu, mutest, rtol=1e-5)
-isapprox(sigma, sigmatest, rtol=1e-4)
-isapprox(sr, srtest, rtol=1e-4)
+isapprox(mu, mutest, rtol = 1e-5)
+isapprox(sigma, sigmatest, rtol = 1e-4)
+isapprox(sr, srtest, rtol = 1e-4)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [1, 9, 319, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [318, 9, 1, 1, 1, 1, 1, 1, 1, 1]
 gAlloc.shares == testshares
 
@@ -910,9 +909,9 @@ ef = EfficientSemiVar(
     tickers,
     bl.post_ret,
     Matrix(dropmissing(returns)),
-    benchmark=0,
-    market_neutral=true,
-    weight_bounds=(-1, 1),
+    benchmark = 0,
+    market_neutral = true,
+    weight_bounds = (-1, 1),
 )
 min_semivar!(ef)
 testweights = [
@@ -937,20 +936,20 @@ testweights = [
     0.0,
     0.0,
 ]
-isapprox(ef.weights, testweights, atol=1e-1)
+isapprox(ef.weights, testweights, atol = 1e-1)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0, 0, 0
-isapprox(mu, mutest, atol=1e-2)
-isapprox(sigma, sigmatest, atol=1e-2)
+isapprox(mu, mutest, atol = 1e-2)
+isapprox(sigma, sigmatest, atol = 1e-2)
 
 ef.weights .= testweights
 lpAlloc, remaining =
-    Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000, silent=true)
+    Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000, silent = true)
 testshares = nothing
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = nothing
 gAlloc.shares == testshares
 
@@ -977,15 +976,15 @@ testweights = [
     0.9999999989095066,
     -0.9999999997354032,
 ]
-isapprox(ef.weights, testweights, rtol=1e-2)
+isapprox(ef.weights, testweights, rtol = 1e-2)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.3695444374167076, 0.4300511641888641, 0.8127973286062292
-isapprox(mu, mutest, rtol=1e-3)
-isapprox(sigma, sigmatest, rtol=1e-3)
-isapprox(sr, srtest, rtol=1e-3)
+isapprox(mu, mutest, rtol = 1e-3)
+isapprox(sigma, sigmatest, rtol = 1e-3)
+isapprox(sr, srtest, rtol = 1e-3)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [
     1,
     8,
@@ -1011,7 +1010,7 @@ testshares = [
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [
     57,
     15,
@@ -1059,20 +1058,20 @@ testweights = [
     0.369932229128064,
     -0.949911559486228,
 ]
-isapprox(ef.weights, testweights, rtol=1e-3)
+isapprox(ef.weights, testweights, rtol = 1e-3)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.14346415111692887, 0.1300415287657269, 0.9494209448994764
-isapprox(mu, mutest, rtol=1e-3)
-isapprox(sigma, sigmatest, rtol=1e-3)
-isapprox(sr, srtest, rtol=1e-4)
+isapprox(mu, mutest, rtol = 1e-3)
+isapprox(sigma, sigmatest, rtol = 1e-3)
+isapprox(sr, srtest, rtol = 1e-4)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [2, 6, 3, 1, 7, 3, 35, 7, 2, 3, 22, 21, -10, -204, -3, -40, -8, -11, -1, -160]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [2, 21, 35, 6, 1, 21, 3, 3, 3, 8, 2, 8, -159, -204, -11, -39, -1, -3, -7, -4]
 rmsd(Int.(gAlloc.shares), testshares) < 4
 
@@ -1099,20 +1098,20 @@ testweights = [
     2.321656069881314e-01,
     -5.934917762008577e-01,
 ]
-isapprox(ef.weights, testweights, rtol=5e-2)
+isapprox(ef.weights, testweights, rtol = 5e-2)
 mu, sigma, sr = portfolio_performance(ef)
 mutest, sigmatest, srtest = 0.09000000684283793, 0.08158778822807418, 0.8579716200561383
-isapprox(mu, mutest, rtol=1e-4)
-isapprox(sigma, sigmatest, rtol=1e-3)
-isapprox(sr, srtest, rtol=1e-3)
+isapprox(mu, mutest, rtol = 1e-4)
+isapprox(sigma, sigmatest, rtol = 1e-3)
+isapprox(sr, srtest, rtol = 1e-3)
 
 ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [2, 6, 3, 1, 8, 3, 35, 8, 2, 2, 3, 21, 21, -7, -126, -2, -26, -3, -1, -99]
 rmsd(lpAlloc.shares, testshares) < 1
 
 gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment=10000)
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
 testshares = [2, 21, 35, 6, 1, 21, 3, 3, 3, 8, 2, 8, 2, -99, -127, -7, -25, -1, -2, -4]
 rmsd(Int.(gAlloc.shares), testshares) < 3
 
@@ -1141,19 +1140,19 @@ testweights = [
     7.108000000000000e-13,
     9.002169913041960e-02,
 ]
-isapprox(cv.weights, testweights, rtol=1e-3)
+isapprox(cv.weights, testweights, rtol = 1e-3)
 mu, sigma = portfolio_performance(cv)
 mutest, sigmatest = 0.014253439792781208, 0.017049502122532846
-isapprox(mu, mutest, rtol=1e-3)
-isapprox(sigma, sigmatest, rtol=1e-3)
+isapprox(mu, mutest, rtol = 1e-3)
+isapprox(sigma, sigmatest, rtol = 1e-3)
 
 cv.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [3, 11, 86, 8, 4, 103, 15]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment=10000)
+    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [102, 86, 11, 16, 8, 3, 4]
 gAlloc.shares == testshares
 
@@ -1180,19 +1179,19 @@ testweights = [
     5.954000000000000e-12,
     -3.320000000000000e-14,
 ]
-isapprox(cv.weights, testweights, rtol=1e-3)
+isapprox(cv.weights, testweights, rtol = 1e-3)
 mu, sigma = portfolio_performance(cv)
 mutest, sigmatest = 0.06999999999999391, 0.028255572821056847
-isapprox(mu, mutest, rtol=1e-7)
-isapprox(sigma, sigmatest, rtol=1e-4)
+isapprox(mu, mutest, rtol = 1e-7)
+isapprox(sigma, sigmatest, rtol = 1e-4)
 
 cv.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [4, 2, 147, 12, 7]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment=10000)
+    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [149, 3, 13, 4, 7, 3, 1]
 gAlloc.shares == testshares
 
@@ -1219,19 +1218,19 @@ testweights = [
     6.730000000000000e-14,
     -9.400000000000000e-15,
 ]
-isapprox(cv.weights, testweights, atol=1e-5)
+isapprox(cv.weights, testweights, atol = 1e-5)
 mu, sigma = portfolio_performance(cv)
 mutest, sigmatest = 0.09141921970336199, 0.148136422458718
-isapprox(mu, mutest, rtol=1e-3)
-isapprox(sigma, sigmatest, rtol=1e-3)
+isapprox(mu, mutest, rtol = 1e-3)
+isapprox(sigma, sigmatest, rtol = 1e-3)
 
 cv.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [334]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment=10000)
+    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [334, 1]
 gAlloc.shares == testshares
 
@@ -1240,8 +1239,8 @@ cv = EfficientCVaR(
     tickers,
     bl.post_ret,
     Matrix(dropmissing(returns)),
-    market_neutral=true,
-    weight_bounds=(-1, 1),
+    market_neutral = true,
+    weight_bounds = (-1, 1),
 )
 min_cvar!(cv)
 testweights = [
@@ -1266,19 +1265,19 @@ testweights = [
     8.4177e-12,
     -2.1610e-13,
 ]
-isapprox(cv.weights, testweights, atol=1e-4)
+isapprox(cv.weights, testweights, atol = 1e-4)
 mu, sigma = portfolio_performance(cv)
 mutest, sigmatest = 3.279006735579045e-13, 5.19535240389637e-13
-isapprox(mu, mutest, atol=1e-1)
-isapprox(sigma, sigmatest, atol=1e-1)
+isapprox(mu, mutest, atol = 1e-1)
+isapprox(sigma, sigmatest, atol = 1e-1)
 
 cv.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [2, 2, 41, 2, 4, 11, 7, 38]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment=10000)
+    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [38, 2, 7, 12, 43, 1, 5, 3]
 rmsd(Int.(gAlloc.shares), testshares) < 2
 
@@ -1305,19 +1304,19 @@ testweights = [
     0.137412159501253,
     -0.540803868117662,
 ]
-isapprox(cv.weights, testweights, rtol=1e-3)
+isapprox(cv.weights, testweights, rtol = 1e-3)
 mu, sigma = portfolio_performance(cv)
 mutest, sigmatest = 0.07000000000000023, 0.01208285385909055
-isapprox(mu, mutest, rtol=1e-7)
-isapprox(sigma, sigmatest, rtol=1e-3)
+isapprox(mu, mutest, rtol = 1e-7)
+isapprox(sigma, sigmatest, rtol = 1e-3)
 
 cv.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [1, 8, 4, 1, 8, 38, 10, 75, 4, 3, 26, 16, -4, -54, -1, -4, -18, -2, -1, -91]
 rmsd(lpAlloc.shares, testshares) < 0.5
 
 gAlloc, remaining =
-    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment=10000)
+    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [16, 1, 8, 38, 1, 26, 8, 4, 4, 75, 3, 10, -91, -54, -18, -4, -1, -4, -2]
 rmsd(Int.(gAlloc.shares), testshares) < 1
 
@@ -1344,14 +1343,14 @@ testweights = [
     0.999999999998686,
     -0.999999999999495,
 ]
-isapprox(cv.weights, testweights, rtol=1e-4)
+isapprox(cv.weights, testweights, rtol = 1e-4)
 mu, sigma = portfolio_performance(cv)
 mutest, sigmatest = 0.4902004788284181, 0.1799999999999532
-isapprox(mu, mutest, rtol=1e-5)
-isapprox(sigma, sigmatest, rtol=1e-5)
+isapprox(mu, mutest, rtol = 1e-5)
+isapprox(sigma, sigmatest, rtol = 1e-5)
 
 cv.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment=10000)
+lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [
     1,
     7,
@@ -1377,7 +1376,7 @@ testshares = [
 rmsd(lpAlloc.shares, testshares) < 0.5
 
 gAlloc, remaining =
-    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment=10000)
+    Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
 testshares = [
     38,
     10,
@@ -1427,20 +1426,20 @@ testweights = [
     6.560171960161000e-04,
     1.648464003948736e-01,
 ]
-isapprox(cdar.weights, testweights, rtol=1e-3)
+isapprox(cdar.weights, testweights, rtol = 1e-3)
 mu, sigma = portfolio_performance(cdar)
 mutest, sigmatest = 0.0046414239877397775, 0.05643312227060557
-isapprox(mu, mutest, rtol=1e-2)
-isapprox(sigma, sigmatest, rtol=1e-4)
+isapprox(mu, mutest, rtol = 1e-2)
+isapprox(sigma, sigmatest, rtol = 1e-4)
 
 cdar.weights .= testweights
 lpAlloc, remaining =
-    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares = [9, 110, 13, 16, 28]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares = [109, 16, 27, 14, 9, 1, 1]
 gAlloc.shares == testshares
 
@@ -1467,20 +1466,20 @@ testweights = [
     6.073579550183820e-01,
     -1.300000000000000e-15,
 ]
-isapprox(cdar.weights, testweights, rtol=1e-4)
+isapprox(cdar.weights, testweights, rtol = 1e-4)
 mu, sigma = portfolio_performance(cdar)
 mutest, sigmatest = 0.07099999999999985, 0.14924652616273293
-isapprox(mu, mutest, rtol=1e-6)
-isapprox(sigma, sigmatest, rtol=1e-5)
+isapprox(mu, mutest, rtol = 1e-6)
+isapprox(sigma, sigmatest, rtol = 1e-5)
 
 cdar.weights .= testweights
 lpAlloc, remaining =
-    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares = [2, 27, 48, 19, 54]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares = [54, 1, 48, 38, 20, 1]
 gAlloc.shares == testshares
 
@@ -1507,20 +1506,20 @@ testweights = [
     5.065325797064497e-01,
     -1.400000000000000e-15,
 ]
-isapprox(cdar.weights, testweights, rtol=1e-3)
+isapprox(cdar.weights, testweights, rtol = 1e-3)
 mu, sigma = portfolio_performance(cdar)
 mutest, sigmatest = 0.060150020563327425, 0.11000000000000373
-isapprox(mu, mutest, rtol=1e-4)
-isapprox(sigma, sigmatest, rtol=1e-7)
+isapprox(mu, mutest, rtol = 1e-4)
+isapprox(sigma, sigmatest, rtol = 1e-7)
 
 cdar.weights .= testweights
 lpAlloc, remaining =
-    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares = [3, 6, 9, 10, 6, 46]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares = [45, 3, 8, 10, 5, 8]
 gAlloc.shares == testshares
 
@@ -1529,8 +1528,8 @@ cdar = EfficientCDaR(
     tickers,
     bl.post_ret,
     Matrix(dropmissing(returns)),
-    weight_bounds=(-1, 1),
-    market_neutral=true,
+    weight_bounds = (-1, 1),
+    market_neutral = true,
 )
 min_cdar!(cdar, ECOS.Optimizer)
 testweights = [
@@ -1555,20 +1554,20 @@ testweights = [
     2.9461e-12,
     8.4570e-13,
 ]
-isapprox(cdar.weights, testweights, rtol=1e-4)
+isapprox(cdar.weights, testweights, rtol = 1e-4)
 mu, sigma = portfolio_performance(cdar)
 mutest, sigmatest = -3.270061253855585e-14, 2.788899603525084e-13
-isapprox(mu, mutest, rtol=1e-3)
-isapprox(sigma, sigmatest, rtol=1e-14)
+isapprox(mu, mutest, rtol = 1e-3)
+isapprox(sigma, sigmatest, rtol = 1e-14)
 
 cdar.weights .= testweights
 lpAlloc, remaining =
-    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares = [5, 2, 1, 35, 13, 11, 4, 36, 19]
 lpAlloc.shares == testshares
 
 gAlloc, remaining =
-    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares = [36, 1, 19, 10, 5, 4, 14, 38, 2]
 rmsd(Int.(gAlloc.shares), testshares) < 0.5
 
@@ -1595,21 +1594,21 @@ testweights = [
     0.690348263568902,
     -0.535895815858256,
 ]
-isapprox(cdar.weights, testweights, rtol=1e-4)
+isapprox(cdar.weights, testweights, rtol = 1e-4)
 mu, sigma = portfolio_performance(cdar)
 mutest, sigmatest = 0.07099999999999981, 0.06860632727537126
-isapprox(mu, mutest, rtol=1e-6)
-isapprox(sigma, sigmatest, rtol=1e-4)
+isapprox(mu, mutest, rtol = 1e-6)
+isapprox(sigma, sigmatest, rtol = 1e-4)
 
 cdar.weights .= testweights
 lpAlloc, remaining =
-    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares =
     [3, 1, 12, 3, 23, 8, 5, 40, -2, -3, -168, -121, -23, -52, -14, -19, -47, -2, -90]
 rmsd(lpAlloc.shares, testshares) < 1
 
 gAlloc, remaining =
-    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares =
     [39, 23, 1, 5, 8, 3, 3, 12, -90, -121, -168, -52, -23, -47, -3, -2, -14, -2, -19]
 rmsd(Int.(gAlloc.shares), testshares) < 1
@@ -1637,27 +1636,27 @@ testweights = [
     0.999999999999363,
     -0.887235050887876,
 ]
-isapprox(cdar.weights, testweights, rtol=1e-14)
+isapprox(cdar.weights, testweights, rtol = 1e-14)
 mu, sigma = portfolio_performance(cdar)
 mutest, sigmatest = 0.11347395924861056, 0.11000000000006227
-isapprox(mu, mutest, rtol=1e-15)
-isapprox(sigma, sigmatest, rtol=1e-15)
+isapprox(mu, mutest, rtol = 1e-15)
+isapprox(sigma, sigmatest, rtol = 1e-15)
 
 cdar.weights .= testweights
 lpAlloc, remaining =
-    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(LP(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares =
     [4, 1, 10, 3, 23, 9, 5, 37, -3, -5, -263, -174, -34, -66, -4, -68, -87, -10, -150]
 rmsd(lpAlloc.shares, testshares) < 0.5
 
 gAlloc, remaining =
-    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment=10000)
+    Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]); investment = 10000)
 testshares =
     [36, 1, 22, 4, 4, 8, 3, 10, -149, -173, -263, -66, -33, -86, -5, -4, -10, -67, -3]
 rmsd(Int.(gAlloc.shares), testshares) < 2
 
 ## HROpt
-hrp = HRPOpt(tickers, returns=Matrix(dropmissing(returns)))
+hrp = HRPOpt(tickers, returns = Matrix(dropmissing(returns)))
 idx = sortperm(tickers)
 testweights = [
     0.05141029982354615,
