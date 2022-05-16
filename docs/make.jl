@@ -46,4 +46,4 @@ makedocs(;
     pages = ["Home" => "index.md"],
 )
 
-deploydocs(; repo = "github.com/dcelisgarza/PortfolioOptimiser.jl", devbranch = "main")
+deploydocs(; repo = "github.com/dcelisgarza/PortfolioOptimiser.jl.git", devbranch = "main")
