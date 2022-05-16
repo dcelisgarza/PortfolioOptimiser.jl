@@ -17,11 +17,24 @@ logarithmic_barrier
 kelly_objective
 ```
 
-## Expected returns
-
 ## Risk models
 
+```@docs
+AbstractRiskModel
+risk_matrix
+```
+
+## Expected returns
+
+```@docs
+AbstractReturnModel
+ret_model
+```
+
 ## Efficient Frontier
+```@docs
+EfficientSemiVar
+```
 
 ### Mean-var
 

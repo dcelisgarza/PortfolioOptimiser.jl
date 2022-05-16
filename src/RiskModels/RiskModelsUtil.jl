@@ -1,4 +1,4 @@
-@inline function make_pos_def(::SpecFix, matrix)
+@inline function make_pos_def(::SFix, matrix)
     isposdef(matrix) && return matrix
 
     @warn("Covariance matrix is not positive definite. Fixing eigenvalues.")
@@ -8,12 +8,11 @@
     fixed_matrix = vecs * Diagonal(vals) * vecs'
 
     _isposdef = isposdef(fixed_matrix)
-    !_isposdef &&
-        @warn("Covariance matrix could not be fixed. Try a different risk model.")
+    !_isposdef && @warn("Covariance matrix could not be fixed. Try a different risk model.")
     return fixed_matrix
 end
 
-@inline function make_pos_def(::DiagFix, matrix)
+@inline function make_pos_def(::DFix, matrix)
     isposdef(matrix) && return matrix
 
     @warn("Covariance matrix is not positive definite. Fixing eigenvalues.")
@@ -24,8 +23,7 @@ end
     fixed_matrix = matrix - 1.1 * min_val * I(size(matrix, 1))
 
     _isposdef = isposdef(fixed_matrix)
-    !_isposdef &&
-        @warn("Covariance matrix could not be fixed. Try a different risk model.")
+    !_isposdef && @warn("Covariance matrix could not be fixed. Try a different risk model.")
 
     return fixed_matrix
 end

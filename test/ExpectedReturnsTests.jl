@@ -35,7 +35,7 @@ using PortfolioOptimiser.ExpectedReturns
         -0.054896894406269
     ]
     @test capm ≈ capmtest
-    mret = ret_model(MeanRet(), rets)
+    mret = ret_model(MRet(), rets)
     mrettest = [
         -0.022403739743102
         -0.013028170439639
@@ -46,7 +46,7 @@ using PortfolioOptimiser.ExpectedReturns
         -0.486114942675440
     ]
     @test mret ≈ mrettest
-    eret = ret_model(ExpMeanRet(), rets, span = 500)
+    eret = ret_model(EMRet(), rets, span = 500)
     erettest = [
         -0.011759699535282
         0.007429169377570

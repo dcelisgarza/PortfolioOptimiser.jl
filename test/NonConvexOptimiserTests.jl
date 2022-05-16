@@ -9,7 +9,7 @@ using PortfolioOptimiser.EfficientFrontierOptimiser,
     df = CSV.read("./assets/stock_prices.csv", DataFrame)
     returns = returns_from_prices(df[!, 2:end])
 
-    mu = ret_model(MeanRet(), Matrix(dropmissing(returns)))
+    mu = ret_model(MRet(), Matrix(dropmissing(returns)))
     mutest = [
         0.165077005733385
         0.183572017421321
@@ -34,7 +34,7 @@ using PortfolioOptimiser.EfficientFrontierOptimiser,
     ]
     @test mu ≈ mutest
 
-    S = risk_matrix(SampleCov(), Matrix(dropmissing(returns)))
+    S = risk_matrix(Cov(), Matrix(dropmissing(returns)))
     Stest = reshape(
         [
             0.05291391,
@@ -489,8 +489,7 @@ using PortfolioOptimiser.EfficientFrontierOptimiser,
     ]
     @test isapprox(ef.weights, testweights, rtol = 1e-1)
     mu, sigma, sr = EfficientFrontierOptimiser.portfolio_performance(ef)
-    mutest, sigmatest, srtest =
-        0.09713251002640265, 0.14588119846495262, 0.5287350997800682
+    mutest, sigmatest, srtest = 0.09713251002640265, 0.14588119846495262, 0.5287350997800682
     @test isapprox(mu, mutest, rtol = 1e-2)
     @test isapprox(sigma, sigmatest, rtol = 1e-2)
     @test isapprox(sr, srtest, rtol = 1e-1)

@@ -1,5 +1,44 @@
 abstract type AbstractEfficientSemiVar <: AbstractEfficient end
 
+"""
+```
+struct EfficientSemiVar{
+    T1,
+    T2,
+    T3,
+    T4,
+    T5,
+    T6,
+    T7,
+    T8,
+    T9,
+    T10,
+    T11,
+    T12,
+    T13,
+    T14,
+    T15,
+    T16,
+} <: AbstractEfficientSemiVar
+    tickers::T1
+    mean_ret::T2
+    weights::T3
+    returns::T4
+    freq::T5
+    benchmark::T6
+    rf::T7
+    market_neutral::T8
+    risk_aversion::T9
+    target_semidev::T10
+    target_ret::T11
+    extra_vars::T12
+    extra_constraints::T13
+    extra_obj_terms::T14
+    extra_obj_func::T15
+    model::T16
+end
+```
+"""
 struct EfficientSemiVar{
     T1,
     T2,

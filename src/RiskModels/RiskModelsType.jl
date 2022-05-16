@@ -1,9 +1,20 @@
 abstract type AbstractFixPosDef end
-struct SpecFix <: AbstractFixPosDef end
-struct DiagFix <: AbstractFixPosDef end
+struct SFix <: AbstractFixPosDef end
+struct DFix <: AbstractFixPosDef end
 
+"""
+```
 abstract type AbstractRiskModel end
-struct SampleCov <: AbstractRiskModel end
-struct SemiCov <: AbstractRiskModel end
-struct ExpCov <: AbstractRiskModel end
-struct ExpSemiCov <: AbstractRiskModel end
+struct Cov <: AbstractRiskModel end
+struct SCov <: AbstractRiskModel end
+struct ECov <: AbstractRiskModel end
+struct ESCov <: AbstractRiskModel end
+```
+
+Risk models for dispatch.
+"""
+abstract type AbstractRiskModel end
+struct Cov <: AbstractRiskModel end
+struct SCov <: AbstractRiskModel end
+struct ECov <: AbstractRiskModel end
+struct ESCov <: AbstractRiskModel end

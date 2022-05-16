@@ -6,8 +6,8 @@ df = CSV.read("./test/assets/stock_prices.csv", DataFrame)
 tickers = names(df)[2:end]
 returns = returns_from_prices(df[!, 2:end])
 
-mu = ret_model(MeanRet(), Matrix(dropmissing(returns)))
-S = risk_matrix(SampleCov(), Matrix(dropmissing(returns)))
+mu = ret_model(MRet(), Matrix(dropmissing(returns)))
+S = risk_matrix(Cov(), Matrix(dropmissing(returns)))
 
 n = length(names(df)[2:end])
 prev_weights = fill(1 / length(names(df)[2:end]), length(names(df)[2:end]))

@@ -1,9 +1,10 @@
 module PortfolioOptimiser
-# Expected returns
-include("./ExpectedReturns/ExpectedReturns.jl")
 
 # Risk models
 include("./RiskModels/RiskModels.jl")
+
+# Expected returns
+include("./ExpectedReturns/ExpectedReturns.jl")
 
 # Optimisers
 ## Base functionality

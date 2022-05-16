@@ -154,8 +154,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = zeros(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    quadUtil =
-        EfficientFrontier(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
+    quadUtil = EfficientFrontier(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
     @test typeof(quadUtil) <: EfficientFrontier
     max_quadratic_utility!(quadUtil)
     @test all(abs.(quadUtil.weights) .< eps())
@@ -164,21 +163,16 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    quadUtil =
-        EfficientFrontier(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
+    quadUtil = EfficientFrontier(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
     max_quadratic_utility!(quadUtil)
     #     @test quadUtil.weights
-    quadUtil.weights[1] ≈
-    quadUtil.weights[4] ≈
-    -quadUtil.weights[2] ≈
-    -quadUtil.weights[3]
+    quadUtil.weights[1] ≈ quadUtil.weights[4] ≈ -quadUtil.weights[2] ≈ -quadUtil.weights[3]
 
     mean_ret = [1, 2, 4, 3]
     cov_mtx = zeros(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    quadUtil =
-        EfficientFrontier(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
+    quadUtil = EfficientFrontier(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
     max_quadratic_utility!(quadUtil)
     @test quadUtil.weights[1] ≈ -quadUtil.weights[3]
     @test quadUtil.weights[2] ≈ -quadUtil.weights[4]
@@ -187,8 +181,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    quadUtil =
-        EfficientFrontier(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
+    quadUtil = EfficientFrontier(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
     max_quadratic_utility!(quadUtil)
     @test abs(quadUtil.weights[4] - 1) < sqrt(eps()) * length(cov_mtx)
 
@@ -291,8 +284,7 @@ using JuMP, LinearAlgebra, Ipopt
     mean_ret = [1, 4, 6, 8]
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
-    efficientReturn =
-        EfficientFrontier(tickers, mean_ret, cov_mtx; target_ret = 10, rf = 0)
+    efficientReturn = EfficientFrontier(tickers, mean_ret, cov_mtx; target_ret = 10, rf = 0)
     sector_map = Dict()
     for (ticker, sector) in zip(tickers, sectors)
         push!(sector_map, (ticker => sector))
@@ -300,16 +292,12 @@ using JuMP, LinearAlgebra, Ipopt
     sector_lower = Dict("Tech" => 0.2, "Oil" => 0.5, "Food" => 0.3)
     sector_upper = Dict("Tech" => 0.4, "Oil" => 0.8, "Food" => 0.6)
     add_sector_constraint!(efficientReturn, sector_map, sector_lower, sector_upper)
-    constraint_object(efficientReturn.model[:Food_lower]).set.lower ==
-    sector_lower["Food"]
+    constraint_object(efficientReturn.model[:Food_lower]).set.lower == sector_lower["Food"]
     constraint_object(efficientReturn.model[:Oil_lower]).set.lower == sector_lower["Oil"]
-    constraint_object(efficientReturn.model[:Tech_lower]).set.lower ==
-    sector_lower["Tech"]
-    constraint_object(efficientReturn.model[:Food_upper]).set.upper ==
-    sector_upper["Food"]
+    constraint_object(efficientReturn.model[:Tech_lower]).set.lower == sector_lower["Tech"]
+    constraint_object(efficientReturn.model[:Food_upper]).set.upper == sector_upper["Food"]
     constraint_object(efficientReturn.model[:Oil_upper]).set.upper == sector_upper["Oil"]
-    constraint_object(efficientReturn.model[:Tech_upper]).set.upper ==
-    sector_upper["Tech"]
+    constraint_object(efficientReturn.model[:Tech_upper]).set.upper == sector_upper["Tech"]
     efficient_return!(efficientReturn)
     @test 0.2 - sqrt(eps()) * length(cov_mtx) <=
           abs(efficientReturn.weights[1] + efficientReturn.weights[4]) <=
@@ -359,7 +347,7 @@ end
     ret = randn(1000, n) / 10
     ret[:, 1] .= 0.01
     cumret = cumprod(ret .+ 1, dims = 1)
-    mean_ret = ret_model(MeanRet(), ret)
+    mean_ret = ret_model(MRet(), ret)
 
     effSemiVar = EfficientSemiVar(tickers, mean_ret, ret; benchmark = 10)
     minSemiVar = MinSemiVar(tickers, ret; benchmark = 10)
@@ -390,7 +378,7 @@ end
     ret = randn(1000, n) / 10
     ret[:, 1] .= 0.01
     ret[:, 2] .= 0.01
-    mean_ret = ret_model(ExpMeanRet(), ret)
+    mean_ret = ret_model(EMRet(), ret)
 
     effSemiVar = EfficientSemiVar(tickers, mean_ret, ret)
     effSemiRisk = EfficientSemiVarRisk(tickers, mean_ret, ret)
@@ -399,9 +387,7 @@ end
     @test typeof(effSemiRisk) <: EfficientSemiVarRisk
     @test abs(sum(effSemiVar.weights) - 1) < sqrt(eps() * size(ret, 1))
     @test abs(effSemiVar.weights[1] - effSemiVar.weights[2]) < sqrt(eps() * size(ret, 1))
-    @test all(
-        abs.(effSemiVar.weights - effSemiRisk.weights) .< sqrt(eps() * size(ret, 1)),
-    )
+    @test all(abs.(effSemiVar.weights - effSemiRisk.weights) .< sqrt(eps() * size(ret, 1)))
 
     effSemiVar = EfficientSemiVar(tickers, mean_ret, ret)
     efficient_return!(effSemiVar)
@@ -409,9 +395,7 @@ end
     effSemiRet = EfficientSemiVarReturn(tickers, mean_ret, ret)
     efficient_return!(effSemiRet)
     @test typeof(effSemiRet) <: EfficientSemiVarReturn
-    @test all(
-        abs.(effSemiRet.weights .- effSemiVar.weights) .< sqrt(eps() * size(ret, 1)),
-    )
+    @test all(abs.(effSemiRet.weights .- effSemiVar.weights) .< sqrt(eps() * size(ret, 1)))
 
     ret = randn(1000, n) / 100
     mean_ret = ret_model(CAPMRet(), ret)
@@ -450,7 +434,7 @@ end
     n = length(tickers)
 
     ret = (randn(1000, n) .+ 0.01) / 100
-    mean_ret = ret_model(ExpMeanRet(), ret)
+    mean_ret = ret_model(EMRet(), ret)
 
     effCDaR1 = EfficientCDaR(tickers, mean_ret, ret)
     minCDaR = MinCDaR(tickers, ret)
@@ -497,7 +481,7 @@ end
     n = length(tickers)
 
     ret = (randn(1000, n) .+ 0.01) / 100
-    mean_ret = ret_model(ExpMeanRet(), ret)
+    mean_ret = ret_model(EMRet(), ret)
 
     effCVaR1 = EfficientCVaR(tickers, mean_ret, ret)
     minCVaR = MinCVaR(tickers, ret)
