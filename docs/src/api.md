@@ -53,5 +53,5 @@ Allocation(
     optimiser = HiGHS.Optimizer,
     silent = true,
 )
-roundmultiple
+roundmult
 ```

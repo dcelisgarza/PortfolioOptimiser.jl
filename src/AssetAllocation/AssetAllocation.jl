@@ -6,4 +6,4 @@ include("AssetAllocationUtil.jl")
 
 export AbstractAllocation, Lazy, Greedy, LP
 export Allocation
-export roundmultiple
+export roundmult

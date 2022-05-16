@@ -146,7 +146,7 @@ function _Allocation(
     end
 
     ratio = investment / sum(share_costs)
-    shares_bought = roundmultiple.(shares_bought * ratio, rounding, RoundDown)
+    shares_bought = roundmult.(shares_bought * ratio, rounding, RoundDown)
 
     # Remove zero weights.
     tickers, allocated_weights, shares_bought, sum_weights =
@@ -216,7 +216,7 @@ function _Allocation(
     # First loop
     for i in 1:n_tickers
         price = latest_prices[i]
-        n_shares = roundmultiple(weights[i] * investment / price, rounding, RoundDown)
+        n_shares = roundmult(weights[i] * investment / price, rounding, RoundDown)
         cost = n_shares * price
         cost > available_funds && break
         available_funds -= cost
