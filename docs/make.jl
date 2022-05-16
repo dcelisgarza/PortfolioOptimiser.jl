@@ -11,11 +11,9 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://dcelisgarza.github.io/PortfolioOptimiser.jl",
-        assets=String[],
+        assets=String[]
     ),
-    pages=[
-        "Home" => "index.md",
-    ],
+    pages=["Home" => "home.md", "API" => "api.md", "Index" => "index.md"]
 )
 
 deploydocs(;
