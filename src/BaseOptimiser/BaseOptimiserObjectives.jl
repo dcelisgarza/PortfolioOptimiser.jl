@@ -30,7 +30,7 @@ The portfolio return ``\\mu``, is defined as:
 \\mu = \\bm{w} \\cdot \\bm{E},
 ```
 
-where ``\\bm{w}`` are the asset weights, and ``\\bm{E}`` the asset mean returns.
+where ``\\bm{w}`` are the weights, and ``\\bm{E}`` the mean returns.
 """
 function port_return(w, mean_ret)
     return dot(w, mean_ret)
@@ -81,7 +81,7 @@ The ``L_2`` regularisation is defined as:
 L_2 = \\gamma \\Vert \\bm{w} \\Vert\\,,
 ```
 
-where ``\\gamma`` is the tuning parameter, and ``w`` the asset weights.
+where ``\\gamma`` is the tuning parameter, and ``w`` the weights.
 """
 function L2_reg(w, γ = 1)
     return γ * dot(w, w)
@@ -100,7 +100,7 @@ The quadratic utility ``Q``, is defined as:
 Q = \\mu - \\dfrac{1}{2} \\delta  \\bm{w}^T\\, \\Sigma\\, \\bm{w}\\,,
 ```
 
-where ``\\mu`` is the overall portfolio expected return (see [`port_return`](@ref)), ``\\delta`` the risk aversion, ``w`` the asset weights, and ``\\Sigma`` the covariance matrix.
+where ``\\mu`` is the overall portfolio expected return (see [`port_return`](@ref)), ``\\delta`` the risk aversion, ``w`` the weights, and ``\\Sigma`` the covariance matrix.
 """
 function quadratic_utility(w, mean_ret, cov_mtx, risk_aversion = 1)
     μ = port_return(w, mean_ret)
@@ -182,7 +182,7 @@ The ex-ante tracking error ``\\mathrm{Err}``, is defined as:
 \\mathrm{Err} = (\\bm{w} - \\bm{w}_b)^T \\, \\Sigma \\, (\\bm{w} - \\bm{w}_b)\\,,
 ```
 
-where ``\\bm{w}`` are the asset weights, ``\\bm{w}_b`` the benchmark weights, and ``\\Sigma`` the covariance matrix.
+where ``\\bm{w}`` are the weights, ``\\bm{w}_b`` the benchmark weights, and ``\\Sigma`` the covariance matrix.
 """
 function ex_ante_tracking_error(w, cov_mtx, w_bmk)
     w_rel = w .- w_bmk
@@ -206,7 +206,7 @@ The ex-post tracking error ``\\mathrm{Err}``, is defined as:
 \\end{aligned}
 ```
 
-where ``w`` are the asset weights, ``\\mathrm{R}`` historical returns, ``\\bm{R}_b`` benchmark historical returns. In other words the ex-post tracking error is the variance of the historical returns ``r``, minus the benchmark returns ``r_b``, of the portfolio.
+where ``w`` are the weights, ``\\mathrm{R}`` historical returns, ``\\bm{R}_b`` benchmark historical returns. In other words the ex-post tracking error is the variance of the historical returns ``r``, minus the benchmark returns ``r_b``, of the portfolio.
 """
 function ex_post_tracking_error(w, returns, ret_bmk)
     x = returns * w .- ret_bmk
@@ -249,7 +249,7 @@ The Kelly objective ``K``, is defined as:
 K = \\bm{w}^T\\, \\Sigma\\, \\bm{w} - \\dfrac{k}{2} \\bm{w} \\cdot \\bm{E} \\,,
 ```
 
-where ``\\sigma^2 = \\bm{w}^T\\, \\Sigma\\, \\bm{w}`` (see [`port_variance`](@ref)), ``k`` is the adjustment constant, ``\\bm{w}`` the asset weights, and ``\\bm{E}`` the asset mean returns.
+where ``\\sigma^2 = \\bm{w}^T\\, \\Sigma\\, \\bm{w}`` (see [`port_variance`](@ref)), ``k`` is the adjustment constant, ``\\bm{w}`` the weights, and ``\\bm{E}`` the mean returns.
 """
 function kelly_objective(w, mean_ret, cov_mtx, k = 3)
     variance = dot(w, cov_mtx, w)
