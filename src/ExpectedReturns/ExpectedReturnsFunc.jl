@@ -1,15 +1,40 @@
 """
-Compute the mean returns given a concrete type of [`AbstractReturnModel`](@ref), and returns array where each column is an asset and each row is an entry. If `compound` is true, calcualte the compounded returns, the `freq` parameter refers to the frequency at which the returns are logged, default corresponds to the average number of trading days in a year.
+Compute the mean returns given a concrete type of [`AbstractReturnModel`](@ref), and returns array where each column is an asset and each row is an entry. 
+
+For all methods:
+
+- `compound`: if `true` the compute compound mean returns, if false compute uncompounded mean returns.
+- `freq`: frequency at which the returns are logged, defaults to the average number of days in a trading year.
+
+## Mean
+
+### Arithmetic mean
 
 ```
 ret_model(::MRet, returns; compound = true, freq = 252)
 ```
+
 Compute the mean returns.
+
+### Exponentially weighted arithmetic mean
 
 ```
 ret_model(::EMRet, returns; compound = true, freq = 252, span = Int(ceil(freq / 1.4)))
 ```
-Compute the exponentially weighted mean returns using the span as a parameter, `α = 2 / (span + 1)`.
+
+Compute the exponentially weighted areithmetic mean returns. More recent returns are weighted more heavily.
+
+- `span`: defines the weighing parameter, `α = 2 / (span + 1)`.
+
+## Capital Asset Price Model (CAPM) returns
+
+Compute the Capital Asset Price Model (CAPM) returns.
+
+If the market returns are not provided, it estimates them by averaging across all assets and uses those as the market returns. These methods require computing the covariance between asset and market returns. These methods give a fairer value to a stock returns according to how they relate to the market.
+
+- `cov_type`: a concrete type of [`AbstractRiskModel`](@ref) for computing the covariance of the assets to the market.
+
+### CAPM with arithmetic mean
 
 ```
 ret_model(
@@ -23,11 +48,14 @@ ret_model(
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     span = Int(ceil(freq / 1.4)),
-)
+    )
 ```
-Compute the Capital Asset Price Model returns. If the market returns are not provided, it estimates them by averaging across all assets and uses those as the market returns. This gives each asset a fair market value. 
 
-This method requires computing the covariance between the asset and market returns. The keyword argument `cov_type` corresponds to a concrete type of [`AbstractRiskModel`](@ref). The keyword arguments, `target`, `fix_method` and `span` correspond to the same keyword arguments of [`risk_matrix`](@ref).
+Capital Asset Pricing Model (CAPM) returns. `CAPMRet()` uses the normal mean to estimate the mean market returns.
+
+- `target`, `fix_method`, and `span` correspond to the same keyword arguments of [`risk_matrix`](@ref) for computing the covariance specified by `cov_type`.
+
+### CAPM with exponentially weighted arithmetic mean
 
 ```
 ret_model(
@@ -41,10 +69,14 @@ ret_model(
     cov_type::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
-    span = Int(ceil(freq / 1.4)),
+    cspan = Int(ceil(freq / 1.4)),
 )
 ```
-Same as the Capital Asset Pricing Model above, but instead of using the normal mean to estimate the mean market return, it uses the exponentially weighted mean. The values of `rspan` and `cspan` are the `span`` values corresponding to the exponentially weighted mean, and exponentially weighted covariance/semicovariance matrix respectively.
+
+Exponentially weighted Capital Asset Pricing Model (ECAPM) returns. `ECAPMRet()` uses the exponentially weighted mean to estimate the mean market returns.
+
+- `rspan`: span for the exponentially weighted mean returns, same as `span` for `EMRet()` above.
+- `cspan`: span for the exponentially weighted covariance, same as `span` for [`risk_matrix`](@ref).
 """
 function ret_model(::MRet, returns; compound = true, freq = 252)
     if compound
@@ -81,7 +113,7 @@ function ret_model(
     fix_method::Union{SFix, DFix} = SFix(),
     span = Int(ceil(freq / 1.4)),
 )
-    β = _calculate_betas(market_returns, returns, cov_type, target, fix_method, span)
+    β = _compute_betas(market_returns, returns, cov_type, target, fix_method, span)
 
     # Mean market return.
     mkt_mean_ret = ret_model(MRet(), returns[:, end]; compound = compound, freq = freq)
@@ -103,7 +135,7 @@ function ret_model(
     fix_method::Union{SFix, DFix} = SFix(),
     cspan = Int(ceil(freq / 1.4)),
 )
-    β = _calculate_betas(market_returns, returns, cov_type, target, fix_method, cspan)
+    β = _compute_betas(market_returns, returns, cov_type, target, fix_method, cspan)
 
     # Exponentially weighted mean market return.
     mkt_mean_ret =
@@ -113,11 +145,11 @@ function ret_model(
     return rf .+ β * (mkt_mean_ret - rf)
 end
 
-function _calculate_betas(market_returns, returns, cov_type, target, fix_method, cspan)
+function _compute_betas(market_returns, returns, cov_type, target, fix_method, cspan)
 
     # Add the market returns to the right of the returns Array.
     if isnothing(market_returns)
-        # Calculate the market returns if it is not provided.
+        # Compute the market returns if it is not provided.
         returns = hcat(returns, mean(returns, dims = 2))
     else
         returns = hcat(returns, market_returns)
@@ -139,6 +171,16 @@ function _calculate_betas(market_returns, returns, cov_type, target, fix_method,
     return β
 end
 
+"""
+```
+returns_from_prices(prices, log_ret = false)
+```
+
+Compute the returns from prices. 
+
+- `prices`: array of prices, each column is an asset, each row an entry.
+- `log_ret`: if `false` compute the normal returns, if `true` compute the logarithmic returns.
+"""
 function returns_from_prices(prices, log_ret = false)
     if log_ret
         return log.(prices[2:end, :] ./ prices[1:(end - 1), :])
@@ -147,6 +189,16 @@ function returns_from_prices(prices, log_ret = false)
     end
 end
 
+"""
+```
+prices_from_returns(returns, log_ret = false)
+```
+
+Compute the prices from returns. 
+
+- `returns`: array of returns, each column is an asset, each row an entry.
+- `log_ret`: if `false` asume normal returns, if `true` asume logarithmic returns.
+"""
 function prices_from_returns(returns, log_ret = false)
     if log_ret
         ret = exp.(returns)

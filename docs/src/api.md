@@ -1,6 +1,6 @@
 # API
 
-## Objective functions
+## Objective Functions
 
 ```@docs
 port_variance
@@ -16,25 +16,33 @@ logarithmic_barrier
 kelly_objective
 ```
 
-## Risk models
+## Expected Returns
+
+```@docs
+AbstractReturnModel
+ret_model
+returns_from_prices
+prices_from_returns
+```
+
+## Risk Models
 
 ```@docs
 AbstractRiskModel
 risk_matrix
 ```
 
-## Expected returns
+## Portfolio Optimisation
 
 ```@docs
-AbstractReturnModel
-ret_model
+AbstractPortfolioOptimiser
 ```
 
-## Efficient Frontier
+### Efficient Frontier
 
-### Mean-var
+#### Mean-var
 
-### Mean-semivar
+#### Mean-semivar
 
 ```@docs
 EfficientSemiVar
