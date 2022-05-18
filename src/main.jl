@@ -6,7 +6,7 @@ df = CSV.read("./test/assets/stock_prices.csv", DataFrame)
 tickers = names(df)[2:end]
 returns = returns_from_prices(df[!, 2:end])
 
-mu = ret_model(MRet(), Matrix(dropmissing(returns)))
+mu = vec(ret_model(MRet(), Matrix(dropmissing(returns))))
 S = risk_matrix(Cov(), Matrix(dropmissing(returns)))
 
 n = length(names(df)[2:end])
@@ -43,30 +43,46 @@ function mean_barrier_objective(w, cov_matrix, k = 0.1)
     var = dot(w, cov_matrix, w)
     return var - k * mean_sum
 end
-function mean_barrier_objective(w::T...) where {T}
-    # quote
-    cov_mtx = obj_params[1]
-    k = obj_params[2]
-    w = [i for i in w]
-    mean_barrier_objective(w, cov_mtx, k)
-    # end
-end
+# function mean_barrier_objective(w::T...) where {T}
+#     # quote
+#     cov_mtx = obj_params[1]
+#     k = obj_params[2]
+#     w = [i for i in w]
+#     mean_barrier_objective(w, cov_mtx, k)
+#     # end
+# end
 ef = EfficientFrontier(names(df)[2:end], mu, S;)
-obj_params = [ef.cov_mtx, 0.001]
+obj_params = [ef.cov_mtx, 1000000.001]
 custom_optimiser!(ef, mean_barrier_objective, obj_params)
 
-# Now try with a convex objective from  Kolm et al (2014)
+function wak(w)
+    return dot(w, w)
+end
+ef = EfficientFrontier(names(df)[2:end], mu, S;)
+custom_optimiser!(ef, wak)
+
+# Now try with a non convex objective from  Kolm et al (2014)
+function logarithmic_barrier2(w, cov_mtx, k = 0.1)
+    # Add eps() to avoid log(0) divergence.
+    log_sum = sum(log.(w .+ eps()))
+    var = dot(w, cov_mtx, w)
+    return var - k * log_sum
+end
 function logarithmic_barrier(w::T...) where {T}
     cov_mtx = obj_params[1]
     k = obj_params[2]
     w = [i for i in w]
     PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
+    # logarithmic_barrier2(w, cov_mtx, k)
 end
 ef = EfficientFrontier(names(df)[2:end], mu, S)
 obj_params = [ef.cov_mtx, 0.001]
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 
-# Kelly objective with weight bounds on zeroth asset
+obj_params = (ef.mean_ret, ef.cov_mtx, 1000)
+custom_optimiser!(ef, kelly_objective, obj_params)
+
+# Kelly objective with weight bounds on first asset
 lower_bounds, upper_bounds = 0.01, 0.3
 ef = EfficientFrontier(
     names(df)[2:end],

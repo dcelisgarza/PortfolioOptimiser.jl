@@ -39,6 +39,8 @@ cov2cor
 
 ```@docs
 AbstractPortfolioOptimiser
+custom_optimiser!
+custom_nloptimiser!
 ```
 
 ### Efficient Frontier
