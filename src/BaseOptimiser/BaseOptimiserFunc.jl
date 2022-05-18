@@ -21,7 +21,7 @@ Users provide their own objectives that are supported by `JuMP.@objective`.
 
 ## Example
 
-This example defines a new function, but you can use the predefined functions in `PortfolioOptimiser` as long as they are supported by `JuMP.@objective`.
+This example defines a new function, identical to [`kelly_objective`](@ref), but you can use the predefined functions in `PortfolioOptimiser` as long as they are supported by `JuMP.@objective`.
 
 ```
 function kelly_objective2(w, mean_ret, cov_mtx, k = 3)
@@ -35,7 +35,7 @@ obj_params = (ef.mean_ret, ef.cov_mtx, 1000)
 custom_optimiser!(ef, kelly_objective2, obj_params)
 ```
 
-Unlike, [`custom_nloptimiser!`](@ref), functions defined by `PortfolioOptimiser` don't have to be prepended with `PortfolioOptimiser`, they can be used as normal. Here we use `kelly_objective`, which is provided by the package and is identical to `kelly_objective2` of the previous example.
+Unlike, [`custom_nloptimiser!`](@ref), functions defined by `PortfolioOptimiser` don't have to be prepended with `PortfolioOptimiser`, they can be used as normal. Here we use [`kelly_objective`](@ref), which is provided by the package and as previously mentioned is identical to `kelly_objective2` of the previous example.
 
 ```
 ef = EfficientFrontier(tickers, expected_returns, cov_mtx)
@@ -102,7 +102,7 @@ Users provide their own objectives that are supported by `JuMP.@NLobjective`.
 
 ## Example
 
-In this first example we define a logarithmic barrier function identical to `PortfolioOptimiser.logarithmic_barrier`, then we have to define the scalar-only function that `JuMP.@NLobjective` can use.
+In this first example we define a logarithmic barrier function identical to [`logarithmic_barrier`](@ref), then we have to define the scalar-only function that `JuMP.@NLobjective` can use.
 
 ```
 function logarithmic_barrier2(w, cov_mtx, k = 0.1)
@@ -132,6 +132,18 @@ function logarithmic_barrier(w::T...) where {T}
     k = obj_params[2]
     w = [i for i in w]
     PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
+end
+
+ef = EfficientFrontier(names(df)[2:end], mu, S)
+obj_params = [ef.cov_mtx, 0.001]
+custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
+
+# This definition will error in custom_nloptimiser!
+function logarithmic_barrier(w::T...) where {T}
+    cov_mtx = obj_params[1]
+    k = obj_params[2]
+    w = [i for i in w]
+    logarithmic_barrier(w, cov_mtx, k)
 end
 
 ef = EfficientFrontier(names(df)[2:end], mu, S)
