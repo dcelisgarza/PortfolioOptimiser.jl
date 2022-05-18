@@ -45,21 +45,21 @@ custom_nloptimiser!
 
 ### Efficient Frontier
 
-#### Mean-var
+#### Mean-variance
 
-#### Mean-semivar
+#### Mean-semivariance
 
 ```@docs
 EfficientSemiVar
 ```
 
-### Critical Value at Risk (CVaR)
+#### Critical Value at Risk (CVaR)
 
-### Critical Drawdown at Risk (CDaR)
+#### Critical Drawdown at Risk (CDaR)
 
-## Hierarchical Risk Parity Optimisation
+### Hierarchical Risk Parity
 
-## Black-Litterman Optimisation
+### Black-Litterman
 
 ## Critical line algorithm
 
