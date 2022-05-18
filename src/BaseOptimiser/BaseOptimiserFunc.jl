@@ -21,7 +21,7 @@ Users provide their own objectives that are supported by `JuMP.@objective`.
 
 ## Example
 
-This example uses defines a new function, but you can use the predefined functions in `PortfolioOptimiser` as long as they are supported by `JuMP.@objective`.
+This example defines a new function, but you can use the predefined functions in `PortfolioOptimiser` as long as they are supported by `JuMP.@objective`.
 
 ```
 function kelly_objective2(w, mean_ret, cov_mtx, k = 3)
@@ -33,6 +33,14 @@ end
 ef = EfficientFrontier(tickers, expected_returns, cov_mtx)
 obj_params = (ef.mean_ret, ef.cov_mtx, 1000)
 custom_optimiser!(ef, kelly_objective2, obj_params)
+```
+
+Unlike, [`custom_nloptimiser!`](@ref), functions defined by `PortfolioOptimiser` don't have to be prepended with `PortfolioOptimiser`, they can be used as normal. Here we use `kelly_objective`, which is provided by the package and is identical to `kelly_objective2` of the previous example.
+
+```
+ef = EfficientFrontier(tickers, expected_returns, cov_mtx)
+obj_params = (ef.mean_ret, ef.cov_mtx, 1000)
+custom_optimiser!(ef, kelly_objective, obj_params)
 ```
 
 !!! note
