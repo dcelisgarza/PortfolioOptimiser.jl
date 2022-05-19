@@ -151,6 +151,8 @@ The transacion cost ``C``, is defined as:
 C = k \\lvert \\bm{w} - \\bm{w}_{\\mathrm{prev}} \\rvert\\,,
 ```
 
+where ``k`` is the fixed percentage commision, ``\\bm{w}`` the asset weights, and ``\\bm{w}_{\\mathrm{prev}}`` the previous weights of the assets.
+
 !!! warning
     As of JuMP 1.0 there is no support for `norm` in objective functions. A model wishing to add this to their objective function should instead add it as a Vector Cone constraint, eg:
 
