@@ -119,7 +119,7 @@ Compute the historical semi-returns from historical `returns`, for a given `benc
 Historical semi returns ``\\mathrm{R_b}``, are defined as:
 
 ```math
-\\mathrm{R_b} = \\dfrac{\\mathrm{R} - b}{\\sqrt{N}}\\,
+\\mathrm{R_b} = \\dfrac{\\mathrm{R} - b}{\\sqrt{N}}\\,,
 ```
 
 where ``\\mathrm{R}`` are historical returns, ``b`` is the benchmark, and ``N`` is the number of historical entries (not the number of assets). 
@@ -148,7 +148,7 @@ Simple transaction cost model. Sums all the absolute changes in weight and multi
 The transacion cost ``C``, is defined as:
 
 ```math
-C = k \\lvert \\bm{w} - \\bm{w}_{\\mathrm{prev}} \\rvert
+C = k \\lvert \\bm{w} - \\bm{w}_{\\mathrm{prev}} \\rvert\\,,
 ```
 
 !!! warning
@@ -205,8 +205,8 @@ The ex-post tracking error ``\\mathrm{Err}``, is defined as:
 
 ```math
 \\begin{aligned}
-    \\bm{x} &= \\mathrm{R} \\bm{w} - \\bm{R}_b  \\\\
-    \\mu &= \\dfrac{1}{N} \\sum\\limits_{i=1}^N x_i \\\\
+    \\bm{x} &= \\mathrm{R} \\bm{w} - \\bm{R}_b  \\,,\\\\
+    \\mu &= \\dfrac{1}{N} \\sum\\limits_{i=1}^N x_i \\,,\\\\
     \\mathrm{Err} &= (\\bm{x} - \\mu) \\cdot (\\bm{x} - \\mu) = Var(r - r_b)\\,,
 \\end{aligned}
 ```
