@@ -28,7 +28,8 @@ Returns a tuple of an [`Allocation`](@ref) structure and remaining money after a
 - `silent`: if `true` the optimiser is silent.
 
 ## Example
-```
+
+```julia
 ef = EfficientFrontier(
     tickers,
     mean_ret,

@@ -188,7 +188,7 @@ end
     @constraint(model, lower_bounds, w .>= lower_bounds)
     @constraint(model, upper_bounds, w .<= upper_bounds)
 
-    _make_weight_sum_constraint(model, market_neutral)
+    _make_weight_sum_constraint!(model, market_neutral)
 
     # Add extra variables for extra variables and objective functions.
     if !isempty(extra_vars)

@@ -41,11 +41,25 @@ cov2cor
 AbstractPortfolioOptimiser
 custom_optimiser!
 custom_nloptimiser!
+add_sector_constraint!
+_refresh_model!
+_create_weight_bounds
+_make_weight_sum_constraint!
+_add_var_to_model!
+_add_constraint_to_model!
+_add_to_objective!
 ```
 
 ### Efficient Frontier
 
+```@docs
+AbstractEfficient
+```
+
 #### Mean-variance
+
+```@docs
+```
 
 #### Mean-semivariance
 
@@ -55,13 +69,28 @@ EfficientSemiVar
 
 #### Critical Value at Risk (CVaR)
 
+```@docs
+```
+
 #### Critical Drawdown at Risk (CDaR)
+
+```@docs
+```
 
 ### Hierarchical Risk Parity
 
+```@docs
+```
+
 ### Black-Litterman
 
+```@docs
+```
+
 ## Critical line algorithm
+
+```@docs
+```
 
 ## Asset allocation
 

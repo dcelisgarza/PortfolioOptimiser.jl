@@ -154,7 +154,7 @@ C = k \\lvert \\bm{w} - \\bm{w}_{\\mathrm{prev}} \\rvert
     As of JuMP 1.0 there is no support for `norm` in objective functions. A model wishing to add this to their objective function should instead add it as a Vector Cone constraint, eg:
     ```
     n = length(tickers)
-    prev_weights = fill(1 / n), n))
+    prev_weights = fill(1 / n, n)
     k = 0.001
 
     extra_vars = [:(z[1:(\$n)])]

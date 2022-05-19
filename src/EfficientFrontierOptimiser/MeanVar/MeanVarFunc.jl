@@ -212,7 +212,7 @@ function max_quadratic_utility!(
 
     model = portfolio.model
 
-    _make_weight_sum_constraint(model, portfolio.market_neutral)
+    _make_weight_sum_constraint!(model, portfolio.market_neutral)
 
     w = model[:w]
     mean_ret = portfolio.mean_ret
@@ -260,7 +260,7 @@ function efficient_return!(
     @constraint(model, target_ret, port_return(w, mean_ret) >= target_ret)
 
     # Make weight sum constraint.
-    _make_weight_sum_constraint(model, portfolio.market_neutral)
+    _make_weight_sum_constraint!(model, portfolio.market_neutral)
 
     @objective(model, Min, port_variance(w, cov_mtx))
     # Add extra terms to objective function.
@@ -312,7 +312,7 @@ function efficient_risk!(
     @constraint(model, target_variance, variance <= target_variance)
 
     # Make weight sum constraint.
-    _make_weight_sum_constraint(model, portfolio.market_neutral)
+    _make_weight_sum_constraint!(model, portfolio.market_neutral)
 
     @objective(model, Min, -port_return(w, mean_ret))
     # Add extra terms to objective function.
