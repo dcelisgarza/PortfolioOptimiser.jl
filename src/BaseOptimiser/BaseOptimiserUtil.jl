@@ -110,9 +110,9 @@ end
 _add_var_to_model!(model, var, args...)
 ```
 
-Function to add a `JuMP.@variable` to a `JuMP.Model`.
+Function to add a `JuMP.@variable` to a `JuMP.Model()`.
 
-- `model`: a `JuMP.Model`.
+- `model`: a `JuMP.Model()`.
 - `var`: symbol or expression representing a `JuMP.@variable`. Extra array variables have to be expressions. Extra scalar variables can be symbols or expressions.
 - `args...`: expression representing the `args...` to a `JuMP.@variable`.
 
@@ -168,16 +168,16 @@ end
 _add_constraint_to_model!(model, key, constraint)
 ```
 
-Function to add a `JuMP.@constraint` to a `JuMP.Model`.
+Function to add a `JuMP.@constraint` to a `JuMP.Model()`.
 
-- `model`: a `JuMP.Model`.
-- `key`: the key under which the constraint will be registered in the `JuMP.model`.
+- `model`: a `JuMP.Model()`.
+- `key`: the key under which the constraint will be registered in the `JuMP.Model()`.
 - `constraint`: expression representing the constraint.
 
 Constraints can also be directly added to a `model` using `JuMP.@constraint`. This is used internally by [`AbstractEfficient`](@ref) portfolios, so that when a portfolio optimiser is refreshed, the extra constraints can be added back automatically.
 
 !!! warning
-    Variables used within the `constraint` must be registered in the `JuMP.Model` object (hence [`_add_var_to_model!`](@ref)), and referred to as `model[<key>]`, where `<key>` is the key of the variable. For example, when adding a constraint such that the first weight is less than or equal to 0.2, `:(model[:w][1] <= 0.2)`.
+    Variables used within the `constraint` must be registered in the `JuMP.Model()` object (hence [`_add_var_to_model!`](@ref)), and referred to as `model[<key>]`, where `<key>` is the key of the variable. For example, when adding a constraint such that the first weight is less than or equal to 0.2, `:(model[:w][1] <= 0.2)`.
 
 !!! warning
     Constraints must be expressions `:()`, not quotes `quote ... end`, because quotes can contain be multiple expressions.
@@ -232,13 +232,13 @@ end
 _add_to_objective!(model, expr)
 ```
 
-Function to add a term to a `JuMP.@objective` to a `JuMP.Model`.
+Function to add a term to a `JuMP.@objective` to a `JuMP.Model()`.
 
-- `model`: a `JuMP.Model`.
+- `model`: a `JuMP.Model()`.
 - `expr`: the expression to add to the objective function.
 
 !!! warning
-    Variables used within the extra objective must be registered in the `JuMP.Model` object (hence [`_add_var_to_model!`](@ref)), and referred to as `model[<key>]`, where `<key>` is the key of the variable. For example, `quote model[:w][1] * 5 - sum(model[:w]) end` or `:( model[:w][1] * 5 - sum(model[:w]) )`. Extra objective terms can be quotes or expressions. Using quotes is recommended because extra objective terms can be functions, as shown in the example.
+    Variables used within the extra objective must be registered in the `JuMP.Model()` object (hence [`_add_var_to_model!`](@ref)), and referred to as `model[<key>]`, where `<key>` is the key of the variable. For example, `quote model[:w][1] * 5 - sum(model[:w]) end` or `:( model[:w][1] * 5 - sum(model[:w]) )`. Extra objective terms can be quotes or expressions. Using quotes is recommended because extra objective terms can be functions, as shown in the example.
 
 !!! note
     Can only be used for `JuMP.@objective`. For problems which require a non-linear objective, use [`custom_nloptimiser!`](@ref) and add the extra terms to the custom function.
