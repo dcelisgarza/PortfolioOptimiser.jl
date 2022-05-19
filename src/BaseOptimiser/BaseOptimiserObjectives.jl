@@ -55,7 +55,8 @@ The Sharpe ratio ``s``, is defined as:
 s = \\dfrac{\\mu - r}{\\sigma},
 ```
 
-where ``\\mu`` the portfolio's return (see [`port_return`](@ref)), and ``\\sigma`` the portfolio's standard deviation (see [`port_variance`](@ref)). Generally speaking, the greater the Sharpe ratio the better the portfolio. 
+where ``\\mu`` the portfolio's return (see [`port_return`](@ref)), and ``\\sigma`` the portfolio's standard deviation (see [`port_variance`](@ref)). Generally speaking, the greater the Sharpe ratio the better the portfolio.
+
 !!! note
     The Sharpe ratio penalises large swings in both directions, so assets that tend to have large increases in value are disproportionally penalised by this measure. The Sortino ratio has the same formula but uses an adjusted covariance matrix that accounts only for the negative fluctuations in value. The semicovariance is implemented by [`risk_matrix`](@ref) when given `SCov()` or `ESCov()` as its first argument. The Mean-Semivariance optimisations [`EfficientSemiVar`](@ref) make the adjustment too.
 """
@@ -152,7 +153,8 @@ C = k \\lvert \\bm{w} - \\bm{w}_{\\mathrm{prev}} \\rvert
 
 !!! warning
     As of JuMP 1.0 there is no support for `norm` in objective functions. A model wishing to add this to their objective function should instead add it as a Vector Cone constraint, eg:
-    ```
+
+    ```julia
     n = length(tickers)
     prev_weights = fill(1 / n, n)
     k = 0.001
