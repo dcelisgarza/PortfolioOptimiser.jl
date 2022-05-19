@@ -78,10 +78,10 @@ L2 regularisation. Minimising this reduces the number of negligible weights `w`,
 The ``L_2`` regularisation is defined as:
 
 ```math
-L_2 = \\gamma \\Vert \\bm{w} \\Vert\\,,
+L_2 = \\gamma (\\bm{w} \\cdot \\bm{w}) \\,,
 ```
 
-where ``\\gamma`` is the tuning parameter, and ``w`` the weights.
+where ``\\gamma`` is the tuning parameter, and ``\\bm{w}`` the weights.
 """
 function L2_reg(w, γ = 1)
     return γ * dot(w, w)
