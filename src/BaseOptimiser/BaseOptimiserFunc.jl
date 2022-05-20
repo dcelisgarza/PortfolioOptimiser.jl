@@ -119,7 +119,7 @@ function logarithmic_barrier(w::T...) where {T}
     logarithmic_barrier2(w, cov_mtx, k)
 end
 
-ef = EfficientMeanVar(names(df)[2:end], mu, S)
+ef = EfficientMeanVar(tickers, mu, S)
 obj_params = (ef.cov_mtx, 0.001)
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 ```
@@ -127,6 +127,8 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 We can also use objective functions that are already defined by `PortfolioOptimiser`. However, given how `JuMP.@NLobjective` requires user-defined functions to be registered, we need to prepend them with `PortfolioOptimiser` so that it can be recognised and registered by JuMP into the model.
 
 ```julia
+import PortfolioOptimiser: logarithmic_barrier
+
 function logarithmic_barrier(w::T...) where {T}
     cov_mtx = obj_params[1]
     k = obj_params[2]
@@ -134,7 +136,7 @@ function logarithmic_barrier(w::T...) where {T}
     PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
 end
 
-ef = EfficientMeanVar(names(df)[2:end], mu, S)
+ef = EfficientMeanVar(tickers, mu, S)
 obj_params = [ef.cov_mtx, 0.001]
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 
@@ -146,7 +148,7 @@ function logarithmic_barrier(w::T...) where {T}
     logarithmic_barrier(w, cov_mtx, k)
 end
 
-ef = EfficientMeanVar(names(df)[2:end], mu, S)
+ef = EfficientMeanVar(tickers, mu, S)
 obj_params = [ef.cov_mtx, 0.001]
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 ```
@@ -162,7 +164,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
         PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
     end
 
-    ef = EfficientMeanVar(names(df)[2:end], mu, S)
+    ef = EfficientMeanVar(tickers, mu, S)
     obj_params = [ef.cov_mtx, 0.001]
     custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     ```

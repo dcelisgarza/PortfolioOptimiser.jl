@@ -79,7 +79,7 @@ EfficientMeanVar(
 )
 ```
 
-Function for creating a JuMP model for creating an efficient mean-var portfolio to be optimised.
+Create an [`EfficientMeanVar`](@ref) structure to be optimised via JuMP.
 
 - `tickers`: list of tickers.
 - `mean_ret`: mean returns, don't need it to optimise for minimum variance.
