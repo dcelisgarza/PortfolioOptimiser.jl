@@ -1,3 +1,23 @@
+function refresh_model!(portfolio::AbstractEfficientCDaR)
+    default_keys = (
+        :w,
+        :lower_bounds,
+        :upper_bounds,
+        :sum_w,
+        :alpha,
+        :u,
+        :z,
+        :z_geq_uma,
+        :uf_geq_uimvw,
+        :u1_eq_0,
+        :z_geq_0,
+        :u2e_geq_0,
+    )
+    _refresh_add_var_and_constraints(default_keys, portfolio)
+
+    return nothing
+end
+
 function portfolio_performance(portfolio::EfficientCDaR, verbose = true)
     model = portfolio.model
     mean_ret = portfolio.mean_ret

@@ -1,4 +1,11 @@
-function portfolio_performance(portfolio::EfficientFrontier; verbose = true)
+function refresh_model!(portfolio::AbstractEfficientMeanVar)
+    default_keys = (:w, :lower_bounds, :upper_bounds)
+    _refresh_add_var_and_constraints(default_keys, portfolio)
+
+    return nothing
+end
+
+function portfolio_performance(portfolio::EfficientMeanVar; verbose = true)
     rf = portfolio.rf
     mean_ret = portfolio.mean_ret
 

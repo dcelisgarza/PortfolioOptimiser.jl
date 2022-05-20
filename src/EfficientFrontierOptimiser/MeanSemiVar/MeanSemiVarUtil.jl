@@ -1,3 +1,10 @@
+function refresh_model!(portfolio::AbstractEfficientSemiVar)
+    default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :p, :n, :semi_var)
+    _refresh_add_var_and_constraints(default_keys, portfolio)
+
+    return nothing
+end
+
 function portfolio_performance(portfolio::EfficientSemiVar, rf = 0.02; verbose = true)
     mean_ret = portfolio.mean_ret
     freq = portfolio.freq

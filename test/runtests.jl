@@ -8,7 +8,7 @@ using SafeTestsets
 #     include("RiskModelsTests.jl")
 # end
 
-# @safetestset "EfficientFrontier" begin
+# @safetestset "EfficientMeanVar" begin
 #     include("EfficientFrontierTests.jl")
 # end
 

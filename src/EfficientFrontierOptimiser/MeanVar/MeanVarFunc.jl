@@ -1,7 +1,7 @@
 """
 ```
 function optimise!(
-    portfolio::EfficientFrontier{MinVolatility},
+    portfolio::EfficientMeanVar{MinVolatility},
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
@@ -9,7 +9,7 @@ function optimise!(
 Optimise portfolio for minimum volatility.
 """
 function min_volatility!(
-    portfolio::EfficientFrontier,
+    portfolio::EfficientMeanVar,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
@@ -37,16 +37,12 @@ function min_volatility!(
 end
 """
 ```
-optimise(portfolio::EfficientFrontier)
+optimise(portfolio::EfficientMeanVar)
 ```
 !!! warning
     This should not be used for optimising portfolios. It's used internally for some optimisations. It yields portfolios with large volatilities.
 """
-function max_return(
-    portfolio::EfficientFrontier,
-    optimiser = Ipopt.Optimizer,
-    silent = true,
-)
+function max_return(portfolio::EfficientMeanVar, optimiser = Ipopt.Optimizer, silent = true)
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     model = copy(portfolio.model)
@@ -72,7 +68,7 @@ end
 """
 ```
 optimise!(
-    portfolio::EfficientFrontier{MaxSharpe},
+    portfolio::EfficientMeanVar{MaxSharpe},
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
@@ -80,7 +76,7 @@ optimise!(
 Maximise portfolio for maximum sharpe ratio.
 """
 function max_sharpe!(
-    portfolio::EfficientFrontier,
+    portfolio::EfficientMeanVar,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
@@ -200,7 +196,7 @@ function max_sharpe!(
 end
 
 function max_quadratic_utility!(
-    portfolio::EfficientFrontier,
+    portfolio::EfficientMeanVar,
     risk_aversion = portfolio.risk_aversion,
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -236,7 +232,7 @@ function max_quadratic_utility!(
 end
 
 function efficient_return!(
-    portfolio::EfficientFrontier,
+    portfolio::EfficientMeanVar,
     target_ret = portfolio.target_ret,
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -279,7 +275,7 @@ function efficient_return!(
 end
 
 function efficient_risk!(
-    portfolio::EfficientFrontier,
+    portfolio::EfficientMeanVar,
     target_volatility = portfolio.target_volatility,
     optimiser = Ipopt.Optimizer,
     silent = true,

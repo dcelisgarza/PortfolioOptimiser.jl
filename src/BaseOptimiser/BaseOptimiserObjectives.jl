@@ -165,7 +165,7 @@ where ``k`` is the fixed percentage commision, ``\\bm{w}`` the asset weights, an
     extra_constraints =
         [:([\$k * (model[:w] - \$prev_weights); model[:z]] in MOI.NormOneCone(\$(n + n)))]
 
-    ef = EfficientFrontier(tickers, mu, S;
+    ef = EfficientMeanVar(tickers, mu, S;
             extra_vars = extra_vars,
             extra_constraints = extra_constraints,
         )

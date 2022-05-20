@@ -453,7 +453,7 @@ using PortfolioOptimiser.EfficientFrontierOptimiser,
     drptest = 0.32258644752208027
     @test drp ≈ drptest
 
-    ef = EfficientFrontier(names(df)[2:end], mu, S)
+    ef = EfficientMeanVar(names(df)[2:end], mu, S)
 
     @generated function deviation_risk_parity(w::T...) where {T}
         quote

@@ -20,7 +20,7 @@ prev_weights /= sum(prev_weights)
 #     [:([$k * (model[:w] - $prev_weights); model[:z]] in MOI.NormOneCone($(n + n)))]
 # Is equivalent to adding k * norm(model[:w] - prev_weights, 1) to the objective
 k = 0.001
-ef = EfficientFrontier(
+ef = EfficientMeanVar(
     names(df)[2:end],
     mu,
     S;
@@ -51,14 +51,14 @@ end
 #     mean_barrier_objective(w, cov_mtx, k)
 #     # end
 # end
-ef = EfficientFrontier(names(df)[2:end], mu, S;)
+ef = EfficientMeanVar(names(df)[2:end], mu, S;)
 obj_params = [ef.cov_mtx, 1000000.001]
 custom_optimiser!(ef, mean_barrier_objective, obj_params)
 
 function wak(w)
     return dot(w, w)
 end
-ef = EfficientFrontier(names(df)[2:end], mu, S;)
+ef = EfficientMeanVar(names(df)[2:end], mu, S;)
 custom_optimiser!(ef, wak)
 
 # Now try with a non convex objective from  Kolm et al (2014)
@@ -75,7 +75,7 @@ function logarithmic_barrier(w::T...) where {T}
     PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
     # logarithmic_barrier2(w, cov_mtx, k)
 end
-ef = EfficientFrontier(names(df)[2:end], mu, S)
+ef = EfficientMeanVar(names(df)[2:end], mu, S)
 obj_params = [ef.cov_mtx, 0.001]
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 
@@ -84,7 +84,7 @@ custom_optimiser!(ef, kelly_objective, obj_params)
 
 # Kelly objective with weight bounds on first asset
 lower_bounds, upper_bounds = 0.01, 0.3
-ef = EfficientFrontier(
+ef = EfficientMeanVar(
     names(df)[2:end],
     mu,
     S;
@@ -96,7 +96,7 @@ ef = EfficientFrontier(
 obj_params = [ef.mean_ret, ef.cov_mtx, 1000]
 custom_optimiser!(ef, kelly_objective, obj_params)
 
-ef = EfficientFrontier(
+ef = EfficientMeanVar(
     names(df)[2:end],
     mu,
     S;
@@ -131,7 +131,7 @@ deviation_risk_parity2(ef.weights, ef.cov_mtx)
     end
 end
 
-ef = EfficientFrontier(
+ef = EfficientMeanVar(
     names(df)[2:end],
     mu,
     S;
@@ -358,7 +358,7 @@ testblweights = [
 bl.weights ≈ testblweights
 
 ## Efficient Frontier
-ef = EfficientFrontier(names(df)[2:end], bl.post_ret, S)
+ef = EfficientMeanVar(names(df)[2:end], bl.post_ret, S)
 max_sharpe!(ef)
 testweights = [
     0.221896132231067,
@@ -399,7 +399,7 @@ gAlloc, remaining =
 testshares = [231, 2, 4, 19]
 gAlloc.shares == testshares
 
-ef = EfficientFrontier(names(df)[2:end], bl.post_ret, S)
+ef = EfficientMeanVar(names(df)[2:end], bl.post_ret, S)
 min_volatility!(ef)
 testweights = [
     0.007909381852655,
@@ -561,7 +561,7 @@ testshares = [142, 2, 14, 5, 5, 11, 2, 13]
 gAlloc.shares == testshares
 
 ### Eff front market neutral
-ef = EfficientFrontier(
+ef = EfficientMeanVar(
     names(df)[2:end],
     bl.post_ret,
     S,
@@ -608,7 +608,7 @@ gAlloc, remaining =
 testshares = [3, 58, 11, 27, 12, 5, 7, 3, 4, 4, -168, -29, -357, -30, -24, -2, -73, -2, -1]
 gAlloc.shares == testshares
 
-ef = EfficientFrontier(
+ef = EfficientMeanVar(
     names(df)[2:end],
     bl.post_ret,
     S,

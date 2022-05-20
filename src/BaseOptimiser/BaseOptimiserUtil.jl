@@ -124,7 +124,7 @@ We can use this to add a vector variable `c` of length 3, a scalar variable `k`,
 
 ```julia
 extra_vars = [ :( c[1:3] ), :k, :( m[1:3, 1:5, 1:4] ) ]
-ef = EfficientFrontier(tickers, mean_ret, cov_mtx)
+ef = EfficientMeanVar(tickers, mean_ret, cov_mtx)
 _add_var_to_model!.(ef.model, extra_vars)
 ```
 
@@ -132,7 +132,7 @@ Alternatively, we can make sure they get registered in the optimiser. If the por
 
 ```julia
 extra_vars = [ :( c[1:3] ), :k, :( m[1:3, 1:5, 1:4] ) ]
-ef = EfficientFrontier(tickers, mean_ret, cov_mtx; extra_vars = extra_vars)
+ef = EfficientMeanVar(tickers, mean_ret, cov_mtx; extra_vars = extra_vars)
 ```
 
 !!! note
@@ -191,14 +191,14 @@ We can use this to add a constraint, `:const1` such that the weight of the secon
 
 ```julia
 extra_constraints = [:(model[:w][2] >= 2), :(sum(model[:w]) <= 5)]
-ef = EfficientFrontier(tickers, mean_ret, cov_mtx)
+ef = EfficientMeanVar(tickers, mean_ret, cov_mtx)
 _add_constraint_to_model!.(ef.model, [:const1, :const2], extra_constraints)
 ```
 
 We can also use variable interpolation into the expressions.
 
 ```julia
-ef = EfficientFrontier(tickers, mean_ret, cov_mtx)
+ef = EfficientMeanVar(tickers, mean_ret, cov_mtx)
 w = ef.model[:w]
 extra_constraints = [:(\$(w[2]) >= 2), :(sum(\$w) <= 5)]
 _add_constraint_to_model!.(ef.model, [:const1, :const2], extra_constraints)
@@ -208,7 +208,7 @@ If we want the extra constraints to be added back automatically when refreshing 
 
 ```julia
 extra_constraints = [:(model[:w][2] >= 2), :(sum(model[:w]) <= 5)]
-ef = EfficientFrontier(tickers, mean_ret, cov_mtx; extra_constraints = extra_constraints)
+ef = EfficientMeanVar(tickers, mean_ret, cov_mtx; extra_constraints = extra_constraints)
 ```
 
 !!! note
@@ -256,7 +256,7 @@ extra_obj_terms = [
        L2_reg(model[:w], 0.05)
     end
 ]
-ef = EfficientFrontier(tickers, mean_ret, cov_mtx)
+ef = EfficientMeanVar(tickers, mean_ret, cov_mtx)
 _add_to_objective!.(ef.model, extra_obj_terms)
 ```
 
@@ -271,7 +271,7 @@ extra_obj_terms = [
        L2_reg(model[:w], 0.05)
     end
 ]
-ef = EfficientFrontier(tickers, mean_ret, cov_mtx; extra_obj_terms = extra_obj_terms)
+ef = EfficientMeanVar(tickers, mean_ret, cov_mtx; extra_obj_terms = extra_obj_terms)
 ```
 
 !!! note

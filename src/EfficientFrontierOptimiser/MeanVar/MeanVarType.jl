@@ -1,7 +1,7 @@
-abstract type AbstractEfficientFrontier <: AbstractEfficient end
+abstract type AbstractEfficientMeanVar <: AbstractEfficient end
 
-struct EfficientFrontier{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
-       AbstractEfficientFrontier
+struct EfficientMeanVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
+       AbstractEfficientMeanVar
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -17,7 +17,7 @@ struct EfficientFrontier{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13,
     extra_obj_func::T13
     model::T14
 end
-function EfficientFrontier(
+function EfficientMeanVar(
     tickers,
     mean_ret,
     cov_mtx;
@@ -33,7 +33,7 @@ function EfficientFrontier(
     extra_obj_terms = [],
     extra_obj_func = [],
 )
-    return EfficientFrontier(
+    return EfficientMeanVar(
         tickers,
         mean_ret,
         cov_mtx,
@@ -49,7 +49,7 @@ function EfficientFrontier(
         extra_obj_func,
     )
 end
-function EfficientFrontier(
+function EfficientMeanVar(
     tickers::AbstractVector{<:AbstractString},
     mean_ret::AbstractVector{<:Real},
     cov_mtx::AbstractArray{<:Real, 2},
@@ -75,7 +75,7 @@ function EfficientFrontier(
         extra_obj_func,
     )
 
-    return EfficientFrontier(
+    return EfficientMeanVar(
         tickers,
         mean_ret,
         weights,
