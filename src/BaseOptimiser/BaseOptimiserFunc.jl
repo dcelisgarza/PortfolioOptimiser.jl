@@ -105,6 +105,9 @@ Users provide their own objectives that are supported by `JuMP.@NLobjective`.
 In this first example we define a logarithmic barrier function identical to [`logarithmic_barrier`](@ref), then we have to define the scalar-only function that `JuMP.@NLobjective` can use.
 
 ```julia
+# Import logarithmic_barrier so we can add the scalar method.
+import PortfolioOptimiser: logarithmic_barrier
+
 function logarithmic_barrier2(w, cov_mtx, k = 0.1)
     # Add eps() to avoid log(0) divergence.
     log_sum = sum(log.(w .+ eps()))
@@ -119,7 +122,7 @@ function logarithmic_barrier(w::T...) where {T}
     logarithmic_barrier2(w, cov_mtx, k)
 end
 
-ef = EfficientMeanVar(tickers, mu, S)
+ef = EfficientMeanVar(tickers, mean_ret, cov_mtx)
 obj_params = (ef.cov_mtx, 0.001)
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 ```
@@ -127,6 +130,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 We can also use objective functions that are already defined by `PortfolioOptimiser`. However, given how `JuMP.@NLobjective` requires user-defined functions to be registered, we need to prepend them with `PortfolioOptimiser` so that it can be recognised and registered by JuMP into the model.
 
 ```julia
+# Import logarithmic_barrier so we can add the scalar method.
 import PortfolioOptimiser: logarithmic_barrier
 
 function logarithmic_barrier(w::T...) where {T}
@@ -136,7 +140,7 @@ function logarithmic_barrier(w::T...) where {T}
     PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
 end
 
-ef = EfficientMeanVar(tickers, mu, S)
+ef = EfficientMeanVar(tickers, mean_ret, cov_mtx)
 obj_params = [ef.cov_mtx, 0.001]
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 
@@ -148,7 +152,7 @@ function logarithmic_barrier(w::T...) where {T}
     logarithmic_barrier(w, cov_mtx, k)
 end
 
-ef = EfficientMeanVar(tickers, mu, S)
+ef = EfficientMeanVar(tickers, mean_ret, cov_mtx)
 obj_params = [ef.cov_mtx, 0.001]
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 ```
@@ -157,6 +161,9 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     Note how in both cases, the parameters in the scalar-only function are not declared in the function signature. As such, they must be defined in terms of `obj_params`, or as literals, as the variable must be known to `custom_nloptimiser!`. If a variable name other than `obj_params` is used, the model will error becuase the variable will be unkown to the `custom_nloptimiser!`. For example, the following custom nonlinear objective function will not work because `obj_param` and `obj_parameter` do not exist inside `custom_nloptimiser!`.
 
     ```julia
+    # Import logarithmic_barrier so we can add the scalar method.
+    import PortfolioOptimiser: logarithmic_barrier
+
     function logarithmic_barrier(w::T...) where {T}
         cov_mtx = obj_param[1]  # Unkown variable, change to obj_params[1]
         k = obj_parameter[2]    # Unkown variable, change to obj_params[2]
@@ -164,7 +171,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
         PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
     end
 
-    ef = EfficientMeanVar(tickers, mu, S)
+    ef = EfficientMeanVar(tickers, mean_ret, cov_mtx)
     obj_params = [ef.cov_mtx, 0.001]
     custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     ```
