@@ -1,3 +1,10 @@
+"""
+```
+_refresh_add_var_and_constraints(default_keys, portfolio)
+```
+
+Helper function for refreshing portfolios and re-adding extra variables and constraints used to build the model via the constructor.
+"""
 function _refresh_add_var_and_constraints(default_keys, portfolio)
     model = portfolio.model
     extra_vars = portfolio.extra_vars
@@ -20,15 +27,30 @@ function _refresh_add_var_and_constraints(default_keys, portfolio)
     return nothing
 end
 
+"""
+```
+_function_vs_portfolio_val_warn(fval, pval, name)
+```
+
+Helper function for throwing generic warnings about inconsistent values between calls to optimiser functions and the values registered in the portfolio.
+"""
 function _function_vs_portfolio_val_warn(fval, pval, name)
     if fval != pval
         @warn(
             "The value of $(name): $fval, provided to the function does not match the one in the portfolio: $(pval). Using function value: $fval, instead."
         )
     end
+
     return nothing
 end
 
+"""
+```
+_val_compare_benchmark(val, op, benchmark, correction, name)
+```
+
+Helper function for throwing generic warnings about values out of the domain and ammending those values.
+"""
 function _val_compare_benchmark(val, op, benchmark, correction, name)
     if op(val, benchmark)
         @warn(

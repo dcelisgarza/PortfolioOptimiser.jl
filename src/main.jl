@@ -68,6 +68,7 @@ function logarithmic_barrier2(w, cov_mtx, k = 0.1)
     var = dot(w, cov_mtx, w)
     return var - k * log_sum
 end
+import PortfolioOptimiser: logarithmic_barrier
 function logarithmic_barrier(w::T...) where {T}
     cov_mtx = obj_params[1]
     k = obj_params[2]
@@ -106,7 +107,7 @@ ef = EfficientMeanVar(
     # extra_obj_terms = [quote
     #     ragnar(model[:w], 1000)
     # end],
-    # extra_obj_func = [quote
+    # extra_obj_terms = [quote
     #     function lothar(w, i)
     #         w[5] * w[3] - i
     #     end
@@ -142,7 +143,7 @@ ef = EfficientMeanVar(
     # extra_obj_terms = [quote
     #     ragnar(model[:w], 1000)
     # end],
-    # extra_obj_func = [quote
+    # extra_obj_terms = [quote
     #     function lothar(w, i)
     #         w[5] * w[3] - i
     #     end
@@ -440,7 +441,7 @@ gAlloc, remaining =
 testshares = [81, 54, 16, 16, 20, 25, 2, 2, 3, 1]
 gAlloc.shares == testshares
 
-max_quadratic_utility!(ef, 2)
+max_quadratic_utility!(ef)
 testweights = [
     0.142307545055626,
     0.0,
@@ -1357,7 +1358,7 @@ rmsd(lpAlloc.shares, testshares) < 0.5
 
 gAlloc, remaining =
     Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
-testshares = [16, 1, 8, 38, 1, 26, 8, 4, 4, 75, 3, 10, -91, -54, -18, -4, -1, -4, -2]
+testshares = [16, 1, 8, 38, 1, 26, 8, 4, 4, 75, 3, 10, -91, -54, -18, -4, -1, -4, -2, -1]
 rmsd(Int.(gAlloc.shares), testshares) < 1
 
 efficient_risk!(cv, 0.18)

@@ -1,6 +1,12 @@
 using PortfolioOptimiser
 using Documenter
-import PortfolioOptimiser: _short_allocation, _sub_allocation, _clean_zero_shares
+import PortfolioOptimiser:
+    _short_allocation,
+    _sub_allocation,
+    _clean_zero_shares,
+    _refresh_add_var_and_constraints,
+    _function_vs_portfolio_val_warn,
+    _val_compare_benchmark
 
 DocMeta.setdocmeta!(
     PortfolioOptimiser,

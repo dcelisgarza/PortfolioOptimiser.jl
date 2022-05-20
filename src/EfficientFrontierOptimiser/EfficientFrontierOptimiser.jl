@@ -10,7 +10,7 @@ export refresh_model!
 include("./MeanVar/MeanVarType.jl")
 include("./MeanVar/MeanVarFunc.jl")
 include("./MeanVar/MeanVarUtil.jl")
-export EfficientMeanVar
+export AbstractEfficientMeanVar, EfficientMeanVar
 export min_volatility!, max_return, max_sharpe!
 
 # Mean semi variance optimisations.

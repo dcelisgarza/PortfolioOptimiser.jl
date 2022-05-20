@@ -1,6 +1,6 @@
 abstract type AbstractEfficientCDaR <: AbstractEfficient end
 
-struct EfficientCDaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
+struct EfficientCDaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12} <:
        AbstractEfficientCDaR
     tickers::T1
     mean_ret::T2
@@ -13,8 +13,7 @@ struct EfficientCDaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
     extra_vars::T9
     extra_constraints::T10
     extra_obj_terms::T11
-    extra_obj_func::T12
-    model::T13
+    model::T12
 end
 function EfficientCDaR(
     tickers,
@@ -28,76 +27,6 @@ function EfficientCDaR(
     extra_vars = [],
     extra_constraints = [],
     extra_obj_terms = [],
-    extra_obj_func = [],
-)
-    return EfficientCDaR(
-        tickers,
-        mean_ret,
-        returns,
-        weight_bounds,
-        beta,
-        market_neutral,
-        target_cdar,
-        target_ret,
-        extra_vars,
-        extra_constraints,
-        extra_obj_terms,
-        extra_obj_func,
-    )
-end
-function EfficientCDaR(
-    tickers::AbstractVector{<:AbstractString},
-    mean_ret::AbstractVector{<:Real},
-    returns::AbstractArray{<:Real, 2},
-    weight_bounds::Union{Tuple{<:Real, <:Real}, AbstractVector} = (0.0, 1.0),
-    beta::Real = 0.95,
-    market_neutral::Bool = false,
-    target_cdar::Real = mean(maximum(returns, dims = 2)),
-    target_ret::Real = mean(mean_ret),
-    extra_vars::AbstractVector{<:Any} = [],
-    extra_constraints::AbstractVector{<:Any} = [],
-    extra_obj_terms::AbstractVector{<:Any} = [],
-    extra_obj_func::AbstractArray{<:Any} = [],
-)
-    weights, model = _EfficientCDaR(
-        tickers,
-        mean_ret,
-        returns,
-        weight_bounds,
-        beta,
-        market_neutral,
-        extra_vars,
-        extra_constraints,
-        extra_obj_func,
-    )
-
-    return EfficientCDaR(
-        tickers,
-        mean_ret,
-        weights,
-        returns,
-        beta,
-        market_neutral,
-        target_cdar,
-        target_ret,
-        extra_vars,
-        extra_constraints,
-        extra_obj_terms,
-        extra_obj_func,
-        model,
-    )
-end
-
-@inline function _EfficientCDaR(
-    tickers,
-    mean_ret,
-    returns,
-    weight_bounds,
-    beta,
-    market_neutral,
-    extra_vars,
-    extra_constraints,
-    extra_obj_func,
 )
     num_tickers = length(tickers)
     @assert num_tickers == length(mean_ret) == size(returns, 2)
@@ -147,11 +76,18 @@ end
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
-    if !isempty(extra_obj_func)
-        for func in extra_obj_func
-            !isdefined(PortfolioOptimiser, func.args[2].args[1].args[1]) && eval(func)
-        end
-    end
-
-    return weights, model
+    return EfficientCDaR(
+        tickers,
+        mean_ret,
+        weights,
+        returns,
+        beta,
+        market_neutral,
+        target_cdar,
+        target_ret,
+        extra_vars,
+        extra_constraints,
+        extra_obj_terms,
+        model,
+    )
 end
