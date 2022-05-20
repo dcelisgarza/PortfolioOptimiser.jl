@@ -1,0 +1,4 @@
+# Critical Line Algorithm
+
+```@docs
+```

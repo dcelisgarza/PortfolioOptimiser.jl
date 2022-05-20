@@ -44,7 +44,7 @@ custom_optimiser!(ef, kelly_objective, obj_params)
 ```
 
 !!! note
-    `obj_params` can be any variable that can be spatted. It is also optional, so objectives with no parameters are valid too.
+    `obj_params` can be any variable that can be splatted. It is also optional, so objectives with no parameters are valid too.
 """
 function custom_optimiser!(
     portfolio::AbstractPortfolioOptimiser,
@@ -168,7 +168,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     ```
 
 !!! note
-    `obj_params` can be any variable that can be spatted. It is also optional, so nonlinear objectives with no parameters are valid too.
+    `obj_params` can be any variable that can be splatted. It is also optional, so nonlinear objectives with no parameters are valid too.
 """
 function custom_nloptimiser!(
     portfolio::AbstractPortfolioOptimiser,

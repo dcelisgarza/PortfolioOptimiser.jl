@@ -12,6 +12,7 @@ Allocation(
     silent = true,
 )
 ```
+
 Returns a tuple of an [`Allocation`](@ref) structure and remaining money after allocating assets.
 
 !!! note
@@ -26,6 +27,74 @@ Returns a tuple of an [`Allocation`](@ref) structure and remaining money after a
 - `short_ratio`: long to short portfolio ratio, 0.2 corresponds to 120/20 long to short shares. If `nothing` defaults to portfolio weights.
 - `optimiser`: only used for the `LP()` allocation. Needs to support mixed-interger linear programming.
 - `silent`: if `true` the optimiser is silent.
+
+Dispatches one of the following depending on `type`:
+
+## Lazy allocation
+
+```julia
+Allocation(
+    type::Lazy,
+    tickers::AbstractArray,
+    weights::AbstractArray,
+    latest_prices::AbstractVector,
+    investment::Real = 1e4,
+    rounding::Real = 1,
+    reinvest::Bool = false,
+    short_ratio::Union{Real, Nothing} = nothing,
+    optimiser = nothing,
+    silent = nothing,
+)
+```
+
+Lazy asset allocation. Simply finds how many shares up to the smallest multiple of `rounding` you can buy for each ticker.
+
+!!! note
+    `optimiser` and `silent` are not used but are in the function signature for dispatch purposes.
+
+## Greedy allocation
+
+```julia
+Allocation(
+    type::Greedy,
+    tickers::AbstractArray,
+    weights::AbstractArray,
+    latest_prices::AbstractVector,
+    investment::Real = 1e4,
+    rounding::Real = 1,
+    reinvest::Bool = false,
+    short_ratio::Union{Real, Nothing} = nothing,
+    optimiser = nothing,
+    silent = nothing,
+)
+```
+
+Greedy algorithm that allocates assets according to their optimised weights. It priorites assets according to the ones with the greatest differnce between their weight in the portfolio and ideal weight. It allocates assets by progressively adding `rounding` to each share until the cost exceeds the available funds.
+
+!!! note
+    `optimiser` and `silent` are not used but are in the function signature for dispatch purposes.
+
+## LP allocation
+
+```julia
+Allocation(
+    type::LP,
+    tickers::AbstractArray,
+    weights::AbstractArray,
+    latest_prices::AbstractVector,
+    investment::Real = 1e4,
+    rounding = nothing,
+    reinvest::Bool = false,
+    short_ratio::Union{Real, Nothing} = nothing,
+    optimiser = HiGHS.Optimizer,
+    silent = true,
+)
+```
+
+Linear mixed-integer optimisation of assets.
+
+!!! note
+    `rounding` has no effect, as it can only allocate integer numbers of shares.
 
 ## Example
 
@@ -66,7 +135,7 @@ function Allocation(
 )
     @assert isnothing(short_ratio) || short_ratio > 0
 
-    return _Allocation(
+    return Allocation(
         type,
         portfolio.tickers,
         portfolio.weights,
@@ -80,27 +149,7 @@ function Allocation(
     )
 end
 
-"""
-```
-_Allocation(
-    type::Lazy,
-    tickers::AbstractArray,
-    weights::AbstractArray,
-    latest_prices::AbstractVector,
-    investment::Real = 1e4,
-    rounding::Real = 1,
-    reinvest::Bool = false,
-    short_ratio::Union{Real, Nothing} = nothing,
-    optimiser = nothing,
-    silent = nothing,
-)
-```
-Lazy asset allocation. Simply finds how many shares up to the smallest multiple of `rounding` you can buy for each ticker.
-
-!!! note
-    `optimiser` and `silent` are not used but are in the function signature for dispatch purposes.
-"""
-function _Allocation(
+function Allocation(
     type::Lazy,
     tickers::AbstractArray,
     weights::AbstractArray,
@@ -156,27 +205,7 @@ function _Allocation(
     return Allocation(tickers, allocated_weights, shares_bought), investment - sum_weights
 end
 
-"""
-```
-_Allocation(
-    type::Greedy,
-    tickers::AbstractArray,
-    weights::AbstractArray,
-    latest_prices::AbstractVector,
-    investment::Real = 1e4,
-    rounding::Real = 1,
-    reinvest::Bool = false,
-    short_ratio::Union{Real, Nothing} = nothing,
-    optimiser = nothing,
-    silent = nothing,
-)
-```
-Greedy algorithm that allocates assets according to their optimised weights. It priorites assets according to the ones with the greatest differnce between their weight in the portfolio and ideal weight. It allocates assets by progressively adding `rounding` to each share until the cost exceeds the available funds.
-
-!!! note
-    `optimiser` and `silent` are not used but are in the function signature for dispatch purposes.
-"""
-function _Allocation(
+function Allocation(
     type::Greedy,
     tickers::AbstractArray,
     weights::AbstractArray,
@@ -256,27 +285,7 @@ function _Allocation(
     return Allocation(tickers, allocated_weights, shares_bought), available_funds
 end
 
-"""
-```
-_Allocation(
-    type::LP,
-    tickers::AbstractArray,
-    weights::AbstractArray,
-    latest_prices::AbstractVector,
-    investment::Real = 1e4,
-    rounding = nothing,
-    reinvest::Bool = false,
-    short_ratio::Union{Real, Nothing} = nothing,
-    optimiser = HiGHS.Optimizer,
-    silent = true,
-)
-```
-Linear mixed-integer optimisation of assets.
-
-!!! note
-    `rounding` has no effect, as it can only allocate integer numbers of shares.
-"""
-function _Allocation(
+function Allocation(
     type::LP,
     tickers::AbstractArray,
     weights::AbstractArray,
@@ -343,7 +352,7 @@ end
 
 """
 ```
-function _short_allocation(
+_short_allocation(
     type,
     tickers,
     weights,
@@ -356,6 +365,7 @@ function _short_allocation(
     silent
 )
 ```
+
 Helper function for allocating short-long portfolios. Ensures the shares and weights of the shorts are negative.
 """
 function _short_allocation(
@@ -424,9 +434,22 @@ end
 
 """
 ```
-_sub_allocation(type, tickers, weights, latest_prices, investment, rounding, idx)
+_sub_allocation(
+    type,
+    tickers,
+    weights,
+    latest_prices,
+    investment,
+    rounding,
+    idx,
+    reinvest,
+    short_ratio,
+    optimiser,
+    silent,
+)
 ```
-Helper function for creating sub allocations. It calls `Allocation`` again but only for the `idx` provided.
+
+Helper function for creating sub allocations. It calls `Allocation` again but only for the `idx` provided.
 """
 function _sub_allocation(
     type,
@@ -445,7 +468,7 @@ function _sub_allocation(
     weights = weights[idx]
     weights /= sum(weights)
     latest_prices = latest_prices[idx]
-    subAlloc, sub_leftover = _Allocation(
+    subAlloc, sub_leftover = Allocation(
         type,
         tickers,
         weights,
@@ -465,6 +488,7 @@ end
 ```
 _clean_zero_shares(shares_bought, tickers, latest_prices)
 ```
+
 Helper function for removing tickers with zero shares.
 """
 function _clean_zero_shares(shares_bought, tickers, latest_prices)
