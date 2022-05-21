@@ -47,7 +47,7 @@ custom_optimiser!(ef, kelly_objective, obj_params)
     `obj_params` can be any variable that can be splatted. It is also optional, so objectives with no parameters are valid too.
 
 !!! warning
-    This minimises `obj`, if you want to maximise a function---for example, the portfolio return---make value to be maximised negative. Also, this does not add extra objective terms, so they must be added to the definition of `obj`. We illustrate how we can use this to maximise the return (don't do this, 'tis a silly idea) subject to L2 regularisation.
+    This minimises `obj`, if you want to maximise a function---for example, the portfolio return---make the value to be maximised negative. Also, this does not add extra objective terms, so they must be added to the definition of `obj`. We illustrate how we can use this to maximise the return (don't do this, 'tis a silly idea) subject to L2 regularisation.
 
     ```julia
     function max_ret_l2_ret(w, mean_ret, γ = 1)
@@ -203,7 +203,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     `obj_params` can be any variable that can be splatted. It is also optional, so nonlinear objectives with no parameters are valid too.
 
 !!! warning
-    This minimises `obj`, if you want to maximise a function---for example, the sharpe ratio---make value to be maximised negative. Also, this does not add extra objective terms, so they must be added to the definition of `obj`, for example we illustrate how we can maximise the sharpe ratio subject to L2 regularisation.
+    This minimises `obj`, if you want to maximise a function---for example, the sharpe ratio---make the value to be maximised negative. Also, this does not add extra objective terms, so they must be added to the definition of `obj`, for example we illustrate how we can maximise the sharpe ratio subject to L2 regularisation.
 
     ```julia
     function sharpe_l2_reg(w::T...) where {T}
