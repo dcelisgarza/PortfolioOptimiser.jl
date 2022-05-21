@@ -10,12 +10,12 @@ custom_optimiser!(
 )
 ```
 
-Users provide their own objectives that are supported by `JuMP.@objective`.
+Minimises user-provided objectives that are supported by `JuMP.@objective`.
 
 - `portfolio`: any concrete subtype of `AbstractPortfolioOptimiser`.
 - `obj`: objective function supported by `JuMP.@objective`.
 - `obj_params`: vector or tuple of arguments of `obj`.
-- `initial_guess`: initial guess for optimiser, if `nothing` lets the optimiser decide.
+- `initial_guess`: initial guess for optimiser, if `nothing` defaults to uniform weights.
 - `optimiser`: optimiser for solving optimisation problem.
 - `silent`: if `false`, the optimiser prints to console.
 
@@ -45,6 +45,26 @@ custom_optimiser!(ef, kelly_objective, obj_params)
 
 !!! note
     `obj_params` can be any variable that can be splatted. It is also optional, so objectives with no parameters are valid too.
+
+!!! warning
+    This minimises `obj`, if you want to maximise a function---for example, the sharpe ratio---make value to be maximised negative. Also, this does not add extra objective terms, so any extra terms must be added to the definition of `obj`. We illustrate how we can use this to maximise the return (don't do this, 'tis a silly idea) subject to L2 regularisation.
+
+    ```julia
+    function max_ret_l2_ret(w, mean_ret, γ = 1)
+        μ = port_return(w, mean_ret)
+        l2 = L2_reg(w, γ)
+
+        # Minimise L2 regularisation, maximise the return by minimising its negative.
+        return l2 - μ
+    end
+
+    ef = EfficientMeanVar(tickers, mean_ret, cov_mtx)
+
+    γ = 1
+    obj_params = (mean_ret, γ)
+
+    custom_optimiser!(ef, max_ret_l2_ret, obj_params)
+    ```
 """
 function custom_optimiser!(
     portfolio::AbstractPortfolioOptimiser,
@@ -91,12 +111,12 @@ custom_nloptimiser!(
 )
 ```
 
-Users provide their own objectives that are supported by `JuMP.@NLobjective`.
+Minimises user-provided nonlinear objectives that are supported by `JuMP.@NLobjective`.
 
 - `portfolio`: any concrete subtype of `AbstractPortfolioOptimiser`.
 - `obj`: objective function supported by `JuMP.@NLobjective`.
 - `obj_params`: vector or tuple of arguments of `obj`.
-- `initial_guess`: initial guess for optimiser, if `nothing` lets the optimiser decide.
+- `initial_guess`: initial guess for optimiser, if `nothing` defaults to unifrom weights.
 - `optimiser`: optimiser for solving optimisation problem.
 - `silent`: if `false`, the optimiser prints to console.
 
