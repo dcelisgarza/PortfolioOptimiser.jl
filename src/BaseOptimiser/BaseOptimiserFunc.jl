@@ -47,10 +47,10 @@ custom_optimiser!(ef, kelly_objective, obj_params)
     `obj_params` can be any variable that can be splatted. It is also optional, so objectives with no parameters are valid too.
 
 !!! warning
-    This minimises `obj`, if you want to maximise a function---for example, the portfolio return---make the value to be maximised negative. Also, this does not add extra objective terms, so they must be added to the definition of `obj`. We illustrate how we can use this to maximise the return (don't do this, 'tis a silly idea) subject to L2 regularisation.
+    This minimises `obj`, if you want to maximise a function---for example, the portfolio return---make the value to be maximised negative. Also, this does not add extra objective terms, so they must be added to the definition of `obj`. We illustrate how we can use this to maximise the return subject to L2 regularisation (don't do this, 'tis a silly idea) .
 
     ```julia
-    function max_ret_l2_ret(w, mean_ret, γ = 1)
+    function max_ret_l2_reg(w, mean_ret, γ = 1)
         μ = port_return(w, mean_ret)
         l2 = L2_reg(w, γ)
 
@@ -63,7 +63,7 @@ custom_optimiser!(ef, kelly_objective, obj_params)
     γ = 1
     obj_params = (mean_ret, γ)
 
-    custom_optimiser!(ef, max_ret_l2_ret, obj_params)
+    custom_optimiser!(ef, max_ret_l2_reg, obj_params)
     ```
 """
 function custom_optimiser!(
