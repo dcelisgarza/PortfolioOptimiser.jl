@@ -1,4 +1,4 @@
-function portfolio_performance(portfolio::AbstractCriticalLine, rf = 0.02; verbose = true)
+function portfolio_performance(portfolio::AbstractCriticalLine; rf = 0.02, verbose = false)
     mean_ret = portfolio.mean_ret
     cov_mtx = portfolio.cov_mtx
     w = portfolio.weights

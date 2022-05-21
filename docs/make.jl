@@ -6,7 +6,8 @@ import PortfolioOptimiser:
     _clean_zero_shares,
     _refresh_add_var_and_constraints,
     _function_vs_portfolio_val_warn,
-    _val_compare_benchmark
+    _val_compare_benchmark,
+    max_return
 
 DocMeta.setdocmeta!(
     PortfolioOptimiser,

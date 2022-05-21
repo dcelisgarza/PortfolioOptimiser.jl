@@ -18,7 +18,7 @@ function refresh_model!(portfolio::AbstractEfficientCDaR)
     return nothing
 end
 
-function portfolio_performance(portfolio::EfficientCDaR, verbose = true)
+function portfolio_performance(portfolio::EfficientCDaR; verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 

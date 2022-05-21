@@ -361,6 +361,27 @@ bl.weights ≈ testblweights
 ## Efficient Frontier
 ef = EfficientMeanVar(names(df)[2:end], bl.post_ret, S)
 max_sharpe!(ef)
+
+import PortfolioOptimiser: max_sharpe_nl!, L2_reg
+
+function L2_reg(γ = 1, w...)
+    return γ * dot(w, w)
+end
+
+ef2 = EfficientMeanVar(
+    names(df)[2:end],
+    bl.post_ret,
+    S,
+    extra_obj_terms = [quote
+        L2_reg(1000, w...)
+    end],
+)
+
+extra_obj_terms = [quote
+    L2_reg(1000, w...)
+end]
+max_sharpe_nl!(ef2)
+
 testweights = [
     0.221896132231067,
     0.0,

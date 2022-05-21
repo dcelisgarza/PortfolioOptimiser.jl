@@ -5,7 +5,7 @@ function refresh_model!(portfolio::AbstractEfficientSemiVar)
     return nothing
 end
 
-function portfolio_performance(portfolio::EfficientSemiVar, rf = 0.02; verbose = true)
+function portfolio_performance(portfolio::EfficientSemiVar; rf = 0.02, verbose = false)
     mean_ret = portfolio.mean_ret
     freq = portfolio.freq
 

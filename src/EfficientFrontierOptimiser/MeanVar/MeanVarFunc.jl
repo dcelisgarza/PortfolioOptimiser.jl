@@ -1,12 +1,17 @@
 """
 ```
-function optimise!(
-    portfolio::EfficientMeanVar{MinVolatility},
+min_volatility!(
+    portfolio::EfficientMeanVar,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
 ```
-Optimise portfolio for minimum volatility.
+
+Minimise the volatility ([`port_variance`](@ref)) of an [`EfficientMeanVar`](@ref) portfolio.
+
+- `portfolio`: [`EfficientMeanVar`](@ref) structure.
+- `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
+- `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
 function min_volatility!(
     portfolio::EfficientMeanVar,
@@ -35,12 +40,20 @@ function min_volatility!(
 
     return nothing
 end
+
 """
 ```
-optimise(portfolio::EfficientMeanVar)
+max_return(portfolio::EfficientMeanVar, optimiser = Ipopt.Optimizer, silent = true)
 ```
+
+Maximise the return ([`port_return`](@ref)) of an [`EfficientMeanVar`](@ref) portfolio.
+
+- `portfolio`: [`EfficientMeanVar`](@ref) structure.
+- `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
+- `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
+
 !!! warning
-    This should not be used for optimising portfolios. It's used internally for some optimisations. It yields portfolios with large volatilities.
+    This should not be used for optimising portfolios. It's used by efficient_return! to validate the target return. This yields portfolios with large volatilities.
 """
 function max_return(portfolio::EfficientMeanVar, optimiser = Ipopt.Optimizer, silent = true)
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
@@ -67,16 +80,31 @@ end
 
 """
 ```
-optimise!(
-    portfolio::EfficientMeanVar{MaxSharpe},
+max_sharpe!(
+    portfolio::EfficientMeanVar,
+    rf = portfolio.rf,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
 ```
-Maximise portfolio for maximum sharpe ratio.
+
+Maximise the sharpe ratio ([`sharpe_ratio`](@ref)) of an [`EfficientMeanVar`](@ref) portfolio.
+
+Uses a variable transformation to turn the nonlinear objective that is the sharpe ratio, into a convex quadratic optimization problem. See [Cornuejols and Tutuncu (2006)](http://web.math.ku.dk/~rolf/CT_FinOpt.pdf) page 158 for more details.
+
+- `portfolio`: [`EfficientMeanVar`](@ref) structure.
+- `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
+- `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
+
+!!! warning
+    The variable transformation requires extra constraints registered in the [`EfficientMeanVar`](@ref) structure need to be modified. As a result, calling any other optimsiation function on the same `portfolio` after calling `max_sharpe!`, will result in the wrong answer. The variable transformation also means extra terms in the objective function may not work as expected.
+
+!!! warning
+    The variable transformation means any extra terms in the objective function may not work as intended. If this is needed, use [`custom_nloptimiser!`](@ref) and add the extra objective terms in the objective function.
 """
 function max_sharpe!(
     portfolio::EfficientMeanVar,
+    rf = portfolio.rf,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
@@ -85,6 +113,9 @@ function max_sharpe!(
             "Max sharpe uses a variable transformation that changes the constraints and objective function. Please create a new instance instead.",
         ),
     )
+
+    _function_vs_portfolio_val_warn(rf, portfolio.rf, "rf")
+    rf = _val_compare_benchmark(rf, <=, 0, 0.02, "rf")
 
     model = portfolio.model
 
@@ -167,9 +198,8 @@ function max_sharpe!(
     # We have to ensure k is positive.
     @constraint(model, k_positive, k >= 0)
     # Scale the sum so that it can equal k.
-    @constraint(model, sum_w, sum(w) - k == 0)
+    @constraint(model, sum_w, sum(w) == k)
 
-    rf = portfolio.rf
     mean_ret = portfolio.mean_ret
     # Since we increased the unbounded the sum of the weights to potentially be as large as k, leave this be. Equation 8.13 in the pdf linked in docs.
     @constraint(model, max_sharpe_return, dot((mean_ret .- rf), w) == 1)

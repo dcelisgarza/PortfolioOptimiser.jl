@@ -27,6 +27,14 @@ EfficientMeanVar(
     extra_constraints = [],
     extra_obj_terms = [],
 )
+min_volatility!(
+    portfolio::EfficientMeanVar,
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+)
+max_return(portfolio::EfficientMeanVar, optimiser = Ipopt.Optimizer, silent = true)
+refresh_model!(portfolio::AbstractEfficientMeanVar)
+portfolio_performance(portfolio::EfficientMeanVar; verbose = false)
 ```
 
 ## Mean-semivariance

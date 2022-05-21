@@ -61,9 +61,12 @@ function custom_optimiser!(
     !haskey(model, :sum_w) && _make_weight_sum_constraint!(model, portfolio.market_neutral)
 
     w = model[:w]
+    n = length(w)
     if !isnothing(initial_guess)
         @assert length(w) == length(initial_guess)
         set_start_value.(w, initial_guess)
+    else
+        set_start_value.(w, 1 / n)
     end
 
     @objective(model, Min, obj(w, obj_params...))
@@ -178,6 +181,32 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 
 !!! note
     `obj_params` can be any variable that can be splatted. It is also optional, so nonlinear objectives with no parameters are valid too.
+
+!!! warning
+    This minimises `obj`, if you want to maximise a function---for example, the sharpe ratio---make value to be maximised negative. Also, this does not add extra objective terms, so any extra terms must be added to the definition of `obj`, for example we illustrate how we can maximise the sharpe ratio subject to L2 regularisation.
+
+    ```julia
+    function sharpe_l2_reg(w::T...) where {T}
+        mean_ret = obj_params[1]
+        cov_mtx = obj_params[2]
+        rf = obj_params[3]
+        γ = obj_params[4]
+
+        w = [i for i in w]
+        sr = PortfolioOptimiser.sharpe_ratio(w, mean_ret, cov_mtx, rf)
+        l2 = PortfolioOptimiser.L2_reg(w, γ)
+
+        # L2 reg has to be minimised. To maximise the sharpe ratio we minimise its negative.
+        return l2 - sr
+    end
+
+    ef = EfficientMeanVar(tickers, mean_ret, cov_mtx)
+
+    γ = 1
+    obj_params = (mean_ret, cov_mtx, ef.rf, γ)
+
+    custom_nloptimiser!(ef, sharpe_l2_reg, obj_params)
+    ```
 """
 function custom_nloptimiser!(
     portfolio::AbstractPortfolioOptimiser,
@@ -204,6 +233,8 @@ function custom_nloptimiser!(
     if !isnothing(initial_guess)
         @assert length(w) == length(initial_guess)
         set_start_value.(w, initial_guess)
+    else
+        set_start_value.(w, 1 / n)
     end
 
     register(model, :obj, n, obj, autodiff = true)

@@ -24,10 +24,7 @@ function HRPOpt(
         cov_mtx = cov(returns)
         cor_mtx = cor(returns)
     else
-        @assert size(cov_mtx, 1) ==
-                size(cov_mtx, 2) ==
-                size(returns, 2) ==
-                length(tickers)
+        @assert size(cov_mtx, 1) == size(cov_mtx, 2) == size(returns, 2) == length(tickers)
         cor_mtx = cov2cor(cov_mtx)
     end
 
@@ -71,7 +68,7 @@ function hrp_allocation(ordered_ticker_idx, cov_mtx)
     return w
 end
 
-function portfolio_performance(portfolio::HRPOpt; rf = 0.02, freq = 252, verbose = true)
+function portfolio_performance(portfolio::HRPOpt; rf = 0.02, freq = 252, verbose = false)
     w = portfolio.weights
 
     if isnothing(portfolio.returns)

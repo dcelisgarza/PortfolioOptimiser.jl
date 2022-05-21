@@ -11,7 +11,7 @@ include("./MeanVar/MeanVarType.jl")
 include("./MeanVar/MeanVarFunc.jl")
 include("./MeanVar/MeanVarUtil.jl")
 export AbstractEfficientMeanVar, EfficientMeanVar
-export min_volatility!, max_return, max_sharpe!
+export min_volatility!, max_sharpe!
 
 # Mean semi variance optimisations.
 include("./MeanSemiVar/MeanSemiVarType.jl")
@@ -37,5 +37,3 @@ export min_cvar!
 # Common functions among all efficient frontier optimisations.
 export max_quadratic_utility!, efficient_risk!, efficient_return!
 export portfolio_performance
-
-# end

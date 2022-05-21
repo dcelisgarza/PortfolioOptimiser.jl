@@ -85,9 +85,10 @@ Create an [`EfficientMeanVar`](@ref) structure to be optimised via JuMP.
 - `mean_ret`: mean returns, don't need it to optimise for minimum variance.
 - `weights`: weight of each ticker in the portfolio.
 - `cov_mtx`: covariance matrix.
+- `weight_bounds`: weight bounds for tickers. If it's a Tuple of length 2, the first entry will be the lower bound for all weights, the second entry will be the upper bound for all weights. If it's a vector, its length must be equal to that of `tickers`, each element must be a tuple of length 2. In that case, each tuple corresponds to the lower and upper bounds for the corresponding ticker. See [`_create_weight_bounds`](@ref) for further details.
 - `rf`: risk free return.
-- `market_neutral`: whether a portfolio is market neutral or not. Used in [`max_quadratic_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
-- `risk_aversion`: risk aversion parameter. Used in [`max_quadratic_utility!`](@ref).
+- `market_neutral`: whether a portfolio is market neutral or not. If it is market neutral, the sum of the weights will be equal to 0, else the sum will be equal to 1. Used in [`max_quadratic_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
+- `risk_aversion`: risk aversion parameter, the larger it is, the lower the risk. Used in [`max_quadratic_utility!`](@ref).
 - `target_volatility`: target volatility parameter. Used in [`efficient_risk!`](@ref).
 - `target_ret`: target return parameter. Used in [`efficient_return!`](@ref).
 - `extra_vars`: extra variables for the model. See [`_add_var_to_model!`](@ref) for details on how to use this.
