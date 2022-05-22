@@ -278,7 +278,7 @@ picking =
         [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0],
     )'
 
-@time bl = BlackLitterman(
+bl = BlackLitterman(
     mcapsdf[!, 1],
     S;
     rf = 0,
@@ -800,6 +800,19 @@ max_sortino!(ef)
 mumax, varmax, smax = portfolio_performance(ef)
 
 ef = MeanSemivar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark = 0)
+efficient_risk!(ef, varmax)
+mu, sigma, sr = portfolio_performance(ef)
+isapprox(mu, mumax, rtol = 1e-5)
+isapprox(sigma, varmax, rtol = 1e-5)
+isapprox(sr, smax, rtol = 1e-6)
+
+efficient_return!(ef, mumax)
+mu, sigma, sr = portfolio_performance(ef)
+isapprox(mu, mumax, rtol = 1e-5)
+isapprox(sigma, varmax, rtol = 1e-4)
+isapprox(sr, smax, rtol = 1e-4)
+
+ef = MeanSemivar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark = 0)
 min_semivar!(ef)
 
 testweights = [
@@ -841,7 +854,7 @@ gAlloc, remaining =
 testshares = [86, 64, 21, 15, 13, 3, 3, 3, 1, 1, 1]
 gAlloc.shares == testshares
 
-max_quadratic_utility!(ef, eps())
+max_quadratic_utility!(ef)
 testweights = [
     1.100000000000000e-15,
     1.200000000000000e-15,
