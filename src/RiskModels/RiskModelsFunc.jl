@@ -120,9 +120,9 @@ function risk_matrix(
     fix_method::Union{SFix, DFix} = SFix(),
     freq = 252,
 )
-    semi_ret = min.(returns .- target, 0)
+    semi_returns = min.(returns .- target, 0)
 
-    return make_pos_def(fix_method, cov(SimpleCovariance(), semi_ret; mean = 0) * freq)
+    return make_pos_def(fix_method, cov(SimpleCovariance(), semi_returns; mean = 0) * freq)
 end
 
 function risk_matrix(
@@ -147,10 +147,10 @@ function risk_matrix(
 )
     N = size(returns, 1)
 
-    semi_ret = min.(returns .- target, 0)
+    semi_returns = min.(returns .- target, 0)
 
     return make_pos_def(
         fix_method,
-        cov(SimpleCovariance(), semi_ret, eweights(N, 2 / (span + 1)); mean = 0) * freq,
+        cov(SimpleCovariance(), semi_returns, eweights(N, 2 / (span + 1)); mean = 0) * freq,
     )
 end

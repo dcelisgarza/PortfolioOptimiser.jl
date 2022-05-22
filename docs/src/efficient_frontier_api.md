@@ -10,9 +10,9 @@ _val_compare_benchmark
 ## Mean-variance
 
 ```@docs
-AbstractEfficientMeanVar
-EfficientMeanVar
-EfficientMeanVar(
+AbstractMeanVar
+MeanVar
+MeanVar(
     tickers,
     mean_ret,
     cov_mtx;
@@ -28,43 +28,62 @@ EfficientMeanVar(
     extra_obj_terms = [],
 )
 min_volatility!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
-max_return(portfolio::EfficientMeanVar, optimiser = Ipopt.Optimizer, silent = true)
+max_return(portfolio::MeanVar, optimiser = Ipopt.Optimizer, silent = true)
 max_sharpe!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     rf = portfolio.rf,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
 max_quadratic_utility!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     risk_aversion = portfolio.risk_aversion,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
 efficient_return!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     target_ret = portfolio.target_ret,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
 efficient_risk!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     target_volatility = portfolio.target_volatility,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
-refresh_model!(portfolio::AbstractEfficientMeanVar)
-portfolio_performance(portfolio::EfficientMeanVar; verbose = false)
+refresh_model!(portfolio::AbstractMeanVar)
+portfolio_performance(portfolio::MeanVar; rf = portfolio.rf, verbose = false)
 ```
 
 ## Mean-semivariance
 
 ```@docs
-EfficientSemiVar
+AbstractMeanSemivar
+MeanSemivar
+MeanSemivar(
+    tickers,
+    mean_ret,
+    returns;
+    weight_bounds = (0.0, 1.0),
+    freq = 252,
+    benchmark = 0,
+    rf = 0.02,
+    market_neutral = false,
+    risk_aversion = 1.0,
+    target_semidev = std(returns),
+    target_ret = mean(mean_ret),
+    extra_vars = [],
+    extra_constraints = [],
+    extra_obj_terms = [],
+)
+refresh_model!(portfolio::AbstractMeanSemivar)
+portfolio_performance(portfolio::MeanSemivar; rf = portfolio.rf, verbose = false)
 ```
 
 ## Critical Value at Risk (CVaR)

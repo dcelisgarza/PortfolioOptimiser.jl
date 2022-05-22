@@ -32,8 +32,8 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = zeros(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    maxSharpe = EfficientMeanVar(tickers, mean_ret, cov_mtx)
-    @test typeof(maxSharpe) <: EfficientMeanVar
+    maxSharpe = MeanVar(tickers, mean_ret, cov_mtx)
+    @test typeof(maxSharpe) <: MeanVar
     max_sharpe!(maxSharpe)
     @test sum(maxSharpe.weights[i] - i / 10 for i in 1:n) < sqrt(eps()) * length(cov_mtx)
     @test sum(maxSharpe.weights) ≈ 1
@@ -50,7 +50,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    maxSharpe = EfficientMeanVar(tickers, mean_ret, cov_mtx)
+    maxSharpe = MeanVar(tickers, mean_ret, cov_mtx)
     max_sharpe!(maxSharpe)
     @test abs(maxSharpe.weights[4] - 1) < sqrt(eps()) * length(cov_mtx)
     @test sum(maxSharpe.weights) ≈ 1
@@ -66,8 +66,7 @@ using JuMP, LinearAlgebra, Ipopt
     extra_obj_terms = [quote
         L2_reg(model[:w], 1)
     end]
-    maxSharpe =
-        EfficientMeanVar(tickers, mean_ret, cov_mtx; extra_obj_terms = extra_obj_terms)
+    maxSharpe = MeanVar(tickers, mean_ret, cov_mtx; extra_obj_terms = extra_obj_terms)
     max_sharpe!(maxSharpe)
     objective_function(maxSharpe.model)
     @test all(maxSharpe.weights .≈ 0.25)
@@ -96,8 +95,8 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = [1 0 0.5 0.3; 0 1 1 1; 0.5 1 1 1; 0.3 1 1 1]
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    minVolatility = EfficientMeanVar(tickers, mean_ret, cov_mtx)
-    @test typeof(minVolatility) <: EfficientMeanVar
+    minVolatility = MeanVar(tickers, mean_ret, cov_mtx)
+    @test typeof(minVolatility) <: MeanVar
     min_volatility!(minVolatility)
     @test minVolatility.weights[1] ≈ minVolatility.weights[2]
     @test abs(minVolatility.weights[1] - 0.5) < sqrt(eps()) * length(cov_mtx)
@@ -109,7 +108,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    maxSharpe = EfficientMeanVar(tickers, mean_ret, cov_mtx; rf = 0)
+    maxSharpe = MeanVar(tickers, mean_ret, cov_mtx; rf = 0)
     maxRetMod = max_return(maxSharpe)
     @test all(value.(maxRetMod[:w]) .≈ 0.25)
     @test objective_value(maxRetMod) ≈ 1
@@ -118,7 +117,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = zeros(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    maxSharpe = EfficientMeanVar(tickers, mean_ret, cov_mtx; rf = 0)
+    maxSharpe = MeanVar(tickers, mean_ret, cov_mtx; rf = 0)
     maxRetMod = max_return(maxSharpe)
     @test all(value.(maxRetMod[:w]) .≈ 0.25)
     @test objective_value(maxRetMod) ≈ 1
@@ -127,7 +126,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    maxSharpe = EfficientMeanVar(tickers, mean_ret, cov_mtx; rf = 0)
+    maxSharpe = MeanVar(tickers, mean_ret, cov_mtx; rf = 0)
     maxRetMod = max_return(maxSharpe)
     @test value.(maxRetMod[:w][3]) ≈ 1
     @test objective_value(maxRetMod) ≈ mean_ret[3]
@@ -136,7 +135,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = zeros(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    maxSharpe = EfficientMeanVar(tickers, mean_ret, cov_mtx; rf = 0)
+    maxSharpe = MeanVar(tickers, mean_ret, cov_mtx; rf = 0)
     maxRetMod = max_return(maxSharpe)
     @test value.(maxRetMod[:w][2]) ≈ 1
     @test objective_value(maxRetMod) ≈ mean_ret[2]
@@ -154,8 +153,8 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = zeros(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    quadUtil = EfficientMeanVar(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
-    @test typeof(quadUtil) <: EfficientMeanVar
+    quadUtil = MeanVar(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
+    @test typeof(quadUtil) <: MeanVar
     max_quadratic_utility!(quadUtil)
     @test all(abs.(quadUtil.weights) .< eps())
 
@@ -163,7 +162,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    quadUtil = EfficientMeanVar(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
+    quadUtil = MeanVar(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
     max_quadratic_utility!(quadUtil)
     #     @test quadUtil.weights
     quadUtil.weights[1] ≈ quadUtil.weights[4] ≈ -quadUtil.weights[2] ≈ -quadUtil.weights[3]
@@ -172,7 +171,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = zeros(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    quadUtil = EfficientMeanVar(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
+    quadUtil = MeanVar(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
     max_quadratic_utility!(quadUtil)
     @test quadUtil.weights[1] ≈ -quadUtil.weights[3]
     @test quadUtil.weights[2] ≈ -quadUtil.weights[4]
@@ -181,7 +180,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    quadUtil = EfficientMeanVar(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
+    quadUtil = MeanVar(tickers, mean_ret, cov_mtx; rf = 0, market_neutral = true)
     max_quadratic_utility!(quadUtil)
     @test abs(quadUtil.weights[4] - 1) < sqrt(eps()) * length(cov_mtx)
 
@@ -189,7 +188,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = zeros(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    quadUtil = EfficientMeanVar(
+    quadUtil = MeanVar(
         tickers,
         mean_ret,
         cov_mtx,
@@ -204,7 +203,7 @@ using JuMP, LinearAlgebra, Ipopt
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
     weight_bounds = (0, 1)
-    quadUtil = EfficientMeanVar(
+    quadUtil = MeanVar(
         tickers,
         mean_ret,
         cov_mtx,
@@ -227,8 +226,8 @@ using JuMP, LinearAlgebra, Ipopt
     mean_ret = [1, 4, 6, 8]
     cov_mtx = zeros(n, n)
     cov_mtx[I(4)] .= 1
-    efficientRisk = EfficientMeanVar(tickers, mean_ret, cov_mtx; target_volatility = 1)
-    @test typeof(efficientRisk) <: EfficientMeanVar
+    efficientRisk = MeanVar(tickers, mean_ret, cov_mtx; target_volatility = 1)
+    @test typeof(efficientRisk) <: MeanVar
     efficient_risk!(efficientRisk)
     @test abs(efficientRisk.weights[4] - 1) < sqrt(eps()) * length(cov_mtx)
     @test sum(efficientRisk.weights) ≈ 1
@@ -236,7 +235,7 @@ using JuMP, LinearAlgebra, Ipopt
     mean_ret = [1, 4, 6, 8]
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
-    efficientRisk = EfficientMeanVar(tickers, mean_ret, cov_mtx; target_volatility = 1)
+    efficientRisk = MeanVar(tickers, mean_ret, cov_mtx; target_volatility = 1)
     @test_throws SingularException efficient_risk!(efficientRisk)
 
     mean_ret = [1, 4, 6, 8]
@@ -251,8 +250,8 @@ using JuMP, LinearAlgebra, Ipopt
     mean_ret = [1, 4, 6, 8]
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
-    efficientReturn = EfficientMeanVar(tickers, mean_ret, cov_mtx; target_ret = 5)
-    @test typeof(efficientReturn) <: EfficientMeanVar
+    efficientReturn = MeanVar(tickers, mean_ret, cov_mtx; target_ret = 5)
+    @test typeof(efficientReturn) <: MeanVar
     efficient_return!(efficientReturn)
     @test sum(efficientReturn.weights) ≈ 1
     @test port_return(efficientReturn.weights, efficientReturn.mean_ret) >= 5
@@ -260,7 +259,7 @@ using JuMP, LinearAlgebra, Ipopt
     mean_ret = [1, 4, 6, 8]
     cov_mtx = zeros(n, n)
     cov_mtx[I(4)] .= 1
-    efficientReturn = EfficientMeanVar(tickers, mean_ret, cov_mtx; target_ret = 10)
+    efficientReturn = MeanVar(tickers, mean_ret, cov_mtx; target_ret = 10)
     efficient_return!(efficientReturn)
     efficientReturn.weights
 
@@ -271,7 +270,7 @@ using JuMP, LinearAlgebra, Ipopt
     mean_ret = [1, 4, 6, 8]
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
-    efficientReturn = EfficientMeanVar(tickers, mean_ret, cov_mtx; target_ret = 10)
+    efficientReturn = MeanVar(tickers, mean_ret, cov_mtx; target_ret = 10)
     efficient_return!(efficientReturn)
 
     @test abs(port_return(efficientReturn.weights, efficientReturn.mean_ret) - 4) >
@@ -284,7 +283,7 @@ using JuMP, LinearAlgebra, Ipopt
     mean_ret = [1, 4, 6, 8]
     cov_mtx = ones(n, n)
     cov_mtx[I(4)] .= 1
-    efficientReturn = EfficientMeanVar(tickers, mean_ret, cov_mtx; target_ret = 10, rf = 0)
+    efficientReturn = MeanVar(tickers, mean_ret, cov_mtx; target_ret = 10, rf = 0)
     sector_map = Dict()
     for (ticker, sector) in zip(tickers, sectors)
         push!(sector_map, (ticker => sector))
@@ -312,7 +311,7 @@ using JuMP, LinearAlgebra, Ipopt
     mean_ret = [1, 4, 6, 8]
     cov_mtx = zeros(n, n)
     cov_mtx[I(4)] .= 1
-    efficientFrontier = EfficientMeanVar(tickers, mean_ret, cov_mtx)
+    efficientFrontier = MeanVar(tickers, mean_ret, cov_mtx)
 
     max_sharpe!(efficientFrontier)
     @test haskey(efficientFrontier.model, :k)
@@ -349,21 +348,21 @@ end
     cumret = cumprod(ret .+ 1, dims = 1)
     mean_ret = ret_model(MRet(), ret)
 
-    effSemiVar = EfficientSemiVar(tickers, mean_ret, ret; benchmark = 10)
+    effSemiVar = MeanSemivar(tickers, mean_ret, ret; benchmark = 10)
     minSemiVar = MinSemiVar(tickers, ret; benchmark = 10)
     min_semivar!(effSemiVar)
     min_semivar!(minSemiVar)
     @test all(abs.(effSemiVar.weights - minSemiVar.weights) .< sqrt(eps() * size(ret, 1)))
     @test abs(sum(effSemiVar.weights) - 1) < sqrt(eps() * size(ret, 1))
     @test abs(effSemiVar.weights[1] - 1) < sqrt(eps() * size(ret, 1))
-    @test typeof(effSemiVar) <: EfficientSemiVar
+    @test typeof(effSemiVar) <: MeanSemivar
     @test typeof(minSemiVar) <: MinSemiVar
 
-    effSemiVar = EfficientSemiVar(tickers, mean_ret, ret)
+    effSemiVar = MeanSemivar(tickers, mean_ret, ret)
     maxSemiVarQuad = MaxSemiVarQuadraticUtility(tickers, mean_ret, ret)
     max_quadratic_utility!(effSemiVar)
     max_quadratic_utility!(maxSemiVarQuad)
-    @test typeof(effSemiVar) <: EfficientSemiVar
+    @test typeof(effSemiVar) <: MeanSemivar
     @test typeof(maxSemiVarQuad) <: MaxSemiVarQuadraticUtility
 
     @test objective_function(minSemiVar.model) != objective_function(maxSemiVarQuad.model)
@@ -380,7 +379,7 @@ end
     ret[:, 2] .= 0.01
     mean_ret = ret_model(EMRet(), ret)
 
-    effSemiVar = EfficientSemiVar(tickers, mean_ret, ret)
+    effSemiVar = MeanSemivar(tickers, mean_ret, ret)
     effSemiRisk = EfficientSemiVarRisk(tickers, mean_ret, ret)
     efficient_risk!(effSemiVar)
     efficient_risk!(effSemiRisk)
@@ -389,7 +388,7 @@ end
     @test abs(effSemiVar.weights[1] - effSemiVar.weights[2]) < sqrt(eps() * size(ret, 1))
     @test all(abs.(effSemiVar.weights - effSemiRisk.weights) .< sqrt(eps() * size(ret, 1)))
 
-    effSemiVar = EfficientSemiVar(tickers, mean_ret, ret)
+    effSemiVar = MeanSemivar(tickers, mean_ret, ret)
     efficient_return!(effSemiVar)
 
     effSemiRet = EfficientSemiVarReturn(tickers, mean_ret, ret)
@@ -400,7 +399,7 @@ end
     ret = randn(1000, n) / 100
     mean_ret = ret_model(CAPMRet(), ret)
 
-    effSemiVar = EfficientSemiVar(tickers, mean_ret, ret)
+    effSemiVar = MeanSemivar(tickers, mean_ret, ret)
     minSemiVar = MinSemiVar(tickers, ret)
     maxSemiVarQuad = MaxSemiVarQuadraticUtility(tickers, mean_ret, ret)
     effSemiRisk = EfficientSemiVarRisk(tickers, mean_ret, ret)

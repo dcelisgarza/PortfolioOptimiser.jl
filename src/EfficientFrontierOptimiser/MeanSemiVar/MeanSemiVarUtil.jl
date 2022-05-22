@@ -1,11 +1,31 @@
-function refresh_model!(portfolio::AbstractEfficientSemiVar)
+"""
+```
+refresh_model!(portfolio::AbstractMeanSemivar)
+```
+
+Refreshes an [`AbstractMeanSemivar`](@ref) model.
+"""
+function refresh_model!(portfolio::AbstractMeanSemivar)
     default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :p, :n, :semi_var)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
     return nothing
 end
 
-function portfolio_performance(portfolio::EfficientSemiVar; rf = 0.02, verbose = false)
+"""
+```
+portfolio_performance(portfolio::MeanSemivar; rf = portfolio.rf, verbose = false)
+```
+
+Computes the portfolio return ([`port_return`](@ref)), semideviation (square root of [`port_semivar`](@ref)), and sortino ratio ([`sharpe_ratio`](@ref) adjusted to the semideviation) for a given risk free rate, `rf`.
+
+Returns a tuple of:
+
+`(return, semideviation, sortino ratio)`
+
+If `verbose == true`, it prints out this information.
+"""
+function portfolio_performance(portfolio::MeanSemivar; rf = portfolio.rf, verbose = false)
     mean_ret = portfolio.mean_ret
     freq = portfolio.freq
 
@@ -22,11 +42,9 @@ function portfolio_performance(portfolio::EfficientSemiVar; rf = 0.02, verbose =
 
         benchmark = portfolio.benchmark
         returns = portfolio.returns
-        port_ret = returns * w
-        port_ret = min.(port_ret .- benchmark, 0)
 
-        semi_σ = sqrt(dot(port_ret, port_ret) / size(returns, 1) * freq)
-        sortino_ratio = (μ - rf) / semi_σ
+        semi_σ = sqrt(port_semivar(w, returns, benchmark, freq))
+        sortino_ratio = sharpe_ratio(μ, semi_σ, rf)
 
         if verbose
             println(term_status)

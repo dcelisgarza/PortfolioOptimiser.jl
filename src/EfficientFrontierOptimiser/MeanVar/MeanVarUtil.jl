@@ -1,11 +1,11 @@
 """
 ```
-refresh_model!(portfolio::AbstractEfficientMeanVar)
+refresh_model!(portfolio::AbstractMeanVar)
 ```
 
-Refreshes an [`AbstractEfficientMeanVar`](@ref) model.
+Refreshes an [`AbstractMeanVar`](@ref) model.
 """
-function refresh_model!(portfolio::AbstractEfficientMeanVar)
+function refresh_model!(portfolio::AbstractMeanVar)
     default_keys = (:w, :lower_bounds, :upper_bounds)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
@@ -14,14 +14,10 @@ end
 
 """
 ```
-function portfolio_performance(
-    portfolio::EfficientMeanVar;
-    rf = portfolio.rf,
-    verbose = false,
-)
+portfolio_performance(portfolio::MeanVar; rf = portfolio.rf, verbose = false)
 ```
 
-Computes the portfolio return, volatility and sharpe ratio for a given risk free rate, `rf`.
+Computes the portfolio return ([`port_return`](@ref)), volatility (square root of [`port_variance`](@ref)), and sharpe ratio ([`sharpe_ratio`](@ref)) for a given risk free rate, `rf`.
 
 Returns a tuple of:
 
@@ -29,11 +25,7 @@ Returns a tuple of:
 
 If `verbose == true`, it prints out this information.
 """
-function portfolio_performance(
-    portfolio::EfficientMeanVar;
-    rf = portfolio.rf,
-    verbose = false,
-)
+function portfolio_performance(portfolio::MeanVar; rf = portfolio.rf, verbose = false)
     mean_ret = portfolio.mean_ret
 
     model = portfolio.model

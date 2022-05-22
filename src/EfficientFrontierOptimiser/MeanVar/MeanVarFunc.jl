@@ -1,23 +1,19 @@
 """
 ```
 min_volatility!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
 ```
 
-Minimise the volatility ([`port_variance`](@ref)) of an [`EfficientMeanVar`](@ref) portfolio.
+Minimise the volatility ([`port_variance`](@ref)) of an [`MeanVar`](@ref) portfolio.
 
-- `portfolio`: [`EfficientMeanVar`](@ref) structure.
+- `portfolio`: [`MeanVar`](@ref) structure.
 - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
-function min_volatility!(
-    portfolio::EfficientMeanVar,
-    optimiser = Ipopt.Optimizer,
-    silent = true,
-)
+function min_volatility!(portfolio::MeanVar, optimiser = Ipopt.Optimizer, silent = true)
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     model = portfolio.model
@@ -43,19 +39,19 @@ end
 
 """
 ```
-max_return(portfolio::EfficientMeanVar, optimiser = Ipopt.Optimizer, silent = true)
+max_return(portfolio::MeanVar, optimiser = Ipopt.Optimizer, silent = true)
 ```
 
-Maximise the return ([`port_return`](@ref)) of an [`EfficientMeanVar`](@ref) portfolio. Internally minimises the negative of the portfolio return.
+Maximise the return ([`port_return`](@ref)) of an [`MeanVar`](@ref) portfolio. Internally minimises the negative of the portfolio return.
 
-- `portfolio`: [`EfficientMeanVar`](@ref) structure.
+- `portfolio`: [`MeanVar`](@ref) structure.
 - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 
 !!! warning
     This should not be used for optimising portfolios. It's used by efficient_return! to validate the target return. This yields portfolios with large volatilities.
 """
-function max_return(portfolio::EfficientMeanVar, optimiser = Ipopt.Optimizer, silent = true)
+function max_return(portfolio::MeanVar, optimiser = Ipopt.Optimizer, silent = true)
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     model = copy(portfolio.model)
@@ -81,30 +77,30 @@ end
 """
 ```
 max_sharpe!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     rf = portfolio.rf,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
 ```
 
-Maximise the sharpe ratio ([`sharpe_ratio`](@ref)) of an [`EfficientMeanVar`](@ref) portfolio.
+Maximise the sharpe ratio ([`sharpe_ratio`](@ref)) of an [`MeanVar`](@ref) portfolio.
 
 Uses a variable transformation to turn the nonlinear objective that is the sharpe ratio, into a convex quadratic minimisation problem. See [Cornuejols and Tutuncu (2006)](http://web.math.ku.dk/~rolf/CT_FinOpt.pdf) page 158 for more details.
 
-- `portfolio`: [`EfficientMeanVar`](@ref) structure.
+- `portfolio`: [`MeanVar`](@ref) structure.
 - `rf`: risk free rate.
 - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 
 !!! warning
-    The variable transformation requires extra constraints registered in the [`EfficientMeanVar`](@ref) structure need to be modified. As a result, calling any other optimsiation function on the same `portfolio` after calling `max_sharpe!`, will result in the wrong answer. The variable transformation also means extra terms in the objective function may not work as expected.
+    The variable transformation requires extra constraints registered in the [`MeanVar`](@ref) structure need to be modified. As a result, calling any other optimsiation function on the same `portfolio` after calling `max_sharpe!`, will result in the wrong answer. The variable transformation also means extra terms in the objective function may not work as expected.
 
 !!! warning
     The variable transformation means any extra terms in the objective function may not work as intended. If you need to add extra objective terms, use [`custom_nloptimiser!`](@ref) (see the example) and add the extra objective terms in the objective function.
 """
 function max_sharpe!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     rf = portfolio.rf,
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -229,22 +225,22 @@ end
 """
 ```
 max_quadratic_utility!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     risk_aversion = portfolio.risk_aversion,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
 ```
 
-Maximise the [`quadratic_utility`](@ref) of an [`EfficientMeanVar`](@ref) portfolio. Internally minimises the negative of the quadratic utility.
+Maximise the [`quadratic_utility`](@ref) of an [`MeanVar`](@ref) portfolio. Internally minimises the negative of the quadratic utility.
 
-- `portfolio`: [`EfficientMeanVar`](@ref) structure.
+- `portfolio`: [`MeanVar`](@ref) structure.
 - `risk_aversion`: the risk aversion parameter, the larger it is the lower the risk.
 - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
 function max_quadratic_utility!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     risk_aversion = portfolio.risk_aversion,
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -282,22 +278,22 @@ end
 """
 ```
 efficient_return!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     target_ret = portfolio.target_ret,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
 ```
 
-Minimise the [`port_variance`](@ref) of an [`EfficientMeanVar`](@ref) portfolio subject to the constraint for the return to be greater than or equal to `target_ret`. The portfolio is guaranteed to have a return at least equal to `target_ret`.
+Minimise the [`port_variance`](@ref) of an [`MeanVar`](@ref) portfolio subject to the constraint for the return to be greater than or equal to `target_ret`. The portfolio is guaranteed to have a return at least equal to `target_ret`.
 
-- `portfolio`: [`EfficientMeanVar`](@ref) structure.
+- `portfolio`: [`MeanVar`](@ref) structure.
 - `target_ret`: the target return of the portfolio.
 - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
 function efficient_return!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     target_ret = portfolio.target_ret,
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -342,22 +338,22 @@ end
 """
 ```
 efficient_risk!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     target_volatility = portfolio.target_volatility,
     optimiser = Ipopt.Optimizer,
     silent = true,
 )
 ```
 
-Maximise the [`port_return`](@ref) of an [`EfficientMeanVar`](@ref) portfolio subject to the constraint for the volatility to be less than or equal to `target_volatility`. The portfolio is guaranteed to have a volatility of at most `target_volatility`.
+Maximise the [`port_return`](@ref) of an [`MeanVar`](@ref) portfolio subject to the constraint for the volatility to be less than or equal to `target_volatility`. The portfolio is guaranteed to have a volatility of at most `target_volatility`.
 
-- `portfolio`: [`EfficientMeanVar`](@ref) structure.
+- `portfolio`: [`MeanVar`](@ref) structure.
 - `target_ret`: the target return of the portfolio.
 - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
 function efficient_risk!(
-    portfolio::EfficientMeanVar,
+    portfolio::MeanVar,
     target_volatility = portfolio.target_volatility,
     optimiser = Ipopt.Optimizer,
     silent = true,

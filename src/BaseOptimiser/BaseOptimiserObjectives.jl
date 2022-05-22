@@ -58,7 +58,7 @@ s = \\dfrac{\\mu - r}{\\sigma},
 where ``\\mu`` the portfolio's return (see [`port_return`](@ref)), and ``\\sigma`` the portfolio's standard deviation (see [`port_variance`](@ref)). Generally speaking, the greater the Sharpe ratio the better the portfolio.
 
 !!! note
-    The Sharpe ratio penalises large swings in both directions, so assets that tend to have large increases in value are disproportionally penalised by this measure. The Sortino ratio has the same formula but uses an adjusted covariance matrix that accounts only for the negative fluctuations in value. The semicovariance is implemented by [`risk_matrix`](@ref) when given `SCov()` or `ESCov()` as its first argument. The Mean-Semivariance optimisations [`EfficientSemiVar`](@ref) make the adjustment too.
+    The Sharpe ratio penalises large swings in both directions, so assets that tend to have large increases in value are disproportionally penalised by this measure. The Sortino ratio has the same formula but uses an adjusted covariance matrix that accounts only for the negative fluctuations in value. The semicovariance is implemented by [`risk_matrix`](@ref) when given `SCov()` or `ESCov()` as its first argument. The Mean-Semivariance optimisations [`MeanSemivar`](@ref) make the adjustment too.
 """
 function sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 0.02)
     μ = port_return(w, mean_ret)
@@ -67,6 +67,33 @@ function sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 0.02)
 end
 function sharpe_ratio(μ, σ, rf::Real = 0.02)
     return (μ - rf) / σ
+end
+
+"""
+```
+port_semivar(w, returns, benchmark = 0, freq = 252)
+```
+
+Compute the semivariance from the weights `w`, historical returns `returns`, according to the benchmark `benchmark`, and frequency of returns `freq`.
+
+The semivariance is defined as:
+
+```math
+\\begin{aligned}
+\\bm{r} &= \\mathrm{R} \\bm{w}\\,,\\\\
+\\sigma_s &= \\dfrac{f}{N} \\sum\\limits_{i = 1,\\, b < r_i}^{i = N} (r_i - b)^2\\,,
+\\end{aligned}
+```
+
+where ``\\bm{r}`` are the portfolio historical returns with where the subscript ``i`` describes a specific point in time (entry), ``\\mathrm{R}`` the asset historical returns, ``\\bm{w}`` the asset weights, ``\\sigma_s`` the semivariance, ``f`` the frequency of the historical returns, ``N`` the number of entries in historical returns (not the number of assets), and ``b`` the benchmark for splitting "upside" and "downside" returns.
+
+The condition ``b < r_i`` ensures we only consider entries for which the historical portfolio return fell below the benchmark.
+"""
+function port_semivar(w, returns, benchmark = 0, freq = 252)
+    port_ret = returns * w
+    port_ret = min.(port_ret .- benchmark, 0)
+
+    return dot(port_ret, port_ret) / size(returns, 1) * freq
 end
 
 """
@@ -109,28 +136,6 @@ function quadratic_utility(w, mean_ret, cov_mtx, risk_aversion = 1)
     return μ - 0.5 * risk_aversion * σ2
 end
 
-"""
-```
-semi_ret(returns, benchmark = 0)
-```
-
-Compute the historical semi-returns from historical `returns`, for a given `benchmark`. Return values greater than `benchmark` are "upside" returns, values lower than `benchmark` are "downside" returns. Each column of `returns` corresponds to an asset.
-
-Historical semi returns ``\\mathrm{R_b}``, are defined as:
-
-```math
-\\mathrm{R_b} = \\dfrac{\\mathrm{R} - b}{\\sqrt{N}}\\,,
-```
-
-where ``\\mathrm{R}`` are historical returns, ``b`` is the benchmark, and ``N`` is the number of historical entries (not the number of assets). 
-
-!!! note
-    The value of `benchmark` should correspond to the frequency of historical returns, i.e. if using daily returns, `benchmark` should be a reasonable value for daily returns.
-"""
-function semi_ret(returns, benchmark = 0)
-    samples = size(returns, 1)
-    return (returns .- benchmark) / sqrt(samples)
-end
 function cdar(alpha, z, samples, beta)
     return alpha + sum(z) / (samples * (1 - beta))
 end
@@ -165,7 +170,7 @@ where ``k`` is the fixed percentage commision, ``\\bm{w}`` the asset weights, an
     extra_constraints =
         [:([\$k * (model[:w] - \$prev_weights); model[:z]] in MOI.NormOneCone(\$(n + n)))]
 
-    ef = EfficientMeanVar(tickers, mu, S;
+    ef = MeanVar(tickers, mu, S;
             extra_vars = extra_vars,
             extra_constraints = extra_constraints,
         )

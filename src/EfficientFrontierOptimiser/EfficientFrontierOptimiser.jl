@@ -10,14 +10,14 @@ export refresh_model!
 include("./MeanVar/MeanVarType.jl")
 include("./MeanVar/MeanVarFunc.jl")
 include("./MeanVar/MeanVarUtil.jl")
-export AbstractEfficientMeanVar, EfficientMeanVar
+export AbstractMeanVar, MeanVar
 export min_volatility!, max_sharpe!
 
 # Mean semi variance optimisations.
-include("./MeanSemiVar/MeanSemiVarType.jl")
-include("./MeanSemiVar/MeanSemiVarFunc.jl")
-include("./MeanSemiVar/MeanSemiVarUtil.jl")
-export EfficientSemiVar
+include("./MeanSemivar/MeanSemivarType.jl")
+include("./MeanSemivar/MeanSemivarFunc.jl")
+include("./MeanSemivar/MeanSemivarUtil.jl")
+export AbstractMeanSemivar, MeanSemivar
 export min_semivar!, max_sortino!
 
 # Critical Drawdown at Risk (path dependent)

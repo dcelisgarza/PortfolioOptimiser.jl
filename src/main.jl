@@ -20,7 +20,7 @@ prev_weights /= sum(prev_weights)
 #     [:([$k * (model[:w] - $prev_weights); model[:z]] in MOI.NormOneCone($(n + n)))]
 # Is equivalent to adding k * norm(model[:w] - prev_weights, 1) to the objective
 k = 0.001
-ef = EfficientMeanVar(
+ef = MeanVar(
     names(df)[2:end],
     mu,
     S;
@@ -51,14 +51,14 @@ end
 #     mean_barrier_objective(w, cov_mtx, k)
 #     # end
 # end
-ef = EfficientMeanVar(names(df)[2:end], mu, S;)
+ef = MeanVar(names(df)[2:end], mu, S;)
 obj_params = [ef.cov_mtx, 1000000.001]
 custom_optimiser!(ef, mean_barrier_objective, obj_params)
 
 function wak(w)
     return dot(w, w)
 end
-ef = EfficientMeanVar(names(df)[2:end], mu, S;)
+ef = MeanVar(names(df)[2:end], mu, S;)
 custom_optimiser!(ef, wak)
 
 # Now try with a non convex objective from  Kolm et al (2014)
@@ -76,7 +76,7 @@ function logarithmic_barrier(w::T...) where {T}
     PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
     # logarithmic_barrier2(w, cov_mtx, k)
 end
-ef = EfficientMeanVar(names(df)[2:end], mu, S)
+ef = MeanVar(names(df)[2:end], mu, S)
 obj_params = [ef.cov_mtx, 0.001]
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 
@@ -85,7 +85,7 @@ custom_optimiser!(ef, kelly_objective, obj_params)
 
 # Kelly objective with weight bounds on first asset
 lower_bounds, upper_bounds = 0.01, 0.3
-ef = EfficientMeanVar(
+ef = MeanVar(
     names(df)[2:end],
     mu,
     S;
@@ -97,7 +97,7 @@ ef = EfficientMeanVar(
 obj_params = [ef.mean_ret, ef.cov_mtx, 1000]
 custom_optimiser!(ef, kelly_objective, obj_params)
 
-ef = EfficientMeanVar(
+ef = MeanVar(
     names(df)[2:end],
     mu,
     S;
@@ -132,7 +132,7 @@ deviation_risk_parity2(ef.weights, ef.cov_mtx)
     end
 end
 
-ef = EfficientMeanVar(
+ef = MeanVar(
     names(df)[2:end],
     mu,
     S;
@@ -359,7 +359,7 @@ testblweights = [
 bl.weights ≈ testblweights
 
 ## Efficient Frontier
-ef = EfficientMeanVar(names(df)[2:end], bl.post_ret, S)
+ef = MeanVar(names(df)[2:end], bl.post_ret, S)
 max_sharpe!(ef)
 
 import PortfolioOptimiser: max_sharpe_nl!, L2_reg
@@ -368,14 +368,9 @@ function L2_reg(γ = 1, w...)
     return γ * dot(w, w)
 end
 
-ef2 = EfficientMeanVar(
-    names(df)[2:end],
-    bl.post_ret,
-    S,
-    extra_obj_terms = [quote
-        L2_reg(1000, w...)
-    end],
-)
+ef2 = MeanVar(names(df)[2:end], bl.post_ret, S, extra_obj_terms = [quote
+    L2_reg(1000, w...)
+end])
 
 extra_obj_terms = [quote
     L2_reg(1000, w...)
@@ -421,7 +416,7 @@ gAlloc, remaining =
 testshares = [231, 2, 4, 19]
 gAlloc.shares == testshares
 
-ef = EfficientMeanVar(names(df)[2:end], bl.post_ret, S)
+ef = MeanVar(names(df)[2:end], bl.post_ret, S)
 min_volatility!(ef)
 testweights = [
     0.007909381852655,
@@ -583,7 +578,7 @@ testshares = [142, 2, 14, 5, 5, 11, 2, 13]
 gAlloc.shares == testshares
 
 ### Eff front market neutral
-ef = EfficientMeanVar(
+ef = MeanVar(
     names(df)[2:end],
     bl.post_ret,
     S,
@@ -630,7 +625,7 @@ gAlloc, remaining =
 testshares = [3, 58, 11, 27, 12, 5, 7, 3, 4, 4, -168, -29, -357, -30, -24, -2, -73, -2, -1]
 gAlloc.shares == testshares
 
-ef = EfficientMeanVar(
+ef = MeanVar(
     names(df)[2:end],
     bl.post_ret,
     S,
@@ -799,12 +794,12 @@ gAlloc, remaining =
 testshares = [2, 15, 57, 6, 1, 5, 13, 3, 6, 1, 1, 1, 2, -77, -6, -78, -22, -4]
 gAlloc.shares == testshares
 
-## Mean semivar
-ef = EfficientSemiVar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark = 0)
+## Mean port_semivar
+ef = MeanSemivar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark = 0)
 max_sortino!(ef)
 mumax, varmax, smax = portfolio_performance(ef)
 
-ef = EfficientSemiVar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark = 0)
+ef = MeanSemivar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark = 0)
 min_semivar!(ef)
 
 testweights = [
@@ -966,8 +961,8 @@ gAlloc, remaining =
 testshares = [318, 9, 1, 1, 1, 1, 1, 1, 1, 1]
 gAlloc.shares == testshares
 
-### Mean semivar market neutral
-ef = EfficientSemiVar(
+### Mean port_semivar market neutral
+ef = MeanSemivar(
     tickers,
     bl.post_ret,
     Matrix(dropmissing(returns)),

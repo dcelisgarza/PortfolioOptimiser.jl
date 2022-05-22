@@ -1,8 +1,4 @@
-function min_semivar!(
-    portfolio::EfficientSemiVar,
-    optimiser = Ipopt.Optimizer,
-    silent = true,
-)
+function min_semivar!(portfolio::MeanSemivar, optimiser = Ipopt.Optimizer, silent = true)
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     model = portfolio.model
@@ -26,11 +22,7 @@ function min_semivar!(
     return nothing
 end
 
-function max_sortino!(
-    portfolio::EfficientSemiVar,
-    optimiser = Ipopt.Optimizer,
-    silent = true,
-)
+function max_sortino!(portfolio::MeanSemivar, optimiser = Ipopt.Optimizer, silent = true)
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && throw(
         ArgumentError(
             "Max sortino uses a variable transformation that changes the constraints and objective function. Please create a new instance instead.",
@@ -151,7 +143,7 @@ function max_sortino!(
 end
 
 function max_quadratic_utility!(
-    portfolio::EfficientSemiVar,
+    portfolio::MeanSemivar,
     risk_aversion = portfolio.risk_aversion,
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -187,7 +179,7 @@ function max_quadratic_utility!(
 end
 
 function efficient_return!(
-    portfolio::EfficientSemiVar,
+    portfolio::MeanSemivar,
     target_ret = portfolio.target_ret,
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -226,7 +218,7 @@ function efficient_return!(
 end
 
 function efficient_risk!(
-    portfolio::EfficientSemiVar,
+    portfolio::MeanSemivar,
     target_semidev = portfolio.target_semidev,
     optimiser = Ipopt.Optimizer,
     silent = true,

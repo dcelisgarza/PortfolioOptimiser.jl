@@ -1,16 +1,16 @@
 """
 ```
-abstract type AbstractEfficientMeanVar <: AbstractEfficient end
+abstract type AbstractMeanVar <: AbstractEfficient end
 ```
 
 Abstract type for subtyping efficient mean variance optimisers.
 """
-abstract type AbstractEfficientMeanVar <: AbstractEfficient end
+abstract type AbstractMeanVar <: AbstractEfficient end
 
 """
 ```
-struct EfficientMeanVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
-       AbstractEfficientMeanVar
+struct MeanVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
+       AbstractMeanVar
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -33,7 +33,7 @@ Structure for a mean-variance portfolio.
 - `mean_ret`: mean returns, don't need it to optimise for minimum variance.
 - `weights`: weight of each ticker in the portfolio.
 - `cov_mtx`: covariance matrix.
-- `rf`: risk free return.
+- `rf`: risk free rate.
 - `market_neutral`: whether a portfolio is market neutral or not. Used in [`max_quadratic_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
 - `risk_aversion`: risk aversion parameter. Used in [`max_quadratic_utility!`](@ref).
 - `target_volatility`: target volatility parameter. Used in [`efficient_risk!`](@ref).
@@ -43,8 +43,7 @@ Structure for a mean-variance portfolio.
 - `extra_obj_terms`: extra objective terms for the model.
 - `model`: model for optimising portfolio.
 """
-struct EfficientMeanVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
-       AbstractEfficientMeanVar
+struct MeanVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <: AbstractMeanVar
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -62,7 +61,7 @@ end
 
 """
 ```
-EfficientMeanVar(
+MeanVar(
     tickers,
     mean_ret,
     cov_mtx;
@@ -79,14 +78,13 @@ EfficientMeanVar(
 )
 ```
 
-Create an [`EfficientMeanVar`](@ref) structure to be optimised via JuMP.
+Create an [`MeanVar`](@ref) structure to be optimised via JuMP.
 
 - `tickers`: list of tickers.
 - `mean_ret`: mean returns, don't need it to optimise for minimum variance.
-- `weights`: weight of each ticker in the portfolio.
 - `cov_mtx`: covariance matrix.
 - `weight_bounds`: weight bounds for tickers. If it's a Tuple of length 2, the first entry will be the lower bound for all weights, the second entry will be the upper bound for all weights. If it's a vector, its length must be equal to that of `tickers`, each element must be a tuple of length 2. In that case, each tuple corresponds to the lower and upper bounds for the corresponding ticker. See [`_create_weight_bounds`](@ref) for further details.
-- `rf`: risk free return.
+- `rf`: risk free rate. Must be consistent with the frequency at which `mean_ret` and `cov_mtx` were calculated. The default value assumes daily returns.
 - `market_neutral`: whether a portfolio is market neutral or not. If it is market neutral, the sum of the weights will be equal to 0, else the sum will be equal to 1. Used in [`max_quadratic_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
 - `risk_aversion`: risk aversion parameter, the larger it is, the lower the risk. Used in [`max_quadratic_utility!`](@ref).
 - `target_volatility`: target volatility parameter. Used in [`efficient_risk!`](@ref).
@@ -95,7 +93,7 @@ Create an [`EfficientMeanVar`](@ref) structure to be optimised via JuMP.
 - `extra_constraints`: extra constraints for the model. See [`_add_constraint_to_model!`](@ref) for details on how to use this.
 - `extra_obj_terms`: extra objective terms for the model. See [`_add_to_objective!`](@ref) for details on how to use this.
 """
-function EfficientMeanVar(
+function MeanVar(
     tickers,
     mean_ret,
     cov_mtx;
@@ -134,7 +132,7 @@ function EfficientMeanVar(
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
-    return EfficientMeanVar(
+    return MeanVar(
         tickers,
         mean_ret,
         weights,

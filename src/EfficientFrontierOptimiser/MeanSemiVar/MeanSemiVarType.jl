@@ -1,24 +1,16 @@
-abstract type AbstractEfficientSemiVar <: AbstractEfficient end
+"""
+```
+abstract type AbstractMeanSemivar <: AbstractEfficient end
+```
+
+Abstract type for subtyping efficient mean semivariance optimisers.
+"""
+abstract type AbstractMeanSemivar <: AbstractEfficient end
 
 """
 ```
-struct EfficientSemiVar{
-    T1,
-    T2,
-    T3,
-    T4,
-    T5,
-    T6,
-    T7,
-    T8,
-    T9,
-    T10,
-    T11,
-    T12,
-    T13,
-    T14,
-    T15,
-} <: AbstractEfficientSemiVar
+struct MeanSemivar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
+       AbstractMeanSemivar
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -36,9 +28,27 @@ struct EfficientSemiVar{
     model::T15
 end
 ```
+
+Structure for a mean-semivariance portfolio.
+
+- `tickers`: list of tickers.
+- `mean_ret`: mean returns, don't need it to optimise for minimum variance.
+- `weights`: weight of each ticker in the portfolio.
+- `returns`: asset historical returns.
+- `benchmark`: returns benchmark, to differentiate between "downside" (less than `benchmark`) and "upside" (greater than `benchmark`) returns.
+- `freq`: frequency of returns.
+- `rf`: risk free rate.
+- `market_neutral`: whether a portfolio is market neutral or not. Used in [`max_quadratic_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
+- `risk_aversion`: risk aversion parameter. Used in [`max_quadratic_utility!`](@ref).
+- `target_volatility`: target volatility parameter. Used in [`efficient_risk!`](@ref).
+- `target_ret`: target return parameter. Used in [`efficient_return!`](@ref).
+- `extra_vars`: extra variables for the model.
+- `extra_constraints`: extra constraints for the model.
+- `extra_obj_terms`: extra objective terms for the model.
+- `model`: model for optimising portfolio.
 """
-struct EfficientSemiVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
-       AbstractEfficientSemiVar
+struct MeanSemivar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
+       AbstractMeanSemivar
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -55,13 +65,51 @@ struct EfficientSemiVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, 
     extra_obj_terms::T14
     model::T15
 end
-function EfficientSemiVar(
+
+"""
+```
+MeanSemivar(
     tickers,
     mean_ret,
     returns;
     weight_bounds = (0.0, 1.0),
     freq = 252,
-    benchmark = 0,#1.02^(1 / 252) - 1,
+    benchmark = 0,
+    rf = 0.02,
+    market_neutral = false,
+    risk_aversion = 1.0,
+    target_semidev = std(returns),
+    target_ret = mean(mean_ret),
+    extra_vars = [],
+    extra_constraints = [],
+    extra_obj_terms = [],
+)
+```
+
+Create an [`MeanSemivar`](@ref) structure to be optimised via JuMP.
+
+- `tickers`: list of tickers.
+- `mean_ret`: mean returns, don't need it to optimise for minimum variance.
+- `returns`: asset historical returns.
+- `weight_bounds`: weight bounds for tickers. If it's a Tuple of length 2, the first entry will be the lower bound for all weights, the second entry will be the upper bound for all weights. If it's a vector, its length must be equal to that of `tickers`, each element must be a tuple of length 2. In that case, each tuple corresponds to the lower and upper bounds for the corresponding ticker. See [`_create_weight_bounds`](@ref) for further details.
+- `benchmark`: returns benchmark, to differentiate between "downside" (less than `benchmark`) and "upside" (greater than `benchmark`) returns.
+- `freq`: frequency of returns.
+- `rf`: risk free rate. Must be consistent with `freq`. The default value assumes daily returns.
+- `market_neutral`: whether a portfolio is market neutral or not. If it is market neutral, the sum of the weights will be equal to 0, else the sum will be equal to 1. Used in [`max_quadratic_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
+- `risk_aversion`: risk aversion parameter, the larger it is, the lower the risk. Used in [`max_quadratic_utility!`](@ref).
+- `target_volatility`: target volatility parameter. Used in [`efficient_risk!`](@ref).
+- `target_ret`: target return parameter. Used in [`efficient_return!`](@ref).
+- `extra_vars`: extra variables for the model. See [`_add_var_to_model!`](@ref) for details on how to use this.
+- `extra_constraints`: extra constraints for the model. See [`_add_constraint_to_model!`](@ref) for details on how to use this.
+- `extra_obj_terms`: extra objective terms for the model. See [`_add_to_objective!`](@ref) for details on how to use this.
+"""
+function MeanSemivar(
+    tickers,
+    mean_ret,
+    returns;
+    weight_bounds = (0.0, 1.0),
+    freq = 252,
+    benchmark = 0,
     rf = 0.02,
     market_neutral = false,
     risk_aversion = 1.0,
@@ -82,7 +130,7 @@ function EfficientSemiVar(
     @variable(model, p[1:samples] >= 0)
     @variable(model, n[1:samples] >= 0)
 
-    B = semi_ret(returns, benchmark)
+    B = (returns .- benchmark) / sqrt(samples)
     @constraint(model, semi_var, B * w .- p .+ n .== 0)
 
     lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
@@ -104,7 +152,7 @@ function EfficientSemiVar(
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
-    return EfficientSemiVar(
+    return MeanSemivar(
         tickers,
         mean_ret,
         weights,
