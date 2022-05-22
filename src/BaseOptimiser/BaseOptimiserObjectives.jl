@@ -81,7 +81,7 @@ The semivariance is defined as:
 ```math
 \\begin{aligned}
 \\bm{r} &= \\mathrm{R} \\bm{w}\\,,\\\\
-\\sigma_s^2 &= \\dfrac{f}{N} \\sum\\limits_{i = 1,\\, b < r_i}^{i = N} (r_i - b)^2\\,,
+\\sigma_s^2 &= \\dfrac{f}{N} \\sum\\limits_{i = 1,\\, b < r_i}^{N} (r_i - b)^2\\,,
 \\end{aligned}
 ```
 
@@ -106,7 +106,7 @@ L2 regularisation. Minimising this reduces the number of negligible weights `w`,
 The ``L_2`` regularisation is defined as:
 
 ```math
-L_2 = \\gamma (\\bm{w} \\cdot \\bm{w}) \\,,
+L_2 = \\gamma (\\bm{w} \\cdot \\bm{w}) =  \\gamma \\lVert \\bm{w} \\rVert ^2\\,,
 ```
 
 where ``\\gamma`` is the tuning parameter, and ``\\bm{w}`` the weights.
@@ -128,7 +128,7 @@ The quadratic utility ``Q``, is defined as:
 Q = \\mu - \\dfrac{1}{2} \\delta  \\bm{w}^T\\, \\Sigma\\, \\bm{w}\\,,
 ```
 
-where ``\\mu`` is the overall portfolio expected return (see [`port_return`](@ref)), ``\\delta`` the risk aversion, ``w`` the weights, and ``\\Sigma`` the covariance matrix.
+where ``\\mu`` is the overall portfolio expected return (see [`port_return`](@ref)), ``\\delta`` the risk aversion, ``\\bm{w}`` the weights, and ``\\Sigma`` the covariance matrix.
 """
 function quadratic_utility(w, mean_ret, cov_mtx, risk_aversion = 1)
     μ = port_return(w, mean_ret)
