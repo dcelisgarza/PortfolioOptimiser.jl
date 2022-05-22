@@ -81,11 +81,11 @@ The semivariance is defined as:
 ```math
 \\begin{aligned}
 \\bm{r} &= \\mathrm{R} \\bm{w}\\,,\\\\
-\\sigma_s &= \\dfrac{f}{N} \\sum\\limits_{i = 1,\\, b < r_i}^{i = N} (r_i - b)^2\\,,
+\\sigma_s^2 &= \\dfrac{f}{N} \\sum\\limits_{i = 1,\\, b < r_i}^{i = N} (r_i - b)^2\\,,
 \\end{aligned}
 ```
 
-where ``\\bm{r}`` are the portfolio historical returns with where the subscript ``i`` describes a specific point in time (entry), ``\\mathrm{R}`` the asset historical returns, ``\\bm{w}`` the asset weights, ``\\sigma_s`` the semivariance, ``f`` the frequency of the historical returns, ``N`` the number of entries in historical returns (not the number of assets), and ``b`` the benchmark for splitting "upside" and "downside" returns.
+where ``\\bm{r}`` are the portfolio historical returns with where the subscript ``i`` describes a specific point in time (entry), ``\\mathrm{R}`` the asset historical returns, ``\\bm{w}`` the asset weights, ``\\sigma_s`` the semideviation, ``f`` the frequency of the historical returns, ``N`` the number of entries in historical returns (not the number of assets), and ``b`` the benchmark for splitting "upside" and "downside" returns.
 
 The condition ``b < r_i`` ensures we only consider entries for which the historical portfolio return fell below the benchmark.
 """
