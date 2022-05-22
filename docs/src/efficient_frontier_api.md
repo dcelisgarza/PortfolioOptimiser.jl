@@ -33,6 +33,30 @@ min_volatility!(
     silent = true,
 )
 max_return(portfolio::EfficientMeanVar, optimiser = Ipopt.Optimizer, silent = true)
+max_sharpe!(
+    portfolio::EfficientMeanVar,
+    rf = portfolio.rf,
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+)
+max_quadratic_utility!(
+    portfolio::EfficientMeanVar,
+    risk_aversion = portfolio.risk_aversion,
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+)
+efficient_return!(
+    portfolio::EfficientMeanVar,
+    target_ret = portfolio.target_ret,
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+)
+efficient_risk!(
+    portfolio::EfficientMeanVar,
+    target_volatility = portfolio.target_volatility,
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+)
 refresh_model!(portfolio::AbstractEfficientMeanVar)
 portfolio_performance(portfolio::EfficientMeanVar; verbose = false)
 ```
