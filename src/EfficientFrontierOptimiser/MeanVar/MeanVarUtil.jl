@@ -14,17 +14,26 @@ end
 
 """
 ```
-portfolio_performance(portfolio::EfficientMeanVar; verbose = false)
+function portfolio_performance(
+    portfolio::EfficientMeanVar;
+    rf = portfolio.rf,
+    verbose = false,
+)
 ```
 
-Computes the portfolio return, volatility and sharpe ratio. Returns a tuple of:
+Computes the portfolio return, volatility and sharpe ratio for a given risk free rate, `rf`.
+
+Returns a tuple of:
 
 `(return, volatility, sharpe ratio)`
 
 If `verbose == true`, it prints out this information.
 """
-function portfolio_performance(portfolio::EfficientMeanVar; verbose = false)
-    rf = portfolio.rf
+function portfolio_performance(
+    portfolio::EfficientMeanVar;
+    rf = portfolio.rf,
+    verbose = false,
+)
     mean_ret = portfolio.mean_ret
 
     model = portfolio.model
