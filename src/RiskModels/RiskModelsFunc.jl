@@ -73,7 +73,7 @@ risk_matrix(
 """
 function risk_matrix(
     type::AbstractRiskModel,
-    returns;
+    returns,
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     freq = 252,

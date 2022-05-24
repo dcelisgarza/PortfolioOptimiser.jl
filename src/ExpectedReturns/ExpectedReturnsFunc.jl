@@ -80,9 +80,9 @@ Exponentially weighted Capital Asset Pricing Model (ECAPM) returns. `ECAPMRet()`
 """
 function ret_model(::MRet, returns; compound = true, freq = 252)
     if compound
-        return prod(returns .+ 1, dims = 1) .^ (freq / size(returns, 1)) .- 1
+        return vec(prod(returns .+ 1, dims = 1) .^ (freq / size(returns, 1)) .- 1)
     else
-        return mean(returns, dims = 1) * freq
+        return vec(mean(returns, dims = 1) * freq)
     end
 end
 
@@ -95,9 +95,9 @@ function ret_model(
 )
     N = size(returns, 1)
     if compound
-        return (1 .+ mean(returns, eweights(N, 2 / (span + 1)), dims = 1)) .^ freq .- 1
+        return vec((1 .+ mean(returns, eweights(N, 2 / (span + 1)), dims = 1)) .^ freq .- 1)
     else
-        return mean(returns, eweights(N, 2 / (span + 1)), dims = 1) * freq
+        return vec(mean(returns, eweights(N, 2 / (span + 1)), dims = 1) * freq)
     end
 end
 
@@ -113,10 +113,10 @@ function ret_model(
     fix_method::Union{SFix, DFix} = SFix(),
     span = Int(ceil(freq / 1.4)),
 )
-    β = _compute_betas(market_returns, returns, cov_type, target, fix_method, span)
+    β, returns = _compute_betas(market_returns, returns, cov_type, target, fix_method, span)
 
     # Mean market return.
-    mkt_mean_ret = ret_model(MRet(), returns[:, end]; compound = compound, freq = freq)
+    mkt_mean_ret = ret_model(MRet(), returns[:, end]; compound = compound, freq = freq)[1]
 
     # Capital asset pricing.
     return rf .+ β * (mkt_mean_ret - rf)
@@ -130,16 +130,17 @@ function ret_model(
     compound = true,
     freq = 252,
     rspan = Int(ceil(freq / 1.4)),
-    cov_type::AbstractRiskModel = Cov(),
+    cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     cspan = Int(ceil(freq / 1.4)),
 )
-    β = _compute_betas(market_returns, returns, cov_type, target, fix_method, cspan)
+    β, returns =
+        _compute_betas(market_returns, returns, cov_type, target, fix_method, cspan)
 
     # Exponentially weighted mean market return.
     mkt_mean_ret =
-        ret_model(EMRet(), returns[:, end]; compound = compound, freq = freq, span = rspan)
+        ret_model(EMRet(), returns[:, end]; compound = compound, freq = freq, span = rspan)[1]
 
     # Capital asset pricing.
     return rf .+ β * (mkt_mean_ret - rf)
@@ -155,20 +156,13 @@ function _compute_betas(market_returns, returns, cov_type, target, fix_method, c
         returns = hcat(returns, market_returns)
     end
     # Covariance with the market returns.
-    cov_mtx = risk_matrix(
-        cov_type,
-        returns;
-        target = target,
-        fix_method = fix_method,
-        freq = 1,
-        span = cspan,
-    )
+    cov_mtx = risk_matrix(cov_type, returns, target, fix_method, 1, cspan)
 
     # The rightmost column is the covariance to the market.
     β = cov_mtx[:, end] / cov_mtx[end, end]
     β = β[1:(end - 1)]
 
-    return β
+    return β, returns
 end
 
 """
