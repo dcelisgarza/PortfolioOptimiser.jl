@@ -200,5 +200,6 @@ function prices_from_returns(returns, log_ret = false)
         ret = 1 .+ returns
     end
 
-    return cumprod([1; returns])
+    ret[1, :] .= 1
+    return cumprod(ret, dims = 1)
 end
