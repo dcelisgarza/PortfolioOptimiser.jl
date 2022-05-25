@@ -1,7 +1,7 @@
 function portfolio_performance(
     portfolio::AbstractBlackLitterman,
     rf = 0.02;
-    verbose = true,
+    verbose = false,
 )
     mean_ret = portfolio.post_ret
     cov_mtx = portfolio.post_cov
