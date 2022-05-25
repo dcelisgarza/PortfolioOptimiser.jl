@@ -28,34 +28,39 @@ MeanVar(
     extra_obj_terms = [],
 )
 min_volatility!(
-    portfolio::MeanVar,
+    portfolio::MeanVar;
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
-max_return(portfolio::MeanVar, optimiser = Ipopt.Optimizer, silent = true)
+max_return(portfolio::MeanVar; optimiser = Ipopt.Optimizer, silent = true, optimiser_attributes = (),)
 max_sharpe!(
-    portfolio::MeanVar,
+    portfolio::MeanVar;
     rf = portfolio.rf,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
 max_quadratic_utility!(
-    portfolio::MeanVar,
+    portfolio::MeanVar;
     risk_aversion = portfolio.risk_aversion,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
 efficient_return!(
-    portfolio::MeanVar,
+    portfolio::MeanVar;
     target_ret = portfolio.target_ret,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
 efficient_risk!(
-    portfolio::MeanVar,
+    portfolio::MeanVar;
     target_volatility = portfolio.target_volatility,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
 refresh_model!(portfolio::AbstractMeanVar)
 portfolio_performance(portfolio::MeanVar; rf = portfolio.rf, verbose = false)
