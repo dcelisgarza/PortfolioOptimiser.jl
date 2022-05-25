@@ -13,7 +13,12 @@ Minimise the volatility ([`port_variance`](@ref)) of a [`MeanVar`](@ref) portfol
 - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
-function min_volatility!(portfolio::MeanVar, optimiser = Ipopt.Optimizer, silent = true)
+function min_volatility!(
+    portfolio::MeanVar,
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+    optimiser_attributes = (),
+)
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     model = portfolio.model
@@ -28,9 +33,7 @@ function min_volatility!(portfolio::MeanVar, optimiser = Ipopt.Optimizer, silent
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
 
@@ -51,7 +54,12 @@ Maximise the return ([`port_return`](@ref)) of a [`MeanVar`](@ref) portfolio. In
 !!! warning
     This should not be used for optimising portfolios. It's used by [`efficient_return!`](@ref) to validate the target return. This yields portfolios with large volatilities.
 """
-function max_return(portfolio::MeanVar, optimiser = Ipopt.Optimizer, silent = true)
+function max_return(
+    portfolio::MeanVar,
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+    optimiser_attributes = (),
+)
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     model = copy(portfolio.model)
@@ -67,9 +75,7 @@ function max_return(portfolio::MeanVar, optimiser = Ipopt.Optimizer, silent = tr
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     return model
 end
@@ -104,6 +110,7 @@ function max_sharpe!(
     rf = portfolio.rf,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && throw(
         ArgumentError(
@@ -214,9 +221,8 @@ function max_sharpe!(
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
+
     portfolio.weights .= value.(w) / value(k)
 
     return nothing
@@ -244,6 +250,7 @@ function max_quadratic_utility!(
     risk_aversion = portfolio.risk_aversion,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
@@ -266,9 +273,7 @@ function max_quadratic_utility!(
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
 
@@ -297,6 +302,7 @@ function efficient_return!(
     target_ret = portfolio.target_ret,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
@@ -326,9 +332,7 @@ function efficient_return!(
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
 
@@ -357,6 +361,7 @@ function efficient_risk!(
     target_volatility = portfolio.target_volatility,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
@@ -395,9 +400,7 @@ function efficient_risk!(
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
 

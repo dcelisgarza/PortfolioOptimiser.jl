@@ -1,4 +1,9 @@
-function min_semivar!(portfolio::MeanSemivar, optimiser = Ipopt.Optimizer, silent = true)
+function min_semivar!(
+    portfolio::MeanSemivar,
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+    optimiser_attributes = (),
+)
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     model = portfolio.model
@@ -13,16 +18,19 @@ function min_semivar!(portfolio::MeanSemivar, optimiser = Ipopt.Optimizer, silen
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
 
     return nothing
 end
 
-function max_sortino!(portfolio::MeanSemivar, optimiser = Ipopt.Optimizer, silent = true)
+function max_sortino!(
+    portfolio::MeanSemivar,
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+    optimiser_attributes = (),
+)
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && throw(
         ArgumentError(
             "Max sortino uses a variable transformation that changes the constraints and objective function. Please create a new instance instead.",
@@ -134,9 +142,8 @@ function max_sortino!(portfolio::MeanSemivar, optimiser = Ipopt.Optimizer, silen
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
+
     portfolio.weights .= value.(w) / value(k)
 
     return nothing
@@ -147,6 +154,7 @@ function max_quadratic_utility!(
     risk_aversion = portfolio.risk_aversion,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
@@ -169,9 +177,7 @@ function max_quadratic_utility!(
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
 
@@ -183,6 +189,7 @@ function efficient_return!(
     target_ret = portfolio.target_ret,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
@@ -208,9 +215,7 @@ function efficient_return!(
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
 
@@ -222,6 +227,7 @@ function efficient_risk!(
     target_semidev = portfolio.target_semidev,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
@@ -248,9 +254,7 @@ function efficient_risk!(
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
 

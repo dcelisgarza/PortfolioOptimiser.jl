@@ -1820,6 +1820,28 @@ bl = BlackLitterman(
     P = picking,
 )
 
+using Ipopt, JuMP
+model = Model()
+function _setup_and_optimise(model, optimiser, silent, optimiser_attributes = ())
+    MOI.set(model, MOI.Silent(), silent)
+    set_optimizer(model, optimiser)
+
+    if isempty(optimiser_attributes)
+        # Do nothing.
+    elseif typeof(optimiser_attributes) <: Pair
+        set_optimizer_attributes(model, optimiser_attributes)
+    else
+        set_optimizer_attributes(model, optimiser_attributes...)
+    end
+    optimize!(model)
+end
+
+_setup_and_optimise(model, Ipopt.Optimizer, true, ("tol" => 1e-4, "max_iter" => 100))
+
+get_optimizer_attribute(model, "max_iter")
+
+#("tol" => 1e-4, "max_iter" => 100)
+
 ef = MeanVar(names(df)[2:end], bl.post_ret, S)
 min_volatility!(ef)
 testweights = [

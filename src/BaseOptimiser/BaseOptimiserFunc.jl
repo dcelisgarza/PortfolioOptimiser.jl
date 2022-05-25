@@ -73,6 +73,7 @@ function custom_optimiser!(
     initial_guess = nothing,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     model = portfolio.model
 
@@ -91,9 +92,7 @@ function custom_optimiser!(
 
     @objective(model, Min, obj(w, obj_params...))
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
     return nothing
@@ -235,6 +234,7 @@ function custom_nloptimiser!(
     initial_guess = nothing,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     model = portfolio.model
 
@@ -260,9 +260,7 @@ function custom_nloptimiser!(
     register(model, :obj, n, obj, autodiff = true)
     @NLobjective(model, Min, obj(w...))
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
     return nothing

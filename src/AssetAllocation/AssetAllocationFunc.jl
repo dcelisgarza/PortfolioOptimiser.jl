@@ -132,6 +132,7 @@ function Allocation(
     short_ratio = nothing,
     optimiser = HiGHS.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     @assert isnothing(short_ratio) || short_ratio > 0
 
@@ -146,6 +147,7 @@ function Allocation(
         short_ratio,
         optimiser,
         silent,
+        optimiser_attributes,
     )
 end
 
@@ -160,6 +162,7 @@ function Allocation(
     short_ratio::Union{Real, Nothing} = nothing,
     optimiser = nothing,
     silent = nothing,
+    optimiser_attributes = nothing,
 )
     idx = sortperm(weights, rev = true)
 
@@ -216,6 +219,7 @@ function Allocation(
     short_ratio::Union{Real, Nothing} = nothing,
     optimiser = nothing,
     silent = nothing,
+    optimiser_attributes = nothing,
 )
     idx = sortperm(weights, rev = true)
 
@@ -296,6 +300,7 @@ function Allocation(
     short_ratio::Union{Real, Nothing} = nothing,
     optimiser = HiGHS.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     if any(x -> x < 0, weights)
         return _short_allocation(
@@ -336,9 +341,7 @@ function Allocation(
 
     @objective(model, Min, sum(u) + r)
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     shares_bought = Int.(round.(value.(x)))
     available_funds = value(r)

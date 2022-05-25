@@ -420,3 +420,18 @@ function _val_compare_benchmark(val, op, benchmark, correction, name)
     end
     return val
 end
+
+function _setup_and_optimise(model, optimiser, silent, optimiser_attributes = ())
+    MOI.set(model, MOI.Silent(), silent)
+    set_optimizer(model, optimiser)
+
+    if isempty(optimiser_attributes)
+        # Do nothing.
+    elseif typeof(optimiser_attributes) <: Pair
+        set_optimizer_attributes(model, optimiser_attributes)
+    else
+        set_optimizer_attributes(model, optimiser_attributes...)
+    end
+
+    optimize!(model)
+end

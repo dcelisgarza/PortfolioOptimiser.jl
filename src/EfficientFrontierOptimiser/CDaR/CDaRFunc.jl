@@ -1,4 +1,9 @@
-function min_cdar!(portfolio::EfficientCDaR, optimiser = Ipopt.Optimizer, silent = true)
+function min_cdar!(
+    portfolio::EfficientCDaR,
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+    optimiser_attributes = (),
+)
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     model = portfolio.model
@@ -15,9 +20,7 @@ function min_cdar!(portfolio::EfficientCDaR, optimiser = Ipopt.Optimizer, silent
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     w = model[:w]
     portfolio.weights .= value.(w)
@@ -30,6 +33,7 @@ function efficient_return!(
     target_ret = portfolio.target_ret,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
@@ -59,9 +63,7 @@ function efficient_return!(
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
 
@@ -72,6 +74,7 @@ function efficient_risk!(
     target_cdar = portfolio.target_cdar,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
@@ -101,9 +104,7 @@ function efficient_risk!(
         _add_to_objective!.(model, extra_obj_terms)
     end
 
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-    optimize!(model)
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w)
 
