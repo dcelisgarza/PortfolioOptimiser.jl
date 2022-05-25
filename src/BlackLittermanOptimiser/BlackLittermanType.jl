@@ -46,7 +46,7 @@ function BlackLitterman(
         Q, P = _parse_views(tickers, absolute_views)
     end
     K = length(Q)
-    @assert size(P) == (K, num_tickers)
+    @assert size(P) == (num_tickers, K)
 
     _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
 
@@ -76,7 +76,7 @@ function BlackLitterman(
 
         omega = idzorek(view_confidence, cov_mtx, Q, P, tau)
     elseif omega == :default
-        omega = Diagonal(tau * P * cov_mtx * P')
+        omega = Diagonal(tau * P' * cov_mtx * P)
     else
         throw(
             ArgumentError(
@@ -87,13 +87,13 @@ function BlackLitterman(
     @assert size(omega) == (K, K)
 
     # Intermediate values
-    tau_sigma_p = tau * cov_mtx * P'
+    tau_sigma_p = tau * cov_mtx * P
     # NxN * NxK => NxK
-    A = P * tau_sigma_p + omega
+    A = P' * tau_sigma_p + omega
     # KxN * NxK + KxK => KxK + KxK => KxK
 
     # Posterior return
-    b = Q - P * pi
+    b = Q - P' * pi
     # Kx1 - KxN * Nx1 => Kx1 - Kx1 => Kx1
     post_ret = pi + tau_sigma_p * (A \ b)
     # Nx1 + NxK * (KxK \ Kx1) => Nx1 + NxK * Kx1 => Nx1 + Nx1 => Nx1

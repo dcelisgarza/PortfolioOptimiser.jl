@@ -6,7 +6,7 @@ function _parse_views(tickers, views::Dict)
 
     for (i, ticker) in enumerate(keys(views))
         Q[i] = views[ticker]
-        P[i, findfirst(x -> x == ticker, tickers)] = 1
+        P[findfirst(x -> x == ticker, tickers), i] = 1
     end
 
     return Q, P
@@ -45,7 +45,7 @@ function idzorek(view_confidence, cov_mtx, Q, P, tau)
             continue
         end
 
-        P_view = P[i, :]
+        P_view = P[:, i]
         alpha = (1 - conf) / conf # eq (44)
         omega = tau * alpha * dot(P_view, cov_mtx, P_view) # eq (45)
         view_omegas[i] = omega
