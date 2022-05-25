@@ -5,6 +5,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
     df = CSV.read("./assets/stock_prices.csv", DataFrame)
     dropmissing!(df)
     returns = returns_from_prices(df[!, 2:end])
+    tickers = names(df)[2:end]
 
     mu = vec(ret_model(MRet(), Matrix(returns)))
     S = risk_matrix(Cov(), Matrix(returns))
@@ -15,7 +16,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
     @test delta ≈ deltatest
 
     mcapsdf = DataFrame(
-        ticker = names(df)[2:end],
+        ticker = tickers,
         mcap = [
             927e9,
             1.19e12,
