@@ -30,7 +30,7 @@ function BlackLitterman(
     Q::Union{Nothing, AbstractArray} = nothing,
     P::Union{Nothing, AbstractArray} = nothing,
     view_confidence::Union{Nothing, AbstractArray} = nothing,
-    market_caps::Union{Nothing, Dict} = nothing,
+    market_caps::Union{Nothing, AbstractArray} = nothing,
 )
     num_tickers = length(tickers)
     @assert size(cov_mtx) == (num_tickers, num_tickers)
@@ -59,7 +59,7 @@ function BlackLitterman(
         @warn("running Black-Litterman with no prior")
         pi = zeros(num_tickers)
     elseif pi == :market
-        @assert !isnothing(market_caps) "please provide a dictionary of market caps via the market_caps keyword"
+        @assert !isnothing(market_caps) "please provide a vector of market caps via the market_caps keyword"
         pi = market_implied_prior_returns(market_caps, cov_mtx, risk_aversion, rf)
     elseif pi == :equal
         pi = ones(num_tickers) / num_tickers
@@ -79,9 +79,9 @@ function BlackLitterman(
 
         @assert length(view_confidence) == K "the length of `view_confidence` must be equal to the number of views privided in `Q`: $K"
 
-        omega = _idzorek(view_confidence, cov_mtx, Q, P, tau)
+        omega = idzorek(view_confidence, cov_mtx, Q, P, tau)
     elseif omega == :default
-        omega = _default(tau, P, cov_mtx)
+        omega = Diagonal(tau * P * cov_mtx * P')
     else
         throw(
             ArgumentError(

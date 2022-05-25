@@ -25,7 +25,7 @@ function market_implied_risk_aversion(market_prices, freq = 252, rf = 0.02)
     return (μ - rf) / σ
 end
 
-function _idzorek(view_confidence, cov_mtx, Q, P, tau)
+function idzorek(view_confidence, cov_mtx, Q, P, tau)
     lq = length(Q)
     view_omegas = Vector{Float64}(undef, lq)
 
@@ -52,10 +52,6 @@ function _idzorek(view_confidence, cov_mtx, Q, P, tau)
     end
 
     return Diagonal(view_omegas)
-end
-
-function _default(tau, P, cov_mtx)
-    return Diagonal(tau * P * cov_mtx * P')
 end
 
 function calc_weights!(
