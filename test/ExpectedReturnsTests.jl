@@ -109,7 +109,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics
     @test mu ≈ mutest
 
     # CAPM rets.
-    mu = ret_model(CAPMRet(), Matrix(returns))
+    mu = ret_model(CAPMRet(), Matrix(returns); fix_method = DFix())
     mutest = [
         0.094883850444685
         0.095679415838370
@@ -184,7 +184,14 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics
     ]
     @test mu ≈ mutest
 
-    mu = ret_model(ECAPMRet(), Matrix(returns); compound = false, rspan = 500, cspan = 500)
+    mu = ret_model(
+        ECAPMRet(),
+        Matrix(returns);
+        compound = false,
+        rspan = 500,
+        cspan = 500,
+        fix_method = DFix(),
+    )
     mutest = [
         0.08723285636839716
         0.08200125066043745
