@@ -155,4 +155,10 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         -6.459447803277293,
     ]
     @test bl.weights ≈ testblweights
+
+    mu, sigma, sr = portfolio_performance(bl)
+    mutest, sigmatest, srtest = 1.0093606663118133, 1.405512109425161, 0.7039147223828978
+    @test mu ≈ mutest
+    @test sigma ≈ sigmatest
+    @test sr ≈ srtest
 end

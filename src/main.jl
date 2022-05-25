@@ -1912,3 +1912,9 @@ testblweights = [
     -6.459447803277293,
 ]
 bl.weights ≈ testblweights
+
+mu, sigma, sr = portfolio_performance(bl)
+mutest, sigmatest, srtest = 1.0093606663118133, 1.405512109425161, 0.7039147223828978
+mu ≈ mutest
+sigma ≈ sigmatest
+sr ≈ srtest
