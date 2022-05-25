@@ -80,7 +80,7 @@ function BlackLitterman(
     else
         throw(
             ArgumentError(
-                "omega: $omega must be a square matrix, `:idzorek`, or `:default`",
+                "omega: $omega must be a square matrix, `:idzorek`, `:default`, or a $(K)x$(K) matrix",
             ),
         )
     end
