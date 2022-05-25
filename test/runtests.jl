@@ -8,6 +8,10 @@ end
     include("RiskModelsTests.jl")
 end
 
+@safetestset "Black Litterman" begin
+    include("BlackLittermanTests.jl")
+end
+
 # @safetestset "MeanVar" begin
 #     include("EfficientFrontierTests.jl")
 # end
