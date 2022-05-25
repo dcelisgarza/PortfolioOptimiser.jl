@@ -3,10 +3,11 @@
 custom_optimiser!(
     portfolio::AbstractPortfolioOptimiser,
     obj,
-    obj_params = (),
+    obj_params = ();
     initial_guess = nothing,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
 ```
 
@@ -69,7 +70,7 @@ custom_optimiser!(ef, kelly_objective, obj_params)
 function custom_optimiser!(
     portfolio::AbstractPortfolioOptimiser,
     obj,
-    obj_params = (),
+    obj_params = ();
     initial_guess = nothing,
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -103,10 +104,11 @@ end
 custom_nloptimiser!(
     portfolio::AbstractPortfolioOptimiser,
     obj,
-    obj_params = (),
+    obj_params = ();
     initial_guess = nothing,
     optimiser = Ipopt.Optimizer,
     silent = true,
+    optimiser_attributes = (),
 )
 ```
 
@@ -230,7 +232,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 function custom_nloptimiser!(
     portfolio::AbstractPortfolioOptimiser,
     obj,
-    obj_params = (),
+    obj_params = ();
     initial_guess = nothing,
     optimiser = Ipopt.Optimizer,
     silent = true,
