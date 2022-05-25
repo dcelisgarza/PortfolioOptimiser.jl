@@ -34,7 +34,7 @@ function idzorek(view_confidence, cov_mtx, Q, P, tau)
 
         if !(0 <= conf <= 1)
             throw(
-                ArgumentError(
+                DomainError(
                     "view confidences must be between 0 and 1, errored at view $i with value $conf",
                 ),
             )
