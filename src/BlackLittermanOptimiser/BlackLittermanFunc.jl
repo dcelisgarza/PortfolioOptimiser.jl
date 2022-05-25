@@ -2,7 +2,7 @@
 function _parse_views(tickers, views::Dict)
     K = length(views)
     Q = zeros(K)
-    P = zeros(K, length(tickers))
+    P = zeros(length(tickers), K)
 
     for (i, ticker) in enumerate(keys(views))
         Q[i] = views[ticker]

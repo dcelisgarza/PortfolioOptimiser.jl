@@ -38,7 +38,9 @@ function BlackLitterman(
     if isnothing(absolute_views)
         @assert !isnothing(Q) "if not providing an absolute_views dictionary, must provide a Q vector"
         if isnothing(P) && length(Q) == num_tickers
-            P = I[num_tickers]
+            # If there's no P and views are provided on every asset, P defaults to the identity matrix.
+            # P = I[num_tickers]
+            P = Diagonal(I, num_tickers)
         else
             @assert !isnothing(P) "if Q does not have an entry for every ticker, must provide a P matrix"
         end
@@ -46,7 +48,7 @@ function BlackLitterman(
         Q, P = _parse_views(tickers, absolute_views)
     end
     K = length(Q)
-    @assert size(P) == (num_tickers, K)
+    @assert size(P) == (num_tickers, K) "size of P must be equal to ($num_tickers, $K), it is equal to $(size(P))"
 
     _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
 
