@@ -37,7 +37,7 @@ function BlackLitterman(
 
     if isnothing(absolute_views)
         @assert !isnothing(Q) "if not providing an absolute_views dictionary, must provide a Q vector"
-        if length(Q) == num_tickers
+        if isnothing(P) && length(Q) == num_tickers
             P = I[num_tickers]
         else
             @assert !isnothing(P) "if Q does not have an entry for every ticker, must provide a P matrix"
@@ -48,10 +48,7 @@ function BlackLitterman(
     K = length(Q)
     @assert size(P) == (K, num_tickers)
 
-    if risk_aversion <= 0
-        @warn("risk_aversion: $risk_aversion, must be greater than zero, defaulting to 1")
-        risk_aversion = 1
-    end
+    _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
 
     if typeof(pi) <: AbstractVector
         @assert length(pi) == num_tickers
@@ -67,10 +64,8 @@ function BlackLitterman(
         throw(ArgumentError("pi must be either nothing, :market or :equal"))
     end
 
-    if !(0 <= tau <= 1)
-        @warn("tau: $tau, must be between 0 and 1, defaulting to 0.05")
-        tau = 0.05
-    end
+    _val_compare_benchmark(tau, <=, 0, 0.05, "tau")
+    _val_compare_benchmark(tau, >, 1, 0.05, "tau")
 
     if typeof(omega) <: AbstractArray
         # Do nothing, all is good.
