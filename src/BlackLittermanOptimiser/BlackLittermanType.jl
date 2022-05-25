@@ -20,7 +20,7 @@ end
 
 function BlackLitterman(
     tickers::AbstractArray,
-    cov_mtx::AbstractArray,
+    cov_mtx::AbstractArray;
     rf::Real = 0.02,
     risk_aversion::Real = 1,
     tau::Real = 0.05,
@@ -127,34 +127,5 @@ function BlackLitterman(
         A,
         post_ret,
         post_cov,
-    )
-end
-function BlackLitterman(
-    tickers,
-    cov_mtx;
-    rf = 0.02,
-    risk_aversion = 1,
-    tau = 0.05,
-    omega = :default, # either a square matrix, :idzorek, :default
-    pi = nothing, # either a vector, `nothing`, `:equal`, or `:market`
-    absolute_views = nothing,
-    Q = nothing,
-    P = nothing,
-    view_confidence = nothing,
-    market_caps = nothing,
-)
-    BlackLitterman(
-        tickers,
-        cov_mtx,
-        rf,
-        risk_aversion,
-        tau,
-        omega,
-        pi,
-        absolute_views,
-        Q,
-        P,
-        view_confidence,
-        market_caps,
     )
 end
