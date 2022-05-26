@@ -434,4 +434,9 @@ function _setup_and_optimise(model, optimiser, silent, optimiser_attributes = ()
     end
 
     optimize!(model)
+
+    term_status = termination_status(model)
+    if term_status ∉ (MOI.OPTIMAL, MOI.LOCALLY_SOLVED)
+        @warn("The optimiser returned an infeasable solution with code: $term_status.")
+    end
 end

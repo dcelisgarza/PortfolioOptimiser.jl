@@ -418,47 +418,6 @@ gAlloc.shares == testshares
 
 #############################################
 
-ef = MeanVar(names(df)[2:end], bl.post_ret, S)
-min_volatility!(ef)
-testweights = [
-    0.007909381852655,
-    0.030690045397095,
-    0.010506892855973,
-    0.027486977795442,
-    0.012277615067487,
-    0.033411624151502,
-    0.0,
-    0.139848395652807,
-    0.0,
-    0.0,
-    0.287822361245511,
-    0.0,
-    0.0,
-    0.125283674542888,
-    0.0,
-    0.015085474081069,
-    0.0,
-    0.193123876049454,
-    0.0,
-    0.116553681308117,
-]
-isapprox(ef.weights, testweights, rtol = 1e-4)
-mu, sigma, sr = portfolio_performance(ef)
-mutest, sigmatest, srtest = 0.011450350358250433, 0.1223065907437908, -0.06990342539805944
-isapprox(mu, mutest, rtol = 1e-4)
-isapprox(sigma, sigmatest, rtol = 1e-6)
-isapprox(sr, srtest, rtol = 1e-3)
-
-ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [2, 1, 2, 26, 16, 82, 16, 2, 54, 20]
-lpAlloc.shares == testshares
-
-gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [81, 54, 16, 16, 20, 25, 2, 2, 3, 1]
-gAlloc.shares == testshares
-
 max_quadratic_utility!(ef)
 testweights = [
     0.142307545055626,
@@ -1820,65 +1779,5 @@ bl = BlackLitterman(
     P = picking,
 )
 
-using Ipopt, JuMP
-model = Model()
-function _setup_and_optimise(model, optimiser, silent, optimiser_attributes = ())
-    MOI.set(model, MOI.Silent(), silent)
-    set_optimizer(model, optimiser)
-
-    if isempty(optimiser_attributes)
-        # Do nothing.
-    elseif typeof(optimiser_attributes) <: Pair
-        set_optimizer_attributes(model, optimiser_attributes)
-    else
-        set_optimizer_attributes(model, optimiser_attributes...)
-    end
-    optimize!(model)
-end
-
-_setup_and_optimise(model, Ipopt.Optimizer, true, ("tol" => 1e-4, "max_iter" => 100))
-
-get_optimizer_attribute(model, "max_iter")
-
-#("tol" => 1e-4, "max_iter" => 100)
-
-ef = MeanVar(names(df)[2:end], bl.post_ret, S)
-min_volatility!(ef)
-testweights = [
-    0.007909381852655,
-    0.030690045397095,
-    0.010506892855973,
-    0.027486977795442,
-    0.012277615067487,
-    0.033411624151502,
-    0.0,
-    0.139848395652807,
-    0.0,
-    0.0,
-    0.287822361245511,
-    0.0,
-    0.0,
-    0.125283674542888,
-    0.0,
-    0.015085474081069,
-    0.0,
-    0.193123876049454,
-    0.0,
-    0.116553681308117,
-]
-isapprox(ef.weights, testweights, rtol = 1e-4)
-mu, sigma, sr = portfolio_performance(ef)
-mutest, sigmatest, srtest = 0.011450350358250433, 0.1223065907437908, -0.06990342539805944
-isapprox(mu, mutest, rtol = 1e-4)
-isapprox(sigma, sigmatest, rtol = 1e-6)
-isapprox(sr, srtest, rtol = 1e-3)
-
-ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [2, 1, 2, 26, 16, 82, 16, 2, 54, 20]
-lpAlloc.shares == testshares
-
-gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [81, 54, 16, 16, 20, 25, 2, 2, 3, 1]
-gAlloc.shares == testshares
+ef = MeanVar(tickers, bl.post_ret, S)
+ef = MeanVar(tickers, bl.post_ret, S, weight_bounds = (-1, 1), market_neutral = true)
