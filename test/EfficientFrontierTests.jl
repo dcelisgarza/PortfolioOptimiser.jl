@@ -86,7 +86,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         0.0,
     ]
     @test ef.weights ≈ testweights
-    mu, sigma, sr = portfolio_performance(ef)
+    mu, sigma, sr = portfolio_performance(ef; verbose = true)
     mutest, sigmatest, srtest = 0.08173248653446699, 0.2193583713684134, 0.2814229798906876
     @test mu ≈ mutest
     @test sigma ≈ sigmatest

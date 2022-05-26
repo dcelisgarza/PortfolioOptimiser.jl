@@ -51,5 +51,4 @@ function portfolio_performance(portfolio::MeanVar; rf = portfolio.rf, verbose = 
 
         return μ, σ, sr
     end
-    return nothing
 end
