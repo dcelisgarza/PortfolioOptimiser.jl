@@ -418,46 +418,6 @@ gAlloc.shares == testshares
 
 #############################################
 
-max_quadratic_utility!(ef)
-testweights = [
-    0.142307545055626,
-    0.0,
-    0.0,
-    0.045165241857315,
-    0.0,
-    0.0,
-    0.019010547882617,
-    0.0,
-    0.793516665204442,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-]
-isapprox(ef.weights, testweights, rtol = 1e-5)
-mu, sigma, sr = portfolio_performance(ef)
-mutest, sigmatest, srtest = 0.0850569180412342, 0.2324517001148201, 0.27987284244038296
-isapprox(mu, mutest, rtol = 1e-6)
-isapprox(sigma, sigmatest, rtol = 1e-6)
-isapprox(sr, srtest, rtol = 1e-6)
-
-ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [1, 3, 20, 276]
-lpAlloc.shares == testshares
-
-gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [265, 1, 3, 19]
-gAlloc.shares == testshares
-
 efficient_risk!(ef, 0.2)
 testweights = [
     2.682965379536906e-01,
@@ -1780,4 +1740,5 @@ bl = BlackLitterman(
 )
 
 ef = MeanVar(tickers, bl.post_ret, S)
-ef = MeanVar(tickers, bl.post_ret, S, weight_bounds = (-1, 1), market_neutral = true)
+
+ef = MeanVar(tickers, bl.post_ret, S, market_neutral = true)
