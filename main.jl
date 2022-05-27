@@ -1062,47 +1062,34 @@ bl = BlackLitterman(
     P = picking,
 )
 
-ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
-
-ef = MeanSemivar(
-    tickers,
-    bl.post_ret,
-    Matrix(returns),
-    weight_bounds = (0, 1),
-    market_neutral = false,
-)
-max_sortino!(ef)
-mumax, varmax, smax = portfolio_performance(ef)
-
-ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (0, 1))
-
-ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
-efficient_return!(ef, 0.09)
+## HROpt
+hrp = HRPOpt(tickers, returns = Matrix(returns))
+idx = sortperm(tickers)
 testweights = [
-    0.26587342118737,
-    0.0965371129134666,
-    -0.1083440586709533,
-    0.0472631405569012,
-    0.0925397377541989,
-    -0.16577616699613,
-    0.0072119213407655,
-    0.0227400114825395,
-    0.10350347319794,
-    -0.0071334231129069,
-    -0.0883015612045468,
-    0.0134635120313752,
-    -0.0009731371433595,
-    0.010494163524052,
-    -0.0066909561294794,
-    0.0173324674445928,
-    -0.0122390919128145,
-    0.0763576474308947,
-    0.232051643617103,
-    -0.5959098573110091,
+    0.05141029982354615,
+    0.012973422626800228,
+    0.02018216653246635,
+    0.04084621303656177,
+    0.015567906456662952,
+    0.0377521927556203,
+    0.04075799338381744,
+    0.06072154753518565,
+    0.04354241996221517,
+    0.03182464218785058,
+    0.02325487286365021,
+    0.04956897986914887,
+    0.10700323656585976,
+    0.017325239748703498,
+    0.08269670342726206,
+    0.010999466705659471,
+    0.15533136214701582,
+    0.02353673037019126,
+    0.10170965737619252,
+    0.07299494662558993,
 ]
-isapprox(ef.weights, testweights, rtol = 5e-2)
-mu, sigma, sr = portfolio_performance(ef)
-mutest, sigmatest, srtest = 0.0900000005909446, 0.08157952690824329, 0.8580584276944535
-isapprox(mu, mutest, rtol = 1e-4)
-isapprox(sigma, sigmatest, rtol = 1e-3)
-isapprox(sr, srtest, rtol = 1e-3)
+hrp.weights[idx] ≈ testweights
+mu, sigma, sr = portfolio_performance(hrp)
+mutest, sigmatest, srtest = 0.10779113291906073, 0.1321728564045751, 0.6642145392571078
+mu ≈ mutest
+sigma ≈ sigmatest
+sr ≈ srtest

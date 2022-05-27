@@ -16,9 +16,9 @@ end
     include("EfficientFrontierTests.jl")
 end
 
-# @safetestset "Hierarchical Risk Parity" begin
-#     include("HRPOptTests.jl")
-# end
+@safetestset "Hierarchical Risk Parity" begin
+    include("HRPOptTests.jl")
+end
 
 # @safetestset "Black Litterman" begin
 #     include("BlackLittermanTests.jl")
