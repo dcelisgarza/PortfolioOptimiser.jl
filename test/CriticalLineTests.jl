@@ -47,7 +47,7 @@ using PortfolioOptimiser
     @test all(sum.(cla.w) .≈ 1)
     @test cla.weights ≈ [0.28619054, 0.0, 0.71380946, 0.0]
     @test sum(cla.weights) == 1
-    mu, sigma, sr = portfolio_performance(cla)
+    mu, sigma, sr = portfolio_performance(cla, verbose = true)
     @test mu ≈ port_return(cla.weights, cla.mean_ret)
     @test sigma ≈ sqrt(port_variance(cla.weights, cla.cov_mtx))
     @test sr ≈ (mu - 0.02) / sigma
