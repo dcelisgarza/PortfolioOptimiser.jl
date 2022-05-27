@@ -427,169 +427,7 @@ ef = MeanVar(
 
 ## Mean port_semivar
 
-max_quadratic_utility!(ef)
-testweights = [
-    1.100000000000000e-15,
-    1.200000000000000e-15,
-    1.100000000000000e-15,
-    1.000000000000000e-15,
-    1.200000000000000e-15,
-    1.000000000000000e-15,
-    5.000000000000000e-16,
-    1.500000000000000e-15,
-    9.999999999999784e-01,
-    9.000000000000000e-16,
-    1.500000000000000e-15,
-    8.000000000000000e-16,
-    7.000000000000000e-16,
-    1.200000000000000e-15,
-    9.000000000000000e-16,
-    1.100000000000000e-15,
-    1.000000000000000e-15,
-    1.300000000000000e-15,
-    5.000000000000000e-16,
-    1.300000000000000e-15,
-]
-isapprox(ef.weights, testweights, rtol = 1e-3)
-mu, sigma, sr = portfolio_performance(ef)
-mutest, sigmatest, srtest = 0.091419219703374, 0.1829724238719523, 0.39032777831786586
-isapprox(mu, mutest, rtol = 1e-3)
-isapprox(sigma, sigmatest, rtol = 1e-3)
-isapprox(sr, srtest, rtol = 1e-4)
-
-ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [334]
-lpAlloc.shares == testshares
-
-gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [334, 1]
-gAlloc.shares == testshares
-
-efficient_risk!(ef, 0.13)
-testweights = [
-    2.874750375415112e-01,
-    6.195275902493500e-02,
-    4.152863104000000e-07,
-    3.754883121164440e-02,
-    2.335468505800000e-06,
-    4.139595347000000e-07,
-    5.180351073718700e-03,
-    2.282885531500000e-06,
-    4.040036784043188e-01,
-    8.569500938000000e-07,
-    1.073950326300000e-06,
-    4.148599173000000e-07,
-    3.056287327000000e-07,
-    5.362159168381390e-02,
-    3.496258672140000e-05,
-    1.238539893500000e-06,
-    1.317666202400000e-06,
-    6.146402530123640e-02,
-    8.870790761308990e-02,
-    2.002169627000000e-07,
-]
-isapprox(ef.weights, testweights, rtol = 1e-2)
-mu, sigma, sr = portfolio_performance(ef)
-mutest, sigmatest, srtest = 0.06959704494304779, 0.1300556974853854, 0.38135234289617415
-isapprox(mu, mutest, rtol = 1e-3)
-isapprox(sigma, sigmatest, rtol = 1e-3)
-isapprox(sr, srtest, rtol = 1e-3)
-
-ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [3, 3, 2, 135, 7, 17, 8]
-lpAlloc.shares == testshares
-
-gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [135, 3, 8, 3, 17, 6, 2, 6, 1, 1]
-gAlloc.shares == testshares
-
-efficient_return!(ef, 0.09)
-testweights = [
-    3.904746815385050e-02,
-    5.923397958900000e-06,
-    9.829962419900001e-06,
-    4.485521037400000e-06,
-    6.398473463000000e-06,
-    1.058079920190000e-05,
-    8.609310912354300e-03,
-    9.421584972200000e-06,
-    9.522038516156038e-01,
-    7.426588225800000e-06,
-    1.019932942990000e-05,
-    9.315528047900000e-06,
-    1.118486159000000e-05,
-    6.553049888500000e-06,
-    5.498591175600000e-06,
-    8.239081503600000e-06,
-    6.940805469200000e-06,
-    7.319651581700000e-06,
-    3.430088268500000e-06,
-    1.661143469400000e-05,
-]
-isapprox(ef.weights, testweights, rtol = 1e-2)
-mu, sigma, sr = portfolio_performance(ef)
-mutest, sigmatest, srtest = 0.09000090563810152, 0.17811334827609804, 0.393013248673487
-isapprox(mu, mutest, rtol = 1e-5)
-isapprox(sigma, sigmatest, rtol = 1e-4)
-isapprox(sr, srtest, rtol = 1e-4)
-
-ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [1, 9, 319, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-lpAlloc.shares == testshares
-
-gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [318, 9, 1, 1, 1, 1, 1, 1, 1, 1]
-gAlloc.shares == testshares
-
 ### Mean port_semivar market neutral
-ef = MeanSemivar(
-    tickers,
-    bl.post_ret,
-    Matrix(dropmissing(returns)),
-    benchmark = 0,
-    market_neutral = true,
-    weight_bounds = (-1, 1),
-)
-min_semivar!(ef)
-testweights = [
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-]
-isapprox(ef.weights, testweights, atol = 1e-1)
-mu, sigma, sr = portfolio_performance(ef)
-mutest, sigmatest, srtest = 0, 0, 0
-isapprox(mu, mutest, atol = 1e-2)
-isapprox(sigma, sigmatest, atol = 1e-2)
-
-ef.weights .= testweights
-lpAlloc, remaining =
-    Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000, silent = true)
-testshares = nothing
-lpAlloc.shares == testshares
 
 gAlloc, remaining =
     Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
@@ -1393,4 +1231,16 @@ bl = BlackLitterman(
 
 ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
 
-ef = MeanVar(tickers, bl.post_ret, S, market_neutral = true)
+ef = MeanSemivar(
+    tickers,
+    bl.post_ret,
+    Matrix(returns),
+    weight_bounds = (0, 1),
+    market_neutral = false,
+)
+max_sortino!(ef)
+mumax, varmax, smax = portfolio_performance(ef)
+
+ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (0, 1))
+
+ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), market_neutral = true)

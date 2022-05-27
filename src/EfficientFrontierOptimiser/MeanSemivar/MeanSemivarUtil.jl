@@ -55,5 +55,4 @@ function portfolio_performance(portfolio::MeanSemivar; rf = portfolio.rf, verbos
 
         return μ, semi_σ, sortino_ratio
     end
-    return nothing
 end

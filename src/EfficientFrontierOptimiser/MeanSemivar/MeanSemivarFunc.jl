@@ -25,6 +25,31 @@ function min_semivar!(
     return nothing
 end
 
+function max_return(
+    portfolio::MeanSemivar;
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+    optimiser_attributes = (),
+)
+    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
+
+    model = copy(portfolio.model)
+
+    w = model[:w]
+
+    mean_ret = portfolio.mean_ret
+    @objective(model, Min, -port_return(w, mean_ret))
+    # Add extra terms to objective function.
+    extra_obj_terms = portfolio.extra_obj_terms
+    if !isempty(extra_obj_terms)
+        _add_to_objective!.(model, extra_obj_terms)
+    end
+
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
+
+    return model
+end
+
 function max_sortino!(
     portfolio::MeanSemivar,
     rf = portfolio.rf;
@@ -196,15 +221,17 @@ function efficient_return!(
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
-    model = portfolio.model
-
     mean_ret = portfolio.mean_ret
-    max_ret = maximum(mean_ret)
+    max_ret_model = max_return(portfolio; optimiser, silent, optimiser_attributes)
+    w_max_ret = value.(max_ret_model[:w])
+    max_ret = port_return(w_max_ret, mean_ret)
 
     correction = max(max_ret / 2, 0)
     _function_vs_portfolio_val_warn(target_ret, portfolio.target_ret, "target_ret")
     target_ret = _val_compare_benchmark(target_ret, >, max_ret, correction, "target_ret")
     target_ret = _val_compare_benchmark(target_ret, <, 0, correction, "target_ret")
+
+    model = portfolio.model
 
     w = model[:w]
     @constraint(model, target_ret, port_return(w, mean_ret) >= target_ret)
