@@ -1077,3 +1077,32 @@ mumax, varmax, smax = portfolio_performance(ef)
 ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (0, 1))
 
 ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
+efficient_return!(ef, 0.09)
+testweights = [
+    0.26587342118737,
+    0.0965371129134666,
+    -0.1083440586709533,
+    0.0472631405569012,
+    0.0925397377541989,
+    -0.16577616699613,
+    0.0072119213407655,
+    0.0227400114825395,
+    0.10350347319794,
+    -0.0071334231129069,
+    -0.0883015612045468,
+    0.0134635120313752,
+    -0.0009731371433595,
+    0.010494163524052,
+    -0.0066909561294794,
+    0.0173324674445928,
+    -0.0122390919128145,
+    0.0763576474308947,
+    0.232051643617103,
+    -0.5959098573110091,
+]
+isapprox(ef.weights, testweights, rtol = 5e-2)
+mu, sigma, sr = portfolio_performance(ef)
+mutest, sigmatest, srtest = 0.0900000005909446, 0.08157952690824329, 0.8580584276944535
+isapprox(mu, mutest, rtol = 1e-4)
+isapprox(sigma, sigmatest, rtol = 1e-3)
+isapprox(sr, srtest, rtol = 1e-3)

@@ -1240,7 +1240,7 @@ end
     @test isapprox(ef.weights, testweights, rtol = 5e-2)
     mu, sigma, sr = portfolio_performance(ef)
     mutest, sigmatest, srtest = 0.0900000005909446, 0.08157952690824329, 0.8580584276944535
-    @test isapprox(mu, mutest, rtol = 1e-7)
+    @test isapprox(mu, mutest, rtol = 1e-4)
     @test isapprox(sigma, sigmatest, rtol = 1e-3)
     @test isapprox(sr, srtest, rtol = 1e-3)
 
