@@ -64,9 +64,9 @@ end
     mean_ret = portfolio.mean_ret
     cov_mtx = portfolio.cov_mtx
     w = a * w0 + (1 - a) * w1
-    b = port_return(w, mean_ret)
-    c = sqrt(dot(w, cov_mtx, w))
-    return b / c
+    mu = port_return(w, mean_ret)
+    sigma = sqrt(port_variance(w, cov_mtx))
+    return mu / sigma
 end
 
 function _golden_section(

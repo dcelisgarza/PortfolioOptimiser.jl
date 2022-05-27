@@ -2,6 +2,14 @@
 
 using Clustering, LinearAlgebra, Statistics
 
-include("HRPOpt.jl")
+include("HRPOptType.jl")
+include("HRPOptFunc.jl")
+include("HRPOptUtil.jl")
 
-export HRPOpt, optimise!, min_volatility, max_quadratic_utility, portfolio_performance
+export HRPOpt,
+    optimise!,
+    min_volatility,
+    max_quadratic_utility,
+    max_return,
+    max_sharpe,
+    portfolio_performance

@@ -1119,8 +1119,19 @@ S = risk_matrix(Cov(), Matrix(returns))
 
 hrp = HRPOpt(tickers, returns = Matrix(returns), risk_aversion=1)
 optimise!(hrp, max_quadratic_utility)
-hrp.weights
-portfolio_performance(hrp, verbose = true)
+testweights = [
+    0.053786684146864876, -0.41265611750315045, 0.09686673404189124, 0.08257285280695957, 0.14492069705070706, 0.4073098824162846, 0.06828156176492603, -0.010348133086424266, 0.056139267832765134, 0.06197799306215815, 0.024927864699722278, 0.035677589026737885, -0.15478152888511781, -0.013222509868836205, 0.14335770434850123, 0.24250548421907214, 0.1476799007815831, -0.013608071045093663, 0.06258638595359726, -0.023974241763148114
+    ]
+hrp.weights ≈ testweights
+mu, sigma, sr = portfolio_performance(hrp, verbose = true)
+mutest, sigmatest, srtest = 0.1501811670967654, 0.23503576141992305, 0.5538781260787767
+mu ≈ mutest
+sigma ≈ sigmatest
+sr ≈ srtest
+
+
+
+
 
 hrp = HRPOpt(tickers, returns = Matrix(returns), risk_aversion=2)
 optimise!(hrp, max_quadratic_utility)
