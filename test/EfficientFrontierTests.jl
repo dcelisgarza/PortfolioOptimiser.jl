@@ -62,7 +62,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase
     )
 
     ef = MeanVar(tickers, bl.post_ret, S)
-    @test 0, 0, 0 == portfolio_performance(ef)
+    @test (0.0, 0.0, 0.0) == portfolio_performance(ef)
+
     max_sharpe!(ef)
     testweights = [
         0.2218961322310675,
@@ -734,7 +735,7 @@ end
     )
 
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
-    @test 0, 0, 0 == portfolio_performance(ef)
+    @test (0.0, 0.0, 0.0) == portfolio_performance(ef)
 
     max_sortino!(ef)
     mumax, varmax, smax = portfolio_performance(ef)
