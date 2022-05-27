@@ -671,3 +671,141 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase
     testshares = [2, 15, 57, 6, 1, 5, 13, 3, 6, 1, 1, 1, 2, -158, -13, -160, -45, -7]
     @test gAlloc.shares == testshares
 end
+
+@testset "Mean Semivar" begin
+    df = CSV.read("./assets/stock_prices.csv", DataFrame)
+    dropmissing!(df)
+    returns = returns_from_prices(df[!, 2:end])
+    tickers = names(df)[2:end]
+
+    mu = vec(ret_model(MRet(), Matrix(returns)))
+    S = risk_matrix(Cov(), Matrix(returns))
+
+    spy_prices = CSV.read("./assets/spy_prices.csv", DataFrame)
+    delta = market_implied_risk_aversion(spy_prices[!, 2])
+    # In the order of the dataframes, the
+    mcapsdf = DataFrame(
+        ticker = tickers,
+        mcap = [
+            927e9,
+            1.19e12,
+            574e9,
+            533e9,
+            867e9,
+            96e9,
+            43e9,
+            339e9,
+            301e9,
+            51e9,
+            61e9,
+            78e9,
+            0,
+            295e9,
+            1e9,
+            22e9,
+            288e9,
+            212e9,
+            422e9,
+            102e9,
+        ],
+    )
+
+    prior = market_implied_prior_returns(mcapsdf[!, 2], S, delta)
+
+    # 1. SBUX drop by 20%
+    # 2. GOOG outperforms FB by 10%
+    # 3. BAC and JPM will outperform T and GE by 15%
+    views = [-0.20, 0.10, 0.15]
+    picking = hcat(
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0],
+    )
+
+    bl = BlackLitterman(
+        mcapsdf[!, 1],
+        S;
+        rf = 0,
+        tau = 0.01,
+        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        Q = views,
+        P = picking,
+    )
+
+    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    max_sortino!(ef)
+    mumax, varmax, smax = portfolio_performance(ef)
+
+    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    efficient_risk!(ef, varmax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mu, mumax, rtol = 1e-5)
+    @test isapprox(sigma, varmax, rtol = 1e-5)
+    @test isapprox(sr, smax, rtol = 1e-6)
+
+    efficient_return!(ef, mumax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mu, mumax, rtol = 1e-5)
+    @test isapprox(sigma, varmax, rtol = 1e-4)
+    @test isapprox(sr, smax, rtol = 1e-4)
+
+    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    max_sortino!(ef, 0.03)
+    mumax, varmax, smax = portfolio_performance(ef, rf = 0.03)
+
+    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    efficient_risk!(ef, varmax)
+    mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
+    @test isapprox(mu, mumax, rtol = 1e-5)
+    @test isapprox(sigma, varmax, rtol = 1e-5)
+    @test isapprox(sr, smax, rtol = 1e-7)
+
+    efficient_return!(ef, mumax)
+    mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
+    @test isapprox(mu, mumax, rtol = 1e-5)
+    @test isapprox(sigma, varmax, rtol = 1e-3)
+    @test isapprox(sr, smax, rtol = 1e-3)
+
+    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    min_semivar!(ef)
+    testweights = [
+        -8.8369599e-09,
+        0.0521130667306068,
+        -5.54696556e-08,
+        0.0032731356678013,
+        0.0324650564450746,
+        6.3744722e-09,
+        3.37125568e-07,
+        0.1255659243075475,
+        1.633273845e-07,
+        4.5898985e-08,
+        0.3061337299353124,
+        -6.68458646e-08,
+        -1.4187474e-08,
+        0.0967467542201713,
+        0.004653018274916,
+        0.0198838224019178,
+        0.0018092577849403,
+        0.2315968397352792,
+        1.032235721e-07,
+        0.1257588839643445,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-1)
+    mu, sigma, sr = portfolio_performance(ef)
+    mutest, sigmatest, srtest =
+        0.011139799284510227, 0.08497381732464267, -0.1042697738485651
+    @test isapprox(mu, mutest, atol = 1e-2)
+    @test isapprox(sigma, sigmatest, rtol = 1e-3)
+    @test isapprox(sr, srtest, atol = 1e-1)
+
+    ef.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [3, 1, 1, 2, 15, 87, 13, 4, 3, 65, 22]
+    @test lpAlloc.shares == testshares
+
+    gAlloc, remaining =
+        Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [86, 64, 21, 15, 13, 3, 3, 3, 1, 1, 1]
+    @test gAlloc.shares == testshares
+end

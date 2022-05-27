@@ -1,5 +1,5 @@
 function min_semivar!(
-    portfolio::MeanSemivar,
+    portfolio::MeanSemivar;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -27,6 +27,7 @@ end
 
 function max_sortino!(
     portfolio::MeanSemivar,
+    rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -36,6 +37,9 @@ function max_sortino!(
             "Max sortino uses a variable transformation that changes the constraints and objective function. Please create a new instance instead.",
         ),
     )
+
+    _function_vs_portfolio_val_warn(rf, portfolio.rf, "rf")
+    rf = _val_compare_benchmark(rf, <=, 0, 0.02, "rf")
 
     model = portfolio.model
 
@@ -124,7 +128,6 @@ function max_sortino!(
     end
     @constraint(model, sum_w, sum(w) - k == 0)
 
-    rf = portfolio.rf
     mean_ret = portfolio.mean_ret
     # Since we increased the unbounded sum of the weights to potentially be as large as k, leave this be. Equation 8.13 in the pdf linked in docs.
     @constraint(model, max_sharpe_return, dot((mean_ret .- rf), w) == 1)
@@ -151,7 +154,7 @@ end
 
 function max_quadratic_utility!(
     portfolio::MeanSemivar,
-    risk_aversion = portfolio.risk_aversion,
+    risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -186,7 +189,7 @@ end
 
 function efficient_return!(
     portfolio::MeanSemivar,
-    target_ret = portfolio.target_ret,
+    target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -224,7 +227,7 @@ end
 
 function efficient_risk!(
     portfolio::MeanSemivar,
-    target_semidev = portfolio.target_semidev,
+    target_semidev = portfolio.target_semidev;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),

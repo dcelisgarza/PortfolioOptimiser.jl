@@ -426,64 +426,6 @@ ef = MeanVar(
 )
 
 ## Mean port_semivar
-ef = MeanSemivar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark = 0)
-max_sortino!(ef)
-mumax, varmax, smax = portfolio_performance(ef)
-
-ef = MeanSemivar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark = 0)
-efficient_risk!(ef, varmax)
-mu, sigma, sr = portfolio_performance(ef)
-isapprox(mu, mumax, rtol = 1e-5)
-isapprox(sigma, varmax, rtol = 1e-5)
-isapprox(sr, smax, rtol = 1e-6)
-
-efficient_return!(ef, mumax)
-mu, sigma, sr = portfolio_performance(ef)
-isapprox(mu, mumax, rtol = 1e-5)
-isapprox(sigma, varmax, rtol = 1e-4)
-isapprox(sr, smax, rtol = 1e-4)
-
-ef = MeanSemivar(tickers, bl.post_ret, Matrix(dropmissing(returns)), benchmark = 0)
-min_semivar!(ef)
-
-testweights = [
-    -8.836959900000000e-09,
-    5.211306673060680e-02,
-    -5.546965560000000e-08,
-    3.273135667801300e-03,
-    3.246505644507460e-02,
-    6.374472200000000e-09,
-    3.371255680000000e-07,
-    1.255659243075475e-01,
-    1.633273845000000e-07,
-    4.589898500000000e-08,
-    3.061337299353124e-01,
-    -6.684586460000000e-08,
-    -1.418747400000000e-08,
-    9.674675422017130e-02,
-    4.653018274916000e-03,
-    1.988382240191780e-02,
-    1.809257784940300e-03,
-    2.315968397352792e-01,
-    1.032235721000000e-07,
-    1.257588839643445e-01,
-]
-isapprox(ef.weights, testweights, rtol = 1e-1)
-mu, sigma, sr = portfolio_performance(ef)
-mutest, sigmatest, srtest = 0.011139799284510227, 0.08497381732464267, -0.1042697738485651
-isapprox(mu, mutest, atol = 1e-2)
-isapprox(sigma, sigmatest, rtol = 1e-3)
-isapprox(sr, srtest, atol = 1e-1)
-
-ef.weights .= testweights
-lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [3, 1, 1, 2, 15, 87, 13, 4, 3, 65, 22]
-lpAlloc.shares == testshares
-
-gAlloc, remaining =
-    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-testshares = [86, 64, 21, 15, 13, 3, 3, 3, 1, 1, 1]
-gAlloc.shares == testshares
 
 max_quadratic_utility!(ef)
 testweights = [
@@ -1449,6 +1391,6 @@ bl = BlackLitterman(
     P = picking,
 )
 
-ef = MeanVar(tickers, bl.post_ret, S)
+ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
 
 ef = MeanVar(tickers, bl.post_ret, S, market_neutral = true)
