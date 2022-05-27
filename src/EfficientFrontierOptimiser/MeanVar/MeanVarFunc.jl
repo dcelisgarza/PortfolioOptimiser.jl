@@ -84,8 +84,8 @@ end
 """
 ```
 max_sharpe!(
-    portfolio::MeanVar;
-    rf = portfolio.rf,
+    portfolio::MeanVar,
+    rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -108,8 +108,8 @@ Uses a variable transformation to turn the nonlinear objective that is the sharp
     The variable transformation means any extra terms in the objective function may not work as intended. If you need to add extra objective terms, use [`custom_nloptimiser!`](@ref) (see the example) and add the extra objective terms in the objective function.
 """
 function max_sharpe!(
-    portfolio::MeanVar;
-    rf = portfolio.rf,
+    portfolio::MeanVar,
+    rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -233,8 +233,8 @@ end
 """
 ```
 max_quadratic_utility!(
-    portfolio::MeanVar;
-    risk_aversion = portfolio.risk_aversion,
+    portfolio::MeanVar,
+    risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -249,8 +249,8 @@ Maximise the [`quadratic_utility`](@ref) of a [`MeanVar`](@ref) portfolio. Inter
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
 function max_quadratic_utility!(
-    portfolio::MeanVar;
-    risk_aversion = portfolio.risk_aversion,
+    portfolio::MeanVar,
+    risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -286,8 +286,8 @@ end
 """
 ```
 efficient_return!(
-    portfolio::MeanVar;
-    target_ret = portfolio.target_ret,
+    portfolio::MeanVar,
+    target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -302,8 +302,8 @@ Minimise the [`port_variance`](@ref) of a [`MeanVar`](@ref) portfolio subject to
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
 function efficient_return!(
-    portfolio::MeanVar;
-    target_ret = portfolio.target_ret,
+    portfolio::MeanVar,
+    target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -346,8 +346,8 @@ end
 """
 ```
 efficient_risk!(
-    portfolio::MeanVar;
-    target_volatility = portfolio.target_volatility,
+    portfolio::MeanVar,
+    target_volatility = portfolio.target_volatility;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -362,8 +362,8 @@ Maximise the [`port_return`](@ref) of a [`MeanVar`](@ref) portfolio subject to t
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
 function efficient_risk!(
-    portfolio::MeanVar;
-    target_volatility = portfolio.target_volatility,
+    portfolio::MeanVar,
+    target_volatility = portfolio.target_volatility;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),

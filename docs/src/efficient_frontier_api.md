@@ -35,29 +35,29 @@ min_volatility!(
 )
 max_return(portfolio::MeanVar; optimiser = Ipopt.Optimizer, silent = true, optimiser_attributes = (),)
 max_sharpe!(
-    portfolio::MeanVar;
-    rf = portfolio.rf,
+    portfolio::MeanVar,
+    rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
 )
 max_quadratic_utility!(
-    portfolio::MeanVar;
-    risk_aversion = portfolio.risk_aversion,
+    portfolio::MeanVar,
+    risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
 )
 efficient_return!(
-    portfolio::MeanVar;
-    target_ret = portfolio.target_ret,
+    portfolio::MeanVar,
+    target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
 )
 efficient_risk!(
-    portfolio::MeanVar;
-    target_volatility = portfolio.target_volatility,
+    portfolio::MeanVar,
+    target_volatility = portfolio.target_volatility;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
