@@ -62,6 +62,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase
     )
 
     ef = MeanVar(tickers, bl.post_ret, S)
+    @test 0, 0, 0 == portfolio_performance(ef)
     max_sharpe!(ef)
     testweights = [
         0.2218961322310675,
@@ -733,6 +734,8 @@ end
     )
 
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    @test 0, 0, 0 == portfolio_performance(ef)
+
     max_sortino!(ef)
     mumax, varmax, smax = portfolio_performance(ef)
 
@@ -1299,4 +1302,65 @@ end
     testshares =
         [2, 21, 35, 6, 1, 21, 3, 3, 3, 8, 2, 8, -159, -204, -11, -39, -1, -3, -7, -4]
     @test gAlloc.shares == testshares
+end
+
+@testset "Efficient CVaR" begin
+    df = CSV.read("./assets/stock_prices.csv", DataFrame)
+    dropmissing!(df)
+    returns = returns_from_prices(df[!, 2:end])
+    tickers = names(df)[2:end]
+
+    mu = vec(ret_model(MRet(), Matrix(returns)))
+    S = risk_matrix(Cov(), Matrix(returns))
+
+    spy_prices = CSV.read("./assets/spy_prices.csv", DataFrame)
+    delta = market_implied_risk_aversion(spy_prices[!, 2])
+    # In the order of the dataframes, the
+    mcapsdf = DataFrame(
+        ticker = tickers,
+        mcap = [
+            927e9,
+            1.19e12,
+            574e9,
+            533e9,
+            867e9,
+            96e9,
+            43e9,
+            339e9,
+            301e9,
+            51e9,
+            61e9,
+            78e9,
+            0,
+            295e9,
+            1e9,
+            22e9,
+            288e9,
+            212e9,
+            422e9,
+            102e9,
+        ],
+    )
+
+    prior = market_implied_prior_returns(mcapsdf[!, 2], S, delta)
+
+    # 1. SBUX drop by 20%
+    # 2. GOOG outperforms FB by 10%
+    # 3. BAC and JPM will outperform T and GE by 15%
+    views = [-0.20, 0.10, 0.15]
+    picking = hcat(
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0],
+    )
+
+    bl = BlackLitterman(
+        mcapsdf[!, 1],
+        S;
+        rf = 0,
+        tau = 0.01,
+        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        Q = views,
+        P = picking,
+    )
 end

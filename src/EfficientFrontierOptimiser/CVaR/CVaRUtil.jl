@@ -33,5 +33,4 @@ function portfolio_performance(portfolio::EfficientCVaR; verbose = false)
 
         return μ, cvar_val
     end
-    return nothing
 end

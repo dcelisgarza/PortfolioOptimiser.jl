@@ -45,5 +45,4 @@ function portfolio_performance(portfolio::EfficientCDaR; verbose = false)
 
         return μ, cdar_val
     end
-    return nothing
 end
