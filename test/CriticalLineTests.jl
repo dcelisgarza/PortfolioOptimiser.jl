@@ -1,5 +1,5 @@
 using Test
-using PortfolioOptimiser.CriticalLineOptimiser, PortfolioOptimiser.BaseOptimiser
+using PortfolioOptimiser
 
 @testset "Critical Line Optimiser" begin
     tickers = ["AAPL", "GOOG", "AMD", "MSFT"]
