@@ -1061,3 +1061,84 @@ bl = BlackLitterman(
     Q = views,
     P = picking,
 )
+
+# Reading in the data; preparing expected returns and a risk model
+df = CSV.read("./test/assets/stock_prices.csv", DataFrame)
+dropmissing!(df)
+tickers = names(df)[2:end]
+returns = returns_from_prices(df[!, 2:end])
+
+mu = vec(ret_model(MRet(), Matrix(returns)))
+S = risk_matrix(Cov(), Matrix(returns))
+
+hrp = HRPOpt(tickers, returns = Matrix(returns))
+optimise!(hrp, min_volatility)
+idx = sortperm(tickers)
+testweights = [
+    0.05141029982354615,
+    0.012973422626800228,
+    0.02018216653246635,
+    0.04084621303656177,
+    0.015567906456662952,
+    0.0377521927556203,
+    0.04075799338381744,
+    0.06072154753518565,
+    0.04354241996221517,
+    0.03182464218785058,
+    0.02325487286365021,
+    0.04956897986914887,
+    0.10700323656585976,
+    0.017325239748703498,
+    0.08269670342726206,
+    0.010999466705659471,
+    0.15533136214701582,
+    0.02353673037019126,
+    0.10170965737619252,
+    0.07299494662558993,
+]
+hrp.weights[idx] ≈ testweights
+mu, sigma, sr = portfolio_performance(hrp, verbose = true)
+mutest, sigmatest, srtest = 0.10779113291906073, 0.1321728564045751, 0.6642145392571078
+mu ≈ mutest
+sigma ≈ sigmatest
+sr ≈ srtest
+
+ArgumentError HRPOpt(tickers)
+
+
+
+
+# Reading in the data; preparing expected returns and a risk model
+df = CSV.read("./test/assets/stock_prices.csv", DataFrame)
+dropmissing!(df)
+tickers = names(df)[2:end]
+returns = returns_from_prices(df[!, 2:end])
+
+mu = vec(ret_model(MRet(), Matrix(returns)))
+S = risk_matrix(Cov(), Matrix(returns))
+
+hrp = HRPOpt(tickers, returns = Matrix(returns), risk_aversion=1)
+optimise!(hrp, max_quadratic_utility)
+hrp.weights
+portfolio_performance(hrp, verbose = true)
+
+hrp = HRPOpt(tickers, returns = Matrix(returns), risk_aversion=2)
+optimise!(hrp, max_quadratic_utility)
+portfolio_performance(hrp, verbose = true)
+
+hrp = HRPOpt(tickers, returns = Matrix(returns), risk_aversion=3)
+optimise!(hrp, max_quadratic_utility)
+portfolio_performance(hrp, verbose = true)
+
+hrp = HRPOpt(tickers, returns = Matrix(returns), risk_aversion=10)
+optimise!(hrp, max_quadratic_utility)
+portfolio_performance(hrp, verbose = true)
+
+hrp.weights[hrp.weights .< 0] .= 0
+hrp.weights ./= sum(hrp.weights)
+portfolio_performance(hrp, verbose = true)
+
+alloc, remaining = Allocation(LP(), hrp, Vector(df[end, hrp.tickers]); investment = 10000)
+
+optimise!(hrp, min_volatility)
+portfolio_performance(hrp, verbose=true)

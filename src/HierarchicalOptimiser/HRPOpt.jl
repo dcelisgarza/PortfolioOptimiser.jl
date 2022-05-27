@@ -1,18 +1,23 @@
 abstract type AbstractHRPOpt <: AbstractPortfolioOptimiser end
 
-struct HRPOpt{T1, T2, T3, T4, T5, T6} <: AbstractHRPOpt
+struct HRPOpt{T1, T2, T3, T4, T5, T6, T7, T8} <: AbstractHRPOpt
     tickers::T1
-    weights::T2
-    returns::T3
-    cov_mtx::T4
-    linkage::T5
-    clusters::T6
+    mean_ret::T2
+    weights::T3
+    returns::T4
+    cov_mtx::T5
+    risk_aversion::T6
+    linkage::T7
+    clusters::T8
 end
 function HRPOpt(
     tickers::AbstractVector{<:AbstractString};
     linkage::Symbol = :single,
     returns = nothing,
     cov_mtx = nothing,
+    mean_ret = nothing,
+    risk_aversion = 1,
+    D = :default,
 )
     if isnothing(returns) && isnothing(cov_mtx)
         throw(ArgumentError("Either returns or cov_mtx must be defined."))
@@ -28,22 +33,73 @@ function HRPOpt(
         cor_mtx = cov2cor(cov_mtx)
     end
 
-    D = Symmetric(sqrt.(clamp.((1 .- cor_mtx) / 2, 0, 1)))
+    if D == :default
+        D = Symmetric(sqrt.(clamp.((1 .- cor_mtx) / 2, 0, 1)))
+    elseif D <: AbstractArray
+        @assert size(D) == size(cov_mtx)
+    else
+        throw(
+            ArgumentError(
+                "Distance matrix D must be :default, or a square matrix if size equal to the covariance matrix.",
+            ),
+        )
+    end
     clusters = hclust(D, linkage = linkage)
-    order = clusters.order
-    weights = hrp_allocation(order, cov_mtx)
 
-    return HRPOpt(tickers, weights, returns, cov_mtx, linkage, clusters)
+    weights = zeros(length(tickers))
+
+    return HRPOpt(
+        tickers,
+        mean_ret,
+        weights,
+        returns,
+        cov_mtx,
+        risk_aversion,
+        linkage,
+        clusters,
+    )
 end
 
-function cluster_var(cluster_ticker_idx, cov_mtx)
-    cov_slice = cov_mtx[cluster_ticker_idx, cluster_ticker_idx]
+function min_volatility(portfolio::HRPOpt, cluster_ticker_idx)
+    cov_slice = portfolio.cov_mtx[cluster_ticker_idx, cluster_ticker_idx]
+
+    weights = _hrp_sub_weights(cov_slice)
+
+    return port_variance(weights, cov_slice)
+end
+
+function max_return(portfolio::HRPOpt, cluster_ticker_idx)
+    cov_slice = portfolio.cov_mtx[cluster_ticker_idx, cluster_ticker_idx]
+
+    weights = _hrp_sub_weights(cov_slice)
+
+    return port_return(weights, cov_slice)
+end
+
+function max_quadratic_utility(portfolio::HRPOpt, cluster_ticker_idx)
+    isnothing(portfolio.mean_ret) ?
+    mean_ret = mean(portfolio.returns[:, cluster_ticker_idx], dims = 1) :
+    mean_ret = portfolio.mean_ret[cluster_ticker_idx]
+
+    cov_slice = portfolio.cov_mtx[cluster_ticker_idx, cluster_ticker_idx]
+
+    risk_aversion = portfolio.risk_aversion
+
+    weights = _hrp_sub_weights(cov_slice)
+
+    return 1 / quadratic_utility(weights, mean_ret, cov_slice, risk_aversion)
+end
+
+function _hrp_sub_weights(cov_slice)
     weights = diag(inv(Diagonal(cov_slice)))
     weights /= sum(weights)
-    return dot(weights, cov_slice, weights)
+
+    return weights
 end
 
-function hrp_allocation(ordered_ticker_idx, cov_mtx)
+function optimise!(portfolio::HRPOpt, obj, obj_params...)
+    ordered_ticker_idx = portfolio.clusters.order
+
     w = ones(length(ordered_ticker_idx))
     cluster_tickers = [ordered_ticker_idx] # All items in one cluster.
 
@@ -57,15 +113,18 @@ function hrp_allocation(ordered_ticker_idx, cov_mtx)
         for i in 1:2:length(cluster_tickers)
             first_cluster = cluster_tickers[i]
             second_cluster = cluster_tickers[i + 1]
-            # Form the inverse variance portfolio for this pair
-            first_variance = cluster_var(first_cluster, cov_mtx)
-            second_variance = cluster_var(second_cluster, cov_mtx)
-            alpha = 1 - first_variance / (first_variance + second_variance)
+            # Maximise the inverse of the convex objective.
+            first_measure = obj(portfolio, first_cluster, obj_params...)
+            second_measure = obj(portfolio, second_cluster, obj_params...)
+            alpha = 1 - first_measure / (first_measure + second_measure)
             w[first_cluster] *= alpha  # weight 1
             w[second_cluster] *= 1 - alpha  # weight 2
         end
     end
-    return w
+
+    portfolio.weights .= w
+
+    return nothing
 end
 
 function portfolio_performance(portfolio::HRPOpt; rf = 0.02, freq = 252, verbose = false)

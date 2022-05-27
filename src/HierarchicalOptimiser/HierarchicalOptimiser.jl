@@ -4,4 +4,4 @@ using Clustering, LinearAlgebra, Statistics
 
 include("HRPOpt.jl")
 
-export HRPOpt, hrp_allocation, cluster_var, portfolio_performance
+export HRPOpt, optimise!, min_volatility, max_quadratic_utility, portfolio_performance

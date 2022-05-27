@@ -20,9 +20,9 @@ end
     include("HRPOptTests.jl")
 end
 
-@safetestset "Critical Line" begin
-    include("CriticalLineTests.jl")
-end
+# @safetestset "Critical Line" begin
+#     include("CriticalLineTests.jl")
+# end
 
 # @safetestset "Asset allocation" begin
 #     include("AssetAllocationTests.jl")

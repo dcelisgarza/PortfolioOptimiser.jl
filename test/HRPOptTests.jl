@@ -9,6 +9,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics
     ret[:, 1] = ret[:, 2] .+ 1
     cov_mtx = cov(ret) * 252
     hropt = HRPOpt(tickers, cov_mtx = cov_mtx)
+    optimise!(hropt, min_volatility)
     @test hropt.weights[1] ≈ hropt.weights[2]
     mu, sigma, sr = portfolio_performance(hropt, verbose = true)
     @test isnan(mu)
@@ -20,6 +21,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics
     cov_mtx = cov(ret) * 252
 
     hropt = HRPOpt(tickers, returns = ret, cov_mtx = cov_mtx)
+    optimise!(hropt, min_volatility)
     @test hropt.weights[1] ≈ hropt.weights[2] * k^2
     portfolio_performance(hropt, verbose = true)
 
@@ -29,6 +31,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics
     ret[:, 4] = k * ret[:, 2] .- 6
     cov_mtx = cov(ret) * 252
     hropt = HRPOpt(tickers, returns = ret)
+    optimise!(hropt, min_volatility)
     @test hropt.weights[2] ≈ hropt.weights[4] * k^2
     portfolio_performance(hropt, verbose = true)
 
@@ -42,6 +45,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics
     S = risk_matrix(Cov(), Matrix(returns))
 
     hrp = HRPOpt(tickers, returns = Matrix(returns))
+    optimise!(hrp, min_volatility)
     idx = sortperm(tickers)
     testweights = [
         0.05141029982354615,
