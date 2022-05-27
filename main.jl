@@ -1131,25 +1131,105 @@ sr ≈ srtest
 
 
 
+df = CSV.read("./test/assets/stock_prices.csv", DataFrame)
+dropmissing!(df)
+returns = returns_from_prices(df[!, 2:end])
+tickers = names(df)[2:end]
+
+mu = vec(ret_model(MRet(), Matrix(returns)))
+S = risk_matrix(Cov(), Matrix(returns))
+
+spy_prices = CSV.read("./test/assets/spy_prices.csv", DataFrame)
+delta = market_implied_risk_aversion(spy_prices[!, 2])
+# In the order of the dataframes, the
+mcapsdf = DataFrame(
+    ticker = tickers,
+    mcap = [
+        927e9,
+        1.19e12,
+        574e9,
+        533e9,
+        867e9,
+        96e9,
+        43e9,
+        339e9,
+        301e9,
+        51e9,
+        61e9,
+        78e9,
+        0,
+        295e9,
+        1e9,
+        22e9,
+        288e9,
+        212e9,
+        422e9,
+        102e9,
+    ],
+)
+
+prior = market_implied_prior_returns(mcapsdf[!, 2], S, delta)
+
+# 1. SBUX drop by 20%
+# 2. GOOG outperforms FB by 10%
+# 3. BAC and JPM will outperform T and GE by 15%
+views = [-0.20, 0.10, 0.15]
+picking = hcat(
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0],
+)
+
+bl = BlackLitterman(
+    mcapsdf[!, 1],
+    S;
+    rf = 0,
+    tau = 0.01,
+    pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+    Q = views,
+    P = picking,
+)
 
 
-hrp = HRPOpt(tickers, returns = Matrix(returns), risk_aversion=2)
-optimise!(hrp, max_quadratic_utility)
-portfolio_performance(hrp, verbose = true)
+ef = MeanVar(tickers, bl.post_ret, S)
 
-hrp = HRPOpt(tickers, returns = Matrix(returns), risk_aversion=3)
-optimise!(hrp, max_quadratic_utility)
-portfolio_performance(hrp, verbose = true)
+max_sharpe!(ef)
+testweights = [
+    0.2218961322310675,
+    0.0,
+    0.0,
+    0.0678019811907844,
+    0.0,
+    0.0,
+    0.0185451412830906,
+    0.0,
+    0.6917567452950577,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+]
+ef.weights ≈ testweights
+mu, sigma, sr = portfolio_performance(ef; verbose = true)
+mutest, sigmatest, srtest = 0.08173248653446699, 0.2193583713684134, 0.2814229798906876
+mu ≈ mutest
+sigma ≈ sigmatest
+sr ≈ srtest
 
-hrp = HRPOpt(tickers, returns = Matrix(returns), risk_aversion=10)
-optimise!(hrp, max_quadratic_utility)
-portfolio_performance(hrp, verbose = true)
+ef.weights .= testweights
+gAlloc, remaining =
+    Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+testshares = [231, 2, 4, 19]
+lpAlloc.shares == testshares
 
-hrp.weights[hrp.weights .< 0] .= 0
-hrp.weights ./= sum(hrp.weights)
-portfolio_performance(hrp, verbose = true)
-
-alloc, remaining = Allocation(LP(), hrp, Vector(df[end, hrp.tickers]); investment = 10000)
-
-optimise!(hrp, min_volatility)
-portfolio_performance(hrp, verbose=true)
+lAlloc, remaining =
+    Allocation(Lazy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+testshares = [231, 2, 4, 19]
+gAlloc.shares == testshares
