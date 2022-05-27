@@ -18,39 +18,17 @@ Returns a tuple of an [`Allocation`](@ref) structure and remaining money after a
 !!! note
     Short positions have negative weights and shares.
 
-- `type`: Allocation algorithm to use, can be `Lazy()`, `Greedy()` or `LP()` (see [`AbstractAllocation`](@ref)).
+- `type`: Allocation algorithm to use, can be `Greedy()` or `LP()` (see [`AbstractAllocation`](@ref)).
 - `portfolio`: Portfolio [`AbstractPortfolioOptimiser`](@ref).
 - `latest_prices`: Vector of latest prices, entries should be in the same order as `portfolio.tickers`.
 - `investment`: value to be invested in the portfolio.
-- `rounding`: `Greedy()` and `Lazy()` support fractional shares, rounds shares down to the nearest multiple of `rounding`. This has no effect on an `LP()` allocation.
+- `rounding`: `Greedy()` supports fractional shares, rounds shares down to the nearest multiple of `rounding`. This has no effect on an `LP()` allocation.
 - `reinvest`: if `true`, reinvests the money earned from short positions of the portfolio into buying more long positions.
 - `short_ratio`: long to short portfolio ratio, 0.2 corresponds to 120/20 long to short shares. If `nothing` defaults to portfolio weights.
 - `optimiser`: only used for the `LP()` allocation. Needs to support mixed-interger linear programming.
 - `silent`: if `true` the optimiser is silent.
 
 Dispatches one of the following depending on `type`:
-
-## Lazy allocation
-
-```julia
-Allocation(
-    type::Lazy,
-    tickers::AbstractArray,
-    weights::AbstractArray,
-    latest_prices::AbstractVector,
-    investment::Real = 1e4,
-    rounding::Real = 1,
-    reinvest::Bool = false,
-    short_ratio::Union{Real, Nothing} = nothing,
-    optimiser = nothing,
-    silent = nothing,
-)
-```
-
-Lazy asset allocation. Simply finds how many shares up to the smallest multiple of `rounding` you can buy for each ticker.
-
-!!! note
-    `optimiser` and `silent` are not used but are in the function signature for dispatch purposes.
 
 ## Greedy allocation
 
@@ -113,13 +91,6 @@ allocLP, leftoverLP = Allocation(LP(), ef, latest_prices; investment = 3590)
 
 # Greedy allocation up to quarter shares.
 allocGreedy, leftoverGreedy = Allocation(Greedy(), ef, latest_prices; rounding = 0.25)
-
-# Lazy allocation with a 110/10 long-short ratio and reinvesting 
-# earnings from selling the short positions into buying long positions.
-allocLazy, leftoverLazy = Allocation(
-                            Lazy(), ef, latest_prices; 
-                            short_ratio = 0.1, reinvest = true
-                        )
 ```
 """
 function Allocation(
