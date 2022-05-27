@@ -105,11 +105,6 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase
     testshares = [231, 2, 4, 19]
     @test gAlloc.shares == testshares
 
-    lAlloc, remaining =
-        Allocation(Lazy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-    testshares = [231, 2, 4, 19]
-    @test lAlloc.shares == testshares
-
     ef = MeanVar(tickers, bl.post_ret, S)
     max_sharpe!(ef, 0.03)
     testweights = [

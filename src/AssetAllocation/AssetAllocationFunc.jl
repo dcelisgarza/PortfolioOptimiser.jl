@@ -152,63 +152,6 @@ function Allocation(
 end
 
 function Allocation(
-    type::Lazy,
-    tickers::AbstractArray,
-    weights::AbstractArray,
-    latest_prices::AbstractVector,
-    investment::Real = 1e4,
-    rounding::Real = 1,
-    reinvest::Bool = false,
-    short_ratio::Union{Real, Nothing} = nothing,
-    optimiser = nothing,
-    silent = nothing,
-    optimiser_attributes = nothing,
-)
-    idx = sortperm(weights, rev = true)
-
-    weights = weights[idx]
-    tickers = tickers[idx]
-    latest_prices = latest_prices[idx]
-
-    if weights[end] < 0
-        return _short_allocation(
-            type,
-            tickers,
-            weights,
-            latest_prices,
-            investment,
-            rounding,
-            reinvest,
-            short_ratio,
-            optimiser,
-            silent,
-        )
-    end
-
-    # If there is no shorting, continue with lazy allocation.
-    n_tickers = length(tickers)
-    shares_bought = zeros(n_tickers)
-    share_costs = zeros(n_tickers)
-
-    norm_price = latest_prices[end]
-    norm_weights = weights / weights[end]
-
-    for i in 1:n_tickers
-        share_costs[i] = norm_price * norm_weights[i]
-        shares_bought[i] = share_costs[i] / latest_prices[i]
-    end
-
-    ratio = investment / sum(share_costs)
-    shares_bought = roundmult.(shares_bought * ratio, rounding, RoundDown)
-
-    # Remove zero weights.
-    tickers, allocated_weights, shares_bought, sum_weights =
-        _clean_zero_shares(shares_bought, tickers, latest_prices)
-
-    return Allocation(tickers, allocated_weights, shares_bought), investment - sum_weights
-end
-
-function Allocation(
     type::Greedy,
     tickers::AbstractArray,
     weights::AbstractArray,

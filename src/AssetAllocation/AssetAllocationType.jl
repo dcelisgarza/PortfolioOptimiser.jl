@@ -1,19 +1,16 @@
 """
 ```
 abstract type AbstractAllocation end
-struct Lazy <: AbstractAllocation end
 struct Greedy <: AbstractAllocation end
 struct LP <: AbstractAllocation end
 ```
 
 Types for allocation dispatch.
 
-- `Lazy`: Lazy allocation algorithm. Can do fractional shares.
 - `Greedy`: Greedy allocation algorithm. Can do fractional shares.
 - `LP`: Mixed linear integer programming algorithm. Can only handle full shares.
 """
 abstract type AbstractAllocation end
-struct Lazy <: AbstractAllocation end
 struct Greedy <: AbstractAllocation end
 struct LP <: AbstractAllocation end
 
