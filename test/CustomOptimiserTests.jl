@@ -14,8 +14,6 @@ using PortfolioOptimiser, CSV, DataFrames
         k = obj_params[2]
         w = [i for i in w]
         PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
-        # PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
-        # logarithmic_barrier2(w, cov_mtx, k)
     end
     mean_ret = ret_model(MRet(), Matrix(returns))
     ef = MeanVar(tickers, mean_ret, S, weight_bounds = (0.03, 0.2))
@@ -44,4 +42,83 @@ using PortfolioOptimiser, CSV, DataFrames
         0.0601290817911846,
     ]
     @test isapprox(ef.weights, testweights, rtol = 1e-6)
+
+    @test_throws ArgumentError custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
+
+    ef = MeanVar(tickers, mean_ret, S, weight_bounds = fill((0.03, 0.2), 20))
+    obj_params = (ef.cov_mtx, 0.001)
+    custom_nloptimiser!(
+        ef,
+        logarithmic_barrier,
+        obj_params;
+        initial_guess = fill(1 / 20, 20),
+    )
+    @test isapprox(ef.weights, testweights, rtol = 1e-6)
+
+    @test_throws ArgumentError MeanVar(
+        tickers,
+        mean_ret,
+        S,
+        weight_bounds = fill((0.03, 0.2), 19),
+    )
+
+    ef = MeanVar(tickers, mean_ret, S, weight_bounds = fill([0.03, 0.2], 20))
+    obj_params = (ef.cov_mtx, 0.001)
+    custom_nloptimiser!(
+        ef,
+        logarithmic_barrier,
+        obj_params;
+        initial_guess = fill(1 / 20, 20),
+    )
+    @test isapprox(ef.weights, testweights, rtol = 1e-6)
+
+    weight_bounds = [
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        [0.03, 0.2]
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+    ]
+
+    @test_throws ArgumentError MeanVar(tickers, mean_ret, S, weight_bounds = weight_bounds)
+
+    weight_bounds = [
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2, 0.5)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+        (0.03, 0.2)
+    ]
+
+    @test_throws ArgumentError MeanVar(tickers, mean_ret, S, weight_bounds = weight_bounds)
 end

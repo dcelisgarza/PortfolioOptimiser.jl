@@ -39,8 +39,8 @@ function _create_weight_bounds(num_tickers, bounds)
     # If the bounds is an array of tuples, assume each is a bound.
     if typeof(bounds) <: AbstractVector &&
        length(bounds) == num_tickers &&
-       eltype(bounds) <: Tuple &&
-       length(bounds[1]) == 2
+       (eltype(bounds) <: Tuple || eltype(bounds) <: AbstractVector) &&
+       all(x -> x == 2, length.(bounds))
         bounds = Float64.(reshape(collect(Iterators.flatten(bounds)), 2, :))
         lower_bounds, upper_bounds = bounds
     elseif length(bounds) == 2
@@ -50,7 +50,7 @@ function _create_weight_bounds(num_tickers, bounds)
     else
         throw(
             ArgumentError(
-                "Weight bounds must either be a tuple of length 2, or a vector of length $num_tickers of tuples of length 2.",
+                "Weight bounds must either be a tuple of length 2, or a vector of length $num_tickers of tuples/vectors of length 2.",
             ),
         )
     end
