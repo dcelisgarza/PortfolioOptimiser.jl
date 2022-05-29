@@ -32,10 +32,9 @@ function EfficientCDaR(
     @assert num_tickers == length(mean_ret) == size(returns, 2)
     weights = zeros(num_tickers)
 
-    if !(0 <= beta <= 1)
-        @warn("beta: $beta must be between 0 and 1. Defaulting to 0.95")
-        beta = 0.95
-    end
+    beta = _val_compare_benchmark(beta, >=, 1, 0.95, "beta")
+    beta = _val_compare_benchmark(beta, <, 0, 0.95, "beta")
+
     if beta <= 0.2
         @warn(
             "beta: $beta is the confidence level, not percentile. It is typically 0.8, 0.9, 0.95"

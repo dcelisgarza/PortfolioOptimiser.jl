@@ -24,10 +24,6 @@ end
     include("CriticalLineTests.jl")
 end
 
-# @safetestset "Asset allocation" begin
-#     include("AssetAllocationTests.jl")
-# end
-
 # @safetestset "Non convex optimiser" begin
 #     include("NonConvexOptimiserTests.jl")
 # end

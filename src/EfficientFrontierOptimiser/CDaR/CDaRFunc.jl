@@ -1,5 +1,5 @@
 function min_cdar!(
-    portfolio::EfficientCDaR,
+    portfolio::EfficientCDaR;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -30,7 +30,7 @@ end
 
 function efficient_return!(
     portfolio::EfficientCDaR,
-    target_ret = portfolio.target_ret,
+    target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -71,7 +71,7 @@ function efficient_return!(
 end
 function efficient_risk!(
     portfolio::EfficientCDaR,
-    target_cdar = portfolio.target_cdar,
+    target_cdar = portfolio.target_cdar;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
