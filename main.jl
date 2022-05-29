@@ -9,30 +9,204 @@ returns = returns_from_prices(df[!, 2:end])
 mu = vec(ret_model(MRet(), Matrix(dropmissing(returns))))
 S = risk_matrix(Cov(), Matrix(dropmissing(returns)))
 
-n = length(names(df)[2:end])
-prev_weights = fill(1 / length(names(df)[2:end]), length(names(df)[2:end]))
-prev_weights = rand(n)
-prev_weights /= sum(prev_weights)
+n = length(tickers)
+prev_weights = fill(1 / n, n)
+# prev_weights = rand(n)
+# prev_weights /= sum(prev_weights)
 
 # JuMP doesn't support norm in the objective, so we need to turn them into constraints with MOI.NormOneCone.
-# extra_vars = [:(z[1:($n)])]
-# extra_constraints =
-#     [:([$k * (model[:w] - $prev_weights); model[:z]] in MOI.NormOneCone($(n + n)))]
-# Is equivalent to adding k * norm(model[:w] - prev_weights, 1) to the objective
+# We use the example in the [JuMP tutorial](https://jump.dev/JuMP.jl/stable/tutorials/conic/logistic_regression/#\\ell_1-regularized-logistic-regression)
+# 
 k = 0.001
 ef = MeanVar(
-    names(df)[2:end],
+    tickers,
     mu,
     S;
-    extra_vars = [:(z[1:($n)])],
+    extra_vars = [:(0 <= l1)],
     extra_constraints = [
-        :([$k * (model[:w] - $prev_weights); model[:z]] in MOI.NormOneCone($(n + n))),
+        :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
     ],
-    # extra_obj_terms = [quote
-    #     L2_reg(model[:w], 0.05)
-    # end],
+    extra_obj_terms = [quote
+        $k * model[:l1]
+    end],
 )
 min_volatility!(ef)
+testweights = [
+    0.0190824077428914,
+    0.0416074082548058,
+    0.014327445825398,
+    0.0283293437359261,
+    0.0158256985460487,
+    0.05,
+    0.0,
+    0.1350653428695091,
+    0.0,
+    0.0095134235345545,
+    0.275220844540597,
+    0.0,
+    0.0,
+    0.1068488025990047,
+    0.0,
+    0.0212151308897821,
+    0.0194625229450863,
+    0.1745302544719146,
+    0.0,
+    0.0889713740444816,
+]
+isapprox(ef.weights, testweights, rtol = 1e-4)
+
+max_quadratic_utility!(ef)
+testweights = [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    -3e-16,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+]
+isapprox(ef.weights, testweights, rtol = 1e-7)
+
+efficient_return!(ef, 0.05)
+testweights = [
+    0.0190824077428914,
+    0.0416074082548058,
+    0.014327445825398,
+    0.0283293437359261,
+    0.0158256985460487,
+    0.05,
+    0.0,
+    0.1350653428695091,
+    0.0,
+    0.0095134235345545,
+    0.275220844540597,
+    0.0,
+    0.0,
+    0.1068488025990047,
+    0.0,
+    0.0212151308897821,
+    0.0194625229450863,
+    0.1745302544719146,
+    0.0,
+    0.0889713740444816,
+]
+isapprox(ef.weights, testweights, rtol = 1e-4)
+
+efficient_risk!(ef, 0.15)
+testweights = [
+    3.862392e-10,
+    1.462361578e-07,
+    3.1757104e-09,
+    1.8336637e-09,
+    0.2776719131226072,
+    1.233935e-10,
+    8.6056733e-09,
+    0.0807754777430426,
+    5.576187e-10,
+    6.772662e-10,
+    0.1792988250175469,
+    3.90913e-11,
+    2.22677e-11,
+    3.825667e-10,
+    3.17097e-11,
+    0.0681959031493882,
+    0.1846163039508845,
+    0.1107650269744363,
+    0.0777902349701932,
+    0.0208861530004506,
+]
+isapprox(ef.weights, testweights, rtol = 1e-3)
+
+k = 0.001
+ef = MeanVar(
+    tickers,
+    mu,
+    S;
+    extra_vars = [:(0 <= l1)],
+    extra_constraints = [
+        :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
+    ],
+    extra_obj_terms = [quote
+        $k * model[:l1]
+    end],
+)
+max_sharpe!(ef)
+testweights = [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.5864001037614084,
+    0.0,
+    0.0081872941075679,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.1043355596305029,
+    0.2250264480349554,
+    0.0,
+    0.0760505944655653,
+    0.0,
+]
+isapprox(ef.weights, testweights, rtol = 1e-6)
+
+k = 0.01
+ef = MeanVar(
+    tickers,
+    mu,
+    S;
+    extra_vars = [:(0 <= l1)],
+    extra_constraints = [
+        :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
+        :(model[:w][6] == 0.2),
+    ],
+    extra_obj_terms = [quote
+        $k * model[:l1]
+    end],
+)
+max_sharpe!(ef)
+testweights = [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.6910750346160773,
+    0.2,
+    0.0125752537981832,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0784821104326499,
+    0.0178676011530893,
+    0.0,
+    0.0,
+    0.0,
+]
+isapprox(ef.weights, testweights, rtol = 1e-6)
+
 display(ef.weights)
 
 display(sum([k * ef.model[:w][i] - k * prev_weights[i] for i in 1:length(prev_weights)]))

@@ -90,6 +90,11 @@ function max_sortino!(
                 intfKey = :lower
             elseif intfType <: JuMP.MathOptInterface.LessThan{<:Number}
                 intfKey = :upper
+            else
+                @warn(
+                    "Sharpe ratio optimisation uses a variable transformation which means constraint types other than linear and quadratic may not behave as expected. Use custom_nloptimiser if constraints of type $intfType are needed.",
+                )
+                continue
             end
 
             # If the constant is zero, then we continue as there's nothing to multiply k by.
@@ -115,6 +120,9 @@ function max_sortino!(
                 for (key, value) in model.obj_dict
                     if eltype(value) <: ConstraintRef
                         co = constraint_object(value[1])
+                        typeof(co.set) <: intfType && (constKey = key)
+                    elseif typeof(value) <: ConstraintRef
+                        co = constraint_object(value)
                         typeof(co.set) <: intfType && (constKey = key)
                     end
                 end

@@ -24,6 +24,6 @@ end
     include("CriticalLineTests.jl")
 end
 
-# @safetestset "Non convex optimiser" begin
-#     include("NonConvexOptimiserTests.jl")
-# end
+@safetestset "Custom optimiser" begin
+    include("CustomOptimiserTests.jl")
+end

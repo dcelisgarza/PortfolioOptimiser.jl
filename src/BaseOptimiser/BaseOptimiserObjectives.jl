@@ -159,21 +159,27 @@ C = k \\lvert \\bm{w} - \\bm{w}_{\\mathrm{prev}} \\rvert\\,,
 where ``k`` is the fixed percentage commision, ``\\bm{w}`` the asset weights, and ``\\bm{w}_{\\mathrm{prev}}`` the previous weights of the assets.
 
 !!! warning
-    As of JuMP 1.0 there is no support for `norm` in objective functions. A model wishing to add this to their objective function should instead add it as a Vector Cone constraint, eg:
+    JuMP doesn't yet support norm in the objective (v1.0), so we need to turn them into a variable subject to a [MOI.NormOneCone](https://docs.juliahub.com/MathOptInterface/tyub8/1.3.0/reference/standard_form/#MathOptInterface.NormOneCone) constraint. We can follow the example in the [JuMP tutorial](https://jump.dev/JuMP.jl/stable/tutorials/conic/logistic_regression/#\\ell_1-regularized-logistic-regression) to do this.
 
     ```julia
     n = length(tickers)
     prev_weights = fill(1 / n, n)
     k = 0.001
-
-    extra_vars = [:(z[1:(\$n)])]
-    extra_constraints =
-        [:([\$k * (model[:w] - \$prev_weights); model[:z]] in MOI.NormOneCone(\$(n + n)))]
-
-    ef = MeanVar(tickers, mu, S;
-            extra_vars = extra_vars,
-            extra_constraints = extra_constraints,
-        )
+    ef = MeanVar(
+        tickers,
+        mu,
+        S;
+        # Add the variable that will contain the value of the l1 regularisation.
+        extra_vars = [:(0 <= l1)],
+        # We constrain it to be within a MOI.NormOneCone.
+        extra_constraints = [
+            :([model[:l1]; (model[:w] - \$prev_weights)] in MOI.NormOneCone(\$(n + 1))),
+        ],
+        # We add the variable to the objective and multiply it by the adjustment parameter.
+        extra_obj_terms = [quote
+            \$k * model[:l1]
+        end],
+    )
     ```
     Similarly L2-norms must be turned into constraints of type `MOI.NormTwoCone`. More information on how to do this can be found in [JuMP Vector Cones](https://jump.dev/JuMP.jl/stable/moi/manual/standard_form/#Vector-cones).
 """
