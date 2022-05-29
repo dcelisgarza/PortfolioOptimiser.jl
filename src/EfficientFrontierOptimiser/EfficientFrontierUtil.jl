@@ -27,7 +27,7 @@ function _refresh_add_var_and_constraints(default_keys, portfolio)
     return nothing
 end
 
-function _transform_constraints_sharpe(model, k)
+function _transform_constraints_sharpe(model, k, fname = "max_sharpe!")
     # Go through all registered variables and only look at constraint and constraint arrays.
     for (key, value) in model.obj_dict
         if eltype(value) <: ConstraintRef
@@ -53,7 +53,7 @@ function _transform_constraints_sharpe(model, k)
             intfKey = :upper
         else
             @warn(
-                "Sharpe ratio optimisation uses a variable transformation which means constraint types other than linear and quadratic may not behave as expected. Use custom_nloptimiser if constraints of type $intfType are needed.",
+                "$fname optimisation uses a variable transformation which means constraint types other than linear and quadratic may not behave as expected. Use custom_nloptimiser! if constraints of type $intfType are needed.",
             )
             continue
         end
@@ -85,7 +85,7 @@ function _transform_constraints_sharpe(model, k)
             push!(exprArr, expr)
         end
 
-        # If the inner loop broke out, then we don't want to change anything and we continue on to the next iteration.
+        # If the inner loop broke out, then we don't want to change anything and we continue to the next iteration.
         skip && continue
 
         # Delete old constraint.

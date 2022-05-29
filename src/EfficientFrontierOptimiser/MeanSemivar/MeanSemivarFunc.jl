@@ -71,7 +71,7 @@ function max_sortino!(
     # We need a new variable for max_sharpe_optim.
     @variable(model, k)
 
-    _transform_constraints_sharpe(model, k)
+    _transform_constraints_sharpe(model, k, "max_sortino!")
 
     # Add constraints for the transformed sharpe ratio.
     w = model[:w]
