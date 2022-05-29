@@ -1,7 +1,7 @@
 using Test
 using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase
 
-@testset "Mean Variance Optimisation and Allocation" begin
+@testset "Mean Variance" begin
     df = CSV.read("./assets/stock_prices.csv", DataFrame)
     dropmissing!(df)
     returns = returns_from_prices(df[!, 2:end])
@@ -674,7 +674,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase
     @test gAlloc.shares == testshares
 end
 
-@testset "Mean Semivar" begin
+@testset "Mean Semivariance" begin
     df = CSV.read("./assets/stock_prices.csv", DataFrame)
     dropmissing!(df)
     returns = returns_from_prices(df[!, 2:end])
@@ -1364,4 +1364,441 @@ end
         Q = views,
         P = picking,
     )
+
+    cv = EfficientCVaR(tickers, bl.post_ret, Matrix(returns))
+    min_cvar!(cv)
+    testweights = [
+        1.196700000000000e-12,
+        4.242033345496910e-02,
+        1.247300000000000e-12,
+        3.092200000000000e-12,
+        7.574027808866600e-03,
+        1.305400000000000e-12,
+        1.735000000000000e-13,
+        9.464947870552300e-02,
+        5.519000000000000e-13,
+        7.337000000000000e-13,
+        3.040110655916818e-01,
+        6.947000000000000e-13,
+        3.879000000000000e-13,
+        6.564167130410940e-02,
+        1.189600000000000e-12,
+        2.937161110264830e-02,
+        1.548900000000000e-12,
+        3.663101128889494e-01,
+        7.108000000000000e-13,
+        9.002169913041960e-02,
+    ]
+    @test isapprox(cv.weights, testweights, rtol = 1e-3)
+    mu, sigma = portfolio_performance(cv, verbose = true)
+    mutest, sigmatest = 0.014253439792781208, 0.017049502122532846
+    @test isapprox(mu, mutest, rtol = 1e-3)
+    @test isapprox(sigma, sigmatest, rtol = 1e-3)
+
+    cv.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [3, 11, 86, 8, 4, 103, 15]
+    @test lpAlloc.shares == testshares
+
+    gAlloc, remaining =
+        Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [102, 86, 11, 16, 8, 3, 4]
+    @test gAlloc.shares == testshares
+
+    efficient_return!(cv, 0.07)
+    testweights = [
+        0.3839859145444188,
+        0.0359698109636541,
+        6.78e-14,
+        7.7866e-12,
+        6.22e-13,
+        9.53e-14,
+        8.145e-13,
+        8.463e-13,
+        0.4466960681039454,
+        2.409e-13,
+        3.971e-13,
+        1.291e-13,
+        4.19e-14,
+        0.1071394799383709,
+        6.6342e-12,
+        4.764e-13,
+        3.925e-13,
+        0.0262087264251456,
+        5.954e-12,
+        -3.32e-14,
+    ]
+    isapprox(cv.weights, testweights)
+    mu, sigma = portfolio_performance(cv)
+    mutest, sigmatest = 0.06999999999999391, 0.028255572821056847
+    isapprox(mu, mutest, rtol = 1e-7)
+    isapprox(sigma, sigmatest, rtol = 1e-4)
+
+    cv.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [4, 2, 147, 12, 7]
+    @test lpAlloc.shares == testshares
+
+    gAlloc, remaining =
+        Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [149, 3, 14, 3, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    @test gAlloc.shares == testshares
+
+    efficient_return!(cv, 0.07)
+    testweights = [
+        0.3839859145444188,
+        0.0359698109636541,
+        6.78e-14,
+        7.7866e-12,
+        6.22e-13,
+        9.53e-14,
+        8.145e-13,
+        8.463e-13,
+        0.4466960681039454,
+        2.409e-13,
+        3.971e-13,
+        1.291e-13,
+        4.19e-14,
+        0.1071394799383709,
+        6.6342e-12,
+        4.764e-13,
+        3.925e-13,
+        0.0262087264251456,
+        5.954e-12,
+        -3.32e-14,
+    ]
+    @test isapprox(cv.weights, testweights, rtol = 1e-3)
+    mu, sigma = portfolio_performance(cv)
+    mutest, sigmatest = 0.06999999999999391, 0.028255572821056847
+    @test isapprox(mu, mutest, rtol = 1e-5)
+    @test isapprox(sigma, sigmatest, rtol = 1e-4)
+
+    cv.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [4, 2, 147, 12, 7]
+    @test lpAlloc.shares == testshares
+
+    gAlloc, remaining =
+        Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [149, 3, 14, 3, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    @test gAlloc.shares == testshares
+
+    efficient_risk!(cv, 0.14813)
+    testweights = [
+        2.85e-14,
+        1.58e-14,
+        3.5e-15,
+        -5.3e-15,
+        2.06e-14,
+        1.3e-15,
+        3.591e-13,
+        9.2e-15,
+        0.9999999999994234,
+        1.31e-14,
+        6.9e-15,
+        0.0,
+        -5.4e-15,
+        1.53e-14,
+        8.6e-15,
+        9.6e-15,
+        1.8e-14,
+        1.95e-14,
+        6.73e-14,
+        -9.4e-15,
+    ]
+    @test isapprox(cv.weights, testweights, rtol = 1e-6)
+    mu, sigma = portfolio_performance(cv)
+    mutest, sigmatest = 0.09141921970336199, 0.148136422458718
+    @test isapprox(mu, mutest, rtol = 1e-6)
+    @test isapprox(sigma, sigmatest, rtol = 1e-3)
+
+    cv.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [334]
+    @test lpAlloc.shares == testshares
+
+    gAlloc, remaining =
+        Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [334, 1]
+    @test gAlloc.shares == testshares
+
+    cv = EfficientCVaR(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
+    min_cvar!(cv)
+    testweights = [
+        -2.2800e-12,
+        -5.5010e-13,
+        5.6220e-13,
+        -3.1620e-13,
+        5.1780e-12,
+        -4.6641e-12,
+        8.1920e-13,
+        -1.2637e-12,
+        -2.9427e-12,
+        2.0640e-13,
+        3.8680e-13,
+        -1.8054e-12,
+        -5.7220e-13,
+        -3.0342e-12,
+        -1.6556e-12,
+        1.6296e-12,
+        2.5777e-12,
+        -4.7750e-13,
+        8.4177e-12,
+        -2.1610e-13,
+    ]
+    @test isapprox(cv.weights, testweights, atol = 1e-4)
+    mu, sigma = portfolio_performance(cv)
+    mutest, sigmatest = 3.279006735579045e-13, 5.19535240389637e-13
+    @test isapprox(mu, mutest, atol = 1e-1)
+    @test isapprox(sigma, sigmatest, atol = 1e-1)
+
+    cv.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [2, 2, 41, 2, 4, 11, 7, 38]
+    @test lpAlloc.shares == testshares
+
+    gAlloc, remaining =
+        Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [38, 2, 7, 12, 43, 1, 5, 3]
+    @test gAlloc.shares == testshares
+
+    efficient_return!(cv, 0.07)
+    testweights = [
+        0.119904777207769,
+        0.105260613527609,
+        -0.059118345889513,
+        0.047994829008171,
+        0.080535064283592,
+        -0.07038968929214,
+        -0.000695786742806,
+        0.054006019393697,
+        0.088529728836899,
+        -0.01637772952951,
+        -0.063653950435258,
+        0.012986548220159,
+        0.019165300733247,
+        0.021582076971202,
+        -0.00296786688154,
+        0.018096675589053,
+        -0.024160465458667,
+        0.072693909074444,
+        0.137412159501253,
+        -0.540803868117662,
+    ]
+    @test isapprox(cv.weights, testweights, rtol = 1e-3)
+    mu, sigma = portfolio_performance(cv)
+    mutest, sigmatest = 0.07000000000000023, 0.01208285385909055
+    @test isapprox(mu, mutest, rtol = 1e-7)
+    @test isapprox(sigma, sigmatest, rtol = 1e-3)
+
+    cv.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares =
+        [1, 8, 4, 1, 8, 38, 10, 75, 4, 3, 26, 16, -4, -54, -1, -4, -18, -2, -1, -91]
+    @test rmsd(lpAlloc.shares, testshares) < 0.5
+
+    gAlloc, remaining =
+        Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares =
+        [16, 1, 8, 38, 1, 26, 8, 4, 4, 75, 3, 10, -91, -54, -18, -4, -1, -4, -2, -1]
+    @test gAlloc.shares == testshares
+
+    efficient_risk!(cv, 0.18)
+    testweights = [
+        0.999999999998078,
+        0.999999999994987,
+        -0.999999999998141,
+        0.999999999996761,
+        0.999999999951026,
+        -0.9999999999986,
+        0.999999999934693,
+        -0.999999999995853,
+        0.999999999999143,
+        -0.999999998594101,
+        -0.999999999998166,
+        -0.999999999986599,
+        -0.83525041495262,
+        0.999999999989784,
+        0.709272218478147,
+        -0.163990750353505,
+        -0.345299781283349,
+        -0.364731273180876,
+        0.999999999998686,
+        -0.999999999999495,
+    ]
+    @test isapprox(cv.weights, testweights, rtol = 1e-4)
+    mu, sigma = portfolio_performance(cv)
+    mutest, sigmatest = 0.4902004788284181, 0.1799999999999532
+    @test isapprox(mu, mutest, rtol = 1e-5)
+    @test isapprox(sigma, sigmatest, rtol = 1e-7)
+
+    cv.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [
+        1,
+        7,
+        6,
+        1,
+        117,
+        38,
+        14,
+        54,
+        10,
+        -60,
+        -771,
+        -117,
+        -256,
+        -284,
+        -597,
+        -2533,
+        -23,
+        -20,
+        -102,
+        -168,
+    ]
+    @test rmsd(lpAlloc.shares, testshares) < 0.5
+
+    gAlloc, remaining =
+        Allocation(Greedy(), cv, Vector(df[end, cv.tickers]); investment = 10000)
+    testshares = [
+        38,
+        10,
+        1,
+        6,
+        7,
+        14,
+        1,
+        117,
+        54,
+        -168,
+        -771,
+        -284,
+        -60,
+        -117,
+        -597,
+        -256,
+        -2531,
+        -102,
+        -20,
+        -23,
+    ]
+    @test gAlloc.shares == testshares
+
+    cv = EfficientCVaR(
+        tickers,
+        bl.post_ret,
+        Matrix(returns),
+        beta = 0.2,
+        market_neutral = false,
+    )
+    min_cvar!(cv)
+    testweights = [
+        1.2591e-12,
+        0.0239999111487575,
+        0.0650098845478511,
+        0.0531407521736819,
+        0.0990996575024338,
+        3.624e-13,
+        0.0106099759402764,
+        0.1031880979043503,
+        8.525e-13,
+        0.0238096685816571,
+        0.2741982381970403,
+        8.64e-14,
+        6.49e-14,
+        0.0021107467292905,
+        1.032e-13,
+        0.0302164465597255,
+        0.053838138362372,
+        0.1363179609151427,
+        0.0210516374364299,
+        0.1034088839982625,
+    ]
+    @test isapprox(cv.weights, testweights, rtol = 1e-2)
+    mu, cvar = portfolio_performance(cv)
+    mutest, cvartest = 0.015141313656655424, 0.0020571077411184347
+    @test isapprox(mu, mutest, rtol = 1e-2)
+    @test isapprox(cvar, cvartest, rtol = 1e-2)
+
+    efficient_return!(cv, 0.09)
+    testweights = [
+        5.398e-13,
+        1.53e-14,
+        2.9e-15,
+        0.0208931899503421,
+        2.98e-14,
+        1.4e-15,
+        0.0561037656427129,
+        3.6e-15,
+        0.9230030444062806,
+        4.5e-15,
+        2.6e-15,
+        1.9e-15,
+        7e-16,
+        7e-15,
+        3.9e-15,
+        4.1e-15,
+        8e-15,
+        6.5e-15,
+        3.2e-14,
+        2e-16,
+    ]
+    @test isapprox(cv.weights, testweights, rtol = 1e-3)
+    mu, cvar = portfolio_performance(cv)
+    mutest, cvartest = 0.09000000000000004, 0.004545680961201856
+    @test isapprox(mu, mutest, rtol = 1e-6)
+    @test isapprox(cvar, cvartest, rtol = 1e-3)
+
+    efficient_risk!(cv, 0.1438)
+    testweights = [
+        2.1e-14,
+        1.09e-14,
+        -2.19e-14,
+        5.82e-14,
+        -1.67e-14,
+        -1.52e-14,
+        4.488e-12,
+        -3.38e-14,
+        0.9999999999954172,
+        1.4e-15,
+        -3.02e-14,
+        -4.3e-15,
+        -1.04e-14,
+        6.9e-15,
+        9.49e-14,
+        -1.49e-14,
+        -5.5e-15,
+        -1.65e-14,
+        8.64e-14,
+        -1.56e-14,
+    ]
+    @test isapprox(cv.weights, testweights, rtol = 1e-6)
+    mu, cvar = portfolio_performance(cv)
+    mutest, cvartest = 0.09141921970332006, 0.14377337204585958
+    @test isapprox(mu, mutest, rtol = 1e-6)
+    @test isapprox(cvar, cvartest, rtol = 1e-3)
+
+    cv = EfficientCVaR(
+        tickers,
+        bl.post_ret,
+        Matrix(returns),
+        beta = 1,
+        market_neutral = false,
+    )
+    @test cv.beta == 0.95
+    cv = EfficientCVaR(
+        tickers,
+        bl.post_ret,
+        Matrix(returns),
+        beta = -0.1,
+        market_neutral = false,
+    )
+    @test cv.beta == 0.95
 end

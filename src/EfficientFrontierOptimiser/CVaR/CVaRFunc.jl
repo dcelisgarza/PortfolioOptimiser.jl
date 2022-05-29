@@ -1,5 +1,5 @@
 function min_cvar!(
-    portfolio::EfficientCVaR,
+    portfolio::EfficientCVaR;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -30,7 +30,7 @@ end
 
 function efficient_return!(
     portfolio::EfficientCVaR,
-    target_ret = portfolio.target_ret,
+    target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -72,7 +72,7 @@ end
 
 function efficient_risk!(
     portfolio::EfficientCVaR,
-    target_cvar = portfolio.target_cvar,
+    target_cvar = portfolio.target_cvar;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
