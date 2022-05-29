@@ -869,6 +869,47 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase
         0.0,
     ]
     @test isapprox(ef.weights, testweights, rtol = 1e-5)
+
+    k = 0.0001
+    ef = MeanVar(
+        tickers,
+        mu,
+        S;
+        extra_vars = [:(0 <= l1)],
+        extra_constraints = [
+            :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
+            :(model[:w][6] == 0.2),
+            :(model[:w][1] >= 0.01),
+            :(model[:w][16] <= 0.03),
+        ],
+        extra_obj_terms = [quote
+            $k * model[:l1]
+        end],
+    )
+    constraint = max_sharpe!(ef)
+    testweights = [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.6804859766794547,
+        0.1999999999999998,
+        0.0064046100477132,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.03,
+        0.0731094132728335,
+        0.0,
+        0.0,
+        0.0,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-6)
 end
 
 @testset "Mean Semivariance" begin
