@@ -1792,6 +1792,7 @@ end
         beta = 1,
         market_neutral = false,
     )
+    @test (0, 0) == portfolio_performance(cv)
     @test cv.beta == 0.95
     cv = EfficientCVaR(
         tickers,
