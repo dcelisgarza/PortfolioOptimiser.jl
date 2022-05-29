@@ -152,13 +152,18 @@ function _add_var_to_model!(model, var, args...)
     else
         svar = var
     end
-    if !haskey(model, svar)
-        eval(quote
-            @variable($model, $var, $(args...))
-        end)
-    else
-        @warn("Variable $var already in model.")
+
+    if haskey(model, svar)
+        @warn(
+            "Variable $svar is already in model. Deleting and replacing it with the one provided."
+        )
+        delete.(model, model[svar])
+        unregister(model, svar)
     end
+
+    eval(quote
+        @variable($model, $var, $(args...))
+    end)
 
     return nothing
 end
@@ -216,14 +221,18 @@ ef = MeanVar(tickers, mean_ret, cov_mtx; extra_constraints = extra_constraints)
 """
 function _add_constraint_to_model!(model, key, constraint)
     if haskey(model, key)
-        @warn("Constraint $key already in model. Deleting and replacing it with new key.")
+        @warn(
+            "Constraint with key $key is already in model. Deleting and replacing it with the one provided."
+        )
         delete.(model, model[key])
         unregister(model, key)
     end
+
     eval(quote
         model = $model
         @constraint($model, $key, $constraint)
     end)
+
     return nothing
 end
 
@@ -288,38 +297,6 @@ function _add_to_objective!(model, expr)
     add_to_expression!.(objFun, lex)
     @objective(model, objSense, objFun)
 end
-
-# """
-# ```
-# # Now try with a nonconvex objective from  Kolm et al (2014)
-# objective = quote
-#     function deviation_risk_parity(w::T...) where {T}
-#         w = [i for i in w]
-#         tmp = w .* (value.(cov_mtx) * w)
-#         diff = tmp .- tmp'
-#         return sum(diff .* diff)
-#     end
-# end
-
-# obj_args = [:w]
-# obj_params =
-#     [(:(cov_mtx[i = 1:length(model[:w]), j = 1:length(model[:w])]), :(portfolio.cov_mtx))]
-# ```
-# obj_args are the arguments of the objective function
-# obj_params array of tuples, first entry in tuple is the parametr, the second is the value of the parameter
-
-# deviation_risk_parity the arguments are obj_args, and the part where it says value.(cov_mtx) is the parameter
-# """
-# function _add_nlparameter_to_model!(portfolio, param, param_val)
-#     model = portfolio.model
-#     key = param.args[1]
-#     eval(quote
-#         model = $model
-#         @NLparameter($model, $param == 0)
-#         portfolio = $portfolio
-#         set_value.($key, $param_val)
-#     end)
-# end
 
 """
 ```
@@ -437,6 +414,8 @@ function _setup_and_optimise(model, optimiser, silent, optimiser_attributes = ()
 
     term_status = termination_status(model)
     if term_status ∉ (MOI.OPTIMAL, MOI.LOCALLY_SOLVED)
-        @warn("The optimiser returned an infeasable solution with code: $term_status.")
+        @warn(
+            "The optimiser could not solve the problem satisfactorily: $term_status. The solution may be useful regardless."
+        )
     end
 end
