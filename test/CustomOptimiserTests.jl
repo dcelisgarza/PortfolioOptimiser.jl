@@ -9,6 +9,59 @@ using PortfolioOptimiser, CSV, DataFrames
     mu = vec(ret_model(MRet(), Matrix(returns)))
     S = risk_matrix(Cov(), Matrix(returns))
 
+    lower_bounds, upper_bounds, strict_bounds = 0.02, 0.03, 0.1
+    ef = MeanVar(
+        tickers,
+        mu,
+        S;
+        extra_constraints = [
+            :(model[:w][1] >= $lower_bounds),
+            :(model[:w][end] <= $upper_bounds),
+            :(model[:w][6] == $strict_bounds),
+        ],
+    )
+    obj_params = [ef.mean_ret, ef.cov_mtx, 100]
+    custom_optimiser!(ef, kelly_objective, obj_params)
+    @test ef.weights[1] >= lower_bounds
+    @test ef.weights[end] <= upper_bounds
+    @test isapprox(ef.weights[6], strict_bounds)
+
+    ef = MeanVar(tickers, mu, S)
+    obj_params = [ef.mean_ret, ef.cov_mtx, 1000]
+    custom_optimiser!(ef, kelly_objective, obj_params, initial_guess = fill(1 / 20, 20))
+    testweights = [
+        0.004758143945488986,
+        0.0313612711044923,
+        0.011581566953884194,
+        0.027540175507339622,
+        0.018637959513280566,
+        0.02649173712097102,
+        4.490597294476849e-16,
+        0.1389075022528616,
+        1.4513664512737593e-16,
+        2.0829028957690552e-15,
+        0.28879549783043423,
+        5.648363280996347e-16,
+        1.0047135830164754e-15,
+        0.12182714167506264,
+        1.8172509176062567e-15,
+        0.016375182319275105,
+        0.0023305748424262045,
+        0.19471263615932596,
+        8.619879289218291e-17,
+        0.1166806107751625,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-3)
+end
+
+@testset "Custom NL optimiser" begin
+    df = CSV.read("./assets/stock_prices.csv", DataFrame)
+    tickers = names(df)[2:end]
+    returns = dropmissing(returns_from_prices(df[!, 2:end]))
+
+    mu = vec(ret_model(MRet(), Matrix(returns)))
+    S = risk_matrix(Cov(), Matrix(returns))
+
     function logarithmic_barrier(w::T...) where {T}
         cov_mtx = obj_params[1]
         k = obj_params[2]
@@ -41,6 +94,9 @@ using PortfolioOptimiser, CSV, DataFrames
         0.037645669856962,
         0.0601290817911846,
     ]
+    @test minimum(abs.(0.2 .- ef.weights)) >= 0
+    @test minimum(abs.(ef.weights .- 0.03)) <= 1e-8
+
     @test isapprox(ef.weights, testweights, rtol = 1e-6)
 
     @test_throws ArgumentError custom_nloptimiser!(ef, logarithmic_barrier, obj_params)

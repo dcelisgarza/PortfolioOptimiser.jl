@@ -9,211 +9,6 @@ returns = returns_from_prices(df[!, 2:end])
 mu = vec(ret_model(MRet(), Matrix(dropmissing(returns))))
 S = risk_matrix(Cov(), Matrix(dropmissing(returns)))
 
-n = length(tickers)
-prev_weights = fill(1 / n, n)
-# prev_weights = rand(n)
-# prev_weights /= sum(prev_weights)
-
-# JuMP doesn't support norm in the objective, so we need to turn them into constraints with MOI.NormOneCone.
-# We use the example in the [JuMP tutorial](https://jump.dev/JuMP.jl/stable/tutorials/conic/logistic_regression/#\\ell_1-regularized-logistic-regression)
-# 
-k = 0.001
-ef = MeanVar(
-    tickers,
-    mu,
-    S;
-    extra_vars = [:(0 <= l1)],
-    extra_constraints = [
-        :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
-    ],
-    extra_obj_terms = [quote
-        $k * model[:l1]
-    end],
-)
-min_volatility!(ef)
-testweights = [
-    0.0190824077428914,
-    0.0416074082548058,
-    0.014327445825398,
-    0.0283293437359261,
-    0.0158256985460487,
-    0.05,
-    0.0,
-    0.1350653428695091,
-    0.0,
-    0.0095134235345545,
-    0.275220844540597,
-    0.0,
-    0.0,
-    0.1068488025990047,
-    0.0,
-    0.0212151308897821,
-    0.0194625229450863,
-    0.1745302544719146,
-    0.0,
-    0.0889713740444816,
-]
-isapprox(ef.weights, testweights, rtol = 1e-4)
-
-max_quadratic_utility!(ef)
-testweights = [
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    1.0,
-    0.0,
-    -3e-16,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-]
-isapprox(ef.weights, testweights, rtol = 1e-7)
-
-efficient_return!(ef, 0.05)
-testweights = [
-    0.0190824077428914,
-    0.0416074082548058,
-    0.014327445825398,
-    0.0283293437359261,
-    0.0158256985460487,
-    0.05,
-    0.0,
-    0.1350653428695091,
-    0.0,
-    0.0095134235345545,
-    0.275220844540597,
-    0.0,
-    0.0,
-    0.1068488025990047,
-    0.0,
-    0.0212151308897821,
-    0.0194625229450863,
-    0.1745302544719146,
-    0.0,
-    0.0889713740444816,
-]
-isapprox(ef.weights, testweights, rtol = 1e-4)
-
-efficient_risk!(ef, 0.15)
-testweights = [
-    3.862392e-10,
-    1.462361578e-07,
-    3.1757104e-09,
-    1.8336637e-09,
-    0.2776719131226072,
-    1.233935e-10,
-    8.6056733e-09,
-    0.0807754777430426,
-    5.576187e-10,
-    6.772662e-10,
-    0.1792988250175469,
-    3.90913e-11,
-    2.22677e-11,
-    3.825667e-10,
-    3.17097e-11,
-    0.0681959031493882,
-    0.1846163039508845,
-    0.1107650269744363,
-    0.0777902349701932,
-    0.0208861530004506,
-]
-isapprox(ef.weights, testweights, rtol = 1e-3)
-
-k = 0.001
-ef = MeanVar(
-    tickers,
-    mu,
-    S;
-    extra_vars = [:(0 <= l1)],
-    extra_constraints = [
-        :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
-    ],
-    extra_obj_terms = [quote
-        $k * model[:l1]
-    end],
-)
-max_sharpe!(ef)
-testweights = [
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.5864001037614084,
-    0.0,
-    0.0081872941075679,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.1043355596305029,
-    0.2250264480349554,
-    0.0,
-    0.0760505944655653,
-    0.0,
-]
-isapprox(ef.weights, testweights, rtol = 1e-6)
-
-k = 0.0001
-ef = MeanVar(
-    tickers,
-    mu,
-    S;
-    extra_vars = [:(0 <= l1)],
-    extra_constraints = [
-        :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
-        :(model[:w][6] == 0.2),
-        :(model[:w][1] >= 0.01),
-        :(model[:w][16] <= 0.03),
-    ],
-    extra_obj_terms = [quote
-        $k * model[:l1]
-    end],
-)
-constraint = max_sharpe!(ef)
-testweights = [
-    0.01,
-    0.0,
-    0.0,
-    0.0,
-    0.6804859766794547,
-    0.1999999999999998,
-    0.0064046100477132,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.03,
-    0.0731094132728335,
-    0.0,
-    0.0,
-    0.0,
-]
-isapprox(ef.weights, testweights, rtol = 1e-6)
-
-display(ef.weights)
-
-display(sum([k * ef.model[:w][i] - k * prev_weights[i] for i in 1:length(prev_weights)]))
-max_sharpe!(ef)
-
 function mean_barrier_objective(w, cov_matrix, k = 0.1)
     mean_sum = sum(w) / length(w)
     var = dot(w, cov_matrix, w)
@@ -260,18 +55,26 @@ obj_params = (ef.mean_ret, ef.cov_mtx, 1000)
 custom_optimiser!(ef, kelly_objective, obj_params)
 
 # Kelly objective with weight bounds on first asset
-lower_bounds, upper_bounds = 0.01, 0.3
+lower_bounds, upper_bounds, strict_bounds = 0.02, 0.03, 0.1
 ef = MeanVar(
-    names(df)[2:end],
+    tickers,
     mu,
     S;
     extra_constraints = [
         :(model[:w][1] >= $lower_bounds),
-        :(model[:w][1] <= $upper_bounds),
+        :(model[:w][end] <= $upper_bounds),
+        :(model[:w][6] == $strict_bounds),
     ],
 )
-obj_params = [ef.mean_ret, ef.cov_mtx, 1000]
-custom_optimiser!(ef, kelly_objective, obj_params)
+obj_params = [ef.mean_ret, ef.cov_mtx, 100]
+custom_optimiser!(ef, kelly_objective, obj_params; silent = false)
+ef.weights[1] >= lower_bounds
+ef.weights[end] <= upper_bounds
+isapprox(ef.weights[6], strict_bounds)
+
+portfolio_performance(ef, verbose = true)
+
+kelly_objective(fill(1 / 20, 20), obj_params[1], obj_params[2], obj_params[3])
 
 ef = MeanVar(
     names(df)[2:end],
@@ -670,99 +473,49 @@ bl = BlackLitterman(
     P = picking,
 )
 
-# L1 Regularisation
-mean_ret = ret_model(MRet(), Matrix(returns))
+df = CSV.read("./test/assets/stock_prices.csv", DataFrame)
+tickers = names(df)[2:end]
+returns = dropmissing(returns_from_prices(df[!, 2:end]))
+
+mu = vec(ret_model(MRet(), Matrix(returns)))
 S = risk_matrix(Cov(), Matrix(returns))
-n = length(tickers)
-prev_weights = fill(1 / n, n)
 
-k = 0.0001
-ef = EfficientCDaR(
-    tickers,
-    mean_ret,
-    Matrix(returns);
-    extra_vars = [:(0 <= l1)],
-    extra_constraints = [
-        :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
-        # :(model[:w][6] == 0.2),
-        # :(model[:w][1] >= 0.01),
-        # :(model[:w][16] <= 0.03),
-    ],
-    extra_obj_terms = [quote
-        $k * model[:l1]
-    end],
-)
-min_cdar!(ef)
+function logarithmic_barrier(w::T...) where {T}
+    cov_mtx = obj_params[1]
+    k = obj_params[2]
+    w = [i for i in w]
+    PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
+end
+mean_ret = ret_model(MRet(), Matrix(returns))
+ef = MeanVar(tickers, mean_ret, S, weight_bounds = (0.03, 0.2))
+obj_params = (ef.cov_mtx, 0.001)
+custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 testweights = [
-    5.8e-15,
-    5.127e-13,
-    1.02e-14,
-    5e-16,
-    0.0035594792687726,
-    -3e-15,
-    -1.04e-14,
-    0.079973068549514,
-    1.26e-14,
-    -2.8e-15,
-    0.3871598884148665,
-    5.02e-14,
-    6.05e-14,
-    1.133e-13,
-    0.0002218291232121,
-    0.0965257689615006,
-    0.2659397480643742,
-    2.058e-13,
-    0.0019205861934667,
-    0.164699631423338,
+    0.0459759150798785,
+    0.0465060033736648,
+    0.0406223479132712,
+    0.0367443944616427,
+    0.0394265018793106,
+    0.0533782687664828,
+    0.0300000004313922,
+    0.0940987390957382,
+    0.0307216371198716,
+    0.0402226547518765,
+    0.1209594547099574,
+    0.0300000012819006,
+    0.0300000004033861,
+    0.065153111884118,
+    0.0300000023324234,
+    0.0367907531898106,
+    0.0457521843192034,
+    0.0858732773342319,
+    0.037645669856962,
+    0.0601290817911846,
 ]
-isapprox(ef.weights, testweights, rtol = 1e-3)
+minimum(abs.(0.2 .- ef.weights)) >= 0
+minimum(abs.(ef.weights .- 0.03)) <= 1e-8
 
-efficient_return!(ef, 0.17)
-testweights = [
-    1e-16,
-    2e-15,
-    1.23e-14,
-    -7e-16,
-    0.0819555819215858,
-    -9e-16,
-    -1.1e-15,
-    0.1018672906381434,
-    1e-16,
-    -6e-16,
-    0.3566693544811642,
-    -9e-16,
-    -1e-15,
-    1.3e-15,
-    -8e-16,
-    0.12248240804338,
-    0.1788992614241954,
-    8e-16,
-    6.76e-14,
-    0.1581261034914527,
-]
-isapprox(ef.weights, testweights, rtol = 1e-4)
+0.2 .- ef.weights
 
-efficient_risk!(ef, 0.09)
-testweights = [
-    -3.72e-14,
-    -2.56e-14,
-    0.0968865336134717,
-    -5.39e-14,
-    0.382879247996457,
-    -5.87e-14,
-    -5.97e-14,
-    0.1747389572731268,
-    -5.47e-14,
-    -5.31e-14,
-    0.1223279091478751,
-    -5.75e-14,
-    -6.29e-14,
-    -3.87e-14,
-    -5.69e-14,
-    0.2231673519674347,
-    4.01e-14,
-    -3.27e-14,
-    -2.96e-14,
-    2.216e-12,
-]
-isapprox(ef.weights, testweights, rtol = 1e-4)
+ef.weights
+all(ef.weights .>= 0.03 + 20^2 * eps())
