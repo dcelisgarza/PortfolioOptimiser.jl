@@ -2231,6 +2231,102 @@ end
         market_neutral = false,
     )
     @test cv.beta == 0.95
+
+    mean_ret = ret_model(MRet(), Matrix(returns))
+    S = risk_matrix(Cov(), Matrix(returns))
+    n = length(tickers)
+    prev_weights = fill(1 / n, n)
+
+    k = 0.0001
+    ef = EfficientCVaR(
+        tickers,
+        mean_ret,
+        Matrix(returns);
+        extra_vars = [:(0 <= l1)],
+        extra_constraints = [
+            :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
+            # :(model[:w][6] == 0.2),
+            # :(model[:w][1] >= 0.01),
+            # :(model[:w][16] <= 0.03),
+        ],
+        extra_obj_terms = [quote
+            $k * model[:l1]
+        end],
+    )
+    min_cvar!(ef)
+    testweights = [
+        1.0892e-12,
+        0.0500000000076794,
+        1.0671e-12,
+        3.4685e-12,
+        0.0071462860549324,
+        1.4497e-12,
+        1.053e-13,
+        0.09689425274277,
+        5.118e-13,
+        6.801e-13,
+        0.306535765681518,
+        6.189e-13,
+        3.304e-13,
+        0.0681247368437245,
+        1.7277e-12,
+        0.0285905010302666,
+        1.3816e-12,
+        0.3642755366704354,
+        6.405e-13,
+        0.078432920955603,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-3)
+
+    efficient_return!(ef, 0.11)
+    testweights = [
+        1.338e-13,
+        0.0365748381251478,
+        1.341e-13,
+        6.271e-13,
+        0.0612399946270939,
+        1.195e-13,
+        2.08e-14,
+        0.1040143575055467,
+        7.79e-14,
+        5.98e-14,
+        0.2563667017115727,
+        6.27e-14,
+        1.88e-14,
+        0.0529676397826387,
+        7.08e-14,
+        0.0313099048708647,
+        3.72e-13,
+        0.3619202934010016,
+        1.261e-13,
+        0.0956062699743107,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-3)
+
+    efficient_risk!(ef, 0.03)
+    testweights = [
+        5.7e-15,
+        2.17e-14,
+        1.59e-14,
+        -5e-16,
+        0.6048157267914637,
+        -1.08e-14,
+        -2e-16,
+        1.147e-13,
+        1.22e-14,
+        0.0,
+        6.89e-14,
+        -1.44e-14,
+        -1.67e-14,
+        1e-15,
+        -1.59e-14,
+        0.1658143853764952,
+        0.2293698878316262,
+        1.107e-13,
+        8.55e-14,
+        3.65e-14,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-5)
 end
 
 @testset "Efficient CDaR" begin
@@ -2631,7 +2727,7 @@ end
     cdar = EfficientCDaR(tickers, bl.post_ret, Matrix(returns), beta = 1)
     @test (0, 0) == portfolio_performance(cdar)
     @test cdar.beta == 0.95
-    cdar = EfficientCVaR(
+    cdar = EfficientCDaR(
         tickers,
         bl.post_ret,
         Matrix(returns),
@@ -2639,4 +2735,100 @@ end
         market_neutral = false,
     )
     @test cdar.beta == 0.95
+
+    mean_ret = ret_model(MRet(), Matrix(returns))
+    S = risk_matrix(Cov(), Matrix(returns))
+    n = length(tickers)
+    prev_weights = fill(1 / n, n)
+
+    k = 0.0001
+    ef = EfficientCDaR(
+        tickers,
+        mean_ret,
+        Matrix(returns);
+        extra_vars = [:(0 <= l1)],
+        extra_constraints = [
+            :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
+            # :(model[:w][6] == 0.2),
+            # :(model[:w][1] >= 0.01),
+            # :(model[:w][16] <= 0.03),
+        ],
+        extra_obj_terms = [quote
+            $k * model[:l1]
+        end],
+    )
+    min_cdar!(ef)
+    testweights = [
+        5.8e-15,
+        5.127e-13,
+        1.02e-14,
+        5e-16,
+        0.0035594792687726,
+        -3e-15,
+        -1.04e-14,
+        0.079973068549514,
+        1.26e-14,
+        -2.8e-15,
+        0.3871598884148665,
+        5.02e-14,
+        6.05e-14,
+        1.133e-13,
+        0.0002218291232121,
+        0.0965257689615006,
+        0.2659397480643742,
+        2.058e-13,
+        0.0019205861934667,
+        0.164699631423338,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-3)
+
+    efficient_return!(ef, 0.17)
+    testweights = [
+        1e-16,
+        2e-15,
+        1.23e-14,
+        -7e-16,
+        0.0819555819215858,
+        -9e-16,
+        -1.1e-15,
+        0.1018672906381434,
+        1e-16,
+        -6e-16,
+        0.3566693544811642,
+        -9e-16,
+        -1e-15,
+        1.3e-15,
+        -8e-16,
+        0.12248240804338,
+        0.1788992614241954,
+        8e-16,
+        6.76e-14,
+        0.1581261034914527,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-4)
+
+    efficient_risk!(ef, 0.09)
+    testweights = [
+        -3.72e-14,
+        -2.56e-14,
+        0.0968865336134717,
+        -5.39e-14,
+        0.382879247996457,
+        -5.87e-14,
+        -5.97e-14,
+        0.1747389572731268,
+        -5.47e-14,
+        -5.31e-14,
+        0.1223279091478751,
+        -5.75e-14,
+        -6.29e-14,
+        -3.87e-14,
+        -5.69e-14,
+        0.2231673519674347,
+        4.01e-14,
+        -3.27e-14,
+        -2.96e-14,
+        2.216e-12,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-4)
 end

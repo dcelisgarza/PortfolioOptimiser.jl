@@ -676,8 +676,8 @@ S = risk_matrix(Cov(), Matrix(returns))
 n = length(tickers)
 prev_weights = fill(1 / n, n)
 
-k = 0.00001
-ef = MeanSemivar(
+k = 0.0001
+ef = EfficientCDaR(
     tickers,
     mean_ret,
     Matrix(returns);
@@ -692,171 +692,77 @@ ef = MeanSemivar(
         $k * model[:l1]
     end],
 )
-min_semivar!(ef)
+min_cdar!(ef)
 testweights = [
-    0.05000003815106,
-    0.0500000323406222,
-    0.0305470536068529,
-    0.0119165898801848,
-    0.0499999897938178,
-    0.0500000778586521,
-    -9.70902283e-08,
-    0.1050006178939432,
-    -1.074573985e-07,
-    0.0217993269186788,
-    0.2267216752364789,
-    4.54544546e-08,
-    2.475203931e-07,
-    0.0500000608483738,
-    0.0195085389944512,
-    0.0500000224593989,
-    0.050000026895504,
-    0.1345057919377536,
-    0.0499999927807392,
-    0.0500000757003792,
+    5.8e-15,
+    5.127e-13,
+    1.02e-14,
+    5e-16,
+    0.0035594792687726,
+    -3e-15,
+    -1.04e-14,
+    0.079973068549514,
+    1.26e-14,
+    -2.8e-15,
+    0.3871598884148665,
+    5.02e-14,
+    6.05e-14,
+    1.133e-13,
+    0.0002218291232121,
+    0.0965257689615006,
+    0.2659397480643742,
+    2.058e-13,
+    0.0019205861934667,
+    0.164699631423338,
 ]
-isapprox(ef.weights, testweights, rtol = 5e-2)
-
-max_quadratic_utility!(ef)
-testweights = [
-    -1.926600572e-07,
-    -4.32976813e-08,
-    -2.100198937e-07,
-    -2.227540243e-07,
-    0.9999993287957882,
-    1.339119054e-07,
-    -1.90544883e-07,
-    2.103890502e-07,
-    2.02309627e-08,
-    4.75400441e-08,
-    2.628872504e-07,
-    -6.86900634e-08,
-    1.741756607e-07,
-    1.917324164e-07,
-    1.195934128e-07,
-    1.58547084e-07,
-    -1.05257917e-08,
-    2.052601162e-07,
-    9.02686384e-08,
-    -5.2371344e-09,
-]
-isapprox(ef.weights, testweights, rtol = 1e-4)
+isapprox(ef.weights, testweights, rtol = 1e-3)
 
 efficient_return!(ef, 0.17)
 testweights = [
-    0.0500000020066915,
-    0.050000024220804,
-    0.0499999820760388,
-    0.0129296743862539,
-    0.125422488440367,
-    1.58893521e-07,
-    3.848623616e-07,
-    0.0926245150180408,
-    0.0111676929257631,
-    0.0193112602977583,
-    0.2152467221514765,
-    6.67588294e-08,
-    1.043403337e-07,
-    0.0500000617361081,
-    3.382072052e-07,
-    0.049999966749425,
-    0.0499999984345341,
-    0.1232965674920904,
-    0.0499999660885184,
-    0.0500000247739652,
+    1e-16,
+    2e-15,
+    1.23e-14,
+    -7e-16,
+    0.0819555819215858,
+    -9e-16,
+    -1.1e-15,
+    0.1018672906381434,
+    1e-16,
+    -6e-16,
+    0.3566693544811642,
+    -9e-16,
+    -1e-15,
+    1.3e-15,
+    -8e-16,
+    0.12248240804338,
+    0.1788992614241954,
+    8e-16,
+    6.76e-14,
+    0.1581261034914527,
 ]
-isapprox(ef.weights, testweights, rtol = 5e-2)
+isapprox(ef.weights, testweights, rtol = 1e-4)
 
-efficient_risk!(ef, 0.13)
+efficient_risk!(ef, 0.09)
 testweights = [
-    3.329183953e-07,
-    9.835480279e-07,
-    5.250592795e-07,
-    3.243999157e-07,
-    0.5778004406239079,
-    1.522240624e-07,
-    5.005016494e-07,
-    2.4055191111e-06,
-    5.712576846e-07,
-    3.741311414e-07,
-    0.0607364237999792,
-    9.86216476e-08,
-    7.53996833e-08,
-    3.345659355e-07,
-    8.62979338e-08,
-    0.1264635025652296,
-    0.1651783353678204,
-    1.01678964876e-05,
-    0.0698034082988953,
-    9.565700518e-07,
+    -3.72e-14,
+    -2.56e-14,
+    0.0968865336134717,
+    -5.39e-14,
+    0.382879247996457,
+    -5.87e-14,
+    -5.97e-14,
+    0.1747389572731268,
+    -5.47e-14,
+    -5.31e-14,
+    0.1223279091478751,
+    -5.75e-14,
+    -6.29e-14,
+    -3.87e-14,
+    -5.69e-14,
+    0.2231673519674347,
+    4.01e-14,
+    -3.27e-14,
+    -2.96e-14,
+    2.216e-12,
 ]
-isapprox(ef.weights, testweights, rtol = 5e-4)
-
-k = 0.00001
-ef = MeanSemivar(
-    tickers,
-    mean_ret,
-    Matrix(returns);
-    extra_vars = [:(0 <= l1)],
-    extra_constraints = [
-        :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
-        # :(model[:w][6] == 0.2),
-        # :(model[:w][1] >= 0.01),
-        # :(model[:w][16] <= 0.03),
-    ],
-    extra_obj_terms = [quote
-        $k * model[:l1]
-    end],
-)
-max_sortino!(ef)
-mumax, sigmamax, srmax = portfolio_performance(ef, verbose = true)
-
-k = 0.00001
-ef = MeanSemivar(
-    tickers,
-    mean_ret,
-    Matrix(returns);
-    extra_vars = [:(0 <= l1)],
-    extra_constraints = [
-        :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
-        # :(model[:w][6] == 0.2),
-        # :(model[:w][1] >= 0.01),
-        # :(model[:w][16] <= 0.03),
-    ],
-    extra_obj_terms = [quote
-        $k * model[:l1]
-    end],
-)
-efficient_return!(ef, mumax)
-mu, sigma, sr = portfolio_performance(ef)
-isapprox(mumax, mu, rtol = 1e-4)
-isapprox(sigmamax, sigma, rtol = 1e-2)
-isapprox(srmax, sr, rtol = 1e-2)
-
-efficient_risk!(ef, sigmamax)
-mu, sigma, sr = portfolio_performance(ef)
-isapprox(mumax, mu, rtol = 1e-4)
-isapprox(sigmamax, sigma, rtol = 1e-4)
-isapprox(srmax, sr, rtol = 1e-4)
-
-k = 0.00001
-ef = MeanSemivar(
-    tickers,
-    mean_ret,
-    Matrix(returns);
-    extra_vars = [:(0 <= l1)],
-    extra_constraints = [
-        :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
-        :(model[:w][6] == 0.2),
-        :(model[:w][1] >= 0.01),
-        :(model[:w][16] <= 0.03),
-    ],
-    extra_obj_terms = [quote
-        $k * model[:l1]
-    end],
-)
-max_sortino!(ef, -0.01)
-
-ef.weights[6] ≈ 0.2
-ef.weights[1] >= 0.01
-ef.weights[16] <= 0.03
+isapprox(ef.weights, testweights, rtol = 1e-4)
