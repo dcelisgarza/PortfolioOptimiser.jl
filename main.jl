@@ -111,23 +111,13 @@ deviation_risk_parity2(ef.weights, ef.cov_mtx)
     end
 end
 
-ef = MeanVar(
-    names(df)[2:end],
-    mu,
-    S;
-    extra_constraints = [:(model[:w][1] == 0.1)],
-    # extra_obj_terms = [quote
-    #     L2_reg(model[:w], 1000)
-    # end],
-    # extra_obj_terms = [quote
-    #     ragnar(model[:w], 1000)
-    # end],
-    # extra_obj_terms = [quote
-    #     function lothar(w, i)
-    #         w[5] * w[3] - i
-    #     end
-    # end],
-)
+ef = MeanVar(tickers, mu, S)
+efficient_risk!(ef, 0.01, optimiser_attributes = "tol" => 1e-3)
+termination_status(ef.model) == MOI.NUMERICAL_ERROR
+
+efficient_risk!(ef, 0.01, optimiser_attributes = ("tol" => 1e-3, "max_iter" => 20))
+termination_status(ef.model) == MOI.ITERATION_LIMIT
+
 obj_params = ef.cov_mtx
 custom_nloptimiser!(ef, deviation_risk_parity2, obj_params)
 

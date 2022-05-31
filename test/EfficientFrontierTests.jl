@@ -1,5 +1,5 @@
 using Test
-using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase
+using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
 
 @testset "Mean Variance" begin
     df = CSV.read("./assets/stock_prices.csv", DataFrame)
@@ -9,6 +9,13 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase
 
     mu = vec(ret_model(MRet(), Matrix(returns)))
     S = risk_matrix(Cov(), Matrix(returns))
+
+    ef = MeanVar(tickers, mu, S)
+    efficient_risk!(ef, 0.01, optimiser_attributes = "tol" => 1e-3)
+    @test termination_status(ef.model) == MOI.NUMERICAL_ERROR
+
+    efficient_risk!(ef, 0.01, optimiser_attributes = ("tol" => 1e-3, "max_iter" => 20))
+    @test termination_status(ef.model) == MOI.ITERATION_LIMIT
 
     spy_prices = CSV.read("./assets/spy_prices.csv", DataFrame)
     delta = market_implied_risk_aversion(spy_prices[!, 2])

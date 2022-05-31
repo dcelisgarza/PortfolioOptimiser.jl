@@ -139,27 +139,28 @@ ef = MeanVar(tickers, mean_ret, cov_mtx; extra_vars = extra_vars)
     When adding variables to the constructor, they must be a collection (Tuple or vector), even if it's of length 1.
 """
 function _add_var_to_model!(model, var, args...)
-    if typeof(var) <: Expr
-        if var.head == :call
-            larg = var.args[2:end]
-            larg = larg[typeof.(larg) .<: Symbol]
-            svar = Symbol(larg)
-        elseif var.head == :ref
-            svar = var.args[1]
-        else
-            svar = var.head
-        end
-    else
-        svar = var
-    end
+    # if typeof(var) <: Expr
+    #     if var.head == :call
+    #         larg = var.args[2:end]
+    #         larg = larg[typeof.(larg) .<: Symbol]
+    #         println(isempty(larg))
+    #         svar = Symbol(larg)
+    #     elseif var.head == :ref
+    #         svar = var.args[1]
+    #     else
+    #         svar = var.head
+    #     end
+    # else
+    #     svar = var
+    # end
 
-    if haskey(model, svar)
-        @warn(
-            "Variable $svar is already in model. Deleting and replacing it with the one provided."
-        )
-        delete.(model, model[svar])
-        unregister(model, svar)
-    end
+    # if haskey(model, svar)
+    #     @warn(
+    #         "Variable $svar is already in model. Deleting and replacing it with the one provided."
+    #     )
+    #     delete.(model, model[svar])
+    #     unregister(model, svar)
+    # end
 
     eval(quote
         @variable($model, $var, $(args...))
@@ -220,13 +221,13 @@ ef = MeanVar(tickers, mean_ret, cov_mtx; extra_constraints = extra_constraints)
     When adding constraints to the constructor, they must be a collection (Tuple or vector), even if it's of length 1.
 """
 function _add_constraint_to_model!(model, key, constraint)
-    if haskey(model, key)
-        @warn(
-            "Constraint with key $key is already in model. Deleting and replacing it with the one provided."
-        )
-        delete.(model, model[key])
-        unregister(model, key)
-    end
+    # if haskey(model, key)
+    #     @warn(
+    #         "Constraint with key $key is already in model. Deleting and replacing it with the one provided."
+    #     )
+    #     delete.(model, model[key])
+    #     unregister(model, key)
+    # end
 
     eval(quote
         model = $model
