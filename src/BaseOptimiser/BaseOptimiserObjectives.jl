@@ -224,10 +224,10 @@ The ex-post tracking error ``\\mathrm{Err}``, is defined as:
 \\end{aligned}
 ```
 
-where ``w`` are the weights, ``\\mathrm{R}`` historical returns, ``\\bm{R}_b`` benchmark historical returns. In other words the ex-post tracking error is the variance of the historical returns ``r``, minus the benchmark returns ``r_b``, of the portfolio.
+where ``w`` are the weights, ``\\mathrm{R}`` historical returns, ``\\bm{R}_b`` benchmark historical returns. In other words the ex-post tracking error is the variance of the historical returns ``r``, minus the benchmark historical returns ``r_b``, of the portfolio.
 """
 function ex_post_tracking_error(w, returns, ret_bmk)
-    x = returns * w .- ret_bmk
+    x = returns * w - ret_bmk
     μ = mean(x)
     tmp = (x .- μ)
     return dot(tmp, tmp)

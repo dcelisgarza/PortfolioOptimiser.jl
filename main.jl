@@ -111,6 +111,21 @@ deviation_risk_parity2(ef.weights, ef.cov_mtx)
     end
 end
 
+mean_ret = ret_model(MRet(), Matrix(returns))
+ef = MeanVar(tickers, mean_ret, S)
+max_sharpe!(ef)
+sr1 = sharpe_ratio(ef.weights, ef.mean_ret, ef.cov_mtx)
+mu, sigma, sr = portfolio_performance(ef)
+sr ≈ sr1
+L2_reg(ef.weights, 0.69) ≈ 0.2823863907490376
+transaction_cost(ef.weights, fill(1 / 20, 20), 0.005) ≈ 0.007928708353566113
+ex_ante_tracking_error(ef.weights, S, fill(1 / 20, 20)) ≈ 0.022384515086395627
+ex_post_tracking_error(ef.weights, Matrix(returns), fill(1 / 895, 895)) ≈
+0.16061468446601332
+
+test = Matrix(returns) * ef.weights - fill(1 / 895, 895)
+var(test, mean = 0)
+
 # Now try with a nonconvex objective from  Kolm et al (2014)
 function deviation_risk_parity(w, cov_mtx)
     tmp = w .* (cov_mtx * w)
