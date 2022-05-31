@@ -10,7 +10,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     mean_ret = vec(ret_model(MRet(), Matrix(returns)))
     S = risk_matrix(Cov(), Matrix(returns))
 
-    ef = MeanVar(tickers, mu, S)
+    ef = MeanVar(tickers, mean_ret, S)
     efficient_risk!(ef, 0.01, optimiser_attributes = "tol" => 1e-3)
     @test termination_status(ef.model) == MOI.NUMERICAL_ERROR
 
