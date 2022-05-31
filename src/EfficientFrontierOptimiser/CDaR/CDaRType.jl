@@ -1,6 +1,6 @@
 abstract type AbstractEfficientCDaR <: AbstractEfficient end
 
-struct EfficientCDaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12} <:
+struct EfficientCDaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
        AbstractEfficientCDaR
     tickers::T1
     mean_ret::T2
@@ -8,12 +8,13 @@ struct EfficientCDaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12} <:
     returns::T4
     beta::T5
     market_neutral::T6
-    target_cdar::T7
-    target_ret::T8
-    extra_vars::T9
-    extra_constraints::T10
-    extra_obj_terms::T11
-    model::T12
+    risk_aversion::T7
+    target_cdar::T8
+    target_ret::T9
+    extra_vars::T10
+    extra_constraints::T11
+    extra_obj_terms::T12
+    model::T13
 end
 function EfficientCDaR(
     tickers,
@@ -22,6 +23,7 @@ function EfficientCDaR(
     weight_bounds = (0.0, 1.0),
     beta = 0.95,
     market_neutral = false,
+    risk_aversion = 1.0,
     target_cdar = mean(maximum(returns, dims = 2)),
     target_ret = mean(mean_ret),
     extra_vars = [],
@@ -82,6 +84,7 @@ function EfficientCDaR(
         returns,
         beta,
         market_neutral,
+        risk_aversion,
         target_cdar,
         target_ret,
         extra_vars,

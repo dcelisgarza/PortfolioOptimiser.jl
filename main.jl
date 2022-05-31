@@ -4,10 +4,33 @@ using CSV, DataFrames, TimeSeries, LinearAlgebra, JuMP, Ipopt, ECOS
 # Reading in the data; preparing expected returns and a risk model
 df = CSV.read("./test/assets/stock_prices.csv", DataFrame)
 tickers = names(df)[2:end]
-returns = returns_from_prices(df[!, 2:end])
+returns = dropmissing(returns_from_prices(df[!, 2:end]))
 
-mu = vec(ret_model(MRet(), Matrix(dropmissing(returns))))
-S = risk_matrix(Cov(), Matrix(dropmissing(returns)))
+mean_ret = vec(ret_model(MRet(), Matrix(returns)))
+S = risk_matrix(Cov(), Matrix(returns))
+
+cv = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+max_quadratic_utility!(cv, 1)
+portfolio_performance(cv, verbose = true)
+max_quadratic_utility!(cv, 2)
+portfolio_performance(cv, verbose = true)
+max_quadratic_utility!(cv, 4)
+portfolio_performance(cv, verbose = true)
+max_quadratic_utility!(cv, 8)
+portfolio_performance(cv, verbose = true)
+
+cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+max_quadratic_utility!(cd, 0.1)
+portfolio_performance(cd, verbose = true)
+max_quadratic_utility!(cd, 2)
+portfolio_performance(cd, verbose = true)
+max_quadratic_utility!(cd, 4)
+portfolio_performance(cd, verbose = true)
+max_quadratic_utility!(cd, 8)
+portfolio_performance(cd, verbose = true)
+
+min_cdar!(cd)
+portfolio_performance(cd, verbose = true)
 
 function mean_barrier_objective(w, cov_matrix, k = 0.1)
     mean_sum = sum(w) / length(w)
