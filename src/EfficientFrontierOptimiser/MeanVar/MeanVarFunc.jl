@@ -120,8 +120,8 @@ function max_sharpe!(
         ),
     )
 
-    _function_vs_portfolio_val_warn(rf, portfolio.rf, "rf")
     rf = _val_compare_benchmark(rf, <=, 0, 0.02, "rf")
+    _function_vs_portfolio_val_warn(rf, portfolio.rf, "rf")
 
     model = portfolio.model
 
