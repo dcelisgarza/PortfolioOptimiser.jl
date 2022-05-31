@@ -7,7 +7,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     returns = returns_from_prices(df[!, 2:end])
     tickers = names(df)[2:end]
 
-    mu = vec(ret_model(MRet(), Matrix(returns)))
+    mean_ret = vec(ret_model(MRet(), Matrix(returns)))
     S = risk_matrix(Cov(), Matrix(returns))
 
     ef = MeanVar(tickers, mu, S)
@@ -16,6 +16,17 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
 
     efficient_risk!(ef, 0.01, optimiser_attributes = ("tol" => 1e-3, "max_iter" => 20))
     @test termination_status(ef.model) == MOI.ITERATION_LIMIT
+
+    ef = MeanVar(tickers, mean_ret, S)
+    max_sharpe!(ef)
+    sr1 = sharpe_ratio(ef.weights, ef.mean_ret, ef.cov_mtx)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test sr ≈ sr1
+    @test L2_reg(ef.weights, 0.69) ≈ 0.2823863907490376
+    @test transaction_cost(ef.weights, fill(1 / 20, 20), 0.005) ≈ 0.007928708353566113
+    @test ex_ante_tracking_error(ef.weights, S, fill(1 / 20, 20)) ≈ 0.022384515086395627
+    @test ex_post_tracking_error(ef.weights, Matrix(returns), fill(1 / 895, 895)) ≈
+          0.16061468446601332
 
     spy_prices = CSV.read("./assets/spy_prices.csv", DataFrame)
     delta = market_implied_risk_aversion(spy_prices[!, 2])

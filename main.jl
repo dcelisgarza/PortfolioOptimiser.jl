@@ -111,16 +111,6 @@ deviation_risk_parity2(ef.weights, ef.cov_mtx)
     end
 end
 
-ef = MeanVar(tickers, mu, S)
-efficient_risk!(ef, 0.01, optimiser_attributes = "tol" => 1e-3)
-termination_status(ef.model) == MOI.NUMERICAL_ERROR
-
-efficient_risk!(ef, 0.01, optimiser_attributes = ("tol" => 1e-3, "max_iter" => 20))
-termination_status(ef.model) == MOI.ITERATION_LIMIT
-
-obj_params = ef.cov_mtx
-custom_nloptimiser!(ef, deviation_risk_parity2, obj_params)
-
 # Now try with a nonconvex objective from  Kolm et al (2014)
 function deviation_risk_parity(w, cov_mtx)
     tmp = w .* (cov_mtx * w)
