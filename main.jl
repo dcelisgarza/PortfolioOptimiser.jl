@@ -32,52 +32,6 @@ isapprox(mu, mu2, rtol = 1e-6)
 isapprox(sigma, sigma2, rtol = 1e-6)
 isapprox(sr, sr2, rtol = 1e-6)
 
-function cdar_ratio(w...)
-    mean_ret = obj_params[1]
-    beta = obj_params[2]
-    samples = obj_params[3]
-    # n = obj_params[4]
-    # o = obj_params[5]
-    # p = obj_params[6]
-
-    weights = [i for i in w[1:20]]
-    alpha = w[21]
-    z = [i for i in w[22:end]]
-
-    mu = PortfolioOptimiser.port_return(weights, mean_ret)
-    cd = PortfolioOptimiser.cdar(alpha, z, samples, beta)
-
-    return -mu / cd
-end
-
-cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
-obj_params = []
-extra_vars = []
-push!(obj_params, mean_ret)
-push!(obj_params, cd.beta)
-push!(obj_params, size(cd.returns, 1))
-# push!(obj_params, 20)
-# push!(obj_params, 21)
-# push!(obj_params, 22)
-push!(extra_vars, cd.model[:alpha])
-push!(extra_vars, cd.model[:z])
-
-custom_nloptimiser!(
-    cd,
-    cdar_ratio,
-    obj_params,
-    extra_vars,
-    # initial_guess = nothing,
-    # optimiser = Ipopt.Optimizer,
-    # silent = true,
-    # optimiser_attributes = (),
-)
-mu, cdar = portfolio_performance(cd, verbose = true)
-mu / cdar
-min_cdar!(cd)
-mu2, cdar2 = portfolio_performance(cd, verbose = true)
-mu2 / cdar2
-
 cv = EfficientCVaR(tickers, mean_ret, Matrix(returns))
 function cvar_ratio(w...)
     mean_ret = obj_params[1]
@@ -105,53 +59,54 @@ push!(obj_params, size(cv.returns, 1))
 push!(obj_params, 20)
 push!(obj_params, 21)
 push!(obj_params, 22)
-push!(obj_params, cv.model[:alpha])
-push!(obj_params, cv.model[:u])
-
-objective_value(ef.model)
-
-ef2 = MeanVar(tickers, mean_ret, S)
-max_sharpe!(ef2)
-ef2.model
-
+push!(extra_vars, (cv.model[:alpha], 0.1))
+push!(extra_vars, (cv.model[:u], fill(1 / length(cv.model[:u]), length(cv.model[:u]))))
+custom_nloptimiser!(cv, cvar_ratio, obj_params, extra_vars)
+mu, cvar = portfolio_performance(cv, verbose = true)
 mu / cvar
 
-cv = EfficientCVaR(tickers, mean_ret, Matrix(returns))
-min_cvar!(cv)
-mu2, cvar2 = portfolio_performance(cv, verbose = true)
+cv2 = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+min_cvar!(cv2)
+mu2, cvar2 = portfolio_performance(cv2, verbose = true)
 mu2 / cvar2
 
 cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
-min_cdar!(cd)
-portfolio_performance(cd, verbose = true)
+function cdar_ratio(w...)
+    mean_ret = obj_params[1]
+    beta = obj_params[2]
+    samples = obj_params[3]
+    n = obj_params[4]
+    o = obj_params[5]
+    p = obj_params[6]
 
-max_quadratic_utility!(cv, 1)
+    weights = [i for i in w[1:n]]
+    alpha = w[o]
+    z = [i for i in w[p:end]]
 
-mean_ret = ret_model(MRet(), Matrix(returns))
-S = risk_matrix(Cov(), Matrix(returns))
-n = length(tickers)
-prev_weights = fill(1 / n, n)
+    mu = PortfolioOptimiser.port_return(weights, mean_ret)
+    cd = PortfolioOptimiser.cdar(alpha, z, samples, beta)
 
-portfolio_performance(cv, verbose = true)
-max_quadratic_utility!(cv, 4)
-portfolio_performance(cv, verbose = true)
-max_quadratic_utility!(cv, 8)
-portfolio_performance(cv, verbose = true)
-min_cvar!(cv)
-portfolio_performance(cv, verbose = true)
+    return -mu / cd
+end
 
-cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
-max_quadratic_utility!(cd, 0.1)
-portfolio_performance(cd, verbose = true)
-max_quadratic_utility!(cd, 2)
-portfolio_performance(cd, verbose = true)
-max_quadratic_utility!(cd, 4)
-portfolio_performance(cd, verbose = true)
-max_quadratic_utility!(cd, 8)
-portfolio_performance(cd, verbose = true)
+obj_params = []
+extra_vars = []
+push!(obj_params, mean_ret)
+push!(obj_params, cd.beta)
+push!(obj_params, size(cd.returns, 1))
+push!(obj_params, 20)
+push!(obj_params, 21)
+push!(obj_params, 22)
+push!(extra_vars, (cd.model[:alpha], 0.1))
+push!(extra_vars, (cd.model[:z], fill(1 / length(cd.model[:z]), length(cd.model[:z]))))
+custom_nloptimiser!(cd, cdar_ratio, obj_params, extra_vars)
+mu, cdar = portfolio_performance(cd, verbose = true)
+mu / cdar
 
-min_cdar!(cd)
-portfolio_performance(cd, verbose = true)
+cd2 = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+min_cdar!(cd2)
+mu2, cdar2 = portfolio_performance(cd2, verbose = true)
+mu2 / cdar2
 
 function mean_barrier_objective(w, cov_matrix, k = 0.1)
     mean_sum = sum(w) / length(w)

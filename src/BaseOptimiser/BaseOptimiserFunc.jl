@@ -118,6 +118,7 @@ Minimises user-provided nonlinear objectives that are supported by `JuMP.@NLobje
 - `portfolio`: any concrete subtype of `AbstractPortfolioOptimiser`.
 - `obj`: objective function supported by `JuMP.@NLobjective`.
 - `obj_params`: vector or tuple of arguments of `obj`.
+- `extra_vars`: collection of tuples of extra variables for the nonlinear optimiser and their starting values, each element takes the form of `(variable, value)`. If `!isnothing(value)`, it sets/overrides the start value of `variable`, else it takes the default. This is important because the optimiser can fail if the start value causes a discontinuity in the `obj` function, or one of its derivatives. Furthermore, `variable` must be a variable registered to the model.
 - `initial_guess`: initial guess for optimiser, if `nothing` defaults to unifrom weights.
 - `optimiser`: optimiser for solving optimisation problem.
 - `silent`: if `false`, the optimiser prints to console.
@@ -263,7 +264,10 @@ function custom_nloptimiser!(
 
     # Extra, non-weight variables for the model.
     if !isempty(extra_vars)
-        for val in extra_vars
+        for (val, start_val) in extra_vars
+            if !isnothing(start_val)
+                set_start_value.(val, start_val)
+            end
             w = [w; val]
         end
     end
