@@ -177,4 +177,27 @@ end
     ]
 
     @test_throws ArgumentError MeanVar(tickers, mean_ret, S, weight_bounds = weight_bounds)
+
+    function sharpe_ratio_nl(w::T...) where {T}
+        mean_ret = obj_params[1]
+        cov_mtx = obj_params[2]
+        rf = obj_params[3]
+
+        w = [i for i in w]
+        sr = PortfolioOptimiser.sharpe_ratio(w, mean_ret, cov_mtx, rf)
+
+        return -sr
+    end
+    ef = MeanVar(tickers, mean_ret, S)
+    obj_params = [ef.mean_ret, ef.cov_mtx, ef.rf]
+    custom_nloptimiser!(ef, sharpe_ratio_nl, obj_params)
+    mu, sigma, sr = portfolio_performance(ef)
+
+    ef2 = MeanVar(tickers, mean_ret, S)
+    max_sharpe!(ef2)
+    mu2, sigma2, sr2 = portfolio_performance(ef2)
+
+    @test isapprox(mu, mu2, rtol = 1e-6)
+    @test isapprox(sigma, sigma2, rtol = 1e-6)
+    @test isapprox(sr, sr2, rtol = 1e-6)
 end

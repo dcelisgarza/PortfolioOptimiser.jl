@@ -9,14 +9,156 @@ returns = dropmissing(returns_from_prices(df[!, 2:end]))
 mean_ret = vec(ret_model(MRet(), Matrix(returns)))
 S = risk_matrix(Cov(), Matrix(returns))
 
+function sharpe_ratio_nl(w::T...) where {T}
+    mean_ret = obj_params[1]
+    cov_mtx = obj_params[2]
+    rf = obj_params[3]
+
+    w = [i for i in w]
+    sr = PortfolioOptimiser.sharpe_ratio(w, mean_ret, cov_mtx, rf)
+
+    return -sr
+end
+ef = MeanVar(tickers, mean_ret, S)
+obj_params = [ef.mean_ret, ef.cov_mtx, ef.rf]
+@time custom_nloptimiser!(ef, sharpe_ratio_nl, obj_params)
+mu, sigma, sr = portfolio_performance(ef, verbose = true)
+
+ef2 = MeanVar(tickers, mean_ret, S)
+@time max_sharpe!(ef2)
+mu2, sigma2, sr2 = portfolio_performance(ef2, verbose = true)
+
+isapprox(mu, mu2, rtol = 1e-6)
+isapprox(sigma, sigma2, rtol = 1e-6)
+isapprox(sr, sr2, rtol = 1e-6)
+
+function cdar_ratio(w...)
+    mean_ret = obj_params[1]
+    beta = obj_params[2]
+    samples = obj_params[3]
+    # n = obj_params[4]
+    # o = obj_params[5]
+    # p = obj_params[6]
+
+    weights = [i for i in w[1:20]]
+    alpha = w[21]
+    z = [i for i in w[22:end]]
+
+    mu = PortfolioOptimiser.port_return(weights, mean_ret)
+    cd = PortfolioOptimiser.cdar(alpha, z, samples, beta)
+
+    return -mu / cd
+end
+
+cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+obj_params = []
+extra_vars = []
+push!(obj_params, mean_ret)
+push!(obj_params, cd.beta)
+push!(obj_params, size(cd.returns, 1))
+# push!(obj_params, 20)
+# push!(obj_params, 21)
+# push!(obj_params, 22)
+push!(extra_vars, cd.model[:alpha])
+push!(extra_vars, cd.model[:z])
+
+custom_nloptimiser!(
+    cd,
+    cdar_ratio,
+    obj_params,
+    extra_vars,
+    # initial_guess = nothing,
+    # optimiser = Ipopt.Optimizer,
+    # silent = true,
+    # optimiser_attributes = (),
+)
+mu, cdar = portfolio_performance(cd, verbose = true)
+mu / cdar
+min_cdar!(cd)
+mu2, cdar2 = portfolio_performance(cd, verbose = true)
+mu2 / cdar2
+
 cv = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+function cvar_ratio(w...)
+    mean_ret = obj_params[1]
+    beta = obj_params[2]
+    samples = obj_params[3]
+    n = obj_params[4]
+    o = obj_params[5]
+    p = obj_params[6]
+
+    weights = [i for i in w[1:n]]
+    alpha = w[o]
+    u = [i for i in w[p:end]]
+
+    mu = PortfolioOptimiser.port_return(weights, mean_ret)
+    cv = PortfolioOptimiser.cdar(alpha, u, samples, beta)
+
+    return -mu / cv
+end
+
+obj_params = []
+extra_vars = []
+push!(obj_params, mean_ret)
+push!(obj_params, cv.beta)
+push!(obj_params, size(cv.returns, 1))
+push!(obj_params, 20)
+push!(obj_params, 21)
+push!(obj_params, 22)
+push!(obj_params, cv.model[:alpha])
+push!(obj_params, cv.model[:u])
+
+objective_value(ef.model)
+
+ef2 = MeanVar(tickers, mean_ret, S)
+max_sharpe!(ef2)
+ef2.model
+
+mu / cvar
+
+cv = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+min_cvar!(cv)
+mu2, cvar2 = portfolio_performance(cv, verbose = true)
+mu2 / cvar2
+
+cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+min_cdar!(cd)
+portfolio_performance(cd, verbose = true)
+
 max_quadratic_utility!(cv, 1)
-portfolio_performance(cv, verbose = true)
-max_quadratic_utility!(cv, 2)
+
+cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+
+max_quadratic_utility!(cd, 1e8)
+mu, cdar = portfolio_performance(cd)
+min_cdar!(cd)
+muinf, cdarinf = portfolio_performance(cd)
+isapprox(mu, muinf, rtol = 1e-3)
+isapprox(cdar, cdarinf, rtol = 1e-3)
+
+max_quadratic_utility!(cd, 0.25)
+mu1, cdar1 = portfolio_performance(cd)
+max_quadratic_utility!(cd, 0.5)
+mu2, cdar2 = portfolio_performance(cd)
+max_quadratic_utility!(cd, 1)
+mu3, cdar3 = portfolio_performance(cd)
+max_quadratic_utility!(cd, 2)
+mu4, cdar4 = portfolio_performance(cd)
+max_quadratic_utility!(cd, 4)
+mu5, cdar5 = portfolio_performance(cd)
+max_quadratic_utility!(cd, 8)
+mu6, cdar6 = portfolio_performance(cd)
+max_quadratic_utility!(cd, 16)
+mu7, cdar7 = portfolio_performance(cd)
+
+cdar1 > cdar2 > cdar3 > cdar4 > cdar5 > cdar6 > cdar7
+
 portfolio_performance(cv, verbose = true)
 max_quadratic_utility!(cv, 4)
 portfolio_performance(cv, verbose = true)
 max_quadratic_utility!(cv, 8)
+portfolio_performance(cv, verbose = true)
+min_cvar!(cv)
 portfolio_performance(cv, verbose = true)
 
 cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))

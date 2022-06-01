@@ -104,7 +104,8 @@ end
 custom_nloptimiser!(
     portfolio::AbstractPortfolioOptimiser,
     obj,
-    obj_params = ();
+    obj_params = (),
+    extra_vars = ();
     initial_guess = nothing,
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -232,7 +233,8 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 function custom_nloptimiser!(
     portfolio::AbstractPortfolioOptimiser,
     obj,
-    obj_params = ();
+    obj_params = (),
+    extra_vars = ();
     initial_guess = nothing,
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -259,11 +261,19 @@ function custom_nloptimiser!(
         set_start_value.(w, 1 / n)
     end
 
-    register(model, :obj, n, obj, autodiff = true)
+    # Extra, non-weight variables for the model.
+    if !isempty(extra_vars)
+        for val in extra_vars
+            w = [w; val]
+        end
+    end
+    m = length(w) - n
+
+    register(model, :obj, n + m, obj, autodiff = true)
     @NLobjective(model, Min, obj(w...))
 
     _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
-    portfolio.weights .= value.(w)
+    portfolio.weights .= value.(w)[1:n]
     return nothing
 end
