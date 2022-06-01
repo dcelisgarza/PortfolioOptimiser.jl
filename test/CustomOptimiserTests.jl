@@ -59,7 +59,7 @@ end
     tickers = names(df)[2:end]
     returns = dropmissing(returns_from_prices(df[!, 2:end]))
 
-    mu = vec(ret_model(MRet(), Matrix(returns)))
+    mean_ret = ret_model(MRet(), Matrix(returns))
     S = risk_matrix(Cov(), Matrix(returns))
 
     function logarithmic_barrier(w::T...) where {T}
@@ -68,7 +68,6 @@ end
         w = [i for i in w]
         PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
     end
-    mean_ret = ret_model(MRet(), Matrix(returns))
     ef = MeanVar(tickers, mean_ret, S, weight_bounds = (0.03, 0.2))
     obj_params = (ef.cov_mtx, 0.001)
     custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
@@ -200,4 +199,44 @@ end
     @test isapprox(mu, mu2, rtol = 1e-6)
     @test isapprox(sigma, sigma2, rtol = 1e-6)
     @test isapprox(sr, sr2, rtol = 1e-6)
+
+    cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+    function cdar_ratio(w...)
+        mean_ret = obj_params[1]
+        beta = obj_params[2]
+        samples = obj_params[3]
+        n = obj_params[4]
+        o = obj_params[5]
+        p = obj_params[6]
+
+        weights = [i for i in w[1:n]]
+        alpha = w[o]
+        z = [i for i in w[p:end]]
+
+        mu = PortfolioOptimiser.port_return(weights, mean_ret)
+        cd = PortfolioOptimiser.cdar(alpha, z, samples, beta)
+
+        return -mu / cd
+    end
+
+    obj_params = []
+    extra_vars = []
+    push!(obj_params, mean_ret)
+    push!(obj_params, cd.beta)
+    push!(obj_params, size(cd.returns, 1))
+    push!(obj_params, 20)
+    push!(obj_params, 21)
+    push!(obj_params, 22)
+    push!(extra_vars, (cd.model[:alpha], 0.1))
+    push!(extra_vars, (cd.model[:z], fill(1 / length(cd.model[:z]), length(cd.model[:z]))))
+    custom_nloptimiser!(cd, cdar_ratio, obj_params, extra_vars)
+    mu, cdar = portfolio_performance(cd, verbose = true)
+    @test mu / cdar ≈ 3.2819464291074305
+
+    cd2 = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+    min_cdar!(cd2)
+    mu2, cdar2 = portfolio_performance(cd2, verbose = true)
+    mu2 / cdar2
+
+    @test mu / cdar > mu2 / cdar2
 end

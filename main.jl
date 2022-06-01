@@ -101,12 +101,14 @@ push!(extra_vars, (cd.model[:alpha], 0.1))
 push!(extra_vars, (cd.model[:z], fill(1 / length(cd.model[:z]), length(cd.model[:z]))))
 custom_nloptimiser!(cd, cdar_ratio, obj_params, extra_vars)
 mu, cdar = portfolio_performance(cd, verbose = true)
-mu / cdar
+mu / cdar ≈ 3.2819464291074305
 
 cd2 = EfficientCDaR(tickers, mean_ret, Matrix(returns))
 min_cdar!(cd2)
 mu2, cdar2 = portfolio_performance(cd2, verbose = true)
 mu2 / cdar2
+
+mu / cdar > mu2 / cdar2
 
 function mean_barrier_objective(w, cov_matrix, k = 0.1)
     mean_sum = sum(w) / length(w)
