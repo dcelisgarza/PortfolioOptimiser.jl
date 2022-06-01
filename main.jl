@@ -127,31 +127,10 @@ portfolio_performance(cd, verbose = true)
 
 max_quadratic_utility!(cv, 1)
 
-cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
-
-max_quadratic_utility!(cd, 1e8)
-mu, cdar = portfolio_performance(cd)
-min_cdar!(cd)
-muinf, cdarinf = portfolio_performance(cd)
-isapprox(mu, muinf, rtol = 1e-3)
-isapprox(cdar, cdarinf, rtol = 1e-3)
-
-max_quadratic_utility!(cd, 0.25)
-mu1, cdar1 = portfolio_performance(cd)
-max_quadratic_utility!(cd, 0.5)
-mu2, cdar2 = portfolio_performance(cd)
-max_quadratic_utility!(cd, 1)
-mu3, cdar3 = portfolio_performance(cd)
-max_quadratic_utility!(cd, 2)
-mu4, cdar4 = portfolio_performance(cd)
-max_quadratic_utility!(cd, 4)
-mu5, cdar5 = portfolio_performance(cd)
-max_quadratic_utility!(cd, 8)
-mu6, cdar6 = portfolio_performance(cd)
-max_quadratic_utility!(cd, 16)
-mu7, cdar7 = portfolio_performance(cd)
-
-cdar1 > cdar2 > cdar3 > cdar4 > cdar5 > cdar6 > cdar7
+mean_ret = ret_model(MRet(), Matrix(returns))
+S = risk_matrix(Cov(), Matrix(returns))
+n = length(tickers)
+prev_weights = fill(1 / n, n)
 
 portfolio_performance(cv, verbose = true)
 max_quadratic_utility!(cv, 4)

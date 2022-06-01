@@ -71,7 +71,7 @@ function optimise!(portfolio::HRPOpt, obj, obj_params...)
         for i in 1:2:length(cluster_tickers)
             first_cluster = cluster_tickers[i]
             second_cluster = cluster_tickers[i + 1]
-            # Maximise the inverse of the convex objective.
+            # Maximise the inverse of the objective.
             first_measure = obj(portfolio, first_cluster, obj_params...)
             second_measure = obj(portfolio, second_cluster, obj_params...)
             alpha = 1 - first_measure / (first_measure + second_measure)

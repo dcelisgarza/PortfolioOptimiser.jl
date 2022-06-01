@@ -2372,6 +2372,51 @@ end
     mu7, cvar7 = portfolio_performance(cv)
 
     @test cvar1 > cvar2 > cvar3 > cvar4 > cvar5 > cvar6 > cvar7 > cvarinf
+
+    mean_ret = ret_model(MRet(), Matrix(returns))
+    S = risk_matrix(Cov(), Matrix(returns))
+    n = length(tickers)
+    prev_weights = fill(1 / n, n)
+    k = 0.001
+    cv = EfficientCVaR(
+        tickers,
+        mean_ret,
+        Matrix(returns);
+        extra_vars = [:(0 <= l1)],
+        extra_constraints = [
+            :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
+            # :(model[:w][6] == 0.2),
+            # :(model[:w][1] >= 0.01),
+            # :(model[:w][16] <= 0.03),
+        ],
+        extra_obj_terms = [quote
+            $k * model[:l1]
+        end],
+    )
+    max_quadratic_utility!(cv)
+    testweights = [
+        3.113756569142173e-6
+        0.03651110428668516
+        1.7559327229467127e-6
+        2.4988508813368607e-6
+        0.2884507824236885
+        4.740307839121232e-7
+        6.35965677451175e-7
+        0.059851753966193834
+        1.2328589244485448e-6
+        7.729653606291163e-7
+        0.23925600103724068
+        2.821757987240221e-7
+        2.236857664879175e-7
+        2.4956855515063193e-6
+        2.3603525249476997e-7
+        0.0499988249909567
+        0.05000484516920409
+        0.18054754949754553
+        0.045424798952762205
+        0.04994061773243416
+    ]
+    @test isapprox(cv.weights, testweights)
 end
 
 @testset "Efficient CDaR" begin
@@ -2883,8 +2928,8 @@ end
     mu, cdar = portfolio_performance(cd)
     min_cdar!(cd)
     muinf, cdarinf = portfolio_performance(cd)
-    isapprox(mu, muinf, rtol = 1e-3)
-    isapprox(cdar, cdarinf, rtol = 1e-3)
+    @test isapprox(mu, muinf, rtol = 1e-3)
+    @test isapprox(cdar, cdarinf, rtol = 1e-3)
 
     max_quadratic_utility!(cd, 0.25)
     mu1, cdar1 = portfolio_performance(cd)
@@ -2901,5 +2946,46 @@ end
     max_quadratic_utility!(cd, 16)
     mu7, cdar7 = portfolio_performance(cd)
 
-    cdar1 > cdar2 > cdar3 > cdar4 > cdar5 > cdar6 > cdar7
+    @test cdar1 > cdar2 > cdar3 > cdar4 > cdar5 > cdar6 > cdar7
+
+    k = 0.001
+    cd = EfficientCDaR(
+        tickers,
+        mean_ret,
+        Matrix(returns);
+        extra_vars = [:(0 <= l1)],
+        extra_constraints = [
+            :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
+            # :(model[:w][6] == 0.2),
+            # :(model[:w][1] >= 0.01),
+            # :(model[:w][16] <= 0.03),
+        ],
+        extra_obj_terms = [quote
+            $k * model[:l1]
+        end],
+    )
+    max_quadratic_utility!(cd)
+    testweights = [
+        2.4310205346857125e-7
+        1.3076816436003056e-6
+        5.128595922385004e-7
+        1.3722438999845795e-7
+        0.01602055169559408
+        1.0376808957724839e-7
+        3.0145546986152965e-8
+        0.07460084218292454
+        2.565000474740614e-7
+        1.2369417424546358e-7
+        0.38921831557277276
+        2.0060734523276934e-7
+        1.2113214134486977e-7
+        1.1858065328182865e-6
+        1.7026638199337542e-7
+        0.1169266302620751
+        0.2495346328937271
+        6.678082003005919e-6
+        0.0009745300671170129
+        0.15271342645584743
+    ]
+    @test isapprox(cd.weights, testweights)
 end
