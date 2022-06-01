@@ -6,8 +6,26 @@ df = CSV.read("./test/assets/stock_prices.csv", DataFrame)
 tickers = names(df)[2:end]
 returns = dropmissing(returns_from_prices(df[!, 2:end]))
 
-mean_ret = vec(ret_model(MRet(), Matrix(returns)))
+mean_ret = ret_model(MRet(), Matrix(returns))
 S = risk_matrix(Cov(), Matrix(returns))
+
+ef = MeanVar(tickers, mean_ret, S)
+sectors = ["Tech", "Medical", "RealEstate", "Oil"]
+sector_map = Dict(tickers[1:4:20] .=> sectors[1])
+merge!(sector_map, Dict(tickers[2:4:20] .=> sectors[2]))
+merge!(sector_map, Dict(tickers[3:4:20] .=> sectors[3]))
+merge!(sector_map, Dict(tickers[4:4:20] .=> sectors[4]))
+sector_lower =
+    Dict([(sectors[1], 0.2), (sectors[2], 0.1), (sectors[3], 0.15), (sectors[4], 0.05)])
+sector_upper =
+    Dict([(sectors[1], 0.4), (sectors[2], 0.5), (sectors[3], 0.2), (sectors[4], 0.2)])
+add_sector_constraint!(ef, sector_map, sector_lower, sector_upper)
+max_sharpe!(ef)
+
+0.2 - 1e-9 <= sum(ef.weights[1:4:20]) <= 0.4 + 1e-9
+0.1 - 1e-9 <= sum(ef.weights[2:4:20]) <= 0.5 + 1e-9
+0.15 - 1e-9 <= sum(ef.weights[3:4:20]) <= 0.2 + 1e-9
+0.05 - 1e-9 <= sum(ef.weights[4:4:20]) <= 0.2 + 1e-9
 
 function sharpe_ratio_nl(w::T...) where {T}
     mean_ret = obj_params[1]
