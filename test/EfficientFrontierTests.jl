@@ -961,7 +961,7 @@ end
     returns = returns_from_prices(df[!, 2:end])
     tickers = names(df)[2:end]
 
-    mu = vec(ret_model(MRet(), Matrix(returns)))
+    mean_ret = vec(ret_model(MRet(), Matrix(returns)))
     S = risk_matrix(Cov(), Matrix(returns))
 
     ef = MeanSemivar(tickers, mean_ret, S, market_neutral = true)
