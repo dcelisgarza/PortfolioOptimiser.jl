@@ -354,6 +354,7 @@ function add_sector_constraint!(
         if !isempty(is_sector)
             sector_upper_key = Symbol(String(key) * "_upper")
             if haskey(model, sector_upper_key)
+                println("MAX")
                 delete(model, model[sector_upper_key])
                 unregister(model, sector_upper_key)
             end

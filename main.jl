@@ -20,12 +20,17 @@ sector_lower =
 sector_upper =
     Dict([(sectors[1], 0.4), (sectors[2], 0.5), (sectors[3], 0.2), (sectors[4], 0.2)])
 add_sector_constraint!(ef, sector_map, sector_lower, sector_upper)
+add_sector_constraint!(ef, sector_map, sector_lower, sector_upper)
+
 max_sharpe!(ef)
 
 0.2 - 1e-9 <= sum(ef.weights[1:4:20]) <= 0.4 + 1e-9
 0.1 - 1e-9 <= sum(ef.weights[2:4:20]) <= 0.5 + 1e-9
 0.15 - 1e-9 <= sum(ef.weights[3:4:20]) <= 0.2 + 1e-9
 0.05 - 1e-9 <= sum(ef.weights[4:4:20]) <= 0.2 + 1e-9
+
+ef = MeanSemivar(tickers, mean_ret, S, market_neutral = true)
+add_sector_constraint!(ef, sector_map, sector_lower, sector_upper)
 
 function sharpe_ratio_nl(w::T...) where {T}
     mean_ret = obj_params[1]
