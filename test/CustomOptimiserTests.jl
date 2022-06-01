@@ -214,9 +214,9 @@ end
         z = [i for i in w[p:end]]
 
         mu = PortfolioOptimiser.port_return(weights, mean_ret)
-        cd = PortfolioOptimiser.cdar(alpha, z, samples, beta)
+        CDaR = PortfolioOptimiser.cdar(alpha, z, samples, beta)
 
-        return -mu / cd
+        return -mu / CDaR
     end
 
     obj_params = []
@@ -230,13 +230,13 @@ end
     push!(extra_vars, (cd.model[:alpha], 0.1))
     push!(extra_vars, (cd.model[:z], fill(1 / length(cd.model[:z]), length(cd.model[:z]))))
     custom_nloptimiser!(cd, cdar_ratio, obj_params, extra_vars)
-    mu, cdar = portfolio_performance(cd, verbose = true)
-    @test mu / cdar ≈ 3.2819464291074305
+    mu, cdar1 = portfolio_performance(cd)
+    @test mu / cdar1 ≈ 3.2819464291074305
 
     cd2 = EfficientCDaR(tickers, mean_ret, Matrix(returns))
     min_cdar!(cd2)
-    mu2, cdar2 = portfolio_performance(cd2, verbose = true)
+    mu2, cdar2 = portfolio_performance(cd2)
     mu2 / cdar2
 
-    @test mu / cdar > mu2 / cdar2
+    @test mu / cdar1 > mu2 / cdar2
 end
