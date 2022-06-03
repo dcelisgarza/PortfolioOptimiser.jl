@@ -52,7 +52,7 @@ function efficient_frontier!(portfolio::AbstractCriticalLine, points = 100)
             w = w1 * j + (1 - j) * w0
             push!(weights, copy(w))
             push!(mu, port_return(w, mean_ret))
-            push!(sigma, sqrt(dot(w, cov_mtx, w)))
+            push!(sigma, sqrt(port_variance(w, cov_mtx)))
         end
     end
     portfolio.frontier_values[1] = (mu = mu, sigma = sigma, weights = weights)

@@ -541,100 +541,120 @@ tickers = names(df)[2:end]
 mu = vec(ret_model(MRet(), Matrix(returns)))
 S = risk_matrix(Cov(), Matrix(returns))
 
-spy_prices = CSV.read("./test/assets/spy_prices.csv", DataFrame)
-delta = market_implied_risk_aversion(spy_prices[!, 2])
-# In the order of the dataframes, the
-mcapsdf = DataFrame(
-    ticker = tickers,
-    mcap = [
-        927e9,
-        1.19e12,
-        574e9,
-        533e9,
-        867e9,
-        96e9,
-        43e9,
-        339e9,
-        301e9,
-        51e9,
-        61e9,
-        78e9,
-        0,
-        295e9,
-        1e9,
-        22e9,
-        288e9,
-        212e9,
-        422e9,
-        102e9,
-    ],
-)
-
-prior = market_implied_prior_returns(mcapsdf[!, 2], S, delta)
-
-# 1. SBUX drop by 20%
-# 2. GOOG outperforms FB by 10%
-# 3. BAC and JPM will outperform T and GE by 15%
-views = [-0.20, 0.10, 0.15]
-picking = hcat(
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0],
-)
-
-bl = BlackLitterman(
-    mcapsdf[!, 1],
-    S;
-    rf = 0,
-    tau = 0.01,
-    pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
-    Q = views,
-    P = picking,
-)
-
-df = CSV.read("./test/assets/stock_prices.csv", DataFrame)
-tickers = names(df)[2:end]
-returns = dropmissing(returns_from_prices(df[!, 2:end]))
-
-mu = vec(ret_model(MRet(), Matrix(returns)))
-S = risk_matrix(Cov(), Matrix(returns))
-
-function logarithmic_barrier(w::T...) where {T}
-    cov_mtx = obj_params[1]
-    k = obj_params[2]
-    w = [i for i in w]
-    PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
-end
-mean_ret = ret_model(MRet(), Matrix(returns))
-ef = MeanVar(tickers, mean_ret, S, weight_bounds = (0.03, 0.2))
-obj_params = (ef.cov_mtx, 0.001)
-custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
+hrp = HRPOpt(tickers, returns = Matrix(returns))
+optimise!(hrp, max_quadratic_utility!)
 testweights = [
-    0.0459759150798785,
-    0.0465060033736648,
-    0.0406223479132712,
-    0.0367443944616427,
-    0.0394265018793106,
-    0.0533782687664828,
-    0.0300000004313922,
-    0.0940987390957382,
-    0.0307216371198716,
-    0.0402226547518765,
-    0.1209594547099574,
-    0.0300000012819006,
-    0.0300000004033861,
-    0.065153111884118,
-    0.0300000023324234,
-    0.0367907531898106,
-    0.0457521843192034,
-    0.0858732773342319,
-    0.037645669856962,
-    0.0601290817911846,
+    0.05322978571963428,
+    0.0013525614095372441,
+    0.0845701131689161,
+    0.08166673007984035,
+    0.16404173578207706,
+    0.0006158870845536016,
+    0.049189141600734725,
+    0.0069323722289936765,
+    0.05932923127907018,
+    0.061314572056272124,
+    0.023130441823266446,
+    0.005234336476474105,
+    0.029075109239338887,
+    0.009122881135802348,
+    0.08064447242628374,
+    0.1282639687104863,
+    0.16244508468678345,
+    0.03794588221718694,
+    0.06687051853947568,
+    0.06890700229846011,
 ]
-minimum(abs.(0.2 .- ef.weights)) >= 0
-minimum(abs.(ef.weights .- 0.03)) <= 1e-8
+hrp.weights ≈ testweights
+mu, sigma, sr = portfolio_performance(hrp)
+mutest, sigmatest, srtest = 0.23977731989029213, 0.1990931650935869, 1.103891837708152
+mu ≈ mutest
+sigma ≈ sigmatest
+sr ≈ srtest
 
-0.2 .- ef.weights
+hrp = HRPOpt(tickers, returns = Matrix(returns))
+optimise!(hrp, max_return!)
+testweights = [
+    0.053215775973689344,
+    0.0014298867467719253,
+    0.08459870820429168,
+    0.08164522293333767,
+    0.16394762797243273,
+    0.0006506856473305975,
+    0.04877541431712327,
+    0.006966529106643553,
+    0.05933305965116203,
+    0.061351686897633866,
+    0.023122626771250834,
+    0.005255850404371056,
+    0.028772641690166374,
+    0.009101244131990852,
+    0.08058316841784602,
+    0.1283171317054279,
+    0.1623978785944996,
+    0.03793881981412327,
+    0.06685508940506842,
+    0.0688799562236672,
+]
+hrp.weights ≈ testweights
+mu, sigma, sr = portfolio_performance(hrp)
+mutest, sigmatest, srtest = 0.23967354225156112, 0.19889330638531708, 1.1044793122699987
+mu ≈ mutest
+sigma ≈ sigmatest
+sr ≈ srtest
 
-ef.weights
-all(ef.weights .>= 0.03 + 20^2 * eps())
+optimise!(hrp, max_quadratic_utility!, 1e-12)
+mu_mq, sigma_mq, sr_mq = portfolio_performance(hrp)
+mu ≈ mu_mq
+sigma ≈ sigma_mq
+sr ≈ sr_mq
+
+optimise!(hrp, min_volatility!)
+mu, sigma, sr = portfolio_performance(hrp)
+optimise!(hrp, max_quadratic_utility!, 1e12)
+mu_mq, sigma_mq, sr_mq = portfolio_performance(hrp)
+mu ≈ mu_mq
+sigma ≈ sigma_mq
+sr ≈ sr_mq
+
+hrp = HRPOpt(tickers, returns = Matrix(returns))
+optimise!(hrp, max_sharpe!)
+testweights = [
+    0.060950709858938946,
+    0.024688958223226046,
+    0.07636491146846057,
+    0.09098114189215895,
+    0.16345933040156524,
+    0.01321315607100166,
+    0.030495530737540685,
+    0.0041676003148035014,
+    0.05012315893824599,
+    0.047425984889118235,
+    0.0354866498145466,
+    0.0029681045872571015,
+    0.018207753673800363,
+    0.01757206461257125,
+    0.07232501039144949,
+    0.09318121978905623,
+    0.17882024226595147,
+    0.04731099202207161,
+    0.0699409077092408,
+    0.0859547509506454,
+]
+hrp.weights ≈ testweights
+mu, sigma, sr = portfolio_performance(hrp)
+mutest, sigmatest, srtest = 0.23690508565115886, 0.19266051071806212, 1.1258409148960271
+mu ≈ mutest
+sigma ≈ sigmatest
+sr ≈ srtest
+
+optimise!(hrp, min_volatility!)
+mu1, sigma1, sr1 = portfolio_performance(hrp)
+optimise!(hrp, max_return!)
+mu2, sigma2, sr2 = portfolio_performance(hrp)
+optimise!(hrp, max_quadratic_utility!)
+mu3, sigma3, sr3 = portfolio_performance(hrp)
+
+sr > sr1
+sr > sr2
+sr > sr3
