@@ -110,14 +110,26 @@ function _hrp_maximise(w, cluster1_idx, cluster2_idx, val1, val2)
 
     if val1 < 0
         alpha = val1 / (val1 - val2)
-        w[cluster1_idx] *= alpha  # weight 1
+        if alpha > 0.5
+            w[cluster1_idx] *= 1 - alpha  # weight 1
+            w[cluster2_idx] *= alpha  # weight 1
+        else
+            w[cluster1_idx] *= alpha  # weight 1
+            w[cluster2_idx] *= 1 - alpha  # weight 1
+        end
 
         return nothing
     end
 
     if val2 < 0
         alpha = val2 / (val2 - val1)
-        w[cluster2_idx] *= alpha  # weight 2
+        if alpha > 0.5
+            w[cluster1_idx] *= alpha  # weight 2
+            w[cluster2_idx] *= 1 - alpha  # weight 2
+        else
+            w[cluster1_idx] *= 1 - alpha  # weight 2
+            w[cluster2_idx] *= alpha  # weight 2
+        end
 
         return nothing
     end
@@ -144,15 +156,27 @@ function _hrp_minimise(w, cluster1_idx, cluster2_idx, val1, val2)
     end
 
     if val1 < 0
-        alpha = 1 - val1 / (val1 - val2)
-        w[cluster1_idx] *= alpha  # weight 1
+        alpha = val1 / (val1 - val2)
+        if alpha > 0.5
+            w[cluster1_idx] *= alpha  # weight 1
+            w[cluster2_idx] *= 1 - alpha  # weight 1
+        else
+            w[cluster1_idx] *= 1 - alpha  # weight 1
+            w[cluster2_idx] *= alpha  # weight 1
+        end
 
         return nothing
     end
 
     if val2 < 0
-        alpha = 1 - val2 / (val2 - val1)
-        w[cluster2_idx] *= alpha  # weight 2
+        alpha = val2 / (val2 - val1)
+        if alpha > 0.5
+            w[cluster1_idx] *= 1 - alpha  # weight 1
+            w[cluster2_idx] *= alpha  # weight 1
+        else
+            w[cluster1_idx] *= alpha  # weight 1
+            w[cluster2_idx] *= 1 - alpha  # weight 1
+        end
 
         return nothing
     end
