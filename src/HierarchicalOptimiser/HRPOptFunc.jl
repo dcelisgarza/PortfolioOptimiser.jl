@@ -99,6 +99,8 @@ end
 
 function _hrp_maximise(w, cluster1_idx, cluster2_idx, val1, val2)
     if val1 < 0 && val2 < 0
+        # If both val1 and val2 are negative, we want the least negative of the two to have the larger weight because we're maximising the function.
+        # If abs(val1) >>> abs(val2), alpha -> 1, the most negative would be val1 so we want its weight to be smaller.
         alpha = val1 / (val1 + val2)
 
         w[cluster1_idx] *= 1 - alpha  # weight 1
@@ -115,25 +117,29 @@ function _hrp_maximise(w, cluster1_idx, cluster2_idx, val1, val2)
 
     if val2 < 0
         alpha = val2 / (val2 - val1)
-        w[cluster2_idx] *= alpha  # weight 1
+        w[cluster2_idx] *= alpha  # weight 2
 
         return nothing
     end
 
+    # If both val1 and val2 are positive, we want the larger of the two to have the larger weight because we're maximising the function.
+    # If val1 >>> val2, alpha -> 1.
     alpha = val1 / (val1 + val2)
 
-    w[cluster1_idx] *= alpha  # weight 1
-    w[cluster2_idx] *= 1 - alpha  # weight 2
+    w[cluster1_idx] *= alpha        # weight 1
+    w[cluster2_idx] *= 1 - alpha    # weight 2
 
     return nothing
 end
 
 function _hrp_minimise(w, cluster1_idx, cluster2_idx, val1, val2)
     if val1 < 0 && val2 < 0
+        # If both val1 and val2 are negative, we want the most negative of the two to have the larger weight because we're minimising the function.
+        # If abs(val1) >>> abs(val2), alpha -> 0, the most negative would be val1 so we want its weight to be larger.
         alpha = 1 - val1 / (val1 + val2)
 
-        w[cluster1_idx] *= 1 - alpha  # weight 1
-        w[cluster2_idx] *= alpha  # weight 2
+        w[cluster1_idx] *= 1 - alpha    # weight 1
+        w[cluster2_idx] *= alpha        # weight 2
         return nothing
     end
 
@@ -146,15 +152,17 @@ function _hrp_minimise(w, cluster1_idx, cluster2_idx, val1, val2)
 
     if val2 < 0
         alpha = 1 - val2 / (val2 - val1)
-        w[cluster2_idx] *= alpha  # weight 1
+        w[cluster2_idx] *= alpha  # weight 2
 
         return nothing
     end
 
+    # If both val1 and val2 are positive, we want the smaller of the two to have the larger weight because we're minimising the function.
+    # If val1 <<< val2, alpha -> 1.
     alpha = 1 - val1 / (val1 + val2)
 
-    w[cluster1_idx] *= alpha  # weight 1
-    w[cluster2_idx] *= 1 - alpha  # weight 2
+    w[cluster1_idx] *= alpha        # weight 1
+    w[cluster2_idx] *= 1 - alpha    # weight 2
 
     return nothing
 end

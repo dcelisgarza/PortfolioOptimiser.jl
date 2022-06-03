@@ -41,7 +41,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     tickers = names(df)[2:end]
     returns = returns_from_prices(df[!, 2:end])
 
-    mu = vec(ret_model(MRet(), Matrix(returns)))
+    mean_ret = vec(ret_model(MRet(), Matrix(returns)))
     S = risk_matrix(Cov(), Matrix(returns))
 
     hrp = HRPOpt(tickers, returns = Matrix(returns))
@@ -115,7 +115,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     @test_throws ArgumentError HRPOpt(tickers)
     @test_throws ArgumentError HRPOpt(tickers, returns = Matrix(returns), D = :custom)
 
-    hrp = HRPOpt(tickers, returns = Matrix(returns))
+    hrp = HRPOpt(tickers, returns = Matrix(returns), mean_ret = mean_ret)
     optimise!(hrp, max_quadratic_utility!)
     testweights = [
         0.05322978571963428,
@@ -191,7 +191,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     @test sigma ≈ sigma_mq
     @test sr ≈ sr_mq
 
-    hrp = HRPOpt(tickers, returns = Matrix(returns))
+    hrp = HRPOpt(tickers, returns = Matrix(returns), mean_ret = mean_ret)
     optimise!(hrp, max_sharpe!)
     testweights = [
         0.060950709858938946,

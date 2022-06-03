@@ -541,7 +541,7 @@ tickers = names(df)[2:end]
 mu = vec(ret_model(MRet(), Matrix(returns)))
 S = risk_matrix(Cov(), Matrix(returns))
 
-hrp = HRPOpt(tickers, returns = Matrix(returns))
+hrp = HRPOpt(tickers, returns = Matrix(returns), mean_ret = mu)
 optimise!(hrp, max_quadratic_utility!)
 testweights = [
     0.05322978571963428,
