@@ -1,7 +1,7 @@
 using Test
 using PortfolioOptimiser, CSV, DataFrames, Statistics
 
-@testset "Efficient return value" begin
+@testset "Expected returns" begin
     df = CSV.read("./assets/stock_prices.csv", DataFrame)
     dropmissing!(df)
     returns = returns_from_prices(df[!, 2:end])
