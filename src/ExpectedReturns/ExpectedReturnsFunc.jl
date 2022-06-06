@@ -66,7 +66,7 @@ ret_model(
     compound = true,
     freq = 252,
     rspan = Int(ceil(freq / 1.4)),
-    cov_type::AbstractRiskModel = Cov(),
+    cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     cspan = Int(ceil(freq / 1.4)),
@@ -200,6 +200,8 @@ function prices_from_returns(returns, log_ret = false)
         ret = 1 .+ returns
     end
 
-    ret[1, :] .= 1
+    # ret[1, :] .= 1
+    # println(size(ret, 2))
+    ret = [ones(1, size(ret, 2)); ret]
     return cumprod(ret, dims = 1)
 end
