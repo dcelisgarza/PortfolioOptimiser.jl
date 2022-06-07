@@ -1,5 +1,5 @@
 using Test
-using PortfolioOptimiser, CSV, DataFrames, Statistics
+using PortfolioOptimiser, CSV, DataFrames, Statistics, CovarianceEstimation
 
 @testset "Expected returns" begin
     df = CSV.read("./assets/stock_prices.csv", DataFrame)
@@ -236,4 +236,69 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics
     reconstructed_prices = (rel_prices' .* Vector(df[1, 2:end]))'
 
     @test reconstructed_prices ≈ Matrix(df[!, 2:end])
+
+    target = DiagonalUnequalVariance()
+    shrinkage = :lw
+    method = LinearShrinkage(target, shrinkage)
+
+    capm_ret = ret_model(
+        CAPMRet(),
+        Matrix(returns),
+        cov_type = CustomCov(),
+        custom_cov_estimator = method,
+    )
+
+    @test capm_ret ≈ [
+        0.09278178288462897,
+        0.09355501593033733,
+        0.10077289837186976,
+        0.11090335142923119,
+        0.10281724770903872,
+        0.08717182341661432,
+        0.18660602210741187,
+        0.06511287753486789,
+        0.11956051755492042,
+        0.10231667873029156,
+        0.0616666133216439,
+        0.14115245913476981,
+        0.19232879156294488,
+        0.08058033843956112,
+        0.1412548546904358,
+        0.11129845397787426,
+        0.09397237926550572,
+        0.07033250574250885,
+        0.10463507198733277,
+        0.0827216739348617,
+    ]
+
+    exp_capm_ret = ret_model(
+        ECAPMRet(),
+        Matrix(returns),
+        cspan = 1503,
+        rspan = 1503,
+        cov_type = CustomCov(),
+        custom_cov_estimator = method,
+    )
+    @test exp_capm_ret ≈ [
+        0.10295512054015153,
+        0.10383643503905633,
+        0.1120632231754654,
+        0.123609697048356,
+        0.11439332885534213,
+        0.0965610086422304,
+        0.20989398306639132,
+        0.07141869360015936,
+        0.13347694996562873,
+        0.11382279103221057,
+        0.06749071530819609,
+        0.1580869834858518,
+        0.2164166733769566,
+        0.08904817494761193,
+        0.1582036917516621,
+        0.12406002648862763,
+        0.10431213684802158,
+        0.0773679142701998,
+        0.11646524611471647,
+        0.09148882337760635,
+    ]
 end

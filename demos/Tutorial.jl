@@ -289,11 +289,12 @@ Calculate the returns and sample covariance.
 
 returns = returns_from_prices(hist_prices[!, 2:end])
 num_cols = ncol(returns)
+num_rows = nrow(returns)
 
 sample_cov = risk_model(SCov(), Matrix(returns), freq = 252)
 
 fig1 = heatmap(
-    cov2cor(S),
+    cov2cor(sample_cov),
     yflip = true,
     xticks = (1:num_cols, names(returns)),
     yticks = (1:num_cols, names(returns)),
@@ -309,10 +310,10 @@ The package [CovarianceEstimation.jl](https://github.com/mateuszbaran/Covariance
 using CovarianceEstimation
 
 target = DiagonalUnequalVariance()
-
 shrinkage = :lw
 method = LinearShrinkage(target, shrinkage)
-lw_shrunken2 = cov(method, Matrix(returns)) * 252
+
+S = risk_model(CustomCov(), Matrix(returns), estimator = method)
 
 fig1 = heatmap(
     cov2cor(Matrix(S)),
@@ -322,13 +323,75 @@ fig1 = heatmap(
     xrotation = 70,
 )
 
-capm_ret =
-    ret_model(CAPMRet(), Matrix(returns), custom_cov = cov, custom_cov_estimator = method)
+"""
+## Mean Variance optimisation.
+
+As previously stated, using returns is not the best idea given how volatile they can be. Returns are optional on portfolios that do not use them such as `min_volatility!`.
+
+As we are demonstrating all Mean Variance optimisations we will use returns. We'll use exponentially weighted CAPM returns with the LeDoit-Wolf covariance shrinkage as defined above as our mean returns. This is because CAPM returns aim to be more stable than mean historical returns, combining them with a shrunken covariance and assigning exponentially increasing weights to more recent entries should give a better indication of future returns.
+"""
+
+capm_ret = ret_model(
+    CAPMRet(),
+    Matrix(returns),
+    cov_type = CustomCov(),
+    custom_cov_estimator = method,
+)
+
 exp_capm_ret = ret_model(
     ECAPMRet(),
     Matrix(returns),
     cspan = num_rows / 2,
     rspan = num_rows / 2,
-    custom_cov = cov,
+    cov_type = CustomCov(),
     custom_cov_estimator = method,
 )
+
+[tickers exp_capm_ret]
+
+fig = bar(
+    exp_capm_ret,
+    yticks = (1:num_cols, tickers),
+    orientation = :h,
+    yflip = true,
+    legend = false,
+    title = "Exp CAPM",
+)
+
+"""
+We can optimise for the minimum volatility without providing expected returns. In this example we also allow the weight bounds to be between -1 and 1, because we want to create a long-short portfolio.
+"""
+
+ef = MeanVar(tickers, nothing, S, weight_bounds = (-1, 1))
+min_volatility!(ef)
+portfolio_performance(ef, verbose = true)
+[tickers ef.weights]
+
+"""
+However, if we want to optimise for other objectives in Mean-Variance optmisation we must provide the expected returns. In this example we also allow the weights to be negative such that we can optimise 
+"""
+
+ef = MeanVar(tickers, exp_capm_ret, S, weight_bounds = (-1, 1))
+min_volatility!(ef)
+portfolio_performance(ef)
+[tickers ef.weights]
+
+"""
+Assuming we want to stick with this portfolio we then need to allocate it depending on how much money we have. Lets pretend we want a long-short portfolio with a ratio of 169:69, long:short and we have 420,000 to invest. We can do this with mixed-integer optimisation for discrete shares, or a greedy algorithm that supports fractional shares.
+"""
+
+alloc, leftover = Allocation(
+    LP(),
+    ef,
+    Vector(hist_prices[end, 2:end]);
+    investment = 420_000,
+    short_ratio = 0.69,
+)
+
+[alloc.tickers alloc.shares]
+
+"""
+We can see that the weights between the optimal and allocated portfolios are not the same, because we wanted a specific short:long ratio, we have a finite amount of money, and we are restricted to whole shares by the mixed-integer optimisation.
+"""
+
+[alloc.weights[sortperm(alloc.tickers)] ef.weights]

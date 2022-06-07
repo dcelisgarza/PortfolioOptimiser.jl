@@ -38,7 +38,7 @@ function portfolio_performance(portfolio::MeanVar; rf = portfolio.rf, verbose = 
         w = portfolio.weights
         cov_mtx = portfolio.cov_mtx
 
-        μ = port_return(w, mean_ret)
+        !isnothing(mean_ret) ? μ = port_return(w, mean_ret) : μ = NaN
         σ = sqrt(port_variance(w, cov_mtx))
         sr = sharpe_ratio(μ, σ, rf)
 

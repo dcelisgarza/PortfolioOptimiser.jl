@@ -25,13 +25,15 @@ function EfficientCDaR(
     market_neutral = false,
     risk_aversion = 1.0,
     target_cdar = mean(maximum(returns, dims = 2)),
-    target_ret = mean(mean_ret),
+    target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
     extra_vars = [],
     extra_constraints = [],
     extra_obj_terms = [],
 )
     num_tickers = length(tickers)
-    @assert num_tickers == length(mean_ret) == size(returns, 2)
+    @assert num_tickers == size(returns, 2)
+    !isnothing(mean_ret) && @assert(num_tickers == length(mean_ret))
+
     weights = zeros(num_tickers)
 
     beta = _val_compare_benchmark(beta, >=, 1, 0.95, "beta")

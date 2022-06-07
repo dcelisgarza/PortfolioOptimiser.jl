@@ -78,6 +78,9 @@ function risk_model(
     fix_method::Union{SFix, DFix} = SFix(),
     freq = 252,
     span = Int(ceil(freq / 1.4)),
+    custom_cov_estimator = nothing,
+    custom_cov_args = (),
+    custom_cov_kwargs = (),
 )
     if typeof(type) <: Cov
         return risk_model(Cov(), returns; fix_method = fix_method, freq = freq)
@@ -105,6 +108,15 @@ function risk_model(
             fix_method = fix_method,
             freq = freq,
             span = span,
+        )
+    elseif typeof(type) <: CustomCov
+        risk_model(
+            CustomCov(),
+            returns;
+            freq = freq,
+            estimator = custom_cov_estimator,
+            args = custom_cov_args,
+            kwargs = custom_cov_kwargs,
         )
     end
 end
@@ -153,4 +165,16 @@ function risk_model(
         fix_method,
         cov(SimpleCovariance(), semi_returns, eweights(N, 2 / (span + 1)); mean = 0) * freq,
     )
+end
+
+function risk_model(
+    ::CustomCov,
+    returns;
+    freq = 252,
+    estimator = nothing,
+    args = (),
+    kwargs = (),
+)
+    return isnothing(estimator) ? cov(returns, args...; kwargs...) * freq :
+           cov(estimator, returns, args...; kwargs...) * freq
 end

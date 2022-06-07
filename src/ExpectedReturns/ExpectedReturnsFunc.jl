@@ -48,7 +48,6 @@ ret_model(
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     span = Int(ceil(freq / 1.4)),
-    custom_cov = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
     custom_cov_kwargs = (),
@@ -74,10 +73,9 @@ ret_model(
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     cspan = Int(ceil(freq / 1.4)),
-    custom_cov = nothing,
     custom_cov_estimator = nothing,
-    custom_cov_args = nothing,
-    custom_cov_kwargs = nothing,
+    custom_cov_args = (),
+    custom_cov_kwargs = (),
 )
 ```
 
@@ -120,7 +118,6 @@ function ret_model(
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     span = Int(ceil(freq / 1.4)),
-    custom_cov = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
     custom_cov_kwargs = (),
@@ -132,7 +129,6 @@ function ret_model(
         target,
         fix_method,
         span,
-        custom_cov,
         custom_cov_estimator,
         custom_cov_args,
         custom_cov_kwargs,
@@ -157,7 +153,6 @@ function ret_model(
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     cspan = Int(ceil(freq / 1.4)),
-    custom_cov = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
     custom_cov_kwargs = (),
@@ -169,7 +164,6 @@ function ret_model(
         target,
         fix_method,
         cspan,
-        custom_cov,
         custom_cov_estimator,
         custom_cov_args,
         custom_cov_kwargs,
@@ -190,7 +184,6 @@ function _compute_betas(
     target,
     fix_method,
     cspan,
-    custom_cov,
     custom_cov_estimator,
     custom_cov_args,
     custom_cov_kwargs,
@@ -204,20 +197,17 @@ function _compute_betas(
         returns = hcat(returns, market_returns)
     end
     # Covariance with the market returns.
-    if isnothing(custom_cov)
-        cov_mtx = risk_model(cov_type, returns, target, fix_method, 1, cspan)
-    else
-        if isnothing(custom_cov_estimator)
-            cov_mtx = custom_cov(returns, custom_cov_args...; custom_cov_kwargs...)
-        else
-            cov_mtx = custom_cov(
-                custom_cov_estimator,
-                returns,
-                custom_cov_args...;
-                custom_cov_kwargs...,
-            )
-        end
-    end
+    cov_mtx = risk_model(
+        cov_type,
+        returns,
+        target,
+        fix_method,
+        1,
+        cspan,
+        custom_cov_estimator,
+        custom_cov_args...;
+        custom_cov_kwargs...,
+    )
 
     # The rightmost column is the covariance to the market.
     β = cov_mtx[:, end] / cov_mtx[end, end]

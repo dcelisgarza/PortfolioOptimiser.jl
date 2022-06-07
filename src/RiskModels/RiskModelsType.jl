@@ -21,6 +21,7 @@ struct Cov <: AbstractRiskModel end
 struct SCov <: AbstractRiskModel end
 struct ECov <: AbstractRiskModel end
 struct ESCov <: AbstractRiskModel end
+struct CustomCov <: AbstractRiskModel end
 ```
 
 Risk models for dispatch on [`risk_model`](@ref).
@@ -29,9 +30,11 @@ Risk models for dispatch on [`risk_model`](@ref).
 - `SCov`: Exponentially weighted mean returns.
 - `ECov`: Capital Asset Pricing Model (CAPM) returns.
 - `ESCov`: Exponentially weighted Capital Asset Pricing Model (ECAPM) returns.
+- `CustomCov`: Custom covariance matrix.
 """
 abstract type AbstractRiskModel end
 struct Cov <: AbstractRiskModel end
 struct SCov <: AbstractRiskModel end
 struct ECov <: AbstractRiskModel end
 struct ESCov <: AbstractRiskModel end
+struct CustomCov <: AbstractRiskModel end

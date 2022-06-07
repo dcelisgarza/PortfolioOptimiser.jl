@@ -38,7 +38,7 @@ function portfolio_performance(portfolio::MeanSemivar; rf = portfolio.rf, verbos
     else
         w = portfolio.weights
 
-        μ = port_return(w, mean_ret)
+        !isnothing(mean_ret) ? μ = port_return(w, mean_ret) : μ = NaN
 
         benchmark = portfolio.benchmark
         returns = portfolio.returns

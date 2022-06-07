@@ -16,7 +16,7 @@ function portfolio_performance(portfolio::EfficientCVaR; verbose = false)
         return 0.0, 0.0
     else
         w = portfolio.weights
-        μ = port_return(w, mean_ret)
+        !isnothing(mean_ret) ? μ = port_return(w, mean_ret) : μ = NaN
 
         alpha = value(portfolio.model[:alpha])
         u = value.(portfolio.model[:u])
