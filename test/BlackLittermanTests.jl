@@ -8,7 +8,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
     tickers = names(df)[2:end]
 
     mu = vec(ret_model(MRet(), Matrix(returns)))
-    S = risk_matrix(Cov(), Matrix(returns))
+    S = risk_model(Cov(), Matrix(returns))
 
     spy_prices = CSV.read("./assets/spy_prices.csv", DataFrame)
     delta = market_implied_risk_aversion(spy_prices[!, 2])

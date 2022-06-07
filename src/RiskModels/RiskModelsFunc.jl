@@ -4,7 +4,7 @@ Calculate covariance matrices.
 ## Wrapper function
 
 ```
-risk_matrix(
+risk_model(
     type::AbstractRiskModel,
     returns;
     target = 1.02^(1 / 252) - 1,
@@ -25,7 +25,7 @@ Dispatches specific covariance matrix calculation methods according to `type.`
 ## Normal covariance
 
 ```
-risk_matrix(::Cov, returns; fix_method::Union{SFix, DFix} = SFix(), freq = 252)
+risk_model(::Cov, returns; fix_method::Union{SFix, DFix} = SFix(), freq = 252)
 ```
 
 ## Semi-covariance
@@ -33,7 +33,7 @@ risk_matrix(::Cov, returns; fix_method::Union{SFix, DFix} = SFix(), freq = 252)
 The semi-covariance sets a target for distinguishing "upside" and "downside" risk. It only considers fluctuations below `target` which heavily biases losses. Lets users minimise negative risk.
 
 ```
-risk_matrix(
+risk_model(
     ::SCov,
     returns;
     target = 1.02^(1 / 252) - 1,
@@ -47,7 +47,7 @@ risk_matrix(
 The exponentially weighted covariance uses exponentially weighted expected returns rather than normally weighted expected returns. More recent returns are weighted more heavily.
 
 ```
-risk_matrix(
+risk_model(
     ::ECov,
     returns;
     fix_method::Union{SFix, DFix} = SFix(),
@@ -61,7 +61,7 @@ risk_matrix(
 Combines the semi-covariance and exponentially weighted covariance.
 
 ```
-risk_matrix(
+risk_model(
     ::ESCov,
     returns;
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.
@@ -71,7 +71,7 @@ risk_matrix(
 )
 ```
 """
-function risk_matrix(
+function risk_model(
     type::AbstractRiskModel,
     returns,
     target = 1.02^(1 / 252) - 1,
@@ -80,9 +80,9 @@ function risk_matrix(
     span = Int(ceil(freq / 1.4)),
 )
     if typeof(type) <: Cov
-        return risk_matrix(Cov(), returns; fix_method = fix_method, freq = freq)
+        return risk_model(Cov(), returns; fix_method = fix_method, freq = freq)
     elseif typeof(type) <: SCov
-        return risk_matrix(
+        return risk_model(
             SCov(),
             returns;
             target = target,
@@ -90,7 +90,7 @@ function risk_matrix(
             freq = freq,
         )
     elseif typeof(type) <: ECov
-        return risk_matrix(
+        return risk_model(
             ECov(),
             returns;
             fix_method = fix_method,
@@ -98,7 +98,7 @@ function risk_matrix(
             span = span,
         )
     elseif typeof(type) <: ESCov
-        return risk_matrix(
+        return risk_model(
             ESCov(),
             returns;
             target = target,
@@ -109,11 +109,11 @@ function risk_matrix(
     end
 end
 
-function risk_matrix(::Cov, returns; fix_method::Union{SFix, DFix} = SFix(), freq = 252)
+function risk_model(::Cov, returns; fix_method::Union{SFix, DFix} = SFix(), freq = 252)
     return make_pos_def(fix_method, cov(returns) * freq)
 end
 
-function risk_matrix(
+function risk_model(
     ::SCov,
     returns;
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.
@@ -125,7 +125,7 @@ function risk_matrix(
     return make_pos_def(fix_method, cov(SimpleCovariance(), semi_returns; mean = 0) * freq)
 end
 
-function risk_matrix(
+function risk_model(
     ::ECov,
     returns;
     fix_method::Union{SFix, DFix} = SFix(),
@@ -137,7 +137,7 @@ function risk_matrix(
     make_pos_def(fix_method, cov(returns, eweights(N, 2 / (span + 1))) * freq)
 end
 
-function risk_matrix(
+function risk_model(
     ::ESCov,
     returns;
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.

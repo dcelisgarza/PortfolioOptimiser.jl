@@ -5,7 +5,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics
     df = CSV.read("./assets/stock_prices.csv", DataFrame)
     dropmissing!(df)
     returns = returns_from_prices(df[!, 2:end])
-    cov_mtx = risk_matrix(
+    cov_mtx = risk_model(
         SCov(),
         Matrix(returns),
         1.02^(1 / 252) - 1,
@@ -421,7 +421,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics
     )
     @test isapprox(cov_mtx, testcov, rtol = 1e-4)
 
-    cov_mtx = risk_matrix(
+    cov_mtx = risk_model(
         ESCov(),
         Matrix(returns),
         1.02^(1 / 252) - 1,

@@ -48,12 +48,16 @@ ret_model(
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     span = Int(ceil(freq / 1.4)),
+    custom_cov = nothing,
+    custom_cov_estimator = nothing,
+    custom_cov_args = (),
+    custom_cov_kwargs = (),
     )
 ```
 
 Capital Asset Pricing Model (CAPM) returns. `CAPMRet()` uses the normal mean to estimate the mean market returns.
 
-- `target`, `fix_method`, and `span` correspond to the same keyword arguments of [`risk_matrix`](@ref) for computing the covariance specified by `cov_type`.
+- `target`, `fix_method`, and `span` correspond to the same keyword arguments of [`risk_model`](@ref) for computing the covariance specified by `cov_type`.
 
 ### CAPM with exponentially weighted arithmetic mean
 
@@ -70,13 +74,17 @@ ret_model(
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     cspan = Int(ceil(freq / 1.4)),
+    custom_cov = nothing,
+    custom_cov_estimator = nothing,
+    custom_cov_args = nothing,
+    custom_cov_kwargs = nothing,
 )
 ```
 
 Exponentially weighted Capital Asset Pricing Model (ECAPM) returns. `ECAPMRet()` uses the exponentially weighted mean to estimate the mean market returns.
 
 - `rspan`: span for the exponentially weighted mean returns, same as `span` for `EMRet()` above.
-- `cspan`: span for the exponentially weighted covariance, same as `span` for [`risk_matrix`](@ref).
+- `cspan`: span for the exponentially weighted covariance, same as `span` for [`risk_model`](@ref).
 """
 function ret_model(::MRet, returns; compound = true, freq = 252)
     if compound
@@ -112,8 +120,23 @@ function ret_model(
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     span = Int(ceil(freq / 1.4)),
+    custom_cov = nothing,
+    custom_cov_estimator = nothing,
+    custom_cov_args = (),
+    custom_cov_kwargs = (),
 )
-    β, returns = _compute_betas(market_returns, returns, cov_type, target, fix_method, span)
+    β, returns = _compute_betas(
+        market_returns,
+        returns,
+        cov_type,
+        target,
+        fix_method,
+        span,
+        custom_cov,
+        custom_cov_estimator,
+        custom_cov_args,
+        custom_cov_kwargs,
+    )
 
     # Mean market return.
     mkt_mean_ret = ret_model(MRet(), returns[:, end]; compound = compound, freq = freq)[1]
@@ -134,9 +157,23 @@ function ret_model(
     target = 1.02^(1 / 252) - 1,
     fix_method::Union{SFix, DFix} = SFix(),
     cspan = Int(ceil(freq / 1.4)),
+    custom_cov = nothing,
+    custom_cov_estimator = nothing,
+    custom_cov_args = (),
+    custom_cov_kwargs = (),
 )
-    β, returns =
-        _compute_betas(market_returns, returns, cov_type, target, fix_method, cspan)
+    β, returns = _compute_betas(
+        market_returns,
+        returns,
+        cov_type,
+        target,
+        fix_method,
+        cspan,
+        custom_cov,
+        custom_cov_estimator,
+        custom_cov_args,
+        custom_cov_kwargs,
+    )
 
     # Exponentially weighted mean market return.
     mkt_mean_ret =
@@ -146,7 +183,18 @@ function ret_model(
     return rf .+ β * (mkt_mean_ret - rf)
 end
 
-function _compute_betas(market_returns, returns, cov_type, target, fix_method, cspan)
+function _compute_betas(
+    market_returns,
+    returns,
+    cov_type,
+    target,
+    fix_method,
+    cspan,
+    custom_cov,
+    custom_cov_estimator,
+    custom_cov_args,
+    custom_cov_kwargs,
+)
 
     # Add the market returns to the right of the returns Array.
     if isnothing(market_returns)
@@ -156,7 +204,20 @@ function _compute_betas(market_returns, returns, cov_type, target, fix_method, c
         returns = hcat(returns, market_returns)
     end
     # Covariance with the market returns.
-    cov_mtx = risk_matrix(cov_type, returns, target, fix_method, 1, cspan)
+    if isnothing(custom_cov)
+        cov_mtx = risk_model(cov_type, returns, target, fix_method, 1, cspan)
+    else
+        if isnothing(custom_cov_estimator)
+            cov_mtx = custom_cov(returns, custom_cov_args...; custom_cov_kwargs...)
+        else
+            cov_mtx = custom_cov(
+                custom_cov_estimator,
+                returns,
+                custom_cov_args...;
+                custom_cov_kwargs...,
+            )
+        end
+    end
 
     # The rightmost column is the covariance to the market.
     β = cov_mtx[:, end] / cov_mtx[end, end]
