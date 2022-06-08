@@ -200,7 +200,7 @@ function Allocation(
     tickers, allocated_weights, shares_bought, missing =
         _clean_zero_shares(shares_bought, tickers, latest_prices)
 
-    return Allocation(tickers, allocated_weights, shares_bought), available_funds
+    return Allocation(tickers, shares_bought, allocated_weights), available_funds
 end
 
 function Allocation(
@@ -264,7 +264,7 @@ function Allocation(
     tickers, allocated_weights, shares_bought, missing =
         _clean_zero_shares(shares_bought, tickers, latest_prices)
 
-    return Allocation(tickers, allocated_weights, shares_bought), available_funds
+    return Allocation(tickers, shares_bought, allocated_weights), available_funds
 end
 
 """

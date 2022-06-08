@@ -18,18 +18,18 @@ struct LP <: AbstractAllocation end
 ```
 struct Allocation{T1,T2,T3}
     tickers::T1
-    weights::T2
-    shares::T3
+    shares::T2
+    weights::T3
 end
 ```
 Concrete allocation created by [`Allocation`](@ref).
 
 - `tickers`: list of tickers.
-- `weights`: list of corresponding weights according to share allocation and latest prices.
 - `shares`: list of corresponding shares according to their optimal allocation.
+- `weights`: list of corresponding weights according to share allocation and latest prices.
 """
 struct Allocation{T1, T2, T3}
     tickers::T1
-    weights::T2
-    shares::T3
+    shares::T2
+    weights::T3
 end
