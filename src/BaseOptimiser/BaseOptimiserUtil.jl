@@ -365,22 +365,22 @@ function add_sector_constraint!(
     return nothing
 end
 
-"""
-```
-_function_vs_portfolio_val_warn(fval, pval, name)
-```
+# """
+# ```
+# _function_vs_portfolio_val_warn(fval, pval, name)
+# ```
 
-Helper function for throwing generic warnings about inconsistent values between calls to optimiser functions and the values registered in the portfolio.
-"""
-function _function_vs_portfolio_val_warn(fval, pval, name)
-    if fval != pval
-        @warn(
-            "The value of $(name): $fval, provided to the function does not match the one in the portfolio: $(pval). Using function value: $fval, instead."
-        )
-    end
+# Helper function for throwing generic warnings about inconsistent values between calls to optimiser functions and the values registered in the portfolio.
+# """
+# function _function_vs_portfolio_val_warn(fval, pval, name)
+#     if fval != pval
+#         @warn(
+#             "The value of $(name): $fval, provided to the function does not match the one in the portfolio: $(pval). Using function value: $fval, instead."
+#         )
+#     end
 
-    return nothing
-end
+#     return nothing
+# end
 
 """
 ```
