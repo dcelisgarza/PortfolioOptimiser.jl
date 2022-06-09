@@ -346,7 +346,7 @@ function _short_allocation(
     weights = [longAlloc.weights; -shortAlloc.weights]
     shares = [longAlloc.shares; -shortAlloc.shares]
 
-    return Allocation(tickers, weights, shares), long_leftover + short_leftover
+    return Allocation(tickers, shares, weights), long_leftover + short_leftover
 end
 
 """
