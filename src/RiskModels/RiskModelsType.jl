@@ -31,6 +31,7 @@ Risk models for dispatch on [`risk_model`](@ref).
 - `ECov`: Capital Asset Pricing Model (CAPM) returns.
 - `ESCov`: Exponentially weighted Capital Asset Pricing Model (ECAPM) returns.
 - `CustomCov`: Custom covariance matrix.
+- `CustomSCov`: Custom semicovariance matrix.
 """
 abstract type AbstractRiskModel end
 struct Cov <: AbstractRiskModel end
@@ -38,3 +39,4 @@ struct SCov <: AbstractRiskModel end
 struct ECov <: AbstractRiskModel end
 struct ESCov <: AbstractRiskModel end
 struct CustomCov <: AbstractRiskModel end
+struct CustomSCov <: AbstractRiskModel end

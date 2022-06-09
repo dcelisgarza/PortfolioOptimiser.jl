@@ -118,6 +118,16 @@ function risk_model(
             args = custom_cov_args,
             kwargs = custom_cov_kwargs,
         )
+    elseif typeof(type) <: CustomSCov
+        risk_model(
+            CustomSCov(),
+            returns;
+            target = target,
+            freq = freq,
+            estimator = custom_cov_estimator,
+            args = custom_cov_args,
+            kwargs = custom_cov_kwargs,
+        )
     end
 end
 
@@ -177,4 +187,19 @@ function risk_model(
 )
     return isnothing(estimator) ? cov(returns, args...; kwargs...) * freq :
            cov(estimator, returns, args...; kwargs...) * freq
+end
+
+function risk_model(
+    ::CustomSCov,
+    returns;
+    target = 1.02^(1 / 252) - 1,
+    freq = 252,
+    estimator = nothing,
+    args = (),
+    kwargs = (),
+)
+    semi_returns = min.(returns .- target, 0)
+
+    return isnothing(estimator) ? cov(semi_returns, args...; mean = 0, kwargs...) * freq :
+           cov(estimator, semi_returns, args...; mean = 0, kwargs...) * freq
 end
