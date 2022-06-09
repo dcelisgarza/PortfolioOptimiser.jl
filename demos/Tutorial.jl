@@ -5,7 +5,7 @@ This is a demo/template for using `PortfolioOptimiser.jl`. It should be all that
 """
 
 using PortfolioOptimiser
-using CSV, DataFrames, Plots
+using CSV, DataFrames, Plots, CovarianceEstimation, LinearAlgebra
 
 """
 ## Loading data
@@ -15,7 +15,7 @@ All our functions take AbstractArray or Tuple arguments, not DataFrame or TimeAr
 For the example we'll use CSV and DataFrames to load our historical prices.
 """
 
-hist_prices = CSV.read("./assets/stock_prices.csv", DataFrame)
+hist_prices = CSV.read("./demos/assets/stock_prices.csv", DataFrame)
 dropmissing!(hist_prices)
 
 """
@@ -74,19 +74,67 @@ capm_ret = ret_model(CAPMRet(), past_returns)
 exp_capm_ret =
     ret_model(ECAPMRet(), past_returns, cspan = num_rows / 2, rspan = num_rows / 2)
 
+"""
+Using [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl) and CustomCov() or CustomSCov() (see Risk Models section), we can come up with some more robust measurements of CAPM returns.
+
+Downside covariance tends to be more stable, to prove this we use both the shrunken covariance and shrunken semicovariance. Note that we can use any covariance type by simply changing the `cov_type` keyword argument. The default is to use the sample covariance for CAPMRet(), and exponentially weighted covariance for ECAPMRet().
+"""
+
+target = DiagonalCommonVariance()
+shrinkage = :oas
+method = LinearShrinkage(target, shrinkage)
+
+capm_ret_shrunken_cov = ret_model(
+    CAPMRet(),
+    past_returns,
+    cov_type = CustomCov(),
+    custom_cov_estimator = method,
+)
+
+exp_capm_ret_shrunken_cov = ret_model(
+    ECAPMRet(),
+    past_returns,
+    cspan = num_rows / 2,
+    rspan = num_rows / 2,
+    cov_type = CustomCov(),
+    custom_cov_estimator = method,
+)
+
+capm_ret_shrunken_scov = ret_model(
+    CAPMRet(),
+    past_returns,
+    cov_type = CustomSCov(),
+    custom_cov_estimator = method,
+)
+
+exp_capm_ret_shrunken_scov = ret_model(
+    ECAPMRet(),
+    past_returns,
+    cspan = num_rows / 2,
+    rspan = num_rows / 2,
+    cov_type = CustomSCov(),
+    custom_cov_estimator = method,
+)
+
 errors = Float64[]
 push!(errors, sum(abs.(mean_future_rets - mean_ret)))
 push!(errors, sum(abs.(mean_future_rets - exp_mean_ret)))
 push!(errors, sum(abs.(mean_future_rets - capm_ret)))
+push!(errors, sum(abs.(mean_future_rets - capm_ret_shrunken_cov)))
+push!(errors, sum(abs.(mean_future_rets - capm_ret_shrunken_scov)))
 push!(errors, sum(abs.(mean_future_rets - exp_capm_ret)))
+push!(errors, sum(abs.(mean_future_rets - exp_capm_ret_shrunken_cov)))
+push!(errors, sum(abs.(mean_future_rets - exp_capm_ret_shrunken_scov)))
 
 errors /= length(mean_future_rets)
 
-fig = bar(
-    ["Mean", "Exp Mean", "CAPM", "Exp CAPM"],
+fig = plot(
+    ["M", "EM", "CAPM", "CAPM S C", "CAPM S SC", "ECAPM", "ECAPM S C", "ECAPM S SC"],
     errors,
     ylabel = "Rel err",
     legend = false,
+    size = (700, 400),
+    seriestype = :bar,
 )
 
 println(errors)
@@ -98,7 +146,7 @@ Minimum volatility, semivariance, CVaR and CDaR tend to give more stable portfol
 
 We can plot all the return types together to see how they correlate to each other.
 """
-l = @layout [a b c d]
+l = @layout [a b c d; e f g h]
 
 fig1 = bar(
     mean_ret,
@@ -106,7 +154,7 @@ fig1 = bar(
     orientation = :h,
     yflip = true,
     legend = false,
-    title = "Mean",
+    title = "M",
 )
 
 fig2 = bar(
@@ -115,7 +163,7 @@ fig2 = bar(
     orientation = :h,
     yflip = true,
     legend = false,
-    title = "Exp Mean",
+    title = "EM",
 )
 
 fig3 = bar(
@@ -128,15 +176,51 @@ fig3 = bar(
 )
 
 fig4 = bar(
+    capm_ret_shrunken_cov,
+    yticks = (1:num_cols, []),
+    orientation = :h,
+    yflip = true,
+    legend = false,
+    title = "CAPM S C",
+)
+
+fig5 = bar(
+    capm_ret_shrunken_scov,
+    yticks = (1:num_cols, names(returns)),
+    orientation = :h,
+    yflip = true,
+    legend = false,
+    title = "CAPM S SC",
+)
+
+fig6 = bar(
     exp_capm_ret,
     yticks = (1:num_cols, []),
     orientation = :h,
     yflip = true,
     legend = false,
-    title = "Exp CAPM",
+    title = "ECAPM",
 )
 
-plot(fig1, fig2, fig3, fig4, layout = l, size = (1000, 500))
+fig7 = bar(
+    exp_capm_ret_shrunken_cov,
+    yticks = (1:num_cols, []),
+    orientation = :h,
+    yflip = true,
+    legend = false,
+    title = "ECAPM S C",
+)
+
+fig8 = bar(
+    exp_capm_ret_shrunken_scov,
+    yticks = (1:num_cols, []),
+    orientation = :h,
+    yflip = true,
+    legend = false,
+    title = "ECAPM S SC",
+)
+
+plot(fig1, fig2, fig3, fig4, fig5, fig6, fig7, fig8, layout = l, size = (1200, 1200))
 
 """
 There's strong correspondence between exponential and non-exponentially weighted return types. CAPM returns are a little bit different as they account for an asset's relationship to the market via a covariance matrix.
@@ -145,7 +229,7 @@ There's strong correspondence between exponential and non-exponentially weighted
 """
 ## Risk models
 
-We also have a few built-in risk models. For more models see [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl).
+We also have a few built-in risk models. However, using CustomCov() and CustomSCov() we can make use of other models, such as those found in [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl), and use other types of weights other than exponential ones.
 
 We provide a variety of covariance measures:
 
@@ -153,6 +237,8 @@ We provide a variety of covariance measures:
 - exponentially weighted sample covariance
 - semicovariance
 - exponentially weighted semicovariance
+- custom covariance
+- custom semicovariance
 
 The optional keyword arguments are further explained in the docs.
 
@@ -167,19 +253,29 @@ exp_cov = risk_model(ECov(), past_returns, span = num_rows / 2)
 semi_cov = risk_model(SCov(), past_returns)
 exp_semi_cov = risk_model(ESCov(), past_returns, span = num_rows / 2)
 
+target = DiagonalCommonVariance()
+shrinkage = :oas
+method = LinearShrinkage(target, shrinkage)
+
+oas_shrunken_cov = Matrix(risk_model(CustomCov(), past_returns, estimator = method))
+oas_shrunken_cov_semi_cov =
+    Matrix(risk_model(CustomSCov(), past_returns, estimator = method))
+
 future_var = diag(future_cov)
 future_semivar = diag(future_semi_cov)
 
 errors = Float64[]
 push!(errors, sum(abs.(future_var - diag(sample_cov))))
 push!(errors, sum(abs.(future_var - diag(exp_cov))))
+push!(errors, sum(abs.(future_var - diag(oas_shrunken_cov))))
 push!(errors, sum(abs.(future_semivar - diag(semi_cov))))
 push!(errors, sum(abs.(future_semivar - diag(exp_semi_cov))))
+push!(errors, sum(abs.(future_semivar - diag(oas_shrunken_cov_semi_cov))))
 
 errors /= length(future_var)
 
 fig = bar(
-    ["Sample", "Exp Sample", "Semi", "Exp Semi"],
+    ["Sample", "Exp Sample", "OAS", "Semi", "Exp Semi", "OAS Semi"],
     errors,
     ylabel = "Rel err",
     legend = false,
@@ -241,7 +337,7 @@ fig2 = heatmap(
 
 First we import the packages we need. In this case we will download the data using MarketData.
 """
-using PortfolioOptimiser, DataFrames, MarketData, TimeArray, CovarianceEstimation
+using PortfolioOptimiser, DataFrames, MarketData, TimeArray
 
 """
 We will use the following tickers as they tend to be trendy.
