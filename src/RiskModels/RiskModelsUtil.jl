@@ -55,7 +55,8 @@ end
 
     vals, vecs = eigen(matrix)
     idx = vals .< 0
-    vals[idx] .= sum(vals[idx]) / (length(vals) - length(idx))
+
+    vals[idx] .= sum(vals[idx]) / (length(vals) - length(idx) + eps())
     fixed_matrix = vecs * Diagonal(vals) * vecs'
 
     _isposdef = isposdef(fixed_matrix)
