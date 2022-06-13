@@ -3,7 +3,7 @@
 ```@docs
 AbstractFixPosDef
 AbstractRiskModel
-risk_model
+cov
 make_pos_def
 cov2cor
 ```

@@ -8,7 +8,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     tickers = names(df)[2:end]
 
     mean_ret = ret_model(MRet(), Matrix(returns))
-    S = risk_model(Cov(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
 
     ef = MeanVar(tickers, mean_ret, S)
     sectors = ["Tech", "Medical", "RealEstate", "Oil"]
@@ -718,7 +718,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
 
     # L1 Regularisation
     mu = vec(ret_model(MRet(), Matrix(dropmissing(returns))))
-    S = risk_model(Cov(), Matrix(dropmissing(returns)))
+    S = cov(Cov(), Matrix(dropmissing(returns)))
 
     n = length(tickers)
     prev_weights = fill(1 / n, n)
@@ -962,7 +962,7 @@ end
     tickers = names(df)[2:end]
 
     mean_ret = vec(ret_model(MRet(), Matrix(returns)))
-    S = risk_model(Cov(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
 
     ef = MeanSemivar(tickers, mean_ret, S, market_neutral = true)
     sectors = ["Tech", "Medical", "RealEstate", "Oil"]
@@ -1601,7 +1601,7 @@ end
 
     # L1 Regularisation
     mean_ret = ret_model(MRet(), Matrix(returns))
-    S = risk_model(Cov(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
     n = length(tickers)
     prev_weights = fill(1 / n, n)
 
@@ -1798,7 +1798,7 @@ end
     tickers = names(df)[2:end]
 
     mu = vec(ret_model(MRet(), Matrix(returns)))
-    S = risk_model(Cov(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
 
     spy_prices = CSV.read("./assets/spy_prices.csv", DataFrame)
     delta = market_implied_risk_aversion(spy_prices[!, 2])
@@ -2290,7 +2290,7 @@ end
     @test cv.beta == 0.95
 
     mean_ret = ret_model(MRet(), Matrix(returns))
-    S = risk_model(Cov(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
     n = length(tickers)
     prev_weights = fill(1 / n, n)
 
@@ -2413,7 +2413,7 @@ end
     @test cvar1 > cvar2 > cvar3 > cvar4 > cvar5 > cvar6 > cvar7 > cvarinf
 
     mean_ret = ret_model(MRet(), Matrix(returns))
-    S = risk_model(Cov(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
     n = length(tickers)
     prev_weights = fill(1 / n, n)
     k = 0.001
@@ -2465,7 +2465,7 @@ end
     tickers = names(df)[2:end]
 
     mu = vec(ret_model(MRet(), Matrix(returns)))
-    S = risk_model(Cov(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
 
     spy_prices = CSV.read("./assets/spy_prices.csv", DataFrame)
     delta = market_implied_risk_aversion(spy_prices[!, 2])
@@ -2866,7 +2866,7 @@ end
     @test cdar.beta == 0.95
 
     mean_ret = ret_model(MRet(), Matrix(returns))
-    S = risk_model(Cov(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
     n = length(tickers)
     prev_weights = fill(1 / n, n)
 

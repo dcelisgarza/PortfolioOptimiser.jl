@@ -46,7 +46,7 @@ ret_model(
     freq = 252,
     cov_type::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     span = Int(ceil(freq / 1.4)),
     custom_cov_estimator = nothing,
     custom_cov_args = (),
@@ -56,7 +56,7 @@ ret_model(
 
 Capital Asset Pricing Model (CAPM) returns. `CAPMRet()` uses the normal mean to estimate the mean market returns.
 
-- `target`, `fix_method`, and `span` correspond to the same keyword arguments of [`risk_model`](@ref) for computing the covariance specified by `cov_type`.
+- `target`, `fix_method`, and `span` correspond to the same keyword arguments of [`cov`](@ref) for computing the covariance specified by `cov_type`.
 
 ### CAPM with exponentially weighted arithmetic mean
 
@@ -71,7 +71,7 @@ ret_model(
     rspan = Int(ceil(freq / 1.4)),
     cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     cspan = Int(ceil(freq / 1.4)),
     custom_cov_estimator = nothing,
     custom_cov_args = (),
@@ -82,7 +82,7 @@ ret_model(
 Exponentially weighted Capital Asset Pricing Model (ECAPM) returns. `ECAPMRet()` uses the exponentially weighted mean to estimate the mean market returns.
 
 - `rspan`: span for the exponentially weighted mean returns, same as `span` for `EMRet()` above.
-- `cspan`: span for the exponentially weighted covariance, same as `span` for [`risk_model`](@ref).
+- `cspan`: span for the exponentially weighted covariance, same as `span` for [`cov`](@ref).
 """
 function ret_model(::MRet, returns; compound = true, freq = 252)
     if compound
@@ -116,8 +116,9 @@ function ret_model(
     freq = 252,
     cov_type::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     span = Int(ceil(freq / 1.4)),
+    scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
     custom_cov_kwargs = (),
@@ -129,6 +130,7 @@ function ret_model(
         target,
         fix_method,
         span,
+        scale,
         custom_cov_estimator,
         custom_cov_args,
         custom_cov_kwargs,
@@ -151,8 +153,9 @@ function ret_model(
     rspan = Int(ceil(freq / 1.4)),
     cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     cspan = Int(ceil(freq / 1.4)),
+    scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
     custom_cov_kwargs = (),
@@ -164,6 +167,7 @@ function ret_model(
         target,
         fix_method,
         cspan,
+        scale,
         custom_cov_estimator,
         custom_cov_args,
         custom_cov_kwargs,
@@ -184,6 +188,7 @@ function _compute_betas(
     target,
     fix_method,
     cspan,
+    scale,
     custom_cov_estimator,
     custom_cov_args,
     custom_cov_kwargs,
@@ -197,13 +202,14 @@ function _compute_betas(
         returns = hcat(returns, market_returns)
     end
     # Covariance with the market returns.
-    cov_mtx = risk_model(
+    cov_mtx = cov(
         cov_type,
         returns,
         target,
         fix_method,
         1,
         cspan,
+        scale,
         custom_cov_estimator,
         custom_cov_args...;
         custom_cov_kwargs...,

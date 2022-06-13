@@ -42,7 +42,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     returns = returns_from_prices(df[!, 2:end])
 
     mean_ret = vec(ret_model(MRet(), Matrix(returns)))
-    S = risk_model(Cov(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
 
     hrp = HRPOpt(tickers, returns = Matrix(returns))
     optimise!(hrp, min_volatility!)

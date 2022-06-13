@@ -17,7 +17,7 @@ make_pos_def(::DFix, matrix, scale = 1.1)
 
 Uses a Levenberg-Marquardt factor, `c = scale` * `min(eigenvalues)`, which is used to subtract a scaled identity matrix from `matrix`.
 """
-@inline function make_pos_def(::SFix, matrix)
+@inline function make_pos_def(::SFix, matrix, scale = nothing)
     isposdef(matrix) && return matrix
 
     @warn("Covariance matrix is not positive definite. Fixing eigenvalues.")
@@ -31,9 +31,10 @@ Uses a Levenberg-Marquardt factor, `c = scale` * `min(eigenvalues)`, which is us
     return fixed_matrix
 end
 
-@inline function make_pos_def(::DFix, matrix, scale = 1.1)
+@inline function make_pos_def(::DFix, matrix, scale = nothing)
     isposdef(matrix) && return matrix
 
+    isnothing(scale) && (scale = 1.1)
     @warn("Covariance matrix is not positive definite. Fixing eigenvalues.")
 
     vals = eigvals(matrix)
@@ -44,6 +45,21 @@ end
     _isposdef = isposdef(fixed_matrix)
     !_isposdef && @warn("Covariance matrix could not be fixed. Try a different risk model.")
 
+    return fixed_matrix
+end
+
+@inline function make_pos_def(::FFix, matrix, scale = nothing)
+    isposdef(matrix) && return matrix
+
+    @warn("Covariance matrix is not positive definite. Fixing eigenvalues.")
+
+    vals, vecs = eigen(matrix)
+    idx = vals .< 0
+    vals[idx] .= sum(vals[idx]) / (length(vals) - length(idx))
+    fixed_matrix = vecs * Diagonal(vals) * vecs'
+
+    _isposdef = isposdef(fixed_matrix)
+    !_isposdef && @warn("Covariance matrix could not be fixed. Try a different risk model.")
     return fixed_matrix
 end
 

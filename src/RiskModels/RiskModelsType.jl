@@ -3,16 +3,19 @@
 abstract type AbstractFixPosDef end
 struct SFix <: AbstractFixPosDef end
 struct DFix <: AbstractFixPosDef end
+struct FFix <: AbstractFixPosDef end
 ```
 
-Types for fixing non-positive definite matrices in [`risk_model`](@ref).
+Types for fixing non-positive definite matrices in [`cov`](@ref).
 
 - `SFix`: fix via the spectral method (eigenvalue decomposition).
 - `DFix`: fix by adding a multiple of the identity matrix (damping factor).
+- `FFix`: fix by changing bad eigenvalues their sum devided by the difference between the number of good eigenvalues minus bad ones.
 """
 abstract type AbstractFixPosDef end
 struct SFix <: AbstractFixPosDef end
 struct DFix <: AbstractFixPosDef end
+struct FFix <: AbstractFixPosDef end
 
 """
 ```
@@ -24,7 +27,7 @@ struct ESCov <: AbstractRiskModel end
 struct CustomCov <: AbstractRiskModel end
 ```
 
-Risk models for dispatch on [`risk_model`](@ref).
+Risk models for dispatch on [`cov`](@ref).
 
 - `Cov`: Mean returns.
 - `SCov`: Exponentially weighted mean returns.

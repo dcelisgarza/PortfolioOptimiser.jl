@@ -5,6 +5,6 @@ include("RiskModelsFunc.jl")
 include("RiskModelsUtil.jl")
 
 export AbstractFixPosDef,
-    AbstractRiskModel, SFix, DFix, Cov, SCov, ECov, ESCov, CustomCov, CustomSCov
-export risk_model
+    AbstractRiskModel, SFix, DFix, FFix, Cov, SCov, ECov, ESCov, CustomCov, CustomSCov
+export cov
 export make_pos_def, cov2cor

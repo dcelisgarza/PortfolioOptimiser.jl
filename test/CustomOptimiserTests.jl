@@ -7,7 +7,7 @@ using PortfolioOptimiser, CSV, DataFrames
     returns = dropmissing(returns_from_prices(df[!, 2:end]))
 
     mu = vec(ret_model(MRet(), Matrix(returns)))
-    S = risk_model(Cov(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
 
     lower_bounds, upper_bounds, strict_bounds = 0.02, 0.03, 0.1
     ef = MeanVar(
@@ -60,7 +60,7 @@ end
     returns = dropmissing(returns_from_prices(df[!, 2:end]))
 
     mean_ret = ret_model(MRet(), Matrix(returns))
-    S = risk_model(Cov(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
 
     function logarithmic_barrier(w::T...) where {T}
         cov_mtx = obj_params[1]

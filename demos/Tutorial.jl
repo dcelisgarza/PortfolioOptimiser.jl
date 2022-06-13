@@ -245,21 +245,20 @@ The optional keyword arguments are further explained in the docs.
 We can see which covariance matrix estimates the future asset variances the best.
 """
 
-future_cov = risk_model(Cov(), future_returns)
-future_semi_cov = risk_model(SCov(), future_returns)
+future_cov = cov(Cov(), future_returns)
+future_semi_cov = cov(SCov(), future_returns)
 
-sample_cov = risk_model(Cov(), past_returns)
-exp_cov = risk_model(ECov(), past_returns, span = num_rows / 2)
-semi_cov = risk_model(SCov(), past_returns)
-exp_semi_cov = risk_model(ESCov(), past_returns, span = num_rows / 2)
+sample_cov = cov(Cov(), past_returns)
+exp_cov = cov(ECov(), past_returns, span = num_rows / 2)
+semi_cov = cov(SCov(), past_returns)
+exp_semi_cov = cov(ESCov(), past_returns, span = num_rows / 2)
 
 target = DiagonalCommonVariance()
 shrinkage = :oas
 method = LinearShrinkage(target, shrinkage)
 
-oas_shrunken_cov = Matrix(risk_model(CustomCov(), past_returns, estimator = method))
-oas_shrunken_cov_semi_cov =
-    Matrix(risk_model(CustomSCov(), past_returns, estimator = method))
+oas_shrunken_cov = Matrix(cov(CustomCov(), past_returns, estimator = method))
+oas_shrunken_cov_semi_cov = Matrix(cov(CustomSCov(), past_returns, estimator = method))
 
 future_var = diag(future_cov)
 future_semivar = diag(future_semi_cov)
@@ -337,7 +336,8 @@ fig2 = heatmap(
 
 First we import the packages we need. In this case we will download the data using MarketData.
 """
-using PortfolioOptimiser, DataFrames, MarketData, TimeArray
+
+using PortfolioOptimiser, DataFrames, MarketData
 
 """
 We will use the following tickers as they tend to be trendy.
@@ -387,7 +387,7 @@ returns = returns_from_prices(hist_prices[!, 2:end])
 num_cols = ncol(returns)
 num_rows = nrow(returns)
 
-sample_cov = risk_model(SCov(), Matrix(returns), freq = 252)
+sample_cov = cov(SCov(), Matrix(returns), freq = 252)
 
 fig1 = heatmap(
     cov2cor(sample_cov),
@@ -409,7 +409,7 @@ target = DiagonalUnequalVariance()
 shrinkage = :lw
 method = LinearShrinkage(target, shrinkage)
 
-S = risk_model(CustomCov(), Matrix(returns), estimator = method)
+S = cov(CustomCov(), Matrix(returns), estimator = method)
 
 fig1 = heatmap(
     cov2cor(Matrix(S)),

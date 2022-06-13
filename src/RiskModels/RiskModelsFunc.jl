@@ -1,14 +1,15 @@
+import Statistics.cov
 """
 Calculate covariance matrices.
 
 ## Wrapper function
 
 ```
-risk_model(
+cov(
     type::AbstractRiskModel,
     returns;
     target = 1.02^(1 / 252) - 1,
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     freq = 252,
     span = Int(ceil(freq / 1.4)),
 )
@@ -25,7 +26,7 @@ Dispatches specific covariance matrix calculation methods according to `type.`
 ## Normal covariance
 
 ```
-risk_model(::Cov, returns; fix_method::Union{SFix, DFix} = SFix(), freq = 252)
+cov(::Cov, returns; fix_method::AbstractFixPosDef = SFix(), freq = 252)
 ```
 
 ## Semi-covariance
@@ -33,11 +34,11 @@ risk_model(::Cov, returns; fix_method::Union{SFix, DFix} = SFix(), freq = 252)
 The semi-covariance sets a target for distinguishing "upside" and "downside" risk. It only considers fluctuations below `target` which heavily biases losses. Lets users minimise negative risk.
 
 ```
-risk_model(
+cov(
     ::SCov,
     returns;
     target = 1.02^(1 / 252) - 1,
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     freq = 252,
 )
 ```
@@ -47,10 +48,10 @@ risk_model(
 The exponentially weighted covariance uses exponentially weighted expected returns rather than normally weighted expected returns. More recent returns are weighted more heavily.
 
 ```
-risk_model(
+cov(
     ::ECov,
     returns;
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     freq = 252,
     span = Int(ceil(freq / 1.4)),
 )
@@ -61,56 +62,60 @@ risk_model(
 Combines the semi-covariance and exponentially weighted covariance.
 
 ```
-risk_model(
+cov(
     ::ESCov,
     returns;
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     freq = 252,
     span = Int(ceil(freq / 1.4)),
 )
 ```
 """
-function risk_model(
+function cov(
     type::AbstractRiskModel,
     returns,
     target = 1.02^(1 / 252) - 1,
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     freq = 252,
     span = Int(ceil(freq / 1.4)),
+    scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
     custom_cov_kwargs = (),
 )
     if typeof(type) <: Cov
-        return risk_model(Cov(), returns; fix_method = fix_method, freq = freq)
+        return cov(Cov(), returns; fix_method = fix_method, freq = freq, scale = scale)
     elseif typeof(type) <: SCov
-        return risk_model(
+        return cov(
             SCov(),
             returns;
             target = target,
             fix_method = fix_method,
             freq = freq,
+            scale = scale,
         )
     elseif typeof(type) <: ECov
-        return risk_model(
+        return cov(
             ECov(),
             returns;
             fix_method = fix_method,
             freq = freq,
             span = span,
+            scale = scale,
         )
     elseif typeof(type) <: ESCov
-        return risk_model(
+        return cov(
             ESCov(),
             returns;
             target = target,
             fix_method = fix_method,
             freq = freq,
             span = span,
+            scale = scale,
         )
     elseif typeof(type) <: CustomCov
-        risk_model(
+        cov(
             CustomCov(),
             returns;
             freq = freq,
@@ -119,7 +124,7 @@ function risk_model(
             kwargs = custom_cov_kwargs,
         )
     elseif typeof(type) <: CustomSCov
-        risk_model(
+        cov(
             CustomSCov(),
             returns;
             target = target,
@@ -131,41 +136,54 @@ function risk_model(
     end
 end
 
-function risk_model(::Cov, returns; fix_method::Union{SFix, DFix} = SFix(), freq = 252)
-    return make_pos_def(fix_method, cov(returns) * freq)
+function cov(
+    ::Cov,
+    returns;
+    fix_method::AbstractFixPosDef = SFix(),
+    freq = 252,
+    scale = nothing,
+)
+    return make_pos_def(fix_method, cov(returns) * freq, scale)
 end
 
-function risk_model(
+function cov(
     ::SCov,
     returns;
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     freq = 252,
+    scale = nothing,
 )
     semi_returns = min.(returns .- target, 0)
 
-    return make_pos_def(fix_method, cov(SimpleCovariance(), semi_returns; mean = 0) * freq)
+    return make_pos_def(
+        fix_method,
+        cov(SimpleCovariance(), semi_returns; mean = 0) * freq,
+        scale,
+    )
 end
 
-function risk_model(
+function cov(
     ::ECov,
     returns;
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     freq = 252,
     span = Int(ceil(freq / 1.4)),
+    scale = nothing,
 )
     N = size(returns, 1)
 
-    make_pos_def(fix_method, cov(returns, eweights(N, 2 / (span + 1))) * freq)
+    make_pos_def(fix_method, cov(returns, eweights(N, 2 / (span + 1))) * freq, scale)
 end
 
-function risk_model(
+function cov(
     ::ESCov,
     returns;
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.
-    fix_method::Union{SFix, DFix} = SFix(),
+    fix_method::AbstractFixPosDef = SFix(),
     freq = 252,
     span = Int(ceil(freq / 1.4)),
+    scale = nothing,
 )
     N = size(returns, 1)
 
@@ -174,22 +192,16 @@ function risk_model(
     return make_pos_def(
         fix_method,
         cov(SimpleCovariance(), semi_returns, eweights(N, 2 / (span + 1)); mean = 0) * freq,
+        scale,
     )
 end
 
-function risk_model(
-    ::CustomCov,
-    returns;
-    freq = 252,
-    estimator = nothing,
-    args = (),
-    kwargs = (),
-)
+function cov(::CustomCov, returns; freq = 252, estimator = nothing, args = (), kwargs = ())
     return isnothing(estimator) ? cov(returns, args...; kwargs...) * freq :
            cov(estimator, returns, args...; kwargs...) * freq
 end
 
-function risk_model(
+function cov(
     ::CustomSCov,
     returns;
     target = 1.02^(1 / 252) - 1,
