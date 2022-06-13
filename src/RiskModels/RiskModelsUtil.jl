@@ -54,9 +54,9 @@ end
     @warn("Covariance matrix is not positive definite. Fixing eigenvalues.")
 
     vals, vecs = eigen(matrix)
-    idx = vals .< 0
 
-    vals[idx] .= sum(vals[idx]) / (length(vals) - length(idx) + eps())
+    idx = vals .< 0
+    vals[idx] .= sum(vals[idx]) / (length(vals) - count(idx))
     fixed_matrix = vecs * Diagonal(vals) * vecs'
 
     _isposdef = isposdef(fixed_matrix)
