@@ -272,6 +272,6 @@ where ``\\sigma^2 = \\bm{w}^T\\, \\Sigma\\, \\bm{w}`` (see [`port_variance`](@re
 """
 function kelly_objective(w, mean_ret, cov_mtx, k = 3)
     variance = dot(w, cov_mtx, w)
-    objective = variance * 0.5 * k - dot(w, mean_ret)
+    objective = 0.5 * variance * k - dot(w, mean_ret)
     return objective
 end

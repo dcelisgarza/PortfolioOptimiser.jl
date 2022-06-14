@@ -137,9 +137,9 @@ function max_sharpe!(
     # Scale the sum so that it can equal k.
     @constraint(model, sum_w, sum(w) == k)
 
-    mean_ret = portfolio.mean_ret
+    mean_ret = portfolio.mean_ret .- rf
     # Since we increased the unbounded the sum of the weights to potentially be as large as k, leave this be. Equation 8.13 in the pdf linked in docs.
-    @constraint(model, max_sharpe_return, dot((mean_ret .- rf), w) == 1)
+    @constraint(model, max_sharpe_return, port_return(w, mean_ret) == 1)
 
     # Objective function.
     cov_mtx = portfolio.cov_mtx
