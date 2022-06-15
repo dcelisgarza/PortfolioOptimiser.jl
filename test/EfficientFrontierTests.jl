@@ -2485,7 +2485,7 @@ end
         alpha = w[n + 1]
         u = w[(n + 2):end]
 
-        samples = length(z)
+        samples = length(u)
 
         ret = PortfolioOptimiser.port_return(weights, mean_ret) - rf
         CVaR = PortfolioOptimiser.cvar(alpha, u, samples, beta)
