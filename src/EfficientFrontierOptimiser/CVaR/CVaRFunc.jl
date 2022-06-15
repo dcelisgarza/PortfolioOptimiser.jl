@@ -134,7 +134,7 @@ function max_quadratic_utility!(
 
     mean_ret = portfolio.mean_ret
 
-    μ = port_return(w, mean_ret) / (samples * (1 - beta))
+    μ = port_return(w, mean_ret)# / (samples * (1 - beta))
 
     @objective(model, Min, -μ + 0.5 * risk_aversion * cvar(alpha, u, samples, beta))
 
