@@ -2458,7 +2458,6 @@ end
     @test isapprox(cv.weights, testweights)
 
     mean_ret = ret_model(MRet(), Matrix(returns))
-    tickers = names(hist_prices[!, 2:end])
 
     cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
     max_sharpe!(cvar)
