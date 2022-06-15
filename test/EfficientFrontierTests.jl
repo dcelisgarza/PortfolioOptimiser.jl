@@ -320,7 +320,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     testshares = [81, 54, 16, 16, 20, 25, 2, 2, 3, 1]
     @test gAlloc.shares == testshares
 
-    ef = MeanVar(tickers, bl.post_ret, S, weight_bounds = (-1, 1), market_neutral = true)
+    ef = MeanVar(tickers, bl.post_ret, S, weight_bounds = (-1, 1))
     min_volatility!(ef)
     testweights = [
         0.0035893754885593,

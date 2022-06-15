@@ -77,12 +77,6 @@ function max_sortino!(
     w = model[:w]
     # We have to ensure k is positive.
     @constraint(model, k_positive, k >= 0)
-    # Scale the sum so that it can equal k.
-    if haskey(model, :sum_w)
-        delete.(model, model[:sum_w])
-        unregister(model, :sum_w)
-    end
-    @constraint(model, sum_w, sum(w) - k == 0)
 
     mean_ret = portfolio.mean_ret .- rf
     # Since we increased the unbounded sum of the weights to potentially be as large as k, leave this be. Equation 8.13 in the pdf linked in docs.

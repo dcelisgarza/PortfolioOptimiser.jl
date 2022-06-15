@@ -491,3 +491,22 @@ We can see that the weights between the optimal and allocated portfolios are not
 """
 
 [alloc.weights[sortperm(alloc.tickers)] ef.weights]
+
+mean_ret = ret_model(MRet(), Matrix(returns))
+tickers = names(hist_prices[!, 2:end])
+
+cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+max_sharpe!(cvar)
+munl, cvarnl = portfolio_performance(cvar, verbose = true)
+
+cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+min_cvar!(cvar)
+portfolio_performance(cvar, verbose = true)
+
+cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+max_sharpe!(cdar)
+munl, cdarnl = portfolio_performance(cdar, verbose = true)
+
+cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+min_cdar!(cdar)
+portfolio_performance(cdar, verbose = true)

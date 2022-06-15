@@ -23,9 +23,8 @@ function min_volatility!(
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     model = portfolio.model
-
     w = model[:w]
-    @constraint(model, sum_w, sum(w) == 1)
+
     cov_mtx = portfolio.cov_mtx
     @objective(model, Min, port_variance(w, cov_mtx))
     # Add extra terms to objective function.
@@ -64,9 +63,7 @@ function max_return(
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     model = copy(portfolio.model)
-
     w = model[:w]
-    @constraint(model, sum_w, sum(w) == 1)
 
     mean_ret = portfolio.mean_ret
     @objective(model, Min, -port_return(w, mean_ret))
@@ -134,8 +131,6 @@ function max_sharpe!(
     w = model[:w]
     # We have to ensure k is positive.
     @constraint(model, k_positive, k >= 0)
-    # Scale the sum so that it can equal k.
-    @constraint(model, sum_w, sum(w) == k)
 
     mean_ret = portfolio.mean_ret .- rf
     # Since we increased the unbounded the sum of the weights to potentially be as large as k, leave this be. Equation 8.13 in the pdf linked in docs.
@@ -192,8 +187,6 @@ function max_quadratic_utility!(
     risk_aversion = _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
 
     model = portfolio.model
-
-    _make_weight_sum_constraint!(model, portfolio.market_neutral)
 
     w = model[:w]
     mean_ret = portfolio.mean_ret
@@ -256,9 +249,6 @@ function efficient_return!(
     cov_mtx = portfolio.cov_mtx
     # Set constraint to set the portfolio return to be greater than or equal to the target return.
     @constraint(model, target_ret, port_return(w, mean_ret) >= target_ret)
-
-    # Make weight sum constraint.
-    _make_weight_sum_constraint!(model, portfolio.market_neutral)
 
     @objective(model, Min, port_variance(w, cov_mtx))
     # Add extra terms to objective function.
@@ -325,9 +315,6 @@ function efficient_risk!(
     target_variance = target_volatility^2
     variance = port_variance(w, cov_mtx)
     @constraint(model, target_variance, variance <= target_variance)
-
-    # Make weight sum constraint.
-    _make_weight_sum_constraint!(model, portfolio.market_neutral)
 
     @objective(model, Min, -port_return(w, mean_ret))
     # Add extra terms to objective function.

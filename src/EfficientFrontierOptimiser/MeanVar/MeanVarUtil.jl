@@ -6,7 +6,7 @@ refresh_model!(portfolio::AbstractMeanVar)
 Refreshes an [`AbstractMeanVar`](@ref) model.
 """
 function refresh_model!(portfolio::AbstractMeanVar)
-    default_keys = (:w, :lower_bounds, :upper_bounds)
+    default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
     return nothing
