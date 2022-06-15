@@ -129,11 +129,11 @@ function MeanSemivar(
     @variable(model, w[1:num_tickers])
 
     samples = size(returns, 1)
-    @variable(model, p[1:samples] >= 0)
+
     @variable(model, n[1:samples] >= 0)
 
     B = (returns .- benchmark) / sqrt(samples)
-    @constraint(model, semi_var, B * w .- p .+ n .== 0)
+    @constraint(model, semi_var, B * w .+ n .>= 0)
 
     lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
 
@@ -153,6 +153,10 @@ function MeanSemivar(
             [Symbol("extra_constraint$(i)") for i in 1:length(extra_constraints)]
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
+
+    # Return and risk.
+    !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
+    @expression(model, risk, dot(n, n) * freq)
 
     return MeanSemivar(
         tickers,

@@ -81,6 +81,15 @@ function EfficientCDaR(
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
+    !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
+    @expression(model, risk, cdar(alpha, z, samples, beta))
+
+    # vars = [w; mean_ret]
+    # register(model, :port_return, length(w) * 2, port_return, autodiff = true)
+    # register(model, :cdar, length(z) + 3, cdar, autodiff = true)
+    # !isnothing(mean_ret) && @NLexpression(model, nl_ret, port_return(vars...))
+    # @NLexpression(model, nl_risk, cdar(alpha, samples, beta, z...))
+
     return EfficientCDaR(
         tickers,
         mean_ret,

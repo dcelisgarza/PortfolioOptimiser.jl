@@ -12,6 +12,8 @@ function refresh_model!(portfolio::AbstractEfficientCDaR)
         :u1_eq_0,
         :z_geq_0,
         :u2e_geq_0,
+        :ret,
+        :risk,
     )
     _refresh_add_var_and_constraints(default_keys, portfolio)
 

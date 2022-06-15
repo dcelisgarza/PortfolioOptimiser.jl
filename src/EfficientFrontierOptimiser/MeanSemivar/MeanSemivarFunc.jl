@@ -9,9 +9,9 @@ function min_semivar!(
     model = portfolio.model
 
     w = model[:w]
-    n = model[:n]
+    risk = model[:risk]
 
-    @objective(model, Min, dot(n, n))
+    @objective(model, Min, risk)
     # Add extra terms to objective function.
     extra_obj_terms = portfolio.extra_obj_terms
     if !isempty(extra_obj_terms)
@@ -35,10 +35,9 @@ function max_return(
 
     model = copy(portfolio.model)
 
-    w = model[:w]
+    ret = model[:ret]
 
-    mean_ret = portfolio.mean_ret
-    @objective(model, Min, -port_return(w, mean_ret))
+    @objective(model, Min, -ret)
     # Add extra terms to objective function.
     extra_obj_terms = portfolio.extra_obj_terms
     if !isempty(extra_obj_terms)
@@ -78,14 +77,14 @@ function max_sortino!(
     # We have to ensure k is positive.
     @constraint(model, k_positive, k >= 0)
 
-    mean_ret = portfolio.mean_ret
+    ret = model[:ret]
     # Since we increased the unbounded the sum of the weights to potentially be as large as k, leave this be. Equation 8.13 in the pdf linked in docs.
-    port_ret = port_return(w, mean_ret)
-    @constraint(model, max_sharpe_return, port_ret - rf * k == 1)
+    @constraint(model, max_sharpe_return, ret - rf * k == 1)
 
-    n = model[:n]
     # Objective function.
-    @objective(model, Min, dot(n, n))
+    risk = model[:risk]
+    # We only have to minimise the unbounded weights and risk.
+    @objective(model, Min, risk)
 
     # Add extra terms to objective function.
     extra_obj_terms = portfolio.extra_obj_terms
@@ -118,12 +117,10 @@ function max_quadratic_utility!(
     model = portfolio.model
 
     w = model[:w]
-    n = model[:n]
+    ret = model[:ret]
+    risk = model[:risk]
 
-    mean_ret = portfolio.mean_ret
-    freq = portfolio.freq
-    μ = port_return(w, mean_ret) / freq
-    @objective(model, Min, -μ + 0.5 * risk_aversion * dot(n, n))
+    @objective(model, Min, -ret + 0.5 * risk_aversion * risk)
 
     # Add extra terms to objective function.
     extra_obj_terms = portfolio.extra_obj_terms
@@ -160,10 +157,12 @@ function efficient_return!(
     model = portfolio.model
 
     w = model[:w]
-    @constraint(model, target_ret, port_return(w, mean_ret) >= target_ret)
+    ret = model[:ret]
+    risk = model[:risk]
+    # Set constraint to set the portfolio return to be greater than or equal to the target return.
+    @constraint(model, target_ret, ret >= target_ret)
 
-    n = model[:n]
-    @objective(model, Min, dot(n, n))
+    @objective(model, Min, risk)
 
     # Add extra terms to objective function.
     extra_obj_terms = portfolio.extra_obj_terms
@@ -194,15 +193,14 @@ function efficient_risk!(
     # )
 
     model = portfolio.model
-    n = model[:n]
-
-    freq = portfolio.freq
-    target_semivariance = target_semidev^2
-    @constraint(model, target_semivariance, freq * dot(n, n) <= target_semivariance)
-
     w = model[:w]
-    mean_ret = portfolio.mean_ret
-    @objective(model, Min, -port_return(w, mean_ret))
+    ret = model[:ret]
+    risk = model[:risk]
+
+    target_semivariance = target_semidev^2
+    @constraint(model, target_semivariance, risk <= target_semivariance)
+
+    @objective(model, Min, -ret)
 
     # Add extra terms to objective function.
     extra_obj_terms = portfolio.extra_obj_terms

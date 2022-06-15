@@ -497,7 +497,42 @@ tickers = names(hist_prices[!, 2:end])
 
 cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
 max_sharpe!(cvar)
-munl, cvarnl = portfolio_performance(cvar, verbose = true)
+mu, risk = portfolio_performance(cvar, verbose = true)
+
+nl_cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+model = nl_cvar.model
+alpha = model[:alpha]
+u = model[:u]
+w = model[:w]
+mean_ret = nl_cvar.mean_ret
+beta = nl_cvar.beta
+rf = nl_cvar.rf
+
+extra_vars = [(alpha, nothing), (u, 1 / length(u))]
+obj_params = [length(w), mean_ret, beta, rf]
+
+function nl_cvar_sharpe(w...)
+    n = obj_params[1]
+    mean_ret = obj_params[2]
+    beta = obj_params[3]
+    rf = obj_params[4]
+
+    weights = w[1:n]
+    alpha = w[n + 1]
+    u = w[(n + 2):end]
+
+    samples = length(z)
+
+    ret = PortfolioOptimiser.port_return(weights, mean_ret) - rf
+    CVaR = PortfolioOptimiser.cvar(alpha, u, samples, beta)
+
+    return -ret / CVaR
+end
+custom_nloptimiser!(nl_cvar, nl_cvar_sharpe, obj_params, extra_vars)
+isapprox(cvar.weights, nl_cvar.weights, rtol = 1e-3)
+nl_mu, nl_risk = portfolio_performance(nl_cvar, verbose = true)
+
+######################################
 
 cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
 min_cvar!(cvar)
@@ -505,8 +540,41 @@ portfolio_performance(cvar, verbose = true)
 
 cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
 max_sharpe!(cdar)
-munl, cdarnl = portfolio_performance(cdar, verbose = true)
+mu, risk = portfolio_performance(cdar, verbose = true)
+
+nl_cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+model = nl_cdar.model
+alpha = model[:alpha]
+z = model[:z]
+w = model[:w]
+mean_ret = nl_cdar.mean_ret
+beta = nl_cdar.beta
+rf = nl_cdar.rf
+
+extra_vars = [(alpha, nothing), (z, 1 / length(z))]
+obj_params = [length(w), mean_ret, beta, rf]
+
+function nl_cdar_sharpe(w...)
+    n = obj_params[1]
+    mean_ret = obj_params[2]
+    beta = obj_params[3]
+    rf = obj_params[4]
+
+    weights = w[1:n]
+    alpha = w[n + 1]
+    z = w[(n + 2):end]
+
+    samples = length(z)
+
+    ret = PortfolioOptimiser.port_return(weights, mean_ret) - rf
+    CDaR = PortfolioOptimiser.cdar(alpha, z, samples, beta)
+
+    return -ret / CDaR
+end
+custom_nloptimiser!(nl_cdar, nl_cdar_sharpe, obj_params, extra_vars)
+isapprox(cdar.weights, nl_cdar.weights, rtol = 1e-4)
+nl_mu, nl_risk = portfolio_performance(nl_cdar, verbose = true)
 
 cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
 min_cdar!(cdar)
-portfolio_performance(cdar, verbose = true)
+mu, risk = portfolio_performance(cdar, verbose = true)

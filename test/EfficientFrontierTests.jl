@@ -1057,7 +1057,7 @@ end
     mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
     @test isapprox(mu, mumax, rtol = 1e-5)
     @test isapprox(sigma, varmax, rtol = 1e-5)
-    @test isapprox(sr, smax, rtol = 1e-7)
+    @test isapprox(sr, smax, rtol = 1e-6)
 
     efficient_return!(ef, mumax)
     mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
@@ -1250,9 +1250,9 @@ end
     @test isapprox(ef.weights, testweights, rtol = 1e-2)
     mu, sigma, sr = portfolio_performance(ef)
     mutest, sigmatest, srtest = 0.09000090563810152, 0.17811334827609804, 0.393013248673487
-    @test isapprox(mu, mutest, rtol = 1e-5)
-    @test isapprox(sigma, sigmatest, rtol = 1e-4)
-    @test isapprox(sr, srtest, rtol = 1e-4)
+    @test isapprox(mu, mutest, rtol = 1e-4)
+    @test isapprox(sigma, sigmatest, rtol = 1e-3)
+    @test isapprox(sr, srtest, rtol = 1e-3)
 
     ef.weights .= testweights
     lpAlloc, remaining =
@@ -1605,7 +1605,7 @@ end
     n = length(tickers)
     prev_weights = fill(1 / n, n)
 
-    k = 0.00001
+    k = 0.00001 * 252
     ef = MeanSemivar(
         tickers,
         mean_ret,
@@ -1719,9 +1719,9 @@ end
         0.0698034082988953,
         9.565700518e-07,
     ]
-    @test isapprox(ef.weights, testweights, rtol = 5e-4)
+    @test isapprox(ef.weights, testweights, rtol = 5e-3)
 
-    k = 0.00001
+    k = 0.00001 * 252
     ef = MeanSemivar(
         tickers,
         mean_ret,
@@ -1740,7 +1740,7 @@ end
     max_sortino!(ef)
     mumax, sigmamax, srmax = portfolio_performance(ef, verbose = true)
 
-    k = 0.00001
+    k = 0.00001 * 252
     ef = MeanSemivar(
         tickers,
         mean_ret,
@@ -1768,7 +1768,7 @@ end
     @test isapprox(sigmamax, sigma, rtol = 1e-4)
     @test isapprox(srmax, sr, rtol = 1e-4)
 
-    k = 0.00001
+    k = 0.00001 * 252
     ef = MeanSemivar(
         tickers,
         mean_ret,
@@ -2456,6 +2456,46 @@ end
         -4.2424791815443736e-9,
     ]
     @test isapprox(cv.weights, testweights)
+
+    mean_ret = ret_model(MRet(), Matrix(returns))
+    tickers = names(hist_prices[!, 2:end])
+
+    cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+    max_sharpe!(cvar)
+    mu, risk = portfolio_performance(cvar, verbose = true)
+
+    nl_cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+    model = nl_cvar.model
+    alpha = model[:alpha]
+    u = model[:u]
+    w = model[:w]
+    mean_ret = nl_cvar.mean_ret
+    beta = nl_cvar.beta
+    rf = nl_cvar.rf
+
+    extra_vars = [(alpha, nothing), (u, 1 / length(u))]
+    obj_params = [length(w), mean_ret, beta, rf]
+
+    function nl_cvar_sharpe(w...)
+        n = obj_params[1]
+        mean_ret = obj_params[2]
+        beta = obj_params[3]
+        rf = obj_params[4]
+
+        weights = w[1:n]
+        alpha = w[n + 1]
+        u = w[(n + 2):end]
+
+        samples = length(z)
+
+        ret = PortfolioOptimiser.port_return(weights, mean_ret) - rf
+        CVaR = PortfolioOptimiser.cvar(alpha, u, samples, beta)
+
+        return -ret / CVaR
+    end
+    custom_nloptimiser!(nl_cvar, nl_cvar_sharpe, obj_params, extra_vars)
+    @test isapprox(cvar.weights, nl_cvar.weights, rtol = 1e-3)
+    nl_mu, nl_risk = portfolio_performance(nl_cvar, verbose = true)
 end
 
 @testset "Efficient CDaR" begin
@@ -3027,4 +3067,41 @@ end
         6.761592949160405e-10,
     ]
     @test isapprox(cd.weights, testweights)
+
+    cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+    max_sharpe!(cdar)
+    mu, risk = portfolio_performance(cdar, verbose = true)
+
+    nl_cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+    model = nl_cdar.model
+    alpha = model[:alpha]
+    z = model[:z]
+    w = model[:w]
+    mean_ret = nl_cdar.mean_ret
+    beta = nl_cdar.beta
+    rf = nl_cdar.rf
+
+    extra_vars = [(alpha, nothing), (z, 1 / length(z))]
+    obj_params = [length(w), mean_ret, beta, rf]
+
+    function nl_cdar_sharpe(w...)
+        n = obj_params[1]
+        mean_ret = obj_params[2]
+        beta = obj_params[3]
+        rf = obj_params[4]
+
+        weights = w[1:n]
+        alpha = w[n + 1]
+        z = w[(n + 2):end]
+
+        samples = length(z)
+
+        ret = PortfolioOptimiser.port_return(weights, mean_ret) - rf
+        CDaR = PortfolioOptimiser.cdar(alpha, z, samples, beta)
+
+        return -ret / CDaR
+    end
+    custom_nloptimiser!(nl_cdar, nl_cdar_sharpe, obj_params, extra_vars)
+    @test isapprox(cdar.weights, nl_cdar.weights, rtol = 1e-4)
+    nl_mu, nl_risk = portfolio_performance(nl_cdar, verbose = true)
 end

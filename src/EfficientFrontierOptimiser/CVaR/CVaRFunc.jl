@@ -8,11 +8,10 @@ function min_cvar!(
 
     model = portfolio.model
 
-    alpha = model[:alpha]
-    u = model[:u]
-    beta = portfolio.beta
-    samples = size(portfolio.returns, 1)
-    @objective(model, Min, cvar(alpha, u, samples, beta))
+    w = model[:w]
+    risk = model[:risk]
+
+    @objective(model, Min, risk)
 
     # Add extra terms to objective function.
     extra_obj_terms = portfolio.extra_obj_terms
@@ -22,7 +21,6 @@ function min_cvar!(
 
     _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
-    w = model[:w]
     portfolio.weights .= value.(w)
 
     return portfolio
@@ -56,17 +54,14 @@ function max_sharpe!(
     # We have to ensure k is positive.
     @constraint(model, k_positive, k >= 0)
 
-    mean_ret = portfolio.mean_ret
+    ret = model[:ret]
     # Since we increased the unbounded the sum of the weights to potentially be as large as k, leave this be. Equation 8.13 in the pdf linked in docs.
-    port_ret = port_return(w, mean_ret)
-    @constraint(model, max_sharpe_return, port_ret - rf * k == 1)
+    @constraint(model, max_sharpe_return, ret - rf * k == 1)
 
     # Objective function.
-    alpha = model[:alpha]
-    u = model[:u]
-    beta = portfolio.beta
-    samples = size(portfolio.returns, 1)
-    @objective(model, Min, cvar(alpha, u, samples, beta))
+    risk = model[:risk]
+    # We only have to minimise the unbounded weights and risk.
+    @objective(model, Min, risk)
 
     # Add extra terms to objective function.
     extra_obj_terms = portfolio.extra_obj_terms
@@ -80,6 +75,39 @@ function max_sharpe!(
     _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
     portfolio.weights .= value.(w) / value(k)
+
+    return nothing
+end
+
+function max_quadratic_utility!(
+    portfolio::EfficientCVaR,
+    risk_aversion = portfolio.risk_aversion;
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+    optimiser_attributes = (),
+)
+    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
+
+    # _function_vs_portfolio_val_warn(risk_aversion, portfolio.risk_aversion, "risk_aversion")
+    risk_aversion = _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
+
+    model = portfolio.model
+
+    w = model[:w]
+    ret = model[:ret]
+    risk = model[:risk]
+
+    @objective(model, Min, -ret + 0.5 * risk_aversion * risk)
+
+    # Add extra terms to objective function.
+    extra_obj_terms = portfolio.extra_obj_terms
+    if !isempty(extra_obj_terms)
+        _add_to_objective!.(model, extra_obj_terms)
+    end
+
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
+
+    portfolio.weights .= value.(w)
 
     return nothing
 end
@@ -104,14 +132,12 @@ function efficient_return!(
     model = portfolio.model
 
     w = model[:w]
+    ret = model[:ret]
+    risk = model[:risk]
+    # Set constraint to set the portfolio return to be greater than or equal to the target return.
+    @constraint(model, target_ret, ret >= target_ret)
 
-    @constraint(model, target_ret, port_return(w, mean_ret) >= target_ret)
-
-    alpha = model[:alpha]
-    u = model[:u]
-    beta = portfolio.beta
-    samples = size(portfolio.returns, 1)
-    @objective(model, Min, cvar(alpha, u, samples, beta))
+    @objective(model, Min, risk)
 
     # Add extra terms to objective function.
     extra_obj_terms = portfolio.extra_obj_terms
@@ -145,15 +171,14 @@ function efficient_risk!(
     )
 
     model = portfolio.model
-    alpha = model[:alpha]
-    u = model[:u]
-    beta = portfolio.beta
-    samples = size(portfolio.returns, 1)
-    @constraint(model, target_cvar, cvar(alpha, u, samples, beta) <= target_cvar)
 
     w = model[:w]
-    mean_ret = portfolio.mean_ret
-    @objective(model, Min, -port_return(w, mean_ret))
+    ret = model[:ret]
+    risk = model[:risk]
+
+    @constraint(model, target_cvar, risk <= target_cvar)
+
+    @objective(model, Min, -ret)
 
     # Add extra terms to objective function.
     extra_obj_terms = portfolio.extra_obj_terms
@@ -166,43 +191,4 @@ function efficient_risk!(
     portfolio.weights .= value.(w)
 
     return portfolio
-end
-
-function max_quadratic_utility!(
-    portfolio::EfficientCVaR,
-    risk_aversion = portfolio.risk_aversion;
-    optimiser = Ipopt.Optimizer,
-    silent = true,
-    optimiser_attributes = (),
-)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
-
-    # _function_vs_portfolio_val_warn(risk_aversion, portfolio.risk_aversion, "risk_aversion")
-    risk_aversion = _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
-
-    model = portfolio.model
-
-    w = model[:w]
-    alpha = model[:alpha]
-    u = model[:u]
-    beta = portfolio.beta
-    samples = size(portfolio.returns, 1)
-
-    mean_ret = portfolio.mean_ret
-
-    μ = port_return(w, mean_ret)# / (samples * (1 - beta))
-
-    @objective(model, Min, -μ + 0.5 * risk_aversion * cvar(alpha, u, samples, beta))
-
-    # Add extra terms to objective function.
-    extra_obj_terms = portfolio.extra_obj_terms
-    if !isempty(extra_obj_terms)
-        _add_to_objective!.(model, extra_obj_terms)
-    end
-
-    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
-
-    portfolio.weights .= value.(w)
-
-    return nothing
 end

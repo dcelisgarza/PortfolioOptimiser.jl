@@ -136,6 +136,10 @@ function MeanVar(
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
+    # Return and risk.
+    !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
+    @expression(model, risk, port_variance(w, cov_mtx))
+
     return MeanVar(
         tickers,
         mean_ret,

@@ -79,6 +79,9 @@ function EfficientCVaR(
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
+    !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
+    @expression(model, risk, cvar(alpha, u, samples, beta))
+
     return EfficientCVaR(
         tickers,
         mean_ret,
