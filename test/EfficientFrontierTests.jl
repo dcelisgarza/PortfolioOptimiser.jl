@@ -10,7 +10,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     mean_ret = ret_model(MRet(), Matrix(returns))
     S = cov(Cov(), Matrix(returns))
 
-    ef = MeanVar(tickers, mean_ret, S)
+    ef = EffMeanVar(tickers, mean_ret, S)
     sectors = ["Tech", "Medical", "RealEstate", "Oil"]
     sector_map = Dict(tickers[1:4:20] .=> sectors[1])
     merge!(sector_map, Dict(tickers[2:4:20] .=> sectors[2]))
@@ -32,17 +32,17 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     @test 0.15 - 1e-9 <= sum(ef.weights[3:4:20]) <= 0.2 + 1e-9
     @test 0.05 - 1e-9 <= sum(ef.weights[4:4:20]) <= 0.2 + 1e-9
 
-    ef = MeanVar(tickers, mean_ret, S, market_neutral = true)
+    ef = EffMeanVar(tickers, mean_ret, S, market_neutral = true)
     add_sector_constraint!(ef, sector_map, sector_lower, sector_upper)
 
-    ef = MeanVar(tickers, mean_ret, S)
+    ef = EffMeanVar(tickers, mean_ret, S)
     efficient_risk!(ef, 0.01, optimiser_attributes = "tol" => 1e-3)
     @test termination_status(ef.model) == MOI.NUMERICAL_ERROR
 
     efficient_risk!(ef, 0.01, optimiser_attributes = ("tol" => 1e-3, "max_iter" => 20))
     @test termination_status(ef.model) == MOI.ITERATION_LIMIT
 
-    ef = MeanVar(tickers, mean_ret, S)
+    ef = EffMeanVar(tickers, mean_ret, S)
     max_sharpe!(ef)
     sr1 = sharpe_ratio(ef.weights, ef.mean_ret, ef.cov_mtx)
     mu, sigma, sr = portfolio_performance(ef)
@@ -104,7 +104,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
         P = picking,
     )
 
-    ef = MeanVar(tickers, bl.post_ret, S)
+    ef = EffMeanVar(tickers, bl.post_ret, S)
     @test (0.0, 0.0, 0.0) == portfolio_performance(ef)
 
     max_sharpe!(ef)
@@ -148,7 +148,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     testshares = [231, 2, 4, 19]
     @test gAlloc.shares == testshares
 
-    ef = MeanVar(tickers, bl.post_ret, S)
+    ef = EffMeanVar(tickers, bl.post_ret, S)
     max_sharpe!(ef, 0.03)
     testweights = [
         0.151542234028701,
@@ -191,7 +191,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     testshares = [261, 1, 3, 19]
     @test gAlloc.shares == testshares
 
-    ef = MeanVar(tickers, bl.post_ret, S, weight_bounds = (-1, 1))
+    ef = EffMeanVar(tickers, bl.post_ret, S, weight_bounds = (-1, 1))
     max_sharpe!(ef)
     testweights = [
         0.7629861545939385,
@@ -234,7 +234,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
         [3, 58, 11, 27, 12, 5, 7, 3, 4, 4, -168, -29, -357, -30, -24, -2, -73, -2, -1]
     @test gAlloc.shares == testshares
 
-    ef = MeanVar(tickers, bl.post_ret, S, weight_bounds = (-1, 1))
+    ef = EffMeanVar(tickers, bl.post_ret, S, weight_bounds = (-1, 1))
     max_sharpe!(ef, 0.03)
     testweights = [
         0.859721100506911,
@@ -277,7 +277,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
         [3, 61, 12, 12, 5, 26, 3, 5, 4, 5, -168, -34, -428, -50, -4, -29, -86, -5, -2]
     @test gAlloc.shares == testshares
 
-    ef = MeanVar(tickers, bl.post_ret, S)
+    ef = EffMeanVar(tickers, bl.post_ret, S)
     min_risk!(ef)
     testweights = [
         0.007909381852655,
@@ -320,7 +320,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     testshares = [81, 54, 16, 16, 20, 25, 2, 2, 3, 1]
     @test gAlloc.shares == testshares
 
-    ef = MeanVar(tickers, bl.post_ret, S, weight_bounds = (-1, 1))
+    ef = EffMeanVar(tickers, bl.post_ret, S, weight_bounds = (-1, 1))
     min_risk!(ef)
     testweights = [
         0.0035893754885593,
@@ -363,7 +363,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     testshares = [72, 51, 17, 15, 19, 37, 2, 2, 3, 4, 1, 1, 1, -6, -12, -3, -10, -28]
     @test gAlloc.shares == testshares
 
-    ef = MeanVar(tickers, bl.post_ret, S)
+    ef = EffMeanVar(tickers, bl.post_ret, S)
     max_utility!(ef)
     testweights = [
         0.142307545055626,
@@ -528,7 +528,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     testshares = [176, 2, 5, 9, 3, 16, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     @test gAlloc.shares == testshares
 
-    ef = MeanVar(tickers, bl.post_ret, S, market_neutral = true)
+    ef = EffMeanVar(tickers, bl.post_ret, S, market_neutral = true)
     max_utility!(ef)
     testweights = [
         1.0,
@@ -724,7 +724,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     prev_weights = fill(1 / n, n)
 
     k = 0.001
-    ef = MeanVar(
+    ef = EffMeanVar(
         tickers,
         mu,
         S;
@@ -837,7 +837,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     @test isapprox(ef.weights, testweights, rtol = 1e-3)
 
     k = 0.001
-    ef = MeanVar(
+    ef = EffMeanVar(
         tickers,
         mu,
         S;
@@ -875,7 +875,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     @test isapprox(ef.weights, testweights, rtol = 1e-6)
 
     k = 0.01
-    ef = MeanVar(
+    ef = EffMeanVar(
         tickers,
         mu,
         S;
@@ -914,7 +914,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     @test isapprox(ef.weights, testweights, rtol = 1e-5)
 
     k = 0.0001
-    ef = MeanVar(
+    ef = EffMeanVar(
         tickers,
         mu,
         S;
@@ -964,7 +964,7 @@ end
     mean_ret = vec(ret_model(MRet(), Matrix(returns)))
     S = cov(Cov(), Matrix(returns))
 
-    ef = MeanSemivar(tickers, mean_ret, S, market_neutral = true)
+    ef = EffMeanSemivar(tickers, mean_ret, S, market_neutral = true)
     sectors = ["Tech", "Medical", "RealEstate", "Oil"]
     sector_map = Dict(tickers[1:4:20] .=> sectors[1])
     merge!(sector_map, Dict(tickers[2:4:20] .=> sectors[2]))
@@ -1029,13 +1029,13 @@ end
         P = picking,
     )
 
-    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
     @test (0.0, 0.0, 0.0) == portfolio_performance(ef)
 
     max_sharpe!(ef)
     mumax, varmax, smax = portfolio_performance(ef)
 
-    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
     efficient_risk!(ef, varmax)
     mu, sigma, sr = portfolio_performance(ef)
     @test isapprox(mu, mumax, rtol = 1e-5)
@@ -1048,11 +1048,11 @@ end
     @test isapprox(sigma, varmax, rtol = 1e-4)
     @test isapprox(sr, smax, rtol = 1e-4)
 
-    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
     max_sharpe!(ef, 0.03)
     mumax, varmax, smax = portfolio_performance(ef, rf = 0.03)
 
-    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
     efficient_risk!(ef, varmax)
     mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
     @test isapprox(mu, mumax, rtol = 1e-5)
@@ -1065,11 +1065,11 @@ end
     @test isapprox(sigma, varmax, rtol = 1e-3)
     @test isapprox(sr, smax, rtol = 1e-3)
 
-    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
     max_sharpe!(ef)
     mumax, varmax, smax = portfolio_performance(ef)
 
-    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
     efficient_risk!(ef, varmax)
     mu, sigma, sr = portfolio_performance(ef)
     @test isapprox(mu, mumax, rtol = 1e-5)
@@ -1082,11 +1082,11 @@ end
     @test isapprox(sigma, varmax, rtol = 1e-4)
     @test isapprox(sr, smax, rtol = 1e-4)
 
-    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
     max_sharpe!(ef, 0.03)
     mumax, varmax, smax = portfolio_performance(ef, rf = 0.03)
 
-    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
     efficient_risk!(ef, varmax)
     mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
     @test isapprox(mu, mumax, rtol = 1e-5)
@@ -1099,7 +1099,7 @@ end
     @test isapprox(sigma, varmax, rtol = 1e-4)
     @test isapprox(sr, smax, rtol = 1e-4)
 
-    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
     min_risk!(ef)
     testweights = [
         -8.8369599e-09,
@@ -1306,7 +1306,7 @@ end
     testshares = [135, 3, 8, 3, 17, 6, 2, 6, 1, 1]
     @test gAlloc.shares == testshares
 
-    ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
     min_risk!(ef)
     testweights = [
         -6.87746970453e-05,
@@ -1606,7 +1606,7 @@ end
     prev_weights = fill(1 / n, n)
 
     k = 0.00001 * 252
-    ef = MeanSemivar(
+    ef = EffMeanSemivar(
         tickers,
         mean_ret,
         Matrix(returns);
@@ -1722,7 +1722,7 @@ end
     @test isapprox(ef.weights, testweights, rtol = 5e-3)
 
     k = 0.00001 * 252
-    ef = MeanSemivar(
+    ef = EffMeanSemivar(
         tickers,
         mean_ret,
         Matrix(returns);
@@ -1741,7 +1741,7 @@ end
     mumax, sigmamax, srmax = portfolio_performance(ef, verbose = true)
 
     k = 0.00001 * 252
-    ef = MeanSemivar(
+    ef = EffMeanSemivar(
         tickers,
         mean_ret,
         Matrix(returns);
@@ -1769,7 +1769,7 @@ end
     @test isapprox(srmax, sr, rtol = 1e-4)
 
     k = 0.00001 * 252
-    ef = MeanSemivar(
+    ef = EffMeanSemivar(
         tickers,
         mean_ret,
         Matrix(returns);
@@ -1851,7 +1851,7 @@ end
         P = picking,
     )
 
-    cv = EfficientCVaR(tickers, bl.post_ret, Matrix(returns))
+    cv = EffCVaR(tickers, bl.post_ret, Matrix(returns))
     min_risk!(cv)
     testweights = [
         1.196700000000000e-12,
@@ -2012,7 +2012,7 @@ end
     testshares = [334, 1]
     @test gAlloc.shares == testshares
 
-    cv = EfficientCVaR(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
+    cv = EffCVaR(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
     min_risk!(cv)
     testweights = [
         -2.2800e-12,
@@ -2177,13 +2177,7 @@ end
     ]
     @test gAlloc.shares == testshares
 
-    cv = EfficientCVaR(
-        tickers,
-        bl.post_ret,
-        Matrix(returns),
-        beta = 0.2,
-        market_neutral = false,
-    )
+    cv = EffCVaR(tickers, bl.post_ret, Matrix(returns), beta = 0.2, market_neutral = false)
     min_risk!(cv)
     testweights = [
         1.2591e-12,
@@ -2271,22 +2265,10 @@ end
     @test isapprox(mu, mutest, rtol = 1e-6)
     @test isapprox(cvar, cvartest, rtol = 1e-3)
 
-    cv = EfficientCVaR(
-        tickers,
-        bl.post_ret,
-        Matrix(returns),
-        beta = 1,
-        market_neutral = false,
-    )
+    cv = EffCVaR(tickers, bl.post_ret, Matrix(returns), beta = 1, market_neutral = false)
     @test (0, 0) == portfolio_performance(cv)
     @test cv.beta == 0.95
-    cv = EfficientCVaR(
-        tickers,
-        bl.post_ret,
-        Matrix(returns),
-        beta = -0.1,
-        market_neutral = false,
-    )
+    cv = EffCVaR(tickers, bl.post_ret, Matrix(returns), beta = -0.1, market_neutral = false)
     @test cv.beta == 0.95
 
     mean_ret = ret_model(MRet(), Matrix(returns))
@@ -2295,7 +2277,7 @@ end
     prev_weights = fill(1 / n, n)
 
     k = 0.0001
-    ef = EfficientCVaR(
+    ef = EffCVaR(
         tickers,
         mean_ret,
         Matrix(returns);
@@ -2385,7 +2367,7 @@ end
     ]
     @test isapprox(ef.weights, testweights, rtol = 1e-5)
 
-    cv = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+    cv = EffCVaR(tickers, mean_ret, Matrix(returns))
 
     max_utility!(cv, 1e8)
     mu, cvar = portfolio_performance(cv)
@@ -2417,7 +2399,7 @@ end
     n = length(tickers)
     prev_weights = fill(1 / n, n)
     k = 0.001
-    cv = EfficientCVaR(
+    cv = EffCVaR(
         tickers,
         mean_ret,
         Matrix(returns);
@@ -2459,11 +2441,11 @@ end
 
     mean_ret = ret_model(MRet(), Matrix(returns))
 
-    cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+    cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
     max_sharpe!(cvar)
     mu, risk = portfolio_performance(cvar, verbose = true)
 
-    nl_cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+    nl_cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
     model = nl_cvar.model
     alpha = model[:alpha]
     u = model[:u]
@@ -2557,7 +2539,7 @@ end
         P = picking,
     )
 
-    cdar = EfficientCDaR(tickers, bl.post_ret, Matrix(returns))
+    cdar = EffCDaR(tickers, bl.post_ret, Matrix(returns))
     @test (0, 0) == portfolio_performance(cdar)
     min_risk!(cdar)
     testweights = [
@@ -2679,7 +2661,7 @@ end
     testshares = [45, 3, 9, 5, 6, 9, 1, 1, 1, 1, 1, 1]
     @test gAlloc.shares == testshares
 
-    cdar = EfficientCDaR(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
+    cdar = EffCDaR(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
     min_risk!(cdar)
     testweights = [
         -7.8660e-13,
@@ -2804,7 +2786,7 @@ end
         [36, 1, 22, 4, 4, 8, 3, 10, -149, -173, -263, -66, -33, -86, -5, -4, -10, -67, -3]
     @test gAlloc.shares == testshares
 
-    cdar = EfficientCDaR(tickers, bl.post_ret, Matrix(returns), beta = 0.2)
+    cdar = EffCDaR(tickers, bl.post_ret, Matrix(returns), beta = 0.2)
     min_risk!(cdar)
     testweights = [
         1.229e-13,
@@ -2892,16 +2874,11 @@ end
     @test isapprox(mu, mutest, rtol = 1e-4)
     @test isapprox(cvar, cvartest, rtol = 1e-7)
 
-    cdar = EfficientCDaR(tickers, bl.post_ret, Matrix(returns), beta = 1)
+    cdar = EffCDaR(tickers, bl.post_ret, Matrix(returns), beta = 1)
     @test (0, 0) == portfolio_performance(cdar)
     @test cdar.beta == 0.95
-    cdar = EfficientCDaR(
-        tickers,
-        bl.post_ret,
-        Matrix(returns),
-        beta = -0.1,
-        market_neutral = false,
-    )
+    cdar =
+        EffCDaR(tickers, bl.post_ret, Matrix(returns), beta = -0.1, market_neutral = false)
     @test cdar.beta == 0.95
 
     mean_ret = ret_model(MRet(), Matrix(returns))
@@ -2910,7 +2887,7 @@ end
     prev_weights = fill(1 / n, n)
 
     k = 0.0001
-    ef = EfficientCDaR(
+    ef = EffCDaR(
         tickers,
         mean_ret,
         Matrix(returns);
@@ -3000,7 +2977,7 @@ end
     ]
     @test isapprox(ef.weights, testweights, rtol = 1e-4)
 
-    cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+    cd = EffCDaR(tickers, mean_ret, Matrix(returns))
 
     max_utility!(cd, 1e8)
     mu, cdar = portfolio_performance(cd)
@@ -3027,7 +3004,7 @@ end
     @test cdar1 > cdar2 > cdar3 > cdar4 > cdar5 > cdar6 > cdar7
 
     k = 0.001
-    cd = EfficientCDaR(
+    cd = EffCDaR(
         tickers,
         mean_ret,
         Matrix(returns);
@@ -3067,11 +3044,11 @@ end
     ]
     @test isapprox(cd.weights, testweights)
 
-    cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+    cdar = EffCDaR(tickers, mean_ret, Matrix(returns))
     max_sharpe!(cdar)
     mu, risk = portfolio_performance(cdar, verbose = true)
 
-    nl_cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+    nl_cdar = EffCDaR(tickers, mean_ret, Matrix(returns))
     model = nl_cdar.model
     alpha = model[:alpha]
     z = model[:z]

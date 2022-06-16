@@ -10,7 +10,7 @@ using PortfolioOptimiser, CSV, DataFrames
     S = cov(Cov(), Matrix(returns))
 
     lower_bounds, upper_bounds, strict_bounds = 0.02, 0.03, 0.1
-    ef = MeanVar(
+    ef = EffMeanVar(
         tickers,
         mu,
         S;
@@ -26,7 +26,7 @@ using PortfolioOptimiser, CSV, DataFrames
     @test ef.weights[end] <= upper_bounds
     @test isapprox(ef.weights[6], strict_bounds)
 
-    ef = MeanVar(tickers, mu, S)
+    ef = EffMeanVar(tickers, mu, S)
     obj_params = [ef.mean_ret, ef.cov_mtx, 1000]
     custom_optimiser!(ef, kelly_objective, obj_params, initial_guess = fill(1 / 20, 20))
     testweights = [
@@ -68,7 +68,7 @@ end
         w = [i for i in w]
         PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
     end
-    ef = MeanVar(tickers, mean_ret, S, weight_bounds = (0.03, 0.2))
+    ef = EffMeanVar(tickers, mean_ret, S, weight_bounds = (0.03, 0.2))
     obj_params = (ef.cov_mtx, 0.001)
     custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     testweights = [
@@ -100,7 +100,7 @@ end
 
     @test_throws ArgumentError custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 
-    ef = MeanVar(tickers, mean_ret, S, weight_bounds = fill((0.03, 0.2), 20))
+    ef = EffMeanVar(tickers, mean_ret, S, weight_bounds = fill((0.03, 0.2), 20))
     obj_params = (ef.cov_mtx, 0.001)
     custom_nloptimiser!(
         ef,
@@ -110,14 +110,14 @@ end
     )
     @test isapprox(ef.weights, testweights, rtol = 1e-6)
 
-    @test_throws ArgumentError MeanVar(
+    @test_throws ArgumentError EffMeanVar(
         tickers,
         mean_ret,
         S,
         weight_bounds = fill((0.03, 0.2), 19),
     )
 
-    ef = MeanVar(tickers, mean_ret, S, weight_bounds = fill([0.03, 0.2], 20))
+    ef = EffMeanVar(tickers, mean_ret, S, weight_bounds = fill([0.03, 0.2], 20))
     obj_params = (ef.cov_mtx, 0.001)
     custom_nloptimiser!(
         ef,
@@ -150,7 +150,12 @@ end
         (0.03, 0.2)
     ]
 
-    @test_throws ArgumentError MeanVar(tickers, mean_ret, S, weight_bounds = weight_bounds)
+    @test_throws ArgumentError EffMeanVar(
+        tickers,
+        mean_ret,
+        S,
+        weight_bounds = weight_bounds,
+    )
 
     weight_bounds = [
         (0.03, 0.2)
@@ -175,7 +180,12 @@ end
         (0.03, 0.2)
     ]
 
-    @test_throws ArgumentError MeanVar(tickers, mean_ret, S, weight_bounds = weight_bounds)
+    @test_throws ArgumentError EffMeanVar(
+        tickers,
+        mean_ret,
+        S,
+        weight_bounds = weight_bounds,
+    )
 
     function sharpe_ratio_nl(w::T...) where {T}
         mean_ret = obj_params[1]
@@ -187,12 +197,12 @@ end
 
         return -sr
     end
-    ef = MeanVar(tickers, mean_ret, S)
+    ef = EffMeanVar(tickers, mean_ret, S)
     obj_params = [ef.mean_ret, ef.cov_mtx, ef.rf]
     custom_nloptimiser!(ef, sharpe_ratio_nl, obj_params)
     mu, sigma, sr = portfolio_performance(ef)
 
-    ef2 = MeanVar(tickers, mean_ret, S)
+    ef2 = EffMeanVar(tickers, mean_ret, S)
     max_sharpe!(ef2)
     mu2, sigma2, sr2 = portfolio_performance(ef2)
 
@@ -200,7 +210,7 @@ end
     @test isapprox(sigma, sigma2, rtol = 1e-6)
     @test isapprox(sr, sr2, rtol = 1e-6)
 
-    cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+    cd = EffCDaR(tickers, mean_ret, Matrix(returns))
     function cdar_ratio(w...)
         mean_ret = obj_params[1]
         beta = obj_params[2]
@@ -233,7 +243,7 @@ end
     mu, cdar1 = portfolio_performance(cd)
     @test mu / cdar1 ≈ 3.2819464291074305
 
-    cd2 = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+    cd2 = EffCDaR(tickers, mean_ret, Matrix(returns))
     min_risk!(cd2)
     mu2, cdar2 = portfolio_performance(cd2)
     mu2 / cdar2

@@ -1,16 +1,16 @@
 """
 ```
-abstract type AbstractMeanVar <: AbstractEfficient end
+abstract type AbstractEffMeanVar <: AbstractEfficient end
 ```
 
 Abstract type for subtyping efficient mean variance optimisers.
 """
-abstract type AbstractMeanVar <: AbstractEfficient end
+abstract type AbstractEffMeanVar <: AbstractEfficient end
 
 """
 ```
-struct MeanVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
-       AbstractMeanVar
+struct EffMeanVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
+       AbstractEffMeanVar
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -43,7 +43,8 @@ Structure for a mean-variance portfolio.
 - `extra_obj_terms`: extra objective terms for the model.
 - `model`: model for optimising portfolio.
 """
-struct MeanVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <: AbstractMeanVar
+struct EffMeanVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
+       AbstractEffMeanVar
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -61,7 +62,7 @@ end
 
 """
 ```
-MeanVar(
+EffMeanVar(
     tickers,
     mean_ret,
     cov_mtx;
@@ -78,7 +79,7 @@ MeanVar(
 )
 ```
 
-Create an [`MeanVar`](@ref) structure to be optimised via JuMP.
+Create an [`EffMeanVar`](@ref) structure to be optimised via JuMP.
 
 - `tickers`: list of tickers.
 - `mean_ret`: mean returns, don't need it to optimise for minimum variance.
@@ -93,7 +94,7 @@ Create an [`MeanVar`](@ref) structure to be optimised via JuMP.
 - `extra_constraints`: extra constraints for the model. See [`_add_constraint_to_model!`](@ref) for details on how to use this.
 - `extra_obj_terms`: extra objective terms for the model. See [`_add_to_objective!`](@ref) for details on how to use this.
 """
-function MeanVar(
+function EffMeanVar(
     tickers,
     mean_ret,
     cov_mtx;
@@ -140,7 +141,7 @@ function MeanVar(
     !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
     @expression(model, risk, port_variance(w, cov_mtx))
 
-    return MeanVar(
+    return EffMeanVar(
         tickers,
         mean_ret,
         weights,

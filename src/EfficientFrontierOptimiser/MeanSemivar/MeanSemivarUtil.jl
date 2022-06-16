@@ -1,11 +1,11 @@
 """
 ```
-refresh_model!(portfolio::AbstractMeanSemivar)
+refresh_model!(portfolio::AbstractEffMeanSemivar)
 ```
 
-Refreshes an [`AbstractMeanSemivar`](@ref) model.
+Refreshes an [`AbstractEffMeanSemivar`](@ref) model.
 """
-function refresh_model!(portfolio::AbstractMeanSemivar)
+function refresh_model!(portfolio::AbstractEffMeanSemivar)
     default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :n, :semi_var, :ret, :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
@@ -14,7 +14,7 @@ end
 
 """
 ```
-portfolio_performance(portfolio::MeanSemivar; rf = portfolio.rf, verbose = false)
+portfolio_performance(portfolio::EffMeanSemivar; rf = portfolio.rf, verbose = false)
 ```
 
 Computes the portfolio return ([`port_return`](@ref)), semideviation (square root of [`port_semivar`](@ref)), and sortino ratio ([`sharpe_ratio`](@ref) adjusted to the semideviation) for a given risk free rate, `rf`.
@@ -25,7 +25,11 @@ Returns a tuple of:
 
 If `verbose == true`, it prints out this information.
 """
-function portfolio_performance(portfolio::MeanSemivar; rf = portfolio.rf, verbose = false)
+function portfolio_performance(
+    portfolio::EffMeanSemivar;
+    rf = portfolio.rf,
+    verbose = false,
+)
     mean_ret = portfolio.mean_ret
     freq = portfolio.freq
 

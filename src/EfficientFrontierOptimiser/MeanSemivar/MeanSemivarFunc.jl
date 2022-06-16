@@ -1,5 +1,5 @@
 function min_risk!(
-    portfolio::MeanSemivar;
+    portfolio::EffMeanSemivar;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -26,7 +26,7 @@ function min_risk!(
 end
 
 function max_return(
-    portfolio::MeanSemivar;
+    portfolio::EffMeanSemivar;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -50,7 +50,7 @@ function max_return(
 end
 
 function max_sharpe!(
-    portfolio::MeanSemivar,
+    portfolio::EffMeanSemivar,
     rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -103,7 +103,7 @@ function max_sharpe!(
 end
 
 function max_utility!(
-    portfolio::MeanSemivar,
+    portfolio::EffMeanSemivar,
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -136,7 +136,7 @@ function max_utility!(
 end
 
 function efficient_return!(
-    portfolio::MeanSemivar,
+    portfolio::EffMeanSemivar,
     target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -178,7 +178,7 @@ function efficient_return!(
 end
 
 function efficient_risk!(
-    portfolio::MeanSemivar,
+    portfolio::EffMeanSemivar,
     target_semidev = portfolio.target_semidev;
     optimiser = Ipopt.Optimizer,
     silent = true,

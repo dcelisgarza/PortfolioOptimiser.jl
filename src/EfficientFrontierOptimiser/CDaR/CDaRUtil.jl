@@ -1,4 +1,4 @@
-function refresh_model!(portfolio::AbstractEfficientCDaR)
+function refresh_model!(portfolio::AbstractEffCDaR)
     default_keys = (
         :w,
         :lower_bounds,
@@ -20,7 +20,7 @@ function refresh_model!(portfolio::AbstractEfficientCDaR)
     return nothing
 end
 
-function portfolio_performance(portfolio::EfficientCDaR; verbose = false)
+function portfolio_performance(portfolio::EffCDaR; verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 

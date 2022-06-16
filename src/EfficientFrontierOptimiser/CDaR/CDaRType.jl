@@ -1,7 +1,7 @@
-abstract type AbstractEfficientCDaR <: AbstractEfficient end
+abstract type AbstractEffCDaR <: AbstractEfficient end
 
-struct EfficientCDaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
-       AbstractEfficientCDaR
+struct EffCDaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
+       AbstractEffCDaR
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -17,7 +17,7 @@ struct EfficientCDaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14
     extra_obj_terms::T13
     model::T14
 end
-function EfficientCDaR(
+function EffCDaR(
     tickers,
     mean_ret,
     returns;
@@ -90,7 +90,7 @@ function EfficientCDaR(
     # !isnothing(mean_ret) && @NLexpression(model, nl_ret, port_return(vars...))
     # @NLexpression(model, nl_risk, cdar(alpha, samples, beta, z...))
 
-    return EfficientCDaR(
+    return EffCDaR(
         tickers,
         mean_ret,
         weights,

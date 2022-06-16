@@ -1,7 +1,7 @@
-abstract type AbstractEfficientCVaR <: AbstractEfficient end
+abstract type AbstractEffCVaR <: AbstractEfficient end
 
-struct EfficientCVaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
-       AbstractEfficientCVaR
+struct EffCVaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
+       AbstractEffCVaR
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -18,7 +18,7 @@ struct EfficientCVaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14
     model::T14
 end
 
-function EfficientCVaR(
+function EffCVaR(
     tickers,
     mean_ret,
     returns;
@@ -82,7 +82,7 @@ function EfficientCVaR(
     !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
     @expression(model, risk, cvar(alpha, u, samples, beta))
 
-    return EfficientCVaR(
+    return EffCVaR(
         tickers,
         mean_ret,
         weights,

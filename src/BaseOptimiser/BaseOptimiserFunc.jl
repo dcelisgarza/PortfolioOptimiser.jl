@@ -31,7 +31,7 @@ function kelly_objective2(w, mean_ret, cov_mtx, k = 3)
     return objective
 end
 
-ef = MeanVar(tickers, expected_returns, cov_mtx)
+ef = EffMeanVar(tickers, expected_returns, cov_mtx)
 obj_params = (ef.mean_ret, ef.cov_mtx, 1000)
 custom_optimiser!(ef, kelly_objective2, obj_params)
 ```
@@ -39,7 +39,7 @@ custom_optimiser!(ef, kelly_objective2, obj_params)
 Unlike, [`custom_nloptimiser!`](@ref), functions defined by `PortfolioOptimiser` don't have to be prepended with `PortfolioOptimiser`, they can be used as normal. Here we use [`kelly_objective`](@ref), which is provided by the package and as previously mentioned is identical to `kelly_objective2` of the previous example.
 
 ```julia
-ef = MeanVar(tickers, expected_returns, cov_mtx)
+ef = EffMeanVar(tickers, expected_returns, cov_mtx)
 obj_params = (ef.mean_ret, ef.cov_mtx, 1000)
 custom_optimiser!(ef, kelly_objective, obj_params)
 ```
@@ -59,7 +59,7 @@ custom_optimiser!(ef, kelly_objective, obj_params)
         return l2 - μ
     end
 
-    ef = MeanVar(tickers, mean_ret, cov_mtx)
+    ef = EffMeanVar(tickers, mean_ret, cov_mtx)
 
     γ = 1
     obj_params = (mean_ret, γ)
@@ -148,7 +148,7 @@ function logarithmic_barrier(w::T...) where {T}
     logarithmic_barrier2(w, cov_mtx, k)
 end
 
-ef = MeanVar(tickers, mean_ret, cov_mtx)
+ef = EffMeanVar(tickers, mean_ret, cov_mtx)
 obj_params = (ef.cov_mtx, 0.001)
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 ```
@@ -166,7 +166,7 @@ function logarithmic_barrier(w::T...) where {T}
     PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
 end
 
-ef = MeanVar(tickers, mean_ret, cov_mtx)
+ef = EffMeanVar(tickers, mean_ret, cov_mtx)
 obj_params = [ef.cov_mtx, 0.001]
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 
@@ -178,7 +178,7 @@ function logarithmic_barrier(w::T...) where {T}
     logarithmic_barrier(w, cov_mtx, k)
 end
 
-ef = MeanVar(tickers, mean_ret, cov_mtx)
+ef = EffMeanVar(tickers, mean_ret, cov_mtx)
 obj_params = [ef.cov_mtx, 0.001]
 custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 ```
@@ -197,7 +197,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
         PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
     end
 
-    ef = MeanVar(tickers, mean_ret, cov_mtx)
+    ef = EffMeanVar(tickers, mean_ret, cov_mtx)
     obj_params = [ef.cov_mtx, 0.001]
     custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     ```
@@ -223,7 +223,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
         return l2 - sr
     end
 
-    ef = MeanVar(tickers, mean_ret, cov_mtx)
+    ef = EffMeanVar(tickers, mean_ret, cov_mtx)
 
     γ = 1
     obj_params = (mean_ret, cov_mtx, ef.rf, γ)

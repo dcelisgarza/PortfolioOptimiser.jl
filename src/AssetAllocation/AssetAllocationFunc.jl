@@ -77,7 +77,7 @@ Linear mixed-integer optimisation of assets.
 ## Example
 
 ```julia
-ef = MeanVar(
+ef = EffMeanVar(
     tickers,
     mean_ret,
     cov_mtx;

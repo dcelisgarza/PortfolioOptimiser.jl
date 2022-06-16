@@ -285,7 +285,7 @@ println(errors)
 """
 This is a toss up, as the non exponentially weighted covariances did a better job of estimating the correlations between assets than the corresponding exponentially weighted ones.
 
-Furthermore, this lends more weight to the concept of using optimisations which account for downside risk such as MeanSemivar, CVaR and CDaR optimisations, and using the semicovariance as the input covariance matrix for Black-Litterman and Hierarchical Risk Parity optimisations.
+Furthermore, this lends more weight to the concept of using optimisations which account for downside risk such as EffMeanSemivar, CVaR and CDaR optimisations, and using the semicovariance as the input covariance matrix for Black-Litterman and Hierarchical Risk Parity optimisations.
 
 We can do the same for the covariances, which is what the optimisations actually use.
 """
@@ -458,7 +458,7 @@ fig = bar(
 We can optimise for the minimum volatility without providing expected returns. In this example we also allow the weight bounds to be between -1 and 1, because we want to create a long-short portfolio.
 """
 
-ef = MeanVar(tickers, nothing, S, weight_bounds = (-1, 1))
+ef = EffMeanVar(tickers, nothing, S, weight_bounds = (-1, 1))
 min_risk!(ef)
 portfolio_performance(ef, verbose = true)
 [tickers ef.weights]
@@ -467,7 +467,7 @@ portfolio_performance(ef, verbose = true)
 However, if we want to optimise for other objectives in Mean-Variance optmisation we must provide the expected returns. In this example we also allow the weights to be negative such that we can optimise 
 """
 
-ef = MeanVar(tickers, exp_capm_ret, S, weight_bounds = (-1, 1))
+ef = EffMeanVar(tickers, exp_capm_ret, S, weight_bounds = (-1, 1))
 min_risk!(ef)
 portfolio_performance(ef)
 [tickers ef.weights]
@@ -495,11 +495,11 @@ We can see that the weights between the optimal and allocated portfolios are not
 mean_ret = ret_model(MRet(), Matrix(returns))
 tickers = names(hist_prices[!, 2:end])
 
-cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
 max_sharpe!(cvar)
 mu, risk = portfolio_performance(cvar, verbose = true)
 
-nl_cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+nl_cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
 model = nl_cvar.model
 alpha = model[:alpha]
 u = model[:u]
@@ -534,15 +534,15 @@ nl_mu, nl_risk = portfolio_performance(nl_cvar, verbose = true)
 
 ######################################
 
-cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
+cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
 min_risk!(cvar)
 portfolio_performance(cvar, verbose = true)
 
-cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+cdar = EffCDaR(tickers, mean_ret, Matrix(returns))
 max_sharpe!(cdar)
 mu, risk = portfolio_performance(cdar, verbose = true)
 
-nl_cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+nl_cdar = EffCDaR(tickers, mean_ret, Matrix(returns))
 model = nl_cdar.model
 alpha = model[:alpha]
 z = model[:z]
@@ -575,6 +575,6 @@ custom_nloptimiser!(nl_cdar, nl_cdar_sharpe, obj_params, extra_vars)
 isapprox(cdar.weights, nl_cdar.weights, rtol = 1e-4)
 nl_mu, nl_risk = portfolio_performance(nl_cdar, verbose = true)
 
-cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
+cdar = EffCDaR(tickers, mean_ret, Matrix(returns))
 min_risk!(cdar)
 mu, risk = portfolio_performance(cdar, verbose = true)

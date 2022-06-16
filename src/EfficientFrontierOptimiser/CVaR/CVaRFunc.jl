@@ -1,5 +1,5 @@
 function min_risk!(
-    portfolio::EfficientCVaR;
+    portfolio::EffCVaR;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -27,7 +27,7 @@ function min_risk!(
 end
 
 function max_sharpe!(
-    portfolio::EfficientCVaR,
+    portfolio::EffCVaR,
     rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -80,7 +80,7 @@ function max_sharpe!(
 end
 
 function max_utility!(
-    portfolio::EfficientCVaR,
+    portfolio::EffCVaR,
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -113,7 +113,7 @@ function max_utility!(
 end
 
 function efficient_return!(
-    portfolio::EfficientCVaR,
+    portfolio::EffCVaR,
     target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -153,7 +153,7 @@ function efficient_return!(
 end
 
 function efficient_risk!(
-    portfolio::EfficientCVaR,
+    portfolio::EffCVaR,
     target_cvar = portfolio.target_cvar;
     optimiser = Ipopt.Optimizer,
     silent = true,

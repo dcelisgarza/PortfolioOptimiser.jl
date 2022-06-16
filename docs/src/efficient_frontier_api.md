@@ -10,9 +10,9 @@ _val_compare_benchmark
 ## Mean-variance
 
 ```@docs
-AbstractMeanVar
-MeanVar
-MeanVar(
+AbstractEffMeanVar
+EffMeanVar
+EffMeanVar(
     tickers,
     mean_ret,
     cov_mtx;
@@ -28,50 +28,50 @@ MeanVar(
     extra_obj_terms = [],
 )
 min_risk!(
-    portfolio::MeanVar;
+    portfolio::EffMeanVar;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
 )
-max_return(portfolio::MeanVar; optimiser = Ipopt.Optimizer, silent = true, optimiser_attributes = (),)
+max_return(portfolio::EffMeanVar; optimiser = Ipopt.Optimizer, silent = true, optimiser_attributes = (),)
 max_sharpe!(
-    portfolio::MeanVar,
+    portfolio::EffMeanVar,
     rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
 )
 max_utility!(
-    portfolio::MeanVar,
+    portfolio::EffMeanVar,
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
 )
 efficient_return!(
-    portfolio::MeanVar,
+    portfolio::EffMeanVar,
     target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
 )
 efficient_risk!(
-    portfolio::MeanVar,
+    portfolio::EffMeanVar,
     target_volatility = portfolio.target_volatility;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
 )
-refresh_model!(portfolio::AbstractMeanVar)
-portfolio_performance(portfolio::MeanVar; rf = portfolio.rf, verbose = false)
+refresh_model!(portfolio::AbstractEffMeanVar)
+portfolio_performance(portfolio::EffMeanVar; rf = portfolio.rf, verbose = false)
 ```
 
 ## Mean-semivariance
 
 ```@docs
-AbstractMeanSemivar
-MeanSemivar
-MeanSemivar(
+AbstractEffMeanSemivar
+EffMeanSemivar
+EffMeanSemivar(
     tickers,
     mean_ret,
     returns;
@@ -87,8 +87,8 @@ MeanSemivar(
     extra_constraints = [],
     extra_obj_terms = [],
 )
-refresh_model!(portfolio::AbstractMeanSemivar)
-portfolio_performance(portfolio::MeanSemivar; rf = portfolio.rf, verbose = false)
+refresh_model!(portfolio::AbstractEffMeanSemivar)
+portfolio_performance(portfolio::EffMeanSemivar; rf = portfolio.rf, verbose = false)
 ```
 
 ## Critical Value at Risk (CVaR)

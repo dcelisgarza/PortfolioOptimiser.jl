@@ -58,7 +58,7 @@ s = \\dfrac{\\mu - r}{\\sigma},
 where ``\\mu`` the portfolio's return (see [`port_return`](@ref)), and ``\\sigma`` the portfolio's standard deviation (see [`port_variance`](@ref)). Generally speaking, the greater the Sharpe ratio the better the portfolio.
 
 !!! note
-    The Sharpe ratio penalises large swings in both directions, so assets that tend to have large increases in value are disproportionally penalised by this measure. The Sortino ratio has the same formula but uses an adjusted covariance matrix that accounts only for the negative fluctuations in value. The semicovariance is implemented by [`cov`](@ref) when given `SCov()` or `ESCov()` as its first argument. The Mean-Semivariance optimisations [`MeanSemivar`](@ref) make the adjustment too.
+    The Sharpe ratio penalises large swings in both directions, so assets that tend to have large increases in value are disproportionally penalised by this measure. The Sortino ratio has the same formula but uses an adjusted covariance matrix that accounts only for the negative fluctuations in value. The semicovariance is implemented by [`cov`](@ref) when given `SCov()` or `ESCov()` as its first argument. The Mean-Semivariance optimisations [`EffMeanSemivar`](@ref) make the adjustment too.
 """
 function sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 0.02)
     μ = port_return(w, mean_ret)
@@ -166,7 +166,7 @@ where ``k`` is the fixed percentage commision, ``\\bm{w}`` the asset weights, an
     n = length(tickers)
     prev_weights = fill(1 / n, n)
     k = 0.001
-    ef = MeanVar(
+    ef = EffMeanVar(
         tickers,
         mu,
         S;

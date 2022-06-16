@@ -1,16 +1,16 @@
 """
 ```
-abstract type AbstractMeanSemivar <: AbstractEfficient end
+abstract type AbstractEffMeanSemivar <: AbstractEfficient end
 ```
 
 Abstract type for subtyping efficient mean semivariance optimisers.
 """
-abstract type AbstractMeanSemivar <: AbstractEfficient end
+abstract type AbstractEffMeanSemivar <: AbstractEfficient end
 
 """
 ```
-struct MeanSemivar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
-       AbstractMeanSemivar
+struct EffMeanSemivar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
+       AbstractEffMeanSemivar
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -47,8 +47,8 @@ Structure for a mean-semivariance portfolio.
 - `extra_obj_terms`: extra objective terms for the model.
 - `model`: model for optimising portfolio.
 """
-struct MeanSemivar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
-       AbstractMeanSemivar
+struct EffMeanSemivar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
+       AbstractEffMeanSemivar
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -68,7 +68,7 @@ end
 
 """
 ```
-MeanSemivar(
+EffMeanSemivar(
     tickers,
     mean_ret,
     returns;
@@ -86,7 +86,7 @@ MeanSemivar(
 )
 ```
 
-Create an [`MeanSemivar`](@ref) structure to be optimised via JuMP.
+Create an [`EffMeanSemivar`](@ref) structure to be optimised via JuMP.
 
 - `tickers`: list of tickers.
 - `mean_ret`: mean returns, don't need it to optimise for minimum variance.
@@ -103,7 +103,7 @@ Create an [`MeanSemivar`](@ref) structure to be optimised via JuMP.
 - `extra_constraints`: extra constraints for the model. See [`_add_constraint_to_model!`](@ref) for details on how to use this.
 - `extra_obj_terms`: extra objective terms for the model. See [`_add_to_objective!`](@ref) for details on how to use this.
 """
-function MeanSemivar(
+function EffMeanSemivar(
     tickers,
     mean_ret,
     returns;
@@ -158,7 +158,7 @@ function MeanSemivar(
     !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
     @expression(model, risk, dot(n, n) * freq)
 
-    return MeanSemivar(
+    return EffMeanSemivar(
         tickers,
         mean_ret,
         weights,
