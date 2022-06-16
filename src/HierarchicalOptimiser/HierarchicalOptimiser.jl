@@ -8,7 +8,7 @@ include("HRPOptUtil.jl")
 
 export HRPOpt,
     optimise!,
-    min_volatility!,
+    min_risk!,
     max_quadratic_utility!,
     max_return!,
     max_sharpe!,

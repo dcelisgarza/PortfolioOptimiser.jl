@@ -27,7 +27,7 @@ MeanVar(
     extra_constraints = [],
     extra_obj_terms = [],
 )
-min_volatility!(
+min_risk!(
     portfolio::MeanVar;
     optimiser = Ipopt.Optimizer,
     silent = true,

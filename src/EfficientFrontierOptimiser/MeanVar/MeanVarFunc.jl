@@ -1,6 +1,6 @@
 """
 ```
-min_volatility!(
+min_risk!(
     portfolio::MeanVar;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -14,7 +14,7 @@ Minimise the volatility ([`port_variance`](@ref)) of a [`MeanVar`](@ref) portfol
 - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
-function min_volatility!(
+function min_risk!(
     portfolio::MeanVar;
     optimiser = Ipopt.Optimizer,
     silent = true,

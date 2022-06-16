@@ -1,4 +1,4 @@
-function min_volatility!(portfolio::AbstractCriticalLine)
+function min_risk!(portfolio::AbstractCriticalLine)
     w = portfolio.w
     isempty(w) && _solve!(portfolio)
     var = Float64[]

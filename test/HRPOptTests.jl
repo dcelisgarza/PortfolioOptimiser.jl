@@ -9,7 +9,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     ret[:, 1] = ret[:, 2] .+ 1
     cov_mtx = cov(ret) * 252
     hropt = HRPOpt(tickers, cov_mtx = cov_mtx)
-    optimise!(hropt, min_volatility!)
+    optimise!(hropt, min_risk!)
     @test hropt.weights[1] ≈ hropt.weights[2]
     mu, sigma, sr = portfolio_performance(hropt, verbose = true)
     @test isnan(mu)
@@ -21,7 +21,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     cov_mtx = cov(ret) * 252
 
     hropt = HRPOpt(tickers, returns = ret, cov_mtx = cov_mtx)
-    optimise!(hropt, min_volatility!)
+    optimise!(hropt, min_risk!)
     @test hropt.weights[1] ≈ hropt.weights[2] * k^2
     portfolio_performance(hropt, verbose = true)
 
@@ -31,7 +31,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     ret[:, 4] = k * ret[:, 2] .- 6
     cov_mtx = cov(ret) * 252
     hropt = HRPOpt(tickers, returns = ret)
-    optimise!(hropt, min_volatility!)
+    optimise!(hropt, min_risk!)
     @test hropt.weights[2] ≈ hropt.weights[4] * k^2
     portfolio_performance(hropt, verbose = true)
 
@@ -45,7 +45,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     S = cov(Cov(), Matrix(returns))
 
     hrp = HRPOpt(tickers, returns = Matrix(returns))
-    optimise!(hrp, min_volatility!)
+    optimise!(hrp, min_risk!)
     idx = sortperm(tickers)
     testweights = [
         0.05141029982354615,
@@ -81,7 +81,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
         returns = Matrix(returns),
         D = Symmetric(sqrt.(clamp.((1 .- cov2cor(cov(Matrix(returns)))) / 2, 0, 1))),
     )
-    optimise!(hrp, min_volatility!)
+    optimise!(hrp, min_risk!)
     idx = sortperm(tickers)
     testweights = [
         0.05141029982354615,
@@ -183,7 +183,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     @test sigma ≈ sigma_mq
     @test sr ≈ sr_mq
 
-    optimise!(hrp, min_volatility!)
+    optimise!(hrp, min_risk!)
     mu, sigma, sr = portfolio_performance(hrp)
     optimise!(hrp, max_quadratic_utility!, 1e12)
     mu_mq, sigma_mq, sr_mq = portfolio_performance(hrp)

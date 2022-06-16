@@ -278,7 +278,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     @test gAlloc.shares == testshares
 
     ef = MeanVar(tickers, bl.post_ret, S)
-    min_volatility!(ef)
+    min_risk!(ef)
     testweights = [
         0.007909381852655,
         0.030690045397095,
@@ -321,7 +321,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     @test gAlloc.shares == testshares
 
     ef = MeanVar(tickers, bl.post_ret, S, weight_bounds = (-1, 1))
-    min_volatility!(ef)
+    min_risk!(ef)
     testweights = [
         0.0035893754885593,
         0.0375547056505898,
@@ -736,7 +736,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
             $k * model[:l1]
         end],
     )
-    min_volatility!(ef)
+    min_risk!(ef)
     testweights = [
         0.0190824077428914,
         0.0416074082548058,

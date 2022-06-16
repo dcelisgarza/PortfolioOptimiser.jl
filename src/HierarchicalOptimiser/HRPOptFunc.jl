@@ -13,7 +13,7 @@ function max_sharpe!(portfolio::HRPOpt, w, cluster1_idx, cluster2_idx, rf = port
     _hrp_minimise(w, cluster1_idx, cluster2_idx, -sr1, -sr2)
 end
 
-function min_volatility!(portfolio::HRPOpt, w, cluster1_idx, cluster2_idx)
+function min_risk!(portfolio::HRPOpt, w, cluster1_idx, cluster2_idx)
     cov_slice1 = portfolio.cov_mtx[cluster1_idx, cluster1_idx]
     cov_slice2 = portfolio.cov_mtx[cluster2_idx, cluster2_idx]
 

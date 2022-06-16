@@ -6,5 +6,5 @@ include("CriticalLineFunc.jl")
 include("CriticalLineUtil.jl")
 
 export CriticalLine
-export max_sharpe!, min_volatility!, efficient_frontier!
+export max_sharpe!, min_risk!, efficient_frontier!
 export portfolio_performance

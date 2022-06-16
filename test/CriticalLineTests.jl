@@ -52,7 +52,7 @@ using PortfolioOptimiser
     @test sigma ≈ sqrt(port_variance(cla.weights, cla.cov_mtx))
     @test sr ≈ (mu - 0.02) / sigma
 
-    min_volatility!(cla)
+    min_risk!(cla)
     @test cla.weights ≈ [0.24057164, 0.24734146, 0.25785421, 0.25423269]
     @test sum(cla.weights) == 1
 

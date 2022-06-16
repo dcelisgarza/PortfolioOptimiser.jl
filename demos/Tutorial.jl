@@ -422,7 +422,7 @@ fig1 = heatmap(
 """
 ## Mean Variance optimisation.
 
-As previously stated, using returns is not the best idea given how volatile they can be. Returns are optional on portfolios that do not use them such as `min_volatility!`.
+As previously stated, using returns is not the best idea given how volatile they can be. Returns are optional on portfolios that do not use them such as `min_risk!`.
 
 As we are demonstrating all Mean Variance optimisations we will use returns. We'll use exponentially weighted CAPM returns with the LeDoit-Wolf covariance shrinkage as defined above as our mean returns. This is because CAPM returns aim to be more stable than mean historical returns, combining them with a shrunken covariance and assigning exponentially increasing weights to more recent entries should give a better indication of future returns.
 """
@@ -459,7 +459,7 @@ We can optimise for the minimum volatility without providing expected returns. I
 """
 
 ef = MeanVar(tickers, nothing, S, weight_bounds = (-1, 1))
-min_volatility!(ef)
+min_risk!(ef)
 portfolio_performance(ef, verbose = true)
 [tickers ef.weights]
 
@@ -468,7 +468,7 @@ However, if we want to optimise for other objectives in Mean-Variance optmisatio
 """
 
 ef = MeanVar(tickers, exp_capm_ret, S, weight_bounds = (-1, 1))
-min_volatility!(ef)
+min_risk!(ef)
 portfolio_performance(ef)
 [tickers ef.weights]
 

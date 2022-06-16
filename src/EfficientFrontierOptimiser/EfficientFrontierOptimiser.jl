@@ -11,7 +11,7 @@ include("./MeanVar/MeanVarType.jl")
 include("./MeanVar/MeanVarFunc.jl")
 include("./MeanVar/MeanVarUtil.jl")
 export AbstractMeanVar, MeanVar
-export min_volatility!, max_sharpe!
+export min_risk!, max_sharpe!
 
 # Mean semi variance optimisations.
 include("./MeanSemivar/MeanSemivarType.jl")
