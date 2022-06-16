@@ -157,7 +157,7 @@ end
 
 """
 ```
-max_quadratic_utility!(
+max_utility!(
     portfolio::MeanVar,
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
@@ -173,7 +173,7 @@ Maximise the [`quadratic_utility`](@ref) of a [`MeanVar`](@ref) portfolio. Inter
 - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
-function max_quadratic_utility!(
+function max_utility!(
     portfolio::MeanVar,
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,

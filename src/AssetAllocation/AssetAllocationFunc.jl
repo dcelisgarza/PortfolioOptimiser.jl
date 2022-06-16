@@ -84,7 +84,7 @@ ef = MeanVar(
     market_neutral = true,
     weight_bounds = (-1, 1),
 )
-max_quadratic_utility!(ef)
+max_utility!(ef)
 
 # Mixed integer, programming, no rounding available.
 allocLP, leftoverLP = Allocation(LP(), ef, latest_prices; investment = 3590)

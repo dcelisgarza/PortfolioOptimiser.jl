@@ -41,7 +41,7 @@ max_sharpe!(
     silent = true,
     optimiser_attributes = (),
 )
-max_quadratic_utility!(
+max_utility!(
     portfolio::MeanVar,
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,

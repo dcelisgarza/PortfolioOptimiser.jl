@@ -102,7 +102,7 @@ function max_sortino!(
     return nothing
 end
 
-function max_quadratic_utility!(
+function max_utility!(
     portfolio::MeanSemivar,
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,

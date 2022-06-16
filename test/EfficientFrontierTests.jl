@@ -364,7 +364,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     @test gAlloc.shares == testshares
 
     ef = MeanVar(tickers, bl.post_ret, S)
-    max_quadratic_utility!(ef)
+    max_utility!(ef)
     testweights = [
         0.142307545055626,
         0.0,
@@ -405,7 +405,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     testshares = [265, 1, 3, 19]
     @test gAlloc.shares == testshares
 
-    max_quadratic_utility!(ef, 2)
+    max_utility!(ef, 2)
     testweights = [
         0.260285197239515,
         0.0259623849226945,
@@ -529,7 +529,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     @test gAlloc.shares == testshares
 
     ef = MeanVar(tickers, bl.post_ret, S, market_neutral = true)
-    max_quadratic_utility!(ef)
+    max_utility!(ef)
     testweights = [
         1.0,
         0.4269138491084772,
@@ -591,7 +591,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
         [3, 79, 17, 5, 9, 3, 11, 14, 5, -771, -168, -54, -218, -13, -14, -23, -40, -126, -4]
     @test gAlloc.shares == testshares
 
-    max_quadratic_utility!(ef, 2)
+    max_utility!(ef, 2)
     testweights = [
         0.6723080121060555,
         0.2293283866220051,
@@ -761,7 +761,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     ]
     @test isapprox(ef.weights, testweights, rtol = 1e-4)
 
-    max_quadratic_utility!(ef)
+    max_utility!(ef)
     testweights = [
         0.0,
         0.0,
@@ -1142,7 +1142,7 @@ end
     testshares = [86, 64, 21, 15, 13, 3, 3, 3, 1, 1, 1]
     @test gAlloc.shares == testshares
 
-    max_quadratic_utility!(ef)
+    max_utility!(ef)
     testweights = [
         1.100000000000000e-15,
         1.200000000000000e-15,
@@ -1183,7 +1183,7 @@ end
     testshares = [334, 1]
     @test gAlloc.shares == testshares
 
-    max_quadratic_utility!(ef, 2)
+    max_utility!(ef, 2)
     testweights = [
         0.1462022850123406,
         1.72696369e-08,
@@ -1348,7 +1348,7 @@ end
     testshares = [36, 2, 7, 10, 2, 37, 8, 5, 1, -1]
     @test gAlloc.shares == testshares
 
-    max_quadratic_utility!(ef)
+    max_utility!(ef)
     testweights = [
         0.9999999987191048,
         0.8025061567310201,
@@ -1431,7 +1431,7 @@ end
     ]
     @test gAlloc.shares == testshares
 
-    max_quadratic_utility!(ef, 2)
+    max_utility!(ef, 2)
     testweights = [
         0.9999999857360712,
         0.4685479704127186,
@@ -1646,7 +1646,7 @@ end
     ]
     @test isapprox(ef.weights, testweights, rtol = 5e-2)
 
-    max_quadratic_utility!(ef)
+    max_utility!(ef)
     testweights = [
         -1.926600572e-07,
         -4.32976813e-08,
@@ -2387,7 +2387,7 @@ end
 
     cv = EfficientCVaR(tickers, mean_ret, Matrix(returns))
 
-    max_quadratic_utility!(cv, 1e8)
+    max_utility!(cv, 1e8)
     mu, cvar = portfolio_performance(cv)
 
     min_cvar!(cv)
@@ -2395,19 +2395,19 @@ end
     @test isapprox(mu, muinf, rtol = 1e-3)
     @test isapprox(cvar, cvarinf, rtol = 1e-3)
 
-    max_quadratic_utility!(cv, 0.25)
+    max_utility!(cv, 0.25)
     mu1, cvar1 = portfolio_performance(cv)
-    max_quadratic_utility!(cv, 0.5)
+    max_utility!(cv, 0.5)
     mu2, cvar2 = portfolio_performance(cv)
-    max_quadratic_utility!(cv, 1)
+    max_utility!(cv, 1)
     mu3, cvar3 = portfolio_performance(cv)
-    max_quadratic_utility!(cv, 2)
+    max_utility!(cv, 2)
     mu4, cvar4 = portfolio_performance(cv)
-    max_quadratic_utility!(cv, 4)
+    max_utility!(cv, 4)
     mu5, cvar5 = portfolio_performance(cv)
-    max_quadratic_utility!(cv, 8)
+    max_utility!(cv, 8)
     mu6, cvar6 = portfolio_performance(cv)
-    max_quadratic_utility!(cv, 16)
+    max_utility!(cv, 16)
     mu7, cvar7 = portfolio_performance(cv)
 
     @test cvar1 > cvar2 > cvar3 > cvar4 > cvar5 > cvar6 > cvar7 > cvarinf
@@ -2432,7 +2432,7 @@ end
             $k * model[:l1]
         end],
     )
-    max_quadratic_utility!(cv)
+    max_utility!(cv)
     testweights = [
         -3.930198121497233e-9,
         -2.9963393584231593e-9,
@@ -3002,26 +3002,26 @@ end
 
     cd = EfficientCDaR(tickers, mean_ret, Matrix(returns))
 
-    max_quadratic_utility!(cd, 1e8)
+    max_utility!(cd, 1e8)
     mu, cdar = portfolio_performance(cd)
     min_cdar!(cd)
     muinf, cdarinf = portfolio_performance(cd)
     @test isapprox(mu, muinf, rtol = 1e-3)
     @test isapprox(cdar, cdarinf, rtol = 1e-3)
 
-    max_quadratic_utility!(cd, 0.25)
+    max_utility!(cd, 0.25)
     mu1, cdar1 = portfolio_performance(cd)
-    max_quadratic_utility!(cd, 0.5)
+    max_utility!(cd, 0.5)
     mu2, cdar2 = portfolio_performance(cd)
-    max_quadratic_utility!(cd, 1)
+    max_utility!(cd, 1)
     mu3, cdar3 = portfolio_performance(cd)
-    max_quadratic_utility!(cd, 2)
+    max_utility!(cd, 2)
     mu4, cdar4 = portfolio_performance(cd)
-    max_quadratic_utility!(cd, 4)
+    max_utility!(cd, 4)
     mu5, cdar5 = portfolio_performance(cd)
-    max_quadratic_utility!(cd, 8)
+    max_utility!(cd, 8)
     mu6, cdar6 = portfolio_performance(cd)
-    max_quadratic_utility!(cd, 16)
+    max_utility!(cd, 16)
     mu7, cdar7 = portfolio_performance(cd)
 
     @test cdar1 > cdar2 > cdar3 > cdar4 > cdar5 > cdar6 > cdar7
@@ -3042,7 +3042,7 @@ end
             $k * model[:l1]
         end],
     )
-    max_quadratic_utility!(cd)
+    max_utility!(cd)
     testweights = [
         2.5682960805549396e-10,
         1.0803636966213697e-9,

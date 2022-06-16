@@ -116,7 +116,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     @test_throws ArgumentError HRPOpt(tickers, returns = Matrix(returns), D = :custom)
 
     hrp = HRPOpt(tickers, returns = Matrix(returns), mean_ret = mean_ret)
-    optimise!(hrp, max_quadratic_utility!)
+    optimise!(hrp, max_utility!)
     testweights = [
         0.05322978571963428,
         0.0007366743249836424,
@@ -177,7 +177,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     @test sigma ≈ sigmatest
     @test sr ≈ srtest
 
-    optimise!(hrp, max_quadratic_utility!, 1e-12)
+    optimise!(hrp, max_utility!, 1e-12)
     mu_mq, sigma_mq, sr_mq = portfolio_performance(hrp)
     @test mu ≈ mu_mq
     @test sigma ≈ sigma_mq
@@ -185,7 +185,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
 
     optimise!(hrp, min_risk!)
     mu, sigma, sr = portfolio_performance(hrp)
-    optimise!(hrp, max_quadratic_utility!, 1e12)
+    optimise!(hrp, max_utility!, 1e12)
     mu_mq, sigma_mq, sr_mq = portfolio_performance(hrp)
     @test mu ≈ mu_mq
     @test sigma ≈ sigma_mq

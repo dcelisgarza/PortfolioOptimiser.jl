@@ -43,7 +43,7 @@ function max_return!(portfolio::HRPOpt, w, cluster1_idx, cluster2_idx)
     _hrp_minimise(w, cluster1_idx, cluster2_idx, -ret1, -ret2)
 end
 
-function max_quadratic_utility!(
+function max_utility!(
     portfolio::HRPOpt,
     w,
     cluster1_idx,

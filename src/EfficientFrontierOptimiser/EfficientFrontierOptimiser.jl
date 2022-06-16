@@ -35,5 +35,5 @@ export EfficientCVaR
 export min_cvar!
 
 # Common functions among all efficient frontier optimisations.
-export max_quadratic_utility!, efficient_risk!, efficient_return!
+export max_utility!, efficient_risk!, efficient_return!
 export portfolio_performance

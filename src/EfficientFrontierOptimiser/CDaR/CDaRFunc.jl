@@ -79,7 +79,7 @@ function max_sharpe!(
     return nothing
 end
 
-function max_quadratic_utility!(
+function max_utility!(
     portfolio::EfficientCDaR,
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
