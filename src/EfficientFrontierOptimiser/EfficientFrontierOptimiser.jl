@@ -32,7 +32,7 @@ include("./CVaR/CVaRType.jl")
 include("./CVaR/CVaRFunc.jl")
 include("./CVaR/CVaRUtil.jl")
 export EfficientCVaR
-export min_cvar!
+export min_risk!
 
 # Common functions among all efficient frontier optimisations.
 export max_utility!, efficient_risk!, efficient_return!

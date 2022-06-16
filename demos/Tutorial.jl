@@ -535,7 +535,7 @@ nl_mu, nl_risk = portfolio_performance(nl_cvar, verbose = true)
 ######################################
 
 cvar = EfficientCVaR(tickers, mean_ret, Matrix(returns))
-min_cvar!(cvar)
+min_risk!(cvar)
 portfolio_performance(cvar, verbose = true)
 
 cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))

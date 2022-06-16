@@ -1852,7 +1852,7 @@ end
     )
 
     cv = EfficientCVaR(tickers, bl.post_ret, Matrix(returns))
-    min_cvar!(cv)
+    min_risk!(cv)
     testweights = [
         1.196700000000000e-12,
         4.242033345496910e-02,
@@ -2013,7 +2013,7 @@ end
     @test gAlloc.shares == testshares
 
     cv = EfficientCVaR(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
-    min_cvar!(cv)
+    min_risk!(cv)
     testweights = [
         -2.2800e-12,
         -5.5010e-13,
@@ -2184,7 +2184,7 @@ end
         beta = 0.2,
         market_neutral = false,
     )
-    min_cvar!(cv)
+    min_risk!(cv)
     testweights = [
         1.2591e-12,
         0.0239999111487575,
@@ -2310,7 +2310,7 @@ end
             $k * model[:l1]
         end],
     )
-    min_cvar!(ef)
+    min_risk!(ef)
     testweights = [
         1.0892e-12,
         0.0500000000076794,
@@ -2390,7 +2390,7 @@ end
     max_utility!(cv, 1e8)
     mu, cvar = portfolio_performance(cv)
 
-    min_cvar!(cv)
+    min_risk!(cv)
     muinf, cvarinf = portfolio_performance(cv)
     @test isapprox(mu, muinf, rtol = 1e-3)
     @test isapprox(cvar, cvarinf, rtol = 1e-3)

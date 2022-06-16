@@ -1,4 +1,4 @@
-function min_cvar!(
+function min_risk!(
     portfolio::EfficientCVaR;
     optimiser = Ipopt.Optimizer,
     silent = true,
