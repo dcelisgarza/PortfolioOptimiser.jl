@@ -1032,7 +1032,7 @@ end
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
     @test (0.0, 0.0, 0.0) == portfolio_performance(ef)
 
-    max_sortino!(ef)
+    max_sharpe!(ef)
     mumax, varmax, smax = portfolio_performance(ef)
 
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
@@ -1049,7 +1049,7 @@ end
     @test isapprox(sr, smax, rtol = 1e-4)
 
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
-    max_sortino!(ef, 0.03)
+    max_sharpe!(ef, 0.03)
     mumax, varmax, smax = portfolio_performance(ef, rf = 0.03)
 
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
@@ -1066,7 +1066,7 @@ end
     @test isapprox(sr, smax, rtol = 1e-3)
 
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
-    max_sortino!(ef)
+    max_sharpe!(ef)
     mumax, varmax, smax = portfolio_performance(ef)
 
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
@@ -1083,7 +1083,7 @@ end
     @test isapprox(sr, smax, rtol = 1e-4)
 
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
-    max_sortino!(ef, 0.03)
+    max_sharpe!(ef, 0.03)
     mumax, varmax, smax = portfolio_performance(ef, rf = 0.03)
 
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
@@ -1100,7 +1100,7 @@ end
     @test isapprox(sr, smax, rtol = 1e-4)
 
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns))
-    min_semivar!(ef)
+    min_risk!(ef)
     testweights = [
         -8.8369599e-09,
         0.0521130667306068,
@@ -1307,7 +1307,7 @@ end
     @test gAlloc.shares == testshares
 
     ef = MeanSemivar(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
-    min_semivar!(ef)
+    min_risk!(ef)
     testweights = [
         -6.87746970453e-05,
         -1.40007211953e-05,
@@ -1621,7 +1621,7 @@ end
             $k * model[:l1]
         end],
     )
-    min_semivar!(ef)
+    min_risk!(ef)
     testweights = [
         0.05000003815106,
         0.0500000323406222,
@@ -1737,7 +1737,7 @@ end
             $k * model[:l1]
         end],
     )
-    max_sortino!(ef)
+    max_sharpe!(ef)
     mumax, sigmamax, srmax = portfolio_performance(ef, verbose = true)
 
     k = 0.00001 * 252
@@ -1784,7 +1784,7 @@ end
             $k * model[:l1]
         end],
     )
-    max_sortino!(ef, -0.01)
+    max_sharpe!(ef, -0.01)
 
     @test ef.weights[6] ≈ 0.2
     @test ef.weights[1] >= 0.01

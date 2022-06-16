@@ -18,7 +18,7 @@ include("./MeanSemivar/MeanSemivarType.jl")
 include("./MeanSemivar/MeanSemivarFunc.jl")
 include("./MeanSemivar/MeanSemivarUtil.jl")
 export AbstractMeanSemivar, MeanSemivar
-export min_semivar!, max_sortino!
+export min_risk!, max_sharpe!
 
 # Critical Drawdown at Risk (path dependent)
 include("./CDaR/CDaRType.jl")

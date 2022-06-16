@@ -1,4 +1,4 @@
-function min_semivar!(
+function min_risk!(
     portfolio::MeanSemivar;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -49,7 +49,7 @@ function max_return(
     return model
 end
 
-function max_sortino!(
+function max_sharpe!(
     portfolio::MeanSemivar,
     rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
@@ -70,7 +70,7 @@ function max_sortino!(
     # We need a new variable for max_sharpe_optim.
     @variable(model, k)
 
-    _transform_constraints_sharpe(model, k, "max_sortino!")
+    _transform_constraints_sharpe(model, k, "max_sharpe!")
 
     # Add constraints for the transformed sharpe ratio.
     w = model[:w]
