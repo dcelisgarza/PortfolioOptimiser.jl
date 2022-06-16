@@ -1,4 +1,4 @@
-function min_cdar!(
+function min_risk!(
     portfolio::EfficientCDaR;
     optimiser = Ipopt.Optimizer,
     silent = true,

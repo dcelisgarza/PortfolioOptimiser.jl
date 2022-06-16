@@ -2559,7 +2559,7 @@ end
 
     cdar = EfficientCDaR(tickers, bl.post_ret, Matrix(returns))
     @test (0, 0) == portfolio_performance(cdar)
-    min_cdar!(cdar)
+    min_risk!(cdar)
     testweights = [
         5.500000000000000e-15,
         4.210000000000000e-13,
@@ -2680,7 +2680,7 @@ end
     @test gAlloc.shares == testshares
 
     cdar = EfficientCDaR(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
-    min_cdar!(cdar)
+    min_risk!(cdar)
     testweights = [
         -7.8660e-13,
         -5.1690e-13,
@@ -2805,7 +2805,7 @@ end
     @test gAlloc.shares == testshares
 
     cdar = EfficientCDaR(tickers, bl.post_ret, Matrix(returns), beta = 0.2)
-    min_cdar!(cdar)
+    min_risk!(cdar)
     testweights = [
         1.229e-13,
         0.0444141271754544,
@@ -2925,7 +2925,7 @@ end
             $k * model[:l1]
         end],
     )
-    min_cdar!(ef)
+    min_risk!(ef)
     testweights = [
         5.8e-15,
         5.127e-13,
@@ -3004,7 +3004,7 @@ end
 
     max_utility!(cd, 1e8)
     mu, cdar = portfolio_performance(cd)
-    min_cdar!(cd)
+    min_risk!(cd)
     muinf, cdarinf = portfolio_performance(cd)
     @test isapprox(mu, muinf, rtol = 1e-3)
     @test isapprox(cdar, cdarinf, rtol = 1e-3)

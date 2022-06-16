@@ -234,7 +234,7 @@ end
     @test mu / cdar1 ≈ 3.2819464291074305
 
     cd2 = EfficientCDaR(tickers, mean_ret, Matrix(returns))
-    min_cdar!(cd2)
+    min_risk!(cd2)
     mu2, cdar2 = portfolio_performance(cd2)
     mu2 / cdar2
 

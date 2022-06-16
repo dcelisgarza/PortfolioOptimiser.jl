@@ -576,5 +576,5 @@ isapprox(cdar.weights, nl_cdar.weights, rtol = 1e-4)
 nl_mu, nl_risk = portfolio_performance(nl_cdar, verbose = true)
 
 cdar = EfficientCDaR(tickers, mean_ret, Matrix(returns))
-min_cdar!(cdar)
+min_risk!(cdar)
 mu, risk = portfolio_performance(cdar, verbose = true)

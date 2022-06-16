@@ -25,7 +25,7 @@ include("./CDaR/CDaRType.jl")
 include("./CDaR/CDaRFunc.jl")
 include("./CDaR/CDaRUtil.jl")
 export EfficientCDaR
-export min_cdar!
+export min_risk!
 
 # Critical Value at Risk (path dependent)
 include("./CVaR/CVaRType.jl")
