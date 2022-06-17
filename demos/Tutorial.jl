@@ -554,6 +554,10 @@ rf = nl_cvar.rf
 
 obj_params = [length(w), mean_ret, beta, rf]
 
+"""
+We can then create our custom non-linear function that only takes optimisation arguments as scalars. Note that all optimisers minimise the objective function, so in order to maximise a function, we return the negative. In order to use internally defined functions, they need to be prepended with the module name. We can also define functions outside of the package and simply use them as normal.
+"""
+
 function nl_cvar_sharpe(w...)
     n = obj_params[1]
     mean_ret = obj_params[2]
@@ -574,10 +578,10 @@ end
 custom_nloptimiser!(nl_cvar, nl_cvar_sharpe, obj_params, extra_vars)
 
 """
-Note how the weights are similar up to five parts in a hundred thousand.
+Note how the weights are similar up to five parts in ten thousand.
 """
 
-isapprox(l_cvar.weights, nl_cvar.weights, rtol = 5e-5)
+isapprox(l_cvar.weights, nl_cvar.weights, rtol = 5e-4)
 
 """
 However, if you get the performance. The cvar is much lower, and the ratio much greater. This is because the non-linear optimiser's tolerance applies to the whole non-linear system, rather than the transformed objective function. However, the weights are much the same, which lends credence to the fact that using returns can lead optimisers to over-fit models, and a small change can lead to a large difference in "performance".
@@ -649,49 +653,98 @@ Thankfully, despite the wildly different ratios between optimisers, the weights 
 
 isapprox(l_cvar.weights, nl_cvar.weights, rtol = 5e-4)
 
-######################################
+"""
+We can do the same for other Efficient Frontier optimisers. We can use the custom non-linear optimiser to add extra terms to the objective function of a max sharpe ratio optimisation. We intentionally use normal mean returns to demonstrate the differences, as CAPM and ECAPM returns are much more stable and don't yield such large differences.
 
-cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
-min_risk!(cvar)
-portfolio_performance(cvar, verbose = true)
+Here we demonstrate L2 regularisation, which should decrease the number of insignificant weights.
+"""
+mean_ret = ret_model(MRet(), Matrix(returns))
 
-cdar = EffCDaR(tickers, mean_ret, Matrix(returns))
-max_sharpe!(cdar)
-mu, risk = portfolio_performance(cdar, verbose = true)
+function sharpe_ratio_nl(w::T...) where {T}
+    mean_ret = obj_params[1]
+    cov_mtx = obj_params[2]
+    rf = obj_params[3]
+    γ = obj_params[4]
 
-nl_cdar = EffCDaR(tickers, mean_ret, Matrix(returns))
-model = nl_cdar.model
-alpha = model[:alpha]
-z = model[:z]
-w = model[:w]
-mean_ret = nl_cdar.mean_ret
-beta = nl_cdar.beta
-rf = nl_cdar.rf
+    w = [i for i in w]
+    sr = PortfolioOptimiser.sharpe_ratio(w, mean_ret, cov_mtx, rf)
 
-extra_vars = [(alpha, nothing), (z, 1 / length(z))]
-obj_params = [length(w), mean_ret, beta, rf]
-
-function nl_cdar_sharpe(w...)
-    n = obj_params[1]
-    mean_ret = obj_params[2]
-    beta = obj_params[3]
-    rf = obj_params[4]
-
-    weights = w[1:n]
-    alpha = w[n + 1]
-    z = w[(n + 2):end]
-
-    samples = length(z)
-
-    ret = PortfolioOptimiser.port_return(weights, mean_ret) - rf
-    CDaR = PortfolioOptimiser.cdar(alpha, z, samples, beta)
-
-    return -ret / CDaR
+    return -sr + PortfolioOptimiser.L2_reg(w, γ)
 end
-custom_nloptimiser!(nl_cdar, nl_cdar_sharpe, obj_params, extra_vars)
-isapprox(cdar.weights, nl_cdar.weights, rtol = 1e-4)
-nl_mu, nl_risk = portfolio_performance(nl_cdar, verbose = true)
 
-cdar = EffCDaR(tickers, mean_ret, Matrix(returns))
-min_risk!(cdar)
-mu, risk = portfolio_performance(cdar, verbose = true)
+"""
+As γ grows, the weights should become more uniform and there should be fewer small weights, this is the case when looking at the weights calculated using the nonlinear optimiser with the added L2 regularisation.
+"""
+
+nl_ef = EffMeanVar(tickers, mean_ret, S)
+obj_params = [nl_ef.mean_ret, nl_ef.cov_mtx, nl_ef.rf, 0]
+custom_nloptimiser!(nl_ef, sharpe_ratio_nl, obj_params)
+nl_mu0, nl_sigma0, nl_sr0 = portfolio_performance(nl_ef, verbose = true)
+nl_weights0 = nl_ef.weights
+
+nl_ef = EffMeanVar(tickers, mean_ret, S)
+obj_params = [nl_ef.mean_ret, nl_ef.cov_mtx, nl_ef.rf, 2]
+custom_nloptimiser!(nl_ef, sharpe_ratio_nl, obj_params)
+nl_mu2, nl_sigma2, nl_sr2 = portfolio_performance(nl_ef, verbose = true)
+nl_weights2 = nl_ef.weights
+
+nl_ef = EffMeanVar(tickers, mean_ret, S)
+obj_params = [nl_ef.mean_ret, nl_ef.cov_mtx, nl_ef.rf, 4]
+custom_nloptimiser!(nl_ef, sharpe_ratio_nl, obj_params)
+nl_mu4, nl_sigma4, nl_sr4 = portfolio_performance(nl_ef, verbose = true)
+nl_weights4 = nl_ef.weights
+
+nl_ef = EffMeanVar(tickers, mean_ret, S)
+obj_params = [nl_ef.mean_ret, nl_ef.cov_mtx, nl_ef.rf, 16]
+custom_nloptimiser!(nl_ef, sharpe_ratio_nl, obj_params)
+nl_mu16, nl_sigma16, nl_sr16 = portfolio_performance(nl_ef, verbose = true)
+nl_weights16 = nl_ef.weights
+
+[nl_weights0 nl_weights2 nl_weights4 nl_weights16]
+
+"""
+However, using the built-in max_sharpe function does not work properly.
+"""
+
+ef = EffMeanVar(tickers, mean_ret, S, extra_obj_terms = [quote
+    L2_reg(model[:w], 0)
+end])
+max_sharpe!(ef)
+mu0, sigma0, sr0 = portfolio_performance(ef, verbose = true)
+weights0 = ef.weights
+
+ef = EffMeanVar(tickers, mean_ret, S, extra_obj_terms = [quote
+    L2_reg(model[:w], 2)
+end])
+max_sharpe!(ef)
+mu2, sigma2, sr2 = portfolio_performance(ef, verbose = true)
+weights2 = ef.weights
+
+ef = EffMeanVar(tickers, mean_ret, S, extra_obj_terms = [quote
+    L2_reg(model[:w], 4)
+end])
+max_sharpe!(ef)
+mu4, sigma4, sr4 = portfolio_performance(ef, verbose = true)
+weights4 = ef.weights
+
+ef = EffMeanVar(tickers, mean_ret, S, extra_obj_terms = [quote
+    L2_reg(model[:w], 16)
+end])
+max_sharpe!(ef)
+mu16, sigma16, sr16 = portfolio_performance(ef, verbose = true)
+weights16 = ef.weights
+
+[weights0 weights2 weights4 weights16]
+
+"""
+We can check by finding the variance of each set of weights. It should tend towards zero with quadratic convergence. Each doubling of γ should roughly half the variance in weights, which is what we see for the weights calculated using the nonlinear optimiser.
+"""
+
+using Statistics
+
+display(var([nl_weights0 nl_weights2 nl_weights4 nl_weights16], dims = 1))
+display(var([weights0 weights2 weights4 weights16], dims = 1))
+
+ef = EffMeanVar(tickers, mean_ret, S)
+min_risk!(ef)
+mu, sigma, sr = portfolio_performance(ef)
