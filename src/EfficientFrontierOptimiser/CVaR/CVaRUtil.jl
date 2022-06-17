@@ -39,6 +39,7 @@ function portfolio_performance(portfolio::EffCVaR; verbose = false)
             println(term_status)
             println("Expected annual return: $(round(100*μ, digits=2)) %")
             println("Conditional Value at Risk: $(round(100*cvar_val, digits=2)) %")
+            println("Ratio: $(round(μ/cvar_val, digits=3))")
         end
 
         return μ, cvar_val

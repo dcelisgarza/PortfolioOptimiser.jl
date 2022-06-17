@@ -469,7 +469,7 @@ However, if we want to optimise for other objectives in Mean-Variance optmisatio
 
 ef = EffMeanVar(tickers, exp_capm_ret, S, weight_bounds = (-1, 1))
 min_risk!(ef)
-portfolio_performance(ef)
+portfolio_performance(ef, verbose = true)
 [tickers ef.weights]
 
 """
@@ -481,7 +481,7 @@ alloc, leftover = Allocation(
     ef,
     Vector(hist_prices[end, 2:end]);
     investment = 420_000,
-    short_ratio = 0.69,
+    short_ratio = 0.1,
 )
 
 [alloc.tickers alloc.shares]
@@ -492,23 +492,66 @@ We can see that the weights between the optimal and allocated portfolios are not
 
 [alloc.weights[sortperm(alloc.tickers)] ef.weights]
 
+"""
+If we remove the short ratio requirement we get something different.
+"""
+
+alloc, leftover =
+    Allocation(LP(), ef, Vector(hist_prices[end, 2:end]); investment = 420_000)
+
+[alloc.tickers alloc.shares]
+
+[alloc.weights[sortperm(alloc.tickers)] ef.weights]
+
+"""
+All four efficient frontier optimisers have five predefined objectives, `min_risk!`, `max_sharpe!`, `max_utility!`, `efficient_return!` and `efficient_risk!`. On top of these, there are two optimisers that let you use custom objective functions. Here we illustrate how you can use both to produce the same optimisation, and it's a good show of how providing returns can lead optimisations astray.
+"""
+
+# Use some type of CAPM returns for more stable results.
 mean_ret = ret_model(MRet(), Matrix(returns))
 tickers = names(hist_prices[!, 2:end])
 
-cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
-max_sharpe!(cvar)
-mu, risk = portfolio_performance(cvar, verbose = true)
+"""
+Use the built-in function that maximises the sharpe ratio (ratio between returns and risk measure). It uses a special variable transformation to turn the ratio into a constrained convex optimisation. It means adding objective functions may not have the desired effcect. In case extra objective terms are needed, it's best to use the nonlinear optimiser.
+"""
+
+l_cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
+max_sharpe!(l_cvar)
+mu, risk = portfolio_performance(l_cvar, verbose = true)
+
+"""
+Now we can use the `custom_nloptimiser!` optimise the ratio explicitly. First we need to create the EffCVaR instance.
+"""
 
 nl_cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
+
+"""
+We need to define the extra optimisation variables (JuMP variables), as well as parameters (non-JuMP variables). We start with the model variables.
+"""
+
 model = nl_cvar.model
-alpha = model[:alpha]
-u = model[:u]
+
+# The weights are always needed as optimisation variables, so they don't need to be in the extra variables vector.
 w = model[:w]
+# Alpha, in this case this stands for the cvar variable.
+alpha = model[:alpha]
+# u is the value at risk optimisation variable.
+u = model[:u]
+
+"""
+For non-linear models, we often have to provide initial guesses for optimisation variables. Especially if a variable appears in a denominator, this avoids division by zero in the first iteration. We do this as a tuple, the extra variables have to be a collection of 2-tuples: `extra_vars = [(var1, init_val1), (var2, init_val2), ...]` or `extra_vars = ((var1, init_val1), (var2, init_val2), ...)`
+"""
+
+extra_vars = [(alpha, nothing), (u, 1 / length(u))]
+
+"""
+The model parameters are just regular variables.
+"""
+
 mean_ret = nl_cvar.mean_ret
 beta = nl_cvar.beta
 rf = nl_cvar.rf
 
-extra_vars = [(alpha, nothing), (u, 1 / length(u))]
 obj_params = [length(w), mean_ret, beta, rf]
 
 function nl_cvar_sharpe(w...)
@@ -521,7 +564,7 @@ function nl_cvar_sharpe(w...)
     alpha = w[n + 1]
     u = w[(n + 2):end]
 
-    samples = length(z)
+    samples = length(u)
 
     ret = PortfolioOptimiser.port_return(weights, mean_ret) - rf
     CVaR = PortfolioOptimiser.cvar(alpha, u, samples, beta)
@@ -529,8 +572,82 @@ function nl_cvar_sharpe(w...)
     return -ret / CVaR
 end
 custom_nloptimiser!(nl_cvar, nl_cvar_sharpe, obj_params, extra_vars)
-isapprox(cvar.weights, nl_cvar.weights, rtol = 1e-3)
+
+"""
+Note how the weights are similar up to five parts in a hundred thousand.
+"""
+
+isapprox(l_cvar.weights, nl_cvar.weights, rtol = 5e-5)
+
+"""
+However, if you get the performance. The cvar is much lower, and the ratio much greater. This is because the non-linear optimiser's tolerance applies to the whole non-linear system, rather than the transformed objective function. However, the weights are much the same, which lends credence to the fact that using returns can lead optimisers to over-fit models, and a small change can lead to a large difference in "performance".
+"""
+
 nl_mu, nl_risk = portfolio_performance(nl_cvar, verbose = true)
+
+"""
+If we minimise the risk, we can see that even though the max ratio is maximised, the previous cases, neither minimise the CVaR.
+"""
+
+l_cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
+min_risk!(l_cvar)
+min_mu, min_risk = portfolio_performance(l_cvar, verbose = true)
+
+"""
+We can do the same with more stable returns.
+"""
+
+num_rows = nrow(returns)
+
+target = DiagonalCommonVariance()
+shrinkage = :oas
+method = LinearShrinkage(target, shrinkage)
+
+mean_ret = ret_model(
+    ECAPMRet(),
+    Matrix(returns),
+    cspan = num_rows,
+    rspan = num_rows,
+    cov_type = CustomCov(),
+    custom_cov_estimator = method,
+)
+
+"""
+Using the variable transformation.
+"""
+
+l_cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
+max_sharpe!(l_cvar)
+mu, risk = portfolio_performance(l_cvar, verbose = true)
+
+"""
+Using the custom nonlinear optimiser.
+"""
+
+nl_cvar = EffCVaR(tickers, mean_ret, Matrix(returns))
+
+model = nl_cvar.model
+w = model[:w]
+alpha = model[:alpha]
+u = model[:u]
+extra_vars = [(alpha, nothing), (u, 1 / length(u))]
+
+mean_ret = nl_cvar.mean_ret
+beta = nl_cvar.beta
+rf = nl_cvar.rf
+
+obj_params = [length(w), mean_ret, beta, rf]
+
+custom_nloptimiser!(nl_cvar, nl_cvar_sharpe, obj_params, extra_vars)
+nl_mu, nl_risk = portfolio_performance(nl_cvar, verbose = true)
+
+"""
+Note how in both cases, max_sharpe! optimises to a similar value of CVaR, but using ECAPM returns with a shrunken covariance yields an of the CVaR that is closer to the minimum possible.
+
+Thankfully, despite the wildly different ratios between optimisers, the weights are ultimately similar up to five parts in then thousand.
+"""
+
+isapprox(l_cvar.weights, nl_cvar.weights, rtol = 5e-4)
 
 ######################################
 

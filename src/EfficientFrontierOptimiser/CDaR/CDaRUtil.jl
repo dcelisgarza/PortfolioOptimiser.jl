@@ -43,6 +43,7 @@ function portfolio_performance(portfolio::EffCDaR; verbose = false)
             println(term_status)
             println("Expected annual return: $(round(100*μ, digits=2)) %")
             println("Conditional Drawdown at Risk: $(round(100*cdar_val, digits=2)) %")
+            println("Ratio: $(round(μ/cdar_val, digits=3))")
         end
 
         return μ, cdar_val
