@@ -179,7 +179,7 @@ end
 
 function efficient_risk!(
     portfolio::EffMeanSemivar,
-    target_semidev = portfolio.target_semidev;
+    target_risk = portfolio.target_risk;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -187,9 +187,9 @@ function efficient_risk!(
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     # _function_vs_portfolio_val_warn(
-    #     target_semidev,
-    #     portfolio.target_semidev,
-    #     "target_semidev",
+    #     target_risk,
+    #     portfolio.target_risk,
+    #     "target_risk",
     # )
 
     model = portfolio.model
@@ -197,7 +197,7 @@ function efficient_risk!(
     ret = model[:ret]
     risk = model[:risk]
 
-    target_semivariance = target_semidev^2
+    target_semivariance = target_risk^2
     @constraint(model, target_semivariance, risk <= target_semivariance)
 
     @objective(model, Min, -ret)

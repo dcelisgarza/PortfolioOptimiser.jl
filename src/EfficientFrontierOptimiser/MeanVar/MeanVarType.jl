@@ -18,7 +18,7 @@ struct EffMeanVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
     rf::T5
     market_neutral::T6
     risk_aversion::T7
-    target_volatility::T8
+    target_risk::T8
     target_ret::T9
     extra_vars::T10
     extra_constraints::T11
@@ -36,7 +36,7 @@ Structure for a mean-variance portfolio.
 - `rf`: risk free rate.
 - `market_neutral`: whether a portfolio is market neutral or not. Used in [`max_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
 - `risk_aversion`: risk aversion parameter. Used in [`max_utility!`](@ref).
-- `target_volatility`: target volatility parameter. Used in [`efficient_risk!`](@ref).
+- `target_risk`: target volatility parameter. Used in [`efficient_risk!`](@ref).
 - `target_ret`: target return parameter. Used in [`efficient_return!`](@ref).
 - `extra_vars`: extra variables for the model.
 - `extra_constraints`: extra constraints for the model.
@@ -52,7 +52,7 @@ struct EffMeanVar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
     rf::T5
     market_neutral::T6
     risk_aversion::T7
-    target_volatility::T8
+    target_risk::T8
     target_ret::T9
     extra_vars::T10
     extra_constraints::T11
@@ -70,7 +70,7 @@ EffMeanVar(
     rf = 0.02,
     market_neutral = false,
     risk_aversion = 1.0,
-    target_volatility = rank(cov_mtx) < size(cov_mtx, 1) ? 1 / sum(diag(cov_mtx)) :
+    target_risk = rank(cov_mtx) < size(cov_mtx, 1) ? 1 / sum(diag(cov_mtx)) :
                         sqrt(1 / sum(inv(cov_mtx))),
     target_ret = mean(mean_ret),
     extra_vars = [],
@@ -88,7 +88,7 @@ Create an [`EffMeanVar`](@ref) structure to be optimised via JuMP.
 - `rf`: risk free rate. Must be consistent with the frequency at which `mean_ret` and `cov_mtx` were calculated. The default value assumes daily returns.
 - `market_neutral`: whether a portfolio is market neutral or not. If it is market neutral, the sum of the weights will be equal to 0, else the sum will be equal to 1. Used in [`max_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
 - `risk_aversion`: risk aversion parameter, the larger it is, the lower the risk. Used in [`max_utility!`](@ref).
-- `target_volatility`: target volatility parameter. Used in [`efficient_risk!`](@ref).
+- `target_risk`: target volatility parameter. Used in [`efficient_risk!`](@ref).
 - `target_ret`: target return parameter. Used in [`efficient_return!`](@ref).
 - `extra_vars`: extra variables for the model. See [`_add_var_to_model!`](@ref) for details on how to use this.
 - `extra_constraints`: extra constraints for the model. See [`_add_constraint_to_model!`](@ref) for details on how to use this.
@@ -102,8 +102,8 @@ function EffMeanVar(
     rf = 0.02,
     market_neutral = false,
     risk_aversion = 1.0,
-    target_volatility = rank(cov_mtx) < size(cov_mtx, 1) ? 1 / sum(diag(cov_mtx)) :
-                        sqrt(1 / sum(inv(cov_mtx))),
+    target_risk = rank(cov_mtx) < size(cov_mtx, 1) ? 1 / sum(diag(cov_mtx)) :
+                  sqrt(1 / sum(inv(cov_mtx))),
     target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
     extra_vars = [],
     extra_constraints = [],
@@ -149,7 +149,7 @@ function EffMeanVar(
         rf,
         market_neutral,
         risk_aversion,
-        target_volatility,
+        target_risk,
         target_ret,
         extra_vars,
         extra_constraints,

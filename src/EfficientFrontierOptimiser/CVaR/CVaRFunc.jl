@@ -154,20 +154,20 @@ end
 
 function efficient_risk!(
     portfolio::EffCVaR,
-    target_cvar = portfolio.target_cvar;
+    target_risk = portfolio.target_risk;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
-    # _function_vs_portfolio_val_warn(target_cvar, portfolio.target_cvar, "target_cvar")
-    target_cvar = _val_compare_benchmark(
-        target_cvar,
+    # _function_vs_portfolio_val_warn(target_risk, portfolio.target_risk, "target_risk")
+    target_risk = _val_compare_benchmark(
+        target_risk,
         <,
         0,
         max(mean(maximum(portfolio.returns, dims = 2)), 0),
-        "target_cvar",
+        "target_risk",
     )
 
     model = portfolio.model
@@ -176,7 +176,7 @@ function efficient_risk!(
     ret = model[:ret]
     risk = model[:risk]
 
-    @constraint(model, target_cvar, risk <= target_cvar)
+    @constraint(model, target_risk, risk <= target_risk)
 
     @objective(model, Min, -ret)
 

@@ -268,14 +268,14 @@ end
 ```
 efficient_risk!(
     portfolio::EffMeanVar,
-    target_volatility = portfolio.target_volatility;
+    target_risk = portfolio.target_risk;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
 )
 ```
 
-Maximise the [`port_return`](@ref) of a [`EffMeanVar`](@ref) portfolio subject to the constraint for the volatility to be less than or equal to `target_volatility`. The portfolio is guaranteed to have a volatility of at most `target_volatility`.
+Maximise the [`port_return`](@ref) of a [`EffMeanVar`](@ref) portfolio subject to the constraint for the volatility to be less than or equal to `target_risk`. The portfolio is guaranteed to have a volatility of at most `target_risk`.
 
 - `portfolio`: [`EffMeanVar`](@ref) structure.
 - `target_ret`: the target return of the portfolio.
@@ -284,7 +284,7 @@ Maximise the [`port_return`](@ref) of a [`EffMeanVar`](@ref) portfolio subject t
 """
 function efficient_risk!(
     portfolio::EffMeanVar,
-    target_volatility = portfolio.target_volatility;
+    target_risk = portfolio.target_risk;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -295,12 +295,12 @@ function efficient_risk!(
     min_volatility = sqrt(1 / sum(inv(cov_mtx)))
 
     # _function_vs_portfolio_val_warn(
-    #     target_volatility,
-    #     portfolio.target_volatility,
-    #     "target_volatility",
+    #     target_risk,
+    #     portfolio.target_risk,
+    #     "target_risk",
     # )
-    target_volatility = _val_compare_benchmark(
-        target_volatility,
+    target_risk = _val_compare_benchmark(
+        target_risk,
         <,
         min_volatility,
         min_volatility,
@@ -312,7 +312,7 @@ function efficient_risk!(
     ret = model[:ret]
     risk = model[:risk]
     # Make variance constraint.
-    target_variance = target_volatility^2
+    target_variance = target_risk^2
     @constraint(model, target_variance, risk <= target_variance)
 
     @objective(model, Min, -ret)

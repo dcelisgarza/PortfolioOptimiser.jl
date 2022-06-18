@@ -10,7 +10,7 @@ struct EffCVaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
     rf::T6
     market_neutral::T7
     risk_aversion::T8
-    target_cvar::T9
+    target_risk::T9
     target_ret::T10
     extra_vars::T11
     extra_constraints::T12
@@ -27,7 +27,7 @@ function EffCVaR(
     rf = 0.02,
     market_neutral = false,
     risk_aversion = 1.0,
-    target_cvar = mean(maximum(returns, dims = 2)),
+    target_risk = mean(maximum(returns, dims = 2)),
     target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
     extra_vars = [],
     extra_constraints = [],
@@ -91,7 +91,7 @@ function EffCVaR(
         rf,
         market_neutral,
         risk_aversion,
-        target_cvar,
+        target_risk,
         target_ret,
         extra_vars,
         extra_constraints,

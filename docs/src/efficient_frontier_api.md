@@ -20,7 +20,7 @@ EffMeanVar(
     rf = 0.02,
     market_neutral = false,
     risk_aversion = 1.0,
-    target_volatility = rank(cov_mtx) < size(cov_mtx, 1) ? 1 / sum(diag(cov_mtx)) :
+    target_risk = rank(cov_mtx) < size(cov_mtx, 1) ? 1 / sum(diag(cov_mtx)) :
                         sqrt(1 / sum(inv(cov_mtx))),
     target_ret = mean(mean_ret),
     extra_vars = [],
@@ -57,7 +57,7 @@ efficient_return!(
 )
 efficient_risk!(
     portfolio::EffMeanVar,
-    target_volatility = portfolio.target_volatility;
+    target_risk = portfolio.target_risk;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -81,7 +81,7 @@ EffMeanSemivar(
     rf = 0.02,
     market_neutral = false,
     risk_aversion = 1.0,
-    target_semidev = std(returns),
+    target_risk = std(returns),
     target_ret = mean(mean_ret),
     extra_vars = [],
     extra_constraints = [],

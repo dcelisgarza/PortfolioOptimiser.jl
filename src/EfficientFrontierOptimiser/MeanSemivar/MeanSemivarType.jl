@@ -20,7 +20,7 @@ struct EffMeanSemivar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T1
     rf::T7
     market_neutral::T8
     risk_aversion::T9
-    target_semidev::T10
+    target_risk::T10
     target_ret::T11
     extra_vars::T12
     extra_constraints::T13
@@ -40,7 +40,7 @@ Structure for a mean-semivariance portfolio.
 - `rf`: risk free rate.
 - `market_neutral`: whether a portfolio is market neutral or not. Used in [`max_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
 - `risk_aversion`: risk aversion parameter. Used in [`max_utility!`](@ref).
-- `target_volatility`: target volatility parameter. Used in [`efficient_risk!`](@ref).
+- `target_risk`: target volatility parameter. Used in [`efficient_risk!`](@ref).
 - `target_ret`: target return parameter. Used in [`efficient_return!`](@ref).
 - `extra_vars`: extra variables for the model.
 - `extra_constraints`: extra constraints for the model.
@@ -58,7 +58,7 @@ struct EffMeanSemivar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T1
     rf::T7
     market_neutral::T8
     risk_aversion::T9
-    target_semidev::T10
+    target_risk::T10
     target_ret::T11
     extra_vars::T12
     extra_constraints::T13
@@ -78,7 +78,7 @@ EffMeanSemivar(
     rf = 0.02,
     market_neutral = false,
     risk_aversion = 1.0,
-    target_semidev = std(returns),
+    target_risk = std(returns),
     target_ret = mean(mean_ret),
     extra_vars = [],
     extra_constraints = [],
@@ -97,7 +97,7 @@ Create an [`EffMeanSemivar`](@ref) structure to be optimised via JuMP.
 - `rf`: risk free rate. Must be consistent with `freq`. The default value assumes daily returns.
 - `market_neutral`: whether a portfolio is market neutral or not. If it is market neutral, the sum of the weights will be equal to 0, else the sum will be equal to 1. Used in [`max_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
 - `risk_aversion`: risk aversion parameter, the larger it is, the lower the risk. Used in [`max_utility!`](@ref).
-- `target_volatility`: target volatility parameter. Used in [`efficient_risk!`](@ref).
+- `target_risk`: target volatility parameter. Used in [`efficient_risk!`](@ref).
 - `target_ret`: target return parameter. Used in [`efficient_return!`](@ref).
 - `extra_vars`: extra variables for the model. See [`_add_var_to_model!`](@ref) for details on how to use this.
 - `extra_constraints`: extra constraints for the model. See [`_add_constraint_to_model!`](@ref) for details on how to use this.
@@ -113,7 +113,7 @@ function EffMeanSemivar(
     rf = 0.02,
     market_neutral = false,
     risk_aversion = 1.0,
-    target_semidev = std(returns),
+    target_risk = std(returns),
     target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
     extra_vars = [],
     extra_constraints = [],
@@ -168,7 +168,7 @@ function EffMeanSemivar(
         rf,
         market_neutral,
         risk_aversion,
-        target_semidev,
+        target_risk,
         target_ret,
         extra_vars,
         extra_constraints,
