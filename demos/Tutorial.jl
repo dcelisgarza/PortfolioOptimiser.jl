@@ -12,7 +12,9 @@ using CSV, DataFrames, Plots, CovarianceEstimation, LinearAlgebra
 
 All our functions take AbstractArray or Tuple arguments, not DataFrame or TimeArray data. The reason is to keep the code as generic and performant as possible. Julia is fast enough that it can be used in performance critical applications, so we remove the data wrangling from the equation, and we leave it up to the user to decide how they want to handle their data.
 
-For the example we'll use CSV and DataFrames to load our historical prices.
+For the example we'll use CSV and DataFrames to load our historical prices. 
+
+We have the data in the `assets` folder, but the package [`MarketData.jl`](https://github.com/JuliaQuant/MarketData.jl) can be used to download stock data.
 """
 
 hist_prices = CSV.read("./demos/assets/stock_prices.csv", DataFrame)
@@ -50,7 +52,7 @@ reconstructed_prices ≈ Matrix(hist_prices[!, 2:end])
 
 We have a few ways of calculating a variety of expected/mean returns:
 
-- mean
+- arithmetic mean
 - exponentially weighted mean
 - capital asset pricing model
 - exponentially weighted capital asset pricing model
@@ -140,7 +142,7 @@ fig = plot(
 println(errors)
 
 """
-Returns are chaotic and unpredictable, so it's often better to optimise portfolios without considering returns. The average absolute errors are all over 30%, so for this case, a portfolio that has an expected return of 10 %, will most likely return between [-20, 40] %.
+Returns are chaotic and unpredictable, so it's often better to optimise portfolios without considering them. The average absolute errors are all over 30%, so for this case, a portfolio that has an expected return of 10 %, will most likely return between [-20, 40] %.
 
 Minimum volatility, semivariance, CVaR and CDaR tend to give more stable portfolios than ones that take returns into consideration.
 
@@ -293,15 +295,15 @@ We can do the same for the covariances, which is what the optimisations actually
 errors = Float64[]
 push!(errors, sum(abs.(future_cov - sample_cov)))
 push!(errors, sum(abs.(future_cov - exp_cov)))
+push!(errors, sum(abs.(future_cov - oas_shrunken_cov)))
 push!(errors, sum(abs.(future_semi_cov - semi_cov)))
 push!(errors, sum(abs.(future_semi_cov - exp_semi_cov)))
+push!(errors, sum(abs.(future_semi_cov - oas_shrunken_cov_semi_cov)))
 
-errors /= length(future_cov)
-
-println(errors)
+errors /= length(future_var)
 
 fig = bar(
-    ["Sample", "Exp Sample", "Semi", "Exp Semi"],
+    ["Sample", "Exp Sample", "OAS", "Semi", "Exp Semi", "OAS Semi"],
     errors,
     ylabel = "Rel err",
     legend = false,
