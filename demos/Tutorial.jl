@@ -5,7 +5,7 @@ This is a demo/template for using `PortfolioOptimiser.jl`. It should be all that
 """
 
 using PortfolioOptimiser
-using CSV, DataFrames, Plots, CovarianceEstimation, LinearAlgebra
+using CSV, DataFrames, Plots, CovarianceEstimation, LinearAlgebra, CovarianceEstimation
 
 """
 ## Loading data
@@ -361,6 +361,7 @@ tickers = sort!([
     "GILD",
     "F",
     "TSLA",
+    "GME",
 ])
 
 """
@@ -407,8 +408,8 @@ The package [CovarianceEstimation.jl](https://github.com/mateuszbaran/Covariance
 
 using CovarianceEstimation
 
-target = DiagonalUnequalVariance()
-shrinkage = :lw
+target = DiagonalCommonVariance()
+shrinkage = :oas
 method = LinearShrinkage(target, shrinkage)
 
 S = cov(CustomCov(), Matrix(returns), estimator = method)
@@ -426,7 +427,7 @@ fig1 = heatmap(
 
 As previously stated, using returns is not the best idea given how volatile they can be. Returns are optional on portfolios that do not use them such as `min_risk!`.
 
-As we are demonstrating all Mean Variance optimisations we will use returns. We'll use exponentially weighted CAPM returns with the LeDoit-Wolf covariance shrinkage as defined above as our mean returns. This is because CAPM returns aim to be more stable than mean historical returns, combining them with a shrunken covariance and assigning exponentially increasing weights to more recent entries should give a better indication of future returns.
+As we are demonstrating all Mean Variance optimisations we will use returns. We'll use exponentially weighted CAPM returns with the Oracle Approximating covariance shrinkage as defined above as our mean returns. This is because CAPM returns aim to be more stable than mean historical returns, combining them with a shrunken covariance and assigning exponentially increasing weights to more recent entries should give a better indication of future returns.
 """
 
 capm_ret = ret_model(

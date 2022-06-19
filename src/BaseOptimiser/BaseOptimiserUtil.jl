@@ -42,7 +42,7 @@ function _create_weight_bounds(num_tickers, bounds)
        (eltype(bounds) <: Tuple || eltype(bounds) <: AbstractVector) &&
        all(x -> x == 2, length.(bounds))
         bounds = Float64.(reshape(collect(Iterators.flatten(bounds)), 2, :))
-        lower_bounds, upper_bounds = bounds
+        lower_bounds, upper_bounds = bounds[1, :], bounds[2, :]
     elseif length(bounds) == 2
         lower, upper = Float64.(bounds)
         lower_bounds = fill(lower, num_tickers)
