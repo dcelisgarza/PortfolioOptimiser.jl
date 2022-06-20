@@ -97,7 +97,12 @@ function ret_model(
     returns;
     compound = true,
     freq = 252,
-    span = Int(ceil(freq / 1.4)),
+    span = Int(
+        ceil(
+            size(returns, 1) * log2(min(size(returns, 1), freq)) /
+            log2(max(size(returns, 1), freq)),
+        ),
+    ),
 )
     N = size(returns, 1)
     if compound
@@ -117,7 +122,12 @@ function ret_model(
     cov_type::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(ceil(freq / 1.4)),
+    span = Int(
+        ceil(
+            size(returns, 1) * log2(min(size(returns, 1), freq)) /
+            log2(max(size(returns, 1), freq)),
+        ),
+    ),
     scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
@@ -150,11 +160,21 @@ function ret_model(
     rf = 0.02,
     compound = true,
     freq = 252,
-    rspan = Int(ceil(freq / 1.4)),
+    rspan = Int(
+        ceil(
+            size(returns, 1) * log2(min(size(returns, 1), freq)) /
+            log2(max(size(returns, 1), freq)),
+        ),
+    ),
     cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    cspan = Int(ceil(freq / 1.4)),
+    cspan = Int(
+        ceil(
+            size(returns, 1) * log2(min(size(returns, 1), freq)) /
+            log2(max(size(returns, 1), freq)),
+        ),
+    ),
     scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),

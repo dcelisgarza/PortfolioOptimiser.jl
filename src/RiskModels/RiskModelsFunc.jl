@@ -78,7 +78,12 @@ function cov(
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
     freq = 252,
-    span = Int(ceil(freq / 1.4)),
+    span = Int(
+        ceil(
+            size(returns, 1) * log2(min(size(returns, 1), freq)) /
+            log2(max(size(returns, 1), freq)),
+        ),
+    ),
     scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
@@ -168,7 +173,12 @@ function cov(
     returns;
     fix_method::AbstractFixPosDef = SFix(),
     freq = 252,
-    span = Int(ceil(freq / 1.4)),
+    span = Int(
+        ceil(
+            size(returns, 1) * log2(min(size(returns, 1), freq)) /
+            log2(max(size(returns, 1), freq)),
+        ),
+    ),
     scale = nothing,
 )
     N = size(returns, 1)
@@ -182,7 +192,12 @@ function cov(
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.
     fix_method::AbstractFixPosDef = SFix(),
     freq = 252,
-    span = Int(ceil(freq / 1.4)),
+    span = Int(
+        ceil(
+            size(returns, 1) * log2(min(size(returns, 1), freq)) /
+            log2(max(size(returns, 1), freq)),
+        ),
+    ),
     scale = nothing,
 )
     N = size(returns, 1)
