@@ -77,7 +77,7 @@ EffMeanSemivar(
     returns;
     weight_bounds = (0.0, 1.0),
     freq = 252,
-    benchmark = 0,
+    target = 0,
     rf = 0.02,
     market_neutral = false,
     risk_aversion = 1.0,

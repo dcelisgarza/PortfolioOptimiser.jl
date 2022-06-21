@@ -44,10 +44,10 @@ function portfolio_performance(
 
         !isnothing(mean_ret) ? μ = port_return(w, mean_ret) : μ = NaN
 
-        benchmark = portfolio.benchmark
+        target = portfolio.target
         returns = portfolio.returns
 
-        semi_σ = sqrt(port_semivar(w, returns, benchmark, freq))
+        semi_σ = sqrt(port_semivar(w, returns, target, freq))
         sortino_ratio = sharpe_ratio(μ, semi_σ, rf)
 
         if verbose

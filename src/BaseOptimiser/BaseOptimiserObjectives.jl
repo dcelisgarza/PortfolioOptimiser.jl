@@ -71,10 +71,10 @@ end
 
 """
 ```
-port_semivar(w, returns, benchmark = 0, freq = 252)
+port_semivar(w, returns, target = 0, freq = 252)
 ```
 
-Compute the semivariance from the weights `w`, historical returns `returns`, according to the benchmark `benchmark`, and frequency of returns `freq`.
+Compute the semivariance from the weights `w`, historical returns `returns`, according to the target `target`, and frequency of returns `freq`.
 
 The semivariance is defined as:
 
@@ -85,13 +85,13 @@ The semivariance is defined as:
 \\end{aligned}
 ```
 
-where ``\\bm{r}`` are the portfolio historical returns with where the subscript ``i`` describes a specific point in time (entry), ``\\mathrm{R}`` the asset historical returns, ``\\bm{w}`` the asset weights, ``\\sigma_s`` the semideviation, ``f`` the frequency of the historical returns, ``N`` the number of entries in historical returns (not the number of assets), and ``b`` the benchmark for splitting "upside" and "downside" returns.
+where ``\\bm{r}`` are the portfolio historical returns with where the subscript ``i`` describes a specific point in time (entry), ``\\mathrm{R}`` the asset historical returns, ``\\bm{w}`` the asset weights, ``\\sigma_s`` the semideviation, ``f`` the frequency of the historical returns, ``N`` the number of entries in historical returns (not the number of assets), and ``b`` the target for splitting "upside" and "downside" returns.
 
-The condition ``b < r_i`` ensures we only consider entries for which the historical portfolio return fell below the benchmark.
+The condition ``b < r_i`` ensures we only consider entries for which the historical portfolio return fell below the target.
 """
-function port_semivar(w, returns, benchmark = 0, freq = 252)
+function port_semivar(w, returns, target = 0, freq = 252)
     port_ret = returns * w
-    port_ret = min.(port_ret .- benchmark, 0)
+    port_ret = min.(port_ret .- target, 0)
 
     return dot(port_ret, port_ret) / size(returns, 1) * freq
 end
@@ -201,7 +201,7 @@ The ex-ante tracking error ``\\mathrm{Err}``, is defined as:
 \\mathrm{Err} = (\\bm{w} - \\bm{w}_b)^T \\, \\Sigma \\, (\\bm{w} - \\bm{w}_b)\\,,
 ```
 
-where ``\\bm{w}`` are the weights, ``\\bm{w}_b`` the benchmark weights, and ``\\Sigma`` the covariance matrix.
+where ``\\bm{w}`` are the weights, ``\\bm{w}_b`` the target weights, and ``\\Sigma`` the covariance matrix.
 """
 function ex_ante_tracking_error(w, cov_mtx, w_bmk)
     w_rel = w .- w_bmk
@@ -213,7 +213,7 @@ end
 ex_post_tracking_error(w, returns, ret_bmk)
 ```
 
-Compute the square of the ex-post tracking error from the weights `w`, historical returns `returns`, and benchmark returns `ret_bmk`.
+Compute the square of the ex-post tracking error from the weights `w`, historical returns `returns`, and target returns `ret_bmk`.
 
 The ex-post tracking error ``\\mathrm{Err}``, is defined as:
 
@@ -225,7 +225,7 @@ The ex-post tracking error ``\\mathrm{Err}``, is defined as:
 \\end{aligned}
 ```
 
-where ``w`` are the weights, ``\\mathrm{R}`` historical returns, ``\\bm{R}_b`` benchmark historical returns. In other words the ex-post tracking error is the variance of the historical returns ``r``, minus the benchmark historical returns ``r_b``, of the portfolio.
+where ``w`` are the weights, ``\\mathrm{R}`` historical returns, ``\\bm{R}_b`` target historical returns. In other words the ex-post tracking error is the variance of the historical returns ``r``, minus the target historical returns ``r_b``, of the portfolio.
 """
 function ex_post_tracking_error(w, returns, ret_bmk)
     x = returns * w - ret_bmk

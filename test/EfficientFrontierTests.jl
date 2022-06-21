@@ -1099,7 +1099,7 @@ end
     @test isapprox(sigma, varmax, rtol = 1e-4)
     @test isapprox(sr, smax, rtol = 1e-4)
 
-    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), target = 0)
     min_risk!(ef)
     testweights = [
         -8.8369599e-09,
@@ -1306,7 +1306,13 @@ end
     testshares = [135, 3, 8, 3, 17, 6, 2, 6, 1, 1]
     @test gAlloc.shares == testshares
 
-    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), market_neutral = true)
+    ef = EffMeanSemivar(
+        tickers,
+        bl.post_ret,
+        Matrix(returns),
+        market_neutral = true,
+        target = 0,
+    )
     min_risk!(ef)
     testweights = [
         -6.87746970453e-05,
@@ -1610,6 +1616,7 @@ end
         tickers,
         mean_ret,
         Matrix(returns);
+        target = 0,
         extra_vars = [:(0 <= l1)],
         extra_constraints = [
             :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
@@ -1726,6 +1733,7 @@ end
         tickers,
         mean_ret,
         Matrix(returns);
+        target = 0,
         extra_vars = [:(0 <= l1)],
         extra_constraints = [
             :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
@@ -1745,6 +1753,7 @@ end
         tickers,
         mean_ret,
         Matrix(returns);
+        target = 0,
         extra_vars = [:(0 <= l1)],
         extra_constraints = [
             :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
@@ -1773,6 +1782,7 @@ end
         tickers,
         mean_ret,
         Matrix(returns);
+        target = 0,
         extra_vars = [:(0 <= l1)],
         extra_constraints = [
             :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
