@@ -20,7 +20,7 @@ function refresh_model!(portfolio::AbstractEffCDaR)
     return nothing
 end
 
-function portfolio_performance(portfolio::EffCDaR; verbose = false)
+function portfolio_performance(portfolio::EffCDaR; rf = portfolio.rf, verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 
@@ -43,7 +43,7 @@ function portfolio_performance(portfolio::EffCDaR; verbose = false)
             println(term_status)
             println("Expected annual return: $(round(100*μ, digits=2)) %")
             println("Conditional Drawdown at Risk: $(round(100*cdar_val, digits=2)) %")
-            println("Ratio: $(round(μ/cdar_val, digits=3))")
+            println("Ratio: $(round((μ-rf)/cdar_val, digits=3))")
         end
 
         return μ, cdar_val

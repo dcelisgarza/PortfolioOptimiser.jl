@@ -23,7 +23,7 @@ function min_risk!(
     w = model[:w]
     portfolio.weights .= value.(w)
 
-    return portfolio
+    return nothing
 end
 
 function max_sharpe!(
@@ -149,7 +149,7 @@ function efficient_return!(
 
     portfolio.weights .= value.(w)
 
-    return portfolio
+    return nothing
 end
 
 function efficient_risk!(
@@ -190,5 +190,5 @@ function efficient_risk!(
 
     portfolio.weights .= value.(w)
 
-    return portfolio
+    return nothing
 end

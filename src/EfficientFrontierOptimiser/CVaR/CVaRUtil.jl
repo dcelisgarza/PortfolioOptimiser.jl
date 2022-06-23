@@ -16,7 +16,7 @@ function refresh_model!(portfolio::AbstractEffCVaR)
     return nothing
 end
 
-function portfolio_performance(portfolio::EffCVaR; verbose = false)
+function portfolio_performance(portfolio::EffCVaR; rf = portfolio.rf, verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 
@@ -39,7 +39,7 @@ function portfolio_performance(portfolio::EffCVaR; verbose = false)
             println(term_status)
             println("Expected annual return: $(round(100*μ, digits=2)) %")
             println("Conditional Value at Risk: $(round(100*cvar_val, digits=2)) %")
-            println("Ratio: $(round(μ/cvar_val, digits=3))")
+            println("Sharpe Ratio: $(round((μ-rf)/cvar_val, digits=3))")
         end
 
         return μ, cvar_val
