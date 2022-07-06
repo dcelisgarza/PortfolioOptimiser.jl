@@ -4,7 +4,7 @@ function _parse_views(tickers, views::Dict)
     Q = zeros(K)
     P = zeros(length(tickers), K)
 
-    for (i, ticker) in enumerate(keys(views))
+    for (i, ticker) in pairs(keys(views))
         Q[i] = views[ticker]
         P[findfirst(x -> x == ticker, tickers), i] = 1
     end
