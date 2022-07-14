@@ -37,7 +37,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
 
     ef = EffMeanVar(tickers, mean_ret, S)
     efficient_risk!(ef, 0.01, optimiser_attributes = "tol" => 1e-3)
-    @test termination_status(ef.model) == MOI.NUMERICAL_ERROR
+    @test termination_status(ef.model) == MOI.LOCALLY_INFEASIBLE
 
     efficient_risk!(ef, 0.01, optimiser_attributes = ("tol" => 1e-3, "max_iter" => 20))
     @test termination_status(ef.model) == MOI.ITERATION_LIMIT

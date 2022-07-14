@@ -1,7 +1,7 @@
 """
 ```
 min_risk!(
-    portfolio::Union{EffMeanVar, EffMeanSemivar};
+    portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR};
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -15,7 +15,7 @@ Minimise the volatility ([`port_variance`](@ref)) of a [`EffMeanVar`](@ref) port
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
 function min_risk!(
-    portfolio::Union{EffMeanVar, EffMeanSemivar};
+    portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR};
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -42,7 +42,7 @@ end
 
 """
 ```
-max_return(portfolio::Union{EffMeanVar, EffMeanSemivar}; optimiser = Ipopt.Optimizer, silent = true, optimiser_attributes = ())
+max_return(portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR}; optimiser = Ipopt.Optimizer, silent = true, optimiser_attributes = ())
 ```
 
 Maximise the return ([`port_return`](@ref)) of a [`EffMeanVar`](@ref) portfolio. Internally minimises the negative of the portfolio return.
@@ -55,7 +55,7 @@ Maximise the return ([`port_return`](@ref)) of a [`EffMeanVar`](@ref) portfolio.
     This should not be used for optimising portfolios. It's used by [`efficient_return!`](@ref) to validate the target return. This yields portfolios with large volatilities.
 """
 function max_return(
-    portfolio::Union{EffMeanVar, EffMeanSemivar};
+    portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR};
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
@@ -80,7 +80,7 @@ end
 """
 ```
 max_sharpe!(
-    portfolio::Union{EffMeanVar, EffMeanSemivar},
+    portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR},
     rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -104,7 +104,7 @@ Uses a variable transformation to turn the nonlinear objective that is the sharp
     The variable transformation means any extra terms in the objective function may not work as intended. If you need to add extra objective terms, use [`custom_nloptimiser!`](@ref) (see the example) and add the extra objective terms in the objective function.
 """
 function max_sharpe!(
-    portfolio::Union{EffMeanVar, EffMeanSemivar},
+    portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR},
     rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -158,7 +158,7 @@ end
 """
 ```
 max_utility!(
-    portfolio::Union{EffMeanVar, EffMeanSemivar},
+    portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR},
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -174,7 +174,7 @@ Maximise the [`quadratic_utility`](@ref) of a [`EffMeanVar`](@ref) portfolio. In
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
 function max_utility!(
-    portfolio::Union{EffMeanVar, EffMeanSemivar},
+    portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR},
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -209,7 +209,7 @@ end
 """
 ```
 efficient_return!(
-    portfolio::Union{EffMeanVar, EffMeanSemivar},
+    portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR},
     target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -225,7 +225,7 @@ Minimise the [`port_variance`](@ref) of a [`EffMeanVar`](@ref) portfolio subject
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
 function efficient_return!(
-    portfolio::Union{EffMeanVar, EffMeanSemivar},
+    portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR},
     target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -267,7 +267,7 @@ end
 """
 ```
 efficient_risk!(
-    portfolio::Union{EffMeanVar, EffMeanSemivar},
+    portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR},
     target_risk = portfolio.target_risk;
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -283,25 +283,13 @@ Maximise the [`port_return`](@ref) of a [`EffMeanVar`](@ref) portfolio subject t
 - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
 function efficient_risk!(
-    portfolio::Union{EffMeanVar, EffMeanSemivar},
+    portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR},
     target_risk = portfolio.target_risk;
     optimiser = Ipopt.Optimizer,
     silent = true,
     optimiser_attributes = (),
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
-
-    if typeof(portfolio) <: EffMeanVar
-        cov_mtx = portfolio.cov_mtx
-        min_volatility = sqrt(1 / sum(inv(cov_mtx)))
-        target_risk = _val_compare_benchmark(
-            target_risk,
-            <,
-            min_volatility,
-            min_volatility,
-            "min_volatility",
-        )
-    end
 
     model = portfolio.model
     w = model[:w]
