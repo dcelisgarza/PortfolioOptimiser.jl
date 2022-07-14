@@ -90,3 +90,20 @@ w3 = copy(emv.weights)
 obj3 = objective_value(emv.model)
 
 findmin([obj1, obj2, obj3])
+
+emsv = EffMeanSemivar(tickers, mean_ret, Matrix(returns));
+@time max_sharpe!(emsv, optimiser = ECOS.Optimizer)
+w1 = copy(emsv.weights)
+obj1 = objective_value(emsv.model)
+
+emsv = EffMeanSemivar(tickers, mean_ret, Matrix(returns));
+@time max_sharpe!(emsv, optimiser = ECOS.Optimizer)
+w2 = copy(emsv.weights)
+obj2 = objective_value(emsv.model)
+
+emsv = EffMeanSemivar(tickers, mean_ret, Matrix(returns));
+@time max_sharpe!(emsv)
+w3 = copy(emsv.weights)
+obj3 = objective_value(emsv.model)
+
+findmax([obj1, obj2, obj3])

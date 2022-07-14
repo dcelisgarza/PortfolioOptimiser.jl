@@ -132,7 +132,7 @@ function EffMeanSemivar(
 
     @variable(model, n[1:samples] >= 0)
 
-    B = (returns .- target) / sqrt(samples)
+    B = (returns .- target) / sqrt(samples) * sqrt(freq)
     @constraint(model, semi_var, B * w .+ n .>= 0)
 
     lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
@@ -156,7 +156,12 @@ function EffMeanSemivar(
 
     # Return and risk.
     !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
-    @expression(model, risk, dot(n, n) * freq)
+    @expression(model, risk, dot(n, n))
+
+    # # Second order cone constraints
+    # @variable(model, g >= 0)
+    # @constraint(model, g_cone, [g; n] in SecondOrderCone())
+    # @expression(model, risk, g^2)
 
     return EffMeanSemivar(
         tickers,

@@ -144,7 +144,7 @@ function EffMeanVar(
     # Second order conic constraints.
     # @variable(model, g >= 0)
     # G = sqrt(cov_mtx)
-    # @constraint(model, [g; G * w] in SecondOrderCone())
+    # @constraint(model, g_cone, [g; G * w] in SecondOrderCone())
     # @expression(model, risk, g^2)
 
     return EffMeanVar(
