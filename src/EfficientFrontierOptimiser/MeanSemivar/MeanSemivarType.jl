@@ -132,7 +132,7 @@ function EffMeanSemivar(
 
     @variable(model, n[1:samples] >= 0)
 
-    B = (returns .- target) / sqrt(samples) * sqrt(freq)
+    B = (returns .- target) / sqrt(samples - 1) * sqrt(freq)
     @constraint(model, semi_var, B * w .+ n .>= 0)
 
     lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)

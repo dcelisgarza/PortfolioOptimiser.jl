@@ -1038,8 +1038,8 @@ end
     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
     efficient_risk!(ef, varmax)
     mu, sigma, sr = portfolio_performance(ef)
-    @test isapprox(mu, mumax, rtol = 1e-5)
-    @test isapprox(sigma, varmax, rtol = 1e-5)
+    @test isapprox(mu, mumax, rtol = 5e-4)
+    @test isapprox(sigma, varmax, rtol = 1e-3)
     @test isapprox(sr, smax, rtol = 1e-6)
 
     efficient_return!(ef, mumax)
@@ -1055,14 +1055,14 @@ end
     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
     efficient_risk!(ef, varmax)
     mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
-    @test isapprox(mu, mumax, rtol = 1e-5)
-    @test isapprox(sigma, varmax, rtol = 1e-5)
+    @test isapprox(mu, mumax, rtol = 5e-4)
+    @test isapprox(sigma, varmax, rtol = 1e-3)
     @test isapprox(sr, smax, rtol = 1e-6)
 
     efficient_return!(ef, mumax)
     mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
     @test isapprox(mu, mumax, rtol = 1e-5)
-    @test isapprox(sigma, varmax, rtol = 1e-3)
+    @test isapprox(sigma, varmax, rtol = 5e-4)
     @test isapprox(sr, smax, rtol = 1e-3)
 
     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
@@ -1072,8 +1072,8 @@ end
     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
     efficient_risk!(ef, varmax)
     mu, sigma, sr = portfolio_performance(ef)
-    @test isapprox(mu, mumax, rtol = 1e-5)
-    @test isapprox(sigma, varmax, rtol = 1e-5)
+    @test isapprox(mu, mumax, rtol = 1e-3)
+    @test isapprox(sigma, varmax, rtol = 1e-3)
     @test isapprox(sr, smax, rtol = 1e-6)
 
     efficient_return!(ef, mumax)
@@ -1089,8 +1089,8 @@ end
     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
     efficient_risk!(ef, varmax)
     mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
-    @test isapprox(mu, mumax, rtol = 1e-5)
-    @test isapprox(sigma, varmax, rtol = 1e-5)
+    @test isapprox(mu, mumax, rtol = 5e-4)
+    @test isapprox(sigma, varmax, rtol = 1e-3)
     @test isapprox(sr, smax, rtol = 1e-6)
 
     efficient_return!(ef, mumax)
@@ -1291,8 +1291,8 @@ end
     @test isapprox(ef.weights, testweights, rtol = 1e-2)
     mu, sigma, sr = portfolio_performance(ef)
     mutest, sigmatest, srtest = 0.06959704494304779, 0.1300556974853854, 0.38135234289617415
-    @test isapprox(mu, mutest, rtol = 1e-3)
-    @test isapprox(sigma, sigmatest, rtol = 1e-3)
+    @test isapprox(mu, mutest, rtol = 5e-3)
+    @test isapprox(sigma, sigmatest, rtol = 5e-3)
     @test isapprox(sr, srtest, rtol = 1e-3)
 
     ef.weights .= testweights
@@ -1588,9 +1588,9 @@ end
     @test isapprox(ef.weights, testweights, rtol = 1e-3)
     mu, sigma, sr = portfolio_performance(ef)
     mutest, sigmatest, srtest = 0.14346415547400485, 0.1300415327156715, 0.9494209495665686
-    @test isapprox(mu, mutest, rtol = 1e-3)
+    @test isapprox(mu, mutest, rtol = 5e-3)
     @test isapprox(sigma, sigmatest, rtol = 1e-3)
-    @test isapprox(sr, srtest, rtol = 1e-4)
+    @test isapprox(sr, srtest, rtol = 5e-4)
 
     ef.weights .= testweights
     lpAlloc, remaining =
@@ -1773,8 +1773,8 @@ end
 
     efficient_risk!(ef, sigmamax)
     mu, sigma, sr = portfolio_performance(ef)
-    @test isapprox(mumax, mu, rtol = 1e-4)
-    @test isapprox(sigmamax, sigma, rtol = 1e-4)
+    @test isapprox(mumax, mu, rtol = 1e-3)
+    @test isapprox(sigmamax, sigma, rtol = 1e-3)
     @test isapprox(srmax, sr, rtol = 1e-4)
 
     k = 0.00001 * 252
