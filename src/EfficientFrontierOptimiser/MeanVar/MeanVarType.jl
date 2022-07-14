@@ -141,6 +141,12 @@ function EffMeanVar(
     !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
     @expression(model, risk, port_variance(w, cov_mtx))
 
+    # Second order conic constraints.
+    # @variable(model, g >= 0)
+    # G = sqrt(cov_mtx)
+    # @constraint(model, [g; G * w] in SecondOrderCone())
+    # @expression(model, risk, g^2)
+
     return EffMeanVar(
         tickers,
         mean_ret,

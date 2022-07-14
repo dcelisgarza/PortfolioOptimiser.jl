@@ -44,3 +44,49 @@ risk = add_nonlinear_expression(m, :(exp($(x))))
 risk
 # println(fieldnames(typeof(m)))
 # display(m.nlp_data)
+
+using PortfolioOptimiser, DataFrames
+using Plots, CovarianceEstimation
+using LinearAlgebra, JuMP, IJulia
+using CSV, MarketData, Statistics
+
+hist_prices = CSV.read("./demos/assets/stock_prices.csv", DataFrame)
+dropmissing!(hist_prices)
+
+returns = returns_from_prices(hist_prices[!, 2:end])
+
+target = DiagonalCommonVariance()
+shrinkage = :oas
+method = LinearShrinkage(target, shrinkage)
+
+S = cov(CustomCov(), Matrix(returns), estimator = method)
+
+mean_ret = ret_model(
+    ECAPMRet(),
+    Matrix(returns),
+    # cspan = num_rows,
+    # rspan = num_rows,
+    cov_type = CustomCov(),
+    custom_cov_estimator = method,
+)
+
+using ECOS
+tickers = names(hist_prices[!, 2:end])
+
+emv = EffMeanVar(tickers, mean_ret, S)
+@time max_sharpe!(emv, optimiser = ECOS.Optimizer)
+
+w1 = copy(emv.weights)
+obj1 = objective_value(emv.model)
+
+emv = EffMeanVar(tickers, mean_ret, S)
+@time max_sharpe!(emv, optimiser = ECOS.Optimizer)
+w2 = copy(emv.weights)
+obj2 = objective_value(emv.model)
+
+emv = EffMeanVar(tickers, mean_ret, S)
+@time max_sharpe!(emv)
+w3 = copy(emv.weights)
+obj3 = objective_value(emv.model)
+
+findmin([obj1, obj2, obj3])
