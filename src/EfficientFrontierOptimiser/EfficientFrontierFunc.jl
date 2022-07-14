@@ -117,7 +117,6 @@ function max_sharpe!(
     )
 
     rf = _val_compare_benchmark(rf, <, 0, 0.02, "rf")
-    # _function_vs_portfolio_val_warn(rf, portfolio.rf, "rf")
 
     model = portfolio.model
 
@@ -182,7 +181,6 @@ function max_utility!(
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
-    # _function_vs_portfolio_val_warn(risk_aversion, portfolio.risk_aversion, "risk_aversion")
     risk_aversion = _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
 
     model = portfolio.model
@@ -239,7 +237,6 @@ function efficient_return!(
     max_ret = port_return(w_max_ret, mean_ret)
 
     correction = max(max_ret / 2, 0)
-    # _function_vs_portfolio_val_warn(target_ret, portfolio.target_ret, "target_ret")
     target_ret = _val_compare_benchmark(target_ret, >, max_ret, correction, "target_ret")
     target_ret = _val_compare_benchmark(target_ret, <, 0, correction, "target_ret")
 

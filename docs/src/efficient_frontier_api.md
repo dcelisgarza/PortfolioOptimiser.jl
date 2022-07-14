@@ -3,7 +3,6 @@
 ```@docs
 AbstractEfficient
 _refresh_add_var_and_constraints
-_function_vs_portfolio_val_warn
 _val_compare_benchmark
 ```
 
