@@ -8,13 +8,13 @@ export refresh_model!
 
 # Classic mean variance optimisations.
 include("./MeanVar/MeanVarType.jl")
+include("./MeanSemivar/MeanSemivarType.jl")
 include("./MeanVar/MeanVarFunc.jl")
 include("./MeanVar/MeanVarUtil.jl")
 export AbstractEffMeanVar, EffMeanVar
 
 # Mean semi variance optimisations.
-include("./MeanSemivar/MeanSemivarType.jl")
-include("./MeanSemivar/MeanSemivarFunc.jl")
+# include("./MeanSemivar/MeanSemivarFunc.jl")
 include("./MeanSemivar/MeanSemivarUtil.jl")
 export AbstractEffMeanSemivar, EffMeanSemivar
 
