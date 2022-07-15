@@ -54,12 +54,11 @@ function EffCDaR(
     # CDaR variables
     @variable(model, alpha)
     @variable(model, u[1:(samples + 1)])
-    @variable(model, z[1:samples])
+    @variable(model, z[1:samples] >= 0)
     # CDaR constraints.
     @constraint(model, z_geq_uma, z .>= u[2:end] .- alpha)
     @constraint(model, uf_geq_uimvw, u[2:end] .>= u[1:(end - 1)] .- returns * w)
     @constraint(model, u1_eq_0, u[1] == 0)
-    @constraint(model, z_geq_0, z .>= 0)
     @constraint(model, u2e_geq_0, u[2:end] .>= 0)
 
     lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)

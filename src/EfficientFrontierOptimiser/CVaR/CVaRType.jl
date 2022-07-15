@@ -54,11 +54,10 @@ function EffCVaR(
 
     # CVaR variables
     @variable(model, alpha)
-    @variable(model, u[1:samples])
+    @variable(model, u[1:samples] >= 0)
 
     # CVaR constraints.
-    @constraint(model, u_geq_0, u .>= 0)
-    @constraint(model, vw_a_u_geq_0, returns * w .+ alpha .+ u .>= 0)
+    @constraint(model, vw_a_u_geq_0, returns * w + u .+ alpha .>= 0)
 
     lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
 

@@ -166,6 +166,12 @@ emad_sharpe_weights = [
 
 emad_sharpe_perf = (0.09488945401189575, 0.08422828832879145, 1.1265746448685674)
 
+eminimax = EffMinimax(tickers, mean_ret, Matrix(returns), rf = eps())
+min_risk!(eminimax)
+portfolio_performance(eminimax, verbose = true)
+
+eminimax.weights
+
 using ECOS, Ipopt
 
 emv = EffMeanVar(tickers, mean_ret, S)

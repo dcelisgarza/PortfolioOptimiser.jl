@@ -10,7 +10,6 @@ function refresh_model!(portfolio::EffCDaR)
         :z_geq_uma,
         :uf_geq_uimvw,
         :u1_eq_0,
-        :z_geq_0,
         :u2e_geq_0,
         :ret,
         :risk,
