@@ -96,6 +96,12 @@ function port_semivar(w, returns, target = 0, freq = 252)
     return dot(port_ret, port_ret) / size(returns, 1) * freq
 end
 
+function port_mean_abs_dev(w, returns, target = zeros(length(w)), freq = 252)
+    port_ret = returns * w
+    port_target = dot(target, w)
+    return sum(port_ret .- port_target) * freq / size(returns, 1)
+end
+
 """
 ```
 L2_reg(w, γ = 1)

@@ -1,11 +1,11 @@
 """
 ```
-refresh_model!(portfolio::EffMeanSemivar)
+refresh_model!(portfolio::EffMeanAbsDev)
 ```
 
 Refreshes an [`AbstractEffMeanSemivar`](@ref) model.
 """
-function refresh_model!(portfolio::EffMeanSemivar)
+function refresh_model!(portfolio::EffMeanAbsDev)
     default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :n, :semi_var, :ret, :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
@@ -25,11 +25,7 @@ Returns a tuple of:
 
 If `verbose == true`, it prints out this information.
 """
-function portfolio_performance(
-    portfolio::EffMeanSemivar;
-    rf = portfolio.rf,
-    verbose = false,
-)
+function portfolio_performance(portfolio::EffMeanAbsDev; rf = portfolio.rf, verbose = false)
     mean_ret = portfolio.mean_ret
     freq = portfolio.freq
 
@@ -47,16 +43,18 @@ function portfolio_performance(
         target = portfolio.target
         returns = portfolio.returns
 
-        semi_σ = sqrt(port_semivar(w, returns, target, freq))
-        sortino_ratio = sharpe_ratio(μ, semi_σ, rf)
+        mean_abs_dev = port_mean_abs_dev(w, returns, target, freq)
+        sr = sharpe_ratio(μ, mean_abs_dev, rf)
 
         if verbose
             println(term_status)
             println("Expected annual return: $(round(100*μ, digits=2)) %")
-            println("Annual semi-deviation: $(round(100*semi_σ, digits=2)) %")
-            println("Sortino Ratio: $(round(sortino_ratio, digits=3))")
+            println(
+                "Annual mean absolute deviation: $(round(100*mean_abs_dev, digits=2)) %",
+            )
+            println("Sharpe Ratio: $(round(sr, digits=3))")
         end
 
-        return μ, semi_σ, sortino_ratio
+        return μ, mean_abs_dev, sr
     end
 end

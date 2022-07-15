@@ -1,11 +1,11 @@
 """
 ```
-refresh_model!(portfolio::AbstractEffMeanVar)
+refresh_model!(portfolio::EffMeanVar)
 ```
 
 Refreshes an [`AbstractEffMeanVar`](@ref) model.
 """
-function refresh_model!(portfolio::AbstractEffMeanVar)
+function refresh_model!(portfolio::EffMeanVar)
     default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :ret, :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 

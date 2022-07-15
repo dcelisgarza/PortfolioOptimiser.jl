@@ -1,4 +1,4 @@
-function refresh_model!(portfolio::AbstractEffCVaR)
+function refresh_model!(portfolio::EffCVaR)
     default_keys = (
         :w,
         :lower_bounds,

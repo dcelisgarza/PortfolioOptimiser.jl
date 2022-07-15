@@ -8,16 +8,19 @@ export AbstractEfficient
 # Classic mean variance optimisations.
 include("./MeanVar/MeanVarType.jl")
 include("./MeanSemivar/MeanSemivarType.jl")
+include("./MeanAbsDev/MeanAbsDevType.jl")
 include("./CVaR/CVaRType.jl")
 include("./CDaR/CDaRType.jl")
 export AbstractEffMeanVar, EffMeanVar
 export AbstractEffMeanSemivar, EffMeanSemivar
+export AbstractEffMeanAbsDev, EffMeanAbsDev
 export AbstractEffCVaR, EffCVaR
 export AbstractEffCDaR, EffCDaR
 
 # Utility functions.
 include("./MeanVar/MeanVarUtil.jl")
 include("./MeanSemivar/MeanSemivarUtil.jl")
+include("./MeanAbsDev/MeanAbsDevUtil.jl")
 include("./CVaR/CVaRUtil.jl")
 include("./CDaR/CDaRUtil.jl")
 

@@ -1,16 +1,16 @@
 """
 ```
-abstract type AbstractEffMeanSemivar <: AbstractEfficient end
+abstract type AbstractEffMeanAbsDev <: AbstractEfficient end
 ```
 
 Abstract type for subtyping efficient mean semivariance optimisers.
 """
-abstract type AbstractEffMeanSemivar <: AbstractEfficient end
+abstract type AbstractEffMeanAbsDev <: AbstractEfficient end
 
 """
 ```
-struct EffMeanSemivar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
-       AbstractEffMeanSemivar
+struct EffMeanAbsDev{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
+       AbstractEffMeanAbsDev
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -47,8 +47,8 @@ Structure for a mean-semivariance portfolio.
 - `extra_obj_terms`: extra objective terms for the model.
 - `model`: model for optimising portfolio.
 """
-struct EffMeanSemivar{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
-       AbstractEffMeanSemivar
+struct EffMeanAbsDev{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
+       AbstractEffMeanAbsDev
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -68,7 +68,7 @@ end
 
 """
 ```
-EffMeanSemivar(
+EffMeanAbsDev(
     tickers,
     mean_ret,
     returns;
@@ -86,7 +86,7 @@ EffMeanSemivar(
 )
 ```
 
-Create an [`EffMeanSemivar`](@ref) structure to be optimised via JuMP.
+Create an [`EffMeanAbsDev`](@ref) structure to be optimised via JuMP.
 
 - `tickers`: list of tickers.
 - `mean_ret`: mean returns, don't need it to optimise for minimum variance.
@@ -103,13 +103,14 @@ Create an [`EffMeanSemivar`](@ref) structure to be optimised via JuMP.
 - `extra_constraints`: extra constraints for the model. See [`_add_constraint_to_model!`](@ref) for details on how to use this.
 - `extra_obj_terms`: extra objective terms for the model. See [`_add_to_objective!`](@ref) for details on how to use this.
 """
-function EffMeanSemivar(
+function EffMeanAbsDev(
     tickers,
     mean_ret,
     returns;
     weight_bounds = (0.0, 1.0),
     freq = 252,
-    target = 1.02^(1 / 252) - 1,
+    target = !isnothing(mean_ret) ? reshape(mean_ret, 1, :) / freq :
+             mean(returns, dims = 1),
     rf = 0.02,
     market_neutral = false,
     risk_aversion = 1.0,
@@ -133,7 +134,7 @@ function EffMeanSemivar(
     @variable(model, n[1:samples] >= 0)
 
     B = returns .- target
-    @constraint(model, semi_var, B * w + n .>= 0)
+    @constraint(model, abs_diff, B * w + n .>= 0)
 
     lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
 
@@ -156,14 +157,9 @@ function EffMeanSemivar(
 
     # Return and risk.
     !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
-    @expression(model, risk, dot(n, n) / (samples - 1) * freq)
+    @expression(model, risk, sum(n) / samples * freq)
 
-    # # Second order cone constraints
-    # @variable(model, g >= 0)
-    # @constraint(model, g_cone, [g; n] in SecondOrderCone())
-    # @expression(model, risk, g^2)
-
-    return EffMeanSemivar(
+    return EffMeanAbsDev(
         tickers,
         mean_ret,
         weights,

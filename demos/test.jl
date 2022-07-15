@@ -1,4 +1,5 @@
 using JuMP, Ipopt
+using PortfolioOptimiser
 
 m = Model(Ipopt.Optimizer)
 @variable(m, x >= 0)
@@ -69,9 +70,23 @@ mean_ret = ret_model(
     cov_type = CustomCov(),
     custom_cov_estimator = method,
 )
+tickers = names(hist_prices[!, 2:end])
+
+emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns))
+min_risk!(emad)
+portfolio_performance(emad, verbose = true)
+efficient_return!(emad)
+portfolio_performance(emad, verbose = true)
+efficient_risk!(emad)
+portfolio_performance(emad, verbose = true)
+
+emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns))
+max_sharpe!(emad)
+portfolio_performance(emad, verbose = true)
+
+display(emad.weights)
 
 using ECOS
-tickers = names(hist_prices[!, 2:end])
 
 emv = EffMeanVar(tickers, mean_ret, S)
 @time max_sharpe!(emv, optimiser = ECOS.Optimizer)
