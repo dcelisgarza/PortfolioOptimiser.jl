@@ -73,20 +73,100 @@ mean_ret = ret_model(
 tickers = names(hist_prices[!, 2:end])
 
 emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns))
-min_risk!(emad)
-portfolio_performance(emad, verbose = true)
-efficient_return!(emad)
-portfolio_performance(emad, verbose = true)
-efficient_risk!(emad)
+min_risk!(emad, optimiser = Ipopt.Optimizer)
 portfolio_performance(emad, verbose = true)
 
-emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns))
-max_sharpe!(emad)
+# emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns))
+efficient_return!(emad, optimiser = Ipopt.Optimizer)
 portfolio_performance(emad, verbose = true)
 
-display(emad.weights)
+# emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns))
+efficient_risk!(emad, 0.5, optimiser = Ipopt.Optimizer)
+portfolio_performance(emad, verbose = true)
 
-using ECOS
+emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns), rf = eps())
+max_sharpe!(emad, optimiser = Ipopt.Optimizer)
+portfolio_performance(emad, verbose = true)
+
+# Try nonlinear optimization
+function sharpe_mad_ratio(w::T...) where {T}
+    mean_ret = obj_params[1]
+    rf = obj_params[2]
+    freq = obj_params[3]
+    num_tickers = obj_params[4]
+
+    weights = w[1:num_tickers]
+    n = w[(num_tickers + 1):end]
+
+    mu = PortfolioOptimiser.port_return(weights, mean_ret) - rf
+    sigma = sum(n) / length(n) * freq
+
+    return -mu / sigma
+end
+
+nl_emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns), rf = eps())
+
+obj_params = [nl_emad.mean_ret, nl_emad.rf, nl_emad.freq, length(tickers)]
+custom_nloptimiser!(
+    nl_emad,
+    sharpe_mad_ratio,
+    obj_params,
+    [(nl_emad.model[:n], 1 / length(nl_emad.model[:n]))],
+)
+
+portfolio_performance(nl_emsv, verbose = true)
+
+nl_emad_sharpe_weights = [
+    0.01604332649627141,
+    0.03295268452523003,
+    0.05035385834264111,
+    0.017059972873500293,
+    0.08269355731801104,
+    6.454142572217534e-6,
+    0.023580313289956665,
+    0.024629982474686115,
+    0.013435222400410767,
+    0.04280140361944625,
+    0.11651487952391605,
+    1.898980383402208e-6,
+    0.01816668841744695,
+    0.05565882234170233,
+    0.009419525833495096,
+    0.054130767682213816,
+    0.09740061162228958,
+    0.09606071084350519,
+    0.13826946316326774,
+    0.11081985610905391,
+]
+
+nl_emad_sharpe_perf = (0.09490585178657714, 0.0845039099800302, 1.123094207226682)
+
+emad_sharpe_weights = [
+    0.014891817506937908,
+    0.03397343162674471,
+    0.0492792026652153,
+    0.017611047164176788,
+    0.08263248964430213,
+    5.623880356946985e-9,
+    0.02362212139521125,
+    0.02407091075523234,
+    0.01327215558630656,
+    0.04171129647201245,
+    0.11927471534789094,
+    9.757118016493556e-10,
+    0.018488990233931902,
+    0.054071740330952876,
+    0.009854273322404012,
+    0.05371167053312045,
+    0.09817146660440665,
+    0.0961666888016265,
+    0.13832763482356134,
+    0.11086834058637372,
+]
+
+emad_sharpe_perf = (0.09488945401189575, 0.08422828832879145, 1.1265746448685674)
+
+using ECOS, Ipopt
 
 emv = EffMeanVar(tickers, mean_ret, S)
 @time max_sharpe!(emv, optimiser = ECOS.Optimizer)

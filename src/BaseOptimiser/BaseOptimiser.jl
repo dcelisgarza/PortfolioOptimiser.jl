@@ -27,4 +27,5 @@ export port_variance,
     logarithmic_barrier,
     kelly_objective,
     custom_optimiser!,
-    custom_nloptimiser!
+    custom_nloptimiser!,
+    port_mean_abs_dev

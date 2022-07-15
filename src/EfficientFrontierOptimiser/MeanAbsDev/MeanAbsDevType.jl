@@ -114,7 +114,8 @@ function EffMeanAbsDev(
     rf = 0.02,
     market_neutral = false,
     risk_aversion = 1.0,
-    target_risk = std(returns),
+    target_risk = sum((returns .- target) * fill(1 / size(returns, 2), size(returns, 2))) /
+                  size(returns, 1) * freq,
     target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
     extra_vars = [],
     extra_constraints = [],
