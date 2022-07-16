@@ -49,32 +49,81 @@ risk
 using PortfolioOptimiser, DataFrames
 using Plots, CovarianceEstimation
 using LinearAlgebra, JuMP, IJulia
-using CSV, MarketData, Statistics
+using CSV, MarketData, Statistics, Ipopt, ECOS
 
 hist_prices = CSV.read("./demos/assets/stock_prices.csv", DataFrame)
 dropmissing!(hist_prices)
 
 returns = returns_from_prices(hist_prices[!, 2:end])
 
+tickers = names(hist_prices[!, 2:end])
+
 target = DiagonalCommonVariance()
 shrinkage = :oas
 method = LinearShrinkage(target, shrinkage)
 
-S = cov(CustomCov(), Matrix(returns), estimator = method)
+freq = 252
+S = cov(CustomCov(), Matrix(returns), freq = freq, estimator = method)
+# mean_ret = ret_model(
+#     ECAPMRet(),
+#     Matrix(returns),
+#     # cspan = num_rows,
+#     # rspan = num_rows,
+#     cov_type = CustomCov(),
+#     custom_cov_estimator = method,
+#     freq = freq,
+#     cspan = Int(
+#         ceil(
+#             size(returns, 1) * log2(min(size(returns, 1), 252)) /
+#             log2(max(size(returns, 1), 252)),
+#         ),
+#     ),
+#     rspan = Int(
+#         ceil(
+#             size(returns, 1) * log2(min(size(returns, 1), 252)) /
+#             log2(max(size(returns, 1), 252)),
+#         ),
+#     ),
+#     rf = 1.02^(2048 / 252) - 1,
+# )
 
-mean_ret = ret_model(
-    ECAPMRet(),
-    Matrix(returns),
-    # cspan = num_rows,
-    # rspan = num_rows,
-    cov_type = CustomCov(),
-    custom_cov_estimator = method,
-)
-tickers = names(hist_prices[!, 2:end])
+mean_ret = ret_model(MRet(), Matrix(returns), freq = freq)
+ecvar = EffCDaR(tickers, mean_ret, Matrix(returns), rf = 1.02^(freq / 252) - 1)#, extra_obj_terms=[quote L2_reg(model[:w], 2) end])
+max_utility!(ecvar, freq, optimiser = Ipopt.Optimizer)
+mu5, vcvar5 = portfolio_performance(ecvar, verbose = true)
+w5 = copy(ecvar.weights)
 
-emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns))
+display([ecvar.tickers ecvar.weights])
+
+emimax = EffMinimax(tickers, mean_ret, Matrix(returns), rf = 0)
+min_risk!(emimax, optimiser = Ipopt.Optimizer)
+portfolio_performance(emimax, verbose = true)
+
+max_utility!(emimax, optimiser = Ipopt.Optimizer)
+portfolio_performance(emimax, verbose = true)
+
+emimax = EffMinimax(tickers, mean_ret, Matrix(returns), rf = 0)
+max_utility!(emimax)
+portfolio_performance(emimax, verbose = true)
+
+emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns), rf = 0, freq = freq)
 min_risk!(emad, optimiser = Ipopt.Optimizer)
 portfolio_performance(emad, verbose = true)
+
+emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns), rf = 0, freq = freq)
+max_utility!(emad)
+portfolio_performance(emad, verbose = true)
+
+efcvar = EffCVaR(tickers, mean_ret, Matrix(returns), rf = 0)
+min_risk!(efcvar)
+portfolio_performance(efcvar, verbose = true)
+
+max_utility!(efcvar)
+portfolio_performance(efcvar, verbose = true)
+
+efcvar = EffCVaR(tickers, mean_ret, Matrix(returns), rf = 0)
+max_sharpe!(efcvar)
+portfolio_performance(efcvar, verbose = true)
 
 # emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns))
 efficient_return!(emad, optimiser = Ipopt.Optimizer)
@@ -84,7 +133,7 @@ portfolio_performance(emad, verbose = true)
 efficient_risk!(emad, 0.5, optimiser = Ipopt.Optimizer)
 portfolio_performance(emad, verbose = true)
 
-emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns), rf = eps())
+emad = EffMeanAbsDev(tickers, mean_ret, Matrix(returns), rf = 0, freq = 252)
 max_sharpe!(emad, optimiser = Ipopt.Optimizer)
 portfolio_performance(emad, verbose = true)
 

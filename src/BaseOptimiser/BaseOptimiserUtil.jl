@@ -295,8 +295,12 @@ function _add_to_objective!(model, expr)
 
     objFun = objective_function(model)
     objSense = objective_sense(model)
-    add_to_expression!.(objFun, lex)
-    @objective(model, objSense, objFun)
+    try
+        add_to_expression!.(objFun, lex)
+        @objective(model, objSense, objFun)
+    catch
+        @objective(model, objSense, objFun + lex)
+    end
 end
 
 """
