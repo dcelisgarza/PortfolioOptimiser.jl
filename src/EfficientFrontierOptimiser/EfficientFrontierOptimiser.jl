@@ -13,6 +13,7 @@ include("./Minimax/MinimaxType.jl")
 include("./CVaR/CVaRType.jl")
 include("./CDaR/CDaRType.jl")
 include("./MaxDaR/MaxDaRType.jl")
+include("./MeanDaR/MeanDaRType.jl")
 export AbstractEffMeanVar, EffMeanVar
 export AbstractEffMeanSemivar, EffMeanSemivar
 export AbstractEffMeanAbsDev, EffMeanAbsDev
@@ -20,6 +21,7 @@ export AbstractEffMinimax, EffMinimax
 export AbstractEffCVaR, EffCVaR
 export AbstractEffCDaR, EffCDaR
 export AbstractEffMaxDaR, EffMaxDaR
+export AbstractEffMeanDaR, EffMeanDaR
 
 # Utility functions.
 include("./MeanVar/MeanVarUtil.jl")
@@ -29,6 +31,7 @@ include("./Minimax/MinimaxUtil.jl")
 include("./CVaR/CVaRUtil.jl")
 include("./CDaR/CDaRUtil.jl")
 include("./MaxDaR/MaxDaRUtil.jl")
+include("./MeanDaR/MeanDaRUtil.jl")
 
 # Optimisation functions.
 include("./EfficientFrontierFunc.jl")

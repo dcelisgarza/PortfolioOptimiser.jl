@@ -62,7 +62,7 @@ target = DiagonalCommonVariance()
 shrinkage = :oas
 method = LinearShrinkage(target, shrinkage)
 
-freq = 2000
+freq = 252
 S = cov(CustomCov(), Matrix(returns), freq = freq, estimator = method)
 # mean_ret = ret_model(
 #     ECAPMRet(),
@@ -87,9 +87,11 @@ S = cov(CustomCov(), Matrix(returns), freq = freq, estimator = method)
 #     rf = 1.02^(2048 / 252) - 1,
 # )
 
-mean_ret = ret_model(MRet(), Matrix(returns), freq = freq)
-ecvar = EffMaxDaR(tickers, mean_ret, Matrix(returns), rf = 1.02^(freq / 252) - 1)#, extra_obj_terms=[quote L2_reg(model[:w], 2) end])
-max_sharpe!(ecvar, optimiser = ECOS.Optimizer)
+mean_ret = ret_model(MRet(), Matrix(returns), compound = true, freq = freq)
+# mean_ret = (mean_ret .+ 1) .^ (1 / 100) .- 1
+# println(mean_ret)
+ecvar = EffMeanDaR(tickers, mean_ret, Matrix(returns), rf = 1.02^(1 / 252) - 1)#, extra_obj_terms=[quote L2_reg(model[:w], 2) end])
+max_utility!(ecvar, optimiser = Ipopt.Optimizer)
 mu, vcvar = portfolio_performance(ecvar, verbose = true)
 w = copy(ecvar.weights)
 
