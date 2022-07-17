@@ -22,6 +22,7 @@ function min_risk!(
         EffCVaR,
         EffCDaR,
         EffMinimax,
+        EffMaxDaR,
     };
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -69,6 +70,7 @@ function max_return(
         EffCVaR,
         EffCDaR,
         EffMinimax,
+        EffMaxDaR,
     };
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -125,6 +127,7 @@ function max_sharpe!(
         EffCVaR,
         EffCDaR,
         EffMinimax,
+        EffMaxDaR,
     },
     rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
@@ -201,6 +204,7 @@ function max_utility!(
         EffCVaR,
         EffCDaR,
         EffMinimax,
+        EffMaxDaR,
     },
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
@@ -258,6 +262,7 @@ function efficient_return!(
         EffCVaR,
         EffCDaR,
         EffMinimax,
+        EffMaxDaR,
     },
     target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
@@ -322,6 +327,7 @@ function efficient_risk!(
         EffCVaR,
         EffCDaR,
         EffMinimax,
+        EffMaxDaR,
     },
     target_risk = portfolio.target_risk;
     optimiser = Ipopt.Optimizer,
