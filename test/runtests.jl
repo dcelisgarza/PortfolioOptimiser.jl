@@ -4,9 +4,9 @@ using SafeTestsets
     include("ExpectedReturnsTests.jl")
 end
 
-# @safetestset "Risk models" begin
-#     include("RiskModelsTests.jl")
-# end
+@safetestset "Risk models" begin
+    include("RiskModelsTests.jl")
+end
 
 # @safetestset "Black Litterman" begin
 #     include("BlackLittermanTests.jl")

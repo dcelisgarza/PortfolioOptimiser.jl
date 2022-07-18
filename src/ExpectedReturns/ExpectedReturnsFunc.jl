@@ -42,7 +42,6 @@ ret_model(
     market_returns = nothing;
     rf = 1.02^(1 / 252) - 1,
     compound = true,
-    
     cov_type::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
@@ -66,7 +65,6 @@ ret_model(
     market_returns = nothing;
     rf = 1.02^(1 / 252) - 1,
     compound = true,
-    
     rspan = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))),
     cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
@@ -202,7 +200,6 @@ function _compute_betas(
         returns,
         target,
         fix_method,
-        1,
         cspan,
         scale,
         custom_cov_estimator,
