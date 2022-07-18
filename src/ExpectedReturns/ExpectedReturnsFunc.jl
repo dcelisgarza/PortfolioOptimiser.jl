@@ -11,7 +11,7 @@ For all methods:
 ### Arithmetic mean
 
 ```
-ret_model(::MRet, returns; compound = true, freq = 252)
+ret_model(::MRet, returns; compound = true, freq = 1)
 ```
 
 Compute the mean returns.
@@ -19,7 +19,7 @@ Compute the mean returns.
 ### Exponentially weighted arithmetic mean
 
 ```
-ret_model(::EMRet, returns; compound = true, freq = 252, span = Int(ceil(freq / 1.4)))
+ret_model(::EMRet, returns; compound = true, freq = 1, span = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))))
 ```
 
 Compute the exponentially weighted areithmetic mean returns. More recent returns are weighted more heavily.
@@ -43,11 +43,11 @@ ret_model(
     market_returns = nothing;
     rf = 0.02,
     compound = true,
-    freq = 252,
+    freq = 1,
     cov_type::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(ceil(freq / 1.4)),
+    span = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))),
     custom_cov_estimator = nothing,
     custom_cov_args = (),
     custom_cov_kwargs = (),
@@ -67,12 +67,12 @@ ret_model(
     market_returns = nothing;
     rf = 0.02,
     compound = true,
-    freq = 252,
-    rspan = Int(ceil(freq / 1.4)),
+    freq = 1,
+    rspan = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))),
     cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    cspan = Int(ceil(freq / 1.4)),
+    cspan = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))),
     custom_cov_estimator = nothing,
     custom_cov_args = (),
     custom_cov_kwargs = (),
@@ -84,7 +84,7 @@ Exponentially weighted Capital Asset Pricing Model (ECAPM) returns. `ECAPMRet()`
 - `rspan`: span for the exponentially weighted mean returns, same as `span` for `EMRet()` above.
 - `cspan`: span for the exponentially weighted covariance, same as `span` for [`cov`](@ref).
 """
-function ret_model(::MRet, returns; compound = true, freq = 252)
+function ret_model(::MRet, returns; compound = true, freq = 1)
     if compound
         return vec(prod(returns .+ 1, dims = 1) .^ (freq / size(returns, 1)) .- 1)
     else
@@ -96,13 +96,8 @@ function ret_model(
     ::EMRet,
     returns;
     compound = true,
-    freq = 252,
-    span = Int(
-        ceil(
-            size(returns, 1) * log2(min(size(returns, 1), freq)) /
-            log2(max(size(returns, 1), freq)),
-        ),
-    ),
+    freq = 1,
+    span = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
 )
     N = size(returns, 1)
     if compound
@@ -118,16 +113,11 @@ function ret_model(
     market_returns = nothing;
     rf = 0.02,
     compound = true,
-    freq = 252,
+    freq = 1,
     cov_type::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(
-        ceil(
-            size(returns, 1) * log2(min(size(returns, 1), freq)) /
-            log2(max(size(returns, 1), freq)),
-        ),
-    ),
+    span = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
     scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
@@ -159,22 +149,12 @@ function ret_model(
     market_returns = nothing;
     rf = 0.02,
     compound = true,
-    freq = 252,
-    rspan = Int(
-        ceil(
-            size(returns, 1) * log2(min(size(returns, 1), freq)) /
-            log2(max(size(returns, 1), freq)),
-        ),
-    ),
+    freq = 1,
+    rspan = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
     cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    cspan = Int(
-        ceil(
-            size(returns, 1) * log2(min(size(returns, 1), freq)) /
-            log2(max(size(returns, 1), freq)),
-        ),
-    ),
+    cspan = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
     scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
