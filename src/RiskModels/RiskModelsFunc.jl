@@ -10,7 +10,7 @@ cov(
     returns;
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    freq = 252,
+    freq = 1,
     span = Int(ceil(freq / 1.4)),
 )
 ```
@@ -26,7 +26,7 @@ Dispatches specific covariance matrix calculation methods according to `type.`
 ## Normal covariance
 
 ```
-cov(::Cov, returns; fix_method::AbstractFixPosDef = SFix(), freq = 252)
+cov(::Cov, returns; fix_method::AbstractFixPosDef = SFix(), freq = 1)
 ```
 
 ## Semi-covariance
@@ -39,7 +39,7 @@ cov(
     returns;
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    freq = 252,
+    freq = 1,
 )
 ```
 
@@ -52,7 +52,7 @@ cov(
     ::ECov,
     returns;
     fix_method::AbstractFixPosDef = SFix(),
-    freq = 252,
+    freq = 1,
     span = Int(ceil(freq / 1.4)),
 )
 ```
@@ -67,7 +67,7 @@ cov(
     returns;
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.
     fix_method::AbstractFixPosDef = SFix(),
-    freq = 252,
+    freq = 1,
     span = Int(ceil(freq / 1.4)),
 )
 ```
@@ -77,7 +77,7 @@ function cov(
     returns,
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    freq = 252,
+    freq = 1,
     span = Int(
         ceil(
             size(returns, 1) * log2(min(size(returns, 1), freq)) /
@@ -145,7 +145,7 @@ function cov(
     ::Cov,
     returns;
     fix_method::AbstractFixPosDef = SFix(),
-    freq = 252,
+    freq = 1,
     scale = nothing,
 )
     return make_pos_def(fix_method, cov(returns) * freq, scale)
@@ -156,7 +156,7 @@ function cov(
     returns;
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.
     fix_method::AbstractFixPosDef = SFix(),
-    freq = 252,
+    freq = 1,
     scale = nothing,
 )
     semi_returns = min.(returns .- target, 0)
@@ -172,7 +172,7 @@ function cov(
     ::ECov,
     returns;
     fix_method::AbstractFixPosDef = SFix(),
-    freq = 252,
+    freq = 1,
     span = Int(
         ceil(
             size(returns, 1) * log2(min(size(returns, 1), freq)) /
@@ -191,7 +191,7 @@ function cov(
     returns;
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.
     fix_method::AbstractFixPosDef = SFix(),
-    freq = 252,
+    freq = 1,
     span = Int(
         ceil(
             size(returns, 1) * log2(min(size(returns, 1), freq)) /
@@ -211,7 +211,7 @@ function cov(
     )
 end
 
-function cov(::CustomCov, returns; freq = 252, estimator = nothing, args = (), kwargs = ())
+function cov(::CustomCov, returns; freq = 1, estimator = nothing, args = (), kwargs = ())
     return isnothing(estimator) ? cov(returns, args...; kwargs...) * freq :
            cov(estimator, returns, args...; kwargs...) * freq
 end
@@ -220,7 +220,7 @@ function cov(
     ::CustomSCov,
     returns;
     target = 1.02^(1 / 252) - 1,
-    freq = 252,
+    freq = 1,
     estimator = nothing,
     args = (),
     kwargs = (),

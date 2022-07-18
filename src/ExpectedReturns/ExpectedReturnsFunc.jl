@@ -4,14 +4,13 @@ Compute the mean returns given a concrete type of [`AbstractReturnModel`](@ref),
 For all methods:
 
 - `compound`: if `true` the compute compound mean returns, if false compute uncompounded mean returns.
-- `freq`: frequency at which the returns are logged, defaults to the average number of days in a trading year.
 
 ## Mean
 
 ### Arithmetic mean
 
 ```
-ret_model(::MRet, returns; compound = true, freq = 1)
+ret_model(::MRet, returns; compound = true)
 ```
 
 Compute the mean returns.
@@ -19,7 +18,7 @@ Compute the mean returns.
 ### Exponentially weighted arithmetic mean
 
 ```
-ret_model(::EMRet, returns; compound = true, freq = 1, span = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))))
+ret_model(::EMRet, returns; compound = true, span = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))))
 ```
 
 Compute the exponentially weighted areithmetic mean returns. More recent returns are weighted more heavily.
@@ -41,9 +40,9 @@ ret_model(
     ::CAPMRet,
     returns,
     market_returns = nothing;
-    rf = 0.02,
+    rf = 1.02^(1 / 252) - 1,
     compound = true,
-    freq = 1,
+    
     cov_type::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
@@ -65,9 +64,9 @@ ret_model(
     ::ECAPMRet,
     returns,
     market_returns = nothing;
-    rf = 0.02,
+    rf = 1.02^(1 / 252) - 1,
     compound = true,
-    freq = 1,
+    
     rspan = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))),
     cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
@@ -84,11 +83,11 @@ Exponentially weighted Capital Asset Pricing Model (ECAPM) returns. `ECAPMRet()`
 - `rspan`: span for the exponentially weighted mean returns, same as `span` for `EMRet()` above.
 - `cspan`: span for the exponentially weighted covariance, same as `span` for [`cov`](@ref).
 """
-function ret_model(::MRet, returns; compound = true, freq = 1)
+function ret_model(::MRet, returns; compound = true)
     if compound
-        return vec(prod(returns .+ 1, dims = 1) .^ (freq / size(returns, 1)) .- 1)
+        return vec(prod(returns .+ 1, dims = 1) .^ (1 / size(returns, 1)) .- 1)
     else
-        return vec(mean(returns, dims = 1) * freq)
+        return vec(mean(returns, dims = 1))
     end
 end
 
@@ -96,14 +95,13 @@ function ret_model(
     ::EMRet,
     returns;
     compound = true,
-    freq = 1,
     span = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
 )
     N = size(returns, 1)
     if compound
-        return vec((1 .+ mean(returns, eweights(N, 2 / (span + 1)), dims = 1)) .^ freq .- 1)
+        return vec((1 .+ mean(returns, eweights(N, 2 / (span + 1)), dims = 1)) .- 1)
     else
-        return vec(mean(returns, eweights(N, 2 / (span + 1)), dims = 1) * freq)
+        return vec(mean(returns, eweights(N, 2 / (span + 1)), dims = 1))
     end
 end
 
@@ -111,9 +109,8 @@ function ret_model(
     ::CAPMRet,
     returns,
     market_returns = nothing;
-    rf = 0.02,
+    rf = 1.02^(1 / 252) - 1,
     compound = true,
-    freq = 1,
     cov_type::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
@@ -137,7 +134,7 @@ function ret_model(
     )
 
     # Mean market return.
-    mkt_mean_ret = ret_model(MRet(), returns[:, end]; compound = compound, freq = freq)[1]
+    mkt_mean_ret = ret_model(MRet(), returns[:, end]; compound = compound)[1]
 
     # Capital asset pricing.
     return rf .+ β * (mkt_mean_ret - rf)
@@ -147,9 +144,8 @@ function ret_model(
     ::ECAPMRet,
     returns,
     market_returns = nothing;
-    rf = 0.02,
+    rf = 1.02^(1 / 252) - 1,
     compound = true,
-    freq = 1,
     rspan = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
     cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
@@ -174,8 +170,7 @@ function ret_model(
     )
 
     # Exponentially weighted mean market return.
-    mkt_mean_ret =
-        ret_model(EMRet(), returns[:, end]; compound = compound, freq = freq, span = rspan)[1]
+    mkt_mean_ret = ret_model(EMRet(), returns[:, end]; compound = compound, span = rspan)[1]
 
     # Capital asset pricing.
     return rf .+ β * (mkt_mean_ret - rf)
