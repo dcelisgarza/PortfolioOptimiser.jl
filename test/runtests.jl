@@ -8,9 +8,9 @@ end
     include("RiskModelsTests.jl")
 end
 
-# @safetestset "Black Litterman" begin
-#     include("BlackLittermanTests.jl")
-# end
+@safetestset "Black Litterman" begin
+    include("BlackLittermanTests.jl")
+end
 
 # @safetestset "Efficient Frontier" begin
 #     include("EfficientFrontierTests.jl")

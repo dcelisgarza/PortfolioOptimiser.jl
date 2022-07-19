@@ -12,16 +12,21 @@ function _parse_views(tickers, views::Dict)
     return Q, P
 end
 
-function market_implied_prior_returns(market_caps, cov_mtx, risk_aversion = 1, rf = 0.02)
+function market_implied_prior_returns(
+    market_caps,
+    cov_mtx,
+    risk_aversion = 1,
+    rf = 1.02^(1 / 252) - 1,
+)
     mkt_weights = market_caps / sum(market_caps)
 
     return risk_aversion * cov_mtx * mkt_weights .+ rf
 end
 
-function market_implied_risk_aversion(market_prices, freq = 252, rf = 0.02)
+function market_implied_risk_aversion(market_prices, rf = 1.02^(1 / 252) - 1)
     rets = returns_from_prices(market_prices)
-    μ = mean(rets) * freq
-    σ = var(rets) * freq
+    μ = mean(rets)
+    σ = var(rets)
     return (μ - rf) / σ
 end
 

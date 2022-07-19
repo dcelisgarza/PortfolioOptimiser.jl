@@ -21,7 +21,7 @@ end
 function BlackLitterman(
     tickers::AbstractArray,
     cov_mtx::AbstractArray;
-    rf::Real = 0.02,
+    rf::Real = 1.02^(1 / 252) - 1,
     risk_aversion::Real = 1,
     tau::Real = 0.05,
     omega::Union{AbstractArray, Symbol} = :default, # either a square matrix, :idzorek, :default
