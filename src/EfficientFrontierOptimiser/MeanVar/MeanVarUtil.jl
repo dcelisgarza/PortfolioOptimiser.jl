@@ -44,8 +44,8 @@ function portfolio_performance(portfolio::EffMeanVar; rf = portfolio.rf, verbose
 
         if verbose
             println(term_status)
-            println("Expected annual return: $(round(100*μ, digits=2)) %")
-            println("Annual volatility: $(round(100*σ, digits=2)) %")
+            println("Expected return: $(round(100*μ, digits=2)) %")
+            println("Volatility: $(round(100*σ, digits=2)) %")
             println("Sharpe Ratio: $(round(sr, digits=3))")
         end
 

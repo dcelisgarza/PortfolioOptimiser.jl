@@ -38,13 +38,13 @@ end
 
 """
 ```
-sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 0.02)
+sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 1.02^(1/252)-1)
 ```
 
 Computes the portfolio's Sharpe ratio given the weights `w`, mean returns `mean_ret`, covariance matrix `cov_mtx`, and risk free rate `rf`.
 
 ```
-sharpe_ratio(μ, σ, rf::Real = 0.02)
+sharpe_ratio(μ, σ, rf::Real = 1.02^(1/252)-1)
 ```
 
 Computes the Sharpe ratio given the return `μ`, standard deviation `σ`, and risk free rate `rf`.
@@ -60,12 +60,12 @@ where ``\\mu`` the portfolio's return (see [`port_return`](@ref)), and ``\\sigma
 !!! note
     The Sharpe ratio penalises large swings in both directions, so assets that tend to have large increases in value are disproportionally penalised by this measure. The Sortino ratio has the same formula but uses an adjusted covariance matrix that accounts only for the negative fluctuations in value. The semicovariance is implemented by [`cov`](@ref) when given `SCov()` or `ESCov()` as its first argument. The Mean-Semivariance optimisations [`EffMeanSemivar`](@ref) make the adjustment too.
 """
-function sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 0.02)
+function sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 1.02^(1 / 252) - 1)
     μ = port_return(w, mean_ret)
     σ = sqrt(port_variance(w, cov_mtx))
     return (μ - rf) / σ
 end
-function sharpe_ratio(μ, σ, rf::Real = 0.02)
+function sharpe_ratio(μ, σ, rf::Real = 1.02^(1 / 252) - 1^(1 / 252) - 1)
     return (μ - rf) / σ
 end
 

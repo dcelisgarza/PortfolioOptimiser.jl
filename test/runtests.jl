@@ -12,9 +12,9 @@ end
     include("BlackLittermanTests.jl")
 end
 
-# @safetestset "Efficient Frontier" begin
-#     include("EfficientFrontierTests.jl")
-# end
+@safetestset "Efficient Frontier" begin
+    include("EfficientFrontierTests.jl")
+end
 
 # @safetestset "Hierarchical Risk Parity" begin
 #     include("HRPOptTests.jl")
