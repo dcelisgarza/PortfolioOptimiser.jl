@@ -31,7 +31,6 @@ function portfolio_performance(
     verbose = false,
 )
     mean_ret = portfolio.mean_ret
-    freq = portfolio.freq
 
     model = portfolio.model
     term_status = termination_status(model)
@@ -47,13 +46,13 @@ function portfolio_performance(
         target = portfolio.target
         returns = portfolio.returns
 
-        semi_σ = sqrt(port_semivar(w, returns, target, freq))
+        semi_σ = sqrt(port_semivar(w, returns, target))
         sortino_ratio = sharpe_ratio(μ, semi_σ, rf)
 
         if verbose
             println(term_status)
-            println("Expected annual return: $(round(100*μ, digits=2)) %")
-            println("Annual semi-deviation: $(round(100*semi_σ, digits=2)) %")
+            println("Expected return: $(round(100*μ, digits=2)) %")
+            println("Semi-deviation: $(round(100*semi_σ, digits=2)) %")
             println("Sortino Ratio: $(round(sortino_ratio, digits=3))")
         end
 

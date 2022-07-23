@@ -958,851 +958,859 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     @test ef.weights ≈ testweights
 end
 
-# @testset "Mean Semivariance" begin
-#     df = CSV.read("./assets/stock_prices.csv", DataFrame)
-#     dropmissing!(df)
-#     returns = returns_from_prices(df[!, 2:end])
-#     tickers = names(df)[2:end]
+@testset "Mean Semivariance" begin
+    df = CSV.read("./assets/stock_prices.csv", DataFrame)
+    dropmissing!(df)
+    returns = returns_from_prices(df[!, 2:end])
+    tickers = names(df)[2:end]
 
-#     mean_ret = vec(ret_model(MRet(), Matrix(returns)))
-#     S = cov(Cov(), Matrix(returns))
+    mean_ret = vec(ret_model(MRet(), Matrix(returns)))
+    S = cov(Cov(), Matrix(returns))
 
-#     ef = EffMeanSemivar(tickers, mean_ret, S, market_neutral = true)
-#     sectors = ["Tech", "Medical", "RealEstate", "Oil"]
-#     sector_map = Dict(tickers[1:4:20] .=> sectors[1])
-#     merge!(sector_map, Dict(tickers[2:4:20] .=> sectors[2]))
-#     merge!(sector_map, Dict(tickers[3:4:20] .=> sectors[3]))
-#     merge!(sector_map, Dict(tickers[4:4:20] .=> sectors[4]))
-#     sector_lower =
-#         Dict([(sectors[1], 0.2), (sectors[2], 0.1), (sectors[3], 0.15), (sectors[4], 0.05)])
-#     sector_upper =
-#         Dict([(sectors[1], 0.4), (sectors[2], 0.5), (sectors[3], 0.2), (sectors[4], 0.2)])
+    ef = EffMeanSemivar(tickers, mean_ret, S, market_neutral = true)
+    sectors = ["Tech", "Medical", "RealEstate", "Oil"]
+    sector_map = Dict(tickers[1:4:20] .=> sectors[1])
+    merge!(sector_map, Dict(tickers[2:4:20] .=> sectors[2]))
+    merge!(sector_map, Dict(tickers[3:4:20] .=> sectors[3]))
+    merge!(sector_map, Dict(tickers[4:4:20] .=> sectors[4]))
+    sector_lower =
+        Dict([(sectors[1], 0.2), (sectors[2], 0.1), (sectors[3], 0.15), (sectors[4], 0.05)])
+    sector_upper =
+        Dict([(sectors[1], 0.4), (sectors[2], 0.5), (sectors[3], 0.2), (sectors[4], 0.2)])
 
-#     # Do it for the warning.
-#     add_sector_constraint!(ef, sector_map, sector_lower, sector_upper)
+    # Do it for the warning.
+    add_sector_constraint!(ef, sector_map, sector_lower, sector_upper)
 
-#     spy_prices = CSV.read("./assets/spy_prices.csv", DataFrame)
-#     delta = market_implied_risk_aversion(spy_prices[!, 2])
-#     # In the order of the dataframes, the
-#     mcapsdf = DataFrame(
-#         ticker = tickers,
-#         mcap = [
-#             927e9,
-#             1.19e12,
-#             574e9,
-#             533e9,
-#             867e9,
-#             96e9,
-#             43e9,
-#             339e9,
-#             301e9,
-#             51e9,
-#             61e9,
-#             78e9,
-#             0,
-#             295e9,
-#             1e9,
-#             22e9,
-#             288e9,
-#             212e9,
-#             422e9,
-#             102e9,
-#         ],
-#     )
+    spy_prices = CSV.read("./assets/spy_prices.csv", DataFrame)
+    delta = market_implied_risk_aversion(spy_prices[!, 2])
+    # In the order of the dataframes, the
+    mcapsdf = DataFrame(
+        ticker = tickers,
+        mcap = [
+            927e9,
+            1.19e12,
+            574e9,
+            533e9,
+            867e9,
+            96e9,
+            43e9,
+            339e9,
+            301e9,
+            51e9,
+            61e9,
+            78e9,
+            0,
+            295e9,
+            1e9,
+            22e9,
+            288e9,
+            212e9,
+            422e9,
+            102e9,
+        ],
+    )
 
-#     prior = market_implied_prior_returns(mcapsdf[!, 2], S, delta)
+    prior = market_implied_prior_returns(mcapsdf[!, 2], S, delta)
 
-#     # 1. SBUX drop by 20%
-#     # 2. GOOG outperforms FB by 10%
-#     # 3. BAC and JPM will outperform T and GE by 15%
-#     views = [-0.20, 0.10, 0.15]
-#     picking = hcat(
-#         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-#         [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-#         [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0],
-#     )
+    # 1. SBUX drop by 20%
+    # 2. GOOG outperforms FB by 10%
+    # 3. BAC and JPM will outperform T and GE by 15%
+    views = [-0.20, 0.10, 0.15] / 252
+    picking = hcat(
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0],
+    )
 
-#     bl = BlackLitterman(
-#         mcapsdf[!, 1],
-#         S;
-#         rf = 0,
-#         tau = 0.01,
-#         pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
-#         Q = views,
-#         P = picking,
-#     )
+    bl = BlackLitterman(
+        mcapsdf[!, 1],
+        S;
+        rf = 0,
+        tau = 0.01,
+        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        Q = views,
+        P = picking,
+    )
 
-#     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
-#     @test (0.0, 0.0, 0.0) == portfolio_performance(ef)
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    @test (0.0, 0.0, 0.0) == portfolio_performance(ef)
 
-#     max_sharpe!(ef)
-#     mumax, varmax, smax = portfolio_performance(ef)
+    max_sharpe!(ef)
+    mumax, varmax, smax = portfolio_performance(ef)
 
-#     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
-#     efficient_risk!(ef, varmax)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     @test isapprox(mu, mumax, rtol = 5e-4)
-#     @test isapprox(sigma, varmax, rtol = 1e-3)
-#     @test isapprox(sr, smax, rtol = 1e-6)
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    efficient_risk!(ef, varmax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mu, mumax, rtol = 5e-2)
+    @test isapprox(sigma, varmax, rtol = 5e-2)
+    @test isapprox(sr, smax, rtol = 5e-4)
 
-#     efficient_return!(ef, mumax)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     @test isapprox(mu, mumax, rtol = 1e-5)
-#     @test isapprox(sigma, varmax, rtol = 1e-4)
-#     @test isapprox(sr, smax, rtol = 1e-4)
+    efficient_return!(ef, mumax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mu, mumax, rtol = 5e-5)
+    @test isapprox(sigma, varmax, rtol = 5e-4)
+    @test isapprox(sr, smax, rtol = 5e-4)
 
-#     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
-#     max_sharpe!(ef, 0.03)
-#     mumax, varmax, smax = portfolio_performance(ef, rf = 0.03)
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    max_sharpe!(ef, 1.03^(1 / 252) - 1)
+    mumax, varmax, smax = portfolio_performance(ef)
 
-#     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
-#     efficient_risk!(ef, varmax)
-#     mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
-#     @test isapprox(mu, mumax, rtol = 5e-4)
-#     @test isapprox(sigma, varmax, rtol = 1e-3)
-#     @test isapprox(sr, smax, rtol = 1e-6)
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns))
+    efficient_risk!(ef, varmax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mu, mumax, rtol = 5e-2)
+    @test isapprox(sigma, varmax, rtol = 5e-2)
+    @test isapprox(sr, smax, rtol = 5e-3)
 
-#     efficient_return!(ef, mumax)
-#     mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
-#     @test isapprox(mu, mumax, rtol = 1e-5)
-#     @test isapprox(sigma, varmax, rtol = 5e-4)
-#     @test isapprox(sr, smax, rtol = 1e-3)
+    efficient_return!(ef, mumax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mu, mumax, rtol = 5e-5)
+    @test isapprox(sigma, varmax, rtol = 5e-5)
+    @test isapprox(sr, smax, rtol = 5e-4)
 
-#     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
-#     max_sharpe!(ef)
-#     mumax, varmax, smax = portfolio_performance(ef)
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
+    max_sharpe!(ef)
+    mumax, varmax, smax = portfolio_performance(ef)
 
-#     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
-#     efficient_risk!(ef, varmax)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     @test isapprox(mu, mumax, rtol = 1e-3)
-#     @test isapprox(sigma, varmax, rtol = 1e-3)
-#     @test isapprox(sr, smax, rtol = 1e-6)
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
+    efficient_risk!(ef, varmax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mu, mumax, rtol = 5e-3)
+    @test isapprox(sigma, varmax, rtol = 5e-3)
+    @test isapprox(sr, smax, rtol = 1e-5)
 
-#     efficient_return!(ef, mumax)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     @test isapprox(mu, mumax, rtol = 1e-5)
-#     @test isapprox(sigma, varmax, rtol = 1e-4)
-#     @test isapprox(sr, smax, rtol = 1e-4)
+    efficient_return!(ef, mumax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mu, mumax, rtol = 5e-5)
+    @test isapprox(sigma, varmax, rtol = 1e-5)
+    @test isapprox(sr, smax, rtol = 1e-5)
 
-#     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
-#     max_sharpe!(ef, 0.03)
-#     mumax, varmax, smax = portfolio_performance(ef, rf = 0.03)
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
+    max_sharpe!(ef, 1.03^(1 / 252) - 1)
+    mumax, varmax, smax = portfolio_performance(ef)
 
-#     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
-#     efficient_risk!(ef, varmax)
-#     mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
-#     @test isapprox(mu, mumax, rtol = 5e-4)
-#     @test isapprox(sigma, varmax, rtol = 1e-3)
-#     @test isapprox(sr, smax, rtol = 1e-6)
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), weight_bounds = (-1, 1))
+    efficient_risk!(ef, varmax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mu, mumax, rtol = 5e-3)
+    @test isapprox(sigma, varmax, rtol = 5e-3)
+    @test isapprox(sr, smax, rtol = 1e-4)
 
-#     efficient_return!(ef, mumax)
-#     mu, sigma, sr = portfolio_performance(ef, rf = 0.03)
-#     @test isapprox(mu, mumax, rtol = 1e-5)
-#     @test isapprox(sigma, varmax, rtol = 1e-4)
-#     @test isapprox(sr, smax, rtol = 1e-4)
+    efficient_return!(ef, mumax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mu, mumax, rtol = 1e-5)
+    @test isapprox(sigma, varmax, rtol = 1e-4)
+    @test isapprox(sr, smax, rtol = 1e-4)
 
-#     ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), target = 0)
-#     min_risk!(ef)
-#     testweights = [
-#         -8.8369599e-09,
-#         0.0521130667306068,
-#         -5.54696556e-08,
-#         0.0032731356678013,
-#         0.0324650564450746,
-#         6.3744722e-09,
-#         3.37125568e-07,
-#         0.1255659243075475,
-#         1.633273845e-07,
-#         4.5898985e-08,
-#         0.3061337299353124,
-#         -6.68458646e-08,
-#         -1.4187474e-08,
-#         0.0967467542201713,
-#         0.004653018274916,
-#         0.0198838224019178,
-#         0.0018092577849403,
-#         0.2315968397352792,
-#         1.032235721e-07,
-#         0.1257588839643445,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 1e-1)
-#     mu, sigma, sr = portfolio_performance(ef, verbose = true)
-#     mutest, sigmatest, srtest =
-#         0.011139799284510227, 0.08497381732464267, -0.1042697738485651
-#     @test isapprox(mu, mutest, atol = 1e-2)
-#     @test isapprox(sigma, sigmatest, rtol = 1e-3)
-#     @test isapprox(sr, srtest, atol = 1e-1)
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns), target = 0)
+    min_risk!(ef)
+    testweights = [
+        -8.8369599e-09,
+        0.0521130667306068,
+        -5.54696556e-08,
+        0.0032731356678013,
+        0.0324650564450746,
+        6.3744722e-09,
+        3.37125568e-07,
+        0.1255659243075475,
+        1.633273845e-07,
+        4.5898985e-08,
+        0.3061337299353124,
+        -6.68458646e-08,
+        -1.4187474e-08,
+        0.0967467542201713,
+        0.004653018274916,
+        0.0198838224019178,
+        0.0018092577849403,
+        0.2315968397352792,
+        1.032235721e-07,
+        0.1257588839643445,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-1)
+    mu, sigma, sr = portfolio_performance(ef, verbose = true)
+    mutest, sigmatest, srtest =
+        4.8745206589257286e-5, 0.005355195554829349, -0.005572109382351622
+    @test mu ≈ mutest
+    @test sigma ≈ sigmatest
+    @test sr ≈ srtest
 
-#     ef.weights .= testweights
-#     lpAlloc, remaining =
-#         Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [3, 1, 1, 2, 15, 87, 13, 4, 3, 65, 22]
-#     @test lpAlloc.shares == testshares
+    ef.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [3, 1, 1, 2, 15, 87, 13, 4, 3, 65, 22]
+    @test lpAlloc.shares == testshares
 
-#     gAlloc, remaining =
-#         Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [86, 64, 21, 15, 13, 3, 3, 3, 1, 1, 1]
-#     @test gAlloc.shares == testshares
+    gAlloc, remaining =
+        Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [86, 64, 21, 15, 13, 3, 3, 3, 1, 1, 1]
+    @test gAlloc.shares == testshares
 
-#     max_utility!(ef)
-#     testweights = [
-#         1.100000000000000e-15,
-#         1.200000000000000e-15,
-#         1.100000000000000e-15,
-#         1.000000000000000e-15,
-#         1.200000000000000e-15,
-#         1.000000000000000e-15,
-#         5.000000000000000e-16,
-#         1.500000000000000e-15,
-#         9.999999999999784e-01,
-#         9.000000000000000e-16,
-#         1.500000000000000e-15,
-#         8.000000000000000e-16,
-#         7.000000000000000e-16,
-#         1.200000000000000e-15,
-#         9.000000000000000e-16,
-#         1.100000000000000e-15,
-#         1.000000000000000e-15,
-#         1.300000000000000e-15,
-#         5.000000000000000e-16,
-#         1.300000000000000e-15,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 1e-3)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     mutest, sigmatest, srtest = 0.091419219703374, 0.1829724238719523, 0.39032777831786586
-#     @test isapprox(mu, mutest, rtol = 1e-3)
-#     @test isapprox(sigma, sigmatest, rtol = 1e-3)
-#     @test isapprox(sr, srtest, rtol = 1e-4)
+    max_utility!(ef)
+    testweights = [
+        1.100000000000000e-15,
+        1.200000000000000e-15,
+        1.100000000000000e-15,
+        1.000000000000000e-15,
+        1.200000000000000e-15,
+        1.000000000000000e-15,
+        5.000000000000000e-16,
+        1.500000000000000e-15,
+        9.999999999999784e-01,
+        9.000000000000000e-16,
+        1.500000000000000e-15,
+        8.000000000000000e-16,
+        7.000000000000000e-16,
+        1.200000000000000e-15,
+        9.000000000000000e-16,
+        1.100000000000000e-15,
+        1.000000000000000e-15,
+        1.300000000000000e-15,
+        5.000000000000000e-16,
+        1.300000000000000e-15,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-3)
+    mu, sigma, sr = portfolio_performance(ef)
+    mutest, sigmatest, srtest =
+        0.00036247930698906614, 0.01152281097796569, 0.02463759629028793
+    @test mu ≈ mutest
+    @test sigma ≈ sigmatest
+    @test sr ≈ srtest
 
-#     ef.weights .= testweights
-#     lpAlloc, remaining =
-#         Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [334]
-#     @test lpAlloc.shares == testshares
+    ef.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [334]
+    @test lpAlloc.shares == testshares
 
-#     gAlloc, remaining =
-#         Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [334, 1]
-#     @test gAlloc.shares == testshares
+    gAlloc, remaining =
+        Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [334, 1]
+    @test gAlloc.shares == testshares
 
-#     max_utility!(ef, 2)
-#     testweights = [
-#         0.1462022850123406,
-#         1.72696369e-08,
-#         2.8627388e-09,
-#         2.761140791e-07,
-#         1.01336466e-08,
-#         2.513371e-09,
-#         0.0066277509841478,
-#         4.751995e-09,
-#         0.8471695614090771,
-#         4.6036865e-09,
-#         3.7028104e-09,
-#         2.755922e-09,
-#         1.9606178e-09,
-#         1.04848137e-08,
-#         1.19804731e-08,
-#         4.6723839e-09,
-#         6.2853476e-09,
-#         8.8590514e-09,
-#         3.23131513e-08,
-#         1.3307094e-09,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 1e-2)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     mutest, sigmatest, srtest = 0.08650132737011566, 0.16695152293028043, 0.3983271682875685
-#     @test isapprox(mu, mutest, rtol = 1e-3)
-#     @test isapprox(sigma, sigmatest, rtol = 1e-3)
-#     @test isapprox(sr, srtest, rtol = 1e-3)
+    max_utility!(ef, 2)
+    testweights = [
+        0.1462022850123406,
+        1.72696369e-08,
+        2.8627388e-09,
+        2.761140791e-07,
+        1.01336466e-08,
+        2.513371e-09,
+        0.0066277509841478,
+        4.751995e-09,
+        0.8471695614090771,
+        4.6036865e-09,
+        3.7028104e-09,
+        2.755922e-09,
+        1.9606178e-09,
+        1.04848137e-08,
+        1.19804731e-08,
+        4.6723839e-09,
+        6.2853476e-09,
+        8.8590514e-09,
+        3.23131513e-08,
+        1.3307094e-09,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-2)
+    mu, sigma, sr = portfolio_performance(ef)
+    mutest, sigmatest, srtest =
+        0.0003429692295918099, 0.010512337102958619, 0.025149905774306962
+    @test mu ≈ mutest
+    @test sigma ≈ sigmatest
+    @test sr ≈ srtest
 
-#     ef.weights .= testweights
-#     lpAlloc, remaining =
-#         Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [1, 1, 7, 284, 1, 1, 1, 1, 1]
-#     @test lpAlloc.shares == testshares
+    ef.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [1, 1, 7, 284, 1, 1, 1, 1, 1]
+    @test lpAlloc.shares == testshares
 
-#     gAlloc, remaining =
-#         Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [283, 1, 7, 1, 1, 1, 1, 1, 1]
-#     @test gAlloc.shares == testshares
+    gAlloc, remaining =
+        Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [283, 1, 7, 1, 1, 1, 1, 1, 1]
+    @test gAlloc.shares == testshares
 
-#     efficient_return!(ef, 0.09)
-#     testweights = [
-#         3.904746815385050e-02,
-#         5.923397958900000e-06,
-#         9.829962419900001e-06,
-#         4.485521037400000e-06,
-#         6.398473463000000e-06,
-#         1.058079920190000e-05,
-#         8.609310912354300e-03,
-#         9.421584972200000e-06,
-#         9.522038516156038e-01,
-#         7.426588225800000e-06,
-#         1.019932942990000e-05,
-#         9.315528047900000e-06,
-#         1.118486159000000e-05,
-#         6.553049888500000e-06,
-#         5.498591175600000e-06,
-#         8.239081503600000e-06,
-#         6.940805469200000e-06,
-#         7.319651581700000e-06,
-#         3.430088268500000e-06,
-#         1.661143469400000e-05,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 1e-2)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     mutest, sigmatest, srtest = 0.09000090563810152, 0.17811334827609804, 0.393013248673487
-#     @test isapprox(mu, mutest, rtol = 1e-4)
-#     @test isapprox(sigma, sigmatest, rtol = 1e-3)
-#     @test isapprox(sr, srtest, rtol = 1e-3)
+    efficient_return!(ef, 0.09 / 252)
+    testweights = [
+        3.904746815385050e-02,
+        5.923397958900000e-06,
+        9.829962419900001e-06,
+        4.485521037400000e-06,
+        6.398473463000000e-06,
+        1.058079920190000e-05,
+        8.609310912354300e-03,
+        9.421584972200000e-06,
+        9.522038516156038e-01,
+        7.426588225800000e-06,
+        1.019932942990000e-05,
+        9.315528047900000e-06,
+        1.118486159000000e-05,
+        6.553049888500000e-06,
+        5.498591175600000e-06,
+        8.239081503600000e-06,
+        6.940805469200000e-06,
+        7.319651581700000e-06,
+        3.430088268500000e-06,
+        1.661143469400000e-05,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-2)
+    mu, sigma, sr = portfolio_performance(ef)
+    mutest, sigmatest, srtest =
+        0.0003571336094192716, 0.011229212482586095, 0.024805717040850942
+    @test mu ≈ mutest
+    @test sigma ≈ sigmatest
+    @test sr ≈ srtest
 
-#     ef.weights .= testweights
-#     lpAlloc, remaining =
-#         Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [1, 9, 319, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-#     @test lpAlloc.shares == testshares
+    ef.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [1, 9, 319, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    @test lpAlloc.shares == testshares
 
-#     gAlloc, remaining =
-#         Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [318, 9, 1, 1, 1, 1, 1, 1, 1, 1]
-#     @test gAlloc.shares == testshares
+    gAlloc, remaining =
+        Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [318, 9, 1, 1, 1, 1, 1, 1, 1, 1]
+    @test gAlloc.shares == testshares
 
-#     efficient_risk!(ef, 0.13)
-#     testweights = [
-#         2.874750375415112e-01,
-#         6.195275902493500e-02,
-#         4.152863104000000e-07,
-#         3.754883121164440e-02,
-#         2.335468505800000e-06,
-#         4.139595347000000e-07,
-#         5.180351073718700e-03,
-#         2.282885531500000e-06,
-#         4.040036784043188e-01,
-#         8.569500938000000e-07,
-#         1.073950326300000e-06,
-#         4.148599173000000e-07,
-#         3.056287327000000e-07,
-#         5.362159168381390e-02,
-#         3.496258672140000e-05,
-#         1.238539893500000e-06,
-#         1.317666202400000e-06,
-#         6.146402530123640e-02,
-#         8.870790761308990e-02,
-#         2.002169627000000e-07,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 1e-2)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     mutest, sigmatest, srtest = 0.06959704494304779, 0.1300556974853854, 0.38135234289617415
-#     @test isapprox(mu, mutest, rtol = 5e-3)
-#     @test isapprox(sigma, sigmatest, rtol = 5e-3)
-#     @test isapprox(sr, srtest, rtol = 1e-3)
+    efficient_risk!(ef, 0.13 / sqrt(252))
+    testweights = [
+        2.874750375415112e-01,
+        6.195275902493500e-02,
+        4.152863104000000e-07,
+        3.754883121164440e-02,
+        2.335468505800000e-06,
+        4.139595347000000e-07,
+        5.180351073718700e-03,
+        2.282885531500000e-06,
+        4.040036784043188e-01,
+        8.569500938000000e-07,
+        1.073950326300000e-06,
+        4.148599173000000e-07,
+        3.056287327000000e-07,
+        5.362159168381390e-02,
+        3.496258672140000e-05,
+        1.238539893500000e-06,
+        1.317666202400000e-06,
+        6.146402530123640e-02,
+        8.870790761308990e-02,
+        2.002169627000000e-07,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 5e-2)
+    mu, sigma, sr = portfolio_performance(ef)
+    mutest, sigmatest, srtest =
+        0.00027396309257425724, 0.008136621606917017, 0.024012195727956046
+    @test mu ≈ mutest
+    @test sigma ≈ sigmatest
+    @test sr ≈ srtest
 
-#     ef.weights .= testweights
-#     lpAlloc, remaining =
-#         Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [3, 3, 2, 135, 7, 17, 8]
-#     @test lpAlloc.shares == testshares
+    ef.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [3, 3, 2, 135, 7, 17, 8]
+    @test lpAlloc.shares == testshares
 
-#     gAlloc, remaining =
-#         Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [135, 3, 8, 3, 17, 6, 2, 6, 1, 1]
-#     @test gAlloc.shares == testshares
+    gAlloc, remaining =
+        Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [135, 3, 8, 3, 17, 6, 2, 6, 1, 1]
+    @test gAlloc.shares == testshares
 
-#     ef = EffMeanSemivar(
-#         tickers,
-#         bl.post_ret,
-#         Matrix(returns),
-#         market_neutral = true,
-#         target = 0,
-#     )
-#     min_risk!(ef)
-#     testweights = [
-#         -6.87746970453e-05,
-#         -1.40007211953e-05,
-#         2.38011464746e-05,
-#         4.6974224158e-06,
-#         0.000127662765229,
-#         -0.0001817372873211,
-#         1.84999231954e-05,
-#         -2.16770346062e-05,
-#         -5.9067519062e-05,
-#         1.08932533038e-05,
-#         1.38594330145e-05,
-#         -4.04318857464e-05,
-#         -1.23208757829e-05,
-#         -7.53221096413e-05,
-#         -3.7905535553e-05,
-#         3.82318960547e-05,
-#         7.14342416822e-05,
-#         -1.0279450203e-05,
-#         0.0002096363297839,
-#         2.800705002e-06,
-#     ]
-#     @test isapprox(ef.weights, testweights, atol = 1e-1)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     mutest, sigmatest, srtest =
-#         9.68355572016792e-06, 3.830973475511849e-05, -521.8077486586869
-#     @test isapprox(mu, mutest, atol = 1e-3)
-#     @test isapprox(sigma, sigmatest, atol = 1e-2)
+    ef = EffMeanSemivar(
+        tickers,
+        bl.post_ret,
+        Matrix(returns),
+        market_neutral = true,
+        target = 0,
+    )
+    min_risk!(ef)
+    testweights = [
+        -6.87746970453e-05,
+        -1.40007211953e-05,
+        2.38011464746e-05,
+        4.6974224158e-06,
+        0.000127662765229,
+        -0.0001817372873211,
+        1.84999231954e-05,
+        -2.16770346062e-05,
+        -5.9067519062e-05,
+        1.08932533038e-05,
+        1.38594330145e-05,
+        -4.04318857464e-05,
+        -1.23208757829e-05,
+        -7.53221096413e-05,
+        -3.7905535553e-05,
+        3.82318960547e-05,
+        7.14342416822e-05,
+        -1.0279450203e-05,
+        0.0002096363297839,
+        2.800705002e-06,
+    ]
+    @test isapprox(ef.weights, testweights, atol = 1e-1)
+    mu, sigma, sr = portfolio_performance(ef)
+    mutest, sigmatest, srtest =
+        9.68355572016792e-06, 3.830973475511849e-05, -521.8077486586869
+    @test isapprox(mu, mutest, atol = 1e-3)
+    @test isapprox(sigma, sigmatest, atol = 1e-2)
 
-#     ef.weights .= testweights
-#     lpAlloc, remaining =
-#         Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [2, 2, 34, 5, 6, 10, 8, 36, -1]
-#     @test lpAlloc.shares == testshares
+    ef.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [2, 2, 34, 5, 6, 10, 8, 36, -1]
+    @test lpAlloc.shares == testshares
 
-#     gAlloc, remaining =
-#         Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [36, 2, 7, 10, 2, 37, 8, 5, 1, -1]
-#     @test gAlloc.shares == testshares
+    gAlloc, remaining =
+        Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [36, 2, 7, 10, 2, 37, 8, 5, 1, -1]
+    @test gAlloc.shares == testshares
 
-#     max_utility!(ef)
-#     testweights = [
-#         0.9999999987191048,
-#         0.8025061567310201,
-#         -0.9999999983660633,
-#         0.6315188600428658,
-#         0.4922749743437155,
-#         -0.9999999990605686,
-#         0.1762382499326327,
-#         -0.733252470272586,
-#         0.9999999993131146,
-#         -0.2585591997727487,
-#         -0.9999999983706372,
-#         -0.2591719865317014,
-#         -0.1281535712856913,
-#         0.4788874233441203,
-#         -0.0263096469774795,
-#         -0.0874576034104335,
-#         -0.4552360118252822,
-#         0.3667148242725146,
-#         0.9999999989095066,
-#         -0.9999999997354032,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 1e-2)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     mutest, sigmatest, srtest = 0.3695444374167076, 0.4300511641888641, 0.8127973286062292
-#     @test isapprox(mu, mutest, rtol = 1e-3)
-#     @test isapprox(sigma, sigmatest, rtol = 1e-3)
-#     @test isapprox(sr, srtest, rtol = 1e-3)
+    max_utility!(ef)
+    testweights = [
+        0.9999999987191048,
+        0.8025061567310201,
+        -0.9999999983660633,
+        0.6315188600428658,
+        0.4922749743437155,
+        -0.9999999990605686,
+        0.1762382499326327,
+        -0.733252470272586,
+        0.9999999993131146,
+        -0.2585591997727487,
+        -0.9999999983706372,
+        -0.2591719865317014,
+        -0.1281535712856913,
+        0.4788874233441203,
+        -0.0263096469774795,
+        -0.0874576034104335,
+        -0.4552360118252822,
+        0.3667148242725146,
+        0.9999999989095066,
+        -0.9999999997354032,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-2)
+    mu, sigma, sr = portfolio_performance(ef)
+    mutest, sigmatest, srtest =
+        0.0014675481684477804, 0.027106278640627462, 0.05124138377229412
+    @test mu ≈ mutest
+    @test sigma ≈ sigmatest
+    @test sr ≈ srtest
 
-#     ef.weights .= testweights
-#     lpAlloc, remaining =
-#         Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [
-#         1,
-#         8,
-#         6,
-#         1,
-#         30,
-#         57,
-#         11,
-#         17,
-#         15,
-#         -60,
-#         -771,
-#         -85,
-#         -66,
-#         -284,
-#         -155,
-#         -387,
-#         -17,
-#         -12,
-#         -27,
-#         -168,
-#     ]
-#     @test lpAlloc.shares == testshares
+    ef.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [
+        1,
+        8,
+        6,
+        1,
+        30,
+        57,
+        11,
+        17,
+        15,
+        -60,
+        -771,
+        -85,
+        -66,
+        -284,
+        -155,
+        -387,
+        -17,
+        -12,
+        -27,
+        -168,
+    ]
+    @test lpAlloc.shares == testshares
 
-#     gAlloc, remaining =
-#         Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [
-#         57,
-#         15,
-#         1,
-#         8,
-#         6,
-#         1,
-#         11,
-#         17,
-#         30,
-#         -168,
-#         -771,
-#         -284,
-#         -60,
-#         -85,
-#         -27,
-#         -154,
-#         -66,
-#         -389,
-#         -12,
-#         -17,
-#     ]
-#     @test gAlloc.shares == testshares
+    gAlloc, remaining =
+        Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [
+        57,
+        15,
+        1,
+        8,
+        6,
+        1,
+        11,
+        17,
+        30,
+        -168,
+        -771,
+        -284,
+        -60,
+        -85,
+        -27,
+        -154,
+        -66,
+        -389,
+        -12,
+        -17,
+    ]
+    @test gAlloc.shares == testshares
 
-#     max_utility!(ef, 2)
-#     testweights = [
-#         0.9999999857360712,
-#         0.4685479704127186,
-#         -0.8592431647111499,
-#         0.2920727402492227,
-#         0.3445846893910677,
-#         -0.999999984329561,
-#         0.0734859850410818,
-#         -0.172920245654445,
-#         0.9999999347257726,
-#         -0.2143822719074016,
-#         -0.937463177415737,
-#         -0.1008400899077779,
-#         -0.0510006884730285,
-#         0.2396024358477434,
-#         -0.0269876564283418,
-#         -0.038065236125291,
-#         -0.314010116118947,
-#         0.2966189911453665,
-#         0.9999998963472027,
-#         -0.9999999978245666,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 1e-2)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     mutest, sigmatest, srtest = 0.3248302531838691, 0.3470639260949393, 0.8783115451200273
-#     @test isapprox(mu, mutest, rtol = 1e-3)
-#     @test isapprox(sigma, sigmatest, rtol = 1e-3)
-#     @test isapprox(sr, srtest, rtol = 1e-4)
+    max_utility!(ef, 2)
+    testweights = [
+        0.9999999857360712,
+        0.4685479704127186,
+        -0.8592431647111499,
+        0.2920727402492227,
+        0.3445846893910677,
+        -0.999999984329561,
+        0.0734859850410818,
+        -0.172920245654445,
+        0.9999999347257726,
+        -0.2143822719074016,
+        -0.937463177415737,
+        -0.1008400899077779,
+        -0.0510006884730285,
+        0.2396024358477434,
+        -0.0269876564283418,
+        -0.038065236125291,
+        -0.314010116118947,
+        0.2966189911453665,
+        0.9999998963472027,
+        -0.9999999978245666,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-2)
+    mu, sigma, sr = portfolio_performance(ef)
+    mutest, sigmatest, srtest =
+        0.0012893686628308249, 0.021861187259986887, 0.05538508528593527
+    @test mu ≈ mutest
+    @test sigma ≈ sigmatest
+    @test sr ≈ srtest
 
-#     ef.weights .= testweights
-#     lpAlloc, remaining =
-#         Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [
-#         2,
-#         5,
-#         2,
-#         1,
-#         12,
-#         69,
-#         6,
-#         16,
-#         19,
-#         -52,
-#         -772,
-#         -20,
-#         -55,
-#         -266,
-#         -61,
-#         -156,
-#         -18,
-#         -5,
-#         -18,
-#         -168,
-#     ]
-#     @test lpAlloc.shares == testshares
+    ef.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [
+        2,
+        5,
+        2,
+        1,
+        12,
+        69,
+        6,
+        16,
+        19,
+        -52,
+        -772,
+        -20,
+        -55,
+        -266,
+        -61,
+        -156,
+        -18,
+        -5,
+        -18,
+        -168,
+    ]
+    @test lpAlloc.shares == testshares
 
-#     gAlloc, remaining =
-#         Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares = [
-#         2,
-#         70,
-#         19,
-#         6,
-#         17,
-#         4,
-#         7,
-#         15,
-#         -168,
-#         -771,
-#         -265,
-#         -52,
-#         -18,
-#         -55,
-#         -20,
-#         -60,
-#         -154,
-#         -6,
-#         -18,
-#     ]
-#     @test gAlloc.shares == testshares
+    gAlloc, remaining =
+        Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares = [
+        2,
+        70,
+        19,
+        6,
+        17,
+        4,
+        7,
+        15,
+        -168,
+        -771,
+        -265,
+        -52,
+        -18,
+        -55,
+        -20,
+        -60,
+        -154,
+        -6,
+        -18,
+    ]
+    @test gAlloc.shares == testshares
 
-#     efficient_return!(ef, 0.09)
-#     testweights = [
-#         0.26587342118737,
-#         0.0965371129134666,
-#         -0.1083440586709533,
-#         0.0472631405569012,
-#         0.0925397377541989,
-#         -0.16577616699613,
-#         0.0072119213407655,
-#         0.0227400114825395,
-#         0.10350347319794,
-#         -0.0071334231129069,
-#         -0.0883015612045468,
-#         0.0134635120313752,
-#         -0.0009731371433595,
-#         0.010494163524052,
-#         -0.0066909561294794,
-#         0.0173324674445928,
-#         -0.0122390919128145,
-#         0.0763576474308947,
-#         0.232051643617103,
-#         -0.5959098573110091,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 5e-2)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     mutest, sigmatest, srtest = 0.0900000005909446, 0.08157952690824329, 0.8580584276944535
-#     @test isapprox(mu, mutest, rtol = 1e-4)
-#     @test isapprox(sigma, sigmatest, rtol = 1e-3)
-#     @test isapprox(sr, srtest, rtol = 1e-3)
+    efficient_return!(ef, 0.09 / 252)
+    testweights = [
+        0.26587342118737,
+        0.0965371129134666,
+        -0.1083440586709533,
+        0.0472631405569012,
+        0.0925397377541989,
+        -0.16577616699613,
+        0.0072119213407655,
+        0.0227400114825395,
+        0.10350347319794,
+        -0.0071334231129069,
+        -0.0883015612045468,
+        0.0134635120313752,
+        -0.0009731371433595,
+        0.010494163524052,
+        -0.0066909561294794,
+        0.0173324674445928,
+        -0.0122390919128145,
+        0.0763576474308947,
+        0.232051643617103,
+        -0.5959098573110091,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 5e-2)
+    mu, sigma, sr = portfolio_performance(ef)
+    mutest, sigmatest, srtest =
+        0.0003571501978227821, 0.005139043300749973, 0.05420566427169036
+    @test mu ≈ mutest
+    @test sigma ≈ sigmatest
+    @test sr ≈ srtest
 
-#     ef.weights .= testweights
-#     lpAlloc, remaining =
-#         Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares =
-#         [2, 6, 3, 1, 7, 3, 35, 7, 2, 3, 22, 21, -6, -128, -2, -26, -3, -5, -1, -100]
-#     @test lpAlloc.shares == testshares
+    ef.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares =
+        [2, 6, 3, 1, 7, 3, 35, 7, 2, 3, 22, 21, -6, -128, -2, -26, -3, -5, -1, -100]
+    @test lpAlloc.shares == testshares
 
-#     gAlloc, remaining =
-#         Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares =
-#         [2, 21, 35, 6, 1, 21, 3, 3, 3, 8, 2, 8, -100, -128, -6, -25, -1, -2, -5, -3]
-#     @test gAlloc.shares == testshares
+    gAlloc, remaining =
+        Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares =
+        [2, 21, 35, 6, 1, 21, 3, 3, 3, 8, 2, 8, -100, -128, -6, -25, -1, -2, -5, -3]
+    @test gAlloc.shares == testshares
 
-#     efficient_risk!(ef, 0.13)
-#     testweights = [
-#         0.4238401998849985,
-#         0.1538686236477102,
-#         -0.1727359058771851,
-#         0.0753461438850074,
-#         0.1475612389187346,
-#         -0.2642402283037698,
-#         0.0115008067529429,
-#         0.0362772030456925,
-#         0.1649564844571324,
-#         -0.0113530132083892,
-#         -0.1407414688712099,
-#         0.0214516748483527,
-#         -0.0015593312594264,
-#         0.0166505514359901,
-#         -0.0106664370188864,
-#         0.0276341390914952,
-#         -0.0195065353158665,
-#         0.1216951812979697,
-#         0.3699322405966654,
-#         -0.9499115680157854,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 1e-3)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     mutest, sigmatest, srtest = 0.14346415547400485, 0.1300415327156715, 0.9494209495665686
-#     @test isapprox(mu, mutest, rtol = 5e-3)
-#     @test isapprox(sigma, sigmatest, rtol = 1e-3)
-#     @test isapprox(sr, srtest, rtol = 5e-4)
+    efficient_risk!(ef, 0.13 / sqrt(252))
+    testweights = [
+        0.4238401998849985,
+        0.1538686236477102,
+        -0.1727359058771851,
+        0.0753461438850074,
+        0.1475612389187346,
+        -0.2642402283037698,
+        0.0115008067529429,
+        0.0362772030456925,
+        0.1649564844571324,
+        -0.0113530132083892,
+        -0.1407414688712099,
+        0.0214516748483527,
+        -0.0015593312594264,
+        0.0166505514359901,
+        -0.0106664370188864,
+        0.0276341390914952,
+        -0.0195065353158665,
+        0.1216951812979697,
+        0.3699322405966654,
+        -0.9499115680157854,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 5e-3)
+    mu, sigma, sr = portfolio_performance(ef)
+    mutest, sigmatest, srtest =
+        0.00056832498954627, 0.008176190287484111, 0.05989831820711182
+    @test mu ≈ mutest
+    @test sigma ≈ sigmatest
+    @test sr ≈ srtest
 
-#     ef.weights .= testweights
-#     lpAlloc, remaining =
-#         Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares =
-#         [2, 6, 3, 1, 7, 3, 35, 7, 2, 3, 22, 21, -10, -204, -3, -40, -8, -11, -1, -160]
-#     @test lpAlloc.shares == testshares
+    ef.weights .= testweights
+    lpAlloc, remaining =
+        Allocation(LP(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares =
+        [2, 6, 3, 1, 7, 3, 35, 7, 2, 3, 22, 21, -10, -204, -3, -40, -8, -11, -1, -160]
+    @test lpAlloc.shares == testshares
 
-#     gAlloc, remaining =
-#         Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
-#     testshares =
-#         [2, 21, 35, 6, 1, 21, 3, 3, 3, 8, 2, 8, -159, -204, -11, -39, -1, -3, -7, -4]
-#     @test gAlloc.shares == testshares
+    gAlloc, remaining =
+        Allocation(Greedy(), ef, Vector(df[end, ef.tickers]); investment = 10000)
+    testshares =
+        [2, 21, 35, 6, 1, 21, 3, 3, 3, 8, 2, 8, -159, -204, -11, -39, -1, -3, -7, -4]
+    @test gAlloc.shares == testshares
 
-#     # L1 Regularisation
-#     mean_ret = ret_model(MRet(), Matrix(returns))
-#     S = cov(Cov(), Matrix(returns))
-#     n = length(tickers)
-#     prev_weights = fill(1 / n, n)
+    # L1 Regularisation
+    mean_ret = ret_model(MRet(), Matrix(returns))
+    S = cov(Cov(), Matrix(returns))
+    n = length(tickers)
+    prev_weights = fill(1 / n, n)
 
-#     k = 0.00001 * 252
-#     ef = EffMeanSemivar(
-#         tickers,
-#         mean_ret,
-#         Matrix(returns);
-#         target = 0,
-#         extra_vars = [:(0 <= l1)],
-#         extra_constraints = [
-#             :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
-#             # :(model[:w][6] == 0.2),
-#             # :(model[:w][1] >= 0.01),
-#             # :(model[:w][16] <= 0.03),
-#         ],
-#         extra_obj_terms = [quote
-#             $k * model[:l1]
-#         end],
-#     )
-#     min_risk!(ef)
-#     testweights = [
-#         0.05000003815106,
-#         0.0500000323406222,
-#         0.0305470536068529,
-#         0.0119165898801848,
-#         0.0499999897938178,
-#         0.0500000778586521,
-#         -9.70902283e-08,
-#         0.1050006178939432,
-#         -1.074573985e-07,
-#         0.0217993269186788,
-#         0.2267216752364789,
-#         4.54544546e-08,
-#         2.475203931e-07,
-#         0.0500000608483738,
-#         0.0195085389944512,
-#         0.0500000224593989,
-#         0.050000026895504,
-#         0.1345057919377536,
-#         0.0499999927807392,
-#         0.0500000757003792,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 5e-2)
+    k = 0.00001
+    ef = EffMeanSemivar(
+        tickers,
+        mean_ret,
+        Matrix(returns);
+        target = 0,
+        extra_vars = [:(0 <= l1)],
+        extra_constraints = [
+            :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
+            # :(model[:w][6] == 0.2),
+            # :(model[:w][1] >= 0.01),
+            # :(model[:w][16] <= 0.03),
+        ],
+        extra_obj_terms = [quote
+            $k * model[:l1]
+        end],
+    )
+    min_risk!(ef)
+    testweights = [
+        0.05000003815106,
+        0.0500000323406222,
+        0.0305470536068529,
+        0.0119165898801848,
+        0.0499999897938178,
+        0.0500000778586521,
+        -9.70902283e-08,
+        0.1050006178939432,
+        -1.074573985e-07,
+        0.0217993269186788,
+        0.2267216752364789,
+        4.54544546e-08,
+        2.475203931e-07,
+        0.0500000608483738,
+        0.0195085389944512,
+        0.0500000224593989,
+        0.050000026895504,
+        0.1345057919377536,
+        0.0499999927807392,
+        0.0500000757003792,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 5e-2)
 
-#     max_utility!(ef)
-#     testweights = [
-#         -1.926600572e-07,
-#         -4.32976813e-08,
-#         -2.100198937e-07,
-#         -2.227540243e-07,
-#         0.9999993287957882,
-#         1.339119054e-07,
-#         -1.90544883e-07,
-#         2.103890502e-07,
-#         2.02309627e-08,
-#         4.75400441e-08,
-#         2.628872504e-07,
-#         -6.86900634e-08,
-#         1.741756607e-07,
-#         1.917324164e-07,
-#         1.195934128e-07,
-#         1.58547084e-07,
-#         -1.05257917e-08,
-#         2.052601162e-07,
-#         9.02686384e-08,
-#         -5.2371344e-09,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 1e-4)
+    max_utility!(ef)
+    testweights = [
+        -1.926600572e-07,
+        -4.32976813e-08,
+        -2.100198937e-07,
+        -2.227540243e-07,
+        0.9999993287957882,
+        1.339119054e-07,
+        -1.90544883e-07,
+        2.103890502e-07,
+        2.02309627e-08,
+        4.75400441e-08,
+        2.628872504e-07,
+        -6.86900634e-08,
+        1.741756607e-07,
+        1.917324164e-07,
+        1.195934128e-07,
+        1.58547084e-07,
+        -1.05257917e-08,
+        2.052601162e-07,
+        9.02686384e-08,
+        -5.2371344e-09,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 1e-4)
 
-#     efficient_return!(ef, 0.17)
-#     testweights = [
-#         0.0500000020066915,
-#         0.050000024220804,
-#         0.0499999820760388,
-#         0.0129296743862539,
-#         0.125422488440367,
-#         1.58893521e-07,
-#         3.848623616e-07,
-#         0.0926245150180408,
-#         0.0111676929257631,
-#         0.0193112602977583,
-#         0.2152467221514765,
-#         6.67588294e-08,
-#         1.043403337e-07,
-#         0.0500000617361081,
-#         3.382072052e-07,
-#         0.049999966749425,
-#         0.0499999984345341,
-#         0.1232965674920904,
-#         0.0499999660885184,
-#         0.0500000247739652,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 5e-2)
+    efficient_return!(ef, 1.17^(1 / 252) - 1)
+    testweights = [
+        0.048243135588022394,
+        0.05005015448888129,
+        0.04950738917530671,
+        0.013508969423008067,
+        0.14612074950023246,
+        5.161083914557875e-5,
+        0.00020386952047784184,
+        0.0794989456777301,
+        0.014025026462612935,
+        0.018565248696993213,
+        0.21031304840072806,
+        2.3540968703639644e-5,
+        1.1619378307027638e-5,
+        0.049896168124027404,
+        2.0172531262396392e-5,
+        0.050739534329305475,
+        0.050232893750889594,
+        0.118803721194177,
+        0.05000934982112427,
+        0.05017485212906453,
+    ]
+    @test isapprox(ef.weights, testweights, rtol = 5e-2)
 
-#     efficient_risk!(ef, 0.13)
-#     testweights = [
-#         3.329183953e-07,
-#         9.835480279e-07,
-#         5.250592795e-07,
-#         3.243999157e-07,
-#         0.5778004406239079,
-#         1.522240624e-07,
-#         5.005016494e-07,
-#         2.4055191111e-06,
-#         5.712576846e-07,
-#         3.741311414e-07,
-#         0.0607364237999792,
-#         9.86216476e-08,
-#         7.53996833e-08,
-#         3.345659355e-07,
-#         8.62979338e-08,
-#         0.1264635025652296,
-#         0.1651783353678204,
-#         1.01678964876e-05,
-#         0.0698034082988953,
-#         9.565700518e-07,
-#     ]
-#     @test isapprox(ef.weights, testweights, rtol = 5e-3)
+    efficient_risk!(ef, 0.13 / sqrt(252))
+    testweights = [
+        6.446548926626026e-6,
+        2.3069734505128152e-5,
+        1.1209416248366952e-5,
+        6.328326555291172e-6,
+        0.554876423425052,
+        2.1111052484695074e-6,
+        9.774524119877544e-6,
+        3.489779052250414e-5,
+        1.041313825931083e-5,
+        6.479023479848044e-6,
+        0.03673192054364961,
+        1.4210013701492194e-6,
+        8.529296844084627e-7,
+        4.8646790787061755e-6,
+        1.0498564580430158e-6,
+        0.13235577066930504,
+        0.19466813411537295,
+        0.00013420077214587974,
+        0.08109324747504564,
+        2.1384924972134433e-5,
+    ]
+    @test ef.weights ≈ testweights
 
-#     k = 0.00001 * 252
-#     ef = EffMeanSemivar(
-#         tickers,
-#         mean_ret,
-#         Matrix(returns);
-#         target = 0,
-#         extra_vars = [:(0 <= l1)],
-#         extra_constraints = [
-#             :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
-#             # :(model[:w][6] == 0.2),
-#             # :(model[:w][1] >= 0.01),
-#             # :(model[:w][16] <= 0.03),
-#         ],
-#         extra_obj_terms = [quote
-#             $k * model[:l1]
-#         end],
-#     )
-#     max_sharpe!(ef)
-#     mumax, sigmamax, srmax = portfolio_performance(ef, verbose = true)
+    k = 0.00001
+    ef = EffMeanSemivar(
+        tickers,
+        mean_ret,
+        Matrix(returns);
+        target = 0,
+        extra_vars = [:(0 <= l1)],
+        extra_constraints = [
+            :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
+            # :(model[:w][6] == 0.2),
+            # :(model[:w][1] >= 0.01),
+            # :(model[:w][16] <= 0.03),
+        ],
+        extra_obj_terms = [quote
+            $k * model[:l1]
+        end],
+    )
+    max_sharpe!(ef)
+    mumax, sigmamax, srmax = portfolio_performance(ef, verbose = true)
 
-#     k = 0.00001 * 252
-#     ef = EffMeanSemivar(
-#         tickers,
-#         mean_ret,
-#         Matrix(returns);
-#         target = 0,
-#         extra_vars = [:(0 <= l1)],
-#         extra_constraints = [
-#             :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
-#             # :(model[:w][6] == 0.2),
-#             # :(model[:w][1] >= 0.01),
-#             # :(model[:w][16] <= 0.03),
-#         ],
-#         extra_obj_terms = [quote
-#             $k * model[:l1]
-#         end],
-#     )
-#     efficient_return!(ef, mumax)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     @test isapprox(mumax, mu, rtol = 1e-4)
-#     @test isapprox(sigmamax, sigma, rtol = 1e-2)
-#     @test isapprox(srmax, sr, rtol = 1e-2)
+    k = 0.00001
+    ef = EffMeanSemivar(
+        tickers,
+        mean_ret,
+        Matrix(returns);
+        target = 0,
+        extra_vars = [:(0 <= l1)],
+        extra_constraints = [
+            :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
+            # :(model[:w][6] == 0.2),
+            # :(model[:w][1] >= 0.01),
+            # :(model[:w][16] <= 0.03),
+        ],
+        extra_obj_terms = [quote
+            $k * model[:l1]
+        end],
+    )
+    efficient_return!(ef, mumax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mumax, mu, rtol = 1e-4)
+    @test isapprox(sigmamax, sigma, rtol = 1e-2)
+    @test isapprox(srmax, sr, rtol = 1e-2)
 
-#     efficient_risk!(ef, sigmamax)
-#     mu, sigma, sr = portfolio_performance(ef)
-#     @test isapprox(mumax, mu, rtol = 1e-3)
-#     @test isapprox(sigmamax, sigma, rtol = 1e-3)
-#     @test isapprox(srmax, sr, rtol = 1e-4)
+    efficient_risk!(ef, sigmamax)
+    mu, sigma, sr = portfolio_performance(ef)
+    @test isapprox(mumax, mu, rtol = 5e-3)
+    @test isapprox(sigmamax, sigma, rtol = 5e-3)
+    @test isapprox(srmax, sr, rtol = 1e-4)
 
-#     k = 0.00001 * 252
-#     ef = EffMeanSemivar(
-#         tickers,
-#         mean_ret,
-#         Matrix(returns);
-#         target = 0,
-#         extra_vars = [:(0 <= l1)],
-#         extra_constraints = [
-#             :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
-#             :(model[:w][6] == 0.2),
-#             :(model[:w][1] >= 0.01),
-#             :(model[:w][16] <= 0.03),
-#         ],
-#         extra_obj_terms = [quote
-#             $k * model[:l1]
-#         end],
-#     )
-#     max_sharpe!(ef, -0.01)
+    k = 0.00001
+    ef = EffMeanSemivar(
+        tickers,
+        mean_ret,
+        Matrix(returns);
+        target = 0,
+        extra_vars = [:(0 <= l1)],
+        extra_constraints = [
+            :([model[:l1]; (model[:w] - $prev_weights)] in MOI.NormOneCone($(n + 1))),
+            :(model[:w][6] == 0.2),
+            :(model[:w][1] >= 0.01),
+            :(model[:w][16] <= 0.03),
+        ],
+        extra_obj_terms = [quote
+            $k * model[:l1]
+        end],
+    )
+    max_sharpe!(ef)
 
-#     @test ef.weights[6] ≈ 0.2
-#     @test ef.weights[1] >= 0.01
-#     @test ef.weights[16] <= 0.03
-# end
+    @test ef.weights[6] ≈ 0.2
+    @test ef.weights[1] >= 0.01
+    @test ef.weights[16] <= 0.03
+end
 
 # @testset "Efficient CVaR" begin
 #     df = CSV.read("./assets/stock_prices.csv", DataFrame)
