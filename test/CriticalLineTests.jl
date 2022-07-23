@@ -50,7 +50,7 @@ using PortfolioOptimiser
     mu, sigma, sr = portfolio_performance(cla, verbose = true)
     @test mu ≈ port_return(cla.weights, cla.mean_ret)
     @test sigma ≈ sqrt(port_variance(cla.weights, cla.cov_mtx))
-    @test sr ≈ (mu - 0.02) / sigma
+    @test sr ≈ (mu - (1.02^(1 / 252) - 1)) / sigma
 
     min_risk!(cla)
     @test cla.weights ≈ [0.24057164, 0.24734146, 0.25785421, 0.25423269]
