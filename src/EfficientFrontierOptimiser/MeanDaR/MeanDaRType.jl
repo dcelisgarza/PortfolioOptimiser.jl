@@ -21,7 +21,7 @@ function EffMeanDaR(
     mean_ret,
     returns;
     weight_bounds = (0.0, 1.0),
-    rf = 0.02,
+    rf = 1.02^(1 / 252) - 1,
     market_neutral = false,
     risk_aversion = 1.0,
     target_risk = mean(maximum(returns, dims = 2)),

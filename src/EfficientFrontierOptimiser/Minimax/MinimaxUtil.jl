@@ -21,7 +21,7 @@ function portfolio_performance(portfolio::EffMinimax; rf = portfolio.rf, verbose
 
         if verbose
             println(term_status)
-            println("Expected annual return: $(round(100*μ, digits=2)) %")
+            println("Expected return: $(round(100*μ, digits=2)) %")
             println("Worst realisation: $(round(100*minimax, digits=2)) %")
             println("Sharpe Ratio: $(round((μ-rf)/minimax, digits=3))")
         end

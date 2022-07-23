@@ -1,16 +1,15 @@
 abstract type AbstractHRPOpt <: AbstractPortfolioOptimiser end
 
-struct HRPOpt{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10} <: AbstractHRPOpt
+struct HRPOpt{T1, T2, T3, T4, T5, T6, T7, T8, T9} <: AbstractHRPOpt
     tickers::T1
     mean_ret::T2
     weights::T3
     returns::T4
     cov_mtx::T5
     rf::T6
-    freq::T7
-    risk_aversion::T8
-    linkage::T9
-    clusters::T10
+    risk_aversion::T7
+    linkage::T8
+    clusters::T9
 end
 function HRPOpt(
     tickers::AbstractVector{<:AbstractString};
@@ -18,8 +17,7 @@ function HRPOpt(
     returns = nothing,
     cov_mtx = nothing,
     mean_ret = nothing,
-    rf = 0.02,
-    freq = 252,
+    rf = 1.02^(1 / 252) - 1,
     risk_aversion = 1,
     D = :default,
 )
@@ -61,7 +59,6 @@ function HRPOpt(
         returns,
         cov_mtx,
         rf,
-        freq,
         risk_aversion,
         linkage,
         clusters,

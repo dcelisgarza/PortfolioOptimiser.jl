@@ -34,9 +34,9 @@ function portfolio_performance(portfolio::EffMaxDaR; rf = portfolio.rf, verbose 
 
         if verbose
             println(term_status)
-            println("Expected annual return: $(round(100*μ, digits=2)) %")
+            println("Expected return: $(round(100*μ, digits=2)) %")
             println("Maximum Drawdown at Risk: $(round(100*alpha, digits=2)) %")
-            println("Ratio: $(round((μ-rf)/alpha, digits=3))")
+            println("Sharpe ratio: $(round((μ-rf)/alpha, digits=3))")
         end
 
         return μ, alpha

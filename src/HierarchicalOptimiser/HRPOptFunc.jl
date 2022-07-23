@@ -209,10 +209,8 @@ end
 
 function _get_mean_ret(portfolio, cluster1_idx, cluster2_idx)
     if isnothing(portfolio.mean_ret)
-        mean_ret1 =
-            ret_model(MRet(), portfolio.returns[:, cluster1_idx], freq = portfolio.freq)
-        mean_ret2 =
-            ret_model(MRet(), portfolio.returns[:, cluster2_idx], freq = portfolio.freq)
+        mean_ret1 = ret_model(MRet(), portfolio.returns[:, cluster1_idx])
+        mean_ret2 = ret_model(MRet(), portfolio.returns[:, cluster2_idx])
     else
         mean_ret1 = portfolio.mean_ret[cluster1_idx]
         mean_ret2 = portfolio.mean_ret[cluster2_idx]
