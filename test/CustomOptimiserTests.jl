@@ -241,7 +241,7 @@ end
     push!(extra_vars, (cd.model[:z], fill(1 / length(cd.model[:z]), length(cd.model[:z]))))
     custom_nloptimiser!(cd, cdar_ratio, obj_params, extra_vars)
     mu, cdar1 = portfolio_performance(cd)
-    @test mu / cdar1 ≈ 0.01111523004929159
+    @test isapprox(mu / cdar1, 0.01111523004929159, rtol = 1e-4)
 
     cd2 = EffCDaR(tickers, mean_ret, Matrix(returns))
     min_risk!(cd2)
