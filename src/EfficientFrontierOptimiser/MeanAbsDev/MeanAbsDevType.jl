@@ -15,7 +15,6 @@ struct EffMeanAbsDev{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14
     mean_ret::T2
     weights::T3
     returns::T4
-    freq::T5
     target::T6
     rf::T7
     market_neutral::T8
@@ -36,7 +35,6 @@ Structure for a mean-semivariance portfolio.
 - `weights`: weight of each ticker in the portfolio.
 - `returns`: asset historical returns.
 - `target`: returns target, to differentiate between "downside" (less than `target`) and "upside" (greater than `target`) returns.
-- `freq`: frequency of returns.
 - `rf`: risk free rate.
 - `market_neutral`: whether a portfolio is market neutral or not. Used in [`max_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
 - `risk_aversion`: risk aversion parameter. Used in [`max_utility!`](@ref).
@@ -47,23 +45,22 @@ Structure for a mean-semivariance portfolio.
 - `extra_obj_terms`: extra objective terms for the model.
 - `model`: model for optimising portfolio.
 """
-struct EffMeanAbsDev{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15} <:
+struct EffMeanAbsDev{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
        AbstractEffMeanAbsDev
     tickers::T1
     mean_ret::T2
     weights::T3
     returns::T4
-    freq::T5
-    target::T6
-    rf::T7
-    market_neutral::T8
-    risk_aversion::T9
-    target_risk::T10
-    target_ret::T11
-    extra_vars::T12
-    extra_constraints::T13
-    extra_obj_terms::T14
-    model::T15
+    target::T5
+    rf::T6
+    market_neutral::T7
+    risk_aversion::T8
+    target_risk::T9
+    target_ret::T10
+    extra_vars::T11
+    extra_constraints::T12
+    extra_obj_terms::T13
+    model::T14
 end
 
 """
@@ -73,9 +70,8 @@ EffMeanAbsDev(
     mean_ret,
     returns;
     weight_bounds = (0.0, 1.0),
-    freq = 252,
     target = 1.02^(1 / 252) - 1,
-    rf = 0.02,
+    rf = 1.02^(1/252) - 1,
     market_neutral = false,
     risk_aversion = 1.0,
     target_risk = std(returns),
@@ -93,8 +89,7 @@ Create an [`EffMeanAbsDev`](@ref) structure to be optimised via JuMP.
 - `returns`: asset historical returns.
 - `weight_bounds`: weight bounds for tickers. If it's a Tuple of length 2, the first entry will be the lower bound for all weights, the second entry will be the upper bound for all weights. If it's a vector, its length must be equal to that of `tickers`, each element must be a tuple of length 2. In that case, each tuple corresponds to the lower and upper bounds for the corresponding ticker. See [`_create_weight_bounds`](@ref) for further details.
 - `target`: returns target, to differentiate between "downside" (less than `target`) and "upside" (greater than `target`) returns.
-- `freq`: frequency of returns.
-- `rf`: risk free rate. Must be consistent with `freq`. The default value assumes daily returns.
+- `rf`: risk free rate. Must be consistent with the return frequency. The default value assumes daily returns.
 - `market_neutral`: whether a portfolio is market neutral or not. If it is market neutral, the sum of the weights will be equal to 0, else the sum will be equal to 1. Used in [`max_utility!`](@ref), [`efficient_risk!`](@ref), [`efficient_return!`](@ref).
 - `risk_aversion`: risk aversion parameter, the larger it is, the lower the risk. Used in [`max_utility!`](@ref).
 - `target_risk`: target volatility parameter. Used in [`efficient_risk!`](@ref).
@@ -108,14 +103,12 @@ function EffMeanAbsDev(
     mean_ret,
     returns;
     weight_bounds = (0.0, 1.0),
-    freq = 252,
-    target = !isnothing(mean_ret) ? reshape(mean_ret, 1, :) / freq :
-             mean(returns, dims = 1),
-    rf = 0.02,
+    target = !isnothing(mean_ret) ? reshape(mean_ret, 1, :) : mean(returns, dims = 1),
+    rf = 1.02^(1 / 252) - 1,
     market_neutral = false,
     risk_aversion = 1.0,
     target_risk = sum((returns .- target) * fill(1 / size(returns, 2), size(returns, 2))) /
-                  size(returns, 1) * freq,
+                  size(returns, 1),
     target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
     extra_vars = [],
     extra_constraints = [],
@@ -158,14 +151,13 @@ function EffMeanAbsDev(
 
     # Return and risk.
     !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
-    @expression(model, risk, sum(n) / samples * freq)
+    @expression(model, risk, sum(n) / samples)
 
     return EffMeanAbsDev(
         tickers,
         mean_ret,
         weights,
         returns,
-        freq,
         target,
         rf,
         market_neutral,

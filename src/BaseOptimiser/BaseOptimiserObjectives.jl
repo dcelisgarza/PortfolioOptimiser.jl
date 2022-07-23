@@ -38,13 +38,13 @@ end
 
 """
 ```
-sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 0.02)
+sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 1.02^(1/252)-1)
 ```
 
 Computes the portfolio's Sharpe ratio given the weights `w`, mean returns `mean_ret`, covariance matrix `cov_mtx`, and risk free rate `rf`.
 
 ```
-sharpe_ratio(μ, σ, rf::Real = 0.02)
+sharpe_ratio(μ, σ, rf::Real = 1.02^(1/252)-1)
 ```
 
 Computes the Sharpe ratio given the return `μ`, standard deviation `σ`, and risk free rate `rf`.
@@ -60,46 +60,46 @@ where ``\\mu`` the portfolio's return (see [`port_return`](@ref)), and ``\\sigma
 !!! note
     The Sharpe ratio penalises large swings in both directions, so assets that tend to have large increases in value are disproportionally penalised by this measure. The Sortino ratio has the same formula but uses an adjusted covariance matrix that accounts only for the negative fluctuations in value. The semicovariance is implemented by [`cov`](@ref) when given `SCov()` or `ESCov()` as its first argument. The Mean-Semivariance optimisations [`EffMeanSemivar`](@ref) make the adjustment too.
 """
-function sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 0.02)
+function sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 1.02^(1 / 252) - 1)
     μ = port_return(w, mean_ret)
     σ = sqrt(port_variance(w, cov_mtx))
     return (μ - rf) / σ
 end
-function sharpe_ratio(μ, σ, rf::Real = 0.02)
+function sharpe_ratio(μ, σ, rf::Real = 1.02^(1 / 252) - 1^(1 / 252) - 1)
     return (μ - rf) / σ
 end
 
 """
 ```
-port_semivar(w, returns, target = 0, freq = 252)
+port_semivar(w, returns, target = 0)
 ```
 
-Compute the semivariance from the weights `w`, historical returns `returns`, according to the target `target`, and frequency of returns `freq`.
+Compute the semivariance from the weights `w`, historical returns `returns`, according to the target `target`.
 
 The semivariance is defined as:
 
 ```math
 \\begin{aligned}
 \\bm{r} &= \\mathrm{R} \\bm{w}\\,,\\\\
-\\sigma_s^2 &= \\dfrac{f}{N} \\sum\\limits_{i = 1,\\, b < r_i}^{N} (r_i - b)^2\\,,
+\\sigma_s^2 &= \\dfrac{1}{N} \\sum\\limits_{i = 1,\\, b < r_i}^{N} (r_i - b)^2\\,,
 \\end{aligned}
 ```
 
-where ``\\bm{r}`` are the portfolio historical returns with where the subscript ``i`` describes a specific point in time (entry), ``\\mathrm{R}`` the asset historical returns, ``\\bm{w}`` the asset weights, ``\\sigma_s`` the semideviation, ``f`` the frequency of the historical returns, ``N`` the number of entries in historical returns (not the number of assets), and ``b`` the target for splitting "upside" and "downside" returns.
+where ``\\bm{r}`` are the portfolio historical returns with where the subscript ``i`` describes a specific point in time (entry), ``\\mathrm{R}`` the asset historical returns, ``\\bm{w}`` the asset weights, ``\\sigma_s`` the semideviation, ``N`` the number of entries in historical returns (not the number of assets), and ``b`` the target for splitting "upside" and "downside" returns.
 
 The condition ``b < r_i`` ensures we only consider entries for which the historical portfolio return fell below the target.
 """
-function port_semivar(w, returns, target = 0, freq = 252)
+function port_semivar(w, returns, target = 0)
     port_ret = returns * w
     port_ret = min.(port_ret .- target, 0)
 
-    return dot(port_ret, port_ret) / size(returns, 1) * freq
+    return dot(port_ret, port_ret) / size(returns, 1)
 end
 
-function port_mean_abs_dev(w, returns, target = zeros(length(w)), freq = 252)
+function port_mean_abs_dev(w, returns, target = zeros(length(w)))
     port_ret = returns * w
     port_target = dot(target, w)
-    return sum(port_ret .- port_target) * freq / size(returns, 1)
+    return sum(port_ret .- port_target) / size(returns, 1)
 end
 
 """

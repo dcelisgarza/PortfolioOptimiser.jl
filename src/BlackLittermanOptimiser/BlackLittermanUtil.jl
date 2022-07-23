@@ -1,6 +1,6 @@
 function portfolio_performance(
     portfolio::AbstractBlackLitterman,
-    rf = 0.02;
+    rf = 1.02^(1 / 252) - 1;
     verbose = false,
 )
     mean_ret = portfolio.post_ret
@@ -12,8 +12,8 @@ function portfolio_performance(
     sr = sharpe_ratio(μ, σ, rf)
 
     if verbose
-        println("Expected annual return: $(round(100*μ, digits=2)) %")
-        println("Annual volatility: $(round(100*σ, digits=2)) %")
+        println("Expected return: $(round(100*μ, digits=2)) %")
+        println("Volatility: $(round(100*σ, digits=2)) %")
         println("Sharpe Ratio: $(round(sr, digits=3))")
     end
 

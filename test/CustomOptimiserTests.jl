@@ -1,5 +1,5 @@
 using Test
-using PortfolioOptimiser, CSV, DataFrames
+using PortfolioOptimiser, CSV, DataFrames, StatsBase
 
 @testset "Custom optimiser" begin
     df = CSV.read("./assets/stock_prices.csv", DataFrame)
@@ -30,26 +30,26 @@ using PortfolioOptimiser, CSV, DataFrames
     obj_params = [ef.mean_ret, ef.cov_mtx, 1000]
     custom_optimiser!(ef, kelly_objective, obj_params, initial_guess = fill(1 / 20, 20))
     testweights = [
-        0.004758143945488986,
-        0.0313612711044923,
-        0.011581566953884194,
-        0.027540175507339622,
-        0.018637959513280566,
-        0.02649173712097102,
-        4.490597294476849e-16,
-        0.1389075022528616,
-        1.4513664512737593e-16,
-        2.0829028957690552e-15,
-        0.28879549783043423,
-        5.648363280996347e-16,
-        1.0047135830164754e-15,
-        0.12182714167506264,
-        1.8172509176062567e-15,
-        0.016375182319275105,
-        0.0023305748424262045,
-        0.19471263615932596,
-        8.619879289218291e-17,
-        0.1166806107751625,
+        0.005767442440593688,
+        0.03154081133764419,
+        0.011642424046938063,
+        0.027730804163849977,
+        0.016914645304759907,
+        0.026146623485008156,
+        5.212701881376053e-8,
+        0.13902777785485385,
+        9.810751772787176e-8,
+        3.0636345199128637e-6,
+        0.2890167913451911,
+        4.9338483149047114e-8,
+        3.4404354300215894e-8,
+        0.12226858861714271,
+        1.7542852298587199e-7,
+        0.016190054982200913,
+        0.0015896888326559673,
+        0.19489319656761958,
+        1.3053117484579068e-7,
+        0.11726754744995008,
     ]
     @test isapprox(ef.weights, testweights, rtol = 1e-3)
 end
@@ -72,29 +72,29 @@ end
     obj_params = (ef.cov_mtx, 0.001)
     custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     testweights = [
-        0.0459759150798785,
-        0.0465060033736648,
-        0.0406223479132712,
-        0.0367443944616427,
-        0.0394265018793106,
-        0.0533782687664828,
-        0.0300000004313922,
-        0.0940987390957382,
-        0.0307216371198716,
-        0.0402226547518765,
-        0.1209594547099574,
-        0.0300000012819006,
-        0.0300000004033861,
-        0.065153111884118,
-        0.0300000023324234,
-        0.0367907531898106,
-        0.0457521843192034,
-        0.0858732773342319,
-        0.037645669856962,
-        0.0601290817911846,
+        0.05008193131266116,
+        0.05007764309829396,
+        0.05003537085424143,
+        0.04997664927670955,
+        0.050023356842195575,
+        0.050115147567380926,
+        0.04954234092771163,
+        0.050244611437678256,
+        0.0499262489067497,
+        0.05002670222881007,
+        0.050264943535528274,
+        0.04980141845871927,
+        0.0495106023658318,
+        0.0501537977985005,
+        0.04980152841800859,
+        0.049974588773067145,
+        0.05007518766607851,
+        0.05021385111224298,
+        0.05001301193715369,
+        0.05014106748243707,
     ]
-    @test minimum(abs.(0.2 .- ef.weights)) >= 0
-    @test minimum(abs.(ef.weights .- 0.03)) <= 1e-8
+    @test all(ef.weights .<= 0.2)
+    @test all(ef.weights .>= 0.03)
 
     @test isapprox(ef.weights, testweights, rtol = 1e-6)
 
@@ -241,12 +241,19 @@ end
     push!(extra_vars, (cd.model[:z], fill(1 / length(cd.model[:z]), length(cd.model[:z]))))
     custom_nloptimiser!(cd, cdar_ratio, obj_params, extra_vars)
     mu, cdar1 = portfolio_performance(cd)
-    @test mu / cdar1 ≈ 3.2819464291074305
+    @test isapprox(mu / cdar1, 0.01111523004929159, rtol = 1e-4)
 
     cd2 = EffCDaR(tickers, mean_ret, Matrix(returns))
     min_risk!(cd2)
     mu2, cdar2 = portfolio_performance(cd2)
     mu2 / cdar2
 
+    cd3 = EffCDaR(tickers, mean_ret, Matrix(returns))
+    max_sharpe!(cd3)
+    mu3, cdar3 = portfolio_performance(cd3)
+
     @test mu / cdar1 > mu2 / cdar2
+
+    @test rmsd(cd.weights, cd3.weights) < rmsd(cd.weights, cd2.weights)
+    @test rmsd(cd.weights, cd2.weights) < rmsd(cd3.weights, cd2.weights)
 end

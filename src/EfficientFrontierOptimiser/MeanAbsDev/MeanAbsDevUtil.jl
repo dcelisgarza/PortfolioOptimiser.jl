@@ -27,7 +27,6 @@ If `verbose == true`, it prints out this information.
 """
 function portfolio_performance(portfolio::EffMeanAbsDev; rf = portfolio.rf, verbose = false)
     mean_ret = portfolio.mean_ret
-    freq = portfolio.freq
 
     model = portfolio.model
     term_status = termination_status(model)
@@ -43,15 +42,13 @@ function portfolio_performance(portfolio::EffMeanAbsDev; rf = portfolio.rf, verb
         target = portfolio.target
         returns = portfolio.returns
 
-        mean_abs_dev = port_mean_abs_dev(w, returns, target, freq)
+        mean_abs_dev = port_mean_abs_dev(w, returns, target)
         sr = sharpe_ratio(μ, mean_abs_dev, rf)
 
         if verbose
             println(term_status)
-            println("Expected annual return: $(round(100*μ, digits=2)) %")
-            println(
-                "Annual mean absolute deviation: $(round(100*mean_abs_dev, digits=2)) %",
-            )
+            println("Expected return: $(round(100*μ, digits=2)) %")
+            println("Mean absolute deviation: $(round(100*mean_abs_dev, digits=2)) %")
             println("Sharpe Ratio: $(round(sr, digits=3))")
         end
 

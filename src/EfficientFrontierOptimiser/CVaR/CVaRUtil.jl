@@ -27,7 +27,7 @@ function portfolio_performance(portfolio::EffCVaR; rf = portfolio.rf, verbose = 
 
         if verbose
             println(term_status)
-            println("Expected annual return: $(round(100*μ, digits=2)) %")
+            println("Expected return: $(round(100*μ, digits=2)) %")
             println("Conditional Value at Risk: $(round(100*cvar_val, digits=2)) %")
             println("Sharpe Ratio: $(round((μ-rf)/cvar_val, digits=3))")
         end

@@ -67,7 +67,7 @@ EffMeanVar(
     mean_ret,
     cov_mtx;
     weight_bounds = (0, 1),
-    rf = 0.02,
+    rf = 1.02^(1/252)-1,
     market_neutral = false,
     risk_aversion = 1.0,
     target_risk = rank(cov_mtx) < size(cov_mtx, 1) ? 1 / sum(diag(cov_mtx)) :
@@ -99,7 +99,7 @@ function EffMeanVar(
     mean_ret,
     cov_mtx;
     weight_bounds = (0, 1),
-    rf = 0.02,
+    rf = 1.02^(1 / 252) - 1,
     market_neutral = false,
     risk_aversion = 1.0,
     target_risk = rank(cov_mtx) < size(cov_mtx, 1) ? 1 / sum(diag(cov_mtx)) :
