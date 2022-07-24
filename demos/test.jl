@@ -124,7 +124,11 @@ efficient_risk!(evar, 0.03613095055291283, optimiser = ECOS.Optimizer)
 mu, evarval = portfolio_performance(evar, verbose = true)
 
 evar = EffEVaR(tickers, mean_ret, Matrix(returns))
-@time max_sharpe!(evar, optimiser = ECOS.Optimizer)
+@time max_sharpe!(
+    evar,
+    optimiser = ECOS.Optimizer,
+    # optimiser_attributes = ("maxiter" => 1000, "abstol" => 1e-6),
+)
 mu, evarval = portfolio_performance(evar, verbose = true)
 
 ulcer = EffUlcer(tickers, (1 .+ mean_ret) .^ (252) .- 1, Matrix(returns), rf = 0.02)

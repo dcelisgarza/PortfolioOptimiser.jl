@@ -169,7 +169,7 @@ function max_sharpe!(
         @constraint(
             model,
             evar_con[i = 1:samples],
-            [-X[i] * 32 - t * 32, s * 32, u[i] * 32] in MOI.ExponentialCone()
+            [-X[i] * 28 - t * 28, s * 28, u[i] * 28] in MOI.ExponentialCone()
         )
     end
 
