@@ -1,7 +1,7 @@
-abstract type AbstractEffEVaR <: AbstractEfficient end
+abstract type AbstractEffEDaR <: AbstractEfficient end
 
-struct EffEVaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
-       AbstractEffEVaR
+struct EffEDaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
+       AbstractEffEDaR
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -17,8 +17,7 @@ struct EffEVaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
     extra_obj_terms::T13
     model::T14
 end
-
-function EffEVaR(
+function EffEDaR(
     tickers,
     mean_ret,
     returns;
@@ -52,18 +51,21 @@ function EffEVaR(
     samples = size(returns, 1)
     @variable(model, w[1:num_tickers])
 
-    # EVaR variables
+    # EDaR variables
     @variable(model, t)
     @variable(model, s >= 0)
-    @variable(model, u[1:samples] >= 0)
-    @expression(model, X, returns * w)
+    @variable(model, u[1:(samples + 1)])
+    @variable(model, z[1:samples] >= 0)
 
-    # EVaR constraints.
-    @constraint(model, sum_u_leq_s, sum(u) <= s)
+    # EDaR constraints.
+    @constraint(model, u1_eq_0, u[1] == 0)
+    @constraint(model, u2e_geq_0, u[2:end] .>= 0)
+    @constraint(model, uf_geq_uimvw, u[2:end] .>= u[1:(end - 1)] .- returns * w)
+    @constraint(model, sum_z_leq_s, sum(z) <= s)
     @constraint(
         model,
-        evar_con[i = 1:samples],
-        [-X[i] - t, s, u[i]] in MOI.ExponentialCone()
+        edar_con[i = 1:samples],
+        [u[i + 1] - t, s, z[i]] in MOI.ExponentialCone()
     )
 
     lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
@@ -88,7 +90,7 @@ function EffEVaR(
     !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
     @expression(model, risk, t + s * log(1 / ((1 - beta) * samples)))
 
-    return EffEVaR(
+    return EffEDaR(
         tickers,
         mean_ret,
         weights,

@@ -1,4 +1,4 @@
-function refresh_model!(portfolio::EffEVaR)
+function refresh_model!(portfolio::EffEDaR)
     default_keys = (
         :w,
         :lower_bounds,
@@ -7,9 +7,12 @@ function refresh_model!(portfolio::EffEVaR)
         :t,
         :s,
         :u,
-        :X,
-        :sum_u_leq_s,
-        :evar_con,
+        :z,
+        :u1_eq_0,
+        :u2e_geq_0,
+        :uf_geq_uimvw,
+        :sum_z_leq_s,
+        :edar_con,
         :ret,
         :risk,
     )
@@ -18,7 +21,7 @@ function refresh_model!(portfolio::EffEVaR)
     return nothing
 end
 
-function portfolio_performance(portfolio::EffEVaR; rf = portfolio.rf, verbose = false)
+function portfolio_performance(portfolio::EffEDaR; rf = portfolio.rf, verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 
@@ -30,16 +33,16 @@ function portfolio_performance(portfolio::EffEVaR; rf = portfolio.rf, verbose = 
         w = portfolio.weights
         !isnothing(mean_ret) ? μ = port_return(w, mean_ret) : μ = NaN
 
-        evar_val = value(model[:risk])
-        haskey(model, :k) && (evar_val /= value(model[:k]))
+        edar_val = value(model[:risk])
+        haskey(model, :k) && (edar_val /= value(model[:k]))
 
         if verbose
             println(term_status)
             println("Expected return: $(round(100*μ, digits=2)) %")
-            println("Entropic Value at Risk: $(round(100*evar_val, digits=2)) %")
-            println("Sharpe Ratio: $(round((μ-rf)/evar_val, digits=3))")
+            println("Entropic Drawdown at Risk: $(round(100*edar_val, digits=2)) %")
+            println("Ratio: $(round((μ-rf)/edar_val, digits=3))")
         end
 
-        return μ, evar_val
+        return μ, edar_val
     end
 end

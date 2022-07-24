@@ -26,6 +26,7 @@ function min_risk!(
         EffMeanDaR,
         EffUlcer,
         EffEVaR,
+        EffEDaR,
     };
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -77,6 +78,7 @@ function max_return(
         EffMeanDaR,
         EffUlcer,
         EffEVaR,
+        EffEDaR,
     };
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -137,6 +139,7 @@ function max_sharpe!(
         EffMeanDaR,
         EffUlcer,
         EffEVaR,
+        EffEDaR,
     },
     rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
@@ -161,25 +164,13 @@ function max_sharpe!(
         X = model[:X]
         samples = length(u)
 
-        delete(model, model[:sum_u_leq_s])
-        unregister(model, :sum_u_leq_s)
-        @constraint(model, sum_u_leq_s, sum(u) * 1000 <= s * 1000)
-
         delete.(model, model[:evar_con])
         unregister(model, :evar_con)
         @constraint(
             model,
             evar_con[i = 1:samples],
-            [-X[i] * 1000 - t * 1000, s * 1000, u[i] * 1000] in MOI.ExponentialCone()
+            [-X[i] * 32 - t * 32, s * 32, u[i] * 32] in MOI.ExponentialCone()
         )
-
-        delete(model, model[:s_geg_0])
-        unregister(model, :s_geg_0)
-        @constraint(model, s_geg_0, s * 1000 >= 0)
-
-        delete.(model, model[:u_geq_0])
-        unregister(model, :u_geq_0)
-        @constraint(model, u_geq_0, u[1:samples] * 1000 .>= 0)
     end
 
     # We need a new variable for max_sharpe_optim.
@@ -246,6 +237,7 @@ function max_utility!(
         EffMeanDaR,
         EffUlcer,
         EffEVaR,
+        EffEDaR,
     },
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
@@ -307,6 +299,7 @@ function efficient_return!(
         EffMeanDaR,
         EffUlcer,
         EffEVaR,
+        EffEDaR,
     },
     target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
@@ -375,6 +368,7 @@ function efficient_risk!(
         EffMeanDaR,
         EffUlcer,
         EffEVaR,
+        EffEDaR,
     },
     target_risk = portfolio.target_risk;
     optimiser = Ipopt.Optimizer,

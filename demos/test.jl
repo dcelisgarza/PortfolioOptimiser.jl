@@ -89,6 +89,27 @@ S = cov(CustomCov(), Matrix(returns), estimator = method)
 #! EDaR and EVaR https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/
 
 mean_ret = ret_model(MRet(), Matrix(returns))
+cdarp = EffCDaR(tickers, mean_ret, Matrix(returns))
+max_sharpe!(cdarp, optimiser = ECOS.Optimizer)
+cdmu, cdarval = portfolio_performance(cdarp, verbose = true)
+
+edar = EffEDaR(tickers, mean_ret, Matrix(returns))
+min_risk!(edar, optimiser = ECOS.Optimizer, optimiser_attributes = ("maxit" => 250))
+mu, edarval = portfolio_performance(edar, verbose = true)
+
+max_utility!(edar, 1, optimiser = ECOS.Optimizer, optimiser_attributes = ("maxit" => 1000))
+mu, edarval = portfolio_performance(edar, verbose = true)
+
+efficient_return!(edar, 0.000857976343613329, optimiser = ECOS.Optimizer)
+mu, edarval = portfolio_performance(edar, verbose = true)
+
+efficient_risk!(edar, 0.08893937246790279, optimiser = ECOS.Optimizer)
+mu, edarval = portfolio_performance(edar, verbose = true)
+
+edar = EffEDaR(tickers, mean_ret, Matrix(returns))
+@time max_sharpe!(edar, optimiser = ECOS.Optimizer)
+mu, edarval = portfolio_performance(edar, verbose = true)
+
 evar = EffEVaR(tickers, mean_ret, Matrix(returns))
 min_risk!(evar, optimiser = ECOS.Optimizer)
 mu, evarval = portfolio_performance(evar, verbose = true)
@@ -103,7 +124,7 @@ efficient_risk!(evar, 0.03613095055291283, optimiser = ECOS.Optimizer)
 mu, evarval = portfolio_performance(evar, verbose = true)
 
 evar = EffEVaR(tickers, mean_ret, Matrix(returns))
-max_sharpe!(evar, optimiser = ECOS.Optimizer)
+@time max_sharpe!(evar, optimiser = ECOS.Optimizer)
 mu, evarval = portfolio_performance(evar, verbose = true)
 
 ulcer = EffUlcer(tickers, (1 .+ mean_ret) .^ (252) .- 1, Matrix(returns), rf = 0.02)
@@ -113,7 +134,7 @@ efficient_return!(ulcer, 0.0009387518959186161, optimiser = ECOS.Optimizer)
 efficient_risk!(ulcer, 0.0219 * 3, optimiser = ECOS.Optimizer)
 
 ulcer = EffUlcer(tickers, mean_ret, Matrix(returns))
-max_sharpe!(ulcer, optimiser = ECOS.Optimizer)
+@time max_sharpe!(ulcer, optimiser = ECOS.Optimizer)
 
 mu, uidx = portfolio_performance(ulcer, verbose = true)
 
