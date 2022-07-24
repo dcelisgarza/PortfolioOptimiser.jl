@@ -86,7 +86,26 @@ S = cov(CustomCov(), Matrix(returns), estimator = method)
 #     rf = 1.02^(2048 / 252) - 1,
 # )
 
+#! EDaR and EVaR https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/
+
 mean_ret = ret_model(MRet(), Matrix(returns))
+evar = EffEVaR(tickers, mean_ret, Matrix(returns))
+min_risk!(evar, optimiser = ECOS.Optimizer)
+mu, evarval = portfolio_performance(evar, verbose = true)
+
+max_utility!(evar, optimiser = ECOS.Optimizer)
+mu, evarval = portfolio_performance(evar, verbose = true)
+
+efficient_return!(evar, 0.0013072523137606362, optimiser = ECOS.Optimizer)
+mu, evarval = portfolio_performance(evar, verbose = true)
+
+efficient_risk!(evar, 0.03613095055291283, optimiser = ECOS.Optimizer)
+mu, evarval = portfolio_performance(evar, verbose = true)
+
+evar = EffEVaR(tickers, mean_ret, Matrix(returns))
+max_sharpe!(evar, optimiser = ECOS.Optimizer)
+mu, evarval = portfolio_performance(evar, verbose = true)
+
 ulcer = EffUlcer(tickers, (1 .+ mean_ret) .^ (252) .- 1, Matrix(returns), rf = 0.02)
 min_risk!(ulcer, optimiser = ECOS.Optimizer)
 max_utility!(ulcer, optimiser = ECOS.Optimizer)

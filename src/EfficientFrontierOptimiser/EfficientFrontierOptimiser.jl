@@ -15,6 +15,7 @@ include("./CDaR/CDaRType.jl")
 include("./MaxDaR/MaxDaRType.jl")
 include("./MeanDaR/MeanDaRType.jl")
 include("./UlcerIndex/UlcerIndexType.jl")
+include("./EVaR/EVaRType.jl")
 export AbstractEffMeanVar, EffMeanVar
 export AbstractEffMeanSemivar, EffMeanSemivar
 export AbstractEffMeanAbsDev, EffMeanAbsDev
@@ -24,6 +25,7 @@ export AbstractEffCDaR, EffCDaR
 export AbstractEffMaxDaR, EffMaxDaR
 export AbstractEffMeanDaR, EffMeanDaR
 export AbstractEffUlcer, EffUlcer
+export AbstractEffEVaR, EffEVaR
 
 # Utility functions.
 include("./MeanVar/MeanVarUtil.jl")
@@ -35,6 +37,7 @@ include("./CDaR/CDaRUtil.jl")
 include("./MaxDaR/MaxDaRUtil.jl")
 include("./MeanDaR/MeanDaRUtil.jl")
 include("./UlcerIndex/UlcerIndexUtil.jl")
+include("./EVaR/EVaRUtil.jl")
 
 # Optimisation functions.
 include("./EfficientFrontierFunc.jl")

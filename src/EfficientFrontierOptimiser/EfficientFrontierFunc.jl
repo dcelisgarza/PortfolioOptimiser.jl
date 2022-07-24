@@ -25,6 +25,7 @@ function min_risk!(
         EffMaxDaR,
         EffMeanDaR,
         EffUlcer,
+        EffEVaR,
     };
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -75,6 +76,7 @@ function max_return(
         EffMaxDaR,
         EffMeanDaR,
         EffUlcer,
+        EffEVaR,
     };
     optimiser = Ipopt.Optimizer,
     silent = true,
@@ -134,6 +136,7 @@ function max_sharpe!(
         EffMaxDaR,
         EffMeanDaR,
         EffUlcer,
+        EffEVaR,
     },
     rf = portfolio.rf;
     optimiser = Ipopt.Optimizer,
@@ -149,6 +152,35 @@ function max_sharpe!(
     rf = _val_compare_benchmark(rf, <, 0, 0.02, "rf")
 
     model = portfolio.model
+
+    if typeof(portfolio) <: EffEVaR
+        # EVaR constraints.
+        u = model[:u]
+        t = model[:t]
+        s = model[:s]
+        X = model[:X]
+        samples = length(u)
+
+        delete(model, model[:sum_u_leq_s])
+        unregister(model, :sum_u_leq_s)
+        @constraint(model, sum_u_leq_s, sum(u) * 1000 <= s * 1000)
+
+        delete.(model, model[:evar_con])
+        unregister(model, :evar_con)
+        @constraint(
+            model,
+            evar_con[i = 1:samples],
+            [-X[i] * 1000 - t * 1000, s * 1000, u[i] * 1000] in MOI.ExponentialCone()
+        )
+
+        delete(model, model[:s_geg_0])
+        unregister(model, :s_geg_0)
+        @constraint(model, s_geg_0, s * 1000 >= 0)
+
+        delete.(model, model[:u_geq_0])
+        unregister(model, :u_geq_0)
+        @constraint(model, u_geq_0, u[1:samples] * 1000 .>= 0)
+    end
 
     # We need a new variable for max_sharpe_optim.
     @variable(model, k)
@@ -213,6 +245,7 @@ function max_utility!(
         EffMaxDaR,
         EffMeanDaR,
         EffUlcer,
+        EffEVaR,
     },
     risk_aversion = portfolio.risk_aversion;
     optimiser = Ipopt.Optimizer,
@@ -273,6 +306,7 @@ function efficient_return!(
         EffMaxDaR,
         EffMeanDaR,
         EffUlcer,
+        EffEVaR,
     },
     target_ret = portfolio.target_ret;
     optimiser = Ipopt.Optimizer,
@@ -340,6 +374,7 @@ function efficient_risk!(
         EffMaxDaR,
         EffMeanDaR,
         EffUlcer,
+        EffEVaR,
     },
     target_risk = portfolio.target_risk;
     optimiser = Ipopt.Optimizer,
