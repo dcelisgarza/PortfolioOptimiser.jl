@@ -18,6 +18,7 @@ function portfolio_performance(portfolio::EffMinimax; rf = portfolio.rf, verbose
         !isnothing(mean_ret) ? μ = port_return(w, mean_ret) : μ = NaN
 
         minimax = value.(portfolio.model[:m])
+        haskey(model, :k) && (minimax /= value(model[:k]))
 
         if verbose
             println(term_status)

@@ -62,8 +62,7 @@ target = DiagonalCommonVariance()
 shrinkage = :oas
 method = LinearShrinkage(target, shrinkage)
 
-freq = 252
-S = cov(CustomCov(), Matrix(returns), freq = freq, estimator = method)
+S = cov(CustomCov(), Matrix(returns), estimator = method)
 # mean_ret = ret_model(
 #     ECAPMRet(),
 #     Matrix(returns),
@@ -87,10 +86,20 @@ S = cov(CustomCov(), Matrix(returns), freq = freq, estimator = method)
 #     rf = 1.02^(2048 / 252) - 1,
 # )
 
-mean_ret = ret_model(MRet(), Matrix(returns), compound = true, freq = freq)
-# mean_ret = (mean_ret .+ 1) .^ (1 / 100) .- 1
-# println(mean_ret)
+mean_ret = ret_model(MRet(), Matrix(returns))
+ulcer = EffUlcer(tickers, (1 .+ mean_ret) .^ (252) .- 1, Matrix(returns), rf = 0.02)
+min_risk!(ulcer, optimiser = ECOS.Optimizer)
+max_utility!(ulcer, optimiser = ECOS.Optimizer)
+efficient_return!(ulcer, 0.0009387518959186161, optimiser = ECOS.Optimizer)
+efficient_risk!(ulcer, 0.0219 * 3, optimiser = ECOS.Optimizer)
+
+ulcer = EffUlcer(tickers, mean_ret, Matrix(returns))
+max_sharpe!(ulcer, optimiser = ECOS.Optimizer)
+
+mu, uidx = portfolio_performance(ulcer, verbose = true)
+
 ecvar = EffMeanDaR(tickers, mean_ret, Matrix(returns), rf = 1.02^(1 / 252) - 1)#, extra_obj_terms=[quote L2_reg(model[:w], 2) end])
+
 max_utility!(ecvar, optimiser = Ipopt.Optimizer)
 mu, vcvar = portfolio_performance(ecvar, verbose = true)
 w = copy(ecvar.weights)

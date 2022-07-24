@@ -24,6 +24,7 @@ function portfolio_performance(portfolio::EffCVaR; rf = portfolio.rf, verbose = 
         beta = portfolio.beta
 
         cvar_val = cvar(alpha, u, samples, beta)
+        haskey(model, :k) && (cvar_val /= value(model[:k]))
 
         if verbose
             println(term_status)

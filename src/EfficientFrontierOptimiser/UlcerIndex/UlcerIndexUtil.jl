@@ -1,13 +1,12 @@
-function refresh_model!(portfolio::EffCDaR)
+function refresh_model!(portfolio::EffUlcer)
     default_keys = (
         :w,
         :lower_bounds,
         :upper_bounds,
         :sum_w,
-        :alpha,
         :u,
-        :z,
-        :z_geq_uma,
+        :norm_u,
+        :soc_u,
         :uf_geq_uimvw,
         :u1_eq_0,
         :u2e_geq_0,
@@ -19,7 +18,7 @@ function refresh_model!(portfolio::EffCDaR)
     return nothing
 end
 
-function portfolio_performance(portfolio::EffCDaR; rf = portfolio.rf, verbose = false)
+function portfolio_performance(portfolio::EffUlcer; rf = portfolio.rf, verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 
@@ -31,21 +30,19 @@ function portfolio_performance(portfolio::EffCDaR; rf = portfolio.rf, verbose = 
         w = portfolio.weights
         !isnothing(mean_ret) ? μ = port_return(w, mean_ret) : μ = NaN
 
-        alpha = value(portfolio.model[:alpha])
-        z = value.(portfolio.model[:z])
+        norm_u = value(model[:norm_u])
         samples = size(portfolio.returns, 1)
-        beta = portfolio.beta
 
-        cdar_val = cdar(alpha, z, samples, beta)
-        haskey(model, :k) && (cdar_val /= value(model[:k]))
+        haskey(model, :k) && (norm_u /= value(model[:k]))
+        ulcer_index = norm_u / sqrt(samples)
 
         if verbose
             println(term_status)
             println("Expected return: $(round(100*μ, digits=2)) %")
-            println("Conditional Drawdown at Risk: $(round(100*cdar_val, digits=2)) %")
-            println("Ratio: $(round((μ-rf)/cdar_val, digits=3))")
+            println("Ulcer Index: $(round(100*ulcer_index, digits=2)) %")
+            println("Ratio: $(round((μ-rf)/ulcer_index, digits=3))")
         end
 
-        return μ, cdar_val
+        return μ, ulcer_index
     end
 end

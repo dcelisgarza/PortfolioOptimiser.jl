@@ -32,6 +32,7 @@ function portfolio_performance(portfolio::EffMeanDaR; rf = portfolio.rf, verbose
         u = model[:u]
 
         mean_dar = sum(u[2:end]) / samples
+        haskey(model, :k) && (mean_dar /= value(model[:k]))
 
         if verbose
             println(term_status)

@@ -31,6 +31,7 @@ function portfolio_performance(portfolio::EffMaxDaR; rf = portfolio.rf, verbose 
         !isnothing(mean_ret) ? μ = port_return(w, mean_ret) : μ = NaN
 
         alpha = value(portfolio.model[:alpha])
+        haskey(model, :k) && (alpha /= value(model[:k]))
 
         if verbose
             println(term_status)
