@@ -224,12 +224,46 @@ Compute the returns from prices.
 - `prices`: array of prices, each column is an asset, each row an entry.
 - `log_ret`: if `false` compute the normal returns, if `true` compute the logarithmic returns.
 """
-function returns_from_prices(prices, log_ret = false)
-    if log_ret
-        return log.(prices[2:end, :] ./ prices[1:(end - 1), :])
+function returns_from_prices(
+    prices,
+    log_ret = false;
+    capm = false,
+    market_returns = nothing,
+    rf = 1.02^(1 / 252) - 1,
+    cov_type::AbstractRiskModel = ECov(),
+    target = 1.02^(1 / 252) - 1,
+    fix_method::AbstractFixPosDef = SFix(),
+    span = Int(ceil(4 * (size(prices, 1) - 1) / log(size(prices, 1) - 1 + 2))),
+    scale = nothing,
+    custom_cov_estimator = nothing,
+    custom_cov_args = (),
+    custom_cov_kwargs = (),
+)
+    returns = if log_ret
+        log.(prices[2:end, :] ./ prices[1:(end - 1), :])
     else
-        return prices[2:end, :] ./ prices[1:(end - 1), :] .- 1
+        prices[2:end, :] ./ prices[1:(end - 1), :] .- 1
     end
+
+    if capm
+        β, returns = _compute_betas(
+            market_returns,
+            returns,
+            cov_type,
+            target,
+            fix_method,
+            span,
+            scale,
+            custom_cov_estimator,
+            custom_cov_args,
+            custom_cov_kwargs,
+        )
+
+        returns = rf .+ (returns[:, end] .- rf) * β'
+        display(β)
+    end
+
+    return returns
 end
 
 """
