@@ -63,13 +63,20 @@ shrinkage = :oas
 method = LinearShrinkage(target, shrinkage)
 
 S = cov(CustomCov(), Matrix(returns), estimator = method)
+capm_ret = returns_from_prices(
+    Matrix(hist_prices[!, 2:end]),
+    capm = true,
+    cov_type = CustomCov(),
+    custom_cov_estimator = method,
+)
+capm_ret = DataFrame(capm_ret, tickers)
 # mean_ret = ret_model(
 #     ECAPMRet(),
 #     Matrix(returns),
 #     # cspan = num_rows,
 #     # rspan = num_rows,
-#     cov_type = CustomCov(),
-#     custom_cov_estimator = method,
+# cov_type = CustomCov(),
+# custom_cov_estimator = method,
 #     freq = freq,
 #     cspan = Int(
 #         ceil(
@@ -88,8 +95,15 @@ S = cov(CustomCov(), Matrix(returns), estimator = method)
 
 #! EDaR and EVaR https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/
 
-mean_ret = ret_model(MRet(), Matrix(returns))
-cdarp = EffCDaR(tickers, mean_ret, Matrix(returns))
+mean_ret = ret_model(MRet(), Matrix(capm_ret))
+cmean_ret = ret_model(
+    CAPMRet(),
+    Matrix(returns),
+    cov_type = CustomCov(),
+    custom_cov_estimator = method,
+)
+
+cdarp = EffCDaR(tickers, mean_ret, Matrix(returns), rf = 0)
 max_sharpe!(cdarp, optimiser = ECOS.Optimizer)
 cdmu, cdarval = portfolio_performance(cdarp, verbose = true)
 
@@ -106,7 +120,7 @@ mu, edarval = portfolio_performance(edar, verbose = true)
 efficient_risk!(edar, 0.08893937246790279, optimiser = ECOS.Optimizer)
 mu, edarval = portfolio_performance(edar, verbose = true)
 
-edar = EffEDaR(tickers, mean_ret, Matrix(returns))
+edar = EffEDaR(tickers, mean_ret, Matrix(capm_ret), rf = 0)
 @time max_sharpe!(edar, optimiser = ECOS.Optimizer)
 mu, edarval = portfolio_performance(edar, verbose = true)
 
