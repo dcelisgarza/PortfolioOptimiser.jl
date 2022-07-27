@@ -118,13 +118,30 @@ emv = EffMeanVar(tickers, mean_ret, S)
 noc = NearOptCentering(emv)
 optimise!(
     noc,
+    max_sharpe!,
+    # target = 1.03^(1 / 252) - 1,
+    # target = target * 2,
+    # nlsilent = false,
+    # n = 1,
+    n = 100,
+)
+
+cdarp = EffCDaR(tickers, mean_ret, Matrix(returns), rf = 0)
+max_sharpe!(cdarp)
+mu, risk = portfolio_performance(cdarp, verbose = true)
+
+noc = NearOptCentering(EffCDaR(tickers, mean_ret, Matrix(returns), rf = 0))
+optimise!(
+    noc,
     efficient_risk!,
-    target = target * 2,
+    target = 0.07372211501986418,
     # nlsilent = false,
     # n = 15,
 )
 
-calc_c1_c2(emv)
+w1 = copy(noc.weights)
+[value(noc.model[:risk]) / value(noc.opt_port.model[:k]) value(noc.opt_port.model[:risk]) /
+                                                         value(noc.opt_port.model[:k])]
 
 cdarp = EffCDaR(tickers, mean_ret, Matrix(returns), rf = 0)
 max_sharpe!(cdarp, optimiser = ECOS.Optimizer)

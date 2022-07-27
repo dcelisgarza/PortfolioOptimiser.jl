@@ -22,6 +22,7 @@ function optimise!(
     else
         optimisation(opt_port, target; optimiser, silent, optimiser_attributes)
     end
+
     e1, e2 = calc_e1_e2(opt_port, c1, c2)
 
     portfolio.c12 .= (c1, c2)
@@ -41,6 +42,9 @@ function optimise!(
     else
         set_start_value.(w, opt_port.weights)
     end
+
+    # Add stuff to refresh the model so we can continually call it.
+    # termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     @constraint(model, ret_geq_e1, ret >= e1)
     @constraint(model, risk_get_e2, risk <= e2)
