@@ -260,7 +260,6 @@ function returns_from_prices(
         )
 
         returns = rf .+ (returns[:, end] .- rf) * β'
-        display(β)
     end
 
     return returns

@@ -11,6 +11,8 @@ include("./ExpectedReturns/ExpectedReturns.jl")
 include("./BaseOptimiser/BaseOptimiser.jl")
 ## Efficient frontier
 include("./EfficientFrontierOptimiser/EfficientFrontierOptimiser.jl")
+## Near optimal centering
+include("./NearOptCenteringOptimiser/NearOptCenteringOptimiser.jl")
 ## Hierarchical risk parity
 include("./HierarchicalOptimiser/HierarchicalOptimiser.jl")
 ## Critical line

@@ -46,30 +46,6 @@ risk
 # println(fieldnames(typeof(m)))
 # display(m.nlp_data)
 
-using PortfolioOptimiser, DataFrames
-using Plots, CovarianceEstimation
-using LinearAlgebra, JuMP, IJulia
-using CSV, MarketData, Statistics, Ipopt, ECOS
-
-hist_prices = CSV.read("./demos/assets/stock_prices.csv", DataFrame)
-dropmissing!(hist_prices)
-
-returns = returns_from_prices(hist_prices[!, 2:end])
-
-tickers = names(hist_prices[!, 2:end])
-
-target = DiagonalCommonVariance()
-shrinkage = :oas
-method = LinearShrinkage(target, shrinkage)
-
-S = cov(CustomCov(), Matrix(returns), estimator = method)
-capm_ret = returns_from_prices(
-    Matrix(hist_prices[!, 2:end]),
-    capm = true,
-    cov_type = CustomCov(),
-    custom_cov_estimator = method,
-)
-capm_ret = DataFrame(capm_ret, tickers)
 # mean_ret = ret_model(
 #     ECAPMRet(),
 #     Matrix(returns),
@@ -93,15 +69,62 @@ capm_ret = DataFrame(capm_ret, tickers)
 #     rf = 1.02^(2048 / 252) - 1,
 # )
 
-#! EDaR and EVaR https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/
+using PortfolioOptimiser, DataFrames
+using Plots, CovarianceEstimation
+using LinearAlgebra, JuMP, IJulia
+using CSV, MarketData, Statistics, Ipopt, ECOS
+using PortfolioOptimiser: max_return
+using PortfolioOptimiser: min_risk
 
-mean_ret = ret_model(MRet(), Matrix(capm_ret))
+hist_prices = CSV.read("./demos/assets/stock_prices.csv", DataFrame)
+dropmissing!(hist_prices)
+
+returns = returns_from_prices(hist_prices[!, 2:end])
+
+tickers = names(hist_prices[!, 2:end])
+
+target = DiagonalCommonVariance()
+shrinkage = :oas
+method = LinearShrinkage(target, shrinkage)
+
+S = cov(CustomCov(), Matrix(returns), estimator = method)
+capm_ret = returns_from_prices(
+    Matrix(hist_prices[!, 2:end]),
+    capm = true,
+    cov_type = CustomCov(),
+    custom_cov_estimator = method,
+)
+capm_ret = DataFrame(capm_ret, tickers)
+
+#! EDaR and EVaR https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/
+#! NOC https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3572435
+
+mean_ret = ret_model(MRet(), Matrix(returns))
 cmean_ret = ret_model(
     CAPMRet(),
     Matrix(returns),
     cov_type = CustomCov(),
     custom_cov_estimator = method,
 )
+
+emv1 = EffMeanVar(tickers, mean_ret, S)
+min_risk!(emv1)
+target = sqrt(value(emv1.model[:risk]))
+
+efficient_risk!(emv1, target * 2)
+mu, risk, sr = portfolio_performance(emv1, verbose = true)
+
+emv = EffMeanVar(tickers, mean_ret, S)
+noc = NearOptCentering(emv)
+optimise!(
+    noc,
+    efficient_risk!,
+    target = target * 2,
+    # nlsilent = false,
+    # n = 15,
+)
+
+calc_c1_c2(emv)
 
 cdarp = EffCDaR(tickers, mean_ret, Matrix(returns), rf = 0)
 max_sharpe!(cdarp, optimiser = ECOS.Optimizer)

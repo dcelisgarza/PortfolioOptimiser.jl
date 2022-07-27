@@ -101,6 +101,41 @@ function max_return(
     return model
 end
 
+function min_risk(
+    portfolio::Union{
+        EffMeanVar,
+        EffMeanSemivar,
+        EffMeanAbsDev,
+        EffCVaR,
+        EffCDaR,
+        EffMinimax,
+        EffMaxDaR,
+        EffMeanDaR,
+        EffUlcer,
+        EffEVaR,
+        EffEDaR,
+    };
+    optimiser = Ipopt.Optimizer,
+    silent = true,
+    optimiser_attributes = (),
+)
+    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
+
+    model = copy(portfolio.model)
+    risk = model[:risk]
+
+    @objective(model, Min, risk)
+    # Add extra terms to objective function.
+    extra_obj_terms = portfolio.extra_obj_terms
+    if !isempty(extra_obj_terms)
+        _add_to_objective!.(model, extra_obj_terms)
+    end
+
+    _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
+
+    return model
+end
+
 """
 ```
 max_sharpe!(
