@@ -13,6 +13,12 @@ function optimise!(
     nlsilent = true,
     nloptimiser_attributes = (),
 )
+    model = portfolio.model
+
+    if termination_status(model) != OPTIMIZE_NOT_CALLED
+        throw("Nonlinear models must be reconstructed before being used again.")
+    end
+
     opt_port = portfolio.opt_port
 
     c1, c2, w_min, w_max = calc_c1_c2(opt_port, n, optimiser, silent, optimiser_attributes)
@@ -28,7 +34,6 @@ function optimise!(
     portfolio.c12 .= (c1, c2)
     portfolio.e12 .= (e1, e2)
 
-    model = portfolio.model
     w = model[:w]
     ret = model[:ret]
     risk = model[:risk]
@@ -44,7 +49,6 @@ function optimise!(
     end
 
     # Add stuff to refresh the model so we can continually call it.
-    # termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
     @constraint(model, ret_geq_e1, ret >= e1)
     @constraint(model, risk_get_e2, risk <= e2)
@@ -68,8 +72,6 @@ function calc_c1_c2(
     silent = true,
     optimiser_attributes = (),
 )
-    mean_ret = portfolio.mean_ret
-
     max_port = max_return(portfolio; optimiser, silent, optimiser_attributes)
     w_max = value.(max_port[:w])
 

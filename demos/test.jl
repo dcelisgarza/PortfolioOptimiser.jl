@@ -99,9 +99,9 @@ capm_ret = DataFrame(capm_ret, tickers)
 #! EDaR and EVaR https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/
 #! NOC https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3572435
 
-mean_ret = ret_model(MRet(), Matrix(returns))
+mean_ret = ret_model(EMRet(), Matrix(returns))
 cmean_ret = ret_model(
-    CAPMRet(),
+    ECAPMRet(),
     Matrix(returns),
     cov_type = CustomCov(),
     custom_cov_estimator = method,
@@ -130,15 +130,114 @@ cdarp = EffCDaR(tickers, mean_ret, Matrix(returns), rf = 0)
 max_sharpe!(cdarp)
 mu, risk = portfolio_performance(cdarp, verbose = true)
 
-noc = NearOptCentering(EffCDaR(tickers, mean_ret, Matrix(returns), rf = 0))
-optimise!(
-    noc,
-    efficient_risk!,
-    target = 0.07372211501986418,
-    # nlsilent = false,
-    # n = 15,
+################################################################
+mean_ret = (1 .+ mean_ret) .^ 252 .- 1
+cmean_ret = (1 .+ cmean_ret) .^ 252 .- 1
+
+cdarp = EffCDaR(tickers, mean_ret, Matrix(returns))
+noc1 = NearOptCentering(deepcopy(cdarp))
+optimise!(noc1, min_risk!, n = 500)
+munoc1, risknoc1, srnoc1, (mu1, risk1) = portfolio_performance(noc1, verbose = true)
+
+nocs = NearOptCentering(deepcopy(cdarp))
+optimise!(nocs, max_sharpe!, n = 500)
+munocs, risknocs, srnocs, (mus, risks) = portfolio_performance(nocs, verbose = true)
+
+mrisk = (risks - risk1) / 2
+target1 = risk1 + mrisk
+target2 = risks + mrisk
+
+noc2 = NearOptCentering(deepcopy(cdarp))
+optimise!(noc2, efficient_risk!, target = target1, n = 500)
+munoc2, risknoc2, srnoc2, (mu2, risk2) = portfolio_performance(noc2, verbose = true)
+
+noc3 = NearOptCentering(deepcopy(cdarp))
+optimise!(noc3, efficient_risk!, target = target2, n = 500)
+munoc3, risknoc3, srnoc3, (mu3, risk3) = portfolio_performance(noc3, verbose = true)
+
+display(
+    [mean_ret noc1.weights noc2.weights nocs.weights noc3.weights noc1.opt_port.weights noc2.opt_port.weights nocs.opt_port.weights noc3.opt_port.weights],
 )
 
+edarp = EffEDaR(tickers, mean_ret, Matrix(returns))
+ed1 = deepcopy(edarp)
+min_risk!(ed1, optimiser = ECOS.Optimizer)
+mu1, risk1 = portfolio_performance(ed1, verbose = true)
+
+eds = deepcopy(edarp)
+max_sharpe!(eds, optimiser = ECOS.Optimizer)
+mus, risks = portfolio_performance(eds, verbose = true)
+
+mrisk = (risks - risk1) / 2
+target1 = risk1 + mrisk
+target2 = risks + mrisk
+
+ed2 = deepcopy(edarp)
+efficient_risk!(ed2, target1, optimiser = ECOS.Optimizer)
+mu2, risk2 = portfolio_performance(ed2, verbose = true)
+
+ed3 = deepcopy(edarp)
+efficient_risk!(ed3, target2, optimiser = ECOS.Optimizer)
+mu3, risk3 = portfolio_performance(ed3, verbose = true)
+
+display(
+    [mean_ret noc1.opt_port.weights noc2.opt_port.weights nocs.opt_port.weights noc3.opt_port.weights ed1.weights eds.weights ed2.weights ed3.weights],
+    # ./
+    # maximum(
+    #     [mean_ret noc1.opt_port.weights noc2.opt_port.weights nocs.opt_port.weights noc3.opt_port.weights ed1.weights eds.weights ed2.weights ed3.weights],
+    #     dims = 1,
+    # ),
+)
+
+#######################
+
+cvarp = EffCVaR(tickers, mean_ret, Matrix(returns))
+noc1 = NearOptCentering(deepcopy(cvarp))
+optimise!(noc1, min_risk!, n = 500)
+munoc1, risknoc1, srnoc1, (mu1, risk1) = portfolio_performance(noc1, verbose = true)
+
+nocs = NearOptCentering(deepcopy(cvarp))
+optimise!(nocs, max_sharpe!, n = 500)
+munocs, risknocs, srnocs, (mus, risks) = portfolio_performance(nocs, verbose = true)
+
+mrisk = (risks - risk1) / 2
+target1 = risk1 + mrisk
+target2 = risks + mrisk
+
+noc2 = NearOptCentering(deepcopy(cvarp))
+optimise!(noc2, efficient_risk!, target = target1, n = 500)
+munoc2, risknoc2, srnoc2, (mu2, risk2) = portfolio_performance(noc2, verbose = true)
+
+noc3 = NearOptCentering(deepcopy(cvarp))
+optimise!(noc3, efficient_risk!, target = target2, n = 500)
+munoc3, risknoc3, srnoc3, (mu3, risk3) = portfolio_performance(noc3, verbose = true)
+
+display(
+    [mean_ret noc1.weights noc2.weights nocs.weights noc3.weights noc1.opt_port.weights noc2.opt_port.weights nocs.opt_port.weights noc3.opt_port.weights],
+)
+
+evarp = EffEVaR(tickers, mean_ret, Matrix(returns))
+ev1 = deepcopy(evarp)
+min_risk!(ev1, optimiser = ECOS.Optimizer)
+mu1, risk1 = portfolio_performance(ev1, verbose = true)
+
+evs = deepcopy(evarp)
+max_sharpe!(evs, optimiser = ECOS.Optimizer, optimiser_attributes = ("maxit" => 10000))
+mus, risks = portfolio_performance(evs, verbose = true)
+
+mrisk = (risks - risk1) / 2
+target1 = risk1 + mrisk
+target2 = risks + mrisk
+
+ev2 = deepcopy(evarp)
+efficient_risk!(ev2, target1, optimiser = ECOS.Optimizer)
+mu2, risk2 = portfolio_performance(ev2, verbose = true)
+
+ev3 = deepcopy(evarp)
+efficient_risk!(ev3, target2, optimiser = ECOS.Optimizer)
+mu3, risk3 = portfolio_performance(ev3, verbose = true)
+
+#######################
 w1 = copy(noc.weights)
 [value(noc.model[:risk]) / value(noc.opt_port.model[:k]) value(noc.opt_port.model[:risk]) /
                                                          value(noc.opt_port.model[:k])]

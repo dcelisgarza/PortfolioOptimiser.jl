@@ -4,3 +4,6 @@ export NearOptCentering
 
 include("NearOptCenteringFunc.jl")
 export optimise!
+
+include("NearOptCenteringUtil.jl")
+export portfolio_performance
