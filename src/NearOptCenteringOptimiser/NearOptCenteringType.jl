@@ -7,7 +7,7 @@ Abstract type for subtyping efficient frontier optimisers.
 """
 abstract type AbstractNOC <: AbstractPortfolioOptimiser end
 
-struct NearOptCentering{T1, T2, T3, T4, T5}
+struct NearOptCentering{T1, T2, T3, T4, T5} <: AbstractNOC
     opt_port::T1
     c12::T2
     e12::T3

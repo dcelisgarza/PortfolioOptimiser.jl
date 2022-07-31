@@ -137,6 +137,11 @@ cmean_ret = (1 .+ cmean_ret) .^ 252 .- 1
 cdarp = EffCDaR(tickers, mean_ret, Matrix(returns))
 noc1 = NearOptCentering(deepcopy(cdarp))
 optimise!(noc1, min_risk!, n = 500)
+
+alloc, rem = Allocation(LP(), noc1, Vector(hist_prices[end, tickers]), investment = 650)
+alloco, remo =
+    Allocation(LP(), noc1.opt_port, Vector(hist_prices[end, tickers]), investment = 650)
+
 munoc1, risknoc1, srnoc1, (mu1, risk1) = portfolio_performance(noc1, verbose = true)
 
 nocs = NearOptCentering(deepcopy(cdarp))

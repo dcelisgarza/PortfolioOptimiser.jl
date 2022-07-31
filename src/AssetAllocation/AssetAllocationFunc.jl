@@ -107,9 +107,15 @@ function Allocation(
 )
     @assert isnothing(short_ratio) || short_ratio > 0
 
+    tickers = if typeof(portfolio) <: NearOptCentering
+        portfolio.opt_port.tickers
+    else
+        portfolio.tickers
+    end
+
     return Allocation(
         type,
-        portfolio.tickers,
+        tickers,
         portfolio.weights,
         latest_prices,
         investment,
