@@ -233,7 +233,8 @@ function returns_from_prices(
     cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(ceil(4 * (size(prices, 1) - 1) / log(size(prices, 1) - 1 + 2))),
+    span = size(prices, 1) != 0 ?
+           Int(ceil(4 * (size(prices, 1) - 1) / log(size(prices, 1) - 1 + 2))) : 1,
     scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
