@@ -246,6 +246,12 @@ function returns_from_prices(
         prices[2:end, :] ./ prices[1:(end - 1), :] .- 1
     end
 
+    replace_nan(v) = map!(x -> isnan(x) ? zero(x) : x, v, v)
+    replace_inf(v) = map!(x -> isinf(x) ? zero(x) : x, v, v)
+
+    map(replace_nan, eachcol(returns))
+    map(replace_inf, eachcol(returns))
+
     if capm
         β, returns = _compute_betas(
             market_returns,
