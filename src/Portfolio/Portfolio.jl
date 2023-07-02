@@ -10,7 +10,7 @@ const UnionMtxNothing = Union{Matrix{<:Real}, Nothing}
 const UnionDataFrameNothing = Union{DataFrame, Nothing}
 
 mutable struct Portfolio{
-    # Portfolio characteristics.
+    # Portfolio characteristics
     r,
     s,
     us,
@@ -20,14 +20,14 @@ mutable struct Portfolio{
     mna,
     rf,
     l,
-    # Risk parameters.
+    # Risk parameters
     a,
     as,
     b,
     bs,
     k,
     mnak,
-    # Benchmark constraints.
+    # Benchmark constraints
     kb,
     ato,
     to,
@@ -35,10 +35,10 @@ mutable struct Portfolio{
     te,
     rbi,
     bw,
+    # Risk and return constraints
     ami,
     bvi,
     rbv,
-    # Risk and return constraints.
     ler,
     ud,
     uk,
@@ -62,6 +62,7 @@ mutable struct Portfolio{
     uedar,
     urdar,
     uui,
+    # Optimisation model inputs
     tmu,
     tcov,
     tkurt,
@@ -81,6 +82,21 @@ mutable struct Portfolio{
     tedar,
     trvar,
     trdar,
+    tcovl,
+    tcovu,
+    tcovmu,
+    tcovs,
+    tdmu,
+    tkmu,
+    tks,
+    topt,
+    trpopt,
+    trrpopt,
+    twcopt,
+    tlim,
+    tfront,
+    tsolv,
+    tsolvp,
 } <: AbstractPortfolio
     # Portfolio characteristics.
     returns::r
@@ -92,7 +108,7 @@ mutable struct Portfolio{
     max_number_assets::mna
     returns_factors::rf
     loadings::l
-    # Risk parameters.
+    # Risk parameters
     alpha::a
     a_sim::as
     beta::b
@@ -107,10 +123,10 @@ mutable struct Portfolio{
     tracking_err::te
     returns_benchmark_index::rbi
     benchmark_weights::bw
+    # Risk and return constraints
     a_mtx_inequality::ami
     b_vec_inequality::bvi
     risk_budget_vec::rbv
-    # Risk and return constraints
     lower_expected_return::ler
     upper_deviation::ud
     upper_kurtosis::uk
@@ -134,7 +150,7 @@ mutable struct Portfolio{
     upper_entropic_drawdown_at_risk::uedar
     upper_relativistic_drawdown_at_risk::urdar
     upper_ulcer_index::uui
-    # Optimisation model inputs.
+    # Optimisation model inputs
     mu::tmu
     cov::tcov
     kurt::tkurt
@@ -154,9 +170,28 @@ mutable struct Portfolio{
     z_EDaR::tedar
     z_RVaR::trvar
     z_RDaR::trdar
+    # Inputs of Worst Case Optimization Models
+    cov_l::tcovl
+    cov_u::tcovu
+    cov_mu::tcovmu
+    cov_sigma::tcovs
+    d_mu::tdmu
+    k_mu::tkmu
+    k_sigma::tks
+    # Optimal portfolios
+    optimal::topt
+    rp_optimal::trpopt
+    rrp_optimal::trrpopt
+    wc_optimal::twcopt
+    limits::tlim
+    frontier::tfront
+    # Solver params
+    solvers::tsolv
+    sol_params::tsolvp
 end
 
 function Portfolio(;
+    # Portfolio characteristics.
     returns::DataFrame,
     short::Bool = false,
     upper_short::Real = 0.2,
@@ -166,12 +201,14 @@ function Portfolio(;
     max_number_assets::Integer = -1,
     returns_factors::DataFrame = DataFrame(),
     loadings::DataFrame = DataFrame(),
+    # Risk parameters
     alpha::Real = 0.05,
     a_sim::Integer = 100,
     beta::Real = 0.0,
     b_sim::Integer = 0,
     kappa::Real = 0.3,
     max_num_assets_kurt::Integer = 50,
+    # Benchmark constraints
     kind_benchmark::Bool = true,
     allow_turnover::Bool = false,
     turnover::Real = 0.05,
@@ -179,6 +216,7 @@ function Portfolio(;
     tracking_err::Real = 0.05,
     returns_benchmark_index::DataFrame = DataFrame(),
     benchmark_weights::DataFrame = DataFrame(),
+    # Risk and return constraints
     a_mtx_inequality::Matrix{<:Real} = Array{Float64}(undef, 0, 0),
     b_vec_inequality::Vector{<:Real} = Array{Float64}(undef, 0),
     risk_budget_vec::Vector{<:Real} = Array{Float64}(undef, 0),
@@ -205,8 +243,47 @@ function Portfolio(;
     upper_entropic_drawdown_at_risk::Real = Inf,
     upper_relativistic_drawdown_at_risk::Real = Inf,
     upper_ulcer_index::Real = Inf,
+    # Optimisation model inputs
+    mu::Real = -Inf,
+    cov::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    kurt::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    skurt::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    L_2::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    S_2::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    mu_f::Real = -Inf,
+    cov_f::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    mu_fm::Real = -Inf,
+    cov_fm::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    mu_bl::Real = -Inf,
+    cov_bl::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    mu_bl_fm::Real = -Inf,
+    cov_bl_fm::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    returns_fm::DataFrame = DataFrame(),
+    z_EVaR::Real = -Inf,
+    z_EDaR::Real = -Inf,
+    z_RVaR::Real = -Inf,
+    z_RDaR::Real = -Inf,
+    # Inputs of Worst Case Optimization Models
+    cov_l::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    cov_u::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    cov_mu::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    cov_sigma::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    d_mu::Real = -Inf,
+    k_mu::Real = -Inf,
+    k_sigma::Real = -Inf,
+    # Optimal portfolios
+    optimal::DataFrame = DataFrame(),
+    rp_optimal::DataFrame = DataFrame(),
+    rrp_optimal::DataFrame = DataFrame(),
+    wc_optimal::DataFrame = DataFrame(),
+    limits::DataFrame = DataFrame(),
+    frontier::DataFrame = DataFrame(),
+    # Solver params
+    solvers::Vector{AbstractString} = Vector{AbstractString}(undef, 0),
+    sol_params::Dict = Dict(),
 )
     return Portfolio(
+        # Portfolio characteristics.
         returns,
         short,
         upper_short,
@@ -216,12 +293,14 @@ function Portfolio(;
         max_number_assets,
         returns_factors,
         loadings,
+        # Risk parameters
         alpha,
         a_sim,
         beta,
         b_sim,
         kappa,
         max_num_assets_kurt,
+        # Benchmark constraints
         kind_benchmark,
         allow_turnover,
         turnover,
@@ -229,6 +308,7 @@ function Portfolio(;
         tracking_err,
         returns_benchmark_index,
         benchmark_weights,
+        # Risk and return constraints
         a_mtx_inequality,
         b_vec_inequality,
         risk_budget_vec,
@@ -255,25 +335,44 @@ function Portfolio(;
         upper_entropic_drawdown_at_risk,
         upper_relativistic_drawdown_at_risk,
         upper_ulcer_index,
-        -Inf,
-        Matrix{Float64}(undef, 0, 0),
-        Matrix{Float64}(undef, 0, 0),
-        Matrix{Float64}(undef, 0, 0),
-        Matrix{Float64}(undef, 0, 0),
-        Matrix{Float64}(undef, 0, 0),
-        -Inf,
-        Matrix{Float64}(undef, 0, 0),
-        -Inf,
-        Matrix{Float64}(undef, 0, 0),
-        -Inf,
-        Matrix{Float64}(undef, 0, 0),
-        -Inf,
-        Matrix{Float64}(undef, 0, 0),
-        DataFrame(),
-        -Inf,
-        -Inf,
-        -Inf,
-        -Inf,
+        # Optimisation model inputs
+        mu,
+        cov,
+        kurt,
+        skurt,
+        L_2,
+        S_2,
+        mu_f,
+        cov_f,
+        mu_fm,
+        cov_fm,
+        mu_bl,
+        cov_bl,
+        mu_bl_fm,
+        cov_bl_fm,
+        returns_fm,
+        z_EVaR,
+        z_EDaR,
+        z_RVaR,
+        z_RDaR,
+        # Inputs of Worst Case Optimization Models
+        cov_l,
+        cov_u,
+        cov_mu,
+        cov_sigma,
+        d_mu,
+        k_mu,
+        k_sigma,
+        # Optimal portfolios
+        optimal,
+        rp_optimal,
+        rrp_optimal,
+        wc_optimal,
+        limits,
+        frontier,
+        # Solver params
+        solvers,
+        sol_params,
     )
 end
 
