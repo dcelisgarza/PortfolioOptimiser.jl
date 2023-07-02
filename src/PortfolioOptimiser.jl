@@ -23,4 +23,6 @@ include("./BlackLittermanOptimiser/BlackLittermanOptimiser.jl")
 # Asset allocation
 include("./AssetAllocation/AssetAllocation.jl")
 
+include("./Portfolio/Portfolio.jl")
+
 end
