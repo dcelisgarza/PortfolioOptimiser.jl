@@ -478,7 +478,6 @@ function optimize(
     short = portfolio.short
     upper_long = portfolio.upper_long
     upper_short = portfolio.upper_short
-
     sum_short_long = portfolio.sum_short_long
     if obj == :sharpe
         @constraint(model, sum_w, sum(w) == sum_short_long * k)
