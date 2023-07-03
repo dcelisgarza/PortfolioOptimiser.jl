@@ -1,5 +1,5 @@
 
-using DataFrames
+using DataFrames, JuMP
 
 abstract type AbstractPortfolio end
 const UnionBoolNothing = Union{Bool, Nothing}
@@ -8,6 +8,9 @@ const UnionIntegerNothing = Union{<:Integer, Nothing}
 const UnionVecNothing = Union{Vector{<:Real}, Nothing}
 const UnionMtxNothing = Union{Matrix{<:Real}, Nothing}
 const UnionDataFrameNothing = Union{DataFrame, Nothing}
+const KellyRet = (:exact, :approx, :none)
+const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
+const RiskMeasures = (:mean_var,)
 
 mutable struct Portfolio{
     # Portfolio characteristics
@@ -97,6 +100,7 @@ mutable struct Portfolio{
     tfront,
     tsolv,
     tsolvp,
+    tmod,
 } <: AbstractPortfolio
     # Portfolio characteristics.
     returns::r
@@ -188,6 +192,7 @@ mutable struct Portfolio{
     # Solver params
     solvers::tsolv
     sol_params::tsolvp
+    model::tmod
 end
 
 function Portfolio(;
@@ -196,7 +201,7 @@ function Portfolio(;
     short::Bool = false,
     upper_short::Real = 0.2,
     upper_long::Real = 1.0,
-    sum_short_long::Real = 0.1,
+    sum_short_long::Real = 1,
     min_number_effective_assets::Integer = -1,
     max_number_assets::Integer = -1,
     returns_factors::DataFrame = DataFrame(),
@@ -244,19 +249,19 @@ function Portfolio(;
     upper_relativistic_drawdown_at_risk::Real = Inf,
     upper_ulcer_index::Real = Inf,
     # Optimisation model inputs
-    mu::Real = -Inf,
+    mu::Vector{<:Real} = Array{Float64}(undef, 0),
     cov::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     L_2::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     S_2::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    mu_f::Real = -Inf,
+    mu_f::Vector{<:Real} = Array{Float64}(undef, 0),
     cov_f::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    mu_fm::Real = -Inf,
+    mu_fm::Vector{<:Real} = Array{Float64}(undef, 0),
     cov_fm::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    mu_bl::Real = -Inf,
+    mu_bl::Vector{<:Real} = Array{Float64}(undef, 0),
     cov_bl::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    mu_bl_fm::Real = -Inf,
+    mu_bl_fm::Vector{<:Real} = Array{Float64}(undef, 0),
     cov_bl_fm::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     returns_fm::DataFrame = DataFrame(),
     z_EVaR::Real = -Inf,
@@ -373,7 +378,171 @@ function Portfolio(;
         # Solver params
         solvers,
         sol_params,
+        JuMP.Model(),
     )
 end
 
-export AbstractPortfolio, Portfolio#, HCPortfolio, OWAPortfolio
+function _dev_var(model)
+    @variable(model, g >= 0)
+end
+function _dev_constraint(model, sigma)
+    G = sqrt(sigma)
+    @expression(model, risk_dev, model[:g] * model[:g])
+    @constraint(model, sqrt_g, [model[:g]; transpose(G) * model[:w]] in SecondOrderCone())
+end
+
+function optimize(
+    portfolio::Portfolio,
+    optimizer;
+    rm::Symbol = :mean_var,
+    obj::Symbol = :sharpe,
+    kelly::Symbol = :none,
+    rf::Real = 1.0329^(1 / 252) - 1,
+    l::Real = 2.0,
+)
+    @assert(rm ∈ RiskMeasures)
+    @assert(obj ∈ ObjFuncs)
+    @assert(kelly ∈ KellyRet)
+
+    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+        (portfolio.model = JuMP.Model())
+
+    mu = portfolio.mu
+    sigma = portfolio.cov
+    returns = Matrix(portfolio.returns[!, 2:end])
+    T, N = size(returns)
+
+    model = portfolio.model
+
+    @variable(model, w[1:N])
+    if obj == :sharpe
+        @variable(model, k >= 0)
+    end
+
+    # Risk Variables.
+    if rm == :mean_var
+        _dev_var(model)
+        _dev_constraint(model, sigma)
+        @expression(model, risk, model[:risk_dev])
+    end
+
+    # Return variables.
+    if kelly == :exact
+        @variable(model, gr[1:T])
+        if obj == :sharpe
+            @expression(model, ret, sum(gr) / T - rf * k)
+            @expression(model, kret, k .+ returns * w)
+            @constraint(
+                model,
+                exp_gr[i = 1:T],
+                [gr[i], k, kret[i]] in MOI.ExponentialCone()
+            )
+            @constraint(model, sharpe, risk <= 1)
+        else
+            @expression(model, ret, sum(gr) / T)
+            @expression(model, kret, returns * w)
+            @constraint(
+                model,
+                exp_gr[i = 1:N],
+                [gr[i], 1, kret[i]] in MOI.ExponentialCone()
+            )
+        end
+    elseif kelly == :approx
+        if rm != :mean_var
+            _dev_var(model)
+        end
+
+        if obj == :sharpe
+            if rm != :mean_var
+                _dev_constraint(model, sigma)
+            end
+            @variable(model, t >= 0)
+            @constraint(
+                model,
+                quad_over_lin,
+                [k + t, 2 * model[:g] + k - t] in SecondOrderCone()
+            )
+            @expression(model, ret, dot(mu, w) - 0.5 * t)
+            @constraint(model, sharpe, risk <= 1)
+        else
+            @expression(model, ret, dot(mu, w) - 0.5 * model[:risk_dev])
+        end
+    else
+        @expression(model, ret, dot(mu, w))
+        if obj == :sharpe
+            @constraint(model, sharpe, model[:ret] - rf * k == 1)
+        end
+    end
+
+    # Weight constraints.
+    short = portfolio.short
+    upper_long = portfolio.upper_long
+    upper_short = portfolio.upper_short
+
+    sum_short_long = portfolio.sum_short_long
+    if obj == :sharpe
+        @constraint(model, sum_w, sum(w) == sum_short_long * k)
+        if short == false
+            @constraint(model, ul_w, w .<= upper_long * k)
+            @constraint(model, val_w, w .>= 0)
+        else
+            @variable(model, ul[1:N] .>= 0)
+            @variable(model, us[1:N] .>= 0)
+
+            @constraint(model, sum_ul, sum(ul) <= upper_long * k)
+            @constraint(model, sum_us, sum(us) <= upper_short * k)
+
+            @constraint(model, long_w, w .- ul <= 0)
+            @constraint(model, short_w, w .+ us >= 0)
+        end
+    else
+        @constraint(model, sum_w, sum(w) == sum_short_long)
+        if short == false
+            @constraint(model, ul_w, w .<= upper_long)
+            @constraint(model, val_w, w .>= 0)
+        else
+            @variable(model, ul[1:N] .>= 0)
+            @variable(model, us[1:N] .>= 0)
+
+            @constraint(model, sum_ul, sum(ul) <= upper_long)
+            @constraint(model, sum_us, sum(us) <= upper_short)
+
+            @constraint(model, long_w, w .- ul <= 0)
+            @constraint(model, short_w, w .+ us >= 0)
+        end
+    end
+
+    # Objective functions.
+    if obj == :sharpe
+        if kelly == :exact || kelly == :approx
+            @objective(model, Max, model[:ret])
+        else
+            @objective(model, Min, model[:risk])
+        end
+    elseif obj == :min_risk
+        @objective(model, Min, model[:risk])
+    elseif obj == :utility
+        @objective(model, Max, model[:ret] - l * model[:risk])
+    elseif obj == :max_ret
+        @objective(model, Max, model[:ret])
+    end
+
+    set_optimizer(model, optimizer)
+    # set_attribute(model, "feastol", 1e-12)
+    optimize!(model)
+
+    weights = Vector{eltype(returns)}(undef, N)
+    if obj == :sharpe
+        weights .= value.(w) / value(k)
+    else
+        weights .= value.(w)
+    end
+
+    if short == false
+        weights .= abs.(weights) / sum(abs.(weights)) * sum_short_long
+    end
+
+    return DataFrame(weights = weights, tickers = names(portfolio.returns)[2:end])
+end
+
+export AbstractPortfolio, Portfolio, optimize#, HCPortfolio, OWAPortfolio

@@ -1,10 +1,28 @@
-using PortfolioOptimiser, DataFrames, TimeSeries, Dates
+using PortfolioOptimiser, DataFrames, TimeSeries, Dates, Statistics, ECOS, MarketData, CSV
 
 println(fieldnames(Portfolio))
 
-A = TimeArray(collect(Date(2023, 03, 01):Day(1):(Date(2023, 03, 20))), rand(20, 10))
+randn(20, 10) + (1:1:20) * 0.2
+
+A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
-@time test = Portfolio(returns = DataFrame(Y), short = false, sum_short_long = 1)
+RET = dropmissing!(DataFrame(Y))
+
+test = Portfolio(
+    returns = RET,
+    upper_short = 0.2,
+    upper_long = 1,
+    short = true,
+    sum_short_long = 0.8,
+)
+test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
+test.cov = cov(Matrix(RET[!, 2:end]))
+w = optimize(test, ECOS.Optimizer, kelly = :exact, obj = :sharpe)
+value.(test.model[:w])
+
+using JuMP
+value.(test.model[:w])
+
 isinf(test.upper_average_drawdown)
 
 push!(test.sol_params, "ECOS" => Dict("max_iters" => 500, "abstol" => 1e-8))
@@ -21,7 +39,7 @@ cv = cov(A)
 cr = cor(A)
 G = sqrt(cv)
 mu = vec(mean(A, dims = 1))
-n = size(A, 2)
+T, n = size(A)
 
 model1 = JuMP.Model(ECOS.Optimizer)
 @variable(model1, w[1:n] .>= 0)
@@ -55,7 +73,7 @@ model2 = JuMP.Model(ECOS.Optimizer)
 # @expression(model2, risk, dot(w, cv, w))
 @expression(model2, kret, k .+ A * w)
 @constraint(model2, exp_gr[i = 1:n], [gr[i], k, kret[i]] in MOI.ExponentialCone())
-@expression(model2, ret, 1 / n * sum(gr) - rf * k)
+@expression(model2, ret, 1 / T * sum(gr) - rf * k)
 @constraint(model2, risk_leq_1, risk <= 1)
 @objective(model2, Max, ret)
 optimize!(model2)
