@@ -440,7 +440,7 @@ function optimize(
             @constraint(model, sharpe, risk <= 1)
         else
             @expression(model, ret, sum(gr) / T)
-            @expression(model, kret, returns * w)
+            @expression(model, kret, 1 .+ returns * w)
             @constraint(
                 model,
                 exp_gr[i = 1:N],
