@@ -8,6 +8,7 @@ const UnionIntegerNothing = Union{<:Integer, Nothing}
 const UnionVecNothing = Union{Vector{<:Real}, Nothing}
 const UnionMtxNothing = Union{Matrix{<:Real}, Nothing}
 const UnionDataFrameNothing = Union{DataFrame, Nothing}
+const PortModels = (:classic,)
 const KellyRet = (:exact, :approx, :none)
 const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 const RiskMeasures = (:mean_var,)
@@ -382,24 +383,17 @@ function Portfolio(;
     )
 end
 
-function _dev_var(model)
-    @variable(model, g >= 0)
-end
-function _dev_constraint(model, sigma)
-    G = sqrt(sigma)
-    @expression(model, risk_dev, model[:g] * model[:g])
-    @constraint(model, sqrt_g, [model[:g]; transpose(G) * model[:w]] in SecondOrderCone())
-end
-
 function optimize(
     portfolio::Portfolio,
     optimizer;
+    model::Symbol = :classic,
     rm::Symbol = :mean_var,
     obj::Symbol = :sharpe,
     kelly::Symbol = :none,
     rf::Real = 1.0329^(1 / 252) - 1,
     l::Real = 2.0,
 )
+    @assert(model ∈ PortModels)
     @assert(rm ∈ RiskMeasures)
     @assert(obj ∈ ObjFuncs)
     @assert(kelly ∈ KellyRet)
@@ -421,51 +415,54 @@ function optimize(
 
     # Risk Variables.
     if rm == :mean_var
-        _dev_var(model)
-        _dev_constraint(model, sigma)
-        @expression(model, risk, model[:risk_dev])
+        @variable(model, g >= 0)
+        G = sqrt(sigma)
+        @expression(model, risk_dev, g * g)
+        @constraint(model, sqrt_g, [g; transpose(G) * w] in SecondOrderCone())
+        @expression(model, risk, risk_dev)
     end
 
     # Return variables.
-    if kelly == :exact
-        @variable(model, gr[1:T])
-        if obj == :sharpe
-            @expression(model, ret, sum(gr) / T - rf * k)
-            @expression(model, kret, k .+ returns * w)
-            @constraint(
-                model,
-                exp_gr[i = 1:T],
-                [gr[i], k, kret[i]] in MOI.ExponentialCone()
-            )
-            @constraint(model, sharpe, risk <= 1)
-        else
-            @expression(model, ret, sum(gr) / T)
-            @expression(model, kret, 1 .+ returns * w)
-            @constraint(
-                model,
-                exp_gr[i = 1:N],
-                [gr[i], 1, kret[i]] in MOI.ExponentialCone()
-            )
-        end
-    elseif kelly == :approx
-        if rm != :mean_var
-            _dev_var(model)
-        end
-
-        if obj == :sharpe
-            if rm != :mean_var
-                _dev_constraint(model, sigma)
+    if model == :classic && (kelly == :exact || kelly == :approx)
+        if kelly == :exact
+            @variable(model, gr[1:T])
+            if obj == :sharpe
+                @expression(model, ret, sum(gr) / T - rf * k)
+                @expression(model, kret, k .+ returns * w)
+                @constraint(
+                    model,
+                    exp_gr[i = 1:T],
+                    [gr[i], k, kret[i]] in MOI.ExponentialCone()
+                )
+                @constraint(model, sharpe, risk <= 1)
+            else
+                @expression(model, ret, sum(gr) / T)
+                @expression(model, kret, 1 .+ returns * w)
+                @constraint(
+                    model,
+                    exp_gr[i = 1:N],
+                    [gr[i], 1, kret[i]] in MOI.ExponentialCone()
+                )
             end
-            @variable(model, t >= 0)
-            @constraint(
-                model,
-                quad_over_lin,
-                [k + t, 2 * model[:g] + k - t] in SecondOrderCone()
-            )
-            @expression(model, ret, dot(mu, w) - 0.5 * t)
-            @constraint(model, sharpe, risk <= 1)
-        else
-            @expression(model, ret, dot(mu, w) - 0.5 * model[:risk_dev])
+        elseif kelly == :approx
+            if rm != :mean_var
+                @variable(model, g >= 0)
+                @expression(model, risk_dev, g * g)
+                G = sqrt(sigma)
+                @constraint(model, sqrt_g, [g; transpose(G) * w] in SecondOrderCone())
+            end
+            if obj == :sharpe
+                @variable(model, t >= 0)
+                @constraint(
+                    model,
+                    quad_over_lin,
+                    [k + t, 2 * g + k - t] in SecondOrderCone()
+                )
+                @expression(model, ret, dot(mu, w) - 0.5 * t)
+                @constraint(model, sharpe, risk <= 1)
+            else
+                @expression(model, ret, dot(mu, w) - 0.5 * risk_dev)
+            end
         end
     else
         @expression(model, ret, dot(mu, w))
@@ -491,8 +488,8 @@ function optimize(
             @constraint(model, sum_ul, sum(ul) <= upper_long * k)
             @constraint(model, sum_us, sum(us) <= upper_short * k)
 
-            @constraint(model, long_w, w .- ul <= 0)
-            @constraint(model, short_w, w .+ us >= 0)
+            @constraint(model, long_w, w .- ul .<= 0)
+            @constraint(model, short_w, w .+ us .>= 0)
         end
     else
         @constraint(model, sum_w, sum(w) == sum_short_long)
@@ -506,14 +503,14 @@ function optimize(
             @constraint(model, sum_ul, sum(ul) <= upper_long)
             @constraint(model, sum_us, sum(us) <= upper_short)
 
-            @constraint(model, long_w, w .- ul <= 0)
-            @constraint(model, short_w, w .+ us >= 0)
+            @constraint(model, long_w, w .- ul .<= 0)
+            @constraint(model, short_w, w .+ us .>= 0)
         end
     end
 
     # Objective functions.
     if obj == :sharpe
-        if kelly == :exact || kelly == :approx
+        if model == :classic && (kelly == :exact || kelly == :approx)
             @objective(model, Max, model[:ret])
         else
             @objective(model, Min, model[:risk])

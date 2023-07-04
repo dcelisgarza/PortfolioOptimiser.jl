@@ -15,9 +15,9 @@ test = Portfolio(
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
-w1 = optimize(test, ECOS.Optimizer, kelly = :exact, obj = :utility)
-w2 = optimize(test, ECOS.Optimizer, kelly = :approx, obj = :utility)
-w3 = optimize(test, ECOS.Optimizer, kelly = :none, obj = :utility)
+w1 = optimize(test, ECOS.Optimizer, kelly = :exact, obj = :min_risk)
+w2 = optimize(test, ECOS.Optimizer, kelly = :approx, obj = :min_risk)
+w3 = optimize(test, ECOS.Optimizer, kelly = :none, obj = :min_risk)
 sh3 = hcat(w1, w2, w3, makeunique = true)
 display(sh3)
 
