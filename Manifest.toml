@@ -168,9 +168,9 @@ version = "1.5.3+0"
 
 [[deps.Hwloc_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "2982b2ec1cb2e2d04b2893e211d29e1e30f8abf4"
+git-tree-sha1 = "70379ec206165d3ca0c259d38289a6366f5398a1"
 uuid = "e33a78d0-f292-5ffc-b300-72abe9b543c8"
-version = "2.9.1+0"
+version = "2.9.2+0"
 
 [[deps.InlineStrings]]
 deps = ["Parsers"]
@@ -479,10 +479,14 @@ version = "2.3.0"
     ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 
 [[deps.StaticArrays]]
-deps = ["LinearAlgebra", "Random", "StaticArraysCore", "Statistics"]
-git-tree-sha1 = "832afbae2a45b4ae7e831f86965469a24d1d8a83"
+deps = ["LinearAlgebra", "Random", "StaticArraysCore"]
+git-tree-sha1 = "0da7e6b70d1bb40b1ace3b576da9ea2992f76318"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.5.26"
+version = "1.6.0"
+weakdeps = ["Statistics"]
+
+    [deps.StaticArrays.extensions]
+    StaticArraysStatisticsExt = "Statistics"
 
 [[deps.StaticArraysCore]]
 git-tree-sha1 = "6b7ba252635a5eff6a0b0664a41ee140a1c9e72a"

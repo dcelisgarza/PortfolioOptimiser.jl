@@ -1,4 +1,5 @@
-using PortfolioOptimiser, DataFrames, TimeSeries, Dates, Statistics, ECOS, MarketData, CSV
+using PortfolioOptimiser,
+    DataFrames, TimeSeries, Dates, Statistics, ECOS, MarketData, CSV, StatsBase, SCS, JuMP
 
 println(fieldnames(Portfolio))
 
@@ -12,13 +13,23 @@ test = Portfolio(
     # upper_long = 1,
     # short = true,
     # sum_short_long = 0.8,
+    solvers = Dict("ECOS" => ECOS.Optimizer, "SCS" => SCS.Optimizer),
+    sol_params = Dict(
+        "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-11, "verbose" => false),
+    ),
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
-w1 = optimize(test, ECOS.Optimizer, kelly = :exact, obj = :min_risk)
-w2 = optimize(test, ECOS.Optimizer, kelly = :approx, obj = :min_risk)
-w3 = optimize(test, ECOS.Optimizer, kelly = :none, obj = :min_risk)
+w1 = optimize(test, kelly = :exact, obj = :utility)
+w2 = optimize(test, kelly = :approx, obj = :utility)
+w3 = optimize(test, kelly = :none, obj = :utility)
 sh3 = hcat(w1, w2, w3, makeunique = true)
+
+w12 = rmsd(w1[!, :weights], w2[!, :weights])
+w13 = rmsd(w1[!, :weights], w3[!, :weights])
+w23 = rmsd(w3[!, :weights], w2[!, :weights])
+
+println((w12, w13, w23))
 display(sh3)
 
 value.(test.model[:w])

@@ -8,10 +8,11 @@ const UnionIntegerNothing = Union{<:Integer, Nothing}
 const UnionVecNothing = Union{Vector{<:Real}, Nothing}
 const UnionMtxNothing = Union{Matrix{<:Real}, Nothing}
 const UnionDataFrameNothing = Union{DataFrame, Nothing}
-const PortModels = (:classic,)
+const PortClasses = (:classic,)
 const KellyRet = (:exact, :approx, :none)
 const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 const RiskMeasures = (:mean_var,)
+const ValidTermination = (MOI.OPTIMAL,)
 
 mutable struct Portfolio{
     # Portfolio characteristics
@@ -171,10 +172,10 @@ mutable struct Portfolio{
     mu_bl_fm::tmublf
     cov_bl_fm::tcovblf
     returns_fm::trfm
-    z_EVaR::tevar
-    z_EDaR::tedar
-    z_RVaR::trvar
-    z_RDaR::trdar
+    z_evar::tevar
+    z_edar::tedar
+    z_rvar::trvar
+    z_rdar::trdar
     # Inputs of Worst Case Optimization Models
     cov_l::tcovl
     cov_u::tcovu
@@ -265,10 +266,10 @@ function Portfolio(;
     mu_bl_fm::Vector{<:Real} = Array{Float64}(undef, 0),
     cov_bl_fm::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     returns_fm::DataFrame = DataFrame(),
-    z_EVaR::Real = -Inf,
-    z_EDaR::Real = -Inf,
-    z_RVaR::Real = -Inf,
-    z_RDaR::Real = -Inf,
+    z_evar::Real = -Inf,
+    z_edar::Real = -Inf,
+    z_rvar::Real = -Inf,
+    z_rdar::Real = -Inf,
     # Inputs of Worst Case Optimization Models
     cov_l::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     cov_u::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -285,7 +286,7 @@ function Portfolio(;
     limits::DataFrame = DataFrame(),
     frontier::DataFrame = DataFrame(),
     # Solver params
-    solvers::Vector{AbstractString} = Vector{AbstractString}(undef, 0),
+    solvers::Dict = Dict(),
     sol_params::Dict = Dict(),
 )
     return Portfolio(
@@ -357,10 +358,10 @@ function Portfolio(;
         mu_bl_fm,
         cov_bl_fm,
         returns_fm,
-        z_EVaR,
-        z_EDaR,
-        z_RVaR,
-        z_RDaR,
+        z_evar,
+        z_edar,
+        z_rvar,
+        z_rdar,
         # Inputs of Worst Case Optimization Models
         cov_l,
         cov_u,
@@ -384,22 +385,22 @@ function Portfolio(;
 end
 
 function optimize(
-    portfolio::Portfolio,
-    optimizer;
-    model::Symbol = :classic,
+    portfolio::Portfolio;
+    class::Symbol = :classic,
     rm::Symbol = :mean_var,
     obj::Symbol = :sharpe,
     kelly::Symbol = :none,
     rf::Real = 1.0329^(1 / 252) - 1,
     l::Real = 2.0,
 )
-    @assert(model ∈ PortModels)
+    @assert(class ∈ PortClasses)
     @assert(rm ∈ RiskMeasures)
     @assert(obj ∈ ObjFuncs)
     @assert(kelly ∈ KellyRet)
 
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
-        (portfolio.model = JuMP.Model())
+    term_status = termination_status(portfolio.model)
+
+    term_status != MOI.OPTIMIZE_NOT_CALLED && (portfolio.model = JuMP.Model())
 
     mu = portfolio.mu
     sigma = portfolio.cov
@@ -423,7 +424,7 @@ function optimize(
     end
 
     # Return variables.
-    if model == :classic && (kelly == :exact || kelly == :approx)
+    if class == :classic && (kelly == :exact || kelly == :approx)
         if kelly == :exact
             @variable(model, gr[1:T])
             if obj == :sharpe
@@ -523,9 +524,52 @@ function optimize(
         @objective(model, Max, model[:ret])
     end
 
-    set_optimizer(model, optimizer)
-    # set_attribute(model, "feastol", 1e-12)
-    optimize!(model)
+    solvers = portfolio.solvers
+    sol_params = portfolio.sol_params
+    solvers_tried = []
+    obj_val_tried = Float64[]
+    term_status_tried = MOI.TerminationStatusCode[]
+    for (solver_name, solver) in solvers
+        try
+            set_optimizer(model, solver)
+            if haskey(sol_params, solver_name)
+                for (attribute, value) in sol_params[solver_name]
+                    set_attribute(model, attribute, value)
+                end
+            end
+            optimize!(model)
+            term_status = termination_status(model)
+            if term_status in ValidTermination && !any(.!isfinite.(value.(w)))
+                break
+            end
+            push!(solvers_tried, solver_name)
+            push!(obj_val_tried, objective_value(model))
+            push!(term_status_tried, term_status)
+        catch solver_error
+        end
+    end
+
+    if term_status ∉ ValidTermination || any(.!isfinite.(value.(w)))
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.optimize))"
+        slv_params = []
+        for solver_name in solvers_tried
+            if haskey(sol_params, solver_name)
+                push!(slv_params, sol_params[solver_name])
+            else
+                push!(slv_params, missing)
+            end
+        end
+        df = DataFrame(
+            solver = solvers_tried,
+            obj_val = obj_val_tried,
+            term_status = term_status_tried,
+            solver_params = slv_params,
+        )
+
+        @warn(
+            "$funcname: model for could not be optimised satisfactorily.\nPortfolio: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $df"
+        )
+    end
 
     weights = Vector{eltype(returns)}(undef, N)
     if obj == :sharpe
