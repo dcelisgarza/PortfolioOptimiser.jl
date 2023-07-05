@@ -30,30 +30,41 @@ test = Portfolio(
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
-test.max_number_assets = -2
-test.min_number_effective_assets = 0
+# test.max_number_assets = -2
+# test.min_number_effective_assets = 0
 # test.upper_deviation = r3 * 1.5#sqrt(0.00017320998967406147)
 # test.lower_expected_return = Inf
-test.benchmark_weights = DataFrame(weights = collect(1:2:40) / sum(1:20))
+test.tracking_err_benchmark_weights =
+    DataFrame(tickers = names(RET)[2:end], weights = collect(1:4:80) / sum(1:4:80))
 
-test.benchmark_kind = true
+test.tracking_err_benchmark_kind = true
 test.allow_tracking_err = false
-w1 = optimize(test, kelly = :approx, obj = :sharpe)
+w1 = optimize(test, kelly = :approx, obj = :utility)
 
 test.allow_tracking_err = true
-test.tracking_err = 0.005
-w2 = optimize(test, kelly = :approx, obj = :sharpe)
-sh2 = hcat(w1, w2, makeunique = true)
+test.tracking_err = 0.001
+w2 = optimize(test, kelly = :approx, obj = :utility)
+
+test.allow_tracking_err = true
+test.tracking_err = 0.00001
+w3 = optimize(test, kelly = :approx, obj = :utility)
+sh2 = hcat(w1, w2, w3, test.tracking_err_benchmark_weights, makeunique = true)
 display(sh2)
 
-test.benchmark_kind = true
+test.turnover_benchmark_weights =
+    DataFrame(tickers = names(RET)[2:end], weights = collect(80:-4:1) / sum(80:-4:1))
+
 test.allow_turnover = false
 w1 = optimize(test, kelly = :approx, obj = :sharpe)
 
 test.allow_turnover = true
-test.turnover = 0.2
+test.turnover = 0.4
 w2 = optimize(test, kelly = :approx, obj = :sharpe)
-sh2 = hcat(w1, w2, makeunique = true)
+
+test.allow_turnover = true
+test.turnover = 0.1
+w3 = optimize(test, kelly = :approx, obj = :sharpe)
+sh2 = hcat(w1, w2, w3, test.turnover_benchmark_weights, makeunique = true)
 display(sh2)
 
 r1 = sqrt(dot(w1[!, :weights], test.cov, w1[!, :weights]))

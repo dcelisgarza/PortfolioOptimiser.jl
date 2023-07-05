@@ -37,6 +37,7 @@ mutable struct Portfolio{
     kb,
     ato,
     to,
+    tobw,
     ate,
     te,
     rbi,
@@ -124,13 +125,14 @@ mutable struct Portfolio{
     kappa::k
     max_num_assets_kurt::mnak
     # Benchmark constraints
-    benchmark_kind::kb
+    tracking_err_benchmark_kind::kb
     allow_turnover::ato
     turnover::to
+    turnover_benchmark_weights::tobw
     allow_tracking_err::ate
     tracking_err::te
-    benchmark_index_returns::rbi
-    benchmark_weights::bw
+    tracking_err_benchmark_returns::rbi
+    tracking_err_benchmark_weights::bw
     # Risk and return constraints
     a_mtx_ineq::ami
     b_vec_ineq::bvi
@@ -219,13 +221,14 @@ function Portfolio(;
     kappa::Real = 0.3,
     max_num_assets_kurt::Integer = 50,
     # Benchmark constraints
-    benchmark_kind::Bool = true,
+    tracking_err_benchmark_kind::Bool = true,
     allow_turnover::Bool = false,
     turnover::Real = 0.05,
+    turnover_benchmark_weights::DataFrame = DataFrame(),
     allow_tracking_err::Bool = false,
     tracking_err::Real = 0.05,
-    benchmark_index_returns::DataFrame = DataFrame(),
-    benchmark_weights::DataFrame = DataFrame(),
+    tracking_err_benchmark_returns::DataFrame = DataFrame(),
+    tracking_err_benchmark_weights::DataFrame = DataFrame(),
     # Risk and return constraints
     a_mtx_ineq::Matrix{<:Real} = Array{Float64}(undef, 0, 0),
     b_vec_ineq::Vector{<:Real} = Array{Float64}(undef, 0),
@@ -311,13 +314,14 @@ function Portfolio(;
         kappa,
         max_num_assets_kurt,
         # Benchmark constraints
-        benchmark_kind,
+        tracking_err_benchmark_kind,
         allow_turnover,
         turnover,
+        turnover_benchmark_weights,
         allow_tracking_err,
         tracking_err,
-        benchmark_index_returns,
-        benchmark_weights,
+        tracking_err_benchmark_returns,
+        tracking_err_benchmark_weights,
         # Risk and return constraints
         a_mtx_ineq,
         b_vec_ineq,
@@ -591,18 +595,19 @@ function optimize(
 
     # Tracking error variables and constraints.
     allow_tracking_err = portfolio.allow_tracking_err
-    benchmark_kind = portfolio.benchmark_kind
-    benchmark_weights = portfolio.benchmark_weights
-    benchmark_kind = portfolio.benchmark_kind
-    benchmark_index_returns = portfolio.benchmark_index_returns
+    tracking_err_benchmark_kind = portfolio.tracking_err_benchmark_kind
+    tracking_err_benchmark_weights = portfolio.tracking_err_benchmark_weights
+    tracking_err_benchmark_kind = portfolio.tracking_err_benchmark_kind
+    tracking_err_benchmark_returns = portfolio.tracking_err_benchmark_returns
     if allow_tracking_err == true
         tracking_err_flag = false
 
-        if benchmark_kind == true && !isempty(benchmark_weights)
-            benchmark = returns * portfolio.benchmark_weights[!, :weights]
+        if tracking_err_benchmark_kind == true && !isempty(tracking_err_benchmark_weights)
+            benchmark = returns * portfolio.tracking_err_benchmark_weights[!, :weights]
             tracking_err_flag = true
-        elseif benchmark_kind == false && !isempty(benchmark_index_returns)
-            benchmark = benchmark_index_returns[!, :returns]
+        elseif tracking_err_benchmark_kind == false &&
+               !isempty(tracking_err_benchmark_returns)
+            benchmark = tracking_err_benchmark_returns[!, :returns]
             tracking_err_flag = true
         end
 
@@ -623,11 +628,12 @@ function optimize(
 
     # Turnover variables and constraints
     allow_turnover = portfolio.allow_turnover
-    if allow_turnover == true && !isempty(benchmark_weights)
+    turnover_benchmark_weights = portfolio.turnover_benchmark_weights
+    if allow_turnover == true && !isempty(turnover_benchmark_weights)
         turnover = portfolio.turnover
         @variable(model, to_var[1:N] >= 0)
         if obj == :sharpe
-            @expression(model, to, w .- benchmark_weights[!, :weights] * k)
+            @expression(model, to, w .- turnover_benchmark_weights[!, :weights] * k)
             @constraint(
                 model,
                 to_var_norm1[i = 1:N],
@@ -635,7 +641,7 @@ function optimize(
             )
             @constraint(model, to_var_leq_to, to_var .<= turnover * k)
         else
-            @expression(model, to, w .- benchmark_weights[!, :weights])
+            @expression(model, to, w .- turnover_benchmark_weights[!, :weights])
             @constraint(
                 model,
                 to_var_norm1[i = 1:N],
