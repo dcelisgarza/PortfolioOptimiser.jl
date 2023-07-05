@@ -124,16 +124,16 @@ mutable struct Portfolio{
     kappa::k
     max_num_assets_kurt::mnak
     # Benchmark constraints
-    kind_benchmark::kb
+    benchmark_kind::kb
     allow_turnover::ato
     turnover::to
     allow_tracking_err::ate
     tracking_err::te
-    returns_benchmark_index::rbi
+    benchmark_index_returns::rbi
     benchmark_weights::bw
     # Risk and return constraints
-    a_mtx_inequality::ami
-    b_vec_inequality::bvi
+    a_mtx_ineq::ami
+    b_vec_ineq::bvi
     risk_budget_vec::rbv
     lower_expected_return::ler
     upper_deviation::ud
@@ -219,16 +219,16 @@ function Portfolio(;
     kappa::Real = 0.3,
     max_num_assets_kurt::Integer = 50,
     # Benchmark constraints
-    kind_benchmark::Bool = true,
+    benchmark_kind::Bool = true,
     allow_turnover::Bool = false,
     turnover::Real = 0.05,
     allow_tracking_err::Bool = false,
     tracking_err::Real = 0.05,
-    returns_benchmark_index::DataFrame = DataFrame(),
+    benchmark_index_returns::DataFrame = DataFrame(),
     benchmark_weights::DataFrame = DataFrame(),
     # Risk and return constraints
-    a_mtx_inequality::Matrix{<:Real} = Array{Float64}(undef, 0, 0),
-    b_vec_inequality::Vector{<:Real} = Array{Float64}(undef, 0),
+    a_mtx_ineq::Matrix{<:Real} = Array{Float64}(undef, 0, 0),
+    b_vec_ineq::Vector{<:Real} = Array{Float64}(undef, 0),
     risk_budget_vec::Vector{<:Real} = Array{Float64}(undef, 0),
     lower_expected_return::Real = -Inf,
     upper_deviation::Real = Inf,
@@ -311,16 +311,16 @@ function Portfolio(;
         kappa,
         max_num_assets_kurt,
         # Benchmark constraints
-        kind_benchmark,
+        benchmark_kind,
         allow_turnover,
         turnover,
         allow_tracking_err,
         tracking_err,
-        returns_benchmark_index,
+        benchmark_index_returns,
         benchmark_weights,
         # Risk and return constraints
-        a_mtx_inequality,
-        b_vec_inequality,
+        a_mtx_ineq,
+        b_vec_ineq,
         risk_budget_vec,
         lower_expected_return,
         upper_deviation,
@@ -470,7 +470,7 @@ function optimize(
                 @constraint(
                     model,
                     quad_over_lin,
-                    [k + t, 2 * g + k - t] in SecondOrderCone()
+                    [k + t; 2 * g + k - t] in SecondOrderCone()
                 )
                 @expression(model, ret, dot(mu, w) - 0.5 * t)
                 @constraint(model, sharpe, risk <= 1)
@@ -494,7 +494,7 @@ function optimize(
         end
     end
 
-    # Boolean variables max number of assets
+    # Boolean variables max number of assets.
     max_number_assets = portfolio.max_number_assets
     if max_number_assets > 0
         if obj == :sharpe
@@ -565,6 +565,94 @@ function optimize(
             end
         end
     end
+
+    # Linear weight constraints.
+    A = portfolio.a_mtx_ineq
+    B = portfolio.b_vec_ineq
+    if !isempty(A) && !isempty(B)
+        if obj == :sharpe
+            @constraint(model, awb, A * w .- B * k .>= 0)
+        else
+            @constraint(model, awb, A * w .- B .>= 0)
+        end
+    end
+
+    # Minimum number of effective assets.
+    mnea = portfolio.min_number_effective_assets
+    if mnea > 0
+        @variable(model, tmnea >= 0)
+        @constraint(model, wnorm, [tmnea; w] in SecondOrderCone())
+        if obj == :sharpe
+            @constraint(model, tmneal, tmnea * sqrt(mnea) <= k)
+        else
+            @constraint(model, tmneal, tmnea * sqrt(mnea) <= 1)
+        end
+    end
+
+    # Tracking error variables and constraints.
+    allow_tracking_err = portfolio.allow_tracking_err
+    benchmark_kind = portfolio.benchmark_kind
+    benchmark_weights = portfolio.benchmark_weights
+    benchmark_kind = portfolio.benchmark_kind
+    benchmark_index_returns = portfolio.benchmark_index_returns
+    if allow_tracking_err == true
+        tracking_err_flag = false
+
+        if benchmark_kind == true && !isempty(benchmark_weights)
+            benchmark = returns * portfolio.benchmark_weights[!, :weights]
+            tracking_err_flag = true
+        elseif benchmark_kind == false && !isempty(benchmark_index_returns)
+            benchmark = benchmark_index_returns[!, :returns]
+            tracking_err_flag = true
+        end
+
+        if tracking_err_flag == true
+            tracking_err = portfolio.tracking_err
+            @variable(model, terr_var >= 0)
+            if obj == :sharpe
+                @expression(model, terr, returns * w .- benchmark * k)
+                @constraint(model, terr_var_norm, [terr_var; terr] in SecondOrderCone())
+                @constraint(model, terr_leq_err, terr_var <= tracking_err * k * sqrt(T - 1))
+            else
+                @expression(model, terr, returns * w .- benchmark)
+                @constraint(model, terr_var_norm2, [terr_var; terr] in SecondOrderCone())
+                @constraint(model, terr_leq_err, terr_var <= tracking_err * sqrt(T - 1))
+            end
+        end
+    end
+
+    # Turnover variables and constraints
+    allow_turnover = portfolio.allow_turnover
+    if allow_turnover == true && !isempty(benchmark_weights)
+        turnover = portfolio.turnover
+        @variable(model, to_var[1:N] >= 0)
+        if obj == :sharpe
+            @expression(model, to, w .- benchmark_weights[!, :weights] * k)
+            @constraint(
+                model,
+                to_var_norm1[i = 1:N],
+                [to_var[i]; to[i]] in MOI.NormOneCone(2)
+            )
+            @constraint(model, to_var_leq_to, to_var .<= turnover * k)
+        else
+            @expression(model, to, w .- benchmark_weights[!, :weights])
+            @constraint(
+                model,
+                to_var_norm1[i = 1:N],
+                [to_var[i]; to[i]] in MOI.NormOneCone(2)
+            )
+            @constraint(model, to_var_leq_to, to_var .<= turnover)
+        end
+    end
+
+    # if obj == "Sharpe":
+    #     if self.allowTO == True:
+    #         TO_1 = cp.abs(w - c @ k) * 1000
+    #         constraints += [TO_1 <= self.turnover * k * 1000]
+    # else:
+    #     if self.allowTO == True:
+    #         TO_1 = cp.abs(w - c) * 1000
+    #         constraints += [TO_1 <= self.turnover * 1000]
 
     # Objective functions.
     if obj == :sharpe

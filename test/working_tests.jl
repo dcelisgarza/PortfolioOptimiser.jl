@@ -19,22 +19,43 @@ RET = dropmissing!(DataFrame(Y))
 
 test = Portfolio(
     returns = RET,
-    upper_short = 0.2,
-    upper_long = 1,
-    short = true,
-    sum_short_long = 0.8,
+    # upper_short = 0.2,
+    # upper_long = 1,
+    # short = true,
+    # sum_short_long = 0.8,
     solvers = Dict("ECOS" => ECOS.Optimizer, "SCS" => SCS.Optimizer),
     sol_params = Dict(
         "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-12, "verbose" => false),
     ),
-    max_number_assets = 5,
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
 test.max_number_assets = -2
+test.min_number_effective_assets = 0
 # test.upper_deviation = r3 * 1.5#sqrt(0.00017320998967406147)
 # test.lower_expected_return = Inf
-w1 = optimize(test, kelly = :exact, obj = :utility)
+test.benchmark_weights = DataFrame(weights = collect(1:2:40) / sum(1:20))
+
+test.benchmark_kind = true
+test.allow_tracking_err = false
+w1 = optimize(test, kelly = :approx, obj = :sharpe)
+
+test.allow_tracking_err = true
+test.tracking_err = 0.005
+w2 = optimize(test, kelly = :approx, obj = :sharpe)
+sh2 = hcat(w1, w2, makeunique = true)
+display(sh2)
+
+test.benchmark_kind = true
+test.allow_turnover = false
+w1 = optimize(test, kelly = :approx, obj = :sharpe)
+
+test.allow_turnover = true
+test.turnover = 0.2
+w2 = optimize(test, kelly = :approx, obj = :sharpe)
+sh2 = hcat(w1, w2, makeunique = true)
+display(sh2)
+
 r1 = sqrt(dot(w1[!, :weights], test.cov, w1[!, :weights]))
 mu1 = dot(w1[!, :weights], test.mu)
 w2 = optimize(test, kelly = :approx, obj = :utility)
@@ -59,7 +80,7 @@ using JuMP, LinearAlgebra
 
 boo = rand(10)
 wak = JuMP.Model()
-@variable(wak, a[1:10] >= 0, Bin)
+@variable(wak, a[1:10] >= 0)
 @variable(wak, b >= 2)
 @variable(wak, t >= 0)
 @expression(wak, booa, 2 * dot(boo, a))
@@ -67,7 +88,7 @@ wak = JuMP.Model()
 @variable(wak, ab[1:2] >= 0)
 @constraint(wak, cab1, ab[1] == booa)
 @constraint(wak, cab2, ab[2] == b2)
-@constraint(wak, cnst, [t; ab] in SecondOrderCone())
+@constraint(wak, cnst, [t; a] in NormOneCone())
 
 value.(test.model[:w])
 
