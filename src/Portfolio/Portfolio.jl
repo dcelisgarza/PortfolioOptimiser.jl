@@ -11,7 +11,7 @@ const UnionDataFrameNothing = Union{DataFrame, Nothing}
 const PortClasses = (:classic,)
 const KellyRet = (:exact, :approx, :none)
 const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
-const RiskMeasures = (:mean_var,)
+const RiskMeasures = (:mean_var, :mean_abs_dev, :mean_semi_dev)
 const TrackingErrKinds = (:weights, :returns)
 const ValidTermination =
     (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
@@ -138,13 +138,13 @@ mutable struct Portfolio{
     a_mtx_ineq::ami
     b_vec_ineq::bvi
     risk_budget_vec::rbv
-    lower_expected_return::ler
-    upper_deviation::ud
-    upper_kurtosis::uk
-    upper_mean_absolute_deviation::umad
-    upper_gini_mean_difference::ugmd
-    upper_semi_deviation::usd
-    upper_semi_kurtosis::usk
+    lower_mu::ler
+    upper_dev::ud
+    upper_krt::uk
+    upper_mean_abs_dev::umad
+    upper_gini_mean_diff::ugmd
+    upper_mean_semi_dev::usd
+    upper_semi_krt::usk
     upper_first_lower_partial_moment::uflpm
     upper_second_lower_partial_moment::uslpm
     upper_conditional_value_at_risk::ucvar
@@ -234,13 +234,13 @@ function Portfolio(;
     a_mtx_ineq::Matrix{<:Real} = Array{Float64}(undef, 0, 0),
     b_vec_ineq::Vector{<:Real} = Array{Float64}(undef, 0),
     risk_budget_vec::Vector{<:Real} = Array{Float64}(undef, 0),
-    lower_expected_return::Real = -Inf,
-    upper_deviation::Real = Inf,
-    upper_kurtosis::Real = Inf,
-    upper_mean_absolute_deviation::Real = Inf,
-    upper_gini_mean_difference::Real = Inf,
-    upper_semi_deviation::Real = Inf,
-    upper_semi_kurtosis::Real = Inf,
+    lower_mu::Real = -Inf,
+    upper_dev::Real = Inf,
+    upper_krt::Real = Inf,
+    upper_mean_abs_dev::Real = Inf,
+    upper_gini_mean_diff::Real = Inf,
+    upper_mean_semi_dev::Real = Inf,
+    upper_semi_krt::Real = Inf,
     upper_first_lower_partial_moment::Real = Inf,
     upper_second_lower_partial_moment::Real = Inf,
     upper_conditional_value_at_risk::Real = Inf,
@@ -328,13 +328,13 @@ function Portfolio(;
         a_mtx_ineq,
         b_vec_ineq,
         risk_budget_vec,
-        lower_expected_return,
-        upper_deviation,
-        upper_kurtosis,
-        upper_mean_absolute_deviation,
-        upper_gini_mean_difference,
-        upper_semi_deviation,
-        upper_semi_kurtosis,
+        lower_mu,
+        upper_dev,
+        upper_krt,
+        upper_mean_abs_dev,
+        upper_gini_mean_diff,
+        upper_mean_semi_dev,
+        upper_semi_krt,
         upper_first_lower_partial_moment,
         upper_second_lower_partial_moment,
         upper_conditional_value_at_risk,
@@ -394,21 +394,138 @@ function Portfolio(;
     )
 end
 
-function _mv_setup(model, sigma, upper_deviation, obj)
-    @variable(model, g >= 0)
-    @expression(model, risk_dev, g * g)
-    G = sqrt(sigma)
-    @constraint(model, sqrt_g, [g; transpose(G) * model[:w]] in SecondOrderCone())
+function _mv_setup(model, sigma, rm, kelly, upper_dev, obj)
+    w = model[:w]
+    k = model[:k]
+    if rm == :mean_var || kelly == :approx || isfinite(upper_dev)
+        @variable(model, g >= 0)
+        @expression(model, risk_dev, g * g)
+        G = sqrt(sigma)
+        @constraint(model, sqrt_g, [g; transpose(G) * w] in SecondOrderCone())
 
-    if isfinite(upper_deviation)
-        if obj == :sharpe
-            @constraint(model, u_risk, g <= upper_deviation * model[:k])
-        else
-            @constraint(model, u_risk, g <= upper_deviation)
+        if isfinite(upper_dev)
+            if obj == :sharpe
+                @constraint(model, u_risk, g <= upper_dev * k)
+            else
+                @constraint(model, u_risk, g <= upper_dev)
+            end
+        end
+
+        if rm == :mean_var
+            @expression(model, risk, risk_dev)
         end
     end
 
-    return g, risk_dev
+    return nothing
+end
+
+function _mad_setup(model, T, rm, upper_mean_abs_dev, upper_mean_semi_dev, returns, mu, obj)
+    w = model[:w]
+    k = model[:k]
+    if rm == :mean_abs_dev ||
+       rm == :mean_semi_dev ||
+       isfinite(upper_mean_abs_dev) ||
+       isfinite(upper_mean_semi_dev)
+        @variable(model, Y[1:T] >= 0)
+        abs_dev = returns .- transpose(mu)
+        @constraint(model, abs_dev_cnst, abs_dev * w >= -Y)
+
+        if rm == :mean_abs_dev || isfinite(upper_mean_abs_dev)
+            @expression(model, mad, sum(Y) / T)
+
+            if isfinite(upper_mean_abs_dev)
+                if obj == :sharpe
+                    @constraint(model, madlumad, mad * 2 <= upper_mean_abs_dev * k)
+                else
+                    @constraint(model, madlumad, mad * 2 <= upper_mean_abs_dev)
+                end
+            end
+
+            if rm == :mean_abs_dev
+                @expression(model, risk, mad)
+            end
+        end
+
+        if rm == :mean_semi_dev || isfinite(upper_mean_semi_dev)
+            @variable(model, tmsd >= 0)
+            @constraint(model, tmsd_cnst, [tmsd; Y] in SecondOrderCone())
+            @expression(model, msd, tmsd / sqrt(T - 1))
+
+            if isfinite(upper_mean_semi_dev)
+                if obj == :sharpe
+                    @constraint(model, msdlumsd, msd <= upper_mean_semi_dev * k)
+                else
+                    @constraint(model, msdlumsd, msd <= upper_mean_semi_dev)
+                end
+            end
+
+            if rm == :mean_semi_dev
+                @expression(model, risk, msd)
+            end
+        end
+    end
+
+    return nothing
+end
+
+function _return_setup(model, class, kelly, obj, T, rf, returns, mu, lower_mu)
+    w = model[:w]
+    k = model[:k]
+    risk = model[:risk]
+    if class == :classic && (kelly == :exact || kelly == :approx)
+        if kelly == :exact
+            @variable(model, gr[1:T])
+            if obj == :sharpe
+                @expression(model, ret, sum(gr) / T - rf * k)
+                @expression(model, kret, k .+ returns * w)
+                @constraint(
+                    model,
+                    exp_gr[i = 1:T],
+                    [gr[i], k, kret[i]] in MOI.ExponentialCone()
+                )
+                @constraint(model, sharpe, risk <= 1)
+            else
+                @expression(model, ret, sum(gr) / T)
+                @expression(model, kret, 1 .+ returns * w)
+                @constraint(
+                    model,
+                    exp_gr[i = 1:T],
+                    [gr[i], 1, kret[i]] in MOI.ExponentialCone()
+                )
+            end
+        elseif kelly == :approx
+            g = model[:g]
+            risk_dev = model[:risk_dev]
+            if obj == :sharpe
+                @variable(model, t >= 0)
+                @constraint(
+                    model,
+                    quad_over_lin,
+                    [k + t; 2 * g + k - t] in SecondOrderCone()
+                )
+                @expression(model, ret, dot(mu, w) - 0.5 * t)
+                @constraint(model, sharpe, risk <= 1)
+            else
+                @expression(model, ret, dot(mu, w) - 0.5 * risk_dev)
+            end
+        end
+    else
+        @expression(model, ret, dot(mu, w))
+        if obj == :sharpe
+            @constraint(model, sharpe, ret - rf * k == 1)
+        end
+    end
+
+    # Return constraints.
+    if isfinite(lower_mu)
+        if obj == :sharpe
+            @constraint(model, l_ret, ret >= lower_mu * k)
+        else
+            @constraint(model, l_ret, ret >= lower_mu)
+        end
+    end
+
+    return nothing
 end
 
 function optimize(
@@ -436,77 +553,31 @@ function optimize(
 
     model = portfolio.model
 
+    # Model variables.
     @variable(model, w[1:N])
-    if obj == :sharpe
-        @variable(model, k >= 0)
-    end
+    @variable(model, k >= 0)
 
     # Risk Variables.
-    if rm == :mean_var || kelly == :approx
-        g, risk_dev = _mv_setup(model, sigma, portfolio.upper_deviation, obj)
-        if rm == :mean_var
-            @expression(model, risk, risk_dev)
-        end
-    end
+
+    # Mean variance.
+    upper_dev = portfolio.upper_dev
+    _mv_setup(model, sigma, rm, kelly, upper_dev, obj)
+
+    # Mean absolute deviation and mean semi deviation.
+    upper_mean_abs_dev = portfolio.upper_mean_abs_dev
+    upper_mean_semi_dev = portfolio.upper_mean_semi_dev
+    _mad_setup(model, T, rm, upper_mean_abs_dev, upper_mean_semi_dev, returns, mu, obj)
 
     # Return variables.
-    if class == :classic && (kelly == :exact || kelly == :approx)
-        if kelly == :exact
-            @variable(model, gr[1:T])
-            if obj == :sharpe
-                @expression(model, ret, sum(gr) / T - rf * k)
-                @expression(model, kret, k .+ returns * w)
-                @constraint(
-                    model,
-                    exp_gr[i = 1:T],
-                    [gr[i], k, kret[i]] in MOI.ExponentialCone()
-                )
-                @constraint(model, sharpe, risk <= 1)
-            else
-                @expression(model, ret, sum(gr) / T)
-                @expression(model, kret, 1 .+ returns * w)
-                @constraint(
-                    model,
-                    exp_gr[i = 1:T],
-                    [gr[i], 1, kret[i]] in MOI.ExponentialCone()
-                )
-            end
-        elseif kelly == :approx
-            if obj == :sharpe
-                @variable(model, t >= 0)
-                @constraint(
-                    model,
-                    quad_over_lin,
-                    [k + t; 2 * g + k - t] in SecondOrderCone()
-                )
-                @expression(model, ret, dot(mu, w) - 0.5 * t)
-                @constraint(model, sharpe, risk <= 1)
-            else
-                @expression(model, ret, dot(mu, w) - 0.5 * risk_dev)
-            end
-        end
-    else
-        @expression(model, ret, dot(mu, w))
-        if obj == :sharpe
-            @constraint(model, sharpe, ret - rf * k == 1)
-        end
-    end
-
-    # Return constraints.
-    if isfinite(portfolio.lower_expected_return)
-        if obj == :sharpe
-            @constraint(model, l_ret, ret >= portfolio.lower_expected_return * k)
-        else
-            @constraint(model, l_ret, ret >= portfolio.lower_expected_return)
-        end
-    end
+    lower_mu = portfolio.lower_mu
+    _return_setup(model, class, kelly, obj, T, rf, returns, mu, lower_mu)
 
     # Boolean variables max number of assets.
     max_number_assets = portfolio.max_number_assets
     if max_number_assets > 0
         if obj == :sharpe
             @variable(model, e[1:N], binary = true)
-            @variable(model, e1[1:N])
+            @variable(model, e1[1:N] >= 0)
         else
             @variable(model, e[1:N], binary = true)
         end
@@ -520,10 +591,10 @@ function optimize(
     if obj == :sharpe
         @constraint(model, sum_w, sum(w) == sum_short_long * k)
 
+        # Maximum number of assets constraints.
         if max_number_assets > 0
             @constraint(model, sum_e, sum(e) <= max_number_assets)
             @constraint(model, e1lk, e1 .<= k)
-            @constraint(model, e1g0, e1 .>= 0)
             @constraint(model, e1le, e1 .<= 100000 * e)
             @constraint(model, e1gke, e1 .>= k - 100000 * (1 .- e))
             @constraint(model, wgule1, w .<= upper_long * e1)
@@ -542,6 +613,7 @@ function optimize(
             @constraint(model, long_w, w .- ul .<= 0)
             @constraint(model, short_w, w .+ us .>= 0)
 
+            # Maximum number of assets constraints.
             if max_number_assets > 0
                 @constraint(model, wluse1, w .>= -upper_short * e1)
             end
@@ -549,6 +621,7 @@ function optimize(
     else
         @constraint(model, sum_w, sum(w) == sum_short_long)
 
+        # Maximum number of assets constraints.
         if max_number_assets > 0
             @constraint(model, sum_e, sum(e) <= max_number_assets)
             @constraint(model, wgule, w .<= upper_long * e)
@@ -567,6 +640,7 @@ function optimize(
             @constraint(model, long_w, w .- ul .<= 0)
             @constraint(model, short_w, w .+ us .>= 0)
 
+            # Maximum number of assets constraints.
             if max_number_assets > 0
                 @constraint(model, wluse, w .>= -upper_short * e)
             end
@@ -656,6 +730,8 @@ function optimize(
     end
 
     # Objective functions.
+    ret = model[:ret]
+    risk = model[:risk]
     if obj == :sharpe
         if model == :classic && (kelly == :exact || kelly == :approx)
             @objective(model, Max, ret)

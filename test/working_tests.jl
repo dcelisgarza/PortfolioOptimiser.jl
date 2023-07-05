@@ -33,7 +33,7 @@ test.cov = cov(Matrix(RET[!, 2:end]))
 # test.max_number_assets = -2
 # test.min_number_effective_assets = 0
 # test.upper_deviation = r3 * 1.5#sqrt(0.00017320998967406147)
-# test.lower_expected_return = Inf
+# test.lower_mu = Inf
 test.tracking_err_benchmark_weights =
     DataFrame(tickers = names(RET)[2:end], weights = collect(1:4:80) / sum(1:4:80))
 
@@ -74,14 +74,16 @@ test = Portfolio(
     # upper_long = 1,
     # short = true,
     # sum_short_long = 0.8,
-    solvers = Dict("ECOS" => ECOS.Optimizer, "SCS" => SCS.Optimizer),
+    solvers = Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
     sol_params = Dict(
         "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-12, "verbose" => false),
     ),
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
-obj = :min_risk
+test.upper_deviation = Inf#0.009
+test.upper_mean_abs_dev = Inf#0.008
+obj = :max_ret
 w1 = optimize(test, kelly = :exact, obj = obj)
 r1 = sqrt(dot(w1[!, :weights], test.cov, w1[!, :weights]))
 mu1 = dot(w1[!, :weights], test.mu)
