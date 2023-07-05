@@ -12,7 +12,8 @@ const PortClasses = (:classic,)
 const KellyRet = (:exact, :approx, :none)
 const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 const RiskMeasures = (:mean_var,)
-const ValidTermination = (MOI.OPTIMAL,)
+const ValidTermination =
+    (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
 
 mutable struct Portfolio{
     # Portfolio characteristics
@@ -185,7 +186,7 @@ mutable struct Portfolio{
     k_mu::tkmu
     k_sigma::tks
     # Optimal portfolios
-    optimal::topt
+    p_optimal::topt
     rp_optimal::trpopt
     rrp_optimal::trrpopt
     wc_optimal::twcopt
@@ -279,7 +280,7 @@ function Portfolio(;
     k_mu::Real = -Inf,
     k_sigma::Real = -Inf,
     # Optimal portfolios
-    optimal::DataFrame = DataFrame(),
+    p_optimal::DataFrame = DataFrame(),
     rp_optimal::DataFrame = DataFrame(),
     rrp_optimal::DataFrame = DataFrame(),
     wc_optimal::DataFrame = DataFrame(),
@@ -371,7 +372,7 @@ function Portfolio(;
         k_mu,
         k_sigma,
         # Optimal portfolios
-        optimal,
+        p_optimal,
         rp_optimal,
         rrp_optimal,
         wc_optimal,
@@ -382,6 +383,23 @@ function Portfolio(;
         sol_params,
         JuMP.Model(),
     )
+end
+
+function _mv_setup(model, sigma, upper_deviation, obj)
+    @variable(model, g >= 0)
+    @expression(model, risk_dev, g * g)
+    G = sqrt(sigma)
+    @constraint(model, sqrt_g, [g; transpose(G) * model[:w]] in SecondOrderCone())
+
+    if isfinite(upper_deviation)
+        if obj == :sharpe
+            @constraint(model, u_risk, g <= upper_deviation * model[:k])
+        else
+            @constraint(model, u_risk, g <= upper_deviation)
+        end
+    end
+
+    return g, risk_dev
 end
 
 function optimize(
@@ -415,12 +433,11 @@ function optimize(
     end
 
     # Risk Variables.
-    if rm == :mean_var
-        @variable(model, g >= 0)
-        G = sqrt(sigma)
-        @expression(model, risk_dev, g * g)
-        @constraint(model, sqrt_g, [g; transpose(G) * w] in SecondOrderCone())
-        @expression(model, risk, risk_dev)
+    if rm == :mean_var || kelly == :approx
+        g, risk_dev = _mv_setup(model, sigma, portfolio.upper_deviation, obj)
+        if rm == :mean_var
+            @expression(model, risk, risk_dev)
+        end
     end
 
     # Return variables.
@@ -446,12 +463,6 @@ function optimize(
                 )
             end
         elseif kelly == :approx
-            if rm != :mean_var
-                @variable(model, g >= 0)
-                @expression(model, risk_dev, g * g)
-                G = sqrt(sigma)
-                @constraint(model, sqrt_g, [g; transpose(G) * w] in SecondOrderCone())
-            end
             if obj == :sharpe
                 @variable(model, t >= 0)
                 @constraint(
@@ -468,7 +479,16 @@ function optimize(
     else
         @expression(model, ret, dot(mu, w))
         if obj == :sharpe
-            @constraint(model, sharpe, model[:ret] - rf * k == 1)
+            @constraint(model, sharpe, ret - rf * k == 1)
+        end
+    end
+
+    # Return constraints.
+    if isfinite(portfolio.lower_expected_return)
+        if obj == :sharpe
+            @constraint(model, l_ret, ret >= portfolio.lower_expected_return * k)
+        else
+            @constraint(model, l_ret, ret >= portfolio.lower_expected_return)
         end
     end
 
@@ -512,16 +532,16 @@ function optimize(
     # Objective functions.
     if obj == :sharpe
         if model == :classic && (kelly == :exact || kelly == :approx)
-            @objective(model, Max, model[:ret])
+            @objective(model, Max, ret)
         else
-            @objective(model, Min, model[:risk])
+            @objective(model, Min, risk)
         end
     elseif obj == :min_risk
-        @objective(model, Min, model[:risk])
+        @objective(model, Min, risk)
     elseif obj == :utility
-        @objective(model, Max, model[:ret] - l * model[:risk])
+        @objective(model, Max, ret - l * risk)
     elseif obj == :max_ret
-        @objective(model, Max, model[:ret])
+        @objective(model, Max, ret)
     end
 
     solvers = portfolio.solvers
@@ -539,7 +559,8 @@ function optimize(
             end
             optimize!(model)
             term_status = termination_status(model)
-            if term_status in ValidTermination && !any(.!isfinite.(value.(w)))
+            if term_status in ValidTermination &&
+               all(isfinite.(value.(w)) && all(abs.(0.0 .- value.(w)) .> N^2 * eps()))
                 break
             end
             push!(solvers_tried, solver_name)
@@ -569,6 +590,9 @@ function optimize(
         @warn(
             "$funcname: model for could not be optimised satisfactorily.\nPortfolio: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $df"
         )
+
+        portfolio.p_optimal = DataFrame()
+        return portfolio.p_optimal
     end
 
     weights = Vector{eltype(returns)}(undef, N)
@@ -582,7 +606,9 @@ function optimize(
         weights .= abs.(weights) / sum(abs.(weights)) * sum_short_long
     end
 
-    return DataFrame(weights = weights, tickers = names(portfolio.returns)[2:end])
+    portfolio.p_optimal =
+        DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+    return portfolio.p_optimal
 end
 
 export AbstractPortfolio, Portfolio, optimize#, HCPortfolio, OWAPortfolio

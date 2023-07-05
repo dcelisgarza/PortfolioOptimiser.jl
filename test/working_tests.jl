@@ -13,28 +13,50 @@ test = Portfolio(
     # upper_long = 1,
     # short = true,
     # sum_short_long = 0.8,
-    solvers = Dict("ECOS" => ECOS.Optimizer, "SCS" => SCS.Optimizer),
+    solvers = Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
     sol_params = Dict(
-        "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-11, "verbose" => false),
+        "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-12, "verbose" => false),
     ),
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
-w1 = optimize(test, kelly = :exact, obj = :utility)
-w2 = optimize(test, kelly = :approx, obj = :utility)
-w3 = optimize(test, kelly = :none, obj = :utility)
-sh3 = hcat(w1, w2, w3, makeunique = true)
+test.upper_deviation = r3 * 1.5#sqrt(0.00017320998967406147)
+test.lower_expected_return = Inf
+w1 = optimize(test, kelly = :none, obj = :max_ret)
+r1 = sqrt(dot(w1[!, :weights], test.cov, w1[!, :weights]))
+mu1 = dot(w1[!, :weights], test.mu)
+w2 = optimize(test, kelly = :none, obj = :sharpe)
+r2 = sqrt(dot(w2[!, :weights], test.cov, w2[!, :weights]))
+mu2 = dot(w2[!, :weights], test.mu)
+w3 = optimize(test, kelly = :none, obj = :min_risk)
+r3 = sqrt(dot(w3[!, :weights], test.cov, w3[!, :weights]))
+mu3 = dot(w3[!, :weights], test.mu)
 
+sh3 = hcat(w1, w2, w3, makeunique = true)
+latex_formulation(test.model)
 w12 = rmsd(w1[!, :weights], w2[!, :weights])
 w13 = rmsd(w1[!, :weights], w3[!, :weights])
-w23 = rmsd(w3[!, :weights], w2[!, :weights])
+w23 = rmsd(w2[!, :weights], w3[!, :weights])
 
 println((w12, w13, w23))
 display(sh3)
 
 value.(test.model[:w])
 
-using JuMP
+using JuMP, LinearAlgebra
+
+boo = rand(10)
+wak = JuMP.Model()
+@variable(wak, a[1:10] >= 0)
+@variable(wak, b >= 2)
+@variable(wak, t >= 0)
+@expression(wak, booa, 2 * dot(boo, a))
+@expression(wak, b2, -2 * b)
+@variable(wak, ab[1:2] >= 0)
+@constraint(wak, cab1, ab[1] == booa)
+@constraint(wak, cab2, ab[2] == b2)
+@constraint(wak, cnst, [t; ab] in SecondOrderCone())
+
 value.(test.model[:w])
 
 isinf(test.upper_average_drawdown)
