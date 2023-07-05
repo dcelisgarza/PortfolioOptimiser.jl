@@ -39,8 +39,8 @@ test.tracking_err_benchmark_weights =
 
 test.tracking_err_benchmark_kind = :weights
 test.allow_tracking_err = false
-test.min_number_effective_assets = 2
-w1 = optimize(test, kelly = :approx, obj = :utility)
+test.min_number_effective_assets = 0
+w1 = optimize(test, kelly = :exact, obj = :utility)
 
 test.allow_tracking_err = true
 test.tracking_err = 0.001

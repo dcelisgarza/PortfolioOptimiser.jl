@@ -467,7 +467,7 @@ function optimize(
                 @expression(model, kret, 1 .+ returns * w)
                 @constraint(
                     model,
-                    exp_gr[i = 1:N],
+                    exp_gr[i = 1:T],
                     [gr[i], 1, kret[i]] in MOI.ExponentialCone()
                 )
             end
