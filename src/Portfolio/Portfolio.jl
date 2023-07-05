@@ -655,15 +655,6 @@ function optimize(
         end
     end
 
-    # if obj == "Sharpe":
-    #     if self.allowTO == True:
-    #         TO_1 = cp.abs(w - c @ k) * 1000
-    #         constraints += [TO_1 <= self.turnover * k * 1000]
-    # else:
-    #     if self.allowTO == True:
-    #         TO_1 = cp.abs(w - c) * 1000
-    #         constraints += [TO_1 <= self.turnover * 1000]
-
     # Objective functions.
     if obj == :sharpe
         if model == :classic && (kelly == :exact || kelly == :approx)
