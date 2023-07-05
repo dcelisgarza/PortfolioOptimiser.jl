@@ -68,16 +68,32 @@ w3 = optimize(test, kelly = :approx, obj = :sharpe)
 sh2 = hcat(w1, w2, w3, test.turnover_benchmark_weights, makeunique = true)
 display(sh2)
 
+test = Portfolio(
+    returns = RET,
+    # upper_short = 0.2,
+    # upper_long = 1,
+    # short = true,
+    # sum_short_long = 0.8,
+    solvers = Dict("ECOS" => ECOS.Optimizer, "SCS" => SCS.Optimizer),
+    sol_params = Dict(
+        "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-12, "verbose" => false),
+    ),
+)
+test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
+test.cov = cov(Matrix(RET[!, 2:end]))
+obj = :min_risk
+w1 = optimize(test, kelly = :exact, obj = obj)
 r1 = sqrt(dot(w1[!, :weights], test.cov, w1[!, :weights]))
 mu1 = dot(w1[!, :weights], test.mu)
-w2 = optimize(test, kelly = :approx, obj = :utility)
+w2 = optimize(test, kelly = :approx, obj = obj)
 r2 = sqrt(dot(w2[!, :weights], test.cov, w2[!, :weights]))
 mu2 = dot(w2[!, :weights], test.mu)
-w3 = optimize(test, kelly = :none, obj = :utility)
+w3 = optimize(test, kelly = :none, obj = obj)
 r3 = sqrt(dot(w3[!, :weights], test.cov, w3[!, :weights]))
 mu3 = dot(w3[!, :weights], test.mu)
+sh3 = hcat(w1, w2[!, :weights], w3[!, :weights], makeunique = true)
+display(sh3)
 
-sh3 = hcat(w1, w2, w3, makeunique = true)
 latex_formulation(test.model)
 w12 = rmsd(w1[!, :weights], w2[!, :weights])
 w13 = rmsd(w1[!, :weights], w3[!, :weights])
