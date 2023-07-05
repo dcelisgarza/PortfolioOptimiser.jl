@@ -104,6 +104,7 @@ mutable struct Portfolio{
     tsolv,
     tsolvp,
     tmod,
+    tf,
 } <: AbstractPortfolio
     # Portfolio characteristics.
     returns::r
@@ -196,6 +197,7 @@ mutable struct Portfolio{
     solvers::tsolv
     sol_params::tsolvp
     model::tmod
+    fail::tf
 end
 
 function Portfolio(;
@@ -205,8 +207,8 @@ function Portfolio(;
     upper_short::Real = 0.2,
     upper_long::Real = 1.0,
     sum_short_long::Real = 1,
-    min_number_effective_assets::Integer = -1,
-    max_number_assets::Integer = -1,
+    min_number_effective_assets::Integer = 0,
+    max_number_assets::Integer = 0,
     returns_factors::DataFrame = DataFrame(),
     loadings::DataFrame = DataFrame(),
     # Risk parameters
@@ -382,6 +384,7 @@ function Portfolio(;
         solvers,
         sol_params,
         JuMP.Model(),
+        Dict(),
     )
 end
 
@@ -416,9 +419,8 @@ function optimize(
     @assert(obj ∈ ObjFuncs)
     @assert(kelly ∈ KellyRet)
 
+    portfolio.model = JuMP.Model()
     term_status = termination_status(portfolio.model)
-
-    term_status != MOI.OPTIMIZE_NOT_CALLED && (portfolio.model = JuMP.Model())
 
     mu = portfolio.mu
     sigma = portfolio.cov
@@ -492,6 +494,17 @@ function optimize(
         end
     end
 
+    # Boolean variables max number of assets
+    max_number_assets = portfolio.max_number_assets
+    if max_number_assets > 0
+        if obj == :sharpe
+            @variable(model, e[1:N], binary = true)
+            @variable(model, e1[1:N])
+        else
+            @variable(model, e[1:N], binary = true)
+        end
+    end
+
     # Weight constraints.
     short = portfolio.short
     upper_long = portfolio.upper_long
@@ -499,6 +512,16 @@ function optimize(
     sum_short_long = portfolio.sum_short_long
     if obj == :sharpe
         @constraint(model, sum_w, sum(w) == sum_short_long * k)
+
+        if max_number_assets > 0
+            @constraint(model, sum_e, sum(e) <= max_number_assets)
+            @constraint(model, e1lk, e1 .<= k)
+            @constraint(model, e1g0, e1 .>= 0)
+            @constraint(model, e1le, e1 .<= 100000 * e)
+            @constraint(model, e1gke, e1 .>= k - 100000 * (1 .- e))
+            @constraint(model, wgule1, w .<= upper_long * e1)
+        end
+
         if short == false
             @constraint(model, ul_w, w .<= upper_long * k)
             @constraint(model, val_w, w .>= 0)
@@ -511,9 +534,19 @@ function optimize(
 
             @constraint(model, long_w, w .- ul .<= 0)
             @constraint(model, short_w, w .+ us .>= 0)
+
+            if max_number_assets > 0
+                @constraint(model, wluse1, w .>= -upper_short * e1)
+            end
         end
     else
         @constraint(model, sum_w, sum(w) == sum_short_long)
+
+        if max_number_assets > 0
+            @constraint(model, sum_e, sum(e) <= max_number_assets)
+            @constraint(model, wgule, w .<= upper_long * e)
+        end
+
         if short == false
             @constraint(model, ul_w, w .<= upper_long)
             @constraint(model, val_w, w .>= 0)
@@ -526,6 +559,10 @@ function optimize(
 
             @constraint(model, long_w, w .- ul .<= 0)
             @constraint(model, short_w, w .+ us .>= 0)
+
+            if max_number_assets > 0
+                @constraint(model, wluse, w .>= -upper_short * e)
+            end
         end
     end
 
@@ -546,52 +583,48 @@ function optimize(
 
     solvers = portfolio.solvers
     sol_params = portfolio.sol_params
-    solvers_tried = []
-    obj_val_tried = Float64[]
-    term_status_tried = MOI.TerminationStatusCode[]
+    solvers_tried = Dict()
     for (solver_name, solver) in solvers
-        try
-            set_optimizer(model, solver)
-            if haskey(sol_params, solver_name)
-                for (attribute, value) in sol_params[solver_name]
-                    set_attribute(model, attribute, value)
-                end
+        set_optimizer(model, solver)
+        if haskey(sol_params, solver_name)
+            for (attribute, value) in sol_params[solver_name]
+                set_attribute(model, attribute, value)
             end
-            optimize!(model)
-            term_status = termination_status(model)
-            if term_status in ValidTermination &&
-               all(isfinite.(value.(w)) && all(abs.(0.0 .- value.(w)) .> N^2 * eps()))
-                break
-            end
-            push!(solvers_tried, solver_name)
-            push!(obj_val_tried, objective_value(model))
-            push!(term_status_tried, term_status)
-        catch solver_error
         end
+        try
+            optimize!(model)
+        catch jump_error
+            push!(solvers_tried, solver_name => Dict("error" => jump_error))
+            continue
+        end
+        term_status = termination_status(model)
+
+        if term_status in ValidTermination &&
+           all(isfinite.(value.(w))) &&
+           all(abs.(0.0 .- value.(w)) .> N^2 * eps())
+            break
+        end
+        push!(
+            solvers_tried,
+            solver_name => Dict(
+                "objective_val" => objective_value(model),
+                "term_status" => term_status,
+                "sol_params" =>
+                    haskey(sol_params, solver_name) ? sol_params[solver_name] : missing,
+            ),
+        )
     end
 
     if term_status ∉ ValidTermination || any(.!isfinite.(value.(w)))
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.optimize))"
-        slv_params = []
-        for solver_name in solvers_tried
-            if haskey(sol_params, solver_name)
-                push!(slv_params, sol_params[solver_name])
-            else
-                push!(slv_params, missing)
-            end
-        end
-        df = DataFrame(
-            solver = solvers_tried,
-            obj_val = obj_val_tried,
-            term_status = term_status_tried,
-            solver_params = slv_params,
-        )
 
         @warn(
-            "$funcname: model for could not be optimised satisfactorily.\nPortfolio: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $df"
+            "$funcname: model for could not be optimised satisfactorily.\nPortfolio: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $solvers_tried"
         )
 
         portfolio.p_optimal = DataFrame()
+        portfolio.fail = solvers_tried
+
         return portfolio.p_optimal
     end
 
@@ -608,6 +641,13 @@ function optimize(
 
     portfolio.p_optimal =
         DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+
+    if isempty(solvers_tried)
+        portfolio.fail = Dict()
+    else
+        portfolio.fail = solvers_tried
+    end
+
     return portfolio.p_optimal
 end
 
