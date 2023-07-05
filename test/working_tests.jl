@@ -37,8 +37,9 @@ test.cov = cov(Matrix(RET[!, 2:end]))
 test.tracking_err_benchmark_weights =
     DataFrame(tickers = names(RET)[2:end], weights = collect(1:4:80) / sum(1:4:80))
 
-test.tracking_err_benchmark_kind = true
+test.tracking_err_benchmark_kind = :weights
 test.allow_tracking_err = false
+test.min_number_effective_assets = 2
 w1 = optimize(test, kelly = :approx, obj = :utility)
 
 test.allow_tracking_err = true
@@ -91,7 +92,9 @@ using JuMP, LinearAlgebra
 
 boo = rand(10)
 wak = JuMP.Model()
-@variable(wak, a[1:10] >= 0)
+@variable(wak, a[1:10, 1:10] >= 0)
+@expression(wak, tra, sum(diag(a)))
+
 @variable(wak, b >= 2)
 @variable(wak, t >= 0)
 @expression(wak, booa, 2 * dot(boo, a))

@@ -12,6 +12,7 @@ const PortClasses = (:classic,)
 const KellyRet = (:exact, :approx, :none)
 const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 const RiskMeasures = (:mean_var,)
+const TrackingErrKinds = (:weights, :returns)
 const ValidTermination =
     (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
 
@@ -221,7 +222,7 @@ function Portfolio(;
     kappa::Real = 0.3,
     max_num_assets_kurt::Integer = 50,
     # Benchmark constraints
-    tracking_err_benchmark_kind::Bool = true,
+    tracking_err_benchmark_kind::Symbol = :weights,
     allow_turnover::Bool = false,
     turnover::Real = 0.05,
     turnover_benchmark_weights::DataFrame = DataFrame(),
@@ -294,6 +295,7 @@ function Portfolio(;
     # Solver params
     solvers::Dict = Dict(),
     sol_params::Dict = Dict(),
+    model = JuMP.Model(),
 )
     return Portfolio(
         # Portfolio characteristics.
@@ -387,7 +389,7 @@ function Portfolio(;
         # Solver params
         solvers,
         sol_params,
-        JuMP.Model(),
+        model,
         Dict(),
     )
 end
@@ -422,6 +424,7 @@ function optimize(
     @assert(rm ∈ RiskMeasures)
     @assert(obj ∈ ObjFuncs)
     @assert(kelly ∈ KellyRet)
+    @assert(portfolio.tracking_err_benchmark_kind ∈ TrackingErrKinds)
 
     portfolio.model = JuMP.Model()
     term_status = termination_status(portfolio.model)
@@ -602,10 +605,11 @@ function optimize(
     if allow_tracking_err == true
         tracking_err_flag = false
 
-        if tracking_err_benchmark_kind == true && !isempty(tracking_err_benchmark_weights)
+        if tracking_err_benchmark_kind == :weights &&
+           !isempty(tracking_err_benchmark_weights)
             benchmark = returns * portfolio.tracking_err_benchmark_weights[!, :weights]
             tracking_err_flag = true
-        elseif tracking_err_benchmark_kind == false &&
+        elseif tracking_err_benchmark_kind == :returns &&
                !isempty(tracking_err_benchmark_returns)
             benchmark = tracking_err_benchmark_returns[!, :returns]
             tracking_err_flag = true
