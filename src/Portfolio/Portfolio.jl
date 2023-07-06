@@ -35,11 +35,9 @@ mutable struct Portfolio{
     k,
     mnak,
     # Benchmark constraints
-    kb,
-    ato,
-    turnover,
+    to,
     tobw,
-    ate,
+    kte,
     te,
     rbi,
     bw,
@@ -126,11 +124,9 @@ mutable struct Portfolio{
     kappa::k
     max_num_assets_kurt::mnak
     # Benchmark constraints
-    kind_tracking_err::kb
-    allow_turnover::ato
-    turnover::turnover
+    turnover::to
     turnover_weights::tobw
-    allow_tracking_err::ate
+    kind_tracking_err::kte
     tracking_err::te
     tracking_err_returns::rbi
     tracking_err_weights::bw
@@ -222,12 +218,10 @@ function Portfolio(;
     kappa::Real = 0.3,
     max_num_assets_kurt::Integer = 50,
     # Benchmark constraints
-    kind_tracking_err::Symbol = :weights,
-    allow_turnover::Bool = false,
-    turnover::Real = 0.05,
+    turnover::Real = Inf,
     turnover_weights::DataFrame = DataFrame(),
-    allow_tracking_err::Bool = false,
-    tracking_err::Real = 0.05,
+    kind_tracking_err::Symbol = :weights,
+    tracking_err::Real = Inf,
     tracking_err_returns::DataFrame = DataFrame(),
     tracking_err_weights::DataFrame = DataFrame(),
     # Risk and return constraints
@@ -316,11 +310,9 @@ function Portfolio(;
         kappa,
         max_num_assets_kurt,
         # Benchmark constraints
-        kind_tracking_err,
-        allow_turnover,
         turnover,
         turnover_weights,
-        allow_tracking_err,
+        kind_tracking_err,
         tracking_err,
         tracking_err_returns,
         tracking_err_weights,
@@ -650,7 +642,7 @@ function _setup_linear_constraints(model, A, B, obj)
     return nothing
 end
 
-function _setup_min_number_effective_assets(model, mnea)
+function _setup_min_number_effective_assets(model, mnea, obj)
     w = model[:w]
     k = model[:k]
 
@@ -669,18 +661,17 @@ end
 
 function _setup_tracking_err(
     model,
-    allow_tracking_err,
     kind_tracking_err,
     tracking_err_weights,
     returns,
     tracking_err_returns,
     obj,
-    upper_tracking_err,
+    tracking_err,
     T,
 )
     w = model[:w]
     k = model[:k]
-    if allow_tracking_err == true
+    if !isinf(tracking_err) == true
         tracking_err_flag = false
 
         if kind_tracking_err == :weights && !isempty(tracking_err_weights)
@@ -692,40 +683,40 @@ function _setup_tracking_err(
         end
 
         if tracking_err_flag == true
-            @variable(model, t_tracking_err >= 0)
+            @variable(model, t_track_err >= 0)
             if obj == :sharpe
-                @expression(model, tracking_err, returns * w .- benchmark * k)
+                @expression(model, track_err, returns * w .- benchmark * k)
                 @constraint(
                     model,
                     t_track_err_track_err_soc,
-                    [t_tracking_err; tracking_err] in SecondOrderCone()
+                    [t_track_err; track_err] in SecondOrderCone()
                 )
                 @constraint(
                     model,
                     t_track_err_leq_track_err_sqrt_tm1,
-                    t_tracking_err <= upper_tracking_err * k * sqrt(T - 1)
+                    t_track_err <= tracking_err * k * sqrt(T - 1)
                 )
             else
-                @expression(model, tracking_err, returns * w .- benchmark)
+                @expression(model, track_err, returns * w .- benchmark)
                 @constraint(
                     model,
                     t_track_err_track_err_soc,
-                    [t_tracking_err; tracking_err] in SecondOrderCone()
+                    [t_track_err; track_err] in SecondOrderCone()
                 )
                 @constraint(
                     model,
                     t_track_err_leq_track_err_sqrt_tm1,
-                    t_tracking_err <= upper_tracking_err * sqrt(T - 1)
+                    t_track_err <= tracking_err * sqrt(T - 1)
                 )
             end
         end
     end
 end
 
-function _setup_turnover(model, allow_turnover, turnover_weights, N, upper_turnover, obj)
+function _setup_turnover(model, turnover_weights, N, upper_turnover, obj)
     w = model[:w]
     k = model[:k]
-    if allow_turnover == true && !isempty(turnover_weights)
+    if !isinf(upper_turnover) && !isempty(turnover_weights)
         @variable(model, t_turnover[1:N] >= 0)
         if obj == :sharpe
             @expression(model, turnover, w .- turnover_weights[!, :weights] * k)
@@ -747,7 +738,7 @@ function _setup_turnover(model, allow_turnover, turnover_weights, N, upper_turno
     end
 end
 
-function _setup_objective_function(model, obj, kelly)
+function _setup_objective_function(model, obj, kelly, l)
     ret = model[:ret]
     risk = model[:risk]
     if obj == :sharpe
@@ -834,34 +825,31 @@ function optimize(
 
     # Minimum number of effective assets.
     mnea = portfolio.min_number_effective_assets
-    _setup_min_number_effective_assets(model, mnea)
+    _setup_min_number_effective_assets(model, mnea, obj)
 
     # Tracking error variables and constraints.
-    allow_tracking_err = portfolio.allow_tracking_err
     kind_tracking_err = portfolio.kind_tracking_err
     tracking_err_weights = portfolio.tracking_err_weights
     tracking_err_returns = portfolio.tracking_err_returns
-    upper_tracking_err = portfolio.tracking_err
+    tracking_err = portfolio.tracking_err
     _setup_tracking_err(
         model,
-        allow_tracking_err,
         kind_tracking_err,
         tracking_err_weights,
         returns,
         tracking_err_returns,
         obj,
-        upper_tracking_err,
+        tracking_err,
         T,
     )
 
     # Turnover variables and constraints
-    allow_turnover = portfolio.allow_turnover
     turnover_weights = portfolio.turnover_weights
     upper_turnover = portfolio.turnover
-    _setup_turnover(model, allow_turnover, turnover_weights, N, upper_turnover, obj)
+    _setup_turnover(model, turnover_weights, N, upper_turnover, obj)
 
     # Objective functions.
-    _setup_objective_function(model, obj, kelly)
+    _setup_objective_function(model, obj, kelly, l)
 
     solvers = portfolio.solvers
     sol_params = portfolio.sol_params

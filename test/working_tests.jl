@@ -36,20 +36,17 @@ test.tracking_err_weights =
 
 obj = :sharpe
 test.kind_tracking_err = :weights
-test.allow_tracking_err = false
+test.tracking_err = Inf
 w1 = optimize(test, kelly = :exact, obj = obj)
 
-test.allow_tracking_err = true
 test.tracking_err = 0.1
-w2 = optimize(test, kelly = :approx, obj = obj)
+w2 = optimize(test, kelly = :exact, obj = obj)
 
-test.allow_tracking_err = true
-test.tracking_err = 0.001
-w3 = optimize(test, kelly = :approx, obj = obj)
+test.tracking_err = 0.002
+w3 = optimize(test, kelly = :exact, obj = obj)
 
-test.allow_tracking_err = true
-test.tracking_err = 0.0001
-w4 = optimize(test, kelly = :approx, obj = obj)
+test.tracking_err = 0.00001
+w4 = optimize(test, kelly = :exact, obj = obj)
 sh2 = hcat(
     w1,
     w2[!, :weights],
@@ -77,19 +74,18 @@ test.cov = cov(Matrix(RET[!, 2:end]))
 test.turnover_weights =
     DataFrame(tickers = names(RET)[2:end], weights = collect(39:-2:1) / sum(39:-2:1))
 
-test.allow_tracking_err = false
-test.allow_turnover = false
+test.tracking_err = Inf
+test.turnover = Inf
 obj = :sharpe
 w1 = optimize(test, kelly = :exact, obj = obj)
 
-test.allow_turnover = true
 test.turnover = 0.4
 w2 = optimize(test, kelly = :exact, obj = obj)
 
 test.turnover = 0.1
 w3 = optimize(test, kelly = :exact, obj = obj)
 
-test.turnover = 0.05
+test.turnover = 0.005
 w4 = optimize(test, kelly = :exact, obj = obj)
 sh2 = hcat(
     w1,
@@ -116,6 +112,7 @@ test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
 test.upper_dev = 0.009
 test.upper_mean_abs_dev = 0.008
+test.min_number_effective_assets = 0
 obj = :max_ret
 @time w1 = optimize(test, kelly = :exact, obj = obj)
 r1 = sqrt(dot(w1[!, :weights], test.cov, w1[!, :weights]))
@@ -126,8 +123,12 @@ mu2 = dot(w2[!, :weights], test.mu)
 @time w3 = optimize(test, kelly = :none, obj = obj)
 r3 = sqrt(dot(w3[!, :weights], test.cov, w3[!, :weights]))
 mu3 = dot(w3[!, :weights], test.mu)
-sh3 = hcat(w1, w2[!, :weights], w3[!, :weights], makeunique = true)
-display(sh3)
+test.min_number_effective_assets = 20
+@time w4 = optimize(test, kelly = :none, obj = obj)
+r4 = sqrt(dot(w4[!, :weights], test.cov, w4[!, :weights]))
+mu4 = dot(w4[!, :weights], test.mu)
+sh4 = hcat(w1, w2[!, :weights], w3[!, :weights], w4[!, :weights], makeunique = true)
+display(sh4)
 
 latex_formulation(test.model)
 w12 = rmsd(w1[!, :weights], w2[!, :weights])
