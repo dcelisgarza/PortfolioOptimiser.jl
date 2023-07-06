@@ -30,43 +30,34 @@ test = Portfolio(
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
-# test.max_number_assets = -2
-# test.min_number_effective_assets = 0
-# test.upper_deviation = r3 * 1.5#sqrt(0.00017320998967406147)
-# test.lower_mu = Inf
-test.tracking_err_benchmark_weights =
-    DataFrame(tickers = names(RET)[2:end], weights = collect(1:4:80) / sum(1:4:80))
 
-test.tracking_err_benchmark_kind = :weights
+test.tracking_err_weights =
+    DataFrame(tickers = names(RET)[2:end], weights = collect(1:2:40) / sum(1:2:40))
+
+obj = :sharpe
+test.kind_tracking_err = :weights
 test.allow_tracking_err = false
-test.min_number_effective_assets = 0
-w1 = optimize(test, kelly = :exact, obj = :utility)
+w1 = optimize(test, kelly = :exact, obj = obj)
 
 test.allow_tracking_err = true
-test.tracking_err = 0.01
-w2 = optimize(test, kelly = :approx, obj = :utility)
+test.tracking_err = 0.1
+w2 = optimize(test, kelly = :approx, obj = obj)
+
+test.allow_tracking_err = true
+test.tracking_err = 0.001
+w3 = optimize(test, kelly = :approx, obj = obj)
 
 test.allow_tracking_err = true
 test.tracking_err = 0.0001
-w3 = optimize(test, kelly = :approx, obj = :utility)
-sh2 = hcat(w1, w2, w3, test.tracking_err_benchmark_weights, makeunique = true)
-display(sh2)
-
-test.turnover_benchmark_weights =
-    DataFrame(tickers = names(RET)[2:end], weights = collect(80:-4:1) / sum(80:-4:1))
-
-test.allow_tracking_err = false
-test.allow_turnover = false
-w1 = optimize(test, kelly = :approx, obj = :sharpe)
-
-test.allow_turnover = true
-test.turnover = 0.4
-w2 = optimize(test, kelly = :approx, obj = :sharpe)
-
-test.allow_turnover = true
-test.turnover = 0.1
-w3 = optimize(test, kelly = :approx, obj = :sharpe)
-sh2 = hcat(w1, w2, w3, test.turnover_benchmark_weights, makeunique = true)
+w4 = optimize(test, kelly = :approx, obj = obj)
+sh2 = hcat(
+    w1,
+    w2[!, :weights],
+    w3[!, :weights],
+    w4[!, :weights],
+    test.tracking_err_weights[!, :weights],
+    makeunique = true,
+)
 display(sh2)
 
 test = Portfolio(
@@ -75,6 +66,47 @@ test = Portfolio(
     # upper_long = 1,
     # short = true,
     # sum_short_long = 0.8,
+    solvers = Dict("ECOS" => ECOS.Optimizer, "SCS" => SCS.Optimizer),
+    sol_params = Dict(
+        "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-12, "verbose" => false),
+    ),
+)
+test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
+test.cov = cov(Matrix(RET[!, 2:end]))
+
+test.turnover_weights =
+    DataFrame(tickers = names(RET)[2:end], weights = collect(39:-2:1) / sum(39:-2:1))
+
+test.allow_tracking_err = false
+test.allow_turnover = false
+obj = :sharpe
+w1 = optimize(test, kelly = :exact, obj = obj)
+
+test.allow_turnover = true
+test.turnover = 0.4
+w2 = optimize(test, kelly = :exact, obj = obj)
+
+test.turnover = 0.1
+w3 = optimize(test, kelly = :exact, obj = obj)
+
+test.turnover = 0.05
+w4 = optimize(test, kelly = :exact, obj = obj)
+sh2 = hcat(
+    w1,
+    w2[!, :weights],
+    w3[!, :weights],
+    w4[!, :weights],
+    test.turnover_weights[!, :weights],
+    makeunique = true,
+)
+display(sh2)
+
+test = Portfolio(
+    returns = RET,
+    upper_short = 0.2,
+    upper_long = 1,
+    short = true,
+    sum_short_long = 0.8,
     solvers = Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
     sol_params = Dict(
         "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-12, "verbose" => false),
@@ -85,13 +117,13 @@ test.cov = cov(Matrix(RET[!, 2:end]))
 test.upper_dev = 0.009
 test.upper_mean_abs_dev = 0.008
 obj = :max_ret
-w1 = optimize(test, kelly = :exact, obj = obj)
+@time w1 = optimize(test, kelly = :exact, obj = obj)
 r1 = sqrt(dot(w1[!, :weights], test.cov, w1[!, :weights]))
 mu1 = dot(w1[!, :weights], test.mu)
-w2 = optimize(test, kelly = :approx, obj = obj)
+@time w2 = optimize(test, kelly = :approx, obj = obj)
 r2 = sqrt(dot(w2[!, :weights], test.cov, w2[!, :weights]))
 mu2 = dot(w2[!, :weights], test.mu)
-w3 = optimize(test, kelly = :none, obj = obj)
+@time w3 = optimize(test, kelly = :none, obj = obj)
 r3 = sqrt(dot(w3[!, :weights], test.cov, w3[!, :weights]))
 mu3 = dot(w3[!, :weights], test.mu)
 sh3 = hcat(w1, w2[!, :weights], w3[!, :weights], makeunique = true)
