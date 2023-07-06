@@ -31,6 +31,15 @@ test = Portfolio(
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
 
+rm = :wr
+obj = :max_ret
+kelly = :exact
+test.upper_worst_realisation = 0.035#0.04429675707220074
+w1 = optimize(test, rm = rm, kelly = kelly, obj = obj)
+maximum(-value.(test.model[:hist_ret])) - test.upper_worst_realisation
+
+println(all_constraints(test.model, VariableRef, MOI.LessThan{Float64}))
+
 test.tracking_err_weights =
     DataFrame(tickers = names(RET)[2:end], weights = collect(1:2:40) / sum(1:2:40))
 
@@ -111,7 +120,7 @@ test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
 test.upper_dev = Inf#0.007720653477634564
 test.upper_mean_abs_dev = Inf#9.883349909235248
-test.upper_mean_semi_dev = Inf#0.0010573893959405641
+test.upper_semi_dev = Inf#0.0010573893959405641
 test.min_number_effective_assets = 0
 obj = :sharpe
 rm = :mean_semi_dev

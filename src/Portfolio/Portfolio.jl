@@ -11,7 +11,18 @@ const UnionDataFrameNothing = Union{DataFrame, Nothing}
 const PortClasses = (:classic,)
 const KellyRet = (:exact, :approx, :none)
 const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
-const RiskMeasures = (:mean_var, :mean_abs_dev, :mean_semi_dev)
+const RiskMeasures = (
+    :mean_var,
+    :mean_abs_dev,
+    :mean_semi_dev,
+    :cvar,
+    :evar,
+    :rvar,
+    :cdar,
+    :edar,
+    :rdar,
+    :wr,
+)
 const TrackingErrKinds = (:weights, :returns)
 const ValidTermination =
     (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
@@ -139,7 +150,7 @@ mutable struct Portfolio{
     upper_krt::uk
     upper_mean_abs_dev::umad
     upper_gini_mean_diff::ugmd
-    upper_mean_semi_dev::usd
+    upper_semi_dev::usd
     upper_semi_krt::usk
     upper_first_lower_partial_moment::uflpm
     upper_second_lower_partial_moment::uslpm
@@ -233,7 +244,7 @@ function Portfolio(;
     upper_krt::Real = Inf,
     upper_mean_abs_dev::Real = Inf,
     upper_gini_mean_diff::Real = Inf,
-    upper_mean_semi_dev::Real = Inf,
+    upper_semi_dev::Real = Inf,
     upper_semi_krt::Real = Inf,
     upper_first_lower_partial_moment::Real = Inf,
     upper_second_lower_partial_moment::Real = Inf,
@@ -325,7 +336,7 @@ function Portfolio(;
         upper_krt,
         upper_mean_abs_dev,
         upper_gini_mean_diff,
-        upper_mean_semi_dev,
+        upper_semi_dev,
         upper_semi_krt,
         upper_first_lower_partial_moment,
         upper_second_lower_partial_moment,
@@ -415,15 +426,15 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj)
     return nothing
 end
 
-function _mad_setup(portfolio, T, rm, returns, mu, obj)
+function _mad_setup(portfolio, rm, T, returns, mu, obj)
     upper_mean_abs_dev = portfolio.upper_mean_abs_dev
-    upper_mean_semi_dev = portfolio.upper_mean_semi_dev
+    upper_semi_dev = portfolio.upper_semi_dev
 
     !(
         rm == :mean_abs_dev ||
         rm == :mean_semi_dev ||
         isfinite(upper_mean_abs_dev) ||
-        isfinite(upper_mean_semi_dev)
+        isfinite(upper_semi_dev)
     ) && (return nothing)
 
     model = portfolio.model
@@ -435,40 +446,111 @@ function _mad_setup(portfolio, T, rm, returns, mu, obj)
     @constraint(model, abs_dev_w_geq_neg_tmad, abs_dev * w >= -tmad)
 
     if rm == :mean_abs_dev || isfinite(upper_mean_abs_dev)
-        @expression(model, mad, sum(tmad) / T)
+        @expression(model, mad_risk, sum(tmad) / T)
 
         if isfinite(upper_mean_abs_dev)
             if obj == :sharpe
-                @constraint(model, mad_leq_umad_div_2, mad * 2 <= upper_mean_abs_dev * k)
+                @constraint(
+                    model,
+                    mad_risk_leq_umad_div_2,
+                    mad_risk * 2 <= upper_mean_abs_dev * k
+                )
             else
-                @constraint(model, mad_leq_umad_div_2, mad * 2 <= upper_mean_abs_dev)
+                @constraint(
+                    model,
+                    mad_risk_leq_umad_div_2,
+                    mad_risk * 2 <= upper_mean_abs_dev
+                )
             end
         end
 
         if rm == :mean_abs_dev
-            @expression(model, risk, mad)
+            @expression(model, risk, mad_risk)
         end
     end
 
-    !(rm == :mean_semi_dev || isfinite(upper_mean_semi_dev)) && (return nothing)
+    !(rm == :mean_semi_dev || isfinite(upper_semi_dev)) && (return nothing)
 
     @variable(model, tmsd >= 0)
     @constraint(model, tmsd_tmad_soc, [tmsd; tmad] in SecondOrderCone())
-    @expression(model, msd, tmsd / sqrt(T - 1))
+    @expression(model, msd_risk, tmsd / sqrt(T - 1))
 
-    if isfinite(upper_mean_semi_dev)
+    if isfinite(upper_semi_dev)
         if obj == :sharpe
-            @constraint(model, msd_leq_umsd, msd <= upper_mean_semi_dev * k)
+            @constraint(model, msd_risk_leq_umsd, msd_risk <= upper_semi_dev * k)
         else
-            @constraint(model, msd_leq_umsd, msd <= upper_mean_semi_dev)
+            @constraint(model, msd_risk_leq_umsd, msd_risk <= upper_semi_dev)
         end
     end
 
     if rm == :mean_semi_dev
-        @expression(model, risk, msd)
+        @expression(model, risk, msd_risk)
     end
 
     return nothing
+end
+
+function _cvar_setup(portfolio, rm, T, returns, obj)
+    upper_cvar = portfolio.upper_conditional_value_at_risk
+
+    !(rm == :cvar || isfinite(upper_cvar)) && (return nothing)
+
+    alpha = portfolio.alpha
+    model = portfolio.model
+    w = model[:w]
+    k = model[:k]
+
+    @variable(model, var)
+    @variable(model, tvar[1:T])
+    if !haskey(model, :hist_ret)
+        @expression(model, hist_ret, returns * w)
+    end
+    hist_ret = model[:hist_ret]
+    @constraint(model, tvar_geq_0, tvar >= 0)
+    @constraint(model, tvar_p_hist_ret_p_var_geq_0, tvar .+ hist_ret .+ var .>= 0)
+    @expression(model, cvar_risk, var + sum(tvar) / (alpha * T))
+
+    if isfinite(upper_cvar)
+        if obj == :sharpe
+            @constraint(model, cvar_risk_leq_ucvar, cvar_risk <= upper_cvar * k)
+        else
+            @constraint(model, cvar_risk_leq_ucvar, cvar_risk <= upper_cvar)
+        end
+    end
+
+    if rm == :cvar
+        @expression(model, risk, cvar_risk)
+    end
+end
+
+function _wr_setup(portfolio, rm, returns, obj)
+    upper_wr = portfolio.upper_worst_realisation
+
+    !(rm == :wr || isfinite(upper_wr)) && (return nothing)
+
+    model = portfolio.model
+    w = model[:w]
+    k = model[:k]
+
+    @variable(model, twr)
+    if !haskey(model, :hist_ret)
+        @expression(model, hist_ret, returns * w)
+    end
+    hist_ret = model[:hist_ret]
+    @constraint(model, twr_p_hist_ret_geq_0, hist_ret .+ twr .>= 0)
+    @expression(model, wr_risk, twr)
+
+    if isfinite(upper_wr)
+        if obj == :sharpe
+            @constraint(model, hist_ret_p_uwr_geq_0, hist_ret .+ upper_wr * k .>= 0)
+        else
+            @constraint(model, hist_ret_p_uwr_geq_0, hist_ret .+ upper_wr .>= 0)
+        end
+    end
+
+    if rm == :wr
+        @expression(model, risk, wr_risk)
+    end
 end
 
 function _return_setup(portfolio, class, kelly, obj, T, rf, returns, mu)
@@ -885,7 +967,11 @@ function optimize(
     ## Mean variance.
     _mv_setup(portfolio, sigma, rm, kelly, obj)
     ## Mean absolute deviation and mean semi deviation.
-    _mad_setup(portfolio, T, rm, returns, mu, obj)
+    _mad_setup(portfolio, rm, T, returns, mu, obj)
+    ## CVaR.
+    _cvar_setup(portfolio, rm, T, returns, obj)
+    ## Worst realisation.
+    _wr_setup(portfolio, rm, returns, obj)
 
     # Constraints.
     ## Return variables.
