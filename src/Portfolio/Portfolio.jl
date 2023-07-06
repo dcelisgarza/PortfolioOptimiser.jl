@@ -398,21 +398,25 @@ function _mv_setup(model, sigma, rm, kelly, upper_dev, obj)
     w = model[:w]
     k = model[:k]
     if rm == :mean_var || kelly == :approx || isfinite(upper_dev)
-        @variable(model, g >= 0)
-        @expression(model, risk_dev, g * g)
+        @variable(model, tdev >= 0)
+        @expression(model, dev_risk, tdev * tdev)
         G = sqrt(sigma)
-        @constraint(model, sqrt_g, [g; transpose(G) * w] in SecondOrderCone())
+        @constraint(
+            model,
+            tdev_sqrt_sigma_soc_cnstr,
+            [tdev; transpose(G) * w] in SecondOrderCone()
+        )
 
         if isfinite(upper_dev)
             if obj == :sharpe
-                @constraint(model, u_risk, g <= upper_dev * k)
+                @constraint(model, tdev_leq_udev, tdev <= upper_dev * k)
             else
-                @constraint(model, u_risk, g <= upper_dev)
+                @constraint(model, tdev_leq_udev, tdev <= upper_dev)
             end
         end
 
         if rm == :mean_var
-            @expression(model, risk, risk_dev)
+            @expression(model, risk, dev_risk)
         end
     end
 
@@ -426,18 +430,22 @@ function _mad_setup(model, T, rm, upper_mean_abs_dev, upper_mean_semi_dev, retur
        rm == :mean_semi_dev ||
        isfinite(upper_mean_abs_dev) ||
        isfinite(upper_mean_semi_dev)
-        @variable(model, Y[1:T] >= 0)
+        @variable(model, tmad[1:T] >= 0)
         abs_dev = returns .- transpose(mu)
-        @constraint(model, abs_dev_cnst, abs_dev * w >= -Y)
+        @constraint(model, abs_dev_w_geq_neg_tmad, abs_dev * w >= -tmad)
 
         if rm == :mean_abs_dev || isfinite(upper_mean_abs_dev)
-            @expression(model, mad, sum(Y) / T)
+            @expression(model, mad, sum(tmad) / T)
 
             if isfinite(upper_mean_abs_dev)
                 if obj == :sharpe
-                    @constraint(model, madlumad, mad * 2 <= upper_mean_abs_dev * k)
+                    @constraint(
+                        model,
+                        mad_leq_umad_div_2,
+                        mad * 2 <= upper_mean_abs_dev * k
+                    )
                 else
-                    @constraint(model, madlumad, mad * 2 <= upper_mean_abs_dev)
+                    @constraint(model, mad_leq_umad_div_2, mad * 2 <= upper_mean_abs_dev)
                 end
             end
 
@@ -448,14 +456,14 @@ function _mad_setup(model, T, rm, upper_mean_abs_dev, upper_mean_semi_dev, retur
 
         if rm == :mean_semi_dev || isfinite(upper_mean_semi_dev)
             @variable(model, tmsd >= 0)
-            @constraint(model, tmsd_cnst, [tmsd; Y] in SecondOrderCone())
+            @constraint(model, tmsd_tmad_soc_cnst, [tmsd; tmad] in SecondOrderCone())
             @expression(model, msd, tmsd / sqrt(T - 1))
 
             if isfinite(upper_mean_semi_dev)
                 if obj == :sharpe
-                    @constraint(model, msdlumsd, msd <= upper_mean_semi_dev * k)
+                    @constraint(model, msd_leq_umsd, msd <= upper_mean_semi_dev * k)
                 else
-                    @constraint(model, msdlumsd, msd <= upper_mean_semi_dev)
+                    @constraint(model, msd_leq_umsd, msd <= upper_mean_semi_dev)
                 end
             end
 
@@ -474,39 +482,39 @@ function _return_setup(model, class, kelly, obj, T, rf, returns, mu, lower_mu)
     risk = model[:risk]
     if class == :classic && (kelly == :exact || kelly == :approx)
         if kelly == :exact
-            @variable(model, gr[1:T])
+            @variable(model, texact_kelly[1:T])
             if obj == :sharpe
-                @expression(model, ret, sum(gr) / T - rf * k)
+                @expression(model, ret, sum(texact_kelly) / T - rf * k)
                 @expression(model, kret, k .+ returns * w)
                 @constraint(
                     model,
-                    exp_gr[i = 1:T],
-                    [gr[i], k, kret[i]] in MOI.ExponentialCone()
+                    texact_kelly_k_ec_cnst[i = 1:T],
+                    [texact_kelly[i], k, kret[i]] in MOI.ExponentialCone()
                 )
                 @constraint(model, sharpe, risk <= 1)
             else
-                @expression(model, ret, sum(gr) / T)
+                @expression(model, ret, sum(texact_kelly) / T)
                 @expression(model, kret, 1 .+ returns * w)
                 @constraint(
                     model,
-                    exp_gr[i = 1:T],
-                    [gr[i], 1, kret[i]] in MOI.ExponentialCone()
+                    texact_kelly_k_ec_cnst[i = 1:T],
+                    [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
                 )
             end
         elseif kelly == :approx
-            g = model[:g]
-            risk_dev = model[:risk_dev]
+            tdev = model[:tdev]
+            dev_risk = model[:dev_risk]
             if obj == :sharpe
-                @variable(model, t >= 0)
+                @variable(model, tapprox_kelly >= 0)
                 @constraint(
                     model,
-                    quad_over_lin,
-                    [k + t; 2 * g + k - t] in SecondOrderCone()
+                    quad_over_lin_tdev_k_cnst,
+                    [k + tapprox_kelly; 2 * tdev + k - tapprox_kelly] in SecondOrderCone()
                 )
-                @expression(model, ret, dot(mu, w) - 0.5 * t)
+                @expression(model, ret, dot(mu, w) - 0.5 * tapprox_kelly)
                 @constraint(model, sharpe, risk <= 1)
             else
-                @expression(model, ret, dot(mu, w) - 0.5 * risk_dev)
+                @expression(model, ret, dot(mu, w) - 0.5 * dev_risk)
             end
         end
     else
@@ -519,9 +527,9 @@ function _return_setup(model, class, kelly, obj, T, rf, returns, mu, lower_mu)
     # Return constraints.
     if isfinite(lower_mu)
         if obj == :sharpe
-            @constraint(model, l_ret, ret >= lower_mu * k)
+            @constraint(model, ret_geq_lmu, ret >= lower_mu * k)
         else
-            @constraint(model, l_ret, ret >= lower_mu)
+            @constraint(model, ret_geq_lmu, ret >= lower_mu)
         end
     end
 

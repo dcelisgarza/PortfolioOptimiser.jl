@@ -43,11 +43,11 @@ test.min_number_effective_assets = 0
 w1 = optimize(test, kelly = :exact, obj = :utility)
 
 test.allow_tracking_err = true
-test.tracking_err = 0.001
+test.tracking_err = 0.01
 w2 = optimize(test, kelly = :approx, obj = :utility)
 
 test.allow_tracking_err = true
-test.tracking_err = 0.00001
+test.tracking_err = 0.0001
 w3 = optimize(test, kelly = :approx, obj = :utility)
 sh2 = hcat(w1, w2, w3, test.tracking_err_benchmark_weights, makeunique = true)
 display(sh2)
@@ -55,6 +55,7 @@ display(sh2)
 test.turnover_benchmark_weights =
     DataFrame(tickers = names(RET)[2:end], weights = collect(80:-4:1) / sum(80:-4:1))
 
+test.allow_tracking_err = false
 test.allow_turnover = false
 w1 = optimize(test, kelly = :approx, obj = :sharpe)
 
@@ -81,8 +82,8 @@ test = Portfolio(
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
-test.upper_deviation = Inf#0.009
-test.upper_mean_abs_dev = Inf#0.008
+test.upper_dev = 0.009
+test.upper_mean_abs_dev = 0.008
 obj = :max_ret
 w1 = optimize(test, kelly = :exact, obj = obj)
 r1 = sqrt(dot(w1[!, :weights], test.cov, w1[!, :weights]))
