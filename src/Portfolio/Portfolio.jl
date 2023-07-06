@@ -859,11 +859,14 @@ function optimize(
     rf::Real = 1.0329^(1 / 252) - 1,
     l::Real = 2.0,
 )
-    @assert(class ∈ PortClasses)
-    @assert(rm ∈ RiskMeasures)
-    @assert(obj ∈ ObjFuncs)
-    @assert(kelly ∈ KellyRet)
-    @assert(portfolio.kind_tracking_err ∈ TrackingErrKinds)
+    @assert(class ∈ PortClasses, "class must be one of $PortClasses")
+    @assert(rm ∈ RiskMeasures, "rm must be one of $RiskMeasures")
+    @assert(obj ∈ ObjFuncs, "obj must be one of $ObjFuncs")
+    @assert(kelly ∈ KellyRet, "kelly must be one of $KellyRet")
+    @assert(
+        portfolio.kind_tracking_err ∈ TrackingErrKinds,
+        "portfolio.kind_tracking_err must be one of $TrackingErrKinds"
+    )
 
     portfolio.model = JuMP.Model()
 
