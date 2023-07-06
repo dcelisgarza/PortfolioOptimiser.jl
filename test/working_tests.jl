@@ -34,7 +34,7 @@ test.cov = cov(Matrix(RET[!, 2:end]))
 test.tracking_err_weights =
     DataFrame(tickers = names(RET)[2:end], weights = collect(1:2:40) / sum(1:2:40))
 
-obj = :sharpe
+obj = :max_ret
 test.kind_tracking_err = :weights
 test.tracking_err = Inf
 w1 = optimize(test, kelly = :exact, obj = obj)
@@ -59,10 +59,10 @@ display(sh2)
 
 test = Portfolio(
     returns = RET,
-    # upper_short = 0.2,
+    # upper_short = 0.4,
     # upper_long = 1,
     # short = true,
-    # sum_short_long = 0.8,
+    # sum_short_long = 0.6,
     solvers = Dict("ECOS" => ECOS.Optimizer, "SCS" => SCS.Optimizer),
     sol_params = Dict(
         "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-12, "verbose" => false),
@@ -72,17 +72,16 @@ test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
 
 test.turnover_weights =
-    DataFrame(tickers = names(RET)[2:end], weights = collect(39:-2:1) / sum(39:-2:1))
+    DataFrame(tickers = names(RET)[2:end], weights = collect(1:2:40) / sum(1:2:40))
 
-test.tracking_err = Inf
 test.turnover = Inf
-obj = :sharpe
+obj = :max_ret
 w1 = optimize(test, kelly = :exact, obj = obj)
 
 test.turnover = 0.4
 w2 = optimize(test, kelly = :exact, obj = obj)
 
-test.turnover = 0.1
+test.turnover = 0.05
 w3 = optimize(test, kelly = :exact, obj = obj)
 
 test.turnover = 0.005
@@ -99,10 +98,10 @@ display(sh2)
 
 test = Portfolio(
     returns = RET,
-    upper_short = 0.2,
-    upper_long = 1,
-    short = true,
-    sum_short_long = 0.8,
+    # upper_short = 0.2,
+    # upper_long = 1,
+    # short = true,
+    # sum_short_long = 0.8,
     solvers = Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
     sol_params = Dict(
         "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-12, "verbose" => false),
@@ -110,27 +109,31 @@ test = Portfolio(
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
-test.upper_dev = 0.009
-test.upper_mean_abs_dev = 0.008
+test.upper_dev = Inf#0.007720653477634564
+test.upper_mean_abs_dev = Inf#9.883349909235248
+test.upper_mean_semi_dev = Inf#0.0010573893959405641
 test.min_number_effective_assets = 0
-obj = :max_ret
-@time w1 = optimize(test, kelly = :exact, obj = obj)
+obj = :sharpe
+rm = :mean_semi_dev
+@time w1 = optimize(test, rm = rm, kelly = :exact, obj = obj)
 r1 = sqrt(dot(w1[!, :weights], test.cov, w1[!, :weights]))
 mu1 = dot(w1[!, :weights], test.mu)
-@time w2 = optimize(test, kelly = :approx, obj = obj)
+@time w2 = optimize(test, rm = rm, kelly = :approx, obj = obj)
 r2 = sqrt(dot(w2[!, :weights], test.cov, w2[!, :weights]))
 mu2 = dot(w2[!, :weights], test.mu)
-@time w3 = optimize(test, kelly = :none, obj = obj)
+@time w3 = optimize(test, rm = rm, kelly = :none, obj = obj)
 r3 = sqrt(dot(w3[!, :weights], test.cov, w3[!, :weights]))
 mu3 = dot(w3[!, :weights], test.mu)
-test.min_number_effective_assets = 20
-@time w4 = optimize(test, kelly = :none, obj = obj)
+sh3 = hcat(w1, w2[!, :weights], w3[!, :weights], makeunique = true)
+display(sh3)
+
+test.min_number_effective_assets = 5
+@time w4 = optimize(test, rm = rm, kelly = :none, obj = obj)
 r4 = sqrt(dot(w4[!, :weights], test.cov, w4[!, :weights]))
 mu4 = dot(w4[!, :weights], test.mu)
 sh4 = hcat(w1, w2[!, :weights], w3[!, :weights], w4[!, :weights], makeunique = true)
 display(sh4)
 
-latex_formulation(test.model)
 w12 = rmsd(w1[!, :weights], w2[!, :weights])
 w13 = rmsd(w1[!, :weights], w3[!, :weights])
 w23 = rmsd(w2[!, :weights], w3[!, :weights])

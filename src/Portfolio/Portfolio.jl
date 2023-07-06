@@ -116,21 +116,21 @@ mutable struct Portfolio{
     max_number_assets::mna
     returns_factors::rf
     loadings::l
-    # Risk parameters
+    # Risk parameters.
     alpha::a
     a_sim::as
     beta::b
     b_sim::bs
     kappa::k
     max_num_assets_kurt::mnak
-    # Benchmark constraints
+    # Benchmark constraints.
     turnover::to
     turnover_weights::tobw
     kind_tracking_err::kte
     tracking_err::te
     tracking_err_returns::rbi
     tracking_err_weights::bw
-    # Risk and return constraints
+    # Risk and return constraints.
     a_mtx_ineq::ami
     b_vec_ineq::bvi
     risk_budget_vec::rbv
@@ -157,7 +157,7 @@ mutable struct Portfolio{
     upper_entropic_drawdown_at_risk::uedar
     upper_relativistic_drawdown_at_risk::urdar
     upper_ulcer_index::uui
-    # Optimisation model inputs
+    # Optimisation model inputs.
     mu::tmu
     cov::tcov
     kurt::tkurt
@@ -177,7 +177,7 @@ mutable struct Portfolio{
     z_edar::tedar
     z_rvar::trvar
     z_rdar::trdar
-    # Inputs of Worst Case Optimization Models
+    # Inputs of Worst Case Optimization Models.
     cov_l::tcovl
     cov_u::tcovu
     cov_mu::tcovmu
@@ -185,14 +185,14 @@ mutable struct Portfolio{
     d_mu::tdmu
     k_mu::tkmu
     k_sigma::tks
-    # Optimal portfolios
+    # Optimal portfolios.
     p_optimal::topt
     rp_optimal::trpopt
     rrp_optimal::trrpopt
     wc_optimal::twcopt
     limits::tlim
     frontier::tfront
-    # Solver params
+    # Solver params.
     solvers::tsolv
     sol_params::tsolvp
     model::tmod
@@ -210,21 +210,21 @@ function Portfolio(;
     max_number_assets::Integer = 0,
     returns_factors::DataFrame = DataFrame(),
     loadings::DataFrame = DataFrame(),
-    # Risk parameters
+    # Risk parameters.
     alpha::Real = 0.05,
     a_sim::Integer = 100,
     beta::Real = 0.0,
     b_sim::Integer = 0,
     kappa::Real = 0.3,
     max_num_assets_kurt::Integer = 50,
-    # Benchmark constraints
+    # Benchmark constraints.
     turnover::Real = Inf,
     turnover_weights::DataFrame = DataFrame(),
     kind_tracking_err::Symbol = :weights,
     tracking_err::Real = Inf,
     tracking_err_returns::DataFrame = DataFrame(),
     tracking_err_weights::DataFrame = DataFrame(),
-    # Risk and return constraints
+    # Risk and return constraints.
     a_mtx_ineq::Matrix{<:Real} = Array{Float64}(undef, 0, 0),
     b_vec_ineq::Vector{<:Real} = Array{Float64}(undef, 0),
     risk_budget_vec::Vector{<:Real} = Array{Float64}(undef, 0),
@@ -251,7 +251,7 @@ function Portfolio(;
     upper_entropic_drawdown_at_risk::Real = Inf,
     upper_relativistic_drawdown_at_risk::Real = Inf,
     upper_ulcer_index::Real = Inf,
-    # Optimisation model inputs
+    # Optimisation model inputs.
     mu::Vector{<:Real} = Array{Float64}(undef, 0),
     cov::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -271,7 +271,7 @@ function Portfolio(;
     z_edar::Real = -Inf,
     z_rvar::Real = -Inf,
     z_rdar::Real = -Inf,
-    # Inputs of Worst Case Optimization Models
+    # Inputs of Worst Case Optimization Models.
     cov_l::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     cov_u::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     cov_mu::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -279,14 +279,14 @@ function Portfolio(;
     d_mu::Real = -Inf,
     k_mu::Real = -Inf,
     k_sigma::Real = -Inf,
-    # Optimal portfolios
+    # Optimal portfolios.
     p_optimal::DataFrame = DataFrame(),
     rp_optimal::DataFrame = DataFrame(),
     rrp_optimal::DataFrame = DataFrame(),
     wc_optimal::DataFrame = DataFrame(),
     limits::DataFrame = DataFrame(),
     frontier::DataFrame = DataFrame(),
-    # Solver params
+    # Solver params.
     solvers::Dict = Dict(),
     sol_params::Dict = Dict(),
     model = JuMP.Model(),
@@ -302,21 +302,21 @@ function Portfolio(;
         max_number_assets,
         returns_factors,
         loadings,
-        # Risk parameters
+        # Risk parameters.
         alpha,
         a_sim,
         beta,
         b_sim,
         kappa,
         max_num_assets_kurt,
-        # Benchmark constraints
+        # Benchmark constraints.
         turnover,
         turnover_weights,
         kind_tracking_err,
         tracking_err,
         tracking_err_returns,
         tracking_err_weights,
-        # Risk and return constraints
+        # Risk and return constraints.
         a_mtx_ineq,
         b_vec_ineq,
         risk_budget_vec,
@@ -343,7 +343,7 @@ function Portfolio(;
         upper_entropic_drawdown_at_risk,
         upper_relativistic_drawdown_at_risk,
         upper_ulcer_index,
-        # Optimisation model inputs
+        # Optimisation model inputs.
         mu,
         cov,
         kurt,
@@ -363,7 +363,7 @@ function Portfolio(;
         z_edar,
         z_rvar,
         z_rdar,
-        # Inputs of Worst Case Optimization Models
+        # Inputs of Worst Case Optimization Models.
         cov_l,
         cov_u,
         cov_mu,
@@ -371,14 +371,14 @@ function Portfolio(;
         d_mu,
         k_mu,
         k_sigma,
-        # Optimal portfolios
+        # Optimal portfolios.
         p_optimal,
         rp_optimal,
         rrp_optimal,
         wc_optimal,
         limits,
         frontier,
-        # Solver params
+        # Solver params.
         solvers,
         sol_params,
         model,
@@ -386,89 +386,93 @@ function Portfolio(;
     )
 end
 
-function _mv_setup(model, sigma, rm, kelly, upper_dev, obj)
+function _mv_setup(portfolio, sigma, rm, kelly, obj)
+    upper_dev = portfolio.upper_dev
+
+    !(rm == :mean_var || kelly == :approx || isfinite(upper_dev)) && (return nothing)
+
+    model = portfolio.model
+
     w = model[:w]
     k = model[:k]
-    if rm == :mean_var || kelly == :approx || isfinite(upper_dev)
-        @variable(model, tdev >= 0)
-        @expression(model, dev_risk, tdev * tdev)
-        G = sqrt(sigma)
-        @constraint(
-            model,
-            tdev_sqrt_sigma_soc,
-            [tdev; transpose(G) * w] in SecondOrderCone()
-        )
+    @variable(model, tdev >= 0)
+    @expression(model, dev_risk, tdev * tdev)
+    G = sqrt(sigma)
+    @constraint(model, tdev_sqrt_sigma_soc, [tdev; transpose(G) * w] in SecondOrderCone())
 
-        if isfinite(upper_dev)
+    if isfinite(upper_dev)
+        if obj == :sharpe
+            @constraint(model, tdev_leq_udev, tdev <= upper_dev * k)
+        else
+            @constraint(model, tdev_leq_udev, tdev <= upper_dev)
+        end
+    end
+
+    if rm == :mean_var
+        @expression(model, risk, dev_risk)
+    end
+
+    return nothing
+end
+
+function _mad_setup(portfolio, T, rm, returns, mu, obj)
+    upper_mean_abs_dev = portfolio.upper_mean_abs_dev
+    upper_mean_semi_dev = portfolio.upper_mean_semi_dev
+
+    !(
+        rm == :mean_abs_dev ||
+        rm == :mean_semi_dev ||
+        isfinite(upper_mean_abs_dev) ||
+        isfinite(upper_mean_semi_dev)
+    ) && (return nothing)
+
+    model = portfolio.model
+    w = model[:w]
+    k = model[:k]
+
+    @variable(model, tmad[1:T] >= 0)
+    abs_dev = returns .- transpose(mu)
+    @constraint(model, abs_dev_w_geq_neg_tmad, abs_dev * w >= -tmad)
+
+    if rm == :mean_abs_dev || isfinite(upper_mean_abs_dev)
+        @expression(model, mad, sum(tmad) / T)
+
+        if isfinite(upper_mean_abs_dev)
             if obj == :sharpe
-                @constraint(model, tdev_leq_udev, tdev <= upper_dev * k)
+                @constraint(model, mad_leq_umad_div_2, mad * 2 <= upper_mean_abs_dev * k)
             else
-                @constraint(model, tdev_leq_udev, tdev <= upper_dev)
+                @constraint(model, mad_leq_umad_div_2, mad * 2 <= upper_mean_abs_dev)
             end
         end
 
-        if rm == :mean_var
-            @expression(model, risk, dev_risk)
+        if rm == :mean_abs_dev
+            @expression(model, risk, mad)
         end
+    end
+
+    !(rm == :mean_semi_dev || isfinite(upper_mean_semi_dev)) && (return nothing)
+
+    @variable(model, tmsd >= 0)
+    @constraint(model, tmsd_tmad_soc, [tmsd; tmad] in SecondOrderCone())
+    @expression(model, msd, tmsd / sqrt(T - 1))
+
+    if isfinite(upper_mean_semi_dev)
+        if obj == :sharpe
+            @constraint(model, msd_leq_umsd, msd <= upper_mean_semi_dev * k)
+        else
+            @constraint(model, msd_leq_umsd, msd <= upper_mean_semi_dev)
+        end
+    end
+
+    if rm == :mean_semi_dev
+        @expression(model, risk, msd)
     end
 
     return nothing
 end
 
-function _mad_setup(model, T, rm, upper_mean_abs_dev, upper_mean_semi_dev, returns, mu, obj)
-    w = model[:w]
-    k = model[:k]
-    if rm == :mean_abs_dev ||
-       rm == :mean_semi_dev ||
-       isfinite(upper_mean_abs_dev) ||
-       isfinite(upper_mean_semi_dev)
-        @variable(model, tmad[1:T] >= 0)
-        abs_dev = returns .- transpose(mu)
-        @constraint(model, abs_dev_w_geq_neg_tmad, abs_dev * w >= -tmad)
-
-        if rm == :mean_abs_dev || isfinite(upper_mean_abs_dev)
-            @expression(model, mad, sum(tmad) / T)
-
-            if isfinite(upper_mean_abs_dev)
-                if obj == :sharpe
-                    @constraint(
-                        model,
-                        mad_leq_umad_div_2,
-                        mad * 2 <= upper_mean_abs_dev * k
-                    )
-                else
-                    @constraint(model, mad_leq_umad_div_2, mad * 2 <= upper_mean_abs_dev)
-                end
-            end
-
-            if rm == :mean_abs_dev
-                @expression(model, risk, mad)
-            end
-        end
-
-        if rm == :mean_semi_dev || isfinite(upper_mean_semi_dev)
-            @variable(model, tmsd >= 0)
-            @constraint(model, tmsd_tmad_soc, [tmsd; tmad] in SecondOrderCone())
-            @expression(model, msd, tmsd / sqrt(T - 1))
-
-            if isfinite(upper_mean_semi_dev)
-                if obj == :sharpe
-                    @constraint(model, msd_leq_umsd, msd <= upper_mean_semi_dev * k)
-                else
-                    @constraint(model, msd_leq_umsd, msd <= upper_mean_semi_dev)
-                end
-            end
-
-            if rm == :mean_semi_dev
-                @expression(model, risk, msd)
-            end
-        end
-    end
-
-    return nothing
-end
-
-function _return_setup(model, class, kelly, obj, T, rf, returns, mu, lower_mu)
+function _return_setup(portfolio, class, kelly, obj, T, rf, returns, mu)
+    model = portfolio.model
     w = model[:w]
     k = model[:k]
     risk = model[:risk]
@@ -518,27 +522,26 @@ function _return_setup(model, class, kelly, obj, T, rf, returns, mu, lower_mu)
     end
 
     # Return constraints.
-    if isfinite(lower_mu)
-        if obj == :sharpe
-            @constraint(model, ret_geq_lmu, ret >= lower_mu * k)
-        else
-            @constraint(model, ret_geq_lmu, ret >= lower_mu)
-        end
+    lower_mu = portfolio.lower_mu
+    !isfinite(lower_mu) && (return nothing)
+
+    if obj == :sharpe
+        @constraint(model, ret_geq_lmu, ret >= lower_mu * k)
+    else
+        @constraint(model, ret_geq_lmu, ret >= lower_mu)
     end
 
     return nothing
 end
 
-function _setup_weights(
-    model,
-    max_number_assets,
-    obj,
-    N,
-    short,
-    upper_short,
-    upper_long,
-    sum_short_long,
-)
+function _setup_weights(portfolio, obj, N)
+    max_number_assets = portfolio.max_number_assets
+    short = portfolio.short
+    upper_short = portfolio.upper_short
+    upper_long = portfolio.upper_long
+    sum_short_long = portfolio.sum_short_long
+
+    model = portfolio.model
     w = model[:w]
     k = model[:k]
 
@@ -627,120 +630,136 @@ function _setup_weights(
     return nothing
 end
 
-function _setup_linear_constraints(model, A, B, obj)
+function _setup_linear_constraints(portfolio, obj)
+    A = portfolio.a_mtx_ineq
+    B = portfolio.b_vec_ineq
+
+    (isempty(A) || isempty(B)) && (return nothing)
+
+    model = portfolio.model
     w = model[:w]
     k = model[:k]
     # Linear weight constraints.
-    if !isempty(A) && !isempty(B)
-        if obj == :sharpe
-            @constraint(model, aw_geq_b, A * w .- B * k .>= 0)
-        else
-            @constraint(model, aw_geq_b, A * w .- B .>= 0)
-        end
+    if obj == :sharpe
+        @constraint(model, aw_geq_b, A * w .- B * k .>= 0)
+    else
+        @constraint(model, aw_geq_b, A * w .- B .>= 0)
     end
 
     return nothing
 end
 
-function _setup_min_number_effective_assets(model, mnea, obj)
+function _setup_min_number_effective_assets(portfolio, obj)
+    mnea = portfolio.min_number_effective_assets
+
+    (mnea < 1) && (return nothing)
+
+    model = portfolio.model
     w = model[:w]
     k = model[:k]
 
-    if mnea > 0
-        @variable(model, tmnea >= 0)
-        @constraint(model, tmnea_w_soc, [tmnea; w] in SecondOrderCone())
-        if obj == :sharpe
-            @constraint(model, tmnea_sqrt_mnea_leq_1, tmnea * sqrt(mnea) <= k)
-        else
-            @constraint(model, tmnea_sqrt_mnea_leq_1, tmnea * sqrt(mnea) <= 1)
-        end
+    @variable(model, tmnea >= 0)
+    @constraint(model, tmnea_w_soc, [tmnea; w] in SecondOrderCone())
+    if obj == :sharpe
+        @constraint(model, tmnea_sqrt_mnea_leq_1, tmnea * sqrt(mnea) <= k)
+    else
+        @constraint(model, tmnea_sqrt_mnea_leq_1, tmnea * sqrt(mnea) <= 1)
     end
 
     return nothing
 end
 
-function _setup_tracking_err(
-    model,
-    kind_tracking_err,
-    tracking_err_weights,
-    returns,
-    tracking_err_returns,
-    obj,
-    tracking_err,
-    T,
-)
+function _setup_tracking_err(portfolio, returns, obj, T)
+    tracking_err = portfolio.tracking_err
+
+    !isfinite(tracking_err) && (return nothing)
+
+    kind_tracking_err = portfolio.kind_tracking_err
+    tracking_err_weights = portfolio.tracking_err_weights
+    tracking_err_returns = portfolio.tracking_err_returns
+
+    tracking_err_flag = false
+
+    if kind_tracking_err == :weights && !isempty(tracking_err_weights)
+        benchmark = returns * tracking_err_weights[!, :weights]
+        tracking_err_flag = true
+    elseif kind_tracking_err == :returns && !isempty(tracking_err_returns)
+        benchmark = tracking_err_returns[!, :returns]
+        tracking_err_flag = true
+    end
+
+    !(tracking_err_flag) && (return nothing)
+
+    model = portfolio.model
     w = model[:w]
     k = model[:k]
-    if !isinf(tracking_err) == true
-        tracking_err_flag = false
 
-        if kind_tracking_err == :weights && !isempty(tracking_err_weights)
-            benchmark = returns * tracking_err_weights[!, :weights]
-            tracking_err_flag = true
-        elseif kind_tracking_err == :returns && !isempty(tracking_err_returns)
-            benchmark = tracking_err_returns[!, :returns]
-            tracking_err_flag = true
-        end
-
-        if tracking_err_flag == true
-            @variable(model, t_track_err >= 0)
-            if obj == :sharpe
-                @expression(model, track_err, returns * w .- benchmark * k)
-                @constraint(
-                    model,
-                    t_track_err_track_err_soc,
-                    [t_track_err; track_err] in SecondOrderCone()
-                )
-                @constraint(
-                    model,
-                    t_track_err_leq_track_err_sqrt_tm1,
-                    t_track_err <= tracking_err * k * sqrt(T - 1)
-                )
-            else
-                @expression(model, track_err, returns * w .- benchmark)
-                @constraint(
-                    model,
-                    t_track_err_track_err_soc,
-                    [t_track_err; track_err] in SecondOrderCone()
-                )
-                @constraint(
-                    model,
-                    t_track_err_leq_track_err_sqrt_tm1,
-                    t_track_err <= tracking_err * sqrt(T - 1)
-                )
-            end
-        end
+    @variable(model, t_track_err >= 0)
+    if obj == :sharpe
+        @expression(model, track_err, returns * w .- benchmark * k)
+        @constraint(
+            model,
+            t_track_err_track_err_soc,
+            [t_track_err; track_err] in SecondOrderCone()
+        )
+        @constraint(
+            model,
+            t_track_err_leq_track_err_sqrt_tm1,
+            t_track_err <= tracking_err * k * sqrt(T - 1)
+        )
+    else
+        @expression(model, track_err, returns * w .- benchmark)
+        @constraint(
+            model,
+            t_track_err_track_err_soc,
+            [t_track_err; track_err] in SecondOrderCone()
+        )
+        @constraint(
+            model,
+            t_track_err_leq_track_err_sqrt_tm1,
+            t_track_err <= tracking_err * sqrt(T - 1)
+        )
     end
+
+    return nothing
 end
 
-function _setup_turnover(model, turnover_weights, N, upper_turnover, obj)
+function _setup_turnover(portfolio, N, obj)
+    turnover = portfolio.turnover
+    turnover_weights = portfolio.turnover_weights
+
+    (isinf(turnover) || isempty(turnover_weights)) && (return nothing)
+
+    model = portfolio.model
     w = model[:w]
     k = model[:k]
-    if !isinf(upper_turnover) && !isempty(turnover_weights)
-        @variable(model, t_turnover[1:N] >= 0)
-        if obj == :sharpe
-            @expression(model, turnover, w .- turnover_weights[!, :weights] * k)
-            @constraint(
-                model,
-                t_turnover_turnover_soc[i = 1:N],
-                [t_turnover[i]; turnover[i]] in MOI.NormOneCone(2)
-            )
-            @constraint(model, t_turnover_leq_turnover, t_turnover .<= upper_turnover * k)
-        else
-            @expression(model, turnover, w .- turnover_weights[!, :weights])
-            @constraint(
-                model,
-                t_turnover_turnover_soc[i = 1:N],
-                [t_turnover[i]; turnover[i]] in MOI.NormOneCone(2)
-            )
-            @constraint(model, t_turnover_leq_turnover, t_turnover .<= upper_turnover)
-        end
+    @variable(model, t_turnov[1:N] >= 0)
+    if obj == :sharpe
+        @expression(model, turnov, w .- turnover_weights[!, :weights] * k)
+        @constraint(
+            model,
+            t_turnov_turnov_soc[i = 1:N],
+            [t_turnov[i]; turnov[i]] in MOI.NormOneCone(2)
+        )
+        @constraint(model, t_turnov_leq_turnover, t_turnov .<= turnover * k)
+    else
+        @expression(model, turnov, w .- turnover_weights[!, :weights])
+        @constraint(
+            model,
+            t_turnov_turnov_soc[i = 1:N],
+            [t_turnov[i]; turnov[i]] in MOI.NormOneCone(2)
+        )
+        @constraint(model, t_turnov_leq_turnover, t_turnov .<= turnover)
     end
+
+    return nothing
 end
 
-function _setup_objective_function(model, obj, kelly, l)
+function _setup_objective_function(portfolio, obj, kelly, l)
+    model = portfolio.model
     ret = model[:ret]
     risk = model[:risk]
+
     if obj == :sharpe
         if model == :classic && (kelly == :exact || kelly == :approx)
             @objective(model, Max, ret)
@@ -754,106 +773,19 @@ function _setup_objective_function(model, obj, kelly, l)
     elseif obj == :max_ret
         @objective(model, Max, ret)
     end
+
+    return nothing
 end
 
-function optimize(
-    portfolio::Portfolio;
-    class::Symbol = :classic,
-    rm::Symbol = :mean_var,
-    obj::Symbol = :sharpe,
-    kelly::Symbol = :none,
-    rf::Real = 1.0329^(1 / 252) - 1,
-    l::Real = 2.0,
-)
-    @assert(class ∈ PortClasses)
-    @assert(rm ∈ RiskMeasures)
-    @assert(obj ∈ ObjFuncs)
-    @assert(kelly ∈ KellyRet)
-    @assert(portfolio.kind_tracking_err ∈ TrackingErrKinds)
-
-    portfolio.model = JuMP.Model()
-    term_status = termination_status(portfolio.model)
-
-    mu = portfolio.mu
-    sigma = portfolio.cov
-    returns = Matrix(portfolio.returns[!, 2:end])
-    T, N = size(returns)
-
-    model = portfolio.model
-
-    # Model variables.
-    @variable(model, w[1:N])
-    @variable(model, k >= 0)
-
-    # Risk Variables.
-
-    # Mean variance.
-    upper_dev = portfolio.upper_dev
-    _mv_setup(model, sigma, rm, kelly, upper_dev, obj)
-
-    # Mean absolute deviation and mean semi deviation.
-    upper_mean_abs_dev = portfolio.upper_mean_abs_dev
-    upper_mean_semi_dev = portfolio.upper_mean_semi_dev
-    _mad_setup(model, T, rm, upper_mean_abs_dev, upper_mean_semi_dev, returns, mu, obj)
-
-    ###############################
-    # Return variables.
-    lower_mu = portfolio.lower_mu
-    _return_setup(model, class, kelly, obj, T, rf, returns, mu, lower_mu)
-
-    # Weight constraints.
-    max_number_assets = portfolio.max_number_assets
-    short = portfolio.short
-    upper_short = portfolio.upper_short
-    upper_long = portfolio.upper_long
-    sum_short_long = portfolio.sum_short_long
-    _setup_weights(
-        model,
-        max_number_assets,
-        obj,
-        N,
-        short,
-        upper_short,
-        upper_long,
-        sum_short_long,
-    )
-
-    # Linear weight constraints.
-    A = portfolio.a_mtx_ineq
-    B = portfolio.b_vec_ineq
-    _setup_linear_constraints(model, A, B, obj)
-
-    # Minimum number of effective assets.
-    mnea = portfolio.min_number_effective_assets
-    _setup_min_number_effective_assets(model, mnea, obj)
-
-    # Tracking error variables and constraints.
-    kind_tracking_err = portfolio.kind_tracking_err
-    tracking_err_weights = portfolio.tracking_err_weights
-    tracking_err_returns = portfolio.tracking_err_returns
-    tracking_err = portfolio.tracking_err
-    _setup_tracking_err(
-        model,
-        kind_tracking_err,
-        tracking_err_weights,
-        returns,
-        tracking_err_returns,
-        obj,
-        tracking_err,
-        T,
-    )
-
-    # Turnover variables and constraints
-    turnover_weights = portfolio.turnover_weights
-    upper_turnover = portfolio.turnover
-    _setup_turnover(model, turnover_weights, N, upper_turnover, obj)
-
-    # Objective functions.
-    _setup_objective_function(model, obj, kelly, l)
-
+function _optimize_portfolio(portfolio, N)
     solvers = portfolio.solvers
     sol_params = portfolio.sol_params
+    model = portfolio.model
+    w = model[:w]
+
+    term_status = termination_status(model)
     solvers_tried = Dict()
+
     for (solver_name, solver) in solvers
         set_optimizer(model, solver)
         if haskey(sol_params, solver_name)
@@ -885,6 +817,94 @@ function optimize(
         )
     end
 
+    return term_status, solvers_tried
+end
+
+function _cleanup_weights(portfolio, returns, N, obj, solvers_tried)
+    model = portfolio.model
+    w = model[:w]
+    k = model[:k]
+
+    weights = Vector{eltype(returns)}(undef, N)
+    if obj == :sharpe
+        weights .= value.(w) / value(k)
+    else
+        weights .= value.(w)
+    end
+
+    short = portfolio.short
+    sum_short_long = portfolio.sum_short_long
+    if short == false
+        weights .= abs.(weights) / sum(abs.(weights)) * sum_short_long
+    end
+
+    portfolio.p_optimal =
+        DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+
+    if isempty(solvers_tried)
+        portfolio.fail = Dict()
+    else
+        portfolio.fail = solvers_tried
+    end
+
+    return nothing
+end
+
+function optimize(
+    portfolio::Portfolio;
+    class::Symbol = :classic,
+    rm::Symbol = :mean_var,
+    obj::Symbol = :sharpe,
+    kelly::Symbol = :none,
+    rf::Real = 1.0329^(1 / 252) - 1,
+    l::Real = 2.0,
+)
+    @assert(class ∈ PortClasses)
+    @assert(rm ∈ RiskMeasures)
+    @assert(obj ∈ ObjFuncs)
+    @assert(kelly ∈ KellyRet)
+    @assert(portfolio.kind_tracking_err ∈ TrackingErrKinds)
+
+    portfolio.model = JuMP.Model()
+
+    # Returns, mu, covariance.
+    returns = Matrix(portfolio.returns[!, 2:end])
+    T, N = size(returns)
+    mu = portfolio.mu
+    sigma = portfolio.cov
+
+    # Model variables.
+    model = portfolio.model
+    @variable(model, w[1:N])
+    @variable(model, k >= 0)
+
+    # Risk variables, functions and constraints.
+    ## Mean variance.
+    _mv_setup(portfolio, sigma, rm, kelly, obj)
+    ## Mean absolute deviation and mean semi deviation.
+    _mad_setup(portfolio, T, rm, returns, mu, obj)
+
+    # Constraints.
+    ## Return variables.
+    _return_setup(portfolio, class, kelly, obj, T, rf, returns, mu)
+    ## Weight constraints.
+    _setup_weights(portfolio, obj, N)
+    ## Linear weight constraints.
+    _setup_linear_constraints(portfolio, obj)
+    ## Minimum number of effective assets.
+    _setup_min_number_effective_assets(portfolio, obj)
+    ## Tracking error variables and constraints.
+    _setup_tracking_err(portfolio, returns, obj, T)
+    ## Turnover variables and constraints
+    _setup_turnover(portfolio, N, obj)
+
+    # Objective functions.
+    _setup_objective_function(portfolio, obj, kelly, l)
+
+    # Optimize.
+    term_status, solvers_tried = _optimize_portfolio(portfolio, N)
+
+    # Error handling.
     if term_status ∉ ValidTermination || any(.!isfinite.(value.(w)))
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.optimize))"
 
@@ -898,25 +918,8 @@ function optimize(
         return portfolio.p_optimal
     end
 
-    weights = Vector{eltype(returns)}(undef, N)
-    if obj == :sharpe
-        weights .= value.(w) / value(k)
-    else
-        weights .= value.(w)
-    end
-
-    if short == false
-        weights .= abs.(weights) / sum(abs.(weights)) * sum_short_long
-    end
-
-    portfolio.p_optimal =
-        DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
-
-    if isempty(solvers_tried)
-        portfolio.fail = Dict()
-    else
-        portfolio.fail = solvers_tried
-    end
+    # Cleanup.
+    _cleanup_weights(portfolio, returns, N, obj, solvers_tried)
 
     return portfolio.p_optimal
 end
