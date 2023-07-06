@@ -22,6 +22,8 @@ const RiskMeasures = (
     :edar,
     :rdar,
     :wr,
+    :flpm,
+    :slpm,
 )
 const TrackingErrKinds = (:weights, :returns)
 const ValidTermination =
@@ -551,6 +553,68 @@ function _wr_setup(portfolio, rm, returns, obj)
     if rm == :wr
         @expression(model, risk, wr_risk)
     end
+
+    return nothing
+end
+
+function _lpm_setup(portfolio, rm, T, returns, obj, rf)
+    upper_flpm = portfolio.upper_first_lower_partial_moment
+    upper_slpm = portfolio.second_lower_partial_moment
+
+    !(rm == :flpm || rm == :slpm || isfinite(upper_flpm) || isfinite(upper_slpm)) &&
+        (return nothing)
+
+    model = portfolio.model
+    w = model[:w]
+    k = model[:k]
+
+    @variable(model, tlpm[1:T] .>= 0)
+    if !haskey(model, :hist_ret)
+        @expression(model, hist_ret, returns * w)
+    end
+    hist_ret = model[:hist_ret]
+
+    if obj == :sharpe
+        @constraint(model, tlpm_p_hist_ret_geq_rf, tlpm .+ hist_ret .>= rf * k)
+    else
+        @constraint(model, tlpm_p_hist_ret_geq_rf, tlpm .+ hist_ret .>= rf)
+    end
+
+    if rm == :flpm || isfinite(upper_flpm)
+        @expression(model, flpm_risk, sum(tlpm) / T)
+
+        if isfinite(upper_flpm)
+            if obj == :sharpe
+                @constraint(model, flpm_risk_leq_uflpm <= upper_flpm * k)
+            else
+                @constraint(model, flpm_risk_leq_uflpm <= upper_flpm)
+            end
+        end
+
+        if rm == :flpm
+            @expression(model, risk, flpm_risk)
+        end
+    end
+
+    !(rm == :slpm || isfinite(upper_slpm)) && (return nothing)
+
+    @constraint(model, tslpm >= 0)
+    @constraint(model, tslpm_tlpm_soc, [tslpm; tlpm] in SecondOrderCone())
+    @expression(model, slpm_risk, tslpm / sqrt(T - 1))
+
+    if isfinite(upper_slpm)
+        if obj == :sharpe
+            @constraint(model, slpm_risk_leq_uslpm <= upper_slpm * k)
+        else
+            @constraint(model, slpm_risk_leq_uslpm <= upper_slpm)
+        end
+    end
+
+    if rm == :slpm
+        @expression(model, risk, slpm_risk)
+    end
+
+    return nothing
 end
 
 function _return_setup(portfolio, class, kelly, obj, T, rf, returns, mu)
