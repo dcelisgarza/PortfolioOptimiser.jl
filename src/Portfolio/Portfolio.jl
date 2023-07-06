@@ -403,7 +403,7 @@ function _mv_setup(model, sigma, rm, kelly, upper_dev, obj)
         G = sqrt(sigma)
         @constraint(
             model,
-            tdev_sqrt_sigma_soc_cnstr,
+            tdev_sqrt_sigma_soc,
             [tdev; transpose(G) * w] in SecondOrderCone()
         )
 
@@ -456,7 +456,7 @@ function _mad_setup(model, T, rm, upper_mean_abs_dev, upper_mean_semi_dev, retur
 
         if rm == :mean_semi_dev || isfinite(upper_mean_semi_dev)
             @variable(model, tmsd >= 0)
-            @constraint(model, tmsd_tmad_soc_cnst, [tmsd; tmad] in SecondOrderCone())
+            @constraint(model, tmsd_tmad_soc, [tmsd; tmad] in SecondOrderCone())
             @expression(model, msd, tmsd / sqrt(T - 1))
 
             if isfinite(upper_mean_semi_dev)
@@ -488,7 +488,7 @@ function _return_setup(model, class, kelly, obj, T, rf, returns, mu, lower_mu)
                 @expression(model, kret, k .+ returns * w)
                 @constraint(
                     model,
-                    texact_kelly_k_ec_cnst[i = 1:T],
+                    texact_kelly_k_ec[i = 1:T],
                     [texact_kelly[i], k, kret[i]] in MOI.ExponentialCone()
                 )
                 @constraint(model, sharpe, risk <= 1)
@@ -497,7 +497,7 @@ function _return_setup(model, class, kelly, obj, T, rf, returns, mu, lower_mu)
                 @expression(model, kret, 1 .+ returns * w)
                 @constraint(
                     model,
-                    texact_kelly_k_ec_cnst[i = 1:T],
+                    texact_kelly_k_ec[i = 1:T],
                     [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
                 )
             end
@@ -508,7 +508,7 @@ function _return_setup(model, class, kelly, obj, T, rf, returns, mu, lower_mu)
                 @variable(model, tapprox_kelly >= 0)
                 @constraint(
                     model,
-                    quad_over_lin_tdev_k_cnst,
+                    quad_over_lin_tdev_k,
                     [k + tapprox_kelly; 2 * tdev + k - tapprox_kelly] in SecondOrderCone()
                 )
                 @expression(model, ret, dot(mu, w) - 0.5 * tapprox_kelly)
@@ -584,10 +584,10 @@ function optimize(
     max_number_assets = portfolio.max_number_assets
     if max_number_assets > 0
         if obj == :sharpe
-            @variable(model, e[1:N], binary = true)
-            @variable(model, e1[1:N] >= 0)
+            @variable(model, tass_bin[1:N], binary = true)
+            @variable(model, tass_bin_sharpe[1:N] >= 0)
         else
-            @variable(model, e[1:N], binary = true)
+            @variable(model, tass_bin[1:N], binary = true)
         end
     end
 
@@ -597,60 +597,72 @@ function optimize(
     upper_short = portfolio.upper_short
     sum_short_long = portfolio.sum_short_long
     if obj == :sharpe
-        @constraint(model, sum_w, sum(w) == sum_short_long * k)
+        @constraint(model, sum_w_eq_sum_ls, sum(w) == sum_short_long * k)
 
         # Maximum number of assets constraints.
         if max_number_assets > 0
-            @constraint(model, sum_e, sum(e) <= max_number_assets)
-            @constraint(model, e1lk, e1 .<= k)
-            @constraint(model, e1le, e1 .<= 100000 * e)
-            @constraint(model, e1gke, e1 .>= k - 100000 * (1 .- e))
-            @constraint(model, wgule1, w .<= upper_long * e1)
+            @constraint(model, sum_tass_bin_leq_mna, sum(tass_bin) <= max_number_assets)
+            @constraint(model, tass_bin_sharpe_leq_k, tass_bin_sharpe .<= k)
+            @constraint(
+                model,
+                tass_bin_sharpe_leq_tass_bin,
+                tass_bin_sharpe .<= 100000 * tass_bin
+            )
+            @constraint(
+                model,
+                tass_bin_sharpe_geq_o_m_tass_bin,
+                tass_bin_sharpe .>= k - 100000 * (1 .- tass_bin)
+            )
+            @constraint(model, w_leq_ul, w .<= upper_long * tass_bin_sharpe)
         end
 
         if short == false
-            @constraint(model, ul_w, w .<= upper_long * k)
-            @constraint(model, val_w, w .>= 0)
+            @constraint(model, w_leq_ul, w .<= upper_long * k)
+            @constraint(model, w_geq_0, w .>= 0)
         else
-            @variable(model, ul[1:N] .>= 0)
-            @variable(model, us[1:N] .>= 0)
+            @variable(model, tw_ulong[1:N] .>= 0)
+            @variable(model, tw_ushort[1:N] .>= 0)
 
-            @constraint(model, sum_ul, sum(ul) <= upper_long * k)
-            @constraint(model, sum_us, sum(us) <= upper_short * k)
+            @constraint(model, sum_ulong, sum(tw_ulong) <= upper_long * k)
+            @constraint(model, sum_ushort, sum(tw_ushort) <= upper_short * k)
 
-            @constraint(model, long_w, w .- ul .<= 0)
-            @constraint(model, short_w, w .+ us .>= 0)
+            @constraint(model, w_leq_tw_ulong, w .- tw_ulong .<= 0)
+            @constraint(model, w_geq_neg_tw_ushort, w .+ tw_ushort .>= 0)
 
             # Maximum number of assets constraints.
             if max_number_assets > 0
-                @constraint(model, wluse1, w .>= -upper_short * e1)
+                @constraint(
+                    model,
+                    w_geq_neg_us_tass_bin,
+                    w .>= -upper_short * tass_bin_sharpe
+                )
             end
         end
     else
-        @constraint(model, sum_w, sum(w) == sum_short_long)
+        @constraint(model, sum_w_eq_sum_ls, sum(w) == sum_short_long)
 
         # Maximum number of assets constraints.
         if max_number_assets > 0
-            @constraint(model, sum_e, sum(e) <= max_number_assets)
-            @constraint(model, wgule, w .<= upper_long * e)
+            @constraint(model, sum_tass_bin_leq_mna, sum(tass_bin) <= max_number_assets)
+            @constraint(model, wgule, w .<= upper_long * tass_bin)
         end
 
         if short == false
-            @constraint(model, ul_w, w .<= upper_long)
-            @constraint(model, val_w, w .>= 0)
+            @constraint(model, w_leq_ul, w .<= upper_long)
+            @constraint(model, w_geq_0, w .>= 0)
         else
-            @variable(model, ul[1:N] .>= 0)
-            @variable(model, us[1:N] .>= 0)
+            @variable(model, tw_ulong[1:N] .>= 0)
+            @variable(model, tw_ushort[1:N] .>= 0)
 
-            @constraint(model, sum_ul, sum(ul) <= upper_long)
-            @constraint(model, sum_us, sum(us) <= upper_short)
+            @constraint(model, sum_ulong, sum(tw_ulong) <= upper_long)
+            @constraint(model, sum_ushort, sum(tw_ushort) <= upper_short)
 
-            @constraint(model, long_w, w .- ul .<= 0)
-            @constraint(model, short_w, w .+ us .>= 0)
+            @constraint(model, w_leq_tw_ulong, w .- tw_ulong .<= 0)
+            @constraint(model, w_geq_neg_tw_ushort, w .+ tw_ushort .>= 0)
 
             # Maximum number of assets constraints.
             if max_number_assets > 0
-                @constraint(model, wluse, w .>= -upper_short * e)
+                @constraint(model, w_geq_neg_us_tass_bin, w .>= -upper_short * tass_bin)
             end
         end
     end
@@ -660,9 +672,9 @@ function optimize(
     B = portfolio.b_vec_ineq
     if !isempty(A) && !isempty(B)
         if obj == :sharpe
-            @constraint(model, awb, A * w .- B * k .>= 0)
+            @constraint(model, aw_geq_b, A * w .- B * k .>= 0)
         else
-            @constraint(model, awb, A * w .- B .>= 0)
+            @constraint(model, aw_geq_b, A * w .- B .>= 0)
         end
     end
 
@@ -670,7 +682,7 @@ function optimize(
     mnea = portfolio.min_number_effective_assets
     if mnea > 0
         @variable(model, tmnea >= 0)
-        @constraint(model, wnorm, [tmnea; w] in SecondOrderCone())
+        @constraint(model, tmnea_w_soc, [tmnea; w] in SecondOrderCone())
         if obj == :sharpe
             @constraint(model, tmneal, tmnea * sqrt(mnea) <= k)
         else
