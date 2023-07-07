@@ -2,32 +2,8 @@
 using DataFrames, JuMP
 
 abstract type AbstractPortfolio end
-const UnionBoolNothing = Union{Bool, Nothing}
-const UnionRealNothing = Union{<:Real, Nothing}
-const UnionIntegerNothing = Union{<:Integer, Nothing}
-const UnionVecNothing = Union{Vector{<:Real}, Nothing}
-const UnionMtxNothing = Union{Matrix{<:Real}, Nothing}
-const UnionDataFrameNothing = Union{DataFrame, Nothing}
+
 const PortClasses = (:classic,)
-const KellyRet = (:exact, :approx, :none)
-const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
-const RiskMeasures = (
-    :mean_var,
-    :mean_abs_dev,
-    :mean_semi_dev,
-    :cvar,
-    :evar,
-    :rvar,
-    :cdar,
-    :edar,
-    :rdar,
-    :wr,
-    :flpm,
-    :slpm,
-)
-const TrackingErrKinds = (:weights, :returns)
-const ValidTermination =
-    (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
 
 mutable struct Portfolio{
     # Portfolio characteristics
@@ -60,27 +36,27 @@ mutable struct Portfolio{
     rbv,
     ler,
     ud,
-    uk,
     umad,
-    ugmd,
     usd,
-    usk,
+    ucvar,
+    uwr,
     uflpm,
     uslpm,
-    ucvar,
-    utg,
-    uevar,
-    urvar,
-    uwr,
-    ur,
-    urcvar,
-    urtg,
     umd,
     uad,
     ucdar,
+    uuci,
+    uevar,
     uedar,
+    ugmd,
+    utg,
+    ur,
+    urcvar,
+    urtg,
+    uk,
+    usk,
+    urvar,
     urdar,
-    uui,
     # Optimisation model inputs
     tmu,
     tcov,
@@ -122,8 +98,8 @@ mutable struct Portfolio{
     # Portfolio characteristics.
     returns::r
     short::s
-    upper_short::us
-    upper_long::ul
+    short_u::us
+    long_u::ul
     sum_short_long::ssl
     min_number_effective_assets::mnea
     max_number_assets::mna
@@ -147,29 +123,29 @@ mutable struct Portfolio{
     a_mtx_ineq::ami
     b_vec_ineq::bvi
     risk_budget_vec::rbv
-    lower_mu::ler
-    upper_dev::ud
-    upper_krt::uk
-    upper_mean_abs_dev::umad
-    upper_gini_mean_diff::ugmd
-    upper_semi_dev::usd
-    upper_semi_krt::usk
-    upper_first_lower_partial_moment::uflpm
-    upper_second_lower_partial_moment::uslpm
-    upper_conditional_value_at_risk::ucvar
-    upper_tail_gini::utg
-    upper_entropic_value_at_risk::uevar
-    upper_relativistic_value_at_risk::urvar
-    upper_worst_realisation::uwr
-    upper_range::ur
-    upper_range_conditional_value_at_risk::urcvar
-    upper_range_tail_gini::urtg
-    upper_max_drawdown::umd
-    upper_average_drawdown::uad
-    upper_conditional_drawdown_at_risk::ucdar
-    upper_entropic_drawdown_at_risk::uedar
-    upper_relativistic_drawdown_at_risk::urdar
-    upper_ulcer_index::uui
+    mu_l::ler
+    dev_u::ud
+    mad_u::umad
+    sdev_u::usd
+    cvar_u::ucvar
+    wr_u::uwr
+    flpm_u::uflpm
+    slpm_u::uslpm
+    mdd_u::umd
+    add_u::uad
+    cdar_u::ucdar
+    uci_u::uuci
+    evar_u::uevar
+    edar_u::uedar
+    gmd_u::ugmd
+    tg_u::utg
+    rg_u::ur
+    rcvar_u::urcvar
+    rtg_u::urtg
+    krt_u::uk
+    skrt_u::usk
+    rvar_u::urvar
+    rdar_u::urdar
     # Optimisation model inputs.
     mu::tmu
     cov::tcov
@@ -216,8 +192,8 @@ function Portfolio(;
     # Portfolio characteristics.
     returns::DataFrame,
     short::Bool = false,
-    upper_short::Real = 0.2,
-    upper_long::Real = 1.0,
+    short_u::Real = 0.2,
+    long_u::Real = 1.0,
     sum_short_long::Real = 1,
     min_number_effective_assets::Integer = 0,
     max_number_assets::Integer = 0,
@@ -241,29 +217,29 @@ function Portfolio(;
     a_mtx_ineq::Matrix{<:Real} = Array{Float64}(undef, 0, 0),
     b_vec_ineq::Vector{<:Real} = Array{Float64}(undef, 0),
     risk_budget_vec::Vector{<:Real} = Array{Float64}(undef, 0),
-    lower_mu::Real = -Inf,
-    upper_dev::Real = Inf,
-    upper_krt::Real = Inf,
-    upper_mean_abs_dev::Real = Inf,
-    upper_gini_mean_diff::Real = Inf,
-    upper_semi_dev::Real = Inf,
-    upper_semi_krt::Real = Inf,
-    upper_first_lower_partial_moment::Real = Inf,
-    upper_second_lower_partial_moment::Real = Inf,
-    upper_conditional_value_at_risk::Real = Inf,
-    upper_tail_gini::Real = Inf,
-    upper_entropic_value_at_risk::Real = Inf,
-    upper_relativistic_value_at_risk::Real = Inf,
-    upper_worst_realisation::Real = Inf,
-    upper_range::Real = Inf,
-    upper_range_conditional_value_at_risk::Real = Inf,
-    upper_range_tail_gini::Real = Inf,
-    upper_max_drawdown::Real = Inf,
-    upper_average_drawdown::Real = Inf,
-    upper_conditional_drawdown_at_risk::Real = Inf,
-    upper_entropic_drawdown_at_risk::Real = Inf,
-    upper_relativistic_drawdown_at_risk::Real = Inf,
-    upper_ulcer_index::Real = Inf,
+    mu_l::Real = -Inf,
+    dev_u::Real = Inf,
+    mad_u::Real = Inf,
+    sdev_u::Real = Inf,
+    cvar_u::Real = Inf,
+    wr_u::Real = Inf,
+    flpm_u::Real = Inf,
+    slpm_u::Real = Inf,
+    mdd_u::Real = Inf,
+    add_u::Real = Inf,
+    cdar_u::Real = Inf,
+    uci_u::Real = Inf,
+    evar_u::Real = Inf,
+    edar_u::Real = Inf,
+    gmd_u::Real = Inf,
+    tg_u::Real = Inf,
+    rg_u::Real = Inf,
+    rcvar_u::Real = Inf,
+    rtg_u::Real = Inf,
+    krt_u::Real = Inf,
+    skrt_u::Real = Inf,
+    rvar_u::Real = Inf,
+    rdar_u::Real = Inf,
     # Optimisation model inputs.
     mu::Vector{<:Real} = Array{Float64}(undef, 0),
     cov::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -308,8 +284,8 @@ function Portfolio(;
         # Portfolio characteristics.
         returns,
         short,
-        upper_short,
-        upper_long,
+        short_u,
+        long_u,
         sum_short_long,
         min_number_effective_assets,
         max_number_assets,
@@ -333,29 +309,29 @@ function Portfolio(;
         a_mtx_ineq,
         b_vec_ineq,
         risk_budget_vec,
-        lower_mu,
-        upper_dev,
-        upper_krt,
-        upper_mean_abs_dev,
-        upper_gini_mean_diff,
-        upper_semi_dev,
-        upper_semi_krt,
-        upper_first_lower_partial_moment,
-        upper_second_lower_partial_moment,
-        upper_conditional_value_at_risk,
-        upper_tail_gini,
-        upper_entropic_value_at_risk,
-        upper_relativistic_value_at_risk,
-        upper_worst_realisation,
-        upper_range,
-        upper_range_conditional_value_at_risk,
-        upper_range_tail_gini,
-        upper_max_drawdown,
-        upper_average_drawdown,
-        upper_conditional_drawdown_at_risk,
-        upper_entropic_drawdown_at_risk,
-        upper_relativistic_drawdown_at_risk,
-        upper_ulcer_index,
+        mu_l,
+        dev_u,
+        mad_u,
+        sdev_u,
+        cvar_u,
+        wr_u,
+        flpm_u,
+        slpm_u,
+        mdd_u,
+        add_u,
+        cdar_u,
+        uci_u,
+        evar_u,
+        edar_u,
+        gmd_u,
+        tg_u,
+        rg_u,
+        rcvar_u,
+        rtg_u,
+        krt_u,
+        skrt_u,
+        rvar_u,
+        rdar_u,
         # Optimisation model inputs.
         mu,
         cov,
@@ -399,607 +375,15 @@ function Portfolio(;
     )
 end
 
-function _mv_setup(portfolio, sigma, rm, kelly, obj)
-    upper_dev = portfolio.upper_dev
-
-    !(rm == :mean_var || kelly == :approx || isfinite(upper_dev)) && (return nothing)
-
-    model = portfolio.model
-
-    w = model[:w]
-    k = model[:k]
-    @variable(model, tdev >= 0)
-    @expression(model, dev_risk, tdev * tdev)
-    G = sqrt(sigma)
-    @constraint(model, tdev_sqrt_sigma_soc, [tdev; transpose(G) * w] in SecondOrderCone())
-
-    if isfinite(upper_dev)
-        if obj == :sharpe
-            @constraint(model, tdev_leq_udev, tdev <= upper_dev * k)
-        else
-            @constraint(model, tdev_leq_udev, tdev <= upper_dev)
-        end
-    end
-
-    if rm == :mean_var
-        @expression(model, risk, dev_risk)
-    end
-
-    return nothing
-end
-
-function _mad_setup(portfolio, rm, T, returns, mu, obj)
-    upper_mean_abs_dev = portfolio.upper_mean_abs_dev
-    upper_semi_dev = portfolio.upper_semi_dev
-
-    !(
-        rm == :mean_abs_dev ||
-        rm == :mean_semi_dev ||
-        isfinite(upper_mean_abs_dev) ||
-        isfinite(upper_semi_dev)
-    ) && (return nothing)
-
-    model = portfolio.model
-    w = model[:w]
-    k = model[:k]
-
-    @variable(model, tmad[1:T] >= 0)
-    abs_dev = returns .- transpose(mu)
-    @constraint(model, abs_dev_w_geq_neg_tmad, abs_dev * w >= -tmad)
-
-    if rm == :mean_abs_dev || isfinite(upper_mean_abs_dev)
-        @expression(model, mad_risk, sum(tmad) / T)
-
-        if isfinite(upper_mean_abs_dev)
-            if obj == :sharpe
-                @constraint(
-                    model,
-                    mad_risk_leq_umad_div_2,
-                    mad_risk * 2 <= upper_mean_abs_dev * k
-                )
-            else
-                @constraint(
-                    model,
-                    mad_risk_leq_umad_div_2,
-                    mad_risk * 2 <= upper_mean_abs_dev
-                )
-            end
-        end
-
-        if rm == :mean_abs_dev
-            @expression(model, risk, mad_risk)
-        end
-    end
-
-    !(rm == :mean_semi_dev || isfinite(upper_semi_dev)) && (return nothing)
-
-    @variable(model, tmsd >= 0)
-    @constraint(model, tmsd_tmad_soc, [tmsd; tmad] in SecondOrderCone())
-    @expression(model, msd_risk, tmsd / sqrt(T - 1))
-
-    if isfinite(upper_semi_dev)
-        if obj == :sharpe
-            @constraint(model, msd_risk_leq_umsd, msd_risk <= upper_semi_dev * k)
-        else
-            @constraint(model, msd_risk_leq_umsd, msd_risk <= upper_semi_dev)
-        end
-    end
-
-    if rm == :mean_semi_dev
-        @expression(model, risk, msd_risk)
-    end
-
-    return nothing
-end
-
-function _cvar_setup(portfolio, rm, T, returns, obj)
-    upper_cvar = portfolio.upper_conditional_value_at_risk
-
-    !(rm == :cvar || isfinite(upper_cvar)) && (return nothing)
-
-    alpha = portfolio.alpha
-    model = portfolio.model
-    w = model[:w]
-    k = model[:k]
-
-    @variable(model, var)
-    @variable(model, tvar[1:T])
-    if !haskey(model, :hist_ret)
-        @expression(model, hist_ret, returns * w)
-    end
-    hist_ret = model[:hist_ret]
-    @constraint(model, tvar_geq_0, tvar >= 0)
-    @constraint(model, tvar_p_hist_ret_p_var_geq_0, tvar .+ hist_ret .+ var .>= 0)
-    @expression(model, cvar_risk, var + sum(tvar) / (alpha * T))
-
-    if isfinite(upper_cvar)
-        if obj == :sharpe
-            @constraint(model, cvar_risk_leq_ucvar, cvar_risk <= upper_cvar * k)
-        else
-            @constraint(model, cvar_risk_leq_ucvar, cvar_risk <= upper_cvar)
-        end
-    end
-
-    if rm == :cvar
-        @expression(model, risk, cvar_risk)
-    end
-end
-
-function _wr_setup(portfolio, rm, returns, obj)
-    upper_wr = portfolio.upper_worst_realisation
-
-    !(rm == :wr || isfinite(upper_wr)) && (return nothing)
-
-    model = portfolio.model
-    w = model[:w]
-    k = model[:k]
-
-    @variable(model, twr)
-    if !haskey(model, :hist_ret)
-        @expression(model, hist_ret, returns * w)
-    end
-    hist_ret = model[:hist_ret]
-    @constraint(model, twr_p_hist_ret_geq_0, hist_ret .+ twr .>= 0)
-    @expression(model, wr_risk, twr)
-
-    if isfinite(upper_wr)
-        if obj == :sharpe
-            @constraint(model, hist_ret_p_uwr_geq_0, hist_ret .+ upper_wr * k .>= 0)
-        else
-            @constraint(model, hist_ret_p_uwr_geq_0, hist_ret .+ upper_wr .>= 0)
-        end
-    end
-
-    if rm == :wr
-        @expression(model, risk, wr_risk)
-    end
-
-    return nothing
-end
-
-function _lpm_setup(portfolio, rm, T, returns, obj, rf)
-    upper_flpm = portfolio.upper_first_lower_partial_moment
-    upper_slpm = portfolio.second_lower_partial_moment
-
-    !(rm == :flpm || rm == :slpm || isfinite(upper_flpm) || isfinite(upper_slpm)) &&
-        (return nothing)
-
-    model = portfolio.model
-    w = model[:w]
-    k = model[:k]
-
-    @variable(model, tlpm[1:T] .>= 0)
-    if !haskey(model, :hist_ret)
-        @expression(model, hist_ret, returns * w)
-    end
-    hist_ret = model[:hist_ret]
-
-    if obj == :sharpe
-        @constraint(model, tlpm_p_hist_ret_geq_rf, tlpm .+ hist_ret .>= rf * k)
-    else
-        @constraint(model, tlpm_p_hist_ret_geq_rf, tlpm .+ hist_ret .>= rf)
-    end
-
-    if rm == :flpm || isfinite(upper_flpm)
-        @expression(model, flpm_risk, sum(tlpm) / T)
-
-        if isfinite(upper_flpm)
-            if obj == :sharpe
-                @constraint(model, flpm_risk_leq_uflpm <= upper_flpm * k)
-            else
-                @constraint(model, flpm_risk_leq_uflpm <= upper_flpm)
-            end
-        end
-
-        if rm == :flpm
-            @expression(model, risk, flpm_risk)
-        end
-    end
-
-    !(rm == :slpm || isfinite(upper_slpm)) && (return nothing)
-
-    @constraint(model, tslpm >= 0)
-    @constraint(model, tslpm_tlpm_soc, [tslpm; tlpm] in SecondOrderCone())
-    @expression(model, slpm_risk, tslpm / sqrt(T - 1))
-
-    if isfinite(upper_slpm)
-        if obj == :sharpe
-            @constraint(model, slpm_risk_leq_uslpm <= upper_slpm * k)
-        else
-            @constraint(model, slpm_risk_leq_uslpm <= upper_slpm)
-        end
-    end
-
-    if rm == :slpm
-        @expression(model, risk, slpm_risk)
-    end
-
-    return nothing
-end
-
-function _return_setup(portfolio, class, kelly, obj, T, rf, returns, mu)
-    model = portfolio.model
-    w = model[:w]
-    k = model[:k]
-    risk = model[:risk]
-
-    if class == :classic && (kelly == :exact || kelly == :approx)
-        if kelly == :exact
-            @variable(model, texact_kelly[1:T])
-            if obj == :sharpe
-                @expression(model, ret, sum(texact_kelly) / T - rf * k)
-                @expression(model, kret, k .+ returns * w)
-                @constraint(
-                    model,
-                    texact_kelly_k_ec[i = 1:T],
-                    [texact_kelly[i], k, kret[i]] in MOI.ExponentialCone()
-                )
-                @constraint(model, sharpe, risk <= 1)
-            else
-                @expression(model, ret, sum(texact_kelly) / T)
-                @expression(model, kret, 1 .+ returns * w)
-                @constraint(
-                    model,
-                    texact_kelly_k_ec[i = 1:T],
-                    [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
-                )
-            end
-        elseif kelly == :approx
-            tdev = model[:tdev]
-            dev_risk = model[:dev_risk]
-            if obj == :sharpe
-                @variable(model, tapprox_kelly >= 0)
-                @constraint(
-                    model,
-                    quad_over_lin_tdev_k,
-                    [k + tapprox_kelly; 2 * tdev + k - tapprox_kelly] in SecondOrderCone()
-                )
-                @expression(model, ret, dot(mu, w) - 0.5 * tapprox_kelly)
-                @constraint(model, sharpe, risk <= 1)
-            else
-                @expression(model, ret, dot(mu, w) - 0.5 * dev_risk)
-            end
-        end
-    else
-        @expression(model, ret, dot(mu, w))
-        if obj == :sharpe
-            @constraint(model, sharpe, ret - rf * k == 1)
-        end
-    end
-
-    # Return constraints.
-    lower_mu = portfolio.lower_mu
-    !isfinite(lower_mu) && (return nothing)
-
-    if obj == :sharpe
-        @constraint(model, ret_geq_lmu, ret >= lower_mu * k)
-    else
-        @constraint(model, ret_geq_lmu, ret >= lower_mu)
-    end
-
-    return nothing
-end
-
-function _setup_weights(portfolio, obj, N)
-    max_number_assets = portfolio.max_number_assets
-    short = portfolio.short
-    upper_short = portfolio.upper_short
-    upper_long = portfolio.upper_long
-    sum_short_long = portfolio.sum_short_long
-
-    model = portfolio.model
-    w = model[:w]
-    k = model[:k]
-
-    # Boolean variables max number of assets.
-    if max_number_assets > 0
-        if obj == :sharpe
-            @variable(model, tass_bin[1:N], binary = true)
-            @variable(model, tass_bin_sharpe[1:N] >= 0)
-        else
-            @variable(model, tass_bin[1:N], binary = true)
-        end
-    end
-
-    # Weight constraints.
-    if obj == :sharpe
-        @constraint(model, sum_w_eq_sum_ls, sum(w) == sum_short_long * k)
-
-        # Maximum number of assets constraints.
-        if max_number_assets > 0
-            @constraint(model, sum_tass_bin_leq_mna, sum(tass_bin) <= max_number_assets)
-            @constraint(model, tass_bin_sharpe_leq_k, tass_bin_sharpe .<= k)
-            @constraint(
-                model,
-                tass_bin_sharpe_leq_tass_bin,
-                tass_bin_sharpe .<= 100000 * tass_bin
-            )
-            @constraint(
-                model,
-                tass_bin_sharpe_geq_o_m_tass_bin,
-                tass_bin_sharpe .>= k - 100000 * (1 .- tass_bin)
-            )
-            @constraint(model, w_leq_ul, w .<= upper_long * tass_bin_sharpe)
-        end
-
-        if short == false
-            @constraint(model, w_leq_ul, w .<= upper_long * k)
-            @constraint(model, w_geq_0, w .>= 0)
-        else
-            @variable(model, tw_ulong[1:N] .>= 0)
-            @variable(model, tw_ushort[1:N] .>= 0)
-
-            @constraint(model, sum_ulong, sum(tw_ulong) <= upper_long * k)
-            @constraint(model, sum_ushort, sum(tw_ushort) <= upper_short * k)
-
-            @constraint(model, w_leq_tw_ulong, w .- tw_ulong .<= 0)
-            @constraint(model, w_geq_neg_tw_ushort, w .+ tw_ushort .>= 0)
-
-            # Maximum number of assets constraints.
-            if max_number_assets > 0
-                @constraint(
-                    model,
-                    w_geq_neg_us_tass_bin,
-                    w .>= -upper_short * tass_bin_sharpe
-                )
-            end
-        end
-    else
-        @constraint(model, sum_w_eq_sum_ls, sum(w) == sum_short_long)
-
-        # Maximum number of assets constraints.
-        if max_number_assets > 0
-            @constraint(model, sum_tass_bin_leq_mna, sum(tass_bin) <= max_number_assets)
-            @constraint(model, wgule, w .<= upper_long * tass_bin)
-        end
-
-        if short == false
-            @constraint(model, w_leq_ul, w .<= upper_long)
-            @constraint(model, w_geq_0, w .>= 0)
-        else
-            @variable(model, tw_ulong[1:N] .>= 0)
-            @variable(model, tw_ushort[1:N] .>= 0)
-
-            @constraint(model, sum_ulong, sum(tw_ulong) <= upper_long)
-            @constraint(model, sum_ushort, sum(tw_ushort) <= upper_short)
-
-            @constraint(model, w_leq_tw_ulong, w .- tw_ulong .<= 0)
-            @constraint(model, w_geq_neg_tw_ushort, w .+ tw_ushort .>= 0)
-
-            # Maximum number of assets constraints.
-            if max_number_assets > 0
-                @constraint(model, w_geq_neg_us_tass_bin, w .>= -upper_short * tass_bin)
-            end
-        end
-    end
-
-    return nothing
-end
-
-function _setup_linear_constraints(portfolio, obj)
-    A = portfolio.a_mtx_ineq
-    B = portfolio.b_vec_ineq
-
-    (isempty(A) || isempty(B)) && (return nothing)
-
-    model = portfolio.model
-    w = model[:w]
-    k = model[:k]
-    # Linear weight constraints.
-    if obj == :sharpe
-        @constraint(model, aw_geq_b, A * w .- B * k .>= 0)
-    else
-        @constraint(model, aw_geq_b, A * w .- B .>= 0)
-    end
-
-    return nothing
-end
-
-function _setup_min_number_effective_assets(portfolio, obj)
-    mnea = portfolio.min_number_effective_assets
-
-    (mnea < 1) && (return nothing)
-
-    model = portfolio.model
-    w = model[:w]
-    k = model[:k]
-
-    @variable(model, tmnea >= 0)
-    @constraint(model, tmnea_w_soc, [tmnea; w] in SecondOrderCone())
-    if obj == :sharpe
-        @constraint(model, tmnea_sqrt_mnea_leq_1, tmnea * sqrt(mnea) <= k)
-    else
-        @constraint(model, tmnea_sqrt_mnea_leq_1, tmnea * sqrt(mnea) <= 1)
-    end
-
-    return nothing
-end
-
-function _setup_tracking_err(portfolio, returns, obj, T)
-    tracking_err = portfolio.tracking_err
-
-    !isfinite(tracking_err) && (return nothing)
-
-    kind_tracking_err = portfolio.kind_tracking_err
-    tracking_err_weights = portfolio.tracking_err_weights
-    tracking_err_returns = portfolio.tracking_err_returns
-
-    tracking_err_flag = false
-
-    if kind_tracking_err == :weights && !isempty(tracking_err_weights)
-        benchmark = returns * tracking_err_weights[!, :weights]
-        tracking_err_flag = true
-    elseif kind_tracking_err == :returns && !isempty(tracking_err_returns)
-        benchmark = tracking_err_returns[!, :returns]
-        tracking_err_flag = true
-    end
-
-    !(tracking_err_flag) && (return nothing)
-
-    model = portfolio.model
-    w = model[:w]
-    k = model[:k]
-
-    @variable(model, t_track_err >= 0)
-    if obj == :sharpe
-        @expression(model, track_err, returns * w .- benchmark * k)
-        @constraint(
-            model,
-            t_track_err_track_err_soc,
-            [t_track_err; track_err] in SecondOrderCone()
-        )
-        @constraint(
-            model,
-            t_track_err_leq_track_err_sqrt_tm1,
-            t_track_err <= tracking_err * k * sqrt(T - 1)
-        )
-    else
-        @expression(model, track_err, returns * w .- benchmark)
-        @constraint(
-            model,
-            t_track_err_track_err_soc,
-            [t_track_err; track_err] in SecondOrderCone()
-        )
-        @constraint(
-            model,
-            t_track_err_leq_track_err_sqrt_tm1,
-            t_track_err <= tracking_err * sqrt(T - 1)
-        )
-    end
-
-    return nothing
-end
-
-function _setup_turnover(portfolio, N, obj)
-    turnover = portfolio.turnover
-    turnover_weights = portfolio.turnover_weights
-
-    (isinf(turnover) || isempty(turnover_weights)) && (return nothing)
-
-    model = portfolio.model
-    w = model[:w]
-    k = model[:k]
-    @variable(model, t_turnov[1:N] >= 0)
-    if obj == :sharpe
-        @expression(model, turnov, w .- turnover_weights[!, :weights] * k)
-        @constraint(
-            model,
-            t_turnov_turnov_soc[i = 1:N],
-            [t_turnov[i]; turnov[i]] in MOI.NormOneCone(2)
-        )
-        @constraint(model, t_turnov_leq_turnover, t_turnov .<= turnover * k)
-    else
-        @expression(model, turnov, w .- turnover_weights[!, :weights])
-        @constraint(
-            model,
-            t_turnov_turnov_soc[i = 1:N],
-            [t_turnov[i]; turnov[i]] in MOI.NormOneCone(2)
-        )
-        @constraint(model, t_turnov_leq_turnover, t_turnov .<= turnover)
-    end
-
-    return nothing
-end
-
-function _setup_objective_function(portfolio, obj, kelly, l)
-    model = portfolio.model
-    ret = model[:ret]
-    risk = model[:risk]
-
-    if obj == :sharpe
-        if model == :classic && (kelly == :exact || kelly == :approx)
-            @objective(model, Max, ret)
-        else
-            @objective(model, Min, risk)
-        end
-    elseif obj == :min_risk
-        @objective(model, Min, risk)
-    elseif obj == :utility
-        @objective(model, Max, ret - l * risk)
-    elseif obj == :max_ret
-        @objective(model, Max, ret)
-    end
-
-    return nothing
-end
-
-function _optimize_portfolio(portfolio, N)
-    solvers = portfolio.solvers
-    sol_params = portfolio.sol_params
-    model = portfolio.model
-    w = model[:w]
-
-    term_status = termination_status(model)
-    solvers_tried = Dict()
-
-    for (solver_name, solver) in solvers
-        set_optimizer(model, solver)
-        if haskey(sol_params, solver_name)
-            for (attribute, value) in sol_params[solver_name]
-                set_attribute(model, attribute, value)
-            end
-        end
-        try
-            optimize!(model)
-        catch jump_error
-            push!(solvers_tried, solver_name => Dict("error" => jump_error))
-            continue
-        end
-        term_status = termination_status(model)
-
-        if term_status in ValidTermination &&
-           all(isfinite.(value.(w))) &&
-           all(abs.(0.0 .- value.(w)) .> N^2 * eps())
-            break
-        end
-        push!(
-            solvers_tried,
-            solver_name => Dict(
-                "objective_val" => objective_value(model),
-                "term_status" => term_status,
-                "sol_params" =>
-                    haskey(sol_params, solver_name) ? sol_params[solver_name] : missing,
-            ),
-        )
-    end
-
-    return term_status, solvers_tried
-end
-
-function _cleanup_weights(portfolio, returns, N, obj, solvers_tried)
-    model = portfolio.model
-    w = model[:w]
-    k = model[:k]
-
-    weights = Vector{eltype(returns)}(undef, N)
-    if obj == :sharpe
-        weights .= value.(w) / value(k)
-    else
-        weights .= value.(w)
-    end
-
-    short = portfolio.short
-    sum_short_long = portfolio.sum_short_long
-    if short == false
-        weights .= abs.(weights) / sum(abs.(weights)) * sum_short_long
-    end
-
-    portfolio.p_optimal =
-        DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
-
-    if isempty(solvers_tried)
-        portfolio.fail = Dict()
-    else
-        portfolio.fail = solvers_tried
-    end
-
-    return nothing
-end
+# Risk constants and functions.
+include("_portfolio_risk_setup.jl")
+# Optimisation functions.
+include("_portfolio_optim_setup.jl")
 
 function optimize(
     portfolio::Portfolio;
     class::Symbol = :classic,
-    rm::Symbol = :mean_var,
+    rm::Symbol = :mv,
     obj::Symbol = :sharpe,
     kelly::Symbol = :none,
     rf::Real = 1.0329^(1 / 252) - 1,
@@ -1022,6 +406,15 @@ function optimize(
     mu = portfolio.mu
     sigma = portfolio.cov
 
+    if (rm == :rvar || rm == :rdar)
+        alpha = portfolio.alpha
+        kappa = portfolio.kappa
+        c = 1 / (alpha * T)
+        ln_k = (c^kappa - c^(-kappa)) / (2 * kappa)
+    else
+        ln_k = 0
+    end
+
     # Model variables.
     model = portfolio.model
     @variable(model, w[1:N])
@@ -1030,12 +423,16 @@ function optimize(
     # Risk variables, functions and constraints.
     ## Mean variance.
     _mv_setup(portfolio, sigma, rm, kelly, obj)
-    ## Mean absolute deviation and mean semi deviation.
+    ## Mean Absolute Deviation and Mean Semi Deviation.
     _mad_setup(portfolio, rm, T, returns, mu, obj)
-    ## CVaR.
-    _cvar_setup(portfolio, rm, T, returns, obj)
+    ## Conditional and Entropic Value at Risk
+    _var_setup(portfolio, rm, T, returns, obj, ln_k)
     ## Worst realisation.
     _wr_setup(portfolio, rm, returns, obj)
+    ## Lower partial moments, Omega and Sortino ratios.
+    _lpm_setup(portfolio, rm, T, returns, obj, rf)
+    ## Drawdown, Max Drawdown, Average Drawdown, Conditional Drawdown, Ulcer Index, Entropic Drawdown at Risk
+    _drawdown_setup(portfolio, rm, T, returns, obj, rf, ln_k)
 
     # Constraints.
     ## Return variables.

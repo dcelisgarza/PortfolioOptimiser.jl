@@ -19,13 +19,13 @@ RET = dropmissing!(DataFrame(Y))
 
 test = Portfolio(
     returns = RET,
-    # upper_short = 0.2,
-    # upper_long = 1,
+    # short_u = 0.2,
+    # long_u = 1,
     # short = true,
     # sum_short_long = 0.8,
-    solvers = Dict("ECOS" => ECOS.Optimizer, "SCS" => SCS.Optimizer),
+    solvers = Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
     sol_params = Dict(
-        "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-12, "verbose" => false),
+        "ECOS" => Dict("maxit" => 100, "feastol" => 1e-12, "verbose" => false),
     ),
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
@@ -34,11 +34,23 @@ test.cov = cov(Matrix(RET[!, 2:end]))
 rm = :wr
 obj = :max_ret
 kelly = :exact
-test.upper_worst_realisation = 0.035#0.04429675707220074
+test.wr_u = 0.035#0.04429675707220074
 w1 = optimize(test, rm = rm, kelly = kelly, obj = obj)
-maximum(-value.(test.model[:hist_ret])) - test.upper_worst_realisation
+maximum(-value.(test.model[:hist_ret])) - test.wr_u
 
-println(all_constraints(test.model, VariableRef, MOI.LessThan{Float64}))
+test = Portfolio(
+    returns = RET,
+    # short_u = 0.2,
+    # long_u = 1,
+    # short = true,
+    # sum_short_long = 0.8,
+    solvers = Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
+    sol_params = Dict(
+        "ECOS" => Dict("maxit" => 100, "feastol" => 1e-12, "verbose" => false),
+    ),
+)
+test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
+test.cov = cov(Matrix(RET[!, 2:end]))
 
 test.tracking_err_weights =
     DataFrame(tickers = names(RET)[2:end], weights = collect(1:2:40) / sum(1:2:40))
@@ -68,8 +80,8 @@ display(sh2)
 
 test = Portfolio(
     returns = RET,
-    # upper_short = 0.4,
-    # upper_long = 1,
+    # short_u = 0.4,
+    # long_u = 1,
     # short = true,
     # sum_short_long = 0.6,
     solvers = Dict("ECOS" => ECOS.Optimizer, "SCS" => SCS.Optimizer),
@@ -107,8 +119,8 @@ display(sh2)
 
 test = Portfolio(
     returns = RET,
-    # upper_short = 0.2,
-    # upper_long = 1,
+    # short_u = 0.2,
+    # long_u = 1,
     # short = true,
     # sum_short_long = 0.8,
     solvers = Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
@@ -118,12 +130,12 @@ test = Portfolio(
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
-test.upper_dev = Inf#0.007720653477634564
-test.upper_mean_abs_dev = Inf#9.883349909235248
-test.upper_semi_dev = Inf#0.0010573893959405641
+test.dev_u = Inf#0.007720653477634564
+test.mad_u = Inf#9.883349909235248
+test.sdev_u = Inf#0.0010573893959405641
 test.min_number_effective_assets = 0
 obj = :sharpe
-rm = :mean_semi_dev
+rm = :msd
 @time w1 = optimize(test, rm = rm, kelly = :exact, obj = obj)
 r1 = sqrt(dot(w1[!, :weights], test.cov, w1[!, :weights]))
 mu1 = dot(w1[!, :weights], test.mu)
@@ -136,7 +148,7 @@ mu3 = dot(w3[!, :weights], test.mu)
 sh3 = hcat(w1, w2[!, :weights], w3[!, :weights], makeunique = true)
 display(sh3)
 
-test.min_number_effective_assets = 5
+test.min_number_effective_assets = 20
 @time w4 = optimize(test, rm = rm, kelly = :none, obj = obj)
 r4 = sqrt(dot(w4[!, :weights], test.cov, w4[!, :weights]))
 mu4 = dot(w4[!, :weights], test.mu)
@@ -170,7 +182,7 @@ wak = JuMP.Model()
 
 value.(test.model[:w])
 
-isinf(test.upper_average_drawdown)
+isinf(test.add_u)
 
 push!(test.sol_params, "ECOS" => Dict("max_iters" => 500, "abstol" => 1e-8))
 
