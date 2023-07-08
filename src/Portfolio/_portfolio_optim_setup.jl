@@ -1,4 +1,3 @@
-const KellyRet = (:exact, :approx, :none)
 function _return_setup(portfolio, class, kelly, obj, T, rf, returns, mu)
     model = portfolio.model
     w = model[:w]
@@ -193,7 +192,6 @@ function _setup_min_number_effective_assets(portfolio, obj)
     return nothing
 end
 
-const TrackingErrKinds = (:weights, :returns)
 function _setup_tracking_err(portfolio, returns, obj, T)
     tracking_err = portfolio.tracking_err
 
@@ -280,7 +278,6 @@ function _setup_turnover(portfolio, N, obj)
     return nothing
 end
 
-const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 function _setup_objective_function(portfolio, obj, kelly, l)
     model = portfolio.model
     ret = model[:ret]
@@ -303,8 +300,6 @@ function _setup_objective_function(portfolio, obj, kelly, l)
     return nothing
 end
 
-const ValidTermination =
-    (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
 function _optimize_portfolio(portfolio, N)
     solvers = portfolio.solvers
     sol_params = portfolio.sol_params

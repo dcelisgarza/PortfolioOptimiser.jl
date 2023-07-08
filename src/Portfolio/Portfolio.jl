@@ -3,8 +3,6 @@ using DataFrames, JuMP
 
 abstract type AbstractPortfolio end
 
-const PortClasses = (:classic,)
-
 mutable struct Portfolio{
     # Portfolio characteristics
     r,
@@ -202,8 +200,8 @@ function Portfolio(;
     # Risk parameters.
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta::Real = 0.0,
-    b_sim::Integer = 0,
+    beta::Real = Inf,
+    b_sim::Integer = -1,
     kappa::Real = 0.3,
     max_num_assets_kurt::Integer = 50,
     # Benchmark constraints.
@@ -459,7 +457,7 @@ function optimize(
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.optimize))"
 
         @warn(
-            "$funcname: model for could not be optimised satisfactorily.\nPortfolio: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $solvers_tried"
+            "$funcname: model could not be optimised satisfactorily.\nPortfolio: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $solvers_tried"
         )
 
         portfolio.p_optimal = DataFrame()
