@@ -103,7 +103,7 @@ function owa_tgrg(T, alpha = 0.05, a_sim = 100, beta = nothing, b_sim = nothing)
     return w
 end
 
-function _optimize(model, solvers, sol_params)
+function _optimize_owa(model, solvers, sol_params)
     term_status = termination_status(model)
     solvers_tried = Dict()
 
@@ -189,43 +189,42 @@ function owa_l_moment_crm(
         model = JuMP.Model()
         @variable(model, theta[1:T])
         @variable(model, phi[1:n] >= 0)
+
         @constraint(model, sum_phi_eq1, sum(phi) == 1)
-        @constraint(model, theta_eq_ws_phi, theta == ws * phi)
-        @constraint(model, phi_leq_max_phi, phi <= max_phi)
-        @constraint(model, phi2e_m_phi1em1_leq0, phi[2:end] .- phi[1:(end - 1)] .<= 0)
-        @constraint(
-            model,
-            theta2e_m_theta1em1_geq0,
-            theta[2:end] .- theta[1:(end - 1)] .>= 0
-        )
+        @constraint(model, theta_eq_ws_phi, theta .== ws * phi)
+        @constraint(model, phi_leq_max_phi, phi .<= max_phi)
+        @constraint(model, phi2e_m_phi1em1_leq0, phi[2:end] .<= phi[1:(end - 1)])
+        @constraint(model, theta2e_m_theta1em1_geq0, theta[2:end] .>= theta[1:(end - 1)])
 
         if method == :me
-            @variable(model, t[1:T])
-            @variable(model, x[1:T])
-            # Entropy constraints.
-            @constraint(model, entropy1[i = 1:T], [t[i], x[i], 1] in MOI.ExponentialCone())
-            @constraint(model, entropy2, sum(x) == 1)
-            # Constraining entropy to theta.
-            @constraint(model, t_m_theta_geq0, t .- theta .>= 0)
-            @constraint(model, t_p_theta_geq0, t .+ theta .>= 0)
             # Maximise entropy.
-            @objective(model, Max, sum(t))
+            @variable(model, t[1:T])
+            @variable(model, x[1:T] >= 0)
+            @constraint(model, sum_x_eq1, sum(x) == 1)
+            @constraint(model, entropy[i = 1:T], [t[i], x[i], 1] in MOI.ExponentialCone())
+            @constraint(model, x_m_theta_geq_0, x .- theta .>= 0)
+            @constraint(model, x_p_theta_geq_0, x .+ theta .>= 0)
+            @objective(model, Max, sum(t) * 1000)
         elseif method == :mss
-            # L2-norm constraints.
+            @variable(model, r[1:T])
             @variable(model, t)
-            @constraint(model, theta_eq_1, sum(theta) == 1)
-            @constraint(model, [t; theta] in SecondOrderCone())
-            @objective(model, Min, t)
+            @constraint(model, pnorm[i = 1:T], [r[i], t, theta[i]] in MOI.PowerCone(1 / 2))
+            @constraint(model, sum_r_eqt, sum(r) == t)
+            @objective(model, Min, t * 1000)
         elseif method == :msd
-            @expression(model, theta_diff, theta[2:end] .- theta[1:(end - 1)])
-            # L2-norm constraints.
+            @expression(model, theta_diff, theta[2:end] - theta[1:(end - 1)])
+            @variable(model, r[1:(T - 1)])
             @variable(model, t)
-            @constraint(model, [t; theta_diff] in SecondOrderCone())
-            @objective(model, Min, t)
+            @constraint(
+                model,
+                pnorm[i = 1:(T - 1)],
+                [r[i], t, theta_diff[i]] in MOI.PowerCone(1 / 2)
+            )
+            @constraint(model, sum_r_eqt, sum(r) == t)
+            @objective(model, Min, t * 1000)
         end
 
-        term_status, solvers_tried = _optimize(model, solvers, sol_params)
-
+        term_status, solvers_tried = _optimize_owa(model, solvers, sol_params)
         # Error handling.
         if term_status ∉ ValidTermination
             funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
@@ -244,3 +243,5 @@ function owa_l_moment_crm(
 
     return w
 end
+
+export owa_l_moment_crm

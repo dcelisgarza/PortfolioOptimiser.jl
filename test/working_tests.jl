@@ -11,6 +11,16 @@ using PortfolioOptimiser,
     JuMP,
     LinearAlgebra
 
+owa_l_moment_crm(
+    23;
+    k = 4,
+    method = :me,
+    g = 0.5,
+    max_phi = 0.5,
+    solvers = Dict("SCS" => SCS.Optimizer),
+    sol_params = Dict("SCS" => Dict("verbose" => 0)),
+)
+
 println(fieldnames(Portfolio))
 
 A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
