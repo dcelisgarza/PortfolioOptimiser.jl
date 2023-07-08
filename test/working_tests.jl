@@ -11,14 +11,16 @@ using PortfolioOptimiser,
     JuMP,
     LinearAlgebra
 
-owa_l_moment_crm(
-    23;
-    k = 4,
-    method = :me,
-    g = 0.5,
-    max_phi = 0.5,
-    solvers = Dict("SCS" => SCS.Optimizer),
-    sol_params = Dict("SCS" => Dict("verbose" => 0)),
+@time display(
+    owa_l_moment_crm(
+        100;
+        k = 4,
+        method = :msd,
+        g = 0.5,
+        max_phi = 0.5,
+        solvers = Dict("SCS" => SCS.Optimizer),
+        sol_params = Dict("SCS" => Dict("verbose" => 0)),
+    ),
 )
 
 println(fieldnames(Portfolio))

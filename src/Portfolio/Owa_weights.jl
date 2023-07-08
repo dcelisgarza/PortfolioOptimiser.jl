@@ -190,38 +190,37 @@ function owa_l_moment_crm(
         @variable(model, theta[1:T])
         @variable(model, phi[1:n] >= 0)
 
-        @constraint(model, sum_phi_eq1, sum(phi) == 1)
-        @constraint(model, theta_eq_ws_phi, theta .== ws * phi)
-        @constraint(model, phi_leq_max_phi, phi .<= max_phi)
-        @constraint(model, phi2e_m_phi1em1_leq0, phi[2:end] .<= phi[1:(end - 1)])
-        @constraint(model, theta2e_m_theta1em1_geq0, theta[2:end] .>= theta[1:(end - 1)])
+        @constraint(model, sum(phi) == 1)
+        @constraint(model, theta .== ws * phi)
+        @constraint(model, phi .<= max_phi)
+        @constraint(model, phi[2:end] .<= phi[1:(end - 1)])
+        @constraint(model, theta[2:end] .>= theta[1:(end - 1)])
 
         if method == :me
             # Maximise entropy.
             @variable(model, t[1:T])
             @variable(model, x[1:T] >= 0)
-            @constraint(model, sum_x_eq1, sum(x) == 1)
-            @constraint(model, entropy[i = 1:T], [t[i], x[i], 1] in MOI.ExponentialCone())
-            @constraint(model, x_m_theta_geq_0, x .- theta .>= 0)
-            @constraint(model, x_p_theta_geq_0, x .+ theta .>= 0)
-            @objective(model, Max, sum(t) * 1000)
+            @constraint(model, sum(x) == 1)
+            @constraint(model, [i = 1:T], [t[i], x[i], 1] in MOI.ExponentialCone())
+            @constraint(model, x .- theta .>= 0)
+            @constraint(model, x .+ theta .>= 0)
+            @objective(model, Max, sum(t))
         elseif method == :mss
             @variable(model, r[1:T])
             @variable(model, t)
-            @constraint(model, pnorm[i = 1:T], [r[i], t, theta[i]] in MOI.PowerCone(1 / 2))
-            @constraint(model, sum_r_eqt, sum(r) == t)
-            @objective(model, Min, t * 1000)
+            @constraint(model, [i = 1:T], [r[i], t, theta[i]] in MOI.PowerCone(1 / 2))
+            @constraint(model, sum(r) == t)
+            @objective(model, Min, t)
         elseif method == :msd
-            @expression(model, theta_diff, theta[2:end] - theta[1:(end - 1)])
             @variable(model, r[1:(T - 1)])
             @variable(model, t)
             @constraint(
                 model,
-                pnorm[i = 1:(T - 1)],
-                [r[i], t, theta_diff[i]] in MOI.PowerCone(1 / 2)
+                [i = 1:(T - 1)],
+                [r[i], t, theta[i + 1] - theta[i]] in MOI.PowerCone(1 / 2)
             )
             @constraint(model, sum_r_eqt, sum(r) == t)
-            @objective(model, Min, t * 1000)
+            @objective(model, Min, t)
         end
 
         term_status, solvers_tried = _optimize_owa(model, solvers, sol_params)
