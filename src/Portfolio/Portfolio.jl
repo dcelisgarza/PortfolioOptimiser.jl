@@ -440,6 +440,8 @@ function optimize(
     _lpm_setup(portfolio, rm, T, returns, obj, rf)
     ## Drawdown, Max Drawdown, Average Drawdown, Conditional Drawdown, Ulcer Index, Entropic Drawdown at Risk
     _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
+    ## OWA methods
+    _owa_setup(portfolio, rm, T, returns, obj)
 
     # Constraints.
     ## Return variables.

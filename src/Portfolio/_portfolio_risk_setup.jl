@@ -623,3 +623,35 @@ function _owa_setup(portfolio, rm, T, returns, obj)
 
     return nothing
 end
+
+function _kurtosis_setup(portfolio, rm, N, obj)
+    kurt = portfolio.kurt
+    skurt = portfolio.skurt
+    krt_u = portfolio.krt_u
+    skrt_u = portfolio.skrt_u
+
+    !(
+        !isnothing(kurt) ||
+        !isnothing(skurt) ||
+        rm == :krt ||
+        rm == :skrt ||
+        isfinite(krt_u) ||
+        isfinite(skrt_u)
+    ) && (return nothing)
+
+    model = portfolio.model
+    w = model[:w]
+    k = model[:k]
+
+    if !isnothing(kurt) && (rm == :krt || isfinite(krt_u))
+        @variable(model, W[1:N, 1:N], Symmetric)
+        @expression(model, M1, vcat(W, transpose(w)))
+        if obj == :sharpe
+            @expression(model, M2, vcat(w, k))
+        else
+            @expression(model, M2, vcat(w, 1))
+        end
+        @expression(model, M3, hcat(M1, M2))
+        @constraint(model, M3 in PSDCone())
+    end
+end
