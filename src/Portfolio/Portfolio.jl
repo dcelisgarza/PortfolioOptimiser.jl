@@ -207,7 +207,7 @@ function Portfolio(;
     beta::Real = Inf,
     b_sim::Integer = -1,
     kappa::Real = 0.3,
-    max_num_assets_kurt::Integer = 50,
+    max_num_assets_kurt::Integer = 0,
     # Benchmark constraints.
     turnover::Real = Inf,
     turnover_weights::DataFrame = DataFrame(),

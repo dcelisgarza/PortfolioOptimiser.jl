@@ -1,0 +1,1 @@
+function block_vec_pq() end

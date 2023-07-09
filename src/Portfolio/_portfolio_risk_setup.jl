@@ -644,6 +644,7 @@ function _kurtosis_setup(portfolio, rm, N, obj)
     k = model[:k]
 
     if !isnothing(kurt) && (rm == :krt || isfinite(krt_u))
+        max_num_assets_kurt = portfolio.max_num_assets_kurt
         @variable(model, W[1:N, 1:N], Symmetric)
         @expression(model, M1, vcat(W, transpose(w)))
         if obj == :sharpe
@@ -653,5 +654,112 @@ function _kurtosis_setup(portfolio, rm, N, obj)
         end
         @expression(model, M3, hcat(M1, M2))
         @constraint(model, M3 in PSDCone())
+
+        if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
+            K = 2 * N
+            @variable(model, xkurt[1:K])
+            @variable(model, rkurt[1:K])
+            @variable(model, tkurt)
+            @constraint(
+                model,
+                [i = 1:K],
+                [rkurt[i], tkurt, xkurt[i]] in MOI.PowerCone(1 / 2)
+            )
+            @constraint(model, sum(rkurt) == tkurt)
+            @expression(model, kurt_risk, tkurt)
+            A = block_vec_pw(kurt, N, N)
+            vals_A, vecs_A = eigen(A)
+            vals_A = real(vals_A)
+            vecs_A = real(vecs_A)
+            clamp!(vals_A, 0, Inf)
+            Bi = Vector{Matrix{Float64, Float64}}(undef, K)
+            for i in 1:K
+                B = sqrt(vals_A[i]) * vecs_A[:, i]
+                B = reshape(B, N, N)
+                Bi[i] = B
+            end
+
+            @constraint(model, [i = 1:K], xkurt[i] == sum(diag(Bi[i] * W)))
+        else
+            L_2 = portfolio.L_2
+            S_2 = portfolio.S_2
+            sqrt_sigma_4 = sqrt(S_2 * kurt * transpose(L_2))
+            @variable(model, tkurt >= 0)
+            @expression(model, zkurt, L_2 * vec(W))
+            @constraint(model, [tkurt; sqrt_sigma_4 * zkurt] in SecondOrderCone())
+            @expression(model, kurt_risk, tkurt)
+        end
+
+        if isfinite(krt_u)
+            if obj == :sharpe
+                @constraint(model, kurt_risk <= krt_u * k)
+            else
+                @constraint(model, kurt_risk <= krt_u)
+            end
+        end
+
+        if rm == :krt
+            @expression(model, risk, kurt_risk)
+        end
+    end
+
+    if !isnothing(skurt) && (rm == :skrt || isfinite(skrt_u))
+        max_num_assets_skurt = portfolio.max_num_assets_skurt
+        @variable(model, SW[1:N, 1:N], Symmetric)
+        @expression(model, SM1, vcat(SW, transpose(w)))
+        if obj == :sharpe
+            @expression(model, SM2, vcat(w, k))
+        else
+            @expression(model, SM2, vcat(w, 1))
+        end
+        @expression(model, SM3, hcat(SM1, SM2))
+        @constraint(model, SM3 in PSDCone())
+
+        if !iszero(max_num_assets_kurt) && N > max_num_assets_skurt
+            K = 2 * N
+            @variable(model, xskurt[1:K])
+            @variable(model, rskurt[1:K])
+            @variable(model, tskurt)
+            @constraint(
+                model,
+                [i = 1:K],
+                [rskurt[i], tskurt, xskurt[i]] in MOI.PowerCone(1 / 2)
+            )
+            @constraint(model, sum(rskurt) == tskurt)
+            @expression(model, skurt_risk, tskurt)
+            A = block_vec_pw(skurt, N, N)
+            vals_A, vecs_A = eigen(A)
+            vals_A = real(vals_A)
+            vecs_A = real(vecs_A)
+            clamp!(vals_A, 0, Inf)
+            SBi = Vector{Matrix{Float64, Float64}}(undef, K)
+            for i in 1:K
+                B = sqrt(vals_A[i]) * vecs_A[:, i]
+                B = reshape(B, N, N)
+                SBi[i] = B
+            end
+
+            @constraint(model, [i = 1:K], xskurt[i] == sum(diag(SBi[i] * SW)))
+        else
+            L_2 = portfolio.L_2
+            S_2 = portfolio.S_2
+            sqrt_sigma_4 = sqrt(S_2 * skurt * transpose(L_2))
+            @variable(model, tskurt >= 0)
+            @expression(model, zskurt, L_2 * vec(SW))
+            @constraint(model, [tskurt; sqrt_sigma_4 * zskurt] in SecondOrderCone())
+            @expression(model, skurt_risk, tskurt)
+        end
+
+        if isfinite(skrt_u)
+            if obj == :sharpe
+                @constraint(model, skurt_risk <= skrt_u * k)
+            else
+                @constraint(model, skurt_risk <= skrt_u)
+            end
+        end
+
+        if rm == :skrt
+            @expression(model, risk, skurt_risk)
+        end
     end
 end
