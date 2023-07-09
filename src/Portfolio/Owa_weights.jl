@@ -45,7 +45,7 @@ function owa_wcvar(T, alphas, weights)
     return w
 end
 
-function owa_tg(T, alpha = 0.05, a_sim = 100; alpha_i = 0.0001)
+function owa_tg(T; alpha_i = 0.0001, alpha = 0.05, a_sim = 100)
     alphas = range(start = alpha_i, stop = alpha, length = a_sim)
     n = length(alphas)
     w = Vector{Float64}(undef, n)
@@ -75,7 +75,7 @@ function owa_rg(T)
     return w
 end
 
-function owa_cvrg(T, alpha = 0.05, beta = nothing)
+function owa_rcvar(T; alpha = 0.05, beta = nothing)
     isnothing(beta) && (beta = alpha)
 
     w = owa_cvar(T, alpha) - reverse(owa_cvar(T, beta))
@@ -94,11 +94,22 @@ function owa_wcvrg(T, alphas, weights_a, betas = nothing, weights_b = nothing)
     return w
 end
 
-function owa_tgrg(T, alpha = 0.05, a_sim = 100, beta = nothing, b_sim = nothing)
+function owa_rtg(
+    T;
+    alpha_i = 0.0001,
+    alpha = 0.05,
+    a_sim = 100,
+    beta_i = nothing,
+    beta = nothing,
+    b_sim = nothing,
+)
     isnothing(beta) && (beta = alpha)
     isnothing(b_sim) && (b_sim = a_sim)
+    isnothing(beta_i) && (beta_i = alpha_i)
 
-    w = owa_tg(T, alpha, a_sim) - reverse(owa_tg(T, beta, b_sim))
+    w =
+        owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) -
+        reverse(owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim))
 
     return w
 end

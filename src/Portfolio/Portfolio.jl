@@ -13,8 +13,10 @@ mutable struct Portfolio{
     rf,
     l,
     # Risk parameters
+    ai,
     a,
     as,
+    bi,
     b,
     bs,
     k,
@@ -102,8 +104,10 @@ mutable struct Portfolio{
     returns_factors::rf
     loadings::l
     # Risk parameters.
+    alpha_i::ai
     alpha::a
     a_sim::as
+    beta_i::bi
     beta::b
     b_sim::bs
     kappa::k
@@ -196,8 +200,10 @@ function Portfolio(;
     returns_factors::DataFrame = DataFrame(),
     loadings::DataFrame = DataFrame(),
     # Risk parameters.
+    alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
+    beta_i::Real = 0.0001,
     beta::Real = Inf,
     b_sim::Integer = -1,
     kappa::Real = 0.3,
@@ -288,8 +294,10 @@ function Portfolio(;
         returns_factors,
         loadings,
         # Risk parameters.
+        alpha_i,
         alpha,
         a_sim,
+        beta_i,
         beta,
         b_sim,
         kappa,

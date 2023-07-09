@@ -455,3 +455,171 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
 
     return nothing
 end
+
+function _owa_setup(portfolio, rm, T, returns, obj)
+    gmd_u = portfolio.gmd_u
+    tg_u = portfolio.tg_u
+    rg_u = portfolio.rg_u
+    rcvar_u = portfolio.rcvar_u
+    rtg_u = portfolio.rtg_u
+
+    !(
+        rm == :gmd ||
+        rm == :tg ||
+        rm == :rg ||
+        rm == :rcvar ||
+        rm == :rtg ||
+        isfinite(gmd_u) ||
+        isfinite(tg_u) ||
+        isfinite(rg_u) ||
+        isfinite(rcvar_u) ||
+        isfinite(rtg_u)
+    ) && (return nothing)
+
+    onesvec = ones(T)
+    model = portfolio.model
+    if !haskey(model, :hist_ret)
+        @expression(model, hist_ret, returns * w)
+    end
+    hist_ret = model[:hist_ret]
+    @variable(model, gmd[1:T])
+    @constraint(model, hist_ret == y)
+
+    if rm == :gmd || isfinite(gmd_u)
+        @variable(model, gmda[1:T])
+        @variable(model, gmdb[1:T])
+        @expression(model, gmd_risk, sum(gmda + gmdb))
+        gmd_w = owa_gmd(T) / 2
+        @constraint(
+            model,
+            y * transpose(gmd_w) .<= onesvec * transpose(gmda) + gmdb * transpose(onesvec)
+        )
+
+        if isfinite(gmd_u)
+            if obj == :sharpe
+                @constraint(model, gmd_risk <= gmd_u * k / 2)
+            else
+                @constraint(model, gmd_risk <= gmd_u / 2)
+            end
+        end
+
+        if rm == :gmd
+            @expression(model, risk, gmd_risk)
+        end
+    end
+
+    if rm == :tg || isfinite(tg_u)
+        alpha = portfolio.alpha
+        a_sim = portfolio.a_sim
+        alpha_i = portfolio.alpha_i
+        @variable(model, tga[1:T])
+        @variable(model, tgb[1:T])
+        @expression(model, tg_risk, sum(tga + tgb))
+        tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+        @constraint(
+            model,
+            y * transpose(tg_w) .<= onesvec * transpose(tga) + tgb * transpose(onesvec)
+        )
+
+        if isfinite(tg_u)
+            if obj == :sharpe
+                @constraint(model, tg_risk <= tg_u * k)
+            else
+                @constraint(model, tg_risk <= tg_u)
+            end
+        end
+
+        if rm == :tg
+            @expression(model, risk, tg_risk)
+        end
+    end
+
+    if rm == :rg || isfinite(rg_u)
+        @variable(model, rga[1:T])
+        @variable(model, rgb[1:T])
+        @expression(model, rg_risk, sum(rga + rgb))
+        rg_w = owa_rg(T)
+        @constraint(
+            model,
+            y * transpose(rg_w) .<= onesvec * transpose(rga) + rgb * transpose(onesvec)
+        )
+
+        if isfinite(rg_u)
+            if obj == :sharpe
+                @constraint(model, rg_risk <= rg_u * k)
+            else
+                @constraint(model, rg_risk <= rg_u)
+            end
+        end
+
+        if rm == :rg
+            @expression(model, risk, rg_risk)
+        end
+    end
+
+    if rm == :rcvar || isfinite(rcvar_u)
+        alpha = portfolio.alpha
+        beta = portfolio.beta
+        @variable(model, rcvara[1:T])
+        @variable(model, rcvarb[1:T])
+        @expression(model, rcvar_risk, sum(rcvara + rcvarb))
+        rcvar_w = owa_rcvar(T; alpha = alpha, beta = beta)
+        @constraint(
+            model,
+            y * transpose(rcvar_w) .<=
+            onesvec * transpose(rcvara) + rcvarb * transpose(onesvec)
+        )
+
+        if isfinite(rcvar_u)
+            if obj == :sharpe
+                @constraint(model, rcvar_risk <= rcvar_u * k)
+            else
+                @constraint(model, rcvar_risk <= rcvar_u)
+            end
+        end
+
+        if rm == :rcvar
+            @expression(model, risk, rcvar_risk)
+        end
+    end
+
+    !(rm == :rtg || isfinite(rtg_u)) && (return nothing)
+
+    alpha = portfolio.alpha
+    a_sim = portfolio.a_sim
+    alpha_i = portfolio.alpha_i
+    beta = portfolio.beta
+    b_sim = portfolio.b_sim
+    beta_i = portfolio.beta_i
+
+    @variable(model, rtga[1:T])
+    @variable(model, rtgb[1:T])
+    @expression(model, rtg_risk, sum(rtga + rtgb))
+    rtg_w = owa_rtg(
+        T;
+        alpha_i = alpha_i,
+        alpha = alpha,
+        a_sim = a_sim,
+        beta_i = beta_i,
+        beta = beta,
+        b_sim = b_sim,
+    )
+    @constraint(
+        model,
+        y * transpose(rtg_w) .<= onesvec * transpose(rtga) + rtgb * transpose(onesvec)
+    )
+
+    if isfinite(rtg_u)
+        if obj == :sharpe
+            @constraint(model, rtg_risk <= rtg_u * k)
+        else
+            @constraint(model, rtg_risk <= rtg_u)
+        end
+    end
+
+    if rm == :rtg
+        @expression(model, risk, rtg_risk)
+    end
+
+    return nothing
+end

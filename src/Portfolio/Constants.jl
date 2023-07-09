@@ -22,4 +22,11 @@ const RiskMeasures = (
     :edar,
     :rdar,
     :rvar,
+    :gmd,
+    :tg,
+    :rg,
+    :rcvar,
+    :rtg,
+    :krt,
+    :skrt,
 )
