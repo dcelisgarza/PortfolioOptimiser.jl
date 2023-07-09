@@ -478,12 +478,14 @@ function _owa_setup(portfolio, rm, T, returns, obj)
 
     onesvec = ones(T)
     model = portfolio.model
+    w = model[:w]
+    k = model[:k]
     if !haskey(model, :hist_ret)
         @expression(model, hist_ret, returns * w)
     end
     hist_ret = model[:hist_ret]
-    @variable(model, gmd[1:T])
-    @constraint(model, hist_ret == y)
+    @variable(model, owa[1:T])
+    @constraint(model, hist_ret == owa)
 
     if rm == :gmd || isfinite(gmd_u)
         @variable(model, gmda[1:T])
@@ -492,7 +494,8 @@ function _owa_setup(portfolio, rm, T, returns, obj)
         gmd_w = owa_gmd(T) / 2
         @constraint(
             model,
-            y * transpose(gmd_w) .<= onesvec * transpose(gmda) + gmdb * transpose(onesvec)
+            owa * transpose(gmd_w) .<=
+            onesvec * transpose(gmda) + gmdb * transpose(onesvec)
         )
 
         if isfinite(gmd_u)
@@ -518,7 +521,7 @@ function _owa_setup(portfolio, rm, T, returns, obj)
         tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
         @constraint(
             model,
-            y * transpose(tg_w) .<= onesvec * transpose(tga) + tgb * transpose(onesvec)
+            owa * transpose(tg_w) .<= onesvec * transpose(tga) + tgb * transpose(onesvec)
         )
 
         if isfinite(tg_u)
@@ -541,7 +544,7 @@ function _owa_setup(portfolio, rm, T, returns, obj)
         rg_w = owa_rg(T)
         @constraint(
             model,
-            y * transpose(rg_w) .<= onesvec * transpose(rga) + rgb * transpose(onesvec)
+            owa * transpose(rg_w) .<= onesvec * transpose(rga) + rgb * transpose(onesvec)
         )
 
         if isfinite(rg_u)
@@ -560,13 +563,15 @@ function _owa_setup(portfolio, rm, T, returns, obj)
     if rm == :rcvar || isfinite(rcvar_u)
         alpha = portfolio.alpha
         beta = portfolio.beta
+        isinf(beta) && (beta = alpha)
+
         @variable(model, rcvara[1:T])
         @variable(model, rcvarb[1:T])
         @expression(model, rcvar_risk, sum(rcvara + rcvarb))
         rcvar_w = owa_rcvar(T; alpha = alpha, beta = beta)
         @constraint(
             model,
-            y * transpose(rcvar_w) .<=
+            owa * transpose(rcvar_w) .<=
             onesvec * transpose(rcvara) + rcvarb * transpose(onesvec)
         )
 
@@ -592,6 +597,10 @@ function _owa_setup(portfolio, rm, T, returns, obj)
     b_sim = portfolio.b_sim
     beta_i = portfolio.beta_i
 
+    isinf(beta) && (beta = alpha)
+    b_sim < 0 && (b_sim = a_sim)
+    isinf(beta_i) && (beta_i = alpha_i)
+
     @variable(model, rtga[1:T])
     @variable(model, rtgb[1:T])
     @expression(model, rtg_risk, sum(rtga + rtgb))
@@ -606,7 +615,7 @@ function _owa_setup(portfolio, rm, T, returns, obj)
     )
     @constraint(
         model,
-        y * transpose(rtg_w) .<= onesvec * transpose(rtga) + rtgb * transpose(onesvec)
+        owa * transpose(rtg_w) .<= onesvec * transpose(rtga) + rtgb * transpose(onesvec)
     )
 
     if isfinite(rtg_u)

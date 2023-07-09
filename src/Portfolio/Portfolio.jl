@@ -203,7 +203,7 @@ function Portfolio(;
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Real = 0.0001,
+    beta_i::Real = Inf,
     beta::Real = Inf,
     b_sim::Integer = -1,
     kappa::Real = 0.3,

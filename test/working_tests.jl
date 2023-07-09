@@ -9,7 +9,10 @@ using PortfolioOptimiser,
     StatsBase,
     SCS,
     JuMP,
-    LinearAlgebra
+    LinearAlgebra,
+    Clarabel,
+    COSMO,
+    GLPK
 
 A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
@@ -26,46 +29,47 @@ turnover_weights = DataFrame(weights = wghts2)
 
 test = Portfolio(
     returns = RET,
-    short_u = 0.2,
-    long_u = 1,
-    short = true,
-    sum_short_long = 0.8,
-    a_mtx_ineq = a_mtx_ineq,
-    b_vec_ineq = b_vec_ineq,
-    kind_tracking_err = :weights,
-    tracking_err = 0.05,
-    tracking_err_weights = tracking_err_weights,
-    turnover = 0.05,
-    turnover_weights = turnover_weights,
-    ## max_number_assets = 10,
-    min_number_effective_assets = 10,
-    mu_l = -1000000.0,
-    dev_u = 1000000.0,
-    mad_u = 1000000.0,
-    sdev_u = 1000000.0,
-    cvar_u = 1000000.0,
-    wr_u = 1000000.0,
-    flpm_u = 1000000.0,
-    slpm_u = 1000000.0,
-    mdd_u = 1000000.0,
-    add_u = 1000000.0,
-    cdar_u = 1000000.0,
-    uci_u = 1000000.0,
-    evar_u = 1000000.0,
-    edar_u = 1000000.0,
-    gmd_u = 1000000.0,
-    tg_u = 1000000.0,
-    rg_u = 1000000.0,
-    rcvar_u = 1000000.0,
-    rtg_u = 1000000.0,
-    krt_u = 1000000.0,
-    skrt_u = 1000000.0,
-    # rvar_u = 1000000.0,
-    # rdar_u = 1000000.0,
-    solvers = Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
+    # short_u = 0.2,
+    # long_u = 1,
+    # short = true,
+    # sum_short_long = 0.8,
+    # a_mtx_ineq = a_mtx_ineq,
+    # b_vec_ineq = b_vec_ineq,
+    # kind_tracking_err = :weights,
+    # tracking_err = 0.05,
+    # tracking_err_weights = tracking_err_weights,
+    # turnover = 0.05,
+    # turnover_weights = turnover_weights,
+    # ## max_number_assets = 10,
+    # min_number_effective_assets = 10,
+    # mu_l = -1000000.0,
+    # dev_u = 1000000.0,
+    # mad_u = 1000000.0,
+    # sdev_u = 1000000.0,
+    # cvar_u = 1000000.0,
+    # wr_u = 1000000.0,
+    # flpm_u = 1000000.0,
+    # slpm_u = 1000000.0,
+    # mdd_u = 1000000.0,
+    # add_u = 1000000.0,
+    # cdar_u = 1000000.0,
+    # uci_u = 1000000.0,
+    # evar_u = 1000000.0,
+    # edar_u = 1000000.0,
+    # gmd_u = 1000000.0,
+    # tg_u = 1000000.0,
+    # rg_u = 1000000.0,
+    # rcvar_u = 1000000.0,
+    # rtg_u = 1000000.0,
+    # krt_u = 1000000.0,
+    # skrt_u = 1000000.0,
+    # # rvar_u = 1000000.0,
+    # # rdar_u = 1000000.0,
+    solvers = Dict("GLPK" => GLPK.Optimizer),#Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
     sol_params = Dict(
-        "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-12, "verbose" => true),
+        "ECOS" => Dict("maxit" => 2, "feastol" => 1e-12, "verbose" => true),
         "SCS" => Dict("verbose" => 1),
+        "GLPK" => Dict("it_lim" => 2),
     ),
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
@@ -76,9 +80,9 @@ kellies = PortfolioOptimiser.KellyRet
 objs = PortfolioOptimiser.ObjFuncs
 
 weights = DataFrame[]
-for rm in rms
-    for kelly in kellies
-        for obj in objs
+for rm in rms[19:end]
+    for kelly in kellies[3:3]
+        for obj in objs[1:1]
             @time push!(weights, optimize(test, rm = rm, kelly = kelly, obj = obj))
         end
     end
