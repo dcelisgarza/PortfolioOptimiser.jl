@@ -11,6 +11,81 @@ using PortfolioOptimiser,
     JuMP,
     LinearAlgebra
 
+A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
+Y = percentchange(A)
+RET = dropmissing!(DataFrame(Y))
+N = ncol(RET[!, 2:end])
+a_mtx_ineq = rand(3, N)
+b_vec_ineq = ones(3)
+wghts1 = rand(N)
+wghts1 ./= sum(wghts1)
+wghts2 = rand(N)
+wghts2 ./= sum(wghts2)
+tracking_err_weights = DataFrame(weights = wghts1)
+turnover_weights = DataFrame(weights = wghts2)
+
+test = Portfolio(
+    returns = RET,
+    short_u = 0.2,
+    long_u = 1,
+    short = true,
+    sum_short_long = 0.8,
+    a_mtx_ineq = a_mtx_ineq,
+    b_vec_ineq = b_vec_ineq,
+    kind_tracking_err = :weights,
+    tracking_err = 0.05,
+    tracking_err_weights = tracking_err_weights,
+    turnover = 0.05,
+    turnover_weights = turnover_weights,
+    max_number_assets = 10,
+    min_number_effective_assets = 5,
+    mu_l = -1000000.0,
+    dev_u = 1000000.0,
+    mad_u = 1000000.0,
+    sdev_u = 1000000.0,
+    cvar_u = 1000000.0,
+    wr_u = 1000000.0,
+    flpm_u = 1000000.0,
+    slpm_u = 1000000.0,
+    mdd_u = 1000000.0,
+    add_u = 1000000.0,
+    cdar_u = 1000000.0,
+    uci_u = 1000000.0,
+    evar_u = 1000000.0,
+    edar_u = 1000000.0,
+    gmd_u = 1000000.0,
+    tg_u = 1000000.0,
+    rg_u = 1000000.0,
+    rcvar_u = 1000000.0,
+    rtg_u = 1000000.0,
+    krt_u = 1000000.0,
+    skrt_u = 1000000.0,
+    rvar_u = 1000000.0,
+    rdar_u = 1000000.0,
+    solvers = Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
+    sol_params = Dict(
+        "ECOS" => Dict("maxit" => 1000, "feastol" => 1e-12, "verbose" => true),
+        "SCS" => Dict("verbose" => 1),
+    ),
+)
+test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
+test.cov = cov(Matrix(RET[!, 2:end]))
+
+rms = PortfolioOptimiser.RiskMeasures
+kellies = PortfolioOptimiser.KellyRet
+objs = PortfolioOptimiser.ObjFuncs
+
+weights = DataFrame[]
+for rm in rms
+    for kelly in kellies
+        for obj in objs
+            @time push!(weights, optimize(test, rm = rm, kelly = kelly, obj = obj))
+        end
+    end
+end
+
+# test.wr_u = 0.035#0.04429675707220074
+###########################
 @time display(
     owa_l_moment_crm(
         100;

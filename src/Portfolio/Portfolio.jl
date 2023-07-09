@@ -1,8 +1,6 @@
 
 using DataFrames, JuMP
 
-abstract type AbstractPortfolio end
-
 mutable struct Portfolio{
     # Portfolio characteristics
     r,
@@ -274,8 +272,8 @@ function Portfolio(;
     limits::DataFrame = DataFrame(),
     frontier::DataFrame = DataFrame(),
     # Solver params.
-    solvers::Dict = Dict(),
-    sol_params::Dict = Dict(),
+    solvers::AbstractDict = Dict(),
+    sol_params::AbstractDict = Dict(),
     model = JuMP.Model(),
 )
     return Portfolio(
@@ -386,6 +384,7 @@ function optimize(
     kelly::Symbol = :none,
     rf::Real = 1.0329^(1 / 252) - 1,
     l::Real = 2.0,
+    string_names = false,
 )
     @assert(class ∈ PortClasses, "class must be one of $PortClasses")
     @assert(rm ∈ RiskMeasures, "rm must be one of $RiskMeasures")
@@ -415,6 +414,8 @@ function optimize(
 
     # Model variables.
     model = portfolio.model
+    set_string_names_on_creation(model, string_names)
+
     @variable(model, w[1:N])
     @variable(model, k >= 0)
 
@@ -430,7 +431,7 @@ function optimize(
     ## Lower partial moments, Omega and Sortino ratios.
     _lpm_setup(portfolio, rm, T, returns, obj, rf)
     ## Drawdown, Max Drawdown, Average Drawdown, Conditional Drawdown, Ulcer Index, Entropic Drawdown at Risk
-    _drawdown_setup(portfolio, rm, T, returns, obj, rf, ln_k)
+    _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
 
     # Constraints.
     ## Return variables.
