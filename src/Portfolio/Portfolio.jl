@@ -438,7 +438,7 @@ function optimize(
     set_string_names_on_creation(model, string_names)
 
     @variable(model, w[1:N])
-    @variable(model, k >= 0)
+    obj == :sharpe && (@variable(model, k >= 0))
 
     _calc_var_dar_constants(portfolio, rm, T)
     # Risk variables, functions and constraints.
