@@ -1,3 +1,30 @@
+function _calc_var_dar_constants(portfolio, rm, T)
+    !(
+        rm == :cvar ||
+        rm == :evar ||
+        rm == :rvar ||
+        rm == :cdar ||
+        rm == :edar ||
+        rm == :rdar
+    ) && (return nothing)
+
+    alpha = portfolio.alpha
+    portfolio.at = alpha * T
+
+    !(rm == :rvar || rm == :rdar) && (return nothing)
+
+    kappa = portfolio.kappa
+    at = portfolio.at
+    invat = portfolio.invat = 1 / at
+    portfolio.ln_k = (invat^kappa - invat^(-kappa)) / (2 * kappa)
+    portfolio.opk = 1 + kappa
+    portfolio.omk = 1 - kappa
+    portfolio.kappa2 = 2 * kappa
+    portfolio.invk = 1 / kappa
+
+    return nothing
+end
+
 function _mv_setup(portfolio, sigma, rm, kelly, obj)
     dev_u = portfolio.dev_u
 
@@ -10,7 +37,7 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj)
     @variable(model, tdev >= 0)
     @expression(model, dev_risk, tdev * tdev)
     G = sqrt(sigma)
-    @constraint(model, [tdev; transpose(G) * w] in SecondOrderCone())
+    @constraint(model, [tdev; G * w] in SecondOrderCone())
 
     if isfinite(dev_u)
         if obj == :sharpe
@@ -46,9 +73,9 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj)
 
         if isfinite(mad_u)
             if obj == :sharpe
-                @constraint(model, mad_risk * 2 <= mad_u * k)
+                @constraint(model, mad_risk <= 0.5 * mad_u * k)
             else
-                @constraint(model, mad_risk * 2 <= mad_u)
+                @constraint(model, mad_risk <= 0.5 * mad_u)
             end
         end
 
@@ -78,7 +105,7 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj)
     return nothing
 end
 
-function _var_setup(portfolio, rm, T, returns, obj, ln_k)
+function _var_setup(portfolio, rm, T, returns, obj)
     cvar_u = portfolio.cvar_u
     evar_u = portfolio.evar_u
     rvar_u = portfolio.rvar_u
@@ -92,7 +119,6 @@ function _var_setup(portfolio, rm, T, returns, obj, ln_k)
         isfinite(rvar_u)
     ) && (return nothing)
 
-    alpha = portfolio.alpha
     model = portfolio.model
     w = model[:w]
     k = model[:k]
@@ -103,10 +129,11 @@ function _var_setup(portfolio, rm, T, returns, obj, ln_k)
     hist_ret = model[:hist_ret]
 
     if rm == :cvar || isfinite(cvar_u)
+        invat = portfolio.invat
         @variable(model, var)
         @variable(model, z_var[1:T] >= 0)
         @constraint(model, z_var .+ hist_ret .+ var .>= 0)
-        @expression(model, cvar_risk, var + sum(z_var) / (alpha * T))
+        @expression(model, cvar_risk, var + sum(z_var) * invat)
 
         if isfinite(cvar_u)
             if obj == :sharpe
@@ -122,6 +149,7 @@ function _var_setup(portfolio, rm, T, returns, obj, ln_k)
     end
 
     if rm == :evar || isfinite(evar_u)
+        at = portfolio.at
         @variable(model, t_evar)
         @variable(model, s_evar >= 0)
         @variable(model, u_evar[1:T])
@@ -131,7 +159,7 @@ function _var_setup(portfolio, rm, T, returns, obj, ln_k)
             [i = 1:T],
             [-hist_ret[i] - t_evar, s_evar, u_evar[i]] in MOI.ExponentialCone()
         )
-        @expression(model, evar_risk, t_evar - s_evar * log(alpha * T))
+        @expression(model, evar_risk, t_evar - s_evar * log(at))
 
         if isfinite(evar_u)
             if obj == :sharpe
@@ -148,11 +176,11 @@ function _var_setup(portfolio, rm, T, returns, obj, ln_k)
 
     !(rm == :rvar || isfinite(rvar_u)) && (return nothing)
 
-    kappa = portfolio.kappa
-    opk = 1 + kappa
-    omk = 1 - kappa
-    kappa2 = 2 * kappa
-    invk = 1 / kappa
+    ln_k = portfolio.ln_k
+    opk = portfolio.opk
+    omk = portfolio.omk
+    kappa2 = portfolio.kappa2
+    invk = portfolio.invk
     @variable(model, t_rvar)
     @variable(model, s_rvar >= 0)
     @variable(model, omega_rvar[1:T])
@@ -177,7 +205,7 @@ function _var_setup(portfolio, rm, T, returns, obj, ln_k)
         if obj == :sharpe
             @constraint(model, rvar_risk <= rvar_u * k)
         else
-            @constraint(model, rvar_risk <= rvar_u * k)
+            @constraint(model, rvar_risk <= rvar_u)
         end
     end
 
@@ -202,14 +230,14 @@ function _wr_setup(portfolio, rm, returns, obj)
         @expression(model, hist_ret, returns * w)
     end
     hist_ret = model[:hist_ret]
-    @constraint(model, hist_ret .+ twr .>= 0)
+    @constraint(model, -hist_ret .<= twr)
     @expression(model, wr_risk, twr)
 
     if isfinite(wr_u)
         if obj == :sharpe
-            @constraint(model, hist_ret .+ wr_u * k .>= 0)
+            @constraint(model, -hist_ret .<= wr_u * k)
         else
-            @constraint(model, hist_ret .+ wr_u .>= 0)
+            @constraint(model, -hist_ret .<= wr_u)
         end
     end
 
@@ -237,9 +265,9 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf)
     end
     hist_ret = model[:hist_ret]
     if obj == :sharpe
-        @constraint(model, tlpm .+ hist_ret .>= rf * k)
+        @constraint(model, tlpm .>= rf * k .- hist_ret)
     else
-        @constraint(model, tlpm .+ hist_ret .>= rf)
+        @constraint(model, tlpm .>= rf .- hist_ret)
     end
 
     if rm == :flpm || isfinite(flpm_u)
@@ -279,7 +307,7 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf)
     return nothing
 end
 
-function _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
+function _drawdown_setup(portfolio, rm, T, returns, obj)
     mdd_u = portfolio.mdd_u
     add_u = portfolio.add_u
     cdar_u = portfolio.cdar_u
@@ -350,12 +378,11 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
     end
 
     if rm == :cdar || isfinite(cdar_u)
-        alpha = portfolio.alpha
-
+        invat = portfolio.invat
         @variable(model, tdar)
         @variable(model, zdar[1:T] .>= 0)
         @constraint(model, zdar .- tdd[2:end] .+ tdar .>= 0)
-        @expression(model, cdar_risk, tdar + sum(zdar) / (alpha * T))
+        @expression(model, cdar_risk, tdar + sum(zdar) * invat)
 
         if isfinite(cdar_u)
             if obj == :sharpe
@@ -389,7 +416,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
     end
 
     if rm == :edar || isfinite(edar_u)
-        alpha = portfolio.alpha
+        at = portfolio.at
         @variable(model, t_edar)
         @variable(model, s_edar >= 0)
         @variable(model, u_edar[1:T])
@@ -399,7 +426,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
             [i = 1:T],
             [tdd[i + 1] - t_edar, s_edar, u_edar[i]] in MOI.ExponentialCone()
         )
-        @expression(model, edar_risk, t_edar - s_edar * log(alpha * T))
+        @expression(model, edar_risk, t_edar - s_edar * log(at))
 
         if isfinite(edar_u)
             if obj == :sharpe
@@ -416,11 +443,11 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
 
     !(rm == :rdar || isfinite(rdar_u)) && (return nothing)
 
-    k = portfolio.kappa
-    opk = 1 + k
-    omk = 1 - k
-    kappa2 = 2 * k
-    invk = 1 / k
+    ln_k = portfolio.ln_k
+    opk = portfolio.opk
+    omk = portfolio.omk
+    kappa2 = portfolio.kappa2
+    invk = portfolio.invk
     @variable(model, t_rdar)
     @variable(model, s_rdar >= 0)
     @variable(model, omega_rdar[1:T])
@@ -445,7 +472,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
         if obj == :sharpe
             @constraint(model, rdar_risk <= rdar_u * k)
         else
-            @constraint(model, rdar_risk <= rdar_u * k)
+            @constraint(model, rdar_risk <= rdar_u)
         end
     end
 

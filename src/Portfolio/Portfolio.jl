@@ -1,6 +1,7 @@
 
 using DataFrames, JuMP
 
+mutable struct s_kappa{} end
 mutable struct Portfolio{
     # Portfolio characteristics
     r,
@@ -16,10 +17,17 @@ mutable struct Portfolio{
     ai,
     a,
     as,
+    tat,
     bi,
     b,
     bs,
     k,
+    tiat,
+    lnk,
+    topk,
+    tomk,
+    tk2,
+    tkinv,
     mnak,
     # Benchmark constraints
     to,
@@ -107,10 +115,17 @@ mutable struct Portfolio{
     alpha_i::ai
     alpha::a
     a_sim::as
+    at::tat
     beta_i::bi
     beta::b
     b_sim::bs
     kappa::k
+    invat::tiat
+    ln_k::lnk
+    opk::topk
+    omk::tomk
+    kappa2::tk2
+    invk::tkinv
     max_num_assets_kurt::mnak
     # Benchmark constraints.
     turnover::to
@@ -297,10 +312,17 @@ function Portfolio(;
         alpha_i,
         alpha,
         a_sim,
+        zero(eltype(alpha)),
         beta_i,
         beta,
         b_sim,
         kappa,
+        zero(eltype(kappa)),
+        zero(eltype(kappa)),
+        zero(eltype(kappa)),
+        zero(eltype(kappa)),
+        zero(eltype(kappa)),
+        zero(eltype(kappa)),
         max_num_assets_kurt,
         # Benchmark constraints.
         turnover,
@@ -411,15 +433,6 @@ function optimize(
     mu = portfolio.mu
     sigma = portfolio.cov
 
-    if (rm == :rvar || rm == :rdar)
-        alpha = portfolio.alpha
-        kappa = portfolio.kappa
-        c = 1 / (alpha * T)
-        ln_k = (c^kappa - c^(-kappa)) / (2 * kappa)
-    else
-        ln_k = 0
-    end
-
     # Model variables.
     model = portfolio.model
     set_string_names_on_creation(model, string_names)
@@ -427,19 +440,20 @@ function optimize(
     @variable(model, w[1:N])
     @variable(model, k >= 0)
 
+    _calc_var_dar_constants(portfolio, rm, T)
     # Risk variables, functions and constraints.
     ## Mean variance.
     _mv_setup(portfolio, sigma, rm, kelly, obj)
     ## Mean Absolute Deviation and Mean Semi Deviation.
     _mad_setup(portfolio, rm, T, returns, mu, obj)
     ## Conditional and Entropic Value at Risk
-    _var_setup(portfolio, rm, T, returns, obj, ln_k)
+    _var_setup(portfolio, rm, T, returns, obj)
     ## Worst realisation.
     _wr_setup(portfolio, rm, returns, obj)
     ## Lower partial moments, Omega and Sortino ratios.
     _lpm_setup(portfolio, rm, T, returns, obj, rf)
     ## Drawdown, Max Drawdown, Average Drawdown, Conditional Drawdown, Ulcer Index, Entropic Drawdown at Risk
-    _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
+    _drawdown_setup(portfolio, rm, T, returns, obj)
     ## OWA methods
     _owa_setup(portfolio, rm, T, returns, obj)
 
