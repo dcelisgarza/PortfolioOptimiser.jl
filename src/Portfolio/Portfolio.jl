@@ -28,6 +28,8 @@ mutable struct Portfolio{
     tomk,
     tk2,
     tkinv,
+    tinvopk,
+    tinvomk,
     mnak,
     # Benchmark constraints
     to,
@@ -124,8 +126,10 @@ mutable struct Portfolio{
     ln_k::lnk
     opk::topk
     omk::tomk
-    kappa2::tk2
+    invkappa2::tk2
     invk::tkinv
+    invopk::tinvopk
+    invomk::tinvomk
     max_num_assets_kurt::mnak
     # Benchmark constraints.
     turnover::to
@@ -317,6 +321,8 @@ function Portfolio(;
         beta,
         b_sim,
         kappa,
+        zero(eltype(kappa)),
+        zero(eltype(kappa)),
         zero(eltype(kappa)),
         zero(eltype(kappa)),
         zero(eltype(kappa)),

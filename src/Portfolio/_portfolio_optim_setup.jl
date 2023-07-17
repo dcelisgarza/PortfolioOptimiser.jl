@@ -23,19 +23,19 @@ function _return_setup(portfolio, class, kelly, obj, T, rf, returns, mu)
                 )
             end
         elseif kelly == :approx
-            tdev = model[:tdev]
-            dev_risk = model[:dev_risk]
             if obj == :sharpe
                 @variable(model, tapprox_kelly >= 0)
                 @constraint(
                     model,
-                    [model[:k] + tapprox_kelly; 2 * tdev + model[:k] - tapprox_kelly] in
-                    SecondOrderCone()
+                    [
+                        model[:k] + tapprox_kelly
+                        2 * model[:dev] + model[:k] - tapprox_kelly
+                    ] in SecondOrderCone()
                 )
                 @expression(model, ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
                 @constraint(model, model[:risk] <= 1)
             else
-                @expression(model, ret, dot(mu, model[:w]) - 0.5 * dev_risk)
+                @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
             end
         end
     else
