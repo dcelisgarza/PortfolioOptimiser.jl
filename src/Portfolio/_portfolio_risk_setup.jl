@@ -148,11 +148,11 @@ function _var_setup(portfolio, rm, T, returns, obj, ln_k)
 
     !(rm == :rvar || isfinite(rvar_u)) && (return nothing)
 
-    k = portfolio.kappa
-    opk = 1 + k
-    omk = 1 - k
-    k2 = 2 * k
-    invk = 1 / k
+    kappa = portfolio.kappa
+    opk = 1 + kappa
+    omk = 1 - kappa
+    kappa2 = 2 * kappa
+    invk = 1 / kappa
     @variable(model, t_rvar)
     @variable(model, s_rvar >= 0)
     @variable(model, omega_rvar[1:T])
@@ -162,13 +162,13 @@ function _var_setup(portfolio, rm, T, returns, obj, ln_k)
     @constraint(
         model,
         [i = 1:T],
-        [s_rvar * opk / k2, psi_rvar[i] * opk * invk, epsilon_rvar[i]] in
+        [s_rvar * opk / kappa2, psi_rvar[i] * opk * invk, epsilon_rvar[i]] in
         MOI.PowerCone(1 / opk)
     )
     @constraint(
         model,
         [i = 1:T],
-        [omega_rvar[i] / omk, theta_rvar[i] * invk, -s_rvar / k2] in MOI.PowerCone(omk)
+        [omega_rvar[i] / omk, theta_rvar[i] * invk, -s_rvar / kappa2] in MOI.PowerCone(omk)
     )
     @constraint(model, -hist_ret .- t_rvar .+ epsilon_rvar .+ omega_rvar .<= 0)
     @expression(model, rvar_risk, t_rvar + ln_k * s_rvar + sum(psi_rvar .+ theta_rvar))
@@ -419,7 +419,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
     k = portfolio.kappa
     opk = 1 + k
     omk = 1 - k
-    k2 = 2 * k
+    kappa2 = 2 * k
     invk = 1 / k
     @variable(model, t_rdar)
     @variable(model, s_rdar >= 0)
@@ -430,13 +430,13 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, ln_k)
     @constraint(
         model,
         [i = 1:T],
-        [s_rdar * opk / k2, psi_rdar[i] * opk * invk, epsilon_rdar[i]] in
+        [s_rdar * opk / kappa2, psi_rdar[i] * opk * invk, epsilon_rdar[i]] in
         MOI.PowerCone(1 / opk)
     )
     @constraint(
         model,
         [i = 1:T],
-        [omega_rdar[i] / omk, theta_rdar[i] * invk, -s_rdar / k2] in MOI.PowerCone(omk)
+        [omega_rdar[i] / omk, theta_rdar[i] * invk, -s_rdar / kappa2] in MOI.PowerCone(omk)
     )
     @constraint(model, tdd[2:end] .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0)
     @expression(model, rdar_risk, t_rdar + ln_k * s_rdar + sum(psi_rdar .+ theta_rdar))
