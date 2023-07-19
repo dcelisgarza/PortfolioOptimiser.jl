@@ -30,7 +30,8 @@ function cokurt(returns)
     T, N = size(x)
     mu = mean(x, dims = 1)
     x .-= mu
-    o = ones(1, N)
+    ex = eltype(x)
+    o = transpose(range(start = one(ex), stop = one(ex), length = N))
     z = kron(o, x) .* kron(x, o)
     cokurt = transpose(z) * z / T
 
@@ -46,7 +47,8 @@ function scokurt(returns, minval = 0)
     mu = mean(x, dims = 1)
     x .-= mu
     x .= min.(x, minval)
-    o = ones(1, N)
+    ex = eltype(x)
+    o = transpose(range(start = one(ex), stop = one(ex), length = N))
     z = kron(o, x) .* kron(x, o)
     scokurt = transpose(z) * z / T
 
