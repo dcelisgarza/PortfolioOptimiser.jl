@@ -39,7 +39,7 @@ function cokurt(returns)
     return df
 end
 
-function scokurt(returns, minval = 0)
+function scokurt(returns, minval = 0.0)
     nms = names(returns)[2:end]
     cols = vec(["$x-$y" for x in nms, y in nms])
     x = Matrix(returns[!, 2:end])
