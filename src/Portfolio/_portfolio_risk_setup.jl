@@ -219,10 +219,10 @@ function _wr_setup(portfolio, rm, returns, obj)
 
     model = portfolio.model
 
-    @variable(model, twr)
+    @variable(model, wr)
     !haskey(model, :hist_ret) && (@expression(model, hist_ret, returns * model[:w]))
-    @constraint(model, -model[:hist_ret] .<= twr)
-    @expression(model, wr_risk, twr)
+    @constraint(model, -model[:hist_ret] .<= wr)
+    @expression(model, wr_risk, wr)
 
     if isfinite(wr_u)
         if obj == :sharpe
@@ -248,17 +248,17 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf)
 
     model = portfolio.model
 
-    @variable(model, tlpm[1:T] .>= 0)
+    @variable(model, lpm[1:T] .>= 0)
     !haskey(model, :hist_ret) && (@expression(model, hist_ret, returns * model[:w]))
 
     if obj == :sharpe
-        @constraint(model, tlpm .>= rf * model[:k] .- model[:hist_ret])
+        @constraint(model, lpm .>= rf * model[:k] .- model[:hist_ret])
     else
-        @constraint(model, tlpm .>= rf .- model[:hist_ret])
+        @constraint(model, lpm .>= rf .- model[:hist_ret])
     end
 
     if rm == :flpm || isfinite(flpm_u)
-        @expression(model, flpm_risk, sum(tlpm) / T)
+        @expression(model, flpm_risk, sum(lpm) / T)
 
         if isfinite(flpm_u)
             if obj == :sharpe
@@ -275,9 +275,9 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf)
 
     !(rm == :slpm || isfinite(slpm_u)) && (return nothing)
 
-    @variable(model, tslpm >= 0)
-    @constraint(model, [tslpm; tlpm] in SecondOrderCone())
-    @expression(model, slpm_risk, tslpm / sqrt(T - 1))
+    @variable(model, slpm >= 0)
+    @constraint(model, [slpm; lpm] in SecondOrderCone())
+    @expression(model, slpm_risk, slpm / sqrt(T - 1))
 
     if isfinite(slpm_u)
         if obj == :sharpe
@@ -319,22 +319,22 @@ function _drawdown_setup(portfolio, rm, T, returns, obj)
 
     model = portfolio.model
 
-    @variable(model, tdd[1:(T + 1)])
+    @variable(model, dd[1:(T + 1)])
     !haskey(model, :hist_ret) && (@expression(model, hist_ret, returns * model[:w]))
-    @constraint(model, tdd[2:end] .>= tdd[1:(end - 1)] .- model[:hist_ret])
-    @constraint(model, tdd[2:end] .>= 0)
-    @constraint(model, tdd[1] == 0)
+    @constraint(model, dd[2:end] .>= dd[1:(end - 1)] .- model[:hist_ret])
+    @constraint(model, dd[2:end] .>= 0)
+    @constraint(model, dd[1] == 0)
 
     if rm == :mdd || isfinite(mdd_u)
-        @variable(model, tmdd)
-        @constraint(model, tmdd .>= tdd[2:end])
-        @expression(model, mdd_risk, tmdd)
+        @variable(model, mdd)
+        @constraint(model, mdd .>= dd[2:end])
+        @expression(model, mdd_risk, mdd)
 
         if isfinite(mdd_u)
             if obj == :sharpe
-                @constraint(model, tdd[2:end] .<= mdd_u * model[:k])
+                @constraint(model, dd[2:end] .<= mdd_u * model[:k])
             else
-                @constraint(model, tdd[2:end] .<= mdd_u)
+                @constraint(model, dd[2:end] .<= mdd_u)
             end
         end
 
@@ -344,7 +344,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj)
     end
 
     if rm == :add || isfinite(add_u)
-        @expression(model, add_risk, sum(tdd[2:end]) / T)
+        @expression(model, add_risk, sum(dd[2:end]) / T)
 
         if isfinite(add_u)
             if obj == :sharpe
@@ -361,10 +361,10 @@ function _drawdown_setup(portfolio, rm, T, returns, obj)
 
     if rm == :cdar || isfinite(cdar_u)
         invat = portfolio.invat
-        @variable(model, tdar)
+        @variable(model, dar)
         @variable(model, z_dar[1:T] .>= 0)
-        @constraint(model, z_dar .>= tdd[2:end] .- tdar)
-        @expression(model, cdar_risk, tdar + sum(z_dar) * invat)
+        @constraint(model, z_dar .>= dd[2:end] .- dar)
+        @expression(model, cdar_risk, dar + sum(z_dar) * invat)
 
         if isfinite(cdar_u)
             if obj == :sharpe
@@ -380,9 +380,9 @@ function _drawdown_setup(portfolio, rm, T, returns, obj)
     end
 
     if rm == :uci || isfinite(uci_u)
-        @variable(model, tuci >= 0)
-        @constraint(model, [tuci; tdd[2:end]] in SecondOrderCone())
-        @expression(model, uci_risk, tuci / sqrt(T))
+        @variable(model, uci >= 0)
+        @constraint(model, [uci; dd[2:end]] in SecondOrderCone())
+        @expression(model, uci_risk, uci / sqrt(T))
 
         if isfinite(uci_u)
             if obj == :sharpe
@@ -406,7 +406,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj)
         @constraint(
             model,
             [i = 1:T],
-            [tdd[i + 1] - t_edar, s_edar, u_edar[i]] in MOI.ExponentialCone()
+            [dd[i + 1] - t_edar, s_edar, u_edar[i]] in MOI.ExponentialCone()
         )
         @expression(model, edar_risk, t_edar - s_edar * log(at))
 
@@ -451,7 +451,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj)
         [omega_rdar[i] * invomk, theta_rdar[i] * invk, -s_rdar * invkappa2] in
         MOI.PowerCone(omk)
     )
-    @constraint(model, tdd[2:end] .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0)
+    @constraint(model, dd[2:end] .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0)
     @expression(model, rdar_risk, t_rdar + ln_k * s_rdar + sum(psi_rdar .+ theta_rdar))
 
     if isfinite(rdar_u)
@@ -671,17 +671,17 @@ function _kurtosis_setup(portfolio, rm, N, obj)
         @expression(model, M3, hcat(M1, M2))
         @constraint(model, M3 in PSDCone())
 
-        @variable(model, tkurt)
+        @variable(model, t_kurt)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
             N2 = 2 * N
-            @variable(model, xkurt[1:N2])
-            @variable(model, rkurt[1:N2])
+            @variable(model, x_kurt[1:N2])
+            @variable(model, r_kurt[1:N2])
             @constraint(
                 model,
                 [i = 1:N2],
-                [rkurt[i], tkurt, xkurt[i]] in MOI.PowerCone(1 / 2)
+                [r_kurt[i], t_kurt, x_kurt[i]] in MOI.PowerCone(1 / 2)
             )
-            @constraint(model, sum(rkurt) == tkurt)
+            @constraint(model, sum(r_kurt) == t_kurt)
             A = block_vec_pq(kurt, N, N)
             vals_A, vecs_A = eigen(A)
             vals_A = real.(vals_A)
@@ -693,16 +693,16 @@ function _kurtosis_setup(portfolio, rm, N, obj)
                 B = reshape(B, N, N)
                 Bi[i] = B
             end
-            @constraint(model, [i = 1:N2], xkurt[i] == sum(diag(Bi[i] * W)))
+            @constraint(model, [i = 1:N2], x_kurt[i] == sum(diag(Bi[i] * W)))
         else
             L_2 = portfolio.L_2
             S_2 = portfolio.S_2
             sqrt_sigma_4 = sqrt(S_2 * kurt * transpose(S_2))
-            @constraint(model, tkurt >= 0)
+            @constraint(model, t_kurt >= 0)
             @expression(model, zkurt, L_2 * vec(W))
-            @constraint(model, [tkurt; sqrt_sigma_4 * zkurt] in SecondOrderCone())
+            @constraint(model, [t_kurt; sqrt_sigma_4 * zkurt] in SecondOrderCone())
         end
-        @expression(model, kurt_risk, tkurt)
+        @expression(model, kurt_risk, t_kurt)
 
         if isfinite(krt_u)
             if obj == :sharpe
@@ -729,17 +729,17 @@ function _kurtosis_setup(portfolio, rm, N, obj)
         @expression(model, SM3, hcat(SM1, SM2))
         @constraint(model, SM3 in PSDCone())
 
-        @variable(model, tskurt)
+        @variable(model, t_skurt)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_skurt
             N2 = 2 * N
-            @variable(model, xskurt[1:N2])
-            @variable(model, rskurt[1:N2])
+            @variable(model, x_skurt[1:N2])
+            @variable(model, r_skurt[1:N2])
             @constraint(
                 model,
                 [i = 1:N2],
-                [rskurt[i], tskurt, xskurt[i]] in MOI.PowerCone(1 / 2)
+                [r_skurt[i], t_skurt, x_skurt[i]] in MOI.PowerCone(1 / 2)
             )
-            @constraint(model, sum(rskurt) == tskurt)
+            @constraint(model, sum(r_skurt) == t_skurt)
             A = block_vec_pq(skurt, N, N)
             vals_A, vecs_A = eigen(A)
             vals_A = real.(vals_A)
@@ -752,16 +752,16 @@ function _kurtosis_setup(portfolio, rm, N, obj)
                 SBi[i] = B
             end
 
-            @constraint(model, [i = 1:N2], xskurt[i] == sum(diag(SBi[i] * SW)))
+            @constraint(model, [i = 1:N2], x_skurt[i] == sum(diag(SBi[i] * SW)))
         else
             L_2 = portfolio.L_2
             S_2 = portfolio.S_2
             sqrt_sigma_4 = sqrt(S_2 * skurt * transpose(S_2))
-            @constraint(model, tskurt >= 0)
+            @constraint(model, t_skurt >= 0)
             @expression(model, zskurt, L_2 * vec(SW))
-            @constraint(model, [tskurt; sqrt_sigma_4 * zskurt] in SecondOrderCone())
+            @constraint(model, [t_skurt; sqrt_sigma_4 * zskurt] in SecondOrderCone())
         end
-        @expression(model, skurt_risk, tskurt)
+        @expression(model, skurt_risk, t_skurt)
 
         if isfinite(skrt_u)
             if obj == :sharpe
