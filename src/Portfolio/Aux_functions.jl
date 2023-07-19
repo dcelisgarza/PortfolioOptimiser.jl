@@ -22,3 +22,34 @@ function block_vec_pq(A, p, q)
 
     return A_vec
 end
+
+function cokurt(returns)
+    nms = names(returns)[2:end]
+    cols = vec(["$x-$y" for x in nms, y in nms])
+    x = Matrix(returns[!, 2:end])
+    T, N = size(x)
+    mu = mean(x, dims = 1)
+    x .-= mu
+    o = ones(1, N)
+    z = kron(o, x) .* kron(x, o)
+    cokurt = transpose(z) * z / T
+
+    df = DataFrame(cokurt, cols)
+    return df
+end
+
+function scokurt(returns, minval = 0)
+    nms = names(returns)[2:end]
+    cols = vec(["$x-$y" for x in nms, y in nms])
+    x = Matrix(returns[!, 2:end])
+    T, N = size(x)
+    mu = mean(x, dims = 1)
+    x .-= mu
+    x .= min.(x, minval)
+    o = ones(1, N)
+    z = kron(o, x) .* kron(x, o)
+    scokurt = transpose(z) * z / T
+
+    df = DataFrame(scokurt, cols)
+    return df
+end
