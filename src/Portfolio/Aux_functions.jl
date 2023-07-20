@@ -76,9 +76,10 @@ end
 
 function commutation_matrix(x::AbstractMatrix)
     m, n = size(x)
-    row = 1:(m * n)
+    mn = m * n
+    row = 1:mn
     col = vec(transpose(reshape(row, m, n)))
-    data = range(start = 1, stop = 1, length = m * n)
-    com = sparse(row, col, data, m * n, m * n)
+    data = range(start = 1, stop = 1, length = mn)
+    com = sparse(row, col, data, mn, mn)
     return com
 end
