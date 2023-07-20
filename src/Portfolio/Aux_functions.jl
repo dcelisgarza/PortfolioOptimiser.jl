@@ -23,35 +23,62 @@ function block_vec_pq(A, p, q)
     return A_vec
 end
 
-function cokurt(returns)
-    nms = names(returns)[2:end]
-    cols = vec(["$x-$y" for x in nms, y in nms])
-    x = Matrix(returns[!, 2:end])
+function cokurt(x::AbstractMatrix, mean_func::Function = mean, args...; kwargs...)
     T, N = size(x)
-    mu = mean(x, dims = 1)
-    x .-= mu
-    ex = eltype(x)
+    mu =
+        !haskey(kwargs, :dims) ? mean_func(x, args...; dims = 1, kwargs...) :
+        mean_func(x, args...; kwargs...)
+    y = x .- mu
+    ex = eltype(y)
     o = transpose(range(start = one(ex), stop = one(ex), length = N))
-    z = kron(o, x) .* kron(x, o)
+    z = kron(o, y) .* kron(y, o)
     cokurt = transpose(z) * z / T
+    return cokurt
+end
 
-    df = DataFrame(cokurt, cols)
+function scokurt(
+    x::AbstractMatrix,
+    minval = 0.0,
+    mean_func::Function = mean,
+    args...;
+    kwargs...,
+)
+    T, N = size(x)
+    mu =
+        !haskey(kwargs, :dims) ? mean_func(x, args...; dims = 1, kwargs...) :
+        mean_func(x, args...; kwargs...)
+    y = x .- mu
+    y .= min.(y, minval)
+    ex = eltype(y)
+    o = transpose(range(start = one(ex), stop = one(ex), length = N))
+    z = kron(o, y) .* kron(y, o)
+    scokurt = transpose(z) * z / T
+    return scokurt
+end
+
+function cokurt(returns, mean_func::Function = mean, args...; kwargs...)
+    nms = names(returns)
+    cols = vec(["$x-$y" for x in nms, y in nms])
+    x = Matrix(returns)
+    cokrt = cokurt(x, mean_func, args...; kwargs...)
+    df = DataFrame(cokrt, cols)
     return df
 end
 
-function scokurt(returns, minval = 0.0)
-    nms = names(returns)[2:end]
+function scokurt(returns, minval = 0.0, mean_func::Function = mean, args...; kwargs...)
+    nms = names(returns)
     cols = vec(["$x-$y" for x in nms, y in nms])
-    x = Matrix(returns[!, 2:end])
-    T, N = size(x)
-    mu = mean(x, dims = 1)
-    x .-= mu
-    x .= min.(x, minval)
-    ex = eltype(x)
-    o = transpose(range(start = one(ex), stop = one(ex), length = N))
-    z = kron(o, x) .* kron(x, o)
-    scokurt = transpose(z) * z / T
-
-    df = DataFrame(scokurt, cols)
+    x = Matrix(returns)
+    scokrt = scokurt(x, minval, mean_func, args...; kwargs...)
+    df = DataFrame(scokrt, cols)
     return df
+end
+
+function commutation_matrix(x::AbstractMatrix)
+    m, n = size(x)
+    row = 1:(m * n)
+    col = vec(transpose(reshape(row, m, n)))
+    data = range(start = 1, stop = 1, length = m * n)
+    com = sparse(row, col, data, m * n, m * n)
+    return com
 end
