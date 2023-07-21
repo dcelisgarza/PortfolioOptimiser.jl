@@ -65,7 +65,7 @@ test = Portfolio(
     # skrt_u = 1000000.0,
     # # rvar_u = 1000000.0,
     # # rdar_u = 1000000.0,
-    solvers = Dict("GLPK" => GLPK.Optimizer),#Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
+    solvers = Dict("Clarabel" => SCS.Optimizer),#Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
     sol_params = Dict(
         "ECOS" => Dict("maxit" => 2, "feastol" => 1e-12, "verbose" => true),
         "SCS" => Dict("verbose" => 1),
@@ -74,6 +74,12 @@ test = Portfolio(
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
+test.kurt = cokurt(Matrix(RET[!, 2:end]))
+test.skurt = scokurt(Matrix(RET[!, 2:end]))
+test.max_num_assets_kurt = 19
+
+test.krt_u = Inf
+optimize(test, rm = :skrt, kelly = :none, obj = :min_risk)
 
 rms = PortfolioOptimiser.RiskMeasures
 kellies = PortfolioOptimiser.KellyRet

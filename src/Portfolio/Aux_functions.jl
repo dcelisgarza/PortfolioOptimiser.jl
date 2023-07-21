@@ -65,7 +65,7 @@ function cokurt(returns, mean_func::Function = mean, args...; kwargs...)
     return df
 end
 
-function scokurt(returns, minval = 0.0, mean_func::Function = mean, args...; kwargs...)
+function scokurt(returns, args...; minval = 0.0, mean_func::Function = mean, kwargs...)
     nms = names(returns)
     cols = vec(["$x-$y" for x in nms, y in nms])
     x = Matrix(returns)
@@ -102,3 +102,5 @@ function cov_returns(x; seed = nothing, rng = Random.default_rng(), len = 10, it
     C = cholesky(x)
     return a * C.U
 end
+
+export cokurt, scokurt

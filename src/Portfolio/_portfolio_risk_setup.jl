@@ -684,16 +684,14 @@ function _kurtosis_setup(portfolio, rm, N, obj)
             @constraint(model, sum(r_kurt) == t_kurt)
             A = block_vec_pq(kurt, N, N)
             vals_A, vecs_A = eigen(A)
-            vals_A = real.(vals_A)
-            vecs_A = real.(vecs_A)
-            clamp!.(vals_A, 0, Inf)
-            Bi = Vector{Matrix{eltype(kurt), eltype(kurt)}}(undef, N2)
+            clamp!(vals_A, 0, Inf)
+            Bi = Vector{Matrix{eltype(kurt)}}(undef, N2)
             for i in 1:N2
-                B = sqrt(vals_A[i]) * vecs_A[:, i]
-                B = reshape(B, N, N)
+                B = vals_A[i]^0.5 * vecs_A[:, i]
+                B = real.(reshape(B, N, N))
                 Bi[i] = B
             end
-            @constraint(model, [i = 1:N2], x_kurt[i] == sum(diag(Bi[i] * W)))
+            @constraint(model, [i = 1:N2], x_kurt[i] == tr(Bi[i] * W))
         else
             L_2 = portfolio.L_2
             S_2 = portfolio.S_2
@@ -718,7 +716,7 @@ function _kurtosis_setup(portfolio, rm, N, obj)
     end
 
     if !isnothing(skurt) && (rm == :skrt || isfinite(skrt_u))
-        max_num_assets_skurt = portfolio.max_num_assets_skurt
+        max_num_assets_kurt = portfolio.max_num_assets_kurt
         @variable(model, SW[1:N, 1:N], Symmetric)
         @expression(model, SM1, vcat(SW, transpose(model[:w])))
         if obj == :sharpe
@@ -730,7 +728,7 @@ function _kurtosis_setup(portfolio, rm, N, obj)
         @constraint(model, SM3 in PSDCone())
 
         @variable(model, t_skurt)
-        if !iszero(max_num_assets_kurt) && N > max_num_assets_skurt
+        if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
             N2 = 2 * N
             @variable(model, x_skurt[1:N2])
             @variable(model, r_skurt[1:N2])
@@ -742,17 +740,15 @@ function _kurtosis_setup(portfolio, rm, N, obj)
             @constraint(model, sum(r_skurt) == t_skurt)
             A = block_vec_pq(skurt, N, N)
             vals_A, vecs_A = eigen(A)
-            vals_A = real.(vals_A)
-            vecs_A = real.(vecs_A)
-            clamp!.(vals_A, 0, Inf)
-            SBi = Vector{Matrix{eltype(skurt), eltype(skurt)}}(undef, N2)
+            clamp!(vals_A, 0, Inf)
+            SBi = Vector{Matrix{eltype(skurt)}}(undef, N2)
             for i in 1:N2
-                B = sqrt(vals_A[i]) * vecs_A[:, i]
-                B = reshape(B, N, N)
+                B = vals_A[i]^0.5 * vecs_A[:, i]
+                B = real.(reshape(B, N, N))
                 SBi[i] = B
             end
 
-            @constraint(model, [i = 1:N2], x_skurt[i] == sum(diag(SBi[i] * SW)))
+            @constraint(model, [i = 1:N2], x_skurt[i] == tr(SBi[i] * SW))
         else
             L_2 = portfolio.L_2
             S_2 = portfolio.S_2

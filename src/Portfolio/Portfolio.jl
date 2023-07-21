@@ -462,6 +462,8 @@ function optimize(
     _drawdown_setup(portfolio, rm, T, returns, obj)
     ## OWA methods
     _owa_setup(portfolio, rm, T, returns, obj)
+    ## Kurtosis setup
+    _kurtosis_setup(portfolio, rm, N, obj)
 
     # Constraints.
     ## Return variables.
