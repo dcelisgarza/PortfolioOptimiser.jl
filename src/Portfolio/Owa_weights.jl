@@ -170,6 +170,7 @@ function _crra_method(ws, k, g)
     return w
 end
 
+const OWAMethods = (:crra, :me, :mss, :msd)
 function owa_l_moment_crm(
     T;
     k = 4,

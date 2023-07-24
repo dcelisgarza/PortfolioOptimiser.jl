@@ -23,7 +23,6 @@ include("./BlackLittermanOptimiser/BlackLittermanOptimiser.jl")
 # Asset allocation
 include("./AssetAllocation/AssetAllocation.jl")
 
-include("./Portfolio/Constants.jl")
 include("./Portfolio/Aux_functions.jl")
 include("./Portfolio/OWA_weights.jl")
 include("./Portfolio/Portfolio.jl")

@@ -1,3 +1,5 @@
+using SparseArrays
+
 function block_vec_pq(A, p, q)
     mp, nq = size(A)
 
@@ -103,4 +105,65 @@ function cov_returns(x; seed = nothing, rng = Random.default_rng(), len = 10, it
     return a * C.U
 end
 
-export cokurt, scokurt
+function duplication_matrix(n::Int)
+    cols = Int(n * (n + 1) / 2)
+    rows = n * n
+    mtx = spzeros(rows, cols)
+    for j in 1:n
+        for i in j:n
+            u = spzeros(1, cols)
+            col = Int((j - 1) * n + i - (j * (j - 1)) / 2)
+            u[col] = 1
+            T = spzeros(n, n)
+            T[i, j] = 1
+            T[j, i] = 1
+            mtx .+= vec(T) * u
+        end
+    end
+    return mtx
+end
+
+function elimination_matrix(n::Int)
+    rows = Int(n * (n + 1) / 2)
+    cols = n * n
+    mtx = spzeros(rows, cols)
+    for j in 1:n
+        ej = spzeros(1, n)
+        ej[j] = 1
+        for i in j:n
+            u = spzeros(rows)
+            row = Int((j - 1) * n + i - (j * (j - 1)) / 2)
+            u[row] = 1
+            ei = spzeros(1, n)
+            ei[i] = 1
+            mtx .+= kron(u, kron(ej, ei))
+        end
+    end
+    return mtx
+end
+
+function summation_matrix(n::Int)
+    d = duplication_matrix(n)
+    l = elimination_matrix(n)
+
+    s = transpose(d) * d * l
+
+    return s
+end
+
+function dup_elim_sum_matrices(n::Int)
+    d = duplication_matrix(n)
+    l = elimination_matrix(n)
+    s = transpose(d) * d * l
+
+    return d, l, s
+end
+
+export cokurt,
+    scokurt,
+    commutation_matrix,
+    cov_returns,
+    duplication_matrix,
+    elimination_matrix,
+    summation_matrix,
+    dup_elim_sum_matrices

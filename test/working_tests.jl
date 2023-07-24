@@ -12,7 +12,9 @@ using PortfolioOptimiser,
     LinearAlgebra,
     Clarabel,
     COSMO,
-    GLPK
+    GLPK,
+    SparseArrays,
+    OrderedCollections
 
 A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
@@ -65,21 +67,29 @@ test = Portfolio(
     # skrt_u = 1000000.0,
     # # rvar_u = 1000000.0,
     # # rdar_u = 1000000.0,
-    solvers = Dict("Clarabel" => SCS.Optimizer),#Dict("ECOS" => ECOS.Optimizer),#, "SCS" => SCS.Optimizer),
+    solvers = OrderedDict(
+        :Clarabel => Clarabel.Optimizer,
+        :COSMO => COSMO.Optimizer,
+        :SCS => SCS.Optimizer,
+        :ECOS => ECOS.Optimizer,
+    ),
     sol_params = Dict(
-        "ECOS" => Dict("maxit" => 2, "feastol" => 1e-12, "verbose" => true),
-        "SCS" => Dict("verbose" => 1),
-        "GLPK" => Dict("it_lim" => 2),
+        :ECOS => Dict("maxit" => 2, "feastol" => 1e-12, "verbose" => true),
+        :SCS => Dict("verbose" => 1),
+        :GLPK => Dict("it_lim" => 2),
     ),
 )
 test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
 test.cov = cov(Matrix(RET[!, 2:end]))
 test.kurt = cokurt(Matrix(RET[!, 2:end]))
 test.skurt = scokurt(Matrix(RET[!, 2:end]))
-test.max_num_assets_kurt = 19
-
+asset_statistics!(test)
 test.krt_u = Inf
-optimize(test, rm = :skrt, kelly = :none, obj = :min_risk)
+test.max_num_assets_kurt = 20
+
+optimize(test, rm = :krt, kelly = :exact, obj = :min_risk)
+
+mtx = duplication_matrix(4)
 
 rms = PortfolioOptimiser.RiskMeasures
 kellies = PortfolioOptimiser.KellyRet

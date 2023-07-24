@@ -1,3 +1,27 @@
+const RiskMeasures = (
+    :mv,
+    :mad,
+    :msv,
+    :cvar,
+    :wr,
+    :flpm,
+    :slpm,
+    :mdd,
+    :add,
+    :cdar,
+    :uci,
+    :evar,
+    :edar,
+    :rdar,
+    :rvar,
+    :gmd,
+    :tg,
+    :rg,
+    :rcvar,
+    :rtg,
+    :krt,
+    :skrt,
+)
 function _calc_var_dar_constants(portfolio, rm, T)
     !(
         rm == :cvar ||
