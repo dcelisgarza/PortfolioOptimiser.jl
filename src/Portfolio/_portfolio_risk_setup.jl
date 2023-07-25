@@ -695,7 +695,7 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             @constraint(
                 model,
                 [i = 1:N2],
-                [r_kurt[i], t_kurt, x_kurt[i]] in MOI.PowerCone(1 / 2)
+                [r_kurt[i], t_kurt, x_kurt[i]] in MOI.PowerCone(0.5)
             )
             @constraint(model, sum(r_kurt) == t_kurt)
             A = block_vec_pq(kurtosis, N, N)
@@ -703,8 +703,8 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             clamp!(vals_A, 0, Inf)
             Bi = Vector{Matrix{eltype(kurtosis)}}(undef, N2)
             for i in 1:N2
-                B = vals_A[i]^0.5 * vecs_A[:, i]
-                B = real.(reshape(B, N, N))
+                B = real.(sqrt(complex(vals_A[i])) * vecs_A[:, i])
+                B .= reshape(B, N, N)
                 Bi[i] = B
             end
             @constraint(model, [i = 1:N2], x_kurt[i] == tr(Bi[i] * W))
@@ -751,7 +751,7 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             @constraint(
                 model,
                 [i = 1:N2],
-                [r_skurt[i], t_skurt, x_skurt[i]] in MOI.PowerCone(1 / 2)
+                [r_skurt[i], t_skurt, x_skurt[i]] in MOI.PowerCone(0.5)
             )
             @constraint(model, sum(r_skurt) == t_skurt)
             A = block_vec_pq(skurtosis, N, N)
@@ -759,8 +759,8 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             clamp!(vals_A, 0, Inf)
             SBi = Vector{Matrix{eltype(skurtosis)}}(undef, N2)
             for i in 1:N2
-                B = vals_A[i]^0.5 * vecs_A[:, i]
-                B = real.(reshape(B, N, N))
+                B = real.(sqrt(complex(vals_A[i])) * vecs_A[:, i])
+                B .= reshape(B, N, N)
                 SBi[i] = B
             end
 
