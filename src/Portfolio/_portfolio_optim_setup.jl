@@ -274,7 +274,7 @@ function _setup_objective_function(portfolio, type, obj, class, kelly, l)
         elseif obj == :max_ret
             @objective(model, Max, model[:ret])
         end
-    elseif type == :rp
+    elseif type == :rp || type == :rrp
         @objective(model, Min, model[:risk])
     end
 
@@ -363,13 +363,18 @@ function _finalise_portfolio(portfolio, rm, type, returns, N, obj, solvers_tried
 
         portfolio.p_optimal =
             DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
-    elseif type == :rp
+    elseif type == :rp || type == :rrp
         weights .= value.(model[:w])
         sum_w = sum(abs.(weights))
         sum_w = sum_w > N^2 * eps() ? sum_w : 1
         weights .= abs.(weights) / sum_w
-        portfolio.rp_optimal =
-            DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+        if type == :rp
+            portfolio.rp_optimal =
+                DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+        else
+            portfolio.rrp_optimal =
+                DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+        end
     end
 
     if isempty(solvers_tried)
@@ -383,7 +388,6 @@ end
 
 const PortClasses = (:classic,)
 const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
-const RRPTypes = (:none, :reg, :reg_pen)
 const UncertaintyTypes = (:box, :ellipse)
 function opt_port!(
     portfolio::Portfolio;
@@ -392,8 +396,10 @@ function opt_port!(
     rm::Symbol = :mv,
     obj::Symbol = :sharpe,
     kelly::Symbol = :none,
+    rrp_ver::Symbol = :none,
     rf::Real = 1.0329^(1 / 252) - 1,
     l::Real = 2.0,
+    rrp_penalty::Real = 1.0,
     risk_budget = nothing,
     string_names = false,
 )
@@ -402,14 +408,11 @@ function opt_port!(
     @assert(rm ∈ RiskMeasures, "rm must be one of $RiskMeasures")
     @assert(obj ∈ ObjFuncs, "obj must be one of $ObjFuncs")
     @assert(kelly ∈ KellyRet, "kelly must be one of $KellyRet")
+    @assert(rrp_ver ∈ RRPVersions)
     @assert(
         portfolio.kind_tracking_err ∈ TrackingErrKinds,
         "portfolio.kind_tracking_err must be one of $TrackingErrKinds"
     )
-    if type != :trad
-        class = :none
-        obj = :none
-    end
 
     portfolio.model = JuMP.Model()
 
@@ -444,27 +447,33 @@ function opt_port!(
         @variable(model, k >= 0)
     end
 
-    _calc_var_dar_constants(portfolio, rm, T)
-    # Risk variables, functions and constraints.
-    ## Mean variance.
-    _mv_setup(portfolio, covariance, rm, kelly, obj, type)
-    ## Mean Absolute Deviation and Mean Semi Deviation.
-    _mad_setup(portfolio, rm, T, returns, mu, obj, type)
-    ## Conditional and Entropic Value at Risk
-    _var_setup(portfolio, rm, T, returns, obj, type)
-    ## Worst realisation.
-    _wr_setup(portfolio, rm, returns, obj, type)
-    ## Lower partial moments, Omega and Sortino ratios.
-    _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
-    ## Drawdown, Max Drawdown, Average Drawdown, Conditional Drawdown, Ulcer Index, Entropic Drawdown at Risk
-    _drawdown_setup(portfolio, rm, T, returns, obj, type)
-    ## OWA methods
-    _owa_setup(portfolio, rm, T, returns, obj, type)
-    ## Kurtosis setup
-    _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
-    ## RP setupt
-    if type == :rp
-        _rp_setup(portfolio, N, rb)
+    if type == :trad || type == :rp
+        _calc_var_dar_constants(portfolio, rm, T)
+        # Risk variables, functions and constraints.
+        ## Mean variance.
+        _mv_setup(portfolio, covariance, rm, kelly, obj, type)
+        ## Mean Absolute Deviation and Mean Semi Deviation.
+        _mad_setup(portfolio, rm, T, returns, mu, obj, type)
+        ## Conditional and Entropic Value at Risk
+        _var_setup(portfolio, rm, T, returns, obj, type)
+        ## Worst realisation.
+        _wr_setup(portfolio, rm, returns, obj, type)
+        ## Lower partial moments, Omega and Sortino ratios.
+        _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
+        ## Drawdown, Max Drawdown, Average Drawdown, Conditional Drawdown, Ulcer Index, Entropic Drawdown at Risk
+        _drawdown_setup(portfolio, rm, T, returns, obj, type)
+        ## OWA methods
+        _owa_setup(portfolio, rm, T, returns, obj, type)
+        ## Kurtosis setup
+        _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
+        ## RP setupt
+        if type == :rp
+            _rp_setup(portfolio, N, rb)
+        end
+    end
+
+    if type == :rrp
+        _rrp_setup(portfolio, covariance, N, rb, rrp_ver, rrp_penalty)
     end
 
     # Constraints.
@@ -502,7 +511,10 @@ function opt_port!(
             portfolio.p_optimal = DataFrame()
         elseif type == :rp
             portfolio.rp_optimal = DataFrame()
+        elseif type == :rrp
+            portfolio.rp_optimal = DataFrame()
         end
+
         portfolio.fail = solvers_tried
 
         return retval
@@ -511,10 +523,12 @@ function opt_port!(
     # Cleanup.
     _finalise_portfolio(portfolio, rm, type, returns, N, obj, solvers_tried)
 
-    if type == :trad
-        retval = portfolio.p_optimal
+    retval = if type == :trad
+        portfolio.p_optimal
     elseif type == :rp
-        retval = portfolio.rp_optimal
+        portfolio.rp_optimal
+    elseif type == :rrp
+        portfolio.rrp_optimal
     end
 
     return retval

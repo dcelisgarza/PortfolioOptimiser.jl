@@ -84,6 +84,14 @@ asset_statistics!(test)
 test.krt_u = Inf
 test.max_num_assets_kurt = 20
 
+(:none, :reg, :reg_pen)
+rrp1 = opt_port!(test, type = :rrp, rrp_ver = :none)
+rrp2 = opt_port!(test, type = :rrp, rrp_ver = :reg)
+rrp3 = opt_port!(test, type = :rrp, rrp_ver = :reg_pen, rrp_penalty = 1000)
+rp1 = opt_port!(test, type = :rp, rm = :mv, kelly = :none)
+rp2 = opt_port!(test, type = :rp, rm = :mv, kelly = :approx)
+display(hcat(rrp1, rrp2, rrp3, rp1, rp2, makeunique = true))
+
 risk_budget = DataFrame(risk = 100:-5:1)
 tr1 = opt_port!(
     test,

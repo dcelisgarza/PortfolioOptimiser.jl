@@ -797,3 +797,45 @@ function _rp_setup(portfolio, N, rb)
     @constraint(model, model[:w] .>= 0)
     @constraint(model, sum(model[:w]) == model[:k])
 end
+
+const RRPVersions = (:none, :reg, :reg_pen)
+function _rrp_setup(portfolio, covariance, N, rb, rrp_ver, rrp_penalty)
+    G = sqrt(covariance)
+    model = portfolio.model
+    @variable(model, psi >= 0)
+    @variable(model, gamma >= 0)
+    @variable(model, zeta[1:N] .>= 0)
+    @expression(model, risk, psi - gamma)
+    # RRP constraints.
+    @constraint(model, zeta .== covariance * model[:w])
+    @constraint(model, sum(model[:w]) == 1)
+    @constraint(model, model[:w] >= 0)
+    @constraint(
+        model,
+        [i = 1:N],
+        [
+            model[:w][i] + zeta[i]
+            2 * gamma * sqrt(rb[i])
+            model[:w][i] - zeta[i]
+        ] in SecondOrderCone()
+    )
+    # RRP version constraints
+    if rrp_ver == :reg || rrp_ver == :reg_pen
+        @variable(model, rho >= 0)
+        @constraint(model, [2 * psi; 2 * G * model[:w]; -2 * rho] in SecondOrderCone())
+    end
+
+    if rrp_ver == :none
+        @constraint(model, [psi; G * model[:w]] in SecondOrderCone())
+    elseif rrp_ver == :reg
+        @constraint(model, [rho; G * model[:w]] in SecondOrderCone())
+    elseif rrp_ver == :reg_pen
+        theta = Diagonal(sqrt.(diag(covariance)))
+        @constraint(
+            model,
+            [rho; sqrt(rrp_penalty) * theta * model[:w]] in SecondOrderCone()
+        )
+    end
+
+    return nothing
+end
