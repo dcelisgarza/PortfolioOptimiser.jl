@@ -207,7 +207,6 @@ mutable struct Portfolio{
     fail::tf
 end
 
-const PortClasses = (:classic,)
 function Portfolio(;
     # Portfolio characteristics.
     returns,

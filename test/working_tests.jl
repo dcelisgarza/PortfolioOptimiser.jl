@@ -83,8 +83,98 @@ test = Portfolio(
 asset_statistics!(test)
 test.krt_u = Inf
 test.max_num_assets_kurt = 20
-opt_port!(test, rm = :krt, kelly = :approx, obj = :sharpe)
 
+risk_budget = DataFrame(risk = 100:-5:1)
+tr1 = opt_port!(
+    test,
+    type = :trad,
+    rm = :rvar,
+    kelly = :none,
+    obj = :min_risk,
+    risk_budget = risk_budget,
+)
+rp1 = opt_port!(
+    test,
+    type = :rp,
+    rm = :rvar,
+    kelly = :none,
+    obj = :min_risk,
+    risk_budget = risk_budget,
+)
+
+tr2 = opt_port!(
+    test,
+    type = :trad,
+    rm = :rvar,
+    kelly = :approx,
+    obj = :min_risk,
+    risk_budget = risk_budget,
+)
+rp2 = opt_port!(
+    test,
+    type = :rp,
+    rm = :rvar,
+    kelly = :approx,
+    obj = :min_risk,
+    risk_budget = risk_budget,
+)
+
+tr3 = opt_port!(
+    test,
+    type = :trad,
+    rm = :rvar,
+    kelly = :exact,
+    obj = :min_risk,
+    risk_budget = risk_budget,
+)
+
+wakao = hcat(tr1, rp1, tr2, rp2, tr3, makeunique = true)
+
+risk_budget = nothing
+tr1 = opt_port!(
+    test,
+    type = :trad,
+    rm = :rvar,
+    kelly = :none,
+    obj = :min_risk,
+    risk_budget = risk_budget,
+)
+rp1 = opt_port!(
+    test,
+    type = :rp,
+    rm = :rvar,
+    kelly = :none,
+    obj = :min_risk,
+    risk_budget = risk_budget,
+)
+
+tr2 = opt_port!(
+    test,
+    type = :trad,
+    rm = :rvar,
+    kelly = :approx,
+    obj = :min_risk,
+    risk_budget = risk_budget,
+)
+rp2 = opt_port!(
+    test,
+    type = :rp,
+    rm = :rvar,
+    kelly = :approx,
+    obj = :min_risk,
+    risk_budget = risk_budget,
+)
+
+tr3 = opt_port!(
+    test,
+    type = :trad,
+    rm = :rvar,
+    kelly = :exact,
+    obj = :min_risk,
+    risk_budget = risk_budget,
+)
+
+wakao2 = hcat(tr1, rp1, tr2, rp2, tr3, makeunique = true)
 (
     :mv,
     :mad,

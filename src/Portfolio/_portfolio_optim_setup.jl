@@ -1,49 +1,67 @@
 const KellyRet = (:exact, :approx, :none)
-function _return_setup(portfolio, class, kelly, obj, T, rf, returns, mu)
+function _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
     model = portfolio.model
 
-    if class == :classic && (kelly == :exact || kelly == :approx)
-        if kelly == :exact
-            @variable(model, texact_kelly[1:T])
-            if obj == :sharpe
-                @expression(model, ret, sum(texact_kelly) / T - rf * model[:k])
-                @expression(model, kret, model[:k] .+ returns * model[:w])
-                @constraint(
-                    model,
-                    [i = 1:T],
-                    [texact_kelly[i], model[:k], kret[i]] in MOI.ExponentialCone()
-                )
-                @constraint(model, model[:risk] <= 1)
-            else
-                @expression(model, ret, sum(texact_kelly) / T)
-                @expression(model, kret, 1 .+ returns * model[:w])
-                @constraint(
-                    model,
-                    [i = 1:T],
-                    [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
-                )
+    if type == :trad
+        if class == :classic && (kelly == :exact || kelly == :approx)
+            if kelly == :exact
+                @variable(model, texact_kelly[1:T])
+                if obj == :sharpe
+                    @expression(model, ret, sum(texact_kelly) / T - rf * model[:k])
+                    @expression(model, kret, model[:k] .+ returns * model[:w])
+                    @constraint(
+                        model,
+                        [i = 1:T],
+                        [texact_kelly[i], model[:k], kret[i]] in MOI.ExponentialCone()
+                    )
+                    @constraint(model, model[:risk] <= 1)
+                else
+                    @expression(model, ret, sum(texact_kelly) / T)
+                    @expression(model, kret, 1 .+ returns * model[:w])
+                    @constraint(
+                        model,
+                        [i = 1:T],
+                        [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
+                    )
+                end
+            elseif kelly == :approx
+                if obj == :sharpe
+                    @variable(model, tapprox_kelly >= 0)
+                    @constraint(
+                        model,
+                        [
+                            model[:k] + tapprox_kelly
+                            2 * model[:dev] + model[:k] - tapprox_kelly
+                        ] in SecondOrderCone()
+                    )
+                    @expression(model, ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
+                    @constraint(model, model[:risk] <= 1)
+                else
+                    @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
+                end
             end
-        elseif kelly == :approx
+        else
+            obj == :min_risk && isempty(mu) && return nothing
+            @expression(model, ret, dot(mu, model[:w]))
             if obj == :sharpe
-                @variable(model, tapprox_kelly >= 0)
-                @constraint(
-                    model,
-                    [
-                        model[:k] + tapprox_kelly
-                        2 * model[:dev] + model[:k] - tapprox_kelly
-                    ] in SecondOrderCone()
-                )
-                @expression(model, ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
-                @constraint(model, model[:risk] <= 1)
-            else
-                @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
+                @constraint(model, ret - rf * model[:k] == 1)
             end
         end
-    else
-        obj == :min_risk && isempty(mu) && return nothing
-        @expression(model, ret, dot(mu, model[:w]))
-        if obj == :sharpe
-            @constraint(model, ret - rf * model[:k] == 1)
+    elseif type == :rp || type == :rrp
+        if kelly == :exact
+            @variable(model, texact_kelly[1:T])
+            @expression(model, ret, sum(texact_kelly) / T)
+            @expression(model, kret, 1 .+ returns * model[:w])
+            @constraint(
+                model,
+                [i = 1:T],
+                [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
+            )
+        elseif kelly == :approx
+            @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
+        else
+            isempty(mu) && return nothing
+            @expression(model, ret, dot(mu, model[:w]))
         end
     end
 
@@ -51,7 +69,7 @@ function _return_setup(portfolio, class, kelly, obj, T, rf, returns, mu)
     mu_l = portfolio.mu_l
     !isfinite(mu_l) && (return nothing)
 
-    if obj == :sharpe
+    if obj == :sharpe || type == :rp
         @constraint(model, ret >= mu_l * model[:k])
     else
         @constraint(model, ret >= mu_l)
@@ -142,7 +160,7 @@ function _setup_weights(portfolio, obj, N)
     return nothing
 end
 
-function _setup_linear_constraints(portfolio, obj)
+function _setup_linear_constraints(portfolio, obj, type)
     A = portfolio.a_mtx_ineq
     B = portfolio.b_vec_ineq
 
@@ -151,7 +169,7 @@ function _setup_linear_constraints(portfolio, obj)
     model = portfolio.model
 
     # Linear weight constraints.
-    if obj == :sharpe
+    if obj == :sharpe || type == :rp
         @constraint(model, A * model[:w] .- B * model[:k] .>= 0)
     else
         @constraint(model, A * model[:w] .- B .>= 0)
@@ -239,21 +257,25 @@ function _setup_turnover(portfolio, N, obj)
 end
 
 const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
-function _setup_objective_function(portfolio, obj, class, kelly, l)
+function _setup_objective_function(portfolio, type, obj, class, kelly, l)
     model = portfolio.model
 
-    if obj == :sharpe
-        if class == :classic && (kelly == :exact || kelly == :approx)
-            @objective(model, Max, model[:ret])
-        else
+    if type == :trad
+        if obj == :sharpe
+            if class == :classic && (kelly == :exact || kelly == :approx)
+                @objective(model, Max, model[:ret])
+            else
+                @objective(model, Min, model[:risk])
+            end
+        elseif obj == :min_risk
             @objective(model, Min, model[:risk])
+        elseif obj == :utility
+            @objective(model, Max, model[:ret] - l * model[:risk])
+        elseif obj == :max_ret
+            @objective(model, Max, model[:ret])
         end
-    elseif obj == :min_risk
+    elseif type == :rp
         @objective(model, Min, model[:risk])
-    elseif obj == :utility
-        @objective(model, Max, model[:ret] - l * model[:risk])
-    elseif obj == :max_ret
-        @objective(model, Max, model[:ret])
     end
 
     return nothing
@@ -308,28 +330,47 @@ function _optimize_portfolio(portfolio, N)
     return term_status, solvers_tried
 end
 
-function _cleanup_weights(portfolio, returns, N, obj, solvers_tried)
+function _finalise_portfolio(portfolio, rm, type, returns, N, obj, solvers_tried)
     model = portfolio.model
 
+    if rm == :evar
+        portfolio.z_evar = value(portfolio.model[:s_evar])
+    elseif rm == :edar
+        portfolio.z_edar = value(portfolio.model[:s_edar])
+    elseif rm == :rvar
+        portfolio.z_rvar = value(portfolio.model[:s_rvar])
+    elseif rm == :rdar
+        portfolio.z_rdar = value(portfolio.model[:s_rdar])
+    end
+
     weights = Vector{eltype(returns)}(undef, N)
-    if obj == :sharpe
-        val_k = value(model[:k])
-        val_k = val_k > 0 ? val_k : 1
-        weights .= value.(model[:w]) / val_k
-    else
+    if type == :trad
+        if obj == :sharpe
+            val_k = value(model[:k])
+            val_k = val_k > 0 ? val_k : 1
+            weights .= value.(model[:w]) / val_k
+        else
+            weights .= value.(model[:w])
+        end
+
+        short = portfolio.short
+        sum_short_long = portfolio.sum_short_long
+        if short == false
+            sum_w = sum(abs.(weights))
+            sum_w = sum_w > N^2 * eps() ? sum_w : 1
+            weights .= abs.(weights) / sum_w * sum_short_long
+        end
+
+        portfolio.p_optimal =
+            DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+    elseif type == :rp
         weights .= value.(model[:w])
-    end
-
-    short = portfolio.short
-    sum_short_long = portfolio.sum_short_long
-    if short == false
         sum_w = sum(abs.(weights))
-        sum_w = sum_w > N^2 > eps() ? sum_w : 1
-        weights .= abs.(weights) / sum_w * sum_short_long
+        sum_w = sum_w > N^2 * eps() ? sum_w : 1
+        weights .= abs.(weights) / sum_w
+        portfolio.rp_optimal =
+            DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
     end
-
-    portfolio.p_optimal =
-        DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
 
     if isempty(solvers_tried)
         portfolio.fail = Dict()
@@ -340,16 +381,23 @@ function _cleanup_weights(portfolio, returns, N, obj, solvers_tried)
     return nothing
 end
 
+const PortClasses = (:classic,)
+const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
+const RRPTypes = (:none, :reg, :reg_pen)
+const UncertaintyTypes = (:box, :ellipse)
 function opt_port!(
     portfolio::Portfolio;
+    type::Symbol = :trad,
     class::Symbol = :classic,
     rm::Symbol = :mv,
     obj::Symbol = :sharpe,
     kelly::Symbol = :none,
     rf::Real = 1.0329^(1 / 252) - 1,
     l::Real = 2.0,
+    risk_budget = nothing,
     string_names = false,
 )
+    @assert(type ∈ PortTypes, "type must be one of $PortTypes")
     @assert(class ∈ PortClasses, "class must be one of $PortClasses")
     @assert(rm ∈ RiskMeasures, "rm must be one of $RiskMeasures")
     @assert(obj ∈ ObjFuncs, "obj must be one of $ObjFuncs")
@@ -358,13 +406,17 @@ function opt_port!(
         portfolio.kind_tracking_err ∈ TrackingErrKinds,
         "portfolio.kind_tracking_err must be one of $TrackingErrKinds"
     )
+    if type != :trad
+        class = :none
+        obj = :none
+    end
 
     portfolio.model = JuMP.Model()
 
     # Returns, mu, covariance.
     returns = Matrix(portfolio.returns[!, 2:end])
     T, N = size(returns)
-    mu = !isempty(portfolio.mu) ? portfolio.mu[!, 2] : Float64[]
+    mu = !isempty(portfolio.mu) ? portfolio.mu[!, 2] : Vector{eltype(returns)}(undef, 0)
     covariance = Matrix(portfolio.cov)
     kurtosis = Matrix(portfolio.kurt)
     skurtosis = Matrix(portfolio.skurt)
@@ -374,43 +426,66 @@ function opt_port!(
     set_string_names_on_creation(model, string_names)
 
     @variable(model, w[1:N])
-    obj == :sharpe && (@variable(model, k >= 0))
+
+    if type == :trad
+        obj == :sharpe && (@variable(model, k >= 0))
+    elseif type == :rp || type == :rrp
+        rb = Vector{eltype(returns)}(undef, N)
+        if isnothing(risk_budget)
+            portfolio.risk_budget_vec = DataFrame(
+                tickers = names(portfolio.returns[!, 2:end]),
+                risk = fill(1 / N, N),
+            )
+        else
+            risk_budget[!, :risk] ./= sum(risk_budget[!, :risk])
+            portfolio.risk_budget_vec = copy(risk_budget)
+        end
+        rb .= portfolio.risk_budget_vec[!, :risk]
+        @variable(model, k >= 0)
+    end
 
     _calc_var_dar_constants(portfolio, rm, T)
     # Risk variables, functions and constraints.
     ## Mean variance.
-    _mv_setup(portfolio, covariance, rm, kelly, obj)
+    _mv_setup(portfolio, covariance, rm, kelly, obj, type)
     ## Mean Absolute Deviation and Mean Semi Deviation.
-    _mad_setup(portfolio, rm, T, returns, mu, obj)
+    _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     ## Conditional and Entropic Value at Risk
-    _var_setup(portfolio, rm, T, returns, obj)
+    _var_setup(portfolio, rm, T, returns, obj, type)
     ## Worst realisation.
-    _wr_setup(portfolio, rm, returns, obj)
+    _wr_setup(portfolio, rm, returns, obj, type)
     ## Lower partial moments, Omega and Sortino ratios.
-    _lpm_setup(portfolio, rm, T, returns, obj, rf)
+    _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
     ## Drawdown, Max Drawdown, Average Drawdown, Conditional Drawdown, Ulcer Index, Entropic Drawdown at Risk
-    _drawdown_setup(portfolio, rm, T, returns, obj)
+    _drawdown_setup(portfolio, rm, T, returns, obj, type)
     ## OWA methods
-    _owa_setup(portfolio, rm, T, returns, obj)
+    _owa_setup(portfolio, rm, T, returns, obj, type)
     ## Kurtosis setup
-    _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj)
+    _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
+    ## RP setupt
+    if type == :rp
+        _rp_setup(portfolio, N, rb)
+    end
 
     # Constraints.
     ## Return variables.
-    _return_setup(portfolio, class, kelly, obj, T, rf, returns, mu)
-    ## Weight constraints.
-    _setup_weights(portfolio, obj, N)
+    _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
     ## Linear weight constraints.
-    _setup_linear_constraints(portfolio, obj)
-    ## Minimum number of effective assets.
-    _setup_min_number_effective_assets(portfolio, obj)
-    ## Tracking error variables and constraints.
-    _setup_tracking_err(portfolio, returns, obj, T)
-    ## Turnover variables and constraints
-    _setup_turnover(portfolio, N, obj)
+    _setup_linear_constraints(portfolio, obj, type)
+
+    if type == :trad
+        ## Weight constraints.
+        _setup_weights(portfolio, obj, N)
+        ## Minimum number of effective assets.
+        _setup_min_number_effective_assets(portfolio, obj)
+        ## Tracking error variables and constraints.
+        _setup_tracking_err(portfolio, returns, obj, T)
+        ## Turnover variables and constraints
+        _setup_turnover(portfolio, N, obj)
+    end
 
     # Objective functions.
-    _setup_objective_function(portfolio, obj, class, kelly, l)
+    _setup_objective_function(portfolio, type, obj, class, kelly, l)
 
     # Optimize.
     term_status, solvers_tried = _optimize_portfolio(portfolio, N)
@@ -420,19 +495,29 @@ function opt_port!(
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.opt_port!))"
 
         @warn(
-            "$funcname: model could not be optimised satisfactorily.\nPortfolio: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $solvers_tried"
+            "$funcname: model could not be optimised satisfactorily.\nPortfolio type: $type\nClass: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $solvers_tried"
         )
 
-        portfolio.p_optimal = DataFrame()
+        retval = if type == :trad
+            portfolio.p_optimal = DataFrame()
+        elseif type == :rp
+            portfolio.rp_optimal = DataFrame()
+        end
         portfolio.fail = solvers_tried
 
-        return portfolio.p_optimal
+        return retval
     end
 
     # Cleanup.
-    _cleanup_weights(portfolio, returns, N, obj, solvers_tried)
+    _finalise_portfolio(portfolio, rm, type, returns, N, obj, solvers_tried)
 
-    return portfolio.p_optimal
+    if type == :trad
+        retval = portfolio.p_optimal
+    elseif type == :rp
+        retval = portfolio.rp_optimal
+    end
+
+    return retval
 end
 
 export opt_port!
