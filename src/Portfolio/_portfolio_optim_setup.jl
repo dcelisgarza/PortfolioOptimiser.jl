@@ -48,16 +48,7 @@ function _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
             end
         end
     elseif type == :rp || type == :rrp
-        if kelly == :exact
-            @variable(model, texact_kelly[1:T])
-            @expression(model, ret, sum(texact_kelly) / T)
-            @expression(model, kret, 1 .+ returns * model[:w])
-            @constraint(
-                model,
-                [i = 1:T],
-                [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
-            )
-        elseif kelly == :approx
+        if kelly == :approx
             @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
         else
             isempty(mu) && return nothing
