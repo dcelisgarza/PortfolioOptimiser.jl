@@ -82,7 +82,11 @@ test = Portfolio(
 
 asset_statistics!(test)
 test.krt_u = Inf
-test.max_num_assets_kurt = 20
+test.max_num_assets_kurt = 5
+krt1 = opt_port!(test, type = :trad, rm = :krt, kelly = :none)
+krt2 = opt_port!(test, type = :trad, rm = :krt, kelly = :approx)
+krt3 = opt_port!(test, type = :trad, rm = :krt, kelly = :exact)
+display(hcat(krt1, krt2, makeunique = true))
 
 (:none, :reg, :reg_pen)
 rrp1 = opt_port!(test, type = :rrp, rrp_ver = :none)
