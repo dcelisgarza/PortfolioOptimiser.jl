@@ -38,26 +38,6 @@ function cokurt(x::AbstractMatrix, mean_func::Function = mean, args...; kwargs..
     return cokurt
 end
 
-function scokurt(
-    x::AbstractMatrix,
-    minval = 0.0,
-    mean_func::Function = mean,
-    args...;
-    kwargs...,
-)
-    T, N = size(x)
-    mu =
-        !haskey(kwargs, :dims) ? mean_func(x, args...; dims = 1, kwargs...) :
-        mean_func(x, args...; kwargs...)
-    y = x .- mu
-    y .= min.(y, minval)
-    ex = eltype(y)
-    o = transpose(range(start = one(ex), stop = one(ex), length = N))
-    z = kron(o, y) .* kron(y, o)
-    scokurt = transpose(z) * z / T
-    return scokurt
-end
-
 function cokurt(returns, mean_func::Function = mean, args...; kwargs...)
     nms = names(returns)
     cols = vec(["$x-$y" for x in nms, y in nms])
@@ -67,11 +47,82 @@ function cokurt(returns, mean_func::Function = mean, args...; kwargs...)
     return df
 end
 
-function scokurt(returns, args...; minval = 0.0, mean_func::Function = mean, kwargs...)
+function cokurt(x::AbstractMatrix, mu::AbstractArray)
+    T, N = size(x)
+    y = x .- mu
+    ex = eltype(y)
+    o = transpose(range(start = one(ex), stop = one(ex), length = N))
+    z = kron(o, y) .* kron(y, o)
+    cokurt = transpose(z) * z / T
+    return cokurt
+end
+
+function cokurt(returns, mu::AbstractArray)
     nms = names(returns)
     cols = vec(["$x-$y" for x in nms, y in nms])
     x = Matrix(returns)
-    scokrt = scokurt(x, minval, mean_func, args...; kwargs...)
+    cokrt = cokurt(x, mu)
+    df = DataFrame(cokrt, cols)
+    return df
+end
+
+function scokurt(
+    x::AbstractMatrix,
+    mean_func::Function = mean,
+    target_ret::AbstractFloat = 0.0,
+    args...;
+    kwargs...,
+)
+    T, N = size(x)
+    mu =
+        !haskey(kwargs, :dims) ? mean_func(x, args...; dims = 1, kwargs...) :
+        mean_func(x, args...; kwargs...)
+    y = x .- mu
+    y .= min.(y, target_ret)
+    ex = eltype(y)
+    o = transpose(range(start = one(ex), stop = one(ex), length = N))
+    z = kron(o, y) .* kron(y, o)
+    scokurt = transpose(z) * z / T
+    return scokurt
+end
+
+function scokurt(
+    returns,
+    mean_func::Function = mean,
+    target_ret::AbstractFloat = 0.0,
+    args...;
+    kwargs...,
+)
+    nms = names(returns)
+    cols = vec(["$x-$y" for x in nms, y in nms])
+    x = Matrix(returns)
+    scokrt = scokurt(x, target_ret, mean_func, args...; kwargs...)
+    df = DataFrame(scokrt, cols)
+    return df
+end
+
+function scokurt(x::AbstractMatrix, mu::AbstractArray, target_ret::AbstractFloat = 0.0)
+    T, N = size(x)
+    y = x .- mu
+    y .= min.(y, target_ret)
+    ex = eltype(y)
+    o = transpose(range(start = one(ex), stop = one(ex), length = N))
+    z = kron(o, y) .* kron(y, o)
+    scokurt = transpose(z) * z / T
+    return scokurt
+end
+
+function scokurt(
+    returns,
+    mu::AbstractArray,
+    target_ret::AbstractFloat = 0.0,
+    args...;
+    kwargs...,
+)
+    nms = names(returns)
+    cols = vec(["$x-$y" for x in nms, y in nms])
+    x = Matrix(returns)
+    scokrt = scokurt(x, mu)
     df = DataFrame(scokrt, cols)
     return df
 end

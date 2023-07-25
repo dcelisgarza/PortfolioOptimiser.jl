@@ -74,20 +74,41 @@ test = Portfolio(
         :ECOS => ECOS.Optimizer,
     ),
     sol_params = Dict(
-        :ECOS => Dict("maxit" => 2, "feastol" => 1e-12, "verbose" => true),
+        :ECOS => Dict("verbose" => true),
         :SCS => Dict("verbose" => 1),
         :GLPK => Dict("it_lim" => 2),
     ),
 )
-test.mu = vec(mean(Matrix(RET[!, 2:end]), dims = 1))
-test.cov = cov(Matrix(RET[!, 2:end]))
-test.kurt = cokurt(Matrix(RET[!, 2:end]))
-test.skurt = scokurt(Matrix(RET[!, 2:end]))
+
 asset_statistics!(test)
 test.krt_u = Inf
 test.max_num_assets_kurt = 20
+opt_port!(test, rm = :krt, kelly = :approx, obj = :sharpe)
 
-optimize(test, rm = :krt, kelly = :exact, obj = :min_risk)
+(
+    :mv,
+    :mad,
+    :msv,
+    :cvar,
+    :wr,
+    :flpm,
+    :slpm,
+    :mdd,
+    :add,
+    :cdar,
+    :uci,
+    :evar,
+    :edar,
+    :rdar,
+    :rvar,
+    :gmd,
+    :tg,
+    :rg,
+    :rcvar,
+    :rtg,
+    :krt,
+    :skrt,
+)
 
 mtx = duplication_matrix(4)
 

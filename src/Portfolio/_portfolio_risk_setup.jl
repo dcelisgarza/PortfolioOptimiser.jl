@@ -34,11 +34,12 @@ function _calc_var_dar_constants(portfolio, rm, T)
 
     alpha = portfolio.alpha
     portfolio.at = alpha * T
+    portfolio.invat = 1 / portfolio.at
 
     !(rm == :rvar || rm == :rdar) && (return nothing)
 
     kappa = portfolio.kappa
-    invat = portfolio.invat = 1 / portfolio.at
+    invat = portfolio.invat
     portfolio.ln_k = (invat^kappa - invat^(-kappa)) / (2 * kappa)
     portfolio.opk = 1 + kappa
     portfolio.omk = 1 - kappa
@@ -50,7 +51,7 @@ function _calc_var_dar_constants(portfolio, rm, T)
     return nothing
 end
 
-function _mv_setup(portfolio, sigma, rm, kelly, obj)
+function _mv_setup(portfolio, covariance, rm, kelly, obj)
     dev_u = portfolio.dev_u
 
     !(rm == :mv || kelly == :approx || isfinite(dev_u)) && (return nothing)
@@ -59,7 +60,7 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj)
 
     @variable(model, dev >= 0)
     @expression(model, dev_risk, dev * dev)
-    G = sqrt(sigma)
+    G = sqrt(covariance)
     @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
 
     if isfinite(dev_u)
@@ -513,7 +514,7 @@ function _owa_setup(portfolio, rm, T, returns, obj)
         isfinite(rtg_u)
     ) && (return nothing)
 
-    onesvec = ones(T)
+    onesvec = range(1, stop = 1, length = T)
     model = portfolio.model
 
     !haskey(model, :hist_ret) && (@expression(model, hist_ret, returns * model[:w]))
@@ -666,24 +667,15 @@ function _owa_setup(portfolio, rm, T, returns, obj)
     return nothing
 end
 
-function _kurtosis_setup(portfolio, rm, N, obj)
-    kurt = portfolio.kurt
-    skurt = portfolio.skurt
+function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj)
     krt_u = portfolio.krt_u
     skrt_u = portfolio.skrt_u
 
-    !(
-        !isnothing(kurt) ||
-        !isnothing(skurt) ||
-        rm == :krt ||
-        rm == :skrt ||
-        isfinite(krt_u) ||
-        isfinite(skrt_u)
-    ) && (return nothing)
+    !(rm == :krt || rm == :skrt || isfinite(krt_u) || isfinite(skrt_u)) && (return nothing)
 
     model = portfolio.model
 
-    if !isnothing(kurt) && (rm == :krt || isfinite(krt_u))
+    if rm == :krt || isfinite(krt_u)
         max_num_assets_kurt = portfolio.max_num_assets_kurt
         @variable(model, W[1:N, 1:N], Symmetric)
         @expression(model, M1, vcat(W, transpose(model[:w])))
@@ -706,10 +698,10 @@ function _kurtosis_setup(portfolio, rm, N, obj)
                 [r_kurt[i], t_kurt, x_kurt[i]] in MOI.PowerCone(1 / 2)
             )
             @constraint(model, sum(r_kurt) == t_kurt)
-            A = block_vec_pq(kurt, N, N)
+            A = block_vec_pq(kurtosis, N, N)
             vals_A, vecs_A = eigen(A)
             clamp!(vals_A, 0, Inf)
-            Bi = Vector{Matrix{eltype(kurt)}}(undef, N2)
+            Bi = Vector{Matrix{eltype(kurtosis)}}(undef, N2)
             for i in 1:N2
                 B = vals_A[i]^0.5 * vecs_A[:, i]
                 B = real.(reshape(B, N, N))
@@ -719,7 +711,7 @@ function _kurtosis_setup(portfolio, rm, N, obj)
         else
             L_2 = portfolio.L_2
             S_2 = portfolio.S_2
-            sqrt_sigma_4 = sqrt(S_2 * kurt * transpose(S_2))
+            sqrt_sigma_4 = sqrt(S_2 * kurtosis * transpose(S_2))
             @constraint(model, t_kurt >= 0)
             @expression(model, zkurt, L_2 * vec(W))
             @constraint(model, [t_kurt; sqrt_sigma_4 * zkurt] in SecondOrderCone())
@@ -739,7 +731,7 @@ function _kurtosis_setup(portfolio, rm, N, obj)
         end
     end
 
-    if !isnothing(skurt) && (rm == :skrt || isfinite(skrt_u))
+    if rm == :skrt || isfinite(skrt_u)
         max_num_assets_kurt = portfolio.max_num_assets_kurt
         @variable(model, SW[1:N, 1:N], Symmetric)
         @expression(model, SM1, vcat(SW, transpose(model[:w])))
@@ -762,10 +754,10 @@ function _kurtosis_setup(portfolio, rm, N, obj)
                 [r_skurt[i], t_skurt, x_skurt[i]] in MOI.PowerCone(1 / 2)
             )
             @constraint(model, sum(r_skurt) == t_skurt)
-            A = block_vec_pq(skurt, N, N)
+            A = block_vec_pq(skurtosis, N, N)
             vals_A, vecs_A = eigen(A)
             clamp!(vals_A, 0, Inf)
-            SBi = Vector{Matrix{eltype(skurt)}}(undef, N2)
+            SBi = Vector{Matrix{eltype(skurtosis)}}(undef, N2)
             for i in 1:N2
                 B = vals_A[i]^0.5 * vecs_A[:, i]
                 B = real.(reshape(B, N, N))
@@ -776,7 +768,7 @@ function _kurtosis_setup(portfolio, rm, N, obj)
         else
             L_2 = portfolio.L_2
             S_2 = portfolio.S_2
-            sqrt_sigma_4 = sqrt(S_2 * skurt * transpose(S_2))
+            sqrt_sigma_4 = sqrt(S_2 * skurtosis * transpose(S_2))
             @constraint(model, t_skurt >= 0)
             @expression(model, zskurt, L_2 * vec(SW))
             @constraint(model, [t_skurt; sqrt_sigma_4 * zskurt] in SecondOrderCone())

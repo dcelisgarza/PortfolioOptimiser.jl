@@ -40,6 +40,7 @@ function _return_setup(portfolio, class, kelly, obj, T, rf, returns, mu)
             end
         end
     else
+        obj == :min_risk && isempty(mu) && return nothing
         @expression(model, ret, dot(mu, model[:w]))
         if obj == :sharpe
             @constraint(model, ret - rf * model[:k] == 1)
@@ -238,11 +239,11 @@ function _setup_turnover(portfolio, N, obj)
 end
 
 const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
-function _setup_objective_function(portfolio, obj, kelly, l)
+function _setup_objective_function(portfolio, obj, class, kelly, l)
     model = portfolio.model
 
     if obj == :sharpe
-        if model == :classic && (kelly == :exact || kelly == :approx)
+        if class == :classic && (kelly == :exact || kelly == :approx)
             @objective(model, Max, model[:ret])
         else
             @objective(model, Min, model[:risk])
@@ -276,7 +277,7 @@ function _optimize_portfolio(portfolio, N)
             end
         end
         try
-            optimize!(model)
+            JuMP.optimize!(model)
         catch jump_error
             push!(solvers_tried, solver_name => Dict(:jump_error => jump_error))
             continue
@@ -285,9 +286,12 @@ function _optimize_portfolio(portfolio, N)
 
         all_finite_weights = all(isfinite.(value.(model[:w])))
         all_non_zero_weights = all(abs.(0.0 .- value.(model[:w])) .> N^2 * eps())
-        if term_status in ValidTermination && all_finite_weights && all_non_zero_weights
+
+        term_status in ValidTermination &&
+            all_finite_weights &&
+            all_non_zero_weights &&
             break
-        end
+
         push!(
             solvers_tried,
             solver_name => Dict(
@@ -336,7 +340,7 @@ function _cleanup_weights(portfolio, returns, N, obj, solvers_tried)
     return nothing
 end
 
-function optimize(
+function opt_port!(
     portfolio::Portfolio;
     class::Symbol = :classic,
     rm::Symbol = :mv,
@@ -360,8 +364,10 @@ function optimize(
     # Returns, mu, covariance.
     returns = Matrix(portfolio.returns[!, 2:end])
     T, N = size(returns)
-    mu = portfolio.mu
-    sigma = portfolio.cov
+    mu = !isempty(portfolio.mu) ? portfolio.mu[!, 2] : Float64[]
+    covariance = Matrix(portfolio.cov)
+    kurtosis = Matrix(portfolio.kurt)
+    skurtosis = Matrix(portfolio.skurt)
 
     # Model variables.
     model = portfolio.model
@@ -373,7 +379,7 @@ function optimize(
     _calc_var_dar_constants(portfolio, rm, T)
     # Risk variables, functions and constraints.
     ## Mean variance.
-    _mv_setup(portfolio, sigma, rm, kelly, obj)
+    _mv_setup(portfolio, covariance, rm, kelly, obj)
     ## Mean Absolute Deviation and Mean Semi Deviation.
     _mad_setup(portfolio, rm, T, returns, mu, obj)
     ## Conditional and Entropic Value at Risk
@@ -387,7 +393,7 @@ function optimize(
     ## OWA methods
     _owa_setup(portfolio, rm, T, returns, obj)
     ## Kurtosis setup
-    _kurtosis_setup(portfolio, rm, N, obj)
+    _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj)
 
     # Constraints.
     ## Return variables.
@@ -404,14 +410,14 @@ function optimize(
     _setup_turnover(portfolio, N, obj)
 
     # Objective functions.
-    _setup_objective_function(portfolio, obj, kelly, l)
+    _setup_objective_function(portfolio, obj, class, kelly, l)
 
     # Optimize.
     term_status, solvers_tried = _optimize_portfolio(portfolio, N)
 
     # Error handling.
     if term_status ∉ ValidTermination || any(.!isfinite.(value.(w)))
-        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.optimize))"
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.opt_port!))"
 
         @warn(
             "$funcname: model could not be optimised satisfactorily.\nPortfolio: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $solvers_tried"
@@ -429,4 +435,4 @@ function optimize(
     return portfolio.p_optimal
 end
 
-export optimize
+export opt_port!
