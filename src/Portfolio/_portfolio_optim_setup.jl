@@ -48,7 +48,17 @@ function _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
             end
         end
     elseif type == :rp || type == :rrp
-        if kelly == :approx
+        # Exact is infeasable with exponential cone rp weight constraints.
+        if kelly == :exact && type == :rrp
+            @variable(model, texact_kelly[1:T])
+            @expression(model, ret, sum(texact_kelly) / T)
+            @expression(model, kret, 1 .+ returns * model[:w])
+            @constraint(
+                model,
+                [i = 1:T],
+                [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
+            )
+        elseif kelly == :approx
             @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
         else
             isempty(mu) && return nothing
@@ -438,11 +448,12 @@ function opt_port!(
         @variable(model, k >= 0)
     end
 
+    _mv_setup(portfolio, covariance, rm, kelly, obj, type)
+
     if type == :trad || type == :rp
         _calc_var_dar_constants(portfolio, rm, T)
         # Risk variables, functions and constraints.
         ## Mean variance.
-        _mv_setup(portfolio, covariance, rm, kelly, obj, type)
         ## Mean Absolute Deviation and Mean Semi Deviation.
         _mad_setup(portfolio, rm, T, returns, mu, obj, type)
         ## Conditional and Entropic Value at Risk

@@ -90,7 +90,28 @@ rrp2 = opt_port!(test, type = :rrp, rrp_ver = :reg)
 rrp3 = opt_port!(test, type = :rrp, rrp_ver = :reg_pen, rrp_penalty = 1000)
 rp1 = opt_port!(test, type = :rp, rm = :mv, kelly = :none)
 rp2 = opt_port!(test, type = :rp, rm = :mv, kelly = :approx)
+rp3 = opt_port!(test, type = :rp, rm = :msv, kelly = :exact)
+
 display(hcat(rrp1, rrp2, rrp3, rp1, rp2, makeunique = true))
+
+rrp1 = opt_port!(test, type = :rrp, rrp_ver = :none, kelly = :none)
+rrp2 = opt_port!(test, type = :rrp, rrp_ver = :none, kelly = :approx)
+rrp3 = opt_port!(test, type = :rrp, rrp_ver = :none, kelly = :exact)
+display(hcat(rrp1, rrp2, rrp3, makeunique = true))
+
+rrp11 = opt_port!(test, type = :rrp, rrp_ver = :reg, kelly = :none)
+rrp21 = opt_port!(test, type = :rrp, rrp_ver = :reg, kelly = :approx)
+rrp31 = opt_port!(test, type = :rrp, rrp_ver = :reg, kelly = :exact)
+display(hcat(rrp11, rrp21, rrp31, makeunique = true))
+
+rrp12 = opt_port!(test, type = :rrp, rrp_ver = :reg_pen, rrp_penalty = 1000, kelly = :none)
+rrp22 =
+    opt_port!(test, type = :rrp, rrp_ver = :reg_pen, rrp_penalty = 1000, kelly = :approx)
+rrp32 = opt_port!(test, type = :rrp, rrp_ver = :reg_pen, rrp_penalty = 1000, kelly = :exact)
+display(hcat(rrp12, rrp22, rrp32, makeunique = true))
+
+rp1 = opt_port!(test, type = :rp, rm = :mv, kelly = :none)
+rp2 = opt_port!(test, type = :rp, rm = :mv, kelly = :approx)
 
 risk_budget = DataFrame(risk = 100:-5:1)
 tr1 = opt_port!(

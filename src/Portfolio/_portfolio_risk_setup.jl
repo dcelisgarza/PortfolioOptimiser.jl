@@ -71,7 +71,7 @@ function _mv_setup(portfolio, covariance, rm, kelly, obj, type)
         end
     end
 
-    if rm == :mv
+    if rm == :mv && type != :rrp
         @expression(model, risk, dev_risk)
     end
 
