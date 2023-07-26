@@ -11,7 +11,8 @@ mutable struct Portfolio{
     ssl,
     mnea,
     mna,
-    rf,
+    mnaf,
+    tretf,
     l,
     # Risk parameters
     ai,
@@ -100,8 +101,9 @@ mutable struct Portfolio{
     tfront,
     tsolv,
     tsolvp,
-    tmod,
     tf,
+    toptpar,
+    tmod,
 } <: AbstractPortfolio
     # Portfolio characteristics.
     returns::r
@@ -111,7 +113,8 @@ mutable struct Portfolio{
     sum_short_long::ssl
     min_number_effective_assets::mnea
     max_number_assets::mna
-    returns_factors::rf
+    max_number_assets_factor::mnaf
+    returns_factors::tretf
     loadings::l
     # Risk parameters.
     alpha_i::ai
@@ -203,8 +206,9 @@ mutable struct Portfolio{
     # Solver params.
     solvers::tsolv
     sol_params::tsolvp
-    model::tmod
+    opt_params::toptpar
     fail::tf
+    model::tmod
 end
 
 function Portfolio(;
@@ -216,6 +220,7 @@ function Portfolio(;
     sum_short_long::Real = 1,
     min_number_effective_assets::Integer = 0,
     max_number_assets::Integer = 0,
+    max_number_assets_factor::Real = 100_000,
     returns_factors = DataFrame(),
     loadings = DataFrame(),
     # Risk parameters.
@@ -296,9 +301,11 @@ function Portfolio(;
     wc_optimal = DataFrame(),
     limits = DataFrame(),
     frontier = DataFrame(),
-    # Solver params.
+    # Solutions.
     solvers::AbstractDict = Dict(),
     sol_params::AbstractDict = Dict(),
+    opt_params::AbstractDict = Dict(),
+    fail::AbstractDict = Dict(),
     model = JuMP.Model(),
 )
     return Portfolio(
@@ -310,6 +317,7 @@ function Portfolio(;
         sum_short_long,
         min_number_effective_assets,
         max_number_assets,
+        max_number_assets_factor,
         returns_factors,
         loadings,
         # Risk parameters.
@@ -399,11 +407,12 @@ function Portfolio(;
         wc_optimal,
         limits,
         frontier,
-        # Solver params.
+        # Solutions.
         solvers,
         sol_params,
+        opt_params,
+        fail,
         model,
-        Dict(),
     )
 end
 

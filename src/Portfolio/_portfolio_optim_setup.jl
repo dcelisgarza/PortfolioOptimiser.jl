@@ -81,6 +81,7 @@ end
 
 function _setup_weights(portfolio, obj, N)
     max_number_assets = portfolio.max_number_assets
+    factor = portfolio.max_number_assets_factor
     short = portfolio.short
     short_u = portfolio.short_u
     long_u = portfolio.long_u
@@ -106,8 +107,8 @@ function _setup_weights(portfolio, obj, N)
         if max_number_assets > 0
             @constraint(model, sum(tass_bin) <= max_number_assets)
             @constraint(model, tass_bin_sharpe .<= model[:k])
-            @constraint(model, tass_bin_sharpe .<= 100000 * tass_bin)
-            @constraint(model, tass_bin_sharpe .>= model[:k] - 100000 * (1 .- tass_bin))
+            @constraint(model, tass_bin_sharpe .<= factor * tass_bin)
+            @constraint(model, tass_bin_sharpe .>= model[:k] - factor * (1 .- tass_bin))
             @constraint(model, model[:w] .<= long_u * tass_bin_sharpe)
         end
 
@@ -121,8 +122,8 @@ function _setup_weights(portfolio, obj, N)
             @constraint(model, sum(tw_ulong) <= long_u * model[:k])
             @constraint(model, sum(tw_ushort) <= short_u * model[:k])
 
-            @constraint(model, model[:w] .- tw_ulong .<= 0)
-            @constraint(model, model[:w] .+ tw_ushort .>= 0)
+            @constraint(model, model[:w] .<= tw_ulong)
+            @constraint(model, model[:w] .>= -tw_ushort)
 
             # Maximum number of assets constraints.
             if max_number_assets > 0
@@ -148,8 +149,8 @@ function _setup_weights(portfolio, obj, N)
             @constraint(model, sum(tw_ulong) <= long_u)
             @constraint(model, sum(tw_ushort) <= short_u)
 
-            @constraint(model, model[:w] .- tw_ulong .<= 0)
-            @constraint(model, model[:w] .+ tw_ushort .>= 0)
+            @constraint(model, model[:w] .<= tw_ulong)
+            @constraint(model, model[:w] .>= -tw_ushort)
 
             # Maximum number of assets constraints.
             if max_number_assets > 0
