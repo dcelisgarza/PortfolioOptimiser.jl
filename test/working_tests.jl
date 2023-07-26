@@ -68,22 +68,18 @@ test = Portfolio(
     # # rvar_u = 1000000.0,
     # # rdar_u = 1000000.0,
     solvers = OrderedDict(
-        :Clarabel => Clarabel.Optimizer,
-        :COSMO => COSMO.Optimizer,
-        :SCS => SCS.Optimizer,
-        :ECOS => ECOS.Optimizer,
-    ),
-    sol_params = Dict(
-        :ECOS => Dict("verbose" => true),
-        :SCS => Dict("verbose" => 1),
-        :GLPK => Dict("it_lim" => 2),
+        :Clarabel => Dict(:solver => Clarabel.Optimizer),
+        :COSMO => Dict(:solver => COSMO.Optimizer),
+        :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
+        :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => true)),
+        # :GLPK => Dict(:solver => GLPK.Optmizer, :params => Dict("it_lim" => 2)),
     ),
 )
 
 asset_statistics!(test)
 test.krt_u = Inf
-test.max_num_assets_kurt = 5
-krt1 = opt_port!(test, type = :trad, rm = :krt, kelly = :none, obj = :sharpe)
+test.max_num_assets_kurt = 20
+krt1 = opt_port!(test, type = :trad, rm = :mv, kelly = :exact, obj = :sharpe)
 krt2 = opt_port!(test, type = :trad, rm = :krt, kelly = :approx, obj = :sharpe)
 krt3 = opt_port!(test, type = :trad, rm = :krt, kelly = :exact, obj = :sharpe)
 display(hcat(krt1, krt2, krt3, makeunique = true))

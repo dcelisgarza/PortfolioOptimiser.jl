@@ -100,7 +100,6 @@ mutable struct Portfolio{
     tlim,
     tfront,
     tsolv,
-    tsolvp,
     tf,
     toptpar,
     tmod,
@@ -144,7 +143,7 @@ mutable struct Portfolio{
     # Risk and return constraints.
     a_mtx_ineq::ami
     b_vec_ineq::bvi
-    risk_budget_vec::rbv
+    risk_budget::rbv
     mu_l::ler
     dev_u::ud
     mad_u::umad
@@ -205,7 +204,6 @@ mutable struct Portfolio{
     frontier::tfront
     # Solver params.
     solvers::tsolv
-    sol_params::tsolvp
     opt_params::toptpar
     fail::tf
     model::tmod
@@ -242,7 +240,7 @@ function Portfolio(;
     # Risk and return constraints.
     a_mtx_ineq = Matrix{Float64}(undef, 0, 0),
     b_vec_ineq = Vector{Float64}(undef, 0),
-    risk_budget_vec = DataFrame(),
+    risk_budget = DataFrame(),
     mu_l::Real = -Inf,
     dev_u::Real = Inf,
     mad_u::Real = Inf,
@@ -303,7 +301,6 @@ function Portfolio(;
     frontier = DataFrame(),
     # Solutions.
     solvers::AbstractDict = Dict(),
-    sol_params::AbstractDict = Dict(),
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
@@ -348,7 +345,7 @@ function Portfolio(;
         # Risk and return constraints.
         a_mtx_ineq,
         b_vec_ineq,
-        risk_budget_vec,
+        risk_budget,
         mu_l,
         dev_u,
         mad_u,
@@ -409,7 +406,6 @@ function Portfolio(;
         frontier,
         # Solutions.
         solvers,
-        sol_params,
         opt_params,
         fail,
         model,

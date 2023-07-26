@@ -287,25 +287,29 @@ const ValidTermination =
     (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
 function _optimize_portfolio(portfolio, N)
     solvers = portfolio.solvers
-    sol_params = portfolio.sol_params
     model = portfolio.model
 
     term_status = termination_status(model)
     solvers_tried = Dict()
 
-    for (solver_name, solver) in solvers
-        set_optimizer(model, solver)
-        if haskey(sol_params, solver_name)
-            for (attribute, value) in sol_params[solver_name]
+    for (key, val) in solvers
+        if haskey(val, :solver)
+            set_optimizer(model, val[:solver])
+        end
+
+        if haskey(val, :params)
+            for (attribute, value) in val[:params]
                 set_attribute(model, attribute, value)
             end
         end
+
         try
             JuMP.optimize!(model)
         catch jump_error
-            push!(solvers_tried, solver_name => Dict(:jump_error => jump_error))
+            push!(solvers_tried, key => Dict(:jump_error => jump_error))
             continue
         end
+
         term_status = termination_status(model)
 
         all_finite_weights = all(isfinite.(value.(model[:w])))
@@ -318,11 +322,10 @@ function _optimize_portfolio(portfolio, N)
 
         push!(
             solvers_tried,
-            solver_name => Dict(
+            key => Dict(
                 :objective_val => objective_value(model),
                 :term_status => term_status,
-                :sol_params =>
-                    haskey(sol_params, solver_name) ? sol_params[solver_name] : missing,
+                :params => haskey(val, :params) ? val[:params] : missing,
                 :finite_weights => all_finite_weights,
                 :nonzero_weights => all_non_zero_weights,
             ),
@@ -332,7 +335,7 @@ function _optimize_portfolio(portfolio, N)
     return term_status, solvers_tried
 end
 
-function _finalise_portfolio(portfolio, rm, type, returns, N, obj, solvers_tried)
+function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj)
     model = portfolio.model
 
     if rm == :evar
@@ -385,6 +388,66 @@ function _finalise_portfolio(portfolio, rm, type, returns, N, obj, solvers_tried
         portfolio.fail = solvers_tried
     end
 
+    retval = if type == :trad
+        portfolio.p_optimal
+    elseif type == :rp
+        portfolio.rp_optimal
+    elseif type == :rrp
+        portfolio.rrp_optimal
+    end
+
+    return retval
+end
+
+function _save_opt_params(
+    portfolio,
+    type,
+    class,
+    rm,
+    obj,
+    kelly,
+    rrp_ver,
+    rf,
+    l,
+    rrp_penalty,
+    string_names,
+    save_opt_params,
+)
+    !save_opt_params && return nothing
+
+    opt_params_dict = if type == :trad
+        Dict(
+            :class => class,
+            :rm => rm,
+            :obj => obj,
+            :kelly => kelly,
+            :rf => rf,
+            :l => l,
+            :string_names => string_names,
+        )
+    elseif type == :rp
+        Dict(
+            :class => class,
+            :rm => rm,
+            :obj => :min_risk,
+            :kelly => (kelly == :exact) ? :none : kelly,
+            :rf => rf,
+            :string_names => string_names,
+        )
+    elseif type == :rrp
+        Dict(
+            :class => class,
+            :rm => :mv,
+            :obj => :min_risk,
+            :kelly => kelly,
+            :rrp_penalty => rrp_penalty,
+            :rrp_ver => rrp_ver,
+            :string_names => string_names,
+        )
+    end
+
+    portfolio.opt_params[type] = opt_params_dict
+
     return nothing
 end
 
@@ -402,8 +465,8 @@ function opt_port!(
     rf::Real = 1.0329^(1 / 252) - 1,
     l::Real = 2.0,
     rrp_penalty::Real = 1.0,
-    risk_budget = nothing,
     string_names = false,
+    save_opt_params = true,
 )
     @assert(type ∈ PortTypes, "type must be one of $PortTypes")
     @assert(class ∈ PortClasses, "class must be one of $PortClasses")
@@ -435,17 +498,14 @@ function opt_port!(
     if type == :trad
         obj == :sharpe && (@variable(model, k >= 0))
     elseif type == :rp || type == :rrp
-        rb = Vector{eltype(returns)}(undef, N)
-        if isnothing(risk_budget)
-            portfolio.risk_budget_vec = DataFrame(
+        if isempty(portfolio.risk_budget)
+            portfolio.risk_budget = DataFrame(
                 tickers = names(portfolio.returns[!, 2:end]),
                 risk = fill(1 / N, N),
             )
         else
-            risk_budget[!, :risk] ./= sum(risk_budget[!, :risk])
-            portfolio.risk_budget_vec = copy(risk_budget)
+            portfolio.risk_budget[!, :risk] ./= sum(portfolio.risk_budget[!, :risk])
         end
-        rb .= portfolio.risk_budget_vec[!, :risk]
         @variable(model, k >= 0)
     end
 
@@ -471,12 +531,10 @@ function opt_port!(
         _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         ## RP setupt
         if type == :rp
-            _rp_setup(portfolio, N, rb)
+            _rp_setup(portfolio, N)
         end
-    end
-
-    if type == :rrp
-        _rrp_setup(portfolio, covariance, N, rb, rrp_ver, rrp_penalty)
+    elseif type == :rrp
+        _rrp_setup(portfolio, covariance, N, rrp_ver, rrp_penalty)
     end
 
     # Constraints.
@@ -519,20 +577,25 @@ function opt_port!(
         end
 
         portfolio.fail = solvers_tried
-
-        return retval
+    else
+        retval = _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj)
     end
 
-    # Cleanup.
-    _finalise_portfolio(portfolio, rm, type, returns, N, obj, solvers_tried)
-
-    retval = if type == :trad
-        portfolio.p_optimal
-    elseif type == :rp
-        portfolio.rp_optimal
-    elseif type == :rrp
-        portfolio.rrp_optimal
-    end
+    # Save optimisation parameters.
+    _save_opt_params(
+        portfolio,
+        type,
+        class,
+        rm,
+        obj,
+        kelly,
+        rrp_ver,
+        rf,
+        l,
+        rrp_penalty,
+        string_names,
+        save_opt_params,
+    )
 
     return retval
 end

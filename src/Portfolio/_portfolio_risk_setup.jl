@@ -787,8 +787,9 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
     end
 end
 
-function _rp_setup(portfolio, N, rb)
+function _rp_setup(portfolio, N)
     model = portfolio.model
+    rb = portfolio.risk_budget[!, :risk]
     @variable(model, log_w[1:N])
     @constraint(model, dot(rb, log_w) >= 1)
     @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] in MOI.ExponentialCone())
@@ -797,9 +798,11 @@ function _rp_setup(portfolio, N, rb)
 end
 
 const RRPVersions = (:none, :reg, :reg_pen)
-function _rrp_setup(portfolio, covariance, N, rb, rrp_ver, rrp_penalty)
+function _rrp_setup(portfolio, covariance, N, rrp_ver, rrp_penalty)
     G = sqrt(covariance)
     model = portfolio.model
+    rb = portfolio.risk_budget[!, :risk]
+
     @variable(model, psi >= 0)
     @variable(model, gamma >= 0)
     @variable(model, zeta[1:N] .>= 0)
