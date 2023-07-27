@@ -529,7 +529,7 @@ function opt_port!(
     # Returns, mu, covariance.
     returns = Matrix(portfolio.returns[!, 2:end])
     T, N = size(returns)
-    mu = !isempty(portfolio.mu) ? portfolio.mu[!, 2] : nothing
+    mu = !isempty(portfolio.mu) ? portfolio.mu[!, :val] : nothing
     covariance = Matrix(portfolio.cov)
     kurtosis = Matrix(portfolio.kurt)
     skurtosis = Matrix(portfolio.skurt)

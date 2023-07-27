@@ -62,6 +62,8 @@ mutable struct Portfolio{
     ur,
     urcvar,
     urtg,
+    uowa,
+    wowa,
     uk,
     usk,
     urvar,
@@ -163,6 +165,8 @@ mutable struct Portfolio{
     rg_u::ur
     rcvar_u::urcvar
     rtg_u::urtg
+    owa_u::uowa
+    owa_w::wowa
     krt_u::uk
     skrt_u::usk
     rvar_u::urvar
@@ -260,6 +264,8 @@ function Portfolio(;
     rg_u::Real = Inf,
     rcvar_u::Real = Inf,
     rtg_u::Real = Inf,
+    owa_u::Real = Inf,
+    owa_w = DataFrame(),
     krt_u::Real = Inf,
     skrt_u::Real = Inf,
     rvar_u::Real = Inf,
@@ -365,6 +371,8 @@ function Portfolio(;
         rg_u,
         rcvar_u,
         rtg_u,
+        owa_u,
+        owa_w,
         krt_u,
         skrt_u,
         rvar_u,

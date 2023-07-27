@@ -500,6 +500,7 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
     rg_u = portfolio.rg_u
     rcvar_u = portfolio.rcvar_u
     rtg_u = portfolio.rtg_u
+    owa_u = portfolio.owa_u
 
     !(
         rm == :gmd ||
@@ -507,11 +508,13 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
         rm == :rg ||
         rm == :rcvar ||
         rm == :rtg ||
+        rm == :owa ||
         isfinite(gmd_u) ||
         isfinite(tg_u) ||
         isfinite(rg_u) ||
         isfinite(rcvar_u) ||
-        isfinite(rtg_u)
+        isfinite(rtg_u) ||
+        isfinite(owa_u)
     ) && (return nothing)
 
     onesvec = range(1, stop = 1, length = T)
@@ -622,46 +625,77 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
         end
     end
 
-    !(rm == :rtg || isfinite(rtg_u)) && (return nothing)
+    if rm == :rtg || isfinite(rtg_u)
+        alpha = portfolio.alpha
+        a_sim = portfolio.a_sim
+        alpha_i = portfolio.alpha_i
+        beta = portfolio.beta
+        b_sim = portfolio.b_sim
+        beta_i = portfolio.beta_i
 
-    alpha = portfolio.alpha
-    a_sim = portfolio.a_sim
-    alpha_i = portfolio.alpha_i
-    beta = portfolio.beta
-    b_sim = portfolio.b_sim
-    beta_i = portfolio.beta_i
+        isinf(beta) && (beta = alpha)
+        b_sim < 0 && (b_sim = a_sim)
+        isinf(beta_i) && (beta_i = alpha_i)
 
-    isinf(beta) && (beta = alpha)
-    b_sim < 0 && (b_sim = a_sim)
-    isinf(beta_i) && (beta_i = alpha_i)
+        @variable(model, rtga[1:T])
+        @variable(model, rtgb[1:T])
+        @expression(model, rtg_risk, sum(rtga .+ rtgb))
+        rtg_w = owa_rtg(
+            T;
+            alpha_i = alpha_i,
+            alpha = alpha,
+            a_sim = a_sim,
+            beta_i = beta_i,
+            beta = beta,
+            b_sim = b_sim,
+        )
+        @constraint(
+            model,
+            owa * transpose(rtg_w) .<=
+            onesvec * transpose(rtga) + rtgb * transpose(onesvec)
+        )
 
-    @variable(model, rtga[1:T])
-    @variable(model, rtgb[1:T])
-    @expression(model, rtg_risk, sum(rtga .+ rtgb))
-    rtg_w = owa_rtg(
-        T;
-        alpha_i = alpha_i,
-        alpha = alpha,
-        a_sim = a_sim,
-        beta_i = beta_i,
-        beta = beta,
-        b_sim = b_sim,
-    )
-    @constraint(
-        model,
-        owa * transpose(rtg_w) .<= onesvec * transpose(rtga) + rtgb * transpose(onesvec)
-    )
+        if isfinite(rtg_u) && type == :trad
+            if obj == :sharpe
+                @constraint(model, rtg_risk <= rtg_u * model[:k])
+            else
+                @constraint(model, rtg_risk <= rtg_u)
+            end
+        end
 
-    if isfinite(rtg_u) && type == :trad
-        if obj == :sharpe
-            @constraint(model, rtg_risk <= rtg_u * model[:k])
-        else
-            @constraint(model, rtg_risk <= rtg_u)
+        if rm == :rtg
+            @expression(model, risk, rtg_risk)
         end
     end
 
-    if rm == :rtg
-        @expression(model, risk, rtg_risk)
+    !(rm == :owa || isfinite(owa_u)) && (return nothing)
+
+    @variable(model, owa_a[1:T])
+    @variable(model, owa_b[1:T])
+    @expression(model, owa_risk, sum(owa_a .+ owa_b))
+
+    owa_w = portfolio.owa_w
+    if isempty(owa_w)
+        owa_w = owa_gmd(T) / 2
+    else
+        owa_w = portfolio.owa_w[!, :weights]
+    end
+
+    @constraint(
+        model,
+        owa * transpose(owa_w) .<= onesvec * transpose(owa_a) + owa_b * transpose(onesvec)
+    )
+
+    if isfinite(owa_u) && type == :trad
+        if obj == :sharpe
+            @constraint(model, owa_risk <= owa_u * model[:k])
+        else
+            @constraint(model, owa_risk <= owa_u)
+        end
+    end
+
+    if rm == :owa
+        @expression(model, risk, owa_risk)
     end
 
     return nothing
@@ -849,7 +883,7 @@ function _setup_wc(portfolio, obj, N, rf, mu, covariance, u_mu, u_cov)
     # Return uncertainy sets.
     @expression(model, _ret, dot(mu, model[:w]))
     if u_mu == :box
-        d_mu = portfolio.d_mu[!, 2]
+        d_mu = portfolio.d_mu[!, :val]
         @variable(model, abs_w[1:N])
         @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
         @expression(model, ret, _ret - dot(d_mu, abs_w))
