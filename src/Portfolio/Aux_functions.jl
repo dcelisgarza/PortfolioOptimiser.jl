@@ -210,6 +210,32 @@ function dup_elim_sum_matrices(n::Int)
     return d, l, s
 end
 
+const KindBootstrap = (:stationary, :circular, :moving)
+function gen_bootstrap(
+    returns,
+    kind,
+    window = 3,
+    seed = nothing,
+    rng = Random.default_rng(),
+)
+    @assert(kind ∈ KindBootstrap, "kind must be one of $KindBootstrap")
+    !isnothing(seed) && Random.seed!(rng, seed)
+
+    mus = nothing
+    covs = nothing
+
+    return mus, covs
+end
+
+function calc_lo_hi_mu_cov(mus, covs, q, n_sim)
+    mu_l = nothing
+    mu_u = nothing
+    cov_l = nothing
+    cov_u = nothing
+
+    return mu_l, mu_u, cov_l, cov_u
+end
+
 export cokurt,
     scokurt,
     commutation_matrix,
@@ -217,4 +243,5 @@ export cokurt,
     duplication_matrix,
     elimination_matrix,
     summation_matrix,
-    dup_elim_sum_matrices
+    dup_elim_sum_matrices,
+    gen_bootstrap

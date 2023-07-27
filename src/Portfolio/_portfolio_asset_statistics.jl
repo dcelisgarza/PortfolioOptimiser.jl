@@ -32,4 +32,39 @@ function asset_statistics!(
     return nothing
 end
 
+const EllipseTypes = (:stationary, :circular, :moving, :normal)
+const BoxTypes = (EllipseTypes..., :delta)
+function wc_statistics!(
+    portfolio;
+    box = :stationary,
+    ellipse = :stationary,
+    q = 0.05,
+    n_sim = 3_000,
+    window = 3,
+    dmu = 0.1,
+    dcov = 0.1,
+    seed = nothing,
+    rng = Random.default_rng(),
+)
+    @assert(box ∈ BoxTypes, "box must be one of $BoxTypes")
+    @assert(ellipse ∈ EllipseTypes, "ellipse must be one of $EllipseTypes")
+
+    returns = Matrix(portfolio.returns[!, 2:end])
+    T, N = size(returns)
+
+    if box == :normal || box == :delta || ellipse == :normal
+        box == :delta && (mu = vec(mean(returns, dims = 1)))
+        covariance = cov(returns)
+    end
+
+    if box == :stationary || box == :circular || box == :moving
+        mus, covs = gen_bootstrap(returns, box, window, seed, rng)
+
+        mu_l, mu_u, cov_l, cov_u = calc_lo_hi_mu_cov(mus, covs, q, n_sim)
+
+        d_mu = (mu_u - mu_l) / 2
+    elseif box == :normal
+    end
+end
+
 export asset_statistics!

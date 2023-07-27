@@ -78,8 +78,8 @@ test2 = deepcopy(test1)
 asset_statistics!(test1)
 asset_statistics!(test2)
 
-wc1 = opt_port!(test1, type = :wc, u_mu = :none, u_cov = :none, obj = :max_ret)
-mv = opt_port!(test2, type = :trad, kelly = :none, rm = :mv, obj = :max_ret)
+wc1 = opt_port!(test1, type = :wc, u_mu = :none, u_cov = :none, obj = :sharpe)
+mv = opt_port!(test2, type = :trad, kelly = :none, rm = :mv, obj = :sharpe)
 display(hcat(wc1, mv[!, 2], wc1[!, 2] - mv[!, 2], makeunique = true))
 
 test.krt_u = Inf
