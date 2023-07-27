@@ -1,5 +1,18 @@
 const KellyRet = (:exact, :approx, :none)
-function _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
+function _return_setup(
+    portfolio,
+    type,
+    class,
+    kelly,
+    obj,
+    T,
+    rf,
+    returns,
+    mu,
+    u_mu,
+    u_cov,
+    N,
+)
     model = portfolio.model
 
     if type == :trad
@@ -41,7 +54,7 @@ function _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
                 end
             end
         else
-            obj == :min_risk && isempty(mu) && return nothing
+            obj == :min_risk && isnothing(mu) && return nothing
             @expression(model, ret, dot(mu, model[:w]))
             if obj == :sharpe
                 @constraint(model, ret - rf * model[:k] == 1)
@@ -61,8 +74,37 @@ function _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
         elseif kelly == :approx
             @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
         else
-            isempty(mu) && return nothing
+            isnothing(mu) && return nothing
             @expression(model, ret, dot(mu, model[:w]))
+        end
+    elseif type == :wc
+        @expression(model, _ret, dot(mu, model[:w]))
+        if u_mu == :box
+            d_mu = portfolio.d_mu
+            @variable(model, abs_w[1:N])
+            @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
+            @expression(model, ret, _ret - dot(d_mu, abs_w))
+            if obj == :sharpe
+                @constraint(model, ret - rf * model[:k] >= 1)
+            end
+        elseif u_mu == :ellipse
+            k_mu = portfolio.k_mu
+            cov_mu = portfolio.cov_mu
+            G = sqrt(cov_mu)
+            @expression(model, gw, G * model[:w])
+            @variable(model, r_gw[1:N])
+            @variable(model, t_gw)
+            @constraint(model, [i = 1:N], [r_gw[i], t_gw, gw[i]] in MOI.PowerCone(0.5))
+            @constraint(model, sum(r_gw) == t_gw)
+            @expression(model, ret, _ret - k_mu * t_gw)
+            if obj == :sharpe
+                @constraint(model, ret - rf * model[:k] >= 1)
+            end
+        else
+            @expression(model, ret, _ret)
+            if obj == :sharpe
+                @constraint(model, ret - rf * model[:k] >= 1)
+            end
         end
     end
 
@@ -410,6 +452,8 @@ function _save_opt_params(
     rf,
     l,
     rrp_penalty,
+    u_mu,
+    u_cov,
     string_names,
     save_opt_params,
 )
@@ -444,6 +488,17 @@ function _save_opt_params(
             :rrp_ver => rrp_ver,
             :string_names => string_names,
         )
+    elseif type == :wc
+        Dict(
+            :rm => :mv,
+            :obj => obj,
+            :kelly => kelly,
+            :rf => rf,
+            :l => l,
+            :u_mu => u_mu,
+            :u_cov => u_cov,
+            :string_names => string_names,
+        )
     end
 
     portfolio.opt_params[type] = opt_params_dict
@@ -453,7 +508,7 @@ end
 
 const PortClasses = (:classic,)
 const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
-const UncertaintyTypes = (:box, :ellipse)
+const UncertaintyTypes = (:none, :box, :ellipse)
 function opt_port!(
     portfolio::Portfolio;
     type::Symbol = :trad,
@@ -465,6 +520,8 @@ function opt_port!(
     rf::Real = 1.0329^(1 / 252) - 1,
     l::Real = 2.0,
     rrp_penalty::Real = 1.0,
+    u_mu = :box,
+    u_cov = :box,
     string_names = false,
     save_opt_params = true,
 )
@@ -474,6 +531,9 @@ function opt_port!(
     @assert(obj ∈ ObjFuncs, "obj must be one of $ObjFuncs")
     @assert(kelly ∈ KellyRet, "kelly must be one of $KellyRet")
     @assert(rrp_ver ∈ RRPVersions)
+    @assert(u_mu ∈ UncertaintyTypes, "u_mu must be one of $UncertaintyTypes")
+    @assert(u_cov ∈ UncertaintyTypes, "u_cov must be one of $UncertaintyTypes")
+
     @assert(
         portfolio.kind_tracking_err ∈ TrackingErrKinds,
         "portfolio.kind_tracking_err must be one of $TrackingErrKinds"
@@ -484,7 +544,7 @@ function opt_port!(
     # Returns, mu, covariance.
     returns = Matrix(portfolio.returns[!, 2:end])
     T, N = size(returns)
-    mu = !isempty(portfolio.mu) ? portfolio.mu[!, 2] : Vector{eltype(returns)}(undef, 0)
+    mu = !isempty(portfolio.mu) ? portfolio.mu[!, 2] : nothing
     covariance = Matrix(portfolio.cov)
     kurtosis = Matrix(portfolio.kurt)
     skurtosis = Matrix(portfolio.skurt)
@@ -535,11 +595,12 @@ function opt_port!(
         end
     elseif type == :rrp
         _rrp_setup(portfolio, covariance, N, rrp_ver, rrp_penalty)
+    elseif type == :wc
     end
 
     # Constraints.
     ## Return variables.
-    _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
+    _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu, u_mu, u_cov, N)
     ## Linear weight constraints.
     _setup_linear_constraints(portfolio, obj, type)
 
@@ -593,6 +654,8 @@ function opt_port!(
         rf,
         l,
         rrp_penalty,
+        u_mu,
+        u_box,
         string_names,
         save_opt_params,
     )

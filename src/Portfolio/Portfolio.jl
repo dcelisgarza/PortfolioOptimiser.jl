@@ -419,4 +419,4 @@ include("_portfolio_risk_setup.jl")
 # Optimisation functions.
 include("_portfolio_optim_setup.jl")
 
-export AbstractPortfolio, Portfolio#, HCPortfolio, OWAPortfolio
+export AbstractPortfolio, Portfolio
