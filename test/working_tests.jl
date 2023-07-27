@@ -12,8 +12,7 @@ using PortfolioOptimiser,
     LinearAlgebra,
     Clarabel,
     COSMO,
-    GLPK,
-    SparseArrays,
+    # SparseArrays,
     OrderedCollections
 
 A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
@@ -29,7 +28,7 @@ wghts2 ./= sum(wghts2)
 tracking_err_weights = DataFrame(weights = wghts1)
 turnover_weights = DataFrame(weights = wghts2)
 
-test = Portfolio(
+test1 = Portfolio(
     returns = RET,
     # short_u = 0.2,
     # long_u = 1,
@@ -75,8 +74,14 @@ test = Portfolio(
         # :GLPK => Dict(:solver => GLPK.Optmizer, :params => Dict("it_lim" => 2)),
     ),
 )
+test2 = deepcopy(test1)
+asset_statistics!(test1)
+asset_statistics!(test2)
 
-asset_statistics!(test)
+wc1 = opt_port!(test1, type = :wc, u_mu = :none, u_cov = :none, obj = :max_ret)
+mv = opt_port!(test2, type = :trad, kelly = :none, rm = :mv, obj = :max_ret)
+display(hcat(wc1, mv[!, 2], wc1[!, 2] - mv[!, 2], makeunique = true))
+
 test.krt_u = Inf
 test.max_num_assets_kurt = 20
 krt1 = opt_port!(test, type = :trad, rm = :mv, kelly = :exact, obj = :sharpe)
@@ -85,7 +90,7 @@ krt3 = opt_port!(test, type = :trad, rm = :krt, kelly = :exact, obj = :sharpe)
 display(hcat(krt1, krt2, krt3, makeunique = true))
 
 (:none, :reg, :reg_pen)
-rrp1 = opt_port!(test, type = :rrp, rrp_ver = :none)
+rrp1 = opt_port!(test, type = :wc, rrp_ver = :none)
 rrp2 = opt_port!(test, type = :rrp, rrp_ver = :reg)
 rrp3 = opt_port!(test, type = :rrp, rrp_ver = :reg_pen, rrp_penalty = 1000)
 rp1 = opt_port!(test, type = :rp, rm = :mv, kelly = :none)

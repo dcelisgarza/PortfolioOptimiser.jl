@@ -419,6 +419,8 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
         portfolio.rp_optimal
     elseif type == :rrp
         portfolio.rrp_optimal
+    elseif type == :wc
+        portfolio.wc_optimal
     end
 
     return retval
@@ -609,6 +611,8 @@ function opt_port!(
             portfolio.rp_optimal = DataFrame()
         elseif type == :rrp
             portfolio.rp_optimal = DataFrame()
+        elseif type == :wc
+            portfolio.wc_optimal = DataFrame()
         end
 
         portfolio.fail = solvers_tried
@@ -629,7 +633,7 @@ function opt_port!(
         l,
         rrp_penalty,
         u_mu,
-        u_box,
+        u_cov,
         string_names,
         save_opt_params,
     )

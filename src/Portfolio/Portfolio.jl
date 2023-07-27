@@ -289,7 +289,7 @@ function Portfolio(;
     cov_u = DataFrame(),
     cov_mu = DataFrame(),
     cov_sigma = DataFrame(),
-    d_mu::Real = -Inf,
+    d_mu = DataFrame(),
     k_mu::Real = -Inf,
     k_sigma::Real = -Inf,
     # Optimal portfolios.

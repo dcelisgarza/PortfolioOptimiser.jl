@@ -842,12 +842,14 @@ function _rrp_setup(portfolio, covariance, N, rrp_ver, rrp_penalty)
 end
 
 function _setup_wc(portfolio, obj, N, rf, mu, covariance, u_mu, u_cov)
+    obj == :min_risk && isnothing(mu) && return nothing
+
     model = portfolio.model
 
     # Return uncertainy sets.
     @expression(model, _ret, dot(mu, model[:w]))
     if u_mu == :box
-        d_mu = portfolio.d_mu
+        d_mu = portfolio.d_mu[!, 2]
         @variable(model, abs_w[1:N])
         @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
         @expression(model, ret, _ret - dot(d_mu, abs_w))
@@ -856,7 +858,7 @@ function _setup_wc(portfolio, obj, N, rf, mu, covariance, u_mu, u_cov)
         end
     elseif u_mu == :ellipse
         k_mu = portfolio.k_mu
-        cov_mu = portfolio.cov_mu
+        cov_mu = Matrix(portfolio.cov_mu)
         G = sqrt(cov_mu)
         @expression(model, x_gw, G * model[:w])
         @variable(model, r_gw[1:N])
@@ -876,8 +878,8 @@ function _setup_wc(portfolio, obj, N, rf, mu, covariance, u_mu, u_cov)
 
     # Cov uncertainty sets.
     if u_cov == :box
-        cov_u = portfolio.cov_u
-        cov_l = portfolio.cov_l
+        cov_u = Matrix(portfolio.cov_u)
+        cov_l = Matrix(portfolio.cov_l)
         @variable(model, Au[1:N, 1:N] .>= 0, Symmetric)
         @variable(model, Al[1:N, 1:N] .>= 0, Symmetric)
         @expression(model, M1, vcat(Au - Al, transpose(model[:w])))
@@ -891,7 +893,7 @@ function _setup_wc(portfolio, obj, N, rf, mu, covariance, u_mu, u_cov)
         @expression(model, risk, tr(Au * cov_u) - tr(Al * cov_l))
     elseif u_cov == :ellipse
         k_sigma = portfolio.k_sigma
-        G_sigma = sqrt(portfolio.cov_sigma)
+        G_sigma = sqrt(Matrix(portfolio.cov_sigma))
         @variable(model, E1[1:N, 1:N], Symmetric)
         @variable(model, E2[1:N, 1:N], Symmetric)
         @expression(M1, vcat(E1, transpose(model[:w])))
@@ -911,8 +913,8 @@ function _setup_wc(portfolio, obj, N, rf, mu, covariance, u_mu, u_cov)
         @expression(model, risk, tr(covariance * (E1 .+ E2)) + k_sigma * t_ge)
     else
         @variable(model, dev >= 0)
-        @expression(model, risk, dev * dev)
         G = sqrt(covariance)
         @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
+        @expression(model, risk, dev * dev)
     end
 end
