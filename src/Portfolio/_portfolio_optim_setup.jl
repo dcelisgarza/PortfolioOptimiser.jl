@@ -1,5 +1,23 @@
+function _setup_k_and_risk_budged(portfolio, obj, type)
+    model = portfolio.model
+    if obj == :sharpe && (type == :trad || type == :wc)
+        @variable(model, k >= 0)
+    elseif type == :rp || type == :rrp
+        if isempty(portfolio.risk_budget)
+            portfolio.risk_budget = DataFrame(
+                tickers = names(portfolio.returns[!, 2:end]),
+                risk = fill(1 / N, N),
+            )
+        else
+            portfolio.risk_budget[!, :risk] ./= sum(portfolio.risk_budget[!, :risk])
+        end
+        @variable(model, k >= 0)
+    end
+    return nothing
+end
+
 const KellyRet = (:exact, :approx, :none)
-function _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
+function _setup_return(portfolio, type, class, kelly, obj, T, rf, returns, mu)
     model = portfolio.model
 
     if type == :trad
@@ -77,59 +95,6 @@ function _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
     end
 
     return nothing
-end
-
-function _setup_uncertainty_sets(portfolio, obj, N, rf, mu, u_mu, u_cov)
-    model = portfolio.model
-
-    # Return uncertainy sets.
-    @expression(model, _ret, dot(mu, model[:w]))
-    if u_mu == :box
-        d_mu = portfolio.d_mu
-        @variable(model, abs_w[1:N])
-        @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
-        @expression(model, ret, _ret - dot(d_mu, abs_w))
-        if obj == :sharpe
-            @constraint(model, ret - rf * model[:k] >= 1)
-        end
-    elseif u_mu == :ellipse
-        k_mu = portfolio.k_mu
-        cov_mu = portfolio.cov_mu
-        G = sqrt(cov_mu)
-        @expression(model, x_gw, G * model[:w])
-        @variable(model, r_gw[1:N])
-        @variable(model, t_gw)
-        @constraint(model, [i = 1:N], [r_gw[i], t_gw, x_gw[i]] in MOI.PowerCone(0.5))
-        @constraint(model, sum(r_gw) == t_gw)
-        @expression(model, ret, _ret - k_mu * t_gw)
-        if obj == :sharpe
-            @constraint(model, ret - rf * model[:k] >= 1)
-        end
-    else
-        @expression(model, ret, _ret)
-        if obj == :sharpe
-            @constraint(model, ret - rf * model[:k] >= 1)
-        end
-    end
-
-    # Cov uncertainty sets.
-    if u_cov == :box
-        cov_u = portfolio.cov_u
-        cov_l = portfolio.cov_l
-        @variable(model, Au[1:N, 1:N] .>= 0, Symmetric)
-        @variable(model, Al[1:N, 1:N] .>= 0, Symmetric)
-        @expression(model, M1, vcat(Au - Al, transpose(model[:w])))
-        if obj == :sharpe
-            @expression(model, M2, vcat(model[:w], model[:k]))
-        else
-            @expression(model, M2, vcat(model[:w], 1))
-        end
-        @expression(model, M3, hcat(M1, M2))
-        @expression(model, risk, tr(Au * cov_u) - tr(Al * cov_l))
-        @constraint(model, M3 in PSDCone())
-    elseif u_cov == :ellipse
-    else
-    end
 end
 
 function _setup_weights(portfolio, obj, N)
@@ -315,9 +280,9 @@ const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 function _setup_objective_function(portfolio, type, obj, class, kelly, l)
     model = portfolio.model
 
-    if type == :trad
+    if type == :trad || type == :wc
         if obj == :sharpe
-            if class == :classic && (kelly == :exact || kelly == :approx)
+            if type == :trad && class == :classic && (kelly == :exact || kelly == :approx)
                 @objective(model, Max, model[:ret])
             else
                 @objective(model, Min, model[:risk])
@@ -391,18 +356,20 @@ end
 function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj)
     model = portfolio.model
 
-    if rm == :evar
-        portfolio.z_evar = value(portfolio.model[:s_evar])
-    elseif rm == :edar
-        portfolio.z_edar = value(portfolio.model[:s_edar])
-    elseif rm == :rvar
-        portfolio.z_rvar = value(portfolio.model[:s_rvar])
-    elseif rm == :rdar
-        portfolio.z_rdar = value(portfolio.model[:s_rdar])
+    if type == :trad || type == :rp
+        if rm == :evar
+            portfolio.z_evar = value(portfolio.model[:s_evar])
+        elseif rm == :edar
+            portfolio.z_edar = value(portfolio.model[:s_edar])
+        elseif rm == :rvar
+            portfolio.z_rvar = value(portfolio.model[:s_rvar])
+        elseif rm == :rdar
+            portfolio.z_rdar = value(portfolio.model[:s_rdar])
+        end
     end
 
     weights = Vector{eltype(returns)}(undef, N)
-    if type == :trad
+    if type == :trad || type == :wc
         if obj == :sharpe
             val_k = value(model[:k])
             val_k = val_k > 0 ? val_k : 1
@@ -419,8 +386,13 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
             weights .= abs.(weights) / sum_w * sum_short_long
         end
 
-        portfolio.p_optimal =
-            DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+        if type == :trad
+            portfolio.p_optimal =
+                DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+        else
+            portfolio.wc_optimal =
+                DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+        end
     elseif type == :rp || type == :rrp
         weights .= value.(model[:w])
         sum_w = sum(abs.(weights))
@@ -566,25 +538,13 @@ function opt_port!(
 
     @variable(model, w[1:N])
 
-    if type == :trad
-        obj == :sharpe && (@variable(model, k >= 0))
-    elseif type == :rp || type == :rrp
-        if isempty(portfolio.risk_budget)
-            portfolio.risk_budget = DataFrame(
-                tickers = names(portfolio.returns[!, 2:end]),
-                risk = fill(1 / N, N),
-            )
-        else
-            portfolio.risk_budget[!, :risk] ./= sum(portfolio.risk_budget[!, :risk])
-        end
-        @variable(model, k >= 0)
-    end
+    _setup_k_and_risk_budged(portfolio, obj, type)
 
-    _mv_setup(portfolio, covariance, rm, kelly, obj, type)
+    type != :wc && _mv_setup(portfolio, covariance, rm, kelly, obj, type)
 
+    # Risk variables, functions and constraints.
     if type == :trad || type == :rp
         _calc_var_dar_constants(portfolio, rm, T)
-        # Risk variables, functions and constraints.
         ## Mean variance.
         ## Mean Absolute Deviation and Mean Semi Deviation.
         _mad_setup(portfolio, rm, T, returns, mu, obj, type)
@@ -607,19 +567,18 @@ function opt_port!(
     elseif type == :rrp
         _rrp_setup(portfolio, covariance, N, rrp_ver, rrp_penalty)
     elseif type == :wc
+        _setup_wc(portfolio, obj, N, rf, mu, covariance, u_mu, u_cov)
     end
 
     # Constraints.
     ## Return constraints.
-    if type == :trad || type == :rp || type == :rrp
-        _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
-    elseif type == :wc
-        _setup_uncertainty_sets(portfolio, obj, N, rf, mu, u_mu, u_cov)
-    end
+    (type == :trad || type == :rp || type == :rrp) &&
+        _setup_return(portfolio, type, class, kelly, obj, T, rf, returns, mu)
+
     ## Linear weight constraints.
     _setup_linear_constraints(portfolio, obj, type)
 
-    if type == :trad
+    if type == :trad || type == :wc
         ## Weight constraints.
         _setup_weights(portfolio, obj, N)
         ## Minimum number of effective assets.

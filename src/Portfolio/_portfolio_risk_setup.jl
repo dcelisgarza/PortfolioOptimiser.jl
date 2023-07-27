@@ -840,3 +840,79 @@ function _rrp_setup(portfolio, covariance, N, rrp_ver, rrp_penalty)
 
     return nothing
 end
+
+function _setup_wc(portfolio, obj, N, rf, mu, covariance, u_mu, u_cov)
+    model = portfolio.model
+
+    # Return uncertainy sets.
+    @expression(model, _ret, dot(mu, model[:w]))
+    if u_mu == :box
+        d_mu = portfolio.d_mu
+        @variable(model, abs_w[1:N])
+        @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
+        @expression(model, ret, _ret - dot(d_mu, abs_w))
+        if obj == :sharpe
+            @constraint(model, ret - rf * model[:k] >= 1)
+        end
+    elseif u_mu == :ellipse
+        k_mu = portfolio.k_mu
+        cov_mu = portfolio.cov_mu
+        G = sqrt(cov_mu)
+        @expression(model, x_gw, G * model[:w])
+        @variable(model, r_gw[1:N])
+        @variable(model, t_gw)
+        @constraint(model, [i = 1:N], [r_gw[i], t_gw, x_gw[i]] in MOI.PowerCone(0.5))
+        @constraint(model, sum(r_gw) == t_gw)
+        @expression(model, ret, _ret - k_mu * t_gw)
+        if obj == :sharpe
+            @constraint(model, ret - rf * model[:k] >= 1)
+        end
+    else
+        @expression(model, ret, _ret)
+        if obj == :sharpe
+            @constraint(model, ret - rf * model[:k] >= 1)
+        end
+    end
+
+    # Cov uncertainty sets.
+    if u_cov == :box
+        cov_u = portfolio.cov_u
+        cov_l = portfolio.cov_l
+        @variable(model, Au[1:N, 1:N] .>= 0, Symmetric)
+        @variable(model, Al[1:N, 1:N] .>= 0, Symmetric)
+        @expression(model, M1, vcat(Au - Al, transpose(model[:w])))
+        if obj == :sharpe
+            @expression(model, M2, vcat(model[:w], model[:k]))
+        else
+            @expression(model, M2, vcat(model[:w], 1))
+        end
+        @expression(model, M3, hcat(M1, M2))
+        @constraint(model, M3 in PSDCone())
+        @expression(model, risk, tr(Au * cov_u) - tr(Al * cov_l))
+    elseif u_cov == :ellipse
+        k_sigma = portfolio.k_sigma
+        G_sigma = sqrt(portfolio.cov_sigma)
+        @variable(model, E1[1:N, 1:N], Symmetric)
+        @variable(model, E2[1:N, 1:N], Symmetric)
+        @expression(M1, vcat(E1, transpose(model[:w])))
+        if obj == :sharpe
+            @expression(M2, vcat(model[:w], model[:k]))
+        else
+            @expression(M2, vcat(model[:w], 1))
+        end
+        @expression(M3, hcat(M1, M2))
+        @constraint(model, M3 in PSDCone())
+        @constraint(model, E2 in PSDCone())
+        @expression(model, x_ge, G_sigma * vec(E1 .+ E2))
+        @variable(model, r_ge[1:(N * N)])
+        @variable(model, t_ge)
+        @constraint(model, [i = 1:(N * N)], [r_ge[i], t_ge, x_ge[i]] in MOI.PowerCone(0.5))
+        @constraint(model, sum(r_ge) == t_ge)
+        @expression(model, risk, tr(covariance * (E1 .+ E2)) + k_sigma * t_ge)
+    else
+        @variable(model, dev >= 0)
+        @expression(model, risk, dev * dev)
+        G = sqrt(covariance)
+        @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
+    end
+end
