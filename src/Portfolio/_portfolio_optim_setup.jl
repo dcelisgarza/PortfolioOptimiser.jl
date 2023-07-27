@@ -1,18 +1,5 @@
 const KellyRet = (:exact, :approx, :none)
-function _return_setup(
-    portfolio,
-    type,
-    class,
-    kelly,
-    obj,
-    T,
-    rf,
-    returns,
-    mu,
-    u_mu,
-    u_cov,
-    N,
-)
+function _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
     model = portfolio.model
 
     if type == :trad
@@ -77,35 +64,6 @@ function _return_setup(
             isnothing(mu) && return nothing
             @expression(model, ret, dot(mu, model[:w]))
         end
-    elseif type == :wc
-        @expression(model, _ret, dot(mu, model[:w]))
-        if u_mu == :box
-            d_mu = portfolio.d_mu
-            @variable(model, abs_w[1:N])
-            @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
-            @expression(model, ret, _ret - dot(d_mu, abs_w))
-            if obj == :sharpe
-                @constraint(model, ret - rf * model[:k] >= 1)
-            end
-        elseif u_mu == :ellipse
-            k_mu = portfolio.k_mu
-            cov_mu = portfolio.cov_mu
-            G = sqrt(cov_mu)
-            @expression(model, gw, G * model[:w])
-            @variable(model, r_gw[1:N])
-            @variable(model, t_gw)
-            @constraint(model, [i = 1:N], [r_gw[i], t_gw, gw[i]] in MOI.PowerCone(0.5))
-            @constraint(model, sum(r_gw) == t_gw)
-            @expression(model, ret, _ret - k_mu * t_gw)
-            if obj == :sharpe
-                @constraint(model, ret - rf * model[:k] >= 1)
-            end
-        else
-            @expression(model, ret, _ret)
-            if obj == :sharpe
-                @constraint(model, ret - rf * model[:k] >= 1)
-            end
-        end
     end
 
     # Return constraints.
@@ -119,6 +77,59 @@ function _return_setup(
     end
 
     return nothing
+end
+
+function _setup_uncertainty_sets(portfolio, obj, N, rf, mu, u_mu, u_cov)
+    model = portfolio.model
+
+    # Return uncertainy sets.
+    @expression(model, _ret, dot(mu, model[:w]))
+    if u_mu == :box
+        d_mu = portfolio.d_mu
+        @variable(model, abs_w[1:N])
+        @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
+        @expression(model, ret, _ret - dot(d_mu, abs_w))
+        if obj == :sharpe
+            @constraint(model, ret - rf * model[:k] >= 1)
+        end
+    elseif u_mu == :ellipse
+        k_mu = portfolio.k_mu
+        cov_mu = portfolio.cov_mu
+        G = sqrt(cov_mu)
+        @expression(model, x_gw, G * model[:w])
+        @variable(model, r_gw[1:N])
+        @variable(model, t_gw)
+        @constraint(model, [i = 1:N], [r_gw[i], t_gw, x_gw[i]] in MOI.PowerCone(0.5))
+        @constraint(model, sum(r_gw) == t_gw)
+        @expression(model, ret, _ret - k_mu * t_gw)
+        if obj == :sharpe
+            @constraint(model, ret - rf * model[:k] >= 1)
+        end
+    else
+        @expression(model, ret, _ret)
+        if obj == :sharpe
+            @constraint(model, ret - rf * model[:k] >= 1)
+        end
+    end
+
+    # Cov uncertainty sets.
+    if u_cov == :box
+        cov_u = portfolio.cov_u
+        cov_l = portfolio.cov_l
+        @variable(model, Au[1:N, 1:N] .>= 0, Symmetric)
+        @variable(model, Al[1:N, 1:N] .>= 0, Symmetric)
+        @expression(model, M1, vcat(Au - Al, transpose(model[:w])))
+        if obj == :sharpe
+            @expression(model, M2, vcat(model[:w], model[:k]))
+        else
+            @expression(model, M2, vcat(model[:w], 1))
+        end
+        @expression(model, M3, hcat(M1, M2))
+        @expression(model, risk, tr(Au * cov_u) - tr(Al * cov_l))
+        @constraint(model, M3 in PSDCone())
+    elseif u_cov == :ellipse
+    else
+    end
 end
 
 function _setup_weights(portfolio, obj, N)
@@ -599,8 +610,12 @@ function opt_port!(
     end
 
     # Constraints.
-    ## Return variables.
-    _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu, u_mu, u_cov, N)
+    ## Return constraints.
+    if type == :trad || type == :rp || type == :rrp
+        _return_setup(portfolio, type, class, kelly, obj, T, rf, returns, mu)
+    elseif type == :wc
+        _setup_uncertainty_sets(portfolio, obj, N, rf, mu, u_mu, u_cov)
+    end
     ## Linear weight constraints.
     _setup_linear_constraints(portfolio, obj, type)
 
