@@ -73,9 +73,9 @@ function wc_statistics!(
 
         !isnothing(seed) && Random.seed!(rng, seed)
         A = vcat(# Vertically concatenate the vectors into an (n_samples x N^2) matrix.
-            transpose( # Transpose the vectors to turn them into row vectors.
+            transpose.(# Transpose all vectors into row vectors.
                 vec.(# Turn all (N x N) matrices into vectors of length N^2.
-                    rand(# Generate a vector of length n_samples where each entry is a wishart matrix sampled from the covariance (N x N).
+                    rand(# Generate a vector of length n_samples where each entry is a Wishart matrix sampled from the covariance (N x N).
                         Wishart(T, covariance / T),
                         n_samples,
                     )#
