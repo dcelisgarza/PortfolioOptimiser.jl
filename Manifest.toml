@@ -204,9 +204,9 @@ version = "2.9.2+0"
 
 [[deps.HypergeometricFunctions]]
 deps = ["DualNumbers", "LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
-git-tree-sha1 = "83e95aaab9dc184a6dcd9c4c52aa0dc26cd14a1d"
+git-tree-sha1 = "f218fe3736ddf977e0e772bc9a586b2383da2685"
 uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
-version = "0.3.21"
+version = "0.3.23"
 
 [[deps.InlineStrings]]
 deps = ["Parsers"]
@@ -259,9 +259,9 @@ version = "0.21.4"
 
 [[deps.JuMP]]
 deps = ["LinearAlgebra", "MathOptInterface", "MutableArithmetics", "OrderedCollections", "Printf", "SnoopPrecompile", "SparseArrays"]
-git-tree-sha1 = "b0ded4f36829f7cfd4400b11289faf9b4f0b795a"
+git-tree-sha1 = "3cacc9aa90f3313e0375b1c4ac4641c8d57349ef"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
-version = "1.12.0"
+version = "1.13.0"
 
 [[deps.LaTeXStrings]]
 git-tree-sha1 = "f2355693d6778a178ade15952b7ac47a4ff97996"

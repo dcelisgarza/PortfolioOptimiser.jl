@@ -1,3 +1,5 @@
+using Distributions
+
 function asset_statistics!(
     portfolio::Portfolio,
     target_ret::AbstractFloat = 0.0,
@@ -43,6 +45,7 @@ function wc_statistics!(
     window = 3,
     dmu = 0.1,
     dcov = 0.1,
+    n_samples = 10_000,
     seed = nothing,
     rng = Random.default_rng(),
 )
@@ -50,6 +53,7 @@ function wc_statistics!(
     @assert(ellipse ∈ EllipseTypes, "ellipse must be one of $EllipseTypes")
 
     returns = Matrix(portfolio.returns[!, 2:end])
+    nms = names(portfolio.returns)[2:end]
     T, N = size(returns)
 
     if box == :normal || box == :delta || ellipse == :normal
@@ -64,6 +68,12 @@ function wc_statistics!(
 
         d_mu = (mu_u - mu_l) / 2
     elseif box == :normal
+        d_mu = quantile(Normal(), 1 - q / 2) * sqrt(diag.(covariance) / T)
+        d_mu = DataFrame(tickers = nms, val = d_mu)
+
+        !isnothing(seed) && Random.seed!(rng, seed)
+        A = rand(Wishart(T, covariance / T), n_samples)
+        cov_l
     end
 end
 
