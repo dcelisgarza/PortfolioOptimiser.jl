@@ -72,8 +72,29 @@ function wc_statistics!(
         d_mu = DataFrame(tickers = nms, val = d_mu)
 
         !isnothing(seed) && Random.seed!(rng, seed)
-        A = rand(Wishart(T, covariance / T), n_samples)
-        cov_l
+        A = vcat(# Vertically concatenate the vectors into an (n_samples x N^2) matrix.
+            transpose( # Transpose the vectors to turn them into row vectors.
+                vec.(# Turn all (N x N) matrices into vectors of length N^2.
+                    rand(# Generate a vector of length n_samples where each entry is a wishart matrix sampled from the covariance (N x N).
+                        Wishart(T, covariance / T),
+                        n_samples,
+                    )#
+                ),#
+            )...,# Splat the transposed vectors into vcat so they get concatenated into a matrix, else they'd be concatenated into a vector of length n_samples where each entry is a vector of length N^2.
+        )#
+
+        # Each column in A corresponds to an entry in the original Wishart matrix, each row corresponds to a sample. This effectively calculates quantiles accross samples for equivalent entries in the sampled Wishart matrices. We then reshape back into an N x N matrix.
+        cov_l = reshape([quantile(A[:, i], q / 2) for i in 1:(N * N)], N, N)
+        cov_u = reshape([quantile(A[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
+
+        args = ()
+        kwargs = (;)
+        !isposdef(cov_l) && fix_cov(cov_l, args..., kwargs...)
+        !isposdef(cov_u) && fix_cov(cov_u, args..., kwargs...)
+
+        cov_l = DataFrame(cov_l, nms)
+        cov_u = DataFrame(cov_u, nms)
+    elseif box == :delta
     end
 end
 

@@ -233,7 +233,12 @@ function calc_lo_hi_mu_cov(mus, covs, q, n_sim)
     cov_l = nothing
     cov_u = nothing
 
+    println("IMPLEMENT ME")
     return mu_l, mu_u, cov_l, cov_u
+end
+
+function fix_cov(covariance, args...; kwargs...)
+    println("IMPLEMENT ME")
 end
 
 export cokurt,
@@ -244,4 +249,5 @@ export cokurt,
     elimination_matrix,
     summation_matrix,
     dup_elim_sum_matrices,
-    gen_bootstrap
+    gen_bootstrap,
+    fix_cov
