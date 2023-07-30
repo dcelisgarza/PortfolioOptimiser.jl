@@ -214,6 +214,7 @@ const KindBootstrap = (:stationary, :circular, :moving)
 function gen_bootstrap(
     returns,
     kind,
+    n_sim,
     window = 3,
     seed = nothing,
     rng = Random.default_rng(),
@@ -225,23 +226,6 @@ function gen_bootstrap(
     covs = nothing
 
     return mus, covs
-end
-
-function calc_lo_hi_mu_cov(mus, covs, q, n_sim)
-    mu_l = nothing
-    mu_u = nothing
-    cov_l = nothing
-    cov_u = nothing
-
-    println("IMPLEMENT ME")
-    return mu_l, mu_u, cov_l, cov_u
-end
-
-function calc_cov_mu_cov_sigma(mus, covs, q, n_sim)
-    cov_mu = nothing
-    cov_sigma = nothing
-    println("IMPLEMENT ME")
-    return cov_mu, cov_sigma
 end
 
 function fix_cov!(covariance, args...; kwargs...)
