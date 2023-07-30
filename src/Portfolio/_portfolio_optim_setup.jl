@@ -526,11 +526,11 @@ function opt_port!(
 
     portfolio.model = JuMP.Model()
 
-    # Returns, mu, covariance.
+    # Returns, mu, sigma.
     returns = Matrix(portfolio.returns[!, 2:end])
     T, N = size(returns)
     mu = !isempty(portfolio.mu) ? portfolio.mu[!, :val] : nothing
-    covariance = Matrix(portfolio.cov)
+    sigma = Matrix(portfolio.cov)
     kurtosis = Matrix(portfolio.kurt)
     skurtosis = Matrix(portfolio.skurt)
 
@@ -542,7 +542,7 @@ function opt_port!(
 
     _setup_k_and_risk_budged(portfolio, obj, type)
 
-    type != :wc && _mv_setup(portfolio, covariance, rm, kelly, obj, type)
+    type != :wc && _mv_setup(portfolio, sigma, rm, kelly, obj, type)
 
     # Risk variables, functions and constraints.
     if type == :trad || type == :rp
@@ -567,9 +567,9 @@ function opt_port!(
             _rp_setup(portfolio, N)
         end
     elseif type == :rrp
-        _rrp_setup(portfolio, covariance, N, rrp_ver, rrp_penalty)
+        _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     elseif type == :wc
-        _setup_wc(portfolio, obj, N, rf, mu, covariance, u_mu, u_cov)
+        _setup_wc(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
     end
 
     # Constraints.

@@ -45,11 +45,11 @@ function _transform_constraints_sharpe(model, k, fname = "max_sharpe!")
         end
 
         intfType = typeof(constraints[1].set)
-        if intfType <: JuMP.MathOptInterface.EqualTo{<:Number}
+        if intfType <: JuMP.MOI.EqualTo{<:Number}
             intfKey = :value
-        elseif intfType <: JuMP.MathOptInterface.GreaterThan{<:Number}
+        elseif intfType <: JuMP.MOI.GreaterThan{<:Number}
             intfKey = :lower
-        elseif intfType <: JuMP.MathOptInterface.LessThan{<:Number}
+        elseif intfType <: JuMP.MOI.LessThan{<:Number}
             intfKey = :upper
         else
             @warn(
@@ -94,11 +94,11 @@ function _transform_constraints_sharpe(model, k, fname = "max_sharpe!")
         unregister(model, constKey)
         # When we're at the end of the constraints, delete the constraint key and add the new transformed constraints.
 
-        if intfType <: JuMP.MathOptInterface.EqualTo{<:Number}
+        if intfType <: JuMP.MOI.EqualTo{<:Number}
             model[constKey] = @constraint(model, exprArr .== 0, base_name = constName)
-        elseif intfType <: JuMP.MathOptInterface.GreaterThan{<:Number}
+        elseif intfType <: JuMP.MOI.GreaterThan{<:Number}
             model[constKey] = @constraint(model, exprArr .>= 0, base_name = constName)
-        elseif intfType <: JuMP.MathOptInterface.LessThan{<:Number}
+        elseif intfType <: JuMP.MOI.LessThan{<:Number}
             model[constKey] = @constraint(model, exprArr .<= 0, base_name = constName)
         end
     end

@@ -74,8 +74,10 @@ test1 = Portfolio(
         # :GLPK => Dict(:solver => GLPK.Optmizer, :params => Dict("it_lim" => 2)),
     ),
 )
-test2 = deepcopy(test1)
 asset_statistics!(test1)
+wc_statistics!(test1, box = :delta, ellipse = :normal)
+
+test2 = deepcopy(test1)
 asset_statistics!(test2)
 
 wc1 = opt_port!(test1, type = :wc, u_mu = :none, u_cov = :none, obj = :sharpe)

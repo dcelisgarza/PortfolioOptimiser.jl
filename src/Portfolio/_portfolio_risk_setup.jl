@@ -51,7 +51,7 @@ function _calc_var_dar_constants(portfolio, rm, T)
     return nothing
 end
 
-function _mv_setup(portfolio, covariance, rm, kelly, obj, type)
+function _mv_setup(portfolio, sigma, rm, kelly, obj, type)
     dev_u = portfolio.dev_u
 
     !(rm == :mv || kelly == :approx || isfinite(dev_u)) && (return nothing)
@@ -60,7 +60,7 @@ function _mv_setup(portfolio, covariance, rm, kelly, obj, type)
 
     @variable(model, dev >= 0)
     @expression(model, dev_risk, dev * dev)
-    G = sqrt(covariance)
+    G = sqrt(sigma)
     @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
 
     if isfinite(dev_u) && type == :trad
@@ -832,8 +832,8 @@ function _rp_setup(portfolio, N)
 end
 
 const RRPVersions = (:none, :reg, :reg_pen)
-function _rrp_setup(portfolio, covariance, N, rrp_ver, rrp_penalty)
-    G = sqrt(covariance)
+function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
+    G = sqrt(sigma)
     model = portfolio.model
     rb = portfolio.risk_budget[!, :risk]
 
@@ -842,7 +842,7 @@ function _rrp_setup(portfolio, covariance, N, rrp_ver, rrp_penalty)
     @variable(model, zeta[1:N] .>= 0)
     @expression(model, risk, psi - gamma)
     # RRP constraints.
-    @constraint(model, zeta .== covariance * model[:w])
+    @constraint(model, zeta .== sigma * model[:w])
     @constraint(model, sum(model[:w]) == 1)
     @constraint(model, model[:w] >= 0)
     @constraint(
@@ -865,7 +865,7 @@ function _rrp_setup(portfolio, covariance, N, rrp_ver, rrp_penalty)
     elseif rrp_ver == :reg
         @constraint(model, [rho; G * model[:w]] in SecondOrderCone())
     elseif rrp_ver == :reg_pen
-        theta = Diagonal(sqrt.(diag(covariance)))
+        theta = Diagonal(sqrt.(diag(sigma)))
         @constraint(
             model,
             [rho; sqrt(rrp_penalty) * theta * model[:w]] in SecondOrderCone()
@@ -875,7 +875,7 @@ function _rrp_setup(portfolio, covariance, N, rrp_ver, rrp_penalty)
     return nothing
 end
 
-function _setup_wc(portfolio, obj, N, rf, mu, covariance, u_mu, u_cov)
+function _setup_wc(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
     obj == :min_risk && isnothing(mu) && return nothing
 
     model = portfolio.model
@@ -944,10 +944,10 @@ function _setup_wc(portfolio, obj, N, rf, mu, covariance, u_mu, u_cov)
         @variable(model, t_ge)
         @constraint(model, [i = 1:(N * N)], [r_ge[i], t_ge, x_ge[i]] in MOI.PowerCone(0.5))
         @constraint(model, sum(r_ge) == t_ge)
-        @expression(model, risk, tr(covariance * (E1 .+ E2)) + k_sigma * t_ge)
+        @expression(model, risk, tr(sigma * (E1 .+ E2)) + k_sigma * t_ge)
     else
         @variable(model, dev >= 0)
-        G = sqrt(covariance)
+        G = sqrt(sigma)
         @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
         @expression(model, risk, dev * dev)
     end

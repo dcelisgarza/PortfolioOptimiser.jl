@@ -1,4 +1,4 @@
-using SparseArrays
+using SparseArrays, Random
 
 function block_vec_pq(A, p, q)
     mp, nq = size(A)
@@ -40,7 +40,7 @@ end
 
 function cokurt(returns, mean_func::Function = mean, args...; kwargs...)
     nms = names(returns)
-    cols = vec(["$x-$y" for x in nms, y in nms])
+    cols = vec(["$(i)-$(j)" for i in nms, j in nms])
     x = Matrix(returns)
     cokrt = cokurt(x, mean_func, args...; kwargs...)
     df = DataFrame(cokrt, cols)
@@ -59,7 +59,7 @@ end
 
 function cokurt(returns, mu::AbstractArray)
     nms = names(returns)
-    cols = vec(["$x-$y" for x in nms, y in nms])
+    cols = vec(["$(i)-$(j)" for i in nms, j in nms])
     x = Matrix(returns)
     cokrt = cokurt(x, mu)
     df = DataFrame(cokrt, cols)
@@ -94,7 +94,7 @@ function scokurt(
     kwargs...,
 )
     nms = names(returns)
-    cols = vec(["$x-$y" for x in nms, y in nms])
+    cols = vec(["$(i)-$(j)" for i in nms, j in nms])
     x = Matrix(returns)
     scokrt = scokurt(x, target_ret, mean_func, args...; kwargs...)
     df = DataFrame(scokrt, cols)
@@ -120,7 +120,7 @@ function scokurt(
     kwargs...,
 )
     nms = names(returns)
-    cols = vec(["$x-$y" for x in nms, y in nms])
+    cols = vec(["$(x)-$(y)" for x in nms, y in nms])
     x = Matrix(returns)
     scokrt = scokurt(x, mu)
     df = DataFrame(scokrt, cols)
@@ -237,7 +237,14 @@ function calc_lo_hi_mu_cov(mus, covs, q, n_sim)
     return mu_l, mu_u, cov_l, cov_u
 end
 
-function fix_cov(covariance, args...; kwargs...)
+function calc_cov_mu_cov_sigma(mus, covs, q, n_sim)
+    cov_mu = nothing
+    cov_sigma = nothing
+    println("IMPLEMENT ME")
+    return cov_mu, cov_sigma
+end
+
+function fix_cov!(covariance, args...; kwargs...)
     println("IMPLEMENT ME")
 end
 
