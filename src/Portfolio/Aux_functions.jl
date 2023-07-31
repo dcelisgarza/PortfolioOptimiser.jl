@@ -1,4 +1,35 @@
-using SparseArrays, Random
+using SparseArrays, Random, DataFrames
+
+function gen_dataframes(portfolio)
+    nms = portfolio.assets
+    nms2 = vec(["$(i)-$(j)" for i in nms, j in nms])
+
+    df_returns = hcat(
+        DataFrame(timestamp = portfolio.timestamps),
+        DataFrame(portfolio.returns, portfolio.assets),
+    )
+    df_mu = DataFrame(ticker = nms, val = portfolio.mu)
+    df_cov = DataFrame(portfolio.cov, nms)
+    df_kurt = DataFrame(portfolio.kurt, nms2)
+    df_skurt = DataFrame(portfolio.skurt, nms2)
+
+    df_cov_l = DataFrame(portfolio.cov_l, nms)
+    df_cov_u = DataFrame(portfolio.cov_u, nms)
+    df_cov_mu = DataFrame(portfolio.cov_mu, nms)
+    df_cov_sigma = DataFrame(portfolio.cov_sigma, nms2)
+    df_dmu = DataFrame(ticker = nms, val = portfolio.d_mu)
+
+    return df_returns,
+    df_mu,
+    df_cov,
+    df_kurt,
+    df_skurt,
+    df_cov_l,
+    df_cov_u,
+    df_cov_mu,
+    df_cov_sigma,
+    df_dmu
+end
 
 function block_vec_pq(A, p, q)
     mp, nq = size(A)
@@ -38,15 +69,6 @@ function cokurt(x::AbstractMatrix, mean_func::Function = mean, args...; kwargs..
     return cokurt
 end
 
-function cokurt(returns, mean_func::Function = mean, args...; kwargs...)
-    nms = names(returns)
-    cols = vec(["$(i)-$(j)" for i in nms, j in nms])
-    x = Matrix(returns)
-    cokrt = cokurt(x, mean_func, args...; kwargs...)
-    df = DataFrame(cokrt, cols)
-    return df
-end
-
 function cokurt(x::AbstractMatrix, mu::AbstractArray)
     T, N = size(x)
     y = x .- mu
@@ -55,15 +77,6 @@ function cokurt(x::AbstractMatrix, mu::AbstractArray)
     z = kron(o, y) .* kron(y, o)
     cokurt = transpose(z) * z / T
     return cokurt
-end
-
-function cokurt(returns, mu::AbstractArray)
-    nms = names(returns)
-    cols = vec(["$(i)-$(j)" for i in nms, j in nms])
-    x = Matrix(returns)
-    cokrt = cokurt(x, mu)
-    df = DataFrame(cokrt, cols)
-    return df
 end
 
 function scokurt(
@@ -86,21 +99,6 @@ function scokurt(
     return scokurt
 end
 
-function scokurt(
-    returns,
-    mean_func::Function = mean,
-    target_ret::AbstractFloat = 0.0,
-    args...;
-    kwargs...,
-)
-    nms = names(returns)
-    cols = vec(["$(i)-$(j)" for i in nms, j in nms])
-    x = Matrix(returns)
-    scokrt = scokurt(x, target_ret, mean_func, args...; kwargs...)
-    df = DataFrame(scokrt, cols)
-    return df
-end
-
 function scokurt(x::AbstractMatrix, mu::AbstractArray, target_ret::AbstractFloat = 0.0)
     T, N = size(x)
     y = x .- mu
@@ -110,21 +108,6 @@ function scokurt(x::AbstractMatrix, mu::AbstractArray, target_ret::AbstractFloat
     z = kron(o, y) .* kron(y, o)
     scokurt = transpose(z) * z / T
     return scokurt
-end
-
-function scokurt(
-    returns,
-    mu::AbstractArray,
-    target_ret::AbstractFloat = 0.0,
-    args...;
-    kwargs...,
-)
-    nms = names(returns)
-    cols = vec(["$(x)-$(y)" for x in nms, y in nms])
-    x = Matrix(returns)
-    scokrt = scokurt(x, mu)
-    df = DataFrame(scokrt, cols)
-    return df
 end
 
 function commutation_matrix(x::AbstractMatrix)
@@ -241,4 +224,5 @@ export cokurt,
     summation_matrix,
     dup_elim_sum_matrices,
     gen_bootstrap,
-    fix_cov
+    fix_cov!,
+    gen_dataframes

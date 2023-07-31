@@ -1,15 +1,12 @@
-function _setup_k_and_risk_budged(portfolio, obj, type)
+function _setup_k_and_risk_budged(portfolio, obj, N, type)
     model = portfolio.model
     if obj == :sharpe && (type == :trad || type == :wc)
         @variable(model, k >= 0)
     elseif type == :rp || type == :rrp
-        if isempty(portfolio.risk_budget)
-            portfolio.risk_budget = DataFrame(
-                tickers = names(portfolio.returns[!, 2:end]),
-                risk = fill(1 / N, N),
-            )
+        if isempty(portfolio.risk_budget) || isa(portfolio.risk_budget, Real)
+            portfolio.risk_budget = fill(1 / N, N)
         else
-            portfolio.risk_budget[!, :risk] ./= sum(portfolio.risk_budget[!, :risk])
+            portfolio.risk_budget ./= sum(portfolio.risk_budget)
         end
         @variable(model, k >= 0)
     end
@@ -229,10 +226,10 @@ function _setup_tracking_err(portfolio, returns, obj, T)
     tracking_err_flag = false
 
     if kind_tracking_err == :weights && !isempty(tracking_err_weights)
-        benchmark = returns * tracking_err_weights[!, :weights]
+        benchmark = returns * tracking_err_weights
         tracking_err_flag = true
     elseif kind_tracking_err == :returns && !isempty(tracking_err_returns)
-        benchmark = tracking_err_returns[!, :returns]
+        benchmark = tracking_err_returns
         tracking_err_flag = true
     end
 
@@ -264,11 +261,11 @@ function _setup_turnover(portfolio, N, obj)
 
     @variable(model, t_turnov[1:N] >= 0)
     if obj == :sharpe
-        @expression(model, turnov, model[:w] .- turnover_weights[!, :weights] * model[:k])
+        @expression(model, turnov, model[:w] .- turnover_weights * model[:k])
         @constraint(model, [i = 1:N], [t_turnov[i]; turnov[i]] in MOI.NormOneCone(2))
         @constraint(model, t_turnov .<= turnover * model[:k])
     else
-        @expression(model, turnov, model[:w] .- turnover_weights[!, :weights])
+        @expression(model, turnov, model[:w] .- turnover_weights)
         @constraint(model, [i = 1:N], [t_turnov[i]; turnov[i]] in MOI.NormOneCone(2))
         @constraint(model, t_turnov .<= turnover)
     end
@@ -387,11 +384,9 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
         end
 
         if type == :trad
-            portfolio.p_optimal =
-                DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+            portfolio.p_optimal = DataFrame(tickers = portfolio.assets, weights = weights)
         else
-            portfolio.wc_optimal =
-                DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+            portfolio.wc_optimal = DataFrame(tickers = portfolio.assets, weights = weights)
         end
     elseif type == :rp || type == :rrp
         weights .= value.(model[:w])
@@ -399,11 +394,9 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
         sum_w = sum_w > eps() ? sum_w : 1
         weights .= abs.(weights) / sum_w
         if type == :rp
-            portfolio.rp_optimal =
-                DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+            portfolio.rp_optimal = DataFrame(tickers = portfolio.assets, weights = weights)
         else
-            portfolio.rrp_optimal =
-                DataFrame(tickers = names(portfolio.returns)[2:end], weights = weights)
+            portfolio.rrp_optimal = DataFrame(tickers = portfolio.assets, weights = weights)
         end
     end
 
@@ -527,12 +520,12 @@ function opt_port!(
     portfolio.model = JuMP.Model()
 
     # Returns, mu, sigma.
-    returns = Matrix(portfolio.returns[!, 2:end])
+    returns = portfolio.returns
     T, N = size(returns)
-    mu = !isempty(portfolio.mu) ? portfolio.mu[!, :val] : nothing
-    sigma = Matrix(portfolio.cov)
-    kurtosis = Matrix(portfolio.kurt)
-    skurtosis = Matrix(portfolio.skurt)
+    mu = !isempty(portfolio.mu) ? portfolio.mu : nothing
+    sigma = portfolio.cov
+    kurtosis = portfolio.kurt
+    skurtosis = portfolio.skurt
 
     # Model variables.
     model = portfolio.model
@@ -540,7 +533,7 @@ function opt_port!(
 
     @variable(model, w[1:N])
 
-    _setup_k_and_risk_budged(portfolio, obj, type)
+    _setup_k_and_risk_budged(portfolio, obj, N, type)
 
     type != :wc && _mv_setup(portfolio, sigma, rm, kelly, obj, type)
 

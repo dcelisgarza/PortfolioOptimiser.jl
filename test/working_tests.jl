@@ -28,6 +28,19 @@ tickers = names(RET)[2:end]
 mu = ret_model(MRet(), Matrix(RET[!, 2:end]), compound = false)
 sigma = cov(Cov(), Matrix(RET[!, 2:end]))
 
+portfolio1 = Portfolio(
+    returns = RET,
+    solvers = OrderedDict(
+        :COSMO => Dict(:solver => COSMO.Optimizer),
+        :Clarabel => Dict(:solver => Clarabel.Optimizer),
+        :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
+        :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => true)),
+    ),
+)
+asset_statistics!(portfolio1)
+wc_statistics!(portfolio1, box = :normal, ellipse = :normal)
+dfs = gen_dataframes(portfolio1)
+
 @testset "mv" begin
     portfolio1 = Portfolio(
         returns = RET,
@@ -139,7 +152,6 @@ end
     # Mean Semivar
     ## Min Risk
     returns = Matrix(RET[!, 2:end])
-    portfolio1.msv_target = DataFrame()
     msv1 = opt_port!(
         portfolio1,
         type = PTypes[1],
@@ -246,12 +258,51 @@ end
     )
     display(mv1_2)
     @test rmsd(msv1.weights, msv2.weights) < 1e-3
+
+    portfolio1 = Portfolio(
+        returns = RET,
+        msv_target = [],
+        solvers = OrderedDict(
+            :COSMO => Dict(:solver => COSMO.Optimizer),
+            :Clarabel => Dict(:solver => Clarabel.Optimizer),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => true)),
+        ),
+    )
+    asset_statistics!(portfolio1)
+
+    msv1 = opt_port!(
+        portfolio1,
+        type = PTypes[1],
+        rm = RMs[3],
+        obj = ObjF[3],
+        kelly = Kret[1],
+        rf = rf,
+        l = l,
+    )
+    msv2 = EffMeanSemivar(
+        tickers,
+        mu,
+        returns;
+        target = transpose(mu),
+        rf = rf,
+        risk_aversion = 2 * l,
+    )
+    max_sharpe!(msv2, optimiser = COSMO.Optimizer, silent = false)
+    msv1_2 = hcat(
+        msv1,
+        DataFrame(weights2 = msv2.weights),
+        DataFrame(abs_diff = abs.(msv1.weights - msv2.weights)),
+    )
+    display(msv1_2)
+    @test rmsd(msv1.weights, msv2.weights) < 1e-3
 end
 
 @testset "msv target rf" begin
     portfolio1 = Portfolio(
         returns = RET,
-        msv_target = DataFrame(val = fill(rf, length(tickers))),
+        msv_target = fill(rf, length(tickers)),
         solvers = OrderedDict(
             :COSMO => Dict(:solver => COSMO.Optimizer),
             :Clarabel => Dict(:solver => Clarabel.Optimizer),
@@ -380,8 +431,8 @@ wghts1 = rand(N)
 wghts1 ./= sum(wghts1)
 wghts2 = rand(N)
 wghts2 ./= sum(wghts2)
-tracking_err_weights = DataFrame(weights = wghts1)
-turnover_weights = DataFrame(weights = wghts2)
+tracking_err_weights = wghts1
+turnover_weights = wghts2
 
 test1 = Portfolio(
     returns = RET,
@@ -475,7 +526,7 @@ display(hcat(rrp12, rrp22, rrp32, makeunique = true))
 rp1 = opt_port!(test, type = :rp, rm = :mv, kelly = :none)
 rp2 = opt_port!(test, type = :rp, rm = :mv, kelly = :approx)
 
-risk_budget = DataFrame(risk = 100:-5:1)
+risk_budget = 100:-5:1
 tr1 = opt_port!(
     test,
     type = :trad,

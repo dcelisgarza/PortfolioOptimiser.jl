@@ -87,12 +87,12 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     model = portfolio.model
     msv_target = portfolio.msv_target
 
-    abs_dev = if isnothing(msv_target) || isempty(msv_target)
+    abs_dev = if isempty(msv_target) || (isa(msv_target, Real) && isinf(msv_target))
         returns .- transpose(mu)
-    elseif isa(msv_target, Real)
+    elseif isa(msv_target, Real) && isfinite(msv_target)
         returns .- msv_target
     else
-        returns .- transpose(msv_target[!, :val])
+        returns .- transpose(msv_target)
     end
 
     @variable(model, mad[1:T] >= 0)
@@ -283,12 +283,12 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
 
     lpm_target = portfolio.lpm_target
 
-    lpm_t = if isnothing(lpm_target) || isempty(lpm_target)
+    lpm_t = if isempty(lpm_target) || (isa(lpm_target, Real) && isinf(lpm_target))
         rf
-    elseif isa(lpm_target, Real)
+    elseif isa(lpm_target, Real) && isfinite(lpm_target)
         lpm_target
     else
-        transpose(lpm_target[!, :val])
+        transpose(lpm_target)
     end
 
     @variable(model, lpm[1:T] .>= 0)
@@ -695,8 +695,10 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
     owa_w = portfolio.owa_w
     if isempty(owa_w)
         owa_w = owa_gmd(T) / 2
+    elseif isa(owa_w, Vector)
+        owa_w = portfolio.owa_w
     else
-        owa_w = portfolio.owa_w[!, :weights]
+        owa_w = fill(1 / T, T)
     end
 
     @constraint(
@@ -829,7 +831,7 @@ end
 
 function _rp_setup(portfolio, N)
     model = portfolio.model
-    rb = portfolio.risk_budget[!, :risk]
+    rb = portfolio.risk_budget
     @variable(model, log_w[1:N])
     @constraint(model, dot(rb, log_w) >= 1)
     @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] in MOI.ExponentialCone())
@@ -841,7 +843,7 @@ const RRPVersions = (:none, :reg, :reg_pen)
 function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     G = sqrt(sigma)
     model = portfolio.model
-    rb = portfolio.risk_budget[!, :risk]
+    rb = portfolio.risk_budget
 
     @variable(model, psi)
     @variable(model, gamma >= 0)
@@ -898,7 +900,7 @@ function _setup_wc(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
         end
     elseif u_mu == :ellipse
         k_mu = portfolio.k_mu
-        cov_mu = Matrix(portfolio.cov_mu)
+        cov_mu = portfolio.cov_mu
         G = sqrt(cov_mu)
         @expression(model, x_gw, G * model[:w])
         @variable(model, t_gw)
@@ -916,8 +918,8 @@ function _setup_wc(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
 
     # Cov uncertainty sets.
     if u_cov == :box
-        cov_u = Matrix(portfolio.cov_u)
-        cov_l = Matrix(portfolio.cov_l)
+        cov_u = portfolio.cov_u
+        cov_l = portfolio.cov_l
         @variable(model, Au[1:N, 1:N] .>= 0, Symmetric)
         @variable(model, Al[1:N, 1:N] .>= 0, Symmetric)
         @expression(model, M1, vcat(Au - Al, transpose(model[:w])))
@@ -931,7 +933,7 @@ function _setup_wc(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
         @expression(model, risk, tr(Au * cov_u) - tr(Al * cov_l))
     elseif u_cov == :ellipse
         k_sigma = portfolio.k_sigma
-        G_sigma = sqrt(Matrix(portfolio.cov_sigma))
+        G_sigma = sqrt(portfolio.cov_sigma)
         @variable(model, E1[1:N, 1:N], Symmetric)
         @variable(model, E2[1:N, 1:N], Symmetric)
         @expression(M1, vcat(E1, transpose(model[:w])))

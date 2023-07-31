@@ -1,9 +1,11 @@
 
-using DataFrames, JuMP
+using DataFrames, JuMP, Dates
 
 abstract type AbstractPortfolio end
 mutable struct Portfolio{
     # Portfolio characteristics
+    ast,
+    dat,
     r,
     s,
     us,
@@ -12,6 +14,8 @@ mutable struct Portfolio{
     mnea,
     mna,
     mnaf,
+    tfa,
+    tfdat,
     tretf,
     l,
     # Risk parameters
@@ -109,6 +113,8 @@ mutable struct Portfolio{
     tmod,
 } <: AbstractPortfolio
     # Portfolio characteristics.
+    assets::ast
+    timestamps::dat
     returns::r
     short::s
     short_u::us
@@ -117,7 +123,9 @@ mutable struct Portfolio{
     min_number_effective_assets::mnea
     max_number_assets::mna
     max_number_assets_factor::mnaf
-    returns_factors::tretf
+    f_assets::tfa
+    f_timestamps::tfdat
+    f_returns::tretf
     loadings::l
     # Risk parameters.
     msv_target::msvt
@@ -219,7 +227,7 @@ end
 
 function Portfolio(;
     # Portfolio characteristics.
-    returns,
+    returns = DataFrame(),
     short::Bool = false,
     short_u::Real = 0.2,
     long_u::Real = 1.0,
@@ -227,11 +235,11 @@ function Portfolio(;
     min_number_effective_assets::Integer = 0,
     max_number_assets::Integer = 0,
     max_number_assets_factor::Real = 100_000,
-    returns_factors = DataFrame(),
-    loadings = DataFrame(),
+    f_returns = DataFrame(),
+    loadings = Matrix{Float64}(undef, 0, 0),
     # Risk parameters.
-    msv_target = DataFrame(),
-    lpm_target = DataFrame(),
+    msv_target = Inf,
+    lpm_target = Inf,
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
@@ -242,15 +250,15 @@ function Portfolio(;
     max_num_assets_kurt::Integer = 0,
     # Benchmark constraints.
     turnover::Real = Inf,
-    turnover_weights = DataFrame(),
+    turnover_weights = Vector{Float64}(undef, 0),
     kind_tracking_err::Symbol = :weights,
     tracking_err::Real = Inf,
-    tracking_err_returns = DataFrame(),
-    tracking_err_weights = DataFrame(),
+    tracking_err_returns = Vector{Float64}(undef, 0),
+    tracking_err_weights = Vector{Float64}(undef, 0),
     # Risk and return constraints.
     a_mtx_ineq = Matrix{Float64}(undef, 0, 0),
     b_vec_ineq = Vector{Float64}(undef, 0),
-    risk_budget = DataFrame(),
+    risk_budget = Vector{Float64}(undef, 0),
     mu_l::Real = -Inf,
     dev_u::Real = Inf,
     mad_u::Real = Inf,
@@ -271,37 +279,37 @@ function Portfolio(;
     rcvar_u::Real = Inf,
     rtg_u::Real = Inf,
     owa_u::Real = Inf,
-    owa_w = DataFrame(),
+    owa_w = Vector{Float64}(undef, 0),
     krt_u::Real = Inf,
     skrt_u::Real = Inf,
     rvar_u::Real = Inf,
     rdar_u::Real = Inf,
     # Optimisation model inputs.
-    mu = DataFrame(),
-    cov = DataFrame(),
-    kurt = DataFrame(),
-    skurt = DataFrame(),
+    mu = Vector{Float64}(undef, 0),
+    cov = Matrix{Float64}(undef, 0, 0),
+    kurt = Matrix{Float64}(undef, 0, 0),
+    skurt = Matrix{Float64}(undef, 0, 0),
     L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
-    mu_f = DataFrame(),
-    cov_f = DataFrame(),
-    mu_fm = DataFrame(),
-    cov_fm = DataFrame(),
-    mu_bl = DataFrame(),
-    cov_bl = DataFrame(),
-    mu_bl_fm = DataFrame(),
-    cov_bl_fm = DataFrame(),
-    returns_fm = DataFrame(),
+    mu_f = Vector{Float64}(undef, 0),
+    cov_f = Matrix{Float64}(undef, 0, 0),
+    mu_fm = Vector{Float64}(undef, 0),
+    cov_fm = Matrix{Float64}(undef, 0, 0),
+    mu_bl = Vector{Float64}(undef, 0),
+    cov_bl = Matrix{Float64}(undef, 0, 0),
+    mu_bl_fm = Vector{Float64}(undef, 0),
+    cov_bl_fm = Matrix{Float64}(undef, 0, 0),
+    returns_fm = Matrix{Float64}(undef, 0, 0),
     z_evar::Real = -Inf,
     z_edar::Real = -Inf,
     z_rvar::Real = -Inf,
     z_rdar::Real = -Inf,
     # Inputs of Worst Case Optimization Models.
-    cov_l = DataFrame(),
-    cov_u = DataFrame(),
-    cov_mu = DataFrame(),
-    cov_sigma = DataFrame(),
-    d_mu = DataFrame(),
+    cov_l = Matrix{Float64}(undef, 0, 0),
+    cov_u = Matrix{Float64}(undef, 0, 0),
+    cov_mu = Diagonal{Float64}(undef, 0),
+    cov_sigma = Diagonal{Float64}(undef, 0),
+    d_mu = Vector{Float64}(undef, 0),
     k_mu::Real = -Inf,
     k_sigma::Real = -Inf,
     # Optimal portfolios.
@@ -309,16 +317,32 @@ function Portfolio(;
     rp_optimal = DataFrame(),
     rrp_optimal = DataFrame(),
     wc_optimal = DataFrame(),
-    limits = DataFrame(),
-    frontier = DataFrame(),
+    limits = Matrix{Float64}(undef, 0, 0),
+    frontier = Matrix{Float64}(undef, 0, 0),
     # Solutions.
     solvers::AbstractDict = Dict(),
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
 )
+    assets = names(returns)[2:end]
+    timestamps = returns[!, 1]
+    returns = Matrix(returns[!, 2:end])
+
+    if !isempty(f_returns)
+        f_assets = names(f_returns)[2:end]
+        f_timestamps = f_returns[!, 1]
+        f_returns = Matrix(f_returns[!, 2:end])
+    else
+        f_assets = Vector{String}(undef, 0)
+        f_timestamps = Vector{Date}(undef, 0)
+        f_returns = Matrix{eltype(returns)}(undef, 0, 0)
+    end
+
     return Portfolio(
         # Portfolio characteristics.
+        assets,
+        timestamps,
         returns,
         short,
         short_u,
@@ -327,7 +351,9 @@ function Portfolio(;
         min_number_effective_assets,
         max_number_assets,
         max_number_assets_factor,
-        returns_factors,
+        f_assets,
+        f_timestamps,
+        f_returns,
         loadings,
         # Risk parameters.
         msv_target,
