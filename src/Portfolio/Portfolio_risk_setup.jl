@@ -1,26 +1,27 @@
 const RiskMeasures = (
-    :mv,
-    :mad,
-    :msv,
-    :cvar,
-    :wr,
-    :flpm,
-    :slpm,
-    :mdd,
-    :add,
-    :cdar,
-    :uci,
-    :evar,
-    :edar,
-    :rdar,
-    :rvar,
-    :gmd,
-    :tg,
-    :rg,
-    :rcvar,
-    :rtg,
-    :krt,
-    :skrt,
+    :mv,    # _mv
+    :mad,   # _mad
+    :msv,   # _mad
+    :flpm,  # _lpm
+    :slpm,  # _lpm
+    :wr,    # _wr
+    :cvar,  # _var
+    :evar,  # _var
+    :rvar,  # _var
+    :mdd,   # _dar
+    :add,   # _dar
+    :cdar,  # _dar
+    :uci,   # _dar
+    :edar,  # _dar
+    :rdar,  # _dar
+    :krt,   # _krt
+    :skrt,  # _krt
+    :gmd,   # _owa
+    :tg,    # _owa
+    :rg,    # _owa
+    :rcvar, # _owa
+    :rtg,   # _owa
+    :owa,   # _owa
 )
 function _calc_var_dar_constants(portfolio, rm, T)
     !(
@@ -118,15 +119,6 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
 
     @variable(model, sdev)
     @constraint(model, [sdev; mad] in SecondOrderCone())
-    # @expression(model, sdev_risk, sdev * sdev / (T - 1))
-
-    # if isfinite(sdev_u) && type == :trad
-    #     if obj == :sharpe
-    #         @constraint(model, sdev <= sqrt(T - 1) * sdev_u * model[:k])
-    #     else
-    #         @constraint(model, sdev <= sqrt(T - 1) * sdev_u)
-    #     end
-    # end
 
     @expression(model, sdev_risk, sdev / sqrt(T - 1))
 
@@ -140,6 +132,98 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
 
     if rm == :msv
         @expression(model, risk, sdev_risk)
+    end
+
+    return nothing
+end
+
+function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
+    flpm_u = portfolio.flpm_u
+    slpm_u = portfolio.slpm_u
+
+    !(rm == :flpm || rm == :slpm || isfinite(flpm_u) || isfinite(slpm_u)) &&
+        (return nothing)
+
+    model = portfolio.model
+
+    lpm_target = portfolio.lpm_target
+
+    lpm_t = if isempty(lpm_target) || (isa(lpm_target, Real) && isinf(lpm_target))
+        rf
+    elseif isa(lpm_target, Real) && isfinite(lpm_target)
+        lpm_target
+    else
+        transpose(lpm_target)
+    end
+
+    @variable(model, lpm[1:T] .>= 0)
+    !haskey(model, :hist_ret) && (@expression(model, hist_ret, returns * model[:w]))
+
+    if obj == :sharpe || type == :rp
+        @constraint(model, lpm .>= lpm_t * model[:k] .- model[:hist_ret])
+    else
+        @constraint(model, lpm .>= lpm_t .- model[:hist_ret])
+    end
+
+    if rm == :flpm || isfinite(flpm_u)
+        @expression(model, flpm_risk, sum(lpm) / T)
+
+        if isfinite(flpm_u) && type == :trad
+            if obj == :sharpe
+                @constraint(model, flpm_risk <= flpm_u * model[:k])
+            else
+                @constraint(model, flpm_risk <= flpm_u)
+            end
+        end
+
+        if rm == :flpm
+            @expression(model, risk, flpm_risk)
+        end
+    end
+
+    !(rm == :slpm || isfinite(slpm_u)) && (return nothing)
+
+    @variable(model, slpm)
+    @constraint(model, [slpm; lpm] in SecondOrderCone())
+    @expression(model, slpm_risk, slpm / sqrt(T - 1))
+
+    if isfinite(slpm_u) && type == :trad
+        if obj == :sharpe
+            @constraint(model, slpm_risk <= slpm_u * model[:k])
+        else
+            @constraint(model, slpm_risk <= slpm_u)
+        end
+    end
+
+    if rm == :slpm
+        @expression(model, risk, slpm_risk)
+    end
+
+    return nothing
+end
+
+function _wr_setup(portfolio, rm, returns, obj, type)
+    wr_u = portfolio.wr_u
+
+    !(rm == :wr || isfinite(wr_u)) && (return nothing)
+
+    model = portfolio.model
+
+    @variable(model, wr)
+    !haskey(model, :hist_ret) && (@expression(model, hist_ret, returns * model[:w]))
+    @constraint(model, -model[:hist_ret] .<= wr)
+    @expression(model, wr_risk, wr)
+
+    if isfinite(wr_u) && type == :trad
+        if obj == :sharpe
+            @constraint(model, -model[:hist_ret] .<= wr_u * model[:k])
+        else
+            @constraint(model, -model[:hist_ret] .<= wr_u)
+        end
+    end
+
+    if rm == :wr
+        @expression(model, risk, wr_risk)
     end
 
     return nothing
@@ -250,98 +334,6 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
 
     if rm == :rvar
         @expression(model, risk, rvar_risk)
-    end
-
-    return nothing
-end
-
-function _wr_setup(portfolio, rm, returns, obj, type)
-    wr_u = portfolio.wr_u
-
-    !(rm == :wr || isfinite(wr_u)) && (return nothing)
-
-    model = portfolio.model
-
-    @variable(model, wr)
-    !haskey(model, :hist_ret) && (@expression(model, hist_ret, returns * model[:w]))
-    @constraint(model, -model[:hist_ret] .<= wr)
-    @expression(model, wr_risk, wr)
-
-    if isfinite(wr_u) && type == :trad
-        if obj == :sharpe
-            @constraint(model, -model[:hist_ret] .<= wr_u * model[:k])
-        else
-            @constraint(model, -model[:hist_ret] .<= wr_u)
-        end
-    end
-
-    if rm == :wr
-        @expression(model, risk, wr_risk)
-    end
-
-    return nothing
-end
-
-function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
-    flpm_u = portfolio.flpm_u
-    slpm_u = portfolio.slpm_u
-
-    !(rm == :flpm || rm == :slpm || isfinite(flpm_u) || isfinite(slpm_u)) &&
-        (return nothing)
-
-    model = portfolio.model
-
-    lpm_target = portfolio.lpm_target
-
-    lpm_t = if isempty(lpm_target) || (isa(lpm_target, Real) && isinf(lpm_target))
-        rf
-    elseif isa(lpm_target, Real) && isfinite(lpm_target)
-        lpm_target
-    else
-        transpose(lpm_target)
-    end
-
-    @variable(model, lpm[1:T] .>= 0)
-    !haskey(model, :hist_ret) && (@expression(model, hist_ret, returns * model[:w]))
-
-    if obj == :sharpe || type == :rp
-        @constraint(model, lpm .>= lpm_t * model[:k] .- model[:hist_ret])
-    else
-        @constraint(model, lpm .>= lpm_t .- model[:hist_ret])
-    end
-
-    if rm == :flpm || isfinite(flpm_u)
-        @expression(model, flpm_risk, sum(lpm) / T)
-
-        if isfinite(flpm_u) && type == :trad
-            if obj == :sharpe
-                @constraint(model, flpm_risk <= flpm_u * model[:k])
-            else
-                @constraint(model, flpm_risk <= flpm_u)
-            end
-        end
-
-        if rm == :flpm
-            @expression(model, risk, flpm_risk)
-        end
-    end
-
-    !(rm == :slpm || isfinite(slpm_u)) && (return nothing)
-
-    @variable(model, slpm)
-    @constraint(model, [slpm; lpm] in SecondOrderCone())
-    @expression(model, slpm_risk, slpm / sqrt(T - 1))
-
-    if isfinite(slpm_u) && type == :trad
-        if obj == :sharpe
-            @constraint(model, slpm_risk <= slpm_u * model[:k])
-        else
-            @constraint(model, slpm_risk <= slpm_u)
-        end
-    end
-
-    if rm == :slpm
-        @expression(model, risk, slpm_risk)
     end
 
     return nothing
@@ -520,6 +512,114 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     end
 
     return nothing
+end
+
+function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
+    krt_u = portfolio.krt_u
+    skrt_u = portfolio.skrt_u
+
+    !(rm == :krt || rm == :skrt || isfinite(krt_u) || isfinite(skrt_u)) && (return nothing)
+
+    model = portfolio.model
+
+    if rm == :krt || isfinite(krt_u)
+        max_num_assets_kurt = portfolio.max_num_assets_kurt
+        @variable(model, W[1:N, 1:N], Symmetric)
+        @expression(model, M1, vcat(W, transpose(model[:w])))
+        if obj == :sharpe
+            @expression(model, M2, vcat(model[:w], model[:k]))
+        else
+            @expression(model, M2, vcat(model[:w], 1))
+        end
+        @expression(model, M3, hcat(M1, M2))
+        @constraint(model, M3 in PSDCone())
+
+        @variable(model, t_kurt)
+        if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
+            N2 = 2 * N
+            @variable(model, x_kurt[1:N2])
+            @constraint(model, [t_kurt; x_kurt] in SecondOrderCone())
+
+            A = block_vec_pq(kurtosis, N, N)
+            vals_A, vecs_A = eigen(A)
+            vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
+            Bi = Vector{Matrix{eltype(kurtosis)}}(undef, N2)
+            for i in 1:N2
+                B = reshape(real.(sqrt(complex(vals_A[i])) * vecs_A[:, i]), N, N)
+                Bi[i] = B
+            end
+            @constraint(model, [i = 1:N2], x_kurt[i] == tr(Bi[i] * W))
+        else
+            L_2 = portfolio.L_2
+            S_2 = portfolio.S_2
+            sqrt_sigma_4 = sqrt(S_2 * kurtosis * transpose(S_2))
+            @expression(model, zkurt, L_2 * vec(W))
+            @constraint(model, [t_kurt; sqrt_sigma_4 * zkurt] in SecondOrderCone())
+        end
+        @expression(model, kurt_risk, t_kurt)
+
+        if isfinite(krt_u) && type == :trad
+            if obj == :sharpe
+                @constraint(model, kurt_risk <= krt_u * model[:k])
+            else
+                @constraint(model, kurt_risk <= krt_u)
+            end
+        end
+
+        if rm == :krt
+            @expression(model, risk, kurt_risk)
+        end
+    end
+
+    if rm == :skrt || isfinite(skrt_u)
+        max_num_assets_kurt = portfolio.max_num_assets_kurt
+        @variable(model, SW[1:N, 1:N], Symmetric)
+        @expression(model, SM1, vcat(SW, transpose(model[:w])))
+        if obj == :sharpe
+            @expression(model, SM2, vcat(model[:w], model[:k]))
+        else
+            @expression(model, SM2, vcat(model[:w], 1))
+        end
+        @expression(model, SM3, hcat(SM1, SM2))
+        @constraint(model, SM3 in PSDCone())
+
+        @variable(model, t_skurt)
+        if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
+            N2 = 2 * N
+            @variable(model, x_skurt[1:N2])
+            @constraint(model, [t_skurt; x_skurt] in SecondOrderCone())
+
+            A = block_vec_pq(skurtosis, N, N)
+            vals_A, vecs_A = eigen(A)
+            vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
+            SBi = Vector{Matrix{eltype(skurtosis)}}(undef, N2)
+            for i in 1:N2
+                B = reshape(real.(sqrt(complex(vals_A[i])) * vecs_A[:, i]), N, N)
+                SBi[i] = B
+            end
+
+            @constraint(model, [i = 1:N2], x_skurt[i] == tr(SBi[i] * SW))
+        else
+            L_2 = portfolio.L_2
+            S_2 = portfolio.S_2
+            sqrt_sigma_4 = sqrt(S_2 * skurtosis * transpose(S_2))
+            @expression(model, zskurt, L_2 * vec(SW))
+            @constraint(model, [t_skurt; sqrt_sigma_4 * zskurt] in SecondOrderCone())
+        end
+        @expression(model, skurt_risk, t_skurt)
+
+        if isfinite(skrt_u) && type == :trad
+            if obj == :sharpe
+                @constraint(model, skurt_risk <= skrt_u * model[:k])
+            else
+                @constraint(model, skurt_risk <= skrt_u)
+            end
+        end
+
+        if rm == :skrt
+            @expression(model, risk, skurt_risk)
+        end
+    end
 end
 
 function _owa_setup(portfolio, rm, T, returns, obj, type)
@@ -731,114 +831,6 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
     return nothing
 end
 
-function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
-    krt_u = portfolio.krt_u
-    skrt_u = portfolio.skrt_u
-
-    !(rm == :krt || rm == :skrt || isfinite(krt_u) || isfinite(skrt_u)) && (return nothing)
-
-    model = portfolio.model
-
-    if rm == :krt || isfinite(krt_u)
-        max_num_assets_kurt = portfolio.max_num_assets_kurt
-        @variable(model, W[1:N, 1:N], Symmetric)
-        @expression(model, M1, vcat(W, transpose(model[:w])))
-        if obj == :sharpe
-            @expression(model, M2, vcat(model[:w], model[:k]))
-        else
-            @expression(model, M2, vcat(model[:w], 1))
-        end
-        @expression(model, M3, hcat(M1, M2))
-        @constraint(model, M3 in PSDCone())
-
-        @variable(model, t_kurt)
-        if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
-            N2 = 2 * N
-            @variable(model, x_kurt[1:N2])
-            @constraint(model, [t_kurt; x_kurt] in SecondOrderCone())
-
-            A = block_vec_pq(kurtosis, N, N)
-            vals_A, vecs_A = eigen(A)
-            vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
-            Bi = Vector{Matrix{eltype(kurtosis)}}(undef, N2)
-            for i in 1:N2
-                B = reshape(real.(sqrt(complex(vals_A[i])) * vecs_A[:, i]), N, N)
-                Bi[i] = B
-            end
-            @constraint(model, [i = 1:N2], x_kurt[i] == tr(Bi[i] * W))
-        else
-            L_2 = portfolio.L_2
-            S_2 = portfolio.S_2
-            sqrt_sigma_4 = sqrt(S_2 * kurtosis * transpose(S_2))
-            @expression(model, zkurt, L_2 * vec(W))
-            @constraint(model, [t_kurt; sqrt_sigma_4 * zkurt] in SecondOrderCone())
-        end
-        @expression(model, kurt_risk, t_kurt)
-
-        if isfinite(krt_u) && type == :trad
-            if obj == :sharpe
-                @constraint(model, kurt_risk <= krt_u * model[:k])
-            else
-                @constraint(model, kurt_risk <= krt_u)
-            end
-        end
-
-        if rm == :krt
-            @expression(model, risk, kurt_risk)
-        end
-    end
-
-    if rm == :skrt || isfinite(skrt_u)
-        max_num_assets_kurt = portfolio.max_num_assets_kurt
-        @variable(model, SW[1:N, 1:N], Symmetric)
-        @expression(model, SM1, vcat(SW, transpose(model[:w])))
-        if obj == :sharpe
-            @expression(model, SM2, vcat(model[:w], model[:k]))
-        else
-            @expression(model, SM2, vcat(model[:w], 1))
-        end
-        @expression(model, SM3, hcat(SM1, SM2))
-        @constraint(model, SM3 in PSDCone())
-
-        @variable(model, t_skurt)
-        if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
-            N2 = 2 * N
-            @variable(model, x_skurt[1:N2])
-            @constraint(model, [t_skurt; x_skurt] in SecondOrderCone())
-
-            A = block_vec_pq(skurtosis, N, N)
-            vals_A, vecs_A = eigen(A)
-            vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
-            SBi = Vector{Matrix{eltype(skurtosis)}}(undef, N2)
-            for i in 1:N2
-                B = reshape(real.(sqrt(complex(vals_A[i])) * vecs_A[:, i]), N, N)
-                SBi[i] = B
-            end
-
-            @constraint(model, [i = 1:N2], x_skurt[i] == tr(SBi[i] * SW))
-        else
-            L_2 = portfolio.L_2
-            S_2 = portfolio.S_2
-            sqrt_sigma_4 = sqrt(S_2 * skurtosis * transpose(S_2))
-            @expression(model, zskurt, L_2 * vec(SW))
-            @constraint(model, [t_skurt; sqrt_sigma_4 * zskurt] in SecondOrderCone())
-        end
-        @expression(model, skurt_risk, t_skurt)
-
-        if isfinite(skrt_u) && type == :trad
-            if obj == :sharpe
-                @constraint(model, skurt_risk <= skrt_u * model[:k])
-            else
-                @constraint(model, skurt_risk <= skrt_u)
-            end
-        end
-
-        if rm == :skrt
-            @expression(model, risk, skurt_risk)
-        end
-    end
-end
-
 function _rp_setup(portfolio, N)
     model = portfolio.model
     rb = portfolio.risk_budget
@@ -893,7 +885,7 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     return nothing
 end
 
-function _setup_wc(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
+function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
     obj == :min_risk && isnothing(mu) && return nothing
 
     model = portfolio.model

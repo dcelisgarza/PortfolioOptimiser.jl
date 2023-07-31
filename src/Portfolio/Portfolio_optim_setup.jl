@@ -544,18 +544,18 @@ function opt_port!(
         ## Mean variance.
         ## Mean Absolute Deviation and Mean Semi Deviation.
         _mad_setup(portfolio, rm, T, returns, mu, obj, type)
-        ## Conditional and Entropic Value at Risk
-        _var_setup(portfolio, rm, T, returns, obj, type)
-        ## Worst realisation.
-        _wr_setup(portfolio, rm, returns, obj, type)
         ## Lower partial moments, Omega and Sortino ratios.
         _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
+        ## Worst realisation.
+        _wr_setup(portfolio, rm, returns, obj, type)
+        ## Conditional and Entropic Value at Risk
+        _var_setup(portfolio, rm, T, returns, obj, type)
         ## Drawdown, Max Drawdown, Average Drawdown, Conditional Drawdown, Ulcer Index, Entropic Drawdown at Risk
         _drawdown_setup(portfolio, rm, T, returns, obj, type)
-        ## OWA methods
-        _owa_setup(portfolio, rm, T, returns, obj, type)
         ## Kurtosis setup
         _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
+        ## OWA methods
+        _owa_setup(portfolio, rm, T, returns, obj, type)
         ## RP setupt
         if type == :rp
             _rp_setup(portfolio, N)
@@ -563,7 +563,7 @@ function opt_port!(
     elseif type == :rrp
         _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     elseif type == :wc
-        _setup_wc(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
+        _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
     end
 
     # Constraints.
