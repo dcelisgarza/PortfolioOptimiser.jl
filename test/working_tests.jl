@@ -24,6 +24,10 @@ ObjF = PortfolioOptimiser.ObjFuncs
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+tickers = names(RET)[2:end]
+mu = ret_model(MRet(), Matrix(RET[!, 2:end]), compound = false)
+sigma = cov(Cov(), Matrix(RET[!, 2:end]))
+
 @testset "mv" begin
     portfolio1 = Portfolio(
         returns = RET,
@@ -38,10 +42,6 @@ l = 2.0
     asset_statistics!(portfolio1)
 
     # Mean variance
-    tickers = names(RET)[2:end]
-    mu = ret_model(MRet(), Matrix(RET[!, 2:end]), compound = false)
-    sigma = cov(Cov(), Matrix(RET[!, 2:end]))
-
     ## Min Risk
     mv1 = opt_port!(
         portfolio1,
@@ -135,11 +135,6 @@ end
         ),
     )
     asset_statistics!(portfolio1)
-
-    # Mean variance
-    tickers = names(RET)[2:end]
-    mu = ret_model(MRet(), Matrix(RET[!, 2:end]), compound = false)
-    sigma = cov(Cov(), Matrix(RET[!, 2:end]))
 
     # Mean Semivar
     ## Min Risk
@@ -256,6 +251,7 @@ end
 @testset "msv target rf" begin
     portfolio1 = Portfolio(
         returns = RET,
+        msv_target = DataFrame(val = fill(rf, length(tickers))),
         solvers = OrderedDict(
             :COSMO => Dict(:solver => COSMO.Optimizer),
             :Clarabel => Dict(:solver => Clarabel.Optimizer),
@@ -267,14 +263,9 @@ end
     asset_statistics!(portfolio1)
 
     # Mean variance
-    tickers = names(RET)[2:end]
-    mu = ret_model(MRet(), Matrix(RET[!, 2:end]), compound = false)
-    sigma = cov(Cov(), Matrix(RET[!, 2:end]))
-
     # MSV target = rf
     ## Min Risk
     returns = Matrix(RET[!, 2:end])
-    portfolio1.msv_target = DataFrame(val = fill(rf, length(tickers)))
     msv1 = opt_port!(
         portfolio1,
         type = PTypes[1],
