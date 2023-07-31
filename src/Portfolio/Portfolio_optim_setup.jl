@@ -300,7 +300,7 @@ end
 
 const ValidTermination =
     (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
-function _optimize_portfolio(portfolio, N)
+function _optimize_portfolio(portfolio)
     solvers = portfolio.solvers
     model = portfolio.model
 
@@ -588,7 +588,7 @@ function opt_port!(
     _setup_objective_function(portfolio, type, obj, class, kelly, l)
 
     # Optimize.
-    term_status, solvers_tried = _optimize_portfolio(portfolio, N)
+    term_status, solvers_tried = _optimize_portfolio(portfolio)
 
     # Error handling.
     if term_status ∉ ValidTermination || any(.!isfinite.(value.(w)))

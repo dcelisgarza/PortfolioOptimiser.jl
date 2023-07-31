@@ -114,35 +114,38 @@ function owa_rtg(
     return w
 end
 
-function _optimize_owa(model, solvers, sol_params)
+function _optimize_owa(model, solvers)
     term_status = termination_status(model)
     solvers_tried = Dict()
 
-    for (solver_name, solver) in solvers
-        set_optimizer(model, solver)
-        if haskey(sol_params, solver_name)
-            for (attribute, value) in sol_params[solver_name]
+    for (key, val) in solvers
+        if haskey(val, :solver)
+            set_optimizer(model, val[:solver])
+        end
+
+        if haskey(val, :params)
+            for (attribute, value) in val[:params]
                 set_attribute(model, attribute, value)
             end
         end
+
         try
-            optimize!(model)
+            JuMP.optimize!(model)
         catch jump_error
-            push!(solvers_tried, solver_name => Dict("error" => jump_error))
+            push!(solvers_tried, key => Dict(:jump_error => jump_error))
             continue
         end
+
         term_status = termination_status(model)
 
-        if term_status in ValidTermination
-            break
-        end
+        term_status in ValidTermination && break
+
         push!(
             solvers_tried,
-            solver_name => Dict(
-                "objective_val" => objective_value(model),
-                "term_status" => term_status,
-                "sol_params" =>
-                    haskey(sol_params, solver_name) ? sol_params[solver_name] : missing,
+            key => Dict(
+                :objective_val => objective_value(model),
+                :term_status => term_status,
+                :params => haskey(val, :params) ? val[:params] : missing,
             ),
         )
     end
