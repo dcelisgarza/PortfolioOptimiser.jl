@@ -41,12 +41,13 @@ function _setup_return(portfolio, type, class, kelly, obj, T, rf, returns, mu)
                 end
             elseif kelly == :approx
                 if obj == :sharpe
-                    @variable(model, tapprox_kelly >= 0)
+                    @variable(model, tapprox_kelly)
                     @constraint(
                         model,
                         [
                             model[:k] + tapprox_kelly
-                            2 * model[:dev] + model[:k] - tapprox_kelly
+                            2 * model[:dev]
+                            model[:k] - tapprox_kelly
                         ] in SecondOrderCone()
                     )
                     @expression(model, ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)

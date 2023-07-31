@@ -24,10 +24,33 @@ ObjF = PortfolioOptimiser.ObjFuncs
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-tickers = names(RET)[2:end]
-mu = ret_model(MRet(), Matrix(RET[!, 2:end]), compound = false)
-sigma = cov(Cov(), Matrix(RET[!, 2:end]))
+port = Portfolio(
+    returns = RET,
+    solvers = OrderedDict(
+        :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+        :COSMO => Dict(:solver => COSMO.Optimizer),
+        :Clarabel => Dict(:solver => Clarabel.Optimizer),
+        :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
+    ),
+)
+asset_statistics!(port)
+type = :trad
+rm = :msv
 
+# portfolio1 = Portfolio(
+#     returns = RET,
+#     solvers = OrderedDict(
+#         :COSMO => Dict(:solver => COSMO.Optimizer),
+#         :Clarabel => Dict(:solver => Clarabel.Optimizer),
+#         :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
+#         :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => true)),
+#     ),
+# )
+# asset_statistics!(portfolio1)
+# wc_statistics!(portfolio1, box = :normal, ellipse = :normal)
+# dfs = gen_dataframes(portfolio1)
+
+# @testset "mv" begin
 portfolio1 = Portfolio(
     returns = RET,
     solvers = OrderedDict(
@@ -38,103 +61,88 @@ portfolio1 = Portfolio(
     ),
 )
 asset_statistics!(portfolio1)
-wc_statistics!(portfolio1, box = :normal, ellipse = :normal)
-dfs = gen_dataframes(portfolio1)
 
-@testset "mv" begin
-    portfolio1 = Portfolio(
-        returns = RET,
-        solvers = OrderedDict(
-            :COSMO => Dict(:solver => COSMO.Optimizer),
-            :Clarabel => Dict(:solver => Clarabel.Optimizer),
-            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
-            :ECOS =>
-                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => true)),
-        ),
-    )
-    asset_statistics!(portfolio1)
+# Mean variance
+## Min Risk
+mv1 = opt_port!(
+    portfolio1,
+    type = PTypes[1],
+    rm = RMs[1],
+    obj = ObjF[1],
+    kelly = Kret[1],
+    rf = rf,
+    l = l,
+)
+mv2 = EffMeanVar(tickers, mu, sigma; rf = rf, risk_aversion = 2 * l)
+min_risk!(mv2, optimiser = COSMO.Optimizer, silent = false)
+mv1_2 = hcat(
+    mv1,
+    DataFrame(weights2 = mv2.weights),
+    DataFrame(abs_diff = abs.(mv1.weights - mv2.weights)),
+)
+display(mv1_2)
+@test rmsd(mv1.weights, mv2.weights) < 1e-3
 
-    # Mean variance
-    ## Min Risk
-    mv1 = opt_port!(
-        portfolio1,
-        type = PTypes[1],
-        rm = RMs[1],
-        obj = ObjF[1],
-        kelly = Kret[1],
-        rf = rf,
-        l = l,
-    )
-    mv2 = EffMeanVar(tickers, mu, sigma; rf = rf, risk_aversion = 2 * l)
-    min_risk!(mv2, optimiser = COSMO.Optimizer, silent = false)
-    mv1_2 = hcat(
-        mv1,
-        DataFrame(weights2 = mv2.weights),
-        DataFrame(abs_diff = abs.(mv1.weights - mv2.weights)),
-    )
-    display(mv1_2)
-    @test rmsd(mv1.weights, mv2.weights) < 1e-3
+## Max Util
+mv1 = opt_port!(
+    portfolio1,
+    type = PTypes[1],
+    obj = ObjF[2],
+    rm = RMs[1],
+    kelly = Kret[1],
+    rf = rf,
+    l = l,
+)
+mv2 = EffMeanVar(tickers, mu, sigma; rf = rf, risk_aversion = 2 * l)
+max_utility!(mv2, optimiser = COSMO.Optimizer, silent = false)
+mv1_2 = hcat(
+    mv1,
+    DataFrame(weights2 = mv2.weights),
+    DataFrame(abs_diff = abs.(mv1.weights - mv2.weights)),
+)
+display(mv1_2)
+@test rmsd(mv1.weights, mv2.weights) < 1e-3
 
-    ## Max Util
-    mv1 = opt_port!(
-        portfolio1,
-        type = PTypes[1],
-        obj = ObjF[2],
-        rm = RMs[1],
-        kelly = Kret[1],
-        rf = rf,
-        l = l,
-    )
-    mv2 = EffMeanVar(tickers, mu, sigma; rf = rf, risk_aversion = 2 * l)
-    max_utility!(mv2, optimiser = COSMO.Optimizer, silent = false)
-    mv1_2 = hcat(
-        mv1,
-        DataFrame(weights2 = mv2.weights),
-        DataFrame(abs_diff = abs.(mv1.weights - mv2.weights)),
-    )
-    display(mv1_2)
-    @test rmsd(mv1.weights, mv2.weights) < 1e-3
+## Sharpe
+mv1 = opt_port!(
+    portfolio1,
+    type = PTypes[1],
+    obj = ObjF[3],
+    rm = RMs[1],
+    kelly = Kret[1],
+    rf = rf,
+    l = l,
+)
+mv2 = EffMeanVar(tickers, mu, sigma; rf = rf, risk_aversion = 2 * l)
+max_sharpe!(mv2, optimiser = COSMO.Optimizer, silent = false)
+mv1_2 = hcat(
+    mv1,
+    DataFrame(weights2 = mv2.weights),
+    DataFrame(abs_diff = abs.(mv1.weights - mv2.weights)),
+)
+display(mv1_2)
+@test rmsd(mv1.weights, mv2.weights) < 1e-3
 
-    ## Sharpe
-    mv1 = opt_port!(
-        portfolio1,
-        type = PTypes[1],
-        obj = ObjF[3],
-        rm = RMs[1],
-        kelly = Kret[1],
-        rf = rf,
-        l = l,
-    )
-    mv2 = EffMeanVar(tickers, mu, sigma; rf = rf, risk_aversion = 2 * l)
-    max_sharpe!(mv2, optimiser = COSMO.Optimizer, silent = false)
-    mv1_2 = hcat(
-        mv1,
-        DataFrame(weights2 = mv2.weights),
-        DataFrame(abs_diff = abs.(mv1.weights - mv2.weights)),
-    )
-    display(mv1_2)
-    @test rmsd(mv1.weights, mv2.weights) < 1e-3
-
-    ## Max Ret
-    mv1 = opt_port!(
-        portfolio1,
-        type = PTypes[1],
-        obj = ObjF[4],
-        rm = RMs[1],
-        kelly = Kret[1],
-        rf = rf,
-        l = l,
-    )
-    mv2 = EffMeanVar(tickers, mu, sigma; rf = rf, risk_aversion = 2 * l)
-    efficient_risk!(mv2, 10, optimiser = COSMO.Optimizer, silent = false)
-    mv1_2 = hcat(
-        mv1,
-        DataFrame(weights2 = mv2.weights),
-        DataFrame(abs_diff = abs.(mv1.weights - mv2.weights)),
-    )
-    display(mv1_2)
-    @test rmsd(mv1.weights, mv2.weights) < 1e-3
-end
+## Max Ret
+mv1 = opt_port!(
+    portfolio1,
+    type = PTypes[1],
+    obj = ObjF[4],
+    rm = RMs[1],
+    kelly = Kret[1],
+    rf = rf,
+    l = l,
+)
+mv2 = EffMeanVar(tickers, mu, sigma; rf = rf, risk_aversion = 2 * l)
+efficient_risk!(mv2, 10, optimiser = COSMO.Optimizer, silent = false)
+mv1_2 = hcat(
+    mv1,
+    DataFrame(weights2 = mv2.weights),
+    DataFrame(abs_diff = abs.(mv1.weights - mv2.weights)),
+)
+display(mv1_2)
+@test rmsd(mv1.weights, mv2.weights) < 1e-3
+# end
 
 @testset "msv target mu" begin
     portfolio1 = Portfolio(

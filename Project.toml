@@ -21,11 +21,30 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 julia = "1.9"
 
 [extras]
+COSMO = "1e616198-aa4e-51ec-90a2-23f7fbd31d8d"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+Clarabel = "61c947e1-3e6d-4ee4-985a-eec8c727bd6e"
 CovarianceEstimation = "587fd27a-f159-11e8-2dae-1979310e6154"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+ECOS = "e2685f51-7e38-5353-a97d-a921fd2c8199"
+SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+
 
 [targets]
-test = ["Test", "SafeTestsets", "CSV", "DataFrames", "CovarianceEstimation"]
+test = [
+    "Test",
+    "SafeTestsets",
+    "CSV",
+    "DataFrames",
+    "CovarianceEstimation",
+    "COSMO",
+    "Clarabel",
+    "SCS",
+    "ECOS",
+    "TimeSeries",
+    "OrderedCollections",
+]

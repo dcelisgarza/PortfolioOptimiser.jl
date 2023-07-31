@@ -118,13 +118,23 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
 
     @variable(model, sdev)
     @constraint(model, [sdev; mad] in SecondOrderCone())
-    @expression(model, sdev_risk, sdev * sdev / (T - 1))
+    # @expression(model, sdev_risk, sdev * sdev / (T - 1))
+
+    # if isfinite(sdev_u) && type == :trad
+    #     if obj == :sharpe
+    #         @constraint(model, sdev <= sqrt(T - 1) * sdev_u * model[:k])
+    #     else
+    #         @constraint(model, sdev <= sqrt(T - 1) * sdev_u)
+    #     end
+    # end
+
+    @expression(model, sdev_risk, sdev / sqrt(T - 1))
 
     if isfinite(sdev_u) && type == :trad
         if obj == :sharpe
-            @constraint(model, sdev <= sqrt(T - 1) * sdev_u * model[:k])
+            @constraint(model, sdev_risk <= sdev_u * model[:k])
         else
-            @constraint(model, sdev <= sqrt(T - 1) * sdev_u)
+            @constraint(model, sdev_risk <= sdev_u)
         end
     end
 
