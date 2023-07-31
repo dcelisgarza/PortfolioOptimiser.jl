@@ -1,5 +1,3 @@
-using SparseArrays, Random, DataFrames
-
 function gen_dataframes(portfolio)
     nms = portfolio.assets
     nms2 = vec(["$(i)-$(j)" for i in nms, j in nms])
@@ -54,60 +52,6 @@ function block_vec_pq(A, p, q)
     end
 
     return A_vec
-end
-
-function cokurt(x::AbstractMatrix, mean_func::Function = mean, args...; kwargs...)
-    T, N = size(x)
-    mu =
-        !haskey(kwargs, :dims) ? mean_func(x, args...; dims = 1, kwargs...) :
-        mean_func(x, args...; kwargs...)
-    y = x .- mu
-    ex = eltype(y)
-    o = transpose(range(start = one(ex), stop = one(ex), length = N))
-    z = kron(o, y) .* kron(y, o)
-    cokurt = transpose(z) * z / T
-    return cokurt
-end
-
-function cokurt(x::AbstractMatrix, mu::AbstractArray)
-    T, N = size(x)
-    y = x .- mu
-    ex = eltype(y)
-    o = transpose(range(start = one(ex), stop = one(ex), length = N))
-    z = kron(o, y) .* kron(y, o)
-    cokurt = transpose(z) * z / T
-    return cokurt
-end
-
-function scokurt(
-    x::AbstractMatrix,
-    mean_func::Function = mean,
-    target_ret::AbstractFloat = 0.0,
-    args...;
-    kwargs...,
-)
-    T, N = size(x)
-    mu =
-        !haskey(kwargs, :dims) ? mean_func(x, args...; dims = 1, kwargs...) :
-        mean_func(x, args...; kwargs...)
-    y = x .- mu
-    y .= min.(y, target_ret)
-    ex = eltype(y)
-    o = transpose(range(start = one(ex), stop = one(ex), length = N))
-    z = kron(o, y) .* kron(y, o)
-    scokurt = transpose(z) * z / T
-    return scokurt
-end
-
-function scokurt(x::AbstractMatrix, mu::AbstractArray, target_ret::AbstractFloat = 0.0)
-    T, N = size(x)
-    y = x .- mu
-    y .= min.(y, target_ret)
-    ex = eltype(y)
-    o = transpose(range(start = one(ex), stop = one(ex), length = N))
-    z = kron(o, y) .* kron(y, o)
-    scokurt = transpose(z) * z / T
-    return scokurt
 end
 
 function commutation_matrix(x::AbstractMatrix)
@@ -211,18 +155,12 @@ function gen_bootstrap(
     return mus, covs
 end
 
-function fix_cov!(covariance, args...; kwargs...)
-    println("IMPLEMENT ME")
-end
-
-export cokurt,
-    scokurt,
+export gen_dataframes,
+    block_vec_pq,
     commutation_matrix,
     cov_returns,
     duplication_matrix,
     elimination_matrix,
     summation_matrix,
     dup_elim_sum_matrices,
-    gen_bootstrap,
-    fix_cov!,
-    gen_dataframes
+    gen_bootstrap

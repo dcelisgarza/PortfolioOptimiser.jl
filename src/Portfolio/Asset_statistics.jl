@@ -1,4 +1,60 @@
-using Distributions, Random
+function cokurt(x::AbstractMatrix, mean_func::Function = mean, args...; kwargs...)
+    T, N = size(x)
+    mu =
+        !haskey(kwargs, :dims) ? mean_func(x, args...; dims = 1, kwargs...) :
+        mean_func(x, args...; kwargs...)
+    y = x .- mu
+    ex = eltype(y)
+    o = transpose(range(start = one(ex), stop = one(ex), length = N))
+    z = kron(o, y) .* kron(y, o)
+    cokurt = transpose(z) * z / T
+    return cokurt
+end
+
+function cokurt(x::AbstractMatrix, mu::AbstractArray)
+    T, N = size(x)
+    y = x .- mu
+    ex = eltype(y)
+    o = transpose(range(start = one(ex), stop = one(ex), length = N))
+    z = kron(o, y) .* kron(y, o)
+    cokurt = transpose(z) * z / T
+    return cokurt
+end
+
+function scokurt(
+    x::AbstractMatrix,
+    mean_func::Function = mean,
+    target_ret::AbstractFloat = 0.0,
+    args...;
+    kwargs...,
+)
+    T, N = size(x)
+    mu =
+        !haskey(kwargs, :dims) ? mean_func(x, args...; dims = 1, kwargs...) :
+        mean_func(x, args...; kwargs...)
+    y = x .- mu
+    y .= min.(y, target_ret)
+    ex = eltype(y)
+    o = transpose(range(start = one(ex), stop = one(ex), length = N))
+    z = kron(o, y) .* kron(y, o)
+    scokurt = transpose(z) * z / T
+    return scokurt
+end
+
+function scokurt(x::AbstractMatrix, mu::AbstractArray, target_ret::AbstractFloat = 0.0)
+    T, N = size(x)
+    y = x .- mu
+    y .= min.(y, target_ret)
+    ex = eltype(y)
+    o = transpose(range(start = one(ex), stop = one(ex), length = N))
+    z = kron(o, y) .* kron(y, o)
+    scokurt = transpose(z) * z / T
+    return scokurt
+end
+
+function fix_cov!(covariance, args...; kwargs...)
+    println("IMPLEMENT ME")
+end
 
 function asset_statistics!(
     portfolio::Portfolio,
@@ -131,4 +187,4 @@ function wc_statistics!(
     return nothing
 end
 
-export asset_statistics!, wc_statistics!
+export cokurt, scokurt, asset_statistics!, wc_statistics!, fix_cov!

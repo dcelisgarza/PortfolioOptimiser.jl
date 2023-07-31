@@ -1,6 +1,3 @@
-
-using DataFrames, JuMP, Dates
-
 abstract type AbstractPortfolio end
 mutable struct Portfolio{
     # Portfolio characteristics
@@ -453,12 +450,5 @@ function Portfolio(;
         model,
     )
 end
-
-# Asset statistics.
-include("_portfolio_asset_statistics.jl")
-# Risk constants and functions.
-include("_portfolio_risk_setup.jl")
-# Optimisation functions.
-include("_portfolio_optim_setup.jl")
 
 export AbstractPortfolio, Portfolio

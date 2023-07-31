@@ -29,7 +29,7 @@ end
 
 function owa_cvar(T, alpha = 0.05)
     k = Int(ceil(T * alpha))
-    w = zeros(T)
+    w = Vector(undef, T)
     w[1:(k - 1)] .= -1 / (T * alpha)
     w[k] = -1 - sum(w[1:(k - 1)])
 
@@ -48,7 +48,7 @@ end
 function owa_tg(T; alpha_i = 0.0001, alpha = 0.05, a_sim = 100)
     alphas = range(start = alpha_i, stop = alpha, length = a_sim)
     n = length(alphas)
-    w = Vector{Float64}(undef, n)
+    w = Vector(undef, n)
 
     w[1] = alphas[2] * alphas[1] / alphas[n]^2
     for i in 2:(n - 1)
@@ -56,7 +56,7 @@ function owa_tg(T; alpha_i = 0.0001, alpha = 0.05, a_sim = 100)
     end
     w[n] = (alphas[n] - alphas[n - 1]) / alphas[n]
 
-    w = owa_wcvar(T, alphas, w)
+    w .= owa_wcvar(T, alphas, w)
 
     return w
 end
@@ -78,7 +78,7 @@ end
 function owa_rcvar(T; alpha = 0.05, beta = nothing)
     isnothing(beta) && (beta = alpha)
 
-    w = owa_cvar(T, alpha) - reverse(owa_cvar(T, beta))
+    w = owa_cvar(T, alpha) .- reverse(owa_cvar(T, beta))
 
     return w
 end
@@ -89,7 +89,7 @@ function owa_wcvrg(T, alphas, weights_a, betas = nothing, weights_b = nothing)
         weights_b = weights_a
     end
 
-    w = owa_wcvar(T, alphas, weights_a) - reverse(owa_wcvar(T, betas, weights_b))
+    w = owa_wcvar(T, alphas, weights_a) .- reverse(owa_wcvar(T, betas, weights_b))
 
     return w
 end
@@ -108,7 +108,7 @@ function owa_rtg(
     isnothing(beta_i) && (beta_i = alpha_i)
 
     w =
-        owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) -
+        owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) .-
         reverse(owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim))
 
     return w
