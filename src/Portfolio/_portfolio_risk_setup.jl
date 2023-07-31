@@ -122,9 +122,9 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
 
     if isfinite(sdev_u) && type == :trad
         if obj == :sharpe
-            @constraint(model, sdev <= sdev_u * model[:k])
+            @constraint(model, sdev <= sqrt(T - 1) * sdev_u * model[:k])
         else
-            @constraint(model, sdev <= sdev_u)
+            @constraint(model, sdev <= sqrt(T - 1) * sdev_u)
         end
     end
 
