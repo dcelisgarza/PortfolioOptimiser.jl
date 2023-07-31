@@ -281,7 +281,7 @@ function max_utility!(
 )
     termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
 
-    risk_aversion = _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
+    # risk_aversion = _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
 
     model = portfolio.model
 

@@ -218,20 +218,13 @@ function owa_l_moment_crm(
             @constraint(model, x .+ theta .>= 0)
             @objective(model, Max, sum(t))
         elseif method == :mss
-            @variable(model, r[1:T])
             @variable(model, t)
-            @constraint(model, [i = 1:T], [r[i], t, theta[i]] in MOI.PowerCone(1 / 2))
-            @constraint(model, sum(r) == t)
+            @constraint(model, [t; theta] in SecondOrderCone())
             @objective(model, Min, t)
         elseif method == :msd
-            @variable(model, r[1:(T - 1)])
             @variable(model, t)
-            @constraint(
-                model,
-                [i = 1:(T - 1)],
-                [r[i], t, theta[i + 1] - theta[i]] in MOI.PowerCone(1 / 2)
-            )
-            @constraint(model, sum_r_eqt, sum(r) == t)
+            @expression(model, theta_diff, theta[2:end] .- theta[1:(end - 1)])
+            @constraint(model, [t; theta_diff] in SecondOrderCone())
             @objective(model, Min, t)
         end
 

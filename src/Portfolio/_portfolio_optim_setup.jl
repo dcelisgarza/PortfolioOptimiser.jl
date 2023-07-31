@@ -16,7 +16,7 @@ function _setup_k_and_risk_budged(portfolio, obj, type)
     return nothing
 end
 
-const KellyRet = (:exact, :approx, :none)
+const KellyRet = (:none, :approx, :exact)
 function _setup_return(portfolio, type, class, kelly, obj, T, rf, returns, mu)
     model = portfolio.model
 
@@ -331,7 +331,7 @@ function _optimize_portfolio(portfolio, N)
         term_status = termination_status(model)
 
         all_finite_weights = all(isfinite.(value.(model[:w])))
-        all_non_zero_weights = all(abs.(0.0 .- value.(model[:w])) .> N^2 * eps())
+        all_non_zero_weights = all(abs.(0.0 .- value.(model[:w])) .> eps())
 
         term_status in ValidTermination &&
             all_finite_weights &&
@@ -382,7 +382,7 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
         sum_short_long = portfolio.sum_short_long
         if short == false
             sum_w = sum(abs.(weights))
-            sum_w = sum_w > N^2 * eps() ? sum_w : 1
+            sum_w = sum_w > eps() ? sum_w : 1
             weights .= abs.(weights) / sum_w * sum_short_long
         end
 
@@ -396,7 +396,7 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
     elseif type == :rp || type == :rrp
         weights .= value.(model[:w])
         sum_w = sum(abs.(weights))
-        sum_w = sum_w > N^2 * eps() ? sum_w : 1
+        sum_w = sum_w > eps() ? sum_w : 1
         weights .= abs.(weights) / sum_w
         if type == :rp
             portfolio.rp_optimal =

@@ -58,10 +58,10 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj, type)
 
     model = portfolio.model
 
-    @variable(model, dev >= 0)
-    @expression(model, dev_risk, dev * dev)
+    @variable(model, dev)
     G = sqrt(sigma)
     @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
+    @expression(model, dev_risk, dev * dev)
 
     if isfinite(dev_u) && type == :trad
         if obj == :sharpe
@@ -85,10 +85,18 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     !(rm == :mad || rm == :msv || isfinite(mad_u) || isfinite(sdev_u)) && (return nothing)
 
     model = portfolio.model
+    msv_target = portfolio.msv_target
+
+    abs_dev = if isnothing(msv_target) || isempty(msv_target)
+        returns .- transpose(mu)
+    elseif isa(msv_target, Real)
+        returns .- msv_target
+    else
+        returns .- transpose(msv_target[!, :val])
+    end
 
     @variable(model, mad[1:T] >= 0)
-    abs_dev = returns .- transpose(mu)
-    @constraint(model, abs_dev * model[:w] >= -mad)
+    @constraint(model, abs_dev * model[:w] .>= -mad)
 
     if rm == :mad || isfinite(mad_u)
         @expression(model, mad_risk, sum(mad) / T)
@@ -108,15 +116,15 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
 
     !(rm == :msv || isfinite(sdev_u)) && (return nothing)
 
-    @variable(model, sdev >= 0)
+    @variable(model, sdev)
     @constraint(model, [sdev; mad] in SecondOrderCone())
-    @expression(model, sdev_risk, sdev / sqrt(T - 1))
+    @expression(model, sdev_risk, sdev * sdev / (T - 1))
 
     if isfinite(sdev_u) && type == :trad
         if obj == :sharpe
-            @constraint(model, sdev_risk <= sdev_u * model[:k])
+            @constraint(model, sdev <= sdev_u * model[:k])
         else
-            @constraint(model, sdev_risk <= sdev_u)
+            @constraint(model, sdev <= sdev_u)
         end
     end
 
@@ -273,13 +281,23 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
 
     model = portfolio.model
 
+    lpm_target = portfolio.lpm_target
+
+    lpm_t = if isnothing(lpm_target) || isempty(lpm_target)
+        rf
+    elseif isa(lpm_target, Real)
+        lpm_target
+    else
+        transpose(lpm_target[!, :val])
+    end
+
     @variable(model, lpm[1:T] .>= 0)
     !haskey(model, :hist_ret) && (@expression(model, hist_ret, returns * model[:w]))
 
     if obj == :sharpe || type == :rp
-        @constraint(model, lpm .>= rf * model[:k] .- model[:hist_ret])
+        @constraint(model, lpm .>= lpm_t * model[:k] .- model[:hist_ret])
     else
-        @constraint(model, lpm .>= rf .- model[:hist_ret])
+        @constraint(model, lpm .>= lpm_t .- model[:hist_ret])
     end
 
     if rm == :flpm || isfinite(flpm_u)
@@ -300,7 +318,7 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
 
     !(rm == :slpm || isfinite(slpm_u)) && (return nothing)
 
-    @variable(model, slpm >= 0)
+    @variable(model, slpm)
     @constraint(model, [slpm; lpm] in SecondOrderCone())
     @expression(model, slpm_risk, slpm / sqrt(T - 1))
 
@@ -405,7 +423,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     end
 
     if rm == :uci || isfinite(uci_u)
-        @variable(model, uci >= 0)
+        @variable(model, uci)
         @constraint(model, [uci; dd[2:end]] in SecondOrderCone())
         @expression(model, uci_risk, uci / sqrt(T))
 
@@ -725,13 +743,8 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
             N2 = 2 * N
             @variable(model, x_kurt[1:N2])
-            @variable(model, r_kurt[1:N2])
-            @constraint(
-                model,
-                [i = 1:N2],
-                [r_kurt[i], t_kurt, x_kurt[i]] in MOI.PowerCone(0.5)
-            )
-            @constraint(model, sum(r_kurt) == t_kurt)
+            @constraint(model, [t_kurt; x_kurt] in SecondOrderCone())
+
             A = block_vec_pq(kurtosis, N, N)
             vals_A, vecs_A = eigen(A)
             vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
@@ -745,7 +758,6 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             L_2 = portfolio.L_2
             S_2 = portfolio.S_2
             sqrt_sigma_4 = sqrt(S_2 * kurtosis * transpose(S_2))
-            @constraint(model, t_kurt >= 0)
             @expression(model, zkurt, L_2 * vec(W))
             @constraint(model, [t_kurt; sqrt_sigma_4 * zkurt] in SecondOrderCone())
         end
@@ -780,13 +792,8 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
             N2 = 2 * N
             @variable(model, x_skurt[1:N2])
-            @variable(model, r_skurt[1:N2])
-            @constraint(
-                model,
-                [i = 1:N2],
-                [r_skurt[i], t_skurt, x_skurt[i]] in MOI.PowerCone(0.5)
-            )
-            @constraint(model, sum(r_skurt) == t_skurt)
+            @constraint(model, [t_skurt; x_skurt] in SecondOrderCone())
+
             A = block_vec_pq(skurtosis, N, N)
             vals_A, vecs_A = eigen(A)
             vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
@@ -801,7 +808,6 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             L_2 = portfolio.L_2
             S_2 = portfolio.S_2
             sqrt_sigma_4 = sqrt(S_2 * skurtosis * transpose(S_2))
-            @constraint(model, t_skurt >= 0)
             @expression(model, zskurt, L_2 * vec(SW))
             @constraint(model, [t_skurt; sqrt_sigma_4 * zskurt] in SecondOrderCone())
         end
@@ -837,7 +843,7 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     model = portfolio.model
     rb = portfolio.risk_budget[!, :risk]
 
-    @variable(model, psi >= 0)
+    @variable(model, psi)
     @variable(model, gamma >= 0)
     @variable(model, zeta[1:N] .>= 0)
     @expression(model, risk, psi - gamma)
@@ -856,7 +862,7 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     )
     # RRP version constraints
     if rrp_ver == :reg || rrp_ver == :reg_pen
-        @variable(model, rho >= 0)
+        @variable(model, rho)
         @constraint(model, [2 * psi; 2 * G * model[:w]; -2 * rho] in SecondOrderCone())
     end
 
@@ -895,10 +901,8 @@ function _setup_wc(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
         cov_mu = Matrix(portfolio.cov_mu)
         G = sqrt(cov_mu)
         @expression(model, x_gw, G * model[:w])
-        @variable(model, r_gw[1:N])
         @variable(model, t_gw)
-        @constraint(model, [i = 1:N], [r_gw[i], t_gw, x_gw[i]] in MOI.PowerCone(0.5))
-        @constraint(model, sum(r_gw) == t_gw)
+        @constraint(model, [t_gw; x_gw] in SecondOrderCone())
         @expression(model, ret, _ret - k_mu * t_gw)
         if obj == :sharpe
             @constraint(model, ret - rf * model[:k] >= 1)
@@ -940,13 +944,11 @@ function _setup_wc(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
         @constraint(model, M3 in PSDCone())
         @constraint(model, E2 in PSDCone())
         @expression(model, x_ge, G_sigma * vec(E1 .+ E2))
-        @variable(model, r_ge[1:(N * N)])
         @variable(model, t_ge)
-        @constraint(model, [i = 1:(N * N)], [r_ge[i], t_ge, x_ge[i]] in MOI.PowerCone(0.5))
-        @constraint(model, sum(r_ge) == t_ge)
+        @constraint(model, [t_ge; x_gw] in SecondOrderCone())
         @expression(model, risk, tr(sigma * (E1 .+ E2)) + k_sigma * t_ge)
     else
-        @variable(model, dev >= 0)
+        @variable(model, dev)
         G = sqrt(sigma)
         @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
         @expression(model, risk, dev * dev)

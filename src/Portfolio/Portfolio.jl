@@ -15,6 +15,8 @@ mutable struct Portfolio{
     tretf,
     l,
     # Risk parameters
+    msvt,
+    lpmt,
     ai,
     a,
     as,
@@ -118,6 +120,8 @@ mutable struct Portfolio{
     returns_factors::tretf
     loadings::l
     # Risk parameters.
+    msv_target::msvt
+    lpm_target::lpmt
     alpha_i::ai
     alpha::a
     a_sim::as
@@ -226,6 +230,8 @@ function Portfolio(;
     returns_factors = DataFrame(),
     loadings = DataFrame(),
     # Risk parameters.
+    msv_target = DataFrame(),
+    lpm_target = DataFrame(),
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
@@ -324,6 +330,8 @@ function Portfolio(;
         returns_factors,
         loadings,
         # Risk parameters.
+        msv_target,
+        lpm_target,
         alpha_i,
         alpha,
         a_sim,

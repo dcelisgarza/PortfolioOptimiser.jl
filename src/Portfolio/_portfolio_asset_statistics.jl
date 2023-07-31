@@ -36,6 +36,9 @@ end
 
 const EllipseTypes = (:stationary, :circular, :moving, :normal)
 const BoxTypes = (EllipseTypes..., :delta)
+function vec_of_vecs_to_mtx(x::AbstractVector{AbstractVector})
+    return vcat(transpose.(x)...)
+end
 function wc_statistics!(
     portfolio;
     box = :stationary,
@@ -76,11 +79,11 @@ function wc_statistics!(
 
     if calc_box
         if box == :stationary || box == :circular || box == :moving
-            mu_s = vcat(transpose.(mus)...)
+            mu_s = vec_of_vecs_to_mtx(mus)
             mu_l = [quantile(mu_s[:, i], q / 2) for i in 1:N]
             mu_u = [quantile(mu_s[:, i], 1 - q / 2) for i in 1:N]
 
-            cov_s = vcat(transpose.(vec.(covs))...)
+            cov_s = vec_of_vecs_to_mtx(vec.(covs))
             cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)], N, N)
             cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
 
@@ -93,18 +96,8 @@ function wc_statistics!(
         elseif box == :normal
             !isnothing(seed) && Random.seed!(rng, seed)
             d_mu = cquantile(Normal(), q / 2) * sqrt.(diag(sigma) / T)
-            cov_s = vcat(# Vertically concatenate the vectors into an (n_samples x N^2) matrix.
-                transpose.(# Transpose all vectors into row vectors.
-                    vec.(# Turn all (N x N) matrices into vectors of length N^2.
-                        rand(# Generate a vector of length n_samples where each entry is a Wishart matrix sampled from the sigma (N x N).
-                            Wishart(T, sigma / T),
-                            n_samples,
-                        )#
-                    ),#
-                )...,# Splat the transposed vectors into vcat so they get concatenated into a matrix, else they'd be concatenated into a vector of length n_samples where each entry is a vector of length N^2.
-            )#
+            cov_s = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, sigma / T), n_samples)))
 
-            # Each column in cov_s corresponds to an entry in the original Wishart matrix, each row corresponds to a sample. This effectively calculates quantiles accross samples for equivalent entries in the sampled Wishart matrices. We then reshape back into an N x N matrix.
             cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)], N, N)
             cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
 
@@ -121,15 +114,9 @@ function wc_statistics!(
 
     if calc_ellipse
         if ellipse == :stationary || ellipse == :circular || ellipse == :moving
-            cov_mu = Diagonal(cov(vcat(transpose.(mus)...) .- transpose(mu)))
+            cov_mu = Diagonal(cov(vec_of_vecs_to_mtx([mu_s .- mu for mu_s in mus])))
             cov_sigma = Diagonal(
-                cov(
-                    vcat(
-                        [
-                            transpose(vec.(cov_s)) .- transpose(vec(cov)) for cov_s in covs
-                        ]...,
-                    ),
-                ),
+                cov(vec_of_vecs_to_mtx([vec(cov_s) .- vec(cov) for cov_s in covs])),
             )
         elseif ellipse == :normal
             cov_mu = Diagonal(sigma) / T
