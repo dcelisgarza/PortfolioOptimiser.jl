@@ -538,14 +538,20 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
             N2 = 2 * N
             @variable(model, x_kurt[1:N2])
-            @constraint(model, [t_kurt; x_kurt] in SecondOrderCone())
+            @variable(model, r_kurt[1:N2])
+            @constraint(
+                model,
+                [i = 1:N2],
+                [r_kurt[i], t_kurt, x_kurt[i]] in MOI.PowerCone(0.5)
+            )
+            @constraint(model, sum(r_kurt) == t_kurt)
 
             A = block_vec_pq(kurtosis, N, N)
             vals_A, vecs_A = eigen(A)
             vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
             Bi = Vector{Matrix{eltype(kurtosis)}}(undef, N2)
             for i in 1:N2
-                B = reshape(real.(sqrt(complex(vals_A[i])) * vecs_A[:, i]), N, N)
+                B = reshape(real.(complex(sqrt(vals_A[i])) * vecs_A[:, i]), N, N)
                 Bi[i] = B
             end
             @constraint(model, [i = 1:N2], x_kurt[i] == tr(Bi[i] * W))
@@ -587,7 +593,13 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
             N2 = 2 * N
             @variable(model, x_skurt[1:N2])
-            @constraint(model, [t_skurt; x_skurt] in SecondOrderCone())
+            @variable(model, r_skurt[1:N2])
+            @constraint(
+                model,
+                [i = 1:N2],
+                [r_skurt[i], t_skurt, x_skurt[i]] in MOI.PowerCone(0.5)
+            )
+            @constraint(model, sum(r_skurt) == t_skurt)
 
             A = block_vec_pq(skurtosis, N, N)
             vals_A, vecs_A = eigen(A)
@@ -597,7 +609,6 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
                 B = reshape(real.(sqrt(complex(vals_A[i])) * vecs_A[:, i]), N, N)
                 SBi[i] = B
             end
-
             @constraint(model, [i = 1:N2], x_skurt[i] == tr(SBi[i] * SW))
         else
             L_2 = portfolio.L_2
