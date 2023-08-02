@@ -451,4 +451,108 @@ function Portfolio(;
     )
 end
 
-export AbstractPortfolio, Portfolio
+mutable struct HCPortfolio{
+    ast,
+    dat,
+    r,
+    ai,
+    a,
+    as,
+    tat,
+    bi,
+    b,
+    bs,
+    k,
+    tiat,
+    lnk,
+    topk,
+    tomk,
+    tk2,
+    tkinv,
+    tinvopk,
+    tinvomk,
+    ata,
+    gst,
+    tmu,
+    tcov,
+    tbin,
+    ao,
+    so,
+    tco,
+    tcor,
+    tcl,
+    wmi,
+    wma,
+    tsolv,
+    toptpar,
+    tf,
+} <: AbstractPortfolio
+    # Portfolio characteristics.
+    assets::ast
+    timestamps::dat
+    returns::r
+    # Risk parmeters.
+    alpha_i::ai
+    alpha::a
+    a_sim::as
+    at::tat
+    beta_i::bi
+    beta::b
+    b_sim::bs
+    kappa::k
+    invat::tiat
+    ln_k::lnk
+    opk::topk
+    omk::tomk
+    invkappa2::tk2
+    invk::tkinv
+    invopk::tinvopk
+    invomk::tinvomk
+    alpha_tail::ata
+    gs_threshold::gst
+    # Optimisation parameters.
+    mu::tmu
+    cov::tcov
+    bins::tbin
+    w_min::wmi
+    w_max::wma
+    # Optimisation results.
+    asset_order::ao
+    sort_order::so
+    codep::tco
+    codep_order::tcor
+    clusters::tcl
+    # Solver params.
+    solvers::tsolv
+    opt_params::toptpar
+    fail::tf
+end
+
+function HCPortfolio(;
+    # Portfolio characteristics.
+    returns = DataFrame(),
+    # Risk parmeters.
+    alpha_i::Real = 0.0001,
+    alpha::Real = 0.05,
+    a_sim::Integer = 100,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = -1,
+    kappa::Real = 0.3,
+    alpha_tail = 0.05,
+    gs_threshold = 0.5,
+    # Optimisation parameters.
+    mu = Vector{Float64}(undef, 0),
+    cov = Matrix{Float64}(undef, 0, 0),
+    bins = :kn,
+    w_min = Vector{Float64}(undef, 0),
+    w_max = Vector{Float64}(undef, 0),
+    # Optimisation results.
+    asset_order = Vector{Float64}(undef, 0),
+    sort_order = Vector{Float64}(undef, 0),
+    codep = Vector{Float64}(undef, 0),
+    codep_order = Vector{Float64}(undef, 0),
+    clusters = Vector{Vector{Float64}}(undef, 0),
+) end
+
+export AbstractPortfolio, Portfolio, HCPortfolio

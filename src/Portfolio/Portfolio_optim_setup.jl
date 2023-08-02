@@ -512,7 +512,10 @@ function opt_port!(
     @assert(rrp_ver ∈ RRPVersions)
     @assert(u_mu ∈ UncertaintyTypes, "u_mu must be one of $UncertaintyTypes")
     @assert(u_cov ∈ UncertaintyTypes, "u_cov must be one of $UncertaintyTypes")
-
+    @assert(
+        0 < portfolio.kappa < 1,
+        "portfolio.kappa must be greater than 0 and smaller than 1"
+    )
     @assert(
         portfolio.kind_tracking_err ∈ TrackingErrKinds,
         "portfolio.kind_tracking_err must be one of $TrackingErrKinds"
