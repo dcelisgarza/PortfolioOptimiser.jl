@@ -852,7 +852,6 @@ function _rp_setup(portfolio, N)
     @constraint(model, sum(model[:w]) == model[:k])
 end
 
-const RRPVersions = (:none, :reg, :reg_pen)
 function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     G = sqrt(sigma)
     model = portfolio.model
@@ -967,5 +966,33 @@ function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
         G = sqrt(sigma)
         @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
         @expression(model, risk, dev * dev)
+    end
+end
+
+const HRRiskMeasures = (:msd, RiskMeasures..., :equal)
+function _naive_risk(portfolio, returns, cov, rm = :mv, rf = 0.0)
+    N = length(portfolio.assets)
+    if rm == :equal
+        weights = fill(1 / N, N)
+    else
+        inv_risk = zeros(N)
+        w = zeros(N)
+        for i in 1:N
+            fill!(w, 0)
+            w[i] = 1
+            risk = sharpe_risk(
+                w,
+                cov,
+                returns,
+                rm,
+                rf,
+                portfolio.alpha,
+                portfolio.a_sim,
+                portfolio.beta,
+                portfolio.b_sim,
+                portfolio.kappa,
+                portfolio.solver,
+            )
+        end
     end
 end

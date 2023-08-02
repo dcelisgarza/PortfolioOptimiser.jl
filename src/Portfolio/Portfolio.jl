@@ -358,19 +358,19 @@ function Portfolio(;
         alpha_i,
         alpha,
         a_sim,
-        zero(eltype(alpha)),
+        zero(typeof(alpha)),
         beta_i,
         beta,
         b_sim,
         kappa,
-        zero(eltype(kappa)),
-        zero(eltype(kappa)),
-        zero(eltype(kappa)),
-        zero(eltype(kappa)),
-        zero(eltype(kappa)),
-        zero(eltype(kappa)),
-        zero(eltype(kappa)),
-        zero(eltype(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
         max_num_assets_kurt,
         # Benchmark constraints.
         turnover,
@@ -562,7 +562,7 @@ function HCPortfolio(;
     timestamps = returns[!, 1]
     returns = Matrix(returns[!, 2:end])
 
-    return HCPortfiolio(
+    return HCPortfolio(
         # Portfolio characteristics.
         assets,
         timestamps,
@@ -570,10 +570,19 @@ function HCPortfolio(;
         alpha_i,
         alpha,
         a_sim,
+        zero(typeof(kappa)),
         beta_i,
         beta,
         b_sim,
         kappa,
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
+        zero(typeof(kappa)),
         alpha_tail,
         gs_threshold,
         # Optimisation parameters.

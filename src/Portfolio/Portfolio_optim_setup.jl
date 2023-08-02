@@ -488,6 +488,7 @@ end
 const PortClasses = (:classic,)
 const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
 const UncertaintyTypes = (:none, :box, :ellipse)
+const RRPVersions = (:none, :reg, :reg_pen)
 function opt_port!(
     portfolio::Portfolio;
     type::Symbol = :trad,
@@ -496,7 +497,7 @@ function opt_port!(
     obj::Symbol = :sharpe,
     kelly::Symbol = :none,
     rrp_ver::Symbol = :none,
-    rf::Real = 1.0329^(1 / 252) - 1,
+    rf::Real = 0.0,#1.0329^(1 / 252) - 1
     l::Real = 2.0,
     rrp_penalty::Real = 1.0,
     u_mu = :box,
@@ -637,5 +638,8 @@ function opt_port!(
 
     return retval
 end
+
+const HRTypes = (:hrp, :herc, :herc2, :nco)
+const CodepTypes = (:pearson, :spearman, :kendall, :gerber1, :gerber2, :custom)
 
 export opt_port!

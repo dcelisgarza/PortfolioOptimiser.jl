@@ -1,0 +1,1 @@
+function sharpe_risk(w, cov, returns, rm, rf, alpha, a_sim, beta, b_sim, kappa, solver) end
