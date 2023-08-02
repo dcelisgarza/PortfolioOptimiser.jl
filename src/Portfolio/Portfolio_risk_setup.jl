@@ -970,14 +970,14 @@ function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
 end
 
 const HRRiskMeasures = (:msd, RiskMeasures..., :equal)
-function _naive_risk(portfolio, idx, returns, cov, rm = :mv, rf = 0.0)
-    N = length(idx)
+function _naive_risk(portfolio, returns, cov, rm = :mv, rf = 0.0)
+    N = size(returns, 2)
     if rm == :equal
         weights = fill(1 / N, N)
     else
         inv_risk = zeros(N)
         w = zeros(N)
-        for i in idx
+        for i in 1:N
             fill!(w, 0)
             w[i] = 1
             risk = sharpe_risk(
@@ -993,9 +993,8 @@ function _naive_risk(portfolio, idx, returns, cov, rm = :mv, rf = 0.0)
                 portfolio.kappa,
                 portfolio.solver,
             )
-            inv_risk[i] = risk
+            inv_risk[i] = 1 / risk
         end
-        inv_risk .= rm == :mv ? 1 ./ (inv_risk .^ 2) : 1 ./ inv_risk
         weights = inv_risk / sum(inv_risk)
     end
 
