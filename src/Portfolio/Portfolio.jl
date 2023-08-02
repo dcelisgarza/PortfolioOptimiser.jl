@@ -522,7 +522,7 @@ mutable struct HCPortfolio{
     codep::tco
     codep_order::tcor
     clusters::tcl
-    # Solver params.
+    # Solutions.
     solvers::tsolv
     opt_params::toptpar
     fail::tf
@@ -539,8 +539,8 @@ function HCPortfolio(;
     beta::Real = Inf,
     b_sim::Integer = -1,
     kappa::Real = 0.3,
-    alpha_tail = 0.05,
-    gs_threshold = 0.5,
+    alpha_tail::Real = 0.05,
+    gs_threshold::Real = 0.5,
     # Optimisation parameters.
     mu = Vector{Float64}(undef, 0),
     cov = Matrix{Float64}(undef, 0, 0),
@@ -553,6 +553,46 @@ function HCPortfolio(;
     codep = Vector{Float64}(undef, 0),
     codep_order = Vector{Float64}(undef, 0),
     clusters = Vector{Vector{Float64}}(undef, 0),
-) end
+    # Solutions.
+    solvers::AbstractDict = Dict(),
+    opt_params::AbstractDict = Dict(),
+    fail::AbstractDict = Dict(),
+)
+    assets = names(returns)[2:end]
+    timestamps = returns[!, 1]
+    returns = Matrix(returns[!, 2:end])
+
+    return HCPortfiolio(
+        # Portfolio characteristics.
+        assets,
+        timestamps,
+        returns,
+        alpha_i,
+        alpha,
+        a_sim,
+        beta_i,
+        beta,
+        b_sim,
+        kappa,
+        alpha_tail,
+        gs_threshold,
+        # Optimisation parameters.
+        mu,
+        cov,
+        bins,
+        w_min,
+        w_max,
+        # Optimisation results.
+        asset_order,
+        sort_order,
+        codep,
+        codep_order,
+        clusters,
+        # Solutions.
+        solvers,
+        opt_params,
+        fail,
+    )
+end
 
 export AbstractPortfolio, Portfolio, HCPortfolio
