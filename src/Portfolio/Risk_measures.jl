@@ -184,9 +184,9 @@ function mdd_abs(x)
     val = 0.0
     peak = -Inf
     for i in cs
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd = peak - i
-        dd > val && val = dd
+        dd > val && (val = dd)
     end
 
     return val
@@ -199,9 +199,9 @@ function add_abs(x)
     val = 0.0
     peak = -Inf
     for i in cs
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd = peak - i
-        dd > val && val += dd
+        dd > val && (val += dd)
     end
 
     return val / T
@@ -213,7 +213,7 @@ function dar_abs(x, alpha)
     peak = -Inf
     dd = similar(cs)
     for (idx, i) in enumerate(cs)
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd[idx] = i - peak
     end
     deleteat!(dd, 1)
@@ -228,7 +228,7 @@ function cdar_abs(x, alpha)
     peak = -Inf
     dd = similar(cs)
     for (idx, i) in enumerate(cs)
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd[idx] = i - peak
     end
     deleteat!(dd, 1)
@@ -249,9 +249,9 @@ function uci_abs(x)
     val = 0.0
     peak = -Inf
     for i in cs
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd = peak - i
-        dd > val && val += dd^2
+        dd > val && (val += dd^2)
     end
 
     return sqrt(val / T)
@@ -263,7 +263,7 @@ function edar_abs(x, solvers, alpha)
     peak = -Inf
     dd = similar(cs)
     for (idx, i) in enumerate(cs)
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd[idx] = i - peak
     end
     deleteat!(dd, 1)
@@ -276,7 +276,7 @@ function rdar_abs(x, solvers, alpha = 0.05, kappa = 0.3)
     peak = -Inf
     dd = similar(cs)
     for (idx, i) in enumerate(cs)
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd[idx] = i - peak
     end
     deleteat!(dd, 1)
@@ -289,9 +289,9 @@ function mdd_rel(x)
     val = 0.0
     peak = -Inf
     for i in cs
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd = 1 - i / peak
-        dd > val && val = dd
+        dd > val && (val = dd)
     end
 
     return val
@@ -304,9 +304,9 @@ function add_rel(x)
     val = 0.0
     peak = -Inf
     for i in cs
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd = 1 - i / peak
-        dd > val && val += dd
+        dd > val && (val += dd)
     end
 
     return val / T
@@ -318,7 +318,7 @@ function dar_rel(x, alpha)
     peak = -Inf
     dd = similar(cs)
     for (idx, i) in enumerate(cs)
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end
     deleteat!(dd, 1)
@@ -333,7 +333,7 @@ function cdar_rel(x, alpha)
     peak = -Inf
     dd = similar(cs)
     for (idx, i) in enumerate(cs)
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end
     deleteat!(dd, 1)
@@ -354,9 +354,9 @@ function uci_rel(x)
     val = 0.0
     peak = -Inf
     for i in cs
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd = 1 - i / peak
-        dd > val && val += dd^2
+        dd > val && (val += dd^2)
     end
 
     return sqrt(val / T)
@@ -368,7 +368,7 @@ function edar_rel(x, solvers, alpha)
     peak = -Inf
     dd = similar(cs)
     for (idx, i) in enumerate(cs)
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end
     deleteat!(dd, 1)
@@ -381,7 +381,7 @@ function rdar_rel(x, solvers, alpha = 0.05, kappa = 0.3)
     peak = -Inf
     dd = similar(cs)
     for (idx, i) in enumerate(cs)
-        i > peak && peak = i
+        i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end
     deleteat!(dd, 1)

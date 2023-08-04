@@ -1029,7 +1029,7 @@ function _opt_w(
     port.cov = cov
 
     weights = if obj ∈ (:min_risk, :utility, :sharpe)
-        !isnothing(mu) && port.mu = mu
+        !isnothing(mu) && (port.mu = mu)
         opt_port!(port; type = :trad, class = :classic, rm = rm, obj = obj, rf = rf, l = l)
     elseif obj == :erc
         opt_port!(port; type = :rp, class = :classic, rm = rm, rf = rf, l = l)
@@ -1054,23 +1054,8 @@ function _hierarchical_clustering(
     elseif codependence ∈ (:abs_pearson, :abs_spearman, :abs_kendall, :distance)
         sqrt.(clamp!((1 .- codep), 0, 1))
     elseif codependence == :mutual_info
-        var_info_mtx(returns, codep)
+        info_mtx(returns, bins_info, :variation)
     elseif codependence == :tail
         -log.(codep)
     end
 end
-
-CodepTypes = (
-    :pearson,
-    :spearman,
-    :kendall,
-    :gerber1,
-    :gerber2,
-    :abs_pearson,
-    :abs_spearman,
-    :abs_kendall,
-    :distance,
-    :mutual_info,
-    :tail,
-    :custom,
-)

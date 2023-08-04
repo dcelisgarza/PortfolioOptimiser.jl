@@ -1,3 +1,4 @@
+
 function gen_dataframes(portfolio)
     nms = portfolio.assets
     nms2 = vec(["$(i)-$(j)" for i in nms, j in nms])
@@ -156,7 +157,7 @@ function gen_bootstrap(
 end
 
 const BinTypes = (:kn, :fd, :sc, :hgr)
-function _calc_bins(x, j, i, bin_width_func)
+function _calc_num_bins(x, j, i, bin_width_func)
     k1 = (maximum(x[:, j]) - minimum(x[:, j])) / bin_width_func(x[:, j])
     bins = if j != i
         k2 = (maximum(x[:, i]) - minimum(x[:, i])) / bin_width_func(x[:, i])
@@ -167,36 +168,47 @@ function _calc_bins(x, j, i, bin_width_func)
     return bins
 end
 
-function knuth_bin_width(x) end
-function freedman_bin_width(x) end
-function scott_bin_width(x) end
-function calc_num_bins(T, corr) end
+function _calc_num_bins(N, corr = nothing)
+    bins = if isnothing(corr)
+        z = cbrt(8 + 324 * N + 12 * sqrt(36 * N + 729 * N^2))
+        Int(round(z / 6 + 2 / (3 * z) + 1 / 3))
+    else
+        Int(round(sqrt(1 + sqrt(1 + 24 * N / (1 - corr^2))) / sqrt(2)))
+    end
+end
 
-function var_info_mtx(x, bins_info = :kn, normed = true)
+const InfoTypes = (:variation, :mutual)
+function info_mtx(x, bins_info = :kn, type_info = :mutual, normed = true)
     @assert(
         bins_info ∈ BinTypes || isa(bins_info, Int),
         "bins has to either be in $BinTypes, or an integer value"
     )
+    @assert(type_info ∈ InfoTypes, "type_info must be in $InfoTypes")
+
+    bin_width_func = if bins_info == :kn
+        pyimport("astropy.stats").knuth_bin_width
+    elseif bins_info == :fd
+        pyimport("astropy.stats").freedman_bin_width
+    elseif bins_info == :sc
+        pyimport("astropy.stats").scott_bin_width
+    end
+
     T, N = size(x)
 
     mtx = zeros(N, N)
     for j in 1:N, i in j:N
         bins = if isa(bins_info, Int)
             bins_info
-        elseif bins_info == :kn
-            _calc_bins(x, j, i, knuth_bin_width)
-        elseif bins_info == :fd
-            _calc_bins(x, j, i, freedman_bin_width)
-        elseif bins_info == :sc
-            _calc_bins(x, j, i, scott_bin_width)
         elseif bins_info == :hgr
             corr = cor(x[:, j], x[:, i])
-            corr == 1 ? calc_num_bins(T, nothing) : calc_num_bins(T, corr)
+            corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
+        else
+            _calc_num_bins(x, j, i, bin_width_func)
         end
 
-        hx = entropy(fit(Histogram, x[:, j], nbins = bins).weights)
-        hy = entropy(fit(Histogram, x[:, i], nbins = bins).weights)
-        ixy = mutualinfo(hx, hy, normed = normed)
+        hx = fit(Histogram, x[:, j], nbins = bins).weights
+        hy = fit(Histogram, x[:, i], nbins = bins).weights
+        ixy = type_info == :mutual ? mutualinfo(hx, hy, normed = normed) : varinfo(hx, hy)
 
         mtx[i, j] = clamp(ixy, 0, Inf)
     end
