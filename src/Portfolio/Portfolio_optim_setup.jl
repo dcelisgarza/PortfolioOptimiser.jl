@@ -77,7 +77,7 @@ function _setup_return(portfolio, type, class, kelly, obj, T, rf, returns, mu)
         elseif kelly == :approx
             @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
         else
-            isnothing(mu) && return nothing
+            isempty(mu) && return nothing
             @expression(model, ret, dot(mu, model[:w]))
         end
     end
@@ -356,13 +356,13 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
 
     if type == :trad || type == :rp
         if rm == :evar
-            portfolio.z_evar = value(portfolio.model[:s_evar])
+            portfolio.z_evar = value(portfolio.model[:z_evar])
         elseif rm == :edar
-            portfolio.z_edar = value(portfolio.model[:s_edar])
+            portfolio.z_edar = value(portfolio.model[:z_edar])
         elseif rm == :rvar
-            portfolio.z_rvar = value(portfolio.model[:s_rvar])
+            portfolio.z_rvar = value(portfolio.model[:z_rvar])
         elseif rm == :rdar
-            portfolio.z_rdar = value(portfolio.model[:s_rdar])
+            portfolio.z_rdar = value(portfolio.model[:z_rdar])
         end
     end
 

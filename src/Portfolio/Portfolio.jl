@@ -61,9 +61,9 @@ mutable struct Portfolio{
     uevar,
     uedar,
     ugmd,
-    utg,
     ur,
     urcvar,
+    utg,
     urtg,
     uowa,
     wowa,
@@ -170,9 +170,9 @@ mutable struct Portfolio{
     evar_u::uevar
     edar_u::uedar
     gmd_u::ugmd
-    tg_u::utg
     rg_u::ur
     rcvar_u::urcvar
+    tg_u::utg
     rtg_u::urtg
     owa_u::uowa
     owa_w::wowa
@@ -225,6 +225,9 @@ end
 function Portfolio(;
     # Portfolio characteristics.
     returns = DataFrame(),
+    ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
+    assets::Vector{Union{String, Symbol}} = Vector{String}(undef, 0),
     short::Bool = false,
     short_u::Real = 0.2,
     long_u::Real = 1.0,
@@ -271,9 +274,9 @@ function Portfolio(;
     evar_u::Real = Inf,
     edar_u::Real = Inf,
     gmd_u::Real = Inf,
-    tg_u::Real = Inf,
     rg_u::Real = Inf,
     rcvar_u::Real = Inf,
+    tg_u::Real = Inf,
     rtg_u::Real = Inf,
     owa_u::Real = Inf,
     owa_w = Vector{Float64}(undef, 0),
@@ -322,9 +325,17 @@ function Portfolio(;
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
 )
-    assets = names(returns)[2:end]
-    timestamps = returns[!, 1]
-    returns = Matrix(returns[!, 2:end])
+    if isa(returns, DataFrame) && !isempty(returns)
+        assets = names(returns)[2:end]
+        timestamps = returns[!, 1]
+        returns = Matrix(returns[!, 2:end])
+    else
+        @assert(
+            length(assets) == size(ret, 2),
+            "each column of returns must correspond to an asset"
+        )
+        returns = ret
+    end
 
     if !isempty(f_returns)
         f_assets = names(f_returns)[2:end]
@@ -398,9 +409,9 @@ function Portfolio(;
         evar_u,
         edar_u,
         gmd_u,
-        tg_u,
         rg_u,
         rcvar_u,
+        tg_u,
         rtg_u,
         owa_u,
         owa_w,
@@ -463,14 +474,6 @@ mutable struct HCPortfolio{
     b,
     bs,
     k,
-    tiat,
-    lnk,
-    topk,
-    tomk,
-    tk2,
-    tkinv,
-    tinvopk,
-    tinvomk,
     ata,
     gst,
     tmu,
@@ -500,14 +503,6 @@ mutable struct HCPortfolio{
     beta::b
     b_sim::bs
     kappa::k
-    invat::tiat
-    ln_k::lnk
-    opk::topk
-    omk::tomk
-    invkappa2::tk2
-    invk::tkinv
-    invopk::tinvopk
-    invomk::tinvomk
     alpha_tail::ata
     gs_threshold::gst
     # Optimisation parameters.
@@ -575,14 +570,6 @@ function HCPortfolio(;
         beta,
         b_sim,
         kappa,
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
         alpha_tail,
         gs_threshold,
         # Optimisation parameters.

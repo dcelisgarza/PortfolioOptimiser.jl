@@ -17,9 +17,9 @@ const RiskMeasures = (
     :krt,   # _krt
     :skrt,  # _krt
     :gmd,   # _owa
-    :tg,    # _owa
     :rg,    # _owa
     :rcvar, # _owa
+    :tg,    # _owa
     :rtg,   # _owa
     :owa,   # _owa
 )
@@ -270,15 +270,15 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     if rm == :evar || isfinite(evar_u)
         at = portfolio.at
         @variable(model, t_evar)
-        @variable(model, s_evar >= 0)
+        @variable(model, z_evar >= 0)
         @variable(model, u_evar[1:T])
-        @constraint(model, sum(u_evar) <= s_evar)
+        @constraint(model, sum(u_evar) <= z_evar)
         @constraint(
             model,
             [i = 1:T],
-            [-model[:hist_ret][i] - t_evar, s_evar, u_evar[i]] in MOI.ExponentialCone()
+            [-model[:hist_ret][i] - t_evar, z_evar, u_evar[i]] in MOI.ExponentialCone()
         )
-        @expression(model, evar_risk, t_evar - s_evar * log(at))
+        @expression(model, evar_risk, t_evar - z_evar * log(at))
 
         if isfinite(evar_u) && type == :trad
             if obj == :sharpe
@@ -304,7 +304,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     invomk = portfolio.invomk
 
     @variable(model, t_rvar)
-    @variable(model, s_rvar >= 0)
+    @variable(model, z_rvar >= 0)
     @variable(model, omega_rvar[1:T])
     @variable(model, psi_rvar[1:T])
     @variable(model, theta_rvar[1:T])
@@ -312,17 +312,17 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     @constraint(
         model,
         [i = 1:T],
-        [s_rvar * opk * invkappa2, psi_rvar[i] * opk * invk, epsilon_rvar[i]] in
+        [z_rvar * opk * invkappa2, psi_rvar[i] * opk * invk, epsilon_rvar[i]] in
         MOI.PowerCone(invopk)
     )
     @constraint(
         model,
         [i = 1:T],
-        [omega_rvar[i] * invomk, theta_rvar[i] * invk, -s_rvar * invkappa2] in
+        [omega_rvar[i] * invomk, theta_rvar[i] * invk, -z_rvar * invkappa2] in
         MOI.PowerCone(omk)
     )
     @constraint(model, -model[:hist_ret] .- t_rvar .+ epsilon_rvar .+ omega_rvar .<= 0)
-    @expression(model, rvar_risk, t_rvar + ln_k * s_rvar + sum(psi_rvar .+ theta_rvar))
+    @expression(model, rvar_risk, t_rvar + ln_k * z_rvar + sum(psi_rvar .+ theta_rvar))
 
     if isfinite(rvar_u) && type == :trad
         if obj == :sharpe
@@ -445,15 +445,15 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     if rm == :edar || isfinite(edar_u)
         at = portfolio.at
         @variable(model, t_edar)
-        @variable(model, s_edar >= 0)
+        @variable(model, z_edar >= 0)
         @variable(model, u_edar[1:T])
-        @constraint(model, sum(u_edar) <= s_edar)
+        @constraint(model, sum(u_edar) <= z_edar)
         @constraint(
             model,
             [i = 1:T],
-            [dd[i + 1] - t_edar, s_edar, u_edar[i]] in MOI.ExponentialCone()
+            [dd[i + 1] - t_edar, z_edar, u_edar[i]] in MOI.ExponentialCone()
         )
-        @expression(model, edar_risk, t_edar - s_edar * log(at))
+        @expression(model, edar_risk, t_edar - z_edar * log(at))
 
         if isfinite(edar_u)
             if obj == :sharpe
@@ -479,7 +479,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     invomk = portfolio.invomk
 
     @variable(model, t_rdar)
-    @variable(model, s_rdar >= 0)
+    @variable(model, z_rdar >= 0)
     @variable(model, omega_rdar[1:T])
     @variable(model, psi_rdar[1:T])
     @variable(model, theta_rdar[1:T])
@@ -487,17 +487,17 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     @constraint(
         model,
         [i = 1:T],
-        [s_rdar * opk * invkappa2, psi_rdar[i] * opk * invk, epsilon_rdar[i]] in
+        [z_rdar * opk * invkappa2, psi_rdar[i] * opk * invk, epsilon_rdar[i]] in
         MOI.PowerCone(invopk)
     )
     @constraint(
         model,
         [i = 1:T],
-        [omega_rdar[i] * invomk, theta_rdar[i] * invk, -s_rdar * invkappa2] in
+        [omega_rdar[i] * invomk, theta_rdar[i] * invk, -z_rdar * invkappa2] in
         MOI.PowerCone(omk)
     )
     @constraint(model, dd[2:end] .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0)
-    @expression(model, rdar_risk, t_rdar + ln_k * s_rdar + sum(psi_rdar .+ theta_rdar))
+    @expression(model, rdar_risk, t_rdar + ln_k * z_rdar + sum(psi_rdar .+ theta_rdar))
 
     if isfinite(rdar_u) && type == :trad
         if obj == :sharpe
@@ -635,16 +635,16 @@ end
 
 function _owa_setup(portfolio, rm, T, returns, obj, type)
     gmd_u = portfolio.gmd_u
-    tg_u = portfolio.tg_u
     rg_u = portfolio.rg_u
+    tg_u = portfolio.tg_u
     rcvar_u = portfolio.rcvar_u
     rtg_u = portfolio.rtg_u
     owa_u = portfolio.owa_u
 
     !(
         rm == :gmd ||
-        rm == :tg ||
         rm == :rg ||
+        rm == :tg ||
         rm == :rcvar ||
         rm == :rtg ||
         rm == :owa ||
@@ -684,32 +684,6 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
 
         if rm == :gmd
             @expression(model, risk, gmd_risk)
-        end
-    end
-
-    if rm == :tg || isfinite(tg_u)
-        alpha = portfolio.alpha
-        a_sim = portfolio.a_sim
-        alpha_i = portfolio.alpha_i
-        @variable(model, tga[1:T])
-        @variable(model, tgb[1:T])
-        @expression(model, tg_risk, sum(tga .+ tgb))
-        tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-        @constraint(
-            model,
-            owa * transpose(tg_w) .<= onesvec * transpose(tga) + tgb * transpose(onesvec)
-        )
-
-        if isfinite(tg_u) && type == :trad
-            if obj == :sharpe
-                @constraint(model, tg_risk <= tg_u * model[:k])
-            else
-                @constraint(model, tg_risk <= tg_u)
-            end
-        end
-
-        if rm == :tg
-            @expression(model, risk, tg_risk)
         end
     end
 
@@ -761,6 +735,32 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
 
         if rm == :rcvar
             @expression(model, risk, rcvar_risk)
+        end
+    end
+
+    if rm == :tg || isfinite(tg_u)
+        alpha = portfolio.alpha
+        a_sim = portfolio.a_sim
+        alpha_i = portfolio.alpha_i
+        @variable(model, tga[1:T])
+        @variable(model, tgb[1:T])
+        @expression(model, tg_risk, sum(tga .+ tgb))
+        tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+        @constraint(
+            model,
+            owa * transpose(tg_w) .<= onesvec * transpose(tga) + tgb * transpose(onesvec)
+        )
+
+        if isfinite(tg_u) && type == :trad
+            if obj == :sharpe
+                @constraint(model, tg_risk <= tg_u * model[:k])
+            else
+                @constraint(model, tg_risk <= tg_u)
+            end
+        end
+
+        if rm == :tg
+            @expression(model, risk, tg_risk)
         end
     end
 
@@ -969,7 +969,19 @@ function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
     end
 end
 
-const HRRiskMeasures = (:msd, RiskMeasures..., :equal, :var)
+const HRRiskMeasures = (
+    :msd,
+    RiskMeasures...,
+    :equal,
+    :var,
+    :dar,
+    :mdd_r,
+    :add_r,
+    :dar_r,
+    :cdar_r,
+    :edar_r,
+    :rdar_r,
+)
 function _naive_risk(portfolio, returns, cov, rm = :mv, rf = 0.0)
     N = size(returns, 2)
     if rm == :equal
@@ -980,7 +992,7 @@ function _naive_risk(portfolio, returns, cov, rm = :mv, rf = 0.0)
         for i in 1:N
             fill!(w, 0)
             w[i] = 1
-            risk = sharpe_risk(
+            risk = calc_risk(
                 w,
                 cov,
                 returns,
@@ -999,4 +1011,29 @@ function _naive_risk(portfolio, returns, cov, rm = :mv, rf = 0.0)
     end
 
     return weights
+end
+
+function _opt_w(
+    portfolio,
+    assets,
+    returns,
+    mu,
+    cov,
+    obj = :min_risk,
+    rm = :mv,
+    rf = 0.0,
+    l = 2.0,
+)
+    port = Portfolio(assets = assets, ret = returns, solvers = portfolio.solvers)
+    asset_statistics!(port; calc_kurt = false)
+    port.cov = cov
+
+    weights = if obj ∈ (:min_risk, :utility, :sharpe)
+        !isnothing(mu) && port.mu = mu
+        opt_port!(port; type = :trad, class = :classic, rm = rm, obj = obj, rf = rf, l = l)
+    elseif obj == :erc
+        opt_port!(port; type = :rp, class = :classic, rm = rm, rf = rf, l = l)
+    end
+
+    return weights[!, :weights]
 end

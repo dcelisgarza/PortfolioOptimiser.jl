@@ -63,6 +63,7 @@ function asset_statistics!(
     cov_func::Function = cov,
     mean_args = (),
     cov_args = ();
+    calc_kurt = true,
     mean_kwargs = (;),
     cov_kwargs = (;),
 )
@@ -75,14 +76,14 @@ function asset_statistics!(
         mean_func(returns, mean_args...; mean_kwargs...),
     )
 
-    nms = portfolio.assets
-
     portfolio.mu = mu
-
     portfolio.cov = cov_func(returns, cov_args...; cov_kwargs...)
-    portfolio.kurt = cokurt(returns, transpose(mu))
-    portfolio.skurt = scokurt(returns, transpose(mu), target_ret)
-    missing, portfolio.L_2, portfolio.S_2 = dup_elim_sum_matrices(N)
+
+    if calc_kurt
+        portfolio.kurt = cokurt(returns, transpose(mu))
+        portfolio.skurt = scokurt(returns, transpose(mu), target_ret)
+        missing, portfolio.L_2, portfolio.S_2 = dup_elim_sum_matrices(N)
+    end
 
     return nothing
 end
