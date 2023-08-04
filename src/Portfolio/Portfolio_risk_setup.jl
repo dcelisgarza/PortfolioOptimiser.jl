@@ -1037,3 +1037,40 @@ function _opt_w(
 
     return weights[!, :weights]
 end
+
+function _hierarchical_clustering(
+    portfolio::HCPortfolio,
+    model = :hrp,
+    linkage = :ward,
+    codependence = :pearson,
+    max_k = 10,
+    leaf_order = true,
+)
+    codep = portfolio.codep
+    returns = portfolio.returns
+
+    dist = if codependence ∈ (:pearson, :spearman, :kendall, :gerber1, :gerber2, :custom)
+        sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+    elseif codependence ∈ (:abs_pearson, :abs_spearman, :abs_kendall, :distance)
+        sqrt.(clamp!((1 .- codep), 0, 1))
+    elseif codependence == :mutual_info
+        var_info_mtx(returns, codep)
+    elseif codependence == :tail
+        -log.(codep)
+    end
+end
+
+CodepTypes = (
+    :pearson,
+    :spearman,
+    :kendall,
+    :gerber1,
+    :gerber2,
+    :abs_pearson,
+    :abs_spearman,
+    :abs_kendall,
+    :distance,
+    :mutual_info,
+    :tail,
+    :custom,
+)

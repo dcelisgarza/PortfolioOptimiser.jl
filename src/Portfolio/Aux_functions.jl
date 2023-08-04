@@ -155,6 +155,51 @@ function gen_bootstrap(
     return mus, covs
 end
 
+const BinTypes = (:kn, :fd, :sc, :hgr)
+function _calc_bins(x, j, i, bin_width_func)
+    k1 = (maximum(x[:, j]) - minimum(x[:, j])) / bin_width_func(x[:, j])
+    bins = if j != i
+        k2 = (maximum(x[:, i]) - minimum(x[:, i])) / bin_width_func(x[:, i])
+        Int(round(max(k1, k2)))
+    else
+        Int(round(k1))
+    end
+    return bins
+end
+
+function knuth_bin_width(x) end
+function freedman_bin_width(x) end
+function scott_bin_width(x) end
+function calc_num_bins(T, corr) end
+
+function var_info_mtx(x, bins_info = :kn)
+    @assert(
+        bins_info ∈ BinTypes || isa(bins_info, Int),
+        "bins has to either be in $BinTypes, or an integer value"
+    )
+    T, N = size(x)
+
+    mtx = zeros(N, N)
+    for j in 1:N, i in j:N
+        bins = if isa(bins_info, Int)
+            bins_info
+        elseif bins_info == :kn
+            _calc_bins(x, j, i, knuth_bin_width)
+        elseif bins_info == :fd
+            _calc_bins(x, j, i, freedman_bin_width)
+        elseif bins_info == :sc
+            _calc_bins(x, j, i, scott_bin_width)
+        elseif bins_info == :hgr
+            corr = cor(x[:, j], x[:, i])
+            if corr == 1
+                calc_num_bins(T, nothing)
+            else
+                calc_num_bins(T, corr)
+            end
+        end
+    end
+end
+
 export gen_dataframes,
     block_vec_pq,
     commutation_matrix,
@@ -164,3 +209,9 @@ export gen_dataframes,
     summation_matrix,
     dup_elim_sum_matrices,
     gen_bootstrap
+
+N = 5
+mtx = zeros(N, N)
+for j in 1:N, i in j:N
+    mtx[i, j] = 1
+end

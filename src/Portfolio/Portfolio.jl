@@ -227,7 +227,7 @@ function Portfolio(;
     returns = DataFrame(),
     ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
-    assets::Vector{Union{String, Symbol}} = Vector{String}(undef, 0),
+    assets = Vector{String}(undef, 0),
     short::Bool = false,
     short_u::Real = 0.2,
     long_u::Real = 1.0,
@@ -469,7 +469,6 @@ mutable struct HCPortfolio{
     ai,
     a,
     as,
-    tat,
     bi,
     b,
     bs,
@@ -498,7 +497,6 @@ mutable struct HCPortfolio{
     alpha_i::ai
     alpha::a
     a_sim::as
-    at::tat
     beta_i::bi
     beta::b
     b_sim::bs
@@ -508,7 +506,7 @@ mutable struct HCPortfolio{
     # Optimisation parameters.
     mu::tmu
     cov::tcov
-    bins::tbin
+    bins_info::tbin
     w_min::wmi
     w_max::wma
     # Optimisation results.
@@ -526,6 +524,9 @@ end
 function HCPortfolio(;
     # Portfolio characteristics.
     returns = DataFrame(),
+    ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
+    assets = Vector{String}(undef, 0),
     # Risk parmeters.
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
@@ -539,7 +540,7 @@ function HCPortfolio(;
     # Optimisation parameters.
     mu = Vector{Float64}(undef, 0),
     cov = Matrix{Float64}(undef, 0, 0),
-    bins = :kn,
+    bins_info::Union{Symbol, Int} = :kn,
     w_min = Vector{Float64}(undef, 0),
     w_max = Vector{Float64}(undef, 0),
     # Optimisation results.
@@ -553,11 +554,49 @@ function HCPortfolio(;
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
 )
-    assets = names(returns)[2:end]
-    timestamps = returns[!, 1]
-    returns = Matrix(returns[!, 2:end])
+    if isa(returns, DataFrame) && !isempty(returns)
+        assets = names(returns)[2:end]
+        timestamps = returns[!, 1]
+        returns = Matrix(returns[!, 2:end])
+    else
+        @assert(
+            length(assets) == size(ret, 2),
+            "each column of returns must correspond to an asset"
+        )
+        returns = ret
+    end
 
-    return HCPortfolio(
+    return HCPortfolio{
+        typeof(assets),
+        typeof(timestamps),
+        typeof(returns),
+        # Risk parmeters.
+        typeof(alpha_i),
+        typeof(alpha),
+        typeof(a_sim),
+        typeof(beta_i),
+        typeof(beta),
+        typeof(b_sim),
+        typeof(kappa),
+        typeof(alpha_tail),
+        typeof(gs_threshold),
+        # Optimisation parameters.
+        typeof(mu),
+        typeof(cov),
+        Union{Symbol, Int},
+        typeof(w_min),
+        typeof(w_max),
+        # Optimisation results.
+        typeof(asset_order),
+        typeof(sort_order),
+        typeof(codep),
+        typeof(codep_order),
+        typeof(clusters),
+        # Solutions.
+        typeof(solvers),
+        typeof(opt_params),
+        typeof(fail),
+    }(
         # Portfolio characteristics.
         assets,
         timestamps,
@@ -565,7 +604,6 @@ function HCPortfolio(;
         alpha_i,
         alpha,
         a_sim,
-        zero(typeof(kappa)),
         beta_i,
         beta,
         b_sim,
@@ -575,7 +613,7 @@ function HCPortfolio(;
         # Optimisation parameters.
         mu,
         cov,
-        bins,
+        bins_info,
         w_min,
         w_max,
         # Optimisation results.

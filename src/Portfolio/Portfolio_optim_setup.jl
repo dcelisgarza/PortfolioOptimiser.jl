@@ -640,6 +640,19 @@ function opt_port!(
 end
 
 const HRTypes = (:hrp, :herc, :herc2, :nco)
-const CodepTypes = (:pearson, :spearman, :kendall, :gerber1, :gerber2, :custom)
+const CodepTypes = (
+    :pearson,
+    :spearman,
+    :kendall,
+    :gerber1,
+    :gerber2,
+    :abs_pearson,
+    :abs_spearman,
+    :abs_kendall,
+    :distance,
+    :mutual_info,
+    :tail,
+    :custom,
+)
 
 export opt_port!
