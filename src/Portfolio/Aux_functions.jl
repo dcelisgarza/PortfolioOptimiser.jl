@@ -172,7 +172,7 @@ function freedman_bin_width(x) end
 function scott_bin_width(x) end
 function calc_num_bins(T, corr) end
 
-function var_info_mtx(x, bins_info = :kn)
+function var_info_mtx(x, bins_info = :kn, normed = true)
     @assert(
         bins_info ∈ BinTypes || isa(bins_info, Int),
         "bins has to either be in $BinTypes, or an integer value"
@@ -191,13 +191,17 @@ function var_info_mtx(x, bins_info = :kn)
             _calc_bins(x, j, i, scott_bin_width)
         elseif bins_info == :hgr
             corr = cor(x[:, j], x[:, i])
-            if corr == 1
-                calc_num_bins(T, nothing)
-            else
-                calc_num_bins(T, corr)
-            end
+            corr == 1 ? calc_num_bins(T, nothing) : calc_num_bins(T, corr)
         end
+
+        hx = entropy(fit(Histogram, x[:, j], nbins = bins).weights)
+        hy = entropy(fit(Histogram, x[:, i], nbins = bins).weights)
+        ixy = mutualinfo(hx, hy, normed = normed)
+
+        mtx[i, j] = clamp(ixy, 0, Inf)
     end
+
+    return Symmetric(mtx, :L)
 end
 
 export gen_dataframes,
