@@ -969,7 +969,7 @@ function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
     end
 end
 
-const HRRiskMeasures = (:msd, RiskMeasures..., :equal)
+const HRRiskMeasures = (:msd, RiskMeasures..., :equal, :var)
 function _naive_risk(portfolio, returns, cov, rm = :mv, rf = 0.0)
     N = size(returns, 2)
     if rm == :equal
