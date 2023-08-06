@@ -107,6 +107,8 @@ function wc_statistics!(
     n_samples = 10_000,
     seed = nothing,
     rng = Random.default_rng(),
+    fix_cov_args = (),
+    fix_cov_kwargs = (;),
 )
     @assert(box ∈ BoxTypes, "box must be one of $BoxTypes")
     @assert(ellipse ∈ EllipseTypes, "ellipse must be one of $EllipseTypes")
@@ -137,8 +139,8 @@ function wc_statistics!(
 
             args = ()
             kwargs = (;)
-            !isposdef(cov_l) && fix_cov!(cov_l, args..., kwargs...)
-            !isposdef(cov_u) && fix_cov!(cov_u, args..., kwargs...)
+            !isposdef(cov_l) && fix_cov!(cov_l, fix_cov_args...; fix_cov_kwargs...)
+            !isposdef(cov_u) && fix_cov!(cov_u, fix_cov_args...; fix_cov_kwargs...)
 
             d_mu = (mu_u - mu_l) / 2
         elseif box == :normal

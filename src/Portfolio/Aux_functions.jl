@@ -141,8 +141,8 @@ end
 const KindBootstrap = (:stationary, :circular, :moving)
 function gen_bootstrap(
     returns,
-    kind,
-    n_sim,
+    kind = :stationary,
+    n_sim = 3_000,
     window = 3,
     seed = nothing,
     rng = Random.default_rng(),
@@ -150,8 +150,23 @@ function gen_bootstrap(
     @assert(kind ∈ KindBootstrap, "kind must be one of $KindBootstrap")
     !isnothing(seed) && Random.seed!(rng, seed)
 
-    mus = nothing
-    covs = nothing
+    mus = Vector{Vector{eltype(returns)}}(undef, n_sim)
+    covs = Vector{Matrix{eltype(returns)}}(undef, n_sim)
+
+    bootstrap_func = if kind == :stationary
+        pyimport("arch.bootstrap").StationaryBootstrap
+    elseif kind == :circular
+        pyimport("arch.bootstrap").CircularBlockBootstrap
+    elseif kind == :moving
+        pyimport("arch.bootstrap").MovingBlockBootstrap
+    end
+
+    gen = bootstrap_func(window, returns, seed = seed)
+    for (i, data) in enumerate(gen.bootstrap(n_sim))
+        A = data[1][1]
+        mus[i] = vec(mean(A, dims = 1))
+        covs[i] = cov(A)
+    end
 
     return mus, covs
 end
@@ -195,7 +210,7 @@ function info_mtx(x, bins_info = :kn, type_info = :mutual, normed = true)
 
     T, N = size(x)
 
-    mtx = zeros(N, N)
+    mtx = Matrix{eltype(x)}(undef, N, N)
     for j in 1:N, i in j:N
         bins = if isa(bins_info, Int)
             bins_info
@@ -225,9 +240,3 @@ export gen_dataframes,
     summation_matrix,
     dup_elim_sum_matrices,
     gen_bootstrap
-
-N = 5
-mtx = zeros(N, N)
-for j in 1:N, i in j:N
-    mtx[i, j] = 1
-end

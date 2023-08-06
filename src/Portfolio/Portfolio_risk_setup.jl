@@ -1044,18 +1044,29 @@ function _hierarchical_clustering(
     linkage = :ward,
     codependence = :pearson,
     max_k = 10,
-    leaf_order = true,
+    branch_order = :optimal,
 )
     codep = portfolio.codep
     returns = portfolio.returns
+    bins_info = portfolio.bins_info
 
-    dist = if codependence ∈ (:pearson, :spearman, :kendall, :gerber1, :gerber2, :custom)
+    codeps1 = (:pearson, :spearman, :kendall, :gerber1, :gerber2, :custom)
+    codeps2 = (:abs_pearson, :abs_spearman, :abs_kendall, :distance)
+
+    dist = if codependence ∈ codeps1
         sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-    elseif codependence ∈ (:abs_pearson, :abs_spearman, :abs_kendall, :distance)
-        sqrt.(clamp!((1 .- codep), 0, 1))
+    elseif codependence ∈ codeps2
+        sqrt.(clamp!(1 .- codep, 0, 1))
     elseif codependence == :mutual_info
         info_mtx(returns, bins_info, :variation)
     elseif codependence == :tail
         -log.(codep)
+    end
+
+    if linkage == :dbht
+        codep = codependence ∈ codeps1 ? 1 - dist .^ 2 : portfolio.codep
+        DBHTs(dist, codep, branch_order)
+    else
+        clustering = hclust(dist; linkage = linkage, branchorder = branch_order)
     end
 end
