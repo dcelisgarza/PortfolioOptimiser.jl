@@ -76,7 +76,7 @@ function PMFG_T2s(W, nargout = 3)
         kk += 2
     end
 
-    A = W .* ((A + A') .== 1)
+    A = sparse(W .* ((A + A') .== 1))
 
     cliques = if nargout > 3
         vcat(transpose(in_v[1:4]), hcat(clique3, in_v[5:end]))
@@ -100,9 +100,17 @@ function PMFG_T2s(W, nargout = 3)
         Matrix{Int}(undef, 0, 0)
     end
 
-    return sparse(A), tri, clique3, cliques, cliqueTree
+    return A, tri, clique3, cliques, cliqueTree
 end
 
+function _findnz(A::AbstractSparseVector)
+    return findnz(A)[1]
+end
+
+function _findnz(A::AbstractVector)
+    return getindex.(findall(A .!= 0))
+end
+#! Maybe replace all findnz with _findnz
 function distance_wei(L)
     N = size(L, 1)
     D = fill(Inf, N, N)
@@ -116,12 +124,8 @@ function distance_wei(L)
         while true
             S[V] .= false
             L1[:, V] .= 0
-            for v in vec(V)
-                T = if issparse(L1)
-                    findnz(L1[v, :])[1]
-                else
-                    getindex.(findall(L1[v, :] .!= 0), 1)
-                end
+            for v in V
+                T = findnz(L1[v, :])[1]
                 d, wi = findmin([D[u, T] D[u, v] .+ L1[v, T]], dims = 2)
                 wi = vec(getindex.(wi, 2))
                 D[u, T] .= vec(d)
@@ -142,13 +146,278 @@ function distance_wei(L)
     return D, B
 end
 
+function clique3(A)
+    A = A - Diagonal(A)
+    A = A .!= 0
+    A2 = A * A
+    P = (A2 .!= 0) .* (A .!= 0)
+    P = sparse(UpperTriangular(P))
+    r, c = findnz(P .!= 0)[1:2]
+    E = hcat(r, c)
+
+    lr = length(r)
+    N3 = Vector{Int}(undef, lr)
+    K3 = Vector{Vector{Int}}(undef, lr)
+    for n in 1:lr
+        i = r[n]
+        j = c[n]
+        a = A[i, :] .* A[j, :]
+        idx = findnz(a .!= 0)[1]
+        K3[n] = idx
+        N3[n] = length(idx)
+    end
+
+    clique = zeros(Int, 1, 3)
+    for n in 1:lr
+        temp = K3[n]
+        for m in eachindex(temp)
+            candidate = transpose(E[n, :])
+            candidate = hcat(candidate, temp[m])
+            sort!(candidate, dims = 2)
+            a = clique[:, 1] .== candidate[1]
+            b = clique[:, 2] .== candidate[2]
+            c = clique[:, 3] .== candidate[3]
+            check = a .* b .* c
+            check = sum(check)
+            if check == 0
+                clique = vcat(clique, candidate)
+            end
+            candidate, check, a, b, c = nothing, nothing, nothing, nothing, nothing
+        end
+    end
+
+    isort = sortperm(collect(zip(clique[:, 1], clique[:, 2], clique[:, 3])))
+    clique = clique[isort, :]
+    clique = clique[2:size(clique, 1), :]
+
+    return K3, E, clique
+end
+
+function breadth(CIJ, source)
+    N = size(CIJ, 1)
+    white = 0
+    gray = 1
+    black = 2
+    color = zeros(Int, N)
+    distance = fill(Inf, N)
+    branch = zeros(Int, N)
+    color[source] = gray
+    distance[source] = 0
+    branch[source] = -1
+    Q = [source]
+    while !isempty(Q)
+        u = Q[1]
+        ns = findnz(CIJ[u, :])[1]
+        for v in ns
+            all(distance[v] .== 0) && (distance[v] = distance[u] + 1)
+            if all(color[v] .== white)
+                color[v] = gray
+                distance[v] = distance[u] + 1
+                branch[v] = u
+                Q = vcat(Q, v)
+            end
+        end
+        Q = Q[2:length(Q)]
+        color[u] = black
+    end
+
+    return distance, branch
+end
+
+function FindDisjoint(Adj, Cliq)
+    N = size(Adj, 1)
+    Temp = copy(Adj)
+    T = zeros(Int, N)
+    IndxTotal = 1:N
+    IndxNot =
+        findall(IndxTotal .!= Cliq[1] .&& IndxTotal .!= Cliq[2] .&& IndxTotal .!= Cliq[3])
+    Temp[Cliq, :] .= 0
+    Temp[:, Cliq] .= 0
+    dropzeros!(Temp)
+
+    d = breadth(Temp, IndxNot[1])[1]
+    d[isinf.(d)] .= -1
+    d[IndxNot[1]] = 0
+    Indx1 = d .== -1
+    Indx2 = d .!= -1
+    T[Indx1] .= 1
+    T[Indx2] .= 2
+    T[Cliq] .= 0
+    return T, IndxNot
+end
+
+function BuildHierarchy(M)
+    N = size(M, 2)
+    Pred = zeros(Int, N)
+    for n in 1:N
+        Children = findnz(M[:, n] .== 1)[1]
+        ChildrenSum = vec(sum(M[Children, :], dims = 1))
+        Parents = findall(ChildrenSum .== length(Children))
+        Parents = Parents[Parents .!= n]
+        if !isempty(Parents)
+            ParentSum = vec(sum(M[Parents], dims = 1))
+            a = findall(ParentSum .== minimum(ParentSum))
+            if length(a) == 1
+                Pred[n] = Parents[a[1]]
+            else
+                Pred = Int[]
+            end
+        else
+            Pred[n] = 0
+        end
+    end
+    return Pred
+end
+
+function AdjCliq(A, CliqList, CliqRoot)
+    Nc = size(CliqList, 1)
+    N = size(A, 1)
+    Adj = spzeros(Nc, Nc)
+    Indicator = zeros(Int, N)
+    for n in eachindex(CliqRoot)
+        Indicator[CliqList[CliqRoot[n], :]] .= 1
+        Indi = hcat(
+            Indicator[CliqList[CliqRoot, 1]],
+            Indicator[CliqList[CliqRoot, 2]],
+            Indicator[CliqList[CliqRoot, 3]],
+        )
+
+        adjacent = CliqRoot[vec(sum(Indi, dims = 2)) .== 2]
+        Adj[adjacent, n] .= 1
+    end
+
+    Adj = Adj + transpose(Adj)
+end
+
+function BubbleHierarchy(Pred, Sb)
+    Nc = size(Pred, 1)
+    Root = findall(Pred .== 0)
+    CliqCount = zeros(Nc, 1)
+    CliqCount[Root] .= 1
+    Mb = Matrix{Int}(undef, Nc, 0)
+
+    if length(Root) > 1
+        TempVec = zeros(Nc)
+        TempVec[Root] .= 1
+        Mb = hcat(Mb, TempVec)
+    end
+
+    while sum(CliqCount) < Nc
+        NxtRoot = Int[]
+        for n in eachindex(Root)
+            DirectChild = findall(Pred .== Root[n])
+            TempVec = spzeros(Int, Nc, 1)
+            TempVec[[Root[n]; DirectChild]] .= 1
+            Mb = hcat(Mb, TempVec)
+            CliqCount[DirectChild] .= 1
+            for m in eachindex(DirectChild)
+                if Sb[DirectChild[m]] != 0
+                    NxtRoot = [NxtRoot; DirectChild[m]]
+                end
+            end
+        end
+        Root = unique(NxtRoot)
+    end
+    Nb = size(Mb, 2)
+    H = spzeros(Int, Nb, Nb)
+
+    for n in 1:Nb
+        Indx = Mb[:, n] .== 1
+        JointSum = vec(sum(Mb[Indx, :], dims = 1))
+        Neigh = JointSum .>= 1
+        H[n, Neigh] .= 1
+    end
+
+    H = H + transpose(H)
+    H = H - Diagonal(H)
+    return H, Mb
+end
+
+const RootMethods = (:unique, :equal)
+function CliqHierarchyTree2s(Apm, method = :unique)
+    @assert(method ∈ RootMethods, "method must be one of $RootMethods")
+    N = size(Apm, 1)
+    A = Apm .!= 0
+    clique = clique3(A)[3]
+
+    Nc = size(clique, 1)
+    M = spzeros(Int, N, Nc)
+    CliqList = copy(clique)
+    Sb = zeros(Int, Nc)
+
+    for n in 1:Nc
+        cliq_vec = CliqList[n, :]
+        T = FindDisjoint(A, cliq_vec)[1]
+        indx0 = findall(T .== 0)
+        indx1 = findall(T .== 1)
+        indx2 = findall(T .== 2)
+
+        if length(indx1) > length(indx2)
+            indx_s = vcat(indx2, indx0)
+        else
+            indx_s = vcat(indx1, indx0)
+        end
+
+        if isempty(indx_s)
+            Sb[n] = 0
+        else
+            Sb[n] = length(indx_s) - 3
+        end
+
+        M[indx_s, n] .= 1
+    end
+
+    Pred = BuildHierarchy(M)
+    Root = findall(Pred .== 0)
+
+    if method == :unique
+        if length(Root) > 1
+            push!(Pred, 0)
+            Pred[Root] .= length(Pred)
+        end
+
+        H = spzeros(Int, Nc + 1, Nc + 1)
+        for n in eachindex(Pred)
+            Pred[n] != 0 && (H[n, Pred[n]] = 1)
+        end
+        H = H + transpose(H)
+    else
+        if length(Root) > 1
+            Adj = AdjCliq(A, CliqList, Root)
+        end
+        H = spzeros(Int, Nc, Nc)
+        for n in eachindex(Pred)
+            Pred[n] != 0 && (H[n, Pred[n]] = 1)
+        end
+        if !isempty(Pred)
+            H = H + transpose(H)
+            H = H + Adj
+        else
+            H = spzeros(Int, 0, 0)
+        end
+    end
+
+    if !isempty(H)
+        H2, Mb = BubbleHierarchy(Pred, Sb)
+        H2 = H2 .!= 0
+        Mb = Mb[1:size(CliqList, 1), :]
+    else
+        H2 = spzeros(Int, 0, 0)
+        Mb = spzeros(Int, 0, 0)
+    end
+
+    return H, H2, Mb, CliqList, Sb
+end
+
 function DBHTs(D, S)
     Rpm = PMFG_T2s(S)[1]
     Apm = copy(Rpm)
     Apm[Apm != 0] = D[Apm != 0]
     Dpm = distance_wei(Apm)[1]
-    (H1, Hb, Mb, CliqList, Sb) = CliqHierarchyTree2s(Rpm, method1 = "uniqueroot")
+    (H1, Hb, Mb, CliqList, Sb) = CliqHierarchyTree2s(Rpm, :unique)
 
     Clustering.orderbranches_barjoseph!(Z, D)
     return T8, Rpm, Adjv, Dpm, Mv, Z
 end
+
+export DBHTs, PMFG_T2s, distance_wei, clique3, breadth, FindDisjoint, CliqHierarchyTree2s
