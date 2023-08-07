@@ -655,11 +655,44 @@ function HierarchyConstruct4s(Rpm, Dpm, Tc, Adjv, Mv)
         Z = DendroConstruct(Z, LabelVec1, LabelVec2, dvu)
         LabelVec1 = copy(LabelVec2)
     end
-
     return Z
 end
 
-function DBHTs(D, S)
+function add_cluster_count(Z)
+    N = size(Z, 1) + 1
+    Z = hcat(Z, zeros(N - 1))
+
+    for i in eachindex(view(Z, :, 1))
+
+        # Cluster indices.
+        a = Int(Z[i, 1])
+        b = Int(Z[i, 2])
+
+        # If the cluster index is less than N, it represents a leaf, 
+        # so only one add one to the count.
+        a <= N && (Z[i, 4] += 1)
+        b <= N && (Z[i, 4] += 1)
+
+        if a > N
+            # Clusters in index Z[i, 1:2] are combined to form cluster i + N.
+            # If a cluster has index a > N, it's a combined cluster.
+            # The index of the child is j = a - N, so we need to go to index j
+            # which is being combined by cluster a, get the count at index j
+            # and add it to the count at index i, which contains cluster a.
+            j = a - N
+            Z[i, 4] += Z[j, 4]
+        end
+
+        if b > N
+            # Do the same with the other side of the cluster, to wherever that side leads.
+            j = b - N
+            Z[i, 4] += Z[j, 4]
+        end
+    end
+    return Z
+end
+
+function DBHTs(D, S, branchorder = true)
     Rpm = PMFG_T2s(S)[1]
     Apm = copy(Rpm)
     Apm[Apm .!= 0] .= D[Apm .!= 0]
@@ -682,8 +715,10 @@ function DBHTs(D, S)
     Adjv, T8 = BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
 
     Z = HierarchyConstruct4s(Rpm, Dpm, T8, Adjv, Mv)
+    Z = add_cluster_count(Z)
 
-    # Clustering.orderbranches_barjoseph!(Z, D)
+    # branchorder && (Z = sch.optimal_leaf_ordering(Z, scp.squareform(D)))
+
     return T8, Rpm, Adjv, Dpm, Mv, Z
 end
 

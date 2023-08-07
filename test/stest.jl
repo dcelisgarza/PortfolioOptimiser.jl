@@ -1836,13 +1836,21 @@ S = reshape(
     30,
 )
 
-println([Int.(Z[i, 1:2]) for i in 1:size(Z, 1)])
-println([Z[i, 3] for i in 1:size(Z, 1)])
-
+# println([Int.(Z[i, 1:2]) for i in 1:size(Z, 1)])
+# println([Z[i, 3] for i in 1:size(Z, 1)])
+using Clustering
 clustering = hclust(D)
 
 T8, Rpm, Adjv, Dpm, Mv, Z = DBHTs(D, S)
+
+Z2 = copy(Z)
+
+Z2 = add_cluster_count(Z)
+
+counts = setdiff(Int.(vec(Z[:, 1:2])), 1:N)
+
 # Z = from_mlab_linkage(Z)
+println([Z[i, :] for i in 1:size(Z, 1)])
 
 Z2 = copy(Z)
 mask1 = Z[:, 1] .<= size(Z, 1)
