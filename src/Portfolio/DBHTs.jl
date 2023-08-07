@@ -510,8 +510,8 @@ function BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
 end
 
 function DendroConstruct(Zi, LabelVec1, LabelVec2, LinkageDist)
-    indx = !(LabelVec1 == LabelVec2)
-    Z = vcat((Zi, hcat((sort!(unique(LabelVec1[indx])), LinkageDist))))
+    indx = LabelVec1 .!= LabelVec2
+    Z = vcat(Zi, hcat(transpose(sort!(unique(LabelVec1[indx]))), LinkageDist))
     return Z
 end
 
@@ -535,31 +535,128 @@ function BubbleMember(Dpm, Rpm, Mv, Mc)
     return Mvv
 end
 
+function LinkageFunction(d, labelvec)
+    lvec = sort!(unique(labelvec))
+    Links = Matrix{Int}(undef, 0, 3)
+    for r in 1:(length(lvec) - 1)
+        vecr = labelvec .== lvec[r]
+        for c in (r + 1):length(lvec)
+            vecc = labelvec .== lvec[c]
+            x1 = vecr .|| vecc
+            dd = d[x1, x1]
+            de = dd[dd .!= 0]
+            if isempty(de)
+                Link1 = hcat(lvec[r], lvec[c], 0)
+            else
+                Link1 = hcat(lvec[r], lvec[c], vec(maximum(de, dims = 1)))
+            end
+            Links = vcat(Links, Link1)
+        end
+    end
+    dvu, imn = findmin(Links[:, 3])
+    PairLink = Links[imn, 1:2]
+    return PairLink, dvu
+end
+
+function _build_link_and_dendro(rg, dpm, LabelVec, LabelVec1, LabelVec2, V, nc, Z)
+    for _ in rg
+        PairLink, dvu = LinkageFunction(dpm, LabelVec)
+        LabelVec[LabelVec .== PairLink[1] .|| LabelVec .== PairLink[2]] .=
+            maximum(LabelVec1) + 1
+        LabelVec2[V] = LabelVec
+        Z = DendroConstruct(Z, LabelVec1, LabelVec2, 1 / nc)
+        nc -= 1
+        LabelVec1 = copy(LabelVec2)
+    end
+    return Z, nc, LabelVec1
+end
+
+function from_mlab_linkage(Z)
+    N = size(Z, 1)
+
+    counts = zeros(Int, N)
+    for i in 1:N
+        current_count = 0
+        merge = Int.(Z[i, 1:2])
+        for child_idx in merge
+            if child_idx < N + 1
+                current_count += 1  # leaf node
+            else
+                current_count += counts[child_idx - N]
+            end
+        end
+        counts[i] = current_count
+    end
+    Z = hcat(Z, counts)
+
+    return Z
+end
+
 function HierarchyConstruct4s(Rpm, Dpm, Tc, Adjv, Mv)
     N = size(Dpm, 1)
     kvec = sort!(unique(Tc))
-    LabelVec1 = 1:N
+    LabelVec1 = collect(1:N)
     E = sparse(LabelVec1, Tc, ones(Int, N), N, maximum(Tc))
-    Z = Matrix{Int}(undef, 0, 3)
+    Z = Matrix{Float64}(undef, 0, 3)
 
     for n in eachindex(kvec)
         Mc = vec(E[:, kvec[n]]) .* Mv
         Mvv = BubbleMember(Dpm, Rpm, Mv, Mc)
         Bub = findall(vec(sum(Mvv, dims = 1) .> 0))
-        nc = vec(sum(Tc .== kvec[n], dims = 1)) .- 1
-
+        nc = sum(Tc .== kvec[n]) - 1
         for m in eachindex(Bub)
-            V = vec(findall(Mvv[:, Bub[m]] != 0))
+            V = vec(findall(Mvv[:, Bub[m]] .!= 0))
             if length(V) > 1
                 dpm = Dpm[V, V]
                 LabelVec = LabelVec1[V]
                 LabelVec2 = copy(LabelVec1)
-                for v in 1:(length(V) - 1)
-                    PairLink, dvu = LinkageFunction(dpm, LabelVec)
-                end
+                Z, nc, LabelVec1 = _build_link_and_dendro(
+                    1:(length(V) - 1),
+                    dpm,
+                    LabelVec,
+                    LabelVec1,
+                    LabelVec2,
+                    V,
+                    nc,
+                    Z,
+                )
             end
         end
+
+        V = findall(E[:, kvec[n]] .!= 0)
+        dpm = Dpm[V, V]
+
+        LabelVec = LabelVec1[V]
+        LabelVec2 = copy(LabelVec1)
+        Z, nc, LabelVec1 = _build_link_and_dendro(
+            1:(length(Bub) - 1),
+            dpm,
+            LabelVec,
+            LabelVec1,
+            LabelVec2,
+            V,
+            nc,
+            Z,
+        )
     end
+
+    LabelVec2 = copy(LabelVec1)
+    dcl = ones(Int, length(LabelVec1))
+    for n in 1:(length(kvec) - 1)
+        PairLink, dvu = LinkageFunction(Dpm, LabelVec1)
+        LabelVec2[LabelVec1 .== PairLink[1] .|| LabelVec1 .== PairLink[2]] .=
+            maximum(LabelVec1) + 1
+
+        dvu =
+            unique(dcl[LabelVec1 .== PairLink[1]]) + unique(dcl[LabelVec1 .== PairLink[2]])
+
+        dcl[LabelVec1 .== PairLink[1] .|| LabelVec1 .== PairLink[2]] .= dvu
+
+        Z = DendroConstruct(Z, LabelVec1, LabelVec2, dvu)
+        LabelVec1 = copy(LabelVec2)
+    end
+
+    return Z
 end
 
 function DBHTs(D, S)
@@ -583,12 +680,18 @@ function DBHTs(D, S)
     end
 
     Adjv, T8 = BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
-    return HierarchyConstruct4s(Rpm, Dpm, T8, Adjv, Mv)
 
     Z = HierarchyConstruct4s(Rpm, Dpm, T8, Adjv, Mv)
 
-    Clustering.orderbranches_barjoseph!(Z, D)
+    # Clustering.orderbranches_barjoseph!(Z, D)
     return T8, Rpm, Adjv, Dpm, Mv, Z
 end
 
-export DBHTs, PMFG_T2s, distance_wei, clique3, breadth, FindDisjoint, CliqHierarchyTree2s
+export DBHTs,
+    PMFG_T2s,
+    distance_wei,
+    clique3,
+    breadth,
+    FindDisjoint,
+    CliqHierarchyTree2s,
+    from_mlab_linkage

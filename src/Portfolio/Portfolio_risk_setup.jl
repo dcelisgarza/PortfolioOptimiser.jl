@@ -1065,7 +1065,7 @@ function _hierarchical_clustering(
 
     if linkage == :dbht
         codep = codependence ∈ codeps1 ? 1 - dist .^ 2 : portfolio.codep
-        DBHTs(dist, codep, branch_order)
+        (_, _, _, _, _, clustering) = DBHTs(dist, codep)
     else
         clustering = hclust(dist; linkage = linkage, branchorder = branch_order)
     end

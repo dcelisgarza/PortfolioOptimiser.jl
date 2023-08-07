@@ -13,16 +13,15 @@ using Test,
     StatsBase,
     PyCall
 
-# S = randn(30, 30)
+# S = randn(100, 100)
 # S = S .^ 2
-# D = randn(30, 30)
+# D = randn(100, 100)
 # D = D .^ 2
 # D = Symmetric(D)
 # S = Symmetric(S)
 # D[diagind(D)] .= 0
-# S[diagind(S)] .= 0
+# S[diagind(S)] .= 1
 
-println(vec(S))
 D = reshape(
     [
         0.0,
@@ -1837,10 +1836,70 @@ S = reshape(
     30,
 )
 
+println([Int.(Z[i, 1:2]) for i in 1:size(Z, 1)])
+println([Z[i, 3] for i in 1:size(Z, 1)])
+
+clustering = hclust(D)
+
+T8, Rpm, Adjv, Dpm, Mv, Z = DBHTs(D, S)
+# Z = from_mlab_linkage(Z)
+
+Z2 = copy(Z)
+mask1 = Z[:, 1] .<= size(Z, 1)
+mask2 = Z[:, 2] .<= size(Z, 1)
+lidx1 = findall(mask1)
+tidx1 = findall(.!mask1)
+lidx2 = findall(mask2)
+tidx2 = findall(.!mask2)
+Z2[lidx1, 1] .*= -1
+Z2[lidx2, 2] .*= -1
+
+Z2 = Z[:, 1:2] .- (size(Z, 1) + 1)
+Z[findall(Z2 .> 0)]
+
+Z[idx1, 1] *= -1
+Z[idx2, 2] *= -1
+
+N = size(Z, 1)
+idx = findall(Z1[:, 1] .> N .|| Z1[:, 2] .> N)
+Z1[idx, :] .= 3
+
+pZ = [
+    [18.0, 27.0, 0.08333333],
+    [3.0, 22.0, 0.09090909],
+    [5.0, 13.0, 0.1],
+    [7.0, 15.0, 0.11111111],
+    [2.0, 34.0, 0.125],
+    [10.0, 35.0, 0.14285714],
+    [17.0, 36.0, 0.16666667],
+    [32.0, 37.0, 0.2],
+    [12.0, 38.0, 0.25],
+    [16.0, 39.0, 0.33333333],
+    [31.0, 33.0, 0.5],
+    [40.0, 41.0, 1.0],
+    [25.0, 29.0, 0.1],
+    [9.0, 43.0, 0.11111111],
+    [21.0, 28.0, 0.125],
+    [20.0, 23.0, 0.14285714],
+    [11.0, 46.0, 0.16666667],
+    [1.0, 47.0, 0.2],
+    [45.0, 48.0, 0.25],
+    [30.0, 49.0, 0.33333333],
+    [8.0, 44.0, 0.5],
+    [50.0, 51.0, 1.0],
+    [6.0, 24.0, 0.2],
+    [4.0, 26.0, 0.25],
+    [19.0, 54.0, 0.33333333],
+    [14.0, 55.0, 0.5],
+    [53.0, 56.0, 1.0],
+    [42.0, 57.0, 2.0],
+    [52.0, 58.0, 3.0],
+]
+pZ = vcat(transpose.(pZ)...)
+norm(pZ - pZ)
+
 println([D[i, :] for i in 1:size(D, 1)])
 println([S[i, :] for i in 1:size(S, 1)])
-
-bub, nc = DBHTs(D, S)
 
 pZ = [
     [
