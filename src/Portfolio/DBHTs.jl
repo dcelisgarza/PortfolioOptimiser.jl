@@ -14,7 +14,7 @@ function PMFG_T2s(W, nargout = 3)
     j = sortperm(vec(s), rev = true)
 
     in_v[1:4] .= j[1:4]
-    ou_v = setdiff(1:N, in_v)  # List of vertices not inserted yet
+    ou_v = sort!(setdiff(1:N, in_v))  # List of vertices not inserted yet
 
     # Build the tetrahedron with largest strength
     tri[1, :] = in_v[[1, 2, 3]]
@@ -124,9 +124,13 @@ function distance_wei(L)
         while true
             S[V] .= false
             L1[:, V] .= 0
+            dropzeros!(L1)
             for v in V
                 T = findnz(L1[v, :])[1]
-                d, wi = findmin([D[u, T] D[u, v] .+ L1[v, T]], dims = 2)
+                d, wi = findmin(
+                    vcat(vcat(transpose(D[u, T]), transpose(D[u, v] .+ L1[v, T]))),
+                    dims = 1,
+                )
                 wi = vec(getindex.(wi, 2))
                 D[u, T] .= vec(d)
                 ind = T[wi .== 3]
@@ -234,7 +238,6 @@ function FindDisjoint(Adj, Cliq)
     Temp[Cliq, :] .= 0
     Temp[:, Cliq] .= 0
     dropzeros!(Temp)
-
     d = breadth(Temp, IndxNot[1])[1]
     d[isinf.(d)] .= -1
     d[IndxNot[1]] = 0
@@ -249,13 +252,14 @@ end
 function BuildHierarchy(M)
     N = size(M, 2)
     Pred = zeros(Int, N)
+    dropzeros!(M)
     for n in 1:N
         Children = findnz(M[:, n] .== 1)[1]
         ChildrenSum = vec(sum(M[Children, :], dims = 1))
         Parents = findall(ChildrenSum .== length(Children))
         Parents = Parents[Parents .!= n]
         if !isempty(Parents)
-            ParentSum = vec(sum(M[Parents], dims = 1))
+            ParentSum = vec(sum(M[:, Parents], dims = 1))
             a = findall(ParentSum .== minimum(ParentSum))
             if length(a) == 1
                 Pred[n] = Parents[a[1]]
@@ -292,7 +296,7 @@ end
 function BubbleHierarchy(Pred, Sb)
     Nc = size(Pred, 1)
     Root = findall(Pred .== 0)
-    CliqCount = zeros(Nc, 1)
+    CliqCount = zeros(Nc)
     CliqCount[Root] .= 1
     Mb = Matrix{Int}(undef, Nc, 0)
 
@@ -301,12 +305,11 @@ function BubbleHierarchy(Pred, Sb)
         TempVec[Root] .= 1
         Mb = hcat(Mb, TempVec)
     end
-
     while sum(CliqCount) < Nc
         NxtRoot = Int[]
         for n in eachindex(Root)
             DirectChild = findall(Pred .== Root[n])
-            TempVec = spzeros(Int, Nc, 1)
+            TempVec = zeros(Int, Nc)
             TempVec[[Root[n]; DirectChild]] .= 1
             Mb = hcat(Mb, TempVec)
             CliqCount[DirectChild] .= 1
@@ -315,8 +318,9 @@ function BubbleHierarchy(Pred, Sb)
                     NxtRoot = [NxtRoot; DirectChild[m]]
                 end
             end
+            DirectChild, TempVec = nothing, nothing
         end
-        Root = unique(NxtRoot)
+        Root = sort!(unique(NxtRoot))
     end
     Nb = size(Mb, 2)
     H = spzeros(Int, Nb, Nb)
@@ -338,7 +342,7 @@ function CliqHierarchyTree2s(Apm, method = :unique)
     @assert(method ∈ RootMethods, "method must be one of $RootMethods")
     N = size(Apm, 1)
     A = Apm .!= 0
-    clique = clique3(A)[3]
+    K3, E, clique = clique3(A)
 
     Nc = size(clique, 1)
     M = spzeros(Int, N, Nc)
@@ -409,12 +413,125 @@ function CliqHierarchyTree2s(Apm, method = :unique)
     return H, H2, Mb, CliqList, Sb
 end
 
+function DirectHb(Rpm, Hb, Mb, Mv, CliqList)
+    Hb = Hb .!= 0
+    r, c, _ = findnz(sparse(UpperTriangular(Hb) .!= 0))
+    CliqEdge = Matrix{Int}(undef, 0, 3)
+    for n in eachindex(r)
+        data = findall(Mb[:, r[n]] .!= 0 .&& Mb[:, c[n]] .!= 0)
+        data = hcat(r[n], c[n], data)
+        CliqEdge = vcat(CliqEdge, data)
+    end
+
+    kb = vec(sum(Hb, dims = 1))
+    sMv = size(Mv, 2)
+    Hc = spzeros(sMv, sMv)
+
+    sCE = size(CliqEdge, 1)
+    for n in 1:sCE
+        Temp = copy(Hb)
+        Temp[CliqEdge[n, 1], CliqEdge[n, 2]] = 0
+        Temp[CliqEdge[n, 2], CliqEdge[n, 1]] = 0
+        dropzeros!(Temp)
+        d, _ = breadth(Temp, 1)
+        d[isinf.(d)] .= -1
+        d[1] = 0
+
+        vo = CliqList[CliqEdge[n, 3], :]
+        b = CliqEdge[n, 1:2]
+        bleft = b[d[b] .!= -1]
+        bright = b[d[b] .== -1]
+
+        vleft = getindex.(findall(Mv[:, d .!= -1] .!= 0), 1)
+        vleft = setdiff(vleft, vo)
+
+        vright = getindex.(findall(Mv[:, d .== -1] .!= 0), 1)
+        vright = setdiff(vright, vo)
+
+        left = sum(Rpm[vo, vleft])
+        right = sum(Rpm[vo, vright])
+
+        if left > right
+            Hc[bright, bleft] .= left
+        else
+            Hc[bleft, bright] .= right
+        end
+    end
+
+    Sep = vec(Int.(sum(Hc, dims = 2) .== 0))
+    Sep[vec(sum(Hc, dims = 1) .== 0) .&& kb .> 1] .= 2
+
+    return Hc, Sep
+end
+
+function BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
+    Hc, Sep = DirectHb(Rpm, Hb, Mb, Mv, CliqList)
+
+    N = size(Rpm, 1)
+    indx = findall(Sep .== 1)
+    Adjv = spzeros(0, 0)
+
+    dropzeros!(Hc)
+    lidx = length(indx)
+    if lidx > 1
+        Adjv = spzeros(size(Mv, 1), lidx)
+
+        for n in eachindex(indx)
+            d, _ = breadth(transpose(Hc), indx[n])
+            d[isinf.(d)] .= -1
+            d[indx[n]] = 0
+            r = getindex.(findall(Mv[:, d .!= -1] .!= 0), 1)
+            Adjv[unique(r), n] .= 1
+        end
+        Tc = zeros(Int, N)
+        Bubv = Mv[:, indx]
+        cv = findall(vec(sum(Bubv, dims = 2) .== 1))
+        uv = findall(vec(sum(Bubv, dims = 2) .> 1))
+        Mdjv = spzeros(N, lidx)
+        Mdjv[cv, :] = Bubv[cv, :]
+        for v in eachindex(uv)
+            v_cont = vec(sum(Rpm[:, uv[v]] .* Bubv, dims = 1))
+            all_cont = vec(3 * (sum(Bubv, dims = 1) .- 2))
+            imx = argmax(v_cont ./ all_cont)
+            Mdjv[uv[v], imx] = 1
+        end
+        v, ci, _ = findnz(Mdjv)
+        Tc[v] .= ci
+
+        Udjv = Dpm * Mdjv * diagm(1 ./ vec(sum(Mdjv .!= 0, dims = 1)))
+        Udjv[Adjv .== 0] .= Inf
+        imn = vec(getindex.(argmin(Udjv[vec(sum(Mdjv, dims = 2)) .== 0, :], dims = 2), 2))
+        Tc[Tc .== 0] .= imn
+    else
+        Tc = ones(Int, N)
+    end
+
+    return Adjv, Tc
+end
+
 function DBHTs(D, S)
     Rpm = PMFG_T2s(S)[1]
     Apm = copy(Rpm)
-    Apm[Apm != 0] = D[Apm != 0]
+    Apm[Apm .!= 0] .= D[Apm .!= 0]
     Dpm = distance_wei(Apm)[1]
-    (H1, Hb, Mb, CliqList, Sb) = CliqHierarchyTree2s(Rpm, :unique)
+
+    H1, Hb, Mb, CliqList, Sb = CliqHierarchyTree2s(Rpm, :unique)
+
+    Mb = Mb[1:size(CliqList, 1), :]
+
+    sRpm = size(Rpm, 1)
+    Mv = spzeros(Int, sRpm, 0)
+
+    nMb = size(Mb, 2)
+    for n in 1:nMb
+        vc = spzeros(Int, sRpm)
+        vc[sort!(unique(CliqList[Mb[:, n] .!= 0, :]))] .= 1
+        Mv = hcat(Mv, vc)
+    end
+
+    return BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
+
+    Adjv, T8 = BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
 
     Clustering.orderbranches_barjoseph!(Z, D)
     return T8, Rpm, Adjv, Dpm, Mv, Z
