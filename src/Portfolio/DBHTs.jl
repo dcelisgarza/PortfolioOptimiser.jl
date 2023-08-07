@@ -509,6 +509,59 @@ function BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
     return Adjv, Tc
 end
 
+function DendroConstruct(Zi, LabelVec1, LabelVec2, LinkageDist)
+    indx = !(LabelVec1 == LabelVec2)
+    Z = vcat((Zi, hcat((sort!(unique(LabelVec1[indx])), LinkageDist))))
+    return Z
+end
+
+function BubbleMember(Dpm, Rpm, Mv, Mc)
+    Mvv = zeros(size(Mv, 1), size(Mv, 2))
+
+    vu = findall(vec(sum(Mc, dims = 2) .> 1))
+    v = findall(vec(sum(Mc, dims = 2) .== 1))
+
+    Mvv[v, :] = Mc[v, :]
+
+    for n in eachindex(vu)
+        bub = findall(Mc[vu[n], :] .!= 0)
+        vu_bub = vec(sum(Rpm[:, vu[n]] .* Mv[:, bub], dims = 1))
+        all_bub = diag(transpose(Mv[:, bub]) * Rpm * Mv[:, bub]) / 2
+        frac = vu_bub ./ all_bub
+        imx = vec(argmax(frac, dims = 1))
+        Mvv[vu[n], bub[imx]] .= 1
+    end
+
+    return Mvv
+end
+
+function HierarchyConstruct4s(Rpm, Dpm, Tc, Adjv, Mv)
+    N = size(Dpm, 1)
+    kvec = sort!(unique(Tc))
+    LabelVec1 = 1:N
+    E = sparse(LabelVec1, Tc, ones(Int, N), N, maximum(Tc))
+    Z = Matrix{Int}(undef, 0, 3)
+
+    for n in eachindex(kvec)
+        Mc = vec(E[:, kvec[n]]) .* Mv
+        Mvv = BubbleMember(Dpm, Rpm, Mv, Mc)
+        Bub = findall(vec(sum(Mvv, dims = 1) .> 0))
+        nc = vec(sum(Tc .== kvec[n], dims = 1)) .- 1
+
+        for m in eachindex(Bub)
+            V = vec(findall(Mvv[:, Bub[m]] != 0))
+            if length(V) > 1
+                dpm = Dpm[V, V]
+                LabelVec = LabelVec1[V]
+                LabelVec2 = copy(LabelVec1)
+                for v in 1:(length(V) - 1)
+                    PairLink, dvu = LinkageFunction(dpm, LabelVec)
+                end
+            end
+        end
+    end
+end
+
 function DBHTs(D, S)
     Rpm = PMFG_T2s(S)[1]
     Apm = copy(Rpm)
@@ -529,9 +582,10 @@ function DBHTs(D, S)
         Mv = hcat(Mv, vc)
     end
 
-    return BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
-
     Adjv, T8 = BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
+    return HierarchyConstruct4s(Rpm, Dpm, T8, Adjv, Mv)
+
+    Z = HierarchyConstruct4s(Rpm, Dpm, T8, Adjv, Mv)
 
     Clustering.orderbranches_barjoseph!(Z, D)
     return T8, Rpm, Adjv, Dpm, Mv, Z
