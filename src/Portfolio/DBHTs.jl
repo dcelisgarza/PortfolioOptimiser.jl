@@ -697,7 +697,10 @@ function turn_into_Hclust_merges(Z)
     return Z
 end
 
+const BranchOrder = (:optimal, :barjoseph, :r, :default)
 function DBHTs(D, S, branchorder = :optimal)
+    @assert(branchorder ∈ BranchOrder, "branchorder must be one of $BranchOrder")
+
     Rpm = PMFG_T2s(S)[1]
     Apm = copy(Rpm)
     Apm[Apm .!= 0] .= D[Apm .!= 0]
@@ -732,8 +735,6 @@ function DBHTs(D, S, branchorder = :optimal)
         Clustering.orderbranches_barjoseph!(hmer, D)
     elseif branchorder == :r
         Clustering.orderbranches_r!(hmer)
-    else
-        throw(ArgumentError("Unsupported branchorder=$branchorder method"))
     end
     hclust = Hclust(hmer, :dbht)
 
