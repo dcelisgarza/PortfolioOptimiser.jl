@@ -735,9 +735,9 @@ function DBHTs(D, S, branchorder = :optimal)
     else
         throw(ArgumentError("Unsupported branchorder=$branchorder method"))
     end
-    Z = Hclust(hmer, :dbht)
+    hclust = Hclust(hmer, :dbht)
 
-    return T8, Rpm, Adjv, Dpm, Mv, Z
+    return T8, Rpm, Adjv, Dpm, Mv, Z, hclust
 end
 
 export DBHTs,
