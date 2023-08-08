@@ -28,7 +28,7 @@ function owa_gmd(T)
 end
 
 function owa_cvar(T, alpha = 0.05)
-    k = Int(ceil(T * alpha))
+    k = ceil(Int, T * alpha)
     w = Vector(undef, T)
     w[1:(k - 1)] .= -1 / (T * alpha)
     w[k] = -1 - sum(w[1:(k - 1)])

@@ -80,7 +80,7 @@ function _golden_section(
 )
     # Golden section method. Maximum if minimum == false is passed
     minimum ? sign = 1 : sign = -1
-    max_iter = Int(ceil(-2.078087 * log(tol / abs(b - a))))
+    max_iter = ceil(Int, -2.078087 * log(tol / abs(b - a)))
 
     r = 0.618033989
     c = 1.0 - r

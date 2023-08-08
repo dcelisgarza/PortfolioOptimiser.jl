@@ -30,6 +30,10 @@ function gen_dataframes(portfolio)
     df_dmu
 end
 
+function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractVector})
+    return vcat(transpose.(x)...)
+end
+
 function block_vec_pq(A, p, q)
     mp, nq = size(A)
 
@@ -229,6 +233,32 @@ function info_mtx(x, bins_info = :kn, type_info = :mutual, normed = true)
     end
 
     return Symmetric(mtx, :L)
+end
+
+function two_diff_gap_stat(dist, clustering, max_k = 10)
+    N = length(clustering.order)
+    cluster_lvls = [cutree(clustering; k = i) for i in 1:N]
+
+    c1 = max(N, max_k)
+    W_list = Vector{eltype(dist)}(undef, c1)
+
+    for i in 1:c1
+        lvl = cluster_lvls[i]
+        c2 = max(unique(lvl))
+        mean_dist = 0.0
+        for j in 1:c2
+            cluster = lvl[lvl .== j]
+            cluster_dist = dist[cluster, cluster]
+            isempty(cluster_dist) && continue
+            mean_dist += mean(cluster_dist)
+        end
+        W_list[i] = mean_dist
+    end
+
+    limit_k = ceil(Int, min(max_k, sqrt(N)))
+    gaps = W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)]
+    gaps = gaps[1:limit_k]
+    return argmax(gaps + 2)
 end
 
 export gen_dataframes,

@@ -697,9 +697,10 @@ function turn_into_Hclust_merges(Z)
     return Z
 end
 
-const BranchOrder = (:optimal, :barjoseph, :r, :default)
 function DBHTs(D, S, branchorder = :optimal)
-    @assert(branchorder ∈ BranchOrder, "branchorder must be one of $BranchOrder")
+    @assert(branchorder ∈ BranchOrderTypes, "branchorder must be one of $BranchOrderTypes")
+    @assert(issymmetric(D), "D must be symmetric")
+    @assert(issymmetric(S), "S must be symmetric")
 
     Rpm = PMFG_T2s(S)[1]
     Apm = copy(Rpm)

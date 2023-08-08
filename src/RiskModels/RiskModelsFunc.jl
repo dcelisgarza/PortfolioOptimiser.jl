@@ -10,7 +10,7 @@ cov(
     returns;
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
+    span = ceil(Int,4 * size(returns, 1) / log(size(returns, 1) + 2)),
 )
 ```
 
@@ -49,7 +49,7 @@ cov(
     ::ECov,
     returns;
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
+    span = ceil(Int,4 * size(returns, 1) / log(size(returns, 1) + 2)),
 )
 ```
 
@@ -63,7 +63,7 @@ cov(
     returns;
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
+    span = ceil(Int,4 * size(returns, 1) / log(size(returns, 1) + 2)),
 )
 ```
 """
@@ -72,7 +72,7 @@ function cov(
     returns,
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
+    span = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
     scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
@@ -133,7 +133,7 @@ function cov(
     ::ECov,
     returns;
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
+    span = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
     scale = nothing,
 )
     N = size(returns, 1)
@@ -146,7 +146,7 @@ function cov(
     returns;
     target = 1.02^(1 / 252) - 1, # Daily risk free rate.
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
+    span = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
     scale = nothing,
 )
     N = size(returns, 1)

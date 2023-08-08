@@ -1044,8 +1044,10 @@ function _hierarchical_clustering(
     linkage = :ward,
     codependence = :pearson,
     max_k = 10,
-    branch_order = :optimal,
+    branchorder = :optimal,
 )
+    @assert(codependence ∈ CodepTypes, "codependence must be one of $CodepTypes")
+
     codep = portfolio.codep
     returns = portfolio.returns
     bins_info = portfolio.bins_info
@@ -1063,10 +1065,26 @@ function _hierarchical_clustering(
         -log.(codep)
     end
 
+    dist = issymmetric(dist) ? dist : Symmetric(dist)
+    codep = issymmetric(codep) ? codep : Symmetric(codep)
+
     if linkage == :dbht
-        codep = codependence ∈ codeps1 ? 1 - dist .^ 2 : portfolio.codep
-        (_, _, _, _, _, clustering) = DBHTs(dist, codep)
+        codep = codependence ∈ codeps1 ? 1 - dist .^ 2 : codep
+        missing, missing, missing, missing, missing, missing, clustering =
+            DBHTs(dist, codep, branchorder)
     else
-        clustering = hclust(dist; linkage = linkage, branchorder = branch_order)
+        clustering = hclust(
+            dist;
+            linkage = linkage,
+            branchorder = branchorder == :default ? :r : branchorder,
+        )
     end
+
+    if model ∈ (:herc, :herc2, :nco)
+        k = two_diff_gap_stat(dist, clustering, max_k)
+    else
+        k = nothing
+    end
+
+    return clustering, k
 end

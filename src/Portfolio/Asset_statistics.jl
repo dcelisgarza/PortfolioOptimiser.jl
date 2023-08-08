@@ -90,9 +90,6 @@ end
 
 const EllipseTypes = (:stationary, :circular, :moving, :normal)
 const BoxTypes = (EllipseTypes..., :delta)
-function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractVector})
-    return vcat(transpose.(x)...)
-end
 function wc_statistics!(
     portfolio;
     box = :stationary,

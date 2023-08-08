@@ -37,13 +37,13 @@ end
 
 function var(x, alpha = 0.05)
     sort!(x)
-    idx = Int(ceil(alpha * length(x)))
+    idx = ceil(Int, alpha * length(x))
     return -x[idx]
 end
 
 function cvar(x, alpha = 0.05)
     sort!(x)
-    idx = Int(ceil(alpha * length(x)))
+    idx = ceil(Int, alpha * length(x))
     var = -x[idx]
     sum_var = 0.0
     for i in 1:(idx - 1)
@@ -218,7 +218,7 @@ function dar_abs(x, alpha)
     end
     deleteat!(dd, 1)
     sort!(dd)
-    idx = Int(ceil(alpha * length(dd)))
+    idx = ceil(Int, alpha * length(dd))
     return -dd[idx]
 end
 
@@ -233,7 +233,7 @@ function cdar_abs(x, alpha)
     end
     deleteat!(dd, 1)
     sort!(dd)
-    idx = Int(ceil(alpha * length(dd)))
+    idx = ceil(Int, alpha * length(dd))
     var = -dd[idx]
     sum_var = 0.0
     for i in 1:(idx - 1)
@@ -323,7 +323,7 @@ function dar_rel(x, alpha)
     end
     deleteat!(dd, 1)
     sort!(dd)
-    idx = Int(ceil(alpha * length(dd)))
+    idx = ceil(Int, alpha * length(dd))
     return -dd[idx]
 end
 
@@ -338,7 +338,7 @@ function cdar_rel(x, alpha)
     end
     deleteat!(dd, 1)
     sort!(dd)
-    idx = Int(ceil(alpha * length(dd)))
+    idx = ceil(Int, alpha * length(dd))
     var = -dd[idx]
     sum_var = 0.0
     for i in 1:(idx - 1)

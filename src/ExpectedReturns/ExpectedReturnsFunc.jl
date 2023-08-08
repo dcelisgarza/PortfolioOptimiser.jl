@@ -18,7 +18,7 @@ Compute the mean returns.
 ### Exponentially weighted arithmetic mean
 
 ```
-ret_model(::EMRet, returns; compound = true, span = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))))
+ret_model(::EMRet, returns; compound = true, span = ceil(Int,4*size(returns, 1) / log(size(returns, 1) + 2)))
 ```
 
 Compute the exponentially weighted areithmetic mean returns. More recent returns are weighted more heavily.
@@ -45,7 +45,7 @@ ret_model(
     cov_type::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))),
+    span = ceil(Int,4*size(returns, 1) / log(size(returns, 1) + 2)),
     custom_cov_estimator = nothing,
     custom_cov_args = (),
     custom_cov_kwargs = (),
@@ -65,11 +65,11 @@ ret_model(
     market_returns = nothing;
     rf = 1.02^(1 / 252) - 1,
     compound = true,
-    rspan = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))),
+    rspan = ceil(Int,4*size(returns, 1) / log(size(returns, 1) + 2)),
     cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    cspan = Int(ceil(4*size(returns, 1) / log(size(returns, 1) + 2))),
+    cspan = ceil(Int,4*size(returns, 1) / log(size(returns, 1) + 2)),
     custom_cov_estimator = nothing,
     custom_cov_args = (),
     custom_cov_kwargs = (),
@@ -94,7 +94,7 @@ function ret_model(
     returns;
     compound = true,
     frequency = 1,
-    span = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
+    span = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
 )
     N = size(returns, 1)
     if compound
@@ -116,7 +116,7 @@ function ret_model(
     cov_type::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    span = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
+    span = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
     scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
@@ -150,11 +150,11 @@ function ret_model(
     rf = 1.02^(1 / 252) - 1,
     compound = true,
     frequency = 1,
-    rspan = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
+    rspan = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
     cov_type::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
-    cspan = Int(ceil(4 * size(returns, 1) / log(size(returns, 1) + 2))),
+    cspan = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
     scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),
@@ -246,7 +246,7 @@ function returns_from_prices(
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
     span = size(prices, 1) != 0 ?
-           Int(ceil(4 * (size(prices, 1) - 1) / log(size(prices, 1) - 1 + 2))) : 1,
+           ceil(Int, 4 * (size(prices, 1) - 1) / log(size(prices, 1) - 1 + 2)) : 1,
     scale = nothing,
     custom_cov_estimator = nothing,
     custom_cov_args = (),

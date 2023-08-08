@@ -654,5 +654,7 @@ const CodepTypes = (
     :tail,
     :custom,
 )
+const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :dbht)
+const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
 
 export opt_port!
