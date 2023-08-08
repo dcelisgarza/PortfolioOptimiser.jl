@@ -1839,7 +1839,7 @@ S = reshape(
 # println([Int.(Z[i, 1:2]) for i in 1:size(Z, 1)])
 # println([Z[i, 3] for i in 1:size(Z, 1)])
 using Clustering
-clustering = hclust(D)
+clustering = hclust(D; linkage = :complete, branchorder = :optimal)
 
 T8, Rpm, Adjv, Dpm, Mv, Z = DBHTs(D, S)
 

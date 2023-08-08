@@ -671,7 +671,7 @@ function turn_into_Hclust_merges(Z)
         # If the cluster index is less than N, it represents a leaf, 
         # so only one add one to the count.
         if a <= N
-            Z[i, 1] *= -1
+            Z[i, 1] = -a
             Z[i, 4] += 1
         else
             # Clusters in index Z[i, 1:2] are combined to form cluster i + N.
@@ -685,7 +685,7 @@ function turn_into_Hclust_merges(Z)
         end
 
         if b <= N
-            Z[i, 2] *= -1
+            Z[i, 2] = -b
             Z[i, 4] += 1
         else
             # Do the same with the other side of the cluster, to wherever that side leads.
@@ -697,7 +697,7 @@ function turn_into_Hclust_merges(Z)
     return Z
 end
 
-function DBHTs(D, S, branchorder = true)
+function DBHTs(D, S, branchorder = :optimal)
     Rpm = PMFG_T2s(S)[1]
     Apm = copy(Rpm)
     Apm[Apm .!= 0] .= D[Apm .!= 0]
@@ -722,7 +722,20 @@ function DBHTs(D, S, branchorder = true)
     Z = HierarchyConstruct4s(Rpm, Dpm, T8, Adjv, Mv)
     Z = turn_into_Hclust_merges(Z)
 
-    # branchorder && (Z = sch.optimal_leaf_ordering(Z, scp.squareform(D)))
+    n = size(Z, 1)
+    hmer = Clustering.HclustMerges{eltype(D)}(n + 1)
+    resize!(hmer.mleft, n) .= Int.(Z[:, 1])
+    resize!(hmer.mright, n) .= Int.(Z[:, 2])
+    resize!(hmer.heights, n) .= Z[:, 3]
+
+    if branchorder == :barjoseph || branchorder == :optimal
+        Clustering.orderbranches_barjoseph!(hmer, D)
+    elseif branchorder == :r
+        Clustering.orderbranches_r!(hmer)
+    else
+        throw(ArgumentError("Unsupported branchorder=$branchorder method"))
+    end
+    Z = Hclust(hmer, :dbht)
 
     return T8, Rpm, Adjv, Dpm, Mv, Z
 end
