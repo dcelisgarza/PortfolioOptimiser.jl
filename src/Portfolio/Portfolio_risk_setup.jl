@@ -982,7 +982,7 @@ const HRRiskMeasures = (
     :edar_r,
     :rdar_r,
 )
-function _naive_risk(portfolio, returns, cov, rm = :mv, rf = 0.0)
+function _naive_risk(portfolio, returns, covariance; rm = :mv, rf = 0.0)
     N = size(returns, 2)
     if rm == :equal
         weights = fill(1 / N, N)
@@ -994,16 +994,16 @@ function _naive_risk(portfolio, returns, cov, rm = :mv, rf = 0.0)
             w[i] = 1
             risk = calc_risk(
                 w,
-                cov,
                 returns,
-                rm,
-                rf,
-                portfolio.alpha,
-                portfolio.a_sim,
-                portfolio.beta,
-                portfolio.b_sim,
-                portfolio.kappa,
-                portfolio.solver,
+                covariance;
+                rm = rm,
+                rf = rf,
+                alpha = portfolio.alpha,
+                a_sim = portfolio.a_sim,
+                beta = portfolio.beta,
+                b_sim = portfolio.b_sim,
+                kappa = portfolio.kappa,
+                solvers = portfolio.solvers,
             )
             inv_risk[i] = 1 / risk
         end
@@ -1088,3 +1088,104 @@ function _hierarchical_clustering(
 
     return clustering, k
 end
+
+function leaves_list(clustering)
+    merges = transpose(clustering.merges)
+    idx = findall(x -> x < 0, merges)
+    leaves = merges[idx]
+    return leaves
+end
+
+function _cluster_risk(portfolio, returns, covariance, cluster; rm = :mv, rf = 0.0)
+    cret = returns[:, cluster]
+    ccov = covariance[cluster, cluster]
+    cw = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf)
+    crisk = calc_risk(
+        cw,
+        cret,
+        ccov;
+        rm = rm,
+        rf = rf,
+        alpha = portfolio.alpha,
+        a_sim = portfolio.a_sim,
+        beta = portfolio.beta,
+        b_sim = portfolio.b_sim,
+        kappa = portfolio.kappa,
+        solvers = portfolio.solvers,
+    )
+
+    return crisk
+end
+
+function _hr_weight_bounds(upper_bound, lower_bound, weights, sort_order, lc, rc, alpha_1)
+    if (any(upper_bound .< weights[sort_order]) || any(lower_bound .> weights[sort_order]))
+        lmaxw = weights[lc[1]]
+        a1 = sum(upper_bound[lc]) / lmaxw
+        a2 = max(sum(lower_bound[lc]) / lmaxw, alpha_1)
+        alpha_1 = min(a1, a2)
+
+        rmaxw = weights[rc[1]]
+        a1 = sum(upper_bound[rc]) / rmaxw
+        a2 = max(sum(lower_bound[rc]) / rmaxw, 1 - alpha_1)
+        alpha_1 = 1 - min(a1, a2)
+    end
+
+    return alpha_1
+end
+
+function _recursive_bisection(
+    portfolio,
+    sort_order;
+    rm = :mv,
+    rf = 0.0,
+    upper_bound = nothing,
+    lower_bound = nothing,
+)
+    N = length(portfolio.assets)
+    weights = fill(1.0, N)
+    items = [sort_order]
+    returns = portfolio.returns
+    covariance = portfolio.covariance
+
+    while length(items) > 0
+        items = [
+            i[j:k] for i in items for
+            (j, k) in ((1, div(length(i), 2)), (1 + div(length(i), 2), length(i))) if
+            length(i) > 1
+        ]
+
+        for i in 1:2:length(items)
+            lc = items[i]
+            rc = items[i + 1]
+
+            # Left cluster.
+            lrisk = _cluster_risk(portfolio, returns, covariance, lc; rm = rm, rf = rf)
+
+            # Right cluster.
+            rrisk = _cluster_risk(portfolio, returns, covariance, rc; rm = rm, rf = rf)
+
+            # Allocate weight to clusters.
+            alpha_1 = 1 - lrisk / (lrisk + rrisk)
+
+            # Weight constraints.
+            alpha_1 = _hr_weight_bounds(
+                upper_bound,
+                lower_bound,
+                weights,
+                sort_order,
+                lc,
+                rc,
+                alpha_1,
+            )
+
+            weights[lc] *= alpha_1
+            weights[rc] *= 1 - alpha_1
+        end
+    end
+
+    return weights
+end
+
+function _hierarchical_recursive_bisection() end
+
+export leaves_list

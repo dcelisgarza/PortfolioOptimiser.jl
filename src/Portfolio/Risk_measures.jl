@@ -453,8 +453,8 @@ end
 
 function calc_risk(
     w,
-    cov,
     returns,
+    cov;
     rm = :mv,
     rf = 0.0,
     alpha_i = 0.0001,

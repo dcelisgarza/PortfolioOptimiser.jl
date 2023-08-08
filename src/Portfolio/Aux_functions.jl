@@ -236,7 +236,7 @@ function info_mtx(x, bins_info = :kn, type_info = :mutual, normed = true)
 end
 
 function two_diff_gap_stat(dist, clustering, max_k = 10)
-    N = length(clustering.order)
+    N = size(dist, 1)
     cluster_lvls = [cutree(clustering; k = i) for i in 1:N]
 
     c1 = max(N, max_k)
@@ -258,7 +258,9 @@ function two_diff_gap_stat(dist, clustering, max_k = 10)
     limit_k = ceil(Int, min(max_k, sqrt(N)))
     gaps = W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)]
     gaps = gaps[1:limit_k]
-    return argmax(gaps + 2)
+    k = argmax(gaps) + 2
+
+    return k
 end
 
 export gen_dataframes,

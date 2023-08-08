@@ -483,6 +483,7 @@ mutable struct HCPortfolio{
     tco,
     tcor,
     tcl,
+    tk,
     wmi,
     wma,
     tsolv,
@@ -515,6 +516,7 @@ mutable struct HCPortfolio{
     codep::tco
     codep_order::tcor
     clusters::tcl
+    k::tk
     # Solutions.
     solvers::tsolv
     opt_params::toptpar
@@ -549,6 +551,7 @@ function HCPortfolio(;
     codep = Vector{Float64}(undef, 0),
     codep_order = Vector{Float64}(undef, 0),
     clusters = Vector{Vector{Float64}}(undef, 0),
+    k::Int = 0,
     # Solutions.
     solvers::AbstractDict = Dict(),
     opt_params::AbstractDict = Dict(),
@@ -592,6 +595,7 @@ function HCPortfolio(;
         typeof(codep),
         typeof(codep_order),
         typeof(clusters),
+        typeof(k),
         # Solutions.
         typeof(solvers),
         typeof(opt_params),
@@ -622,6 +626,7 @@ function HCPortfolio(;
         codep,
         codep_order,
         clusters,
+        k,
         # Solutions.
         solvers,
         opt_params,

@@ -1840,7 +1840,8 @@ S = reshape(
 # println([Int.(Z[i, 1:2]) for i in 1:size(Z, 1)])
 # println([Z[i, 3] for i in 1:size(Z, 1)])
 clustering = hclust(D; linkage = :complete, branchorder = :optimal)
-T8, Rpm, Adjv, Dpm, Mv, Z, dbht = DBHTs(D, S)
+T8, Rpm, Adjv, Dpm, Mv, Z, dbht = DBHTs(D, S, branchorder = :default)
+leaf_order = leaves_list(dbht)
 
 cluster_lvls = [cutree(clustering; k = i) for i in 1:length(clustering.order)]
 dbht_lvls = [cutree(dbht; k = i) for i in 1:length(clustering.order)]

@@ -697,7 +697,7 @@ function turn_into_Hclust_merges(Z)
     return Z
 end
 
-function DBHTs(D, S, branchorder = :optimal)
+function DBHTs(D, S; branchorder = :optimal)
     @assert(branchorder ∈ BranchOrderTypes, "branchorder must be one of $BranchOrderTypes")
     @assert(issymmetric(D), "D must be symmetric")
     @assert(issymmetric(S), "S must be symmetric")
