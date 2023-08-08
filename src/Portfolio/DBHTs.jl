@@ -658,7 +658,7 @@ function HierarchyConstruct4s(Rpm, Dpm, Tc, Adjv, Mv)
     return Z
 end
 
-function add_cluster_count(Z)
+function turn_into_Hclust_merges(Z)
     N = size(Z, 1) + 1
     Z = hcat(Z, zeros(N - 1))
 
@@ -670,22 +670,27 @@ function add_cluster_count(Z)
 
         # If the cluster index is less than N, it represents a leaf, 
         # so only one add one to the count.
-        a <= N && (Z[i, 4] += 1)
-        b <= N && (Z[i, 4] += 1)
-
-        if a > N
+        if a <= N
+            Z[i, 1] *= -1
+            Z[i, 4] += 1
+        else
             # Clusters in index Z[i, 1:2] are combined to form cluster i + N.
             # If a cluster has index a > N, it's a combined cluster.
             # The index of the child is j = a - N, so we need to go to index j
             # which is being combined by cluster a, get the count at index j
             # and add it to the count at index i, which contains cluster a.
             j = a - N
+            Z[i, 1] = j
             Z[i, 4] += Z[j, 4]
         end
 
-        if b > N
+        if b <= N
+            Z[i, 2] *= -1
+            Z[i, 4] += 1
+        else
             # Do the same with the other side of the cluster, to wherever that side leads.
             j = b - N
+            Z[i, 2] = j
             Z[i, 4] += Z[j, 4]
         end
     end
@@ -715,7 +720,7 @@ function DBHTs(D, S, branchorder = true)
     Adjv, T8 = BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
 
     Z = HierarchyConstruct4s(Rpm, Dpm, T8, Adjv, Mv)
-    Z = add_cluster_count(Z)
+    Z = turn_into_Hclust_merges(Z)
 
     # branchorder && (Z = sch.optimal_leaf_ordering(Z, scp.squareform(D)))
 
