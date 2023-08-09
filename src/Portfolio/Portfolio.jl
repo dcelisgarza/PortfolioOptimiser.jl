@@ -466,6 +466,7 @@ mutable struct HCPortfolio{
     ast,
     dat,
     r,
+    # Risk parmeters.
     ai,
     a,
     as,
@@ -475,15 +476,21 @@ mutable struct HCPortfolio{
     k,
     ata,
     gst,
+    # Optimisation parameters.
     tmu,
     tcov,
     tbin,
+    wmi,
+    wma,
+    # Optimal portfolios.
+    ttco,
     tco,
+    tdist,
     tcl,
     so,
     tk,
-    wmi,
-    wma,
+    topt,
+    # Solutions.
     tsolv,
     toptpar,
     tf,
@@ -508,11 +515,14 @@ mutable struct HCPortfolio{
     bins_info::tbin
     w_min::wmi
     w_max::wma
-    # Optimisation results.
+    # Optimal portfolios.
+    codep_type::ttco
     codep::tco
+    dist::tdist
     clusters::tcl
     sort_order::so
     k::tk
+    p_optimal::topt
     # Solutions.
     solvers::tsolv
     opt_params::toptpar
@@ -539,11 +549,13 @@ function HCPortfolio(;
     mu = Vector{Float64}(undef, 0),
     cov = Matrix{Float64}(undef, 0, 0),
     bins_info::Union{Symbol, Int} = :kn,
-    w_min = Vector{Float64}(undef, 0),
-    w_max = Vector{Float64}(undef, 0),
-    # Optimisation results.
-    codep = Vector{Float64}(undef, 0),
-    clusters = Vector{Vector{Float64}}(undef, 0),
+    w_min::Union{AbstractFloat, AbstractVector, Nothing} = Vector{Float64}(undef, 0),
+    w_max::Union{AbstractFloat, AbstractVector, Nothing} = Vector{Float64}(undef, 0),
+    # Optimal portfolios.
+    codep_type::Symbol = :pearson,
+    codep = Matrix{Float64}(undef, 0, 0),
+    dist = Matrix{Float64}(undef, 0, 0),
+    clusters = Hclust{Float64}(Matrix{Int64}(undef, 0, 2), Float64[], Int64[], :nothing),
     sort_order = Vector{Int}(undef, 0),
     k::Int = 0,
     # Solutions.
@@ -581,22 +593,25 @@ function HCPortfolio(;
         typeof(mu),
         typeof(cov),
         Union{Symbol, Int},
-        typeof(w_min),
-        typeof(w_max),
-        # Optimisation results.
+        Union{AbstractFloat, AbstractVector, Nothing},
+        Union{AbstractFloat, AbstractVector, Nothing},
+        # Optimal portfolios.
+        typeof(codep_type),
         typeof(codep),
+        typeof(dist),
         typeof(clusters),
         typeof(sort_order),
         typeof(k),
+        DataFrame,
         # Solutions.
         typeof(solvers),
         typeof(opt_params),
         typeof(fail),
     }(
-        # Portfolio characteristics.
         assets,
         timestamps,
         returns,
+        # Risk parmeters.
         alpha_i,
         alpha,
         a_sim,
@@ -612,11 +627,14 @@ function HCPortfolio(;
         bins_info,
         w_min,
         w_max,
-        # Optimisation results.
+        # Optimal portfolios.
+        codep_type,
         codep,
+        dist,
         clusters,
         sort_order,
         k,
+        DataFrame(),
         # Solutions.
         solvers,
         opt_params,

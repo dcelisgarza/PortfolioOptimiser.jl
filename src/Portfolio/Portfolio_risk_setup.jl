@@ -1013,18 +1013,8 @@ function _naive_risk(portfolio, returns, covariance; rm = :mv, rf = 0.0)
     return weights
 end
 
-function _opt_w(
-    portfolio,
-    assets,
-    returns,
-    mu,
-    cov,
-    obj = :min_risk,
-    rm = :mv,
-    rf = 0.0,
-    l = 2.0,
-)
-    port = Portfolio(assets = assets, ret = returns, solvers = portfolio.solvers)
+function _opt_w(portfolio, returns, mu, cov; obj = :min_risk, rm = :mv, rf = 0.0, l = 2.0)
+    port = Portfolio(assets = 1:length(mu), ret = returns, solvers = portfolio.solvers)
     asset_statistics!(port; calc_kurt = false)
     port.cov = cov
 
@@ -1040,36 +1030,19 @@ end
 
 function _hierarchical_clustering(
     portfolio::HCPortfolio,
-    model = :hrp,
+    type = :hrp,
     linkage = :ward,
-    codependence = :pearson,
     max_k = 10,
     branchorder = :optimal,
 )
-    @assert(codependence ∈ CodepTypes, "codependence must be one of $CodepTypes")
-
+    codep_type = portfolio.codep_type
     codep = portfolio.codep
-    returns = portfolio.returns
-    bins_info = portfolio.bins_info
+    dist = portfolio.dist
 
     codeps1 = (:pearson, :spearman, :kendall, :gerber1, :gerber2, :custom)
-    codeps2 = (:abs_pearson, :abs_spearman, :abs_kendall, :distance)
-
-    dist = if codependence ∈ codeps1
-        sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-    elseif codependence ∈ codeps2
-        sqrt.(clamp!(1 .- codep, 0, 1))
-    elseif codependence == :mutual_info
-        info_mtx(returns, bins_info, :variation)
-    elseif codependence == :tail
-        -log.(codep)
-    end
-
-    dist = issymmetric(dist) ? dist : Symmetric(dist)
-    codep = issymmetric(codep) ? codep : Symmetric(codep)
 
     if linkage == :dbht
-        codep = codependence ∈ codeps1 ? 1 - dist .^ 2 : codep
+        codep = codep_type ∈ codeps1 ? 1 - dist .^ 2 : codep
         missing, missing, missing, missing, missing, missing, clustering =
             DBHTs(dist, codep, branchorder = branchorder)
     else
@@ -1080,7 +1053,7 @@ function _hierarchical_clustering(
         )
     end
 
-    if model ∈ (:herc, :herc2, :nco)
+    if type ∈ (:herc, :herc2, :nco)
         k = two_diff_gap_stat(dist, clustering, max_k)
     else
         k = nothing
@@ -1117,8 +1090,8 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :mv, rf = 0
     return crisk
 end
 
-function _hr_weight_bounds(upper_bound, lower_bound, weights, sort_order, lc, rc, alpha_1)
-    if (any(upper_bound .< weights[sort_order]) || any(lower_bound .> weights[sort_order]))
+function _hr_weight_bounds(upper_bound, lower_bound, weights, lc, rc, alpha_1)
+    if (any(upper_bound .< weights) || any(lower_bound .> weights))
         lmaxw = weights[lc[1]]
         a1 = sum(upper_bound[lc]) / lmaxw
         a2 = max(sum(lower_bound[lc]) / lmaxw, alpha_1)
@@ -1131,6 +1104,27 @@ function _hr_weight_bounds(upper_bound, lower_bound, weights, sort_order, lc, rc
     end
 
     return alpha_1
+end
+
+function _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter = 100)
+    if any(upper_bound .< weights) || any(lower_bound .> weights)
+        for _ in 1:max_iter
+            !(any(upper_bound .< weights) || any(lower_bound .> weights)) && break
+
+            old_w = copy(weights)
+            weights = max.(min.(weights, upper_bound), lower_bound)
+            idx = weights .< upper_bound .&& weights .> lower_bound
+            w_add = sum(max.(old_w - upper_bound, 0.0))
+            w_sub = sum(min.(old_w - lower_bound, 0.0))
+            delta = w_add + w_sub
+
+            if delta != 0
+                weights[idx] += delta * weights[idx] / sum(weights[idx])
+            end
+        end
+    end
+
+    return weights
 end
 
 function _recursive_bisection(
@@ -1168,15 +1162,7 @@ function _recursive_bisection(
             alpha_1 = 1 - lrisk / (lrisk + rrisk)
 
             # Weight constraints.
-            alpha_1 = _hr_weight_bounds(
-                upper_bound,
-                lower_bound,
-                weights,
-                sort_order,
-                lc,
-                rc,
-                alpha_1,
-            )
+            alpha_1 = _hr_weight_bounds(upper_bound, lower_bound, weights, lc, rc, alpha_1)
 
             weights[lc] *= alpha_1
             weights[rc] *= 1 - alpha_1
@@ -1283,13 +1269,12 @@ function _hierarchical_recursive_bisection(
     portfolio;
     rm = :mv,
     rf = 0.0,
-    model = :herc,
+    type = :herc,
     upper_bound = nothing,
     lower_bound = nothing,
 )
     returns = portfolio.returns
     covariance = portfolio.covariance
-    sort_order = portfolio.sort_order
     clustering = portfolio.clustering
     k = portfolio.k
     root, nodes = to_tree(clustering)
@@ -1297,7 +1282,7 @@ function _hierarchical_recursive_bisection(
     idx = sortperm(dists, rev = true)
     nodes = nodes[idx]
 
-    weights = fill(1, length(portfolio.assets))
+    weights = ones(length(portfolio.assets))
 
     clustering_idx = cutree(clustering; k = k)
     uidx = minimum(clustering_idx):maximum(clustering_idx)
@@ -1320,7 +1305,7 @@ function _hierarchical_recursive_bisection(
         rc = Int[]
 
         if rm == :equal
-            alpha_i = 0.5
+            alpha_1 = 0.5
         else
             for j in eachindex(clusters)
                 if issubset(clusters[j], ln)
@@ -1350,15 +1335,7 @@ function _hierarchical_recursive_bisection(
 
             alpha_1 = 1 - lrisk / (lrisk + rrisk)
 
-            alpha_1 = _hr_weight_bounds(
-                upper_bound,
-                lower_bound,
-                weights,
-                sort_order,
-                lc,
-                rc,
-                alpha_1,
-            )
+            alpha_1 = _hr_weight_bounds(upper_bound, lower_bound, weights, lc, rc, alpha_1)
         end
 
         weights[lc] *= alpha_1
@@ -1370,14 +1347,55 @@ function _hierarchical_recursive_bisection(
         cidx = clustering_idx .== i
         cret = returns[:, cidx]
         ccov = covariance[cidx, cidx]
-        if model == :herc
+        if type == :herc
             cweights = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf)
-        elseif model == :herc2
+        elseif type == :herc2
             cweights = _naive_risk(portfolio, cret, ccov; rm = :equal, rf = rf)
         end
 
         weights[cidx] *= cweights
     end
+
+    return weights
+end
+
+function _intra_weights(portfolio; obj = :min_risk, rm = :mv, rf = 0.0, l = 2.0)
+    returns = portfolio.returns
+    mu = portfolio.mu
+    covariance = portfolio.covariance
+    clustering = portfolio.clustering
+    k = portfolio.k
+    clustering_idx = cutree(clustering; k = k)
+
+    intra_weights = zeros(length(portfolio.assets))
+    for i in 1:k
+        idx = clustering_idx .== k
+        cmu = !isnothing(mu) ? mu[idx] : nothing
+        ccov = covariance[idx, idx]
+        cret = returns[:, idx]
+        weights = _opt_w(portfolio, cret, cmu, ccov; obj = obj, rm = rm, rf = rf, l = l)
+        intra_weights[idx] = weights
+    end
+
+    return intra_weights
+end
+
+function _inter_weights(
+    portfolio,
+    intra_weights;
+    obj = :min_risk,
+    rm = :mv,
+    rf = 0.0,
+    l = 2.0,
+)
+    mu = portfolio.mu
+    returns = portfolio.returns
+    tmu = !isnothing(mu) ? dot(mu, intra_weights) : nothing
+    tcov = dot(intra_weights, cov, intra_weights)
+    tret = returns * intra_weights
+    inter_weights = _opt_w(portfolio, tret, tmu, tcov; obj = obj, rm = rm, rf = rf, l = l)
+
+    weights = inter_weights .* intra_weights
 
     return weights
 end

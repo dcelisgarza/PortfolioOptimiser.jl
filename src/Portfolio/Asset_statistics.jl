@@ -57,12 +57,12 @@ function fix_cov!(covariance, args...; kwargs...)
 end
 
 function asset_statistics!(
-    portfolio::Portfolio,
+    portfolio::AbstractPortfolio;
     target_ret::AbstractFloat = 0.0,
     mean_func::Function = mean,
     cov_func::Function = cov,
     mean_args = (),
-    cov_args = ();
+    cov_args = (),
     calc_kurt = true,
     mean_kwargs = (;),
     cov_kwargs = (;),
@@ -79,10 +79,32 @@ function asset_statistics!(
     portfolio.mu = mu
     portfolio.cov = cov_func(returns, cov_args...; cov_kwargs...)
 
-    if calc_kurt
-        portfolio.kurt = cokurt(returns, transpose(mu))
-        portfolio.skurt = scokurt(returns, transpose(mu), target_ret)
-        missing, portfolio.L_2, portfolio.S_2 = dup_elim_sum_matrices(N)
+    if isa(portfolio, Portfolio)
+        if calc_kurt
+            portfolio.kurt = cokurt(returns, transpose(mu))
+            portfolio.skurt = scokurt(returns, transpose(mu), target_ret)
+            missing, portfolio.L_2, portfolio.S_2 = dup_elim_sum_matrices(N)
+        end
+    else
+        codep_type = portfolio.codep_type
+        codep = portfolio.codep
+        bins_info = portfolio.bins_info
+
+        codeps1 = (:pearson, :spearman, :kendall, :gerber1, :gerber2, :custom)
+        codeps2 = (:abs_pearson, :abs_spearman, :abs_kendall, :distance)
+
+        dist = if codep_type ∈ codeps1
+            sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        elseif codep_type ∈ codeps2
+            sqrt.(clamp!(1 .- codep, 0, 1))
+        elseif codep_type == :mutual_info
+            info_mtx(returns, bins_info, :variation)
+        elseif codep_type == :tail
+            -log.(codep)
+        end
+
+        portfolio.dist = issymmetric(dist) ? dist : Symmetric(dist)
+        portfolio.codep = issymmetric(codep) ? codep : Symmetric(codep)
     end
 
     return nothing

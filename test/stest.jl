@@ -1841,6 +1841,11 @@ S = reshape(
 # println([Z[i, 3] for i in 1:size(Z, 1)])
 clustering = hclust(D; linkage = :ward, branchorder = :optimal)
 T8, Rpm, Adjv, Dpm, Mv, Z, dbht = DBHTs(D, S, branchorder = :optimal)
+A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
+Y = percentchange(A)
+RET = dropmissing!(DataFrame(Y))
+hcport = HCPortfolio(returns = RET)
+opt_port!(hcport)
 
 root, nodes = to_tree(dbht)
 
