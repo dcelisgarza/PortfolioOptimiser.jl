@@ -1071,7 +1071,7 @@ function _hierarchical_clustering(
     if linkage == :dbht
         codep = codependence ∈ codeps1 ? 1 - dist .^ 2 : codep
         missing, missing, missing, missing, missing, missing, clustering =
-            DBHTs(dist, codep, branchorder)
+            DBHTs(dist, codep, branchorder = branchorder)
     else
         clustering = hclust(
             dist;
@@ -1092,7 +1092,7 @@ end
 function leaves_list(clustering)
     merges = transpose(clustering.merges)
     idx = findall(x -> x < 0, merges)
-    leaves = merges[idx]
+    leaves = -merges[idx]
     return leaves
 end
 
@@ -1134,8 +1134,7 @@ function _hr_weight_bounds(upper_bound, lower_bound, weights, sort_order, lc, rc
 end
 
 function _recursive_bisection(
-    portfolio,
-    sort_order;
+    portfolio;
     rm = :mv,
     rf = 0.0,
     upper_bound = nothing,
@@ -1143,6 +1142,7 @@ function _recursive_bisection(
 )
     N = length(portfolio.assets)
     weights = fill(1.0, N)
+    sort_order = portfolio.sort_order
     items = [sort_order]
     returns = portfolio.returns
     covariance = portfolio.covariance
@@ -1186,6 +1186,200 @@ function _recursive_bisection(
     return weights
 end
 
-function _hierarchical_recursive_bisection() end
+struct ClusterNode{tid, tl, tr, td, tcnt}
+    id::tid
+    left::tl
+    right::tr
+    dist::td
+    count::tcnt
 
-export leaves_list
+    function ClusterNode(
+        id,
+        left::Union{ClusterNode, Nothing} = nothing,
+        right::Union{ClusterNode, Nothing} = nothing,
+        dist::AbstractFloat = 0.0,
+        count::Int = 1,
+    )
+        if isnothing(left)
+            icount = count
+        else
+            icount = left.count + right.count
+        end
+
+        new{typeof(id), typeof(left), typeof(right), typeof(dist), typeof(count)}(
+            id,
+            left,
+            right,
+            dist,
+            icount,
+        )
+    end
+end
+import Base.>, Base.<, Base.==
+<(a::ClusterNode, b::ClusterNode) = a.dist < b.dist
+>(a::ClusterNode, b::ClusterNode) = a.dist > b.dist
+==(a::ClusterNode, b::ClusterNode) = a.dist == b.dist
+function is_leaf(a::ClusterNode)
+    isnothing(a.left)
+end
+function pre_order(a::ClusterNode, func::Function = x -> x.id)
+    n = a.count
+    curNode = Vector{ClusterNode}(undef, 2 * n)
+    lvisited = Set()
+    rvisited = Set()
+    curNode[1] = a
+    k = 1
+    preorder = Int[]
+
+    while k >= 1
+        nd = curNode[k]
+        ndid = nd.id
+        if is_leaf(nd)
+            push!(preorder, func(nd))
+            k = k - 1
+        else
+            if ndid ∉ lvisited
+                curNode[k + 1] = nd.left
+                push!(lvisited, ndid)
+                k = k + 1
+            elseif ndid ∉ rvisited
+                curNode[k + 1] = nd.right
+                push!(rvisited, ndid)
+                k = k + 1
+                # If we've visited the left and right of this non-leaf
+                # node already, go up in the tree.
+            else
+                k = k - 1
+            end
+        end
+    end
+    return preorder
+end
+
+function to_tree(a::Hclust)
+    n = length(a.order)
+    d = Vector{ClusterNode}(undef, 2 * n - 1)
+    for i in 1:n
+        d[i] = ClusterNode(i)
+    end
+    merges = a.merges
+    heights = a.heights
+    nd = nothing
+
+    for (i, height) in enumerate(heights)
+        fi = merges[i, 1]
+        fj = merges[i, 2]
+
+        fi = fi < 0 ? -fi : fi + n
+        fj = fj < 0 ? -fj : fj + n
+
+        nd = ClusterNode(i + n, d[fi], d[fj], height)
+        d[n + i] = nd
+    end
+    return nd, d
+end
+
+function _hierarchical_recursive_bisection(
+    portfolio;
+    rm = :mv,
+    rf = 0.0,
+    model = :herc,
+    upper_bound = nothing,
+    lower_bound = nothing,
+)
+    returns = portfolio.returns
+    covariance = portfolio.covariance
+    sort_order = portfolio.sort_order
+    clustering = portfolio.clustering
+    k = portfolio.k
+    root, nodes = to_tree(clustering)
+    dists = [i.dist for i in nodes]
+    idx = sortperm(dists, rev = true)
+    nodes = nodes[idx]
+
+    weights = fill(1, length(portfolio.assets))
+
+    clustering_idx = cutree(clustering; k = k)
+    uidx = minimum(clustering_idx):maximum(clustering_idx)
+    clusters = Vector{Vector{Int}}(undef, length(uidx))
+    for (i, v) in enumerate(clustering_idx)
+        push!(clusters[v], i)
+    end
+
+    # Calculate intra cluster weights. Drill down into clusters closer in similarity.
+    for i in nodes[1:(k - 1)]
+        is_leaf(i) && continue
+
+        ln = pre_order(i.left)
+        rn = pre_order(i.right)
+
+        lrisk = 0.0
+        rrisk = 0.0
+
+        lc = Int[]
+        rc = Int[]
+
+        if rm == :equal
+            alpha_i = 0.5
+        else
+            for j in eachindex(clusters)
+                if issubset(clusters[j], ln)
+                    _lrisk = _cluster_risk(
+                        portfolio,
+                        returns,
+                        covariance,
+                        clusters[j];
+                        rm = :mv,
+                        rf = 0.0,
+                    )
+                    lrisk += _lrisk
+                    append!(lc, clusters[j])
+                elseif issubset(clusters[j], rn)
+                    _rrisk = _cluster_risk(
+                        portfolio,
+                        returns,
+                        covariance,
+                        clusters[j];
+                        rm = :mv,
+                        rf = 0.0,
+                    )
+                    rrisk += _rrisk
+                    append!(rc, clusters[j])
+                end
+            end
+
+            alpha_1 = 1 - lrisk / (lrisk + rrisk)
+
+            alpha_1 = _hr_weight_bounds(
+                upper_bound,
+                lower_bound,
+                weights,
+                sort_order,
+                lc,
+                rc,
+                alpha_1,
+            )
+        end
+
+        weights[lc] *= alpha_1
+        weights[rc] *= 1 - alpha_1
+    end
+
+    # We multiply the intra cluster weights by the weights by the weights of the cluster.
+    for i in 1:k
+        cidx = clustering_idx .== i
+        cret = returns[:, cidx]
+        ccov = covariance[cidx, cidx]
+        if model == :herc
+            cweights = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf)
+        elseif model == :herc2
+            cweights = _naive_risk(portfolio, cret, ccov; rm = :equal, rf = rf)
+        end
+
+        weights[cidx] *= cweights
+    end
+
+    return weights
+end
+
+export leaves_list, pre_order, ClusterNode, to_tree, is_leaf

@@ -478,11 +478,9 @@ mutable struct HCPortfolio{
     tmu,
     tcov,
     tbin,
-    ao,
-    so,
     tco,
-    tcor,
     tcl,
+    so,
     tk,
     wmi,
     wma,
@@ -511,11 +509,9 @@ mutable struct HCPortfolio{
     w_min::wmi
     w_max::wma
     # Optimisation results.
-    asset_order::ao
-    sort_order::so
     codep::tco
-    codep_order::tcor
     clusters::tcl
+    sort_order::so
     k::tk
     # Solutions.
     solvers::tsolv
@@ -546,11 +542,9 @@ function HCPortfolio(;
     w_min = Vector{Float64}(undef, 0),
     w_max = Vector{Float64}(undef, 0),
     # Optimisation results.
-    asset_order = Vector{Float64}(undef, 0),
-    sort_order = Vector{Float64}(undef, 0),
     codep = Vector{Float64}(undef, 0),
-    codep_order = Vector{Float64}(undef, 0),
     clusters = Vector{Vector{Float64}}(undef, 0),
+    sort_order = Vector{Int}(undef, 0),
     k::Int = 0,
     # Solutions.
     solvers::AbstractDict = Dict(),
@@ -590,11 +584,9 @@ function HCPortfolio(;
         typeof(w_min),
         typeof(w_max),
         # Optimisation results.
-        typeof(asset_order),
-        typeof(sort_order),
         typeof(codep),
-        typeof(codep_order),
         typeof(clusters),
+        typeof(sort_order),
         typeof(k),
         # Solutions.
         typeof(solvers),
@@ -621,11 +613,9 @@ function HCPortfolio(;
         w_min,
         w_max,
         # Optimisation results.
-        asset_order,
-        sort_order,
         codep,
-        codep_order,
         clusters,
+        sort_order,
         k,
         # Solutions.
         solvers,
