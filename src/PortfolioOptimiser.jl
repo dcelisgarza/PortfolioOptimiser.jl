@@ -24,7 +24,7 @@ include("./BlackLittermanOptimiser/BlackLittermanOptimiser.jl")
 include("./AssetAllocation/AssetAllocation.jl")
 
 # Version 2.0
-using SparseArrays, Random, DataFrames, JuMP, Dates, Distributions, PyCall
+using SparseArrays, Random, DataFrames, JuMP, Dates, Distributions, PyCall, Distances
 include("./Portfolio/Portfolio.jl")
 include("./Portfolio/DBHTs.jl")
 include("./Portfolio/Aux_functions.jl")

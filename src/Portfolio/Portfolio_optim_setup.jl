@@ -652,11 +652,38 @@ const CodepTypes = (
     :distance,
     :mutual_info,
     :tail,
-    :custom,
+    :custom_cov,
+    :custom_cor,
 )
 const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :dbht)
 const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
 const HRObjFuncs = (:min_risk, :utility, :sharpe, :erc)
+
+function _setup_hr_weights(w_max, w_min, N)
+    @assert(
+        all(w_max .>= w_min),
+        "all upper bounds must be bigger than their corresponding lower bounds"
+    )
+
+    upper_bound = if isnothing(w_max)
+        ones(N)
+    elseif isa(w_max, Real)
+        fill(min(1.0, w_max), N)
+    else
+        min.(1.0, w_max)
+    end
+
+    lower_bound = if isnothing(w_min)
+        zeros(N)
+    elseif isa(w_min, Real)
+        fill(max(0.0, w_min), N)
+    else
+        max.(0.0, w_min)
+    end
+
+    return upper_bound, lower_bound
+end
+
 function opt_port!(
     portfolio::HCPortfolio;
     type::Symbol = :hrp,
@@ -677,8 +704,7 @@ function opt_port!(
     @assert(obj ∈ HRObjFuncs, "obj must be one of $HRObjFuncs")
     @assert(kelly ∈ KellyRet, "kelly must be one of $KellyRet")
     @assert(linkage ∈ LinkageTypes, "linkage must be one of $LinkageTypes")
-    codep_type = portfolio.codep_type
-    @assert(codep_type ∈ CodepTypes, "codep_type must be one of $CodepTypes")
+    @assert(portfolio.codep_type ∈ CodepTypes, "codep_type must be one of $CodepTypes")
     @assert(
         0 < portfolio.kappa < 1,
         "portfolio.kappa must be greater than 0 and smaller than 1"
@@ -693,28 +719,7 @@ function opt_port!(
 
     portfolio.sort_order = leaves_list(portfolio.clusters)
 
-    w_max = portfolio.w_max
-    w_min = portfolio.w_min
-    upper_bound = if isnothing(w_max)
-        ones(N)
-    elseif isa(w_max, Real)
-        fill(min(1.0, w_max), N)
-    else
-        min.(1.0, w_max)
-    end
-
-    lower_bound = if isnothing(w_min)
-        zeros(N)
-    elseif isa(w_min, Real)
-        fill(max(0.0, w_min), N)
-    else
-        max.(0.0, w_min)
-    end
-
-    @assert(
-        all(w_max .>= w_min),
-        "all upper bounds must be bigger than their corresponding lower bounds"
-    )
+    upper_bound, lower_bound = _setup_hr_weights(portfolio.w_max, portfolio.w_min, N)
 
     if type == :hrp
         weights = _recursive_bisection(

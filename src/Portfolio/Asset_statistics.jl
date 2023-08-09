@@ -61,50 +61,90 @@ function asset_statistics!(
     target_ret::AbstractFloat = 0.0,
     mean_func::Function = mean,
     cov_func::Function = cov,
+    cor_dist_func::Function = cor,
+    custom_mu = nothing,
+    custom_cov = nothing,
+    custom_kurt = nothing,
+    custom_skurt = nothing,
     mean_args = (),
     cov_args = (),
+    cor_dist_args = (),
     calc_kurt = true,
     mean_kwargs = (;),
     cov_kwargs = (;),
+    cor_dist_kwargs = (;),
+    uplo = :L,
 )
     returns = portfolio.returns
     N = size(returns, 2)
 
-    mu = vec(
-        !haskey(mean_kwargs, :dims) ?
-        mean_func(returns, mean_args...; dims = 1, mean_kwargs...) :
-        mean_func(returns, mean_args...; mean_kwargs...),
-    )
+    portfolio.mu =
+        mu =
+            isnothing(custom_mu) ?
+            vec(
+                !haskey(mean_kwargs, :dims) ?
+                mean_func(returns, mean_args...; dims = 1, mean_kwargs...) :
+                mean_func(returns, mean_args...; mean_kwargs...),
+            ) : custom_mu
 
-    portfolio.mu = mu
-    portfolio.cov = cov_func(returns, cov_args...; cov_kwargs...)
+    portfolio.cov =
+        isnothing(custom_cov) ? cov_func(returns, cov_args...; cov_kwargs...) : custom_cov
 
     if isa(portfolio, Portfolio)
         if calc_kurt
-            portfolio.kurt = cokurt(returns, transpose(mu))
-            portfolio.skurt = scokurt(returns, transpose(mu), target_ret)
+            portfolio.kurt =
+                isnothing(custom_kurt) ? cokurt(returns, transpose(mu)) : custom_kurt
+            portfolio.skurt =
+                isnothing(custom_skurt) ? cokurt(returns, transpose(mu), target_ret) :
+                custom_skurt
             missing, portfolio.L_2, portfolio.S_2 = dup_elim_sum_matrices(N)
         end
     else
         codep_type = portfolio.codep_type
-        codep = portfolio.codep
-        bins_info = portfolio.bins_info
 
-        codeps1 = (:pearson, :spearman, :kendall, :gerber1, :gerber2, :custom)
-        codeps2 = (:abs_pearson, :abs_spearman, :abs_kendall, :distance)
-
-        dist = if codep_type ∈ codeps1
-            sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        elseif codep_type ∈ codeps2
-            sqrt.(clamp!(1 .- codep, 0, 1))
+        if codep_type == :pearson
+            codep = cor(returns)
+            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        elseif codep_type == :spearman
+            codep = corspearman(returns)
+            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        elseif codep_type == :kendall
+            codep = corkendall(returns)
+            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        elseif codep_type == :abs_pearson
+            codep = abs.(cor(returns))
+            dist = sqrt.(clamp!(1 .- codep, 0, 1))
+        elseif codep_type == :abs_spearman
+            codep = abs.(corspearman(returns))
+            dist = sqrt.(clamp!(1 .- codep, 0, 1))
+        elseif codep_type == :abs_kendall
+            codep = abs.(corkendall(returns))
+            dist = sqrt.(clamp!(1 .- codep, 0, 1))
+        elseif codep_type == :gerber1
+            codep = covgerber1(returns, portfolio.gs_threshold)
+            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        elseif codep_type == :gerber2
+            codep = covgerber2(returns, portfolio.gs_threshold)
+            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        elseif codep_type == :distance
+            codep = cordistance(returns)
+            dist = sqrt.(clamp!(1 .- codep, 0, 1))
         elseif codep_type == :mutual_info
-            info_mtx(returns, bins_info, :variation)
+            bins_info = portfolio.bins_info
+            codep = info_mtx(returns, bins_info, :mutual)
+            dist = info_mtx(returns, bins_info, :variation)
         elseif codep_type == :tail
-            -log.(codep)
+            codep = ltdi_mtx(returns, portfolio.alpha_tail)
+            dist = -log.(codep)
+        elseif codep_type == :custom_cov
+            codep = cov2cor(portfolio.cov)
+            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        elseif codep_type == :custom_cor
+            codep, dist = cor_dist_func(portfolio, cor_dist_args...; cor_dist_kwargs...)
         end
 
-        portfolio.dist = issymmetric(dist) ? dist : Symmetric(dist)
-        portfolio.codep = issymmetric(codep) ? codep : Symmetric(codep)
+        portfolio.dist = issymmetric(dist) ? dist : Symmetric(dist, uplo)
+        portfolio.codep = issymmetric(codep) ? codep : Symmetric(codep, uplo)
     end
 
     return nothing

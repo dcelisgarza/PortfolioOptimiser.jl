@@ -175,11 +175,10 @@ function gen_bootstrap(
     return mus, covs
 end
 
-const BinTypes = (:kn, :fd, :sc, :hgr)
-function _calc_num_bins(x, j, i, bin_width_func)
-    k1 = (maximum(x[:, j]) - minimum(x[:, j])) / bin_width_func(x[:, j])
+function _calc_num_bins(xj, xi, j, i, bin_width_func)
+    k1 = (maximum(xj) - minimum(xj)) / bin_width_func(xj)
     bins = if j != i
-        k2 = (maximum(x[:, i]) - minimum(x[:, i])) / bin_width_func(x[:, i])
+        k2 = (maximum(xi) - minimum(xi)) / bin_width_func(xi)
         Int(round(max(k1, k2)))
     else
         Int(round(k1))
@@ -194,9 +193,12 @@ function _calc_num_bins(N, corr = nothing)
     else
         Int(round(sqrt(1 + sqrt(1 + 24 * N / (1 - corr^2))) / sqrt(2)))
     end
+
+    return bins
 end
 
-const InfoTypes = (:variation, :mutual)
+const BinTypes = (:kn, :fd, :sc, :hgr)
+const InfoTypes = (:mutual, :variation)
 function info_mtx(x, bins_info = :kn, type_info = :mutual, normed = true)
     @assert(
         bins_info ∈ BinTypes || isa(bins_info, Int),
@@ -214,25 +216,168 @@ function info_mtx(x, bins_info = :kn, type_info = :mutual, normed = true)
 
     T, N = size(x)
 
+    isa(bins_info, Int) && (bins = bins_info)
+
     mtx = Matrix{eltype(x)}(undef, N, N)
-    for j in 1:N, i in j:N
-        bins = if isa(bins_info, Int)
-            bins_info
-        elseif bins_info == :hgr
-            corr = cor(x[:, j], x[:, i])
-            corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
-        else
-            _calc_num_bins(x, j, i, bin_width_func)
+
+    for j in 1:N
+        xj = x[:, j]
+        for i in j:N
+            xi = x[:, i]
+            bins = if bins_info == :hgr
+                corr = cor(xj, xi)
+                corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
+            else
+                _calc_num_bins(xj, xi, j, i, bin_width_func)
+            end
+
+            hx = fit(Histogram, xj, nbins = bins).weights
+            hy = fit(Histogram, xi, nbins = bins).weights
+            ixy =
+                type_info == :mutual ? mutualinfo(hx, hy, normed = normed) : varinfo(hx, hy)
+
+            mtx[i, j] = clamp(ixy, 0, Inf)
         end
-
-        hx = fit(Histogram, x[:, j], nbins = bins).weights
-        hy = fit(Histogram, x[:, i], nbins = bins).weights
-        ixy = type_info == :mutual ? mutualinfo(hx, hy, normed = normed) : varinfo(hx, hy)
-
-        mtx[i, j] = clamp(ixy, 0, Inf)
     end
 
     return Symmetric(mtx, :L)
+end
+
+function cordistance(v1::AbstractVector, v2::AbstractVector)
+    N = length(v1)
+    @assert(
+        N == length(v2) && N > 1,
+        "lengths of v1 and v2 must be equal and greater than 1"
+    )
+
+    N2 = N^2
+
+    a = pairwise(Euclidean(), v1)
+    b = pairwise(Euclidean(), v2)
+
+    A = a - mean(a, dims = 1) - mean(a, dims = 2) + mean(a)
+    B = b - mean(b, dims = 1) - mean(b, dims = 2) + mean(b)
+
+    dcov2_xx = sum(A * A) / N2
+    dcov2_xy = sum(A * B) / N2
+    dcov2_yy = sum(B * B) / N2
+
+    val = sqrt(dcov2_xy) / sqrt(sqrt(dcov2_xx) * sqrt(dcov2_yy))
+
+    return val
+end
+
+function cordistance(x::AbstractMatrix)
+    N = size(x, 2)
+
+    mtx = Matrix{eltype(x)}(undef, N, N)
+    for j in 1:N
+        xj = x[:, j]
+        for i in j:N
+            mtx[i, j] = cordistance(x[:, i], xj)
+        end
+    end
+
+    return Symmetric(mtx, :L)
+end
+
+function ltdi_mtx(x, alpha = 0.05)
+    T, N = size(x)
+    k = ceil(Int, T * alpha)
+    mtx = Matrix{eltype(x)}(undef, N, N)
+
+    if k > 0
+        for j in 1:N
+            xj = x[:, j]
+            v = sort(xj)[k]
+            maskj = xj .<= v
+            for i in j:N
+                xi = x[:, i]
+                u = sort(xi)[k]
+                ltd = sum(xi .<= u .&& maskj) / k
+                mtx[i, j] = clamp(ltd, 0, 1)
+            end
+        end
+    end
+
+    return Symmetric(mtx, :L)
+end
+
+function covgerber1(x, threshold = 0.5; std_func = std, std_args = (), std_kwargs = (;))
+    @assert(0 < threshold < 1, "threshold must be greater than zero and smaller than one")
+    T, N = size(x)
+
+    std_vec = vec(
+        !haskey(std_kwargs, :dims) ? std_func(x, std_args...; dims = 1, std_kwargs...) :
+        std_func(x, std_args...; std_kwargs...),
+    )
+
+    mtx = Matrix{eltype(x)}(undef, N, N)
+    for j in 1:N
+        for i in 1:j
+            neg = 0
+            pos = 0
+            nn = 0
+            for k in 1:T
+                if (
+                    (x[k, i] >= threshold * std_vec[i]) &&
+                    (x[k, j] >= threshold * std_vec[j])
+                ) || (
+                    (x[k, i] <= -threshold * std_vec[i]) &&
+                    (x[k, j] <= -threshold * std_vec[j])
+                )
+                    pos += 1
+                elseif (
+                    (x[k, i] >= threshold * std_vec[i]) &&
+                    (x[k, j] <= -threshold * std_vec[j])
+                ) || (
+                    (x[k, i] <= -threshold * std_vec[i]) &&
+                    (x[k, j] >= threshold * std_vec[j])
+                )
+                    neg += 1
+                elseif (
+                    abs(x[k, i]) < threshold * std_vec[i] &&
+                    abs(x[k, j]) < threshold * std_vec[j]
+                )
+                    nn += 1
+                end
+            end
+            mtx[i, j] = (pos - neg) / (N - nn)
+        end
+    end
+
+    return Symmetric(mtx .* (std_vec * transpose(std_vec)), :L)
+end
+
+function covgerber2(x, threshold = 0.5; std_func = std, std_args = (), std_kwargs = (;))
+    @assert(0 < threshold < 1, "threshold must be greater than zero and smaller than one")
+    T, N = size(x)
+
+    std_vec = vec(
+        !haskey(std_kwargs, :dims) ? std_func(x, std_args...; dims = 1, std_kwargs...) :
+        std_func(x, std_args...; std_kwargs...),
+    )
+
+    U = Matrix{Bool}(undef, T, N)
+    D = Matrix{Bool}(undef, T, N)
+
+    for i in 1:N
+        U[:, i] .= x[:, i] .>= std_vec[i] * threshold
+        D[:, i] .= x[:, i] .<= -std_vec[i] * threshold
+    end
+
+    # nconc = transpose(U) * U + transpose(D) * D
+    # ndisc = transpose(U) * D + transpose(D) * U
+    # H = nconc - ndisc
+
+    UmD = U - D
+    H = transpose(U) * UmD - transpose(D) * UmD
+
+    h = sqrt.(diag(H))
+
+    mtx = H ./ (h * transpose(h))
+
+    return Symmetric(mtx .* (std_vec * transpose(std_vec)), :L)
 end
 
 function two_diff_gap_stat(dist, clustering, max_k = 10)
@@ -271,4 +416,6 @@ export gen_dataframes,
     elimination_matrix,
     summation_matrix,
     dup_elim_sum_matrices,
-    gen_bootstrap
+    gen_bootstrap,
+    covgerber1,
+    covgerber2
