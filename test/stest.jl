@@ -1843,8 +1843,15 @@ clustering = hclust(D; linkage = :ward, branchorder = :optimal)
 T8, Rpm, Adjv, Dpm, Mv, Z, dbht = DBHTs(D, S, branchorder = :optimal)
 A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
-RET = dropmissing!(DataFrame(Y))
-hcport = HCPortfolio(returns = RET)
+returns = dropmissing!(DataFrame(Y))
+
+port1 = Portfolio(returns = returns)
+asset_statistics!(port1)
+port2 = HCPortfolio(returns = returns)
+port2.codep_type
+asset_statistics!(port2)
+
+PortfolioOptimiser.CodepTypes
 opt_port!(hcport)
 
 wak = Matrix(RET[1:50, 2:end])

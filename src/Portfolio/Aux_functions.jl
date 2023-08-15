@@ -243,6 +243,52 @@ function info_mtx(x, bins_info = :kn, type_info = :mutual, normed = true)
     return Symmetric(mtx, :L)
 end
 
+function mut_var_info_mtx(x, bins_info = :kn, normed = true)
+    @assert(
+        bins_info ∈ BinTypes || isa(bins_info, Int),
+        "bins has to either be in $BinTypes, or an integer value"
+    )
+
+    bin_width_func = if bins_info == :kn
+        pyimport("astropy.stats").knuth_bin_width
+    elseif bins_info == :fd
+        pyimport("astropy.stats").freedman_bin_width
+    elseif bins_info == :sc
+        pyimport("astropy.stats").scott_bin_width
+    end
+
+    T, N = size(x)
+
+    isa(bins_info, Int) && (bins = bins_info)
+
+    mut_mtx = Matrix{eltype(x)}(undef, N, N)
+    var_mtx = Matrix{eltype(x)}(undef, N, N)
+
+    for j in 1:N
+        xj = x[:, j]
+        for i in j:N
+            xi = x[:, i]
+            bins = if bins_info == :hgr
+                corr = cor(xj, xi)
+                corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
+            else
+                _calc_num_bins(xj, xi, j, i, bin_width_func)
+            end
+
+            hx = fit(Histogram, xj, nbins = bins).weights
+            hy = fit(Histogram, xi, nbins = bins).weights
+
+            mut_ixy = clamp(mutualinfo(hx, hy, normed = normed), 0, Inf)
+            var_ixy = clamp(varinfo(hx, hy), 0, Inf)
+
+            mut_mtx[i, j] = mut_ixy
+            var_mtx[i, j] = var_ixy
+        end
+    end
+
+    return Symmetric(mut_mtx, :L), Symmetric(var_mtx, :L)
+end
+
 function cordistance(v1::AbstractVector, v2::AbstractVector)
     N = length(v1)
     @assert(
