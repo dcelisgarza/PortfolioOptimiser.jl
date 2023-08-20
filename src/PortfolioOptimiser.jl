@@ -25,10 +25,10 @@ include("./AssetAllocation/AssetAllocation.jl")
 
 # Version 2.0
 using SparseArrays, Random, DataFrames, JuMP, Dates, Distributions, PyCall, Distances
+include("./Portfolio/OWA_weights.jl")
 include("./Portfolio/Portfolio.jl")
 include("./Portfolio/DBHTs.jl")
 include("./Portfolio/Aux_functions.jl")
-include("./Portfolio/OWA_weights.jl")
 include("./Portfolio/Asset_statistics.jl")
 include("./Portfolio/Risk_measures.jl")
 include("./Portfolio/Portfolio_risk_setup.jl")

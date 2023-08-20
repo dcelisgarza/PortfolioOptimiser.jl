@@ -3,6 +3,10 @@ using SafeTestsets
 @safetestset "Traditional optimisations" begin
     include("TraditionalOptimisationTests.jl")
 end
+
+@safetestset "Risk functions" begin
+    include("RiskMeasureTests.jl")
+end
 # @safetestset "Expected returns" begin
 #     include("ExpectedReturnsTests.jl")
 # end

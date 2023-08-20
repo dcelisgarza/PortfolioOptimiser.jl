@@ -101,7 +101,7 @@ function _entropic_rm(x, solvers, alpha = 0.05)
     @variable(model, z >= 0)
     @variable(model, u[1:T])
     @constraint(model, sum(u) <= z)
-    @constraint(model, [i = 1:T], [x[i] - t, z, u[i]] in MOI.ExponentialCone())
+    @constraint(model, [i = 1:T], [-x[i] - t, z, u[i]] in MOI.ExponentialCone())
     @expression(model, risk, t - z * log(at))
     @objective(model, Min, risk)
 
@@ -155,7 +155,7 @@ function _relativistic_rm(x, solvers, alpha = 0.05, kappa = 0.3)
         [i = 1:T],
         [omega[i] * invomk, theta[i] * invk, -z * invkappa2] in MOI.PowerCone(omk)
     )
-    @constraint(model, x .- t .+ epsilon .+ omega .<= 0)
+    @constraint(model, -x .- t .+ epsilon .+ omega .<= 0)
     @expression(model, risk, t + ln_k * z + sum(psi .+ theta))
     @objective(model, Min, risk)
 
@@ -201,13 +201,14 @@ function add_abs(x)
     for i in cs
         i > peak && (peak = i)
         dd = peak - i
-        dd > val && (val += dd)
+        dd > 0 && (val += dd)
     end
 
     return val / T
 end
 
 function dar_abs(x, alpha)
+    T = length(x)
     insert!(x, 1, 1)
     cs = cumsum(x)
     peak = -Inf
@@ -218,11 +219,12 @@ function dar_abs(x, alpha)
     end
     deleteat!(dd, 1)
     sort!(dd)
-    idx = ceil(Int, alpha * length(dd))
+    idx = ceil(Int, alpha * T)
     return -dd[idx]
 end
 
 function cdar_abs(x, alpha)
+    T = length(x)
     insert!(x, 1, 1)
     cs = cumsum(x)
     peak = -Inf
@@ -233,13 +235,13 @@ function cdar_abs(x, alpha)
     end
     deleteat!(dd, 1)
     sort!(dd)
-    idx = ceil(Int, alpha * length(dd))
+    idx = ceil(Int, alpha * T)
     var = -dd[idx]
     sum_var = 0.0
     for i in 1:(idx - 1)
         sum_var += dd[i] + var
     end
-    return var - sum_var / (alpha * length(x))
+    return var - sum_var / (alpha * T)
 end
 
 function uci_abs(x)
@@ -251,20 +253,20 @@ function uci_abs(x)
     for i in cs
         i > peak && (peak = i)
         dd = peak - i
-        dd > val && (val += dd^2)
+        dd > 0 && (val += dd^2)
     end
 
     return sqrt(val / T)
 end
 
-function edar_abs(x, solvers, alpha)
+function edar_abs(x, solvers, alpha = 0.05)
     insert!(x, 1, 1)
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
     for (idx, i) in enumerate(cs)
         i > peak && (peak = i)
-        dd[idx] = i - peak
+        dd[idx] = -(peak - i)
     end
     deleteat!(dd, 1)
     return _entropic_rm(dd, solvers, alpha)
@@ -306,13 +308,14 @@ function add_rel(x)
     for i in cs
         i > peak && (peak = i)
         dd = 1 - i / peak
-        dd > val && (val += dd)
+        dd > 0 && (val += dd)
     end
 
     return val / T
 end
 
 function dar_rel(x, alpha)
+    T = length(x)
     x .= insert!(x, 1, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
@@ -323,11 +326,12 @@ function dar_rel(x, alpha)
     end
     deleteat!(dd, 1)
     sort!(dd)
-    idx = ceil(Int, alpha * length(dd))
+    idx = ceil(Int, alpha * T)
     return -dd[idx]
 end
 
 function cdar_rel(x, alpha)
+    T = length(x)
     x .= insert!(x, 1, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
@@ -338,13 +342,13 @@ function cdar_rel(x, alpha)
     end
     deleteat!(dd, 1)
     sort!(dd)
-    idx = ceil(Int, alpha * length(dd))
+    idx = ceil(Int, alpha * T)
     var = -dd[idx]
     sum_var = 0.0
     for i in 1:(idx - 1)
         sum_var += dd[i] + var
     end
-    return var - sum_var / (alpha * length(x))
+    return var - sum_var / (alpha * T)
 end
 
 function uci_rel(x)
@@ -356,7 +360,7 @@ function uci_rel(x)
     for i in cs
         i > peak && (peak = i)
         dd = 1 - i / peak
-        dd > val && (val += dd^2)
+        dd > 0 && (val += dd^2)
     end
 
     return sqrt(val / T)
@@ -399,7 +403,7 @@ function skurt(x)
     T = length(x)
     mu = mean(x)
     val = x .- mu
-    return sqrt(sum(val[val .>= 0] .^ 4) / T)
+    return sqrt(sum(val[val .< 0] .^ 4) / T)
 end
 
 function gmd(x)
@@ -428,15 +432,16 @@ end
 
 function rtg(
     x;
-    alpha_i = alpha_i,
-    alpha = alpha,
-    a_sim = a_sim,
-    beta_i = beta_i,
-    beta = beta,
-    b_sim = b_sim,
+    alpha_i = 0.0001,
+    alpha = 0.05,
+    a_sim = 100,
+    beta_i = nothing,
+    beta = nothing,
+    b_sim = nothing,
 )
+    T = length(x)
     w = owa_rtg(
-        x;
+        T;
         alpha_i = alpha_i,
         alpha = alpha,
         a_sim = a_sim,
@@ -460,15 +465,13 @@ function calc_risk(
     alpha_i = 0.0001,
     alpha = 0.05,
     a_sim = 100,
-    beta_i = 0.0001,
-    beta = Inf,
-    b_sim = -1,
+    beta_i = nothing,
+    beta = nothing,
+    b_sim = nothing,
     kappa = 0.3,
     solvers = nothing,
 )
-    if rm != :mv || rm != :msd
-        x = returns * w
-    end
+    x = (rm != :mv || rm != :msd) && returns * w
 
     risk = if rm == :msd
         msd(w, cov)
@@ -516,13 +519,13 @@ function calc_risk(
         cdar_rel(x, alpha)
     elseif rm == :uci_r
         uci_rel(x)
-    elseif :edar_r
+    elseif rm == :edar_r
         edar_rel(x, solvers, alpha)
     elseif rm == :rdar_r
         rdar_rel(x, solvers, alpha, kappa)
     elseif rm == :krt
         kurt(x)
-    elseif :skrt
+    elseif rm == :skrt
         skurt(x)
     elseif rm == :gmd
         gmd(x)
@@ -548,3 +551,5 @@ function calc_risk(
 
     return risk
 end
+
+export calc_risk

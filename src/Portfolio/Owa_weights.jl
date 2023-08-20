@@ -29,7 +29,7 @@ end
 
 function owa_cvar(T, alpha = 0.05)
     k = ceil(Int, T * alpha)
-    w = Vector(undef, T)
+    w = zeros(T)
     w[1:(k - 1)] .= -1 / (T * alpha)
     w[k] = -1 - sum(w[1:(k - 1)])
 
@@ -56,7 +56,7 @@ function owa_tg(T; alpha_i = 0.0001, alpha = 0.05, a_sim = 100)
     end
     w[n] = (alphas[n] - alphas[n - 1]) / alphas[n]
 
-    w .= owa_wcvar(T, alphas, w)
+    w = owa_wcvar(T, alphas, w)
 
     return w
 end
@@ -77,7 +77,6 @@ end
 
 function owa_rcvar(T; alpha = 0.05, beta = nothing)
     isnothing(beta) && (beta = alpha)
-
     w = owa_cvar(T, alpha) .- reverse(owa_cvar(T, beta))
 
     return w
