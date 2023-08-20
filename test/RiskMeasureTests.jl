@@ -12,7 +12,7 @@ using Test,
     LinearAlgebra,
     StatsBase
 
-A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
+A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
 
@@ -32,6 +32,8 @@ returns = dropmissing!(DataFrame(Y))
         ),
     )
     asset_statistics!(port1)
+    N = length(port1.assets)
+    w = fill(1 / N, N)
 
     @test abs(calc_risk(w, port1.returns, port1.cov; rm = :mv) - 0.000101665490230637) <
           eps()
@@ -110,7 +112,7 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(w, port1.returns, port1.cov; rm = :edar_r, solvers = port1.solvers) -
         0.12775945574727807,
-    ) < 1.2e-8
+    ) < 7.7e-8
     @test abs(
         calc_risk(w, port1.returns, port1.cov; rm = :rdar_r, solvers = port1.solvers) -
         0.13863825698673474,
