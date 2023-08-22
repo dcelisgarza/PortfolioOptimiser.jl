@@ -19,5 +19,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: julia-actions/setup-julia@v1
         with:
-          version: [1.9, 'nightly']               # replace this with whatever version you need
+          version: [1.9, nightly]               # replace this with whatever version you need
           show-versioninfo: true         # this causes versioninfo to be printed to the action log
