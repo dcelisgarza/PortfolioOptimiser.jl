@@ -1,0 +1,41 @@
+name: Run tests
+
+on: 
+  push:
+    branches:
+      - master
+      - main
+      - dev
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        julia-version: ['1.9', 'nightly']
+        julia-arch: [x64, x86]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        exclude:
+          - os: macOS-latest
+            julia-arch: x86
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.julia-version }}
+          arch: ${{ matrix.julia-arch }}
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+      - uses: actions/checkout@master
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # files: ./coverage1.xml,./coverage2.xml # optional
+          # flags: unittests # optional
+          name: codecov-umbrella # optional
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
+        # with:
+        #   annotate: true
