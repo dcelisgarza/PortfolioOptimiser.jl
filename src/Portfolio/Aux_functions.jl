@@ -447,9 +447,18 @@ function two_diff_gap_stat(dist, clustering, max_k = 10)
     end
 
     limit_k = ceil(Int, min(max_k, sqrt(N)))
-    gaps = W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)]
+    gaps = fill(-Inf, length(W_list) + 2)
+
+    length(W_list) > 2 && gaps[3:end] .=
+        W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)]
+
     gaps = gaps[1:limit_k]
-    k = argmax(gaps) + 2
+
+    if all(isinf.(gaps))
+        k = length(gaps)
+    else
+        k = argmax(gaps) + 2
+    end
 
     return k
 end
