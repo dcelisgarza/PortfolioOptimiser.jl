@@ -34,8 +34,6 @@ SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
-Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
-
 
 [targets]
 test = [
@@ -50,5 +48,4 @@ test = [
     "ECOS",
     "TimeSeries",
     "OrderedCollections",
-    "Conda",
 ]

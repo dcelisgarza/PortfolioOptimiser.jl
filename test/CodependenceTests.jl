@@ -1,5 +1,4 @@
-using Test, PortfolioOptimiser, CSV, TimeSeries, DataFrames, Conda, Pkg
-
+using Test, PortfolioOptimiser, CSV, TimeSeries, DataFrames
 # ENV["PYTHON"] = ""
 # Pkg.build("PyCall")
 # Conda.add("astropy")
