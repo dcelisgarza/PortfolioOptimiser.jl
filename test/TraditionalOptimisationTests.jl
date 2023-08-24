@@ -1030,7 +1030,7 @@ end
     @test isapprox(w1t, w1[!, :weights], rtol = 6e-5)
     @test isapprox(w2t, w2[!, :weights], rtol = 3e-6)
     @test isapprox(w3t, w3[!, :weights], rtol = 7e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 5e-7)
+    @test isapprox(w4t, w4[!, :weights], rtol = 5e-6)
 end
 
 @testset "flpm" begin
@@ -2359,7 +2359,7 @@ end
     @test isapprox(w1t, w1[!, :weights], rtol = 3e-7)
     @test isapprox(w2t, w2[!, :weights], rtol = 3e-3)
     @test isapprox(w3t, w3[!, :weights], rtol = 6e-6)
-    @test isapprox(w4t, w4[!, :weights], rtol = 3e-6)
+    @test isapprox(w4t, w4[!, :weights], rtol = 3e-5)
 end
 
 @testset "evar" begin

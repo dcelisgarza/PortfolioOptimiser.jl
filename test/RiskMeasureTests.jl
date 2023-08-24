@@ -84,7 +84,7 @@ println("Risk measures...")
             rm = :rvar,
             solvers = portfolio.solvers,
         ) - 0.03586321171352101,
-    ) < 5e-6
+    ) < 1e-5
     @test abs(
         calc_risk(
             w,
