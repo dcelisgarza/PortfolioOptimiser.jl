@@ -199,48 +199,58 @@ end
 
 const BinTypes = (:kn, :fd, :sc, :hgr)
 const InfoTypes = (:mutual, :variation)
-function info_mtx(x, bins_info = :kn, type_info = :mutual, normed = true)
-    @assert(
-        bins_info ∈ BinTypes || isa(bins_info, Int),
-        "bins has to either be in $BinTypes, or an integer value"
-    )
-    @assert(type_info ∈ InfoTypes, "type_info must be in $InfoTypes")
 
-    bin_width_func = if bins_info == :kn
-        pyimport("astropy.stats").knuth_bin_width
-    elseif bins_info == :fd
-        pyimport("astropy.stats").freedman_bin_width
-    elseif bins_info == :sc
-        pyimport("astropy.stats").scott_bin_width
+function mutualinfo(A::AbstractMatrix{<:Real})
+    p_i = vec(sum(A, dims = 2))
+    p_j = vec(sum(A, dims = 1))
+
+    if length(p_i) == 1 || length(p_j) == 1
+        return 0.0
     end
 
-    T, N = size(x)
+    mask = findall(A .!= 0)
 
-    isa(bins_info, Int) && (bins = bins_info)
+    nz = vec(A[mask])
+    nz_sum = sum(nz)
+    log_nz = log.(nz)
+    nz_nm = nz / nz_sum
 
-    mtx = Matrix{eltype(x)}(undef, N, N)
+    outer = p_i[getindex.(mask, 1)] .* p_j[getindex.(mask, 2)]
+    log_outer = -log.(outer) .+ log(sum(p_i)) .+ log(sum(p_j))
 
-    for j in 1:N
-        xj = x[:, j]
-        for i in j:N
-            xi = x[:, i]
-            bins = if bins_info == :hgr
-                corr = cor(xj, xi)
-                corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
-            else
-                _calc_num_bins(xj, xi, j, i, bin_width_func)
-            end
+    mi = (nz_nm .* (log_nz .- log(nz_sum)) .+ nz_nm .* log_outer)
+    mi[abs.(mi) .< eps(eltype(mi))] .= 0.0
 
-            hx = fit(Histogram, xj, nbins = bins).weights
-            hy = fit(Histogram, xi, nbins = bins).weights
-            ixy =
-                type_info == :mutual ? mutualinfo(hx, hy, normed = normed) : varinfo(hx, hy)
+    return sum(mi)
+end
 
-            mtx[i, j] = clamp(ixy, 0, Inf)
-        end
-    end
+function _calc_hist_data(xj, xi, bins)
+    xjl = minimum(xj) - eps(eltype(xj))
+    xjh = maximum(xj) + eps(eltype(xj))
 
-    return Symmetric(mtx, :L)
+    xil = minimum(xi) - eps(eltype(xi))
+    xih = maximum(xi) + eps(eltype(xi))
+
+    hx = fit(Histogram, xj, range(xjl, stop = xjh, length = bins + 1)).weights
+    hx /= sum(hx)
+
+    hy = fit(Histogram, xi, range(xil, stop = xih, length = bins + 1)).weights
+    hy /= sum(hy)
+
+    ex = entropy(hx)
+    ey = entropy(hy)
+
+    hxy =
+        fit(
+            Histogram,
+            (xj, xi),
+            (
+                range(xjl, stop = xjh, length = bins + 1),
+                range(xil, stop = xih, length = bins + 1),
+            ),
+        ).weights
+
+    return ex, ey, hxy
 end
 
 function mut_var_info_mtx(x, bins_info = :kn, normed = true)
@@ -275,11 +285,15 @@ function mut_var_info_mtx(x, bins_info = :kn, normed = true)
                 _calc_num_bins(xj, xi, j, i, bin_width_func)
             end
 
-            hx = fit(Histogram, xj, nbins = bins).weights
-            hy = fit(Histogram, xi, nbins = bins).weights
+            ex, ey, hxy = _calc_hist_data(xj, xi, bins)
 
-            mut_ixy = clamp(mutualinfo(hx, hy, normed = normed), 0, Inf)
-            var_ixy = clamp(varinfo(hx, hy), 0, Inf)
+            mut_ixy = clamp(mutualinfo(hxy), 0, Inf)
+            var_ixy = ex + ey - 2 * mut_ixy
+            if normed
+                vxy = ex + ey - mut_ixy
+                var_ixy = var_ixy / vxy
+                mut_ixy /= min(ex, ey)
+            end
 
             mut_mtx[i, j] = mut_ixy
             var_mtx[i, j] = var_ixy
@@ -300,13 +314,12 @@ function cordistance(v1::AbstractVector, v2::AbstractVector)
 
     a = pairwise(Euclidean(), v1)
     b = pairwise(Euclidean(), v2)
+    A = a .- mean(a, dims = 1) .- mean(a, dims = 2) .+ mean(a)
+    B = b .- mean(b, dims = 1) .- mean(b, dims = 2) .+ mean(b)
 
-    A = a - mean(a, dims = 1) - mean(a, dims = 2) + mean(a)
-    B = b - mean(b, dims = 1) - mean(b, dims = 2) + mean(b)
-
-    dcov2_xx = sum(A * A) / N2
-    dcov2_xy = sum(A * B) / N2
-    dcov2_yy = sum(B * B) / N2
+    dcov2_xx = sum(A .* A) / N2
+    dcov2_xy = sum(A .* B) / N2
+    dcov2_yy = sum(B .* B) / N2
 
     val = sqrt(dcov2_xy) / sqrt(sqrt(dcov2_xx) * sqrt(dcov2_yy))
 
@@ -351,6 +364,7 @@ end
 
 function covgerber1(x, threshold = 0.5; std_func = std, std_args = (), std_kwargs = (;))
     @assert(0 < threshold < 1, "threshold must be greater than zero and smaller than one")
+
     T, N = size(x)
 
     std_vec = vec(
@@ -388,15 +402,18 @@ function covgerber1(x, threshold = 0.5; std_func = std, std_args = (), std_kwarg
                     nn += 1
                 end
             end
-            mtx[i, j] = (pos - neg) / (N - nn)
+            mtx[i, j] = (pos - neg) / (T - nn)
         end
     end
 
-    return Symmetric(mtx .* (std_vec * transpose(std_vec)), :L)
+    mtx .= Symmetric(mtx, :U)
+
+    return mtx .* (std_vec * transpose(std_vec))
 end
 
 function covgerber2(x, threshold = 0.5; std_func = std, std_args = (), std_kwargs = (;))
     @assert(0 < threshold < 1, "threshold must be greater than zero and smaller than one")
+
     T, N = size(x)
 
     std_vec = vec(
@@ -423,7 +440,7 @@ function covgerber2(x, threshold = 0.5; std_func = std, std_args = (), std_kwarg
 
     mtx = H ./ (h * transpose(h))
 
-    return Symmetric(mtx .* (std_vec * transpose(std_vec)), :L)
+    return mtx .* (std_vec * transpose(std_vec))
 end
 
 function two_diff_gap_stat(dist, clustering, max_k = 10)

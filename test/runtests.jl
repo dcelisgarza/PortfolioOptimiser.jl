@@ -1,11 +1,15 @@
 using SafeTestsets
 
-@safetestset "Traditional optimisations" begin
-    include("TraditionalOptimisationTests.jl")
-end
-
 @safetestset "Risk functions" begin
     include("RiskMeasureTests.jl")
+end
+
+@safetestset "Codependence functions" begin
+    include("CodependenceTests.jl")
+end
+
+@safetestset "Traditional optimisations" begin
+    include("TraditionalOptimisationTests.jl")
 end
 
 # @safetestset "Expected returns" begin

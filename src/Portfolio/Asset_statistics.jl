@@ -29,6 +29,7 @@ function asset_statistics!(
     mean_func::Function = mean,
     cov_func::Function = cov,
     cor_func::Function = cor,
+    std_func = std,
     dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
     custom_mu = nothing,
     custom_cov = nothing,
@@ -38,12 +39,13 @@ function asset_statistics!(
     cov_args = (),
     cor_args = (),
     dist_args = (),
+    std_args = (),
     calc_kurt = true,
     mean_kwargs = (; dims = 1),
     cov_kwargs = (;),
     cor_kwargs = (;),
     dist_kwargs = (;),
-    uplo = :L,
+    std_kwargs = (;)uplo = :L,
 )
     returns = portfolio.returns
     N = size(returns, 2)
@@ -87,10 +89,26 @@ function asset_statistics!(
             codep = abs.(corkendall(returns))
             dist = sqrt.(clamp!(1 .- codep, 0, 1))
         elseif codep_type == :gerber1
-            codep = cov2cor(covgerber1(returns, portfolio.gs_threshold))
+            codep = cov2cor(
+                covgerber1(
+                    returns,
+                    portfolio.gs_threshold,
+                    std_func = std_func,
+                    std_args = std_args,
+                    std_kwargs = std_kwargs,
+                ),
+            )
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
         elseif codep_type == :gerber2
-            codep = cov2cor(covgerber2(returns, portfolio.gs_threshold))
+            codep = cov2cor(
+                covgerber2(
+                    returns,
+                    portfolio.gs_threshold,
+                    std_func = std_func,
+                    std_args = std_args,
+                    std_kwargs = std_kwargs,
+                ),
+            )
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
         elseif codep_type == :distance
             codep = cordistance(returns)
