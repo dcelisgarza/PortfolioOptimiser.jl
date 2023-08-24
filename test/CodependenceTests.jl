@@ -1,6 +1,6 @@
 using Test, PortfolioOptimiser, CSV, TimeSeries, DataFrames, Conda
 
-Conda.add("astropy")
+Conda.add("astropy.stats")
 A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
