@@ -43,9 +43,12 @@ returns = dropmissing!(DataFrame(Y))
     asset_statistics!(portfolio)
     distance = portfolio.codep
 
-    portfolio.codep_type = :mutual_info
-    asset_statistics!(portfolio)
-    mutual_info = portfolio.codep
+    try
+        portfolio.codep_type = :mutual_info
+        asset_statistics!(portfolio)
+        mutual_info = portfolio.codep
+    catch
+    end
 
     portfolio.codep_type = :tail
     asset_statistics!(portfolio)

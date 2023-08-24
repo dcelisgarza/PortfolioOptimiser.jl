@@ -259,17 +259,12 @@ function mut_var_info_mtx(x, bins_info = :kn, normed = true)
         "bins has to either be in $BinTypes, or an integer value"
     )
 
-    ast = PyNULL()
-    copy!(ast, pyimport_conda("astropy.stats", "astropy"))
     bin_width_func = if bins_info == :kn
-        # pyimport("astropy.stats").knuth_bin_width
-        ast.knuth_bin_width
+        pyimport("astropy.stats").knuth_bin_width
     elseif bins_info == :fd
-        # pyimport("astropy.stats").freedman_bin_width
-        ast.freedman_bin_width
+        pyimport("astropy.stats").freedman_bin_width
     elseif bins_info == :sc
-        # pyimport("astropy.stats").scott_bin_width
-        ast.scott_bin_width
+        pyimport("astropy.stats").scott_bin_width
     end
 
     T, N = size(x)
