@@ -1,7 +1,9 @@
-using Test, PortfolioOptimiser, CSV, TimeSeries, DataFrames, Conda
+using Test, PortfolioOptimiser, CSV, TimeSeries, DataFrames, Conda, Pkg
 
-ENV["PYTHON"] = ""
-Conda.add("astropy")
+# ENV["PYTHON"] = ""
+# Pkg.build("PyCall")
+# Conda.add("astropy")
+
 A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))

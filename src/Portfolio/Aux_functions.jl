@@ -260,11 +260,11 @@ function mut_var_info_mtx(x, bins_info = :kn, normed = true)
     )
 
     bin_width_func = if bins_info == :kn
-        pyimport("astropy.stats").knuth_bin_width
+        pyimport_conda("astropy.stats", "astropy").knuth_bin_width
     elseif bins_info == :fd
-        pyimport("astropy.stats").freedman_bin_width
+        pyimport_conda("astropy.stats", "astropy").freedman_bin_width
     elseif bins_info == :sc
-        pyimport("astropy.stats").scott_bin_width
+        pyimport_conda("astropy.stats", "astropy").scott_bin_width
     end
 
     T, N = size(x)
