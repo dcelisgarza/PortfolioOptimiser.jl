@@ -8,11 +8,11 @@ end
     include("CodependenceTests.jl")
 end
 
-@safetestset begin
+@safetestset "Clustering" begin
     include("ClusteringTests.jl")
 end
 
-@safetestset "Traditional optimisations" begin
+@safetestset begin"Traditional optimisations" begin
     include("TraditionalOptimisationTests.jl")
 end
 
