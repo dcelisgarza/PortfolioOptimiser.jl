@@ -4,8 +4,8 @@ using SafeTestsets
     include("RiskMeasureTests.jl")
 end
 
-@safetestset "Codependence functions" begin
-    include("CodependenceTests.jl")
+@safetestset "Codependence and distance functions" begin
+    include("CodepDistTests.jl")
 end
 
 @safetestset "Clustering" begin
