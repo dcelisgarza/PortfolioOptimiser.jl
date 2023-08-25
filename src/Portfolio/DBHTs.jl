@@ -78,11 +78,9 @@ function PMFG_T2s(W, nargout = 3)
 
     A = sparse(W .* ((A + A') .== 1))
 
-    cliques = if nargout > 3
-        vcat(transpose(in_v[1:4]), hcat(clique3, in_v[5:end]))
-    else
+    cliques =
+        nargout > 3 ? vcat(transpose(in_v[1:4]), hcat(clique3, in_v[5:end])) :
         Matrix{Int}(undef, 0, 0)
-    end
 
     cliqueTree = if nargout > 4
         M = size(cliques, 1)
@@ -103,14 +101,6 @@ function PMFG_T2s(W, nargout = 3)
     return A, tri, clique3, cliques, cliqueTree
 end
 
-function _findnz(A::AbstractSparseVector)
-    return findnz(A)[1]
-end
-
-function _findnz(A::AbstractVector)
-    return getindex.(findall(A .!= 0))
-end
-#! Maybe replace all findnz with _findnz
 function distance_wei(L)
     N = size(L, 1)
     D = fill(Inf, N, N)
@@ -139,9 +129,8 @@ function distance_wei(L)
 
             dus = D[u, S]
             minD = !isempty(dus) ? minimum(dus) : Float64[]
-            if isempty(minD) || isinf(minD)
-                break
-            end
+
+            (isempty(minD) || isinf(minD)) && break
 
             V = findall(D[u, :] .== minD)
         end
@@ -183,9 +172,9 @@ function clique3(A)
             c = clique[:, 3] .== candidate[3]
             check = a .* b .* c
             check = sum(check)
-            if check == 0
-                clique = vcat(clique, candidate)
-            end
+
+            check == 0 && (clique = vcat(clique, candidate))
+
             candidate, check, a, b, c = nothing, nothing, nothing, nothing, nothing
         end
     end
@@ -261,11 +250,7 @@ function BuildHierarchy(M)
         if !isempty(Parents)
             ParentSum = vec(sum(M[:, Parents], dims = 1))
             a = findall(ParentSum .== minimum(ParentSum))
-            if length(a) == 1
-                Pred[n] = Parents[a[1]]
-            else
-                Pred = Int[]
-            end
+            length(a) == 1 ? Pred[n] = Parents[a[1]] : Pred = Int[]
         else
             Pred[n] = 0
         end
@@ -305,6 +290,7 @@ function BubbleHierarchy(Pred, Sb)
         TempVec[Root] .= 1
         Mb = hcat(Mb, TempVec)
     end
+
     while sum(CliqCount) < Nc
         NxtRoot = Int[]
         for n in eachindex(Root)
@@ -313,11 +299,11 @@ function BubbleHierarchy(Pred, Sb)
             TempVec[[Root[n]; DirectChild]] .= 1
             Mb = hcat(Mb, TempVec)
             CliqCount[DirectChild] .= 1
+
             for m in eachindex(DirectChild)
-                if Sb[DirectChild[m]] != 0
-                    NxtRoot = [NxtRoot; DirectChild[m]]
-                end
+                Sb[DirectChild[m]] != 0 && (NxtRoot = [NxtRoot; DirectChild[m]])
             end
+
             DirectChild, TempVec = nothing, nothing
         end
         Root = sort!(unique(NxtRoot))
@@ -356,17 +342,9 @@ function CliqHierarchyTree2s(Apm, method = :unique)
         indx1 = findall(T .== 1)
         indx2 = findall(T .== 2)
 
-        if length(indx1) > length(indx2)
-            indx_s = vcat(indx2, indx0)
-        else
-            indx_s = vcat(indx1, indx0)
-        end
+        indx_s = length(indx1) > length(indx2) ? vcat(indx2, indx0) : vcat(indx1, indx0)
 
-        if isempty(indx_s)
-            Sb[n] = 0
-        else
-            Sb[n] = length(indx_s) - 3
-        end
+        Sb[n] = isempty(indx_s) ? 0 : length(indx_s) - 3
 
         M[indx_s, n] .= 1
     end
@@ -386,13 +364,13 @@ function CliqHierarchyTree2s(Apm, method = :unique)
         end
         H = H + transpose(H)
     else
-        if length(Root) > 1
-            Adj = AdjCliq(A, CliqList, Root)
-        end
+        length(Root) > 1 && (Adj = AdjCliq(A, CliqList, Root))
+
         H = spzeros(Int, Nc, Nc)
         for n in eachindex(Pred)
             Pred[n] != 0 && (H[n, Pred[n]] = 1)
         end
+
         if !isempty(Pred)
             H = H + transpose(H)
             H = H + Adj
@@ -451,11 +429,7 @@ function DirectHb(Rpm, Hb, Mb, Mv, CliqList)
         left = sum(Rpm[vo, vleft])
         right = sum(Rpm[vo, vright])
 
-        if left > right
-            Hc[bright, bleft] .= left
-        else
-            Hc[bleft, bright] .= right
-        end
+        left > right ? Hc[bright, bleft] .= left : Hc[bleft, bright] .= right
     end
 
     Sep = vec(Int.(sum(Hc, dims = 2) .== 0))
@@ -545,11 +519,11 @@ function LinkageFunction(d, labelvec)
             x1 = vecr .|| vecc
             dd = d[x1, x1]
             de = dd[dd .!= 0]
-            if isempty(de)
-                Link1 = hcat(lvec[r], lvec[c], 0)
-            else
-                Link1 = hcat(lvec[r], lvec[c], vec(maximum(de, dims = 1)))
-            end
+
+            Link1 =
+                isempty(de) ? hcat(lvec[r], lvec[c], 0) :
+                hcat(lvec[r], lvec[c], vec(maximum(de, dims = 1)))
+
             Links = vcat(Links, Link1)
         end
     end
@@ -569,27 +543,6 @@ function _build_link_and_dendro(rg, dpm, LabelVec, LabelVec1, LabelVec2, V, nc, 
         LabelVec1 = copy(LabelVec2)
     end
     return Z, nc, LabelVec1
-end
-
-function from_mlab_linkage(Z)
-    N = size(Z, 1)
-
-    counts = zeros(Int, N)
-    for i in 1:N
-        current_count = 0
-        merge = Int.(Z[i, 1:2])
-        for child_idx in merge
-            if child_idx < N + 1
-                current_count += 1  # leaf node
-            else
-                current_count += counts[child_idx - N]
-            end
-        end
-        counts[i] = current_count
-    end
-    Z = hcat(Z, counts)
-
-    return Z
 end
 
 function HierarchyConstruct4s(Rpm, Dpm, Tc, Adjv, Mv)
@@ -737,16 +690,10 @@ function DBHTs(D, S; branchorder = :optimal)
     elseif branchorder == :r
         Clustering.orderbranches_r!(hmer)
     end
+
     hclust = Hclust(hmer, :dbht)
 
     return T8, Rpm, Adjv, Dpm, Mv, Z, hclust
 end
 
-export DBHTs,
-    PMFG_T2s,
-    distance_wei,
-    clique3,
-    breadth,
-    FindDisjoint,
-    CliqHierarchyTree2s,
-    from_mlab_linkage
+export DBHTs, PMFG_T2s, distance_wei, clique3, breadth, FindDisjoint, CliqHierarchyTree2s
