@@ -1062,13 +1062,6 @@ function _hierarchical_clustering(
     return clustering, k
 end
 
-function leaves_list(clustering)
-    merges = transpose(clustering.merges)
-    idx = findall(x -> x < 0, merges)
-    leaves = -merges[idx]
-    return leaves
-end
-
 function _cluster_risk(portfolio, returns, covariance, cluster; rm = :mv, rf = 0.0)
     cret = returns[:, cluster]
     ccov = covariance[cluster, cluster]
@@ -1136,10 +1129,10 @@ function _recursive_bisection(
 )
     N = length(portfolio.assets)
     weights = fill(1.0, N)
-    sort_order = portfolio.sort_order
+    sort_order = portfolio.clusters.order
     items = [sort_order]
     returns = portfolio.returns
-    covariance = portfolio.covariance
+    covariance = portfolio.cov
 
     while length(items) > 0
         items = [
@@ -1400,4 +1393,4 @@ function _inter_weights(
     return weights
 end
 
-export leaves_list, pre_order, ClusterNode, to_tree, is_leaf
+export pre_order, ClusterNode, to_tree, is_leaf

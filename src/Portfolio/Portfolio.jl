@@ -598,7 +598,6 @@ mutable struct HCPortfolio{
     tco,
     tdist,
     tcl,
-    so,
     tk,
     topt,
     # Solutions.
@@ -631,7 +630,6 @@ mutable struct HCPortfolio{
     codep::tco
     dist::tdist
     clusters::tcl
-    sort_order::so
     k::tk
     p_optimal::topt
     # Solutions.
@@ -660,15 +658,14 @@ function HCPortfolio(;
     mu = Vector{Float64}(undef, 0),
     cov = Matrix{Float64}(undef, 0, 0),
     bins_info::Union{Symbol, Int} = :kn,
-    w_min::Union{AbstractFloat, AbstractVector, Nothing} = Vector{Float64}(undef, 0),
-    w_max::Union{AbstractFloat, AbstractVector, Nothing} = Vector{Float64}(undef, 0),
+    w_min::Union{AbstractFloat, AbstractVector, Nothing} = 0.0,
+    w_max::Union{AbstractFloat, AbstractVector, Nothing} = 1.0,
     # Optimal portfolios.
     codep_type::Symbol = :pearson,
     codep = Matrix{Float64}(undef, 0, 0),
     dist = Matrix{Float64}(undef, 0, 0),
     clusters = Hclust{Float64}(Matrix{Int64}(undef, 0, 2), Float64[], Int64[], :nothing),
-    sort_order = Vector{Int}(undef, 0),
-    k::Int = 0,
+    k::Union{Int, Nothing} = nothing,
     # Solutions.
     solvers::AbstractDict = Dict(),
     opt_params::AbstractDict = Dict(),
@@ -711,8 +708,7 @@ function HCPortfolio(;
         typeof(codep),
         typeof(dist),
         typeof(clusters),
-        typeof(sort_order),
-        typeof(k),
+        Union{Int, Nothing},
         DataFrame,
         # Solutions.
         typeof(solvers),
@@ -743,7 +739,6 @@ function HCPortfolio(;
         codep,
         dist,
         clusters,
-        sort_order,
         k,
         DataFrame(),
         # Solutions.

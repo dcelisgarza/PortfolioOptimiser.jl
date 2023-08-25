@@ -690,7 +690,7 @@ function opt_port!(
     rm::Symbol = :mv,
     obj::Symbol = :min_risk,
     kelly::Symbol = :none,
-    rf::Real = 0.0,#1.0329^(1 / 252) - 1
+    rf::Real = 0.0,
     l::Real = 2.0,
     linkage::Symbol = :single,
     k = nothing,
@@ -716,8 +716,6 @@ function opt_port!(
         _hierarchical_clustering(portfolio, type, linkage, max_k, branchorder)
 
     portfolio.k = isnothing(k) ? tk : k
-
-    portfolio.sort_order = leaves_list(portfolio.clusters)
 
     upper_bound, lower_bound = _setup_hr_weights(portfolio.w_max, portfolio.w_min, N)
 
