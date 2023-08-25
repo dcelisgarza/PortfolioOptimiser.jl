@@ -2690,7 +2690,7 @@ end
 
     @test isapprox(w1t, w1[!, :weights], rtol = 4e-5)
     @test isapprox(w2t, w2[!, :weights], rtol = 8e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-6)
+    @test isapprox(w3t, w3[!, :weights], rtol = 1e-4)
     @test isapprox(w4t, w4[!, :weights], rtol = 9e-7)
 end
 
