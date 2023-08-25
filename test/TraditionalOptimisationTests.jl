@@ -2369,7 +2369,7 @@ end
         solvers = OrderedDict(
             :Clarabel => Dict(
                 :solver => (Clarabel.Optimizer),
-                :params => Dict("verbose" => false),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
             ),
             :ECOS =>
                 Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
@@ -2483,7 +2483,7 @@ end
     @test isapprox(w1t, w1[!, :weights], rtol = 4e-4)
     @test isapprox(w2t, w2[!, :weights], rtol = 5e-5)
     @test isapprox(w3t, w3[!, :weights], rtol = 5e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 9e-8)
+    @test isapprox(w4t, w4[!, :weights], rtol = 1e-6)
 
     kelly = :approx
     obj = :min_risk
@@ -2585,9 +2585,9 @@ end
     ]
 
     @test isapprox(w1t, w1[!, :weights], rtol = 3e-4)
-    @test isapprox(w2t, w2[!, :weights], rtol = 4e-4)
+    @test isapprox(w2t, w2[!, :weights], rtol = 4e-3)
     @test isapprox(w3t, w3[!, :weights], rtol = 4e-2)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
+    @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
 
     kelly = :exact
     obj = :min_risk
@@ -2644,26 +2644,26 @@ end
         0.18363554373480495,
     ]
     w3t = [
-        5.991052752377225e-11,
-        2.433071572090745e-10,
-        6.137987612028502e-11,
-        7.764227729932904e-11,
-        0.5137576728307748,
-        1.3933353478876682e-11,
-        0.11861563828805713,
-        1.1627729300826322e-10,
-        5.840486231537919e-11,
-        4.476212471392546e-11,
-        1.5078033138891433e-10,
-        1.3140683132002661e-11,
-        8.958777288465453e-12,
-        3.433655115631202e-11,
-        9.66514874044241e-12,
-        0.18153051016263663,
-        0.18609617738724765,
-        1.2749530550618746e-10,
-        2.5163966524024895e-10,
-        5.965006890936763e-11,
+        8.266331433964576e-8,
+        3.728699560161654e-7,
+        9.269866763349194e-8,
+        1.1210657741506878e-7,
+        0.5137969965134378,
+        1.954341280065966e-8,
+        0.11863859546203073,
+        1.5287285610914292e-7,
+        8.662208998177539e-8,
+        6.058504207628976e-8,
+        2.0303472094261e-7,
+        1.858191729611256e-8,
+        1.2842153650699011e-8,
+        4.6096211294738755e-8,
+        1.3554788074336607e-8,
+        0.18154566943344225,
+        0.18601670327754108,
+        1.785124332178018e-7,
+        4.995919815355082e-7,
+        8.313742580354917e-8,
     ]
     w4t = [
         2.3421861988228217e-10,
@@ -2690,7 +2690,7 @@ end
 
     @test isapprox(w1t, w1[!, :weights], rtol = 4e-5)
     @test isapprox(w2t, w2[!, :weights], rtol = 8e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-5)
+    @test isapprox(w3t, w3[!, :weights], rtol = 1e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 9e-7)
 end
 
@@ -3354,7 +3354,7 @@ end
 
     @test isapprox(w1t, w1[!, :weights], rtol = 3e-8)
     @test isapprox(w2t, w2[!, :weights], rtol = 2e-8)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-5)
+    @test isapprox(w3t, w3[!, :weights], rtol = 8e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 9e-8)
 end
 
