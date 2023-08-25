@@ -12,7 +12,7 @@ end
     include("ClusteringTests.jl")
 end
 
-@safetestset begin"Traditional optimisations" begin
+@safetestset "Traditional optimisations" begin
     include("TraditionalOptimisationTests.jl")
 end
 
