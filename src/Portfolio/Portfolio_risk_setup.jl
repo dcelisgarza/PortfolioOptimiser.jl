@@ -1042,7 +1042,7 @@ function _hierarchical_clustering(
     codeps1 = (:pearson, :spearman, :kendall, :gerber1, :gerber2, :custom)
 
     if linkage == :dbht
-        codep = codep_type ∈ codeps1 ? 1 - dist .^ 2 : codep
+        codep = codep_type ∈ codeps1 ? 1 .- dist .^ 2 : codep
         missing, missing, missing, missing, missing, missing, clustering =
             DBHTs(dist, codep, branchorder = branchorder)
     else
