@@ -1015,10 +1015,10 @@ function _naive_risk(portfolio, returns, covariance; rm = :mv, rf = 0.0)
     return weights
 end
 
-function _opt_w(portfolio, returns, mu, cov; obj = :min_risk, rm = :mv, rf = 0.0, l = 2.0)
+function _opt_w(portfolio, returns, mu, icov; obj = :min_risk, rm = :mv, rf = 0.0, l = 2.0)
     port = Portfolio(assets = 1:length(mu), ret = returns, solvers = portfolio.solvers)
     asset_statistics!(port; calc_kurt = false)
-    port.cov = cov
+    port.cov = icov
 
     weights = if obj ∈ (:min_risk, :utility, :sharpe)
         !isnothing(mu) && (port.mu = mu)
@@ -1356,19 +1356,19 @@ end
 function _intra_weights(portfolio; obj = :min_risk, rm = :mv, rf = 0.0, l = 2.0)
     returns = portfolio.returns
     mu = portfolio.mu
-    covariance = portfolio.covariance
-    clustering = portfolio.clustering
+    covariance = portfolio.cov
+    clustering = portfolio.clusters
     k = portfolio.k
     clustering_idx = cutree(clustering; k = k)
 
-    intra_weights = zeros(length(portfolio.assets))
+    intra_weights = zeros(eltype(covariance), length(portfolio.assets), k)
     for i in 1:k
-        idx = clustering_idx .== k
+        idx = clustering_idx .== i
         cmu = !isnothing(mu) ? mu[idx] : nothing
         ccov = covariance[idx, idx]
         cret = returns[:, idx]
         weights = _opt_w(portfolio, cret, cmu, ccov; obj = obj, rm = rm, rf = rf, l = l)
-        intra_weights[idx] = weights
+        intra_weights[idx, i] .= weights
     end
 
     return intra_weights
@@ -1384,12 +1384,13 @@ function _inter_weights(
 )
     mu = portfolio.mu
     returns = portfolio.returns
-    tmu = !isnothing(mu) ? dot(mu, intra_weights) : nothing
-    tcov = dot(intra_weights, cov, intra_weights)
+    covariance = portfolio.cov
+    tmu = !isnothing(mu) ? transpose(intra_weights) * mu : nothing
+    tcov = transpose(intra_weights) * covariance * intra_weights
     tret = returns * intra_weights
     inter_weights = _opt_w(portfolio, tret, tmu, tcov; obj = obj, rm = rm, rf = rf, l = l)
 
-    weights = inter_weights .* intra_weights
+    weights = intra_weights * inter_weights
 
     return weights
 end

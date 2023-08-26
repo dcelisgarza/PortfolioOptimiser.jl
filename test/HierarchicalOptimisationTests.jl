@@ -215,3 +215,67 @@ end
 
     @test isapprox(w1t, w1.weights)
 end
+
+@testset "NCO" begin
+    println("NCO tests...")
+
+    portfolio = HCPortfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :ECOS => Dict(
+                :solver => ECOS.Optimizer,
+                :params => Dict("verbose" => false, "maxit" => 500),
+            ),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    portfolio.codep_type = :pearson
+    asset_statistics!(portfolio)
+
+    type = :nco
+    rm = :mv
+    obj = :min_risk
+    kelly = :none
+    linkage = :dbht
+    branchorder = :default
+    w1 = opt_port!(
+        portfolio;
+        type = type,
+        rm = rm,
+        obj = obj,
+        kelly = kelly,
+        rf = rf,
+        l = l,
+        linkage = linkage,
+        branchorder = branchorder,
+    )
+    w1t = [
+        0.025117587653493957,
+        0.0024048985731171847,
+        0.022135371734711015,
+        0.02429059700839297,
+        0.011430669574765646,
+        0.06565629672888273,
+        2.6271145081525728e-5,
+        0.13511327499330353,
+        2.1745072038914858e-8,
+        3.7616017207683504e-7,
+        0.24203124072378313,
+        0.0061739548023942836,
+        1.0693420061805877e-8,
+        0.1154519756683228,
+        1.5660071684882708e-9,
+        1.3060602681031305e-7,
+        0.004094640899102485,
+        0.1963562319205421,
+        0.041569633327894866,
+        0.10814681447551365,
+    ]
+    @test isapprox(w1t, w1.weights, rtol = 3e-4)
+end
