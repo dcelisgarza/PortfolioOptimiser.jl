@@ -550,4 +550,39 @@ function calc_risk(
     return risk
 end
 
+function calc_risk(portfolio::AbstractPortfolio; type = :trad, rm = :mv, rf = 0.0)
+    weights = if isa(portfolio, Portfolio)
+        @assert(type ∈ PortTypes, "type must be one of $PortTypes")
+        # @assert(rm ∈ RiskMeasures, "rm must be one of $RiskMeasures")
+        if type == :trad
+            portfolio.p_optimal[!, :weights]
+        elseif type == :rp
+            portfolio.rp_optimal[!, :weights]
+        elseif type == :rrp
+            portfolio.rp_optimal[!, :weights]
+        elseif type == :wc
+            portfolio.wc_optimal[!, :weights]
+        end
+    else
+        # @assert(rm ∈ HRRiskMeasures, "rm must be one of $HRRiskMeasures")
+        portfolio.p_optimal[!, :weights]
+    end
+
+    return calc_risk(
+        weights,
+        portfolio.returns,
+        portfolio.cov;
+        rm = rm,
+        rf = rf,
+        alpha_i = portfolio.alpha_i,
+        alpha = portfolio.alpha,
+        a_sim = portfolio.a_sim,
+        beta_i = portfolio.beta_i,
+        beta = portfolio.beta,
+        b_sim = portfolio.b_sim,
+        kappa = portfolio.kappa,
+        solvers = portfolio.solvers,
+    )
+end
+
 export calc_risk

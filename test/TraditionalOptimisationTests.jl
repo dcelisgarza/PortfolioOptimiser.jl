@@ -22,7 +22,7 @@ type = :trad
 println("Traditional optimisation tests...")
 
 @testset "mv" begin
-    println("Testing rm = :mv, for all kelly returns.")
+    println("* rm = :mv")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -38,9 +38,10 @@ println("Traditional optimisation tests...")
         ),
     )
     asset_statistics!(portfolio)
-
-    kelly = :none
     rm = :mv
+
+    println("     - kelly = :none")
+    kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     obj = :utility
@@ -144,6 +145,7 @@ println("Traditional optimisation tests...")
     @test isapprox(w3t, w3[!, :weights], rtol = 4e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 3e-8)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -248,6 +250,7 @@ println("Traditional optimisation tests...")
     @test isapprox(w3t, w3[!, :weights], rtol = 3e-4)
     @test isapprox(w4t, w4[!, :weights], rtol = 3e-5)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -354,7 +357,7 @@ println("Traditional optimisation tests...")
 end
 
 @testset "mad" begin
-    println("Testing rm = :mad, for all kelly returns.")
+    println("* rm = :mad")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -386,9 +389,10 @@ end
         ),
     )
     asset_statistics!(portfolio)
-
-    kelly = :none
     rm = :mad
+
+    println("     - kelly = :none")
+    kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     obj = :utility
@@ -492,6 +496,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 8e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 4e-6)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -596,6 +601,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 2e-3)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -699,10 +705,116 @@ end
     @test isapprox(w2t, w2[!, :weights], rtol = 3e-4)
     @test isapprox(w3t, w3[!, :weights], rtol = 3e-4)
     @test isapprox(w4t, w4[!, :weights], rtol = 3e-5)
+
+    println("     - risk bounds")
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+        ),
+    )
+    asset_statistics!(portfolio)
+    rm = :mv
+    kelly = :none
+    portfolio.dev_u = Inf
+    portfolio.mu_l = Inf
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r1 = calc_risk(portfolio, rm = :msd)
+    m1 = dot(portfolio.mu, w1.weights)
+    obj = :utility
+    w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r2 = calc_risk(portfolio, rm = :msd)
+    m2 = dot(portfolio.mu, w2.weights)
+    obj = :sharpe
+    w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r3 = calc_risk(portfolio, rm = :msd)
+    m3 = dot(portfolio.mu, w3.weights)
+    obj = :max_ret
+    w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r4 = calc_risk(portfolio, rm = :msd)
+    m4 = dot(portfolio.mu, w4.weights)
+
+    obj = :max_ret
+    portfolio.dev_u = r1
+    w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r5 = calc_risk(portfolio, rm = :msd)
+    m5 = dot(portfolio.mu, w5.weights)
+    @test isapprox(w5.weights, w1.weights, rtol = 2e-3)
+    @test isapprox(r5, r1, rtol = 2e-7)
+    @test isapprox(m5, m1, rtol = 4e-3)
+
+    portfolio.dev_u = r2
+    w6 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r6 = calc_risk(portfolio, rm = :msd)
+    m6 = dot(portfolio.mu, w6.weights)
+    @test isapprox(w6.weights, w2.weights, rtol = 7e-6)
+    @test isapprox(r6, r2, rtol = 9e-8)
+    @test isapprox(m6, m2, rtol = 4e-7)
+
+    portfolio.dev_u = r3
+    w7 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r7 = calc_risk(portfolio, rm = :msd)
+    m7 = dot(portfolio.mu, w7.weights)
+    @test isapprox(w7.weights, w3.weights, rtol = 8e-6)
+    @test isapprox(r7, r3, rtol = 5e-8)
+    @test isapprox(m7, m3, rtol = 5e-7)
+
+    portfolio.dev_u = r4
+    w8 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r8 = calc_risk(portfolio, rm = :msd)
+    m8 = dot(portfolio.mu, w8.weights)
+    @test isapprox(w8.weights, w4.weights, rtol = 4e-6)
+    @test isapprox(r8, r4, rtol = 2e-6)
+    @test isapprox(m8, m4, rtol = 8e-9)
+
+    println("     - return bounds (independent of risk measure so we only test this here)")
+    obj = :min_risk
+    portfolio.dev_u = Inf
+    portfolio.mu_l = m1
+    w9 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r9 = calc_risk(portfolio, rm = :msd)
+    m9 = dot(portfolio.mu, w9.weights)
+    @test isapprox(w9.weights, w1.weights, rtol = 2e-3)
+    @test isapprox(r9, r1, rtol = 8e-7)
+    @test isapprox(m9, m1, rtol = 2e-3)
+
+    portfolio.mu_l = m2
+    w10 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r10 = calc_risk(portfolio, rm = :msd)
+    m10 = dot(portfolio.mu, w10.weights)
+    @test isapprox(w10.weights, w2.weights, rtol = 7e-6)
+    @test isapprox(r10, r2, rtol = 9e-7)
+    @test isapprox(m10, m2, rtol = 3e-8)
+
+    portfolio.mu_l = m3
+    w11 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r11 = calc_risk(portfolio, rm = :msd)
+    m11 = dot(portfolio.mu, w11.weights)
+    @test isapprox(w11.weights, w3.weights, rtol = 1e-5)
+    @test isapprox(r11, r3, rtol = 1e-6)
+    @test isapprox(m11, m3, rtol = 6e-8)
+
+    portfolio.mu_l = m4
+    w12 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r12 = calc_risk(portfolio, rm = :msd)
+    m12 = dot(portfolio.mu, w12.weights)
+    @test isapprox(w12.weights, w4.weights, rtol = 2e-5)
+    @test isapprox(r12, r4, rtol = 2e-5)
+    @test isapprox(m12, m4, rtol = 2e-10)
 end
 
 @testset "msv" begin
-    println("Testing rm = :msv, for all kelly returns.")
+    println("* rm = :msv")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -718,9 +830,10 @@ end
         ),
     )
     asset_statistics!(portfolio)
-
-    kelly = :none
     rm = :msv
+
+    println("     - kelly = :none")
+    kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     obj = :utility
@@ -824,6 +937,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 4e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 2e-6)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -928,6 +1042,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 5e-4)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -1034,7 +1149,7 @@ end
 end
 
 @testset "flpm" begin
-    println("Testing rm = :flpm, for all kelly returns.")
+    println("* rm = :flpm")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -1050,9 +1165,10 @@ end
         ),
     )
     asset_statistics!(portfolio)
-
-    kelly = :none
     rm = :flpm
+
+    println("     - kelly = :none")
+    kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     obj = :utility
@@ -1156,6 +1272,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 5e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 4e-6)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -1260,6 +1377,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 7e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -1366,7 +1484,7 @@ end
 end
 
 @testset "slpm" begin
-    println("Testing rm = :slpm, for all kelly returns.")
+    println("* rm = :slpm")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -1382,9 +1500,10 @@ end
         ),
     )
     asset_statistics!(portfolio)
-
-    kelly = :none
     rm = :slpm
+
+    println("     - kelly = :none")
+    kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     obj = :utility
@@ -1488,6 +1607,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 2e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 2e-6)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -1592,6 +1712,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 2e-3)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -1698,7 +1819,7 @@ end
 end
 
 @testset "wr" begin
-    println("Testing rm = :wr, for all kelly returns.")
+    println("* rm = :wr")
 
     portfolio = Portfolio(
         returns = returns,
@@ -1715,9 +1836,10 @@ end
         ),
     )
     asset_statistics!(portfolio)
-
-    kelly = :none
     rm = :wr
+
+    println("     - kelly = :none")
+    kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     obj = :utility
@@ -1821,6 +1943,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 7e-7)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-8)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -1925,6 +2048,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 2e-4)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -2031,7 +2155,7 @@ end
 end
 
 @testset "cvar" begin
-    println("Testing rm = :cvar, for all kelly returns.")
+    println("* rm = :cvar")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -2047,9 +2171,10 @@ end
         ),
     )
     asset_statistics!(portfolio)
-
-    kelly = :none
     rm = :cvar
+
+    println("     - kelly = :none")
+    kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     obj = :utility
@@ -2153,6 +2278,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 3e-7)
     @test isapprox(w4t, w4[!, :weights], rtol = 3e-8)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -2257,6 +2383,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 9e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -2363,7 +2490,7 @@ end
 end
 
 @testset "evar" begin
-    println("Testing rm = :evar, for all kelly returns.")
+    println("* rm = :evar")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -2379,9 +2506,10 @@ end
         ),
     )
     asset_statistics!(portfolio)
-
-    kelly = :none
     rm = :evar
+
+    println("     - kelly = :none")
+    kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     obj = :utility
@@ -2485,6 +2613,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 5e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-6)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -2589,6 +2718,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 4e-2)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -2695,7 +2825,7 @@ end
 end
 
 @testset "rvar" begin
-    println("Testing rm = :rvar, for all kelly returns.")
+    println("* rm = :rvar")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -2713,6 +2843,7 @@ end
     asset_statistics!(portfolio)
     rm = :rvar
 
+    println("     - kelly = :none")
     kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -2817,6 +2948,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 5e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 3e-6)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -2921,6 +3053,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 1e-7)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -3027,7 +3160,7 @@ end
 end
 
 @testset "mdd" begin
-    println("Testing rm = :mdd, for all kelly returns.")
+    println("* rm = :mdd")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -3045,6 +3178,7 @@ end
     asset_statistics!(portfolio)
     rm = :mdd
 
+    println("     - kelly = :none")
     kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -3149,6 +3283,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 2e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 9e-6)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -3253,6 +3388,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 2e-2)
     @test isapprox(w4t, w4[!, :weights], rtol = 9e-6)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -3359,7 +3495,7 @@ end
 end
 
 @testset "add" begin
-    println("Testing rm = :add, for all kelly returns.")
+    println("* rm = :add")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -3375,9 +3511,9 @@ end
         ),
     )
     asset_statistics!(portfolio)
-
     rm = :add
 
+    println("     - kelly = :none")
     kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -3482,6 +3618,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 1e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 2e-5)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -3586,6 +3723,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 6e-8)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -3692,7 +3830,7 @@ end
 end
 
 @testset "cdar" begin
-    println("Testing rm = :cdar, for all kelly returns.")
+    println("* rm = :cdar")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -3710,6 +3848,7 @@ end
     asset_statistics!(portfolio)
     rm = :cdar
 
+    println("     - kelly = :none")
     kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -3814,6 +3953,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 3e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 6e-5)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -3918,6 +4058,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 7e-4)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -4024,7 +4165,7 @@ end
 end
 
 @testset "uci" begin
-    println("Testing rm = :uci, for all kelly returns.")
+    println("* rm = :uci")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -4042,6 +4183,7 @@ end
     asset_statistics!(portfolio)
     rm = :uci
 
+    println("     - kelly = :none")
     kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -4146,6 +4288,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 3e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 2e-5)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -4250,6 +4393,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 4e-4)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -4356,7 +4500,7 @@ end
 end
 
 @testset "edar" begin
-    println("Testing rm = :edar, for all kelly returns.")
+    println("* rm = :edar")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -4376,6 +4520,7 @@ end
     asset_statistics!(portfolio)
     rm = :edar
 
+    println("     - kelly = :none")
     kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -4480,6 +4625,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 3e-4)
     @test isapprox(w4t, w4[!, :weights], rtol = 7e-5)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -4602,6 +4748,7 @@ end
     )
     asset_statistics!(portfolio)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -4708,7 +4855,7 @@ end
 end
 
 @testset "rdar" begin
-    println("Testing rm = :rdar, for all kelly returns.")
+    println("* rm = :rdar")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -4726,9 +4873,9 @@ end
         ),
     )
     asset_statistics!(portfolio)
-
     rm = :rdar
 
+    println("     - kelly = :none")
     kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -4833,6 +4980,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 6e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 9e-5)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -4937,6 +5085,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 2e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-6)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -5043,7 +5192,7 @@ end
 end
 
 @testset "krt full" begin
-    println("Testing full rm = :krt, for all kelly returns.")
+    println("full rm = :krt")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -5061,9 +5210,9 @@ end
         ),
     )
     asset_statistics!(portfolio)
-
     rm = :krt
 
+    println("     - kelly = :none")
     kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -5168,6 +5317,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 5e-4)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-6)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -5272,6 +5422,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 2e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-6)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -5353,7 +5504,7 @@ end
 end
 
 @testset "krt relaxed" begin
-    println("Testing relaxed rm = :krt, for all kelly returns.")
+    println("relaxed rm = :krt")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -5362,8 +5513,9 @@ end
     )
     asset_statistics!(portfolio)
     portfolio.max_num_assets_kurt = 1
-
     rm = :krt
+
+    println("     - kelly = :none")
     kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -5468,6 +5620,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 1e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
 
+    println("     - kelly = :approx")
     rm = :krt
     kelly = :approx
     obj = :min_risk
@@ -5548,6 +5701,7 @@ end
     @test isapprox(w2t, w2[!, :weights], rtol = 1e-4)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-4)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -5629,7 +5783,7 @@ end
 end
 
 @testset "skrt full" begin
-    println("Testing full rm = :skrt, for all kelly returns.")
+    println("full rm = :skrt")
 
     portfolio = Portfolio(
         returns = returns,
@@ -5648,8 +5802,9 @@ end
         ),
     )
     asset_statistics!(portfolio)
-
     rm = :skrt
+
+    println("     - kelly = :none")
     kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -5754,6 +5909,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 1e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 5e-7)
 
+    println("     - kelly = :approx")
     rm = :skrt
     kelly = :approx
     obj = :min_risk
@@ -5859,6 +6015,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 1e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-6)
 
+    println("     - kelly = :exact")
     rm = :skrt
     kelly = :exact
     obj = :min_risk
@@ -5941,7 +6098,7 @@ end
 end
 
 @testset "skrt relaxed" begin
-    println("Testing relaxed rm = :skrt, for all kelly returns.")
+    println("relaxed rm = :skrt")
 
     portfolio = Portfolio(
         returns = returns,
@@ -5963,6 +6120,7 @@ end
     portfolio.max_num_assets_kurt = 5
     rm = :skrt
 
+    println("     - kelly = :none")
     kelly = :none
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -6067,6 +6225,7 @@ end
     @test isapprox(w3t, w3[!, :weights], rtol = 1e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
 
+    println("     - kelly = :approx")
     kelly = :approx
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -6146,6 +6305,7 @@ end
     @test isapprox(w2t, w2[!, :weights], rtol = 2e-2)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
 
+    println("     - kelly = :exact")
     kelly = :exact
     obj = :min_risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)

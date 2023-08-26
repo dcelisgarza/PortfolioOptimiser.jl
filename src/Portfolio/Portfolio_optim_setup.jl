@@ -83,7 +83,7 @@ function _setup_return(portfolio, type, class, kelly, obj, T, rf, returns, mu)
 
     # Return constraints.
     mu_l = portfolio.mu_l
-    !isfinite(mu_l) && (return nothing)
+    isinf(mu_l) && (return nothing)
 
     obj == :sharpe || type == :rp ? @constraint(model, ret >= mu_l * model[:k]) :
     @constraint(model, ret >= mu_l)
@@ -207,7 +207,7 @@ const TrackingErrKinds = (:weights, :returns)
 function _setup_tracking_err(portfolio, returns, obj, T)
     tracking_err = portfolio.tracking_err
 
-    !isfinite(tracking_err) && (return nothing)
+    isinf(tracking_err) && (return nothing)
 
     kind_tracking_err = portfolio.kind_tracking_err
     tracking_err_weights = portfolio.tracking_err_weights
