@@ -45,7 +45,8 @@ function asset_statistics!(
     cov_kwargs = (;),
     cor_kwargs = (;),
     dist_kwargs = (;),
-    std_kwargs = (;)uplo = :L,
+    std_kwargs = (;),
+    uplo = :L,
 )
     returns = portfolio.returns
     N = size(returns, 2)
@@ -121,7 +122,7 @@ function asset_statistics!(
             dist = -log.(codep)
         elseif codep_type == :custom_cov
             codep = cov2cor(portfolio.cov)
-            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+            dist = dist_func(codep, dist_args...; dist_kwargs...)
         elseif codep_type == :custom_cor
             codep = cor_func(returns, cor_args...; cor_kwargs...)
             dist = dist_func(codep, dist_args...; dist_kwargs...)
