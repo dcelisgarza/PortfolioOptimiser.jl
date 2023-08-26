@@ -1086,36 +1086,36 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :mv, rf = 0
 end
 
 function _hr_weight_bounds(upper_bound, lower_bound, weights, lc, rc, alpha_1)
-    if (any(upper_bound .< weights) || any(lower_bound .> weights))
-        lmaxw = weights[lc[1]]
-        a1 = sum(upper_bound[lc]) / lmaxw
-        a2 = max(sum(lower_bound[lc]) / lmaxw, alpha_1)
-        alpha_1 = min(a1, a2)
+    !(any(upper_bound .< weights) || any(lower_bound .> weights)) && return alpha_1
 
-        rmaxw = weights[rc[1]]
-        a1 = sum(upper_bound[rc]) / rmaxw
-        a2 = max(sum(lower_bound[rc]) / rmaxw, 1 - alpha_1)
-        alpha_1 = 1 - min(a1, a2)
-    end
+    lmaxw = weights[lc[1]]
+    a1 = sum(upper_bound[lc]) / lmaxw
+    a2 = max(sum(lower_bound[lc]) / lmaxw, alpha_1)
+    alpha_1 = min(a1, a2)
+
+    rmaxw = weights[rc[1]]
+    a1 = sum(upper_bound[rc]) / rmaxw
+    a2 = max(sum(lower_bound[rc]) / rmaxw, 1 - alpha_1)
+    alpha_1 = 1 - min(a1, a2)
 
     return alpha_1
 end
 
 function _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter = 100)
-    if any(upper_bound .< weights) || any(lower_bound .> weights)
-        for _ in 1:max_iter
-            !(any(upper_bound .< weights) || any(lower_bound .> weights)) && break
+    !(any(upper_bound .< weights) || any(lower_bound .> weights)) && return weights
 
-            old_w = copy(weights)
-            weights = max.(min.(weights, upper_bound), lower_bound)
-            idx = weights .< upper_bound .&& weights .> lower_bound
-            w_add = sum(max.(old_w - upper_bound, 0.0))
-            w_sub = sum(min.(old_w - lower_bound, 0.0))
-            delta = w_add + w_sub
+    for _ in 1:max_iter
+        !(any(upper_bound .< weights) || any(lower_bound .> weights)) && break
 
-            if delta != 0
-                weights[idx] += delta * weights[idx] / sum(weights[idx])
-            end
+        old_w = copy(weights)
+        weights = max.(min.(weights, upper_bound), lower_bound)
+        idx = weights .< upper_bound .&& weights .> lower_bound
+        w_add = sum(max.(old_w - upper_bound, 0.0))
+        w_sub = sum(min.(old_w - lower_bound, 0.0))
+        delta = w_add + w_sub
+
+        if delta != 0
+            weights[idx] += delta * weights[idx] / sum(weights[idx])
         end
     end
 

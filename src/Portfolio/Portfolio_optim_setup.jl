@@ -1,4 +1,4 @@
-function _setup_k_and_risk_budged(portfolio, obj, N, type)
+function _setup_k_and_risk_budget(portfolio, obj, N, type)
     model = portfolio.model
     if obj == :sharpe && (type == :trad || type == :wc)
         @variable(model, k >= 0)
@@ -538,7 +538,7 @@ function opt_port!(
 
     @variable(model, w[1:N])
 
-    _setup_k_and_risk_budged(portfolio, obj, N, type)
+    _setup_k_and_risk_budget(portfolio, obj, N, type)
 
     type != :wc && _mv_setup(portfolio, sigma, rm, kelly, obj, type)
 
