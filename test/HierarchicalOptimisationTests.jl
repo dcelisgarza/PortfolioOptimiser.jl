@@ -85,3 +85,133 @@ println("Hierarchical optimisation tests...")
 
     @test isapprox(w1t, w1.weights)
 end
+
+@testset "HERC" begin
+    println("HERC tests...")
+
+    portfolio = HCPortfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :ECOS => Dict(
+                :solver => ECOS.Optimizer,
+                :params => Dict("verbose" => false, "maxit" => 500),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    type = :herc
+    rm = :mv
+    obj = :min_risk
+    kelly = :none
+    linkage = :dbht
+    branchorder = :default
+    w1 = opt_port!(
+        portfolio;
+        type = type,
+        rm = rm,
+        obj = obj,
+        kelly = kelly,
+        rf = rf,
+        l = l,
+        linkage = linkage,
+        branchorder = branchorder,
+    )
+
+    w1t = [
+        0.049141829952957225,
+        0.08890554096278969,
+        0.04011249526834231,
+        0.025756069886785627,
+        0.03116417114657615,
+        0.04954824538953943,
+        0.011409883813963236,
+        0.06309701295416763,
+        0.03212704206115593,
+        0.07940635883011783,
+        0.08422876480710824,
+        0.012556431315299158,
+        0.009939116986938707,
+        0.06177790325183918,
+        0.008929720036096727,
+        0.03822533548129327,
+        0.11577046171718577,
+        0.084560900836747,
+        0.047990414170144664,
+        0.06535230113095213,
+    ]
+
+    @test isapprox(w1t, w1.weights)
+end
+
+@testset "HERC2" begin
+    println("HERC tests...")
+
+    portfolio = HCPortfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :ECOS => Dict(
+                :solver => ECOS.Optimizer,
+                :params => Dict("verbose" => false, "maxit" => 500),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    type = :herc2
+    rm = :mv
+    obj = :min_risk
+    kelly = :none
+    linkage = :dbht
+    branchorder = :default
+    w1 = opt_port!(
+        portfolio;
+        type = type,
+        rm = rm,
+        obj = obj,
+        kelly = kelly,
+        rf = rf,
+        l = l,
+        linkage = linkage,
+        branchorder = branchorder,
+    )
+
+    w1t = [
+        0.05131211159664687,
+        0.0720286288313129,
+        0.05131211159664687,
+        0.05131211159664687,
+        0.05131211159664687,
+        0.04245121729016905,
+        0.0720286288313129,
+        0.05131211159664687,
+        0.04245121729016905,
+        0.042523603766116594,
+        0.04245121729016905,
+        0.04245121729016905,
+        0.042523603766116594,
+        0.04245121729016905,
+        0.04245121729016905,
+        0.042523603766116594,
+        0.0720286288313129,
+        0.05131211159664687,
+        0.04245121729016905,
+        0.05131211159664687,
+    ]
+
+    @test isapprox(w1t, w1.weights)
+end

@@ -984,14 +984,16 @@ const HRRiskMeasures = (
 )
 function _naive_risk(portfolio, returns, covariance; rm = :mv, rf = 0.0)
     N = size(returns, 2)
+    tcov = eltype(covariance)
+
     if rm == :equal
-        weights = fill(1 / N, N)
+        weights = fill(tcov(1 / N), N)
     else
-        inv_risk = zeros(N)
-        w = zeros(N)
+        inv_risk = Vector{tcov}(undef, N)
+        w = Vector{tcov}(undef, N)
         for i in 1:N
-            fill!(w, 0)
-            w[i] = 1
+            w .= zero(tcov)
+            w[i] = one(tcov)
             risk = calc_risk(
                 w,
                 returns,
@@ -1267,8 +1269,8 @@ function _hierarchical_recursive_bisection(
     lower_bound = nothing,
 )
     returns = portfolio.returns
-    covariance = portfolio.covariance
-    clustering = portfolio.clustering
+    covariance = portfolio.cov
+    clustering = portfolio.clusters
     k = portfolio.k
     root, nodes = to_tree(clustering)
     dists = [i.dist for i in nodes]
@@ -1278,10 +1280,12 @@ function _hierarchical_recursive_bisection(
     weights = ones(length(portfolio.assets))
 
     clustering_idx = cutree(clustering; k = k)
+
     uidx = minimum(clustering_idx):maximum(clustering_idx)
+
     clusters = Vector{Vector{Int}}(undef, length(uidx))
-    for (i, v) in enumerate(clustering_idx)
-        push!(clusters[v], i)
+    for i in eachindex(clusters)
+        clusters[i] = findall(clustering_idx .== i)
     end
 
     # Calculate intra cluster weights. Drill down into clusters closer in similarity.
@@ -1307,8 +1311,8 @@ function _hierarchical_recursive_bisection(
                         returns,
                         covariance,
                         clusters[j];
-                        rm = :mv,
-                        rf = 0.0,
+                        rm = rm,
+                        rf = rf,
                     )
                     lrisk += _lrisk
                     append!(lc, clusters[j])
@@ -1318,8 +1322,8 @@ function _hierarchical_recursive_bisection(
                         returns,
                         covariance,
                         clusters[j];
-                        rm = :mv,
-                        rf = 0.0,
+                        rm = rm,
+                        rf = rf,
                     )
                     rrisk += _rrisk
                     append!(rc, clusters[j])
@@ -1335,18 +1339,15 @@ function _hierarchical_recursive_bisection(
         weights[rc] *= 1 - alpha_1
     end
 
+    # If herc2, then each cluster contributes an equal amount of risk.
+    type == :herc2 && (rm = :equal)
     # We multiply the intra cluster weights by the weights by the weights of the cluster.
     for i in 1:k
         cidx = clustering_idx .== i
         cret = returns[:, cidx]
         ccov = covariance[cidx, cidx]
-        if type == :herc
-            cweights = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf)
-        elseif type == :herc2
-            cweights = _naive_risk(portfolio, cret, ccov; rm = :equal, rf = rf)
-        end
-
-        weights[cidx] *= cweights
+        cweights = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf)
+        weights[cidx] .*= cweights
     end
 
     return weights

@@ -450,34 +450,45 @@ function two_diff_gap_stat(dist, clustering, max_k = 10)
     N = size(dist, 1)
     cluster_lvls = [cutree(clustering; k = i) for i in 1:N]
 
-    c1 = max(N, max_k)
+    c1 = min(N, max_k)
     W_list = Vector{eltype(dist)}(undef, c1)
 
     for i in 1:c1
         lvl = cluster_lvls[i]
-        c2 = max(unique(lvl))
+        c2 = maximum(unique(lvl))
         mean_dist = 0.0
         for j in 1:c2
-            cluster = lvl[lvl .== j]
+            cluster = findall(lvl .== j)
             cluster_dist = dist[cluster, cluster]
             isempty(cluster_dist) && continue
-            mean_dist += mean(cluster_dist)
+
+            val = 0.0
+            counter = 0
+            M = size(cluster_dist, 1)
+            for col in 1:M
+                for row in (col + 1):M
+                    val += cluster_dist[row, col]
+                    counter += 1
+                end
+            end
+            counter == 0 && continue
+            mean_dist += val / counter
         end
         W_list[i] = mean_dist
     end
 
-    limit_k = ceil(Int, min(max_k, sqrt(N)))
-    gaps = fill(-Inf, length(W_list) + 2)
+    limit_k = floor(Int, min(max_k, sqrt(N)))
+    gaps = fill(-Inf, length(W_list))
 
-    length(W_list) > 2 && gaps[3:end] .=
-        W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)]
+    length(W_list) > 2 &&
+        (gaps[3:end] .= W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)])
 
     gaps = gaps[1:limit_k]
 
     if all(isinf.(gaps))
         k = length(gaps)
     else
-        k = argmax(gaps) + 2
+        k = argmax(gaps) + 1
     end
 
     return k
