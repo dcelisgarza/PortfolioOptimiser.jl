@@ -57,9 +57,7 @@ function _optimize_rm(model, solvers)
     solvers_tried = Dict()
 
     for (key, val) in solvers
-        if haskey(val, :solver)
-            set_optimizer(model, val[:solver])
-        end
+        haskey(val, :solver) && set_optimizer(model, val[:solver])
 
         if haskey(val, :params)
             for (attribute, value) in val[:params]

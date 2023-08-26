@@ -1,4 +1,5 @@
 
+#=
 function gen_dataframes(portfolio)
     nms = portfolio.assets
     nms2 = vec(["$(i)-$(j)" for i in nms, j in nms])
@@ -29,6 +30,7 @@ function gen_dataframes(portfolio)
     df_cov_sigma,
     df_dmu
 end
+=#
 
 function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractVector})
     return vcat(transpose.(x)...)
@@ -204,9 +206,7 @@ function mutualinfo(A::AbstractMatrix{<:Real})
     p_i = vec(sum(A, dims = 2))
     p_j = vec(sum(A, dims = 1))
 
-    if length(p_i) == 1 || length(p_j) == 1
-        return 0.0
-    end
+    length(p_i) == 1 || length(p_j) == 1 && (return 0.0)
 
     mask = findall(A .!= 0)
 
@@ -485,17 +485,12 @@ function two_diff_gap_stat(dist, clustering, max_k = 10)
 
     gaps = gaps[1:limit_k]
 
-    if all(isinf.(gaps))
-        k = length(gaps)
-    else
-        k = argmax(gaps) + 1
-    end
+    k = all(isinf.(gaps)) ? length(gaps) : k = argmax(gaps) + 1
 
     return k
 end
 
-export gen_dataframes,
-    block_vec_pq,
+export block_vec_pq,
     commutation_matrix,
     cov_returns,
     duplication_matrix,

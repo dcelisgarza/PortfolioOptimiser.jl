@@ -1,6 +1,6 @@
 using SafeTestsets
 
-@safetestset "Risk functions" begin
+@safetestset "Risk measures" begin
     include("RiskMeasureTests.jl")
 end
 
