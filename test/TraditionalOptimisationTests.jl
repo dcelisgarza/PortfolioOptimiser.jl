@@ -2488,6 +2488,88 @@ end
     @test isapprox(w2t, w2[!, :weights], rtol = 5e-8)
     @test isapprox(w3t, w3[!, :weights], rtol = 6e-8)
     @test isapprox(w4t, w4[!, :weights], rtol = 2e-6)
+
+    println("     - risk bounds")
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+        ),
+    )
+    asset_statistics!(portfolio)
+    rm = :wr
+    kelly = :none
+    portfolio.wr_u = Inf
+    portfolio.mu_l = Inf
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r1 = calc_risk(portfolio, rm = rm)
+    m1 = dot(portfolio.mu, w1.weights)
+    obj = :utility
+    w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r2 = calc_risk(portfolio, rm = rm)
+    m2 = dot(portfolio.mu, w2.weights)
+    obj = :sharpe
+    w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r3 = calc_risk(portfolio, rm = rm)
+    m3 = dot(portfolio.mu, w3.weights)
+    obj = :max_ret
+    w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r4 = calc_risk(portfolio, rm = rm)
+    m4 = dot(portfolio.mu, w4.weights)
+
+    obj = :max_ret
+    portfolio.wr_u = r1
+    w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r5 = calc_risk(portfolio, rm = rm)
+    m5 = dot(portfolio.mu, w5.weights)
+    @test isapprox(w5.weights, w1.weights, rtol = 1e-8)
+    @test isapprox(r5, r1, rtol = 3e-10)
+    @test isapprox(m5, m1, rtol = 6e-9)
+
+    portfolio.wr_u = r2
+    w6 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r6 = calc_risk(portfolio, rm = rm)
+    m6 = dot(portfolio.mu, w6.weights)
+    @test isapprox(w6.weights, w2.weights, rtol = 3e-9)
+    @test isapprox(r6, r2, rtol = 2e-10)
+    @test isapprox(m6, m2, rtol = 2e-9)
+
+    portfolio.wr_u = r3
+    w7 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r7 = calc_risk(portfolio, rm = rm)
+    m7 = dot(portfolio.mu, w7.weights)
+    @test isapprox(w7.weights, w3.weights, rtol = 5e-7)
+    @test isapprox(r7, r3, rtol = 2e-8)
+    @test isapprox(m7, m3, rtol = 9e-8)
+
+    portfolio.wr_u = r4
+    w8 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r8 = calc_risk(portfolio, rm = rm)
+    m8 = dot(portfolio.mu, w8.weights)
+    @test isapprox(w8.weights, w4.weights, rtol = 2e-6)
+    @test isapprox(r8, r4, rtol = 9e-7)
+    @test isapprox(m8, m4, rtol = 5e-8)
+
+    portfolio.wr_u = Inf
+    portfolio.mu_l = Inf
+    obj = :sharpe
+    portfolio.wr_u = r1
+    w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r13 = calc_risk(portfolio, rm = rm)
+    m13 = dot(portfolio.mu, w13.weights)
+    @test isapprox(w13.weights, w1.weights, rtol = 3e-8)
+    @test isapprox(r13, r1, rtol = 5e-10)
+    @test isapprox(m13, m1, rtol = 4e-8)
 end
 
 @testset "cvar" begin
@@ -2823,6 +2905,88 @@ end
     @test isapprox(w2t, w2[!, :weights], rtol = 3e-3)
     @test isapprox(w3t, w3[!, :weights], rtol = 6e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 3e-5)
+
+    println("     - risk bounds")
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+        ),
+    )
+    asset_statistics!(portfolio)
+    rm = :cvar
+    kelly = :none
+    portfolio.cvar_u = Inf
+    portfolio.mu_l = Inf
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r1 = calc_risk(portfolio, rm = rm)
+    m1 = dot(portfolio.mu, w1.weights)
+    obj = :utility
+    w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r2 = calc_risk(portfolio, rm = rm)
+    m2 = dot(portfolio.mu, w2.weights)
+    obj = :sharpe
+    w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r3 = calc_risk(portfolio, rm = rm)
+    m3 = dot(portfolio.mu, w3.weights)
+    obj = :max_ret
+    w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r4 = calc_risk(portfolio, rm = rm)
+    m4 = dot(portfolio.mu, w4.weights)
+
+    obj = :max_ret
+    portfolio.cvar_u = r1
+    w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r5 = calc_risk(portfolio, rm = rm)
+    m5 = dot(portfolio.mu, w5.weights)
+    @test isapprox(w5.weights, w1.weights, rtol = 4e-5)
+    @test isapprox(r5, r1, rtol = 5e-8)
+    @test isapprox(m5, m1, rtol = 2e-5)
+
+    portfolio.cvar_u = r2
+    w6 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r6 = calc_risk(portfolio, rm = rm)
+    m6 = dot(portfolio.mu, w6.weights)
+    @test isapprox(w6.weights, w2.weights, rtol = 8e-7)
+    @test isapprox(r6, r2, rtol = 6e-9)
+    @test isapprox(m6, m2, rtol = 5e-7)
+
+    portfolio.cvar_u = r3
+    w7 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r7 = calc_risk(portfolio, rm = rm)
+    m7 = dot(portfolio.mu, w7.weights)
+    @test isapprox(w7.weights, w3.weights, rtol = 3e-6)
+    @test isapprox(r7, r3, rtol = 6e-8)
+    @test isapprox(m7, m3, rtol = 3e-9)
+
+    portfolio.cvar_u = r4
+    w8 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r8 = calc_risk(portfolio, rm = rm)
+    m8 = dot(portfolio.mu, w8.weights)
+    @test isapprox(w8.weights, w4.weights, rtol = 7e-6)
+    @test isapprox(r8, r4, rtol = 4e-6)
+    @test isapprox(m8, m4, rtol = 5e-7)
+
+    portfolio.cvar_u = Inf
+    portfolio.mu_l = Inf
+    obj = :sharpe
+    portfolio.cvar_u = r1
+    w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r13 = calc_risk(portfolio, rm = rm)
+    m13 = dot(portfolio.mu, w13.weights)
+    @test isapprox(w13.weights, w1.weights, rtol = 9e-6)
+    @test isapprox(r13, r1, rtol = 2e-8)
+    @test isapprox(m13, m1, rtol = 3e-6)
 end
 
 @testset "evar" begin
@@ -3158,6 +3322,88 @@ end
     @test isapprox(w2t, w2[!, :weights], rtol = 8e-4)
     @test isapprox(w3t, w3[!, :weights], rtol = 1e-4)
     @test isapprox(w4t, w4[!, :weights], rtol = 9e-7)
+
+    println("     - risk bounds")
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+        ),
+    )
+    asset_statistics!(portfolio)
+    rm = :evar
+    kelly = :none
+    portfolio.evar_u = Inf
+    portfolio.mu_l = Inf
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r1 = calc_risk(portfolio, rm = rm)
+    m1 = dot(portfolio.mu, w1.weights)
+    obj = :utility
+    w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r2 = calc_risk(portfolio, rm = rm)
+    m2 = dot(portfolio.mu, w2.weights)
+    obj = :sharpe
+    w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r3 = calc_risk(portfolio, rm = rm)
+    m3 = dot(portfolio.mu, w3.weights)
+    obj = :max_ret
+    w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r4 = calc_risk(portfolio, rm = rm)
+    m4 = dot(portfolio.mu, w4.weights)
+
+    obj = :max_ret
+    portfolio.evar_u = r1 + 0.000001 * r1
+    w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r5 = calc_risk(portfolio, rm = rm)
+    m5 = dot(portfolio.mu, w5.weights)
+    @test isapprox(w5.weights, w1.weights, rtol = 2e-2)
+    @test isapprox(r5, r1, rtol = 2e-4)
+    @test isapprox(m5, m1, rtol = 4e-2)
+
+    portfolio.evar_u = r2
+    w6 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r6 = calc_risk(portfolio, rm = rm)
+    m6 = dot(portfolio.mu, w6.weights)
+    @test isapprox(w6.weights, w2.weights, rtol = 8e-4)
+    @test isapprox(r6, r2, rtol = 8e-6)
+    @test isapprox(m6, m2, rtol = 8e-4)
+
+    portfolio.evar_u = r3
+    w7 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r7 = calc_risk(portfolio, rm = rm)
+    m7 = dot(portfolio.mu, w7.weights)
+    @test isapprox(w7.weights, w3.weights, rtol = 3e-5)
+    @test isapprox(r7, r3, rtol = 3e-6)
+    @test isapprox(m7, m3, rtol = 3e-6)
+
+    portfolio.evar_u = r4
+    w8 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r8 = calc_risk(portfolio, rm = rm)
+    m8 = dot(portfolio.mu, w8.weights)
+    @test isapprox(w8.weights, w4.weights, rtol = 4e-5)
+    @test isapprox(r8, r4, rtol = 3e-5)
+    @test isapprox(m8, m4, rtol = 7e-7)
+
+    portfolio.evar_u = Inf
+    portfolio.mu_l = Inf
+    obj = :sharpe
+    portfolio.evar_u = r1 + 0.00001 * r1
+    w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r13 = calc_risk(portfolio, rm = rm)
+    m13 = dot(portfolio.mu, w13.weights)
+    @test isapprox(w13.weights, w1.weights, rtol = 6e-3)
+    @test isapprox(r13, r1, rtol = 8e-6)
+    @test isapprox(m13, m1, rtol = 1e-2)
 end
 
 @testset "rvar" begin
@@ -3493,6 +3739,88 @@ end
     @test isapprox(w2t, w2[!, :weights], rtol = 5e-4)
     @test isapprox(w3t, w3[!, :weights], rtol = 1e-7)
     @test isapprox(w4t, w4[!, :weights], rtol = 4e-6)
+
+    println("     - risk bounds")
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+        ),
+    )
+    asset_statistics!(portfolio)
+    rm = :rvar
+    kelly = :none
+    portfolio.rvar_u = Inf
+    portfolio.mu_l = Inf
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r1 = calc_risk(portfolio, rm = rm)
+    m1 = dot(portfolio.mu, w1.weights)
+    obj = :utility
+    w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r2 = calc_risk(portfolio, rm = rm)
+    m2 = dot(portfolio.mu, w2.weights)
+    obj = :sharpe
+    w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r3 = calc_risk(portfolio, rm = rm)
+    m3 = dot(portfolio.mu, w3.weights)
+    obj = :max_ret
+    w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r4 = calc_risk(portfolio, rm = rm)
+    m4 = dot(portfolio.mu, w4.weights)
+
+    obj = :max_ret
+    portfolio.rvar_u = r1
+    w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r5 = calc_risk(portfolio, rm = rm)
+    m5 = dot(portfolio.mu, w5.weights)
+    @test isapprox(w5.weights, w1.weights, rtol = 1e-3)
+    @test isapprox(r5, r1, rtol = 2e-7)
+    @test isapprox(m5, m1, rtol = 1e-3)
+
+    portfolio.rvar_u = r2
+    w6 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r6 = calc_risk(portfolio, rm = rm)
+    m6 = dot(portfolio.mu, w6.weights)
+    @test isapprox(w6.weights, w2.weights, rtol = 5e-5)
+    @test isapprox(r6, r2, rtol = 2e-7)
+    @test isapprox(m6, m2, rtol = 2e-5)
+
+    portfolio.rvar_u = r3
+    w7 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r7 = calc_risk(portfolio, rm = rm)
+    m7 = dot(portfolio.mu, w7.weights)
+    @test isapprox(w7.weights, w3.weights, rtol = 4e-5)
+    @test isapprox(r7, r3, rtol = 9e-7)
+    @test isapprox(m7, m3, rtol = 8e-7)
+
+    portfolio.rvar_u = r4
+    w8 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r8 = calc_risk(portfolio, rm = rm)
+    m8 = dot(portfolio.mu, w8.weights)
+    @test isapprox(w8.weights, w4.weights, rtol = 2e-4)
+    @test isapprox(r8, r4, rtol = 2e-4)
+    @test isapprox(m8, m4, rtol = 4e-6)
+
+    portfolio.rvar_u = Inf
+    portfolio.mu_l = Inf
+    obj = :sharpe
+    portfolio.rvar_u = r1 + 0.000001 * r1
+    w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    r13 = calc_risk(portfolio, rm = rm)
+    m13 = dot(portfolio.mu, w13.weights)
+    @test isapprox(w13.weights, w1.weights, rtol = 2e-3)
+    @test isapprox(r13, r1, rtol = 6e-7)
+    @test isapprox(m13, m1, rtol = 2e-3)
 end
 
 @testset "mdd" begin
