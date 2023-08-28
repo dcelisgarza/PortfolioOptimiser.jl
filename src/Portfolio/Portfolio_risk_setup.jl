@@ -939,7 +939,7 @@ function _opt_w(portfolio, returns, mu, icov; obj = :min_risk, rm = :mv, rf = 0.
         !isnothing(mu) && (port.mu = mu)
         opt_port!(port; type = :trad, class = :classic, rm = rm, obj = obj, rf = rf, l = l)
     elseif obj == :erc
-        opt_port!(port; type = :rp, class = :classic, rm = rm, rf = rf, l = l)
+        opt_port!(port; type = :rp, class = :classic, rm = rm, rf = rf)
     end
 
     return weights[!, :weights]

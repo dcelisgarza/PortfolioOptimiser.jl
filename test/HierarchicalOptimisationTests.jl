@@ -218,7 +218,7 @@ end
 
 @testset "NCO" begin
     println("NCO tests...")
-
+    println("Intra cluster weights optimised with trad type optimisation.")
     portfolio = HCPortfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -278,4 +278,47 @@ end
         0.10814681447551365,
     ]
     @test isapprox(w1t, w1.weights, rtol = 3e-4)
+
+    println("Intra cluster weights optimised with risk parity type optimisation.")
+
+    type = :nco
+    rm = :mv
+    obj = :erc
+    kelly = :none
+    linkage = :dbht
+    branchorder = :default
+    w2 = opt_port!(
+        portfolio;
+        type = type,
+        rm = rm,
+        obj = obj,
+        kelly = kelly,
+        rf = rf,
+        l = l,
+        linkage = linkage,
+        branchorder = branchorder,
+    )
+    w2t = [
+        0.03686989551346506,
+        0.0885648202981644,
+        0.03550338070885995,
+        0.03365193555569722,
+        0.032410817940959694,
+        0.04373193503852158,
+        0.035009184770548325,
+        0.05892155114612448,
+        0.03280418878206287,
+        0.09589560971220468,
+        0.06533686857891337,
+        0.02703273246131023,
+        0.03466128468840722,
+        0.04661028146874129,
+        0.022775178622336942,
+        0.06580197558444718,
+        0.09949545752431102,
+        0.06027877962414397,
+        0.037339275204482505,
+        0.04730484677629799,
+    ]
+    @test isapprox(w2t, w2.weights, rtol = 6e-6)
 end
