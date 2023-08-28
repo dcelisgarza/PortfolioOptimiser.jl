@@ -163,7 +163,7 @@ function _relativistic_rm(x, solvers, alpha = 0.05, kappa = 0.3)
     obj_val = objective_value(model)
 
     if term_status ∉ ValidTermination || !isfinite(obj_val)
-        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._optimize_entropic_rm))"
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._optimize_relativistic_rm))"
         @warn(
             "$funcname: model could not be optimised satisfactorily. Solvers: $solvers_tried"
         )
