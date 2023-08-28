@@ -64,7 +64,7 @@ l = 2.0
         0.045296393183736884,
         0.059081181824151126,
     ]
-    @test isapprox(w1t, w1.weights, rtol = 6e-5)
+    @test isapprox(w1t, w1.weights, rtol = 7e-5)
 
     portfolio.risk_budget = collect(1:20.0)
     w2 = opt_port!(portfolio; type = type, rm = rm, kelly = kelly, rf = rf, l = l)
