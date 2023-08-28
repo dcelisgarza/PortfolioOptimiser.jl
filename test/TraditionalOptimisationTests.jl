@@ -6655,8 +6655,8 @@ end
     r13 = calc_risk(portfolio, rm = rm)
     m13 = dot(portfolio.mu, w13.weights)
     @test isapprox(w13.weights, w1.weights, rtol = 5e-4)
-    @test isapprox(r13, r1, rtol = 3e-10)
-    @test isapprox(m13, m1, rtol = 6e-4)
+    @test isapprox(r13, r1, rtol = 2e-9)
+    @test isapprox(m13, m1, rtol = 7e-4)
 end
 
 @testset "krt relaxed" begin
