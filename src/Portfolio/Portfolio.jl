@@ -258,7 +258,7 @@ function Portfolio(;
     # Risk and return constraints.
     a_mtx_ineq = Matrix{Float64}(undef, 0, 0),
     b_vec_ineq = Vector{Float64}(undef, 0),
-    risk_budget = Vector{Float64}(undef, 0),
+    risk_budget::Union{Real, AbstractVector{<:Real}} = Vector{Float64}(undef, 0),
     mu_l::Real = -Inf,
     dev_u::Real = Inf,
     mad_u::Real = Inf,
@@ -392,7 +392,7 @@ function Portfolio(;
         # Risk and return constraints.
         typeof(a_mtx_ineq),
         typeof(b_vec_ineq),
-        typeof(risk_budget),
+        Union{Real, Vector{<:Real}},
         typeof(mu_l),
         typeof(dev_u),
         typeof(mad_u),

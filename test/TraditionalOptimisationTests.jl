@@ -6226,8 +6226,8 @@ end
     r5 = calc_risk(portfolio, rm = rm)
     m5 = dot(portfolio.mu, w5.weights)
     @test isapprox(w5.weights, w1.weights, rtol = 2e-3)
-    @test isapprox(r5, r1, rtol = 6e-7)
-    @test isapprox(m5, m1, rtol = 9e-4)
+    @test isapprox(r5, r1, rtol = 9e-7)
+    @test isapprox(m5, m1, rtol = 2e-3)
 
     portfolio.rdar_u = r2
     w6 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)

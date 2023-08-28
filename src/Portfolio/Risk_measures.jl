@@ -559,7 +559,7 @@ function calc_risk(portfolio::AbstractPortfolio; type = :trad, rm = :mv, rf = 0.
         elseif type == :rp
             portfolio.rp_optimal[!, :weights]
         elseif type == :rrp
-            portfolio.rp_optimal[!, :weights]
+            portfolio.rrp_optimal[!, :weights]
         elseif type == :wc
             portfolio.wc_optimal[!, :weights]
         end

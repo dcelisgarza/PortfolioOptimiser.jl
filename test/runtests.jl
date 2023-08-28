@@ -16,6 +16,10 @@ end
     include("HierarchicalOptimisationTests.jl")
 end
 
+@safetestset "Risk parity optimisations" begin
+    include("RiskParityTests.jl")
+end
+
 @safetestset "Traditional optimisations" begin
     include("TraditionalOptimisationTests.jl")
 end
