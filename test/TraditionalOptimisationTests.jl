@@ -10,7 +10,8 @@ using Test,
     COSMO,
     OrderedCollections,
     LinearAlgebra,
-    StatsBase
+    StatsBase,
+    HiGHS
 
 A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
@@ -8119,7 +8120,7 @@ end
         returns = returns,
         solvers = OrderedDict(
             :Clarabel => Dict(
-                :solver => (Clarabel.Optimizer),
+                :solver => Clarabel.Optimizer,
                 :params => Dict("verbose" => false),
             ),
             :ECOS =>
