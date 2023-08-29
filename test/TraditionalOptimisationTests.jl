@@ -7706,3 +7706,299 @@ end
     @test isapprox(w2t, w2[!, :weights], rtol = 1e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 2e-4)
 end
+
+@testset "constraints" begin
+    println("Short portfolios.")
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false),
+            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+        ),
+    )
+    asset_statistics!(portfolio)
+    rm = :mv
+    kelly = :none
+    portfolio.short = true
+
+    portfolio.short_u = 0.3
+    portfolio.long_u = 1.3
+    portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    w1t = [
+        0.003587824703236382,
+        0.03755523524543413,
+        0.01767899875983944,
+        0.03308647263306699,
+        0.012486408438682959,
+        0.05379626508860939,
+        -0.00971112965037303,
+        0.14121875540611653,
+        -0.010891701181792467,
+        0.018593623803989382,
+        0.28368308550277926,
+        -0.0211415604757037,
+        -0.009133130104719252,
+        0.14588497161233518,
+        0.0007734050697862307,
+        0.025431747995892363,
+        0.014569199255512567,
+        0.20358680770171717,
+        -0.06421886110150134,
+        0.12316358129715226,
+    ]
+    @test isapprox(w1t, w1.weights, rtol = 6e-4)
+    @test all(w1.weights[w1.weights .< 0] .>= -portfolio.short_u)
+    @test all(w1.weights[w1.weights .> 0] .<= portfolio.long_u)
+    @test isapprox(sum(w1.weights), portfolio.sum_short_long)
+
+    obj = :sharpe
+    w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    w2t = [
+        2.5267713200790443e-8,
+        2.3557997670125438e-7,
+        5.66536481013349e-7,
+        3.683998080561952e-7,
+        0.47410790094874317,
+        -0.05667373527599564,
+        0.06488650583079525,
+        0.03063705375737504,
+        8.798375683807772e-8,
+        9.676849395496075e-8,
+        0.03837776267163533,
+        -0.07625577190446572,
+        -0.046402349834757724,
+        1.4595903097759926e-8,
+        -0.12066765314099208,
+        0.1802766001824138,
+        0.24781714990391104,
+        4.737709722232439e-7,
+        0.26389424388040816,
+        4.240771538000945e-7,
+    ]
+    @test isapprox(w2t, w2.weights, rtol = 6e-5)
+    @test all(w2.weights[w2.weights .< 0] .>= -portfolio.short_u)
+    @test all(w2.weights[w2.weights .> 0] .<= portfolio.long_u)
+    @test isapprox(sum(w2.weights), portfolio.sum_short_long)
+
+    portfolio.short_u = 0.11
+    portfolio.long_u = 1.23
+    portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
+
+    obj = :min_risk
+    w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    w3t = [
+        0.004299730250331464,
+        0.04091408957120287,
+        0.019260807512482624,
+        0.03658001164838576,
+        0.014225762488882734,
+        0.05746343605850661,
+        -0.00996248424417953,
+        0.15798886098309115,
+        -0.01493472945184608,
+        0.017869360599409075,
+        0.3178463049624519,
+        -0.02187044093991696,
+        -0.00946997632593845,
+        0.1600574313436442,
+        0.0003116825695443617,
+        0.027446705294999874,
+        0.012821050896696927,
+        0.22586523897569308,
+        -0.053761904352271,
+        0.13704906215838034,
+    ]
+    @test isapprox(w3t, w3.weights, rtol = 3e-4)
+    @test all(w3.weights[w3.weights .< 0] .>= -portfolio.short_u)
+    @test all(w3.weights[w3.weights .> 0] .<= portfolio.long_u)
+    @test isapprox(sum(w3.weights), portfolio.sum_short_long)
+
+    obj = :sharpe
+    w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    w4t = [
+        2.2549529814806565e-8,
+        1.1286803738583013e-7,
+        1.370876887163495e-7,
+        9.945581252127811e-8,
+        0.540148036366995,
+        -1.6419705392134607e-8,
+        0.07154753778886971,
+        2.3451969702780645e-7,
+        5.56563020211513e-8,
+        3.688083646091651e-8,
+        1.5644516846888938e-7,
+        -1.7332962067334847e-7,
+        -0.030700417446881203,
+        1.121158663330529e-8,
+        -0.07929922509667617,
+        0.179809683050173,
+        0.25457466107429866,
+        1.1853741694129262e-7,
+        0.1839188261411397,
+        1.0266209809286423e-7,
+    ]
+    @test isapprox(w4t, w4.weights, rtol = 9e-6)
+    @test all(w4.weights[w4.weights .< 0] .>= -portfolio.short_u)
+    @test all(w4.weights[w4.weights .> 0] .<= portfolio.long_u)
+    @test isapprox(sum(w4.weights), portfolio.sum_short_long)
+
+    println("Turnover constraints.")
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false),
+            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+        ),
+    )
+    asset_statistics!(portfolio)
+    rm = :mv
+    kelly = :none
+
+    obj = :sharpe
+    w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    portfolio.turnover = 0.05
+    portfolio.turnover_weights = copy(w1.weights)
+
+    obj = :min_risk
+    w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    @test all(abs.(w2.weights - portfolio.turnover_weights) .<= portfolio.turnover)
+
+    portfolio.turnover = Inf
+    obj = :min_risk
+    w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    portfolio.turnover = 0.031
+    portfolio.turnover_weights = copy(w3.weights)
+
+    obj = :sharpe
+    w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    @test all(abs.(w4.weights - portfolio.turnover_weights) .<= portfolio.turnover)
+
+    println("Tracking error constraints.")
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false),
+            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+        ),
+    )
+    asset_statistics!(portfolio)
+    rm = :mv
+    kelly = :none
+
+    obj = :sharpe
+    w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    portfolio.kind_tracking_err = :weights
+    portfolio.tracking_err = 0.0005
+    # portfolio.tracking_err_returns = Vector{Float64}(undef, 0)
+    portfolio.tracking_err_weights = copy(w1.weights)
+
+    obj = :min_risk
+    w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    w2t = [
+        0.00012937963825922666,
+        0.0017993432603443194,
+        0.0005925682560396107,
+        0.0014774704811308095,
+        0.4945923286068745,
+        0.0017603635964306935,
+        0.06023870178607093,
+        0.0064070969591296075,
+        7.0320195517678365e-9,
+        0.0005641226614673089,
+        0.013583525225151482,
+        8.268177529019035e-10,
+        5.371519497662845e-10,
+        0.006554406848381595,
+        4.8956778188903165e-9,
+        0.13751830557487418,
+        0.18830514952012686,
+        0.009650044091409016,
+        0.07135039176230074,
+        0.00547678844034211,
+    ]
+    @test isapprox(w2t, w2.weights, rtol = 3e-4)
+    @test norm(
+        Matrix(returns[!, 2:end]) * (w2.weights - portfolio.tracking_err_weights),
+        2,
+    ) / sqrt(nrow(returns) - 1) <= portfolio.tracking_err
+
+    portfolio.tracking_err = Inf
+    obj = :min_risk
+    w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    portfolio.kind_tracking_err = :weights
+    portfolio.tracking_err = 0.0003
+    # portfolio.tracking_err_returns = Vector{Float64}(undef, 0)
+    portfolio.tracking_err_weights = copy(w3.weights)
+
+    obj = :sharpe
+    w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    w4t = [
+        0.002928171421595965,
+        0.030370445108063172,
+        0.012247780040264142,
+        0.02749763537332101,
+        0.021654631904835957,
+        0.016980527231975316,
+        0.0011918329883360305,
+        0.13840549677476377,
+        1.6022609102027843e-8,
+        7.574054535367988e-8,
+        0.2891049073740062,
+        2.5460439167122798e-9,
+        1.973348841914057e-9,
+        0.11538863223449589,
+        1.984445672057219e-9,
+        0.016999247436935577,
+        0.006939722662829445,
+        0.19329596637910745,
+        0.010767499407052895,
+        0.11622740539542435,
+    ]
+    @test isapprox(w4t, w4.weights, rtol = 4e-4)
+    @test norm(
+        Matrix(returns[!, 2:end]) * (w4.weights - portfolio.tracking_err_weights),
+        2,
+    ) / sqrt(nrow(returns) - 1) <= portfolio.tracking_err
+
+    portfolio.tracking_err = Inf
+    portfolio.tracking_err = 0.007
+    portfolio.kind_tracking_err = :returns
+    portfolio.tracking_err_returns = vec(returns[!, argmax(w1.weights) + 1])
+    obj = :sharpe
+    w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    @test norm(Matrix(returns[!, 2:end]) * w5.weights - portfolio.tracking_err_returns, 2) /
+          sqrt(nrow(returns) - 1) <= portfolio.tracking_err
+
+    portfolio.tracking_err = Inf
+    portfolio.tracking_err = 0.003
+    portfolio.kind_tracking_err = :returns
+    portfolio.tracking_err_returns = vec(returns[!, argmax(w1.weights) + 1])
+    obj = :min_risk
+    w6 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    @test norm(Matrix(returns[!, 2:end]) * w6.weights - portfolio.tracking_err_returns, 2) /
+          sqrt(nrow(returns) - 1) <= portfolio.tracking_err
+end
