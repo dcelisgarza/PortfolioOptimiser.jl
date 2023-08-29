@@ -8001,4 +8001,164 @@ end
     w6 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     @test norm(Matrix(returns[!, 2:end]) * w6.weights - portfolio.tracking_err_returns, 2) /
           sqrt(nrow(returns) - 1) <= portfolio.tracking_err
+
+    println("Min number of effective assets.")
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false),
+            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+        ),
+    )
+    asset_statistics!(portfolio)
+    rm = :mv
+    kelly = :none
+
+    obj = :sharpe
+    portfolio.min_number_effective_assets = 5
+    w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    w1t = [
+        6.375514180278588e-8,
+        0.027882159293922966,
+        0.0557336742327969,
+        0.013037690322754812,
+        0.3584225067124871,
+        8.318630557899562e-9,
+        0.06661686835404312,
+        0.016046763373863127,
+        2.0829497312333203e-7,
+        5.0307208020413264e-8,
+        3.330340050361633e-5,
+        6.346688680901949e-9,
+        4.289403834579757e-9,
+        1.8373274827340437e-8,
+        4.353301999181876e-9,
+        0.1362408783189624,
+        0.1709714790176626,
+        0.008864615309020838,
+        0.11908068551285773,
+        0.027069012112501845,
+    ]
+    @test isapprox(w1t, w1.weights, rtol = 1e-4)
+
+    obj = :min_risk
+    portfolio.min_number_effective_assets = 11
+    w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    w2t = [
+        0.04106779420433762,
+        0.050740893930896,
+        0.03185109806650701,
+        0.031446388115378206,
+        0.026970772260889782,
+        0.07201438611372805,
+        7.582110751791772e-9,
+        0.12559431248317532,
+        7.879051411431053e-8,
+        0.03819801450124479,
+        0.15650662475502,
+        1.32980104284167e-8,
+        1.674330566233696e-8,
+        0.10145056805736621,
+        0.011556811471121392,
+        0.03455656383781936,
+        0.04719511108868762,
+        0.12383171848358535,
+        0.021139976473931545,
+        0.08587884974237084,
+    ]
+    @test isapprox(w2t, w2.weights, rtol = 5e-4)
+
+    println("Max number of assets.")
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false),
+            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+            :HiGHS => Dict(
+                :solver => HiGHS.Optimizer,
+                :params => Dict("log_to_console" => false),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio)
+    rm = :cdar
+    kelly = :none
+
+    obj = :min_risk
+    portfolio.max_number_assets = 0
+    w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    portfolio.max_number_assets = 5
+    w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    @test sum(w2.weights[w2.weights .> length(w2.weights) * eps()]) <=
+          portfolio.max_number_assets
+
+    obj = :sharpe
+    portfolio.max_number_assets = 0
+    w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    portfolio.max_number_assets = 3
+    w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    @test sum(w4.weights[w4.weights .> length(w4.weights) * eps()]) <=
+          portfolio.max_number_assets
+
+    println("Max number of assets.")
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false),
+            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+            :HiGHS => Dict(
+                :solver => HiGHS.Optimizer,
+                :params => Dict("log_to_console" => false),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio)
+    rm = :cdar
+    kelly = :none
+
+    obj = :min_risk
+    portfolio.max_number_assets = 5
+    w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    @test sum(w1.weights[w1.weights .> 1e-6]) <= portfolio.max_number_assets
+
+    obj = :sharpe
+    portfolio.max_number_assets = 3
+    w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    @test sum(w2.weights[w2.weights .> 1e-6]) <= portfolio.max_number_assets
+
+    portfolio.short = true
+    portfolio.short_u = 0.4
+    portfolio.long_u = 0.6
+    portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
+
+    obj = :min_risk
+    portfolio.max_number_assets = 10
+    w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    @test sum(w3.weights[abs.(w3.weights) .> 1e-6]) <= portfolio.max_number_assets
+
+    obj = :sharpe
+    portfolio.max_number_assets = 11
+    w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
+    @test sum(w4.weights[abs.(w4.weights) .> 1e-6]) <= portfolio.max_number_assets
 end

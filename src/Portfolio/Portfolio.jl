@@ -234,7 +234,7 @@ function Portfolio(;
     sum_short_long::Real = 1.0,
     min_number_effective_assets::Integer = 0,
     max_number_assets::Integer = 0,
-    max_number_assets_factor::Int = 100_000,
+    max_number_assets_factor::Real = 100_000.0,
     f_returns = DataFrame(),
     loadings = Matrix{Float64}(undef, 0, 0),
     # Risk parameters.
