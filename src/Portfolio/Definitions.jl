@@ -105,23 +105,43 @@ const PortClasses = (:classic,)
 const PortClasses = (:classic,)
 
 """
-Available optimisation types for [`Portfolio`](@ref).
+Available optimisation types.
+```
+const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
+```
 """
 const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
 
 """
-Available versions of relaxed risk parity optimisation for [`Portfolio`](@ref).
+Available versions of relaxed risk parity optimisations.
 ```
 const RRPVersions = (:none, :reg, :reg_pen)
 ```
 """
 const RRPVersions = (:none, :reg, :reg_pen)
 
-# Worst case uncertainty types.
+"""
+Types of uncertainty sets for worst case optimisations.
+```
 const UncertaintyTypes = (:none, :box, :ellipse)
-# Bootstrap for worst case optimisations.
+```
+"""
+const UncertaintyTypes = (:none, :box, :ellipse)
+
+"""
+Bootstrap for worst case optimisations.
+```
 const KindBootstrap = (:stationary, :circular, :moving)
-# Ellipse and box types for worst case optimisations.
+```
+"""
+const KindBootstrap = (:stationary, :circular, :moving)
+"""
+Ellipse and box types for worst case optimisations.
+```
+const EllipseTypes = (:stationary, :circular, :moving, :normal)
+const BoxTypes = (EllipseTypes..., :delta)
+```
+"""
 const EllipseTypes = (:stationary, :circular, :moving, :normal)
 const BoxTypes = (EllipseTypes..., :delta)
 
