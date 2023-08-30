@@ -23,6 +23,60 @@ function fix_cov!(covariance, args...; kwargs...)
     println("IMPLEMENT ME")
 end
 
+function duplication_matrix(n::Int)
+    cols = Int(n * (n + 1) / 2)
+    rows = n * n
+    mtx = spzeros(rows, cols)
+    for j in 1:n
+        for i in j:n
+            u = spzeros(1, cols)
+            col = Int((j - 1) * n + i - (j * (j - 1)) / 2)
+            u[col] = 1
+            T = spzeros(n, n)
+            T[i, j] = 1
+            T[j, i] = 1
+            mtx .+= vec(T) * u
+        end
+    end
+    return mtx
+end
+
+function elimination_matrix(n::Int)
+    rows = Int(n * (n + 1) / 2)
+    cols = n * n
+    mtx = spzeros(rows, cols)
+    for j in 1:n
+        ej = spzeros(1, n)
+        ej[j] = 1
+        for i in j:n
+            u = spzeros(rows)
+            row = Int((j - 1) * n + i - (j * (j - 1)) / 2)
+            u[row] = 1
+            ei = spzeros(1, n)
+            ei[i] = 1
+            mtx .+= kron(u, kron(ej, ei))
+        end
+    end
+    return mtx
+end
+
+function summation_matrix(n::Int)
+    d = duplication_matrix(n)
+    l = elimination_matrix(n)
+
+    s = transpose(d) * d * l
+
+    return s
+end
+
+function dup_elim_sum_matrices(n::Int)
+    d = duplication_matrix(n)
+    l = elimination_matrix(n)
+    s = transpose(d) * d * l
+
+    return d, l, s
+end
+
 function asset_statistics!(
     portfolio::AbstractPortfolio;
     target_ret::AbstractFloat = 0.0,
@@ -135,8 +189,52 @@ function asset_statistics!(
     return nothing
 end
 
-const EllipseTypes = (:stationary, :circular, :moving, :normal)
-const BoxTypes = (EllipseTypes..., :delta)
+function commutation_matrix(x::AbstractMatrix)
+    m, n = size(x)
+    mn = m * n
+    row = 1:mn
+    col = vec(transpose(reshape(row, m, n)))
+    data = range(start = 1, stop = 1, length = mn)
+    com = sparse(row, col, data, mn, mn)
+    return com
+end
+
+function gen_bootstrap(
+    returns,
+    kind = :stationary,
+    n_sim = 3_000,
+    window = 3,
+    seed = nothing,
+    rng = Random.default_rng(),
+)
+    @assert(kind ∈ KindBootstrap, "kind must be one of $KindBootstrap")
+    !isnothing(seed) && Random.seed!(rng, seed)
+
+    mus = Vector{Vector{eltype(returns)}}(undef, n_sim)
+    covs = Vector{Matrix{eltype(returns)}}(undef, n_sim)
+
+    bootstrap_func = if kind == :stationary
+        pyimport("arch.bootstrap").StationaryBootstrap
+    elseif kind == :circular
+        pyimport("arch.bootstrap").CircularBlockBootstrap
+    elseif kind == :moving
+        pyimport("arch.bootstrap").MovingBlockBootstrap
+    end
+
+    gen = bootstrap_func(window, returns, seed = seed)
+    for (i, data) in enumerate(gen.bootstrap(n_sim))
+        A = data[1][1]
+        mus[i] = vec(mean(A, dims = 1))
+        covs[i] = cov(A)
+    end
+
+    return mus, covs
+end
+
+function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractVector})
+    return vcat(transpose.(x)...)
+end
+
 function wc_statistics!(
     portfolio;
     box = :stationary,

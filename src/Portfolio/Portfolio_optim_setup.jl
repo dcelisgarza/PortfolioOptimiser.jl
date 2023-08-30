@@ -13,7 +13,6 @@ function _setup_k_and_risk_budget(portfolio, obj, N, type)
     return nothing
 end
 
-const KellyRet = (:none, :approx, :exact)
 function _setup_return(portfolio, type, class, kelly, obj, T, rf, returns, mu)
     model = portfolio.model
 
@@ -203,7 +202,6 @@ function _setup_min_number_effective_assets(portfolio, obj)
     return nothing
 end
 
-const TrackingErrKinds = (:weights, :returns)
 function _setup_tracking_err(portfolio, returns, obj, T)
     tracking_err = portfolio.tracking_err
 
@@ -263,7 +261,6 @@ function _setup_turnover(portfolio, N, obj)
     return nothing
 end
 
-const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 function _setup_objective_function(portfolio, type, obj, class, kelly, l)
     model = portfolio.model
 
@@ -285,8 +282,6 @@ function _setup_objective_function(portfolio, type, obj, class, kelly, l)
     return nothing
 end
 
-const ValidTermination =
-    (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
 function _optimize_portfolio(portfolio)
     solvers = portfolio.solvers
     model = portfolio.model
@@ -463,10 +458,6 @@ function _save_opt_params(
     return nothing
 end
 
-const PortClasses = (:classic,)
-const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
-const UncertaintyTypes = (:none, :box, :ellipse)
-const RRPVersions = (:none, :reg, :reg_pen)
 function opt_port!(
     portfolio::Portfolio;
     type::Symbol = :trad,
@@ -614,26 +605,6 @@ function opt_port!(
 
     return retval
 end
-
-const HRTypes = (:hrp, :herc, :herc2, :nco)
-const CodepTypes = (
-    :pearson,
-    :spearman,
-    :kendall,
-    :gerber1,
-    :gerber2,
-    :abs_pearson,
-    :abs_spearman,
-    :abs_kendall,
-    :distance,
-    :mutual_info,
-    :tail,
-    :custom_cov,
-    :custom_cor,
-)
-const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :dbht)
-const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
-const HRObjFuncs = (:min_risk, :utility, :sharpe, :erc)
 
 function _setup_hr_weights(w_max, w_min, N)
     @assert(

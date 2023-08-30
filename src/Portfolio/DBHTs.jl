@@ -323,9 +323,8 @@ function BubbleHierarchy(Pred, Sb)
     return H, Mb
 end
 
-const RootMethods = (:unique, :equal)
 function CliqHierarchyTree2s(Apm, method = :unique)
-    @assert(method ∈ RootMethods, "method must be one of $RootMethods")
+    @assert(method ∈ DBHTRootMethods, "method must be one of $DBHTRootMethods")
     N = size(Apm, 1)
     A = Apm .!= 0
     K3, E, clique = clique3(A)

@@ -1,28 +1,4 @@
-const RiskMeasures = (
-    :mv,    # _mv
-    :mad,   # _mad
-    :msv,   # _mad
-    :flpm,  # _lpm
-    :slpm,  # _lpm
-    :wr,    # _wr
-    :cvar,  # _var
-    :evar,  # _var
-    :rvar,  # _var
-    :mdd,   # _dar
-    :add,   # _dar
-    :cdar,  # _dar
-    :uci,   # _dar
-    :edar,  # _dar
-    :rdar,  # _dar
-    :krt,   # _krt
-    :skrt,  # _krt
-    :gmd,   # _owa
-    :rg,    # _owa
-    :rcvar, # _owa
-    :tg,    # _owa
-    :rtg,   # _owa
-    :owa,   # _owa
-)
+
 function _calc_var_dar_constants(portfolio, rm, T)
     !(
         rm == :cvar ||
@@ -467,6 +443,31 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     return nothing
 end
 
+function block_vec_pq(A, p, q)
+    mp, nq = size(A)
+
+    !(mod(mp, p) == 0 && mod(nq, p) == 0) && (throw(
+        DimensionMismatch(
+            "dimensions A, $(size(A)), must be integer multiples of (p, q) = ($p, $q)",
+        ),
+    ))
+
+    m = Int(mp / p)
+    n = Int(nq / q)
+
+    A_vec = Matrix{eltype(A)}(undef, m * n, p * q)
+    for j in 0:(n - 1)
+        Aj = Matrix{eltype(A)}(undef, m, p * q)
+        for i in 0:(m - 1)
+            Aij = vec(A[(1 + (i * p)):((i + 1) * p), (1 + (j * q)):((j + 1) * q)])
+            Aj[i + 1, :] .= Aij
+        end
+        A_vec[(1 + (j * m)):((j + 1) * m), :] .= Aj
+    end
+
+    return A_vec
+end
+
 function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
     krt_u = portfolio.krt_u
     skrt_u = portfolio.skrt_u
@@ -884,19 +885,6 @@ function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
     end
 end
 
-const HRRiskMeasures = (
-    :msd,
-    RiskMeasures...,
-    :equal,
-    :var,
-    :dar,
-    :mdd_r,
-    :add_r,
-    :dar_r,
-    :cdar_r,
-    :edar_r,
-    :rdar_r,
-)
 function _naive_risk(portfolio, returns, covariance; rm = :mv, rf = 0.0)
     N = size(returns, 2)
     tcov = eltype(covariance)
@@ -943,6 +931,50 @@ function _opt_w(portfolio, returns, mu, icov; obj = :min_risk, rm = :mv, rf = 0.
     end
 
     return weights[!, :weights]
+end
+
+function two_diff_gap_stat(dist, clustering, max_k = 10)
+    N = size(dist, 1)
+    cluster_lvls = [cutree(clustering; k = i) for i in 1:N]
+
+    c1 = min(N, max_k)
+    W_list = Vector{eltype(dist)}(undef, c1)
+
+    for i in 1:c1
+        lvl = cluster_lvls[i]
+        c2 = maximum(unique(lvl))
+        mean_dist = 0.0
+        for j in 1:c2
+            cluster = findall(lvl .== j)
+            cluster_dist = dist[cluster, cluster]
+            isempty(cluster_dist) && continue
+
+            val = 0.0
+            counter = 0
+            M = size(cluster_dist, 1)
+            for col in 1:M
+                for row in (col + 1):M
+                    val += cluster_dist[row, col]
+                    counter += 1
+                end
+            end
+            counter == 0 && continue
+            mean_dist += val / counter
+        end
+        W_list[i] = mean_dist
+    end
+
+    limit_k = floor(Int, min(max_k, sqrt(N)))
+    gaps = fill(-Inf, length(W_list))
+
+    length(W_list) > 2 &&
+        (gaps[3:end] .= W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)])
+
+    gaps = gaps[1:limit_k]
+
+    k = all(isinf.(gaps)) ? length(gaps) : k = argmax(gaps) + 1
+
+    return k
 end
 
 function _hierarchical_clustering(

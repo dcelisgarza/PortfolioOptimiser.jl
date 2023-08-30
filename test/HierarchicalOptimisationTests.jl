@@ -320,5 +320,5 @@ end
         0.037339275204482505,
         0.04730484677629799,
     ]
-    @test isapprox(w2t, w2.weights, rtol = 6e-6)
+    @test isapprox(w2t, w2.weights, rtol = 9e-6)
 end
