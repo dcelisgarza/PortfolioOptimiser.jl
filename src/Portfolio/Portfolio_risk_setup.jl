@@ -827,7 +827,7 @@ function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
     # Return uncertainy sets.
     @expression(model, _ret, dot(mu, model[:w]))
     if u_mu == :box
-        d_mu = portfolio.d_mu[!, :val]
+        d_mu = portfolio.d_mu
         @variable(model, abs_w[1:N])
         @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
         @expression(model, ret, _ret - dot(d_mu, abs_w))
@@ -839,6 +839,11 @@ function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
         @expression(model, x_gw, G * model[:w])
         @variable(model, t_gw)
         @constraint(model, [t_gw; x_gw] in SecondOrderCone())
+
+        # @variable(model, r_gw[1:N])
+        # @constraint(model, [i = 1:N], [r_gw[i], t_gw, x_gw[i]] in MOI.PowerCone(0.5))
+        # @constraint(model, sum(r_gw) == t_gw)
+
         @expression(model, ret, _ret - k_mu * t_gw)
         obj == :sharpe && @constraint(model, ret - rf * model[:k] >= 1)
     else
@@ -865,17 +870,22 @@ function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
         G_sigma = sqrt(portfolio.cov_sigma)
         @variable(model, E1[1:N, 1:N], Symmetric)
         @variable(model, E2[1:N, 1:N], Symmetric)
-        @expression(M1, vcat(E1, transpose(model[:w])))
+        @expression(model, M1, vcat(E1, transpose(model[:w])))
 
         obj == :sharpe ? @expression(M2, vcat(model[:w], model[:k])) :
-        @expression(M2, vcat(model[:w], 1))
+        @expression(model, M2, vcat(model[:w], 1))
 
-        @expression(M3, hcat(M1, M2))
+        @expression(model, M3, hcat(M1, M2))
         @constraint(model, M3 in PSDCone())
         @constraint(model, E2 in PSDCone())
         @expression(model, x_ge, G_sigma * vec(E1 .+ E2))
         @variable(model, t_ge)
         @constraint(model, [t_ge; x_gw] in SecondOrderCone())
+
+        # @variable(model, r_ge[1:N])
+        # @constraint(model, [i = 1:N], [r_ge[i], t_ge, x_ge[i]] in MOI.PowerCone(0.5))
+        # @constraint(model, sum(r_ge) == t_ge)
+
         @expression(model, risk, tr(sigma * (E1 .+ E2)) + k_sigma * t_ge)
     else
         @variable(model, dev)

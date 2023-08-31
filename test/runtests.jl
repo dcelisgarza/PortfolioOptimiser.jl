@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Misc tests" begin
+    include("MiscTests.jl")
+end
+
 @safetestset "Risk measures" begin
     include("RiskMeasureTests.jl")
 end
@@ -18,6 +22,10 @@ end
 
 @safetestset "Risk parity optimisations" begin
     include("RiskParityTests.jl")
+end
+
+@safetestset "Worst case optimisations" begin
+    include("WorstCaseOptimisationTests.jl")
 end
 
 @safetestset "Traditional optimisations" begin

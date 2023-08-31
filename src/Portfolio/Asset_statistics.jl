@@ -262,8 +262,11 @@ function wc_statistics!(
     returns = portfolio.returns
     T, N = size(returns)
 
-    if box == :normal || box == :delta || ellipse == :normal
-        box == :delta && (mu = vec(mean(returns, dims = 1)))
+    if box == :delta || ellipse == :stationary || ellipse == :circular || ellipse == :moving
+        mu = vec(mean(returns, dims = 1))
+    end
+
+    if calc_ellipse || box == :normal || box == :delta
         sigma = cov(returns)
     end
 
@@ -309,12 +312,12 @@ function wc_statistics!(
 
             cov_mu = Diagonal(cov(vec_of_vecs_to_mtx([mu_s .- mu for mu_s in mus])))
             cov_sigma = Diagonal(
-                cov(vec_of_vecs_to_mtx([vec(cov_s) .- vec(cov) for cov_s in covs])),
+                cov(vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma) for cov_s in covs])),
             )
         elseif ellipse == :normal
             cov_mu = Diagonal(sigma) / T
             K = commutation_matrix(sigma)
-            cov_sigma = Diagonal((I + K) * kron(cov_mu, cov_mu)) * T
+            cov_sigma = T * Diagonal((I + K) * kron(cov_mu, cov_mu))
         end
     end
 
