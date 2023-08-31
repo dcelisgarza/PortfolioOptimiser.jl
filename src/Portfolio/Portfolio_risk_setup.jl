@@ -491,13 +491,7 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
             N2 = 2 * N
             @variable(model, x_kurt[1:N2])
-            @variable(model, r_kurt[1:N2])
-            @constraint(
-                model,
-                [i = 1:N2],
-                [r_kurt[i], t_kurt, x_kurt[i]] in MOI.PowerCone(0.5)
-            )
-            @constraint(model, sum(r_kurt) == t_kurt)
+            @constraint(model, [t_kurt; x_kurt] in SecondOrderCone())
 
             A = block_vec_pq(kurtosis, N, N)
             vals_A, vecs_A = eigen(A)
@@ -542,13 +536,8 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
             N2 = 2 * N
             @variable(model, x_skurt[1:N2])
-            @variable(model, r_skurt[1:N2])
-            @constraint(
-                model,
-                [i = 1:N2],
-                [r_skurt[i], t_skurt, x_skurt[i]] in MOI.PowerCone(0.5)
-            )
-            @constraint(model, sum(r_skurt) == t_skurt)
+
+            @constraint(model, [t_skurt; x_skurt] in SecondOrderCone())
 
             A = block_vec_pq(skurtosis, N, N)
             vals_A, vecs_A = eigen(A)
@@ -820,35 +809,35 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
 end
 
 function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
-    obj == :min_risk && isnothing(mu) && return nothing
-
     model = portfolio.model
 
     # Return uncertainy sets.
-    @expression(model, _ret, dot(mu, model[:w]))
-    if u_mu == :box
-        d_mu = portfolio.d_mu
-        @variable(model, abs_w[1:N])
-        @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
-        @expression(model, ret, _ret - dot(d_mu, abs_w))
-        obj == :sharpe && @constraint(model, ret - rf * model[:k] >= 1)
-    elseif u_mu == :ellipse
-        k_mu = portfolio.k_mu
-        cov_mu = portfolio.cov_mu
-        G = sqrt(cov_mu)
-        @expression(model, x_gw, G * model[:w])
-        @variable(model, t_gw)
-        @constraint(model, [t_gw; x_gw] in SecondOrderCone())
 
-        # @variable(model, r_gw[1:N])
-        # @constraint(model, [i = 1:N], [r_gw[i], t_gw, x_gw[i]] in MOI.PowerCone(0.5))
-        # @constraint(model, sum(r_gw) == t_gw)
+    if !isempty(mu)
+        @expression(model, _ret, dot(mu, model[:w]))
+        if u_mu == :box
+            d_mu = portfolio.d_mu
 
-        @expression(model, ret, _ret - k_mu * t_gw)
-        obj == :sharpe && @constraint(model, ret - rf * model[:k] >= 1)
-    else
-        @expression(model, ret, _ret)
-        obj == :sharpe && @constraint(model, ret - rf * model[:k] >= 1)
+            @variable(model, abs_w[1:N])
+            @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
+            @expression(model, ret, _ret - dot(d_mu, abs_w))
+            obj == :sharpe && @constraint(model, ret - rf * model[:k] >= 1)
+        elseif u_mu == :ellipse
+            k_mu = portfolio.k_mu
+            cov_mu = portfolio.cov_mu
+            G = sqrt(cov_mu)
+
+            @expression(model, x_gw, G * model[:w])
+            @variable(model, t_gw)
+            @constraint(model, [t_gw; x_gw] in SecondOrderCone())
+
+            @expression(model, ret, _ret - k_mu * t_gw)
+
+            obj == :sharpe && @constraint(model, ret - rf * model[:k] >= 1)
+        else
+            @expression(model, ret, _ret)
+            obj == :sharpe && @constraint(model, ret - rf * model[:k] >= 1)
+        end
     end
 
     # Cov uncertainty sets.
@@ -857,7 +846,7 @@ function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
         cov_l = portfolio.cov_l
         @variable(model, Au[1:N, 1:N] .>= 0, Symmetric)
         @variable(model, Al[1:N, 1:N] .>= 0, Symmetric)
-        @expression(model, M1, vcat(Au - Al, transpose(model[:w])))
+        @expression(model, M1, vcat(Au .- Al, transpose(model[:w])))
 
         obj == :sharpe ? @expression(model, M2, vcat(model[:w], model[:k])) :
         @expression(model, M2, vcat(model[:w], 1))
@@ -868,25 +857,26 @@ function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
     elseif u_cov == :ellipse
         k_sigma = portfolio.k_sigma
         G_sigma = sqrt(portfolio.cov_sigma)
+
         @variable(model, E1[1:N, 1:N], Symmetric)
         @variable(model, E2[1:N, 1:N], Symmetric)
         @expression(model, M1, vcat(E1, transpose(model[:w])))
 
-        obj == :sharpe ? @expression(M2, vcat(model[:w], model[:k])) :
+        obj == :sharpe ? @expression(model, M2, vcat(model[:w], model[:k])) :
         @expression(model, M2, vcat(model[:w], 1))
 
         @expression(model, M3, hcat(M1, M2))
+
         @constraint(model, M3 in PSDCone())
         @constraint(model, E2 in PSDCone())
-        @expression(model, x_ge, G_sigma * vec(E1 .+ E2))
+
+        @expression(model, E1_p_E2, E1 .+ E2)
+
+        @expression(model, x_ge, G_sigma * vec(E1_p_E2))
         @variable(model, t_ge)
         @constraint(model, [t_ge; x_gw] in SecondOrderCone())
 
-        # @variable(model, r_ge[1:N])
-        # @constraint(model, [i = 1:N], [r_ge[i], t_ge, x_ge[i]] in MOI.PowerCone(0.5))
-        # @constraint(model, sum(r_ge) == t_ge)
-
-        @expression(model, risk, tr(sigma * (E1 .+ E2)) + k_sigma * t_ge)
+        @expression(model, risk, tr(sigma * E1_p_E2) + k_sigma * t_ge)
     else
         @variable(model, dev)
         G = sqrt(sigma)

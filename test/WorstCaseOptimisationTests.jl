@@ -11,13 +11,16 @@ using Test,
     OrderedCollections,
     LinearAlgebra,
     StatsBase,
-    SparseArrays
+    SparseArrays,
+    JuMP
 
 A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
+
+println("Worst case MV optimisations...")
 
 @testset "Worst case optimisation statistics" begin
     portfolio = Portfolio(
@@ -32,12 +35,10 @@ l = 2.0
             :COSMO =>
                 Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
             :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
-            :HiGHS => Dict(
-                :solver => HiGHS.Optimizer,
-                :params => Dict("log_to_console" => false),
-            ),
         ),
     )
+
+    println("Worst case statistics...")
 
     wc_statistics!(portfolio; box = :normal, ellipse = :normal, seed = 0)
     cov_lt = reshape(
@@ -10419,4 +10420,333 @@ l = 2.0
         @test isapprox(d_mut, portfolio.d_mu)
     catch
     end
+
+    asset_statistics!(portfolio)
+    wc_statistics!(portfolio; box = :delta, ellipse = :normal, seed = 0)
+
+    println("Box constraints.")
+
+    u_mu = :box
+    u_cov = :box
+
+    obj = :min_risk
+    w1 = opt_port!(
+        portfolio;
+        type = :wc,
+        obj = obj,
+        rf = rf,
+        l = l,
+        u_mu = u_mu,
+        u_cov = u_cov,
+    )
+    w1t = [
+        0.016981000260804888,
+        0.03372410106444456,
+        0.008364191339338977,
+        0.023689431062860165,
+        0.010472529367396432,
+        0.053869173504128835,
+        1.8923393898054942e-6,
+        0.1542040064488638,
+        2.40768042739018e-6,
+        0.002183734183547967,
+        0.251679705702548,
+        2.060228783982277e-6,
+        1.5384269957442918e-6,
+        0.1284746008629671,
+        1.7533007453484404e-6,
+        0.016435759810684295,
+        0.01694001125334561,
+        0.17673758977951487,
+        8.733893566085156e-7,
+        0.10623363999385563,
+    ]
+    @test isapprox(w1t, w1.weights, rtol = 2e-1)
+
+    obj = :utility
+    w2 = opt_port!(
+        portfolio;
+        type = :wc,
+        obj = obj,
+        rf = rf,
+        l = l,
+        u_mu = u_mu,
+        u_cov = u_cov,
+    )
+    w2t = [
+        6.249850609532466e-7,
+        8.170065128529779e-7,
+        6.041707678329694e-7,
+        6.528321315552857e-7,
+        0.7307217030200288,
+        1.0160916942137903e-6,
+        0.10068569893056144,
+        9.88871509815226e-7,
+        9.52689034979628e-7,
+        9.181971091040971e-7,
+        1.0012546798277001e-6,
+        5.981427241479463e-7,
+        7.236787601334525e-7,
+        1.8556818866748917e-6,
+        6.869941927142363e-7,
+        0.1551564394942625,
+        0.013421830142315504,
+        1.0564533339952127e-6,
+        1.0373100192484138e-6,
+        7.940534136459138e-7,
+    ]
+    @test isapprox(w2t, w2.weights, rtol = 5e-4)
+
+    obj = :sharpe
+    w3 = opt_port!(
+        portfolio;
+        type = :wc,
+        obj = obj,
+        rf = rf,
+        l = l,
+        u_mu = u_mu,
+        u_cov = u_cov,
+    )
+    w3t = [
+        9.425298153481569e-8,
+        0.007073841314015601,
+        0.003647301988893631,
+        0.002143029057834607,
+        0.25509409554063905,
+        1.4508131967668247e-7,
+        0.0237087627516105,
+        0.0846120886281732,
+        1.04499399410417e-7,
+        1.0881499818399843e-7,
+        0.1591276657551652,
+        1.2974886238460514e-7,
+        1.747203278457603e-7,
+        1.137893333408305e-7,
+        1.982254237382227e-7,
+        0.08446098567398486,
+        0.1676542316742212,
+        0.1024882758255068,
+        0.07712800939982682,
+        0.03286064325748225,
+    ]
+    @test isapprox(w3t, w3.weights, rtol = 3e-4)
+
+    obj = :max_ret
+    w4 = opt_port!(
+        portfolio;
+        type = :wc,
+        obj = obj,
+        rf = rf,
+        l = l,
+        u_mu = u_mu,
+        u_cov = u_cov,
+    )
+    w4t = [
+        3.2785360317546865e-7,
+        3.277651549990667e-7,
+        3.2749061682433446e-7,
+        3.2759712848169483e-7,
+        3.263669391193336e-7,
+        3.2960532904280036e-7,
+        0.9999937624903834,
+        3.283999043241006e-7,
+        3.2769142287410493e-7,
+        3.282191393272515e-7,
+        3.284647964761609e-7,
+        3.2942051061591465e-7,
+        3.306618738845943e-7,
+        3.2888460786361097e-7,
+        3.3051517948690895e-7,
+        3.2724554933157827e-7,
+        3.274460777090779e-7,
+        3.282989351211649e-7,
+        3.276454083175829e-7,
+        3.2793743972384104e-7,
+    ]
+    @test isapprox(w4t, w4.weights, rtol = 8e-6)
+
+    println("Ellipse constraints.")
+
+    u_mu = :ellipse
+    u_cov = :ellipse
+
+    obj = :min_risk
+    w1 = opt_port!(
+        portfolio;
+        type = :wc,
+        obj = obj,
+        rf = rf,
+        l = l,
+        u_mu = u_mu,
+        u_cov = u_cov,
+    )
+    w1t = [
+        0.04575657544088472,
+        0.053735706466928296,
+        0.03357663579665715,
+        0.027599152643458975,
+        0.026999318730300346,
+        0.07628481338065358,
+        2.5807442082003127e-6,
+        0.12800652741382687,
+        7.307616033791112e-7,
+        0.04198563146996374,
+        0.1456887081490273,
+        2.7183395795677573e-6,
+        2.695234982598573e-6,
+        0.098163447443081,
+        0.006309400111063376,
+        0.03361981192575585,
+        0.05190857389327573,
+        0.1179248473329071,
+        0.028727069204417584,
+        0.08370505551742466,
+    ]
+    @test isapprox(w1t, w1.weights, rtol = 4.5e-1)
+
+    obj = :utility
+    w2 = opt_port!(
+        portfolio;
+        type = :wc,
+        obj = obj,
+        rf = rf,
+        l = l,
+        u_mu = u_mu,
+        u_cov = u_cov,
+    )
+    w2t = [
+        0.05836097263050467,
+        0.07219655210521853,
+        0.07746975978348467,
+        0.043980624527980385,
+        0.11908058650794305,
+        5.731370837217665e-10,
+        0.02100799510218614,
+        0.04681526869876252,
+        0.0554877650318664,
+        0.03426395750768164,
+        0.05310074699706495,
+        8.596059371035636e-10,
+        4.695849317296193e-10,
+        7.722584887057806e-5,
+        8.37738805053468e-10,
+        0.04864045304215319,
+        0.13627886390161734,
+        0.059432671054686456,
+        0.09672024778361628,
+        0.0770863067362965,
+    ]
+    @test isapprox(w2t, w2.weights, rtol = 5.8e-1)
+
+    obj = :max_ret
+    w4 = opt_port!(
+        portfolio;
+        type = :wc,
+        obj = obj,
+        rf = rf,
+        l = l,
+        u_mu = u_mu,
+        u_cov = u_cov,
+    )
+    w4t = [
+        0.07147451639011364,
+        0.07806646170063102,
+        0.08362929983536965,
+        0.054247299148853734,
+        0.10740535060623026,
+        1.2566279166284865e-8,
+        0.010495906255848236,
+        0.04121037789616773,
+        0.06416366176506018,
+        0.03533845505931062,
+        0.024234512161978257,
+        1.2556209135976066e-8,
+        1.259060767692178e-8,
+        1.2543731423465839e-8,
+        1.2590534576966392e-8,
+        0.038306017632850714,
+        0.12700244774304462,
+        0.07714207922523156,
+        0.09895658834403429,
+        0.08832696338791353,
+    ]
+    @test isapprox(w4t, w4.weights, rtol = 1.5e-1)
+
+    println("No constraints.")
+
+    u_mu = :none
+    u_cov = :none
+
+    obj = :min_risk
+    w1 = opt_port!(
+        portfolio;
+        type = :wc,
+        obj = obj,
+        rf = rf,
+        l = l,
+        u_mu = u_mu,
+        u_cov = u_cov,
+    )
+    w1t = opt_port!(portfolio; obj = obj, rf = rf, l = l)
+    @test isapprox(w1t.weights, w1.weights)
+
+    obj = :utility
+    w2 = opt_port!(
+        portfolio;
+        type = :wc,
+        obj = obj,
+        rf = rf,
+        l = l,
+        u_mu = u_mu,
+        u_cov = u_cov,
+    )
+    w2t = opt_port!(portfolio; obj = obj, rf = rf, l = l)
+    @test isapprox(w2t.weights, w2.weights)
+
+    obj = :sharpe
+    w3 = opt_port!(
+        portfolio;
+        type = :wc,
+        obj = obj,
+        rf = rf,
+        l = l,
+        u_mu = u_mu,
+        u_cov = u_cov,
+    )
+    w3t = opt_port!(portfolio; obj = obj, rf = rf, l = l)
+    @test isapprox(w3t.weights, w3.weights, rtol = 5e-5)
+
+    obj = :max_ret
+    w4 = opt_port!(
+        portfolio;
+        type = :wc,
+        obj = obj,
+        rf = rf,
+        l = l,
+        u_mu = u_mu,
+        u_cov = u_cov,
+    )
+    w4t = [
+        6.591506961818588e-10,
+        6.494879151766554e-10,
+        6.022468227279762e-10,
+        6.235615370874996e-10,
+        1.3894389819842054e-7,
+        6.083226580400363e-10,
+        0.9999998497564201,
+        6.738365636585473e-10,
+        6.393498420433515e-10,
+        6.756198431499237e-10,
+        6.721730229571437e-10,
+        6.201198647882355e-10,
+        5.465672666162631e-10,
+        6.531978104434234e-10,
+        5.543758739133227e-10,
+        5.556109106910564e-10,
+        5.92664620457268e-10,
+        6.754160234011708e-10,
+        6.319894087555209e-10,
+        6.659910435838176e-10,
+    ]
+    @test isapprox(w4t, w4.weights, rtol = 3e-7)
 end
