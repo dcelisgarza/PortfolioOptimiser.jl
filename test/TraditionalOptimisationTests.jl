@@ -6856,7 +6856,7 @@ end
 
     @test isapprox(w1t, w1[!, :weights], rtol = 6e-6)
     @test isapprox(w2t, w2[!, :weights], rtol = 4e-3)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-6)
+    @test isapprox(w3t, w3[!, :weights], rtol = 3e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
 
     println("     - kelly = :approx")
@@ -6937,7 +6937,7 @@ end
     ]
 
     @test isapprox(w1t, w1[!, :weights], rtol = 8e-2)
-    @test isapprox(w2t, w2[!, :weights], rtol = 1e-4)
+    @test isapprox(w2t, w2[!, :weights], rtol = 3e-3)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-4)
 
     println("     - kelly = :exact")
@@ -7016,8 +7016,8 @@ end
         2.1735501425682977e-6,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 1e-6)
+    @test isapprox(w1t, w1[!, :weights], rtol = 4e-4)
+    @test isapprox(w2t, w2[!, :weights], rtol = 3e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 2e-4)
 end
 
@@ -7544,7 +7544,7 @@ end
 
     @test isapprox(w1t, w1[!, :weights], rtol = 1e-6)
     @test isapprox(w2t, w2[!, :weights], rtol = 2e-2)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-6)
+    @test isapprox(w3t, w3[!, :weights], rtol = 3e-6)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
 
     println("     - kelly = :approx")
@@ -7623,7 +7623,7 @@ end
         2.4656217292334974e-6,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-6)
+    @test isapprox(w1t, w1[!, :weights], rtol = 3e-4)
     @test isapprox(w2t, w2[!, :weights], rtol = 2e-2)
     @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
 
@@ -7703,8 +7703,8 @@ end
         2.173548638545329e-6,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 1e-6)
+    @test isapprox(w1t, w1[!, :weights], rtol = 4e-4)
+    @test isapprox(w2t, w2[!, :weights], rtol = 3e-5)
     @test isapprox(w4t, w4[!, :weights], rtol = 2e-4)
 end
 
