@@ -28,10 +28,10 @@ function owa_gmd(T)
 end
 
 function owa_cvar(T, alpha = 0.05)
-    k = ceil(Int, T * alpha)
+    k = floor(Int, T * alpha)
     w = zeros(T)
-    w[1:(k - 1)] .= -1 / (T * alpha)
-    w[k] = -1 - sum(w[1:(k - 1)])
+    w[1:k] .= -1 / (T * alpha)
+    w[k + 1] = -1 - sum(w[1:k])
 
     return w
 end
@@ -78,17 +78,6 @@ end
 function owa_rcvar(T; alpha = 0.05, beta = nothing)
     isnothing(beta) && (beta = alpha)
     w = owa_cvar(T, alpha) .- reverse(owa_cvar(T, beta))
-
-    return w
-end
-
-function owa_wcvrg(T, alphas, weights_a, betas = nothing, weights_b = nothing)
-    if isnothing(betas) || isnothing(weights_b)
-        betas = alphas
-        weights_b = weights_a
-    end
-
-    w = owa_wcvar(T, alphas, weights_a) .- reverse(owa_wcvar(T, betas, weights_b))
 
     return w
 end
@@ -247,4 +236,5 @@ function owa_l_moment_crm(
     return w
 end
 
-export owa_l_moment_crm
+export owa_l_moment_crm,
+    owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_wcvrg, owa_rtg

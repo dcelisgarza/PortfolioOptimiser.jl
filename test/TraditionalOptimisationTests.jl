@@ -7708,6 +7708,474 @@ end
     @test isapprox(w4t, w4[!, :weights], rtol = 2e-4)
 end
 
+@testset "OWA optimisations" begin
+    println("OWA optimisations.")
+    portfolio = Portfolio(
+        returns = returns[1:100, :],
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false),
+            ), # "max_step_fraction" => 0.75
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            # :ECOS =>
+            #     Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            # :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
+            # :HiGHS => Dict(
+            #     :solver => HiGHS.Optimizer,
+            #     :params => Dict("log_to_console" => false),
+            # ),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    portfolio.owa_w = owa_wr(size(portfolio.returns, 1))
+    portfolio.owa_u = Inf
+    portfolio.wr_u = Inf
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; type = :trad, rm = :wr, obj = obj, rf = rf, l = l)
+    r1 = calc_risk(portfolio; rm = :wr)
+    w2 = opt_port!(portfolio; type = :trad, rm = :owa, obj = obj, rf = rf, l = l)
+    r2 = calc_risk(portfolio; rm = :wr)
+    @test isapprox(w1.weights, w2.weights)
+
+    obj = :sharpe
+    w3 = opt_port!(portfolio; type = :trad, rm = :wr, obj = obj, rf = rf, l = l)
+    r3 = calc_risk(portfolio; rm = :wr)
+    w4 = opt_port!(portfolio; type = :trad, rm = :owa, obj = obj, rf = rf, l = l)
+    r4 = calc_risk(portfolio; rm = :wr)
+    @test isapprox(w3.weights, w4.weights, rtol = 3e-5)
+
+    obj = :max_ret
+    portfolio.owa_u = r4
+    w5 = opt_port!(portfolio; type = :trad, rm = :owa, obj = obj, rf = rf, l = l)
+    @test isapprox(w5.weights, w4.weights, rtol = 7e-8)
+
+    obj = :sharpe
+    portfolio.owa_u = r2
+    w6 = opt_port!(portfolio; type = :trad, rm = :owa, obj = obj, rf = rf, l = l)
+    @test isapprox(w2.weights, w6.weights, rtol = 9e-10)
+
+    portfolio = Portfolio(
+        returns = returns[1:100, :],
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false),
+            ), # "max_step_fraction" => 0.75
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            # :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
+            # :HiGHS => Dict(
+            #     :solver => HiGHS.Optimizer,
+            #     :params => Dict("log_to_console" => false),
+            # ),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    portfolio.owa_w = owa_gmd(size(portfolio.returns, 1))
+    rm = :gmd
+    portfolio.gmd_u = Inf
+    portfolio.owa_u = Inf
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r1 = calc_risk(portfolio; rm = rm)
+    w2 = opt_port!(portfolio; type = :trad, rm = :owa, obj = obj, rf = rf, l = l)
+    r2 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w1.weights, w2.weights, rtol = 1e-3)
+
+    obj = :sharpe
+    w3 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r3 = calc_risk(portfolio; rm = rm)
+    w4 = opt_port!(portfolio; type = :trad, rm = :owa, obj = obj, rf = rf, l = l)
+    r4 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w3.weights, w4.weights, rtol = 6e-5)
+
+    obj = :max_ret
+    portfolio.gmd_u = r3
+    w5 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r5 = calc_risk(portfolio; rm = rm)
+    portfolio.gmd_u = Inf
+    portfolio.owa_u = r4
+    w6 = opt_port!(portfolio; type = :trad, rm = :owa, obj = obj, rf = rf, l = l)
+    r6 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w5.weights, w6.weights, rtol = 4e-5)
+
+    portfolio.gmd_u = Inf
+    portfolio.owa_u = Inf
+    obj = :sharpe
+    portfolio.gmd_u = r1
+    w7 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r7 = calc_risk(portfolio; rm = rm)
+    portfolio.gmd_u = Inf
+    portfolio.owa_u = r2
+    w8 = opt_port!(portfolio; type = :trad, rm = :owa, obj = obj, rf = rf, l = l)
+    r8 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w7.weights, w8.weights, rtol = 8e-4)
+
+    portfolio = Portfolio(
+        returns = returns[1:100, :],
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false),
+            ), # "max_step_fraction" => 0.75
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            # :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
+            # :HiGHS => Dict(
+            #     :solver => HiGHS.Optimizer,
+            #     :params => Dict("log_to_console" => false),
+            # ),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    rm = :rg
+    portfolio.rg_u = Inf
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r1 = calc_risk(portfolio; rm = rm)
+    w1t = [
+        1.0065872796863453e-11,
+        2.1172409094512587e-12,
+        4.656469039402821e-11,
+        0.005579310299754643,
+        0.10757009230887618,
+        0.17194950789532434,
+        0.028498664407906254,
+        0.2758340964489913,
+        5.86034619543313e-12,
+        8.20789757894973e-12,
+        0.1944512388249204,
+        2.296762782961449e-12,
+        3.236306403625521e-11,
+        0.015606557975161818,
+        1.9802846057251476e-12,
+        2.256669267968185e-12,
+        9.87317609550903e-12,
+        9.774694044687755e-12,
+        2.3565804667776783e-11,
+        0.2005105316841385,
+    ]
+    @test isapprox(w1.weights, w1t, rtol = 1e-8)
+
+    obj = :sharpe
+    w2 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r2 = calc_risk(portfolio; rm = rm)
+    w2t = [
+        4.8040690556815e-11,
+        0.1363058983570171,
+        2.589189601257243e-11,
+        3.0730462766521974e-11,
+        0.21282385997488296,
+        2.296010906040605e-11,
+        5.069310961114895e-11,
+        3.5887534233031304e-10,
+        8.44325403872794e-12,
+        2.1864060494758833e-11,
+        2.231454700456383e-11,
+        3.7326744964614845e-11,
+        0.051052004528936296,
+        1.9879352428374655e-12,
+        8.762386015951151e-11,
+        3.429891470282633e-11,
+        2.6966289651644305e-9,
+        0.2592901895134874,
+        2.088484713846883e-11,
+        0.3405280441571115,
+    ]
+    @test isapprox(w2.weights, w2t, rtol = 1e-8)
+
+    obj = :max_ret
+    portfolio.rg_u = r2
+    w3 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r3 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w3.weights, w2.weights, rtol = 8e-8)
+
+    obj = :sharpe
+    portfolio.rg_u = r1
+    w4 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r4 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w4.weights, w1.weights, rtol = 4e-7)
+
+    portfolio = Portfolio(
+        returns = returns[1:100, :],
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false),
+            ), # "max_step_fraction" => 0.75
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            # :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
+            # :HiGHS => Dict(
+            #     :solver => HiGHS.Optimizer,
+            #     :params => Dict("log_to_console" => false),
+            # ),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    rm = :rcvar
+    portfolio.rcvar_u = Inf
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r1 = calc_risk(portfolio; rm = rm)
+    w1t = [
+        0.04631605770586672,
+        2.439474068922396e-12,
+        2.7825313317216076e-11,
+        0.009382704469318921,
+        0.06381054054465991,
+        0.1183875645301668,
+        5.019947727736155e-12,
+        0.2257900349650555,
+        8.702889875205234e-12,
+        5.2449517836383804e-12,
+        0.34102324405814416,
+        1.4189672404350314e-11,
+        1.9365220911621207e-11,
+        1.7980956445223487e-9,
+        2.444259484631097e-12,
+        1.7822926621285815e-11,
+        3.762012963255535e-11,
+        0.045856691705033044,
+        1.8934623365967657e-11,
+        0.1494331600640499,
+    ]
+    @test isapprox(w1.weights, w1t, rtol = 1e-8)
+
+    obj = :sharpe
+    w2 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r2 = calc_risk(portfolio; rm = rm)
+    w2t = [
+        2.344861032727787e-11,
+        0.34443801449432965,
+        1.2576648160903799e-11,
+        1.666939063677421e-11,
+        0.03627867821942035,
+        1.456685809365143e-11,
+        2.664961126288338e-11,
+        5.156646589690019e-10,
+        1.0612812094460367e-11,
+        3.910100694108692e-11,
+        3.667704780486475e-14,
+        2.4261883811051277e-12,
+        0.02002758605086437,
+        1.2111762715383566e-11,
+        4.67053785267986e-11,
+        1.1489072256406304e-11,
+        7.414396737077622e-11,
+        0.3127803065776162,
+        1.2082411621514808e-11,
+        0.28647541383948427,
+    ]
+    @test isapprox(w2.weights, w2t, rtol = 1e-8)
+
+    obj = :max_ret
+    portfolio.rcvar_u = r2
+    w3 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r3 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w3.weights, w2.weights, rtol = 3e-4)
+
+    obj = :sharpe
+    portfolio.rcvar_u = r1
+    w4 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r4 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w4.weights, w1.weights, rtol = 5e-6)
+
+    portfolio = Portfolio(
+        returns = returns[1:100, :],
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false),
+            ), # "max_step_fraction" => 0.75
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            # :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
+            # :HiGHS => Dict(
+            #     :solver => HiGHS.Optimizer,
+            #     :params => Dict("log_to_console" => false),
+            # ),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    rm = :tg
+    portfolio.tg_u = Inf
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r1 = calc_risk(portfolio; rm = rm)
+    w1t = [
+        2.9629604999600752e-12,
+        1.3172830824827146e-12,
+        0.05607738995137136,
+        0.05649863708151018,
+        0.018854132355071794,
+        7.074417451706739e-12,
+        2.4054872616101202e-14,
+        0.2972001759702997,
+        1.6316785013199786e-12,
+        4.338487661044525e-13,
+        0.37575766068547595,
+        2.1104229834455135e-13,
+        0.0019134826765316978,
+        0.06033991076180079,
+        6.938347228404816e-13,
+        3.643319918681142e-13,
+        1.415563364180365e-12,
+        0.13335861049810332,
+        1.3607104480014456e-12,
+        2.345483649462695e-12,
+    ]
+    @test isapprox(w1.weights, w1t, rtol = 1e-8)
+
+    obj = :sharpe
+    w2 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r2 = calc_risk(portfolio; rm = rm)
+    w2t = [
+        2.653130304349078e-10,
+        0.18585547050128823,
+        1.5031499112610813e-11,
+        2.6864417032965195e-11,
+        0.044607198059599375,
+        1.0617121196363914e-10,
+        4.867342571782538e-10,
+        0.2666938887315908,
+        8.178071147385676e-11,
+        4.0438182027182395e-10,
+        2.6432147383329667e-10,
+        1.9820872246245402e-10,
+        0.07200195552437774,
+        1.1952515770258174e-10,
+        7.582791762421663e-10,
+        6.329116056527242e-10,
+        3.7479639077868744e-10,
+        0.25259697810310033,
+        8.450875220544656e-11,
+        0.17824450526121516,
+    ]
+    @test isapprox(w2.weights, w2t, rtol = 1e-8)
+
+    obj = :max_ret
+    portfolio.tg_u = r2
+    w3 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r3 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w3.weights, w2.weights, rtol = 9e-6)
+
+    obj = :sharpe
+    portfolio.tg_u = r1
+    w4 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r4 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w4.weights, w1.weights, rtol = 3e-7)
+
+    portfolio = Portfolio(
+        returns = returns[1:100, :],
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false),
+            ), # "max_step_fraction" => 0.75
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+            # :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 1)),
+            # :HiGHS => Dict(
+            #     :solver => HiGHS.Optimizer,
+            #     :params => Dict("log_to_console" => false),
+            # ),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    rm = :rtg
+    portfolio.rtg_u = Inf
+
+    obj = :min_risk
+    w1 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r1 = calc_risk(portfolio; rm = rm)
+    w1t = [
+        0.02315418871225564,
+        3.122611999363298e-14,
+        0.007325004771381733,
+        9.275640969720347e-11,
+        0.08929240913364729,
+        0.06773822313206025,
+        0.004091970458800883,
+        0.21769907714189168,
+        6.666591902366087e-12,
+        1.226463379185659e-11,
+        0.37541981893837634,
+        4.939341219546928e-12,
+        2.8792655667398515e-12,
+        1.5495866519268611e-10,
+        1.968261186822617e-11,
+        5.658963367983038e-12,
+        6.3901457915964e-12,
+        0.00797806191374815,
+        7.16449046986415e-12,
+        0.20730124548444573,
+    ]
+    @test isapprox(w1.weights, w1t, rtol = 1e-8)
+
+    obj = :sharpe
+    w2 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r2 = calc_risk(portfolio; rm = rm)
+    w2t = [
+        8.446019300435742e-12,
+        0.24942121610745158,
+        4.414767671325562e-12,
+        6.514630905923817e-12,
+        0.11403343654728389,
+        5.2559199788330226e-12,
+        9.613683260640885e-12,
+        4.512367266433344e-11,
+        4.0170137588017504e-12,
+        1.1590616822632309e-11,
+        2.789163256079482e-13,
+        4.955618365720267e-13,
+        0.02673618318770693,
+        4.437343601822197e-12,
+        1.665942288342791e-11,
+        8.038261392118368e-12,
+        5.1950888122255964e-11,
+        0.3207065925852136,
+        4.501763836989433e-12,
+        0.28910257139100554,
+    ]
+    @test isapprox(w2.weights, w2t, rtol = 1e-8)
+
+    obj = :max_ret
+    portfolio.rtg_u = r2
+    w3 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r3 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w3.weights, w2.weights, rtol = 4e-8)
+
+    obj = :sharpe
+    portfolio.rtg_u = r1
+    w4 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    r4 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w4.weights, w1.weights, rtol = 3e-6)
+end
+
 @testset "constraints" begin
     println("Short portfolios.")
     portfolio = Portfolio(
