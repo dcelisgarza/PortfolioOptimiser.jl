@@ -8,7 +8,7 @@ function _naive_risk(portfolio, returns, covariance; rm = :mv, rf = 0.0)
     else
         inv_risk = Vector{tcov}(undef, N)
         w = Vector{tcov}(undef, N)
-        for i in 1:N
+        for i in eachindex(w)
             w .= zero(tcov)
             w[i] = one(tcov)
             risk = calc_risk(
@@ -166,7 +166,8 @@ function _recursive_bisection(
     lower_bound = nothing,
 )
     N = length(portfolio.assets)
-    weights = fill(1.0, N)
+    weights = ones(N)
+    w = ones(N)
     sort_order = portfolio.clusters.order
     items = [sort_order]
     returns = portfolio.returns
@@ -269,7 +270,6 @@ function pre_order(a::ClusterNode, func::Function = x -> x.id)
 
     return preorder
 end
-
 function to_tree(a::Hclust)
     n = length(a.order)
     d = Vector{ClusterNode}(undef, 2 * n - 1)
@@ -481,11 +481,11 @@ function opt_port!(
     rf::Real = 0.0,
     l::Real = 2.0,
     linkage::Symbol = :single,
-    k = nothing,
-    max_k = 10,
+    k = portfolio.k,
+    max_k::Int = 10,
     branchorder = :optimal,
     max_iter = 100,
-    save_opt_params = true,
+    cluster = true,
 )
     @assert(type ∈ HRTypes, "type must be one of $HRTypes")
     @assert(rm ∈ HRRiskMeasures, "rm must be one of $HRRiskMeasures")
@@ -500,13 +500,13 @@ function opt_port!(
 
     N = length(portfolio.assets)
 
-    portfolio.clusters, tk =
-        _hierarchical_clustering(portfolio, type, linkage, max_k, branchorder)
-
-    portfolio.k = isnothing(k) ? tk : k
+    if cluster
+        portfolio.clusters, tk =
+            _hierarchical_clustering(portfolio, type, linkage, max_k, branchorder)
+        portfolio.k = isnothing(k) ? tk : k
+    end
 
     upper_bound, lower_bound = _setup_hr_weights(portfolio.w_max, portfolio.w_min, N)
-
     if type == :hrp
         weights = _recursive_bisection(
             portfolio;
@@ -529,11 +529,9 @@ function opt_port!(
         weights =
             _inter_weights(portfolio, intra_weights, obj = obj, rm = rm, rf = rf, l = l)
     end
-
     weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
 
     portfolio.p_optimal = DataFrame(tickers = portfolio.assets, weights = weights)
-
     return portfolio.p_optimal
 end
 

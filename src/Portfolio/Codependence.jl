@@ -263,3 +263,5 @@ function covgerber2(x, threshold = 0.5; std_func = std, std_args = (), std_kwarg
 
     return mtx .* (std_vec * transpose(std_vec))
 end
+
+export covgerber1, covgerber2

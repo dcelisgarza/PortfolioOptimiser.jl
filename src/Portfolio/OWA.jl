@@ -237,4 +237,4 @@ function owa_l_moment_crm(
 end
 
 export owa_l_moment_crm,
-    owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_wcvrg, owa_rtg
+    owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_rtg

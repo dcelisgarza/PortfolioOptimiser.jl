@@ -85,6 +85,7 @@ function asset_statistics!(
     cor_func::Function = cor,
     std_func = std,
     dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
+    codep_type::Symbol = isa(portfolio, HCPortfolio) ? portfolio.codep_type : :pearson,
     custom_mu = nothing,
     custom_cov = nothing,
     custom_kurt = nothing,
@@ -123,8 +124,6 @@ function asset_statistics!(
             missing, portfolio.L_2, portfolio.S_2 = dup_elim_sum_matrices(N)
         end
     else
-        codep_type = portfolio.codep_type
-
         if codep_type == :pearson
             codep = cor(returns)
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
@@ -147,7 +146,7 @@ function asset_statistics!(
             codep = cov2cor(
                 covgerber1(
                     returns,
-                    portfolio.gs_threshold,
+                    portfolio.gs_threshold;
                     std_func = std_func,
                     std_args = std_args,
                     std_kwargs = std_kwargs,
@@ -158,7 +157,7 @@ function asset_statistics!(
             codep = cov2cor(
                 covgerber2(
                     returns,
-                    portfolio.gs_threshold,
+                    portfolio.gs_threshold;
                     std_func = std_func,
                     std_args = std_args,
                     std_kwargs = std_kwargs,
