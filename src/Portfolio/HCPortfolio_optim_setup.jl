@@ -32,16 +32,35 @@ function _naive_risk(portfolio, returns, covariance; rm = :mv, rf = 0.0)
     return weights
 end
 
-function _opt_w(portfolio, returns, mu, icov; obj = :min_risk, rm = :mv, rf = 0.0, l = 2.0)
+function _opt_w(
+    portfolio,
+    returns,
+    mu,
+    icov;
+    obj = :min_risk,
+    kelly = :none,
+    rm = :mv,
+    rf = 0.0,
+    l = 2.0,
+)
     port = Portfolio(assets = 1:length(mu), ret = returns, solvers = portfolio.solvers)
     asset_statistics!(port; calc_kurt = false)
     port.cov = icov
 
     weights = if obj ∈ (:min_risk, :utility, :sharpe)
         !isnothing(mu) && (port.mu = mu)
-        opt_port!(port; type = :trad, class = :classic, rm = rm, obj = obj, rf = rf, l = l)
+        opt_port!(
+            port;
+            type = :trad,
+            class = :classic,
+            rm = rm,
+            obj = obj,
+            kelly = kelly,
+            rf = rf,
+            l = l,
+        )
     elseif obj == :erc
-        opt_port!(port; type = :rp, class = :classic, rm = rm, rf = rf)
+        opt_port!(port; type = :rp, class = :classic, rm = rm, kelly = kelly, rf = rf)
     end
 
     return weights[!, :weights]
@@ -386,7 +405,14 @@ function _hierarchical_recursive_bisection(
     return weights
 end
 
-function _intra_weights(portfolio; obj = :min_risk, rm = :mv, rf = 0.0, l = 2.0)
+function _intra_weights(
+    portfolio;
+    obj = :min_risk,
+    kelly = :none,
+    rm = :mv,
+    rf = 0.0,
+    l = 2.0,
+)
     returns = portfolio.returns
     mu = portfolio.mu
     covariance = portfolio.cov
@@ -400,7 +426,17 @@ function _intra_weights(portfolio; obj = :min_risk, rm = :mv, rf = 0.0, l = 2.0)
         cmu = !isnothing(mu) ? mu[idx] : nothing
         ccov = covariance[idx, idx]
         cret = returns[:, idx]
-        weights = _opt_w(portfolio, cret, cmu, ccov; obj = obj, rm = rm, rf = rf, l = l)
+        weights = _opt_w(
+            portfolio,
+            cret,
+            cmu,
+            ccov;
+            obj = obj,
+            kelly = kelly,
+            rm = rm,
+            rf = rf,
+            l = l,
+        )
         intra_weights[idx, i] .= weights
     end
 
@@ -411,6 +447,7 @@ function _inter_weights(
     portfolio,
     intra_weights;
     obj = :min_risk,
+    kelly = :none,
     rm = :mv,
     rf = 0.0,
     l = 2.0,
@@ -421,7 +458,17 @@ function _inter_weights(
     tmu = !isnothing(mu) ? transpose(intra_weights) * mu : nothing
     tcov = transpose(intra_weights) * covariance * intra_weights
     tret = returns * intra_weights
-    inter_weights = _opt_w(portfolio, tret, tmu, tcov; obj = obj, rm = rm, rf = rf, l = l)
+    inter_weights = _opt_w(
+        portfolio,
+        tret,
+        tmu,
+        tcov;
+        obj = obj,
+        kelly = kelly,
+        rm = rm,
+        rf = rf,
+        l = l,
+    )
 
     weights = intra_weights * inter_weights
 
@@ -525,9 +572,17 @@ function opt_port!(
             lower_bound = lower_bound,
         )
     else
-        intra_weights = _intra_weights(portfolio; obj = obj, rm = rm, rf = rf, l = l)
-        weights =
-            _inter_weights(portfolio, intra_weights, obj = obj, rm = rm, rf = rf, l = l)
+        intra_weights =
+            _intra_weights(portfolio; obj = obj, kelly = kelly, rm = rm, rf = rf, l = l)
+        weights = _inter_weights(
+            portfolio,
+            intra_weights,
+            obj = obj,
+            kelly = kelly,
+            rm = rm,
+            rf = rf,
+            l = l,
+        )
     end
     weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
 
