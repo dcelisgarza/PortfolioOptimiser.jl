@@ -62,8 +62,7 @@ function _setup_return(portfolio, type, class, kelly, obj, T, rf, returns, mu)
             obj == :sharpe && @constraint(model, ret - rf * model[:k] == 1)
         end
     elseif type == :rp || type == :rrp
-        # Exact is infeasable with exponential cone rp weight constraints.
-        if kelly == :exact && type == :rrp
+        if kelly == :exact #&& type == :rrp
             @variable(model, texact_kelly[1:T])
             @expression(model, ret, sum(texact_kelly) / T)
             @expression(model, kret, 1 .+ returns * model[:w])

@@ -25,6 +25,7 @@ include("./AssetAllocation/AssetAllocation.jl")
 
 # Version 2.0
 using SparseArrays, Random, DataFrames, JuMP, Dates, Distributions, PyCall, Distances
+include("./Portfolio/Constraint_functions.jl")
 include("./Portfolio/Definitions.jl")
 include("./Portfolio/DBHTs.jl")
 include("./Portfolio/OWA.jl")
