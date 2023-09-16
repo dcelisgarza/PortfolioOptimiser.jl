@@ -1,10 +1,6 @@
-using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates
+using Test, PortfolioOptimiser, DataFrames
 
 @testset "Asset constraints" begin
-    A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
-    Y = percentchange(A)
-    returns = dropmissing!(DataFrame(Y))
-
     asset_classes = Dict(
         "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
         "Class 1" => [
