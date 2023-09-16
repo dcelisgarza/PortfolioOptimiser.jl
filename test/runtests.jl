@@ -1,11 +1,15 @@
 using SafeTestsets
 
-@safetestset "Misc tests" begin
+@safetestset "Misc" begin
     include("MiscTests.jl")
 end
 
 @safetestset "Risk measures" begin
     include("RiskMeasureTests.jl")
+end
+
+@safetestset "Constraint functions" begin
+    include("ConstraintTests.jl")
 end
 
 @safetestset "Codependence and distance functions" begin
