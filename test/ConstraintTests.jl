@@ -1601,3 +1601,60 @@ end
     @test isapprox(Ct, C)
     @test Dt == D
 end
+
+@testset "Views constraints" begin
+    asset_classes = Dict(
+        "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
+        "Class 1" => [
+            "Equity",
+            "Equity",
+            "Equity",
+            "Equity",
+            "Equity",
+            "Fixed Income",
+            "Fixed Income",
+        ],
+        "Class 2" => [
+            "Technology",
+            "Technology",
+            "Technology",
+            "Financial",
+            "Financial",
+            "Treasury",
+            "Treasury",
+        ],
+    )
+
+    asset_classes = DataFrame(asset_classes)
+    sort!(asset_classes, "Assets")
+
+    views = Dict(
+        "Enabled" => [true, true, true, true, true],
+        "Type" => ["Assets", "Classes", "Classes", "Assets", "Classes"],
+        "Set" => ["", "Class 2", "Class 1", "", "Class 1"],
+        "Position" => ["WFC", "Financial", "Equity", "FB", "Fixed Income"],
+        "Sign" => ["<=", ">=", ">=", ">=", "<="],
+        "Return" => [0.3, 0.1, 0.05, 0.03, 0.017],
+        "Type Relative" => ["Assets", "Classes", "Assets", "", ""],
+        "Relative Set" => ["", "Class 1", "", "", ""],
+        "Relative" => ["FB", "Fixed Income", "TLT", "", ""],
+    )
+
+    views = DataFrame(views)
+    P, Q = asset_views(views, asset_classes)
+
+    Pt = transpose(
+        hcat(
+            [
+                [-0.0, -1.0, -0.0, -0.0, -0.0, -0.0, 1.0],
+                [0.5, 0.0, 0.0, 0.0, -0.5, -0.5, 0.5],
+                [0.2, 0.2, 0.2, 0.2, 0.0, -1.0, 0.2],
+                [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.0],
+            ]...,
+        ),
+    )
+    Qt = vcat([[0.3], [0.1], [0.05], [0.03], [0.017]]...)
+    @test isapprox(Pt, P)
+    @test isapprox(Qt, Q)
+end

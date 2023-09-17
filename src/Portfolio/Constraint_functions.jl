@@ -171,7 +171,7 @@ function asset_views(views, asset_classes)
     for row in eachrow(views)
         valid = false
 
-        !row["Enabled"] && continue
+        !row["Enabled"] || row["Return"] == "" && continue
 
         if row["Sign"] == ">="
             d = 1
@@ -181,41 +181,48 @@ function asset_views(views, asset_classes)
 
         if row["Type"] == "Assets"
             idx = findfirst(x -> x == row["Position"], asset_list)
-            if row["Weight"] != ""
-                P1 = zeros(m)
-                P1[idx] = 1
-                if row["Type Relative"] == "Assets" && row["Relative"] != ""
-                    idx2 = findfirst(x -> x == row["Relative"], asset_list)
-                    P2 = zeros(m)
-                    P2[idx2] = 1
-                    valid = true
-                elseif row["Type Relative"] == "Classes" &&
-                       row["Relative Set"] != "" &&
-                       row["Relative"] != ""
-                    P2 = asset_classes[!, row["Relative Set"]] .== row["Relative"]
-                    P2 ./= sum(P2)
-                    valid = true
-                elseif row["Type Relative"] == "" &&
-                       row["Relative Set"] == "" &&
-                       row["Relative"] == ""
-                    P2 = zeros(m)
-                    valid = true
-                end
-
-                if valid
-                    P1 = (P1 - P2) * d
-                    P = vcat(P, transpose(P1))
-                    push!(Q, row["weight"] * d)
-                end
-            end
-        elseif row["Type"] == "All Assets"
+            P1 = zeros(m)
+            P1[idx] = 1
         elseif row["Type"] == "Classes"
-        elseif row["Type"] == "All Classes"
-        elseif row["Type"] == "Each asset in a class"
+            P1 = asset_classes[!, row["Set"]] .== row["Position"]
+            P1 = P1 / sum(P1)
+        end
+
+        if row["Type Relative"] == "Assets" && row["Relative"] != ""
+            idx2 = findfirst(x -> x == row["Relative"], asset_list)
+            P2 = zeros(m)
+            P2[idx2] = 1
+            valid = true
+        elseif row["Type Relative"] == "Classes" &&
+               row["Relative Set"] != "" &&
+               row["Relative"] != ""
+            P2 = asset_classes[!, row["Relative Set"]] .== row["Relative"]
+            P2 = P2 / sum(P2)
+            valid = true
+        elseif row["Type Relative"] == "" &&
+               row["Relative Set"] == "" &&
+               row["Relative"] == ""
+            P2 = zeros(m)
+            valid = true
+        end
+
+        if valid
+            P1 = (P1 - P2) * d
+            P = vcat(P, transpose(P1))
+            push!(Q, row["Return"] * d)
         end
     end
+
+    for i in eachindex(view(Q, :, 1))
+        if Q[i, 1] < 0
+            P[i, :] .= -P[i, :]
+            Q[i, :] .= -Q[i, :]
+        end
+    end
+
+    return P, Q
 end
 
 function factor_views(views, loadings, constraints = true) end
 
-export asset_constraints, factor_constraints
+export asset_constraints, factor_constraints, asset_views
