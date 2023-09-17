@@ -55,7 +55,7 @@ function asset_constraints(constraints, asset_classes)
                 A1 = (A1 - A2 * row["Factor"]) * d
                 B = vcat(B, zeros(m))
             end
-            A = vcat(A, transpose(A1))
+            A = vcat(A, A1)
         elseif row["Type"] == "Classes"
             A1 = asset_classes[!, row["Set"]] .== row["Position"]
             if row["Weight"] != ""
@@ -77,13 +77,13 @@ function asset_constraints(constraints, asset_classes)
             A = vcat(A, transpose(A1))
         elseif row["Type"] == "All Classes"
             if row["Weight"] != ""
-                for val in unique(asset_classes[!, row["Set"]])
+                for val in sort!(unique(asset_classes[!, row["Set"]]))
                     A1 = (asset_classes[!, row["Set"]] .== val) * d
                     A = vcat(A, transpose(A1))
                     push!(B, row["Weight"] * d)
                 end
             else
-                for val in unique(asset_classes[!, row["Set"]])
+                for val in sort!(unique(asset_classes[!, row["Set"]]))
                     A1 = asset_classes[!, row["Set"]] .== val
                     if row["Type Relative"] == "Assets" && row["Relative"] != ""
                         idx = findfirst(x -> x == row["Relative"], asset_list)
@@ -103,7 +103,7 @@ function asset_constraints(constraints, asset_classes)
             A1 = asset_classes[!, row["Set"]] .== row["Position"]
             if row["Weight"] != ""
                 for (i, j) in pairs(A1)
-                    j == 0 && continue
+                    !j && continue
                     A2 = zeros(m)
                     A2[i] = d
                     A = vcat(A, transpose(A2))
@@ -111,7 +111,7 @@ function asset_constraints(constraints, asset_classes)
                 end
             else
                 for (i, j) in pairs(A1)
-                    j == 0 && continue
+                    !j && continue
                     A2 = zeros(m)
                     A2[i] = 1
                     if row["Type Relative"] == "Assets" && row["Relative"] != ""
