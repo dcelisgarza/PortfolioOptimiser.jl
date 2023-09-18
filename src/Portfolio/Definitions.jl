@@ -121,6 +121,14 @@ const RRPVersions = (:none, :reg, :reg_pen)
 const RRPVersions = (:none, :reg, :reg_pen)
 
 """
+Types of risk parity constraints for [`rp_constraints`](@ref).
+```
+const RPConstraintTypes = (:assets, :classes)
+```
+"""
+const RPConstraintTypes = (:assets, :classes)
+
+"""
 Types of uncertainty sets for worst case optimisations.
 ```
 const UncertaintyTypes = (:none, :box, :ellipse)

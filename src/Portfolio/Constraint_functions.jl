@@ -216,13 +216,83 @@ function asset_views(views, asset_classes)
     for i in eachindex(view(Q, :, 1))
         if Q[i, 1] < 0
             P[i, :] .= -P[i, :]
-            Q[i, :] .= -Q[i, :]
+            Q[i] .= -Q[i]
         end
     end
 
     return P, Q
 end
 
-function factor_views(views, loadings, constraints = true) end
+function factor_views(views, loadings)
+    m = ncol(loadings)
+    factor_list = names(loadings)
+    P = Matrix{Float64}(undef, 0, m)
+    Q = Float64[]
 
-export asset_constraints, factor_constraints, asset_views
+    for row in eachrow(views)
+        !row["Enabled"] && continue
+
+        if row["Sign"] == ">="
+            d = 1
+        elseif row["Sign"] == "<="
+            d = -1
+        end
+
+        idx = findfirst(x -> x == row["Factor"], factor_list)
+        P1 = zeros(m)
+        P1[idx] = d
+
+        if row["Relative Factor"] != ""
+            idx = findfirst(x -> x == row["Relative Factor"], factor_list)
+            P1[idx] = -d
+        end
+
+        P = vcat(P, transpose(P1))
+        push!(Q, row["Value"] * d)
+    end
+
+    return P, Q
+end
+
+function hrp_constraints(constraints, asset_classes)
+    n = nrow(asset_classes)
+    w = zeros(n, 2)
+    w[:, 2] .= 1
+    for row in eachrow(constraints)
+        !row["Enabled"] && continue
+
+        if row["Sign"] == ">="
+            i = 1
+            op = <=
+        elseif row["Sign"] == "<="
+            i = 2
+            op = >=
+        end
+
+        if row["Type"] == "Assets"
+            idx = findfirst(x -> x == row["Position"], asset_classes[!, "Assets"])
+            op(w[idx, i], row["Weight"]) && (w[idx, i] = row["Weight"])
+        elseif row["Type"] == "All Assets"
+            !isempty(w[op.(w[:, i], row["Weight"]), i]) &&
+                (w[op.(w[:, i], row["Weight"]), i] .= row["Weight"])
+        elseif row["Type"] == "Each asset in a class"
+            assets =
+                asset_classes[asset_classes[!, row["Set"]] .== row["Position"], "Assets"]
+            idx =
+                [findfirst(x -> x == asset, asset_classes[!, "Assets"]) for asset in assets]
+
+            for ind in idx
+                if !isnothing(ind) && op(w[ind, i], row["Weight"])
+                    w[ind, i] = row["Weight"]
+                end
+            end
+        end
+    end
+    return w[:, 1], w[:, 2]
+end
+
+function risk_parity_constraints(asset_classes, type = :assets, class_col = nothing)
+    @assert(type ∈ RPConstraintTypes, "type must be one of $RPConstraintTypes")
+end
+
+export asset_constraints, factor_constraints, asset_views, factor_views, hrp_constraints

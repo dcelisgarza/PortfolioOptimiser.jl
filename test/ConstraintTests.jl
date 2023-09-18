@@ -1658,3 +1658,98 @@ end
     @test isapprox(Pt, P)
     @test isapprox(Qt, Q)
 end
+
+@testset "Factor views" begin
+    loadings = OrderedDict(
+        "const" => [0.0004, 0.0002, 0.0000, 0.0006, 0.0001, 0.0003, -0.0003],
+        "MTUM" => [0.1916, 1.0061, 0.8695, 1.9996, 0.0000, 0.0000, 0.0000],
+        "QUAL" => [0.0000, 2.0129, 1.4301, 0.0000, 0.0000, 0.0000, 0.0000],
+        "SIZE" => [0.0000, 0.0000, 0.0000, 0.4717, 0.0000, -0.1857, 0.0000],
+        "USMV" => [-0.7838, -1.6439, -1.0176, -1.4407, 0.0055, 0.5781, 0.0000],
+        "VLUE" => [1.4772, -0.7590, -0.4090, 0.0000, -0.0054, -0.4844, 0.9435],
+    )
+
+    loadings = DataFrame(loadings)
+
+    views = OrderedDict(
+        "Enabled" => [true, true, true],
+        "Factor" => ["MTUM", "USMV", "VLUE"],
+        "Sign" => ["<=", "<=", ">="],
+        "Value" => [0.9, -1.2, 0.3],
+        "Relative Factor" => ["USMV", "", ""],
+    )
+
+    views = DataFrame(views)
+
+    P, Q = factor_views(views, loadings)
+
+    Pt = transpose(hcat([[0, -1, 0, 0, 1, 0], [0, 0, 0, 0, -1, 0], [0, 0, 0, 0, 0, 1]]...))
+    Qt = vcat([[-0.9], [1.2], [0.3]]...)
+    @test isapprox(Pt, P)
+    @test isapprox(Qt, Q)
+
+    loadings = OrderedDict(
+        "MTUM" => [0.1916, 1.0061, 0.8695, 1.9996, 0.0000, 0.0000, 0.0000],
+        "QUAL" => [0.0000, 2.0129, 1.4301, 0.0000, 0.0000, 0.0000, 0.0000],
+        "SIZE" => [0.0000, 0.0000, 0.0000, 0.4717, 0.0000, -0.1857, 0.0000],
+        "USMV" => [-0.7838, -1.6439, -1.0176, -1.4407, 0.0055, 0.5781, 0.0000],
+        "VLUE" => [1.4772, -0.7590, -0.4090, 0.0000, -0.0054, -0.4844, 0.9435],
+    )
+    loadings = DataFrame(loadings)
+    P, Q = factor_views(views, loadings)
+    Pt = transpose(hcat([[-1, 0, 0, 1, 0], [0, 0, 0, -1, 0], [0, 0, 0, 0, 1]]...))
+    Qt = vcat([[-0.9], [1.2], [0.3]]...)
+    @test isapprox(Pt, P)
+    @test isapprox(Qt, Q)
+end
+
+@testset "HRP constraints" begin
+    asset_classes = Dict(
+        "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
+        "Class 1" => [
+            "Equity",
+            "Equity",
+            "Equity",
+            "Equity",
+            "Equity",
+            "Fixed Income",
+            "Fixed Income",
+        ],
+        "Class 2" => [
+            "Technology",
+            "Technology",
+            "Technology",
+            "Financial",
+            "Financial",
+            "Treasury",
+            "Treasury",
+        ],
+    )
+
+    asset_classes = DataFrame(asset_classes)
+    sort!(asset_classes, "Assets")
+
+    constraints = Dict(
+        "Enabled" => [true, true, true, true, true, true],
+        "Type" => [
+            "Assets",
+            "Assets",
+            "All Assets",
+            "All Assets",
+            "Each asset in a class",
+            "Each asset in a class",
+        ],
+        "Set" => ["", "", "", "", "Class 1", "Class 2"],
+        "Position" => ["BAC", "FB", "", "", "Fixed Income", "Financial"],
+        "Sign" => [">=", "<=", "<=", ">=", "<=", "<="],
+        "Weight" => [0.02, 0.085, 0.09, 0.01, 0.07, 0.06],
+    )
+    constraints = DataFrame(constraints)
+
+    w_min, w_max = hrp_constraints(constraints, asset_classes)
+
+    w_mint = [0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+    w_maxt = [0.06, 0.085, 0.09, 0.09, 0.07, 0.07, 0.06]
+    @test isapprox(w_mint, w_min)
+    @test isapprox(w_maxt, w_max)
+end
