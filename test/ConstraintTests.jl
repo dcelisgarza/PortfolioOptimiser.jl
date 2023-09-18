@@ -1,4 +1,4 @@
-using Test, PortfolioOptimiser, DataFrames
+using Test, PortfolioOptimiser, DataFrames, OrderedCollections
 
 @testset "Asset constraints" begin
     asset_classes = Dict(
