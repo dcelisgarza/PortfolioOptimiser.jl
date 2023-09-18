@@ -216,7 +216,7 @@ function asset_views(views, asset_classes)
     for i in eachindex(view(Q, :, 1))
         if Q[i, 1] < 0
             P[i, :] .= -P[i, :]
-            Q[i] .= -Q[i]
+            Q[i] = -Q[i]
         end
     end
 
