@@ -255,8 +255,8 @@ function factor_views(views, loadings)
 end
 
 function hrp_constraints(constraints, asset_classes)
-    n = nrow(asset_classes)
-    w = zeros(n, 2)
+    N = nrow(asset_classes)
+    w = zeros(N, 2)
     w[:, 2] .= 1
     for row in eachrow(constraints)
         !row["Enabled"] && continue
@@ -293,7 +293,6 @@ end
 
 function rp_constraints(asset_classes, type = :assets, class_col = nothing)
     @assert(type ∈ RPConstraintTypes, "type must be one of $RPConstraintTypes")
-    asset_list = asset_classes[!, "Assets"]
     N = nrow(asset_classes)
 
     if type == :assets
