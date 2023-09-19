@@ -19,8 +19,6 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Risk parity" begin
-    println("Risk parity tests...")
-
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -96,7 +94,6 @@ l = 2.0
 end
 
 @testset "Relaxed risk parity" begin
-    println("Relaxed risk parity tests...")
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -115,7 +112,6 @@ end
     rrp_ver = :none
     rrp_penalty = 20
 
-    println("rrp_ver = :none")
     portfolio.risk_budget = Float64[]
     w1 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty, rrp_ver = rrp_ver)
     m1 = dot(portfolio.mu, w1.weights)
@@ -170,7 +166,6 @@ end
     ]
     @test isapprox(w2t, w2.weights, rtol = 5e-3)
 
-    println("rrp_ver = :reg")
     rrp_ver = :reg
     portfolio.risk_budget = Float64[]
     w3 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty, rrp_ver = rrp_ver)
@@ -226,7 +221,6 @@ end
     ]
     @test isapprox(w4t, w4.weights, rtol = 7e-3)
 
-    println("rrp_ver = :reg_pen")
     rrp_ver = :reg_pen
     portfolio.risk_budget = Float64[]
     w5 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty, rrp_ver = rrp_ver)

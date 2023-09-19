@@ -4,8 +4,6 @@ A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
 
-println("Codependence and distance functions...")
-
 @testset "Codependence and distance functions" begin
     portfolio = HCPortfolio(returns = returns)
 

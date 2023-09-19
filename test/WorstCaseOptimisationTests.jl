@@ -20,8 +20,6 @@ returns = dropmissing!(DataFrame(Y))
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-println("Worst case MV optimisations...")
-
 @testset "Worst case optimisation statistics" begin
     portfolio = Portfolio(
         returns = returns,
@@ -37,8 +35,6 @@ println("Worst case MV optimisations...")
             :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
         ),
     )
-
-    println("Worst case statistics...")
 
     wc_statistics!(portfolio; box = :normal, ellipse = :normal, seed = 0)
     cov_lt = reshape(
@@ -10424,8 +10420,6 @@ println("Worst case MV optimisations...")
     asset_statistics!(portfolio)
     wc_statistics!(portfolio; box = :delta, ellipse = :normal, seed = 0)
 
-    println("Box constraints.")
-
     u_mu = :box
     u_cov = :box
 
@@ -10565,8 +10559,6 @@ println("Worst case MV optimisations...")
     ]
     @test isapprox(w4t, w4.weights, rtol = 8e-6)
 
-    println("Ellipse constraints.")
-
     u_mu = :ellipse
     u_cov = :ellipse
 
@@ -10671,8 +10663,6 @@ println("Worst case MV optimisations...")
         0.08832696338791353,
     ]
     @test isapprox(w4t, w4.weights, rtol = 1.5e-1)
-
-    println("No constraints.")
 
     u_mu = :none
     u_cov = :none

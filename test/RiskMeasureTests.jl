@@ -16,11 +16,7 @@ A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
 
-println("Risk measures...")
-
-@testset "default parameters" begin
-    println("Testing default parameters and even weights.")
-
+@testset "Risk measures" begin
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(

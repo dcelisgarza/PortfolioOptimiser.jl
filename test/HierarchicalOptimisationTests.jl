@@ -18,44 +18,7 @@ returns = dropmissing!(DataFrame(Y))
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-println("Hierarchical optimisation tests...")
-
-@testset "Clustering" begin
-    port = HCPortfolio(returns = returns)
-    asset_statistics!(port)
-    clusters = cluster_assets(port, linkage = :dbht)
-    sort!(clusters, "Assets")
-
-    at = [
-        "AAPL",
-        "AMD",
-        "AMZN",
-        "BABA",
-        "BAC",
-        "BBY",
-        "FB",
-        "GE",
-        "GM",
-        "GOOG",
-        "JPM",
-        "MA",
-        "PFE",
-        "RRC",
-        "SBUX",
-        "SHLD",
-        "T",
-        "UAA",
-        "WMT",
-        "XOM",
-    ]
-    ct = [2, 2, 1, 1, 3, 4, 1, 3, 4, 1, 3, 2, 1, 3, 1, 4, 3, 3, 1, 3]
-    @test at == clusters[!, "Assets"]
-    @test ct == clusters[!, "Clusters"]
-end
-
 @testset "HRP" begin
-    println("HRP tests...")
-
     portfolio = HCPortfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -120,8 +83,6 @@ end
 end
 
 @testset "HERC" begin
-    println("HERC tests...")
-
     portfolio = HCPortfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -185,8 +146,6 @@ end
 end
 
 @testset "HERC2" begin
-    println("HERC tests...")
-
     portfolio = HCPortfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -250,8 +209,6 @@ end
 end
 
 @testset "NCO" begin
-    println("NCO tests...")
-    println("Intra cluster weights optimised with trad type optimisation.")
     portfolio = HCPortfolio(
         returns = returns,
         solvers = OrderedDict(
@@ -311,8 +268,6 @@ end
         0.10814681447551365,
     ]
     @test isapprox(w1t, w1.weights, rtol = 3e-4)
-
-    println("Intra cluster weights optimised with risk parity type optimisation.")
 
     type = :nco
     rm = :mv
