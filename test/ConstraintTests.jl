@@ -1753,3 +1753,54 @@ end
     @test isapprox(w_mint, w_min)
     @test isapprox(w_maxt, w_max)
 end
+
+@testset "RP constraints" begin
+    asset_classes = OrderedDict(
+        "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
+        "Class 1" => [
+            "Equity",
+            "Equity",
+            "Equity",
+            "Equity",
+            "Equity",
+            "Fixed Income",
+            "Fixed Income",
+        ],
+        "Class 2" => [
+            "Technology",
+            "Technology",
+            "Technology",
+            "Financial",
+            "Financial",
+            "Treasury",
+            "Treasury",
+        ],
+    )
+    asset_classes = DataFrame(asset_classes)
+    asset_classes = sort!(asset_classes, "Assets")
+
+    w1 = rp_constraints(asset_classes, :classes, "Class 1")
+    w2 = rp_constraints(asset_classes, :classes, 2)
+    w3 = rp_constraints(asset_classes, :classes, Symbol("Class 1"))
+    w4 = rp_constraints(asset_classes, :classes, "Class 2")
+    w5 = rp_constraints(asset_classes, :classes, 3)
+    w6 = rp_constraints(asset_classes, :classes, Symbol("Class 2"))
+    wt1 = vcat([[0.1], [0.1], [0.1], [0.1], [0.25], [0.25], [0.1]]...)
+    wt2 = vcat(
+        [
+            [0.16666666666666666],
+            [0.1111111111111111],
+            [0.1111111111111111],
+            [0.1111111111111111],
+            [0.16666666666666666],
+            [0.16666666666666666],
+            [0.16666666666666666],
+        ]...,
+    )
+    @test isapprox(wt1, w1)
+    @test isapprox(wt1, w2)
+    @test isapprox(wt1, w3)
+    @test isapprox(wt2, w4)
+    @test isapprox(wt2, w5)
+    @test isapprox(wt2, w6)
+end

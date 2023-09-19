@@ -113,7 +113,7 @@ end
 function _hierarchical_clustering(
     portfolio::HCPortfolio,
     type = :hrp,
-    linkage = :ward,
+    linkage = :single,
     max_k = 10,
     branchorder = :optimal,
 )
@@ -139,6 +139,23 @@ function _hierarchical_clustering(
 
     return clustering, k
 end
+
+function cluster_assets(
+    portfolio::HCPortfolio;
+    linkage = :single,
+    max_k = 10,
+    branchorder = :optimal,
+    k = portfolio.k,
+)
+    clustering, tk = _hierarchical_clustering(portfolio, :herc, linkage, max_k, branchorder)
+
+    k = isnothing(k) ? tk : k
+
+    clustering_idx = cutree(clustering; k = k)
+
+    return DataFrame(Assets = portfolio.assets, Clusters = clustering_idx)
+end
+export cluster_assets
 
 function _cluster_risk(portfolio, returns, covariance, cluster; rm = :mv, rf = 0.0)
     cret = returns[:, cluster]

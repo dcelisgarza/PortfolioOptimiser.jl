@@ -20,6 +20,39 @@ l = 2.0
 
 println("Hierarchical optimisation tests...")
 
+@testset "Clustering" begin
+    port = HCPortfolio(returns = returns)
+    asset_statistics!(port)
+    clusters = cluster_assets(port, linkage = :dbht)
+    sort!(clusters, "Assets")
+
+    at = [
+        "AAPL",
+        "AMD",
+        "AMZN",
+        "BABA",
+        "BAC",
+        "BBY",
+        "FB",
+        "GE",
+        "GM",
+        "GOOG",
+        "JPM",
+        "MA",
+        "PFE",
+        "RRC",
+        "SBUX",
+        "SHLD",
+        "T",
+        "UAA",
+        "WMT",
+        "XOM",
+    ]
+    ct = [2, 2, 1, 1, 3, 4, 1, 3, 4, 1, 3, 2, 1, 3, 1, 4, 3, 3, 1, 3]
+    @test at == clusters[!, "Assets"]
+    @test ct == clusters[!, "Clusters"]
+end
+
 @testset "HRP" begin
     println("HRP tests...")
 

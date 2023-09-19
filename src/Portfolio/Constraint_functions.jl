@@ -1,8 +1,8 @@
 function asset_constraints(constraints, asset_classes)
-    m = nrow(asset_classes)
+    N = nrow(asset_classes)
     asset_list = asset_classes[!, "Assets"]
 
-    A = Matrix{Float64}(undef, 0, m)
+    A = Matrix{Float64}(undef, 0, N)
     B = Float64[]
 
     for row in eachrow(constraints)
@@ -16,7 +16,7 @@ function asset_constraints(constraints, asset_classes)
 
         if row["Type"] == "Assets"
             idx = findfirst(x -> x == row["Position"], asset_list)
-            A1 = zeros(m)
+            A1 = zeros(N)
             if row["Weight"] != ""
                 A1[idx] = d
                 push!(B, row["Weight"] * d)
@@ -24,7 +24,7 @@ function asset_constraints(constraints, asset_classes)
                 A1[idx] = 1
                 if row["Type Relative"] == "Assets" && row["Relative"] != ""
                     idx2 = findfirst(x -> x == row["Relative"], asset_list)
-                    A2 = zeros(m)
+                    A2 = zeros(N)
                     A2[idx2] = 1
                 elseif row["Type Relative"] == "Classes" &&
                        row["Relative Set"] != "" &&
@@ -36,24 +36,24 @@ function asset_constraints(constraints, asset_classes)
             end
             A = vcat(A, transpose(A1))
         elseif row["Type"] == "All Assets"
-            A1 = I(m)
+            A1 = I(N)
             if row["Weight"] != ""
                 A1 *= d
                 B1 = d * row["Weight"]
-                B = vcat(B, fill(B1, m))
+                B = vcat(B, fill(B1, N))
             else
                 if row["Type Relative"] == "Assets" && row["Relative"] != ""
                     idx = findfirst(x -> x == row["Relative"], asset_list)
-                    A2 = zeros(m, m)
+                    A2 = zeros(N, N)
                     A2[:, idx] .= 1
                 elseif row["Type Relative"] == "Classes" &&
                        row["Relative Set"] != "" &&
                        row["Relative"] != ""
                     A2 = asset_classes[!, row["Relative Set"]] .== row["Relative"]
-                    A2 = ones(m, m) .* transpose(A2)
+                    A2 = ones(N, N) .* transpose(A2)
                 end
                 A1 = (A1 - A2 * row["Factor"]) * d
-                B = vcat(B, zeros(m))
+                B = vcat(B, zeros(N))
             end
             A = vcat(A, A1)
         elseif row["Type"] == "Classes"
@@ -64,7 +64,7 @@ function asset_constraints(constraints, asset_classes)
             else
                 if row["Type Relative"] == "Assets" && row["Relative"] != ""
                     idx = findfirst(x -> x == row["Relative"], asset_list)
-                    A2 = zeros(m)
+                    A2 = zeros(N)
                     A2[idx] = 1
                 elseif row["Type Relative"] == "Classes" &&
                        row["Relative Set"] != "" &&
@@ -87,7 +87,7 @@ function asset_constraints(constraints, asset_classes)
                     A1 = asset_classes[!, row["Set"]] .== val
                     if row["Type Relative"] == "Assets" && row["Relative"] != ""
                         idx = findfirst(x -> x == row["Relative"], asset_list)
-                        A2 = zeros(m)
+                        A2 = zeros(N)
                         A2[idx] = 1
                     elseif row["Type Relative"] == "Classes" &&
                            row["Relative Set"] != "" &&
@@ -104,7 +104,7 @@ function asset_constraints(constraints, asset_classes)
             if row["Weight"] != ""
                 for (i, j) in pairs(A1)
                     !j && continue
-                    A2 = zeros(m)
+                    A2 = zeros(N)
                     A2[i] = d
                     A = vcat(A, transpose(A2))
                     push!(B, row["Weight"] * d)
@@ -112,11 +112,11 @@ function asset_constraints(constraints, asset_classes)
             else
                 for (i, j) in pairs(A1)
                     !j && continue
-                    A2 = zeros(m)
+                    A2 = zeros(N)
                     A2[i] = 1
                     if row["Type Relative"] == "Assets" && row["Relative"] != ""
                         idx = findfirst(x -> x == row["Relative"], asset_list)
-                        A3 = zeros(m)
+                        A3 = zeros(N)
                         A3[idx] = 1
                     elseif row["Type Relative"] == "Classes" &&
                            row["Relative Set"] != "" &&
@@ -135,9 +135,9 @@ function asset_constraints(constraints, asset_classes)
 end
 
 function factor_constraints(constraints, loadings)
-    m = nrow(loadings)
+    N = nrow(loadings)
 
-    C = Matrix{Float64}(undef, 0, m)
+    C = Matrix{Float64}(undef, 0, N)
     D = Float64[]
     for row in eachrow(constraints)
         !row["Enabled"] && continue
@@ -162,10 +162,10 @@ function factor_constraints(constraints, loadings)
 end
 
 function asset_views(views, asset_classes)
-    m = nrow(asset_classes)
+    N = nrow(asset_classes)
     asset_list = asset_classes[!, "Assets"]
 
-    P = Matrix{Float64}(undef, 0, m)
+    P = Matrix{Float64}(undef, 0, N)
     Q = Float64[]
 
     for row in eachrow(views)
@@ -181,7 +181,7 @@ function asset_views(views, asset_classes)
 
         if row["Type"] == "Assets"
             idx = findfirst(x -> x == row["Position"], asset_list)
-            P1 = zeros(m)
+            P1 = zeros(N)
             P1[idx] = 1
         elseif row["Type"] == "Classes"
             P1 = asset_classes[!, row["Set"]] .== row["Position"]
@@ -190,7 +190,7 @@ function asset_views(views, asset_classes)
 
         if row["Type Relative"] == "Assets" && row["Relative"] != ""
             idx2 = findfirst(x -> x == row["Relative"], asset_list)
-            P2 = zeros(m)
+            P2 = zeros(N)
             P2[idx2] = 1
             valid = true
         elseif row["Type Relative"] == "Classes" &&
@@ -202,7 +202,7 @@ function asset_views(views, asset_classes)
         elseif row["Type Relative"] == "" &&
                row["Relative Set"] == "" &&
                row["Relative"] == ""
-            P2 = zeros(m)
+            P2 = zeros(N)
             valid = true
         end
 
@@ -224,9 +224,9 @@ function asset_views(views, asset_classes)
 end
 
 function factor_views(views, loadings)
-    m = ncol(loadings)
+    N = ncol(loadings)
     factor_list = names(loadings)
-    P = Matrix{Float64}(undef, 0, m)
+    P = Matrix{Float64}(undef, 0, N)
     Q = Float64[]
 
     for row in eachrow(views)
@@ -239,7 +239,7 @@ function factor_views(views, loadings)
         end
 
         idx = findfirst(x -> x == row["Factor"], factor_list)
-        P1 = zeros(m)
+        P1 = zeros(N)
         P1[idx] = d
 
         if row["Relative Factor"] != ""
@@ -291,8 +291,36 @@ function hrp_constraints(constraints, asset_classes)
     return w[:, 1], w[:, 2]
 end
 
-function risk_parity_constraints(asset_classes, type = :assets, class_col = nothing)
+function rp_constraints(asset_classes, type = :assets, class_col = nothing)
     @assert(type ∈ RPConstraintTypes, "type must be one of $RPConstraintTypes")
+    asset_list = asset_classes[!, "Assets"]
+    N = nrow(asset_classes)
+
+    if type == :assets
+        w = fill(1 / N, N)
+    else
+        classes = names(asset_classes)
+        isa(class_col, Symbol) && (class_col = String(class_col))
+        if class_col ∈ classes
+            A = DataFrame(a = asset_classes[!, class_col])
+            rename!(A, [class_col])
+        elseif isa(class_col, Int) && class_col < N
+            A = DataFrame(a = asset_classes[!, class_col])
+            rename!(A, [classes[class_col]])
+        else
+            throw(ArgumentError("class_col must be a valid index of asset_classes"))
+        end
+    end
+
+    col = names(A)[1]
+    A[!, :weight] .= 1
+    B = combine(groupby(A, col), nrow => :count)
+    A = leftjoin(A, B, on = col)
+    A[!, :weight] ./= A[!, :count]
+    A[!, :weight] ./= sum(A[!, :weight])
+
+    return A[!, :weight]
 end
 
-export asset_constraints, factor_constraints, asset_views, factor_views, hrp_constraints
+export asset_constraints,
+    factor_constraints, asset_views, factor_views, hrp_constraints, rp_constraints
