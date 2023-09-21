@@ -1,24 +1,70 @@
-function mv(w, cov)
+"""
+```
+port_variance(w::AbstractVector, cov::AbstractMatrix)
+```
+Compute the variance of a portfolio with weights `w` and covariance `cov`. Square of [`port_std`](@ref).
+
+```math
+\\mathrm{var}(\\bm{x}, \\mathbf{\\Sigma}) = \\bm{x}^\\intercal \\mathbf{\\Sigma} \\bm{x}\\,,
+```
+
+where ``\\bm{x}`` are the weights and ``\\mathbf{\\Sigma}`` the covariance matrix.
+"""
+function port_variance(w::AbstractVector, cov::AbstractMatrix)
     return dot(w, cov, w)
 end
 
-function msd(w, cov)
-    return sqrt(mv(w, cov))
+"""
+```
+port_std(w::AbstractVector, cov::AbstractMatrix)
+```
+Compute the standard deviation of a portfolio with weights `w` and covariance `cov`. Square root of [`port_variance`](@ref).
+
+```math
+\\mathrm{std}(\\bm{x}, \\mathbf{\\Sigma}) = \\sqrt{\\bm{x}^\\intercal \\mathbf{\\Sigma} \\bm{x}}\\,,
+```
+
+where ``\\bm{x}`` are the weights and ``\\mathbf{\\Sigma}`` the covariance matrix.
+"""
+function port_std(w::AbstractVector, cov::AbstractMatrix)
+    return sqrt(port_variance(w, cov))
 end
 
-function mad(x)
+"""
+```
+port_mad(x::AbstractVector)
+```
+Compute the mean absolute deviation of a vector `x` of portfolio returns.
+
+```math
+\\mathrm{MAD}(\\bm{x}) = \\dfrac{1}{T} \\sum\\limits_{t=1}^T \\lvert x_t - \\mathbb{E}(\\bm{x}) \\rvert\\,.
+```
+
+"""
+function port_mad(x::AbstractVector)
     mu = mean(x)
     return mean(abs.(x .- mu))
 end
-
-function msv(x)
+"""
+```
+msv(x::AbstractVector)
+```
+Compute the mean semi deviation of a vector `x` of portfolio returns.
+"""
+function msv(x::AbstractVector)
     T = length(x)
     mu = mean(x)
     val = mu .- x
     return sqrt(sum(val[val .>= 0] .^ 2) / (T - 1))
 end
 
-function flpm(x, min_ret = 0.0)
+"""
+```
+flpm(x::AbstractVector, min_ret::Real = 0.0)
+```
+Compute the first lower partial moment (omega ratio) of a vector `x` of portfolio returns with a minimum return target of `min_ret`.`
+"""
+function flpm(x::AbstractVector, min_ret::Real = 0.0)
     T = length(x)
     val = min_ret .- x
     return sum(val[val .>= 0]) / T
@@ -35,7 +81,7 @@ function wr(x)
     return -minimum(x)
 end
 
-function var(x, alpha = 0.05)
+function VaR(x, alpha = 0.05)
     sort!(x)
     idx = ceil(Int, alpha * length(x))
     return -x[idx]
@@ -472,11 +518,11 @@ function calc_risk(
     x = (rm != :mv || rm != :msd) && returns * w
 
     risk = if rm == :msd
-        msd(w, cov)
+        port_std(w, cov)
     elseif rm == :mv
-        mv(w, cov)
+        port_variance(w, cov)
     elseif rm == :mad
-        mad(x)
+        port_mad(x)
     elseif rm == :msv
         msv(x)
     elseif rm == :flpm
@@ -486,7 +532,7 @@ function calc_risk(
     elseif rm == :wr
         wr(x)
     elseif rm == :var
-        var(x, alpha)
+        VaR(x, alpha)
     elseif rm == :cvar
         cvar(x, alpha)
     elseif rm == :evar
@@ -585,4 +631,4 @@ function calc_risk(portfolio::AbstractPortfolio; type = :trad, rm = :mv, rf = 0.
     )
 end
 
-export calc_risk
+export calc_risk, port_variance, port_std, port_mad, msv, flpm

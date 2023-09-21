@@ -1,5 +1,5 @@
 """
-Abstract type for portfolios. Concrete portfolio types subtype this.
+Abstract type for portfolios. Concrete portfolios subtype this see [`Portfolio`](@ref) and [`HCPortfolio`](@ref).
 ```
 abstract type AbstractPortfolio end
 ```
@@ -7,7 +7,30 @@ abstract type AbstractPortfolio end
 abstract type AbstractPortfolio end
 
 """
-Available risk measures for [`Portfolio`](@ref).
+Available risk measures for `type = :trad` optimisations of [`Portfolio`](@ref).
+    - `:mv` = standard deviation
+    - `:mad` = max absolute deviation
+    - `:msv` = semi standard deviation
+    - `:flpm` = first lower partial moment (omega ratio)
+    - `:slpm` = second lower partial moment (sortino ratio)
+    - `:wr` = worst realisation
+    - `:cvar` = conditional value at risk
+    - `:evar` = entropic value at risk
+    - `:rvar` = relativistic value at risk
+    - `:mdd` = maximum drawdown
+    - `:add` = average drawdown
+    - `:cdar` = conditional drawdown at risk
+    - `:uci` = ulcer index
+    - `:edar` = entropic drawdown at risk
+    - `:rdar` = relativistic drawdown at risk
+    - `:krt` = kurtosis
+    - `:skrt` = semi-kurtosis
+    - `:gmd` = gini mean difference
+    - `:rg` = range of returns
+    - `:rcvar` = range of conditional value at risk
+    - `:tg` = tail gini
+    - `:rtg` = range of tail gini
+    - `:owa` = ordered weight array (generic OWA weights)
 ```
 const RiskMeasures = (
     :mv,    # _mv
@@ -105,7 +128,7 @@ const PortClasses = (:classic,)
 const PortClasses = (:classic,)
 
 """
-Available optimisation types.
+Available optimisation types for [`Portfolio`](@ref).
 ```
 const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
 ```
@@ -113,7 +136,7 @@ const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
 const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
 
 """
-Available versions of relaxed risk parity optimisations.
+Available versions of relaxed risk parity optimisations of [`Portfolio`](@ref).
 ```
 const RRPVersions = (:none, :reg, :reg_pen)
 ```
@@ -129,7 +152,7 @@ const RPConstraintTypes = (:assets, :classes)
 const RPConstraintTypes = (:assets, :classes)
 
 """
-Types of uncertainty sets for worst case optimisations.
+Types of uncertainty sets for worst case optimisations of [`Portfolio`](@ref).
 ```
 const UncertaintyTypes = (:none, :box, :ellipse)
 ```
@@ -202,4 +225,17 @@ const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :db
 const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
 const HRObjFuncs = (:min_risk, :utility, :sharpe, :erc)
 
-export AbstractPortfolio
+export AbstractPortfolio,
+    RiskMeasures,
+    KellyRet,
+    TrackingErrKinds,
+    ObjFuncs,
+    ValidTermination,
+    PortClasses,
+    PortTypes,
+    RRPVersions,
+    RPConstraintTypes,
+    UncertaintyTypes,
+    KindBootstrap,
+    EllipseTypes,
+    BoxTypes
