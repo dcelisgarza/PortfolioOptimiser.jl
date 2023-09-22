@@ -4,6 +4,6 @@ include("AssetAllocationType.jl")
 include("AssetAllocationFunc.jl")
 include("AssetAllocationUtil.jl")
 
-export AbstractAllocation, Lazy, Greedy, LP
+export AbstractAllocation, Greedy, LP
 export Allocation
 export roundmult
