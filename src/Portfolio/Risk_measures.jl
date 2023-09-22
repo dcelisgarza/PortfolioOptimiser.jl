@@ -1,57 +1,56 @@
 """
+```julia
+Variance(w::AbstractVector, Σ::AbstractMatrix)
 ```
-port_variance(w::AbstractVector, cov::AbstractMatrix)
-```
-Compute the variance of a portfolio with weights `w` and covariance `cov`. Square of [`port_std`](@ref).
+Compute the Variance of a portfolio with weights `w` and covariance `Σ`. Square of [`SD`](@ref).
 
 ```math
-\\mathrm{var}(\\bm{x}, \\mathbf{\\Sigma}) = \\bm{x}^\\intercal \\mathbf{\\Sigma} \\bm{x}\\,,
+\\mathrm{Variance}(\\bm{w},\\, \\mathbf{\\Sigma}) = \\bm{w}^\\intercal \\, \\mathbf{\\Sigma}\\, \\bm{w}\\,.
 ```
-
-where ``\\bm{x}`` are the weights and ``\\mathbf{\\Sigma}`` the covariance matrix.
 """
-function port_variance(w::AbstractVector, cov::AbstractMatrix)
+function Variance(w::AbstractVector, cov::AbstractMatrix)
     return dot(w, cov, w)
 end
 
 """
+```julia
+SD(w::AbstractVector, Σ::AbstractMatrix)
 ```
-port_std(w::AbstractVector, cov::AbstractMatrix)
-```
-Compute the standard deviation of a portfolio with weights `w` and covariance `cov`. Square root of [`port_variance`](@ref).
+Compute the Standard Deviation of a portfolio with weights `w` and covariance `Σ`. Square root of [`Variance`](@ref).
 
 ```math
-\\mathrm{std}(\\bm{x}, \\mathbf{\\Sigma}) = \\sqrt{\\bm{x}^\\intercal \\mathbf{\\Sigma} \\bm{x}}\\,,
+\\mathrm{SD}(\\bm{w},\\, \\mathbf{\\Sigma}) = \\left[\\bm{w}^\\intercal \\, \\mathbf{\\Sigma} \\, \\bm{w}\\right]^{1/2}\\,.
 ```
-
-where ``\\bm{x}`` are the weights and ``\\mathbf{\\Sigma}`` the covariance matrix.
 """
-function port_std(w::AbstractVector, cov::AbstractMatrix)
-    return sqrt(port_variance(w, cov))
+function SD(w::AbstractVector, cov::AbstractMatrix)
+    return sqrt(Variance(w, cov))
 end
 
 """
+```julia
+MAD(x::AbstractVector)
 ```
-port_mad(x::AbstractVector)
-```
-Compute the mean absolute deviation of a vector `x` of portfolio returns.
+Compute the Mean Absolute Deviation of a vector `x` of portfolio returns.
 
 ```math
-\\mathrm{MAD}(\\bm{x}) = \\dfrac{1}{T} \\sum\\limits_{t=1}^T \\lvert x_t - \\mathbb{E}(\\bm{x}) \\rvert\\,.
+\\mathrm{MAD}(\\bm{x}) = \\dfrac{1}{T} \\sum\\limits_{t=1}^T \\left\\lvert x_t - \\mathbb{E}(\\bm{x}) \\right\\rvert\\,.
 ```
-
 """
-function port_mad(x::AbstractVector)
+function MAD(x::AbstractVector)
     mu = mean(x)
     return mean(abs.(x .- mu))
 end
 """
+```julia
+Semi_SD(x::AbstractVector)
 ```
-msv(x::AbstractVector)
+Compute the mean Semi-Standard Deviation of a vector `x` of portfolio returns.
+
+```math
+\\mathrm{SemiSD}(\\bm{x}) = \\left[\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left( \\bm{x}_{t} - \\mathbb{E}(\\bm{x}),\\, 0\\right)^{2}\\right]^{1/2}\\,.
 ```
-Compute the mean semi deviation of a vector `x` of portfolio returns.
 """
-function msv(x::AbstractVector)
+function Semi_SD(x::AbstractVector)
     T = length(x)
     mu = mean(x)
     val = mu .- x
@@ -59,35 +58,85 @@ function msv(x::AbstractVector)
 end
 
 """
+```julia
+FLPM(x::AbstractVector, r::Real = 0.0)
 ```
-flpm(x::AbstractVector, min_ret::Real = 0.0)
+Compute the First Lower Partial Moment (omega ratio) of a vector `x` of portfolio returns with a minimum return target of `r`.
+
+```math
+\\mathrm{FLPM}(\\bm{x},\\, r) = \\dfrac{1}{T}  \\sum\\limits_{t=1}^{T}\\max\\left(r - \\bm{x}_{t},\\, 0\\right)\\,.
 ```
-Compute the first lower partial moment (omega ratio) of a vector `x` of portfolio returns with a minimum return target of `min_ret`.`
 """
-function flpm(x::AbstractVector, min_ret::Real = 0.0)
+function FLPM(x::AbstractVector, min_ret::Real = 0.0)
     T = length(x)
     val = min_ret .- x
     return sum(val[val .>= 0]) / T
 end
 
-function slpm(x, min_ret = 0.0)
+"""
+```julia
+SLPM(x::AbstractVector, r::Real = 0.0)
+```
+Compute the Second Lower Partial Moment (Omega Ratio) of a vector `x` of portfolio returns with a minimum return target of `r`.`
+
+```math
+\\mathrm{SLPM}(\\bm{x},\\, r) = \\left[\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\max\\left(r - \\bm{x}_{t},\\, 0\\right)^{2}\\right]^{1/2}\\,
+```
+"""
+function SLPM(x, min_ret = 0.0)
     T = length(x)
     val = min_ret .- x
     val = sum(val[val .>= 0] .^ 2) / (T - 1)
     return sqrt(val)
 end
 
-function wr(x)
+"""
+```julia
+WR(x::AbstractVector)
+```
+Compute the Worst Realisation or Worst Case Scenario of a returns vector `x`.
+
+```math
+\\begin{align*}
+\\mathrm{WR}(\\bm{x}) &= -\\min(\\bm{x})\\\\
+                      &= \\max(-\\bm{x})\\,.
+\\end{align*}
+```
+"""
+function WR(x::AbstractVector)
     return -minimum(x)
 end
 
-function VaR(x, alpha = 0.05)
+"""
+```julia
+VaR(x::AbstractVector, α::Real = 0.05)
+```
+Compute the Value at Risk of a returns vector `x` at a significance level of `α`.
+
+```math
+\\mathrm{VaR}(\\bm{x},\\, \\alpha) = -\\inf_{t \\in (0,\\, T)} \\left\\{ x_{t} \\in \\mathbb{R} : F_{\\bm{x}}(x_{t}) > \\alpha \\right\\}\\,,
+```
+"""
+function VaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
     idx = ceil(Int, alpha * length(x))
     return -x[idx]
 end
 
-function cvar(x, alpha = 0.05)
+"""
+```
+CVaR(x::AbstractVector, α::Real = 0.05)
+```
+Compute the Conditional Value at Risk of a returns vector `x` at a significance level of `α`.
+
+```math
+\\begin{align*}
+\\mathrm{CVaR}(\\bm{x},\\, \\alpha) &= \\mathrm{VaR}(\\bm{x},\\, \\alpha) - \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\min\\left( x_t + \\mathrm{VaR}(\\bm{x},\\, \\alpha),\\, 0\\right)\\\\
+                                    &= \\mathrm{VaR}(\\bm{x},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\max\\left( -x_t - \\mathrm{VaR}(\\bm{x},\\, \\alpha),\\, 0\\right)\\,.
+\\end{align*}
+```
+"""
+function CVaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
     idx = ceil(Int, alpha * length(x))
     var = -x[idx]
@@ -98,7 +147,7 @@ function cvar(x, alpha = 0.05)
     return var - sum_var / (alpha * length(x))
 end
 
-function _optimize_rm(model, solvers)
+function _optimize_rm(model, solvers::AbstractDict)
     term_status = termination_status(model)
     solvers_tried = Dict()
 
@@ -135,7 +184,28 @@ function _optimize_rm(model, solvers)
     return solvers_tried
 end
 
-function _entropic_rm(x, solvers, alpha = 0.05)
+"""
+```julia
+ERM(x::AbstractVector, z::Real = 1.0, α::Real = 0.05)
+```
+Compute the Entropic Risk Measure of a vector `x` at a significance level of `α` for a given value of `z`.
+
+```julia
+ERM(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
+```
+Compute the Entropic Risk Measure at a significance level of `α` by minimising with respect to `z`, using a dictionary of `JuMP`-supported `solvers`. This is because in general we don't know the value of `z` that minimises the function.
+
+```math
+\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha) = z \\ln \\left( \\dfrac{M_{\\bm{x}}\\left(z^{-1}\\right)}{\\alpha} \\right)\\,,
+```
+where ``M_{\\bm{x}}\\left(z^{-1}\\right)`` is the moment generating function of ``\\bm{x}``.
+"""
+function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
+    val = mean(exp.(-x / z))
+    val = z * log(val / alpha)
+    return val
+end
+function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
 
@@ -155,7 +225,7 @@ function _entropic_rm(x, solvers, alpha = 0.05)
     obj_val = objective_value(model)
 
     if term_status ∉ ValidTermination || !isfinite(obj_val)
-        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._entropic_rm))"
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._ERM))"
         @warn(
             "$funcname: model could not be optimised satisfactorily. Solvers: $solvers_tried"
         )
@@ -164,11 +234,21 @@ function _entropic_rm(x, solvers, alpha = 0.05)
     return obj_val
 end
 
-function evar(x, solvers, alpha = 0.05)
-    return _entropic_rm(x, solvers, alpha)
+"""
+```julia
+EVaR(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
+```
+Compute the Entropic Value at Risk of a returns vector `x` at a significance level of `α`.
+
+```math
+\\mathrm{EVaR}(\\bm{x},\\alpha) = \\inf_{z > 0} \\left\\{\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)\\right\\}\\,.
+```
+"""
+function EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
+    return ERM(x, solvers, alpha)
 end
 
-function _relativistic_rm(x, solvers, alpha = 0.05, kappa = 0.3)
+function RRM(x, solvers, alpha = 0.05, kappa = 0.3)
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
 
@@ -209,7 +289,7 @@ function _relativistic_rm(x, solvers, alpha = 0.05, kappa = 0.3)
     obj_val = objective_value(model)
 
     if term_status ∉ ValidTermination || !isfinite(obj_val)
-        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._optimize_relativistic_rm))"
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._optimizeRRM))"
         @warn(
             "$funcname: model could not be optimised satisfactorily. Solvers: $solvers_tried"
         )
@@ -218,11 +298,11 @@ function _relativistic_rm(x, solvers, alpha = 0.05, kappa = 0.3)
     return obj_val
 end
 
-function rvar(x, solvers, alpha = 0.05, kappa = 0.3)
-    return _relativistic_rm(x, solvers, alpha, kappa)
+function RVaR(x, solvers, alpha = 0.05, kappa = 0.3)
+    return RRM(x, solvers, alpha, kappa)
 end
 
-function mdd_abs(x)
+function MDD_abs(x)
     insert!(x, 1, 1)
     cs = cumsum(x)
     val = 0.0
@@ -236,7 +316,7 @@ function mdd_abs(x)
     return val
 end
 
-function add_abs(x)
+function ADD_abs(x)
     T = length(x)
     insert!(x, 1, 1)
     cs = cumsum(x)
@@ -251,7 +331,7 @@ function add_abs(x)
     return val / T
 end
 
-function dar_abs(x, alpha)
+function DaR_abs(x, alpha)
     T = length(x)
     insert!(x, 1, 1)
     cs = cumsum(x)
@@ -267,7 +347,7 @@ function dar_abs(x, alpha)
     return -dd[idx]
 end
 
-function cdar_abs(x, alpha)
+function CDaR_abs(x, alpha)
     T = length(x)
     insert!(x, 1, 1)
     cs = cumsum(x)
@@ -288,7 +368,7 @@ function cdar_abs(x, alpha)
     return var - sum_var / (alpha * T)
 end
 
-function uci_abs(x)
+function UCI_abs(x)
     T = length(x)
     insert!(x, 1, 1)
     cs = cumsum(x)
@@ -303,7 +383,7 @@ function uci_abs(x)
     return sqrt(val / T)
 end
 
-function edar_abs(x, solvers, alpha = 0.05)
+function EDaR_abs(x, solvers, alpha = 0.05)
     insert!(x, 1, 1)
     cs = cumsum(x)
     peak = -Inf
@@ -313,10 +393,10 @@ function edar_abs(x, solvers, alpha = 0.05)
         dd[idx] = -(peak - i)
     end
     deleteat!(dd, 1)
-    return _entropic_rm(dd, solvers, alpha)
+    return ERM(dd, solvers, alpha)
 end
 
-function rdar_abs(x, solvers, alpha = 0.05, kappa = 0.3)
+function RDaR_abs(x, solvers, alpha = 0.05, kappa = 0.3)
     insert!(x, 1, 1)
     cs = cumsum(x)
     peak = -Inf
@@ -326,10 +406,10 @@ function rdar_abs(x, solvers, alpha = 0.05, kappa = 0.3)
         dd[idx] = i - peak
     end
     deleteat!(dd, 1)
-    return _relativistic_rm(dd, solvers, alpha, kappa)
+    return RRM(dd, solvers, alpha, kappa)
 end
 
-function mdd_rel(x)
+function MDD_rel(x)
     x .= insert!(x, 1, 0) .+ 1
     cs = cumprod(x)
     val = 0.0
@@ -343,7 +423,7 @@ function mdd_rel(x)
     return val
 end
 
-function add_rel(x)
+function ADD_rel(x)
     T = length(x)
     x .= insert!(x, 1, 0) .+ 1
     cs = cumprod(x)
@@ -358,7 +438,7 @@ function add_rel(x)
     return val / T
 end
 
-function dar_rel(x, alpha)
+function DaR_rel(x, alpha)
     T = length(x)
     x .= insert!(x, 1, 0) .+ 1
     cs = cumprod(x)
@@ -374,7 +454,7 @@ function dar_rel(x, alpha)
     return -dd[idx]
 end
 
-function cdar_rel(x, alpha)
+function CDaR_rel(x, alpha)
     T = length(x)
     x .= insert!(x, 1, 0) .+ 1
     cs = cumprod(x)
@@ -395,7 +475,7 @@ function cdar_rel(x, alpha)
     return var - sum_var / (alpha * T)
 end
 
-function uci_rel(x)
+function UCI_rel(x)
     T = length(x)
     x .= insert!(x, 1, 0) .+ 1
     cs = cumprod(x)
@@ -410,7 +490,7 @@ function uci_rel(x)
     return sqrt(val / T)
 end
 
-function edar_rel(x, solvers, alpha)
+function EDaR_rel(x, solvers, alpha)
     x .= insert!(x, 1, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
@@ -420,10 +500,10 @@ function edar_rel(x, solvers, alpha)
         dd[idx] = i / peak - 1
     end
     deleteat!(dd, 1)
-    return _entropic_rm(dd, solvers, alpha)
+    return ERM(dd, solvers, alpha)
 end
 
-function rdar_rel(x, solvers, alpha = 0.05, kappa = 0.3)
+function RDaR_rel(x, solvers, alpha = 0.05, kappa = 0.3)
     x .= insert!(x, 1, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
@@ -433,48 +513,48 @@ function rdar_rel(x, solvers, alpha = 0.05, kappa = 0.3)
         dd[idx] = i / peak - 1
     end
     deleteat!(dd, 1)
-    return _relativistic_rm(dd, solvers, alpha, kappa)
+    return RRM(dd, solvers, alpha, kappa)
 end
 
-function kurt(x)
+function Kurt(x)
     T = length(x)
     mu = mean(x)
     val = x .- mu
     return sqrt(sum(val .^ 4) / T)
 end
 
-function skurt(x)
+function Semi_Kurt(x)
     T = length(x)
     mu = mean(x)
     val = x .- mu
     return sqrt(sum(val[val .< 0] .^ 4) / T)
 end
 
-function gmd(x)
+function GMD(x)
     T = length(x)
     w = owa_gmd(T)
     return dot(w, sort!(x))
 end
 
-function rg(x)
+function RG(x)
     T = length(x)
     w = owa_rg(T)
     return dot(w, sort!(x))
 end
 
-function rcvar(x; alpha = 0.05, beta = nothing)
+function RCVaR(x; alpha = 0.05, beta = nothing)
     T = length(x)
     w = owa_rcvar(T; alpha = alpha, beta = beta)
     return dot(w, sort!(x))
 end
 
-function tg(x; alpha_i = 0.0001, alpha = 0.05, a_sim = 100)
+function TG(x; alpha_i = 0.0001, alpha = 0.05, a_sim = 100)
     T = length(x)
     w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
     return dot(w, sort!(x))
 end
 
-function rtg(
+function RTG(
     x;
     alpha_i = 0.0001,
     alpha = 0.05,
@@ -496,7 +576,7 @@ function rtg(
     return dot(w, sort!(x))
 end
 
-function owa(x, w)
+function OWA(x, w)
     return dot(w, sort!(x))
 end
 
@@ -518,69 +598,69 @@ function calc_risk(
     x = (rm != :mv || rm != :msd) && returns * w
 
     risk = if rm == :msd
-        port_std(w, cov)
+        SD(w, cov)
     elseif rm == :mv
-        port_variance(w, cov)
+        Variance(w, cov)
     elseif rm == :mad
-        port_mad(x)
+        MAD(x)
     elseif rm == :msv
-        msv(x)
+        Semi_SD(x)
     elseif rm == :flpm
-        flpm(x, rf)
+        FLPM(x, rf)
     elseif rm == :slpm
-        slpm(x, rf)
+        SLPM(x, rf)
     elseif rm == :wr
-        wr(x)
+        WR(x)
     elseif rm == :var
         VaR(x, alpha)
     elseif rm == :cvar
-        cvar(x, alpha)
+        CVaR(x, alpha)
     elseif rm == :evar
-        evar(x, solvers, alpha)
+        EVaR(x, solvers, alpha)
     elseif rm == :rvar
-        rvar(x, solvers, alpha, kappa)
+        RVaR(x, solvers, alpha, kappa)
     elseif rm == :mdd
-        mdd_abs(x)
+        MDD_abs(x)
     elseif rm == :add
-        add_abs(x)
+        ADD_abs(x)
     elseif rm == :dar
-        dar_abs(x, alpha)
+        DaR_abs(x, alpha)
     elseif rm == :cdar
-        cdar_abs(x, alpha)
+        CDaR_abs(x, alpha)
     elseif rm == :uci
-        uci_abs(x)
+        UCI_abs(x)
     elseif rm == :edar
-        edar_abs(x, solvers, alpha)
+        EDaR_abs(x, solvers, alpha)
     elseif rm == :rdar
-        rdar_abs(x, solvers, alpha, kappa)
+        RDaR_abs(x, solvers, alpha, kappa)
     elseif rm == :mdd_r
-        mdd_rel(x)
+        MDD_rel(x)
     elseif rm == :add_r
-        add_rel(x)
+        ADD_rel(x)
     elseif rm == :dar_r
-        dar_rel(x, alpha)
+        DaR_rel(x, alpha)
     elseif rm == :cdar_r
-        cdar_rel(x, alpha)
+        CDaR_rel(x, alpha)
     elseif rm == :uci_r
-        uci_rel(x)
+        UCI_rel(x)
     elseif rm == :edar_r
-        edar_rel(x, solvers, alpha)
+        EDaR_rel(x, solvers, alpha)
     elseif rm == :rdar_r
-        rdar_rel(x, solvers, alpha, kappa)
+        RDaR_rel(x, solvers, alpha, kappa)
     elseif rm == :krt
-        kurt(x)
+        Kurt(x)
     elseif rm == :skrt
-        skurt(x)
+        Semi_Kurt(x)
     elseif rm == :gmd
-        gmd(x)
+        GMD(x)
     elseif rm == :rg
-        rg(x)
+        RG(x)
     elseif rm == :rcvar
-        rcvar(x; alpha = alpha, beta = beta)
+        RCVaR(x; alpha = alpha, beta = beta)
     elseif rm == :tg
-        tg(x; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+        TG(x; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
     elseif rm == :rtg
-        rtg(
+        RTG(
             x;
             alpha_i = alpha_i,
             alpha = alpha,
@@ -590,7 +670,7 @@ function calc_risk(
             b_sim = b_sim,
         )
     elseif rm == :owa
-        owa(x, w)
+        OWA(x, w)
     end
 
     return risk
@@ -631,4 +711,4 @@ function calc_risk(portfolio::AbstractPortfolio; type = :trad, rm = :mv, rf = 0.
     )
 end
 
-export calc_risk, port_variance, port_std, port_mad, msv, flpm
+export calc_risk, Variance, SD, MAD, Semi_SD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR

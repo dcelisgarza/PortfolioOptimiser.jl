@@ -1,7 +1,15 @@
 # Risk Functions
 
 ```@docs
-port_variance
-port_std
-port_mad
+Variance
+SD
+MAD
+Semi_SD
+FLPM
+SLPM
+WR
+VaR
+CVaR
+ERM
+EVaR
 ```
