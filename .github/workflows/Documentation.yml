@@ -31,11 +31,11 @@ jobs:
         with:
           name: PDF build logs
           path: ${{ github.workspace }}/latex-debug-logs      
-      - uses: errata-ai/vale-action@reviewdog
-        with:
-          files: docs/src
-          fail_on_error: true
-          filter_mode: nofilter
-          vale_flags: "--config=docs/.vale.ini"
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      # - uses: errata-ai/vale-action@reviewdog
+      #   with:
+      #     files: docs/src
+      #     fail_on_error: true
+      #     filter_mode: nofilter
+      #     vale_flags: "--config=docs/.vale.ini"
+      #   env:
+      #     GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

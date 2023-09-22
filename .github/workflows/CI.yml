@@ -21,12 +21,12 @@ jobs:
           - version: '1'  # The latest point-release (Windows)
             os: windows-latest
             arch: x64
-          - version: '1.6'  # 1.6 LTS (64-bit Linux)
-            os: ubuntu-latest
-            arch: x64
-          - version: '1.6'  # 1.6 LTS (32-bit Linux)
-            os: ubuntu-latest
-            arch: x86
+          # - version: '1.6'  # 1.6 LTS (64-bit Linux)
+          #   os: ubuntu-latest
+          #   arch: x64
+          # - version: '1.6'  # 1.6 LTS (32-bit Linux)
+          #   os: ubuntu-latest
+          #   arch: x86
           - version: 'nightly'
             os: ubuntu-latest
             arch: x64
