@@ -12,4 +12,7 @@ VaR
 CVaR
 ERM
 EVaR
+RRM
+RVaR
+MDD_abs
 ```

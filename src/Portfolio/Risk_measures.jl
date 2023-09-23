@@ -111,10 +111,10 @@ end
 ```julia
 VaR(x::AbstractVector, α::Real = 0.05)
 ```
-Compute the Value at Risk of a returns vector `x` at a significance level of `α`.
+Compute the Value at Risk of a returns vector `x` at a significance level of `α ∈ (0, 1)`.
 
 ```math
-\\mathrm{VaR}(\\bm{x},\\, \\alpha) = -\\inf_{t \\in (0,\\, T)} \\left\\{ x_{t} \\in \\mathbb{R} : F_{\\bm{x}}(x_{t}) > \\alpha \\right\\}\\,,
+\\mathrm{VaR}(\\bm{x},\\, \\alpha) = -\\underset{t \\in (0,\\, T)}{\\inf} \\left\\{ x_{t} \\in \\mathbb{R} : F_{\\bm{x}}(x_{t}) > \\alpha \\right\\}\\,,
 ```
 """
 function VaR(x::AbstractVector, alpha::Real = 0.05)
@@ -127,7 +127,7 @@ end
 ```
 CVaR(x::AbstractVector, α::Real = 0.05)
 ```
-Compute the Conditional Value at Risk of a returns vector `x` at a significance level of `α`.
+Compute the Conditional Value at Risk of a returns vector `x` at a significance level of `α ∈ (0, 1)`.
 
 ```math
 \\begin{align*}
@@ -188,12 +188,12 @@ end
 ```julia
 ERM(x::AbstractVector, z::Real = 1.0, α::Real = 0.05)
 ```
-Compute the Entropic Risk Measure of a vector `x` at a significance level of `α` for a given value of `z`.
+Compute the Entropic Risk Measure of a vector `x` at a significance level of `α ∈ (0, 1)` for a given value of `z`.
 
 ```julia
 ERM(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
 ```
-Compute the Entropic Risk Measure at a significance level of `α` by minimising with respect to `z`, using a dictionary of `JuMP`-supported `solvers`. This is because in general we don't know the value of `z` that minimises the function.
+Compute the Entropic Risk Measure at a significance level of `α ∈ (0, 1)` by minimising with respect to `z`, using a dictionary of `JuMP`-supported `solvers`. This is because in general we don't know the value of `z` that minimises the function.
 
 ```math
 \\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha) = z \\ln \\left( \\dfrac{M_{\\bm{x}}\\left(z^{-1}\\right)}{\\alpha} \\right)\\,,
@@ -201,11 +201,14 @@ Compute the Entropic Risk Measure at a significance level of `α` by minimising 
 where ``M_{\\bm{x}}\\left(z^{-1}\\right)`` is the moment generating function of ``\\bm{x}``.
 """
 function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
+    @assert(0 < alpha < 1, "alpha must be greater than 0 and smaller than 1")
     val = mean(exp.(-x / z))
     val = z * log(val / alpha)
     return val
 end
 function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
+    @assert(0 < alpha < 1, "alpha must be greater than 0 and smaller than 1")
+
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
 
@@ -238,17 +241,47 @@ end
 ```julia
 EVaR(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
 ```
-Compute the Entropic Value at Risk of a returns vector `x` at a significance level of `α`.
+Compute the Entropic Value at Risk of a returns vector `x` at a significance level of `α ∈ (0, 1)`.
 
 ```math
-\\mathrm{EVaR}(\\bm{x},\\alpha) = \\inf_{z > 0} \\left\\{\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)\\right\\}\\,.
+\\mathrm{EVaR}(\\bm{x},\\alpha) = \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)\\right\\}\\,.
 ```
 """
 function EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     return ERM(x, solvers, alpha)
 end
 
-function RRM(x, solvers, alpha = 0.05, kappa = 0.3)
+"""
+```julia
+RRM(
+    x::AbstractVector,
+    solvers::AbstractDict,
+    α::Real = 0.05,
+    κ::Real = 0.3,
+)
+```
+Compute the Relativistic Risk Measure of a vector `x` at a significance level of `α ∈ (0, 1)` and deformation parameter of `κ ∈ (0, 1)`.
+
+```math
+\\textrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\begin{cases}
+\\underset{z,\\, t,\\, \\psi,\\, \\theta,\\, \\varepsilon,\\, \\omega}{\\inf} & t + z \\ln_{\\kappa}\\left(\\dfrac{1}{\\alpha T}\\right) + \\sum\\limits_{i=1}^{T} \\left(\\psi_{i} + \\theta_{i}\\right)\\\\
+\\textrm{s.t.} & -\\bm{x} - t + \\varepsilon + \\omega \\leq 0 \\\\
+& z \\geq 0 \\\\
+& \\left(z\\left(\\dfrac{1+\\kappa}{2\\kappa}\\right),\\, \\psi_{i}\\left(\\dfrac{1+\\kappa}{\\kappa}\\right),\\, \\varepsilon_{i} \\right) \\in \\mathcal{P}_{3}^{1/(1+\\kappa),\\, \\kappa/(1+\\kappa)} \\\\
+& \\left(\\omega_{i}\\left(\\dfrac{1}{1-\\kappa}\\right),\\, \\theta_{i}\\left(\\dfrac{1}{\\kappa}\\right),\\, -z\\left(\\dfrac{1}{2\\kappa}\\right) \\right) \\in \\mathcal{P}_{3}^{1-\\kappa,\\, \\kappa}
+\\end{cases}\\,,
+```
+where ``\\ln_{\\kappa}(x) = \\dfrac{x^{\\kappa} - x^{-\\kappa}}{2 \\kappa}`` and ``\\mathcal{P}_3^{\\alpha,\\, 1-\\alpha}`` is the 3D Power Cone.
+"""
+function RRM(
+    x::AbstractVector,
+    solvers::AbstractDict,
+    alpha::Real = 0.05,
+    kappa::Real = 0.3,
+)
+    @assert(0 < alpha < 1, "alpha must be greater than 0 and smaller than 1")
+    @assert(0 < kappa < 1, "kappa must be greater than 0 and smaller than 1")
+
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
 
@@ -297,12 +330,37 @@ function RRM(x, solvers, alpha = 0.05, kappa = 0.3)
 
     return obj_val
 end
-
-function RVaR(x, solvers, alpha = 0.05, kappa = 0.3)
+"""
+```julia
+RRM(
+    x::AbstractVector,
+    solvers::AbstractDict,
+    α::Real = 0.05,
+    κ::Real = 0.3,
+)
+```
+Compute the Relativistic Risk Measure of a vector `x` at a significance level of `α ∈ (0, 1)` and deformation parameter of `κ ∈ (0, 1)`.
+"""
+function RVaR(
+    x::AbstractVector,
+    solvers::AbstractDict,
+    alpha::Real = 0.05,
+    kappa::Real = 0.3,
+)
     return RRM(x, solvers, alpha, kappa)
 end
 
-function MDD_abs(x)
+"""
+```julia
+MDD_abs(x::AbstractVector)
+```
+Compute the Maximum Drawdown of a returns vector `x` using uncompounded cumulative returns.
+
+```math
+\\textrm{MDD}(\\bm{x}) = \\underset{j \\in (0,\\, T)}{\\max}\\left[\\underset{k \\in (0,\\, j)}{\\max}\\left( \\sum\\limits_{i=0}^{k} x_{i} \\right) - \\sum\\limits_{i=0}^{j} x_{i}\\right]\\,.
+```
+"""
+function MDD_abs(x::AbstractVector)
     insert!(x, 1, 1)
     cs = cumsum(x)
     val = 0.0
@@ -711,4 +769,5 @@ function calc_risk(portfolio::AbstractPortfolio; type = :trad, rm = :mv, rf = 0.
     )
 end
 
-export calc_risk, Variance, SD, MAD, Semi_SD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR
+export calc_risk,
+    Variance, SD, MAD, Semi_SD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR, RRM, RVaR, MDD_abs

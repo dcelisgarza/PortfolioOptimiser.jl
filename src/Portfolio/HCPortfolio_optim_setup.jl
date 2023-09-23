@@ -558,6 +558,10 @@ function opt_port!(
     @assert(linkage ∈ LinkageTypes, "linkage must be one of $LinkageTypes")
     @assert(portfolio.codep_type ∈ CodepTypes, "codep_type must be one of $CodepTypes")
     @assert(
+        0 < portfolio.alpha < 1,
+        "portfolio.alpha must be greater than 0 and smaller than 1"
+    )
+    @assert(
         0 < portfolio.kappa < 1,
         "portfolio.kappa must be greater than 0 and smaller than 1"
     )
