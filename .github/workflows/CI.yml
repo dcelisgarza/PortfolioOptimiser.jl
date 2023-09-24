@@ -14,6 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        allow_failures:
+          - julia_version: nightly
         include:
           - version: '1'  # The latest point-release (Linux)
             os: ubuntu-latest

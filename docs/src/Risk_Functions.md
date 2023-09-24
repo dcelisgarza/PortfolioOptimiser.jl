@@ -21,4 +21,11 @@ CDaR_abs
 UCI_abs
 EDaR_abs
 RDaR_abs
+DaR_rel
+MDD_rel
+ADD_rel
+CDaR_rel
+UCI_rel
+EDaR_rel
+RDaR_rel
 ```
