@@ -25,14 +25,14 @@ function HRPOpt(
         throw(ArgumentError("Either returns or cov_mtx must be defined."))
     elseif isnothing(returns)
         @assert size(cov_mtx, 1) == size(cov_mtx, 2) == length(tickers)
-        cor_mtx = cov2cor(cov_mtx)
+        cor_mtx = cov_to_cor(cov_mtx)
     elseif isnothing(cov_mtx)
         @assert size(returns, 2) == length(tickers)
         cov_mtx = cov(returns)
         cor_mtx = cor(returns)
     else
         @assert size(cov_mtx, 1) == size(cov_mtx, 2) == size(returns, 2) == length(tickers)
-        cor_mtx = cov2cor(cov_mtx)
+        cor_mtx = cov_to_cor(cov_mtx)
     end
 
     if D == :default

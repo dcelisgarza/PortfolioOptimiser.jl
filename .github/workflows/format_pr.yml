@@ -1,4 +1,4 @@
-name: format-pr
+name: format_pr
 on:
   schedule:
     - cron: '0 0 * * *'

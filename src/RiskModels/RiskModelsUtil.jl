@@ -71,4 +71,4 @@ cov2or(cov_mtx)
 ```
 Wraps `StatsBase.cov2cor` to provide the standard deviations vector from the diagonal of `cov_mtx`.
 """
-cov2cor(cov_mtx) = cov2cor(cov_mtx, sqrt.(diag(cov_mtx)))
+cov_to_cor(cov_mtx) = cov2cor(cov_mtx, sqrt.(diag(cov_mtx)))

@@ -80,7 +80,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     hrp = HRPOpt(
         tickers,
         returns = Matrix(returns),
-        D = Symmetric(sqrt.(clamp.((1 .- cov2cor(cov(Matrix(returns)))) / 2, 0, 1))),
+        D = Symmetric(sqrt.(clamp.((1 .- cov_to_cor(cov(Matrix(returns)))) / 2, 0, 1))),
     )
     optimise!(hrp, min_risk!)
     idx = sortperm(tickers)

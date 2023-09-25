@@ -823,7 +823,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, CovarianceEstimation
     )
     @test testcov ≈ cov_mtx
 
-    corr = cov2cor(cov_mtx)
+    corr = cov_to_cor(cov_mtx)
     testcorr = reshape(
         [
             1.0,
