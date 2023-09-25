@@ -103,7 +103,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
     )
@@ -1027,7 +1027,7 @@ end
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
     )
@@ -1867,7 +1867,7 @@ end
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
     )
@@ -2520,7 +2520,7 @@ end
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
     )

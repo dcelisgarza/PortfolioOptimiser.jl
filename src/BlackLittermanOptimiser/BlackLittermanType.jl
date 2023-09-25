@@ -25,7 +25,7 @@ function BlackLitterman(
     risk_aversion::Real = 1,
     tau::Real = 0.05,
     omega::Union{AbstractArray, Symbol} = :default, # either a square matrix, :idzorek, :default
-    pi::Union{Nothing, AbstractArray, Symbol} = nothing, # either a vector, `nothing`, `:equal`, or `:market`
+    pi::Union{Nothing, AbstractArray, Symbol} = nothing, # either a vector, `nothing`, `:Equal`, or `:market`
     absolute_views::Union{Nothing, Dict} = nothing,
     Q::Union{Nothing, AbstractArray} = nothing,
     P::Union{Nothing, AbstractArray} = nothing,
@@ -60,10 +60,10 @@ function BlackLitterman(
     elseif pi == :market
         @assert !isnothing(market_caps) "please provide a vector of market caps via the market_caps keyword"
         pi = market_implied_prior_returns(market_caps, cov_mtx, risk_aversion, rf)
-    elseif pi == :equal
+    elseif pi == :Equal
         pi = ones(num_tickers) / num_tickers
     else
-        throw(ArgumentError("pi must be either nothing, :market or :equal"))
+        throw(ArgumentError("pi must be either nothing, :market or :Equal"))
     end
 
     _val_compare_benchmark(tau, <=, 0, 0.05, "tau")

@@ -118,7 +118,7 @@ function _setup_weights(portfolio, obj, N)
             @constraint(model, sum(tass_bin) <= max_number_assets)
             @constraint(model, tass_bin_sharpe .<= model[:k])
             @constraint(model, tass_bin_sharpe .<= factor * tass_bin)
-            @constraint(model, tass_bin_sharpe .>= model[:k] - factor * (1 .- tass_bin))
+            @constraint(model, tass_bin_sharpe .>= model[:k] .- factor * (1 .- tass_bin))
             @constraint(model, model[:w] .<= long_u * tass_bin_sharpe)
         end
 
@@ -333,13 +333,13 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
     model = portfolio.model
 
     if type == :trad || type == :rp
-        if rm == :evar
+        if rm == :EVaR
             portfolio.z_evar = value(portfolio.model[:z_evar])
-        elseif rm == :edar
+        elseif rm == :EDaR
             portfolio.z_edar = value(portfolio.model[:z_edar])
-        elseif rm == :rvar
+        elseif rm == :RVaR
             portfolio.z_rvar = value(portfolio.model[:z_rvar])
-        elseif rm == :rdar
+        elseif rm == :RDaR
             portfolio.z_rdar = value(portfolio.model[:z_rdar])
         end
     end
@@ -432,7 +432,7 @@ function _save_opt_params(
     elseif type == :rrp
         Dict(
             :class => class,
-            :rm => :mv,
+            :rm => :SD,
             :obj => :min_risk,
             :kelly => kelly,
             :rrp_penalty => rrp_penalty,
@@ -441,7 +441,7 @@ function _save_opt_params(
         )
     elseif type == :wc
         Dict(
-            :rm => :mv,
+            :rm => :SD,
             :obj => obj,
             :kelly => kelly,
             :rf => rf,
@@ -461,7 +461,7 @@ function opt_port!(
     portfolio::Portfolio;
     type::Symbol = :trad,
     class::Symbol = :classic,
-    rm::Symbol = :mv,
+    rm::Symbol = :SD,
     obj::Symbol = :sharpe,
     kelly::Symbol = :none,
     rrp_ver::Symbol = :none,
@@ -475,7 +475,7 @@ function opt_port!(
 )
     @assert(type ∈ PortTypes, "type must be one of $PortTypes")
     @assert(class ∈ PortClasses, "class must be one of $PortClasses")
-    @assert(rm ∈ RiskMeasures, "rm must be one of $RiskMeasures")
+    @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
     @assert(obj ∈ ObjFuncs, "obj must be one of $ObjFuncs")
     @assert(kelly ∈ KellyRet, "kelly must be one of $KellyRet")
     @assert(rrp_ver ∈ RRPVersions)

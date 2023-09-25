@@ -32,7 +32,7 @@ l = 2.0
         ),
     )
     asset_statistics!(portfolio)
-    rm = :mv
+    rm = :SD
     type = :rp
     kelly = :none
     portfolio.risk_budget = Float64[]

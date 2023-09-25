@@ -4,7 +4,7 @@
 Variance
 SD
 MAD
-Semi_SD
+SSD
 FLPM
 SLPM
 WR

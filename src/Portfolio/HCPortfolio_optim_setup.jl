@@ -1,9 +1,9 @@
 
-function _naive_risk(portfolio, returns, covariance; rm = :mv, rf = 0.0)
+function _naive_risk(portfolio, returns, covariance; rm = :SD, rf = 0.0)
     N = size(returns, 2)
     tcov = eltype(covariance)
 
-    if rm == :equal
+    if rm == :Equal
         weights = fill(tcov(1 / N), N)
     else
         inv_risk = Vector{tcov}(undef, N)
@@ -39,7 +39,7 @@ function _opt_w(
     icov;
     obj = :min_risk,
     kelly = :none,
-    rm = :mv,
+    rm = :SD,
     rf = 0.0,
     l = 2.0,
 )
@@ -157,7 +157,7 @@ function cluster_assets(
 end
 export cluster_assets
 
-function _cluster_risk(portfolio, returns, covariance, cluster; rm = :mv, rf = 0.0)
+function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0.0)
     cret = returns[:, cluster]
     ccov = covariance[cluster, cluster]
     cw = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf)
@@ -196,7 +196,7 @@ end
 
 function _recursive_bisection(
     portfolio;
-    rm = :mv,
+    rm = :SD,
     rf = 0.0,
     upper_bound = nothing,
     lower_bound = nothing,
@@ -331,7 +331,7 @@ end
 
 function _hierarchical_recursive_bisection(
     portfolio;
-    rm = :mv,
+    rm = :SD,
     rf = 0.0,
     type = :herc,
     upper_bound = nothing,
@@ -370,7 +370,7 @@ function _hierarchical_recursive_bisection(
         lc = Int[]
         rc = Int[]
 
-        if rm == :equal
+        if rm == :Equal
             alpha_1 = 0.5
         else
             for j in eachindex(clusters)
@@ -409,7 +409,7 @@ function _hierarchical_recursive_bisection(
     end
 
     # If herc2, then each cluster contributes an equal amount of risk.
-    type == :herc2 && (rm = :equal)
+    type == :herc2 && (rm = :Equal)
     # We multiply the intra cluster weights by the weights by the weights of the cluster.
     for i in 1:k
         cidx = clustering_idx .== i
@@ -426,7 +426,7 @@ function _intra_weights(
     portfolio;
     obj = :min_risk,
     kelly = :none,
-    rm = :mv,
+    rm = :SD,
     rf = 0.0,
     l = 2.0,
 )
@@ -465,7 +465,7 @@ function _inter_weights(
     intra_weights;
     obj = :min_risk,
     kelly = :none,
-    rm = :mv,
+    rm = :SD,
     rf = 0.0,
     l = 2.0,
 )
@@ -539,7 +539,7 @@ end
 function opt_port!(
     portfolio::HCPortfolio;
     type::Symbol = :hrp,
-    rm::Symbol = :mv,
+    rm::Symbol = :SD,
     obj::Symbol = :min_risk,
     kelly::Symbol = :none,
     rf::Real = 0.0,

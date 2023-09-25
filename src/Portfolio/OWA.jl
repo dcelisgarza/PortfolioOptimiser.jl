@@ -163,7 +163,7 @@ end
 function owa_l_moment_crm(
     T;
     k = 4,
-    method = :msd,
+    method = :SD,
     g = 0.5,
     max_phi = 0.5,
     solvers = Dict(),
@@ -210,7 +210,7 @@ function owa_l_moment_crm(
             @variable(model, t)
             @constraint(model, [t; theta] in SecondOrderCone())
             @objective(model, Min, t)
-        elseif method == :msd
+        elseif method == :SD
             @variable(model, t)
             @expression(model, theta_diff, theta[2:end] .- theta[1:(end - 1)])
             @constraint(model, [t; theta_diff] in SecondOrderCone())

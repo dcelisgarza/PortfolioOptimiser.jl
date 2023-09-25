@@ -81,7 +81,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
     )
@@ -1011,7 +1011,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         S;
         rf = 0,
         tau = 0.01,
-        pi = :market, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = :market, # either a vector, `nothing`, `:Equal`, or `:market`
         market_caps = mcapsdf[!, 2],
         Q = views,
         P = picking,
@@ -1481,7 +1481,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         S;
         rf = 0,
         tau = 0.01,
-        pi = :equal, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = :Equal, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
     )
@@ -1950,7 +1950,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
         omega = :idzorek,
@@ -2421,7 +2421,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = 1:20,
     )
     testpost_ret = [
@@ -2888,7 +2888,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
         absolute_views = Dict("GE" => 0.5, "SBUX" => -0.3, "BBY" => 1.3, "BAC" => -2.3),
@@ -3357,7 +3357,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
         omega = :idzorek,
@@ -3828,7 +3828,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
         omega = :idzorek,
@@ -3840,7 +3840,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
         omega = :idzorek,
@@ -3852,7 +3852,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         S;
         rf = 0,
         tau = 0.01,
-        pi = prior, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
         omega = :wocao,
@@ -3864,7 +3864,7 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics
         S;
         rf = 0,
         tau = 0.01,
-        pi = :wocao, # either a vector, `nothing`, `:equal`, or `:market`
+        pi = :wocao, # either a vector, `nothing`, `:Equal`, or `:market`
         Q = views,
         P = picking,
         omega = :idzorek,

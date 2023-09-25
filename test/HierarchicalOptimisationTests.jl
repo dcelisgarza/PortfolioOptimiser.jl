@@ -38,7 +38,7 @@ l = 2.0
     asset_statistics!(portfolio)
 
     type = :hrp
-    rm = :mv
+    rm = :Variance
     obj = :min_risk
     kelly = :none
     linkage = :dbht
@@ -102,7 +102,7 @@ end
     asset_statistics!(portfolio)
 
     type = :herc
-    rm = :mv
+    rm = :Variance
     obj = :min_risk
     kelly = :none
     linkage = :dbht
@@ -165,7 +165,7 @@ end
     asset_statistics!(portfolio)
 
     type = :herc2
-    rm = :mv
+    rm = :Variance
     obj = :min_risk
     kelly = :none
     linkage = :dbht
@@ -229,7 +229,7 @@ end
     asset_statistics!(portfolio)
 
     type = :nco
-    rm = :mv
+    rm = :SD
     obj = :min_risk
     kelly = :none
     linkage = :dbht
@@ -270,7 +270,7 @@ end
     @test isapprox(w1t, w1.weights, rtol = 3e-4)
 
     type = :nco
-    rm = :mv
+    rm = :SD
     obj = :erc
     kelly = :none
     linkage = :dbht

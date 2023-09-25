@@ -39,14 +39,14 @@ function MAD(x::AbstractVector)
 end
 """
 ```julia
-Semi_SD(x::AbstractVector)
+SSD(x::AbstractVector)
 ```
 Compute the mean Semi-Standard Deviation of a vector `x` of portfolio returns.
 ```math
-\\mathrm{SemiSD}(\\bm{x}) = \\left[\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left( \\bm{x}_{t} - \\mathbb{E}(\\bm{x}),\\, 0\\right)^{2}\\right]^{1/2}\\,.
+\\mathrm{SSD}(\\bm{x}) = \\left[\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(\\bm{x}_{t} - \\mathbb{E}(\\bm{x}),\\, 0\\right)^{2}\\right]^{1/2}\\,.
 ```
 """
-function Semi_SD(x::AbstractVector)
+function SSD(x::AbstractVector)
     T = length(x)
     mu = mean(x)
     val = mu .- x
@@ -741,7 +741,7 @@ Kurt(x::AbstractVector)
 ```
 Compute the square root kurtosis of a returns vector `x`.
 ```math
-\\mathrm{Krut} = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\left( x_{t} - \\mathbb{E}(\\bm{x}) \\right)^{4} \\right]^{1/2}\\,.
+\\mathrm{Kurt} = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\left( x_{t} - \\mathbb{E}(\\bm{x}) \\right)^{4} \\right]^{1/2}\\,.
 ```
 """
 function Kurt(x::AbstractVector)
@@ -753,14 +753,14 @@ end
 
 """
 ```julia
-Semi_Kurt(x::AbstractVector)
+SKurt(x::AbstractVector)
 ```
 Compute the square root semi-kurtosis of a returns vector `x`.
 ```math
-\\mathrm{Krut} = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\min\\left( x_{t} - \\mathbb{E}(\\bm{x}),\\, 0 \\right)^{4} \\right]^{1/2}\\,.
+\\mathrm{SKurt} = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\min\\left( x_{t} - \\mathbb{E}(\\bm{x}),\\, 0 \\right)^{4} \\right]^{1/2}\\,.
 ```
 """
-function Semi_Kurt(x::AbstractVector)
+function SKurt(x::AbstractVector)
     T = length(x)
     mu = mean(x)
     val = x .- mu
@@ -876,7 +876,7 @@ calc_risk(
     w::AbstractVector,
     returns::AbstractMatrix,
     cov::AbstractMatrix;
-    rm::Symbol = :mv,
+    rm::Symbol = :SD,
     rf::Real = 0.0,
     α_i::Real = 0.0001,
     α::Real = 0.05,
@@ -893,7 +893,7 @@ Compute the risk for a given weights vector `w`, returns matrix `returns`, covar
 calc_risk(
     portfolio::AbstractPortfolio;
     type::Symbol = :trad,
-    rm::Symbol = :mv,
+    rm::Symbol = :SD,
     rf::Real = 0.0,
 )
 ```
@@ -903,7 +903,7 @@ function calc_risk(
     w::AbstractVector,
     returns::AbstractMatrix,
     cov::AbstractMatrix;
-    rm::Symbol = :mv,
+    rm::Symbol = :SD,
     rf::Real = 0.0,
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
@@ -914,71 +914,71 @@ function calc_risk(
     kappa::Real = 0.3,
     solvers::Union{<:AbstractDict, Nothing} = nothing,
 )
-    x = (rm != :mv || rm != :msd) && returns * w
+    x = (rm != :Variance || rm != :SD) && returns * w
 
-    risk = if rm == :msd
+    risk = if rm == :SD
         SD(w, cov)
-    elseif rm == :mv
+    elseif rm == :Variance
         Variance(w, cov)
-    elseif rm == :mad
+    elseif rm == :MAD
         MAD(x)
-    elseif rm == :msv
-        Semi_SD(x)
-    elseif rm == :flpm
+    elseif rm == :SSD
+        SSD(x)
+    elseif rm == :FLPM
         FLPM(x, rf)
-    elseif rm == :slpm
+    elseif rm == :SLPM
         SLPM(x, rf)
-    elseif rm == :wr
+    elseif rm == :WR
         WR(x)
-    elseif rm == :var
+    elseif rm == :VaR
         VaR(x, alpha)
-    elseif rm == :cvar
+    elseif rm == :CVaR
         CVaR(x, alpha)
-    elseif rm == :evar
+    elseif rm == :EVaR
         EVaR(x, solvers, alpha)
-    elseif rm == :rvar
+    elseif rm == :RVaR
         RVaR(x, solvers, alpha, kappa)
-    elseif rm == :dar
+    elseif rm == :DaR
         DaR_abs(x, alpha)
-    elseif rm == :mdd
+    elseif rm == :MDD
         MDD_abs(x)
-    elseif rm == :add
+    elseif rm == :ADD
         ADD_abs(x)
-    elseif rm == :cdar
+    elseif rm == :CDaR
         CDaR_abs(x, alpha)
-    elseif rm == :uci
+    elseif rm == :UCI
         UCI_abs(x)
-    elseif rm == :edar
+    elseif rm == :EDaR
         EDaR_abs(x, solvers, alpha)
-    elseif rm == :rdar
+    elseif rm == :RDaR
         RDaR_abs(x, solvers, alpha, kappa)
-    elseif rm == :dar_r
+    elseif rm == :DaR_r
         DaR_rel(x, alpha)
-    elseif rm == :mdd_r
+    elseif rm == :MDD_r
         MDD_rel(x)
-    elseif rm == :add_r
+    elseif rm == :ADD_r
         ADD_rel(x)
-    elseif rm == :cdar_r
+    elseif rm == :CDaR_r
         CDaR_rel(x, alpha)
     elseif rm == :uci_r
         UCI_rel(x)
-    elseif rm == :edar_r
+    elseif rm == :EDaR_r
         EDaR_rel(x, solvers, alpha)
-    elseif rm == :rdar_r
+    elseif rm == :RDaR_r
         RDaR_rel(x, solvers, alpha, kappa)
-    elseif rm == :krt
+    elseif rm == :Kurt
         Kurt(x)
-    elseif rm == :skrt
-        Semi_Kurt(x)
-    elseif rm == :gmd
+    elseif rm == :SKurt
+        SKurt(x)
+    elseif rm == :GMD
         GMD(x)
-    elseif rm == :rg
+    elseif rm == :RG
         RG(x)
-    elseif rm == :rcvar
+    elseif rm == :RCVaR
         RCVaR(x; alpha = alpha, beta = beta)
-    elseif rm == :tg
+    elseif rm == :TG
         TG(x; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-    elseif rm == :rtg
+    elseif rm == :RTG
         RTG(
             x;
             alpha_i = alpha_i,
@@ -988,7 +988,7 @@ function calc_risk(
             beta = beta,
             b_sim = b_sim,
         )
-    elseif rm == :owa
+    elseif rm == :OWA
         OWA(x, w)
     else
         throw(ArgumentError("rm must be one of $(union(RiskMeasures, HRRiskMeasures))"))
@@ -1000,7 +1000,7 @@ end
 function calc_risk(
     portfolio::AbstractPortfolio;
     type::Symbol = :trad,
-    rm::Symbol = :mv,
+    rm::Symbol = :SD,
     rf::Real = 0.0,
 )
     weights = if isa(portfolio, Portfolio)
@@ -1038,7 +1038,7 @@ end
 export Variance,
     SD,
     MAD,
-    Semi_SD,
+    SSD,
     FLPM,
     SLPM,
     WR,

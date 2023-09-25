@@ -73,7 +73,7 @@ function EffMaxDaR(
 
     # vars = [w; mean_ret]
     # register(model, :port_return, length(w) * 2, port_return, autodiff = true)
-    # register(model, :cdar, length(z) + 3, cdar, autodiff = true)
+    # register(model, :CDaR, length(z) + 3, cdar, autodiff = true)
     # !isnothing(mean_ret) && @NLexpression(model, nl_ret, port_return(vars...))
     # @NLexpression(model, nl_risk, cdar(alpha, samples, beta, z...))
 

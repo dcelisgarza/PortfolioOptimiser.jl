@@ -1,6 +1,6 @@
 """
 Abstract type for portfolios. Concrete portfolios subtype this see [`Portfolio`](@ref) and [`HCPortfolio`](@ref).
-```
+```julia
 abstract type AbstractPortfolio end
 ```
 """
@@ -8,81 +8,81 @@ abstract type AbstractPortfolio end
 
 """
 Available risk measures for `type = :trad` optimisations of [`Portfolio`](@ref).
-    - `:mv` = standard deviation
-    - `:mad` = max absolute deviation
-    - `:msv` = semi standard deviation
-    - `:flpm` = first lower partial moment (omega ratio)
-    - `:slpm` = second lower partial moment (sortino ratio)
-    - `:wr` = worst realisation
-    - `:cvar` = conditional value at risk
-    - `:evar` = entropic value at risk
-    - `:rvar` = relativistic value at risk
-    - `:mdd` = maximum drawdown
-    - `:add` = average drawdown
-    - `:cdar` = conditional drawdown at risk
-    - `:uci` = ulcer index
-    - `:edar` = entropic drawdown at risk
-    - `:rdar` = relativistic drawdown at risk
-    - `:krt` = kurtosis
-    - `:skrt` = semi-kurtosis
-    - `:gmd` = gini mean difference
-    - `:rg` = range of returns
-    - `:rcvar` = range of conditional value at risk
-    - `:tg` = tail gini
-    - `:rtg` = range of tail gini
-    - `:owa` = ordered weight array (generic OWA weights)
+    - `:SD` = standard deviation
+    - `:MAD` = max absolute deviation
+    - `:SSD` = semi standard deviation
+    - `:FLPM` = first lower partial moment (omega ratio)
+    - `:SLPM` = second lower partial moment (sortino ratio)
+    - `:WR` = worst realisation
+    - `:CVaR` = conditional value at risk
+    - `:EVaR` = entropic value at risk
+    - `:RVaR` = relativistic value at risk
+    - `:MDD` = maximum drawdown
+    - `:ADD` = average drawdown
+    - `:CDaR` = conditional drawdown at risk
+    - `:UCI` = ulcer index
+    - `:EDaR` = entropic drawdown at risk
+    - `:RDaR` = relativistic drawdown at risk
+    - `:Kurt` = kurtosis
+    - `:SKurt` = semi-kurtosis
+    - `:GMD` = gini mean difference
+    - `:RG` = range of returns
+    - `:RCVaR` = range of conditional value at risk
+    - `:TG` = tail gini
+    - `:RTG` = range of tail gini
+    - `:OWA` = ordered weight array (generic OWA weights)
 ```
 const RiskMeasures = (
-    :mv,    # _mv
-    :mad,   # _mad
-    :msv,   # _mad
-    :flpm,  # _lpm
-    :slpm,  # _lpm
-    :wr,    # _wr
-    :cvar,  # _var
-    :evar,  # _var
-    :rvar,  # _var
-    :mdd,   # _dar
-    :add,   # _dar
-    :cdar,  # _dar
-    :uci,   # _dar
-    :edar,  # _dar
-    :rdar,  # _dar
-    :krt,   # _krt
-    :skrt,  # _krt
-    :gmd,   # _owa
-    :rg,    # _owa
-    :rcvar, # _owa
-    :tg,    # _owa
-    :rtg,   # _owa
-    :owa,   # _owa
+    :SD,    # _mv
+    :MAD,   # _mad
+    :SSD,   # _mad
+    :FLPM,  # _lpm
+    :SLPM,  # _lpm
+    :WR,    # _wr
+    :CVaR,  # _var
+    :EVaR,  # _var
+    :RVaR,  # _var
+    :MDD,   # _dar
+    :ADD,   # _dar
+    :CDaR,  # _dar
+    :UCI,   # _dar
+    :EDaR,  # _dar
+    :RDaR,  # _dar
+    :Kurt,   # _krt
+    :SKurt,  # _krt
+    :GMD,   # _owa
+    :RG,    # _owa
+    :RCVaR, # _owa
+    :TG,    # _owa
+    :RTG,   # _owa
+    :OWA,   # _owa
 )
 ```
 """
 const RiskMeasures = (
-    :mv,    # _mv
-    :mad,   # _mad
-    :msv,   # _mad
-    :flpm,  # _lpm
-    :slpm,  # _lpm
-    :wr,    # _wr
-    :cvar,  # _var
-    :evar,  # _var
-    :rvar,  # _var
-    :mdd,   # _dar
-    :add,   # _dar
-    :cdar,  # _dar
-    :uci,   # _dar
-    :edar,  # _dar
-    :rdar,  # _dar
-    :krt,   # _krt
-    :skrt,  # _krt
-    :gmd,   # _owa
-    :rg,    # _owa
-    :rcvar, # _owa
-    :tg,    # _owa
-    :rtg,   # _owa
-    :owa,   # _owa
+    :SD,    # _mv
+    :MAD,   # _mad
+    :SSD,   # _mad
+    :FLPM,  # _lpm
+    :SLPM,  # _lpm
+    :WR,    # _wr
+    :CVaR,  # _var
+    :EVaR,  # _var
+    :RVaR,  # _var
+    :MDD,   # _dar
+    :ADD,   # _dar
+    :CDaR,  # _dar
+    :UCI,   # _dar
+    :EDaR,  # _dar
+    :RDaR,  # _dar
+    :Kurt,  # _krt
+    :SKurt, # _krt
+    :GMD,   # _owa
+    :RG,    # _owa
+    :RCVaR, # _owa
+    :TG,    # _owa
+    :RTG,   # _owa
+    :OWA,   # _owa
 )
 
 """
@@ -130,10 +130,10 @@ const PortClasses = (:classic,)
 """
 Available optimisation types for [`Portfolio`](@ref).
 ```
-const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
+const PortTypes = (:trad, :rp, :rrp, :OWA, :wc)
 ```
 """
-const PortTypes = (:trad, :rp, :rrp, :owa, :wc)
+const PortTypes = (:trad, :rp, :rrp, :OWA, :wc)
 
 """
 Available versions of relaxed risk parity optimisations of [`Portfolio`](@ref).
@@ -179,10 +179,10 @@ const BoxTypes = (EllipseTypes..., :delta)
 # Hierarchical portfolios.
 
 # DBHT root methods.
-const DBHTRootMethods = (:unique, :equal)
+const DBHTRootMethods = (:unique, :Equal)
 
 # OWA Methods.
-const OWAMethods = (:crra, :me, :mss, :msd)
+const OWAMethods = (:crra, :me, :mss, :SD)
 
 # Mutual and variation info bins and types.
 const BinTypes = (:kn, :fd, :sc, :hgr)
@@ -192,17 +192,17 @@ const InfoTypes = (:mutual, :variation)
 
 # HRPortfolio risk measures.
 const HRRiskMeasures = (
-    :msd,
     RiskMeasures...,
-    :equal,
-    :var,
-    :dar,
-    :mdd_r,
-    :add_r,
-    :dar_r,
-    :cdar_r,
-    :edar_r,
-    :rdar_r,
+    :Variance,
+    :Equal,
+    :VaR,
+    :DaR,
+    :MDD_r,
+    :ADD_r,
+    :DaR_r,
+    :CDaR_r,
+    :EDaR_r,
+    :RDaR_r,
 )
 
 const HRTypes = (:hrp, :herc, :herc2, :nco)
