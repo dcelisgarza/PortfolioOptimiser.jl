@@ -28,6 +28,7 @@ function owa_gmd(T)
 end
 
 function owa_cvar(T, alpha = 0.05)
+    @assert(0 < alpha < 1, "alpha must be between 0 and 1")
     k = floor(Int, T * alpha)
     w = zeros(T)
     w[1:k] .= -1 / (T * alpha)

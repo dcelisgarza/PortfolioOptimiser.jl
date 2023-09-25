@@ -28,4 +28,7 @@ CDaR_rel
 UCI_rel
 EDaR_rel
 RDaR_rel
+Kurt
+Semi_Kurt
+calc_risk
 ```

@@ -137,10 +137,10 @@ type = :trad
         6.46609443105899e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-4)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-5)
-    @test isapprox(w3t, w3[!, :weights], rtol = 4e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 3e-8)
+    @test isapprox(w1t, w1.weights, rtol = 3e-4)
+    @test isapprox(w2t, w2.weights, rtol = 3e-5)
+    @test isapprox(w3t, w3.weights, rtol = 4e-5)
+    @test isapprox(w4t, w4.weights, rtol = 3e-8)
 
     kelly = :approx
     obj = :min_risk
@@ -241,10 +241,10 @@ type = :trad
         1.4773199024696087e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-4)
-    @test isapprox(w2t, w2[!, :weights], rtol = 7e-5)
-    @test isapprox(w3t, w3[!, :weights], rtol = 3e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 3e-5)
+    @test isapprox(w1t, w1.weights, rtol = 3e-4)
+    @test isapprox(w2t, w2.weights, rtol = 7e-5)
+    @test isapprox(w3t, w3.weights, rtol = 3e-4)
+    @test isapprox(w4t, w4.weights, rtol = 3e-5)
 
     kelly = :exact
     obj = :min_risk
@@ -345,10 +345,10 @@ type = :trad
         2.674823455426402e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 7e-5)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-5)
-    @test isapprox(w3t, w3[!, :weights], rtol = 4e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 5e-6)
+    @test isapprox(w1t, w1.weights, rtol = 7e-5)
+    @test isapprox(w2t, w2.weights, rtol = 2e-5)
+    @test isapprox(w3t, w3.weights, rtol = 4e-5)
+    @test isapprox(w4t, w4.weights, rtol = 5e-6)
 
     portfolio = Portfolio(
         returns = returns,
@@ -599,10 +599,10 @@ end
         8.728903651047666e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-4)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-3)
-    @test isapprox(w3t, w3[!, :weights], rtol = 8e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 4e-6)
+    @test isapprox(w1t, w1.weights, rtol = 3e-4)
+    @test isapprox(w2t, w2.weights, rtol = 2e-3)
+    @test isapprox(w3t, w3.weights, rtol = 8e-5)
+    @test isapprox(w4t, w4.weights, rtol = 4e-6)
 
     kelly = :approx
     obj = :min_risk
@@ -703,10 +703,10 @@ end
         6.106532670780226e-10,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 5e-7)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-3)
-    @test isapprox(w3t, w3[!, :weights], rtol = 2e-3)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
+    @test isapprox(w1t, w1.weights, rtol = 5e-7)
+    @test isapprox(w2t, w2.weights, rtol = 3e-3)
+    @test isapprox(w3t, w3.weights, rtol = 2e-3)
+    @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
     kelly = :exact
     obj = :min_risk
@@ -807,10 +807,10 @@ end
         3.130826651748219e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 2e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 3e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 3e-5)
+    @test isapprox(w1t, w1.weights, rtol = 2e-6)
+    @test isapprox(w2t, w2.weights, rtol = 3e-4)
+    @test isapprox(w3t, w3.weights, rtol = 3e-4)
+    @test isapprox(w4t, w4.weights, rtol = 3e-5)
 
     portfolio = Portfolio(
         returns = returns,
@@ -1011,10 +1011,10 @@ end
         8.728903651047666e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 8e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 5e-6)
-    @test isapprox(w3t, w3[!, :weights], rtol = 4e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 2e-6)
+    @test isapprox(w1t, w1.weights, rtol = 8e-6)
+    @test isapprox(w2t, w2.weights, rtol = 5e-6)
+    @test isapprox(w3t, w3.weights, rtol = 4e-5)
+    @test isapprox(w4t, w4.weights, rtol = 2e-6)
 
     kelly = :approx
     obj = :min_risk
@@ -1115,10 +1115,10 @@ end
         1.6203871132884816e-10,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 2e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 9e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 5e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
+    @test isapprox(w1t, w1.weights, rtol = 2e-6)
+    @test isapprox(w2t, w2.weights, rtol = 9e-4)
+    @test isapprox(w3t, w3.weights, rtol = 5e-4)
+    @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
     kelly = :exact
     obj = :min_risk
@@ -1219,10 +1219,10 @@ end
         3.130826651748219e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 6e-5)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-6)
-    @test isapprox(w3t, w3[!, :weights], rtol = 7e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 5e-6)
+    @test isapprox(w1t, w1.weights, rtol = 6e-5)
+    @test isapprox(w2t, w2.weights, rtol = 3e-6)
+    @test isapprox(w3t, w3.weights, rtol = 7e-4)
+    @test isapprox(w4t, w4.weights, rtol = 5e-6)
 
     portfolio = Portfolio(
         returns = returns,
@@ -1423,10 +1423,10 @@ end
         8.834304768468476e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 8e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 6e-6)
-    @test isapprox(w3t, w3[!, :weights], rtol = 5e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 4e-6)
+    @test isapprox(w1t, w1.weights, rtol = 8e-6)
+    @test isapprox(w2t, w2.weights, rtol = 6e-6)
+    @test isapprox(w3t, w3.weights, rtol = 5e-5)
+    @test isapprox(w4t, w4.weights, rtol = 4e-6)
 
     kelly = :approx
     obj = :min_risk
@@ -1527,10 +1527,10 @@ end
         6.043752858965341e-10,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-7)
-    @test isapprox(w2t, w2[!, :weights], rtol = 5e-2)
-    @test isapprox(w3t, w3[!, :weights], rtol = 7e-6)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
+    @test isapprox(w1t, w1.weights, rtol = 3e-7)
+    @test isapprox(w2t, w2.weights, rtol = 5e-2)
+    @test isapprox(w3t, w3.weights, rtol = 7e-6)
+    @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
     kelly = :exact
     obj = :min_risk
@@ -1631,10 +1631,10 @@ end
         3.120898690286033e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 7e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-3)
-    @test isapprox(w3t, w3[!, :weights], rtol = 3e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 2e-6)
+    @test isapprox(w1t, w1.weights, rtol = 7e-6)
+    @test isapprox(w2t, w2.weights, rtol = 2e-3)
+    @test isapprox(w3t, w3.weights, rtol = 3e-4)
+    @test isapprox(w4t, w4.weights, rtol = 2e-6)
 
     portfolio = Portfolio(
         returns = returns,
@@ -1833,10 +1833,10 @@ end
         8.834304768468476e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 4e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-5)
-    @test isapprox(w3t, w3[!, :weights], rtol = 2e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 2e-6)
+    @test isapprox(w1t, w1.weights, rtol = 4e-6)
+    @test isapprox(w2t, w2.weights, rtol = 2e-5)
+    @test isapprox(w3t, w3.weights, rtol = 2e-5)
+    @test isapprox(w4t, w4.weights, rtol = 2e-6)
 
     kelly = :approx
     obj = :min_risk
@@ -1937,10 +1937,10 @@ end
         7.730789424008123e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 6e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-3)
-    @test isapprox(w3t, w3[!, :weights], rtol = 2e-3)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
+    @test isapprox(w1t, w1.weights, rtol = 6e-6)
+    @test isapprox(w2t, w2.weights, rtol = 2e-3)
+    @test isapprox(w3t, w3.weights, rtol = 2e-3)
+    @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
     kelly = :exact
     obj = :min_risk
@@ -2041,10 +2041,10 @@ end
         3.120898690286033e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 2e-5)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-6)
-    @test isapprox(w3t, w3[!, :weights], rtol = 6e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 9e-6)
+    @test isapprox(w1t, w1.weights, rtol = 2e-5)
+    @test isapprox(w2t, w2.weights, rtol = 3e-6)
+    @test isapprox(w3t, w3.weights, rtol = 6e-4)
+    @test isapprox(w4t, w4.weights, rtol = 9e-6)
 
     portfolio = Portfolio(
         returns = returns,
@@ -2245,10 +2245,10 @@ end
         8.927802357923575e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 4e-7)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-8)
-    @test isapprox(w3t, w3[!, :weights], rtol = 7e-7)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-8)
+    @test isapprox(w1t, w1.weights, rtol = 4e-7)
+    @test isapprox(w2t, w2.weights, rtol = 2e-8)
+    @test isapprox(w3t, w3.weights, rtol = 7e-7)
+    @test isapprox(w4t, w4.weights, rtol = 1e-8)
 
     kelly = :approx
     obj = :min_risk
@@ -2349,10 +2349,10 @@ end
         3.4582992051815595e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 4e-7)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-8)
-    @test isapprox(w3t, w3[!, :weights], rtol = 2e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
+    @test isapprox(w1t, w1.weights, rtol = 4e-7)
+    @test isapprox(w2t, w2.weights, rtol = 2e-8)
+    @test isapprox(w3t, w3.weights, rtol = 2e-4)
+    @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
     kelly = :exact
     obj = :min_risk
@@ -2453,10 +2453,10 @@ end
         2.198590587365655e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 4e-7)
-    @test isapprox(w2t, w2[!, :weights], rtol = 5e-8)
-    @test isapprox(w3t, w3[!, :weights], rtol = 6e-8)
-    @test isapprox(w4t, w4[!, :weights], rtol = 2e-6)
+    @test isapprox(w1t, w1.weights, rtol = 4e-7)
+    @test isapprox(w2t, w2.weights, rtol = 5e-8)
+    @test isapprox(w3t, w3.weights, rtol = 6e-8)
+    @test isapprox(w4t, w4.weights, rtol = 2e-6)
 
     portfolio = Portfolio(
         returns = returns,
@@ -2657,10 +2657,10 @@ end
         8.762288424618493e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 2e-7)
-    @test isapprox(w2t, w2[!, :weights], rtol = 4e-7)
-    @test isapprox(w3t, w3[!, :weights], rtol = 3e-7)
-    @test isapprox(w4t, w4[!, :weights], rtol = 3e-8)
+    @test isapprox(w1t, w1.weights, rtol = 2e-7)
+    @test isapprox(w2t, w2.weights, rtol = 4e-7)
+    @test isapprox(w3t, w3.weights, rtol = 3e-7)
+    @test isapprox(w4t, w4.weights, rtol = 3e-8)
 
     kelly = :approx
     obj = :min_risk
@@ -2761,10 +2761,10 @@ end
         1.585529029013495e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 2e-7)
-    @test isapprox(w2t, w2[!, :weights], rtol = 4e-7)
-    @test isapprox(w3t, w3[!, :weights], rtol = 9e-6)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
+    @test isapprox(w1t, w1.weights, rtol = 2e-7)
+    @test isapprox(w2t, w2.weights, rtol = 4e-7)
+    @test isapprox(w3t, w3.weights, rtol = 9e-6)
+    @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
     kelly = :exact
     obj = :min_risk
@@ -2865,10 +2865,10 @@ end
         3.3352177778610072e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-7)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-3)
-    @test isapprox(w3t, w3[!, :weights], rtol = 6e-6)
-    @test isapprox(w4t, w4[!, :weights], rtol = 3e-5)
+    @test isapprox(w1t, w1.weights, rtol = 3e-7)
+    @test isapprox(w2t, w2.weights, rtol = 3e-3)
+    @test isapprox(w3t, w3.weights, rtol = 6e-6)
+    @test isapprox(w4t, w4.weights, rtol = 3e-5)
 
     portfolio = Portfolio(
         returns = returns,
@@ -3069,10 +3069,10 @@ end
         6.649506650084859e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 4e-4)
-    @test isapprox(w2t, w2[!, :weights], rtol = 5e-5)
-    @test isapprox(w3t, w3[!, :weights], rtol = 5e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-6)
+    @test isapprox(w1t, w1.weights, rtol = 4e-4)
+    @test isapprox(w2t, w2.weights, rtol = 5e-5)
+    @test isapprox(w3t, w3.weights, rtol = 5e-5)
+    @test isapprox(w4t, w4.weights, rtol = 1e-6)
 
     kelly = :approx
     obj = :min_risk
@@ -3173,10 +3173,10 @@ end
         4.673108903566455e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-4)
-    @test isapprox(w2t, w2[!, :weights], rtol = 4e-3)
-    @test isapprox(w3t, w3[!, :weights], rtol = 4e-2)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
+    @test isapprox(w1t, w1.weights, rtol = 3e-4)
+    @test isapprox(w2t, w2.weights, rtol = 4e-3)
+    @test isapprox(w3t, w3.weights, rtol = 4e-2)
+    @test isapprox(w4t, w4.weights, rtol = 1e-5)
 
     kelly = :exact
     obj = :min_risk
@@ -3277,10 +3277,10 @@ end
         2.4758763753935936e-10,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 4e-5)
-    @test isapprox(w2t, w2[!, :weights], rtol = 8e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 9e-7)
+    @test isapprox(w1t, w1.weights, rtol = 4e-5)
+    @test isapprox(w2t, w2.weights, rtol = 8e-4)
+    @test isapprox(w3t, w3.weights, rtol = 1e-4)
+    @test isapprox(w4t, w4.weights, rtol = 9e-7)
 
     portfolio = Portfolio(
         returns = returns,
@@ -3481,10 +3481,10 @@ end
         1.0469429042886405e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-5)
-    @test isapprox(w2t, w2[!, :weights], rtol = 6e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 5e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 3e-6)
+    @test isapprox(w1t, w1.weights, rtol = 3e-5)
+    @test isapprox(w2t, w2.weights, rtol = 6e-4)
+    @test isapprox(w3t, w3.weights, rtol = 5e-5)
+    @test isapprox(w4t, w4.weights, rtol = 3e-6)
 
     kelly = :approx
     obj = :min_risk
@@ -3585,10 +3585,10 @@ end
         1.8285626807746916e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-3)
-    @test isapprox(w2t, w2[!, :weights], rtol = 7e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-7)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
+    @test isapprox(w1t, w1.weights, rtol = 1e-3)
+    @test isapprox(w2t, w2.weights, rtol = 7e-4)
+    @test isapprox(w3t, w3.weights, rtol = 1e-7)
+    @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
     kelly = :exact
     obj = :min_risk
@@ -3689,10 +3689,10 @@ end
         1.7742907192908375e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-5)
-    @test isapprox(w2t, w2[!, :weights], rtol = 5e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-7)
-    @test isapprox(w4t, w4[!, :weights], rtol = 4e-6)
+    @test isapprox(w1t, w1.weights, rtol = 1e-5)
+    @test isapprox(w2t, w2.weights, rtol = 5e-4)
+    @test isapprox(w3t, w3.weights, rtol = 1e-7)
+    @test isapprox(w4t, w4.weights, rtol = 4e-6)
 
     portfolio = Portfolio(
         returns = returns,
@@ -3893,10 +3893,10 @@ end
         8.025491256881099e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-9)
-    @test isapprox(w2t, w2[!, :weights], rtol = 6e-5)
-    @test isapprox(w3t, w3[!, :weights], rtol = 2e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 9e-6)
+    @test isapprox(w1t, w1.weights, rtol = 1e-9)
+    @test isapprox(w2t, w2.weights, rtol = 6e-5)
+    @test isapprox(w3t, w3.weights, rtol = 2e-5)
+    @test isapprox(w4t, w4.weights, rtol = 9e-6)
 
     kelly = :approx
     obj = :min_risk
@@ -3997,10 +3997,10 @@ end
         6.317655172958214e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 5e-9)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-8)
-    @test isapprox(w3t, w3[!, :weights], rtol = 2e-2)
-    @test isapprox(w4t, w4[!, :weights], rtol = 9e-6)
+    @test isapprox(w1t, w1.weights, rtol = 5e-9)
+    @test isapprox(w2t, w2.weights, rtol = 2e-8)
+    @test isapprox(w3t, w3.weights, rtol = 2e-2)
+    @test isapprox(w4t, w4.weights, rtol = 9e-6)
 
     kelly = :exact
     obj = :min_risk
@@ -4101,10 +4101,10 @@ end
         9.189546833512431e-10,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-8)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-8)
-    @test isapprox(w3t, w3[!, :weights], rtol = 5e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 2e-6)
+    @test isapprox(w1t, w1.weights, rtol = 3e-8)
+    @test isapprox(w2t, w2.weights, rtol = 2e-8)
+    @test isapprox(w3t, w3.weights, rtol = 5e-4)
+    @test isapprox(w4t, w4.weights, rtol = 2e-6)
 
     portfolio = Portfolio(
         returns = returns,
@@ -4305,10 +4305,10 @@ end
         8.147499254184257e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 2e-3)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-6)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-6)
-    @test isapprox(w4t, w4[!, :weights], rtol = 2e-5)
+    @test isapprox(w1t, w1.weights, rtol = 2e-3)
+    @test isapprox(w2t, w2.weights, rtol = 3e-6)
+    @test isapprox(w3t, w3.weights, rtol = 1e-6)
+    @test isapprox(w4t, w4.weights, rtol = 2e-5)
 
     kelly = :approx
     obj = :min_risk
@@ -4409,10 +4409,10 @@ end
         1.457304146007259e-10,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 6e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 4e-8)
-    @test isapprox(w3t, w3[!, :weights], rtol = 6e-8)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
+    @test isapprox(w1t, w1.weights, rtol = 6e-6)
+    @test isapprox(w2t, w2.weights, rtol = 4e-8)
+    @test isapprox(w3t, w3.weights, rtol = 6e-8)
+    @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
     kelly = :exact
     obj = :min_risk
@@ -4513,10 +4513,10 @@ end
         2.2898864456396156e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 6e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-7)
-    @test isapprox(w3t, w3[!, :weights], rtol = 4e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 4e-6)
+    @test isapprox(w1t, w1.weights, rtol = 6e-6)
+    @test isapprox(w2t, w2.weights, rtol = 3e-7)
+    @test isapprox(w3t, w3.weights, rtol = 4e-5)
+    @test isapprox(w4t, w4.weights, rtol = 4e-6)
 
     portfolio = Portfolio(
         returns = returns,
@@ -4717,10 +4717,10 @@ end
         3.545183964839339e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 7e-8)
-    @test isapprox(w2t, w2[!, :weights], rtol = 6e-8)
-    @test isapprox(w3t, w3[!, :weights], rtol = 3e-6)
-    @test isapprox(w4t, w4[!, :weights], rtol = 6e-5)
+    @test isapprox(w1t, w1.weights, rtol = 7e-8)
+    @test isapprox(w2t, w2.weights, rtol = 6e-8)
+    @test isapprox(w3t, w3.weights, rtol = 3e-6)
+    @test isapprox(w4t, w4.weights, rtol = 6e-5)
 
     kelly = :approx
     obj = :min_risk
@@ -4821,10 +4821,10 @@ end
         5.81158599282837e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 5e-8)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-7)
-    @test isapprox(w3t, w3[!, :weights], rtol = 7e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
+    @test isapprox(w1t, w1.weights, rtol = 5e-8)
+    @test isapprox(w2t, w2.weights, rtol = 2e-7)
+    @test isapprox(w3t, w3.weights, rtol = 7e-4)
+    @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
     kelly = :exact
     obj = :min_risk
@@ -4925,10 +4925,10 @@ end
         3.671290233929755e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 2e-7)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 6e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 7e-7)
+    @test isapprox(w1t, w1.weights, rtol = 2e-7)
+    @test isapprox(w2t, w2.weights, rtol = 2e-4)
+    @test isapprox(w3t, w3.weights, rtol = 6e-4)
+    @test isapprox(w4t, w4.weights, rtol = 7e-7)
 
     portfolio = Portfolio(
         returns = returns,
@@ -5129,10 +5129,10 @@ end
         8.147499254184257e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 9e-6)
-    @test isapprox(w3t, w3[!, :weights], rtol = 3e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 2e-5)
+    @test isapprox(w1t, w1.weights, rtol = 3e-6)
+    @test isapprox(w2t, w2.weights, rtol = 9e-6)
+    @test isapprox(w3t, w3.weights, rtol = 3e-5)
+    @test isapprox(w4t, w4.weights, rtol = 2e-5)
 
     kelly = :approx
     obj = :min_risk
@@ -5233,10 +5233,10 @@ end
         5.946609144083753e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 8e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-3)
-    @test isapprox(w3t, w3[!, :weights], rtol = 4e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-9)
+    @test isapprox(w1t, w1.weights, rtol = 8e-6)
+    @test isapprox(w2t, w2.weights, rtol = 2e-3)
+    @test isapprox(w3t, w3.weights, rtol = 4e-4)
+    @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
     kelly = :exact
     obj = :min_risk
@@ -5337,10 +5337,10 @@ end
         2.2898864456396156e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 4e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 4e-7)
-    @test isapprox(w3t, w3[!, :weights], rtol = 9e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 3e-7)
+    @test isapprox(w1t, w1.weights, rtol = 4e-6)
+    @test isapprox(w2t, w2.weights, rtol = 4e-7)
+    @test isapprox(w3t, w3.weights, rtol = 9e-4)
+    @test isapprox(w4t, w4.weights, rtol = 3e-7)
 
     portfolio = Portfolio(
         returns = returns,
@@ -5543,10 +5543,10 @@ end
         1.678106090306329e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-4)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-5)
-    @test isapprox(w3t, w3[!, :weights], rtol = 3e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 7e-5)
+    @test isapprox(w1t, w1.weights, rtol = 1e-4)
+    @test isapprox(w2t, w2.weights, rtol = 3e-5)
+    @test isapprox(w3t, w3.weights, rtol = 3e-4)
+    @test isapprox(w4t, w4.weights, rtol = 7e-5)
 
     kelly = :approx
     obj = :min_risk
@@ -5647,10 +5647,10 @@ end
         1.0004896141490282e-10,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-4)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 9e-3)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-7)
+    @test isapprox(w1t, w1.weights, rtol = 1e-4)
+    @test isapprox(w2t, w2.weights, rtol = 2e-4)
+    @test isapprox(w3t, w3.weights, rtol = 9e-3)
+    @test isapprox(w4t, w4.weights, rtol = 1e-7)
 
     portfolio = Portfolio(
         returns = returns,
@@ -5769,10 +5769,10 @@ end
         5.2031643643685795e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 6e-2)
-    @test isapprox(w2t, w2[!, :weights], rtol = 4e-2)
-    @test isapprox(w3t, w3[!, :weights], rtol = 5e-1)
-    @test isapprox(w4t, w4[!, :weights], rtol = 4e-7)
+    @test isapprox(w1t, w1.weights, rtol = 6e-2)
+    @test isapprox(w2t, w2.weights, rtol = 4e-2)
+    @test isapprox(w3t, w3.weights, rtol = 5e-1)
+    @test isapprox(w4t, w4.weights, rtol = 4e-7)
 
     portfolio = Portfolio(
         returns = returns,
@@ -5975,10 +5975,10 @@ end
         1.6985143604918585e-10,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-2)
-    @test isapprox(w2t, w2[!, :weights], rtol = 1e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 6e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 9e-5)
+    @test isapprox(w1t, w1.weights, rtol = 3e-2)
+    @test isapprox(w2t, w2.weights, rtol = 1e-4)
+    @test isapprox(w3t, w3.weights, rtol = 6e-5)
+    @test isapprox(w4t, w4.weights, rtol = 9e-5)
 
     kelly = :approx
     obj = :min_risk
@@ -6079,10 +6079,10 @@ end
         3.91292532510967e-11,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-2)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-4)
-    @test isapprox(w3t, w3[!, :weights], rtol = 2e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-6)
+    @test isapprox(w1t, w1.weights, rtol = 3e-2)
+    @test isapprox(w2t, w2.weights, rtol = 2e-4)
+    @test isapprox(w3t, w3.weights, rtol = 2e-5)
+    @test isapprox(w4t, w4.weights, rtol = 1e-6)
 
     kelly = :exact
     obj = :min_risk
@@ -6183,10 +6183,10 @@ end
         1.2607089038440672e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-2)
-    @test isapprox(w2t, w2[!, :weights], rtol = 8e-3)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-3)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-4)
+    @test isapprox(w1t, w1.weights, rtol = 3e-2)
+    @test isapprox(w2t, w2.weights, rtol = 8e-3)
+    @test isapprox(w3t, w3.weights, rtol = 1e-3)
+    @test isapprox(w4t, w4.weights, rtol = 1e-4)
 
     portfolio = Portfolio(
         returns = returns,
@@ -6389,10 +6389,10 @@ end
         1.4675724302947847e-8,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-2)
-    @test isapprox(w2t, w2[!, :weights], rtol = 8e-5)
-    @test isapprox(w3t, w3[!, :weights], rtol = 5e-4)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-6)
+    @test isapprox(w1t, w1.weights, rtol = 3e-2)
+    @test isapprox(w2t, w2.weights, rtol = 8e-5)
+    @test isapprox(w3t, w3.weights, rtol = 5e-4)
+    @test isapprox(w4t, w4.weights, rtol = 1e-6)
 
     kelly = :approx
     obj = :min_risk
@@ -6493,10 +6493,10 @@ end
         7.69880921433547e-13,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-2)
-    @test isapprox(w2t, w2[!, :weights], rtol = 9e-5)
-    @test isapprox(w3t, w3[!, :weights], rtol = 2e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-6)
+    @test isapprox(w1t, w1.weights, rtol = 3e-2)
+    @test isapprox(w2t, w2.weights, rtol = 9e-5)
+    @test isapprox(w3t, w3.weights, rtol = 2e-5)
+    @test isapprox(w4t, w4.weights, rtol = 1e-6)
 
     kelly = :exact
     obj = :min_risk
@@ -6573,9 +6573,9 @@ end
         2.485903294297768e-6,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-2)
-    @test isapprox(w2t, w2[!, :weights], rtol = 1e-2)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-3)
+    @test isapprox(w1t, w1.weights, rtol = 3e-2)
+    @test isapprox(w2t, w2.weights, rtol = 1e-2)
+    @test isapprox(w4t, w4.weights, rtol = 1e-3)
 
     portfolio = Portfolio(
         returns = returns,
@@ -6769,10 +6769,10 @@ end
         1.4630403986901223e-8,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 6e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 4e-3)
-    @test isapprox(w3t, w3[!, :weights], rtol = 3e-6)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
+    @test isapprox(w1t, w1.weights, rtol = 6e-6)
+    @test isapprox(w2t, w2.weights, rtol = 4e-3)
+    @test isapprox(w3t, w3.weights, rtol = 3e-6)
+    @test isapprox(w4t, w4.weights, rtol = 1e-5)
 
     rm = :krt
     kelly = :approx
@@ -6850,9 +6850,9 @@ end
         2.4656217303691158e-6,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 8e-2)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-3)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-4)
+    @test isapprox(w1t, w1.weights, rtol = 8e-2)
+    @test isapprox(w2t, w2.weights, rtol = 3e-3)
+    @test isapprox(w4t, w4.weights, rtol = 1e-4)
 
     kelly = :exact
     obj = :min_risk
@@ -6929,9 +6929,9 @@ end
         2.1735501425682977e-6,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 4e-4)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 2e-4)
+    @test isapprox(w1t, w1.weights, rtol = 4e-4)
+    @test isapprox(w2t, w2.weights, rtol = 3e-5)
+    @test isapprox(w4t, w4.weights, rtol = 2e-4)
 end
 
 @testset "skrt full" begin
@@ -7053,10 +7053,10 @@ end
         1.4633740910885559e-8,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 1e-6)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-6)
-    @test isapprox(w4t, w4[!, :weights], rtol = 5e-7)
+    @test isapprox(w1t, w1.weights, rtol = 1e-6)
+    @test isapprox(w2t, w2.weights, rtol = 1e-6)
+    @test isapprox(w3t, w3.weights, rtol = 1e-6)
+    @test isapprox(w4t, w4.weights, rtol = 5e-7)
 
     rm = :skrt
     kelly = :approx
@@ -7158,10 +7158,10 @@ end
         3.803398337169116e-12,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 1e-6)
-    @test isapprox(w3t, w3[!, :weights], rtol = 1e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-6)
+    @test isapprox(w1t, w1.weights, rtol = 1e-6)
+    @test isapprox(w2t, w2.weights, rtol = 1e-6)
+    @test isapprox(w3t, w3.weights, rtol = 1e-5)
+    @test isapprox(w4t, w4.weights, rtol = 1e-6)
 
     rm = :skrt
     kelly = :exact
@@ -7239,9 +7239,9 @@ end
         5.001016950102919e-6,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 8e-2)
-    @test isapprox(w4t, w4[!, :weights], rtol = 3e-3)
+    @test isapprox(w1t, w1.weights, rtol = 1e-6)
+    @test isapprox(w2t, w2.weights, rtol = 8e-2)
+    @test isapprox(w4t, w4.weights, rtol = 3e-3)
 
     portfolio = Portfolio(
         returns = returns,
@@ -7446,10 +7446,10 @@ end
         1.46304039079864e-8,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 1e-6)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-2)
-    @test isapprox(w3t, w3[!, :weights], rtol = 3e-6)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
+    @test isapprox(w1t, w1.weights, rtol = 1e-6)
+    @test isapprox(w2t, w2.weights, rtol = 2e-2)
+    @test isapprox(w3t, w3.weights, rtol = 3e-6)
+    @test isapprox(w4t, w4.weights, rtol = 1e-5)
 
     kelly = :approx
     obj = :min_risk
@@ -7526,9 +7526,9 @@ end
         2.4656217292334974e-6,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 3e-4)
-    @test isapprox(w2t, w2[!, :weights], rtol = 2e-2)
-    @test isapprox(w4t, w4[!, :weights], rtol = 1e-5)
+    @test isapprox(w1t, w1.weights, rtol = 3e-4)
+    @test isapprox(w2t, w2.weights, rtol = 2e-2)
+    @test isapprox(w4t, w4.weights, rtol = 1e-5)
 
     kelly = :exact
     obj = :min_risk
@@ -7605,9 +7605,9 @@ end
         2.173548638545329e-6,
     ]
 
-    @test isapprox(w1t, w1[!, :weights], rtol = 4e-4)
-    @test isapprox(w2t, w2[!, :weights], rtol = 3e-5)
-    @test isapprox(w4t, w4[!, :weights], rtol = 2e-4)
+    @test isapprox(w1t, w1.weights, rtol = 4e-4)
+    @test isapprox(w2t, w2.weights, rtol = 3e-5)
+    @test isapprox(w4t, w4.weights, rtol = 2e-4)
 end
 
 @testset "OWA optimisations" begin
