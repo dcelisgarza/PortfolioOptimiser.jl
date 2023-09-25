@@ -14,8 +14,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        allow_failures:
-          - julia_version: nightly
         include:
           - version: '1'  # The latest point-release (Linux)
             os: ubuntu-latest
@@ -32,6 +30,8 @@ jobs:
           - version: 'nightly'
             os: ubuntu-latest
             arch: x64
+        allow-failures:
+          - 'nightly'
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
