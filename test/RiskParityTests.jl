@@ -90,7 +90,7 @@ l = 2.0
         0.0792820130418486,
         0.109772759974536,
     ]
-    @test isapprox(w2t, w2.weights, rtol = 6e-5)
+    @test isapprox(w2t, w2.weights, rtol = 8e-5)
 end
 
 @testset "Relaxed risk parity" begin

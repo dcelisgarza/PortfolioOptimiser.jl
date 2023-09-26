@@ -29,6 +29,6 @@ UCI_rel
 EDaR_rel
 RDaR_rel
 Kurt
-Semi_Kurt
+SKurt
 calc_risk
 ```

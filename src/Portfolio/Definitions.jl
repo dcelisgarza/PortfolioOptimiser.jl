@@ -7,6 +7,33 @@ abstract type AbstractPortfolio end
 abstract type AbstractPortfolio end
 
 """
+```julia
+const RiskMeasures = (
+    :SD,
+    :MAD,
+    :SSD,
+    :FLPM,
+    :SLPM,
+    :WR,
+    :CVaR,
+    :EVaR,
+    :RVaR,
+    :MDD,
+    :ADD,
+    :CDaR,
+    :UCI,
+    :EDaR,
+    :RDaR,
+    :Kurt,
+    :SKurt,
+    :GMD,
+    :RG,
+    :RCVaR,
+    :TG,
+    :RTG,
+    :OWA,
+)
+```
 Available risk measures for `type = :trad` optimisations of [`Portfolio`](@ref).
     - `:SD` = standard deviation
     - `:MAD` = max absolute deviation
@@ -17,47 +44,20 @@ Available risk measures for `type = :trad` optimisations of [`Portfolio`](@ref).
     - `:CVaR` = conditional value at risk
     - `:EVaR` = entropic value at risk
     - `:RVaR` = relativistic value at risk
-    - `:MDD` = maximum drawdown
-    - `:ADD` = average drawdown
-    - `:CDaR` = conditional drawdown at risk
-    - `:UCI` = ulcer index
-    - `:EDaR` = entropic drawdown at risk
-    - `:RDaR` = relativistic drawdown at risk
-    - `:Kurt` = kurtosis
-    - `:SKurt` = semi-kurtosis
+    - `:MDD` = maximum drawdown for uncompounded cummulative returns
+    - `:ADD` = average drawdown for uncompounded cummulative returns
+    - `:CDaR` = conditional drawdown at risk for uncompounded cummulative returns
+    - `:UCI` = ulcer index for uncompounded cummulative returns
+    - `:EDaR` = entropic drawdown at risk for uncompounded cummulative returns
+    - `:RDaR` = relativistic drawdown at risk for uncompounded cummulative returns
+    - `:Kurt` = square root kurtosis
+    - `:SKurt` = square root semi-kurtosis
     - `:GMD` = gini mean difference
     - `:RG` = range of returns
     - `:RCVaR` = range of conditional value at risk
     - `:TG` = tail gini
     - `:RTG` = range of tail gini
     - `:OWA` = ordered weight array (generic OWA weights)
-```
-const RiskMeasures = (
-    :SD,    # _mv
-    :MAD,   # _mad
-    :SSD,   # _mad
-    :FLPM,  # _lpm
-    :SLPM,  # _lpm
-    :WR,    # _wr
-    :CVaR,  # _var
-    :EVaR,  # _var
-    :RVaR,  # _var
-    :MDD,   # _dar
-    :ADD,   # _dar
-    :CDaR,  # _dar
-    :UCI,   # _dar
-    :EDaR,  # _dar
-    :RDaR,  # _dar
-    :Kurt,   # _krt
-    :SKurt,  # _krt
-    :GMD,   # _owa
-    :RG,    # _owa
-    :RCVaR, # _owa
-    :TG,    # _owa
-    :RTG,   # _owa
-    :OWA,   # _owa
-)
-```
 """
 const RiskMeasures = (
     :SD,    # _mv
@@ -86,18 +86,18 @@ const RiskMeasures = (
 )
 
 """
-Available types of Kelly returns for [`Portfolio`](@ref).
-```
+```julia
 const KellyRet = (:none, :approx, :exact)
 ```
+Available types of Kelly returns for [`Portfolio`](@ref).
 """
 const KellyRet = (:none, :approx, :exact)
 
 """
-Available kinds of tracking errors for [`Portfolio`](@ref).
-```
+```julia
 const TrackingErrKinds = (:weights, :returns)
 ```
+Available kinds of tracking errors for [`Portfolio`](@ref).
 """
 const TrackingErrKinds = (:weights, :returns)
 

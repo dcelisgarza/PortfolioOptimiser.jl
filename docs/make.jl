@@ -27,8 +27,11 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
-        "API" =>
-            ["Definitions" => "Definitions.md", "Risk Functions" => "Risk_Functions.md"],
+        "API" => [
+            "Definitions" => "Definitions.md",
+            "Types" => "Types.md",
+            "Risk Functions" => "Risk_Functions.md",
+        ],
         # "API" => [
         #     "obj_func_api.md",
         #     "exp_ret_api.md",
