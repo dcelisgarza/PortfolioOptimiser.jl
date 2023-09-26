@@ -291,6 +291,8 @@ function hrp_constraints(constraints, asset_classes)
     return w[:, 1], w[:, 2]
 end
 
+"""
+"""
 function rp_constraints(asset_classes, type = :assets, class_col = nothing)
     @assert(type ∈ RPConstraintTypes, "type must be one of $RPConstraintTypes")
     N = nrow(asset_classes)

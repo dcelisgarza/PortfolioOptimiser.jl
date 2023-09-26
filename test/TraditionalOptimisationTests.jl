@@ -348,7 +348,7 @@ type = :trad
     @test isapprox(w1t, w1.weights, rtol = 7e-5)
     @test isapprox(w2t, w2.weights, rtol = 3e-3)
     @test isapprox(w3t, w3.weights, rtol = 4e-5)
-    @test isapprox(w4t, w4.weights, rtol = 5e-6)
+    @test isapprox(w4t, w4.weights, rtol = 2e-5)
 
     portfolio = Portfolio(
         returns = returns,

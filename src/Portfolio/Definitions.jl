@@ -35,29 +35,29 @@ const RiskMeasures = (
 )
 ```
 Available risk measures for `type = :trad` optimisations of [`Portfolio`](@ref).
-    - `:SD` = standard deviation
-    - `:MAD` = max absolute deviation
-    - `:SSD` = semi standard deviation
-    - `:FLPM` = first lower partial moment (omega ratio)
-    - `:SLPM` = second lower partial moment (sortino ratio)
-    - `:WR` = worst realisation
-    - `:CVaR` = conditional value at risk
-    - `:EVaR` = entropic value at risk
-    - `:RVaR` = relativistic value at risk
-    - `:MDD` = maximum drawdown for uncompounded cummulative returns
-    - `:ADD` = average drawdown for uncompounded cummulative returns
-    - `:CDaR` = conditional drawdown at risk for uncompounded cummulative returns
-    - `:UCI` = ulcer index for uncompounded cummulative returns
-    - `:EDaR` = entropic drawdown at risk for uncompounded cummulative returns
-    - `:RDaR` = relativistic drawdown at risk for uncompounded cummulative returns
-    - `:Kurt` = square root kurtosis
-    - `:SKurt` = square root semi-kurtosis
-    - `:GMD` = gini mean difference
-    - `:RG` = range of returns
-    - `:RCVaR` = range of conditional value at risk
-    - `:TG` = tail gini
-    - `:RTG` = range of tail gini
-    - `:OWA` = ordered weight array (generic OWA weights)
+    - `:SD` = standard deviation [`SD`](@ref)
+    - `:MAD` = max absolute deviation [`MAD`](@ref)
+    - `:SSD` = semi standard deviation [`SSD`](@ref)
+    - `:FLPM` = first lower partial moment (omega ratio) [`FLPM`](@ref)
+    - `:SLPM` = second lower partial moment (sortino ratio) [`SLPM`](@ref)
+    - `:WR` = worst realisation [`WR`](@ref)
+    - `:CVaR` = conditional value at risk [`CVaR`](@ref)
+    - `:EVaR` = entropic value at risk [`EVaR`](@ref)
+    - `:RVaR` = relativistic value at risk [`RVaR`](@ref)
+    - `:MDD` = maximum drawdown for uncompounded cummulative returns [`MDD_abs`](@ref)
+    - `:ADD` = average drawdown for uncompounded cummulative returns [`ADD_abs`](@ref)
+    - `:CDaR` = conditional drawdown at risk for uncompounded cummulative returns [`CDaR_abs`](@ref)
+    - `:UCI` = ulcer index for uncompounded cummulative returns [`UCI_abs`](@ref)
+    - `:EDaR` = entropic drawdown at risk for uncompounded cummulative returns [`EDaR_abs`](@ref)
+    - `:RDaR` = relativistic drawdown at risk for uncompounded cummulative returns [`RDaR_abs`](@ref)
+    - `:Kurt` = square root kurtosis [`Kurt`](@ref)
+    - `:SKurt` = square root semi-kurtosis [`SKurt`](@ref)
+    - `:GMD` = gini mean difference [`GMD`](@ref)
+    - `:RG` = range of returns [`RG`](@ref)
+    - `:RCVaR` = range of conditional value at risk [`RCVaR`](@ref)
+    - `:TG` = tail gini [`TG`](@ref)
+    - `:RTG` = range of tail gini [`RTG`](@ref)
+    - `:OWA` = ordered weight array (generic OWA weights) [`OWA`](@ref)
 """
 const RiskMeasures = (
     :SD,    # _mv
@@ -90,6 +90,9 @@ const RiskMeasures = (
 const KellyRet = (:none, :approx, :exact)
 ```
 Available types of Kelly returns for [`Portfolio`](@ref).
+    - `:none`: arithmetic mean return
+    - `:approx`: first moment approximation of logarithmic returns, ``\\mu_{\\ln_{\\mathrm{a}}} = \\mathbf{X} \\bm{w} - \\dfrac{1}{2} \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w})``
+    - `:exact`: exact logarithmic returns, ``\\mu_{\\ln} = \\ln\\left(1+ \\mathbf{X} \\bm{w}\\right)``
 """
 const KellyRet = (:none, :approx, :exact)
 

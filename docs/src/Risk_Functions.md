@@ -30,5 +30,11 @@ EDaR_rel
 RDaR_rel
 Kurt
 SKurt
+GMD
+RG
+RCVaR
+TG
+RTG
+OWA
 calc_risk
 ```

@@ -14,5 +14,4 @@ RPConstraintTypes
 UncertaintyTypes
 KindBootstrap
 EllipseTypes
-BoxTypes
 ```
