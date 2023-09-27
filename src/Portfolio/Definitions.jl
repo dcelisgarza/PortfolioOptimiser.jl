@@ -87,7 +87,7 @@ const RiskMeasures = (
 
 """
 ```julia
-const KellyRet = (:none, :approx, :exact)
+KellyRet = (:none, :approx, :exact)
 ```
 Available types of Kelly returns for [`Portfolio`](@ref).
 - `:none`: arithmetic mean return, ``\\bm{\\mu} \\cdot \\bm{w}``;
@@ -99,7 +99,7 @@ const KellyRet = (:none, :approx, :exact)
 
 """
 ```julia
-const TrackingErrKinds = (:weights, :returns)
+TrackingErrKinds = (:weights, :returns)
 ```
 Available kinds of tracking errors for [`Portfolio`](@ref).
 - `:weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns;
@@ -110,7 +110,7 @@ const TrackingErrKinds = (:weights, :returns)
 
 """
 ```julia
-const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
+ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 ```
 Available objective functions for [`Portfolio`](@ref).
 - `:min_risk`: minimum risk portfolio,
@@ -118,7 +118,7 @@ Available objective functions for [`Portfolio`](@ref).
 \\begin{align*}
 \\underset{\\bm{w}}{\\min} &\\qquad \\phi_{j}(\\bm{w}) \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
-&\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\\\
+&\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
 &\\qquad R(\\bm{w}) \\geq \\hat{\\mu}
 \\end{align*}\\,.
 ```
@@ -127,7 +127,7 @@ Available objective functions for [`Portfolio`](@ref).
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) - \\lambda \\phi_{j}(\\bm{w}) \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
-&\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\\\
+&\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
 &\\qquad R(\\bm{w}) \\geq \\hat{\\mu}
 \\end{align*}\\,.
 ```
@@ -136,7 +136,7 @@ Available objective functions for [`Portfolio`](@ref).
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\dfrac{R(\\bm{w}) - r}{\\phi_{j}(\\bm{w})} \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
-&\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\\\
+&\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
 &\\qquad R(\\bm{w}) \\geq \\hat{\\mu}
 \\end{align*}\\,.
 ```
@@ -155,7 +155,7 @@ const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 
 """
 ```julia
-const ValidTermination =
+ValidTermination =
 (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
 ```
 Valid JuMP terminations after optimising an instance of [`Portfolio`](@ref).
@@ -165,7 +165,7 @@ const ValidTermination =
 
 """
 ```julia
-const PortClasses = (:classic,)
+PortClasses = (:classic,)
 ```
 Available classes for [`Portfolio`](@ref).
 """
@@ -173,7 +173,7 @@ const PortClasses = (:classic,)
 
 """
 ```julia
-const PortTypes = (:trad, :rp, :rrp, :OWA, :wc)
+PortTypes = (:trad, :rp, :rrp, :OWA, :wc)
 ```
 Available optimisation types for [`Portfolio`](@ref).
 """
@@ -181,7 +181,7 @@ const PortTypes = (:trad, :rp, :rrp, :OWA, :wc)
 
 """
 ```julia
-const RRPVersions = (:none, :reg, :reg_pen)
+RRPVersions = (:none, :reg, :reg_pen)
 ```
 Available versions of relaxed risk parity optimisations of [`Portfolio`](@ref).
 """
@@ -189,7 +189,7 @@ const RRPVersions = (:none, :reg, :reg_pen)
 
 """
 ```julia
-const RPConstraintTypes = (:assets, :classes)
+RPConstraintTypes = (:assets, :classes)
 ```
 Types of risk parity constraints for [`rp_constraints`](@ref).
 """
@@ -197,7 +197,7 @@ const RPConstraintTypes = (:assets, :classes)
 
 """
 ```julia
-const UncertaintyTypes = (:none, :box, :ellipse)
+UncertaintyTypes = (:none, :box, :ellipse)
 ```
 Types of uncertainty sets for worst case optimisations of [`Portfolio`](@ref).
 """
@@ -206,18 +206,22 @@ const UncertaintyTypes = (:none, :box, :ellipse)
 """
 Bootstrap for worst case optimisations.
 ```
-const KindBootstrap = (:stationary, :circular, :moving)
+KindBootstrap = (:stationary, :circular, :moving)
 ```
 """
 const KindBootstrap = (:stationary, :circular, :moving)
 """
 Ellipse and box types for worst case optimisations.
 ```
-const EllipseTypes = (:stationary, :circular, :moving, :normal)
-const BoxTypes = (EllipseTypes..., :delta)
+EllipseTypes = (:stationary, :circular, :moving, :normal)
 ```
 """
 const EllipseTypes = (:stationary, :circular, :moving, :normal)
+"""
+```julia
+BoxTypes = (EllipseTypes..., :delta)
+```
+"""
 const BoxTypes = (EllipseTypes..., :delta)
 
 # Hierarchical portfolios.

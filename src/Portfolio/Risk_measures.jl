@@ -72,7 +72,7 @@ end
 ```julia
 SLPM(x::AbstractVector, r::Real = 0.0)
 ```
-Compute the Second Lower Partial Moment (Omega Ratio) of a vector `x` of portfolio returns with a minimum return target of `r`.`
+Compute the Second Lower Partial Moment (Omega Ratio) of a vector `x` of portfolio returns with a minimum return target of `r`.
 ```math
 \\mathrm{SLPM}(\\bm{x},\\, r) = \\left[\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\max\\left(r - \\bm{x}_{t},\\, 0\\right)^{2}\\right]^{1/2}\\,
 ```
