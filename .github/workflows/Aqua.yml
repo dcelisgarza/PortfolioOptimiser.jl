@@ -26,4 +26,4 @@ jobs:
           Aqua.test_unbound_args(PortfolioOptimiser)
           Aqua.test_undefined_exports(PortfolioOptimiser)
           Aqua.test_stale_deps(PortfolioOptimiser)
-          Aqua.test_piracy(PortfolioOptimiser
+          Aqua.test_piracy(PortfolioOptimiser)
