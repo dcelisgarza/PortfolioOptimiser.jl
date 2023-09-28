@@ -2,10 +2,13 @@
 ```julia
 Variance(w::AbstractVector, Σ::AbstractMatrix)
 ```
-Compute the Variance of a portfolio with weights `w` and covariance `Σ`. Square of [`SD`](@ref).
+Compute the Variance. Square of [`SD`](@ref).
 ```math
 \\mathrm{Variance}(\\bm{w},\\, \\mathbf{\\Sigma}) = \\bm{w}^\\intercal \\, \\mathbf{\\Sigma}\\, \\bm{w}\\,.
 ```
+### Arguments
+- `w`: vector of asset weights;
+- `Σ`: covariance matrix of asset returns.
 """
 function Variance(w::AbstractVector, cov::AbstractMatrix)
     return dot(w, cov, w)
@@ -15,10 +18,13 @@ end
 ```julia
 SD(w::AbstractVector, Σ::AbstractMatrix)
 ```
-Compute the Standard Deviation of a portfolio with weights `w` and covariance `Σ`. Square root of [`Variance`](@ref).
+Compute the Standard Deviation. Square root of [`Variance`](@ref).
 ```math
 \\mathrm{SD}(\\bm{w},\\, \\mathbf{\\Sigma}) = \\left[\\bm{w}^\\intercal \\, \\mathbf{\\Sigma} \\, \\bm{w}\\right]^{1/2}\\,.
 ```
+### Arguments
+- `w`: vector of asset weights;
+- `Σ`: covariance matrix of asset returns.
 """
 function SD(w::AbstractVector, cov::AbstractMatrix)
     return sqrt(Variance(w, cov))
@@ -28,10 +34,12 @@ end
 ```julia
 MAD(x::AbstractVector)
 ```
-Compute the Mean Absolute Deviation of a vector `x` of portfolio returns.
+Compute the Mean Absolute Deviation.
 ```math
 \\mathrm{MAD}(\\bm{x}) = \\dfrac{1}{T} \\sum\\limits_{t=1}^T \\left\\lvert x_t - \\mathbb{E}(\\bm{x}) \\right\\rvert\\,.
 ```
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function MAD(x::AbstractVector)
     mu = mean(x)
@@ -41,10 +49,12 @@ end
 ```julia
 SSD(x::AbstractVector)
 ```
-Compute the mean Semi-Standard Deviation of a vector `x` of portfolio returns.
+Compute the mean Semi-Standard Deviation.
 ```math
 \\mathrm{SSD}(\\bm{x}) = \\left[\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(\\bm{x}_{t} - \\mathbb{E}(\\bm{x}),\\, 0\\right)^{2}\\right]^{1/2}\\,.
 ```
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function SSD(x::AbstractVector)
     T = length(x)
@@ -57,10 +67,13 @@ end
 ```julia
 FLPM(x::AbstractVector, r::Real = 0.0)
 ```
-Compute the First Lower Partial Moment (omega ratio) of a vector `x` of portfolio returns with a minimum return target of `r`.
+Compute the First Lower Partial Moment (omega ratio).
 ```math
 \\mathrm{FLPM}(\\bm{x},\\, r) = \\dfrac{1}{T}  \\sum\\limits_{t=1}^{T}\\max\\left(r - \\bm{x}_{t},\\, 0\\right)\\,.
 ```
+### Arguments
+- `x`: vector of portfolio returns;
+- `r`: minimum return target.
 """
 function FLPM(x::AbstractVector, min_ret::Real = 0.0)
     T = length(x)
@@ -72,10 +85,13 @@ end
 ```julia
 SLPM(x::AbstractVector, r::Real = 0.0)
 ```
-Compute the Second Lower Partial Moment (Omega Ratio) of a vector `x` of portfolio returns with a minimum return target of `r`.
+Compute the Second Lower Partial Moment (Omega Ratio).
 ```math
 \\mathrm{SLPM}(\\bm{x},\\, r) = \\left[\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\max\\left(r - \\bm{x}_{t},\\, 0\\right)^{2}\\right]^{1/2}\\,
 ```
+### Arguments
+- `x`: vector of portfolio returns;
+- `r`: minimum return target.
 """
 function SLPM(x, min_ret = 0.0)
     T = length(x)
@@ -88,13 +104,15 @@ end
 ```julia
 WR(x::AbstractVector)
 ```
-Compute the Worst Realisation or Worst Case Scenario of a returns vector `x`.
+Compute the Worst Realisation or Worst Case Scenario.
 ```math
 \\begin{align*}
 \\mathrm{WR}(\\bm{x}) &= -\\min(\\bm{x})\\\\
                       &= \\max(-\\bm{x})\\,.
 \\end{align*}
 ```
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function WR(x::AbstractVector)
     return -minimum(x)
@@ -104,10 +122,13 @@ end
 ```julia
 VaR(x::AbstractVector, α::Real = 0.05)
 ```
-Compute the Value at Risk of a returns vector `x` at a significance level of `α ∈ (0, 1)`.
+Compute the Value at Risk.
 ```math
 \\mathrm{VaR}(\\bm{x},\\, \\alpha) = -\\underset{t \\in (0,\\, T)}{\\inf} \\left\\{ x_{t} \\in \\mathbb{R} : F_{\\bm{x}}(x_{t}) > \\alpha \\right\\}\\,,
 ```
+### Arguments
+- `x`: vector of portfolio returns;
+- `α`: significance level, α ∈ (0, 1).
 """
 function VaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
@@ -119,13 +140,16 @@ end
 ```
 CVaR(x::AbstractVector, α::Real = 0.05)
 ```
-Compute the Conditional Value at Risk of a returns vector `x` at a significance level of `α ∈ (0, 1)`.
+Compute the Conditional Value at Risk.
 ```math
 \\begin{align*}
 \\mathrm{CVaR}(\\bm{x},\\, \\alpha) &= \\mathrm{VaR}(\\bm{x},\\, \\alpha) - \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\min\\left( x_t + \\mathrm{VaR}(\\bm{x},\\, \\alpha),\\, 0\\right)\\\\
                                     &= \\mathrm{VaR}(\\bm{x},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\max\\left( -x_t - \\mathrm{VaR}(\\bm{x},\\, \\alpha),\\, 0\\right)\\,.
 \\end{align*}
 ```
+### Arguments
+- `x`: vector of portfolio returns;
+- `α`: significance level, α ∈ (0, 1).
 """
 function CVaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
@@ -179,15 +203,19 @@ end
 ```julia
 ERM(x::AbstractVector, z::Real = 1.0, α::Real = 0.05)
 ```
-Compute the Entropic Risk Measure of a vector `x` at a significance level of `α ∈ (0, 1)` for a given value of `z`,
+Compute the Entropic Risk Measure.
 ```math
 \\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha) = z \\ln \\left( \\dfrac{M_{\\bm{x}}\\left(z^{-1}\\right)}{\\alpha} \\right)\\,,
 ```
 where ``M_{\\bm{x}}\\left(z^{-1}\\right)`` is the moment generating function of ``\\bm{x}``.
+### Arguments
+- `x`: vector of portfolio returns;
+- `α`: significance level, α ∈ (0, 1);
+- `z`: free parameter.
 ```julia
 ERM(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
 ```
-Compute the Entropic Risk Measure at a significance level of `α ∈ (0, 1)` by minimising with respect to `z`, using a dictionary of `JuMP`-supported `solvers` with Exponential Cone support. This is because in general we don't know the value of `z` that minimises the function,
+Compute the Entropic Risk Measure by minimising the function with respect to `z`.
 ```math
 \\mathrm{ERM} = \\begin{cases}
 \\underset{z,\\, t,\\, u}{\\min} & t + z \\ln(\\dfrac{1}{\\alpha T})\\\\
@@ -196,6 +224,10 @@ Compute the Entropic Risk Measure at a significance level of `α ∈ (0, 1)` by 
 \\end{cases}\\,,
 ```
 where ``\\mathcal{K}_{\exp}`` is the exponential cone.
+### Arguments
+- `x`: vector;
+- `solvers`: dictionary of JuMP`-supported `solvers` with Exponential Cone support;
+- `α`: significance level, α ∈ (0, 1).
 """
 function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
     @assert(0 < alpha < 1, "alpha must be greater than 0 and smaller than 1")
@@ -238,11 +270,15 @@ end
 ```julia
 EVaR(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
 ```
-Compute the Entropic Value at Risk of a returns vector `x` at a significance level of `α ∈ (0, 1)`, using a dictionary of `JuMP`-supported `solvers` with Exponential Cone support.
+Compute the Entropic Value at Risk.
 ```math
 \\mathrm{EVaR}(\\bm{x},\\alpha) = \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)\\right\\}\\,,
 ```
 where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure at a significance level of `α ∈ (0, 1)` as defined by [`ERM`](@ref).
+### Arguments
+- `x`: vector of portfolio returns;
+- `solvers`: dictionary of JuMP`-supported `solvers` with Exponential Cone support;
+- `α`: significance level, α ∈ (0, 1).
 """
 function EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     return ERM(x, solvers, alpha)
@@ -257,7 +293,7 @@ RRM(
     κ::Real = 0.3,
 )
 ```
-Compute the Relativistic Risk Measure of a vector `x` at a significance level of `α ∈ (0, 1)` and deformation parameter of `κ ∈ (0, 1)`, using a dictionary of `JuMP`-supported `solvers` with 3D Power Cone support.
+Compute the Relativistic Risk Measure.
 ```math
 \\mathrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\begin{cases}
 \\underset{z,\\, t,\\, \\psi,\\, \\theta,\\, \\varepsilon,\\, \\omega}{\\min} & t + z \\ln_{\\kappa}\\left(\\dfrac{1}{\\alpha T}\\right) + \\sum\\limits_{i=1}^{T} \\left(\\psi_{i} + \\theta_{i}\\right) \\\\
@@ -269,6 +305,11 @@ Compute the Relativistic Risk Measure of a vector `x` at a significance level of
 \\end{cases}\\,,
 ```
 where ``\\ln_{\\kappa}(x) = \\dfrac{x^{\\kappa} - x^{-\\kappa}}{2 \\kappa}`` and ``\\mathcal{P}_3^{\\alpha,\\, 1-\\alpha}`` is the 3D Power Cone.
+### Arguments
+- `x`: vector;
+- `solvers`: dictionary of JuMP`-supported `solvers` with 3D Power Cone support;
+- `α`: significance level, α ∈ (0, 1);
+- `κ`: relativistic deformation parameter.
 """
 function RRM(
     x::AbstractVector,
@@ -336,11 +377,16 @@ RVaR(
     κ::Real = 0.3,
 )
 ```
-Compute the Relativistic Value at Risk of a vector of returns `x` at a significance level of `α ∈ (0, 1)` and deformation parameter of `κ ∈ (0, 1)`, using a dictionary of `JuMP`-supported `solvers` with 3D Power Cone support.
+Compute the Relativistic Value at Risk.
 ```math
 \\mathrm{RVaR}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa)\\,,
 ```
 where ``\\mathrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref).
+### Arguments
+- `x`: vector of portfolio returns;
+- `solvers`: dictionary of JuMP`-supported `solvers` with 3D Power Cone support;
+- `α`: significance level, α ∈ (0, 1);
+- `κ`: relativistic deformation parameter.
 """
 function RVaR(
     x::AbstractVector,
@@ -355,13 +401,16 @@ end
 ```julia
 DaR_abs(x::AbstractArray, alpha::Real = 0.05)
 ```
-Compute the Drawdown at Risk forof a returns vector `x` for a significance level `α ∈ (0, 1)` using uncompounded cumulative returns.
+Compute the Drawdown at Risk using uncompounded cumulative returns.
 ```math
 \\begin{align*}
 \\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{a}}(\\bm{x},\\, j) \\in \\mathbb{R} : F_{\\mathrm{DD}}\\left(\\mathrm{DD_{a}}(\\bm{x},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
 \\mathrm{DD_{a}}(\\bm{x},\\, j) &= \\underset{t \\in (0,\\, j)}{\\max}\\left( \\sum\\limits_{i=0}^{t} x_{i} \\right) - \\sum\\limits_{i=0}^{j} x_{i}
 \\end{align*}\\,.
 ```
+### Arguments
+- `x`: vector of portfolio returns;
+- `α`: significance level, α ∈ (0, 1).
 """
 function DaR_abs(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
@@ -383,11 +432,13 @@ end
 ```julia
 MDD_abs(x::AbstractVector)
 ```
-Compute the Maximum Drawdown of a returns vector `x` using uncompounded cumulative returns.
+Compute the Maximum Drawdown using uncompounded cumulative returns.
 ```math
 \\mathrm{MDD_{a}}(\\bm{x}) = \\underset{j \\in (0,\\, T)}{\\max} \\mathrm{DD_{a}}(\\bm{x},\\, j)\\,,
 ```
 where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the uncompounded cumulative Drawdown as defined in [`DaR_abs`](@ref).
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function MDD_abs(x::AbstractVector)
     insert!(x, 1, 1)
@@ -407,11 +458,13 @@ end
 ```julia
 ADD_abs(x::AbstractVector)
 ```
-Compute the Average Drawdown of a returns vector `x` using uncompounded cumulative returns.
+Compute the Average Drawdown using uncompounded cumulative returns.
 ```math
 \\mathrm{ADD_{a}}(\\bm{x}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{x},\\, j)\\,,
 ```
 where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the uncompounded cumulative Drawdown as defined in [`DaR_abs`](@ref).
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function ADD_abs(x::AbstractVector)
     T = length(x)
@@ -432,11 +485,14 @@ end
 ```julia
 CDaR_abs(x::AbstractVector, alpha::Real = 0.05)
 ```
-Compute the Conditional Drawdown at Risk of a returns vector `x` using uncompounded cumulative returns at a significance level of `α ∈ (0, 1)`.
+Compute the Conditional Drawdown at Risk using uncompounded cumulative returns.
 ```math
 \\mathrm{CDaR_{a}}(\\bm{x},\\, \\alpha) = \\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{a}}(\\bm{x},\\, j) - \\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha),\\, 0 \\right] \\,,
 ```
 where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the uncompounded cumulative Drawdown as defined in [`DaR_abs`](@ref), and ``\\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
+### Arguments
+- `x`: vector of portfolio returns;
+- `α`: significance level, α ∈ (0, 1).
 """
 function CDaR_abs(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
@@ -463,11 +519,13 @@ end
 ```julia
 UCI_abs(x::AbstractVector)
 ```
-Compute the Ulcer Index of a returns vector `x` using uncompounded cumulative returns.
+Compute the Ulcer Index using uncompounded cumulative returns.
 ```math
 \\mathrm{UCI_{a}}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{x},\\, j)^{2}\\right]^{1/2}\\,,
 ```
 where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the uncompounded cumulative Drawdown as defined in [`DaR_abs`](@ref).
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function UCI_abs(x::AbstractVector)
     T = length(x)
@@ -488,7 +546,7 @@ end
 ```julia
 EDaR_abs(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
 ```
-Compute the Entropic Drawdown at Risk of uncompounded cummulative returns of a returns vector `x` at a significance level of `α ∈ (0, 1)`, using a dictionary of `JuMP`-supported `solvers` with Exponential Cone support.
+Compute the Entropic Drawdown at Risk using uncompounded cummulative returns.
 ```math
 \\begin{align*}
 \\mathrm{EDaR_{a}}(\\bm{x},\\alpha) &= \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\mathrm{DD_{a}}(\\bm{x}),\\, z, \\,\\alpha)\\right\\}\\\\
@@ -496,6 +554,10 @@ Compute the Entropic Drawdown at Risk of uncompounded cummulative returns of a r
 \\end{align*}
 ```
 where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure at a significance level of `α ∈ (0, 1)` as defined by [`ERM`](@ref) and ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` the drawdown of uncompounded returns as defined in [`DaR_abs`](@ref).
+### Arguments
+- `x`: vector of portfolio returns;
+- `solvers`: dictionary of JuMP`-supported `solvers` with Exponential Cone support;
+- `α`: significance level, α ∈ (0, 1).
 """
 function EDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     insert!(x, 1, 1)
@@ -519,11 +581,16 @@ RDaR_abs(
     kappa::Real = 0.3,
 )
 ```
-Compute the Relativistic Drawdown at Risk of uncompounded cumulative returns of a vector of returns `x` at a significance level of `α ∈ (0, 1)` and deformation parameter of `κ ∈ (0, 1)`, using a dictionary of `JuMP`-supported `solvers` with 3D Power Cone support.
+Compute the Relativistic Drawdown at Risk using uncompounded cumulative returns.
 ```math
 \\mathrm{RDaR_{a}}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)\\,,
 ```
 where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, ``\\mathrm{DD_{a}}(\\bm{x})``, is the set of drawdowns of uncompounded returns for the timespan ``(0,\\, T)`` as defined in [`EDaR_abs`](@ref).
+### Arguments
+- `x`: vector of portfolio returns;
+- `solvers`: dictionary of JuMP`-supported `solvers` with 3D Power Cone support;
+- `α`: significance level, α ∈ (0, 1);
+- `κ`: relativistic deformation parameter.
 """
 function RDaR_abs(
     x::AbstractVector,
@@ -547,13 +614,16 @@ end
 ```julia
 DaR_ret(x::AbstractArray, alpha::Real = 0.05)
 ```
-Compute the Drawdown at Risk of a returns vector `x` for a significance level `α ∈ (0, 1)` using compounded cumulative returns.
+Compute the Drawdown at Risk using compounded cumulative returns.
 ```math
 \\begin{align*}
 \\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{r}}(\\bm{x},\\, j) \\in \\mathbb{R} : F_{\\mathrm{DD}}\\left(\\mathrm{DD_{r}}(\\bm{x},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
 \\mathrm{DD_{r}}(\\bm{x},\\, j) &= \\underset{t \\in (0,\\, j)}{\\max}\\left( \\prod\\limits_{i=0}^{t} \\left(1+x_{i}\\right) \\right) - \\prod\\limits_{i=0}^{j} \\left(1+x_{i}\\right) 
 \\end{align*}\\,.
 ```
+### Arguments
+- `x`: vector of portfolio returns;
+- `α`: significance level, α ∈ (0, 1).
 """
 function DaR_rel(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
@@ -575,11 +645,13 @@ end
 ```julia
 MDD_rel(x::AbstractVector)
 ```
-Compute the Maximum Drawdown of a returns vector `x` using compounded cumulative returns.
+Compute the Maximum Drawdown using compounded cumulative returns.
 ```math
 \\mathrm{MDD_{r}}(\\bm{x}) = \\underset{j \\in (0,\\, T)}{\\max} \\mathrm{DD_{r}}(\\bm{x},\\, j)\\,,
 ```
 where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the compounded cumulative Drawdown as defined in [`DaR_rel`](@ref).
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function MDD_rel(x::AbstractVector)
     x .= insert!(x, 1, 0) .+ 1
@@ -599,11 +671,13 @@ end
 ```julia
 ADD_rel(x::AbstractVector)
 ```
-Compute the Average Drawdown of a returns vector `x` using compounded cumulative returns.
+Compute the Average Drawdown using compounded cumulative returns.
 ```math
 \\mathrm{ADD_{r}}(\\bm{r}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{x},\\, j)\\,,
 ```
 where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the compounded cumulative Drawdown as defined in [`DaR_rel`](@ref).
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function ADD_rel(x::AbstractVector)
     T = length(x)
@@ -624,11 +698,14 @@ end
 ```julia
 CDaR_rel(x::AbstractVector, alpha::Real = 0.05)
 ```
-Compute the Conditional Drawdown at Risk of a returns vector `x` using compounded cumulative returns at a significance level of `α ∈ (0, 1)`.
+Compute the Conditional Drawdown at Risk using compounded cumulative returns.
 ```math
 \\mathrm{CDaR_{r}}(\\bm{x},\\, \\alpha) = \\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{r}}(\\bm{x},\\, j) - \\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha),\\, 0 \\right] \\,,
 ```
 where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the compounded cumulative Drawdown as defined in [`DaR_rel`](@ref), and ``\\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`DaR_rel`](@ref).
+### Arguments
+- `x`: vector of portfolio returns;
+- `α`: significance level, α ∈ (0, 1).
 """
 function CDaR_rel(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
@@ -655,11 +732,13 @@ end
 ```julia
 UCI_rel(x::AbstractVector)
 ```
-Compute the Ulcer Index of a returns vector `x` using compounded cumulative returns.
+Compute the Ulcer Index using compounded cumulative returns.
 ```math
 \\mathrm{UCI_{r}}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{x},\\, j)^{2}\\right]^{1/2}\\,,
 ```
 where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the compounded cumulative Drawdown as defined in [`DaR_rel`](@ref).
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function UCI_rel(x::AbstractVector)
     T = length(x)
@@ -680,7 +759,7 @@ end
 ```julia
 EDaR_rel(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
 ```
-Compute the Entropic Drawdown at Risk of compounded cummulative returns of a returns vector `x` at a significance level of `α ∈ (0, 1)`, using a dictionary of `JuMP`-supported `solvers` with Exponential Cone support.
+Compute the Entropic Drawdown at Risk using compounded cummulative returns.
 ```math
 \\begin{align*}
 \\mathrm{EDaR_{r}}(\\bm{x},\\alpha) &= \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\mathrm{DD_{r}}(\\bm{x}),\\, z, \\,\\alpha)\\right\\}\\\\
@@ -688,6 +767,11 @@ Compute the Entropic Drawdown at Risk of compounded cummulative returns of a ret
 \\end{align*}
 ```
 where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure at a significance level of `α ∈ (0, 1)` as defined by [`ERM`](@ref) and ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` the drawdown of compounded returns as defined in [`DaR_rel`](@ref).
+### Arguments
+- `x`: vector of portfolio returns;
+- `solvers`: dictionary of JuMP`-supported `solvers` with 3D Power Cone support;
+- `α`: significance level, α ∈ (0, 1);
+- `κ`: relativistic deformation parameter.
 """
 function EDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     x .= insert!(x, 1, 0) .+ 1
@@ -711,11 +795,16 @@ RDaR_rel(
     kappa::Real = 0.3,
 )
 ```
-Compute the Relativistic Drawdown at Risk of compounded cumulative returns of a vector of returns `x` at a significance level of `α ∈ (0, 1)` and deformation parameter of `κ ∈ (0, 1)`, using a dictionary of `JuMP`-supported `solvers` with 3D Power Cone support.
+Compute the Relativistic Drawdown at Risk using compounded cumulative returns.
 ```math
 \\mathrm{RDaR_{r}}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)\\,,
 ```
 where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, ``\\mathrm{DD_{r}}(\\bm{x})``, is the set of drawdowns of compounded returns for the timespan ``(0,\\, T)`` as defined in [`EDaR_rel`](@ref).
+### Arguments
+- `x`: vector of portfolio returns;
+- `solvers`: dictionary of JuMP`-supported `solvers` with 3D Power Cone support;
+- `α`: significance level, α ∈ (0, 1);
+- `κ`: relativistic deformation parameter.
 """
 function RDaR_rel(
     x::AbstractVector,
@@ -739,10 +828,12 @@ end
 ```julia
 Kurt(x::AbstractVector)
 ```
-Compute the square root kurtosis of a returns vector `x`.
+Compute the square root kurtosis.
 ```math
 \\mathrm{Kurt} = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\left( x_{t} - \\mathbb{E}(\\bm{x}) \\right)^{4} \\right]^{1/2}\\,.
 ```
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function Kurt(x::AbstractVector)
     T = length(x)
@@ -755,10 +846,12 @@ end
 ```julia
 SKurt(x::AbstractVector)
 ```
-Compute the square root semi-kurtosis of a returns vector `x`.
+Compute the square root semi-kurtosis.
 ```math
 \\mathrm{SKurt} = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\min\\left( x_{t} - \\mathbb{E}(\\bm{x}),\\, 0 \\right)^{4} \\right]^{1/2}\\,.
 ```
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function SKurt(x::AbstractVector)
     T = length(x)
@@ -771,7 +864,9 @@ end
 ```julia
 GMD(x::AbstractVector)
 ```
-Compute the Gini Mean Difference of a returns vector `x`.
+Compute the Gini Mean Difference.
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function GMD(x::AbstractVector)
     T = length(x)
@@ -783,7 +878,9 @@ end
 ```julia
 RG(x::AbstractVector)
 ```
-Compute the Range of a returns vector `x`.
+Compute the Range.
+### Arguments
+- `x`: vector of portfolio returns.
 """
 function RG(x::AbstractVector)
     T = length(x)
@@ -799,7 +896,11 @@ RCVaR(
     β::Union{<:Real, Nothing} = nothing,
 )
 ```
-Compute the CVaR Range of a returns vector `x` for a significance level of CVaR losses `α ∈ (0, 1)` and CVaR gains `β ∈ (0, 1)`. If `β` is `nothing`, it takes on the value of `α`.
+Compute the CVaR Range.
+### Arguments
+- `x`: vector of portfolio returns;
+- `α`: significance level of CVaR losses, α ∈ (0, 1).
+- `β`: significance level of CVaR gains, `β ∈ (0, 1)`, if `nothing`` it takes the value of `α`.
 """
 function RCVaR(
     x::AbstractVector;
@@ -815,7 +916,12 @@ end
 ```julia
 TG(x::AbstractVector; α_i::Real = 0.0001, α::Real = 0.05, α_sim::Int = 100)
 ```
-Compute the Tail Gini of a returns vector `x` for CVaR losses starting at `α_i` through to `α`, using `α_sim` steps.
+Compute the Tail Gini.
+### Arguments
+- `x`: vector of portfolio returns;
+- `α_i`: start value of the significance level of CVaR losses, `α_i > 0`;
+- `α`: end value of the significance level of CVaR losses, α ∈ (0, 1);
+- `α_sim`: number of steps between `α_i` and `α`.
 """
 function TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100)
     @assert(alpha_i < alpha, "alpha_i must be less than alpha")
@@ -836,7 +942,15 @@ RTG(
     β_sim::Union{Int, Nothing} = nothing,
 )
 ```
-Compute the Tail Gini Range of a returns vector `x` for CVaR losses starting at `α_i` through to `α`, using `α_sim` steps, and for CVaR gains starting at `β_i` through to `β`, using `β_sim` steps. If any argument relating to CVaR gains is `nothing`, it will take the value of its corresponding CVaR loss argument.
+Compute the Tail Gini Range.
+### Arguments
+- `x`: vector of portfolio returns;
+- `α_i`: start value of the significance level of CVaR losses, `α_i > 0`;
+- `α`: end value of the significance level of CVaR losses, α ∈ (0, 1);
+- `α_sim`: number of steps between `α_i` and `α`.
+- `β_i`: start value of the significance level of CVaR gains, `β_i > 0`, if `nothing`` it takes the value of `α_i`;
+- `β`: end value of the significance level of CVaR gains, β ∈ (0, 1), if `nothing`` it takes the value of `α`;
+- `β_sim`: number of steps between `β_i` and `β`, if `nothing`` it takes the value of `α_sim`.
 """
 function RTG(
     x::AbstractVector;
@@ -865,6 +979,9 @@ end
 OWA(x::AbstractVector, w::AbstractVector)
 ```
 Compute the Ordered Weight Array risk measure from a returns vector `x` and am Ordered Weights Array vector `w`.
+### Arguments
+- `w`: vector of asset weights;
+- `x`: vector of portfolio returns.
 """
 function OWA(x::AbstractVector, w::AbstractVector)
     return dot(w, sort!(x))
@@ -874,10 +991,10 @@ end
 ```julia
 calc_risk(
     w::AbstractVector,
-    returns::AbstractMatrix,
-    cov::AbstractMatrix;
+    returns::AbstractMatrix;
     rm::Symbol = :SD,
     rf::Real = 0.0,
+    cov::AbstractMatrix,
     α_i::Real = 0.0001,
     α::Real = 0.05,
     α_sim::Int = 100,
@@ -888,7 +1005,16 @@ calc_risk(
     solvers::Union{<:AbstractDict, Nothing} = nothing,
 )
 ```
-Compute the risk for a given weights vector `w`, returns matrix `returns`, covariance matrix `cov`, risk measure `rm`, risk free rate `rf`, CVaR losses starting at `α_i` through to `α`, using `α_sim` steps, and for CVaR gains starting at `β_i` through to `β`, using `β_sim` steps. If any argument relating to CVaR gains is `nothing`, it will take the value of its corresponding CVaR loss argument. Relativistic risk measure deformation parameter `κ` and dictionary of `solvers` with Exponential Cone and/or 3D Power Cone support in case of using an entropic or relativistic risk measure. Some arguments are only used for specific risk measures.
+Compute the chosen risk function.
+### Arguments
+- `w`: vector of asset weights;
+- `returns`: matrix of portfolio returns where columns are assets and rows are timesteps;
+- `α_i`: start value of the significance level of CVaR losses, `α_i > 0`;
+- `α`: end value of the significance level of CVaR losses, α ∈ (0, 1);
+- `α_sim`: number of steps between `α_i` and `α`.
+- `β_i`: start value of the significance level of CVaR gains, `β_i > 0`, if `nothing`` it takes the value of `α_i`;
+- `β`: end value of the significance level of CVaR gains, β ∈ (0, 1), if `nothing`` it takes the value of `α`;
+- `β_sim`: number of steps between `β_i` and `β`, if `nothing`` it takes the value of `α_sim`.
 ```julia
 calc_risk(
     portfolio::AbstractPortfolio;
@@ -901,10 +1027,10 @@ Compute the risk for a given `portfolio` of `type`, for risk measure `rm`, and r
 """
 function calc_risk(
     w::AbstractVector,
-    returns::AbstractMatrix,
-    cov::AbstractMatrix;
+    returns::AbstractMatrix;
     rm::Symbol = :SD,
     rf::Real = 0.0,
+    cov::AbstractMatrix,
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
@@ -1020,10 +1146,10 @@ function calc_risk(
 
     return calc_risk(
         weights,
-        portfolio.returns,
-        portfolio.cov;
+        portfolio.returns;
         rm = rm,
         rf = rf,
+        cov = portfolio.cov,
         alpha_i = portfolio.alpha_i,
         alpha = portfolio.alpha,
         a_sim = portfolio.a_sim,

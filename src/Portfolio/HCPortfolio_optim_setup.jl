@@ -13,10 +13,10 @@ function _naive_risk(portfolio, returns, covariance; rm = :SD, rf = 0.0)
             w[i] = one(tcov)
             risk = calc_risk(
                 w,
-                returns,
-                covariance;
+                returns;
                 rm = rm,
                 rf = rf,
+                cov = covariance,
                 alpha = portfolio.alpha,
                 a_sim = portfolio.a_sim,
                 beta = portfolio.beta,
@@ -163,10 +163,10 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
     cw = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf)
     crisk = calc_risk(
         cw,
-        cret,
-        ccov;
+        cret;
         rm = rm,
         rf = rf,
+        cov = ccov,
         alpha = portfolio.alpha,
         a_sim = portfolio.a_sim,
         beta = portfolio.beta,

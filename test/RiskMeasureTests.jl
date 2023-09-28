@@ -37,40 +37,46 @@ returns = dropmissing!(DataFrame(Y))
     w = fill(1 / N, N)
 
     @test abs(
-        calc_risk(w, portfolio.returns, portfolio.cov; rm = :Variance)[1] -
+        calc_risk(w, portfolio.returns; cov = portfolio.cov, rm = :Variance)[1] -
         0.000101665490230637,
     ) < eps()
     @test abs(
-        calc_risk(w, portfolio.returns, portfolio.cov; rm = :SD)[1] - 0.010082930637004155,
+        calc_risk(w, portfolio.returns; cov = portfolio.cov, rm = :SD)[1] -
+        0.010082930637004155,
     ) < eps()
     @test abs(
-        calc_risk(w, portfolio.returns, portfolio.cov; rm = :MAD)[1] - 0.007418863748729646,
+        calc_risk(w, portfolio.returns; cov = portfolio.cov, rm = :MAD)[1] -
+        0.007418863748729646,
     ) < eps()
     @test abs(
-        calc_risk(w, portfolio.returns, portfolio.cov; rm = :SSD)[1] - 0.007345533015355076,
+        calc_risk(w, portfolio.returns; cov = portfolio.cov, rm = :SSD)[1] -
+        0.007345533015355076,
     ) < eps()
     @test abs(
-        calc_risk(w, portfolio.returns, portfolio.cov; rm = :FLPM)[1] -
+        calc_risk(w, portfolio.returns; cov = portfolio.cov, rm = :FLPM)[1] -
         0.0034827678064358134,
     ) < eps()
     @test abs(
-        calc_risk(w, portfolio.returns, portfolio.cov; rm = :SLPM)[1] -
+        calc_risk(w, portfolio.returns; cov = portfolio.cov, rm = :SLPM)[1] -
         0.007114744825145661,
     ) < eps()
     @test abs(
-        calc_risk(w, portfolio.returns, portfolio.cov; rm = :WR)[1] - 0.043602428699089285,
+        calc_risk(w, portfolio.returns; cov = portfolio.cov, rm = :WR)[1] -
+        0.043602428699089285,
     ) < eps()
     @test abs(
-        calc_risk(w, portfolio.returns, portfolio.cov; rm = :VaR)[1] - 0.016748899891587572,
+        calc_risk(w, portfolio.returns; cov = portfolio.cov, rm = :VaR)[1] -
+        0.016748899891587572,
     ) < eps()
     @test abs(
-        calc_risk(w, portfolio.returns, portfolio.cov; rm = :CVaR)[1] - 0.02405795664064266,
+        calc_risk(w, portfolio.returns; cov = portfolio.cov, rm = :CVaR)[1] -
+        0.02405795664064266,
     ) < eps()
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :EVaR,
             solvers = portfolio.solvers,
         )[1] - 0.030225422932337445,
@@ -78,8 +84,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :RVaR,
             solvers = portfolio.solvers,
         )[1] - 0.03586321171352101,
@@ -87,8 +93,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :MDD,
             solvers = portfolio.solvers,
         )[1] - 0.1650381304766847,
@@ -96,8 +102,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :ADD,
             solvers = portfolio.solvers,
         )[1] - 0.02762516797999026,
@@ -105,8 +111,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :DaR,
             solvers = portfolio.solvers,
         )[1] - 0.09442013028621254,
@@ -114,8 +120,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :CDaR,
             solvers = portfolio.solvers,
         )[1] - 0.11801077171629008,
@@ -123,8 +129,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :UCI,
             solvers = portfolio.solvers,
         )[1] - 0.0402491262027023,
@@ -132,8 +138,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :EDaR,
             solvers = portfolio.solvers,
         )[1] - 0.13221264782750258,
@@ -141,8 +147,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :RDaR,
             solvers = portfolio.solvers,
         )[1] - 0.14475878303476786,
@@ -150,8 +156,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :MDD_r,
             solvers = portfolio.solvers,
         )[1] - 0.15747952419681518,
@@ -159,8 +165,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :ADD_r,
             solvers = portfolio.solvers,
         )[1] - 0.0283271101845512,
@@ -168,8 +174,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :DaR_r,
             solvers = portfolio.solvers,
         )[1] - 0.09518744803693206,
@@ -177,8 +183,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :CDaR_r,
             solvers = portfolio.solvers,
         )[1] - 0.11577944159793968,
@@ -186,8 +192,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :uci_r,
             solvers = portfolio.solvers,
         )[1] - 0.040563874281498415,
@@ -195,8 +201,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :EDaR_r,
             solvers = portfolio.solvers,
         )[1] - 0.12775945574727807,
@@ -204,8 +210,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :RDaR_r,
             solvers = portfolio.solvers,
         )[1] - 0.13863825698673474,
@@ -213,8 +219,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :Kurt,
             solvers = portfolio.solvers,
         )[1] - 0.0002220921162540514,
@@ -222,20 +228,21 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :SKurt,
             solvers = portfolio.solvers,
         )[1] - 0.00017326399202890477,
     ) < eps()
     @test abs(
-        calc_risk(w, portfolio.returns, portfolio.cov; rm = :GMD)[1] - 0.010916540360808049,
+        calc_risk(w, portfolio.returns; cov = portfolio.cov, rm = :GMD)[1] -
+        0.010916540360808049,
     ) < eps()
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :RG,
             solvers = portfolio.solvers,
         )[1] - 0.08841083118500939,
@@ -243,8 +250,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :RCVaR,
             solvers = portfolio.solvers,
         )[1] - 0.046068669089612116,
@@ -252,8 +259,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :TG,
             solvers = portfolio.solvers,
         )[1] - 0.027380708685309275,
@@ -261,8 +268,8 @@ returns = dropmissing!(DataFrame(Y))
     @test abs(
         calc_risk(
             w,
-            portfolio.returns,
-            portfolio.cov;
+            portfolio.returns;
+            cov = portfolio.cov,
             rm = :RTG,
             solvers = portfolio.solvers,
         )[1] - 0.051977750343340984,
