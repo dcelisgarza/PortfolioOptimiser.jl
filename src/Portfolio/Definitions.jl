@@ -44,12 +44,12 @@ Available risk measures for `type = :trad` optimisations of [`Portfolio`](@ref).
 - `:CVaR` = conditional value at risk ([`CVaR`](@ref));
 - `:EVaR` = entropic value at risk ([`EVaR`](@ref));
 - `:RVaR` = relativistic value at risk ([`RVaR`](@ref));
-- `:MDD` = maximum drawdown for uncompounded cummulative returns ([`MDD_abs`](@ref));
-- `:ADD` = average drawdown for uncompounded cummulative returns ([`ADD_abs`](@ref));
-- `:CDaR` = conditional drawdown at risk for uncompounded cummulative returns ([`CDaR_abs`](@ref));
-- `:UCI` = ulcer index for uncompounded cummulative returns ([`UCI_abs`](@ref));
-- `:EDaR` = entropic drawdown at risk for uncompounded cummulative returns ([`EDaR_abs`](@ref));
-- `:RDaR` = relativistic drawdown at risk for uncompounded cummulative returns ([`RDaR_abs`](@ref));
+- `:MDD` = maximum drawdown of uncompounded cummulative returns ([`MDD_abs`](@ref));
+- `:ADD` = average drawdown of uncompounded cummulative returns ([`ADD_abs`](@ref));
+- `:CDaR` = conditional drawdown at risk of uncompounded cummulative returns ([`CDaR_abs`](@ref));
+- `:UCI` = ulcer index of uncompounded cummulative returns ([`UCI_abs`](@ref));
+- `:EDaR` = entropic drawdown at risk of uncompounded cummulative returns ([`EDaR_abs`](@ref));
+- `:RDaR` = relativistic drawdown at risk of uncompounded cummulative returns ([`RDaR_abs`](@ref));
 - `:Kurt` = square root kurtosis ([`Kurt`](@ref));
 - `:SKurt` = square root semi-kurtosis ([`SKurt`](@ref));
 - `:GMD` = gini mean difference ([`GMD`](@ref));
@@ -239,15 +239,90 @@ const InfoTypes = (:mutual, :variation)
 # Portfolio risk measures.
 
 # HRPortfolio risk measures.
+"""
+```julia
+HRRiskMeasures = (
+    :SD,
+    :MAD,
+    :SSD,
+    :FLPM,
+    :SLPM,
+    :WR,
+    :CVaR,
+    :EVaR,
+    :RVaR,
+    :MDD,
+    :ADD,
+    :CDaR,
+    :UCI,
+    :EDaR,
+    :RDaR,
+    :Kurt,
+    :SKurt,
+    :GMD,
+    :RG,
+    :RCVaR,
+    :TG,
+    :RTG,
+    :OWA,
+    :Variance,
+    :Equal,
+    :VaR,
+    :DaR,
+    :DaR_r,
+    :MDD_r,
+    :ADD_r,
+    :CDaR_r,
+    :EDaR_r,
+    :RDaR_r,
+)
+```
+Available risk measures for `type = :trad` optimisations of [`Portfolio`](@ref).
+- `:SD` = standard deviation ([`SD`](@ref));
+- `:MAD` = max absolute deviation ([`MAD`](@ref));
+- `:SSD` = semi standard deviation ([`SSD`](@ref));
+- `:FLPM` = first lower partial moment (omega ratio) ([`FLPM`](@ref));
+- `:SLPM` = second lower partial moment (sortino ratio) ([`SLPM`](@ref));
+- `:WR` = worst realisation ([`WR`](@ref));
+- `:CVaR` = conditional value at risk ([`CVaR`](@ref));
+- `:EVaR` = entropic value at risk ([`EVaR`](@ref));
+- `:RVaR` = relativistic value at risk ([`RVaR`](@ref));
+- `:MDD` = maximum drawdown of uncompounded cummulative returns ([`MDD_abs`](@ref));
+- `:ADD` = average drawdown of uncompounded cummulative returns ([`ADD_abs`](@ref));
+- `:CDaR` = conditional drawdown at risk of uncompounded cummulative returns ([`CDaR_abs`](@ref));
+- `:UCI` = ulcer index of uncompounded cummulative returns ([`UCI_abs`](@ref));
+- `:EDaR` = entropic drawdown at risk of uncompounded cummulative returns ([`EDaR_abs`](@ref));
+- `:RDaR` = relativistic drawdown at risk of uncompounded cummulative returns ([`RDaR_abs`](@ref));
+- `:Kurt` = square root kurtosis ([`Kurt`](@ref));
+- `:SKurt` = square root semi-kurtosis ([`SKurt`](@ref));
+- `:GMD` = gini mean difference ([`GMD`](@ref));
+- `:RG` = range of returns ([`RG`](@ref));
+- `:RCVaR` = range of conditional value at risk ([`RCVaR`](@ref));
+- `:TG` = tail gini ([`TG`](@ref));
+- `:RTG` = range of tail gini ([`RTG`](@ref));
+- `:OWA` = ordered weight array (generic OWA weights) ([`OWA`](@ref));
+- `:Variance` = variance ([`Variance`](@ref));
+- `:Equal` = equal risk contribution, `1/N` where N is the number of assets;
+- `:VaR` = value at risk ([`VaR`](@ref));
+- `:DaR` = drawdown at risk of uncompounded cummulative returns ([`DaR_abs`](@ref));
+- `:DaR_r` = drawdown at risk of compounded cummulative returns ([`DaR_rel`](@ref));
+- `:MDD`_r = maximum drawdown of compounded cummulative returns ([`MDD_rel`](@ref));
+- `:ADD`_r = average drawdown of compounded cummulative returns ([`ADD_rel`](@ref));
+- `:CDaR_r` = conditional drawdown at risk of compounded cummulative returns ([`CDaR_rel`](@ref));
+- `:UCI`_r = ulcer index of compounded cummulative returns ([`UCI_rel`](@ref));
+- `:EDaR_r` = entropic drawdown at risk of compounded cummulative returns ([`EDaR_rel`](@ref));
+- `:RDaR_r` = relativistic drawdown at risk of compounded cummulative returns ([`RDaR_rel`](@ref)).
+```
+"""
 const HRRiskMeasures = (
     RiskMeasures...,
     :Variance,
     :Equal,
     :VaR,
     :DaR,
+    :DaR_r,
     :MDD_r,
     :ADD_r,
-    :DaR_r,
     :CDaR_r,
     :EDaR_r,
     :RDaR_r,
@@ -286,4 +361,5 @@ export AbstractPortfolio,
     UncertaintyTypes,
     KindBootstrap,
     EllipseTypes,
-    BoxTypes
+    BoxTypes,
+    HRRiskMeasures

@@ -30,11 +30,21 @@ EDaR_rel
 RDaR_rel
 Kurt
 SKurt
+```
+
+## OWA Risk measures
+
+```@docs
 GMD
 RG
 RCVaR
 TG
 RTG
 OWA
+```
+
+## Wrapper risk functions
+
+```@docs
 calc_risk
 ```

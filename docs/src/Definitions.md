@@ -14,4 +14,5 @@ RPConstraintTypes
 UncertaintyTypes
 KindBootstrap
 EllipseTypes
+HRRiskMeasures
 ```
