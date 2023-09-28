@@ -30,7 +30,7 @@ makedocs(;
         "API" => [
             "Definitions" => "Definitions.md",
             "Types" => "Types.md",
-            "Risk Functions" => "Risk_Functions.md",
+            "Risk Measures" => "Risk_measures.md",
             "Constraint Functions" => "Constraint_Functions.md",
         ],
         # "API" => [

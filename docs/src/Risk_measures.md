@@ -1,10 +1,14 @@
-# Risk Functions
+# Risk Measures
+
+## Traditional Risk Measures
 
 ```@docs
 Variance
 SD
-MAD
 SSD
+MAD
+Kurt
+SKurt
 FLPM
 SLPM
 WR
@@ -28,11 +32,9 @@ CDaR_rel
 UCI_rel
 EDaR_rel
 RDaR_rel
-Kurt
-SKurt
 ```
 
-## OWA Risk measures
+## Ordered Weight Array (OWA) Risk Measures
 
 ```@docs
 GMD
@@ -43,7 +45,7 @@ RTG
 OWA
 ```
 
-## Wrapper risk functions
+## Wrapper Functions
 
 ```@docs
 calc_risk

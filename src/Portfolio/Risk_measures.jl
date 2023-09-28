@@ -825,7 +825,7 @@ Kurt(x::AbstractVector)
 ```
 Compute the square root kurtosis.
 ```math
-\\mathrm{Kurt} = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\left( x_{t} - \\mathbb{E}(\\bm{x}) \\right)^{4} \\right]^{1/2}\\,.
+\\mathrm{Kurt}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\left( x_{t} - \\mathbb{E}(\\bm{x}) \\right)^{4} \\right]^{1/2}\\,.
 ```
 ### Arguments
 - `x`: vector of portfolio returns.
@@ -843,7 +843,7 @@ SKurt(x::AbstractVector)
 ```
 Compute the square root semi-kurtosis.
 ```math
-\\mathrm{SKurt} = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\min\\left( x_{t} - \\mathbb{E}(\\bm{x}),\\, 0 \\right)^{4} \\right]^{1/2}\\,.
+\\mathrm{SKurt}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\min\\left( x_{t} - \\mathbb{E}(\\bm{x}),\\, 0 \\right)^{4} \\right]^{1/2}\\,.
 ```
 ### Arguments
 - `x`: vector of portfolio returns.
@@ -1004,7 +1004,7 @@ Compute the value of a risk measure given a vector of asset weights and returns.
 - `w`: vector of asset weights;
 - `returns`: matrix of asset returns where columns are assets and rows are timesteps;
 - `rm`: risk measure from [`RiskMeasures`](@ref) and [`HRRiskMeasures`](@ref);
-- `rf`: risk free rate at the frequency of `returns`;
+- `rf`: risk free rate at the frequency of `returns`, used as the minimum return target, `r`, in [`FLPM`](@ref) and [`SLPM`](@ref);
 - `cov`: covariance matrix of asset returns;
 - `α_i`: start value of the significance level of CVaR losses, `0 < α_i < α`;
 - `α`: `α ∈ (0, 1)`
@@ -1030,7 +1030,7 @@ Compute the value of a risk measure given a portfolio.
 - `portfolio`: optimised portfolio;
 - `type`: type of portfolio from [`PortTypes`](@ref).
 - `rm`: risk measure from [`RiskMeasures`](@ref) and [`HRRiskMeasures`](@ref);
-- `rf`: risk free rate at the frequency of `portfolio.returns`.
+- `rf`: risk free rate at the frequency of `portfolio.returns`, used as the minimum return target, `r`, in [`FLPM`](@ref) and [`SLPM`](@ref).
 """
 function calc_risk(
     w::AbstractVector,
