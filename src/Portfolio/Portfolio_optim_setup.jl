@@ -281,14 +281,18 @@ function _setup_objective_function(portfolio, type, obj, class, kelly, l)
     return nothing
 end
 
-function _optimize_portfolio(portfolio)
+function _optimize_portfolio(portfolio, type, obj)
     solvers = portfolio.solvers
     model = portfolio.model
 
+    N = length(portfolio.assets)
+    rtype = eltype(portfolio.returns)
     term_status = termination_status(model)
     solvers_tried = Dict()
 
     for (key, val) in solvers
+        key = Symbol(String(key) * "_" * String(type))
+
         haskey(val, :solver) && set_optimizer(model, val[:solver])
 
         if haskey(val, :params)
@@ -314,6 +318,30 @@ function _optimize_portfolio(portfolio)
             all_non_zero_weights &&
             break
 
+        weights = Vector{rtype}(undef, N)
+        if type == :trad || type == :wc
+            if obj == :sharpe
+                val_k = value(model[:k])
+                val_k = val_k > 0 ? val_k : 1
+                weights .= value.(model[:w]) / val_k
+            else
+                weights .= value.(model[:w])
+            end
+
+            short = portfolio.short
+            sum_short_long = portfolio.sum_short_long
+            if short == false
+                sum_w = sum(abs.(weights))
+                sum_w = sum_w > eps() ? sum_w : 1
+                weights .= abs.(weights) / sum_w * sum_short_long
+            end
+        elseif type == :rp || type == :rrp
+            weights .= value.(model[:w])
+            sum_w = sum(abs.(weights))
+            sum_w = sum_w > eps() ? sum_w : 1
+            weights .= abs.(weights) / sum_w
+        end
+
         push!(
             solvers_tried,
             key => Dict(
@@ -322,6 +350,7 @@ function _optimize_portfolio(portfolio)
                 :params => haskey(val, :params) ? val[:params] : missing,
                 :finite_weights => all_finite_weights,
                 :nonzero_weights => all_non_zero_weights,
+                :portfolio => DataFrame(tickers = portfolio.assets, weights = weights),
             ),
         )
     end
@@ -563,7 +592,7 @@ function opt_port!(
     _setup_objective_function(portfolio, type, obj, class, kelly, l)
 
     # Optimize.
-    term_status, solvers_tried = _optimize_portfolio(portfolio)
+    term_status, solvers_tried = _optimize_portfolio(portfolio, type, obj)
 
     # Error handling.
     if term_status ∉ ValidTermination || any(.!isfinite.(value.(w)))

@@ -158,7 +158,7 @@ const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 ValidTermination =
 (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
 ```
-Valid JuMP terminations after optimising an instance of [`Portfolio`](@ref).
+Valid `JuMP` termination codes after optimising an instance of [`Portfolio`](@ref). If the termination code is different to these, then the optimisations should be taken with a grain of salt.
 """
 const ValidTermination =
     (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)

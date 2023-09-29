@@ -44,7 +44,7 @@ function _opt_w(
     l = 2.0,
 )
     port = Portfolio(assets = 1:length(mu), ret = returns, solvers = portfolio.solvers)
-    asset_statistics!(port; calc_kurt = false)
+    asset_statistics!(port; calc_kurt = (rm == :Kurt || rm == :SKurt) ? true : false)
     port.cov = icov
 
     weights = if obj ∈ (:min_risk, :utility, :sharpe)
