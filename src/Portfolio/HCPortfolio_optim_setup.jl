@@ -484,7 +484,7 @@ function _inter_weights(
     tret = returns * intra_weights
     inter_weights, inter_fail = _opt_w(
         portfolio,
-        portfolio.assets,
+        1:length(tmu),
         tret,
         tmu,
         tcov;
