@@ -34,6 +34,7 @@ end
 
 function _opt_w(
     portfolio,
+    assets,
     returns,
     mu,
     icov;
@@ -43,7 +44,7 @@ function _opt_w(
     rf = 0.0,
     l = 2.0,
 )
-    port = Portfolio(assets = 1:length(mu), ret = returns, solvers = portfolio.solvers)
+    port = Portfolio(assets = assets, ret = returns, solvers = portfolio.solvers)
     asset_statistics!(port; calc_kurt = (rm == :Kurt || rm == :SKurt) ? true : false)
     port.cov = icov
 
@@ -63,7 +64,9 @@ function _opt_w(
         opt_port!(port; type = :rp, class = :classic, rm = rm, kelly = kelly, rf = rf)
     end
 
-    return weights[!, :weights]
+    w = !isempty(weights) ? weights[!, :weights] : zeros(eltype(returns), length(assets))
+
+    return w, port.fail
 end
 
 function _two_diff_gap_stat(dist, clustering, max_k = 10)
@@ -438,13 +441,16 @@ function _intra_weights(
     clustering_idx = cutree(clustering; k = k)
 
     intra_weights = zeros(eltype(covariance), length(portfolio.assets), k)
+    cfails = Dict{Int, Dict}()
     for i in 1:k
         idx = clustering_idx .== i
         cmu = !isnothing(mu) ? mu[idx] : nothing
         ccov = covariance[idx, idx]
         cret = returns[:, idx]
-        weights = _opt_w(
+        cassets = portfolio.assets[idx]
+        weights, cfail = _opt_w(
             portfolio,
+            cassets,
             cret,
             cmu,
             ccov;
@@ -455,9 +461,10 @@ function _intra_weights(
             l = l,
         )
         intra_weights[idx, i] .= weights
+        cfails[i] = cfail
     end
 
-    return intra_weights
+    return intra_weights, cfails
 end
 
 function _inter_weights(
@@ -475,8 +482,9 @@ function _inter_weights(
     tmu = !isnothing(mu) ? transpose(intra_weights) * mu : nothing
     tcov = transpose(intra_weights) * covariance * intra_weights
     tret = returns * intra_weights
-    inter_weights = _opt_w(
+    inter_weights, inter_fail = _opt_w(
         portfolio,
+        portfolio.assets,
         tret,
         tmu,
         tcov;
@@ -489,7 +497,7 @@ function _inter_weights(
 
     weights = intra_weights * inter_weights
 
-    return weights
+    return weights, inter_fail
 end
 
 function _setup_hr_weights(w_max, w_min, N)
@@ -593,9 +601,9 @@ function opt_port!(
             lower_bound = lower_bound,
         )
     else
-        intra_weights =
+        intra_weights, intra_fails =
             _intra_weights(portfolio; obj = obj, kelly = kelly, rm = rm, rf = rf, l = l)
-        weights = _inter_weights(
+        weights, inter_fails = _inter_weights(
             portfolio,
             intra_weights,
             obj = obj,
@@ -604,6 +612,8 @@ function opt_port!(
             rf = rf,
             l = l,
         )
+        !isempty(intra_fails) && (portfolio.fail[:intra] = intra_fails)
+        !isempty(inter_fails) && (portfolio.fail[:inter] = inter_fails)
     end
     weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
 
