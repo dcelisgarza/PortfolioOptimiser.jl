@@ -257,7 +257,7 @@ end</code></pre><pre><code class="language-julia hljs">Portfolio(;
     a_mtx_ineq = Matrix{Float64}(undef, 0, 0),
     b_vec_ineq = Vector{Float64}(undef, 0),
     risk_budget::Union{Real, AbstractVector{&lt;:Real}} = Vector{Float64}(undef, 0),
-    mu_l::Real = -Inf,
+    mu_l::Real = Inf,
     dev_u::Real = Inf,
     mad_u::Real = Inf,
     sdev_u::Real = Inf,
@@ -298,18 +298,18 @@ end</code></pre><pre><code class="language-julia hljs">Portfolio(;
     mu_bl_fm = Vector{Float64}(undef, 0),
     cov_bl_fm = Matrix{Float64}(undef, 0, 0),
     returns_fm = Matrix{Float64}(undef, 0, 0),
-    z_evar::Real = -Inf,
-    z_edar::Real = -Inf,
-    z_rvar::Real = -Inf,
-    z_rdar::Real = -Inf,
+    z_evar::Real = Inf,
+    z_edar::Real = Inf,
+    z_rvar::Real = Inf,
+    z_rdar::Real = Inf,
     # Inputs of Worst Case Optimization Models.
     cov_l = Matrix{Float64}(undef, 0, 0),
     cov_u = Matrix{Float64}(undef, 0, 0),
     cov_mu = Diagonal{Float64}(undef, 0),
     cov_sigma = Diagonal{Float64}(undef, 0),
     d_mu = Vector{Float64}(undef, 0),
-    k_mu::Real = -Inf,
-    k_sigma::Real = -Inf,
+    k_mu::Real = Inf,
+    k_sigma::Real = Inf,
     # Optimal portfolios.
     p_optimal = DataFrame(),
     rp_optimal = DataFrame(),
@@ -322,7 +322,7 @@ end</code></pre><pre><code class="language-julia hljs">Portfolio(;
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
-)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/5a448745c829848e13d340a4634349fa9e171b64/src/Portfolio/Portfolio.jl#L1-L332">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PortfolioOptimiser.HCPortfolio" href="#PortfolioOptimiser.HCPortfolio"><code>PortfolioOptimiser.HCPortfolio</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">mutable struct HCPortfolio{
+)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/1ac2818e55db44d10e1891252f6432778a9ac9b8/src/Portfolio/Portfolio.jl#L1-L332">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PortfolioOptimiser.HCPortfolio" href="#PortfolioOptimiser.HCPortfolio"><code>PortfolioOptimiser.HCPortfolio</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">mutable struct HCPortfolio{
     ast,
     dat,
     r,
@@ -417,4 +417,4 @@ end</code></pre><pre><code class="language-julia hljs">HCPortfolio(;
     solvers::AbstractDict = Dict(),
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
-)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/5a448745c829848e13d340a4634349fa9e171b64/src/Portfolio/HCPortfolio.jl#L1-L104">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Definitions/">« Definitions</a><a class="docs-footer-nextpage" href="../Risk_measures/">Risk Measures »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.17 on <span class="colophon-date" title="Thursday 28 September 2023 18:03">Thursday 28 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/1ac2818e55db44d10e1891252f6432778a9ac9b8/src/Portfolio/HCPortfolio.jl#L1-L104">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Definitions/">« Definitions</a><a class="docs-footer-nextpage" href="../Risk_measures/">Risk Measures »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.17 on <span class="colophon-date" title="Friday 29 September 2023 11:03">Friday 29 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
