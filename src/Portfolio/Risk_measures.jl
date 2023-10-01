@@ -431,7 +431,7 @@ Compute the Maximum Drawdown of uncompounded cumulative returns.
 ```math
 \\mathrm{MDD_{a}}(\\bm{x}) = \\underset{j \\in (0,\\, T)}{\\max} \\mathrm{DD_{a}}(\\bm{x},\\, j)\\,,
 ```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cummulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns.
 """
@@ -457,7 +457,7 @@ Compute the Average Drawdown of uncompounded cumulative returns.
 ```math
 \\mathrm{ADD_{a}}(\\bm{x}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{x},\\, j)\\,,
 ```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cummulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns.
 """
@@ -484,7 +484,7 @@ Compute the Conditional Drawdown at Risk of uncompounded cumulative returns.
 ```math
 \\mathrm{CDaR_{a}}(\\bm{x},\\, \\alpha) = \\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{a}}(\\bm{x},\\, j) - \\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha),\\, 0 \\right] \\,,
 ```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cummulative returns as defined in [`DaR_abs`](@ref), and ``\\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref), and ``\\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns;
 - `α`: significance level, α ∈ (0, 1).
@@ -518,7 +518,7 @@ Compute the Ulcer Index of uncompounded cumulative returns.
 ```math
 \\mathrm{UCI_{a}}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{x},\\, j)^{2}\\right]^{1/2}\\,,
 ```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cummulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns.
 """
@@ -541,14 +541,14 @@ end
 ```julia
 EDaR_abs(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
 ```
-Compute the Entropic Drawdown at Risk of uncompounded cummulative returns.
+Compute the Entropic Drawdown at Risk of uncompounded cumulative returns.
 ```math
 \\begin{align*}
 \\mathrm{EDaR_{a}}(\\bm{x},\\alpha) &= \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\mathrm{DD_{a}}(\\bm{x}),\\, z, \\,\\alpha)\\right\\}\\\\
 \\mathrm{DD_{a}}(\\bm{x}) &= \\left\\{j \\in (0,\\, T) : \\mathrm{DD_{a}}(\\bm{x},\\, j) \\right\\}\\,,
 \\end{align*}
 ```
-where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` the drawdown of uncompounded cummulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` the drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns;
 - `solvers`: dictionary of `JuMP`-supported solvers with Exponential Cone support;
@@ -580,7 +580,7 @@ Compute the Relativistic Drawdown at Risk of uncompounded cumulative returns.
 ```math
 \\mathrm{RDaR_{a}}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)\\,,
 ```
-where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the relativistic risk measure as defined in [`RRM`](@ref), and ``\\mathrm{DD_{a}}(\\bm{x})`` the drawdown of uncompounded cummulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the relativistic risk measure as defined in [`RRM`](@ref), and ``\\mathrm{DD_{a}}(\\bm{x})`` the drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns;
 - `solvers`: dictionary of `JuMP`-supported solvers with 3D Power Cone support;
@@ -644,7 +644,7 @@ Compute the Maximum Drawdown of compounded cumulative returns.
 ```math
 \\mathrm{MDD_{r}}(\\bm{x}) = \\underset{j \\in (0,\\, T)}{\\max} \\mathrm{DD_{r}}(\\bm{x},\\, j)\\,,
 ```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of compounded cummulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns.
 """
@@ -670,7 +670,7 @@ Compute the Average Drawdown of compounded cumulative returns.
 ```math
 \\mathrm{ADD_{r}}(\\bm{r}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{x},\\, j)\\,,
 ```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of compounded cummulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns.
 """
@@ -697,7 +697,7 @@ Compute the Conditional Drawdown at Risk of compounded cumulative returns.
 ```math
 \\mathrm{CDaR_{r}}(\\bm{x},\\, \\alpha) = \\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{r}}(\\bm{x},\\, j) - \\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha),\\, 0 \\right] \\,,
 ```
-where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the Drawdown of compounded cummulative returns as defined in [`DaR_rel`](@ref), and ``\\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref), and ``\\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`DaR_rel`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns;
 - `α`: significance level, α ∈ (0, 1).
@@ -731,7 +731,7 @@ Compute the Ulcer Index of compounded cumulative returns.
 ```math
 \\mathrm{UCI_{r}}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{x},\\, j)^{2}\\right]^{1/2}\\,,
 ```
-where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the Drawdown of compounded cummulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns.
 """
@@ -754,14 +754,14 @@ end
 ```julia
 EDaR_rel(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
 ```
-Compute the Entropic Drawdown at Risk of compounded cummulative returns.
+Compute the Entropic Drawdown at Risk of compounded cumulative returns.
 ```math
 \\begin{align*}
 \\mathrm{EDaR_{r}}(\\bm{x},\\alpha) &= \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\mathrm{DD_{r}}(\\bm{x}),\\, z, \\,\\alpha)\\right\\}\\\\
 \\mathrm{DD_{r}}(\\bm{x}) &= \\left\\{j \\in (0,\\, T) : \\mathrm{DD_{r}}(\\bm{x},\\, j) \\right\\}\\,,
 \\end{align*}
 ```
-where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` the drawdown of compounded cummulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` the drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns;
 - `solvers`: dictionary of `JuMP`-supported solvers with 3D Power Cone support;
@@ -794,7 +794,7 @@ Compute the Relativistic Drawdown at Risk of compounded cumulative returns.
 ```math
 \\mathrm{RDaR_{r}}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)\\,,
 ```
-where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, and ``\\mathrm{DD_{r}}(\\bm{x})`` the drawdown of compounded cummulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, and ``\\mathrm{DD_{r}}(\\bm{x})`` the drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
 ### Arguments
 - `x`: vector of portfolio returns;
 - `solvers`: dictionary of `JuMP`-supported solvers with 3D Power Cone support;

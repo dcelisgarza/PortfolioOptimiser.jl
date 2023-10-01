@@ -34,7 +34,7 @@ RiskMeasures = (
     :OWA,
 )
 ```
-Available risk measures for `type = :trad` optimisations of [`Portfolio`](@ref).
+Available risk measures for `:trad` and `:rp` type (see [`PortTypes`](@ref)) of [`Portfolio`](@ref).
 - `:SD` = standard deviation ([`SD`](@ref));
 - `:MAD` = max absolute deviation ([`MAD`](@ref));
 - `:SSD` = semi standard deviation ([`SSD`](@ref));
@@ -44,12 +44,12 @@ Available risk measures for `type = :trad` optimisations of [`Portfolio`](@ref).
 - `:CVaR` = conditional value at risk ([`CVaR`](@ref));
 - `:EVaR` = entropic value at risk ([`EVaR`](@ref));
 - `:RVaR` = relativistic value at risk ([`RVaR`](@ref));
-- `:MDD` = maximum drawdown of uncompounded cummulative returns ([`MDD_abs`](@ref));
-- `:ADD` = average drawdown of uncompounded cummulative returns ([`ADD_abs`](@ref));
-- `:CDaR` = conditional drawdown at risk of uncompounded cummulative returns ([`CDaR_abs`](@ref));
-- `:UCI` = ulcer index of uncompounded cummulative returns ([`UCI_abs`](@ref));
-- `:EDaR` = entropic drawdown at risk of uncompounded cummulative returns ([`EDaR_abs`](@ref));
-- `:RDaR` = relativistic drawdown at risk of uncompounded cummulative returns ([`RDaR_abs`](@ref));
+- `:MDD` = maximum drawdown of uncompounded cumulative returns ([`MDD_abs`](@ref));
+- `:ADD` = average drawdown of uncompounded cumulative returns ([`ADD_abs`](@ref));
+- `:CDaR` = conditional drawdown at risk of uncompounded cumulative returns ([`CDaR_abs`](@ref));
+- `:UCI` = ulcer index of uncompounded cumulative returns ([`UCI_abs`](@ref));
+- `:EDaR` = entropic drawdown at risk of uncompounded cumulative returns ([`EDaR_abs`](@ref));
+- `:RDaR` = relativistic drawdown at risk of uncompounded cumulative returns ([`RDaR_abs`](@ref));
 - `:Kurt` = square root kurtosis ([`Kurt`](@ref));
 - `:SKurt` = square root semi-kurtosis ([`SKurt`](@ref));
 - `:GMD` = gini mean difference ([`GMD`](@ref));
@@ -90,10 +90,14 @@ const RiskMeasures = (
 KellyRet = (:none, :approx, :exact)
 ```
 Available types of Kelly returns for [`Portfolio`](@ref).
-- `:none`: arithmetic mean return, ``\\bm{\\mu} \\cdot \\bm{w}``;
-- `:approx`: first moment approximation of the logarithmic returns, ``\\bm{\\mu} \\cdot \\bm{w} - \\dfrac{1}{2} \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}``;
-- `:exact`: exact logarithmic returns, ``\\dfrac{1}{T}\\sum\\limits_{t=1}^{T}\\ln\\left(1 + \\bm{x}_t \\cdot \\bm{w}\\right)``.
-Where ``\\mathbf{\\Sigma}`` is the covariance matrix of the asset returns; ``\\bm{x}_t`` is the vector of asset returns at timestep ``t``; ``\\bm{\\mu}`` is the vector of expected returns for each asset over the timespan; and ``\\bm{w}`` is the asset weights vector.
+- `:none`: arithmetic mean return, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w}``;
+- `:approx`: first moment approximation of the logarithmic returns, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w} - \\dfrac{1}{2} \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}``;
+- `:exact`: exact logarithmic returns, ``R(\\bm{w}) = \\dfrac{1}{T}\\sum\\limits_{t=1}^{T}\\ln\\left(1 + \\bm{x}_t \\cdot \\bm{w}\\right)``.
+Where:
+- ``\\mathbf{\\Sigma}`` is the covariance matrix of the asset returns; 
+- ``\\bm{x}_t`` is the vector of asset returns at timestep ``t``; 
+- ``\\bm{\\mu}`` is the vector of expected returns for each asset over the timespan; 
+- and ``\\bm{w}`` is the asset weights vector.
 """
 const KellyRet = (:none, :approx, :exact)
 
@@ -112,7 +116,7 @@ const TrackingErrKinds = (:weights, :returns)
 ```julia
 ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 ```
-Available objective functions for [`Portfolio`](@ref).
+Available objective functions for the `:trad` type (see [`PortTypes`](@ref)) of [`Portfolio`](@ref).
 - `:min_risk`: minimum risk portfolio,
 ```math
 \\begin{align*}
@@ -149,7 +153,15 @@ Available objective functions for [`Portfolio`](@ref).
 &\\qquad R(\\bm{w}) \\geq \\hat{\\mu}
 \\end{align*}\\,.
 ```
-Where ``\\phi_{i}`` is a risk function from the set of available risk functions ``\\left\\{\\Phi\\right\\}`` from [`RiskMeasures`](@ref); ``c_{i}`` is the maximum acceptable value for the risk function ``\\phi_{i}`` of the optimised portfolio; ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref); ``\\hat{\\mu}`` is the minimum acceptable value for the return of the optimised portfolio; ``r`` is the risk free rate; ``\\lambda`` is the risk aversion coefficient; and ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` are the asset linear constraints.
+Where:
+- ``\\bm{w}`` are the asset weights;
+- ``\\phi_{i}`` is risk measure ``i`` from the set of available risk measures ``\\left\\{\\Phi\\right\\}`` (see [`RiskMeasures`](@ref));
+- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` are the asset linear constraints;
+- ``c_{i}`` is the maximum acceptable value for risk measure ``\\phi_{i}`` of the optimised portfolio;
+- ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref);
+- ``\\hat{\\mu}`` is the minimum acceptable return of the optimised portfolio;
+- ``\\lambda`` is the risk aversion coefficient;
+- and ``r`` is the risk free rate.
 """
 const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 
@@ -158,7 +170,7 @@ const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 ValidTermination =
 (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
 ```
-Valid `JuMP` termination codes after optimising an instance of [`Portfolio`](@ref). If the termination code is different to these, then the optimisations should be taken with a grain of salt.
+Valid `JuMP` termination codes after optimising an instance of [`Portfolio`](@ref). If the termination code is different to these, then the failures are logged in the `.fail` field of [`HCPortfolio`](@ref) and [`Portfolio`](@ref).
 """
 const ValidTermination =
     (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
@@ -173,11 +185,62 @@ const PortClasses = (:classic,)
 
 """
 ```julia
-PortTypes = (:trad, :rp, :rrp, :OWA, :wc)
+PortTypes = (:trad, :rp, :rrp, :wc)
 ```
 Available optimisation types for [`Portfolio`](@ref).
+### `:trad` -- Traditional
+Optimisations for which [`ObjFuncs`](@ref) and [`RiskMeasures`](@ref) apply.
+### `:rp` -- Risk Parity
+Optimisations for which [`RiskMeasures`](@ref) apply. Optimises portfolios based on a vector of risk contributions per asset.
+```math
+\\begin{align*}
+\\underset{\\bm{w}}{\\min} &\\qquad \\phi(\\bm{w}) \\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
+&\\qquad \\bm{b} \\cdot \\ln(\\bm{w}) \\geq c \\\\
+&\\qquad R(\\bm{w}) \\geq \\hat{\\mu}\\\\
+&\\qquad \\bm{w} \\geq \\bm{0}
+\\end{align*}\\,.
+```
+Where:
+- ``\\bm{w}`` are the asset weights;
+- ``\\phi`` a risk measure from the set of available risk measures (see [`RiskMeasures`](@ref));
+- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` are the asset linear constraints;
+- ``\\bm{b}`` is the vector of maximum allowable risk contribution per asset to the optimised portfolio;
+- ``c`` is an auxiliary variable;
+- ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref);
+- and ``\\hat{\\mu}`` is the minimum acceptable return of the optimised portfolio.
+### `:rrp` -- Relaxed Risk Parity
+Defines the risk measure internally, which is derived from the portfolio covariance. Optimises portfolios based on a vector of risk contributions per asset.
+```math
+\\begin{align*}
+\\underset{\\bm{w}}{\\min} &\\qquad \\psi - \\gamma \\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
+&\\qquad \\bm{w}^\\intercal \\, \\mathbf{\\Sigma}\\, \\bm{w} \\leq (\\psi^{2} - \\rho^{2})\\\\
+&\\qquad \\lambda \\bm{w}^\\intercal \\, \\mathbf{\\Theta}\\, \\bm{w} \\leq \\rho^{2}\\\\
+&\\qquad \\bm{\\zeta} = \\mathbf{\\Sigma} \\bm{w}\\\\
+&\\qquad w_{i} \\zeta_{i} \\geq \\gamma^{2} b_{i} \\qquad \\forall \\, i = 1,\\, \\ldots{},\\, N\\\\
+&\\qquad R(\\bm{w}) \\geq \\hat{\\mu}\\\\
+&\\qquad \\sum\\limits_{i=1}^{N} w_{i} = 1\\\\
+&\\qquad \\bm{w} \\geq \\bm{0}\\\\
+&\\qquad \\psi,\\, \\gamma,\\, \\rho \\geq 0
+\\end{align*}\\,.
+```
+Where:
+- ``\\bm{w}`` are the asset weights;
+- ``\\psi`` is the average risk of the portfolio;
+- ``\\gamma`` is the lower bound of the risk contribution for each asset;
+- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` are the asset linear constraints;
+- ``\\mathbf{\\Sigma}`` is the portfolio covariance;
+- ``\\rho`` is a regularisation variable;
+- ``\\mathbf{\\Theta} = \\mathrm{diag}\\left(\\mathbf{\\Sigma}\\right)`` ;
+- ``\\lambda`` is a penalty parameter for ``\\rho``;
+- ``\\bm{\\zeta}`` is the vector of marginal risk for each asset;
+- ``b_{i}`` is the maximum allowable risk contribution for asset ``i``;
+- ``N`` is the number of assets;
+- ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref);
+- and ``\\hat{\\mu}`` is the minimum acceptable return of the optimised portfolio.
 """
-const PortTypes = (:trad, :rp, :rrp, :OWA, :wc)
+const PortTypes = (:trad, :rp, :rrp, :wc)
 
 """
 ```julia
@@ -277,22 +340,22 @@ HRRiskMeasures = (
     :RDaR_r,
 )
 ```
-Available risk measures for `type = :trad` optimisations of [`Portfolio`](@ref).
+Available risk measures for optimisations of [`HCPortfolio`](@ref).
 - `:SD` = standard deviation ([`SD`](@ref));
 - `:MAD` = max absolute deviation ([`MAD`](@ref));
 - `:SSD` = semi standard deviation ([`SSD`](@ref));
-- `:FLPM` = first lower partial moment (omega ratio) ([`FLPM`](@ref));
-- `:SLPM` = second lower partial moment (sortino ratio) ([`SLPM`](@ref));
+- `:FLPM` = first lower partial moment (Omega ratio) ([`FLPM`](@ref));
+- `:SLPM` = second lower partial moment (Sortino ratio) ([`SLPM`](@ref));
 - `:WR` = worst realisation ([`WR`](@ref));
 - `:CVaR` = conditional value at risk ([`CVaR`](@ref));
 - `:EVaR` = entropic value at risk ([`EVaR`](@ref));
 - `:RVaR` = relativistic value at risk ([`RVaR`](@ref));
-- `:MDD` = maximum drawdown of uncompounded cummulative returns ([`MDD_abs`](@ref));
-- `:ADD` = average drawdown of uncompounded cummulative returns ([`ADD_abs`](@ref));
-- `:CDaR` = conditional drawdown at risk of uncompounded cummulative returns ([`CDaR_abs`](@ref));
-- `:UCI` = ulcer index of uncompounded cummulative returns ([`UCI_abs`](@ref));
-- `:EDaR` = entropic drawdown at risk of uncompounded cummulative returns ([`EDaR_abs`](@ref));
-- `:RDaR` = relativistic drawdown at risk of uncompounded cummulative returns ([`RDaR_abs`](@ref));
+- `:MDD` = maximum drawdown of uncompounded cumulative returns (Calmar ratio) ([`MDD_abs`](@ref));
+- `:ADD` = average drawdown of uncompounded cumulative returns ([`ADD_abs`](@ref));
+- `:CDaR` = conditional drawdown at risk of uncompounded cumulative returns ([`CDaR_abs`](@ref));
+- `:UCI` = ulcer index of uncompounded cumulative returns ([`UCI_abs`](@ref));
+- `:EDaR` = entropic drawdown at risk of uncompounded cumulative returns ([`EDaR_abs`](@ref));
+- `:RDaR` = relativistic drawdown at risk of uncompounded cumulative returns ([`RDaR_abs`](@ref));
 - `:Kurt` = square root kurtosis ([`Kurt`](@ref));
 - `:SKurt` = square root semi-kurtosis ([`SKurt`](@ref));
 - `:GMD` = gini mean difference ([`GMD`](@ref));
@@ -304,14 +367,14 @@ Available risk measures for `type = :trad` optimisations of [`Portfolio`](@ref).
 - `:Variance` = variance ([`Variance`](@ref));
 - `:Equal` = equal risk contribution, `1/N` where N is the number of assets;
 - `:VaR` = value at risk ([`VaR`](@ref));
-- `:DaR` = drawdown at risk of uncompounded cummulative returns ([`DaR_abs`](@ref));
-- `:DaR_r` = drawdown at risk of compounded cummulative returns ([`DaR_rel`](@ref));
-- `:MDD`_r = maximum drawdown of compounded cummulative returns ([`MDD_rel`](@ref));
-- `:ADD`_r = average drawdown of compounded cummulative returns ([`ADD_rel`](@ref));
-- `:CDaR_r` = conditional drawdown at risk of compounded cummulative returns ([`CDaR_rel`](@ref));
-- `:UCI`_r = ulcer index of compounded cummulative returns ([`UCI_rel`](@ref));
-- `:EDaR_r` = entropic drawdown at risk of compounded cummulative returns ([`EDaR_rel`](@ref));
-- `:RDaR_r` = relativistic drawdown at risk of compounded cummulative returns ([`RDaR_rel`](@ref)).
+- `:DaR` = drawdown at risk of uncompounded cumulative returns ([`DaR_abs`](@ref));
+- `:DaR_r` = drawdown at risk of compounded cumulative returns ([`DaR_rel`](@ref));
+- `:MDD`_r = maximum drawdown of compounded cumulative returns ([`MDD_rel`](@ref));
+- `:ADD`_r = average drawdown of compounded cumulative returns ([`ADD_rel`](@ref));
+- `:CDaR_r` = conditional drawdown at risk of compounded cumulative returns ([`CDaR_rel`](@ref));
+- `:UCI`_r = ulcer index of compounded cumulative returns ([`UCI_rel`](@ref));
+- `:EDaR_r` = entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`](@ref));
+- `:RDaR_r` = relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`](@ref)).
 ```
 """
 const HRRiskMeasures = (
