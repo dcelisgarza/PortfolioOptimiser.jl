@@ -1008,8 +1008,8 @@ Compute the value of a risk measure given a vector of asset weights and returns.
 - `cov`: covariance matrix of asset returns;
 - `α_i`: start value of the significance level of CVaR losses, `0 < α_i < α`;
 - `α`: `α ∈ (0, 1)`
-    - if `rm` is not an OWA measure: significance level; 
-    - if `rm` is an OWA measure: end value of the significance level of CVaR losses, `α ∈ (0, 1)`;
+    - if `rm` *is not* an OWA range measure: significance level; 
+    - if `rm` *is* an OWA range measure: end value of the significance level of CVaR losses;
 - `α_sim`: number of steps between `α_i` and `α`.
 - `β_i`: start value of the significance level of CVaR gains, `0 < β_i < β`, if `nothing` it takes the value of `α_i`;
 - `β`: end value of the significance level of CVaR gains, `β ∈ (0, 1)`, if `nothing` it takes the value of `α`;
