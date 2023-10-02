@@ -40,6 +40,7 @@ function _setup_return(portfolio, type, class, kelly, obj, T, rf, returns, mu)
                 end
             elseif kelly == :approx
                 if obj == :sharpe
+                    isempty(mu) && return nothing
                     @variable(model, tapprox_kelly)
                     @constraint(
                         model,
@@ -56,9 +57,8 @@ function _setup_return(portfolio, type, class, kelly, obj, T, rf, returns, mu)
                 end
             end
         else
-            obj == :min_risk && isnothing(mu) && return nothing
+            obj == :min_risk && isempty(mu) && return nothing
             @expression(model, ret, dot(mu, model[:w]))
-
             obj == :sharpe && @constraint(model, ret - rf * model[:k] == 1)
         end
     elseif type == :rp || type == :rrp
@@ -566,7 +566,7 @@ function opt_port!(
     elseif type == :rrp
         _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     elseif type == :wc
-        _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
+        _wc_setup(portfolio, kelly, obj, N, rf, mu, sigma, u_mu, u_cov)
     end
 
     # Constraints.

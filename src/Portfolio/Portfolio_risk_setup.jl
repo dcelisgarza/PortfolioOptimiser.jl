@@ -809,13 +809,34 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     return nothing
 end
 
-function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
+function _wc_setup(portfolio, kelly, obj, N, rf, mu, sigma, u_mu, u_cov)
     model = portfolio.model
 
     # Return uncertainy sets.
 
-    if !isempty(mu)
+    if kelly == :approx || (u_cov != :box && u_cov != :ellipse)
+        @variable(model, dev)
+        G = sqrt(sigma)
+        @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
+        @expression(model, dev_risk, dev * dev)
+    end
+
+    if kelly == :exact
+        @variable(model, texact_kelly[1:T])
+        @expression(model, _ret, sum(texact_kelly) / T)
+        @expression(model, kret, 1 .+ returns * model[:w])
+        @constraint(
+            model,
+            [i = 1:T],
+            [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
+        )
+    elseif kelly == :approx && !isempty(mu)
+        @expression(model, _ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
+    elseif !isempty(mu)
         @expression(model, _ret, dot(mu, model[:w]))
+    end
+
+    if haskey(model, :_ret)
         if u_mu == :box
             d_mu = portfolio.d_mu
 
@@ -879,9 +900,6 @@ function _wc_setup(portfolio, obj, N, rf, mu, sigma, u_mu, u_cov)
 
         @expression(model, risk, tr(sigma * E1_p_E2) + k_sigma * t_ge)
     else
-        @variable(model, dev)
-        G = sqrt(sigma)
-        @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
-        @expression(model, risk, dev * dev)
+        @expression(model, risk, dev_risk)
     end
 end
