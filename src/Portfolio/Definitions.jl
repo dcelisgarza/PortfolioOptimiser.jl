@@ -116,14 +116,15 @@ const TrackingErrKinds = (:weights, :returns)
 ```julia
 ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 ```
-Available objective functions for the `:trad` type (see [`PortTypes`](@ref)) of [`Portfolio`](@ref).
+### Traditional Optimisations
+Available objective functions for `type = :trad` optimisations (see [`PortTypes`](@ref)) of [`Portfolio`](@ref).
 - `:min_risk`: minimum risk portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\min} &\\qquad \\phi_{j}(\\bm{w}) \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
 &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
-&\\qquad R(\\bm{w}) \\geq \\hat{\\mu}
+&\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
 ```
 - `:utility`: maximum utility portfolio,
@@ -132,7 +133,7 @@ Available objective functions for the `:trad` type (see [`PortTypes`](@ref)) of 
 \\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) - \\lambda \\phi_{j}(\\bm{w}) \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
 &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
-&\\qquad R(\\bm{w}) \\geq \\hat{\\mu}
+&\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
 ```
 - `:sharpe`: maximum risk-adjusted return ratio portfolio,
@@ -141,7 +142,7 @@ Available objective functions for the `:trad` type (see [`PortTypes`](@ref)) of 
 \\underset{\\bm{w}}{\\max} &\\qquad \\dfrac{R(\\bm{w}) - r}{\\phi_{j}(\\bm{w})} \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
 &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
-&\\qquad R(\\bm{w}) \\geq \\hat{\\mu}
+&\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
 ```
 - `:max_ret`: maximum return portfolio,
@@ -150,7 +151,7 @@ Available objective functions for the `:trad` type (see [`PortTypes`](@ref)) of 
 \\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
 &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
-&\\qquad R(\\bm{w}) \\geq \\hat{\\mu}
+&\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
 ```
 Where:
@@ -159,9 +160,70 @@ Where:
 - ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` are the asset linear constraints;
 - ``c_{i}`` is the maximum acceptable value for risk measure ``\\phi_{i}`` of the optimised portfolio;
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref);
-- ``\\hat{\\mu}`` is the minimum acceptable return of the optimised portfolio;
+- ``\\overline{\\mu}`` is the minimum acceptable return of the optimised portfolio;
 - ``\\lambda`` is the risk aversion coefficient;
-- and ``r`` is the risk free rate.
+- and ``r`` is the risk-free rate.
+
+### Worst Case Mean Variance Optimisations
+Available objective functions for `type = :wc` optimisations (see [`PortTypes`](@ref)) of [`Portfolio`](@ref).
+- `:min_risk`: worst case minimum risk mean-variance portfolio,
+```math
+\\begin{align*}
+\\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B}\\,.
+\\end{align*}
+```
+- `:utility`: worst case maximum utility mean-variance portfolio,
+```math
+\\begin{align*}
+\\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} \\bm{\\mu} \\cdot \\bm{w}\\, -\\, \\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\lambda \\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B}\\,.
+\\end{align*}
+```
+- `:sharpe`: worst case maximum risk-adjusted return ratio mean-variance portfolio,
+```math
+\\begin{align*}
+\\underset{\\bm{w}}{\\max} &\\qquad \\dfrac{\\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} \\bm{\\mu} \\cdot \\bm{w} - r}{\\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\left(\\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\right)^{1/2}} \\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B}\\,.
+\\end{align*}
+```
+- `:max_ret`: worst case maximum return mean-variance portfolio,
+```math
+\\begin{align*}
+\\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} \\bm{\\mu} \\cdot \\bm{w}\\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B}\\,.
+\\end{align*}
+```
+Where:
+- ``\\bm{w}`` are the asset weights;
+- ``\\mathbf{\\Sigma}`` is the covariance matrix of asset returns;
+- ``U_{\\Sigma}`` is the uncertainty set for the covariance matrix, they can be:
+```math
+\\begin{align*}
+U_{\\Sigma}^{\\mathrm{box}} &= \\left\\{\\mathbf{\\Sigma}\\, \\vert\\, \\mathbf{\\Sigma}_{l} \\leq \\mathbf{\\Sigma} \\leq \\mathbf{\\Sigma}_{u},\\, \\mathbf{\\Sigma} \\succeq 0\\right\\}\\\\
+U_{\\Sigma}^{\\mathrm{ellipse}} &= \\left\\{\\mathbf{\\Sigma}\\, \\vert\\, \\left[\\mathrm{vec}\\left(\\mathbf{\\Sigma}\\right) - \\mathrm{vec}\\left(\\hat{\\mathbf{\\Sigma}}\\right)\\right] \\mathbf{\\Sigma}_{\\mathbf{\\Sigma}}^{-1} \\left[\\mathrm{vec}\\left(\\mathbf{\\Sigma}\\right) - \\mathrm{vec}\\left(\\hat{\\mathbf{\\Sigma}}\\right)\\right]^{\\intercal} \\leq k_{\\mathbf{\\Sigma}}^2 ,\\, \\mathbf{\\Sigma} \\succeq 0\\right\\}\\,.
+\\end{align*}
+```
+- Where the following variables are estimated by assuming that the portfolio's asset return covariance can be generated by *some* matrix distribution. This distribution is sampled, and the parameters are estimated from these. Available choices can be found in [`BoxTypes`](@ref) and [`EllipseTypes`](@ref) for the box and ellipse sets respectively: 
+    - the ``\\mathrm{l}`` and ``\\mathrm{u}`` subscripts denote lower and upper bounds for the covariance matrix given the samples;
+    - ``\\mathbf{\\Sigma}_{\\mathbf{\\Sigma}}`` is the covariance of the samples;
+    - ``\\hat{\\mathbf{\\Sigma}}`` the expected covariance given the samples;
+    - and ``k_{\\mathbf{\\Sigma}}`` is a significance parameter of the matrix distribution.
+- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` are the asset linear constraints;
+- ``\\bm{\\mu}`` are the asset returns;
+- ``U_{\\bm{\\mu}}`` is the uncertainty set for the asset returns, they can be:
+```math
+\\begin{align*}
+U_{\\bm{\\mu}}^{\\mathrm{box}} &= \\left\\{\\bm{\\mu}\\, \\vert\\, \\vert \\bm{\\mu} - \\bm{\\hat{\\mu}} \\vert \\leq \\delta \\right\\}\\\\
+U_{\\bm{\\mu}}^{\\mathrm{ellipse}} &= \\left\\{\\bm{\\mu}\\, \\vert\\, \\left(\\bm{\\mu} - \\bm{\\hat{\\mu}}\\right) \\mathbf{\\Sigma}_{\\bm{\\mu}}^{-1} \\left(\\bm{\\mu} - \\bm{\\hat{\\mu}}\\right)^{\\intercal} \\leq k_{\\bm{\\mu}}^{2}\\right\\}\\,.
+\\end{align*}
+```
+- Where the following variables are estimated by assuming that the portfolio's asset mean returns can be generated by *some* distribution. This distribution is sampled, and the parameters are estimated from these. Available choices can be found in [`BoxTypes`](@ref) and [`EllipseTypes`](@ref) for the box and ellipse sets respectively:
+    - ``\\hat{\\bm{\\mu}}`` the expected portfolio asset mean returns given the samples;
+    - ``\\mathbf{\\Sigma}_{\\bm{\\mu}}`` is the covariance of the samples;
+    - and ``k_{\\bm{\\mu}}`` is a significance parameter of the distribution.
+- ``\\lambda`` is the risk aversion coefficient;
+- and ``r`` is the risk-free rate.
 """
 const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
 
@@ -190,6 +252,7 @@ PortTypes = (:trad, :rp, :rrp, :wc)
 Available optimisation types for [`Portfolio`](@ref).
 ### `:trad` -- Traditional
 Optimisations for which [`ObjFuncs`](@ref) and [`RiskMeasures`](@ref) apply.
+
 ### `:rp` -- Risk Parity
 Optimisations for which [`RiskMeasures`](@ref) apply. Optimises portfolios based on a vector of risk contributions per asset.
 ```math
@@ -209,6 +272,7 @@ Where:
 - ``c`` is an auxiliary variable;
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref);
 - and ``\\hat{\\mu}`` is the minimum acceptable return of the optimised portfolio.
+
 ### `:rrp` -- Relaxed Risk Parity
 Defines the risk measure internally, which is derived from the portfolio covariance. Optimises portfolios based on a vector of risk contributions per asset.
 ```math
@@ -233,12 +297,15 @@ Where:
 - ``\\mathbf{\\Sigma}`` is the portfolio covariance;
 - ``\\rho`` is a regularisation variable;
 - ``\\mathbf{\\Theta} = \\mathrm{diag}\\left(\\mathbf{\\Sigma}\\right)`` ;
-- ``\\lambda`` is a penalty parameter for ``\\rho``;
+- ``\\lambda`` is a penalty parameter for ``\\rho``, taken from the available choices in [`RRPVersions`](@ref);
 - ``\\bm{\\zeta}`` is the vector of marginal risk for each asset;
 - ``b_{i}`` is the maximum allowable risk contribution for asset ``i``;
 - ``N`` is the number of assets;
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref);
 - and ``\\hat{\\mu}`` is the minimum acceptable return of the optimised portfolio.
+
+### `:wc` -- Worst Case Mean Variance
+Calculates the worst case mean variance portfolio according to user-selected uncertainty sets (see [`UncertaintyTypes`](@ref)) for the portfolio return and covariance.
 """
 const PortTypes = (:trad, :rp, :rrp, :wc)
 
@@ -282,7 +349,7 @@ EllipseTypes = (:stationary, :circular, :moving, :normal)
 const EllipseTypes = (:stationary, :circular, :moving, :normal)
 """
 ```julia
-BoxTypes = (EllipseTypes..., :delta)
+BoxTypes = (:stationary, :circular, :moving, :normal, :delta)
 ```
 """
 const BoxTypes = (EllipseTypes..., :delta)
