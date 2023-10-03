@@ -293,11 +293,11 @@ end
 
 """
 """
-function rp_constraints(asset_classes, type = :assets, class_col = nothing)
+function rp_constraints(asset_classes, type = :Assets, class_col = nothing)
     @assert(type ∈ RPConstraintTypes, "type must be one of $RPConstraintTypes")
     N = nrow(asset_classes)
 
-    if type == :assets
+    if type == :Assets
         w = fill(1 / N, N)
     else
         classes = names(asset_classes)

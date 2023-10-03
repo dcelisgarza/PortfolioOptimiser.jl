@@ -71,17 +71,17 @@ function _calc_hist_data(xj, xi, bins)
     return ex, ey, hxy
 end
 
-function mut_var_info_mtx(x, bins_info = :kn, normed = true)
+function mut_var_info_mtx(x, bins_info = :KN, normed = true)
     @assert(
         bins_info ∈ BinTypes || isa(bins_info, Int),
         "bins has to either be in $BinTypes, or an integer value"
     )
 
-    bin_width_func = if bins_info == :kn
+    bin_width_func = if bins_info == :KN
         pyimport("astropy.stats").knuth_bin_width
-    elseif bins_info == :fd
+    elseif bins_info == :FD
         pyimport("astropy.stats").freedman_bin_width
-    elseif bins_info == :sc
+    elseif bins_info == :SC
         pyimport("astropy.stats").scott_bin_width
     end
 
@@ -96,7 +96,7 @@ function mut_var_info_mtx(x, bins_info = :kn, normed = true)
         xj = x[:, j]
         for i in j:N
             xi = x[:, i]
-            bins = if bins_info == :hgr
+            bins = if bins_info == :HGR
                 corr = cor(xj, xi)
                 corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
             else

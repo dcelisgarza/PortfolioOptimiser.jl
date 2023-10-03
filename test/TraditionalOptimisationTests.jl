@@ -18,7 +18,7 @@ Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
-type = :trad
+type = :Trad
 
 @testset "SD" begin
     portfolio = Portfolio(
@@ -38,14 +38,14 @@ type = :trad
     asset_statistics!(portfolio)
     rm = :SD
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -142,14 +142,14 @@ type = :trad
     @test isapprox(w3t, w3.weights, rtol = 4e-5)
     @test isapprox(w4t, w4.weights, rtol = 3e-8)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -246,14 +246,14 @@ type = :trad
     @test isapprox(w3t, w3.weights, rtol = 3e-4)
     @test isapprox(w4t, w4.weights, rtol = 3e-5)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -366,28 +366,28 @@ type = :trad
     )
     asset_statistics!(portfolio)
     rm = :SD
-    kelly = :none
+    kelly = :None
     portfolio.dev_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = :SD)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = :SD)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = :SD)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = :SD)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.dev_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = :SD)
@@ -422,7 +422,7 @@ type = :trad
 
     portfolio.dev_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.dev_u = r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = :SD)
@@ -431,7 +431,7 @@ type = :trad
     @test isapprox(r13, r1)
     @test isapprox(m13, m1, rtol = 4e-3)
 
-    obj = :min_risk
+    obj = :Min_Risk
     portfolio.dev_u = Inf
     portfolio.mu_l = m1
     w9 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -500,14 +500,14 @@ end
     asset_statistics!(portfolio)
     rm = :MAD
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -604,14 +604,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 4e-4)
     @test isapprox(w4t, w4.weights, rtol = 4e-6)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -708,14 +708,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 2e-3)
     @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -828,28 +828,28 @@ end
     )
     asset_statistics!(portfolio)
 
-    kelly = :none
+    kelly = :None
     portfolio.mad_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.mad_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -884,7 +884,7 @@ end
 
     portfolio.mad_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.mad_u = r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -912,14 +912,14 @@ end
     asset_statistics!(portfolio)
     rm = :SSD
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -1016,14 +1016,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 5e-5)
     @test isapprox(w4t, w4.weights, rtol = 2e-6)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -1120,14 +1120,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 5e-4)
     @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -1240,28 +1240,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :SSD
-    kelly = :none
+    kelly = :None
     portfolio.sdev_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.sdev_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -1296,7 +1296,7 @@ end
 
     portfolio.sdev_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.sdev_u = r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -1324,14 +1324,14 @@ end
     asset_statistics!(portfolio)
     rm = :FLPM
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -1428,14 +1428,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 5e-5)
     @test isapprox(w4t, w4.weights, rtol = 4e-6)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -1532,14 +1532,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 7e-6)
     @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -1652,28 +1652,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :FLPM
-    kelly = :none
+    kelly = :None
     portfolio.flpm_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.flpm_u = r1 + 0.011 * r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -1706,7 +1706,7 @@ end
     @test isapprox(r8, r4, rtol = 6e-3)
     @test isapprox(m8, m4, rtol = 2e-4)
 
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.flpm_u = r4
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -1734,14 +1734,14 @@ end
     asset_statistics!(portfolio)
     rm = :SLPM
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -1838,14 +1838,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 3e-5)
     @test isapprox(w4t, w4.weights, rtol = 2e-6)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -1942,14 +1942,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 2e-3)
     @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -2062,28 +2062,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :SLPM
-    kelly = :none
+    kelly = :None
     portfolio.slpm_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.slpm_u = r1 + 0.01 * r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -2118,7 +2118,7 @@ end
 
     portfolio.slpm_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.slpm_u = r4
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -2146,14 +2146,14 @@ end
     asset_statistics!(portfolio)
     rm = :WR
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -2250,14 +2250,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 7e-7)
     @test isapprox(w4t, w4.weights, rtol = 3e-7)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -2354,14 +2354,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 2e-4)
     @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -2474,28 +2474,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :WR
-    kelly = :none
+    kelly = :None
     portfolio.wr_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.wr_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -2530,7 +2530,7 @@ end
 
     portfolio.wr_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.wr_u = r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -2558,14 +2558,14 @@ end
     asset_statistics!(portfolio)
     rm = :CVaR
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -2662,14 +2662,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 4e-7)
     @test isapprox(w4t, w4.weights, rtol = 6e-7)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -2766,14 +2766,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 1e-5)
     @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -2886,28 +2886,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :CVaR
-    kelly = :none
+    kelly = :None
     portfolio.cvar_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.cvar_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -2942,7 +2942,7 @@ end
 
     portfolio.cvar_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.cvar_u = r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -2970,14 +2970,14 @@ end
     asset_statistics!(portfolio)
     rm = :EVaR
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -3074,14 +3074,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 5e-5)
     @test isapprox(w4t, w4.weights, rtol = 1e-6)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -3178,14 +3178,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 4e-2)
     @test isapprox(w4t, w4.weights, rtol = 1e-5)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -3298,28 +3298,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :EVaR
-    kelly = :none
+    kelly = :None
     portfolio.evar_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.evar_u = r1 + 0.000001 * r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -3354,7 +3354,7 @@ end
 
     portfolio.evar_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.evar_u = r1 + 0.00001 * r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -3382,14 +3382,14 @@ end
     asset_statistics!(portfolio)
     rm = :RVaR
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -3486,14 +3486,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 5e-5)
     @test isapprox(w4t, w4.weights, rtol = 3e-6)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -3590,14 +3590,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 1e-7)
     @test isapprox(w4t, w4.weights, rtol = 1e-6)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -3710,28 +3710,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :RVaR
-    kelly = :none
+    kelly = :None
     portfolio.rvar_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.rvar_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -3766,7 +3766,7 @@ end
 
     portfolio.rvar_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.rvar_u = r1 + 0.000001 * r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -3794,14 +3794,14 @@ end
     asset_statistics!(portfolio)
     rm = :MDD
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -3898,14 +3898,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 2e-5)
     @test isapprox(w4t, w4.weights, rtol = 2e-4)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -4002,14 +4002,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 2e-2)
     @test isapprox(w4t, w4.weights, rtol = 9e-6)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -4122,28 +4122,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :MDD
-    kelly = :none
+    kelly = :None
     portfolio.mdd_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.mdd_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -4178,7 +4178,7 @@ end
 
     portfolio.mdd_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.mdd_u = r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -4206,14 +4206,14 @@ end
     asset_statistics!(portfolio)
     rm = :ADD
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -4310,14 +4310,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 1e-6)
     @test isapprox(w4t, w4.weights, rtol = 9e-5)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -4414,14 +4414,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 8e-8)
     @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -4534,28 +4534,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :ADD
-    kelly = :none
+    kelly = :None
     portfolio.add_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.add_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -4590,7 +4590,7 @@ end
 
     portfolio.add_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.add_u = r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -4618,14 +4618,14 @@ end
     asset_statistics!(portfolio)
     rm = :CDaR
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -4722,14 +4722,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 3e-6)
     @test isapprox(w4t, w4.weights, rtol = 6e-5)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -4826,14 +4826,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 7e-4)
     @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -4946,28 +4946,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :CDaR
-    kelly = :none
+    kelly = :None
     portfolio.cdar_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.cdar_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -5002,7 +5002,7 @@ end
 
     portfolio.cdar_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.cdar_u = r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -5030,14 +5030,14 @@ end
     asset_statistics!(portfolio)
     rm = :UCI
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -5134,14 +5134,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 3e-4)
     @test isapprox(w4t, w4.weights, rtol = 2e-5)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -5238,14 +5238,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 4e-4)
     @test isapprox(w4t, w4.weights, rtol = 1e-9)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -5358,28 +5358,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :UCI
-    kelly = :none
+    kelly = :None
     portfolio.uci_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.uci_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -5414,7 +5414,7 @@ end
 
     portfolio.uci_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.uci_u = r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -5444,14 +5444,14 @@ end
     asset_statistics!(portfolio)
     rm = :EDaR
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -5548,14 +5548,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 3e-4)
     @test isapprox(w4t, w4.weights, rtol = 7e-5)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -5670,14 +5670,14 @@ end
     )
     asset_statistics!(portfolio)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -5790,28 +5790,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :EDaR
-    kelly = :none
+    kelly = :None
     portfolio.edar_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.edar_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -5846,7 +5846,7 @@ end
 
     portfolio.edar_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.edar_u = r1 + 0.0001 * r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -5876,14 +5876,14 @@ end
     asset_statistics!(portfolio)
     rm = :RDaR
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -5980,14 +5980,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 6e-5)
     @test isapprox(w4t, w4.weights, rtol = 9e-5)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -6084,14 +6084,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 2e-5)
     @test isapprox(w4t, w4.weights, rtol = 1e-6)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -6204,28 +6204,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :RDaR
-    kelly = :none
+    kelly = :None
     portfolio.rdar_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.rdar_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -6260,7 +6260,7 @@ end
 
     portfolio.rdar_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.rdar_u = r1 + 0.01 * r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -6290,14 +6290,14 @@ end
     asset_statistics!(portfolio)
     rm = :Kurt
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -6394,14 +6394,14 @@ end
     @test isapprox(w3t, w3.weights, rtol = 5e-4)
     @test isapprox(w4t, w4.weights, rtol = 1e-6)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -6498,12 +6498,12 @@ end
     @test isapprox(w3t, w3.weights, rtol = 2e-5)
     @test isapprox(w4t, w4.weights, rtol = 1e-6)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -6593,28 +6593,28 @@ end
     )
     asset_statistics!(portfolio)
     rm = :Kurt
-    kelly = :none
+    kelly = :None
     portfolio.krt_u = Inf
     portfolio.mu_l = Inf
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.krt_u = r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -6649,7 +6649,7 @@ end
 
     portfolio.krt_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.krt_u = r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -6670,14 +6670,14 @@ end
     portfolio.max_num_assets_kurt = 1
     rm = :Kurt
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -6775,12 +6775,12 @@ end
     @test isapprox(w4t, w4.weights, rtol = 1e-5)
 
     rm = :Kurt
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -6854,12 +6854,12 @@ end
     @test isapprox(w2t, w2.weights, rtol = 3e-3)
     @test isapprox(w4t, w4.weights, rtol = 1e-4)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -6954,14 +6954,14 @@ end
     asset_statistics!(portfolio)
     rm = :SKurt
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -7059,14 +7059,14 @@ end
     @test isapprox(w4t, w4.weights, rtol = 7e-7)
 
     rm = :SKurt
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -7164,12 +7164,12 @@ end
     @test isapprox(w4t, w4.weights, rtol = 1e-6)
 
     rm = :SKurt
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -7259,29 +7259,29 @@ end
     )
     asset_statistics!(portfolio)
     rm = :SKurt
-    kelly = :none
+    kelly = :None
     portfolio.skrt_u = Inf
     portfolio.mu_l = Inf
     # portfolio.max_num_assets_kurt = 1
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r1 = calc_risk(portfolio, rm = rm)
     m1 = dot(portfolio.mu, w1.weights)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r2 = calc_risk(portfolio, rm = rm)
     m2 = dot(portfolio.mu, w2.weights)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r3 = calc_risk(portfolio, rm = rm)
     m3 = dot(portfolio.mu, w3.weights)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r4 = calc_risk(portfolio, rm = rm)
     m4 = dot(portfolio.mu, w4.weights)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.skrt_u = r1 + 0.034375 * r1
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r5 = calc_risk(portfolio, rm = rm)
@@ -7316,7 +7316,7 @@ end
 
     portfolio.skrt_u = Inf
     portfolio.mu_l = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.skrt_u = r1 + 0.034375 * r1
     w13 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     r13 = calc_risk(portfolio, rm = rm)
@@ -7347,14 +7347,14 @@ end
     portfolio.max_num_assets_kurt = 5
     rm = :SKurt
 
-    kelly = :none
-    obj = :min_risk
+    kelly = :None
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -7451,12 +7451,12 @@ end
     @test isapprox(w3t, w3.weights, rtol = 3e-6)
     @test isapprox(w4t, w4.weights, rtol = 1e-5)
 
-    kelly = :approx
-    obj = :min_risk
+    kelly = :Approx
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -7530,12 +7530,12 @@ end
     @test isapprox(w2t, w2.weights, rtol = 2e-2)
     @test isapprox(w4t, w4.weights, rtol = 1e-5)
 
-    kelly = :exact
-    obj = :min_risk
+    kelly = :Exact
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
 
     w1t = [
@@ -7635,28 +7635,28 @@ end
     portfolio.owa_u = Inf
     portfolio.wr_u = Inf
 
-    obj = :min_risk
-    w1 = opt_port!(portfolio; type = :trad, rm = :WR, obj = obj, rf = rf, l = l)
+    obj = :Min_Risk
+    w1 = opt_port!(portfolio; type = :Trad, rm = :WR, obj = obj, rf = rf, l = l)
     r1 = calc_risk(portfolio; rm = :WR)
-    w2 = opt_port!(portfolio; type = :trad, rm = :OWA, obj = obj, rf = rf, l = l)
+    w2 = opt_port!(portfolio; type = :Trad, rm = :OWA, obj = obj, rf = rf, l = l)
     r2 = calc_risk(portfolio; rm = :WR)
     @test isapprox(w1.weights, w2.weights)
 
-    obj = :sharpe
-    w3 = opt_port!(portfolio; type = :trad, rm = :WR, obj = obj, rf = rf, l = l)
+    obj = :Sharpe
+    w3 = opt_port!(portfolio; type = :Trad, rm = :WR, obj = obj, rf = rf, l = l)
     r3 = calc_risk(portfolio; rm = :WR)
-    w4 = opt_port!(portfolio; type = :trad, rm = :OWA, obj = obj, rf = rf, l = l)
+    w4 = opt_port!(portfolio; type = :Trad, rm = :OWA, obj = obj, rf = rf, l = l)
     r4 = calc_risk(portfolio; rm = :WR)
     @test isapprox(w3.weights, w4.weights, rtol = 3e-5)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.owa_u = r4
-    w5 = opt_port!(portfolio; type = :trad, rm = :OWA, obj = obj, rf = rf, l = l)
+    w5 = opt_port!(portfolio; type = :Trad, rm = :OWA, obj = obj, rf = rf, l = l)
     @test isapprox(w5.weights, w4.weights, rtol = 7e-8)
 
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.owa_u = r2
-    w6 = opt_port!(portfolio; type = :trad, rm = :OWA, obj = obj, rf = rf, l = l)
+    w6 = opt_port!(portfolio; type = :Trad, rm = :OWA, obj = obj, rf = rf, l = l)
     @test isapprox(w2.weights, w6.weights, rtol = 1e-9)
 
     portfolio = Portfolio(
@@ -7684,39 +7684,39 @@ end
     portfolio.gmd_u = Inf
     portfolio.owa_u = Inf
 
-    obj = :min_risk
-    w1 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    obj = :Min_Risk
+    w1 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r1 = calc_risk(portfolio; rm = rm)
-    w2 = opt_port!(portfolio; type = :trad, rm = :OWA, obj = obj, rf = rf, l = l)
+    w2 = opt_port!(portfolio; type = :Trad, rm = :OWA, obj = obj, rf = rf, l = l)
     r2 = calc_risk(portfolio; rm = rm)
     @test isapprox(w1.weights, w2.weights, rtol = 1e-3)
 
-    obj = :sharpe
-    w3 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    obj = :Sharpe
+    w3 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r3 = calc_risk(portfolio; rm = rm)
-    w4 = opt_port!(portfolio; type = :trad, rm = :OWA, obj = obj, rf = rf, l = l)
+    w4 = opt_port!(portfolio; type = :Trad, rm = :OWA, obj = obj, rf = rf, l = l)
     r4 = calc_risk(portfolio; rm = rm)
     @test isapprox(w3.weights, w4.weights, rtol = 6e-5)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.gmd_u = r3
-    w5 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    w5 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r5 = calc_risk(portfolio; rm = rm)
     portfolio.gmd_u = Inf
     portfolio.owa_u = r4
-    w6 = opt_port!(portfolio; type = :trad, rm = :OWA, obj = obj, rf = rf, l = l)
+    w6 = opt_port!(portfolio; type = :Trad, rm = :OWA, obj = obj, rf = rf, l = l)
     r6 = calc_risk(portfolio; rm = rm)
     @test isapprox(w5.weights, w6.weights, rtol = 4e-5)
 
     portfolio.gmd_u = Inf
     portfolio.owa_u = Inf
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.gmd_u = r1
-    w7 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    w7 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r7 = calc_risk(portfolio; rm = rm)
     portfolio.gmd_u = Inf
     portfolio.owa_u = r2
-    w8 = opt_port!(portfolio; type = :trad, rm = :OWA, obj = obj, rf = rf, l = l)
+    w8 = opt_port!(portfolio; type = :Trad, rm = :OWA, obj = obj, rf = rf, l = l)
     r8 = calc_risk(portfolio; rm = rm)
     @test isapprox(w7.weights, w8.weights, rtol = 2.9e-3)
 
@@ -7743,8 +7743,8 @@ end
     rm = :RG
     portfolio.rg_u = Inf
 
-    obj = :min_risk
-    w1 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    obj = :Min_Risk
+    w1 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r1 = calc_risk(portfolio; rm = rm)
     w1t = [
         1.0065872796863453e-11,
@@ -7770,8 +7770,8 @@ end
     ]
     @test isapprox(w1.weights, w1t, rtol = 1e-8)
 
-    obj = :sharpe
-    w2 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    obj = :Sharpe
+    w2 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r2 = calc_risk(portfolio; rm = rm)
     w2t = [
         4.8040690556815e-11,
@@ -7797,15 +7797,15 @@ end
     ]
     @test isapprox(w2.weights, w2t, rtol = 5e-8)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.rg_u = r2
-    w3 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    w3 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r3 = calc_risk(portfolio; rm = rm)
     @test isapprox(w3.weights, w2.weights, rtol = 8e-8)
 
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.rg_u = r1
-    w4 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    w4 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r4 = calc_risk(portfolio; rm = rm)
     @test isapprox(w4.weights, w1.weights, rtol = 3e-6)
 
@@ -7832,8 +7832,8 @@ end
     rm = :RCVaR
     portfolio.rcvar_u = Inf
 
-    obj = :min_risk
-    w1 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    obj = :Min_Risk
+    w1 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r1 = calc_risk(portfolio; rm = rm)
     w1t = [
         0.04631605770586672,
@@ -7859,8 +7859,8 @@ end
     ]
     @test isapprox(w1.weights, w1t, rtol = 3e-7)
 
-    obj = :sharpe
-    w2 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    obj = :Sharpe
+    w2 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r2 = calc_risk(portfolio; rm = rm)
     w2t = [
         2.344861032727787e-11,
@@ -7886,15 +7886,15 @@ end
     ]
     @test isapprox(w2.weights, w2t, rtol = 2e-6)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.rcvar_u = r2
-    w3 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    w3 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r3 = calc_risk(portfolio; rm = rm)
     @test isapprox(w3.weights, w2.weights, rtol = 3e-4)
 
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.rcvar_u = r1
-    w4 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    w4 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r4 = calc_risk(portfolio; rm = rm)
     @test isapprox(w4.weights, w1.weights, rtol = 5e-6)
 
@@ -7921,8 +7921,8 @@ end
     rm = :TG
     portfolio.tg_u = Inf
 
-    obj = :min_risk
-    w1 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    obj = :Min_Risk
+    w1 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r1 = calc_risk(portfolio; rm = rm)
     w1t = [
         2.9629604999600752e-12,
@@ -7948,8 +7948,8 @@ end
     ]
     @test isapprox(w1.weights, w1t, rtol = 5e-8)
 
-    obj = :sharpe
-    w2 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    obj = :Sharpe
+    w2 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r2 = calc_risk(portfolio; rm = rm)
     w2t = [
         2.653130304349078e-10,
@@ -7975,15 +7975,15 @@ end
     ]
     @test isapprox(w2.weights, w2t, rtol = 8e-6)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.tg_u = r2
-    w3 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    w3 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r3 = calc_risk(portfolio; rm = rm)
     @test isapprox(w3.weights, w2.weights, rtol = 9e-6)
 
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.tg_u = r1
-    w4 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    w4 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r4 = calc_risk(portfolio; rm = rm)
     @test isapprox(w4.weights, w1.weights, rtol = 6e-7)
 
@@ -8010,8 +8010,8 @@ end
     rm = :RTG
     portfolio.rtg_u = Inf
 
-    obj = :min_risk
-    w1 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    obj = :Min_Risk
+    w1 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r1 = calc_risk(portfolio; rm = rm)
     w1t = [
         0.02315418871225564,
@@ -8037,8 +8037,8 @@ end
     ]
     @test isapprox(w1.weights, w1t, rtol = 1e-8)
 
-    obj = :sharpe
-    w2 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    obj = :Sharpe
+    w2 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r2 = calc_risk(portfolio; rm = rm)
     w2t = [
         8.446019300435742e-12,
@@ -8064,15 +8064,15 @@ end
     ]
     @test isapprox(w2.weights, w2t, rtol = 7e-8)
 
-    obj = :max_ret
+    obj = :Max_Ret
     portfolio.rtg_u = r2
-    w3 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    w3 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r3 = calc_risk(portfolio; rm = rm)
     @test isapprox(w3.weights, w2.weights, rtol = 7e-8)
 
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.rtg_u = r1
-    w4 = opt_port!(portfolio; type = :trad, rm = rm, obj = obj, rf = rf, l = l)
+    w4 = opt_port!(portfolio; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
     r4 = calc_risk(portfolio; rm = rm)
     @test isapprox(w4.weights, w1.weights, rtol = 3e-6)
 end
@@ -8094,14 +8094,14 @@ end
     )
     asset_statistics!(portfolio)
     rm = :SD
-    kelly = :none
+    kelly = :None
     portfolio.short = true
 
     portfolio.short_u = 0.3
     portfolio.long_u = 1.3
     portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     w1t = [
         0.003587824703236382,
@@ -8130,7 +8130,7 @@ end
     @test all(w1.weights[w1.weights .> 0] .<= portfolio.long_u)
     @test isapprox(sum(w1.weights), portfolio.sum_short_long)
 
-    obj = :sharpe
+    obj = :Sharpe
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     w2t = [
         2.5267713200790443e-8,
@@ -8163,7 +8163,7 @@ end
     portfolio.long_u = 1.23
     portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
 
-    obj = :min_risk
+    obj = :Min_Risk
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     w3t = [
         0.004299730250331464,
@@ -8192,7 +8192,7 @@ end
     @test all(w3.weights[w3.weights .> 0] .<= portfolio.long_u)
     @test isapprox(sum(w3.weights), portfolio.sum_short_long)
 
-    obj = :sharpe
+    obj = :Sharpe
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     w4t = [
         2.2549529814806565e-8,
@@ -8237,24 +8237,24 @@ end
     )
     asset_statistics!(portfolio)
     rm = :SD
-    kelly = :none
+    kelly = :None
 
-    obj = :sharpe
+    obj = :Sharpe
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     portfolio.turnover = 0.05
     portfolio.turnover_weights = copy(w1.weights)
 
-    obj = :min_risk
+    obj = :Min_Risk
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     @test all(abs.(w2.weights - portfolio.turnover_weights) .<= portfolio.turnover)
 
     portfolio.turnover = Inf
-    obj = :min_risk
+    obj = :Min_Risk
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     portfolio.turnover = 0.031
     portfolio.turnover_weights = copy(w3.weights)
 
-    obj = :sharpe
+    obj = :Sharpe
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     @test all(abs.(w4.weights - portfolio.turnover_weights) .<= portfolio.turnover)
 
@@ -8274,16 +8274,16 @@ end
     )
     asset_statistics!(portfolio)
     rm = :SD
-    kelly = :none
+    kelly = :None
 
-    obj = :sharpe
+    obj = :Sharpe
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    portfolio.kind_tracking_err = :weights
+    portfolio.kind_tracking_err = :Weights
     portfolio.tracking_err = 0.0005
     # portfolio.tracking_err_returns = Vector{Float64}(undef, 0)
     portfolio.tracking_err_weights = copy(w1.weights)
 
-    obj = :min_risk
+    obj = :Min_Risk
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     w2t = [
         0.00012937963825922666,
@@ -8314,14 +8314,14 @@ end
     ) / sqrt(nrow(returns) - 1) <= portfolio.tracking_err
 
     portfolio.tracking_err = Inf
-    obj = :min_risk
+    obj = :Min_Risk
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
-    portfolio.kind_tracking_err = :weights
+    portfolio.kind_tracking_err = :Weights
     portfolio.tracking_err = 0.0003
     # portfolio.tracking_err_returns = Vector{Float64}(undef, 0)
     portfolio.tracking_err_weights = copy(w3.weights)
 
-    obj = :sharpe
+    obj = :Sharpe
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     w4t = [
         0.002928171421595965,
@@ -8353,18 +8353,18 @@ end
 
     portfolio.tracking_err = Inf
     portfolio.tracking_err = 0.007
-    portfolio.kind_tracking_err = :returns
+    portfolio.kind_tracking_err = :Returns
     portfolio.tracking_err_returns = vec(returns[!, argmax(w1.weights) + 1])
-    obj = :sharpe
+    obj = :Sharpe
     w5 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     @test norm(Matrix(returns[!, 2:end]) * w5.weights - portfolio.tracking_err_returns, 2) /
           sqrt(nrow(returns) - 1) <= portfolio.tracking_err
 
     portfolio.tracking_err = Inf
     portfolio.tracking_err = 0.003
-    portfolio.kind_tracking_err = :returns
+    portfolio.kind_tracking_err = :Returns
     portfolio.tracking_err_returns = vec(returns[!, argmax(w1.weights) + 1])
-    obj = :min_risk
+    obj = :Min_Risk
     w6 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     @test norm(Matrix(returns[!, 2:end]) * w6.weights - portfolio.tracking_err_returns, 2) /
           sqrt(nrow(returns) - 1) <= portfolio.tracking_err
@@ -8385,9 +8385,9 @@ end
     )
     asset_statistics!(portfolio)
     rm = :SD
-    kelly = :none
+    kelly = :None
 
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.min_number_effective_assets = 5
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     w1t = [
@@ -8414,7 +8414,7 @@ end
     ]
     @test isapprox(w1t, w1.weights, rtol = 1e-4)
 
-    obj = :min_risk
+    obj = :Min_Risk
     portfolio.min_number_effective_assets = 11
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     w2t = [
@@ -8461,9 +8461,9 @@ end
     )
     asset_statistics!(portfolio)
     rm = :CDaR
-    kelly = :none
+    kelly = :None
 
-    obj = :min_risk
+    obj = :Min_Risk
     portfolio.max_number_assets = 0
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     portfolio.max_number_assets = 5
@@ -8471,7 +8471,7 @@ end
     @test sum(w2.weights[w2.weights .> length(w2.weights) * eps()]) <=
           portfolio.max_number_assets
 
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.max_number_assets = 0
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     portfolio.max_number_assets = 4
@@ -8499,14 +8499,14 @@ end
     )
     asset_statistics!(portfolio)
     rm = :CDaR
-    kelly = :none
+    kelly = :None
 
-    obj = :min_risk
+    obj = :Min_Risk
     portfolio.max_number_assets = 5
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     @test sum(w1.weights[w1.weights .> 1e-6]) <= portfolio.max_number_assets
 
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.max_number_assets = 3
     w2 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     @test sum(w2.weights[w2.weights .> 1e-6]) <= portfolio.max_number_assets
@@ -8516,12 +8516,12 @@ end
     portfolio.long_u = 0.6
     portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
 
-    obj = :min_risk
+    obj = :Min_Risk
     portfolio.max_number_assets = 10
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     @test sum(w3.weights[abs.(w3.weights) .> 1e-6]) <= portfolio.max_number_assets
 
-    obj = :sharpe
+    obj = :Sharpe
     portfolio.max_number_assets = 11
     w4 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
     @test sum(w4.weights[abs.(w4.weights) .> 1e-6]) <= portfolio.max_number_assets

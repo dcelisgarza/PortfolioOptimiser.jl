@@ -36,7 +36,7 @@ l = 2.0
         ),
     )
 
-    wc_statistics!(portfolio; box = :normal, ellipse = :normal, seed = 0)
+    wc_statistics!(portfolio; box = :Normal, ellipse = :Normal, seed = 0)
     cov_lt = reshape(
         [
             0.0001780514178877124,
@@ -3331,7 +3331,7 @@ l = 2.0
     @test isapprox(k_mut, portfolio.k_mu)
     @test isapprox(k_sigmat, portfolio.k_sigma)
 
-    wc_statistics!(portfolio; box = :delta, ellipse = :normal, seed = 0)
+    wc_statistics!(portfolio; box = :Delta, ellipse = :Normal, seed = 0)
     cov_lt = reshape(
         [
             0.00018897824005366279,
@@ -4171,7 +4171,7 @@ l = 2.0
     @test isapprox(d_mut, portfolio.d_mu)
 
     try
-        wc_statistics!(portfolio; box = :stationary, ellipse = :stationary, seed = 0)
+        wc_statistics!(portfolio; box = :Stationary, ellipse = :Stationary, seed = 0)
         cov_lt = reshape(
             [
                 0.00015608698015266988,
@@ -6254,7 +6254,7 @@ l = 2.0
     end
 
     try
-        wc_statistics!(portfolio; box = :circular, ellipse = :circular, seed = 0)
+        wc_statistics!(portfolio; box = :Circular, ellipse = :Circular, seed = 0)
         cov_lt = reshape(
             [
                 0.0001558522467916755,
@@ -8336,7 +8336,7 @@ l = 2.0
     end
 
     try
-        wc_statistics!(portfolio; box = :moving, ellipse = :moving, seed = 0)
+        wc_statistics!(portfolio; box = :Moving, ellipse = :Moving, seed = 0)
         cov_lt = reshape(
             [
                 0.00015587163011973303,
@@ -10418,15 +10418,15 @@ l = 2.0
     end
 
     asset_statistics!(portfolio)
-    wc_statistics!(portfolio; box = :delta, ellipse = :normal, seed = 0)
+    wc_statistics!(portfolio; box = :Delta, ellipse = :Normal, seed = 0)
 
-    u_mu = :box
-    u_cov = :box
+    u_mu = :Box
+    u_cov = :Box
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(
         portfolio;
-        type = :wc,
+        type = :WC,
         obj = obj,
         rf = rf,
         l = l,
@@ -10457,10 +10457,10 @@ l = 2.0
     ]
     @test isapprox(w1t, w1.weights, rtol = 2e-1)
 
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(
         portfolio;
-        type = :wc,
+        type = :WC,
         obj = obj,
         rf = rf,
         l = l,
@@ -10491,10 +10491,10 @@ l = 2.0
     ]
     @test isapprox(w2t, w2.weights, rtol = 5e-4)
 
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(
         portfolio;
-        type = :wc,
+        type = :WC,
         obj = obj,
         rf = rf,
         l = l,
@@ -10525,10 +10525,10 @@ l = 2.0
     ]
     @test isapprox(w3t, w3.weights, rtol = 3e-4)
 
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(
         portfolio;
-        type = :wc,
+        type = :WC,
         obj = obj,
         rf = rf,
         l = l,
@@ -10559,13 +10559,13 @@ l = 2.0
     ]
     @test isapprox(w4t, w4.weights, rtol = 8e-6)
 
-    u_mu = :ellipse
-    u_cov = :ellipse
+    u_mu = :Ellipse
+    u_cov = :Ellipse
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(
         portfolio;
-        type = :wc,
+        type = :WC,
         obj = obj,
         rf = rf,
         l = l,
@@ -10596,10 +10596,10 @@ l = 2.0
     ]
     @test isapprox(w1t, w1.weights, rtol = 4.5e-1)
 
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(
         portfolio;
-        type = :wc,
+        type = :WC,
         obj = obj,
         rf = rf,
         l = l,
@@ -10630,10 +10630,10 @@ l = 2.0
     ]
     @test isapprox(w2t, w2.weights, rtol = 5.8e-1)
 
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(
         portfolio;
-        type = :wc,
+        type = :WC,
         obj = obj,
         rf = rf,
         l = l,
@@ -10664,13 +10664,13 @@ l = 2.0
     ]
     @test isapprox(w4t, w4.weights, rtol = 1.5e-1)
 
-    u_mu = :none
-    u_cov = :none
+    u_mu = :None
+    u_cov = :None
 
-    obj = :min_risk
+    obj = :Min_Risk
     w1 = opt_port!(
         portfolio;
-        type = :wc,
+        type = :WC,
         obj = obj,
         rf = rf,
         l = l,
@@ -10680,10 +10680,10 @@ l = 2.0
     w1t = opt_port!(portfolio; obj = obj, rf = rf, l = l)
     @test isapprox(w1t.weights, w1.weights)
 
-    obj = :utility
+    obj = :Utility
     w2 = opt_port!(
         portfolio;
-        type = :wc,
+        type = :WC,
         obj = obj,
         rf = rf,
         l = l,
@@ -10693,10 +10693,10 @@ l = 2.0
     w2t = opt_port!(portfolio; obj = obj, rf = rf, l = l)
     @test isapprox(w2t.weights, w2.weights)
 
-    obj = :sharpe
+    obj = :Sharpe
     w3 = opt_port!(
         portfolio;
-        type = :wc,
+        type = :WC,
         obj = obj,
         rf = rf,
         l = l,
@@ -10706,10 +10706,10 @@ l = 2.0
     w3t = opt_port!(portfolio; obj = obj, rf = rf, l = l)
     @test isapprox(w3t.weights, w3.weights, rtol = 5e-5)
 
-    obj = :max_ret
+    obj = :Max_Ret
     w4 = opt_port!(
         portfolio;
-        type = :wc,
+        type = :WC,
         obj = obj,
         rf = rf,
         l = l,

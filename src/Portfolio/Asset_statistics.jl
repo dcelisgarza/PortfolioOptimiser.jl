@@ -85,7 +85,7 @@ function asset_statistics!(
     cor_func::Function = cor,
     std_func = std,
     dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-    codep_type::Symbol = isa(portfolio, HCPortfolio) ? portfolio.codep_type : :pearson,
+    codep_type::Symbol = isa(portfolio, HCPortfolio) ? portfolio.codep_type : :Pearson,
     custom_mu = nothing,
     custom_cov = nothing,
     custom_kurt = nothing,
@@ -124,25 +124,25 @@ function asset_statistics!(
             missing, portfolio.L_2, portfolio.S_2 = dup_elim_sum_matrices(N)
         end
     else
-        if codep_type == :pearson
+        if codep_type == :Pearson
             codep = cor(returns)
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        elseif codep_type == :spearman
+        elseif codep_type == :Spearman
             codep = corspearman(returns)
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        elseif codep_type == :kendall
+        elseif codep_type == :Kendall
             codep = corkendall(returns)
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        elseif codep_type == :abs_pearson
+        elseif codep_type == :Abs_Pearson
             codep = abs.(cor(returns))
             dist = sqrt.(clamp!(1 .- codep, 0, 1))
-        elseif codep_type == :abs_spearman
+        elseif codep_type == :Abs_Spearman
             codep = abs.(corspearman(returns))
             dist = sqrt.(clamp!(1 .- codep, 0, 1))
-        elseif codep_type == :abs_kendall
+        elseif codep_type == :Abs_Kendall
             codep = abs.(corkendall(returns))
             dist = sqrt.(clamp!(1 .- codep, 0, 1))
-        elseif codep_type == :gerber1
+        elseif codep_type == :Gerber1
             codep = cov_to_cor(
                 covgerber1(
                     returns,
@@ -153,7 +153,7 @@ function asset_statistics!(
                 ),
             )
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        elseif codep_type == :gerber2
+        elseif codep_type == :Gerber2
             codep = cov_to_cor(
                 covgerber2(
                     returns,
@@ -164,19 +164,19 @@ function asset_statistics!(
                 ),
             )
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        elseif codep_type == :distance
+        elseif codep_type == :Distance
             codep = cordistance(returns)
             dist = sqrt.(clamp!(1 .- codep, 0, 1))
-        elseif codep_type == :mutual_info
+        elseif codep_type == :Mutual_Info
             bins_info = portfolio.bins_info
             codep, dist = mut_var_info_mtx(returns, bins_info)
-        elseif codep_type == :tail
+        elseif codep_type == :Tail
             codep = ltdi_mtx(returns, portfolio.alpha_tail)
             dist = -log.(codep)
-        elseif codep_type == :custom_cov
+        elseif codep_type == :Custom_Cov
             codep = cov_to_cor(portfolio.cov)
             dist = dist_func(codep, dist_args...; dist_kwargs...)
-        elseif codep_type == :custom_cor
+        elseif codep_type == :Custom_Cor
             codep = cor_func(returns, cor_args...; cor_kwargs...)
             dist = dist_func(codep, dist_args...; dist_kwargs...)
         end
@@ -200,7 +200,7 @@ end
 
 function gen_bootstrap(
     returns,
-    kind = :stationary,
+    kind = :Stationary,
     n_sim = 3_000,
     window = 3,
     seed = nothing,
@@ -212,11 +212,11 @@ function gen_bootstrap(
     mus = Vector{Vector{eltype(returns)}}(undef, n_sim)
     covs = Vector{Matrix{eltype(returns)}}(undef, n_sim)
 
-    bootstrap_func = if kind == :stationary
+    bootstrap_func = if kind == :Stationary
         pyimport("arch.bootstrap").StationaryBootstrap
-    elseif kind == :circular
+    elseif kind == :Circular
         pyimport("arch.bootstrap").CircularBlockBootstrap
-    elseif kind == :moving
+    elseif kind == :Moving
         pyimport("arch.bootstrap").MovingBlockBootstrap
     end
 
@@ -234,10 +234,32 @@ function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractVector})
     return vcat(transpose.(x)...)
 end
 
+"""
+```julia
+wc_statistics!(
+    portfolio;
+    box = :Stationary,
+    ellipse = :Stationary,
+    calc_box = true,
+    calc_ellipse = true,
+    q = 0.05,
+    n_sim = 3_000,
+    window = 3,
+    dmu = 0.1,
+    dcov = 0.1,
+    n_samples = 10_000,
+    seed = nothing,
+    rng = Random.default_rng(),
+    fix_cov_args = (),
+    fix_cov_kwargs = (;),
+)
+```
+Worst case optimisation statistics.
+"""
 function wc_statistics!(
     portfolio;
-    box = :stationary,
-    ellipse = :stationary,
+    box = :Stationary,
+    ellipse = :Stationary,
     calc_box = true,
     calc_ellipse = true,
     q = 0.05,
@@ -261,16 +283,16 @@ function wc_statistics!(
     returns = portfolio.returns
     T, N = size(returns)
 
-    if box == :delta || ellipse == :stationary || ellipse == :circular || ellipse == :moving
+    if box == :Delta || ellipse == :Stationary || ellipse == :Circular || ellipse == :Moving
         mu = vec(mean(returns, dims = 1))
     end
 
-    if calc_ellipse || box == :normal || box == :delta
+    if calc_ellipse || box == :Normal || box == :Delta
         sigma = cov(returns)
     end
 
     if calc_box
-        if box == :stationary || box == :circular || box == :moving
+        if box == :Stationary || box == :Circular || box == :Moving
             mus, covs = gen_bootstrap(returns, box, n_sim, window, seed, rng)
 
             mu_s = vec_of_vecs_to_mtx(mus)
@@ -287,7 +309,7 @@ function wc_statistics!(
             !isposdef(cov_u) && fix_cov!(cov_u, fix_cov_args...; fix_cov_kwargs...)
 
             d_mu = (mu_u - mu_l) / 2
-        elseif box == :normal
+        elseif box == :Normal
             !isnothing(seed) && Random.seed!(rng, seed)
             d_mu = cquantile(Normal(), q / 2) * sqrt.(diag(sigma) / T)
             cov_s = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, sigma / T), n_samples)))
@@ -298,7 +320,7 @@ function wc_statistics!(
             kwargs = (;)
             !isposdef(cov_l) && fix_cov!(cov_l, args..., kwargs...)
             !isposdef(cov_u) && fix_cov!(cov_u, args..., kwargs...)
-        elseif box == :delta
+        elseif box == :Delta
             d_mu = dmu * abs.(mu)
             cov_l = sigma - dcov * abs.(sigma)
             cov_u = sigma + dcov * abs.(sigma)
@@ -306,14 +328,14 @@ function wc_statistics!(
     end
 
     if calc_ellipse
-        if ellipse == :stationary || ellipse == :circular || ellipse == :moving
+        if ellipse == :Stationary || ellipse == :Circular || ellipse == :Moving
             mus, covs = gen_bootstrap(returns, ellipse, n_sim, window, seed, rng)
 
             cov_mu = Diagonal(cov(vec_of_vecs_to_mtx([mu_s .- mu for mu_s in mus])))
             cov_sigma = Diagonal(
                 cov(vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma) for cov_s in covs])),
             )
-        elseif ellipse == :normal
+        elseif ellipse == :Normal
             cov_mu = Diagonal(sigma) / T
             K = commutation_matrix(sigma)
             cov_sigma = T * Diagonal((I + K) * kron(cov_mu, cov_mu))

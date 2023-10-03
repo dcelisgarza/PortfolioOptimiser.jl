@@ -31,7 +31,8 @@ makedocs(;
             "Definitions" => "Definitions.md",
             "Types" => "Types.md",
             "Risk Measures" => "Risk_measures.md",
-            "Constraint Functions" => "Constraint_Functions.md",
+            "Constraint Functions" => "Constraint_functions.md",
+            "Asset Statistics" => "Asset_statistics.md",
         ],
         # "API" => [
         #     "obj_func_api.md",

@@ -86,11 +86,11 @@ HCPortfolio(;
     # Optimisation parameters.
     mu = Vector{Float64}(undef, 0),
     cov = Matrix{Float64}(undef, 0, 0),
-    bins_info::Union{Symbol, Int} = :kn,
+    bins_info::Union{Symbol, Int} = :KN,
     w_min::Union{AbstractFloat, AbstractVector, Nothing} = 0.0,
     w_max::Union{AbstractFloat, AbstractVector, Nothing} = 1.0,
     # Optimal portfolios.
-    codep_type::Symbol = :pearson,
+    codep_type::Symbol = :Pearson,
     codep = Matrix{Float64}(undef, 0, 0),
     dist = Matrix{Float64}(undef, 0, 0),
     clusters = Hclust{Float64}(Matrix{Int64}(undef, 0, 2), Float64[], Int64[], :nothing),
@@ -186,11 +186,11 @@ function HCPortfolio(;
     # Optimisation parameters.
     mu = Vector{Float64}(undef, 0),
     cov = Matrix{Float64}(undef, 0, 0),
-    bins_info::Union{Symbol, Int} = :kn,
+    bins_info::Union{Symbol, Int} = :KN,
     w_min::Union{AbstractFloat, AbstractVector, Nothing} = 0.0,
     w_max::Union{AbstractFloat, AbstractVector, Nothing} = 1.0,
     # Optimal portfolios.
-    codep_type::Symbol = :pearson,
+    codep_type::Symbol = :Pearson,
     codep = Matrix{Float64}(undef, 0, 0),
     dist = Matrix{Float64}(undef, 0, 0),
     clusters = Hclust{Float64}(Matrix{Int64}(undef, 0, 2), Float64[], Int64[], :nothing),

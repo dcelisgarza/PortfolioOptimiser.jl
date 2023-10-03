@@ -34,7 +34,7 @@ RiskMeasures = (
     :OWA,
 )
 ```
-Available risk measures for `:trad` and `:rp` type (see [`PortTypes`](@ref)) of [`Portfolio`](@ref).
+Available risk measures for `:Trad` and `:RP` type (see [`PortTypes`](@ref)) of [`Portfolio`](@ref).
 - `:SD` = standard deviation ([`SD`](@ref));
 - `:MAD` = max absolute deviation ([`MAD`](@ref));
 - `:SSD` = semi standard deviation ([`SSD`](@ref));
@@ -87,38 +87,38 @@ const RiskMeasures = (
 
 """
 ```julia
-KellyRet = (:none, :approx, :exact)
+KellyRet = (:None, :Approx, :Exact)
 ```
 Available types of Kelly returns for [`Portfolio`](@ref).
-- `:none`: arithmetic mean return, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w}``;
-- `:approx`: first moment approximation of the logarithmic returns, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w} - \\dfrac{1}{2} \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}``;
-- `:exact`: exact logarithmic returns, ``R(\\bm{w}) = \\dfrac{1}{T}\\sum\\limits_{t=1}^{T}\\ln\\left(1 + \\bm{x}_t \\cdot \\bm{w}\\right)``.
+- `:None`: arithmetic mean return, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w}``;
+- `:Approx`: first moment approximation of the logarithmic returns, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w} - \\dfrac{1}{2} \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}``;
+- `:Exact`: exact logarithmic returns, ``R(\\bm{w}) = \\dfrac{1}{T}\\sum\\limits_{t=1}^{T}\\ln\\left(1 + \\bm{x}_t \\cdot \\bm{w}\\right)``.
 Where:
 - ``\\mathbf{\\Sigma}`` is the covariance matrix of the asset returns; 
 - ``\\bm{x}_t`` is the vector of asset returns at timestep ``t``; 
 - ``\\bm{\\mu}`` is the vector of expected returns for each asset; 
 - and ``\\bm{w}`` is the asset weights vector.
 """
-const KellyRet = (:none, :approx, :exact)
+const KellyRet = (:None, :Approx, :Exact)
 
 """
 ```julia
-TrackingErrKinds = (:weights, :returns)
+TrackingErrKinds = (:Weights, :Returns)
 ```
 Available kinds of tracking errors for [`Portfolio`](@ref).
-- `:weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns;
-- `:returns`: directly provide the vector of benchmark returns.
+- `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns;
+- `:Returns`: directly provide the vector of benchmark returns.
 The benchmark is then used as a reference to optimise a portfolio that tracks it up to a given error.
 """
-const TrackingErrKinds = (:weights, :returns)
+const TrackingErrKinds = (:Weights, :Returns)
 
 """
 ```julia
-ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
+ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 ```
-Objective functions available for use in `type = :trad` and `type = :wc` optimisations (see [`PortTypes`](@ref)).
+Objective functions available for use in `type = :Trad` and `type = :WC` optimisations of [`Portfolio`](@ref) (see [`PortTypes`](@ref)).
 """
-const ObjFuncs = (:min_risk, :utility, :sharpe, :max_ret)
+const ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 
 """
 ```julia
@@ -132,20 +132,20 @@ const ValidTermination =
 
 """
 ```julia
-PortClasses = (:classic,)
+PortClasses = (:Classic,)
 ```
 Available classes for [`Portfolio`](@ref).
 """
-const PortClasses = (:classic,)
+const PortClasses = (:Classic,)
 
 """
 ```julia
-PortTypes = (:trad, :rp, :rrp, :wc)
+PortTypes = (:Trad, :RP, :RRP, :WC)
 ```
 Available optimisation types for [`Portfolio`](@ref).
-### `:trad` -- Traditional Optimisations
-Available objective functions for `type = :trad` optimisations. We can chose any of the objective functions in [`ObjFuncs`](@ref) and risk measures in [`RiskMeasures`](@ref).
-- `:min_risk`: minimum risk portfolio,
+### `:Trad` -- Traditional Optimisations
+Available objective functions for `type = :Trad` optimisations. We can chose any of the objective functions in [`ObjFuncs`](@ref) and risk measures in [`RiskMeasures`](@ref).
+- `:Min_Risk`: minimum risk portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\min} &\\qquad \\phi_{j}(\\bm{w}) \\\\
@@ -154,7 +154,7 @@ Available objective functions for `type = :trad` optimisations. We can chose any
 &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
 ```
-- `:utility`: maximum utility portfolio,
+- `:Utility`: maximum utility portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) - \\lambda \\phi_{j}(\\bm{w}) \\\\
@@ -163,7 +163,7 @@ Available objective functions for `type = :trad` optimisations. We can chose any
 &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
 ```
-- `:sharpe`: maximum risk-adjusted return ratio portfolio,
+- `:Sharpe`: maximum risk-adjusted return ratio portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\dfrac{R(\\bm{w}) - r}{\\phi_{j}(\\bm{w})} \\\\
@@ -172,7 +172,7 @@ Available objective functions for `type = :trad` optimisations. We can chose any
 &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
 ```
-- `:max_ret`: maximum return portfolio,
+- `:Max_Ret`: maximum return portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) \\\\
@@ -184,14 +184,14 @@ Available objective functions for `type = :trad` optimisations. We can chose any
 Where:
 - ``\\bm{w}`` are the asset weights;
 - ``\\phi_{i}`` is risk measure ``i`` from the set of available risk measures ``\\left\\{\\Phi\\right\\}`` (see [`RiskMeasures`](@ref));
-- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` are the asset linear constraints;
+- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` is a set of linear constraints;
 - ``c_{i}`` is the maximum acceptable value for risk measure ``\\phi_{i}`` of the optimised portfolio;
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref);
 - ``\\overline{\\mu}`` is the minimum acceptable return of the optimised portfolio;
 - ``\\lambda`` is the risk aversion coefficient;
 - and ``r`` is the risk-free rate.
 
-### `:rp` -- Risk Parity Optimisations
+### `:RP` -- Risk Parity Optimisations
 Optimises portfolios based on a vector of risk contributions per asset. We can chose any of the risk measures in [`RiskMeasures`](@ref).
 ```math
 \\begin{align*}
@@ -205,13 +205,13 @@ Optimises portfolios based on a vector of risk contributions per asset. We can c
 Where:
 - ``\\bm{w}`` are the asset weights;
 - ``\\phi`` a risk measure from the set of available risk measures (see [`RiskMeasures`](@ref));
-- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` are the asset linear constraints;
+- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` is a set of linear constraints;
 - ``\\bm{b}`` is the vector of maximum allowable risk contribution per asset to the optimised portfolio;
 - ``c`` is an auxiliary variable;
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref);
 - and ``\\overline{\\mu}`` is the minimum acceptable return of the optimised portfolio.
 
-### `:rrp` -- Relaxed Risk Parity Optimisations
+### `:RRP` -- Relaxed Risk Parity Optimisations
 Optimises portfolios based on a vector of risk contributions per asset. Defines its own risk measure using the portfolio returns covariance.
 ```math
 \\begin{align*}
@@ -231,7 +231,7 @@ Where:
 - ``\\bm{w}`` are the asset weights;
 - ``\\psi`` is the average risk of the portfolio;
 - ``\\gamma`` is the lower bound of the risk contribution for each asset;
-- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` are the asset linear constraints;
+- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` is a set of linear constraints;
 - ``\\mathbf{\\Sigma}`` is the portfolio covariance;
 - ``\\rho`` is a regularisation variable;
 - ``\\mathbf{\\Theta} = \\mathrm{diag}\\left(\\mathbf{\\Sigma}\\right)`` ;
@@ -242,30 +242,30 @@ Where:
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref);
 - and ``\\overline{\\mu}`` is the minimum acceptable return of the optimised portfolio.
 
-### `:wc` -- Worst Case Mean Variance Optimisations
+### `:WC` -- Worst Case Mean Variance Optimisations
 Computes the worst case mean variance portfolio according to user-selected uncertainty sets (see [`UncertaintyTypes`](@ref)) for the portfolio return and covariance. We can chose any of the objective functions in [`ObjFuncs`](@ref).
-- `:min_risk`: worst case minimum risk mean-variance portfolio,
+- `:Min_Risk`: worst case minimum risk mean-variance portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B}\\,.
 \\end{align*}
 ```
-- `:utility`: worst case maximum utility mean-variance portfolio,
+- `:Utility`: worst case maximum utility mean-variance portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w})\\, -\\, \\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\lambda \\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B}\\,.
 \\end{align*}
 ```
-- `:sharpe`: worst case maximum risk-adjusted return ratio mean-variance portfolio,
+- `:Sharpe`: worst case maximum risk-adjusted return ratio mean-variance portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\dfrac{\\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w}) - r}{\\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\left(\\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\right)^{1/2}} \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B}\\,.
 \\end{align*}
 ```
-- `:max_ret`: worst case maximum return mean-variance portfolio,
+- `:Max_Ret`: worst case maximum return mean-variance portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w})\\\\
@@ -287,7 +287,7 @@ U_{\\Sigma}^{\\mathrm{ellipse}} &= \\left\\{\\mathbf{\\Sigma}\\, \\vert\\, \\lef
     - ``\\mathbf{\\Sigma}_{\\mathbf{\\Sigma}}`` is the covariance of the samples;
     - ``\\hat{\\mathbf{\\Sigma}}`` the expected covariance given the samples;
     - and ``k_{\\mathbf{\\Sigma}}`` is a significance parameter of the matrix distribution.
-- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` are the asset linear constraints;
+- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` is a set of linear constraints;
 - ``\\bm{\\mu}`` is the vector of expected returns for each asset; 
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref);
 - ``U_{\\bm{\\mu}}`` is the uncertainty set for the asset returns, they can be:
@@ -304,64 +304,71 @@ U_{\\bm{\\mu}}^{\\mathrm{ellipse}} &= \\left\\{\\bm{\\mu}\\, \\vert\\, \\left(\\
 - ``\\lambda`` is the risk aversion coefficient;
 - and ``r`` is the risk-free rate.
 """
-const PortTypes = (:trad, :rp, :rrp, :wc)
+const PortTypes = (:Trad, :RP, :RRP, :WC)
 
 """
 ```julia
-RRPVersions = (:none, :reg, :reg_pen)
+RRPVersions = (:None, :Reg, :Reg_Pen)
 ```
-Available versions of relaxed risk parity optimisations of [`Portfolio`](@ref).
+Available versions of Relaxed Risk Parity Optimisations (see [`PortTypes`](@ref)).
+Where:
+- `:None`: no penalty;
+- `:Reg`: regularisation constraint, ``\\rho``;
+- `:Reg_Pen`: regularisation and penalisation constraints, ``\\lambda`` and ``\\rho``.
 """
-const RRPVersions = (:none, :reg, :reg_pen)
+const RRPVersions = (:None, :Reg, :Reg_Pen)
 
 """
 ```julia
-RPConstraintTypes = (:assets, :classes)
+RPConstraintTypes = (:Assets, :Classes)
 ```
-Types of risk parity constraints for [`rp_constraints`](@ref).
+Types of risk parity constraints for building the set of linear constraints via [`rp_constraints`](@ref).
 """
-const RPConstraintTypes = (:assets, :classes)
+const RPConstraintTypes = (:Assets, :Classes)
 
 """
 ```julia
-UncertaintyTypes = (:none, :box, :ellipse)
+UncertaintyTypes = (:None, :Box, :Ellipse)
 ```
-Types of uncertainty sets for worst case optimisations of [`Portfolio`](@ref).
+Types of uncertainty sets for Worst Case Optimisations of [`Portfolio`](@ref) (see [`PortTypes`](@ref)).
 """
-const UncertaintyTypes = (:none, :box, :ellipse)
+const UncertaintyTypes = (:None, :Box, :Ellipse)
 
 """
-Bootstrap for worst case optimisations.
 ```
-KindBootstrap = (:stationary, :circular, :moving)
+KindBootstrap = (:Stationary, :Circular, :Moving)
 ```
+Kind of bootstrap for computing the uncertainty sets with [`wc_statistics!`](@ref), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](@ref)).
 """
-const KindBootstrap = (:stationary, :circular, :moving)
+const KindBootstrap = (:Stationary, :Circular, :Moving)
+
 """
-Ellipse and box types for worst case optimisations.
 ```
-EllipseTypes = (:stationary, :circular, :moving, :normal)
+EllipseTypes = (:Stationary, :Circular, :Moving, :Normal)
 ```
+Available types of elliptical sets that can be computed with [`wc_statistics!`](@ref), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](@ref)).
 """
-const EllipseTypes = (:stationary, :circular, :moving, :normal)
+const EllipseTypes = (:Stationary, :Circular, :Moving, :Normal)
+
 """
 ```julia
-BoxTypes = (:stationary, :circular, :moving, :normal, :delta)
+BoxTypes = (:Stationary, :Circular, :Moving, :Normal, :Delta)
 ```
+Available types of box sets that can be computed with [`wc_statistics!`](@ref), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](@ref)).
 """
-const BoxTypes = (EllipseTypes..., :delta)
+const BoxTypes = (EllipseTypes..., :Delta)
 
 # Hierarchical portfolios.
 
 # DBHT root methods.
-const DBHTRootMethods = (:unique, :Equal)
+const DBHTRootMethods = (:Unique, :Equal)
 
 # OWA Methods.
-const OWAMethods = (:crra, :me, :mss, :SD)
+const OWAMethods = (:CRRA, :ME, :MSS, :SD)
 
 # Mutual and variation info bins and types.
-const BinTypes = (:kn, :fd, :sc, :hgr)
-const InfoTypes = (:mutual, :variation)
+const BinTypes = (:KN, :FD, :SC, :HGR)
+const InfoTypes = (:Mutual, :Variation)
 
 # Portfolio risk measures.
 
@@ -454,25 +461,25 @@ const HRRiskMeasures = (
     :RDaR_r,
 )
 
-const HRTypes = (:hrp, :herc, :herc2, :nco)
+const HRTypes = (:HRP, :HERC, :HERC2, :NCO)
 const CodepTypes = (
-    :pearson,
-    :spearman,
-    :kendall,
-    :gerber1,
-    :gerber2,
-    :abs_pearson,
-    :abs_spearman,
-    :abs_kendall,
-    :distance,
-    :mutual_info,
-    :tail,
-    :custom_cov,
-    :custom_cor,
+    :Pearson,
+    :Spearman,
+    :Kendall,
+    :Gerber1,
+    :Gerber2,
+    :Abs_Pearson,
+    :Abs_Spearman,
+    :Abs_Kendall,
+    :Distance,
+    :Mutual_Info,
+    :Tail,
+    :Custom_Cov,
+    :Custom_Cor,
 )
-const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :dbht)
+const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :DBHT)
 const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
-const HRObjFuncs = (:min_risk, :utility, :sharpe, :erc)
+const HRObjFuncs = (ObjFuncs..., :Equal)
 
 export AbstractPortfolio,
     RiskMeasures,

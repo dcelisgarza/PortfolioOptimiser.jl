@@ -7,44 +7,44 @@ returns = dropmissing!(DataFrame(Y))
 @testset "Codependence and distance functions" begin
     portfolio = HCPortfolio(returns = returns)
 
-    portfolio.codep_type = :pearson
+    portfolio.codep_type = :Pearson
     asset_statistics!(portfolio)
     pearson = portfolio.codep
 
-    portfolio.codep_type = :spearman
+    portfolio.codep_type = :Spearman
     asset_statistics!(portfolio)
     spearman = portfolio.codep
 
-    portfolio.codep_type = :kendall
+    portfolio.codep_type = :Kendall
     asset_statistics!(portfolio)
     kendall = portfolio.codep
 
-    portfolio.codep_type = :abs_pearson
+    portfolio.codep_type = :Abs_Pearson
     asset_statistics!(portfolio)
     abs_pearson = portfolio.codep
 
-    portfolio.codep_type = :abs_spearman
+    portfolio.codep_type = :Abs_Spearman
     asset_statistics!(portfolio)
     abs_spearman = portfolio.codep
 
-    portfolio.codep_type = :abs_kendall
+    portfolio.codep_type = :Abs_Kendall
     asset_statistics!(portfolio)
     abs_kendall = portfolio.codep
 
-    portfolio.codep_type = :gerber1
+    portfolio.codep_type = :Gerber1
     asset_statistics!(portfolio, std_kwargs = (; corrected = false))
     gerber1 = portfolio.codep
 
-    portfolio.codep_type = :gerber2
+    portfolio.codep_type = :Gerber2
     asset_statistics!(portfolio, std_kwargs = (; corrected = false))
     gerber2 = portfolio.codep
 
-    portfolio.codep_type = :distance
+    portfolio.codep_type = :Distance
     asset_statistics!(portfolio)
     distance = portfolio.codep
 
     try
-        portfolio.codep_type = :mutual_info
+        portfolio.codep_type = :Mutual_Info
         asset_statistics!(portfolio)
         mutual_info = portfolio.codep
         var_info = portfolio.dist
@@ -865,7 +865,7 @@ returns = dropmissing!(DataFrame(Y))
     catch
     end
 
-    portfolio.codep_type = :tail
+    portfolio.codep_type = :Tail
     asset_statistics!(portfolio)
     tail = portfolio.codep
 

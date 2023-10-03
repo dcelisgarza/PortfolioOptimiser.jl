@@ -1020,7 +1020,7 @@ Compute the value of a risk measure given a vector of asset weights and returns.
 ```julia
 calc_risk(
     portfolio::AbstractPortfolio;
-    type::Symbol = :trad,
+    type::Symbol = :Trad,
     rm::Symbol = :SD,
     rf::Real = 0.0,
 )
@@ -1132,19 +1132,19 @@ end
 
 function calc_risk(
     portfolio::AbstractPortfolio;
-    type::Symbol = :trad,
+    type::Symbol = :Trad,
     rm::Symbol = :SD,
     rf::Real = 0.0,
 )
     weights = if isa(portfolio, Portfolio)
         @assert(type ∈ PortTypes, "type must be one of $PortTypes")
-        if type == :trad
+        if type == :Trad
             portfolio.p_optimal.weights
-        elseif type == :rp
+        elseif type == :RP
             portfolio.rp_optimal.weights
-        elseif type == :rrp
+        elseif type == :RRP
             portfolio.rrp_optimal.weights
-        elseif type == :wc
+        elseif type == :WC
             portfolio.wc_optimal.weights
         end
     else

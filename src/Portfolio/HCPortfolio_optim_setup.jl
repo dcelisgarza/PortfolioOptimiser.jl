@@ -38,8 +38,8 @@ function _opt_w(
     returns,
     mu,
     icov;
-    obj = :min_risk,
-    kelly = :none,
+    obj = :Min_Risk,
+    kelly = :None,
     rm = :SD,
     rf = 0.0,
     l = 2.0,
@@ -48,23 +48,23 @@ function _opt_w(
     asset_statistics!(port; calc_kurt = (rm == :Kurt || rm == :SKurt) ? true : false)
     port.cov = icov
 
-    weights = if obj ∈ (:min_risk, :utility, :sharpe)
+    weights = if obj != :Equal
         !isnothing(mu) && (port.mu = mu)
         opt_port!(
             port;
-            type = :trad,
-            class = :classic,
+            type = :Trad,
+            class = :Classic,
             rm = rm,
             obj = obj,
             kelly = kelly,
             rf = rf,
             l = l,
         )
-    elseif obj == :erc
-        opt_port!(port; type = :rp, class = :classic, rm = rm, kelly = kelly, rf = rf)
+    else
+        opt_port!(port; type = :RP, class = :Classic, rm = rm, kelly = kelly, rf = rf)
     end
 
-    w = !isempty(weights) ? weights[!, :weights] : zeros(eltype(returns), length(assets))
+    w = !isempty(weights) ? weights.weights : zeros(eltype(returns), length(assets))
 
     return w, port.fail
 end
@@ -115,7 +115,7 @@ end
 
 function _hierarchical_clustering(
     portfolio::HCPortfolio,
-    type = :hrp,
+    type = :HRP,
     linkage = :single,
     max_k = 10,
     branchorder = :optimal,
@@ -124,9 +124,9 @@ function _hierarchical_clustering(
     codep = portfolio.codep
     dist = portfolio.dist
 
-    codeps1 = (:pearson, :spearman, :kendall, :gerber1, :gerber2, :custom)
+    codeps1 = (:Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
 
-    if linkage == :dbht
+    if linkage == :DBHT
         codep = codep_type ∈ codeps1 ? 1 .- dist .^ 2 : codep
         missing, missing, missing, missing, missing, missing, clustering =
             DBHTs(dist, codep, branchorder = branchorder)
@@ -138,7 +138,7 @@ function _hierarchical_clustering(
         )
     end
 
-    k = type ∈ (:herc, :herc2, :nco) ? _two_diff_gap_stat(dist, clustering, max_k) : nothing
+    k = type ∈ (:HERC, :HERC2, :NCO) ? _two_diff_gap_stat(dist, clustering, max_k) : nothing
 
     return clustering, k
 end
@@ -150,7 +150,7 @@ function cluster_assets(
     branchorder = :optimal,
     k = portfolio.k,
 )
-    clustering, tk = _hierarchical_clustering(portfolio, :herc, linkage, max_k, branchorder)
+    clustering, tk = _hierarchical_clustering(portfolio, :HERC, linkage, max_k, branchorder)
 
     k = isnothing(k) ? tk : k
 
@@ -336,7 +336,7 @@ function _hierarchical_recursive_bisection(
     portfolio;
     rm = :SD,
     rf = 0.0,
-    type = :herc,
+    type = :HERC,
     upper_bound = nothing,
     lower_bound = nothing,
 )
@@ -412,7 +412,7 @@ function _hierarchical_recursive_bisection(
     end
 
     # If herc2, then each cluster contributes an equal amount of risk.
-    type == :herc2 && (rm = :Equal)
+    type == :HERC2 && (rm = :Equal)
     # We multiply the intra cluster weights by the weights by the weights of the cluster.
     for i in 1:k
         cidx = clustering_idx .== i
@@ -427,8 +427,8 @@ end
 
 function _intra_weights(
     portfolio;
-    obj = :min_risk,
-    kelly = :none,
+    obj = :Min_Risk,
+    kelly = :None,
     rm = :SD,
     rf = 0.0,
     l = 2.0,
@@ -470,8 +470,8 @@ end
 function _inter_weights(
     portfolio,
     intra_weights;
-    obj = :min_risk,
-    kelly = :none,
+    obj = :Min_Risk,
+    kelly = :None,
     rm = :SD,
     rf = 0.0,
     l = 2.0,
@@ -546,10 +546,10 @@ end
 
 function opt_port!(
     portfolio::HCPortfolio;
-    type::Symbol = :hrp,
+    type::Symbol = :HRP,
     rm::Symbol = :SD,
-    obj::Symbol = :min_risk,
-    kelly::Symbol = :none,
+    obj::Symbol = :Min_Risk,
+    kelly::Symbol = :None,
     rf::Real = 0.0,
     l::Real = 2.0,
     linkage::Symbol = :single,
@@ -583,7 +583,7 @@ function opt_port!(
     end
 
     upper_bound, lower_bound = _setup_hr_weights(portfolio.w_max, portfolio.w_min, N)
-    if type == :hrp
+    if type == :HRP
         weights = _recursive_bisection(
             portfolio;
             rm = rm,
@@ -591,7 +591,7 @@ function opt_port!(
             upper_bound = upper_bound,
             lower_bound = lower_bound,
         )
-    elseif type == :herc || type == :herc2
+    elseif type == :HERC || type == :HERC2
         weights = _hierarchical_recursive_bisection(
             portfolio;
             rm = rm,

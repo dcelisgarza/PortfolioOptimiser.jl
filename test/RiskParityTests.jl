@@ -33,8 +33,8 @@ l = 2.0
     )
     asset_statistics!(portfolio)
     rm = :SD
-    type = :rp
-    kelly = :none
+    type = :RP
+    kelly = :None
     portfolio.risk_budget = Float64[]
 
     w1 = opt_port!(portfolio; type = type, rm = rm, kelly = kelly, rf = rf, l = l)
@@ -107,9 +107,9 @@ end
         ),
     )
     asset_statistics!(portfolio)
-    type = :rrp
-    kelly = :none
-    rrp_ver = :none
+    type = :RRP
+    kelly = :None
+    rrp_ver = :None
     rrp_penalty = 20
 
     portfolio.risk_budget = Float64[]
@@ -166,7 +166,7 @@ end
     ]
     @test isapprox(w2t, w2.weights, rtol = 5e-3)
 
-    rrp_ver = :reg
+    rrp_ver = :Reg
     portfolio.risk_budget = Float64[]
     w3 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty, rrp_ver = rrp_ver)
     m3 = dot(portfolio.mu, w3.weights)
@@ -221,7 +221,7 @@ end
     ]
     @test isapprox(w4t, w4.weights, rtol = 7e-3)
 
-    rrp_ver = :reg_pen
+    rrp_ver = :Reg_Pen
     portfolio.risk_budget = Float64[]
     w5 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty, rrp_ver = rrp_ver)
     m5 = dot(portfolio.mu, w5.weights)

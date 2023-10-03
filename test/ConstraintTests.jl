@@ -1779,12 +1779,12 @@ end
     asset_classes = DataFrame(asset_classes)
     asset_classes = sort!(asset_classes, "Assets")
 
-    w1 = rp_constraints(asset_classes, :classes, "Class 1")
-    w2 = rp_constraints(asset_classes, :classes, 2)
-    w3 = rp_constraints(asset_classes, :classes, Symbol("Class 1"))
-    w4 = rp_constraints(asset_classes, :classes, "Class 2")
-    w5 = rp_constraints(asset_classes, :classes, 3)
-    w6 = rp_constraints(asset_classes, :classes, Symbol("Class 2"))
+    w1 = rp_constraints(asset_classes, :Classes, "Class 1")
+    w2 = rp_constraints(asset_classes, :Classes, 2)
+    w3 = rp_constraints(asset_classes, :Classes, Symbol("Class 1"))
+    w4 = rp_constraints(asset_classes, :Classes, "Class 2")
+    w5 = rp_constraints(asset_classes, :Classes, 3)
+    w6 = rp_constraints(asset_classes, :Classes, Symbol("Class 2"))
     wt1 = vcat([[0.1], [0.1], [0.1], [0.1], [0.25], [0.25], [0.1]]...)
     wt2 = vcat(
         [

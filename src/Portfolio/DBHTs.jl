@@ -323,7 +323,7 @@ function BubbleHierarchy(Pred, Sb)
     return H, Mb
 end
 
-function CliqHierarchyTree2s(Apm, method = :unique)
+function CliqHierarchyTree2s(Apm, method = :Unique)
     @assert(method ∈ DBHTRootMethods, "method must be one of $DBHTRootMethods")
     N = size(Apm, 1)
     A = Apm .!= 0
@@ -351,7 +351,7 @@ function CliqHierarchyTree2s(Apm, method = :unique)
     Pred = BuildHierarchy(M)
     Root = findall(Pred .== 0)
 
-    if method == :unique
+    if method == :Unique
         if length(Root) > 1
             push!(Pred, 0)
             Pred[Root] .= length(Pred)
@@ -659,7 +659,7 @@ function DBHTs(D, S; branchorder = :optimal)
     Apm[Apm .!= 0] .= D[Apm .!= 0]
     Dpm = distance_wei(Apm)[1]
 
-    H1, Hb, Mb, CliqList, Sb = CliqHierarchyTree2s(Rpm, :unique)
+    H1, Hb, Mb, CliqList, Sb = CliqHierarchyTree2s(Rpm, :Unique)
 
     Mb = Mb[1:size(CliqList, 1), :]
 
@@ -690,7 +690,7 @@ function DBHTs(D, S; branchorder = :optimal)
         Clustering.orderbranches_r!(hmer)
     end
 
-    hclust = Hclust(hmer, :dbht)
+    hclust = Hclust(hmer, :DBHT)
 
     return T8, Rpm, Adjv, Dpm, Mv, Z, hclust
 end

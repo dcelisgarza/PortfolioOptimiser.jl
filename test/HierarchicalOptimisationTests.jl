@@ -37,11 +37,11 @@ l = 2.0
     )
     asset_statistics!(portfolio)
 
-    type = :hrp
+    type = :HRP
     rm = :Variance
-    obj = :min_risk
-    kelly = :none
-    linkage = :dbht
+    obj = :Min_Risk
+    kelly = :None
+    linkage = :DBHT
     branchorder = :default
 
     w1 = opt_port!(
@@ -101,11 +101,11 @@ end
     )
     asset_statistics!(portfolio)
 
-    type = :herc
+    type = :HERC
     rm = :Variance
-    obj = :min_risk
-    kelly = :none
-    linkage = :dbht
+    obj = :Min_Risk
+    kelly = :None
+    linkage = :DBHT
     branchorder = :default
     w1 = opt_port!(
         portfolio;
@@ -164,11 +164,11 @@ end
     )
     asset_statistics!(portfolio)
 
-    type = :herc2
+    type = :HERC2
     rm = :Variance
-    obj = :min_risk
-    kelly = :none
-    linkage = :dbht
+    obj = :Min_Risk
+    kelly = :None
+    linkage = :DBHT
     branchorder = :default
     w1 = opt_port!(
         portfolio;
@@ -225,14 +225,14 @@ end
                 Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
         ),
     )
-    portfolio.codep_type = :pearson
+    portfolio.codep_type = :Pearson
     asset_statistics!(portfolio)
 
-    type = :nco
+    type = :NCO
     rm = :SD
-    obj = :min_risk
-    kelly = :none
-    linkage = :dbht
+    obj = :Min_Risk
+    kelly = :None
+    linkage = :DBHT
     branchorder = :default
     w1 = opt_port!(
         portfolio;
@@ -269,11 +269,11 @@ end
     ]
     @test isapprox(w1t, w1.weights, rtol = 3e-4)
 
-    type = :nco
+    type = :NCO
     rm = :SD
-    obj = :erc
-    kelly = :none
-    linkage = :dbht
+    obj = :Equal
+    kelly = :None
+    linkage = :DBHT
     branchorder = :default
     w2 = opt_port!(
         portfolio;

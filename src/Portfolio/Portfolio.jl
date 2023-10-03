@@ -254,7 +254,7 @@ Portfolio(;
     # Benchmark constraints.
     turnover::Real = Inf,
     turnover_weights = Vector{Float64}(undef, 0),
-    kind_tracking_err::Symbol = :weights,
+    kind_tracking_err::Symbol = :Weights,
     tracking_err::Real = Inf,
     tracking_err_returns = Vector{Float64}(undef, 0),
     tracking_err_weights = Vector{Float64}(undef, 0),
@@ -582,7 +582,7 @@ function Portfolio(;
     # Benchmark constraints.
     turnover::Real = Inf,
     turnover_weights = Vector{Float64}(undef, 0),
-    kind_tracking_err::Symbol = :weights,
+    kind_tracking_err::Symbol = :Weights,
     tracking_err::Real = Inf,
     tracking_err_returns = Vector{Float64}(undef, 0),
     tracking_err_weights = Vector{Float64}(undef, 0),

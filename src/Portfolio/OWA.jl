@@ -187,7 +187,7 @@ function owa_l_moment_crm(
         ws = hcat(ws, wi)
     end
 
-    if method == :crra || isempty(solvers)
+    if method == :CRRA || isempty(solvers)
         w = _crra_method(ws, k, g)
     else
         n = size(ws, 2)
@@ -201,7 +201,7 @@ function owa_l_moment_crm(
         @constraint(model, phi[2:end] .<= phi[1:(end - 1)])
         @constraint(model, theta[2:end] .>= theta[1:(end - 1)])
 
-        if method == :me
+        if method == :ME
             # Maximise entropy.
             @variable(model, t[1:T])
             @variable(model, x[1:T] >= 0)
@@ -210,7 +210,7 @@ function owa_l_moment_crm(
             @constraint(model, x .- theta .>= 0)
             @constraint(model, x .+ theta .>= 0)
             @objective(model, Max, sum(t))
-        elseif method == :mss
+        elseif method == :MSS
             @variable(model, t)
             @constraint(model, [t; theta] in SecondOrderCone())
             @objective(model, Min, t)
