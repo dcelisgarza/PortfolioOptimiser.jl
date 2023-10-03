@@ -71,6 +71,11 @@ function _calc_hist_data(xj, xi, bins)
     return ex, ey, hxy
 end
 
+"""
+```julia
+mut_var_info_mtx(x, bins_info = :KN, normed = true)
+```
+"""
 function mut_var_info_mtx(x, bins_info = :KN, normed = true)
     @assert(
         bins_info ∈ BinTypes || isa(bins_info, Int),
@@ -264,4 +269,4 @@ function covgerber2(x, threshold = 0.5; std_func = std, std_args = (), std_kwarg
     return mtx .* (std_vec * transpose(std_vec))
 end
 
-export covgerber1, covgerber2
+export covgerber1, covgerber2, mut_var_info_mtx

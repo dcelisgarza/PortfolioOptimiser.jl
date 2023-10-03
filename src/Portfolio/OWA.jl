@@ -164,6 +164,19 @@ function _crra_method(ws, k, g)
     return w
 end
 
+"""
+```julia
+owa_l_moment_crm(
+    T;
+    k = 4,
+    method = :SD,
+    g = 0.5,
+    max_phi = 0.5,
+    solvers = Dict(),
+    sol_params = Dict(),
+)
+```
+"""
 function owa_l_moment_crm(
     T;
     k = 4,

@@ -77,6 +77,36 @@ function dup_elim_sum_matrices(n::Int)
     return d, l, s
 end
 
+"""
+```julia
+asset_statistics!(
+    portfolio::AbstractPortfolio;
+    target_ret::AbstractFloat = 0.0,
+    mean_func::Function = mean,
+    cov_func::Function = cov,
+    cor_func::Function = cor,
+    std_func = std,
+    dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
+    codep_type::Symbol = isa(portfolio, HCPortfolio) ? portfolio.codep_type : :Pearson,
+    custom_mu = nothing,
+    custom_cov = nothing,
+    custom_kurt = nothing,
+    custom_skurt = nothing,
+    mean_args = (),
+    cov_args = (),
+    cor_args = (),
+    dist_args = (),
+    std_args = (),
+    calc_kurt = true,
+    mean_kwargs = (; dims = 1),
+    cov_kwargs = (;),
+    cor_kwargs = (;),
+    dist_kwargs = (;),
+    std_kwargs = (;),
+    uplo = :L,
+)
+```
+"""
 function asset_statistics!(
     portfolio::AbstractPortfolio;
     target_ret::AbstractFloat = 0.0,

@@ -33,6 +33,8 @@ makedocs(;
             "Risk Measures" => "Risk_measures.md",
             "Constraint Functions" => "Constraint_functions.md",
             "Asset Statistics" => "Asset_statistics.md",
+            "DBHT" => "DBHT.md",
+            "OWA" => "OWA.md",
         ],
         # "API" => [
         #     "obj_func_api.md",

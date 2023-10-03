@@ -358,16 +358,36 @@ Available types of box sets that can be computed with [`wc_statistics!`](@ref), 
 """
 const BoxTypes = (EllipseTypes..., :Delta)
 
-# Hierarchical portfolios.
-
-# DBHT root methods.
+"""
+```julia
+DBHTRootMethods = (:Unique, :Equal)
+```
+Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in [`DBHTs`](@ref).
+"""
 const DBHTRootMethods = (:Unique, :Equal)
 
-# OWA Methods.
+"""
+```julia
+OWAMethods = (:CRRA, :ME, :MSS, :SD)
+```
+Methods for computing the higher order L-moments of Ordered Weight Arrays in [`owa_l_moment_crm`](@ref).
+"""
 const OWAMethods = (:CRRA, :ME, :MSS, :SD)
 
-# Mutual and variation info bins and types.
+"""
+```julia
+BinTypes = (:KN, :FD, :SC, :HGR)
+```
+Bin type choices for calculating bin widths for mutual and variational information matrices computed by [`mut_var_info_mtx`](@ref).
+"""
 const BinTypes = (:KN, :FD, :SC, :HGR)
+
+"""
+```julia
+InfoTypes = (:Mutual, :Variation)
+```
+Type of information matrix to compute when choosing `:Mutual_Info` from [`CodepTypes`](@ref) in [`asset_statistics!`](@ref).
+"""
 const InfoTypes = (:Mutual, :Variation)
 
 # Portfolio risk measures.
@@ -461,7 +481,33 @@ const HRRiskMeasures = (
     :RDaR_r,
 )
 
+"""
+```julia
+HRTypes = (:HRP, :HERC, :HERC2, :NCO)
+```
+"""
 const HRTypes = (:HRP, :HERC, :HERC2, :NCO)
+
+"""
+```julia
+CodepTypes = (
+    :Pearson,
+    :Spearman,
+    :Kendall,
+    :Gerber1,
+    :Gerber2,
+    :Abs_Pearson,
+    :Abs_Spearman,
+    :Abs_Kendall,
+    :Distance,
+    :Mutual_Info,
+    :Tail,
+    :Custom_Cov,
+    :Custom_Cor,
+)
+```
+Available types of codependency measures computed in [`asset_statistics!`](@ref) when the portfolio is a [`HCPortfolio`](@ref).
+"""
 const CodepTypes = (
     :Pearson,
     :Spearman,
@@ -477,8 +523,26 @@ const CodepTypes = (
     :Custom_Cov,
     :Custom_Cor,
 )
+
+"""
+```julia
+LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :DBHT)
+```
+"""
 const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :DBHT)
+
+"""
+```julia
+BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
+```
+"""
 const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
+
+"""
+```julia
+HRObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret, :Equal)
+```
+"""
 const HRObjFuncs = (ObjFuncs..., :Equal)
 
 export AbstractPortfolio,
@@ -495,4 +559,13 @@ export AbstractPortfolio,
     KindBootstrap,
     EllipseTypes,
     BoxTypes,
-    HRRiskMeasures
+    DBHTRootMethods,
+    OWAMethods,
+    BinTypes,
+    InfoTypes,
+    HRRiskMeasures,
+    HRTypes,
+    CodepTypes,
+    LinkageTypes,
+    BranchOrderTypes,
+    HRObjFuncs

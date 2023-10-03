@@ -15,5 +15,14 @@ UncertaintyTypes
 KindBootstrap
 EllipseTypes
 BoxTypes
+DBHTRootMethods
+OWAMethods
+BinTypes
+InfoTypes
 HRRiskMeasures
+HRTypes
+CodepTypes
+LinkageTypes
+BranchOrderTypes
+HRObjFuncs
 ```
