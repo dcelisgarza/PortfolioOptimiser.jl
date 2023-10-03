@@ -460,10 +460,10 @@ Available risk measures for optimisations of [`HCPortfolio`](@ref).
 - `:VaR` = value at risk ([`VaR`](@ref));
 - `:DaR` = drawdown at risk of uncompounded cumulative returns ([`DaR_abs`](@ref));
 - `:DaR_r` = drawdown at risk of compounded cumulative returns ([`DaR_rel`](@ref));
-- `:MDD`_r = maximum drawdown of compounded cumulative returns ([`MDD_rel`](@ref));
-- `:ADD`_r = average drawdown of compounded cumulative returns ([`ADD_rel`](@ref));
+- `:MDD_r` = maximum drawdown of compounded cumulative returns ([`MDD_rel`](@ref));
+- `:ADD_r` = average drawdown of compounded cumulative returns ([`ADD_rel`](@ref));
 - `:CDaR_r` = conditional drawdown at risk of compounded cumulative returns ([`CDaR_rel`](@ref));
-- `:UCI`_r = ulcer index of compounded cumulative returns ([`UCI_rel`](@ref));
+- `:UCI_r` = ulcer index of compounded cumulative returns ([`UCI_rel`](@ref));
 - `:EDaR_r` = entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`](@ref));
 - `:RDaR_r` = relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`](@ref)).
 """
