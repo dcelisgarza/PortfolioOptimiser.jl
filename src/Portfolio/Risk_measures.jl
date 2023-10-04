@@ -1020,7 +1020,7 @@ Compute the value of a risk measure given a vector of asset weights and returns.
 ```julia
 calc_risk(
     portfolio::AbstractPortfolio;
-    type::Symbol = :Trad,
+    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
     rm::Symbol = :SD,
     rf::Real = 0.0,
 )
@@ -1028,7 +1028,7 @@ calc_risk(
 Compute the value of a risk measure given a portfolio.
 ### Arguments
 - `portfolio`: optimised portfolio;
-- `type`: type of portfolio from [`PortTypes`](@ref).
+- `type`: type of portfolio from [`PortTypes`](@ref) or [`HCPortTypes`](@ref).
 - `rm`: risk measure from [`RiskMeasures`](@ref) and [`HRRiskMeasures`](@ref);
 - `rf`: risk-free rate at the frequency of `portfolio.returns`, used as the minimum return target, `r`, in [`FLPM`](@ref) and [`SLPM`](@ref).
 """
@@ -1132,7 +1132,7 @@ end
 
 function calc_risk(
     portfolio::AbstractPortfolio;
-    type::Symbol = :Trad,
+    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
     rm::Symbol = :SD,
     rf::Real = 0.0,
 )
@@ -1148,7 +1148,16 @@ function calc_risk(
             portfolio.wc_optimal.weights
         end
     else
-        portfolio.p_optimal.weights
+        @assert(type ∈ PortTypes, "type must be one of $HCPortTypes")
+        if type == :HRP
+            portfolio.hrp_optimal
+        elseif type == :HERC
+            portfolio.herc_optimal
+        elseif type == :HERC2
+            portfolio.herc2_optimal
+        elseif type == :NCO
+            portfolio.nco_optimal
+        end
     end
 
     return calc_risk(

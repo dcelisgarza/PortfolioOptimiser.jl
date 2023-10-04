@@ -20,7 +20,7 @@ OWAMethods
 BinTypes
 InfoTypes
 HRRiskMeasures
-HRTypes
+HCPortTypes
 CodepTypes
 LinkageTypes
 BranchOrderTypes

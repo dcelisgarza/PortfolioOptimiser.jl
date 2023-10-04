@@ -26,7 +26,10 @@ mutable struct HCPortfolio{
     tdist,
     tcl,
     tk,
-    topt,
+    hrpopt,
+    hercopt,
+    herc2opt,
+    ncoopt,
     # Solutions.
     tsolv,
     toptpar,
@@ -58,7 +61,11 @@ mutable struct HCPortfolio{
     dist::tdist
     clusters::tcl
     k::tk
-    p_optimal::topt
+    # Optimal portfolios
+    hrp_optimal::hrpopt
+    herc_optimal::hercopt
+    herc2_optimal::herc2opt
+    nco_optimal::ncoopt
     # Solutions.
     solvers::tsolv
     opt_params::toptpar
@@ -89,7 +96,6 @@ HCPortfolio(;
     bins_info::Union{Symbol, Int} = :KN,
     w_min::Union{AbstractFloat, AbstractVector, Nothing} = 0.0,
     w_max::Union{AbstractFloat, AbstractVector, Nothing} = 1.0,
-    # Optimal portfolios.
     codep_type::Symbol = :Pearson,
     codep = Matrix{Float64}(undef, 0, 0),
     dist = Matrix{Float64}(undef, 0, 0),
@@ -122,13 +128,16 @@ mutable struct HCPortfolio{
     tbin,
     wmi,
     wma,
-    # Optimal portfolios.
     ttco,
     tco,
     tdist,
     tcl,
     tk,
-    topt,
+    # Optimal portfolios.
+    hrpopt,
+    hercopt,
+    herc2opt,
+    ncoopt,
     # Solutions.
     tsolv,
     toptpar,
@@ -154,13 +163,16 @@ mutable struct HCPortfolio{
     bins_info::tbin
     w_min::wmi
     w_max::wma
-    # Optimal portfolios.
     codep_type::ttco
     codep::tco
     dist::tdist
     clusters::tcl
     k::tk
-    p_optimal::topt
+    # Optimal portfolios.
+    hrp_optimal::hrpopt
+    herc_optimal::hercopt
+    herc2_optimal::herc2opt
+    nco_optimal::ncoopt
     # Solutions.
     solvers::tsolv
     opt_params::toptpar
@@ -232,12 +244,15 @@ function HCPortfolio(;
         Union{Symbol, Int},
         Union{AbstractFloat, AbstractVector, Nothing},
         Union{AbstractFloat, AbstractVector, Nothing},
-        # Optimal portfolios.
         typeof(codep_type),
         typeof(codep),
         typeof(dist),
         typeof(clusters),
         Union{Int, Nothing},
+        # Optimal portfolios.
+        DataFrame,
+        DataFrame,
+        DataFrame,
         DataFrame,
         # Solutions.
         typeof(solvers),
@@ -263,12 +278,15 @@ function HCPortfolio(;
         bins_info,
         w_min,
         w_max,
-        # Optimal portfolios.
         codep_type,
         codep,
         dist,
         clusters,
         k,
+        # Optimal portfolios.
+        DataFrame(),
+        DataFrame(),
+        DataFrame(),
         DataFrame(),
         # Solutions.
         solvers,

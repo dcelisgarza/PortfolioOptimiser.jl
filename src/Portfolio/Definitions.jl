@@ -116,7 +116,7 @@ const TrackingErrKinds = (:Weights, :Returns)
 ```julia
 ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 ```
-Objective functions available for use in `type = :Trad` and `type = :WC` optimisations of [`Portfolio`](@ref) (see [`PortTypes`](@ref)).
+Objective functions available for use in `:Trad` and `:WC` optimisations of [`Portfolio`](@ref) (see [`PortTypes`](@ref)).
 """
 const ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 
@@ -144,7 +144,7 @@ PortTypes = (:Trad, :RP, :RRP, :WC)
 ```
 Available optimisation types for [`Portfolio`](@ref).
 ### `:Trad` -- Traditional Optimisations
-Available objective functions for `type = :Trad` optimisations. We can chose any of the objective functions in [`ObjFuncs`](@ref) and risk measures in [`RiskMeasures`](@ref).
+Available objective functions for `:Trad` optimisations. We can chose any of the objective functions in [`ObjFuncs`](@ref) and risk measures in [`RiskMeasures`](@ref).
 - `:Min_Risk`: minimum risk portfolio,
 ```math
 \\begin{align*}
@@ -483,10 +483,10 @@ const HRRiskMeasures = (
 
 """
 ```julia
-HRTypes = (:HRP, :HERC, :HERC2, :NCO)
+HCPortTypes = (:HRP, :HERC, :HERC2, :NCO)
 ```
 """
-const HRTypes = (:HRP, :HERC, :HERC2, :NCO)
+const HCPortTypes = (:HRP, :HERC, :HERC2, :NCO)
 
 """
 ```julia
@@ -526,8 +526,11 @@ const CodepTypes = (
 
 """
 ```julia
-LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :DBHT)
+LinkageTypes = (:single, :complete, :average, :ward, :ward_presquared, :DBHT)
 ```
+Linkage types available when optimising a [`HCPortfolio`](@ref). Where:
+- `:DBHT`: is Direct Bubble Hierarchical Tree clustering.
+- The rest are linkage types supported by [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
 """
 const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :DBHT)
 
@@ -535,6 +538,9 @@ const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :DB
 ```julia
 BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
 ```
+Algorithm to order leaves and branches.
+- `:default`: if linkage is `:DBHT`, the leaves and branches remain as the algorithm orders them. If any other linkage is used, they fall back to `:r` as that is their default according to [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
+- All other branch orders are as defined by [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
 """
 const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
 
@@ -542,6 +548,9 @@ const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
 ```julia
 HRObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret, :Equal)
 ```
+Objective funcions for `:NCO` [`HCPortTypes`](@ref) of [`HCPortfolio`](@ref). 
+- `:Min_Risk`, `:Utility`, `:Sharpe` and `:Max_Ret` optimise the sub-portfolios as `:Trad` [`PortTypes`](@ref) of [`Portfolio`](@ref) according to their respective definitions in [`ObjFuncs`](@ref). 
+- `:Equal` optimises the sub-portfolios as `:RP` [`PortTypes`](@ref) of [`Portfolio`](@ref) with equal risk contribution per asset. We can't offer customiseable risk contributions because the size and composition of the clusters is initially unknown and depends on the chosen linkage method.
 """
 const HRObjFuncs = (ObjFuncs..., :Equal)
 
@@ -564,7 +573,7 @@ export AbstractPortfolio,
     BinTypes,
     InfoTypes,
     HRRiskMeasures,
-    HRTypes,
+    HCPortTypes,
     CodepTypes,
     LinkageTypes,
     BranchOrderTypes,

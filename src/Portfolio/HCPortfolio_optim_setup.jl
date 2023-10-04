@@ -559,7 +559,7 @@ function opt_port!(
     max_iter = 100,
     cluster = true,
 )
-    @assert(type ∈ HRTypes, "type must be one of $HRTypes")
+    @assert(type ∈ HCPortTypes, "type must be one of $HCPortTypes")
     @assert(rm ∈ HRRiskMeasures, "rm must be one of $HRRiskMeasures")
     @assert(obj ∈ HRObjFuncs, "obj must be one of $HRObjFuncs")
     @assert(kelly ∈ KellyRet, "kelly must be one of $KellyRet")
@@ -617,8 +617,19 @@ function opt_port!(
     end
     weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
 
-    portfolio.p_optimal = DataFrame(tickers = portfolio.assets, weights = weights)
-    return portfolio.p_optimal
+    retval = DataFrame(tickers = portfolio.assets, weights = weights)
+
+    if type == :HRP
+        portfolio.hrp_optimal = retval
+    elseif type == :HERC
+        portfolio.herc_optimal = retval
+    elseif type == :HERC2
+        portfolio.herc2_optimal = retval
+    elseif type == :NCO
+        portfolio.nco_optimal = retval
+    end
+
+    return retval
 end
 
 export opt_port!
