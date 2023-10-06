@@ -274,7 +274,6 @@ function AdjCliq(A, CliqList, CliqRoot)
         adjacent = CliqRoot[vec(sum(Indi, dims = 2)) .== 2]
         Adj[adjacent, n] .= 1
     end
-
     Adj = Adj + transpose(Adj)
 end
 
@@ -651,10 +650,10 @@ end
 
 """
 ```julia
-DBHTs(D, S; branchorder = :optimal)
+DBHTs(D, S; branchorder = :optimal, method = :Unique)
 ```
 """
-function DBHTs(D, S; branchorder = :optimal)
+function DBHTs(D, S; branchorder = :optimal, method = :Unique)
     @assert(branchorder ∈ BranchOrderTypes, "branchorder must be one of $BranchOrderTypes")
     @assert(issymmetric(D), "D must be symmetric")
     @assert(issymmetric(S), "S must be symmetric")
@@ -664,7 +663,7 @@ function DBHTs(D, S; branchorder = :optimal)
     Apm[Apm .!= 0] .= D[Apm .!= 0]
     Dpm = distance_wei(Apm)[1]
 
-    H1, Hb, Mb, CliqList, Sb = CliqHierarchyTree2s(Rpm, :Unique)
+    H1, Hb, Mb, CliqList, Sb = CliqHierarchyTree2s(Rpm, method)
 
     Mb = Mb[1:size(CliqList, 1), :]
 

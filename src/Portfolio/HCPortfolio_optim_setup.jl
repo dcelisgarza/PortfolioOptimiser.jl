@@ -119,6 +119,7 @@ function _hierarchical_clustering(
     linkage = :single,
     max_k = 10,
     branchorder = :optimal,
+    dbht_method = :Unique,
 )
     codep_type = portfolio.codep_type
     codep = portfolio.codep
@@ -129,7 +130,7 @@ function _hierarchical_clustering(
     if linkage == :DBHT
         codep = codep_type ∈ codeps1 ? 1 .- dist .^ 2 : codep
         missing, missing, missing, missing, missing, missing, clustering =
-            DBHTs(dist, codep, branchorder = branchorder)
+            DBHTs(dist, codep; branchorder = branchorder, method = dbht_method)
     else
         clustering = hclust(
             dist;
@@ -149,8 +150,10 @@ function cluster_assets(
     max_k = 10,
     branchorder = :optimal,
     k = portfolio.k,
+    dbht_method = :Unique,
 )
-    clustering, tk = _hierarchical_clustering(portfolio, :HERC, linkage, max_k, branchorder)
+    clustering, tk =
+        _hierarchical_clustering(portfolio, :HERC, linkage, max_k, branchorder, dbht_method)
 
     k = isnothing(k) ? tk : k
 
@@ -573,12 +576,13 @@ function opt_port!(
     kelly::Symbol = :None,
     rf::Real = 0.0,
     l::Real = 2.0,
+    cluster = true,
     linkage::Symbol = :single,
-    k = portfolio.k,
+    k = cluster ? nothing : portfolio.k,
     max_k::Int = 10,
     branchorder = :optimal,
+    dbht_method = :Unique,
     max_iter = 100,
-    cluster = true,
 )
     @assert(type ∈ HCPortTypes, "type must be one of $HCPortTypes")
     @assert(rm ∈ HRRiskMeasures, "rm must be one of $HRRiskMeasures")
@@ -598,8 +602,14 @@ function opt_port!(
     N = length(portfolio.assets)
 
     if cluster
-        portfolio.clusters, tk =
-            _hierarchical_clustering(portfolio, type, linkage, max_k, branchorder)
+        portfolio.clusters, tk = _hierarchical_clustering(
+            portfolio,
+            type,
+            linkage,
+            max_k,
+            branchorder,
+            dbht_method,
+        )
         portfolio.k = isnothing(k) ? tk : k
     end
 
