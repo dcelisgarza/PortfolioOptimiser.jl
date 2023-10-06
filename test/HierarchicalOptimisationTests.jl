@@ -337,7 +337,7 @@ end
     linkage = :DBHT
     branchorder = :default
 
-    asset_classes = DataFrame(Assets = w1.tickers)
+    asset_classes = DataFrame(Assets = portfolio.assets)
     constraints = DataFrame(
         Enabled = fill(true, 20),
         Type = fill("Assets", 20),
