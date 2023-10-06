@@ -181,9 +181,9 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
     return crisk
 end
 
-function _hr_weight_bounds(upper_bound, lower_bound, weights, lc, rc, alpha_1)
-    !(any(upper_bound .< weights) || any(lower_bound .> weights)) && return alpha_1
-
+function _hr_weight_bounds(upper_bound, lower_bound, weights, sort_order, lc, rc, alpha_1)
+    !(any(upper_bound .< weights[sort_order]) || any(lower_bound .> weights[sort_order])) &&
+        return alpha_1
     lmaxw = weights[lc[1]]
     a1 = sum(upper_bound[lc]) / lmaxw
     a2 = max(sum(lower_bound[lc]) / lmaxw, alpha_1)
@@ -193,7 +193,6 @@ function _hr_weight_bounds(upper_bound, lower_bound, weights, lc, rc, alpha_1)
     a1 = sum(upper_bound[rc]) / rmaxw
     a2 = max(sum(lower_bound[rc]) / rmaxw, 1 - alpha_1)
     alpha_1 = 1 - min(a1, a2)
-
     return alpha_1
 end
 
@@ -206,8 +205,10 @@ function _recursive_bisection(
 )
     N = length(portfolio.assets)
     weights = ones(N)
-    w = ones(N)
     sort_order = portfolio.clusters.order
+    upper_bound = upper_bound[sort_order]
+    lower_bound = lower_bound[sort_order]
+
     items = [sort_order]
     returns = portfolio.returns
     covariance = portfolio.cov
@@ -233,7 +234,15 @@ function _recursive_bisection(
             alpha_1 = 1 - lrisk / (lrisk + rrisk)
 
             # Weight constraints.
-            alpha_1 = _hr_weight_bounds(upper_bound, lower_bound, weights, lc, rc, alpha_1)
+            alpha_1 = _hr_weight_bounds(
+                upper_bound,
+                lower_bound,
+                weights,
+                sort_order,
+                lc,
+                rc,
+                alpha_1,
+            )
 
             weights[lc] *= alpha_1
             weights[rc] *= 1 - alpha_1
@@ -343,6 +352,10 @@ function _hierarchical_recursive_bisection(
     returns = portfolio.returns
     covariance = portfolio.cov
     clustering = portfolio.clusters
+    sort_order = clustering.order
+    upper_bound = upper_bound[sort_order]
+    lower_bound = lower_bound[sort_order]
+
     k = portfolio.k
     root, nodes = to_tree(clustering)
     dists = [i.dist for i in nodes]
@@ -404,7 +417,15 @@ function _hierarchical_recursive_bisection(
 
             alpha_1 = 1 - lrisk / (lrisk + rrisk)
 
-            alpha_1 = _hr_weight_bounds(upper_bound, lower_bound, weights, lc, rc, alpha_1)
+            alpha_1 = _hr_weight_bounds(
+                upper_bound,
+                lower_bound,
+                weights,
+                sort_order,
+                lc,
+                rc,
+                alpha_1,
+            )
         end
 
         weights[lc] *= alpha_1
@@ -582,7 +603,10 @@ function opt_port!(
         portfolio.k = isnothing(k) ? tk : k
     end
 
+    sort_order = portfolio.clusters.order
+
     upper_bound, lower_bound = _setup_hr_weights(portfolio.w_max, portfolio.w_min, N)
+
     if type == :HRP
         weights = _recursive_bisection(
             portfolio;
@@ -615,6 +639,7 @@ function opt_port!(
         !isempty(intra_fails) && (portfolio.fail[:intra] = intra_fails)
         !isempty(inter_fails) && (portfolio.fail[:inter] = inter_fails)
     end
+
     weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
 
     retval = DataFrame(tickers = portfolio.assets, weights = weights)

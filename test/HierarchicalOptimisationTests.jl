@@ -310,3 +310,212 @@ end
     ]
     @test isapprox(w2t, w2.weights, rtol = 2.0e-5)
 end
+
+@testset "Weight bounds" begin
+    portfolio = HCPortfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+            :ECOS => Dict(
+                :solver => ECOS.Optimizer,
+                :params => Dict("verbose" => false, "maxit" => 500),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    type = :HRP
+    rm = :Variance
+    obj = :Min_Risk
+    kelly = :None
+    linkage = :DBHT
+    branchorder = :default
+
+    asset_classes = DataFrame(Assets = w1.tickers)
+    constraints = DataFrame(
+        Enabled = fill(true, 20),
+        Type = fill("Assets", 20),
+        Position = [
+            "GOOG",
+            "AAPL",
+            "FB",
+            "BABA",
+            "AMZN",
+            "GE",
+            "AMD",
+            "WMT",
+            "BAC",
+            "GM",
+            "T",
+            "UAA",
+            "SHLD",
+            "XOM",
+            "RRC",
+            "BBY",
+            "MA",
+            "PFE",
+            "JPM",
+            "SBUX",
+        ],
+        Sign = [
+            "<=",
+            "<=",
+            ">=",
+            ">=",
+            ">=",
+            "<=",
+            ">=",
+            "<=",
+            "<=",
+            "<=",
+            "<=",
+            ">=",
+            ">=",
+            "<=",
+            ">=",
+            ">=",
+            ">=",
+            "<=",
+            "<=",
+            ">=",
+        ],
+        Weight = [
+            0.025,
+            0.05,
+            0.06,
+            0.045,
+            0.06,
+            0.03,
+            0.02,
+            0.04,
+            0.03,
+            0.02,
+            0.06,
+            0.03,
+            0.01,
+            0.05,
+            0.03 - eps(),
+            0.01,
+            0.07,
+            0.1,
+            0.001,
+            0.02,
+        ],
+    )
+    w_min, w_max = hrp_constraints(constraints, asset_classes)
+
+    portfolio.w_min = w_min
+    portfolio.w_max = w_max
+    w1 = opt_port!(
+        portfolio;
+        type = type,
+        rm = rm,
+        obj = obj,
+        kelly = kelly,
+        rf = rf,
+        l = l,
+        linkage = linkage,
+        branchorder = branchorder,
+    )
+    w1t = [
+        0.025,
+        0.05,
+        0.19543999999999992,
+        0.045,
+        0.06,
+        0.03,
+        0.06980000000000001,
+        0.04,
+        0.03,
+        0.02,
+        0.06,
+        0.03,
+        0.01,
+        0.05,
+        0.08375999999999999,
+        0.01,
+        0.07,
+        0.1,
+        0.001,
+        0.02,
+    ]
+    @test isapprox(w1.weights, w1t)
+
+    type = :HERC
+    w2 = opt_port!(
+        portfolio;
+        type = type,
+        rm = rm,
+        obj = obj,
+        kelly = kelly,
+        rf = rf,
+        l = l,
+        linkage = linkage,
+        branchorder = branchorder,
+    )
+    w2t = [
+        0.025,
+        0.05,
+        0.06,
+        0.045,
+        0.06,
+        0.03,
+        0.02,
+        0.04,
+        0.03,
+        0.02,
+        0.06,
+        0.03,
+        0.01,
+        0.05,
+        0.029999999999999777,
+        0.08558122261249264,
+        0.07,
+        0.1,
+        0.001,
+        0.1834187773875075,
+    ]
+    @test isapprox(w2.weights, w2t)
+
+    type = :HERC2
+    w3 = opt_port!(
+        portfolio;
+        type = type,
+        rm = rm,
+        obj = obj,
+        kelly = kelly,
+        rf = rf,
+        l = l,
+        linkage = linkage,
+        branchorder = branchorder,
+    )
+    w3t = [
+        0.025,
+        0.049539209901322545,
+        0.07647789640503741,
+        0.07647789640503741,
+        0.07647789640503741,
+        0.03,
+        0.049539209901322545,
+        0.04,
+        0.03,
+        0.02,
+        0.05047199433370411,
+        0.05047199433370411,
+        0.05055805758552769,
+        0.05,
+        0.05047199433370411,
+        0.05055805758552769,
+        0.07,
+        0.07647789640503741,
+        0.001,
+        0.07647789640503741,
+    ]
+    @test isapprox(w3.weights, w3t)
+end

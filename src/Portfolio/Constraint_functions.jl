@@ -297,8 +297,8 @@ function rp_constraints(asset_classes, type = :Assets, class_col = nothing)
     @assert(type ∈ RPConstraintTypes, "type must be one of $RPConstraintTypes")
     N = nrow(asset_classes)
 
-    if type == :Assets
-        w = fill(1 / N, N)
+    w = if type == :Assets
+        fill(1 / N, N)
     else
         classes = names(asset_classes)
         isa(class_col, Symbol) && (class_col = String(class_col))
@@ -311,16 +311,17 @@ function rp_constraints(asset_classes, type = :Assets, class_col = nothing)
         else
             throw(ArgumentError("class_col must be a valid index of asset_classes"))
         end
+
+        col = names(A)[1]
+        A[!, :weight] .= 1
+        B = combine(groupby(A, col), nrow => :count)
+        A = leftjoin(A, B, on = col)
+        A[!, :weight] ./= A[!, :count]
+        A[!, :weight] ./= sum(A[!, :weight])
+        A[!, :weight]
     end
 
-    col = names(A)[1]
-    A[!, :weight] .= 1
-    B = combine(groupby(A, col), nrow => :count)
-    A = leftjoin(A, B, on = col)
-    A[!, :weight] ./= A[!, :count]
-    A[!, :weight] ./= sum(A[!, :weight])
-
-    return A[!, :weight]
+    return w
 end
 
 export asset_constraints,

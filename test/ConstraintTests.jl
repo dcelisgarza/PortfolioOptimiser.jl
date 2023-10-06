@@ -1785,6 +1785,8 @@ end
     w4 = rp_constraints(asset_classes, :Classes, "Class 2")
     w5 = rp_constraints(asset_classes, :Classes, 3)
     w6 = rp_constraints(asset_classes, :Classes, Symbol("Class 2"))
+    w7 = rp_constraints(asset_classes, :Assets)
+
     wt1 = vcat([[0.1], [0.1], [0.1], [0.1], [0.25], [0.25], [0.1]]...)
     wt2 = vcat(
         [
@@ -1803,4 +1805,6 @@ end
     @test isapprox(wt2, w4)
     @test isapprox(wt2, w5)
     @test isapprox(wt2, w6)
+    @test all(isapprox.(w7, 1 / 7))
+    @test_throws ArgumentError rp_constraints(asset_classes, :Classes, "Wak")
 end
