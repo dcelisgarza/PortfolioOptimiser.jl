@@ -613,8 +613,6 @@ function opt_port!(
         portfolio.k = isnothing(k) ? tk : k
     end
 
-    sort_order = portfolio.clusters.order
-
     upper_bound, lower_bound = _setup_hr_weights(portfolio.w_max, portfolio.w_min, N)
 
     if type == :HRP

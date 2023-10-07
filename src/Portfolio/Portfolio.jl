@@ -403,10 +403,13 @@ mutable struct Portfolio{
     urvar,
     urdar,
     # Optimisation model inputs
+    ttmu,
     tmu,
+    ttcov,
     tcov,
     tkurt,
     tskurt,
+    tpdf,
     tl2,
     ts2,
     tmuf,
@@ -512,10 +515,13 @@ mutable struct Portfolio{
     rvar_u::urvar
     rdar_u::urdar
     # Optimisation model inputs.
+    mu_type::ttmu
     mu::tmu
+    cov_type::ttcov
     cov::tcov
     kurt::tkurt
     skurt::tskurt
+    posdef_fix::tpdf
     L_2::tl2
     S_2::ts2
     mu_f::tmuf
@@ -616,10 +622,13 @@ function Portfolio(;
     rvar_u::Real = Inf,
     rdar_u::Real = Inf,
     # Optimisation model inputs.
+    mu_type::Symbol = :Historical,
     mu = Vector{Float64}(undef, 0),
+    cov_type::Symbol = :Historical,
     cov = Matrix{Float64}(undef, 0, 0),
     kurt = Matrix{Float64}(undef, 0, 0),
     skurt = Matrix{Float64}(undef, 0, 0),
+    posdef_fix::Symbol = :None,
     L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
     mu_f = Vector{Float64}(undef, 0),
@@ -750,10 +759,13 @@ function Portfolio(;
         typeof(rvar_u),
         typeof(rdar_u),
         # Optimisation model inputs.
+        typeof(mu_type),
         typeof(mu),
+        typeof(cov_type),
         typeof(cov),
         typeof(kurt),
         typeof(skurt),
+        typeof(posdef_fix),
         typeof(L_2),
         typeof(S_2),
         typeof(mu_f),
@@ -862,10 +874,13 @@ function Portfolio(;
         rvar_u,
         rdar_u,
         # Optimisation model inputs.
+        mu_type,
         mu,
+        cov_type,
         cov,
         kurt,
         skurt,
+        posdef_fix,
         L_2,
         S_2,
         mu_f,

@@ -77,6 +77,21 @@ function dup_elim_sum_matrices(n::Int)
     return d, l, s
 end
 
+function _posdef_fix(
+    mtx::AbstractMatrix,
+    posdef_fix,
+    posdef_func,
+    posdef_args,
+    posdef_kwargs,
+)
+    retval = if posdef_fix == :Custom_Func
+        posdef_func(mtx, posdef_args...; posdef_kwargs...)
+    elseif posdef_fix == :None
+        mtx
+    end
+
+    return retval
+end
 """
 ```julia
 asset_statistics!(
@@ -110,39 +125,64 @@ asset_statistics!(
 function asset_statistics!(
     portfolio::AbstractPortfolio;
     target_ret::AbstractFloat = 0.0,
+    mu_type::Symbol = portfolio.mu_type,
+    cov_type::Symbol = portfolio.cov_type,
+    posdef_fix::Symbol = portfolio.posdef_fix,
     mean_func::Function = mean,
     cov_func::Function = cov,
+    posdef_func::Function = x -> x,
     cor_func::Function = cor,
-    std_func = std,
+    std_func::Function = std,
     dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-    codep_type::Symbol = isa(portfolio, HCPortfolio) ? portfolio.codep_type : :Pearson,
+    codep_type::Union{Symbol, Nothing} = isa(portfolio, HCPortfolio) ?
+                                         portfolio.codep_type : nothing,
     custom_mu = nothing,
     custom_cov = nothing,
     custom_kurt = nothing,
     custom_skurt = nothing,
     mean_args = (),
     cov_args = (),
+    posdef_args = (),
     cor_args = (),
     dist_args = (),
     std_args = (),
     calc_kurt = true,
     mean_kwargs = (; dims = 1),
     cov_kwargs = (;),
+    posdef_kwargs = (;),
     cor_kwargs = (;),
     dist_kwargs = (;),
     std_kwargs = (;),
     uplo = :L,
 )
     returns = portfolio.returns
-    N = size(returns, 2)
 
-    portfolio.mu =
-        isnothing(custom_mu) ? vec(mean_func(returns, mean_args...; mean_kwargs...)) :
+    # Mu
+    @assert(mu_type ∈ MuTypes, "mu_type must be one of $MuTypes")
+    portfolio.mu = if mu_type == :Historical
+        vec(mean(returns, mean_args...; mean_kwargs...))
+    elseif mu_type == :Custom_Func
+        vec(mean_func(returns, mean_args...; mean_kwargs...))
+    elseif mu_type == :Custom_Val
         custom_mu
+    end
+    portfolio.mu_type = mu_type
 
+    # Covariance
+    @assert(cov_type ∈ CovTypes, "cov_type must be one of $CovTypes")
+    portfolio.cov = if cov_type == :Historical
+        cov(returns, cov_args...; cov_kwargs...)
+    elseif cov_type == :Custom_Func
+        cov_func(returns, cov_args...; cov_kwargs...)
+    elseif cov_type == :Custom_Val
+        custom_cov
+    end
+    portfolio.cov_type = cov_type
+    @assert(posdef_fix ∈ PosdefFixes, "posdef_fix must be one of $PosdefFixes")
     portfolio.cov =
-        isnothing(custom_cov) ? cov_func(returns, cov_args...; cov_kwargs...) : custom_cov
+        _posdef_fix(portfolio.cov, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
 
+    # Type specific
     if isa(portfolio, Portfolio)
         if calc_kurt
             portfolio.kurt =
@@ -151,9 +191,28 @@ function asset_statistics!(
             portfolio.skurt =
                 isnothing(custom_skurt) ?
                 scokurt(returns, transpose(portfolio.mu), target_ret) : custom_skurt
+
+            N = length(portfolio.mu)
             missing, portfolio.L_2, portfolio.S_2 = dup_elim_sum_matrices(N)
+
+            portfolio.kurt = _posdef_fix(
+                portfolio.kurt,
+                posdef_fix,
+                posdef_func,
+                posdef_args,
+                posdef_kwargs,
+            )
+
+            portfolio.skurt = _posdef_fix(
+                portfolio.skurt,
+                posdef_fix,
+                posdef_func,
+                posdef_args,
+                posdef_kwargs,
+            )
         end
     else
+        @assert(codep_type ∈ CodepTypes, "codep_type must be one of $CodepTypes")
         if codep_type == :Pearson
             codep = cor(returns)
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
@@ -203,14 +262,18 @@ function asset_statistics!(
         elseif codep_type == :Tail
             codep = ltdi_mtx(returns, portfolio.alpha_tail)
             dist = -log.(codep)
-        elseif codep_type == :Custom_Cov
+        elseif codep_type == :Cov_to_Cor
             codep = cov_to_cor(portfolio.cov)
             dist = dist_func(codep, dist_args...; dist_kwargs...)
-        elseif codep_type == :Custom_Cor
+        elseif codep_type == :Custom_Func
             codep = cor_func(returns, cor_args...; cor_kwargs...)
+            dist = dist_func(codep, dist_args...; dist_kwargs...)
+        elseif codep_type == :Custom_Val
+            codep = custom_cov
             dist = dist_func(codep, dist_args...; dist_kwargs...)
         end
 
+        portfolio.codep_type = codep_type
         portfolio.dist = issymmetric(dist) ? dist : Symmetric(dist, uplo)
         portfolio.codep = issymmetric(codep) ? codep : Symmetric(codep, uplo)
     end

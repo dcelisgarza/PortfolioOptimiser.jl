@@ -488,6 +488,10 @@ HCPortTypes = (:HRP, :HERC, :HERC2, :NCO)
 """
 const HCPortTypes = (:HRP, :HERC, :HERC2, :NCO)
 
+const MuTypes = (:Historical, :Custom_Func, :Custom_Val)
+const CovTypes = (:Historical, :Custom_Func, :Custom_Val)
+const PosdefFixes = (:None, :Custom_Func)
+
 """
 ```julia
 CodepTypes = (
@@ -502,8 +506,9 @@ CodepTypes = (
     :Distance,
     :Mutual_Info,
     :Tail,
-    :Custom_Cov,
-    :Custom_Cor,
+    :Cov_to_Cor,
+    :Custom_Func,
+    :Custom_Val,
 )
 ```
 Available types of codependency measures computed in [`asset_statistics!`](@ref) when the portfolio is a [`HCPortfolio`](@ref).
@@ -520,8 +525,9 @@ const CodepTypes = (
     :Distance,
     :Mutual_Info,
     :Tail,
-    :Custom_Cov,
-    :Custom_Cor,
+    :Cov_to_Cor,
+    :Custom_Func,
+    :Custom_Val,
 )
 
 """
@@ -574,6 +580,8 @@ export AbstractPortfolio,
     InfoTypes,
     HRRiskMeasures,
     HCPortTypes,
+    MuTypes,
+    CovTypes,
     CodepTypes,
     LinkageTypes,
     BranchOrderTypes,

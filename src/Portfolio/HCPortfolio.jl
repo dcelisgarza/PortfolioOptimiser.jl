@@ -15,17 +15,19 @@ mutable struct HCPortfolio{
     ata,
     gst,
     # Optimisation parameters.
+    tymu,
     tmu,
+    tycov,
     tcov,
     tbin,
     wmi,
     wma,
-    # Optimal portfolios.
     ttco,
     tco,
     tdist,
     tcl,
     tk,
+    # Optimal portfolios.
     hrpopt,
     hercopt,
     herc2opt,
@@ -50,18 +52,19 @@ mutable struct HCPortfolio{
     alpha_tail::ata
     gs_threshold::gst
     # Optimisation parameters.
+    mu_type::tymu
     mu::tmu
+    cov_type::tycov
     cov::tcov
     bins_info::tbin
     w_min::wmi
     w_max::wma
-    # Optimal portfolios.
     codep_type::ttco
     codep::tco
     dist::tdist
     clusters::tcl
     k::tk
-    # Optimal portfolios
+    # Optimal portfolios.
     hrp_optimal::hrpopt
     herc_optimal::hercopt
     herc2_optimal::herc2opt
@@ -91,7 +94,9 @@ HCPortfolio(;
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
     # Optimisation parameters.
+    mu_type::Symbol = :Historical,
     mu = Vector{Float64}(undef, 0),
+    cov_type::Symbol = :Historical,
     cov = Matrix{Float64}(undef, 0, 0),
     bins_info::Union{Symbol, Int} = :KN,
     w_min::Union{AbstractFloat, AbstractVector, Nothing} = 0.0,
@@ -123,8 +128,11 @@ mutable struct HCPortfolio{
     ata,
     gst,
     # Optimisation parameters.
+    ttmu,
     tmu,
+    ttcov,
     tcov,
+    tpdf,
     tbin,
     wmi,
     wma,
@@ -158,8 +166,11 @@ mutable struct HCPortfolio{
     alpha_tail::ata
     gs_threshold::gst
     # Optimisation parameters.
+    mu_type::ttmu
     mu::tmu
+    cov_type::ttcov
     cov::tcov
+    posdef_fix::tpdf
     bins_info::tbin
     w_min::wmi
     w_max::wma
@@ -196,12 +207,14 @@ function HCPortfolio(;
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
     # Optimisation parameters.
+    mu_type::Symbol = :Historical,
     mu = Vector{Float64}(undef, 0),
+    cov_type::Symbol = :Historical,
     cov = Matrix{Float64}(undef, 0, 0),
+    posdef_fix::Symbol = :None,
     bins_info::Union{Symbol, Int} = :KN,
     w_min::Union{AbstractFloat, AbstractVector, Nothing} = 0.0,
     w_max::Union{AbstractFloat, AbstractVector, Nothing} = 1.0,
-    # Optimal portfolios.
     codep_type::Symbol = :Pearson,
     codep = Matrix{Float64}(undef, 0, 0),
     dist = Matrix{Float64}(undef, 0, 0),
@@ -239,8 +252,11 @@ function HCPortfolio(;
         typeof(alpha_tail),
         typeof(gs_threshold),
         # Optimisation parameters.
+        typeof(mu_type),
         typeof(mu),
+        typeof(cov_type),
         typeof(cov),
+        typeof(posdef_fix),
         Union{Symbol, Int},
         Union{AbstractFloat, AbstractVector, Nothing},
         Union{AbstractFloat, AbstractVector, Nothing},
@@ -273,8 +289,11 @@ function HCPortfolio(;
         alpha_tail,
         gs_threshold,
         # Optimisation parameters.
+        mu_type,
         mu,
+        cov_type,
         cov,
+        posdef_fix,
         bins_info,
         w_min,
         w_max,
