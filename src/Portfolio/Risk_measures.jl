@@ -93,11 +93,10 @@ Compute the Second Lower Partial Moment (Sortino Ratio).
 - `x`: vector of portfolio returns;
 - `r`: minimum return target.
 """
-function SLPM(x, min_ret = 0.0)
+function SLPM(x::AbstractVector, min_ret::Real = 0.0)
     T = length(x)
     val = min_ret .- x
-    val = sum(val[val .>= 0] .^ 2) / (T - 1)
-    return sqrt(val)
+    return sqrt(sum(val[val .>= 0] .^ 2) / (T - 1))
 end
 
 """

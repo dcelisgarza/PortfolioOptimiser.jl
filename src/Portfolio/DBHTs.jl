@@ -89,7 +89,7 @@ function PMFG_T2s(W, nargout = 3)
         for i in 1:M
             ss .= 0
             for j in 1:3
-                ss .+= sum(cliques .== cliques[i, j], dims = 2)
+                ss .+= vec(sum(cliques .== cliques[i, j], dims = 2))
             end
             cliqueTree[i, ss .== 2] .= 1
         end
@@ -370,8 +370,8 @@ function CliqHierarchyTree2s(Apm, method = :Unique)
         end
 
         if !isempty(Pred)
-            H = H + transpose(H)
-            H = H + Adj
+            H .+= transpose(H)
+            H .+= Adj
         else
             H = spzeros(Int, 0, 0)
         end

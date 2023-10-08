@@ -30,7 +30,6 @@ function gen_dataframes(portfolio)
     df_cov_sigma,
     df_dmu
 end
-=#
 
 function cov_returns(x; seed = nothing, rng = Random.default_rng(), len = 10, iters = 5)
     !isnothing(seed) && Random.seed!(rng, seed)
@@ -51,9 +50,6 @@ function cov_returns(x; seed = nothing, rng = Random.default_rng(), len = 10, it
     return a * C.U
 end
 
-export block_vec_pq,
-    cov_returns,
-    duplication_matrix,
-    elimination_matrix,
-    summation_matrix,
-    dup_elim_sum_matrices
+export cov_returns
+=#
+

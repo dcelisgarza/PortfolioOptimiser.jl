@@ -61,13 +61,16 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     model = portfolio.model
     msv_target = portfolio.msv_target
 
-    abs_dev = if isempty(msv_target) || (isa(msv_target, Real) && isinf(msv_target))
-        returns .- transpose(mu)
-    elseif isa(msv_target, Real) && isfinite(msv_target)
-        returns .- msv_target
-    else
-        returns .- transpose(msv_target)
-    end
+    abs_dev =
+        if (isa(msv_target, Real) && isinf(msv_target)) ||
+           isempty(msv_target) ||
+           isnothing(msv_target)
+            returns .- transpose(mu)
+        elseif isa(msv_target, Real) && isfinite(msv_target)
+            returns .- msv_target
+        else
+            returns .- transpose(msv_target)
+        end
 
     @variable(model, mad[1:T] >= 0)
     @constraint(model, abs_dev * model[:w] .>= -mad)
@@ -115,13 +118,16 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
 
     lpm_target = portfolio.lpm_target
 
-    lpm_t = if isempty(lpm_target) || (isa(lpm_target, Real) && isinf(lpm_target))
-        rf
-    elseif isa(lpm_target, Real) && isfinite(lpm_target)
-        lpm_target
-    else
-        transpose(lpm_target)
-    end
+    lpm_t =
+        if (isa(lpm_target, Real) && isinf(lpm_target)) ||
+           isempty(lpm_target) ||
+           isnothing(lpm_target)
+            rf
+        elseif isa(lpm_target, Real) && isfinite(lpm_target)
+            lpm_target
+        else
+            transpose(lpm_target)
+        end
 
     @variable(model, lpm[1:T] .>= 0)
     !haskey(model, :hist_ret) && @expression(model, hist_ret, returns * model[:w])

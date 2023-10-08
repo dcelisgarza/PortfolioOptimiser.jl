@@ -449,4 +449,13 @@ function wc_statistics!(
     return nothing
 end
 
-export cokurt, scokurt, asset_statistics!, wc_statistics!, fix_cov!
+export block_vec_pq,
+    duplication_matrix,
+    elimination_matrix,
+    summation_matrix,
+    dup_elim_sum_matrices,
+    cokurt,
+    scokurt,
+    asset_statistics!,
+    wc_statistics!,
+    fix_cov!
