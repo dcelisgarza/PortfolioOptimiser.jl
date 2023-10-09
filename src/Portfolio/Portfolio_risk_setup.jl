@@ -28,6 +28,14 @@ function _calc_var_dar_constants(portfolio, rm, T)
     return nothing
 end
 
+function _mv_risk(model, sigma)
+    G = sqrt(sigma)
+    @variable(model, dev)
+    @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
+    @expression(model, dev_risk, dev * dev)
+    return nothing
+end
+
 function _mv_setup(portfolio, sigma, rm, kelly, obj, type)
     dev_u = portfolio.dev_u
 
@@ -35,19 +43,16 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj, type)
 
     model = portfolio.model
 
-    @variable(model, dev)
-    G = sqrt(sigma)
-    @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
-    @expression(model, dev_risk, dev * dev)
+    _mv_risk(model, sigma)
 
     isfinite(dev_u) &&
         type == :Trad &&
         (
-            obj == :Sharpe ? @constraint(model, dev <= dev_u * model[:k]) :
-            @constraint(model, dev <= dev_u)
+            obj == :Sharpe ? @constraint(model, model[:dev] <= dev_u * model[:k]) :
+            @constraint(model, model[:dev] <= dev_u)
         )
 
-    rm == :SD && type != :RRP && @expression(model, risk, dev_risk)
+    rm == :SD && type != :RRP && @expression(model, risk, model[:dev_risk])
 
     return nothing
 end
@@ -449,6 +454,34 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     return nothing
 end
 
+function _risk_setup(
+    portfolio,
+    type,
+    rm,
+    kelly,
+    obj,
+    rf,
+    T,
+    N,
+    mu,
+    returns,
+    sigma,
+    kurtosis,
+    skurtosis,
+)
+    _calc_var_dar_constants(portfolio, rm, T)
+    _mv_setup(portfolio, sigma, rm, kelly, obj, type)
+    _mad_setup(portfolio, rm, T, returns, mu, obj, type)
+    _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
+    _wr_setup(portfolio, rm, returns, obj, type)
+    _var_setup(portfolio, rm, T, returns, obj, type)
+    _drawdown_setup(portfolio, rm, T, returns, obj, type)
+    _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
+    _owa_setup(portfolio, rm, T, returns, obj, type)
+
+    return nothing
+end
+
 function block_vec_pq(A, p, q)
     mp, nq = size(A)
 
@@ -815,16 +848,12 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     return nothing
 end
 
-function _wc_setup(portfolio, kelly, obj, N, rf, mu, sigma, u_mu, u_cov)
+function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
     model = portfolio.model
 
     # Return uncertainy sets.
-
     if kelly == :Approx || (u_cov != :Box && u_cov != :Ellipse)
-        @variable(model, dev)
-        G = sqrt(sigma)
-        @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
-        @expression(model, dev_risk, dev * dev)
+        _mv_risk(model, sigma)
     end
 
     if kelly == :Exact
@@ -845,27 +874,21 @@ function _wc_setup(portfolio, kelly, obj, N, rf, mu, sigma, u_mu, u_cov)
     if haskey(model, :_ret)
         if u_mu == :Box
             d_mu = portfolio.d_mu
-
             @variable(model, abs_w[1:N])
             @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
             @expression(model, ret, _ret - dot(d_mu, abs_w))
-            obj == :Sharpe && @constraint(model, ret - rf * model[:k] >= 1)
         elseif u_mu == :Ellipse
             k_mu = portfolio.k_mu
             cov_mu = portfolio.cov_mu
             G = sqrt(cov_mu)
-
             @expression(model, x_gw, G * model[:w])
             @variable(model, t_gw)
             @constraint(model, [t_gw; x_gw] in SecondOrderCone())
-
             @expression(model, ret, _ret - k_mu * t_gw)
-
-            obj == :Sharpe && @constraint(model, ret - rf * model[:k] >= 1)
         else
             @expression(model, ret, _ret)
-            obj == :Sharpe && @constraint(model, ret - rf * model[:k] >= 1)
         end
+        obj == :Sharpe && @constraint(model, ret - rf * model[:k] >= 1)
     end
 
     # Cov uncertainty sets.
@@ -906,6 +929,6 @@ function _wc_setup(portfolio, kelly, obj, N, rf, mu, sigma, u_mu, u_cov)
 
         @expression(model, risk, tr(sigma * E1_p_E2) + k_sigma * t_ge)
     else
-        @expression(model, risk, dev_risk)
+        @expression(model, risk, model[:dev_risk])
     end
 end

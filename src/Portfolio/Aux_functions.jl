@@ -51,5 +51,5 @@ function cov_returns(x; seed = nothing, rng = Random.default_rng(), len = 10, it
 end
 
 export cov_returns
-=#
 
+=#
