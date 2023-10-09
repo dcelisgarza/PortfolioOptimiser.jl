@@ -650,19 +650,9 @@ function opt_port!(
 
     weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
 
-    retval = DataFrame(tickers = portfolio.assets, weights = weights)
+    portfolio.optimal[type] = DataFrame(tickers = portfolio.assets, weights = weights)
 
-    if type == :HRP
-        portfolio.hrp_optimal = retval
-    elseif type == :HERC
-        portfolio.herc_optimal = retval
-    elseif type == :HERC2
-        portfolio.herc2_optimal = retval
-    elseif type == :NCO
-        portfolio.nco_optimal = retval
-    end
-
-    return retval
+    return portfolio.optimal[type]
 end
 
 export opt_port!

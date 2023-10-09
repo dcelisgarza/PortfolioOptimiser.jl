@@ -197,10 +197,7 @@ mutable struct Portfolio{
     mu_bl_fm::tmublf
     cov_bl_fm::tcovblf
     returns_fm::trfm
-    z_evar::tevar
-    z_edar::tedar
-    z_rvar::trvar
-    z_rdar::trdar
+    z::tz
     # Inputs of Worst Case Optimization Models.
     cov_l::tcovl
     cov_u::tcovu
@@ -210,10 +207,7 @@ mutable struct Portfolio{
     k_mu::tkmu
     k_sigma::tks
     # Optimal portfolios.
-    p_optimal::topt
-    rp_optimal::trpopt
-    rrp_optimal::trrpopt
-    wc_optimal::twcopt
+    optimal::topt
     limits::tlim
     frontier::tfront
     # Solver params.
@@ -316,10 +310,7 @@ Portfolio(;
     k_mu::Real = Inf,
     k_sigma::Real = Inf,
     # Optimal portfolios.
-    p_optimal = DataFrame(),
-    rp_optimal = DataFrame(),
-    rrp_optimal = DataFrame(),
-    wc_optimal = DataFrame(),
+    optimal::AbstractDict = Dict(),
     limits = Matrix{Float64}(undef, 0, 0),
     frontier = Matrix{Float64}(undef, 0, 0),
     # Solutions.
@@ -421,10 +412,7 @@ mutable struct Portfolio{
     tmublf,
     tcovblf,
     trfm,
-    tevar,
-    tedar,
-    trvar,
-    trdar,
+    tz,
     tcovl,
     tcovu,
     tcovmu,
@@ -433,9 +421,6 @@ mutable struct Portfolio{
     tkmu,
     tks,
     topt,
-    trpopt,
-    trrpopt,
-    twcopt,
     tlim,
     tfront,
     tsolv,
@@ -533,10 +518,7 @@ mutable struct Portfolio{
     mu_bl_fm::tmublf
     cov_bl_fm::tcovblf
     returns_fm::trfm
-    z_evar::tevar
-    z_edar::tedar
-    z_rvar::trvar
-    z_rdar::trdar
+    z::tz
     # Inputs of Worst Case Optimization Models.
     cov_l::tcovl
     cov_u::tcovu
@@ -546,10 +528,7 @@ mutable struct Portfolio{
     k_mu::tkmu
     k_sigma::tks
     # Optimal portfolios.
-    p_optimal::topt
-    rp_optimal::trpopt
-    rrp_optimal::trrpopt
-    wc_optimal::twcopt
+    optimal::topt
     limits::tlim
     frontier::tfront
     # Solver params.
@@ -640,10 +619,7 @@ function Portfolio(;
     mu_bl_fm = Vector{Float64}(undef, 0),
     cov_bl_fm = Matrix{Float64}(undef, 0, 0),
     returns_fm = Matrix{Float64}(undef, 0, 0),
-    z_evar::Real = Inf,
-    z_edar::Real = Inf,
-    z_rvar::Real = Inf,
-    z_rdar::Real = Inf,
+    z::AbstractDict = Dict(),
     # Inputs of Worst Case Optimization Models.
     cov_l = Matrix{Float64}(undef, 0, 0),
     cov_u = Matrix{Float64}(undef, 0, 0),
@@ -653,10 +629,7 @@ function Portfolio(;
     k_mu::Real = Inf,
     k_sigma::Real = Inf,
     # Optimal portfolios.
-    p_optimal = DataFrame(),
-    rp_optimal = DataFrame(),
-    rrp_optimal = DataFrame(),
-    wc_optimal = DataFrame(),
+    optimal::AbstractDict = Dict(),
     limits = Matrix{Float64}(undef, 0, 0),
     frontier = Matrix{Float64}(undef, 0, 0),
     # Solutions.
@@ -777,10 +750,7 @@ function Portfolio(;
         typeof(mu_bl_fm),
         typeof(cov_bl_fm),
         typeof(returns_fm),
-        typeof(z_evar),
-        typeof(z_edar),
-        typeof(z_rvar),
-        typeof(z_rdar),
+        typeof(z),
         # Inputs of Worst Case Optimization Models.
         typeof(cov_l),
         typeof(cov_u),
@@ -790,10 +760,7 @@ function Portfolio(;
         typeof(k_mu),
         typeof(k_sigma),
         # Optimal portfolios.
-        typeof(p_optimal),
-        typeof(rp_optimal),
-        typeof(rrp_optimal),
-        typeof(wc_optimal),
+        typeof(optimal),
         typeof(limits),
         typeof(frontier),
         # Solutions.
@@ -892,10 +859,7 @@ function Portfolio(;
         mu_bl_fm,
         cov_bl_fm,
         returns_fm,
-        z_evar,
-        z_edar,
-        z_rvar,
-        z_rdar,
+        z,
         # Inputs of Worst Case Optimization Models.
         cov_l,
         cov_u,
@@ -905,10 +869,7 @@ function Portfolio(;
         k_mu,
         k_sigma,
         # Optimal portfolios.
-        p_optimal,
-        rp_optimal,
-        rrp_optimal,
-        wc_optimal,
+        optimal,
         limits,
         frontier,
         # Solutions.

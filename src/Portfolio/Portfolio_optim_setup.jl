@@ -369,16 +369,9 @@ end
 function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj)
     model = portfolio.model
 
-    if type == :Trad || type == :RP
-        if rm == :EVaR
-            portfolio.z_evar = value(portfolio.model[:z_evar])
-        elseif rm == :EDaR
-            portfolio.z_edar = value(portfolio.model[:z_edar])
-        elseif rm == :RVaR
-            portfolio.z_rvar = value(portfolio.model[:z_rvar])
-        elseif rm == :RDaR
-            portfolio.z_rdar = value(portfolio.model[:z_rdar])
-        end
+    if (type == :Trad || type == :RP) && rm ∈ (:EVaR, :EDaR, :RVaR, :RDaR)
+        z_key = Symbol("z_" * lowercase(string(rm)))
+        portfolio.z[z_key] = portfolio.model[z_key]
     end
 
     weights = Vector{eltype(returns)}(undef, N)
@@ -398,35 +391,18 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
             sum_w = sum_w > eps() ? sum_w : 1
             weights .= abs.(weights) / sum_w * sum_short_long
         end
-
-        type == :Trad ?
-        (portfolio.p_optimal = DataFrame(tickers = portfolio.assets, weights = weights)) :
-        (portfolio.wc_optimal = DataFrame(tickers = portfolio.assets, weights = weights))
-
     elseif type == :RP || type == :RRP
         weights .= value.(model[:w])
         sum_w = sum(abs.(weights))
         sum_w = sum_w > eps() ? sum_w : 1
         weights .= abs.(weights) / sum_w
-
-        type == :RP ?
-        (portfolio.rp_optimal = DataFrame(tickers = portfolio.assets, weights = weights)) :
-        (portfolio.rrp_optimal = DataFrame(tickers = portfolio.assets, weights = weights))
     end
+
+    portfolio.optimal[type] = DataFrame(tickers = portfolio.assets, weights = weights)
 
     isempty(solvers_tried) ? portfolio.fail = Dict() : portfolio.fail = solvers_tried
 
-    retval = if type == :Trad
-        portfolio.p_optimal
-    elseif type == :RP
-        portfolio.rp_optimal
-    elseif type == :RRP
-        portfolio.rrp_optimal
-    elseif type == :WC
-        portfolio.wc_optimal
-    end
-
-    return retval
+    return portfolio.optimal[type]
 end
 
 function _handle_errors_and_finalise(
@@ -442,23 +418,11 @@ function _handle_errors_and_finalise(
     retval =
         if term_status ∉ ValidTermination || any(.!isfinite.(value.(portfolio.model[:w])))
             funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.opt_port!))"
-
             @warn(
                 "$funcname: model could not be optimised satisfactorily.\nPortfolio type: $type\nClass: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $solvers_tried"
             )
-
             portfolio.fail = solvers_tried
-
-            if type == :Trad
-                portfolio.p_optimal = DataFrame()
-            elseif type == :RP
-                portfolio.rp_optimal = DataFrame()
-            elseif type == :RRP
-                portfolio.rp_optimal = DataFrame()
-            else
-                portfolio.wc_optimal = DataFrame()
-            end
-
+            DataFrame()
         else
             _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj)
         end

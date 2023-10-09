@@ -251,7 +251,7 @@ function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     obj_val = objective_value(model)
 
     if term_status ∉ ValidTermination || !isfinite(obj_val)
-        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._ERM))"
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.ERM))"
         @warn(
             "$funcname: model could not be optimised satisfactorily. Solvers: $solvers_tried"
         )
@@ -354,7 +354,7 @@ function RRM(
     obj_val = objective_value(model)
 
     if term_status ∉ ValidTermination || !isfinite(obj_val)
-        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._optimizeRRM))"
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.RRM))"
         @warn(
             "$funcname: model could not be optimised satisfactorily. Solvers: $solvers_tried"
         )
@@ -1135,32 +1135,12 @@ function calc_risk(
     rm::Symbol = :SD,
     rf::Real = 0.0,
 )
-    weights = if isa(portfolio, Portfolio)
-        @assert(type ∈ PortTypes, "type must be one of $PortTypes")
-        if type == :Trad
-            portfolio.p_optimal.weights
-        elseif type == :RP
-            portfolio.rp_optimal.weights
-        elseif type == :RRP
-            portfolio.rrp_optimal.weights
-        elseif type == :WC
-            portfolio.wc_optimal.weights
-        end
-    else
-        @assert(type ∈ PortTypes, "type must be one of $HCPortTypes")
-        if type == :HRP
-            portfolio.hrp_optimal
-        elseif type == :HERC
-            portfolio.herc_optimal
-        elseif type == :HERC2
-            portfolio.herc2_optimal
-        elseif type == :NCO
-            portfolio.nco_optimal
-        end
-    end
+    isa(portfolio, Portfolio) ?
+    @assert(type ∈ PortTypes, "type must be one of $PortTypes") :
+    @assert(type ∈ PortTypes, "type must be one of $HCPortTypes")
 
     return calc_risk(
-        weights,
+        portfolio.optimal[type].weights,
         portfolio.returns;
         rm = rm,
         rf = rf,

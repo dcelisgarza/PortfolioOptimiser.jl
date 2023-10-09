@@ -28,10 +28,7 @@ mutable struct HCPortfolio{
     tcl,
     tk,
     # Optimal portfolios.
-    hrpopt,
-    hercopt,
-    herc2opt,
-    ncoopt,
+    topt,
     # Solutions.
     tsolv,
     toptpar,
@@ -65,10 +62,7 @@ mutable struct HCPortfolio{
     clusters::tcl
     k::tk
     # Optimal portfolios.
-    hrp_optimal::hrpopt
-    herc_optimal::hercopt
-    herc2_optimal::herc2opt
-    nco_optimal::ncoopt
+    optimal::topt
     # Solutions.
     solvers::tsolv
     opt_params::toptpar
@@ -142,10 +136,7 @@ mutable struct HCPortfolio{
     tcl,
     tk,
     # Optimal portfolios.
-    hrpopt,
-    hercopt,
-    herc2opt,
-    ncoopt,
+    topt,
     # Solutions.
     tsolv,
     toptpar,
@@ -180,10 +171,7 @@ mutable struct HCPortfolio{
     clusters::tcl
     k::tk
     # Optimal portfolios.
-    hrp_optimal::hrpopt
-    herc_optimal::hercopt
-    herc2_optimal::herc2opt
-    nco_optimal::ncoopt
+    optimal::topt
     # Solutions.
     solvers::tsolv
     opt_params::toptpar
@@ -220,6 +208,8 @@ function HCPortfolio(;
     dist = Matrix{Float64}(undef, 0, 0),
     clusters = Hclust{Float64}(Matrix{Int64}(undef, 0, 2), Float64[], Int64[], :nothing),
     k::Union{<:Integer, Nothing} = nothing,
+    # Optimal portfolios.
+    optimal::AbstractDict = Dict(),
     # Solutions.
     solvers::AbstractDict = Dict(),
     opt_params::AbstractDict = Dict(),
@@ -266,10 +256,7 @@ function HCPortfolio(;
         typeof(clusters),
         Union{<:Integer, Nothing},
         # Optimal portfolios.
-        DataFrame,
-        DataFrame,
-        DataFrame,
-        DataFrame,
+        typeof(optimal),
         # Solutions.
         typeof(solvers),
         typeof(opt_params),
@@ -303,10 +290,7 @@ function HCPortfolio(;
         clusters,
         k,
         # Optimal portfolios.
-        DataFrame(),
-        DataFrame(),
-        DataFrame(),
-        DataFrame(),
+        optimal,
         # Solutions.
         solvers,
         opt_params,
