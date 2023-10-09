@@ -485,7 +485,7 @@ function _intra_weights(
             l = l,
         )
         intra_weights[idx, i] .= weights
-        cfails[i] = cfail
+        !isempty(cfail) && (cfails[i] = cfail)
     end
 
     return intra_weights, cfails
@@ -568,6 +568,59 @@ function _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter = 100)
     return weights
 end
 
+function _save_opt_params(
+    portfolio,
+    type,
+    rm,
+    obj,
+    kelly,
+    rf,
+    l,
+    cluster,
+    linkage,
+    k,
+    max_k,
+    branchorder,
+    dbht_method,
+    max_iter,
+    save_opt_params,
+)
+    !save_opt_params && return nothing
+
+    opt_params_dict = if type != :NCO
+        Dict(
+            :rm => rm,
+            :rf => rf,
+            :cluster => cluster,
+            :linkage => linkage,
+            :k => k,
+            :max_k => max_k,
+            :branchorder => branchorder,
+            :dbht_method => linkage == :DBHT ? dbht_method : nothing,
+            :max_iter => max_iter,
+        )
+    else
+        Dict(
+            :rm => rm,
+            :obj => obj,
+            :kelly => kelly,
+            :rf => rf,
+            :l => l,
+            :cluster => cluster,
+            :linkage => linkage,
+            :k => k,
+            :max_k => max_k,
+            :branchorder => branchorder,
+            :dbht_method => linkage == :DBHT ? dbht_method : nothing,
+            :max_iter => max_iter,
+        )
+    end
+
+    portfolio.opt_params[type] = opt_params_dict
+
+    return nothing
+end
+
 function opt_port!(
     portfolio::HCPortfolio;
     type::Symbol = :HRP,
@@ -583,6 +636,7 @@ function opt_port!(
     branchorder = :optimal,
     dbht_method = :Unique,
     max_iter = 100,
+    save_opt_params = true,
 )
     @assert(type ∈ HCPortTypes, "type must be one of $HCPortTypes")
     @assert(rm ∈ HRRiskMeasures, "rm must be one of $HRRiskMeasures")
@@ -597,6 +651,24 @@ function opt_port!(
     @assert(
         0 < portfolio.kappa < 1,
         "portfolio.kappa must be greater than 0 and smaller than 1"
+    )
+
+    _save_opt_params(
+        portfolio,
+        type,
+        rm,
+        obj,
+        kelly,
+        rf,
+        l,
+        cluster,
+        linkage,
+        k,
+        max_k,
+        branchorder,
+        dbht_method,
+        max_iter,
+        save_opt_params,
     )
 
     N = length(portfolio.assets)
