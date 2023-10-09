@@ -36,7 +36,7 @@ function _setup_ret(kelly, model, T, returns, mu, mu_l)
     return nothing
 end
 
-function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l)
+function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l, trad = true)
     if kelly == :Exact
         @variable(model, texact_kelly[1:T])
         @expression(model, _ret, sum(texact_kelly) / T - rf * model[:k])
@@ -46,7 +46,7 @@ function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l)
             [i = 1:T],
             [texact_kelly[i], model[:k], kret[i]] in MOI.ExponentialCone()
         )
-        @constraint(model, model[:risk] <= 1)
+        trad && @constraint(model, model[:risk] <= 1)
     elseif kelly == :Approx && (!isempty(mu) || !isnothing(mu))
         @variable(model, tapprox_kelly)
         @constraint(
@@ -58,10 +58,10 @@ function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l)
             ] in SecondOrderCone()
         )
         @expression(model, _ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
-        @constraint(model, model[:risk] <= 1)
+        trad && @constraint(model, model[:risk] <= 1)
     elseif !isempty(mu) || !isnothing(mu)
         @expression(model, _ret, dot(mu, model[:w]))
-        @constraint(model, _ret - rf * model[:k] == 1)
+        trad && @constraint(model, _ret - rf * model[:k] == 1)
     end
 
     !isinf(mu_l) && @constraint(model, _ret >= mu_l * model[:k])
@@ -73,13 +73,10 @@ function _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
     model = portfolio.model
     mu_l = portfolio.mu_l
 
-    if class == :Classic && (kelly == :Exact || kelly == :Approx)
-        obj == :Sharpe ? _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l) :
-        _setup_ret(kelly, model, T, returns, mu, mu_l)
-    else
-        obj == :Sharpe ? _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l) :
-        _setup_ret(kelly, model, T, returns, mu, mu_l)
-    end
+    kelly = class == :Classic ? kelly : :None
+
+    obj == :Sharpe ? _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l) :
+    _setup_ret(kelly, model, T, returns, mu, mu_l)
 
     haskey(model, :_ret) && @expression(model, ret, model[:_ret])
 
@@ -280,7 +277,7 @@ end
 function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l)
     model = portfolio.model
     if obj == :Sharpe
-        type == :Trad && class == :Classic && (kelly == :Exact || kelly == :Approx) ?
+        (type == :Trad && class == :Classic || type == :WC) && kelly != :None ?
         @objective(model, Max, model[:ret]) : @objective(model, Min, model[:risk])
     elseif obj == :Min_Risk
         @objective(model, Min, model[:risk])

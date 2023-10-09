@@ -848,35 +848,67 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     return nothing
 end
 
+function _setup_wc_ret(model, obj, kelly, T, N, mu, returns)
+    if obj == :Sharpe
+        if kelly == :Exact
+            @variable(model, texact_kelly[1:T])
+            @expression(model, _ret, sum(texact_kelly) / T - rf * model[:k])
+            @expression(model, kret, model[:k] .+ returns * model[:w])
+            @constraint(
+                model,
+                [i = 1:T],
+                [texact_kelly[i], model[:k], kret[i]] in MOI.ExponentialCone()
+            )
+        elseif kelly == :Approx && (!isempty(mu) || !isnothing(mu))
+            @variable(model, tapprox_kelly)
+            @constraint(
+                model,
+                [
+                    model[:k] + tapprox_kelly
+                    2 * model[:dev]
+                    model[:k] - tapprox_kelly
+                ] in SecondOrderCone()
+            )
+            @expression(model, _ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
+        elseif !isempty(mu) || !isnothing(mu)
+            @expression(model, _ret, dot(mu, model[:w]))
+        end
+    else
+        if kelly == :Exact
+            @variable(model, texact_kelly[1:T])
+            @expression(model, _ret, sum(texact_kelly) / T)
+            @expression(model, kret, 1 .+ returns * model[:w])
+            @constraint(
+                model,
+                [i = 1:T],
+                [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
+            )
+        elseif kelly == :Approx && (!isempty(mu) || !isnothing(mu))
+            @expression(model, _ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
+        elseif !isempty(mu) || !isnothing(mu)
+            @expression(model, _ret, dot(mu, model[:w]))
+        end
+    end
+
+    return nothing
+end
+
 function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
     model = portfolio.model
 
     # Return uncertainy sets.
-    if kelly == :Approx || (u_cov != :Box && u_cov != :Ellipse)
-        _mv_risk(model, sigma)
-    end
+    (kelly == :Approx || (u_cov != :Box && u_cov != :Ellipse)) && _mv_risk(model, sigma)
 
-    if kelly == :Exact
-        @variable(model, texact_kelly[1:T])
-        @expression(model, _ret, sum(texact_kelly) / T)
-        @expression(model, kret, 1 .+ returns * model[:w])
-        @constraint(
-            model,
-            [i = 1:T],
-            [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
-        )
-    elseif kelly == :Approx && !isempty(mu)
-        @expression(model, _ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
-    elseif !isempty(mu)
-        @expression(model, _ret, dot(mu, model[:w]))
-    end
+    returns = portfolio.returns
+    obj == :Sharpe ? _setup_sharpe_ret(kelly, model, T, rf, returns, mu, Inf, false) :
+    _setup_ret(kelly, model, T, returns, mu, Inf)
 
     if haskey(model, :_ret)
         if u_mu == :Box
             d_mu = portfolio.d_mu
             @variable(model, abs_w[1:N])
             @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
-            @expression(model, ret, _ret - dot(d_mu, abs_w))
+            @expression(model, ret, model[:_ret] - dot(d_mu, abs_w))
         elseif u_mu == :Ellipse
             k_mu = portfolio.k_mu
             cov_mu = portfolio.cov_mu
@@ -884,11 +916,15 @@ function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
             @expression(model, x_gw, G * model[:w])
             @variable(model, t_gw)
             @constraint(model, [t_gw; x_gw] in SecondOrderCone())
-            @expression(model, ret, _ret - k_mu * t_gw)
+            @expression(model, ret, model[:_ret] - k_mu * t_gw)
         else
-            @expression(model, ret, _ret)
+            @expression(model, ret, model[:_ret])
         end
-        obj == :Sharpe && @constraint(model, ret - rf * model[:k] >= 1)
+
+        obj == :Sharpe && (
+            kelly != :None ? @constraint(model, model[:risk] <= 1) :
+            @constraint(model, ret - rf * model[:k] >= 1)
+        )
     end
 
     # Cov uncertainty sets.
