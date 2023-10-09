@@ -848,51 +848,6 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     return nothing
 end
 
-function _setup_wc_ret(model, obj, kelly, T, N, mu, returns)
-    if obj == :Sharpe
-        if kelly == :Exact
-            @variable(model, texact_kelly[1:T])
-            @expression(model, _ret, sum(texact_kelly) / T - rf * model[:k])
-            @expression(model, kret, model[:k] .+ returns * model[:w])
-            @constraint(
-                model,
-                [i = 1:T],
-                [texact_kelly[i], model[:k], kret[i]] in MOI.ExponentialCone()
-            )
-        elseif kelly == :Approx && (!isempty(mu) || !isnothing(mu))
-            @variable(model, tapprox_kelly)
-            @constraint(
-                model,
-                [
-                    model[:k] + tapprox_kelly
-                    2 * model[:dev]
-                    model[:k] - tapprox_kelly
-                ] in SecondOrderCone()
-            )
-            @expression(model, _ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
-        elseif !isempty(mu) || !isnothing(mu)
-            @expression(model, _ret, dot(mu, model[:w]))
-        end
-    else
-        if kelly == :Exact
-            @variable(model, texact_kelly[1:T])
-            @expression(model, _ret, sum(texact_kelly) / T)
-            @expression(model, kret, 1 .+ returns * model[:w])
-            @constraint(
-                model,
-                [i = 1:T],
-                [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
-            )
-        elseif kelly == :Approx && (!isempty(mu) || !isnothing(mu))
-            @expression(model, _ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
-        elseif !isempty(mu) || !isnothing(mu)
-            @expression(model, _ret, dot(mu, model[:w]))
-        end
-    end
-
-    return nothing
-end
-
 function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
     model = portfolio.model
 
