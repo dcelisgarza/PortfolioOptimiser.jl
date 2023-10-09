@@ -429,6 +429,43 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
     return retval
 end
 
+function _handle_errors_and_finalise(
+    portfolio,
+    term_status,
+    returns,
+    N,
+    solvers_tried,
+    type,
+    rm,
+    obj,
+)
+    retval =
+        if term_status ∉ ValidTermination || any(.!isfinite.(value.(portfolio.model[:w])))
+            funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.opt_port!))"
+
+            @warn(
+                "$funcname: model could not be optimised satisfactorily.\nPortfolio type: $type\nClass: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $solvers_tried"
+            )
+
+            portfolio.fail = solvers_tried
+
+            if type == :Trad
+                portfolio.p_optimal = DataFrame()
+            elseif type == :RP
+                portfolio.rp_optimal = DataFrame()
+            elseif type == :RRP
+                portfolio.rp_optimal = DataFrame()
+            else
+                portfolio.wc_optimal = DataFrame()
+            end
+
+        else
+            _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj)
+        end
+
+    return retval
+end
+
 function _save_opt_params(
     portfolio,
     type,
@@ -531,6 +568,23 @@ function opt_port!(
         "portfolio.kind_tracking_err must be one of $TrackingErrKinds"
     )
 
+    _save_opt_params(
+        portfolio,
+        type,
+        class,
+        rm,
+        obj,
+        kelly,
+        rrp_ver,
+        rf,
+        l,
+        rrp_penalty,
+        u_mu,
+        u_cov,
+        string_names,
+        save_opt_params,
+    )
+
     portfolio.model = JuMP.Model()
 
     # Returns, mu, sigma.
@@ -599,44 +653,15 @@ function opt_port!(
 
     term_status, solvers_tried = _optimize_portfolio(portfolio, type, obj)
 
-    # Error handling.
-    if term_status ∉ ValidTermination || any(.!isfinite.(value.(w)))
-        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.opt_port!))"
-
-        @warn(
-            "$funcname: model could not be optimised satisfactorily.\nPortfolio type: $type\nClass: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $solvers_tried"
-        )
-
-        retval = if type == :Trad
-            portfolio.p_optimal = DataFrame()
-        elseif type == :RP
-            portfolio.rp_optimal = DataFrame()
-        elseif type == :RRP
-            portfolio.rp_optimal = DataFrame()
-        elseif type == :WC
-            portfolio.wc_optimal = DataFrame()
-        end
-
-        portfolio.fail = solvers_tried
-    else
-        retval = _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj)
-    end
-
-    _save_opt_params(
+    retval = _handle_errors_and_finalise(
         portfolio,
+        term_status,
+        returns,
+        N,
+        solvers_tried,
         type,
-        class,
         rm,
         obj,
-        kelly,
-        rrp_ver,
-        rf,
-        l,
-        rrp_penalty,
-        u_mu,
-        u_cov,
-        string_names,
-        save_opt_params,
     )
 
     return retval
