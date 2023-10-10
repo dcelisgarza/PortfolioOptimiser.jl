@@ -561,7 +561,7 @@ function Portfolio(;
     short::Bool = false,
     short_u::Real = 0.2,
     long_u::Real = 1.0,
-    sum_short_long::Real = 1.0,
+    sum_short_long::Real = short ? long_u - short_u : 1.0,
     min_number_effective_assets::Integer = 0,
     max_number_assets::Integer = 0,
     max_number_assets_factor::Real = 100_000.0,
