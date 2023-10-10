@@ -254,10 +254,8 @@ function Allocation(
     # weights * investment - allocation * latest_prices
     eta = weights * investment - x .* latest_prices
 
-    # @constraint(model, eta_leq_u, eta .<= u)
-    # @constraint(model, eta_geq_mu, eta .>= -u)
-    @constraint(model, [i = 1:num_tickers], [u[i], eta[i]] in MOI.NormOneCone(2))
-
+    @constraint(model, eta_leq_u, eta .<= u)
+    @constraint(model, eta_geq_mu, eta .>= -u)
     @constraint(model, x_geq_0, x .>= 0)
     @constraint(model, r_geq_0, r >= 0)
 
