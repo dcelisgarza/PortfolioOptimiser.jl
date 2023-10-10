@@ -171,7 +171,7 @@ function _lp_sub_allocation!(
     N = length(tickers)
     # Integer allocation
     # x := number of shares
-    @variable(model, x[1:N], Int)
+    @variable(model, x[1:N] .>= 0, Int)
     # u := bounding variable
     @variable(model, u[1:N])
 
@@ -184,7 +184,6 @@ function _lp_sub_allocation!(
     eta = weights * investment - x .* latest_prices
 
     @constraint(model, [i = 1:N], [u[i], eta[i]] in MOI.NormOneCone(2))
-    @constraint(model, x .>= 0)
     @constraint(model, r >= 0)
 
     @objective(model, Min, sum(u) + r)
