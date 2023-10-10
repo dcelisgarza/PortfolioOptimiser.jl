@@ -92,6 +92,42 @@ function _posdef_fix(
 
     return retval
 end
+
+function mu_esimator(returns, mu_type, target = :GM; dims = 1)
+    @assert(target ∈ MuTargets, "target must be one of $MuTargets")
+
+    T, N = size(returns)
+    mu = vec(mean(returns; dims = dims))
+    sigma = cov(returns)
+    inv_sigma = inv(sigma)
+    evals = eigvals(sigma)
+    ones = range(1, stop = 1, length = N)
+
+    b = if target == :GM
+        fill(mean(mu), N)
+    elseif target == :VW
+        fill(dot(ones, inv_sigma, mu) / dot(ones, inv_sigma, ones), N)
+    else
+        fill(tr(sigma) / T, N)
+    end
+
+    if mu_type == :JS
+        alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
+        mu = (1 - alpha) * mu + alpha * b
+    elseif mu_type == :BS
+        alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
+        mu = (1 - alpha) * mu + alpha * b
+    else
+        alpha =
+            (dot(mu, inv_sigma, mu) - N / (T - N)) * dot(b, inv_sigma, b) -
+            dot(mu, inv_sigma, b)^2
+        alpha /= dot(mu, inv_sigma, mu) * dot(b, inv_sigma, b) - dot(mu, inv_sigma, b)^2
+        beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
+        mu = alpha * mu + beta * b
+    end
+
+    return mu
+end
 """
 ```julia
 asset_statistics!(
@@ -140,27 +176,38 @@ function asset_statistics!(
     custom_cov = nothing,
     custom_kurt = nothing,
     custom_skurt = nothing,
+    mu_alpha = 0.05,
+    mu_target = :GM,
+    cov_alpha = 0.05,
+    mu_scale = true,
+    cov_scale = true,
+    calc_kurt = true,
     mean_args = (),
     cov_args = (),
     posdef_args = (),
     cor_args = (),
-    dist_args = (),
     std_args = (),
-    calc_kurt = true,
+    dist_args = (),
     mean_kwargs = (; dims = 1),
     cov_kwargs = (;),
     posdef_kwargs = (;),
     cor_kwargs = (;),
-    dist_kwargs = (;),
     std_kwargs = (;),
+    dist_kwargs = (;),
     uplo = :L,
 )
     returns = portfolio.returns
 
     # Mu
     @assert(mu_type ∈ MuTypes, "mu_type must be one of $MuTypes")
-    portfolio.mu = if mu_type == :Historical
-        vec(mean(returns, mean_args...; mean_kwargs...))
+    portfolio.mu = if mu_type == :Hist
+        vec(mean(returns; dims = 1))
+    elseif mu_type == :Exp
+        T = size(returns, 1)
+        w = eweights(T, mu_alpha; scale = mu_scale)
+        vec(mean(returns, w; dims = 1))
+    elseif mu_type ∈ (:JS, :BS, :BOP)
+        mu_esimator(returns, mu_type, mu_target; dims = 1)
     elseif mu_type == :Custom_Func
         vec(mean_func(returns, mean_args...; mean_kwargs...))
     elseif mu_type == :Custom_Val
@@ -170,7 +217,7 @@ function asset_statistics!(
 
     # Covariance
     @assert(cov_type ∈ CovTypes, "cov_type must be one of $CovTypes")
-    portfolio.cov = if cov_type == :Historical
+    portfolio.cov = if cov_type == :Hist
         cov(returns, cov_args...; cov_kwargs...)
     elseif cov_type == :Custom_Func
         cov_func(returns, cov_args...; cov_kwargs...)

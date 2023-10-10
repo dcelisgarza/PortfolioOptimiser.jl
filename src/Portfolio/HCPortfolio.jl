@@ -88,9 +88,9 @@ HCPortfolio(;
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
     # Optimisation parameters.
-    mu_type::Symbol = :Historical,
+    mu_type::Symbol = :Hist,
     mu = Vector{Float64}(undef, 0),
-    cov_type::Symbol = :Historical,
+    cov_type::Symbol = :Hist,
     cov = Matrix{Float64}(undef, 0, 0),
     bins_info::Union{Symbol, Int} = :KN,
     w_min::Union{<:Real, AbstractVector{<:Real}, Nothing} = 0.0,
@@ -209,9 +209,9 @@ function HCPortfolio(;
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
     # Optimisation parameters.
-    mu_type::Symbol = :Historical,
+    mu_type::Symbol = :Hist,
     mu = Vector{Float64}(undef, 0),
-    cov_type::Symbol = :Historical,
+    cov_type::Symbol = :Hist,
     cov = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
     bins_info::Union{Symbol, <:Integer} = :KN,
