@@ -405,22 +405,6 @@ l = 2.0
         investment = investment,
     )
 
-    lalloc, lleftover = Allocation(
-        LP(),
-        portfolio.assets,
-        portfolio.optimal[:HERC].weights,
-        portfolio.latest_prices,
-        investment,
-    )
-
-    galloc, gleftover = Allocation(
-        Greedy(),
-        portfolio.assets,
-        portfolio.optimal[:HERC].weights,
-        portfolio.latest_prices,
-        investment,
-    )
-
     lp_alloct = DataFrame(
         tickers = [
             "GOOG",
