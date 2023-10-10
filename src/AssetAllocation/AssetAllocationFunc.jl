@@ -263,7 +263,7 @@ function Allocation(
 
     _setup_and_optimise(model, optimiser, silent, optimiser_attributes)
 
-    shares_bought = Int.(round.(value.(x)))
+    shares_bought = round.(Int, value.(x))
     available_funds = value(r)
 
     # Remove zero weights.

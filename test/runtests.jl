@@ -20,6 +20,10 @@ end
     include("ClusteringTests.jl")
 end
 
+@safetestset "Portfolio allocation" begin
+    include("PortfolioAllocationTests.jl")
+end
+
 @safetestset "Hierarchical optimisations" begin
     include("HierarchicalOptimisationTests.jl")
 end

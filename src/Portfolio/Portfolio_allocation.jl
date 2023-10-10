@@ -59,7 +59,7 @@ function _optimise_allocation(portfolio, model, tickers, latest_prices)
 
         term_status in ValidTermination && break
 
-        shares = value.(model[:x])
+        shares = round.(Int, value.(model[:x]))
         cost = latest_prices .* shares
         weights = cost / sum(cost)
         available_funds = value(model[:r])
@@ -126,13 +126,14 @@ function _handle_alloc_errors_and_finalise(
         portfolio.alloc_fail[key] = solvers_tried
 
         (
-            typeof(rounding)([]),
-            promote_type(typeof(rounding), eltype(latest_prices))([]),
-            promote_type(typeof(rounding), eltype(latest_prices))([]),
-            zero(eltype(latest_prices)),
+            return String[],
+            Vector{eltype(latest_prices)}(undef, 0),
+            Vector{eltype(latest_prices)}(undef, 0),
+            Vector{eltype(latest_prices)}(undef, 0),
+            zero(eltype(latest_prices))
         )
     else
-        shares = value.(model[:x])
+        shares = round.(Int, value.(model[:x]))
         cost = latest_prices .* shares
         weights = cost / sum(cost)
         available_funds = value(model[:r])
@@ -177,7 +178,6 @@ function _lp_sub_allocation!(
 
     # Remaining money
     @expression(model, r, investment - dot(latest_prices, x))
-    # r = investment - dot(latest_prices, x)
     # weights * investment - allocation * latest_prices
     eta = weights * investment - x .* latest_prices
 
@@ -188,11 +188,6 @@ function _lp_sub_allocation!(
 
     term_status, solvers_tried =
         _optimise_allocation(portfolio, model, tickers, latest_prices)
-
-    shares = value.(model[:x])
-    cost = latest_prices .* shares
-    weights = cost / sum(cost)
-    available_funds = value(model[:r])
 
     shares, cost, allocated_weights, available_funds = _handle_alloc_errors_and_finalise(
         portfolio,
