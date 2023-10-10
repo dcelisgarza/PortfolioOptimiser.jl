@@ -173,20 +173,18 @@ function _lp_sub_allocation!(
     # x := number of shares
     @variable(model, x[1:N] .>= 0, Int)
     # u := bounding variable
-    @variable(model, u[1:N])
+    @variable(model, u)
 
-    x = model[:x]
-    u = model[:u]
     # Remaining money
     @expression(model, r, investment - dot(latest_prices, x))
     # r = investment - dot(latest_prices, x)
     # weights * investment - allocation * latest_prices
     eta = weights * investment - x .* latest_prices
 
-    @constraint(model, [i = 1:N], [u[i], eta[i]] in MOI.NormOneCone(2))
+    @constraint(model, [u; eta] in MOI.NormOneCone(N + 1))
     @constraint(model, r >= 0)
 
-    @objective(model, Min, sum(u) + r)
+    @objective(model, Min, u + r)
 
     term_status, solvers_tried =
         _optimise_allocation(portfolio, model, tickers, latest_prices)
