@@ -182,13 +182,14 @@ function asset_statistics!(
     mu_scale = true,
     cov_scale = true,
     calc_kurt = true,
+    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(),
     mean_args = (),
     cov_args = (),
     posdef_args = (),
     cor_args = (),
     std_args = (),
     dist_args = (),
-    mean_kwargs = (; dims = 1),
+    mean_kwargs = (;),
     cov_kwargs = (;),
     posdef_kwargs = (;),
     cor_kwargs = (;),
@@ -218,7 +219,29 @@ function asset_statistics!(
     # Covariance
     @assert(cov_type ∈ CovTypes, "cov_type must be one of $CovTypes")
     portfolio.cov = if cov_type == :Hist
-        cov(returns, cov_args...; cov_kwargs...)
+        cov(returns; cov_kwargs...)
+    elseif cov_type == :Exp
+        T = size(returns, 1)
+        w = eweights(T, cov_alpha; scale = cov_scale)
+        cov(returns, w; cov_kwargs...)
+    elseif cov_type == :Cov_Est
+        cov(cov_est, returns, cov_args...; cov_kwargs...)
+    elseif cov_type == :Gerber1
+        covgerber1(
+            returns,
+            portfolio.gs_threshold;
+            std_func = std_func,
+            std_args = std_args,
+            std_kwargs = std_kwargs,
+        )
+    elseif cov_type == :Gerber2
+        covgerber2(
+            returns,
+            portfolio.gs_threshold;
+            std_func = std_func,
+            std_args = std_args,
+            std_kwargs = std_kwargs,
+        )
     elseif cov_type == :Custom_Func
         cov_func(returns, cov_args...; cov_kwargs...)
     elseif cov_type == :Custom_Val

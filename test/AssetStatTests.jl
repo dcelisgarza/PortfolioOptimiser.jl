@@ -249,4 +249,14 @@ returns = dropmissing!(DataFrame(Y))
     asset_statistics!(portfolio, mu_type = :Exp, mu_alpha = 1 - eps())
     mu3 = copy(portfolio.mu)
     @test isapprox(mu3, portfolio.returns[end, 1:end])
+
+    asset_statistics!(portfolio, cov_type = :Hist, cov_kwargs = (; corrected = false))
+    cov1 = copy(portfolio.cov)
+    asset_statistics!(
+        portfolio,
+        cov_type = :Cov_Est,
+        cov_est = StatsBase.SimpleCovariance(; corrected = false),
+    )
+    cov2 = copy(portfolio.cov)
+    @test isapprox(cov1, cov2)
 end
