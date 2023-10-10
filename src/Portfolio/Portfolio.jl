@@ -427,6 +427,13 @@ mutable struct Portfolio{
     tf,
     toptpar,
     tmod,
+    # Allocation
+    tlp,
+    taopt,
+    tasolv,
+    taoptpar,
+    taf,
+    tamod,
 } <: AbstractPortfolio
     # Portfolio characteristics.
     assets::ast
@@ -536,6 +543,13 @@ mutable struct Portfolio{
     opt_params::toptpar
     fail::tf
     model::tmod
+    # Allocation
+    latest_prices::tlp
+    alloc_optimal::taopt
+    alloc_solvers::tasolv
+    alloc_params::taoptpar
+    alloc_fail::taf
+    alloc_model::tamod
 end
 
 function Portfolio(;
@@ -637,6 +651,13 @@ function Portfolio(;
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
+    # Allocation.
+    latest_prices = Vector{Float64}(undef, 0),
+    alloc_optimal::AbstractDict = Dict(),
+    alloc_solvers::AbstractDict = Dict(),
+    alloc_params::AbstractDict = Dict(),
+    alloc_fail::AbstractDict = Dict(),
+    alloc_model::AbstractDict = Dict(),
 )
     if isa(returns, DataFrame) && !isempty(returns)
         assets = names(returns)[2:end]
@@ -768,6 +789,13 @@ function Portfolio(;
         typeof(opt_params),
         typeof(fail),
         typeof(model),
+        # Allocation.
+        typeof(latest_prices),
+        typeof(alloc_optimal),
+        typeof(alloc_solvers),
+        typeof(alloc_params),
+        typeof(alloc_fail),
+        typeof(alloc_model),
     }(
         # Portfolio characteristics.
         assets,
@@ -877,6 +905,13 @@ function Portfolio(;
         opt_params,
         fail,
         model,
+        # Allocation.
+        latest_prices,
+        alloc_optimal,
+        alloc_solvers,
+        alloc_params,
+        alloc_fail,
+        alloc_model,
     )
 end
 

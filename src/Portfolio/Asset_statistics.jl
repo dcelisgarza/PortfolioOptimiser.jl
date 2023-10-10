@@ -232,7 +232,7 @@ function asset_statistics!(
             codep = abs.(corkendall(returns))
             dist = sqrt.(clamp!(1 .- codep, 0, 1))
         elseif codep_type == :Gerber1
-            codep = cov_to_cor(
+            codep = cov2cor(
                 covgerber1(
                     returns,
                     portfolio.gs_threshold;
@@ -243,7 +243,7 @@ function asset_statistics!(
             )
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
         elseif codep_type == :Gerber2
-            codep = cov_to_cor(
+            codep = cov2cor(
                 covgerber2(
                     returns,
                     portfolio.gs_threshold;
@@ -263,7 +263,7 @@ function asset_statistics!(
             codep = ltdi_mtx(returns, portfolio.alpha_tail)
             dist = -log.(codep)
         elseif codep_type == :Cov_to_Cor
-            codep = cov_to_cor(portfolio.cov)
+            codep = cov2cor(portfolio.cov)
             dist = dist_func(codep, dist_args...; dist_kwargs...)
         elseif codep_type == :Custom_Func
             codep = cor_func(returns, cor_args...; cor_kwargs...)

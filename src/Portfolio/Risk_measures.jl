@@ -1137,7 +1137,7 @@ function calc_risk(
 )
     isa(portfolio, Portfolio) ?
     @assert(type ∈ PortTypes, "type must be one of $PortTypes") :
-    @assert(type ∈ PortTypes, "type must be one of $HCPortTypes")
+    @assert(type ∈ HCPortTypes, "type must be one of $HCPortTypes")
 
     return calc_risk(
         portfolio.optimal[type].weights,

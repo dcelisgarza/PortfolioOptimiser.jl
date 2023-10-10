@@ -560,6 +560,8 @@ Objective funcions for `:NCO` [`HCPortTypes`](@ref) of [`HCPortfolio`](@ref).
 """
 const HRObjFuncs = (ObjFuncs..., :Equal)
 
+const AllocTypes = (:LP, :Greedy)
+
 export AbstractPortfolio,
     RiskMeasures,
     KellyRet,
@@ -585,4 +587,5 @@ export AbstractPortfolio,
     CodepTypes,
     LinkageTypes,
     BranchOrderTypes,
-    HRObjFuncs
+    HRObjFuncs,
+    AllocTypes

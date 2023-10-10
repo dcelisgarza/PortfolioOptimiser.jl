@@ -41,5 +41,6 @@ include("./Portfolio/HCPortfolio_optim_setup.jl")
 
 include("./Portfolio/Asset_statistics.jl")
 include("./Portfolio/Risk_measures.jl")
+include("./Portfolio/Portfolio_allocation.jl")
 
 end
