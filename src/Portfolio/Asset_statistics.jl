@@ -195,7 +195,10 @@ function asset_statistics!(
     custom_kurt = nothing,
     custom_skurt = nothing,
     mu_target = :GM,
+    calc_mu = true,
+    calc_cov = true,
     calc_kurt = true,
+    calc_codep = true,
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     mean_args = (),
     cov_args = (),
@@ -214,65 +217,69 @@ function asset_statistics!(
     returns = portfolio.returns
 
     # Covariance
-    @assert(cov_type ∈ CovTypes, "cov_type must be one of $CovTypes")
-    portfolio.cov = if cov_type == :Full
-        isnothing(cov_weights) ? StatsBase.cov(cov_est, returns; cov_kwargs...) :
-        StatsBase.cov(cov_est, returns, cov_weights; cov_kwargs...)
-    elseif cov_type == :Semi
-        semi_returns =
-            isa(target_ret, Real) ? min.(returns .- target_ret, 0) :
-            min.(returns .- transpose(target_ret), 0)
-        isnothing(cov_weights) ?
-        StatsBase.cov(cov_est, semi_returns; mean = 0.0, cov_kwargs...) :
-        StatsBase.cov(cov_est, semi_returns, cov_weights; mean = 0.0, cov_kwargs...)
-    elseif cov_type == :Gerber1
-        covgerber1(
-            returns,
-            gs_threshold;
-            std_func = std_func,
-            std_args = std_args,
-            std_kwargs = std_kwargs,
-        )
-        portfolio.gs_threshold = gs_threshold
-    elseif cov_type == :Gerber2
-        covgerber2(
-            returns,
-            gs_threshold;
-            std_func = std_func,
-            std_args = std_args,
-            std_kwargs = std_kwargs,
-        )
-        portfolio.gs_threshold = gs_threshold
-    elseif cov_type == :Custom_Func
-        cov_func(returns, cov_args...; cov_kwargs...)
-    elseif cov_type == :Custom_Val
-        custom_cov
-    end
-    portfolio.cov_type = cov_type
-    @assert(posdef_fix ∈ PosdefFixes, "posdef_fix must be one of $PosdefFixes")
+    if calc_cov
+        @assert(cov_type ∈ CovTypes, "cov_type must be one of $CovTypes")
+        portfolio.cov = if cov_type == :Full
+            isnothing(cov_weights) ? StatsBase.cov(cov_est, returns; cov_kwargs...) :
+            StatsBase.cov(cov_est, returns, cov_weights; cov_kwargs...)
+        elseif cov_type == :Semi
+            semi_returns =
+                isa(target_ret, Real) ? min.(returns .- target_ret, 0) :
+                min.(returns .- transpose(target_ret), 0)
+            isnothing(cov_weights) ?
+            StatsBase.cov(cov_est, semi_returns; mean = 0.0, cov_kwargs...) :
+            StatsBase.cov(cov_est, semi_returns, cov_weights; mean = 0.0, cov_kwargs...)
+        elseif cov_type == :Gerber1
+            covgerber1(
+                returns,
+                gs_threshold;
+                std_func = std_func,
+                std_args = std_args,
+                std_kwargs = std_kwargs,
+            )
+            portfolio.gs_threshold = gs_threshold
+        elseif cov_type == :Gerber2
+            covgerber2(
+                returns,
+                gs_threshold;
+                std_func = std_func,
+                std_args = std_args,
+                std_kwargs = std_kwargs,
+            )
+            portfolio.gs_threshold = gs_threshold
+        elseif cov_type == :Custom_Func
+            cov_func(returns, cov_args...; cov_kwargs...)
+        elseif cov_type == :Custom_Val
+            custom_cov
+        end
+        portfolio.cov_type = cov_type
+        @assert(posdef_fix ∈ PosdefFixes, "posdef_fix must be one of $PosdefFixes")
 
-    _posdef_fix!(portfolio.cov, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
+        _posdef_fix!(portfolio.cov, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
+    end
 
     # Mu
-    @assert(mu_type ∈ MuTypes, "mu_type must be one of $MuTypes")
-    portfolio.mu = if mu_type == :Default
-        isnothing(mu_weights) ? vec(mean(returns; dims = 1)) :
-        vec(mean(returns, mu_weights; dims = 1))
-    elseif mu_type ∈ (:JS, :BS, :BOP)
-        mu_esimator(
-            returns,
-            mu_type,
-            mu_target;
-            mu_weights = mu_weights,
-            sigma = portfolio.cov,
-            dims = 1,
-        )
-    elseif mu_type == :Custom_Func
-        vec(mean_func(returns, mean_args...; mean_kwargs...))
-    elseif mu_type == :Custom_Val
-        custom_mu
+    if calc_mu
+        @assert(mu_type ∈ MuTypes, "mu_type must be one of $MuTypes")
+        portfolio.mu = if mu_type == :Default
+            isnothing(mu_weights) ? vec(mean(returns; dims = 1)) :
+            vec(mean(returns, mu_weights; dims = 1))
+        elseif mu_type ∈ (:JS, :BS, :BOP)
+            mu_esimator(
+                returns,
+                mu_type,
+                mu_target;
+                mu_weights = mu_weights,
+                sigma = isnothing(custom_cov) ? portfolio.cov : custom_cov,
+                dims = 1,
+            )
+        elseif mu_type == :Custom_Func
+            vec(mean_func(returns, mean_args...; mean_kwargs...))
+        elseif mu_type == :Custom_Val
+            custom_mu
+        end
+        portfolio.mu_type = mu_type
     end
-    portfolio.mu_type = mu_type
 
     # Type specific
     if isa(portfolio, Portfolio)
@@ -304,73 +311,75 @@ function asset_statistics!(
             )
         end
     else
-        @assert(codep_type ∈ CodepTypes, "codep_type must be one of $CodepTypes")
-        if codep_type == :Pearson
-            codep = cor(returns)
-            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        elseif codep_type == :Spearman
-            codep = corspearman(returns)
-            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        elseif codep_type == :Kendall
-            codep = corkendall(returns)
-            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        elseif codep_type == :Abs_Pearson
-            codep = abs.(cor(returns))
-            dist = sqrt.(clamp!(1 .- codep, 0, 1))
-        elseif codep_type == :Abs_Spearman
-            codep = abs.(corspearman(returns))
-            dist = sqrt.(clamp!(1 .- codep, 0, 1))
-        elseif codep_type == :Abs_Kendall
-            codep = abs.(corkendall(returns))
-            dist = sqrt.(clamp!(1 .- codep, 0, 1))
-        elseif codep_type == :Gerber1
-            codep = cov2cor(
-                covgerber1(
-                    returns,
-                    gs_threshold;
-                    std_func = std_func,
-                    std_args = std_args,
-                    std_kwargs = std_kwargs,
-                ),
-            )
-            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-            portfolio.gs_threshold = gs_threshold
-        elseif codep_type == :Gerber2
-            codep = cov2cor(
-                covgerber2(
-                    returns,
-                    gs_threshold;
-                    std_func = std_func,
-                    std_args = std_args,
-                    std_kwargs = std_kwargs,
-                ),
-            )
-            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-            portfolio.gs_threshold = gs_threshold
-        elseif codep_type == :Distance
-            codep = cordistance(returns)
-            dist = sqrt.(clamp!(1 .- codep, 0, 1))
-        elseif codep_type == :Mutual_Info
-            codep, dist = mut_var_info_mtx(returns, bins_info)
-            portfolio.bins_info = bins_info
-        elseif codep_type == :Tail
-            codep = ltdi_mtx(returns, alpha_tail)
-            dist = -log.(codep)
-            portfolio.alpha_tail = alpha_tail
-        elseif codep_type == :Cov_to_Cor
-            codep = cov2cor(portfolio.cov)
-            dist = dist_func(codep, dist_args...; dist_kwargs...)
-        elseif codep_type == :Custom_Func
-            codep = cor_func(returns, cor_args...; cor_kwargs...)
-            dist = dist_func(codep, dist_args...; dist_kwargs...)
-        elseif codep_type == :Custom_Val
-            codep = custom_cov
-            dist = dist_func(codep, dist_args...; dist_kwargs...)
-        end
+        if calc_codep
+            @assert(codep_type ∈ CodepTypes, "codep_type must be one of $CodepTypes")
+            if codep_type == :Pearson
+                codep = cor(returns)
+                dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+            elseif codep_type == :Spearman
+                codep = corspearman(returns)
+                dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+            elseif codep_type == :Kendall
+                codep = corkendall(returns)
+                dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+            elseif codep_type == :Abs_Pearson
+                codep = abs.(cor(returns))
+                dist = sqrt.(clamp!(1 .- codep, 0, 1))
+            elseif codep_type == :Abs_Spearman
+                codep = abs.(corspearman(returns))
+                dist = sqrt.(clamp!(1 .- codep, 0, 1))
+            elseif codep_type == :Abs_Kendall
+                codep = abs.(corkendall(returns))
+                dist = sqrt.(clamp!(1 .- codep, 0, 1))
+            elseif codep_type == :Gerber1
+                codep = cov2cor(
+                    covgerber1(
+                        returns,
+                        gs_threshold;
+                        std_func = std_func,
+                        std_args = std_args,
+                        std_kwargs = std_kwargs,
+                    ),
+                )
+                dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+                portfolio.gs_threshold = gs_threshold
+            elseif codep_type == :Gerber2
+                codep = cov2cor(
+                    covgerber2(
+                        returns,
+                        gs_threshold;
+                        std_func = std_func,
+                        std_args = std_args,
+                        std_kwargs = std_kwargs,
+                    ),
+                )
+                dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+                portfolio.gs_threshold = gs_threshold
+            elseif codep_type == :Distance
+                codep = cordistance(returns)
+                dist = sqrt.(clamp!(1 .- codep, 0, 1))
+            elseif codep_type == :Mutual_Info
+                codep, dist = mut_var_info_mtx(returns, bins_info)
+                portfolio.bins_info = bins_info
+            elseif codep_type == :Tail
+                codep = ltdi_mtx(returns, alpha_tail)
+                dist = -log.(codep)
+                portfolio.alpha_tail = alpha_tail
+            elseif codep_type == :Cov_to_Cor
+                codep = cov2cor(portfolio.cov)
+                dist = dist_func(codep, dist_args...; dist_kwargs...)
+            elseif codep_type == :Custom_Func
+                codep = cor_func(returns, cor_args...; cor_kwargs...)
+                dist = dist_func(codep, dist_args...; dist_kwargs...)
+            elseif codep_type == :Custom_Val
+                codep = custom_cov
+                dist = dist_func(codep, dist_args...; dist_kwargs...)
+            end
 
-        portfolio.codep_type = codep_type
-        portfolio.dist = issymmetric(dist) ? dist : Symmetric(dist, uplo)
-        portfolio.codep = issymmetric(codep) ? codep : Symmetric(codep, uplo)
+            portfolio.codep_type = codep_type
+            portfolio.dist = issymmetric(dist) ? dist : Symmetric(dist, uplo)
+            portfolio.codep = issymmetric(codep) ? codep : Symmetric(codep, uplo)
+        end
     end
 
     return nothing
