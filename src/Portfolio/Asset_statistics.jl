@@ -194,6 +194,7 @@ function asset_statistics!(
     custom_cov = nothing,
     custom_kurt = nothing,
     custom_skurt = nothing,
+    custom_cor = nothing,
     mu_target = :GM,
     calc_mu = true,
     calc_cov = true,
@@ -372,7 +373,7 @@ function asset_statistics!(
                 codep = cor_func(returns, cor_args...; cor_kwargs...)
                 dist = dist_func(codep, dist_args...; dist_kwargs...)
             elseif codep_type == :Custom_Val
-                codep = custom_cov
+                codep = custom_cor
                 dist = dist_func(codep, dist_args...; dist_kwargs...)
             end
 
