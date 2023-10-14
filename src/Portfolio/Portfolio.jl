@@ -615,9 +615,9 @@ function Portfolio(;
     rvar_u::Real = Inf,
     rdar_u::Real = Inf,
     # Optimisation model inputs.
-    mu_type::Symbol = :Hist,
+    mu_type::Symbol = :Default,
     mu = Vector{Float64}(undef, 0),
-    cov_type::Symbol = :Hist,
+    cov_type::Symbol = :Full,
     cov = Matrix{Float64}(undef, 0, 0),
     kurt = Matrix{Float64}(undef, 0, 0),
     skurt = Matrix{Float64}(undef, 0, 0),

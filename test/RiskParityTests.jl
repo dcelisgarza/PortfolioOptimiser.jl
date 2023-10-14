@@ -10,7 +10,10 @@ using Test,
     COSMO,
     OrderedCollections,
     LinearAlgebra,
-    StatsBase
+    StatsBase,
+    Logging
+
+Logging.disable_logging(Logging.Warn)
 
 A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)

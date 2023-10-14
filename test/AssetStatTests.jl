@@ -1,4 +1,6 @@
-using Test, PortfolioOptimiser, CSV, TimeSeries, DataFrames, StatsBase
+using Test, PortfolioOptimiser, CSV, TimeSeries, DataFrames, StatsBase, Logging
+
+Logging.disable_logging(Logging.Warn)
 
 A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
@@ -241,22 +243,43 @@ returns = dropmissing!(DataFrame(Y))
     ]
     @test isapprox(bsse, bsset)
 
-    asset_statistics!(portfolio, mu_type = :Hist)
+    portfolio.mu_type = :Default
+    asset_statistics!(portfolio)
     mu1 = copy(portfolio.mu)
-    asset_statistics!(portfolio, mu_type = :Exp, mu_alpha = eps())
+    asset_statistics!(
+        portfolio,
+        mu_weights = eweights(size(portfolio.returns, 1), eps(), scale = true),
+    )
     mu2 = copy(portfolio.mu)
     @test isapprox(mu1, mu2)
-    asset_statistics!(portfolio, mu_type = :Exp, mu_alpha = 1 - eps())
+    asset_statistics!(
+        portfolio,
+        mu_weights = eweights(size(portfolio.returns, 1), 1 - eps(), scale = true),
+    )
     mu3 = copy(portfolio.mu)
     @test isapprox(mu3, portfolio.returns[end, 1:end])
 
-    asset_statistics!(portfolio, cov_type = :Hist, cov_kwargs = (; corrected = false))
+    asset_statistics!(portfolio, cov_type = :Full)
     cov1 = copy(portfolio.cov)
+    cov2 = cov(portfolio.returns)
+    @test isapprox(cov1, cov2)
+
+    asset_statistics!(portfolio, cov_type = :Semi)
+    cov3 = copy(portfolio.cov)
+
+    semiret = min.(portfolio.returns .- 0, 0)
+    cov4 = cov(StatsBase.SimpleCovariance(; corrected = true), semiret, mean = 0)
+    @test isapprox(cov3, cov4)
+
+    cov5 = transpose(semiret) * semiret / (size(semiret, 1) - 1)
+    @test isapprox(cov3, cov5)
+
     asset_statistics!(
         portfolio,
-        cov_type = :Cov_Est,
+        cov_type = :Semi,
         cov_est = StatsBase.SimpleCovariance(; corrected = false),
     )
-    cov2 = copy(portfolio.cov)
-    @test isapprox(cov1, cov2)
+    cov6 = copy(portfolio.cov)
+    cov7 = transpose(semiret) * semiret / (size(semiret, 1))
+    @test isapprox(cov6, cov7)
 end
