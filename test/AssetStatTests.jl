@@ -1108,19 +1108,6 @@ returns = dropmissing!(DataFrame(Y))
 
     portfolio = HCPortfolio(
         returns = returns,
-        solvers = Dict(
-            :Clarabel => Dict(
-                :solver => Clarabel.Optimizer,
-                :params => Dict("verbose" => false),
-            ),
-        ),
-        alloc_solvers = Dict(
-            :HiGHS => Dict(
-                :solver => (HiGHS.Optimizer),
-                :params => Dict("log_to_console" => false),
-            ),
-        ),
-        latest_prices = Vector(DataFrame(A[end])[1, 2:end]),
     )
 
     asset_statistics!(portfolio, jlogo = true)
