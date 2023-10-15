@@ -88,8 +88,6 @@ function _posdef_fix!(
 
     if posdef_fix == :Custom_Func
         mtx .= posdef_func(mtx, posdef_args...; posdef_kwargs...)
-    elseif posdef_fix == :None
-        # do nothing
     end
 
     !isposdef(mtx) &&
@@ -177,8 +175,9 @@ function asset_statistics!(
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
     mu_type::Symbol = portfolio.mu_type,
     cov_type::Symbol = portfolio.cov_type,
+    jlogo::Bool = portfolio.jlogo,
     posdef_fix::Symbol = portfolio.posdef_fix,
-    gs_threshold = isa(portfolio, HCPortfolio) ? portfolio.gs_threshold : nothing,
+    gs_threshold = isa(portfolio, HCPortfolio) ? portfolio.gs_threshold : 0.5,
     alpha_tail = isa(portfolio, HCPortfolio) ? portfolio.alpha_tail : nothing,
     bins_info = isa(portfolio, HCPortfolio) ? portfolio.bins_info : nothing,
     mean_func::Function = mean,
@@ -231,6 +230,7 @@ function asset_statistics!(
             StatsBase.cov(cov_est, semi_returns; mean = 0.0, cov_kwargs...) :
             StatsBase.cov(cov_est, semi_returns, cov_weights; mean = 0.0, cov_kwargs...)
         elseif cov_type == :Gerber1
+            isa(portfolio, HCPortfolio) && (portfolio.gs_threshold = gs_threshold)
             covgerber1(
                 returns,
                 gs_threshold;
@@ -238,8 +238,8 @@ function asset_statistics!(
                 std_args = std_args,
                 std_kwargs = std_kwargs,
             )
-            portfolio.gs_threshold = gs_threshold
         elseif cov_type == :Gerber2
+            isa(portfolio, HCPortfolio) && (portfolio.gs_threshold = gs_threshold)
             covgerber2(
                 returns,
                 gs_threshold;
@@ -247,16 +247,26 @@ function asset_statistics!(
                 std_args = std_args,
                 std_kwargs = std_kwargs,
             )
-            portfolio.gs_threshold = gs_threshold
         elseif cov_type == :Custom_Func
             cov_func(returns, cov_args...; cov_kwargs...)
         elseif cov_type == :Custom_Val
             custom_cov
         end
         portfolio.cov_type = cov_type
-        @assert(posdef_fix ∈ PosdefFixes, "posdef_fix must be one of $PosdefFixes")
 
-        _posdef_fix!(portfolio.cov, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
+        if jlogo
+            sigma = portfolio.cov
+            codep = cov2cor(sigma)
+            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+            separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
+            @time portfolio.cov = inv(JLogo(sigma, separators, cliques))
+            portfolio.jlogo = jlogo
+        end
+
+        if posdef_fix != :None
+            @assert(posdef_fix ∈ PosdefFixes, "posdef_fix must be one of $PosdefFixes")
+            _posdef_fix!(portfolio.cov, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
+        end
     end
 
     # Mu

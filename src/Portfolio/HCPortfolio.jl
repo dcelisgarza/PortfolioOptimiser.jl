@@ -52,6 +52,7 @@ mutable struct HCPortfolio{
     mu_type::tymu
     mu::tmu
     cov_type::tycov
+    jlogo::tjlogo
     cov::tcov
     bins_info::tbin
     w_min::wmi
@@ -91,6 +92,7 @@ HCPortfolio(;
     mu_type::Symbol = :Default,
     mu = Vector{Float64}(undef, 0),
     cov_type::Symbol = :Full,
+    tjlogo::Bool = false,
     cov = Matrix{Float64}(undef, 0, 0),
     bins_info::Union{Symbol, Int} = :KN,
     w_min::Union{<:Real, AbstractVector{<:Real}, Nothing} = 0.0,
@@ -125,6 +127,7 @@ mutable struct HCPortfolio{
     ttmu,
     tmu,
     ttcov,
+    tjlogo,
     tcov,
     tpdf,
     tbin,
@@ -167,6 +170,7 @@ mutable struct HCPortfolio{
     mu_type::ttmu
     mu::tmu
     cov_type::ttcov
+    jlogo::tjlogo
     cov::tcov
     posdef_fix::tpdf
     bins_info::tbin
@@ -212,6 +216,7 @@ function HCPortfolio(;
     mu_type::Symbol = :Default,
     mu = Vector{Float64}(undef, 0),
     cov_type::Symbol = :Full,
+    jlogo::Bool = false,
     cov = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
     bins_info::Union{Symbol, <:Integer} = :KN,
@@ -266,6 +271,7 @@ function HCPortfolio(;
         typeof(mu_type),
         typeof(mu),
         typeof(cov_type),
+        typeof(jlogo),
         typeof(cov),
         typeof(posdef_fix),
         Union{Symbol, <:Integer},
@@ -307,6 +313,7 @@ function HCPortfolio(;
         mu_type,
         mu,
         cov_type,
+        jlogo,
         cov,
         posdef_fix,
         bins_info,

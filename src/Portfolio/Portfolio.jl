@@ -397,6 +397,7 @@ mutable struct Portfolio{
     ttmu,
     tmu,
     ttcov,
+    tjlogo,
     tcov,
     tkurt,
     tskurt,
@@ -510,6 +511,7 @@ mutable struct Portfolio{
     mu_type::ttmu
     mu::tmu
     cov_type::ttcov
+    jlogo::tjlogo
     cov::tcov
     kurt::tkurt
     skurt::tskurt
@@ -618,6 +620,7 @@ function Portfolio(;
     mu_type::Symbol = :Default,
     mu = Vector{Float64}(undef, 0),
     cov_type::Symbol = :Full,
+    jlogo::Bool = false,
     cov = Matrix{Float64}(undef, 0, 0),
     kurt = Matrix{Float64}(undef, 0, 0),
     skurt = Matrix{Float64}(undef, 0, 0),
@@ -756,6 +759,7 @@ function Portfolio(;
         typeof(mu_type),
         typeof(mu),
         typeof(cov_type),
+        typeof(jlogo),
         typeof(cov),
         typeof(kurt),
         typeof(skurt),
@@ -872,6 +876,7 @@ function Portfolio(;
         mu_type,
         mu,
         cov_type,
+        jlogo,
         cov,
         kurt,
         skurt,

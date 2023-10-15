@@ -699,4 +699,32 @@ function DBHTs(D, S; branchorder = :optimal, method = :Unique)
     return T8, Rpm, Adjv, Dpm, Mv, Z, hclust
 end
 
-export DBHTs, PMFG_T2s, distance_wei, clique3, breadth, FindDisjoint, CliqHierarchyTree2s
+function _jlogo!(jlogo, sigma, source, sign)
+    tmp = Matrix{eltype(sigma)}(undef, size(source, 2), size(source, 2))
+    for i in axes(source, 1)
+        v = source[i, :]
+        idx = Iterators.product(v, v)
+        for (i, j) in enumerate(idx)
+            tmp[i] = sigma[j[1], j[2]]
+        end
+
+        tmp = inv(tmp)
+
+        for (i, j) in enumerate(idx)
+            jlogo[j[1], j[2]] += sign * tmp[i]
+        end
+    end
+    return nothing
+end
+
+function JLogo(sigma, separators, cliques)
+    jlogo = zeros(eltype(sigma), size(sigma))
+
+    _jlogo!(jlogo, sigma, cliques, 1)
+    _jlogo!(jlogo, sigma, separators, -1)
+
+    return jlogo
+end
+
+export DBHTs,
+    PMFG_T2s, distance_wei, clique3, breadth, FindDisjoint, CliqHierarchyTree2s, JLogo
