@@ -492,7 +492,7 @@ const MuTypes = (:Default, :JS, :BS, :BOP, :Custom_Func, :Custom_Val)
 const MuTargets = (:GM, :VW, :SE)
 const CovTypes = (:Full, :Semi, :Gerber1, :Gerber2, :Custom_Func, :Custom_Val)
 const PosdefFixes = (:None, :Custom_Func)
-const RegCriteria = (:pval, :aic, :aicc, :bic, :r2, :adjr2)
+const RegCriteria = (:pval, GLM.aic, GLM.aicc, GLM.bic, GLM.r2, GLM.adjr2)
 
 """
 ```julia

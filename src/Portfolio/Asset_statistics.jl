@@ -564,43 +564,10 @@ function wc_statistics!(
     return nothing
 end
 
-function _fit_model(included, factor, ovec, x, y)
-    factors = [included; factor]
-    x1 = [ovec Matrix(x[!, factors])]
-    result = lm(x1, y)
-    return result
-end
-
-function _get_new_feature_and_pvals(fit_result, i, best_pval, factor, threshold, mt)
-    new_pvals = coeftable(fit_result).cols[4][2:end]
-    cond1 = mt ? maximum(new_pvals) : -Inf
-    test_pval = new_pvals[i]
-    if best_pval > test_pval && cond1 <= threshold
-        best_pval = test_pval
-        new_feature = factor
-        pvals = copy(new_pvals)
-    end
-
-    return new_feature, pvals
-end
-
-function _get_best_pvals(x, y, included, ovec, threshold, pvals, mt = true)
-    excluded = setdiff(names(x), included)
-    best_pval = Inf
-    new_feature = ""
-    for (i, factor) in enumerate(excluded)
-        fit_result = _fit_model(included, factor, ovec, x, y)
-        new_feature, pvals =
-            _get_new_feature_and_pvals(fit_result, i, best_pval, factor, threshold, mt)
-    end
-
-    return new_feature, pvals
-end
-
 function forward_regression(
     x::DataFrame,
     y::Union{Vector, DataFrame},
-    criterion = :pval,
+    criterion::Union{Symbol, Function} = :pval,
     threshold = 0.05,
 )
     @assert(criterion ∈ RegCriteria, "criterion, $criterion, must be one of $RegCriteria")
@@ -609,52 +576,95 @@ function forward_regression(
     included = String[]
     N = length(y)
     ovec = ones(N)
+    namesx = names(x)
 
     if criterion == :pval
         pvals = Float64[]
-        value = 0.0
-        while value <= threshold
-            new_feature, pvals =
-                _get_best_pvals(x, y, included, ovec, threshold, pvals, true)
+        val = 0.0
+        while val <= threshold
+            excluded = setdiff(namesx, included)
+            best_pval = Inf
+            new_feature = ""
+
+            for i in excluded
+                factors = [included; i]
+                x1 = [ovec Matrix(x[!, factors])]
+                fit_result = lm(x1, y)
+                new_pvals = coeftable(fit_result).cols[4][2:end]
+
+                idx = findfirst(x -> x == i, factors)
+                test_pval = new_pvals[idx]
+                if best_pval > test_pval && maximum(new_pvals) <= threshold
+                    best_pval = test_pval
+                    new_feature = i
+                    pvals = copy(new_pvals)
+                end
+            end
+
             isempty(new_feature) ? break : push!(included, new_feature)
-            !isempty(pvals) && (value = maximum(pvals))
+            !isempty(pvals) && (val = maximum(pvals))
         end
 
         if isempty(included)
-            new_feature, pvals =
-                _get_best_pvals(x, y, included, ovec, threshold, pvals, false)
+            excluded = setdiff(namesx, included)
+            best_pval = Inf
+            new_feature = ""
 
-            value = maximum(pvals)
+            for i in excluded
+                factors = [included; i]
+                x1 = [ovec Matrix(x[!, factors])]
+                fit_result = lm(x1, y)
+                new_pvals = coeftable(fit_result).cols[4][2:end]
+
+                idx = findfirst(x -> x == i, factors)
+                test_pval = new_pvals[idx]
+                if best_pval > test_pval
+                    best_pval = test_pval
+                    new_feature = i
+                    pvals = copy(new_pvals)
+                end
+            end
+
+            @warn(
+                "No asset with p-value lower than threshold. Best we can do is $new_feature, with p-value $best_pval."
+            )
+
             push!(included, new_feature)
         end
     else
-        if criterion ∈ (:aic, :aicc, :bic)
+        if criterion ∈ (GLM.aic, GLM.aicc, GLM.bic)
             threshold = Inf
         else
             threshold = -Inf
         end
 
         excluded = names(x)
-        for j in 1:N
+        for k in 1:N
             ni = length(excluded)
             value = Dict()
 
-            for (i, factor) in enumerate(excluded)
+            for i in excluded
                 factors = copy(included)
-                push!(factors, factor)
+                push!(factors, i)
 
-                fit_result = _fit_model(included, factor, ovec, x, y)
+                x1 = [ovec Matrix(x[!, factors])]
+                fit_result = lm(x1, y)
+
                 value[i] = criterion(fit_result)
             end
 
-            if criterion ∈ (:aic, :aicc, :bic)
-                val, idx = findmin(value)
+            isempty(value) && break
+
+            if criterion ∈ (GLM.aic, GLM.aicc, GLM.bic)
+                val, key = findmin(value)
+                idx = findfirst(x -> x == key, excluded)
                 if val < threshold
                     push!(included, popat!(excluded, idx))
                     threshold = val
                 end
             else
-                val, idx = findmax(value)
+                val, key = findmax(value)
+                idx = findfirst(x -> x == key, excluded)
                 if val > threshold
                     push!(included, popat!(excluded, idx))
                     threshold = val
@@ -662,6 +672,95 @@ function forward_regression(
             end
 
             ni == length(excluded) && break
+        end
+    end
+
+    return included
+end
+
+function backward_regression(
+    x::DataFrame,
+    y::Union{Vector, DataFrame},
+    criterion = :pval,
+    threshold = 0.05,
+)
+    @assert(criterion ∈ RegCriteria, "criterion, $criterion, must be one of $RegCriteria")
+    isa(y, DataFrame) && (y = Vector(y))
+
+    N = length(y)
+    ovec = ones(N)
+
+    fit_result = lm([ovec Matrix(x)], y)
+    included = names(x)
+
+    if criterion == :pval
+        namesx = copy(included)
+        excluded = String[]
+        pvals = coeftable(fit_result).cols[4][2:end]
+        val = maximum(pvals)
+        while val > threshold
+            included = setdiff(namesx, excluded)
+            idx1 = isinf.(pvals)
+            included = included[.!idx1]
+            x1 = [ovec Matrix(x[!, included])]
+            fit_result = lm(x1, y)
+            pvals = coeftable(fit_result).cols[4][2:end]
+
+            isempty(pvals) && break
+            val, idx2 = findmax(pvals)
+
+            append!(excluded, included[idx1], included[idx2])
+        end
+
+        if isempty(included)
+            excluded = setdiff(namesx, included)
+            best_pval = Inf
+            new_feature = ""
+            pvals = Float64[]
+
+            for (i, factor) in enumerate(excluded)
+                fit_result = _fit_model(included, factor, ovec, x, y)
+                new_pvals = coeftable(fit_result).cols[4][2:end]
+                test_pval = new_pvals[i]
+                if best_pval > test_pval
+                    best_pval = test_pval
+                    new_feature = factor
+                    pvals = copy(new_pvals)
+                end
+            end
+
+            value = maximum(pvals)
+            push!(included, new_feature)
+        end
+    else
+        threshold = criterion(fit_result)
+
+        for _ in 1:N
+            ni = length(included)
+            value = Dict()
+            for i in axes(included, 1)
+                factors = copy(included)
+                popat!(factors, i)
+                x1 = [ovec Matrix(x[!, included])]
+                fit_result = lm(x1, y)
+                value[i] = criterion(fit_result)
+            end
+
+            if criterion ∈ (:aic, :aicc, :bic)
+                val, idx = findmin(value)
+                if val < threshold
+                    popat!(included, idx)
+                    threshold = val
+                end
+            else
+                val, idx = findmax(value)
+                if val > threshold
+                    popat!(included, idx)
+                    threshold = val
+                end
+            end
+
+            ni == length(included) && break
         end
     end
 
@@ -677,4 +776,6 @@ export block_vec_pq,
     scokurt,
     asset_statistics!,
     wc_statistics!,
-    fix_cov!
+    fix_cov!,
+    forward_regression,
+    backward_regression
