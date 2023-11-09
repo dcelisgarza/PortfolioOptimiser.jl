@@ -639,7 +639,7 @@ function forward_regression(
         end
 
         excluded = names(x)
-        for k in 1:N
+        for _ in 1:N
             ni = length(excluded)
             value = Dict()
 
@@ -690,26 +690,27 @@ function backward_regression(
     N = length(y)
     ovec = ones(N)
 
-    fit_result = lm([ovec Matrix(x)], y)
+    fit_result = lm([ovec Matrix(x[!, :])], y)
+
     included = names(x)
+    namesx = names(x)
 
     if criterion == :pval
-        namesx = copy(included)
         excluded = String[]
         pvals = coeftable(fit_result).cols[4][2:end]
         val = maximum(pvals)
         while val > threshold
-            included = setdiff(namesx, excluded)
-            idx1 = isinf.(pvals)
-            included = included[.!idx1]
-            x1 = [ovec Matrix(x[!, included])]
+            factors = setdiff(namesx, excluded)
+            included = factors
+
+            isempty(factors) && break
+
+            x1 = [ovec Matrix(x[!, factors])]
             fit_result = lm(x1, y)
             pvals = coeftable(fit_result).cols[4][2:end]
 
-            isempty(pvals) && break
             val, idx2 = findmax(pvals)
-
-            append!(excluded, included[idx1], included[idx2])
+            push!(excluded, factors[idx2])
         end
 
         if isempty(included)
@@ -718,13 +719,18 @@ function backward_regression(
             new_feature = ""
             pvals = Float64[]
 
-            for (i, factor) in enumerate(excluded)
-                fit_result = _fit_model(included, factor, ovec, x, y)
+            for i in excluded
+                factors = [included; i]
+                x1 = [ovec Matrix(x[!, factors])]
+                fit_result = lm(x1, y)
                 new_pvals = coeftable(fit_result).cols[4][2:end]
-                test_pval = new_pvals[i]
+
+                idx = findfirst(x -> x == i, factors)
+                test_pval = new_pvals[idx]
+
                 if best_pval > test_pval
                     best_pval = test_pval
-                    new_feature = factor
+                    new_feature = i
                     pvals = copy(new_pvals)
                 end
             end
@@ -738,24 +744,29 @@ function backward_regression(
         for _ in 1:N
             ni = length(included)
             value = Dict()
-            for i in axes(included, 1)
+            for (i, factor) in enumerate(included)
                 factors = copy(included)
                 popat!(factors, i)
-                x1 = [ovec Matrix(x[!, included])]
+                !isempty(factors) ? (x1 = [ovec Matrix(x[!, factors])]) :
+                x1 = reshape(ovec, :, 1)
                 fit_result = lm(x1, y)
-                value[i] = criterion(fit_result)
+                value[factor] = criterion(fit_result)
             end
 
-            if criterion ∈ (:aic, :aicc, :bic)
+            isempty(value) && break
+
+            if criterion ∈ (GLM.aic, GLM.aicc, GLM.bic)
                 val, idx = findmin(value)
                 if val < threshold
-                    popat!(included, idx)
+                    i = findfirst(x -> x == idx, included)
+                    popat!(included, i)
                     threshold = val
                 end
             else
                 val, idx = findmax(value)
                 if val > threshold
-                    popat!(included, idx)
+                    i = findfirst(x -> x == idx, included)
+                    popat!(included, i)
                     threshold = val
                 end
             end

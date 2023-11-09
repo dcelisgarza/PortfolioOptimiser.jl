@@ -1928,4 +1928,26 @@ end
     @test incl4 == incl4t
     @test incl5 == incl5t
     @test incl6 == incl6t
+
+    incl1 = backward_regression(X, Y[!, 1], :pval, 0.05)
+    incl2 = backward_regression(X, Y[!, 1], :pval, 0.35)
+    incl3 = backward_regression(X, Y[!, 1], aic)
+    incl7 = backward_regression(X, Y[!, 1], aicc)
+    incl4 = backward_regression(X, Y[!, 1], bic)
+    incl5 = backward_regression(X, Y[!, 1], r2)
+    incl6 = backward_regression(X, Y[!, 1], adjr2)
+
+    incl1t = ["x4"]
+    incl2t = ["x2", "x3", "x4"]
+    incl3t = ["x4"]
+    incl4t = Any[]
+    incl5t = ["x1", "x2", "x3", "x4", "x5"]
+    incl6t = ["x2", "x3", "x4"]
+
+    @test incl1 == incl1t
+    @test incl2 == incl2t
+    @test incl3 == incl3t
+    @test incl4 == incl4t
+    @test incl5 == incl5t
+    @test incl6 == incl6t
 end
