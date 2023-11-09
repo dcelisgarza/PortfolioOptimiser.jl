@@ -564,6 +564,110 @@ function wc_statistics!(
     return nothing
 end
 
+function _fit_model(included, factor, ovec, x, y)
+    factors = [included; factor]
+    x1 = [ovec Matrix(x[!, factors])]
+    result = lm(x1, y)
+    return result
+end
+
+function _get_new_feature_and_pvals(fit_result, i, best_pval, factor, threshold, mt)
+    new_pvals = coeftable(fit_result).cols[4][2:end]
+    cond1 = mt ? maximum(new_pvals) : -Inf
+    test_pval = new_pvals[i]
+    if best_pval > test_pval && cond1 <= threshold
+        best_pval = test_pval
+        new_feature = factor
+        pvals = copy(new_pvals)
+    end
+
+    return new_feature, pvals
+end
+
+function _get_best_pvals(x, y, included, ovec, threshold, pvals, mt = true)
+    excluded = setdiff(names(x), included)
+    best_pval = Inf
+    new_feature = ""
+    for (i, factor) in enumerate(excluded)
+        fit_result = _fit_model(included, factor, ovec, x, y)
+        new_feature, pvals =
+            _get_new_feature_and_pvals(fit_result, i, best_pval, factor, threshold, mt)
+    end
+
+    return new_feature, pvals
+end
+
+function forward_regression(
+    x::DataFrame,
+    y::Union{Vector, DataFrame},
+    criterion = :pval,
+    threshold = 0.05,
+)
+    @assert(criterion ∈ RegCriteria, "criterion, $criterion, must be one of $RegCriteria")
+    isa(y, DataFrame) && (y = Vector(y))
+
+    included = String[]
+    N = length(y)
+    ovec = ones(N)
+
+    if criterion == :pval
+        pvals = Float64[]
+        value = 0.0
+        while value <= threshold
+            new_feature, pvals =
+                _get_best_pvals(x, y, included, ovec, threshold, pvals, true)
+            isempty(new_feature) ? break : push!(included, new_feature)
+            !isempty(pvals) && (value = maximum(pvals))
+        end
+
+        if isempty(included)
+            new_feature, pvals =
+                _get_best_pvals(x, y, included, ovec, threshold, pvals, false)
+
+            value = maximum(pvals)
+            push!(included, new_feature)
+        end
+    else
+        if criterion ∈ (:aic, :aicc, :bic)
+            threshold = Inf
+        else
+            threshold = -Inf
+        end
+
+        excluded = names(x)
+        for j in 1:N
+            ni = length(excluded)
+            value = Dict()
+
+            for (i, factor) in enumerate(excluded)
+                factors = copy(included)
+                push!(factors, factor)
+
+                fit_result = _fit_model(included, factor, ovec, x, y)
+                value[i] = criterion(fit_result)
+            end
+
+            if criterion ∈ (:aic, :aicc, :bic)
+                val, idx = findmin(value)
+                if val < threshold
+                    push!(included, popat!(excluded, idx))
+                    threshold = val
+                end
+            else
+                val, idx = findmax(value)
+                if val > threshold
+                    push!(included, popat!(excluded, idx))
+                    threshold = val
+                end
+            end
+
+            ni == length(excluded) && break
+        end
+    end
+
+    return included
+end
+
 export block_vec_pq,
     duplication_matrix,
     elimination_matrix,
