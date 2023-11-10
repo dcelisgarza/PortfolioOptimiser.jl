@@ -799,7 +799,7 @@ function pcr(
     X = transpose(Matrix(x))
 
     model = fit(PCA, X; pca_kwargs...)
-    Xp = transpose(MultivariateStats.transform(model, X))
+    Xp = transpose(predict(model, X))
     Vp = projection(model)
 
     x1 = [ones(N) Xp]
