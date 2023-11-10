@@ -1,42 +1,43 @@
 module PortfolioOptimiser
 
-# Risk models
-include("./RiskModels/RiskModels.jl")
+# # Risk models
+# include("./RiskModels/RiskModels.jl")
 
-# Expected returns
-include("./ExpectedReturns/ExpectedReturns.jl")
+# # Expected returns
+# include("./ExpectedReturns/ExpectedReturns.jl")
 
-# Optimisers
-## Base functionality
-include("./BaseOptimiser/BaseOptimiser.jl")
-## Efficient frontier
-include("./EfficientFrontierOptimiser/EfficientFrontierOptimiser.jl")
-## Near optimal centering
-include("./NearOptCenteringOptimiser/NearOptCenteringOptimiser.jl")
-## Hierarchical risk parity
-include("./HierarchicalOptimiser/HierarchicalOptimiser.jl")
-## Critical line
-include("./CriticalLineOptimiser/CriticalLineOptimiser.jl")
-## Black-Litterman
-include("./BlackLittermanOptimiser/BlackLittermanOptimiser.jl")
+# # Optimisers
+# ## Base functionality
+# include("./BaseOptimiser/BaseOptimiser.jl")
+# ## Efficient frontier
+# include("./EfficientFrontierOptimiser/EfficientFrontierOptimiser.jl")
+# ## Near optimal centering
+# include("./NearOptCenteringOptimiser/NearOptCenteringOptimiser.jl")
+# ## Hierarchical risk parity
+# include("./HierarchicalOptimiser/HierarchicalOptimiser.jl")
+# ## Critical line
+# include("./CriticalLineOptimiser/CriticalLineOptimiser.jl")
+# ## Black-Litterman
+# include("./BlackLittermanOptimiser/BlackLittermanOptimiser.jl")
 
-# Asset allocation
-include("./AssetAllocation/AssetAllocation.jl")
+# # Asset allocation
+# include("./AssetAllocation/AssetAllocation.jl")
 
 # Version 2.0
-using SparseArrays,
-    Random,
+using Clustering,
     DataFrames,
-    JuMP,
     Dates,
-    Distributions,
-    PyCall,
     Distances,
-    LinearAlgebra,
-    Statistics,
-    StatsBase,
+    Distributions,
     GLM,
-    MultivariateStats
+    JuMP,
+    LinearAlgebra,
+    MultivariateStats,
+    PyCall,
+    Random,
+    SparseArrays,
+    Statistics,
+    StatsBase
 
 include("./Portfolio/Definitions.jl")
 include("./Portfolio/DBHTs.jl")
