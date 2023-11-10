@@ -275,7 +275,7 @@ function codep_dist_mtx(
     gs_threshold = 0.5,
     alpha_tail = nothing,
     bins_info = nothing,
-    sigma = cov(returns),
+    sigma::Matrix{<:AbstractFloat} = cov(returns),
     cor_func::Function = cor,
     std_func::Function = std,
     dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
@@ -773,7 +773,7 @@ function forward_regression(
             threshold = -Inf
         end
 
-        excluded = names(x)
+        excluded = namesx
         for _ in 1:N
             ni = length(excluded)
             value = Dict()
@@ -946,7 +946,7 @@ end
 
 function loadings_matrix(
     x::DataFrame,
-    y::Union{Vector, DataFrame},
+    y::DataFrame,
     type = :FReg;
     criterion = :pval,
     threshold = 0.05,
@@ -1003,10 +1003,115 @@ function loadings_matrix(
         end
     end
 
-    return loadings
+    return hcat(DataFrame(ticker = names(y)), DataFrame(loadings, ["const"; features]))
 end
 
-function risk_factors() end
+function risk_factors(
+    x::DataFrame,
+    y::DataFrame;
+    B::Union{DataFrame, Nothing} = nothing,
+    constant::Bool = true,
+    error::Bool = true,
+    reg_type = :FReg,
+    criterion = :pval,
+    threshold = 0.05,
+    mean_func::Function = mean,
+    mean_args = (),
+    mean_kwargs = (;),
+    std_func::Function = std,
+    std_args = (),
+    std_kwargs = (;),
+    pca_kwargs = (;),
+    mu_type::Symbol = :Default,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    custom_mu = nothing,
+    custom_cov = nothing,
+    mu_target = :GM,
+    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    cov_type::Symbol = :Full,
+    jlogo::Bool = false,
+    posdef_fix::Symbol = :None,
+    gs_threshold = 0.5,
+    cov_func::Function = cov,
+    cov_weights::Union{AbstractWeights, Nothing} = nothing,
+    posdef_func::Function = x -> x,
+    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
+    cov_args = (),
+    posdef_args = (),
+    cov_kwargs = (;),
+    posdef_kwargs = (;),
+    var_func::Function = var,
+    var_args = (),
+    var_kwargs = (;),
+)
+    isnothing(B) && (
+        B = loadings_matrix(
+            x,
+            y,
+            reg_type;
+            criterion = criterion,
+            threshold = threshold,
+            mean_func = mean_func,
+            mean_args = mean_args,
+            mean_kwargs = mean_kwargs,
+            std_func = std_func,
+            std_args = std_args,
+            std_kwargs = std_kwargs,
+            pca_kwargs = pca_kwargs,
+        )
+    )
+
+    x1 = constant || "const" ∈ names(B) ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
+
+    cov_f = covar_mtx(
+        x1;
+        target_ret = target_ret,
+        cov_type = cov_type,
+        jlogo = jlogo,
+        posdef_fix = posdef_fix,
+        gs_threshold = gs_threshold,
+        cov_func = cov_func,
+        cov_weights = cov_weights,
+        posdef_func = posdef_func,
+        std_func = std_func,
+        custom_cov = custom_cov,
+        cov_est = cov_est,
+        cov_args = cov_args,
+        posdef_args = posdef_args,
+        std_args = std_args,
+        cov_kwargs = cov_kwargs,
+        posdef_kwargs = posdef_kwargs,
+        std_kwargs = std_kwargs,
+    )
+
+    mu_f = mean_vec(
+        x1;
+        mu_type = mu_type,
+        mean_func = mean_func,
+        mu_weights = mu_weights,
+        custom_mu = custom_mu,
+        sigma = isnothing(custom_cov) ? cov_f : custom_cov,
+        mu_target = mu_target,
+        mean_args = mean_args,
+        mean_kwargs = mean_kwargs,
+    )
+
+    b = Matrix(B[!, setdiff(names(B), ["ticker"])])
+    returns = x1 * transpose(b)
+    mu = b * mu_f
+
+    display(b * cov_f * transpose(b))
+    println(error)
+    sigma = if error
+        e = Matrix(y) - returns
+        S_e = diagm(vec(var_func(e, var_args...; dims = 1, var_kwargs...)))
+        b * cov_f * transpose(b) + S_e
+    else
+        b * cov_f * transpose(b)
+    end
+
+    return mu, sigma, returns
+end
 
 export block_vec_pq,
     duplication_matrix,
@@ -1021,4 +1126,5 @@ export block_vec_pq,
     forward_regression,
     backward_regression,
     pcr,
-    loadings_matrix
+    loadings_matrix,
+    risk_factors
