@@ -487,7 +487,7 @@ function block_vec_pq(A, p, q)
 
     !(mod(mp, p) == 0 && mod(nq, p) == 0) && (throw(
         DimensionMismatch(
-            "dimensions A, $(size(A)), must be integer multiples of (p, q) = ($p, $q)",
+            "size(A) = $(size(A)), must be integer multiples of (p, q) = ($p, $q)",
         ),
     ))
 

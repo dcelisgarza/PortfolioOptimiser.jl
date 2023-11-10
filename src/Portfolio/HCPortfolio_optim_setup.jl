@@ -638,19 +638,22 @@ function opt_port!(
     max_iter = 100,
     save_opt_params = true,
 )
-    @assert(type ∈ HCPortTypes, "type must be one of $HCPortTypes")
-    @assert(rm ∈ HRRiskMeasures, "rm must be one of $HRRiskMeasures")
-    @assert(obj ∈ HRObjFuncs, "obj must be one of $HRObjFuncs")
-    @assert(kelly ∈ KellyRet, "kelly must be one of $KellyRet")
-    @assert(linkage ∈ LinkageTypes, "linkage must be one of $LinkageTypes")
-    @assert(portfolio.codep_type ∈ CodepTypes, "codep_type must be one of $CodepTypes")
+    @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+    @assert(rm ∈ HRRiskMeasures, "rm = $rm, must be one of $HRRiskMeasures")
+    @assert(obj ∈ HRObjFuncs, "obj = $obj, must be one of $HRObjFuncs")
+    @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
+    @assert(linkage ∈ LinkageTypes, "linkage = $linkage, must be one of $LinkageTypes")
+    @assert(
+        portfolio.codep_type ∈ CodepTypes,
+        "portfolio.codep_type = $(portfolio.codep_type), must be one of $CodepTypes"
+    )
     @assert(
         0 < portfolio.alpha < 1,
-        "portfolio.alpha must be greater than 0 and smaller than 1"
+        "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and smaller than 1"
     )
     @assert(
         0 < portfolio.kappa < 1,
-        "portfolio.kappa must be greater than 0 and smaller than 1"
+        "portfolio.kappa = $(portfolio.kappa) must be greater than 0 and smaller than 1"
     )
 
     _save_opt_params(

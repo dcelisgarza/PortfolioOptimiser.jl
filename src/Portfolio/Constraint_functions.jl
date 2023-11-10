@@ -294,7 +294,7 @@ end
 """
 """
 function rp_constraints(asset_classes, type = :Assets, class_col = nothing)
-    @assert(type ∈ RPConstraintTypes, "type must be one of $RPConstraintTypes")
+    @assert(type ∈ RPConstraintTypes, "type = $type, must be one of $RPConstraintTypes")
     N = nrow(asset_classes)
 
     w = if type == :Assets

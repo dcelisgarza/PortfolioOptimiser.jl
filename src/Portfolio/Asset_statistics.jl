@@ -104,7 +104,7 @@ function mu_esimator(
     mu_weights = nothing,
     sigma = nothing,
 )
-    @assert(target ∈ MuTargets, "target must be one of $MuTargets")
+    @assert(target ∈ MuTargets, "target = $target, must be one of $MuTargets")
 
     T, N = size(returns)
     mu =
@@ -218,7 +218,7 @@ function asset_statistics!(
 
     # Covariance
     if calc_cov
-        @assert(cov_type ∈ CovTypes, "cov_type must be one of $CovTypes")
+        @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
         portfolio.cov = if cov_type == :Full
             isnothing(cov_weights) ? StatsBase.cov(cov_est, returns; cov_kwargs...) :
             StatsBase.cov(cov_est, returns, cov_weights; cov_kwargs...)
@@ -259,19 +259,22 @@ function asset_statistics!(
             codep = cov2cor(sigma)
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
             separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
-            @time portfolio.cov = inv(JLogo(sigma, separators, cliques))
+            portfolio.cov = inv(JLogo(sigma, separators, cliques))
             portfolio.jlogo = jlogo
         end
 
         if posdef_fix != :None
-            @assert(posdef_fix ∈ PosdefFixes, "posdef_fix must be one of $PosdefFixes")
+            @assert(
+                posdef_fix ∈ PosdefFixes,
+                "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
+            )
             _posdef_fix!(portfolio.cov, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
         end
     end
 
     # Mu
     if calc_mu
-        @assert(mu_type ∈ MuTypes, "mu_type must be one of $MuTypes")
+        @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
         portfolio.mu = if mu_type == :Default
             isnothing(mu_weights) ? vec(mean(returns; dims = 1)) :
             vec(mean(returns, mu_weights; dims = 1))
@@ -323,7 +326,10 @@ function asset_statistics!(
         end
     else
         if calc_codep
-            @assert(codep_type ∈ CodepTypes, "codep_type must be one of $CodepTypes")
+            @assert(
+                codep_type ∈ CodepTypes,
+                "codep_type = $codep_type, must be one of $CodepTypes"
+            )
             if codep_type == :Pearson
                 codep = cor(returns)
                 dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
@@ -414,7 +420,7 @@ function gen_bootstrap(
     seed = nothing,
     rng = Random.default_rng(),
 )
-    @assert(kind ∈ KindBootstrap, "kind must be one of $KindBootstrap")
+    @assert(kind ∈ KindBootstrap, "kind = $kind, must be one of $KindBootstrap")
     !isnothing(seed) && Random.seed!(rng, seed)
 
     mus = Vector{Vector{eltype(returns)}}(undef, n_sim)
@@ -481,8 +487,8 @@ function wc_statistics!(
     fix_cov_args = (),
     fix_cov_kwargs = (;),
 )
-    @assert(box ∈ BoxTypes, "box must be one of $BoxTypes")
-    @assert(ellipse ∈ EllipseTypes, "ellipse must be one of $EllipseTypes")
+    @assert(box ∈ BoxTypes, "box = $box, must be one of $BoxTypes")
+    @assert(ellipse ∈ EllipseTypes, "ellipse = $ellipse, must be one of $EllipseTypes")
     @assert(
         calc_box || calc_ellipse,
         "at least one of calc_box = $calc_box, or calc_ellipse = $calc_ellipse must be true"
@@ -570,7 +576,7 @@ function forward_regression(
     criterion::Union{Symbol, Function} = :pval,
     threshold = 0.05,
 )
-    @assert(criterion ∈ RegCriteria, "criterion, $criterion, must be one of $RegCriteria")
+    @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
     isa(y, DataFrame) && (y = Vector(y))
 
     included = String[]
@@ -684,7 +690,7 @@ function backward_regression(
     criterion = :pval,
     threshold = 0.05,
 )
-    @assert(criterion ∈ RegCriteria, "criterion, $criterion, must be one of $RegCriteria")
+    @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
     isa(y, DataFrame) && (y = Vector(y))
 
     N = length(y)
@@ -778,6 +784,99 @@ function backward_regression(
     return included
 end
 
+function pcr(
+    x::DataFrame,
+    y::Union{Vector, DataFrame};
+    mean_func::Function = mean,
+    mean_args = (),
+    mean_kwargs = (;),
+    std_func::Function = std,
+    std_args = (),
+    std_kwargs = (;),
+    pca_kwargs = (;),
+)
+    N = nrow(x)
+    X = transpose(Matrix(x))
+
+    model = fit(PCA, X; pca_kwargs...)
+    Xp = transpose(MultivariateStats.transform(model, X))
+    Vp = projection(model)
+
+    x1 = [ones(N) Xp]
+    fit_result = lm(x1, y)
+    beta_pc = coef(fit_result)[2:end]
+    avg = vec(mean_func(X, mean_args...; dims = 2, mean_kwargs...))
+    sdev = vec(std_func(X, std_args...; dims = 2, std_kwargs...))
+
+    beta = Vp * beta_pc ./ sdev
+    beta0 = mean(y) - dot(beta, avg)
+    pushfirst!(beta, beta0)
+
+    return beta
+end
+
+function loadings_matrix(
+    x::DataFrame,
+    y::Union{Vector, DataFrame},
+    type = :FReg;
+    criterion = :pval,
+    threshold = 0.05,
+    mean_func::Function = mean,
+    mean_args = (),
+    mean_kwargs = (;),
+    std_func::Function = std,
+    std_args = (),
+    std_kwargs = (;),
+    pca_kwargs = (;),
+)
+    @assert(type ∈ LoadingMtxType, "type = $type, must be one of $LoadingMtxType")
+    features = names(x)
+    rows = ncol(y)
+    cols = ncol(x) + 1
+
+    N = nrow(y)
+    ovec = ones(N)
+
+    loadings = zeros(rows, cols)
+
+    for i in 1:rows
+        if type == :FReg || type == :BReg
+            included = if type == :FReg
+                forward_regression(x, y[!, i], criterion, threshold)
+            else
+                backward_regression(x, y[!, i], criterion, threshold)
+            end
+
+            !isempty(included) ? (x1 = [ovec Matrix(x[!, included])]) :
+            x1 = reshape(ovec, :, 1)
+
+            fit_result = lm(x1, y[!, i])
+
+            params = coef(fit_result)
+
+            loadings[i, 1] = params[1]
+            isempty(included) && continue
+            idx = [findfirst(x -> x == i, features) + 1 for i in included]
+            loadings[i, idx] .= params[2:end]
+        else
+            beta = pcr(
+                x,
+                y[!, i];
+                mean_func = mean_func,
+                mean_args = mean_args,
+                mean_kwargs = mean_kwargs,
+                std_func = std_func,
+                std_args = std_args,
+                std_kwargs = std_kwargs,
+                pca_kwargs = pca_kwargs,
+            )
+            loadings[i, :] .= beta
+        end
+    end
+
+    return loadings
+end
+
 export block_vec_pq,
     duplication_matrix,
     elimination_matrix,
@@ -789,4 +888,6 @@ export block_vec_pq,
     wc_statistics!,
     fix_cov!,
     forward_regression,
-    backward_regression
+    backward_regression,
+    loadings_matrix,
+    pcr

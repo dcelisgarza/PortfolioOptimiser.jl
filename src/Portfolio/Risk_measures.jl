@@ -224,13 +224,13 @@ where ``\\mathcal{K}_{\\exp}`` is the exponential cone.
 - `α`: significance level, α ∈ (0, 1).
 """
 function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
-    @assert(0 < alpha < 1, "alpha must be greater than 0 and smaller than 1")
+    @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and smaller than 1")
     val = mean(exp.(-x / z))
     val = z * log(val / alpha)
     return val
 end
 function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
-    @assert(0 < alpha < 1, "alpha must be greater than 0 and smaller than 1")
+    @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and smaller than 1")
 
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
@@ -311,8 +311,8 @@ function RRM(
     alpha::Real = 0.05,
     kappa::Real = 0.3,
 )
-    @assert(0 < alpha < 1, "alpha must be greater than 0 and smaller than 1")
-    @assert(0 < kappa < 1, "kappa must be greater than 0 and smaller than 1")
+    @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and smaller than 1")
+    @assert(0 < kappa < 1, "kappa = $kappa, must be greater than 0 and smaller than 1")
 
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
@@ -1136,8 +1136,8 @@ function calc_risk(
     rf::Real = 0.0,
 )
     isa(portfolio, Portfolio) ?
-    @assert(type ∈ PortTypes, "type must be one of $PortTypes") :
-    @assert(type ∈ HCPortTypes, "type must be one of $HCPortTypes")
+    @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes") :
+    @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
 
     return calc_risk(
         portfolio.optimal[type].weights,

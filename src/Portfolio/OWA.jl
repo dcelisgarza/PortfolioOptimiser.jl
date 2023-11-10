@@ -28,7 +28,7 @@ function owa_gmd(T)
 end
 
 function owa_cvar(T, alpha = 0.05)
-    @assert(0 < alpha < 1, "alpha must be between 0 and 1")
+    @assert(0 < alpha < 1, "alpha = $alpha, must be between 0 and 1")
 
     k = floor(Int, T * alpha)
     w = zeros(T)
@@ -48,8 +48,8 @@ function owa_wcvar(T, alphas, weights)
 end
 
 function owa_tg(T; alpha_i = 0.0001, alpha = 0.05, a_sim = 100)
-    @assert(0 < alpha < 1, "alpha must be between 0 and 1")
-    @assert(0 < alpha_i < alpha, "alpha_i must be between 0 and alpha")
+    @assert(0 < alpha < 1, "alpha = $alpha, must be between 0 and 1")
+    @assert(0 < alpha_i < alpha, "alpha_i = $alpha_i, must be between 0 and alpha")
 
     alphas = range(start = alpha_i, stop = alpha, length = a_sim)
     n = length(alphas)

@@ -323,7 +323,7 @@ function BubbleHierarchy(Pred, Sb)
 end
 
 function CliqHierarchyTree2s(Apm, method = :Unique)
-    @assert(method ∈ DBHTRootMethods, "method must be one of $DBHTRootMethods")
+    @assert(method ∈ DBHTRootMethods, "method = $method, must be one of $DBHTRootMethods")
     N = size(Apm, 1)
     A = Apm .!= 0
     K3, E, clique = clique3(A)
@@ -654,7 +654,10 @@ DBHTs(D, S; branchorder = :optimal, method = :Unique)
 ```
 """
 function DBHTs(D, S; branchorder = :optimal, method = :Unique)
-    @assert(branchorder ∈ BranchOrderTypes, "branchorder must be one of $BranchOrderTypes")
+    @assert(
+        branchorder ∈ BranchOrderTypes,
+        "branchorder = $branchorder, must be one of $BranchOrderTypes"
+    )
     @assert(issymmetric(D), "D must be symmetric")
     @assert(issymmetric(S), "S must be symmetric")
 

@@ -511,25 +511,25 @@ function opt_port!(
     string_names = false,
     save_opt_params = true,
 )
-    @assert(type ∈ PortTypes, "type must be one of $PortTypes")
-    @assert(class ∈ PortClasses, "class must be one of $PortClasses")
+    @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
+    @assert(class ∈ PortClasses, "class = $class, must be one of $PortClasses")
     @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
-    @assert(obj ∈ ObjFuncs, "obj must be one of $ObjFuncs")
-    @assert(kelly ∈ KellyRet, "kelly must be one of $KellyRet")
+    @assert(obj ∈ ObjFuncs, "obj = $obj, must be one of $ObjFuncs")
+    @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
     @assert(rrp_ver ∈ RRPVersions)
-    @assert(u_mu ∈ UncertaintyTypes, "u_mu must be one of $UncertaintyTypes")
-    @assert(u_cov ∈ UncertaintyTypes, "u_cov must be one of $UncertaintyTypes")
+    @assert(u_mu ∈ UncertaintyTypes, "u_mu = $u_mu, must be one of $UncertaintyTypes")
+    @assert(u_cov ∈ UncertaintyTypes, "u_cov = $u_cov, must be one of $UncertaintyTypes")
     @assert(
         0 < portfolio.alpha < 1,
-        "portfolio.alpha must be greater than 0 and smaller than 1"
+        "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and smaller than 1"
     )
     @assert(
         0 < portfolio.kappa < 1,
-        "portfolio.kappa must be greater than 0 and smaller than 1"
+        "portfolio.kappa = $(portfolio.kappa), must be greater than 0 and smaller than 1"
     )
     @assert(
         portfolio.kind_tracking_err ∈ TrackingErrKinds,
-        "portfolio.kind_tracking_err must be one of $TrackingErrKinds"
+        "portfolio.kind_tracking_err = $(portfolio.kind_tracking_err), must be one of $TrackingErrKinds"
     )
 
     _save_opt_params(

@@ -35,7 +35,8 @@ using SparseArrays,
     LinearAlgebra,
     Statistics,
     StatsBase,
-    GLM
+    GLM,
+    MultivariateStats
 
 include("./Portfolio/Definitions.jl")
 include("./Portfolio/DBHTs.jl")

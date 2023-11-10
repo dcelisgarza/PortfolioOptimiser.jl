@@ -79,7 +79,7 @@ mut_var_info_mtx(x, bins_info = :KN, normed = true)
 function mut_var_info_mtx(x, bins_info = :KN, normed = true)
     @assert(
         bins_info ∈ BinTypes || isa(bins_info, Int),
-        "bins has to either be in $BinTypes, or an integer value"
+        "bins_info = $bins_info, has to either be in $BinTypes, or an integer value"
     )
 
     bin_width_func = if bins_info == :KN
@@ -133,7 +133,7 @@ function cordistance(v1::AbstractVector, v2::AbstractVector)
     N = length(v1)
     @assert(
         N == length(v2) && N > 1,
-        "lengths of v1 and v2 must be equal and greater than 1"
+        "lengths of v1 = $(length(v1)) and v2 = $(length(v2)) must be equal and greater than 1"
     )
 
     N2 = N^2
@@ -189,7 +189,10 @@ function ltdi_mtx(x, alpha = 0.05)
 end
 
 function covgerber1(x, threshold = 0.5; std_func = std, std_args = (), std_kwargs = (;))
-    @assert(0 < threshold < 1, "threshold must be greater than zero and smaller than one")
+    @assert(
+        0 < threshold < 1,
+        "threshold = $threshold, must be greater than zero and smaller than one"
+    )
 
     T, N = size(x)
 
@@ -238,7 +241,10 @@ function covgerber1(x, threshold = 0.5; std_func = std, std_args = (), std_kwarg
 end
 
 function covgerber2(x, threshold = 0.5; std_func = std, std_args = (), std_kwargs = (;))
-    @assert(0 < threshold < 1, "threshold must be greater than zero and smaller than one")
+    @assert(
+        0 < threshold < 1,
+        "threshold = $threshold, must be greater than zero and smaller than one"
+    )
 
     T, N = size(x)
 

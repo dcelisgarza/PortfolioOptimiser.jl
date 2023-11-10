@@ -21,7 +21,7 @@ function _setup_alloc_optim(weights, short_ratio, investment, reinvest)
 
     @assert(
         short_ratio >= 0,
-        "short ratio: $short_ratio, must be bigger than or equal to zero"
+        "short ratio = $short_ratio, must be bigger than or equal to zero"
     )
 
     short_investment = investment * short_ratio
@@ -411,10 +411,10 @@ function allocate_port!(
     save_opt_params = true,
 )
     isa(portfolio, Portfolio) ?
-    @assert(port_type ∈ PortTypes, "port_type must be one of $PortTypes") :
-    @assert(port_type ∈ HCPortTypes, "port_type must be one of $HCPortTypes")
+    @assert(port_type ∈ PortTypes, "port_type = $port_type, must be one of $PortTypes") :
+    @assert(port_type ∈ HCPortTypes, "port_type = $port_type, must be one of $HCPortTypes")
 
-    @assert(alloc_type ∈ AllocTypes, "alloc_type must be one of $AllocTypes")
+    @assert(alloc_type ∈ AllocTypes, "alloc_type = $alloc_type, must be one of $AllocTypes")
 
     retval, leftover =
         alloc_type == :LP ?
