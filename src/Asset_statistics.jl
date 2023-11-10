@@ -141,25 +141,25 @@ function mu_esimator(
     return mu
 end
 
-function covar_mtx(
+function cov_mtx(
     returns::Matrix{<:AbstractFloat};
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
-    cov_type::Symbol = :Full,
-    jlogo::Bool = false,
-    posdef_fix::Symbol = :None,
-    gs_threshold = 0.5,
-    cov_func::Function = cov,
-    cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    posdef_func::Function = x -> x,
-    std_func::Function = std,
-    custom_cov = nothing,
-    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_args = (),
-    posdef_args = (),
-    std_args = (),
+    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
+    cov_func::Function = cov,
     cov_kwargs = (;),
+    cov_type::Symbol = :Full,
+    cov_weights::Union{AbstractWeights, Nothing} = nothing,
+    custom_cov = nothing,
+    gs_threshold = 0.5,
+    jlogo::Bool = false,
+    posdef_args = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
     posdef_kwargs = (;),
+    std_args = (),
+    std_func::Function = std,
     std_kwargs = (;),
+    target_ret::Union{Real, Vector{<:Real}} = 0.0,
 )
     @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
     cov_mtx = if cov_type == :Full
@@ -214,14 +214,14 @@ end
 
 function mean_vec(
     returns::Matrix{<:AbstractFloat};
-    mu_type::Symbol = :Default,
-    mean_func::Function = mean,
-    mu_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_mu = nothing,
-    sigma::Matrix{<:AbstractFloat} = cov(returns),
-    mu_target = :GM,
     mean_args = (),
+    mean_func::Function = mean,
     mean_kwargs = (;),
+    mu_target = :GM,
+    mu_type::Symbol = :Default,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    sigma::Matrix{<:AbstractFloat} = cov(returns),
 )
     @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
     mu = if mu_type == :Default
@@ -232,9 +232,9 @@ function mean_vec(
             returns,
             mu_type,
             mu_target;
+            dims = 1,
             mu_weights = mu_weights,
             sigma = sigma,
-            dims = 1,
         )
     elseif mu_type == :Custom_Func
         vec(mean_func(returns, mean_args...; mean_kwargs...))
@@ -248,13 +248,13 @@ end
 function cokurt_mtx(
     returns::Matrix{<:AbstractFloat},
     mu::Vector{<:AbstractFloat};
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
-    posdef_fix::Symbol = :None,
-    posdef_func::Function = x -> x,
     custom_kurt = nothing,
     custom_skurt = nothing,
     posdef_args = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
     posdef_kwargs = (;),
+    target_ret::Union{Real, Vector{<:Real}} = 0.0,
 )
     kurt = isnothing(custom_kurt) ? cokurt(returns, transpose(mu)) : custom_kurt
     skurt =
@@ -272,21 +272,21 @@ end
 
 function codep_dist_mtx(
     returns::Matrix{<:AbstractFloat};
-    gs_threshold = 0.5,
     alpha_tail = nothing,
     bins_info = nothing,
-    sigma::Matrix{<:AbstractFloat} = cov(returns),
-    cor_func::Function = cor,
-    std_func::Function = std,
-    dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
     codep_type = nothing,
-    custom_cor = nothing,
     cor_args = (),
-    std_args = (),
-    dist_args = (),
+    cor_func::Function = cor,
     cor_kwargs = (;),
-    std_kwargs = (;),
+    custom_cor = nothing,
+    dist_args = (),
+    dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
     dist_kwargs = (;),
+    gs_threshold = 0.5,
+    sigma::Matrix{<:AbstractFloat} = cov(returns),
+    std_args = (),
+    std_func::Function = std,
+    std_kwargs = (;),
     uplo = :L,
 )
     @assert(codep_type ∈ CodepTypes, "codep_type = $codep_type, must be one of $CodepTypes")
@@ -385,73 +385,78 @@ asset_statistics!(
 )
 ```
 """
+
 function asset_statistics!(
     portfolio::AbstractPortfolio;
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
-    mu_type::Symbol = portfolio.mu_type,
+    # flags
+    calc_codep = true,
+    calc_cov = true,
+    calc_mu = true,
+    calc_kurt = true,
+    # cov_mtx
+    cov_args = (),
+    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
+    cov_func::Function = cov,
+    cov_kwargs = (;),
     cov_type::Symbol = portfolio.cov_type,
-    jlogo::Bool = portfolio.jlogo,
-    posdef_fix::Symbol = portfolio.posdef_fix,
+    cov_weights::Union{AbstractWeights, Nothing} = nothing,
+    custom_cov = nothing,
     gs_threshold = isa(portfolio, HCPortfolio) ? portfolio.gs_threshold : 0.5,
+    jlogo::Bool = portfolio.jlogo,
+    posdef_args = (),
+    posdef_fix::Symbol = portfolio.posdef_fix,
+    posdef_func::Function = x -> x,
+    posdef_kwargs = (;),
+    std_args = (),
+    std_func::Function = std,
+    std_kwargs = (;),
+    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    # mean_vec
+    custom_mu = nothing,
+    mean_args = (),
+    mean_func::Function = mean,
+    mean_kwargs = (;),
+    mu_target = :GM,
+    mu_type::Symbol = portfolio.mu_type,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    # codep_dist_mtx
     alpha_tail = isa(portfolio, HCPortfolio) ? portfolio.alpha_tail : nothing,
     bins_info = isa(portfolio, HCPortfolio) ? portfolio.bins_info : nothing,
-    mean_func::Function = mean,
-    cov_func::Function = cov,
-    mu_weights::Union{AbstractWeights, Nothing} = nothing,
-    cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    posdef_func::Function = x -> x,
-    cor_func::Function = cor,
-    std_func::Function = std,
-    dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
     codep_type = isa(portfolio, HCPortfolio) ? portfolio.codep_type : nothing,
-    custom_mu = nothing,
-    custom_cov = nothing,
+    cor_args = (),
+    cor_func::Function = cor,
+    cor_kwargs = (;),
+    custom_cor = nothing,
+    dist_args = (),
+    dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
+    dist_kwargs = (;),
     custom_kurt = nothing,
     custom_skurt = nothing,
-    custom_cor = nothing,
-    mu_target = :GM,
-    calc_mu = true,
-    calc_cov = true,
-    calc_kurt = true,
-    calc_codep = true,
-    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
-    mean_args = (),
-    cov_args = (),
-    posdef_args = (),
-    cor_args = (),
-    std_args = (),
-    dist_args = (),
-    mean_kwargs = (;),
-    cov_kwargs = (;),
-    posdef_kwargs = (;),
-    cor_kwargs = (;),
-    std_kwargs = (;),
-    dist_kwargs = (;),
     uplo = :L,
 )
     returns = portfolio.returns
 
     # Covariance
     if calc_cov
-        portfolio.cov = covar_mtx(
+        portfolio.cov = cov_mtx(
             returns;
-            target_ret = target_ret,
-            cov_type = cov_type,
-            jlogo = jlogo,
-            posdef_fix = posdef_fix,
-            gs_threshold = gs_threshold,
-            cov_func = cov_func,
-            cov_weights = cov_weights,
-            posdef_func = posdef_func,
-            std_func = std_func,
-            custom_cov = custom_cov,
-            cov_est = cov_est,
             cov_args = cov_args,
-            posdef_args = posdef_args,
-            std_args = std_args,
+            cov_est = cov_est,
+            cov_func = cov_func,
             cov_kwargs = cov_kwargs,
+            cov_type = cov_type,
+            cov_weights = cov_weights,
+            custom_cov = custom_cov,
+            gs_threshold = gs_threshold,
+            jlogo = jlogo,
+            posdef_args = posdef_args,
+            posdef_fix = posdef_fix,
+            posdef_func = posdef_func,
             posdef_kwargs = posdef_kwargs,
+            std_args = std_args,
+            std_func = std_func,
             std_kwargs = std_kwargs,
+            target_ret = target_ret,
         )
 
         portfolio.cov_type = cov_type
@@ -467,14 +472,14 @@ function asset_statistics!(
     if calc_mu
         portfolio.mu = mean_vec(
             returns;
-            mu_type = mu_type,
-            mean_func = mean_func,
-            mu_weights = mu_weights,
             custom_mu = custom_mu,
-            sigma = isnothing(custom_cov) ? portfolio.cov : custom_cov,
-            mu_target = mu_target,
             mean_args = mean_args,
+            mean_func = mean_func,
             mean_kwargs = mean_kwargs,
+            mu_target = mu_target,
+            mu_type = mu_type,
+            mu_weights = mu_weights,
+            sigma = isnothing(custom_cov) ? portfolio.cov : custom_cov,
         )
 
         portfolio.mu_type = mu_type
@@ -486,34 +491,34 @@ function asset_statistics!(
             portfolio.kurt, portfolio.skurt, portfolio.L_2, portfolio.S_2 = cokurt_mtx(
                 returns,
                 portfolio.mu;
-                target_ret = target_ret,
-                posdef_fix = posdef_fix,
-                posdef_func = posdef_func,
                 custom_kurt = custom_kurt,
                 custom_skurt = custom_skurt,
                 posdef_args = posdef_args,
+                posdef_fix = posdef_fix,
+                posdef_func = posdef_func,
                 posdef_kwargs = posdef_kwargs,
+                target_ret = target_ret,
             )
         end
     else
         if calc_codep
             portfolio.codep, portfolio.dist = codep_dist_mtx(
                 returns;
-                gs_threshold = gs_threshold,
                 alpha_tail = alpha_tail,
                 bins_info = bins_info,
-                sigma = isnothing(custom_cov) ? portfolio.cov : custom_cov,
-                cor_func = cor_func,
-                std_func = std_func,
-                dist_func = dist_func,
                 codep_type = codep_type,
-                custom_cor = custom_cor,
                 cor_args = cor_args,
-                std_args = std_args,
-                dist_args = dist_args,
+                cor_func = cor_func,
                 cor_kwargs = cor_kwargs,
-                std_kwargs = std_kwargs,
+                custom_cor = custom_cor,
+                dist_args = dist_args,
+                dist_func = dist_func,
                 dist_kwargs = dist_kwargs,
+                gs_threshold = gs_threshold,
+                sigma = isnothing(custom_cov) ? portfolio.cov : custom_cov,
+                std_args = std_args,
+                std_func = std_func,
+                std_kwargs = std_kwargs,
                 uplo = uplo,
             )
 
@@ -602,19 +607,19 @@ Worst case optimisation statistics.
 function wc_statistics!(
     portfolio;
     box = :Stationary,
-    ellipse = :Stationary,
     calc_box = true,
     calc_ellipse = true,
-    q = 0.05,
-    n_sim = 3_000,
-    window = 3,
-    dmu = 0.1,
     dcov = 0.1,
-    n_samples = 10_000,
-    seed = nothing,
-    rng = Random.default_rng(),
+    dmu = 0.1,
+    ellipse = :Stationary,
     fix_cov_args = (),
     fix_cov_kwargs = (;),
+    n_samples = 10_000,
+    n_sim = 3_000,
+    q = 0.05,
+    rng = Random.default_rng(),
+    seed = nothing,
+    window = 3,
 )
     @assert(box ∈ BoxTypes, "box = $box, must be one of $BoxTypes")
     @assert(ellipse ∈ EllipseTypes, "ellipse = $ellipse, must be one of $EllipseTypes")
@@ -916,13 +921,13 @@ end
 function pcr(
     x::DataFrame,
     y::Union{Vector, DataFrame};
-    mean_func::Function = mean,
     mean_args = (),
+    mean_func::Function = mean,
     mean_kwargs = (;),
-    std_func::Function = std,
-    std_args = (),
-    std_kwargs = (;),
     pca_kwargs = (;),
+    std_args = (),
+    std_func::Function = std,
+    std_kwargs = (;),
 )
     N = nrow(x)
     X = transpose(Matrix(x))
@@ -949,14 +954,14 @@ function loadings_matrix(
     y::DataFrame,
     type = :FReg;
     criterion = :pval,
-    threshold = 0.05,
-    mean_func::Function = mean,
     mean_args = (),
     mean_kwargs = (;),
-    std_func::Function = std,
-    std_args = (),
-    std_kwargs = (;),
     pca_kwargs = (;),
+    std_args = (),
+    std_func::Function = std,
+    mean_func::Function = mean,
+    std_kwargs = (;),
+    threshold = 0.05,
 )
     @assert(type ∈ LoadingMtxType, "type = $type, must be one of $LoadingMtxType")
     features = names(x)
@@ -991,13 +996,13 @@ function loadings_matrix(
             beta = pcr(
                 x,
                 y[!, i];
-                mean_func = mean_func,
                 mean_args = mean_args,
+                mean_func = mean_func,
                 mean_kwargs = mean_kwargs,
-                std_func = std_func,
-                std_args = std_args,
-                std_kwargs = std_kwargs,
                 pca_kwargs = pca_kwargs,
+                std_args = std_args,
+                std_func = std_func,
+                std_kwargs = std_kwargs,
             )
             loadings[i, :] .= beta
         end
@@ -1009,37 +1014,40 @@ end
 function risk_factors(
     x::DataFrame,
     y::DataFrame;
+    # cov_mtx
+    cov_args = (),
+    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
+    cov_func::Function = cov,
+    cov_kwargs = (;),
+    cov_type::Symbol = :Full,
+    cov_weights::Union{AbstractWeights, Nothing} = nothing,
+    custom_cov = nothing,
+    gs_threshold = 0.5,
+    jlogo::Bool = false,
+    posdef_args = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
+    posdef_kwargs = (;),
+    std_args = (),
+    std_func::Function = std,
+    std_kwargs = (;),
+    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    # mean_vec
+    custom_mu = nothing,
+    mean_args = (),
+    mean_func::Function = mean,
+    mean_kwargs = (;),
+    mu_target = :GM,
+    mu_type::Symbol = :Default,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
     constant::Bool = true,
     error::Bool = true,
     reg_type = :FReg,
     criterion = :pval,
     threshold = 0.05,
-    mean_func::Function = mean,
-    mean_args = (),
-    mean_kwargs = (;),
-    std_func::Function = std,
-    std_args = (),
-    std_kwargs = (;),
     pca_kwargs = (;),
-    mu_type::Symbol = :Default,
-    mu_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_mu = nothing,
-    custom_cov = nothing,
-    mu_target = :GM,
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
-    cov_type::Symbol = :Full,
-    jlogo::Bool = false,
-    posdef_fix::Symbol = :None,
-    gs_threshold = 0.5,
-    cov_func::Function = cov,
-    cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    posdef_func::Function = x -> x,
-    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
-    cov_args = (),
-    posdef_args = (),
-    cov_kwargs = (;),
-    posdef_kwargs = (;),
     var_func::Function = var,
     var_args = (),
     var_kwargs = (;),
@@ -1050,58 +1058,56 @@ function risk_factors(
             y,
             reg_type;
             criterion = criterion,
-            threshold = threshold,
-            mean_func = mean_func,
             mean_args = mean_args,
+            mean_func = mean_func,
             mean_kwargs = mean_kwargs,
-            std_func = std_func,
-            std_args = std_args,
-            std_kwargs = std_kwargs,
             pca_kwargs = pca_kwargs,
+            std_args = std_args,
+            std_func = std_func,
+            std_kwargs = std_kwargs,
+            threshold = threshold,
         )
     )
 
     x1 = constant || "const" ∈ names(B) ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
 
-    cov_f = covar_mtx(
+    cov_f = cov_mtx(
         x1;
-        target_ret = target_ret,
-        cov_type = cov_type,
-        jlogo = jlogo,
-        posdef_fix = posdef_fix,
-        gs_threshold = gs_threshold,
-        cov_func = cov_func,
-        cov_weights = cov_weights,
-        posdef_func = posdef_func,
-        std_func = std_func,
-        custom_cov = custom_cov,
-        cov_est = cov_est,
         cov_args = cov_args,
-        posdef_args = posdef_args,
-        std_args = std_args,
+        cov_est = cov_est,
+        cov_func = cov_func,
         cov_kwargs = cov_kwargs,
+        cov_type = cov_type,
+        cov_weights = cov_weights,
+        custom_cov = custom_cov,
+        gs_threshold = gs_threshold,
+        jlogo = jlogo,
+        posdef_args = posdef_args,
+        posdef_fix = posdef_fix,
+        posdef_func = posdef_func,
         posdef_kwargs = posdef_kwargs,
+        std_args = std_args,
+        std_func = std_func,
         std_kwargs = std_kwargs,
+        target_ret = target_ret,
     )
 
     mu_f = mean_vec(
         x1;
-        mu_type = mu_type,
-        mean_func = mean_func,
-        mu_weights = mu_weights,
         custom_mu = custom_mu,
-        sigma = isnothing(custom_cov) ? cov_f : custom_cov,
-        mu_target = mu_target,
         mean_args = mean_args,
+        mean_func = mean_func,
         mean_kwargs = mean_kwargs,
+        mu_target = mu_target,
+        mu_type = mu_type,
+        mu_weights = mu_weights,
+        sigma = isnothing(custom_cov) ? cov_f : custom_cov,
     )
 
     b = Matrix(B[!, setdiff(names(B), ["ticker"])])
     returns = x1 * transpose(b)
     mu = b * mu_f
 
-    display(b * cov_f * transpose(b))
-    println(error)
     sigma = if error
         e = Matrix(y) - returns
         S_e = diagm(vec(var_func(e, var_args...; dims = 1, var_kwargs...)))
@@ -1111,6 +1117,98 @@ function risk_factors(
     end
 
     return mu, sigma, returns
+end
+
+function black_litterman(
+    returns::Matrix{<:AbstractFloat},
+    w::Vector{<:AbstractFloat},
+    P::Matrix{<:AbstractFloat},
+    Q::Matrix{<:AbstractFloat};
+    # cov_mtx
+    cov_args = (),
+    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
+    cov_func::Function = cov,
+    cov_kwargs = (;),
+    cov_type::Symbol = :Full,
+    cov_weights::Union{AbstractWeights, Nothing} = nothing,
+    custom_cov = nothing,
+    gs_threshold = 0.5,
+    jlogo::Bool = false,
+    posdef_args = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
+    posdef_kwargs = (;),
+    std_args = (),
+    std_func::Function = std,
+    std_kwargs = (;),
+    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    # mean_vec
+    custom_mu = nothing,
+    mean_args = (),
+    mean_func::Function = mean,
+    mean_kwargs = (;),
+    mu_target = :GM,
+    mu_type::Symbol = :Default,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    # Black Litterman
+    delta::Real = 1.0,
+    eq::Bool = true,
+    rf = 0.0,
+)
+    sigma = cov_mtx(
+        returns;
+        cov_args = cov_args,
+        cov_est = cov_est,
+        cov_func = cov_func,
+        cov_kwargs = cov_kwargs,
+        cov_type = cov_type,
+        cov_weights = cov_weights,
+        custom_cov = custom_cov,
+        gs_threshold = gs_threshold,
+        jlogo = jlogo,
+        posdef_args = posdef_args,
+        posdef_fix = posdef_fix,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+        std_args = std_args,
+        std_func = std_func,
+        std_kwargs = std_kwargs,
+        target_ret = target_ret,
+    )
+
+    mu = mean_vec(
+        returns;
+        custom_mu = custom_mu,
+        mean_args = mean_args,
+        mean_func = mean_func,
+        mean_kwargs = mean_kwargs,
+        mu_target = mu_target,
+        mu_type = mu_type,
+        mu_weights = mu_weights,
+        sigma = isnothing(custom_cov) ? sigma : custom_cov,
+    )
+
+    tau = 1 / size(returns, 1)
+
+    tau_sigma = (tau * sigma)
+
+    inv_omega = Diagonal(P * tau_sigma * transpose(P)) \ I
+
+    Pi = eq ? delta * sigma * w : mu .- rf
+
+    inv_tau_sigma = tau_sigma \ I
+
+    Pi_ =
+        ((inv_tau_sigma + transpose(P) * inv_omega * P) \ I) *
+        (inv_tau_sigma * Pi + transpose(P) * inv_omega * Q)
+
+    M = (inv_tau_sigma + transpose(P) * inv_omega * P) \ I
+
+    mu = Pi_ + rf
+    cov_mtx = sigma + M
+    w = ((delta * cov_mtx) \ I) * Pi_
+
+    return mu, cov_mtx, w
 end
 
 export block_vec_pq,
