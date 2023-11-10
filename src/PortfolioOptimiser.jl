@@ -39,22 +39,22 @@ using Clustering,
     Statistics,
     StatsBase
 
-include("./Portfolio/Definitions.jl")
-include("./Portfolio/DBHTs.jl")
-include("./Portfolio/Constraint_functions.jl")
-include("./Portfolio/OWA.jl")
-include("./Portfolio/Codependence.jl")
-include("./Portfolio/Aux_functions.jl")
+include("Definitions.jl")
+include("DBHTs.jl")
+include("Constraint_functions.jl")
+include("OWA.jl")
+include("Codependence.jl")
+include("Aux_functions.jl")
 
-include("./Portfolio/Portfolio.jl")
-include("./Portfolio/Portfolio_risk_setup.jl")
-include("./Portfolio/Portfolio_optim_setup.jl")
+include("Portfolio.jl")
+include("Portfolio_risk_setup.jl")
+include("Portfolio_optim_setup.jl")
 
-include("./Portfolio/HCPortfolio.jl")
-include("./Portfolio/HCPortfolio_optim_setup.jl")
+include("HCPortfolio.jl")
+include("HCPortfolio_optim_setup.jl")
 
-include("./Portfolio/Asset_statistics.jl")
-include("./Portfolio/Risk_measures.jl")
-include("./Portfolio/Portfolio_allocation.jl")
+include("Asset_statistics.jl")
+include("Risk_measures.jl")
+include("Portfolio_allocation.jl")
 
 end
