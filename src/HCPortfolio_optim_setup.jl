@@ -331,7 +331,7 @@ function to_tree(a::Hclust)
     heights = a.heights
     nd = nothing
 
-    for (i, height) in enumerate(heights)
+    for (i, height) in pairs(heights)
         fi = merges[i, 1]
         fj = merges[i, 2]
 

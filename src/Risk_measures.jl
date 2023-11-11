@@ -412,7 +412,7 @@ function DaR_abs(x::AbstractArray, alpha::Real = 0.05)
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in enumerate(cs)
+    for (idx, i) in pairs(cs)
         i > peak && (peak = i)
         dd[idx] = i - peak
     end
@@ -494,7 +494,7 @@ function CDaR_abs(x::AbstractVector, alpha::Real = 0.05)
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in enumerate(cs)
+    for (idx, i) in pairs(cs)
         i > peak && (peak = i)
         dd[idx] = i - peak
     end
@@ -558,7 +558,7 @@ function EDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in enumerate(cs)
+    for (idx, i) in pairs(cs)
         i > peak && (peak = i)
         dd[idx] = -(peak - i)
     end
@@ -596,7 +596,7 @@ function RDaR_abs(
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in enumerate(cs)
+    for (idx, i) in pairs(cs)
         i > peak && (peak = i)
         dd[idx] = i - peak
     end
@@ -625,7 +625,7 @@ function DaR_rel(x::AbstractArray, alpha::Real = 0.05)
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in enumerate(cs)
+    for (idx, i) in pairs(cs)
         i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end
@@ -707,7 +707,7 @@ function CDaR_rel(x::AbstractVector, alpha::Real = 0.05)
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in enumerate(cs)
+    for (idx, i) in pairs(cs)
         i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end
@@ -772,7 +772,7 @@ function EDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in enumerate(cs)
+    for (idx, i) in pairs(cs)
         i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end
@@ -810,7 +810,7 @@ function RDaR_rel(
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in enumerate(cs)
+    for (idx, i) in pairs(cs)
         i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end

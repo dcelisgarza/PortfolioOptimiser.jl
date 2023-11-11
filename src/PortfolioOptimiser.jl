@@ -57,4 +57,9 @@ include("Asset_statistics.jl")
 include("Risk_measures.jl")
 include("Portfolio_allocation.jl")
 
+include("../old_src/BaseOptimiser/BaseOptimiser.jl")
+include("../old_src/RiskModels/RiskModels.jl")
+include("../old_src/ExpectedReturns/ExpectedReturns.jl")
+include("../old_src/AssetAllocation/AssetAllocation.jl")
+
 end
