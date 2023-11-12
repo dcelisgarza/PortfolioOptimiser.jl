@@ -4330,7 +4330,7 @@ end
         -7.616458850426216,
     ]
     @test isapprox(muab2, muabt2)
-    @test isapprox(cov_mtxab2, covabt2)
+    @test isapprox(cov_mtxab2, cov_mtxabt2)
     @test isapprox(wab2, wabt2)
 
     mub1, sigma_b1, wb1 = bayesian_black_litterman(
