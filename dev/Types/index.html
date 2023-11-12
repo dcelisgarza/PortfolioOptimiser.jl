@@ -42,6 +42,7 @@
     te,
     rbi,
     bw,
+    blbw,
     # Risk and return constraints
     ami,
     bvi,
@@ -151,6 +152,7 @@
     tracking_err::te
     tracking_err_returns::rbi
     tracking_err_weights::bw
+    bl_bench_weights::blbw
     # Risk and return constraints.
     a_mtx_ineq::ami
     b_vec_ineq::bvi
@@ -247,6 +249,7 @@ end</code></pre><pre><code class="language-julia hljs">Portfolio(;
     tracking_err::Real = Inf,
     tracking_err_returns = Vector{Float64}(undef, 0),
     tracking_err_weights = Vector{Float64}(undef, 0),
+    bl_bench_weights = Vector{Float64}(undef, 0),
     # Risk and return constraints.
     a_mtx_ineq = Matrix{Float64}(undef, 0, 0),
     b_vec_ineq = Vector{Float64}(undef, 0),
@@ -313,7 +316,7 @@ end</code></pre><pre><code class="language-julia hljs">Portfolio(;
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
-)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/74621c163d478a57fd0fa9c9283337109fe2e28c/src/Portfolio.jl#L1-L323">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PortfolioOptimiser.HCPortfolio" href="#PortfolioOptimiser.HCPortfolio"><code>PortfolioOptimiser.HCPortfolio</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">mutable struct HCPortfolio{
+)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/3d6ff1e7c7bf3fc29348673847c3e57f25a1bda0/src/Portfolio.jl#L1-L326">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PortfolioOptimiser.HCPortfolio" href="#PortfolioOptimiser.HCPortfolio"><code>PortfolioOptimiser.HCPortfolio</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">mutable struct HCPortfolio{
     ast,
     dat,
     r,
@@ -415,4 +418,4 @@ end</code></pre><pre><code class="language-julia hljs">HCPortfolio(;
     solvers::AbstractDict = Dict(),
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
-)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/74621c163d478a57fd0fa9c9283337109fe2e28c/src/HCPortfolio.jl#L1-L111">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Definitions/">« Definitions</a><a class="docs-footer-nextpage" href="../Risk_measures/">Risk Measures »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.17 on <span class="colophon-date" title="Sunday 12 November 2023 16:41">Sunday 12 November 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/3d6ff1e7c7bf3fc29348673847c3e57f25a1bda0/src/HCPortfolio.jl#L1-L111">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Definitions/">« Definitions</a><a class="docs-footer-nextpage" href="../Risk_measures/">Risk Measures »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.17 on <span class="colophon-date" title="Sunday 12 November 2023 20:28">Sunday 12 November 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
