@@ -681,8 +681,8 @@ function Portfolio(;
 
     if isa(f_returns, DataFrame) && !isempty(f_returns)
         f_assets = setdiff(names(f_returns), ("timestamp",))
-        f_timestamps = returns[!, "timestamp"]
-        f_returns = Matrix(returns[!, f_assets])
+        f_timestamps = f_returns[!, "timestamp"]
+        f_returns = Matrix(f_returns[!, f_assets])
     else
         @assert(
             length(f_assets) == size(f_ret, 2),
