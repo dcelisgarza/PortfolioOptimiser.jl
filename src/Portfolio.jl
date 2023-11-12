@@ -666,8 +666,8 @@ function Portfolio(;
     alloc_model::AbstractDict = Dict(),
 )
     if isa(returns, DataFrame) && !isempty(returns)
-        assets = setdiff(names(returns), ("ticker",))
-        timestamps = returns[!, "ticker"]
+        assets = setdiff(names(returns), ("timestamp",))
+        timestamps = returns[!, "timestamp"]
         returns = Matrix(returns[!, assets])
     else
         @assert(
@@ -680,8 +680,8 @@ function Portfolio(;
     end
 
     if isa(f_returns, DataFrame) && !isempty(f_returns)
-        f_assets = setdiff(names(f_returns), ("ticker",))
-        f_timestamps = returns[!, "ticker"]
+        f_assets = setdiff(names(f_returns), ("timestamp",))
+        f_timestamps = returns[!, "timestamp"]
         f_returns = Matrix(returns[!, f_assets])
     else
         @assert(

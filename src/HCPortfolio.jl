@@ -242,8 +242,8 @@ function HCPortfolio(;
     alloc_model::AbstractDict = Dict(),
 )
     if isa(returns, DataFrame) && !isempty(returns)
-        assets = setdiff(names(returns), ("ticker",))
-        timestamps = returns[!, "ticker"]
+        assets = setdiff(names(returns), ("timestamp",))
+        timestamps = returns[!, "timestamp"]
         returns = Matrix(returns[!, assets])
     else
         @assert(
