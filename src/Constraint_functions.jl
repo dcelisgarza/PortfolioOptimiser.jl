@@ -224,8 +224,12 @@ function asset_views(views, asset_classes)
 end
 
 function factor_views(views, loadings)
-    N = ncol(loadings)
     factor_list = names(loadings)
+    "const" ∈ factor_list && (factor_list = setdiff(factor_list, ("const",)))
+    "ticker" ∈ factor_list && (factor_list = setdiff(factor_list, ("ticker",)))
+
+    N = length(factor_list)
+
     P = Matrix{Float64}(undef, 0, N)
     Q = Float64[]
 

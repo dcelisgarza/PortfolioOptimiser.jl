@@ -1375,7 +1375,7 @@ function augmented_black_litterman(
         P_a = P_f
         Q_a = Q_f
         omega_a = _omega(P_a, _tau_sigma(tau, sigma_a))
-        Pi_a = _Pi(eq, delta, sigma_a * transpose(B), w, mu, rf)
+        Pi_a = _Pi(eq, delta, sigma_a * transpose(B), w, mu_f, rf)
     elseif all_asset_provided && all_factor_provided
         sigma_a = hcat(vcat(sigma, sigma_f * transpose(B)), vcat(B * sigma_f, sigma_f))
 
@@ -1399,7 +1399,7 @@ function augmented_black_litterman(
         _mu_cov_w(tau * sigma_a, omega_a, P_a, Pi_a, Q_a, rf, sigma_a, delta)
 
     if !all_asset_provided && all_factor_provided
-        mu_a = mu_a * transpose(B)
+        mu_a = B * mu_a
         cov_mtx_a = B * cov_mtx_a * transpose(B)
         w_a = ((delta * cov_mtx_a) \ I) * B * Pi_a_
     end

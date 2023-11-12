@@ -568,6 +568,9 @@ function Portfolio(;
     max_number_assets::Integer = 0,
     max_number_assets_factor::Real = 100_000.0,
     f_returns = DataFrame(),
+    f_ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    f_timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
+    f_assets = Vector{String}(undef, 0),
     loadings = Matrix{Float64}(undef, 0, 0),
     # Risk parameters.
     msv_target::Union{<:Real, AbstractVector{<:Real}, Nothing} = Inf,
@@ -662,7 +665,7 @@ function Portfolio(;
     alloc_fail::AbstractDict = Dict(),
     alloc_model::AbstractDict = Dict(),
 )
-    if isa(returns, DataFrame) && !isempty(returns)
+    if isa(returns, DataFrame)
         assets = names(returns)[2:end]
         timestamps = returns[!, 1]
         returns = Matrix(returns[!, 2:end])
@@ -671,17 +674,23 @@ function Portfolio(;
             length(assets) == size(ret, 2),
             "each column of returns must correspond to an asset"
         )
+        assets = assets
+        timestamps = timestamps
         returns = ret
     end
 
-    if !isempty(f_returns)
+    if isa(f_returns, DataFrame)
         f_assets = names(f_returns)[2:end]
         f_timestamps = f_returns[!, 1]
         f_returns = Matrix(f_returns[!, 2:end])
     else
-        f_assets = Vector{String}(undef, 0)
-        f_timestamps = Vector{Date}(undef, 0)
-        f_returns = Matrix{eltype(returns)}(undef, 0, 0)
+        @assert(
+            length(f_assets) == size(f_ret, 2),
+            "each column of factor returns must correspond to a factor asset"
+        )
+        f_assets = f_assets
+        f_timestamps = f_timestamps
+        f_returns = f_ret
     end
 
     return Portfolio{# Portfolio characteristics.

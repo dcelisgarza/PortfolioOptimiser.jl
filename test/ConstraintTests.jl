@@ -1683,7 +1683,7 @@ end
 
     P, Q = factor_views(views, loadings)
 
-    Pt = transpose(hcat([[0, -1, 0, 0, 1, 0], [0, 0, 0, 0, -1, 0], [0, 0, 0, 0, 0, 1]]...))
+    Pt = transpose(hcat([[-1, 0, 0, 1, 0], [0, 0, 0, -1, 0], [0, 0, 0, 0, 1]]...))
     Qt = vcat([[-0.9], [1.2], [0.3]]...)
     @test isapprox(Pt, P)
     @test isapprox(Qt, Q)
