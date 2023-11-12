@@ -1118,18 +1118,14 @@ function risk_factors(
 
     return mu, sigma, returns
 end
-
-function _tau_sigma(tau, sigma)
-    tau * sigma
-end
 function _omega(P, tau_sigma)
     Diagonal(P * tau_sigma * transpose(P))
 end
 function _Pi(eq, delta, sigma, w, mu, rf)
     eq ? delta * sigma * w : mu .- rf
 end
-function _mu_cov_w(tau_sigma, omega, P, Pi, Q, rf, sigma, delta)
-    inv_tau_sigma = tau_sigma \ I
+function _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta)
+    inv_tau_sigma = (tau * sigma) \ I
     inv_omega = omega \ I
     Pi_ =
         ((inv_tau_sigma + transpose(P) * inv_omega * P) \ I) *
@@ -1213,11 +1209,10 @@ function black_litterman(
     )
 
     tau = 1 / size(returns, 1)
-    tau_sigma = _tau_sigma(tau, sigma)
-    omega = _omega(P, tau_sigma)
+    omega = _omega(P, tau * sigma)
     Pi = _Pi(eq, delta, sigma, w, mu, rf)
 
-    mu, cov_mtx, w, missing = _mu_cov_w(tau_sigma, omega, P, Pi, Q, rf, sigma, delta)
+    mu, cov_mtx, w, missing = _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta)
 
     return mu, cov_mtx, w
 end
@@ -1368,13 +1363,13 @@ function augmented_black_litterman(
         sigma_a = sigma
         P_a = P
         Q_a = Q
-        omega_a = _omega(P_a, _tau_sigma(tau, sigma_a))
+        omega_a = _omega(P_a, tau * sigma_a)
         Pi_a = _Pi(eq, delta, sigma_a, w, mu, rf)
     elseif !all_asset_provided && all_factor_provided
         sigma_a = sigma_f
         P_a = P_f
         Q_a = Q_f
-        omega_a = _omega(P_a, _tau_sigma(tau, sigma_a))
+        omega_a = _omega(P_a, tau * sigma_a)
         Pi_a = _Pi(eq, delta, sigma_a * transpose(B), w, mu_f, rf)
     elseif all_asset_provided && all_factor_provided
         sigma_a = hcat(vcat(sigma, sigma_f * transpose(B)), vcat(B * sigma_f, sigma_f))
@@ -1385,8 +1380,8 @@ function augmented_black_litterman(
         P_a = hcat(vcat(P, zeros_1), vcat(zeros_2, P_f))
         Q_a = vcat(Q, Q_f)
 
-        omega = _omega(P, _tau_sigma(tau, sigma))
-        omega_f = _omega(P_f, _tau_sigma(tau, sigma_f))
+        omega = _omega(P, tau * sigma)
+        omega_f = _omega(P_f, tau * sigma_f)
 
         zeros_3 = zeros(size(omega, 1), size(omega_f, 1))
 
@@ -1396,7 +1391,7 @@ function augmented_black_litterman(
     end
 
     mu_a, cov_mtx_a, w_a, Pi_a_ =
-        _mu_cov_w(tau * sigma_a, omega_a, P_a, Pi_a, Q_a, rf, sigma_a, delta)
+        _mu_cov_w(tau, omega_a, P_a, Pi_a, Q_a, rf, sigma_a, delta)
 
     if !all_asset_provided && all_factor_provided
         mu_a = B * mu_a
@@ -1407,6 +1402,121 @@ function augmented_black_litterman(
     all_factor_provided && constant && (mu_a = mu_a .+ alpha)
 
     return mu_a, cov_mtx_a, w_a
+end
+
+function bayesian_black_litterman(
+    returns::Matrix{<:AbstractFloat},
+    F::Matrix{<:AbstractFloat},
+    B::Matrix{<:AbstractFloat},
+    P_f::Matrix{<:AbstractFloat},
+    Q_f::Vector{<:AbstractFloat};
+    # cov_mtx
+    cov_args = (),
+    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
+    cov_func::Function = cov,
+    cov_kwargs = (;),
+    cov_type::Symbol = :Full,
+    cov_weights::Union{AbstractWeights, Nothing} = nothing,
+    custom_cov = nothing,
+    gs_threshold = 0.5,
+    jlogo::Bool = false,
+    posdef_args = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
+    posdef_kwargs = (;),
+    std_args = (),
+    std_func::Function = std,
+    std_kwargs = (;),
+    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    # mean_vec
+    custom_mu = nothing,
+    mean_args = (),
+    mean_func::Function = mean,
+    mean_kwargs = (;),
+    mu_target = :GM,
+    mu_type::Symbol = :Default,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    # Black Litterman
+    constant = true,
+    delta::Real = 1.0,
+    diag = true,
+    eq::Bool = true,
+    rf = 0.0,
+    var_args = (),
+    var_func = var,
+    var_kwargs = (;),
+)
+    sigma_f = covar_mtx(
+        F;
+        cov_args = cov_args,
+        cov_est = cov_est,
+        cov_func = cov_func,
+        cov_kwargs = cov_kwargs,
+        cov_type = cov_type,
+        cov_weights = cov_weights,
+        custom_cov = custom_cov,
+        gs_threshold = gs_threshold,
+        jlogo = jlogo,
+        posdef_args = posdef_args,
+        posdef_fix = posdef_fix,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+        std_args = std_args,
+        std_func = std_func,
+        std_kwargs = std_kwargs,
+        target_ret = target_ret,
+    )
+
+    mu_f = mean_vec(
+        F;
+        custom_mu = custom_mu,
+        mean_args = mean_args,
+        mean_func = mean_func,
+        mean_kwargs = mean_kwargs,
+        mu_target = mu_target,
+        mu_type = mu_type,
+        mu_weights = mu_weights,
+        sigma = isnothing(custom_cov) ? sigma_f : custom_cov,
+    )
+
+    mu_f .-= rf
+
+    if constant
+        alpha = B[:, 1]
+        B = B[:, 2:end]
+    end
+
+    tau = 1 / size(returns, 1)
+
+    sigma = B * sigma_f * transpose(B)
+
+    if diag
+        D = returns - F * transpose(B)
+        D = Diagonal(vec(var_func(D, var_args...; dims = 1, var_kwargs...)))
+        sigma .+= D
+    end
+
+    omega_f = _omega(P_f, tau * sigma_f)
+
+    inv_sigma = sigma \ I
+    inv_sigma_f = sigma_f \ I
+    inv_omega_f = omega_f \ I
+    sigma_hat = (inv_sigma_f + transpose(P_f) * inv_omega_f * P_f) \ I
+    Pi_hat = sigma_hat * (inv_sigma_f * mu_f + transpose(P_f) * inv_omega_f * Q_f)
+    inv_sigma_hat = sigma_hat \ I
+    iish_b_is_b = (inv_sigma_hat + transpose(B) * inv_sigma * B) \ I
+    is_b_iish_b_is_b = inv_sigma * B * iish_b_is_b
+
+    sigma_bbl = (inv_sigma - is_b_iish_b_is_b * transpose(B) * inv_sigma) \ I
+    Pi_bbl = (sigma_bbl * is_b_iish_b_is_b * inv_sigma_hat * Pi_hat)
+
+    mu = Pi_bbl .+ rf
+
+    constant && (mu .+= alpha)
+
+    w = ((delta * sigma_bbl) \ I) * mu
+
+    return mu, sigma_bbl, w
 end
 
 export block_vec_pq,
@@ -1425,4 +1535,5 @@ export block_vec_pq,
     loadings_matrix,
     risk_factors,
     black_litterman,
-    augmented_black_litterman
+    augmented_black_litterman,
+    bayesian_black_litterman
