@@ -6598,11 +6598,12 @@ end
     ]
 
     @test isapprox(w1t, w1.weights, rtol = 3e-2)
-    try
-        @test isapprox(w2t, w2.weights, rtol = 1e-2)
-    catch
+    if !isapprox(w2t, w2.weights, rtol = 1e-2)
         @test isapprox(w2t1, w2.weights, rtol = 1e-2)
+    else
+        @test isapprox(w2t, w2.weights, rtol = 1e-2)
     end
+
     @test isapprox(w4t, w4.weights, rtol = 1e-3)
 
     portfolio = Portfolio(
