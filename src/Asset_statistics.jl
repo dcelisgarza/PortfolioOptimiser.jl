@@ -1399,9 +1399,10 @@ function augmented_black_litterman(
         w_a = ((delta * cov_mtx_a) \ I) * B * Pi_a_
     end
 
-    all_factor_provided && constant && (mu_a = mu_a .+ alpha)
+    N = size(returns, 2)
+    all_factor_provided && constant && (mu_a = mu_a[1:N] .+ alpha)
 
-    return mu_a, cov_mtx_a, w_a
+    return mu_a[1:N], cov_mtx_a[1:N, 1:N], w_a[1:N]
 end
 
 function bayesian_black_litterman(
