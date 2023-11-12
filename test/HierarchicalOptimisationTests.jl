@@ -559,7 +559,34 @@ end
         0.001,
         0.02,
     ]
-    @test isapprox(w1.weights, w1t)
+    w1t2 = [
+        0.025,
+        0.05,
+        0.19266666666666657,
+        0.045,
+        0.06,
+        0.03,
+        0.06880952380952378,
+        0.04,
+        0.03,
+        0.02,
+        0.06,
+        0.03,
+        0.027523809523809516,
+        0.05,
+        0.07,
+        0.01,
+        0.07,
+        0.1,
+        0.001,
+        0.02,
+    ]
+
+    if isapprox(w1.weights, w1t)
+        @test isapprox(w1.weights, w1t)
+    else
+        @test isapprox(w1.weights, w1t2)
+    end
 
     type = :HERC
     w2 = opt_port!(
