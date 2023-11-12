@@ -665,10 +665,10 @@ function Portfolio(;
     alloc_fail::AbstractDict = Dict(),
     alloc_model::AbstractDict = Dict(),
 )
-    if isa(returns, DataFrame)
-        assets = names(returns)[2:end]
-        timestamps = returns[!, 1]
-        returns = Matrix(returns[!, 2:end])
+    if isa(returns, DataFrame) && !isempty(returns)
+        assets = setdiff(names(returns), ("ticker",))
+        timestamps = returns[!, "ticker"]
+        returns = Matrix(returns[!, assets])
     else
         @assert(
             length(assets) == size(ret, 2),
@@ -679,10 +679,10 @@ function Portfolio(;
         returns = ret
     end
 
-    if isa(f_returns, DataFrame)
-        f_assets = names(f_returns)[2:end]
-        f_timestamps = f_returns[!, 1]
-        f_returns = Matrix(f_returns[!, 2:end])
+    if isa(f_returns, DataFrame) && !isempty(f_returns)
+        f_assets = setdiff(names(f_returns), ("ticker",))
+        f_timestamps = returns[!, "ticker"]
+        f_returns = Matrix(returns[!, f_assets])
     else
         @assert(
             length(f_assets) == size(f_ret, 2),

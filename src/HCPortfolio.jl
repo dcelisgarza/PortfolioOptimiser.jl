@@ -242,14 +242,16 @@ function HCPortfolio(;
     alloc_model::AbstractDict = Dict(),
 )
     if isa(returns, DataFrame) && !isempty(returns)
-        assets = names(returns)[2:end]
-        timestamps = returns[!, 1]
-        returns = Matrix(returns[!, 2:end])
+        assets = setdiff(names(returns), ("ticker",))
+        timestamps = returns[!, "ticker"]
+        returns = Matrix(returns[!, assets])
     else
         @assert(
             length(assets) == size(ret, 2),
             "each column of returns must correspond to an asset"
         )
+        assets = assets
+        timestamps = timestamps
         returns = ret
     end
 

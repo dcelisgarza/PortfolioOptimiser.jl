@@ -830,7 +830,7 @@ function backward_regression(
     N = length(y)
     ovec = ones(N)
 
-    fit_result = lm([ovec Matrix(x[!, :])], y)
+    fit_result = lm([ovec Matrix(x)], y)
 
     included = names(x)
     namesx = names(x)
