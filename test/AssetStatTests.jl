@@ -4341,7 +4341,7 @@ end
         P_f,
         Q_f / 252,
         constant = false,
-        diag = true,
+        diagonal = true,
     )
 
     mubt1 = [
@@ -4429,7 +4429,7 @@ end
         P_f,
         Q_f / 252,
         constant = false,
-        diag = false,
+        diagonal = false,
     )
 
     mubt2 = [
@@ -4523,9 +4523,9 @@ end
     @test isapprox(cov1, port.cov_bl)
 
     rf = 1.0329^(1 / 252) - 1
+    bw = fill(1 / length(port.assets), length(port.assets))
     delta = (dot(port.mu, bw) - rf) / dot(bw, port.cov, bw)
     black_litterman_statistics!(port, P, Q / 252; rf = rf)
-    bw = fill(1 / length(port.assets), length(port.assets))
     mu2, cov2, w2 = augmented_black_litterman(
         port.returns,
         bw;

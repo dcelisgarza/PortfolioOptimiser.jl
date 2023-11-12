@@ -494,6 +494,7 @@ const CovTypes = (:Full, :Semi, :Gerber1, :Gerber2, :Custom_Func, :Custom_Val)
 const PosdefFixes = (:None, :Custom_Func)
 const RegCriteria = (:pval, GLM.aic, GLM.aicc, GLM.bic, GLM.r2, GLM.adjr2)
 const LoadingMtxType = (:FReg, :BReg, :PCR)
+const BlackLittermanType = (:A, :B)
 
 """
 ```julia

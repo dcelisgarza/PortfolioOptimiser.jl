@@ -1049,7 +1049,7 @@ function risk_factors(
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
-    constant::Bool = true,
+    constant::Bool = false,
     error::Bool = true,
     reg_type = :FReg,
     criterion = :pval,
@@ -1265,7 +1265,7 @@ function augmented_black_litterman(
     P_f::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
     Q::Union{Vector{<:AbstractFloat}, Nothing} = nothing,
     Q_f::Union{Vector{<:AbstractFloat}, Nothing} = nothing,
-    constant = true,
+    constant::Bool = true,
     delta::Real = 1.0,
     eq::Bool = true,
     rf = 0.0,
@@ -1450,9 +1450,9 @@ function bayesian_black_litterman(
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
-    constant = true,
+    constant::Bool = true,
     delta::Real = 1.0,
-    diag = true,
+    diagonal = true,
     eq::Bool = true,
     rf = 0.0,
     var_args = (),
@@ -1503,7 +1503,7 @@ function bayesian_black_litterman(
 
     sigma = B * sigma_f * transpose(B)
 
-    if diag
+    if diagonal
         D = returns - F * transpose(B)
         D = Diagonal(vec(var_func(D, var_args...; dims = 1, var_kwargs...)))
         sigma .+= D
@@ -1578,6 +1578,7 @@ function black_litterman_statistics!(
     end
 
     isnothing(delta) && (delta = (dot(portfolio.mu, w) - rf) / dot(w, portfolio.cov, w))
+
     portfolio.mu_bl, portfolio.cov_bl, missing = black_litterman(
         returns,
         w,
@@ -1649,13 +1650,13 @@ function factor_statistics!(
     # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
     constant::Bool = true,
-    error::Bool = true,
-    reg_type = :FReg,
     criterion = :pval,
-    threshold = 0.05,
+    error::Bool = true,
     pca_kwargs = (;),
     pca_std_kwargs = (;),
     pca_std_type = ZScoreTransform,
+    reg_type = :FReg,
+    threshold = 0.05,
     var_func::Function = var,
     var_args = (),
     var_kwargs = (;),
@@ -1739,6 +1740,188 @@ function factor_statistics!(
         var_args = var_args,
         var_kwargs = var_kwargs,
     )
+
+    return nothing
+end
+
+function black_litterman_factor_satistics!(
+    portfolio,
+    w::Vector{<:AbstractFloat} = Vector{Float64}(undef, 0);
+    # cov_mtx
+    cov_args = (),
+    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
+    cov_func::Function = cov,
+    cov_kwargs = (;),
+    cov_type::Symbol = :Full,
+    cov_weights::Union{AbstractWeights, Nothing} = nothing,
+    custom_cov = nothing,
+    gs_threshold = 0.5,
+    jlogo::Bool = false,
+    posdef_args = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
+    posdef_kwargs = (;),
+    std_args = (),
+    std_func::Function = std,
+    std_kwargs = (;),
+    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    # mean_vec
+    custom_mu = nothing,
+    mean_args = (),
+    mean_func::Function = mean,
+    mean_kwargs = (;),
+    mu_target = :GM,
+    mu_type::Symbol = :Default,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    # Black Litterman
+    B::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
+    F::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
+    P::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
+    P_f::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
+    Q::Union{Vector{<:AbstractFloat}, Nothing} = nothing,
+    Q_f::Union{Vector{<:AbstractFloat}, Nothing} = nothing,
+    bl_type = :B,
+    constant::Bool = false,
+    delta::Real = 1.0,
+    eq::Bool = true,
+    rf = 0.0,
+    var_args = (),
+    var_func = var,
+    var_kwargs = (;),
+    # Loadings matrix
+    error::Bool = true,
+    criterion = :pval,
+    diagonal = true,
+    pca_kwargs = (;),
+    pca_std_kwargs = (;),
+    pca_std_type = ZScoreTransform,
+    reg_type = :FReg,
+    threshold = 0.05,
+)
+    @assert(
+        bl_type ∈ BlackLittermanType,
+        "bl_type = $bl_type, must be one of $BlackLittermanType"
+    )
+
+    returns = portfolio.returns
+    f_returns = portfolio.f_returns
+
+    if isempty(w)
+        isempty(portfolio.bl_bench_weights) && (
+            portfolio.bl_bench_weights =
+                fill(1 / length(portfolio.assets), length(portfolio.assets))
+        )
+        w = portfolio.bl_bench_weights
+    end
+
+    isnothing(delta) && (delta = (dot(portfolio.mu, w) - rf) / dot(w, portfolio.cov, w))
+
+    if isnothing(B)
+        B = loadings_matrix(
+            DataFrame(f_returns, names(portfolio.f_assets)),
+            DataFrame(returns, names(portfolio.assets)),
+            reg_type;
+            criterion = criterion,
+            mean_args = mean_args,
+            mean_func = mean_func,
+            mean_kwargs = mean_kwargs,
+            pca_kwargs = pca_kwargs,
+            pca_std_kwargs = pca_std_kwargs,
+            pca_std_type = pca_std_type,
+            std_args = std_args,
+            std_func = std_func,
+            std_kwargs = std_kwargs,
+            threshold = threshold,
+        )
+        constant = true
+    end
+
+    portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_type == :B
+        bayesian_black_litterman(
+            returns,
+            f_returns,
+            B,
+            P_f,
+            Q_f;
+            # cov_mtx
+            cov_args = cov_args,
+            cov_est = cov_est,
+            cov_func = cov_func,
+            cov_kwargs = cov_kwargs,
+            cov_type = cov_type,
+            cov_weights = cov_weights,
+            custom_cov = custom_cov,
+            gs_threshold = gs_threshold,
+            jlogo = jlogo,
+            posdef_args = posdef_args,
+            posdef_fix = posdef_fix,
+            posdef_func = posdef_func,
+            posdef_kwargs = posdef_kwargs,
+            std_args = std_args,
+            std_func = std_func,
+            std_kwargs = std_kwargs,
+            target_ret = target_ret,
+            # mean_vec
+            custom_mu = custom_mu,
+            mean_args = mean_args,
+            mean_func = mean_func,
+            mean_kwargs = mean_kwargs,
+            mu_target = mu_target,
+            mu_type = mu_type,
+            mu_weights = mu_weights,
+            # Black Litterman
+            constant = constant,
+            delta = delta,
+            diagonal = diagonal,
+            eq = eq,
+            rf = rf,
+            var_args = var_args,
+            var_func = var_func,
+            var_kwargs = var_kwargs,
+        )
+    else
+        augmented_black_litterman(
+            returns,
+            w;
+            # cov_mtx
+            cov_args = cov_args,
+            cov_est = cov_est,
+            cov_func = cov_func,
+            cov_kwargs = cov_kwargs,
+            cov_type = cov_type,
+            cov_weights = cov_weights,
+            custom_cov = custom_cov,
+            gs_threshold = gs_threshold,
+            jlogo = jlogo,
+            posdef_args = posdef_args,
+            posdef_fix = posdef_fix,
+            posdef_func = posdef_func,
+            posdef_kwargs = posdef_kwargs,
+            std_args = std_args,
+            std_func = std_func,
+            std_kwargs = std_kwargs,
+            target_ret = target_ret,
+            # mean_vec
+            custom_mu = custom_mu,
+            mean_args = mean_args,
+            mean_func = mean_func,
+            mean_kwargs = mean_kwargs,
+            mu_target = mu_target,
+            mu_type = mu_type,
+            mu_weights = mu_weights,
+            # Black Litterman
+            B = B,
+            F = F,
+            P = P,
+            P_f = P_f,
+            Q = Q,
+            Q_f = Q_f,
+            constant = constant,
+            delta = delta,
+            eq = eq,
+            rf = rf,
+        )
+    end
 
     return nothing
 end
