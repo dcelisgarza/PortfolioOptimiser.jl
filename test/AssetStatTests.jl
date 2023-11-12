@@ -1,4 +1,5 @@
-using Test, PortfolioOptimiser, CSV, TimeSeries, DataFrames, StatsBase, Logging, GLM
+using Test,
+    PortfolioOptimiser, CSV, TimeSeries, DataFrames, StatsBase, Logging, GLM, LinearAlgebra
 
 Logging.disable_logging(Logging.Warn)
 
