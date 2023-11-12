@@ -43,6 +43,7 @@ mutable struct Portfolio{
     te,
     rbi,
     bw,
+    blbw,
     # Risk and return constraints
     ami,
     bvi,
@@ -152,6 +153,7 @@ mutable struct Portfolio{
     tracking_err::te
     tracking_err_returns::rbi
     tracking_err_weights::bw
+    bl_bench_weights::blbw
     # Risk and return constraints.
     a_mtx_ineq::ami
     b_vec_ineq::bvi
@@ -252,6 +254,7 @@ Portfolio(;
     tracking_err::Real = Inf,
     tracking_err_returns = Vector{Float64}(undef, 0),
     tracking_err_weights = Vector{Float64}(undef, 0),
+    bl_bench_weights = Vector{Float64}(undef, 0),
     # Risk and return constraints.
     a_mtx_ineq = Matrix{Float64}(undef, 0, 0),
     b_vec_ineq = Vector{Float64}(undef, 0),
@@ -364,6 +367,7 @@ mutable struct Portfolio{
     te,
     rbi,
     bw,
+    blbw,
     # Risk and return constraints
     ami,
     bvi,
@@ -478,6 +482,7 @@ mutable struct Portfolio{
     tracking_err::te
     tracking_err_returns::rbi
     tracking_err_weights::bw
+    bl_bench_weights::blbw
     # Risk and return constraints.
     a_mtx_ineq::ami
     b_vec_ineq::bvi
@@ -590,6 +595,7 @@ function Portfolio(;
     tracking_err::Real = Inf,
     tracking_err_returns = Vector{Float64}(undef, 0),
     tracking_err_weights = Vector{Float64}(undef, 0),
+    bl_bench_weights = Vector{Float64}(undef, 0),
     # Risk and return constraints.
     a_mtx_ineq = Matrix{Float64}(undef, 0, 0),
     b_vec_ineq = Vector{Float64}(undef, 0),
@@ -735,6 +741,7 @@ function Portfolio(;
         typeof(tracking_err),
         typeof(tracking_err_returns),
         typeof(tracking_err_weights),
+        typeof(bl_bench_weights),
         # Risk and return constraints.
         typeof(a_mtx_ineq),
         typeof(b_vec_ineq),
@@ -852,6 +859,7 @@ function Portfolio(;
         tracking_err,
         tracking_err_returns,
         tracking_err_weights,
+        bl_bench_weights,
         # Risk and return constraints.
         a_mtx_ineq,
         b_vec_ineq,

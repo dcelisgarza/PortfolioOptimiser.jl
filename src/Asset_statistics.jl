@@ -385,7 +385,6 @@ asset_statistics!(
 )
 ```
 """
-
 function asset_statistics!(
     portfolio::AbstractPortfolio;
     # flags
@@ -925,6 +924,8 @@ function pcr(
     mean_func::Function = mean,
     mean_kwargs = (;),
     pca_kwargs = (;),
+    pca_std_kwargs = (;),
+    pca_std_type = ZScoreTransform,
     std_args = (),
     std_func::Function = std,
     std_kwargs = (;),
@@ -932,8 +933,10 @@ function pcr(
     N = nrow(x)
     X = transpose(Matrix(x))
 
-    model = fit(PCA, X; pca_kwargs...)
-    Xp = transpose(predict(model, X))
+    X_std = standardize(pca_std_type, X; dims = 2, pca_std_kwargs...)
+
+    model = fit(PCA, X_std; pca_kwargs...)
+    Xp = transpose(predict(model, X_std))
     Vp = projection(model)
 
     x1 = [ones(N) Xp]
@@ -957,6 +960,8 @@ function loadings_matrix(
     mean_args = (),
     mean_kwargs = (;),
     pca_kwargs = (;),
+    pca_std_kwargs = (;),
+    pca_std_type = ZScoreTransform,
     std_args = (),
     std_func::Function = std,
     mean_func::Function = mean,
@@ -1000,6 +1005,8 @@ function loadings_matrix(
                 mean_func = mean_func,
                 mean_kwargs = mean_kwargs,
                 pca_kwargs = pca_kwargs,
+                pca_std_kwargs = pca_std_kwargs,
+                pca_std_type = pca_std_type,
                 std_args = std_args,
                 std_func = std_func,
                 std_kwargs = std_kwargs,
@@ -1048,6 +1055,8 @@ function risk_factors(
     criterion = :pval,
     threshold = 0.05,
     pca_kwargs = (;),
+    pca_std_kwargs = (;),
+    pca_std_type = ZScoreTransform,
     var_func::Function = var,
     var_args = (),
     var_kwargs = (;),
@@ -1062,6 +1071,8 @@ function risk_factors(
             mean_func = mean_func,
             mean_kwargs = mean_kwargs,
             pca_kwargs = pca_kwargs,
+            pca_std_kwargs = pca_std_kwargs,
+            pca_std_type = pca_std_type,
             std_args = std_args,
             std_func = std_func,
             std_kwargs = std_kwargs,
@@ -1118,6 +1129,7 @@ function risk_factors(
 
     return mu, sigma, returns
 end
+
 function _omega(P, tau_sigma)
     Diagonal(P * tau_sigma * transpose(P))
 end
@@ -1520,6 +1532,217 @@ function bayesian_black_litterman(
     return mu, sigma_bbl, w
 end
 
+function black_litterman_statistics!(
+    portfolio,
+    P::Matrix{<:AbstractFloat},
+    Q::Vector{<:AbstractFloat},
+    w::Vector{<:AbstractFloat} = Vector{Float64}(undef, 0);
+    # cov_mtx
+    cov_args = (),
+    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
+    cov_func::Function = cov,
+    cov_kwargs = (;),
+    cov_type::Symbol = :Full,
+    cov_weights::Union{AbstractWeights, Nothing} = nothing,
+    custom_cov = nothing,
+    gs_threshold = 0.5,
+    jlogo::Bool = false,
+    posdef_args = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
+    posdef_kwargs = (;),
+    std_args = (),
+    std_func::Function = std,
+    std_kwargs = (;),
+    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    # mean_vec
+    custom_mu = nothing,
+    mean_args = (),
+    mean_func::Function = mean,
+    mean_kwargs = (;),
+    mu_target = :GM,
+    mu_type::Symbol = :Default,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    # Black Litterman
+    delta::Union{Real, Nothing} = nothing,
+    eq::Bool = true,
+    rf = 0.0,
+)
+    returns = portfolio.returns
+    if isempty(w)
+        isempty(portfolio.bl_bench_weights) && (
+            portfolio.bl_bench_weights =
+                fill(1 / length(portfolio.assets), length(portfolio.assets))
+        )
+        w = portfolio.bl_bench_weights
+    end
+
+    isnothing(delta) && (delta = (dot(portfolio.mu, w) - rf) / dot(w, portfolio.cov, w))
+    portfolio.mu_bl, portfolio.cov_bl, missing = black_litterman(
+        returns,
+        w,
+        P,
+        Q;
+        # cov_mtx
+        cov_args = cov_args,
+        cov_est = cov_est,
+        cov_func = cov_func,
+        cov_kwargs = cov_kwargs,
+        cov_type = cov_type,
+        cov_weights = cov_weights,
+        custom_cov = custom_cov,
+        gs_threshold = gs_threshold,
+        jlogo = jlogo,
+        posdef_args = posdef_args,
+        posdef_fix = posdef_fix,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+        std_args = std_args,
+        std_func = std_func,
+        std_kwargs = std_kwargs,
+        target_ret = target_ret,
+        # mean_vec
+        custom_mu = custom_mu,
+        mean_args = mean_args,
+        mean_func = mean_func,
+        mean_kwargs = mean_kwargs,
+        mu_target = mu_target,
+        mu_type = mu_type,
+        mu_weights = mu_weights,
+        # Black Litterman
+        delta = delta,
+        eq = eq,
+        rf = rf,
+    )
+
+    return nothing
+end
+
+function factor_statistics!(
+    portfolio;
+    # cov_mtx
+    cov_args = (),
+    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
+    cov_func::Function = cov,
+    cov_kwargs = (;),
+    cov_type::Symbol = :Full,
+    cov_weights::Union{AbstractWeights, Nothing} = nothing,
+    custom_cov = nothing,
+    gs_threshold = 0.5,
+    jlogo::Bool = false,
+    posdef_args = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
+    posdef_kwargs = (;),
+    std_args = (),
+    std_func::Function = std,
+    std_kwargs = (;),
+    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    # mean_vec
+    custom_mu = nothing,
+    mean_args = (),
+    mean_func::Function = mean,
+    mean_kwargs = (;),
+    mu_target = :GM,
+    mu_type::Symbol = :Default,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    # Loadings matrix
+    B::Union{DataFrame, Nothing} = nothing,
+    constant::Bool = true,
+    error::Bool = true,
+    reg_type = :FReg,
+    criterion = :pval,
+    threshold = 0.05,
+    pca_kwargs = (;),
+    pca_std_kwargs = (;),
+    pca_std_type = ZScoreTransform,
+    var_func::Function = var,
+    var_args = (),
+    var_kwargs = (;),
+)
+    returns = portfolio.returns
+    f_returns = portfolio.f_returns
+
+    portfolio.cov_f = covar_mtx(
+        returns;
+        cov_args = cov_args,
+        cov_est = cov_est,
+        cov_func = cov_func,
+        cov_kwargs = cov_kwargs,
+        cov_type = cov_type,
+        cov_weights = cov_weights,
+        custom_cov = custom_cov,
+        gs_threshold = gs_threshold,
+        jlogo = jlogo,
+        posdef_args = posdef_args,
+        posdef_fix = posdef_fix,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+        std_args = std_args,
+        std_func = std_func,
+        std_kwargs = std_kwargs,
+        target_ret = target_ret,
+    )
+
+    portfolio.mu_f = mean_vec(
+        returns;
+        custom_mu = custom_mu,
+        mean_args = mean_args,
+        mean_func = mean_func,
+        mean_kwargs = mean_kwargs,
+        mu_target = mu_target,
+        mu_type = mu_type,
+        mu_weights = mu_weights,
+        sigma = isnothing(custom_cov) ? portfolio.cov_f : custom_cov,
+    )
+
+    portfolio.mu_fm, portfolio.cov_fm, portfolio.returns_fm = risk_factors(
+        DataFrame(f_returns, portfolio.f_assets),
+        DataFrame(returns, portfolio.assets);
+        # cov_mtx
+        cov_args = cov_args,
+        cov_est = cov_est,
+        cov_func = cov_func,
+        cov_kwargs = cov_kwargs,
+        cov_type = cov_type,
+        cov_weights = cov_weights,
+        custom_cov = custom_cov,
+        gs_threshold = gs_threshold,
+        jlogo = jlogo,
+        posdef_args = posdef_args,
+        posdef_fix = posdef_fix,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+        std_args = std_args,
+        std_func = std_func,
+        std_kwargs = std_kwargs,
+        target_ret = target_ret,
+        # mean_vec
+        custom_mu = custom_mu,
+        mean_args = mean_args,
+        mean_func = mean_func,
+        mean_kwargs = mean_kwargs,
+        mu_target = mu_target,
+        mu_type = mu_type,
+        mu_weights = mu_weights,
+        # Loadings matrix
+        B = B,
+        constant = constant,
+        error = error,
+        reg_type = reg_type,
+        criterion = criterion,
+        threshold = threshold,
+        pca_kwargs = pca_kwargs,
+        pca_std_kwargs = pca_std_kwargs,
+        pca_std_type = pca_std_type,
+        var_func = var_func,
+        var_args = var_args,
+        var_kwargs = var_kwargs,
+    )
+
+    return nothing
+end
+
 export block_vec_pq,
     duplication_matrix,
     elimination_matrix,
@@ -1537,4 +1760,6 @@ export block_vec_pq,
     risk_factors,
     black_litterman,
     augmented_black_litterman,
-    bayesian_black_litterman
+    bayesian_black_litterman,
+    black_litterman_statistics!,
+    factor_statistics!
