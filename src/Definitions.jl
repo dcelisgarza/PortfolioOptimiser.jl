@@ -136,7 +136,8 @@ PortClasses = (:Classic,)
 ```
 Available classes for [`Portfolio`](@ref).
 """
-const PortClasses = (:Classic,)
+const PortClasses = (:Classic, :FM, :BL, :BL_FM)
+const PortClassOption = (1, 2, 3)
 
 """
 ```julia

@@ -25,9 +25,9 @@ function _setup_ret(kelly, model, T, returns, mu, mu_l)
             [i = 1:T],
             [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
         )
-    elseif kelly == :Approx && (!isempty(mu) || !isnothing(mu))
+    elseif kelly == :Approx && (!isempty(mu) || !isempty(mu))
         @expression(model, _ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
-    elseif !isempty(mu) || !isnothing(mu)
+    elseif !isempty(mu) || !isempty(mu)
         @expression(model, _ret, dot(mu, model[:w]))
     end
 
@@ -47,7 +47,7 @@ function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l, trad = true)
             [texact_kelly[i], model[:k], kret[i]] in MOI.ExponentialCone()
         )
         trad && @constraint(model, model[:risk] <= 1)
-    elseif kelly == :Approx && (!isempty(mu) || !isnothing(mu))
+    elseif kelly == :Approx && (!isempty(mu) || !isempty(mu))
         @variable(model, tapprox_kelly)
         @constraint(
             model,
@@ -59,7 +59,7 @@ function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l, trad = true)
         )
         @expression(model, _ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
         trad && @constraint(model, model[:risk] <= 1)
-    elseif !isempty(mu) || !isnothing(mu)
+    elseif !isempty(mu) || !isempty(mu)
         @expression(model, _ret, dot(mu, model[:w]))
         trad && @constraint(model, _ret - rf * model[:k] == 1)
     end
@@ -495,10 +495,61 @@ function _save_opt_params(
     return nothing
 end
 
+function _setup_model_class(portfolio, class, hist)
+    mu, sigma, returns = (
+        Vector{Float64}(undef, 0),
+        Matrix{Float64}(undef, 0, 0),
+        Matrix{Float64}(undef, 0, 0),
+    )
+
+    if class == :Classic
+        mu = portfolio.mu
+        sigma = portfolio.cov
+        returns = portfolio.returns
+    elseif class == :FM
+        mu = portfolio.mu_fm
+        if hist == 1
+            sigma = portfolio.cov_fm
+            returns = portfolio.returns_fm
+        elseif hist == 2
+            sigma = portfolio.cov
+            returns = portfolio.returns
+        else
+            throw(AssertionError("for class = $class, hist = $hist can only be 1 or 2"))
+        end
+    elseif class == :BL
+        mu = portfolio.mu_bl
+        if hist == 1
+            sigma = portfolio.cov_bl
+            returns = portfolio.returns_bl
+        elseif hist == 2
+            sigma = portfolio.cov
+            returns = portfolio.returns
+        else
+            throw(AssertionError("for class = $class, hist = $hist can only be 1 or 2"))
+        end
+    elseif class == :BL_FM
+        mu = portfolio.mu_bl_fm
+        if hist == 1
+            sigma = portfolio.cov_bl_fm
+            returns = portfolio.returns_bl_fm
+        elseif hist == 2
+            sigma = portfolio.cov
+            returns = portfolio.returns
+        else
+            sigma = portfolio.cov_fm
+            returns = portfolio.returns_fm
+        end
+    end
+
+    return mu, sigma, returns
+end
+
 function opt_port!(
     portfolio::Portfolio;
     type::Symbol = :Trad,
     class::Symbol = :Classic,
+    hist::Integer = 1,
     rm::Symbol = :SD,
     obj::Symbol = :Sharpe,
     kelly::Symbol = :None,
@@ -513,6 +564,7 @@ function opt_port!(
 )
     @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
     @assert(class ∈ PortClasses, "class = $class, must be one of $PortClasses")
+    @assert(hist ∈ PortClassOption, "hist= $hist, must be one of $PortClassOption")
     @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
     @assert(obj ∈ ObjFuncs, "obj = $obj, must be one of $ObjFuncs")
     @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
@@ -551,11 +603,9 @@ function opt_port!(
 
     portfolio.model = JuMP.Model()
 
-    # Returns, mu, sigma.
-    returns = portfolio.returns
+    # mu, sigma, returns
+    mu, sigma, returns = _setup_model_class(portfolio, class, hist)
     T, N = size(returns)
-    mu = !isempty(portfolio.mu) ? portfolio.mu : nothing
-    sigma = portfolio.cov
     kurtosis = portfolio.kurt
     skurtosis = portfolio.skurt
 
