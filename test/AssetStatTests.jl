@@ -4942,4 +4942,236 @@ end
     @test isapprox(port.cov_f, cov_ft)
     @test isapprox(port.mu_fm, mu_fmt)
     @test isapprox(port.cov_fm, cov_fmt)
+
+    port = Portfolio(returns = Y, f_returns = X)
+    black_litterman_factor_satistics!(
+        port;
+        # w;
+        # Black Litterman
+        B = loadings,
+        P = P,
+        P_f = P_f,
+        Q = Q / 252,
+        Q_f = Q_f / 252,
+        bl_type = :B,
+        # delta = 1.0,
+        # eq = true,
+        # rf = 0.0,
+        # # Loadings matrix
+        # criterion = :pval,
+        # diagonal = true,
+    )
+    mub1, covb1, wb1 = bayesian_black_litterman(
+        port.returns,
+        port.f_returns,
+        Matrix(loadings[!, 2:end]),
+        P_f,
+        Q_f / 252,
+        constant = false,
+    )
+    @test isapprox(port.mu_bl_fm, mub1)
+    @test isapprox(port.cov_bl_fm, covb1)
+
+    f_views = DataFrame(
+        Dict(
+            "Enabled" => [true, true, true],
+            "Factor" => ["R 10800", "R 1800", "R 3600"],
+            "Sign" => [">=", "<=", "<="],
+            "Value" => [0.001, -0.001, -0.003],
+            "Relative Factor" => ["R 7200", "", ""],
+        ),
+    )
+    f_views = DataFrame(f_views)
+    B = loadings_matrix(
+        DataFrame(port.f_returns, port.f_assets),
+        DataFrame(port.returns, port.assets),
+    )
+    P_f1, Q_f1 = factor_views(f_views, B)
+    black_litterman_factor_satistics!(
+        port;
+        # w;
+        # Black Litterman
+        B = B,
+        P = P,
+        P_f = P_f1,
+        Q = Q / 252,
+        Q_f = Q_f1 / 252,
+        bl_type = :B,
+        # delta = 1.0,
+        eq = false,
+        rf = 0.0002,
+        # # Loadings matrix
+        # criterion = :pval,
+        # diagonal = true,
+    )
+    mub2, covb2, wb2 = bayesian_black_litterman(
+        port.returns,
+        port.f_returns,
+        Matrix(B[!, 2:end]),
+        P_f1,
+        Q_f1 / 252,
+        constant = true,
+        eq = false,
+        rf = 0.0002,
+    )
+    @test isapprox(port.mu_bl_fm, mub2)
+    @test isapprox(port.cov_bl_fm, covb2)
+
+    black_litterman_factor_satistics!(
+        port;
+        # w;
+        # Black Litterman
+        B = B,
+        P = P,
+        P_f = P_f1,
+        Q = Q / 252,
+        Q_f = Q_f1 / 252,
+        bl_type = :B,
+        # delta = 1.0,
+        # eq = true,
+        # rf = 0.0,
+        # # Loadings matrix
+        # criterion = :pval,
+        diagonal = false,
+    )
+    mub3, covb3, wb3 = bayesian_black_litterman(
+        port.returns,
+        port.f_returns,
+        Matrix(B[!, 2:end]),
+        P_f1,
+        Q_f1 / 252,
+        constant = true,
+        diagonal = false,
+    )
+    @test isapprox(port.mu_bl_fm, mub3)
+    @test isapprox(port.cov_bl_fm, covb3)
+
+    black_litterman_factor_satistics!(
+        port;
+        # w;
+        # Black Litterman
+        B = loadings,
+        P = P,
+        P_f = P_f,
+        Q = Q / 252,
+        Q_f = Q_f / 252,
+        bl_type = :A,
+        # delta = 1.0,
+        # eq = true,
+        # rf = 0.0,
+        # # Loadings matrix
+        # criterion = :pval,
+        # diagonal = true,
+    )
+    mub4, covb4, w4 = augmented_black_litterman(
+        port.returns,
+        fill(1 / length(port.assets), length(port.assets));
+        F = port.f_returns,
+        B = Matrix(loadings[!, 2:end]),
+        P = P,
+        Q = Q / 252,
+        P_f = P_f,
+        Q_f = Q_f / 252,
+        constant = false,
+    )
+    @test isapprox(port.mu_bl_fm, mub4)
+    @test isapprox(port.cov_bl_fm, covb4)
+
+    black_litterman_factor_satistics!(
+        port;
+        # w;
+        # Black Litterman
+        B = B,
+        P = P,
+        P_f = P_f1,
+        Q = Q / 252,
+        Q_f = Q_f1 / 252,
+        bl_type = :A,
+        # delta = 1.0,
+        # eq = true,
+        # rf = 0.0,
+        # # Loadings matrix
+        # criterion = :pval,
+        # diagonal = true,
+    )
+    mub5, covb5, wb5 = augmented_black_litterman(
+        port.returns,
+        fill(1 / length(port.assets), length(port.assets));
+        F = port.f_returns,
+        B = Matrix(B[!, 2:end]),
+        P = P,
+        Q = Q / 252,
+        P_f = P_f1,
+        Q_f = Q_f1 / 252,
+        constant = true,
+    )
+    @test isapprox(port.mu_bl_fm, mub5)
+    @test isapprox(port.cov_bl_fm, covb5)
+
+    black_litterman_factor_satistics!(
+        port;
+        # w;
+        # Black Litterman
+        B = loadings,
+        P = P,
+        P_f = P_f,
+        Q = Q / 252,
+        Q_f = Q_f / 252,
+        bl_type = :A,
+        # delta = 1.0,
+        eq = false,
+        rf = 0.001,
+        # # Loadings matrix
+        # criterion = :pval,
+        # diagonal = true,
+    )
+    mub6, covb6, w6 = augmented_black_litterman(
+        port.returns,
+        fill(1 / length(port.assets), length(port.assets));
+        F = port.f_returns,
+        B = Matrix(loadings[!, 2:end]),
+        P = P,
+        Q = Q / 252,
+        P_f = P_f,
+        Q_f = Q_f / 252,
+        constant = false,
+        eq = false,
+        rf = 0.001,
+    )
+    @test isapprox(port.mu_bl_fm, mub6)
+    @test isapprox(port.cov_bl_fm, covb6)
+
+    black_litterman_factor_satistics!(
+        port;
+        # w;
+        # Black Litterman
+        B = loadings,
+        P = P,
+        P_f = P_f,
+        Q = Q / 252,
+        Q_f = Q_f / 252,
+        bl_type = :A,
+        delta = 3.0,
+        eq = false,
+        rf = 0.001,
+        # # Loadings matrix
+        # criterion = :pval,
+        # diagonal = true,
+    )
+    mub7, covb7, w7 = augmented_black_litterman(
+        port.returns,
+        fill(1 / length(port.assets), length(port.assets));
+        F = port.f_returns,
+        B = Matrix(loadings[!, 2:end]),
+        P = P,
+        Q = Q / 252,
+        P_f = P_f,
+        Q_f = Q_f / 252,
+        constant = false,
+        eq = false,
+        rf = 0.001,
+        delta = 3.0,
+    )
+    @test isapprox(port.mu_bl_fm, mub7)
+    @test isapprox(port.cov_bl_fm, covb7)
 end

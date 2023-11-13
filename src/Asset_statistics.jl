@@ -1049,7 +1049,6 @@ function risk_factors(
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
-    constant::Bool = false,
     error::Bool = true,
     reg_type = :FReg,
     criterion = :pval,
@@ -1079,8 +1078,9 @@ function risk_factors(
             threshold = threshold,
         )
     )
-
-    x1 = constant || "const" ∈ names(B) ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
+    namesB = names(B)
+    x1 = "const" ∈ namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
+    B = Matrix(B[!, setdiff(namesB, ["ticker"])])
 
     cov_f = covar_mtx(
         x1;
@@ -1115,16 +1115,15 @@ function risk_factors(
         sigma = isnothing(custom_cov) ? cov_f : custom_cov,
     )
 
-    b = Matrix(B[!, setdiff(names(B), ["ticker"])])
-    returns = x1 * transpose(b)
-    mu = b * mu_f
+    returns = x1 * transpose(B)
+    mu = B * mu_f
 
     sigma = if error
         e = Matrix(y) - returns
         S_e = diagm(vec(var_func(e, var_args...; dims = 1, var_kwargs...)))
-        b * cov_f * transpose(b) + S_e
+        B * cov_f * transpose(B) + S_e
     else
-        b * cov_f * transpose(b)
+        B * cov_f * transpose(B)
     end
 
     return mu, sigma, returns
@@ -1575,6 +1574,8 @@ function black_litterman_statistics!(
                 fill(1 / length(portfolio.assets), length(portfolio.assets))
         )
         w = portfolio.bl_bench_weights
+    else
+        portfolio.bl_bench_weights = w
     end
 
     isnothing(delta) && (delta = (dot(portfolio.mu, w) - rf) / dot(w, portfolio.cov, w))
@@ -1649,7 +1650,6 @@ function factor_statistics!(
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
-    constant::Bool = true,
     criterion = :pval,
     error::Bool = true,
     pca_kwargs = (;),
@@ -1728,7 +1728,6 @@ function factor_statistics!(
         mu_weights = mu_weights,
         # Loadings matrix
         B = B,
-        constant = constant,
         error = error,
         reg_type = reg_type,
         criterion = criterion,
@@ -1774,24 +1773,21 @@ function black_litterman_factor_satistics!(
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
-    B::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
-    F::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
+    B::Union{DataFrame, Nothing} = nothing,
     P::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
     P_f::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
     Q::Union{Vector{<:AbstractFloat}, Nothing} = nothing,
     Q_f::Union{Vector{<:AbstractFloat}, Nothing} = nothing,
     bl_type = :B,
-    constant::Bool = false,
     delta::Real = 1.0,
+    diagonal = true,
     eq::Bool = true,
     rf = 0.0,
     var_args = (),
     var_func = var,
     var_kwargs = (;),
     # Loadings matrix
-    error::Bool = true,
     criterion = :pval,
-    diagonal = true,
     pca_kwargs = (;),
     pca_std_kwargs = (;),
     pca_std_type = ZScoreTransform,
@@ -1812,14 +1808,16 @@ function black_litterman_factor_satistics!(
                 fill(1 / length(portfolio.assets), length(portfolio.assets))
         )
         w = portfolio.bl_bench_weights
+    else
+        portfolio.bl_bench_weights = w
     end
 
     isnothing(delta) && (delta = (dot(portfolio.mu, w) - rf) / dot(w, portfolio.cov, w))
 
     if isnothing(B)
         B = loadings_matrix(
-            DataFrame(f_returns, names(portfolio.f_assets)),
-            DataFrame(returns, names(portfolio.assets)),
+            DataFrame(f_returns, portfolio.f_assets),
+            DataFrame(returns, portfolio.assets),
             reg_type;
             criterion = criterion,
             mean_args = mean_args,
@@ -1833,8 +1831,10 @@ function black_litterman_factor_satistics!(
             std_kwargs = std_kwargs,
             threshold = threshold,
         )
-        constant = true
     end
+    namesB = names(B)
+    constant = "const" ∈ namesB
+    B = Matrix(B[!, setdiff(namesB, ["ticker"])])
 
     portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_type == :B
         bayesian_black_litterman(
@@ -1911,7 +1911,7 @@ function black_litterman_factor_satistics!(
             mu_weights = mu_weights,
             # Black Litterman
             B = B,
-            F = F,
+            F = f_returns,
             P = P,
             P_f = P_f,
             Q = Q,
@@ -1945,4 +1945,5 @@ export block_vec_pq,
     augmented_black_litterman,
     bayesian_black_litterman,
     black_litterman_statistics!,
-    factor_statistics!
+    factor_statistics!,
+    black_litterman_factor_satistics!
