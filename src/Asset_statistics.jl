@@ -8,7 +8,7 @@ function cokurt(x::AbstractMatrix, mu::AbstractArray)
     return cokurt
 end
 
-function scokurt(x::AbstractMatrix, mu::AbstractArray, target_ret::AbstractFloat = 0.0)
+function scokurt(x::AbstractMatrix, mu::AbstractArray, target_ret::Real = 0.0)
     T, N = size(x)
     y = x .- mu
     y .= min.(y, target_ret)
@@ -79,10 +79,10 @@ end
 
 function _posdef_fix!(
     mtx::AbstractMatrix,
-    posdef_fix,
-    posdef_func,
-    posdef_args,
-    posdef_kwargs,
+    posdef_fix::Symbol,
+    posdef_func::Function,
+    posdef_args::Tuple,
+    posdef_kwargs::NamedTuple,
 )
     isposdef(mtx) && return nothing
 
@@ -97,13 +97,17 @@ function _posdef_fix!(
 end
 
 function mu_esimator(
-    returns,
-    mu_type,
-    target = :GM;
-    dims = 1,
-    mu_weights = nothing,
-    sigma = nothing,
+    returns::AbstractMatrix,
+    mu_type::Symbol = :JS,
+    target::Symbol = :GM;
+    dims::Integer = 1,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    sigma::AbstractMatrix = cov(returns),
 )
+    @assert(
+        mu_type ∈ (:JS, :BS, :BOP),
+        "mu_type = $mu_type, must be one of (:JS, :BS, :BOP)"
+    )
     @assert(target ∈ MuTargets, "target = $target, must be one of $MuTargets")
 
     T, N = size(returns)
@@ -142,23 +146,23 @@ function mu_esimator(
 end
 
 function covar_mtx(
-    returns::Matrix{<:AbstractFloat};
-    cov_args = (),
+    returns::AbstractMatrix;
+    cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs = (;),
+    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov = nothing,
-    gs_threshold = 0.5,
+    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    gs_threshold::Real = 0.5,
     jlogo::Bool = false,
-    posdef_args = (),
+    posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
-    posdef_kwargs = (;),
-    std_args = (),
+    posdef_kwargs::NamedTuple = (;),
+    std_args::Tuple = (),
     std_func::Function = std,
-    std_kwargs = (;),
+    std_kwargs::NamedTuple = (;),
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
 )
     @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
@@ -213,15 +217,15 @@ function covar_mtx(
 end
 
 function mean_vec(
-    returns::Matrix{<:AbstractFloat};
-    custom_mu = nothing,
-    mean_args = (),
+    returns::AbstractMatrix;
+    custom_mu::Union{AbstractVector, Nothing} = nothing,
+    mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs = (;),
-    mu_target = :GM,
+    mean_kwargs::NamedTuple = (;),
+    mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
-    sigma::Matrix{<:AbstractFloat} = cov(returns),
+    sigma::Union{AbstractMatrix, Nothing} = nothing,
 )
     @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
     mu = if mu_type == :Default
@@ -246,14 +250,14 @@ function mean_vec(
 end
 
 function cokurt_mtx(
-    returns::Matrix{<:AbstractFloat},
-    mu::Vector{<:AbstractFloat};
-    custom_kurt = nothing,
-    custom_skurt = nothing,
-    posdef_args = (),
+    returns::AbstractMatrix,
+    mu::AbstractVector;
+    custom_kurt::Union{AbstractMatrix, Nothing} = nothing,
+    custom_skurt::Union{AbstractMatrix, Nothing} = nothing,
+    posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
-    posdef_kwargs = (;),
+    posdef_kwargs::NamedTuple = (;),
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
 )
     kurt = isnothing(custom_kurt) ? cokurt(returns, transpose(mu)) : custom_kurt
@@ -271,23 +275,23 @@ function cokurt_mtx(
 end
 
 function codep_dist_mtx(
-    returns::Matrix{<:AbstractFloat};
-    alpha_tail = nothing,
-    bins_info = nothing,
-    codep_type = nothing,
-    cor_args = (),
+    returns::AbstractMatrix;
+    alpha_tail::Real = 0.05,
+    bins_info::Union{Symbol, Integer} = :KN,
+    codep_type::Symbol = :Pearson,
+    cor_args::Tuple = (),
     cor_func::Function = cor,
-    cor_kwargs = (;),
-    custom_cor = nothing,
-    dist_args = (),
+    cor_kwargs::NamedTuple = (;),
+    custom_cor::Union{AbstractMatrix, Nothing} = nothing,
+    dist_args::Tuple = (),
     dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-    dist_kwargs = (;),
-    gs_threshold = 0.5,
-    sigma::Matrix{<:AbstractFloat} = cov(returns),
-    std_args = (),
+    dist_kwargs::NamedTuple = (;),
+    gs_threshold::Real = 0.5,
+    sigma::Union{AbstractMatrix, Nothing} = nothing,
+    std_args::Tuple = (),
     std_func::Function = std,
-    std_kwargs = (;),
-    uplo = :L,
+    std_kwargs::NamedTuple = (;),
+    uplo::Symbol = :L,
 )
     @assert(codep_type ∈ CodepTypes, "codep_type = $codep_type, must be one of $CodepTypes")
     if codep_type == :Pearson
@@ -340,12 +344,26 @@ function codep_dist_mtx(
         dist = -log.(codep)
 
     elseif codep_type == :Cov_to_Cor
+        !isa(sigma, Matrix) &&
+            size(sigma, 1) == size(sigma, 2) &&
+            throw(
+                AssertionError(
+                    "sigma = $sigma, size(sigma) = $(size(sigma)), must be a square matrix",
+                ),
+            )
         codep = cov2cor(sigma)
         dist = dist_func(codep, dist_args...; dist_kwargs...)
     elseif codep_type == :Custom_Func
         codep = cor_func(returns, cor_args...; cor_kwargs...)
         dist = dist_func(codep, dist_args...; dist_kwargs...)
     elseif codep_type == :Custom_Val
+        !isa(custom_cor, Matrix) &&
+            size(custom_cor, 1) == size(custom_cor, 2) &&
+            throw(
+                AssertionError(
+                    "custom_cor = $custom_cor, size(custom_cor) = $(size(custom_cor)), must be a square matrix",
+                ),
+            )
         codep = custom_cor
         dist = dist_func(codep, dist_args...; dist_kwargs...)
     end
@@ -370,17 +388,17 @@ asset_statistics!(
     custom_cov = nothing,
     custom_kurt = nothing,
     custom_skurt = nothing,
-    mean_args = (),
-    cov_args = (),
-    cor_args = (),
-    dist_args = (),
-    std_args = (),
+    mean_args::Tuple = (),
+    cov_args::Tuple = (),
+    cor_args::Tuple = (),
+    dist_args::Tuple = (),
+    std_args::Tuple = (),
     calc_kurt = true,
     mean_kwargs = (; dims = 1),
-    cov_kwargs = (;),
-    cor_kwargs = (;),
-    dist_kwargs = (;),
-    std_kwargs = (;),
+    cov_kwargs::NamedTuple = (;),
+    cor_kwargs::NamedTuple = (;),
+    dist_kwargs::NamedTuple = (;),
+    std_kwargs::NamedTuple = (;),
     uplo = :L,
 )
 ```
@@ -388,50 +406,53 @@ asset_statistics!(
 function asset_statistics!(
     portfolio::AbstractPortfolio;
     # flags
-    calc_codep = true,
-    calc_cov = true,
-    calc_mu = true,
-    calc_kurt = true,
+    calc_codep::Bool = true,
+    calc_cov::Bool = true,
+    calc_mu::Bool = true,
+    calc_kurt::Bool = true,
     # cov_mtx
-    cov_args = (),
+    cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs = (;),
+    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = portfolio.cov_type,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov = nothing,
-    gs_threshold = isa(portfolio, HCPortfolio) ? portfolio.gs_threshold : 0.5,
+    custom_cov::Union{AbstractVector, Nothing} = nothing,
+    gs_threshold::Real = portfolio.gs_threshold,
     jlogo::Bool = portfolio.jlogo,
-    posdef_args = (),
+    posdef_args::Tuple = (),
     posdef_fix::Symbol = portfolio.posdef_fix,
     posdef_func::Function = x -> x,
-    posdef_kwargs = (;),
-    std_args = (),
+    posdef_kwargs::NamedTuple = (;),
+    std_args::Tuple = (),
     std_func::Function = std,
-    std_kwargs = (;),
+    std_kwargs::NamedTuple = (;),
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
     # mean_vec
-    custom_mu = nothing,
-    mean_args = (),
+    custom_mu::Union{AbstractVector, Nothing} = nothing,
+    mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs = (;),
-    mu_target = :GM,
+    mean_kwargs::NamedTuple = (;),
+    mu_target::Symbol = :GM,
     mu_type::Symbol = portfolio.mu_type,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # codep_dist_mtx
-    alpha_tail = isa(portfolio, HCPortfolio) ? portfolio.alpha_tail : nothing,
-    bins_info = isa(portfolio, HCPortfolio) ? portfolio.bins_info : nothing,
-    codep_type = isa(portfolio, HCPortfolio) ? portfolio.codep_type : nothing,
-    cor_args = (),
+    alpha_tail::Union{Real, Nothing} = isa(portfolio, HCPortfolio) ? portfolio.alpha_tail :
+                                       nothing,
+    bins_info::Union{Symbol, Integer, Nothing} = isa(portfolio, HCPortfolio) ?
+                                                 portfolio.bins_info : nothing,
+    codep_type::Union{Symbol, Nothing} = isa(portfolio, HCPortfolio) ?
+                                         portfolio.codep_type : nothing,
+    cor_args::Tuple = (),
     cor_func::Function = cor,
-    cor_kwargs = (;),
-    custom_cor = nothing,
-    dist_args = (),
+    cor_kwargs::NamedTuple = (;),
+    custom_cor::Union{AbstractMatrix, Nothing} = nothing,
+    dist_args::Tuple = (),
     dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-    dist_kwargs = (;),
-    custom_kurt = nothing,
-    custom_skurt = nothing,
-    uplo = :L,
+    dist_kwargs::NamedTuple = (;),
+    custom_kurt::Union{AbstractMatrix, Nothing} = nothing,
+    custom_skurt::Union{AbstractMatrix, Nothing} = nothing,
+    uplo::Symbol = :L,
 )
     returns = portfolio.returns
 
@@ -460,8 +481,7 @@ function asset_statistics!(
 
         portfolio.cov_type = cov_type
 
-        isa(portfolio, HCPortfolio) &&
-            (cov_type == :Gerber1 || cov_type == :Gerber2) &&
+        (cov_type == :Gerber1 || cov_type == :Gerber2) &&
             (portfolio.gs_threshold = gs_threshold)
 
         jlogo && (portfolio.jlogo = jlogo)
@@ -546,11 +566,11 @@ function commutation_matrix(x::AbstractMatrix)
 end
 
 function gen_bootstrap(
-    returns,
-    kind = :Stationary,
-    n_sim = 3_000,
-    window = 3,
-    seed = nothing,
+    returns::AbstractVector,
+    kind::Symbol = :Stationary,
+    n_sim::Integer = 3_000,
+    window::Integer = 3,
+    seed::Union{Integer, Nothing} = nothing,
     rng = Random.default_rng(),
 )
     @assert(kind ∈ KindBootstrap, "kind = $kind, must be one of $KindBootstrap")
@@ -597,28 +617,28 @@ wc_statistics!(
     n_samples = 10_000,
     seed = nothing,
     rng = Random.default_rng(),
-    fix_cov_args = (),
-    fix_cov_kwargs = (;),
+    fix_cov_args::Tuple = (),
+    fix_cov_kwargs::NamedTuple = (;),
 )
 ```
 Worst case optimisation statistics.
 """
 function wc_statistics!(
-    portfolio;
-    box = :Stationary,
-    calc_box = true,
-    calc_ellipse = true,
-    dcov = 0.1,
-    dmu = 0.1,
-    ellipse = :Stationary,
-    fix_cov_args = (),
-    fix_cov_kwargs = (;),
-    n_samples = 10_000,
-    n_sim = 3_000,
-    q = 0.05,
+    portfolio::AbstractPortfolio;
+    box::Symbol = :Stationary,
+    calc_box::Bool = true,
+    calc_ellipse::Bool = true,
+    dcov::Real = 0.1,
+    dmu::Real = 0.1,
+    ellipse::Symbol = :Stationary,
+    fix_cov_args::Tuple = (),
+    fix_cov_kwargs::NamedTuple = (;),
+    n_samples::Integer = 10_000,
+    n_sim::Integer = 3_000,
+    q::Real = 0.05,
     rng = Random.default_rng(),
-    seed = nothing,
-    window = 3,
+    seed::Union{Integer, Nothing} = nothing,
+    window::Integer = 3,
 )
     @assert(box ∈ BoxTypes, "box = $box, must be one of $BoxTypes")
     @assert(ellipse ∈ EllipseTypes, "ellipse = $ellipse, must be one of $EllipseTypes")
@@ -707,7 +727,7 @@ function forward_regression(
     x::DataFrame,
     y::Union{Vector, DataFrame},
     criterion::Union{Symbol, Function} = :pval,
-    threshold = 0.05,
+    threshold::Real = 0.05,
 )
     @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
     isa(y, DataFrame) && (y = Vector(y))
@@ -820,8 +840,8 @@ end
 function backward_regression(
     x::DataFrame,
     y::Union{Vector, DataFrame},
-    criterion = :pval,
-    threshold = 0.05,
+    criterion::Symbol = :pval,
+    threshold::Real = 0.05,
 )
     @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
     isa(y, DataFrame) && (y = Vector(y))
@@ -920,15 +940,15 @@ end
 function pcr(
     x::DataFrame,
     y::Union{Vector, DataFrame};
-    mean_args = (),
+    mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs = (;),
-    pca_kwargs = (;),
-    pca_std_kwargs = (;),
+    mean_kwargs::NamedTuple = (;),
+    pca_kwargs::NamedTuple = (;),
+    pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
-    std_args = (),
+    std_args::Tuple = (),
     std_func::Function = std,
-    std_kwargs = (;),
+    std_kwargs::NamedTuple = (;),
 )
     N = nrow(x)
     X = transpose(Matrix(x))
@@ -955,18 +975,18 @@ end
 function loadings_matrix(
     x::DataFrame,
     y::DataFrame,
-    type = :FReg;
-    criterion = :pval,
-    mean_args = (),
-    mean_kwargs = (;),
-    pca_kwargs = (;),
-    pca_std_kwargs = (;),
+    type::Symbol = :FReg;
+    criterion::Symbol = :pval,
+    mean_args::Tuple = (),
+    mean_kwargs::NamedTuple = (;),
+    pca_kwargs::NamedTuple = (;),
+    pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
-    std_args = (),
+    std_args::Tuple = (),
     std_func::Function = std,
     mean_func::Function = mean,
-    std_kwargs = (;),
-    threshold = 0.05,
+    std_kwargs::NamedTuple = (;),
+    threshold::Real = 0.05,
 )
     @assert(type ∈ LoadingMtxType, "type = $type, must be one of $LoadingMtxType")
     features = names(x)
@@ -1022,43 +1042,43 @@ function risk_factors(
     x::DataFrame,
     y::DataFrame;
     # cov_mtx
-    cov_args = (),
+    cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs = (;),
+    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov = nothing,
-    gs_threshold = 0.5,
+    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    gs_threshold::Real = 0.5,
     jlogo::Bool = false,
-    posdef_args = (),
+    posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
-    posdef_kwargs = (;),
-    std_args = (),
+    posdef_kwargs::NamedTuple = (;),
+    std_args::Tuple = (),
     std_func::Function = std,
-    std_kwargs = (;),
+    std_kwargs::NamedTuple = (;),
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
     # mean_vec
-    custom_mu = nothing,
-    mean_args = (),
+    custom_mu::Union{AbstractVector, Nothing} = nothing,
+    mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs = (;),
-    mu_target = :GM,
+    mean_kwargs::NamedTuple = (;),
+    mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
+    criterion::Symbol = :pval,
     error::Bool = true,
-    reg_type = :FReg,
-    criterion = :pval,
-    threshold = 0.05,
-    pca_kwargs = (;),
-    pca_std_kwargs = (;),
+    pca_kwargs::NamedTuple = (;),
+    pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
+    reg_type::Symbol = :FReg,
+    threshold::Real = 0.05,
     var_func::Function = var,
-    var_args = (),
-    var_kwargs = (;),
+    var_args::Tuple = (),
+    var_kwargs::NamedTuple = (;),
 )
     isnothing(B) && (
         B = loadings_matrix(
@@ -1151,40 +1171,40 @@ function _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta)
 end
 
 function black_litterman(
-    returns::Matrix{<:AbstractFloat},
-    w::Vector{<:AbstractFloat},
-    P::Matrix{<:AbstractFloat},
-    Q::Vector{<:AbstractFloat};
+    returns::AbstractMatrix,
+    w::AbstractVector,
+    P::AbstractMatrix,
+    Q::AbstractVector;
     # cov_mtx
-    cov_args = (),
+    cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs = (;),
+    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov = nothing,
-    gs_threshold = 0.5,
+    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    gs_threshold::Real = 0.5,
     jlogo::Bool = false,
-    posdef_args = (),
+    posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
-    posdef_kwargs = (;),
-    std_args = (),
+    posdef_kwargs::NamedTuple = (;),
+    std_args::Tuple = (),
     std_func::Function = std,
-    std_kwargs = (;),
+    std_kwargs::NamedTuple = (;),
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
     # mean_vec
-    custom_mu = nothing,
-    mean_args = (),
+    custom_mu::Union{AbstractVector, Nothing} = nothing,
+    mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs = (;),
-    mu_target = :GM,
+    mean_kwargs::NamedTuple = (;),
+    mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
     delta::Real = 1.0,
     eq::Bool = true,
-    rf = 0.0,
+    rf::Real = 0.0,
 )
     sigma = covar_mtx(
         returns;
@@ -1229,45 +1249,45 @@ function black_litterman(
 end
 
 function augmented_black_litterman(
-    returns::Matrix{<:AbstractFloat},
-    w::Vector{<:AbstractFloat};
+    returns::AbstractMatrix,
+    w::AbstractVector;
     # cov_mtx
-    cov_args = (),
+    cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs = (;),
+    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov = nothing,
-    gs_threshold = 0.5,
+    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    gs_threshold::Real = 0.5,
     jlogo::Bool = false,
-    posdef_args = (),
+    posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
-    posdef_kwargs = (;),
-    std_args = (),
+    posdef_kwargs::NamedTuple = (;),
+    std_args::Tuple = (),
     std_func::Function = std,
-    std_kwargs = (;),
+    std_kwargs::NamedTuple = (;),
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
     # mean_vec
-    custom_mu = nothing,
-    mean_args = (),
+    custom_mu::Union{AbstractVector, Nothing} = nothing,
+    mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs = (;),
-    mu_target = :GM,
+    mean_kwargs::NamedTuple = (;),
+    mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
-    B::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
-    F::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
-    P::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
-    P_f::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
-    Q::Union{Vector{<:AbstractFloat}, Nothing} = nothing,
-    Q_f::Union{Vector{<:AbstractFloat}, Nothing} = nothing,
+    B::Union{AbstractMatrix, Nothing} = nothing,
+    F::Union{AbstractMatrix, Nothing} = nothing,
+    P::Union{AbstractMatrix, Nothing} = nothing,
+    P_f::Union{AbstractMatrix, Nothing} = nothing,
+    Q::Union{AbstractVector, Nothing} = nothing,
+    Q_f::Union{AbstractVector, Nothing} = nothing,
     constant::Bool = true,
     delta::Real = 1.0,
     eq::Bool = true,
-    rf = 0.0,
+    rf::Real = 0.0,
 )
     asset_tuple = (!isnothing(P), !isnothing(Q))
     any_asset_provided = any(asset_tuple)
@@ -1417,46 +1437,45 @@ function augmented_black_litterman(
 end
 
 function bayesian_black_litterman(
-    returns::Matrix{<:AbstractFloat},
-    F::Matrix{<:AbstractFloat},
-    B::Matrix{<:AbstractFloat},
-    P_f::Matrix{<:AbstractFloat},
-    Q_f::Vector{<:AbstractFloat};
+    returns::AbstractMatrix,
+    F::AbstractMatrix,
+    B::AbstractMatrix,
+    P_f::AbstractMatrix,
+    Q_f::AbstractVector;
     # cov_mtx
-    cov_args = (),
+    cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs = (;),
+    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov = nothing,
-    gs_threshold = 0.5,
+    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    gs_threshold::Real = 0.5,
     jlogo::Bool = false,
-    posdef_args = (),
+    posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
-    posdef_kwargs = (;),
-    std_args = (),
+    posdef_kwargs::NamedTuple = (;),
+    std_args::Tuple = (),
     std_func::Function = std,
-    std_kwargs = (;),
+    std_kwargs::NamedTuple = (;),
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
     # mean_vec
-    custom_mu = nothing,
-    mean_args = (),
+    custom_mu::Union{AbstractVector, Nothing} = nothing,
+    mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs = (;),
-    mu_target = :GM,
+    mean_kwargs::NamedTuple = (;),
+    mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
     constant::Bool = true,
     delta::Real = 1.0,
-    diagonal = true,
-    eq::Bool = true,
-    rf = 0.0,
-    var_args = (),
-    var_func = var,
-    var_kwargs = (;),
+    diagonal::Bool = true,
+    rf::Real = 0.0,
+    var_args::Tuple = (),
+    var_func::Function = var,
+    var_kwargs::NamedTuple = (;),
 )
     sigma_f = covar_mtx(
         F;
@@ -1532,40 +1551,40 @@ function bayesian_black_litterman(
 end
 
 function black_litterman_statistics!(
-    portfolio,
-    P::Matrix{<:AbstractFloat},
-    Q::Vector{<:AbstractFloat},
-    w::Vector{<:AbstractFloat} = Vector{Float64}(undef, 0);
+    portfolio::AbstractPortfolio,
+    P::AbstractMatrix,
+    Q::AbstractVector,
+    w::AbstractVector = Vector{Float64}(undef, 0);
     # cov_mtx
-    cov_args = (),
+    cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs = (;),
+    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov = nothing,
-    gs_threshold = 0.5,
+    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    gs_threshold::Real = portfolio.gs_threshold,
     jlogo::Bool = false,
-    posdef_args = (),
+    posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
-    posdef_kwargs = (;),
-    std_args = (),
+    posdef_kwargs::NamedTuple = (;),
+    std_args::Tuple = (),
     std_func::Function = std,
-    std_kwargs = (;),
+    std_kwargs::NamedTuple = (;),
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
     # mean_vec
-    custom_mu = nothing,
-    mean_args = (),
+    custom_mu::Union{AbstractVector, Nothing} = nothing,
+    mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs = (;),
-    mu_target = :GM,
+    mean_kwargs::NamedTuple = (;),
+    mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
     delta::Union{Real, Nothing} = nothing,
     eq::Bool = true,
-    rf = 0.0,
+    rf::Real = 0.0,
 )
     returns = portfolio.returns
     if isempty(w)
@@ -1621,45 +1640,45 @@ function black_litterman_statistics!(
 end
 
 function factor_statistics!(
-    portfolio;
+    portfolio::AbstractPortfolio;
     # cov_mtx
-    cov_args = (),
+    cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs = (;),
+    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov = nothing,
-    gs_threshold = 0.5,
+    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    gs_threshold::Real = portfolio.gs_threshold,
     jlogo::Bool = false,
-    posdef_args = (),
+    posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
-    posdef_kwargs = (;),
-    std_args = (),
+    posdef_kwargs::NamedTuple = (;),
+    std_args::Tuple = (),
     std_func::Function = std,
-    std_kwargs = (;),
+    std_kwargs::NamedTuple = (;),
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
     # mean_vec
-    custom_mu = nothing,
-    mean_args = (),
+    custom_mu::Union{AbstractVector, Nothing} = nothing,
+    mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs = (;),
-    mu_target = :GM,
+    mean_kwargs::NamedTuple = (;),
+    mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
-    criterion = :pval,
+    criterion::Symbol = :pval,
     error::Bool = true,
-    pca_kwargs = (;),
-    pca_std_kwargs = (;),
+    pca_kwargs::NamedTuple = (;),
+    pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
-    reg_type = :FReg,
-    threshold = 0.05,
+    reg_type::Symbol = :FReg,
+    threshold::Real = 0.05,
     var_func::Function = var,
-    var_args = (),
-    var_kwargs = (;),
+    var_args::Tuple = (),
+    var_kwargs::NamedTuple = (;),
 )
     returns = portfolio.returns
     f_returns = portfolio.f_returns
@@ -1744,55 +1763,55 @@ function factor_statistics!(
 end
 
 function black_litterman_factor_satistics!(
-    portfolio,
-    w::Vector{<:AbstractFloat} = Vector{Float64}(undef, 0);
+    portfolio::AbstractPortfolio,
+    w::AbstractVector = Vector{Float64}(undef, 0);
     # cov_mtx
-    cov_args = (),
+    cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs = (;),
+    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov = nothing,
-    gs_threshold = 0.5,
+    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    gs_threshold::Real = portfolio.gs_threshold,
     jlogo::Bool = false,
-    posdef_args = (),
+    posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
-    posdef_kwargs = (;),
-    std_args = (),
+    posdef_kwargs::NamedTuple = (;),
+    std_args::Tuple = (),
     std_func::Function = std,
-    std_kwargs = (;),
+    std_kwargs::NamedTuple = (;),
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
     # mean_vec
-    custom_mu = nothing,
-    mean_args = (),
+    custom_mu::Union{AbstractVector, Nothing} = nothing,
+    mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs = (;),
-    mu_target = :GM,
+    mean_kwargs::NamedTuple = (;),
+    mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
     B::Union{DataFrame, Nothing} = nothing,
-    P::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
-    P_f::Union{Matrix{<:AbstractFloat}, Nothing} = nothing,
-    Q::Union{Vector{<:AbstractFloat}, Nothing} = nothing,
-    Q_f::Union{Vector{<:AbstractFloat}, Nothing} = nothing,
-    bl_type = :B,
+    P::Union{AbstractMatrix, Nothing} = nothing,
+    P_f::Union{AbstractMatrix, Nothing} = nothing,
+    Q::Union{AbstractVector, Nothing} = nothing,
+    Q_f::Union{AbstractVector, Nothing} = nothing,
+    bl_type::Symbol = :B,
     delta::Real = 1.0,
-    diagonal = true,
+    diagonal::Bool = true,
     eq::Bool = true,
-    rf = 0.0,
-    var_args = (),
-    var_func = var,
-    var_kwargs = (;),
+    rf::Real = 0.0,
+    var_args::Tuple = (),
+    var_func::Function = var,
+    var_kwargs::NamedTuple = (;),
     # Loadings matrix
-    criterion = :pval,
-    pca_kwargs = (;),
-    pca_std_kwargs = (;),
+    criterion::Symbol = :pval,
+    pca_kwargs::NamedTuple = (;),
+    pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
-    reg_type = :FReg,
-    threshold = 0.05,
+    reg_type::Symbol = :FReg,
+    threshold::Real = 0.05,
 )
     @assert(
         bl_type ∈ BlackLittermanType,
@@ -1873,7 +1892,6 @@ function black_litterman_factor_satistics!(
             constant = constant,
             delta = delta,
             diagonal = diagonal,
-            eq = eq,
             rf = rf,
             var_args = var_args,
             var_func = var_func,

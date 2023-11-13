@@ -359,6 +359,7 @@ mutable struct Portfolio{
     tkinv,
     tinvopk,
     tinvomk,
+    gst,
     mnak,
     # Benchmark constraints
     to,
@@ -474,6 +475,7 @@ mutable struct Portfolio{
     invk::tkinv
     invopk::tinvopk
     invomk::tinvomk
+    gs_threshold::gst
     max_num_assets_kurt::mnak
     # Benchmark constraints.
     turnover::to
@@ -587,6 +589,7 @@ function Portfolio(;
     beta::Union{<:Real, Nothing} = nothing,
     b_sim::Union{<:Integer, Nothing} = nothing,
     kappa::Real = 0.3,
+    gs_threshold::Real = 0.5,
     max_num_assets_kurt::Integer = 0,
     # Benchmark constraints.
     turnover::Real = Inf,
@@ -733,6 +736,7 @@ function Portfolio(;
         typeof(kappa),
         typeof(kappa),
         typeof(kappa),
+        typeof(gs_threshold),
         typeof(max_num_assets_kurt),
         # Benchmark constraints.
         typeof(turnover),
@@ -851,6 +855,7 @@ function Portfolio(;
         zero(typeof(kappa)),
         zero(typeof(kappa)),
         zero(typeof(kappa)),
+        gs_threshold,
         max_num_assets_kurt,
         # Benchmark constraints.
         turnover,

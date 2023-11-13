@@ -5011,7 +5011,6 @@ end
         P_f1,
         Q_f1 / 252,
         constant = true,
-        eq = false,
         rf = 0.0002,
     )
     @test isapprox(port.mu_bl_fm, mub2)
