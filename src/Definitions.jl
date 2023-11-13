@@ -369,11 +369,11 @@ const DBHTRootMethods = (:Unique, :Equal)
 
 """
 ```julia
-OWAMethods = (:CRRA, :ME, :MSS, :SD)
+OWAMethods = (:CRRA, :E, :SS, :SD)
 ```
 Methods for computing the higher order L-moments of Ordered Weight Arrays in [`owa_l_moment_crm`](@ref).
 """
-const OWAMethods = (:CRRA, :ME, :MSS, :SD)
+const OWAMethods = (:CRRA, :E, :SS, :SD)
 
 """
 ```julia

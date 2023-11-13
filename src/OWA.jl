@@ -177,15 +177,7 @@ owa_l_moment_crm(
 )
 ```
 """
-function owa_l_moment_crm(
-    T;
-    k = 4,
-    method = :SD,
-    g = 0.5,
-    max_phi = 0.5,
-    solvers = Dict(),
-    sol_params = Dict(),
-)
+function owa_l_moment_crm(T; k = 4, method = :SD, g = 0.5, max_phi = 0.5, solvers = Dict())
     @assert(k >= 2, "k = $k, must be an integer bigger than or equal to 2")
     @assert(method ∈ OWAMethods, "method = $method, must be one of $OWAMethods")
     @assert(0 < g < 1, "risk aversion, g = $g, must be in the interval (0, 1)")
@@ -206,24 +198,23 @@ function owa_l_moment_crm(
         n = size(ws, 2)
         model = JuMP.Model()
         @variable(model, theta[1:T])
-        @variable(model, phi[1:n] >= 0)
+        @variable(model, 0 .<= phi[1:n] .<= max_phi)
 
         @constraint(model, sum(phi) == 1)
         @constraint(model, theta .== ws * phi)
-        @constraint(model, phi .<= max_phi)
         @constraint(model, phi[2:end] .<= phi[1:(end - 1)])
         @constraint(model, theta[2:end] .>= theta[1:(end - 1)])
 
-        if method == :ME
+        if method == :E
             # Maximise entropy.
-            @variable(model, t[1:T])
-            @variable(model, x[1:T] >= 0)
+            @variable(model, t)
+            @variable(model, x[1:T])
             @constraint(model, sum(x) == 1)
-            @constraint(model, [i = 1:T], [t[i], x[i], 1] in MOI.ExponentialCone())
-            @constraint(model, x .- theta .>= 0)
-            @constraint(model, x .+ theta .>= 0)
-            @objective(model, Max, sum(t))
-        elseif method == :MSS
+            @constraint(model, [t; ones(T); x] in MOI.RelativeEntropyCone(2 * T + 1))
+            @constraint(model, x .>= theta)
+            @constraint(model, x .>= -theta)
+            @objective(model, Max, -t)
+        elseif method == :SS
             @variable(model, t)
             @constraint(model, [t; theta] in SecondOrderCone())
             @objective(model, Min, t)
@@ -234,7 +225,7 @@ function owa_l_moment_crm(
             @objective(model, Min, t)
         end
 
-        term_status, solvers_tried = _optimize_owa(model, solvers, sol_params)
+        term_status, solvers_tried = _optimize_owa(model, solvers)
         # Error handling.
         if term_status ∉ ValidTermination
             funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
@@ -242,7 +233,6 @@ function owa_l_moment_crm(
             @warn(
                 "$funcname: model could not be optimised satisfactorily.\nMethod: $method\nSolvers: $solvers_tried. Reverting to crra method."
             )
-
             w = _crra_method(ws, k, g)
         else
             phis = value.(phi)

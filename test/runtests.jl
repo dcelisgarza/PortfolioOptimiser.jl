@@ -28,6 +28,10 @@ end
     include("PortfolioAllocationTests.jl")
 end
 
+@safetestset "OWA weights" begin
+    include("OWAWeightsTests.jl")
+end
+
 @safetestset "Hierarchical optimisations" begin
     include("HierarchicalOptimisationTests.jl")
 end
