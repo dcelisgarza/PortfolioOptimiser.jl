@@ -77,23 +77,93 @@ function dup_elim_sum_matrices(n::Int)
     return d, l, s
 end
 
-function _posdef_fix!(
+const NCM = NearestCorrelationMatrix
+function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton())
+    s = sqrt.(diag(mtx))
+    corr = cov2cor(mtx)
+    NCM.nearest_cor!(corr, method)
+
+    return cor2cov(corr, s)
+end
+
+function posdef_fix!(
     mtx::AbstractMatrix,
     posdef_fix::Symbol,
     posdef_func::Function,
     posdef_args::Tuple,
     posdef_kwargs::NamedTuple,
 )
-    isposdef(mtx) && return nothing
+    posdef_fix == :None || isposdef(mtx) && return nothing
 
-    if posdef_fix == :Custom_Func
+    @assert(
+        posdef_fix ∈ PosdefFixes,
+        "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
+    )
+
+    if posdef_fix == :Nearest
+        mtx .= nearest_cov(mtx, posdef_args...; posdef_kwargs...)
+    elseif posdef_fix == :Custom_Func
         mtx .= posdef_func(mtx, posdef_args...; posdef_kwargs...)
     end
 
-    !isposdef(mtx) &&
-        @warn("matrix could not be made postive definite, please try a different method")
+    !isposdef(mtx) && @warn(
+        "matrix could not be made postive definite, please try a different method or a tighter tolerance"
+    )
 
     return nothing
+end
+
+function fitKDE(x, eval, kw = 0.01, kernel = :Gaussian) end
+function mpPDF(x, q, n = 1000)
+    eMin, eMax = x * (1 - (1.0 / q)^0.5)^2, x * (1 + (1.0 / q)^0.5)^2
+    eVal = range(eMin, eMax, n)
+    pdf = q / (2 * pi * x * eVal) * ((eMax - eVal) * (eVal - eMin))^0.5
+    return pdf
+end
+
+function errPDF(x, eval, q, kw = 0.01, n = 1000, kernel = :Gaussian)
+    pdf0 = mpPDF(x, q, n)
+    pdf1 = fitKDE(pdf0, eval, kw, kernel)
+    sse = sum((pdf1 - pdf0)^2)
+
+    return sse
+end
+
+function find_max_eval(
+    eval,
+    q,
+    kw = 0.01,
+    n = 1000,
+    kernel = :Gaussian,
+    opt_args = (),
+    opt_kwargs = (;),
+)
+    res = Optim.optimize(
+        x -> errPDF(x, eval, q, kw, n, kernel),
+        0.0,
+        1.0,
+        opt_args...;
+        opt_kwargs...,
+    )
+    x = Optim.converged(res) ? Optim.minizer(res) : 1.0
+end
+
+function denoise_cov(
+    mtx::AbstractMatrix,
+    q::Real,
+    method::Symbol = :Fixed;
+    kw::Real = 0.01,
+    detone::Bool = false,
+    n::Integer = 1,
+    alpha::Real = 0.0,
+)
+    corr = cov2cor(mtx)
+    s = sqrt.(diag(mtx))
+
+    vals, vecs = eigen(corr)
+    idx = sortperm(vals)
+    vals .= vals[idx]
+    vecs .= vecs[:, idx]
 end
 
 function mu_esimator(
@@ -205,13 +275,7 @@ function covar_mtx(
         cov_mtx .= inv(JLogo(cov_mtx, separators, cliques))
     end
 
-    if posdef_fix != :None
-        @assert(
-            posdef_fix ∈ PosdefFixes,
-            "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
-        )
-        _posdef_fix!(cov_mtx, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
-    end
+    posdef_fix!(cov_mtx, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
 
     return cov_mtx
 end
@@ -261,15 +325,14 @@ function cokurt_mtx(
     target_ret::Union{Real, Vector{<:Real}} = 0.0,
 )
     kurt = isnothing(custom_kurt) ? cokurt(returns, transpose(mu)) : custom_kurt
+    posdef_fix!(kurt, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
+
     skurt =
         isnothing(custom_skurt) ? scokurt(returns, transpose(mu), target_ret) : custom_skurt
+    posdef_fix!(skurt, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
 
     N = length(mu)
     missing, L_2, S_2 = dup_elim_sum_matrices(N)
-
-    _posdef_fix!(kurt, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
-
-    _posdef_fix!(skurt, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
 
     return kurt, skurt, L_2, S_2
 end
@@ -1964,4 +2027,5 @@ export block_vec_pq,
     bayesian_black_litterman,
     black_litterman_statistics!,
     factor_statistics!,
-    black_litterman_factor_satistics!
+    black_litterman_factor_satistics!,
+    nearest_cov

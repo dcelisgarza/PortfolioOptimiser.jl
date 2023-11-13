@@ -37,7 +37,9 @@ using Clustering,
     Random,
     SparseArrays,
     Statistics,
-    StatsBase
+    StatsBase,
+    NearestCorrelationMatrix,
+    Optim
 
 include("Definitions.jl")
 include("DBHTs.jl")
