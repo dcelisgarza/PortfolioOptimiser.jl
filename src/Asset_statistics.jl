@@ -903,7 +903,7 @@ end
 function backward_regression(
     x::DataFrame,
     y::Union{Vector, DataFrame},
-    criterion::Symbol = :pval,
+    criterion::Function = :pval,
     threshold::Real = 0.05,
 )
     @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
@@ -1039,7 +1039,7 @@ function loadings_matrix(
     x::DataFrame,
     y::DataFrame,
     type::Symbol = :FReg;
-    criterion::Symbol = :pval,
+    criterion::Function = :pval,
     mean_args::Tuple = (),
     mean_kwargs::NamedTuple = (;),
     pca_kwargs::NamedTuple = (;),
@@ -1132,7 +1132,7 @@ function risk_factors(
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
-    criterion::Symbol = :pval,
+    criterion::Function = :pval,
     error::Bool = true,
     pca_kwargs::NamedTuple = (;),
     pca_std_kwargs::NamedTuple = (;),
@@ -1732,7 +1732,7 @@ function factor_statistics!(
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
-    criterion::Symbol = :pval,
+    criterion::Function = :pval,
     error::Bool = true,
     pca_kwargs::NamedTuple = (;),
     pca_std_kwargs::NamedTuple = (;),
@@ -1869,7 +1869,7 @@ function black_litterman_factor_satistics!(
     var_func::Function = var,
     var_kwargs::NamedTuple = (;),
     # Loadings matrix
-    criterion::Symbol = :pval,
+    criterion::Function = :pval,
     pca_kwargs::NamedTuple = (;),
     pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
