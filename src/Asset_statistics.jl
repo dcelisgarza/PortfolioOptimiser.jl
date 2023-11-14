@@ -77,10 +77,11 @@ function dup_elim_sum_matrices(n::Int)
     return d, l, s
 end
 
-function nearest_cov(mtx::AbstractMatrix, method = NearestCorrelationMatrix.Newton())
+const NCM = NearestCorrelationMatrix
+function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton())
     s = sqrt.(diag(mtx))
     corr = cov2cor(mtx)
-    NearestCorrelationMatrix.nearest_cor!(corr, method)
+    NCM.nearest_cor!(corr, method)
     nmtx = cor2cov(corr, s)
 
     return any(!isfinite.(nmtx)) ? nmtx : mtx
@@ -88,10 +89,11 @@ end
 
 function posdef_fix!(
     mtx::AbstractMatrix,
-    posdef_fix::Symbol,
-    posdef_func::Function,
-    posdef_args::Tuple,
-    posdef_kwargs::NamedTuple,
+    posdef_fix::Symbol = :None;
+    msg::String = "",
+    posdef_args::Tuple = (),
+    posdef_func::Function = x -> x,
+    posdef_kwargs::NamedTuple = (;),
 )
     (posdef_fix == :None || isposdef(mtx)) && return nothing
 
@@ -108,6 +110,7 @@ function posdef_fix!(
 
     !isposdef(_mtx) ?
     @warn(
+        msg *
         "matrix could not be made postive definite, please try a different method or a tighter tolerance"
     ) : mtx .= _mtx
 
@@ -319,7 +322,7 @@ function covar_mtx(
     std_args::Tuple = (),
     std_func::Function = std,
     std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
 )
     @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
     cov_mtx = if cov_type == :Full
@@ -377,7 +380,14 @@ function covar_mtx(
         cov_mtx .= inv(JLogo(cov_mtx, separators, cliques))
     end
 
-    posdef_fix!(cov_mtx, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
+    posdef_fix!(
+        cov_mtx,
+        posdef_fix;
+        msg = "Covariance ",
+        posdef_args = posdef_args,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+    )
 
     return cov_mtx
 end
@@ -418,20 +428,88 @@ end
 function cokurt_mtx(
     returns::AbstractMatrix,
     mu::AbstractVector;
+    alpha::Real = 0.0,
     custom_kurt::Union{AbstractMatrix, Nothing} = nothing,
     custom_skurt::Union{AbstractMatrix, Nothing} = nothing,
+    denoise::Bool = false,
+    detone::Bool = false,
+    jlogo = false,
+    kernel = ASH.Kernels.gaussian,
+    m::Integer = 10,
+    method::Symbol = :Fixed,
+    mkt_comp::Integer = 0,
+    n::Integer = 1000,
+    opt_args = (),
+    opt_kwargs = (;),
     posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
 )
     kurt = isnothing(custom_kurt) ? cokurt(returns, transpose(mu)) : custom_kurt
-    posdef_fix!(kurt, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
 
     skurt =
         isnothing(custom_skurt) ? scokurt(returns, transpose(mu), target_ret) : custom_skurt
-    posdef_fix!(skurt, posdef_fix, posdef_func, posdef_args, posdef_kwargs)
+
+    if denoise
+        kurt = denoise_cov(
+            kurt,
+            size(returns, 1) / size(returns, 2),
+            method;
+            alpha = alpha,
+            detone = detone,
+            kernel = kernel,
+            m = m,
+            mkt_comp = mkt_comp,
+            n = n,
+            opt_args = opt_args,
+            opt_kwargs = opt_kwargs,
+        )
+
+        skurt = denoise_cov(
+            skurt,
+            size(returns, 1) / size(returns, 2),
+            method;
+            alpha = alpha,
+            detone = detone,
+            kernel = kernel,
+            m = m,
+            mkt_comp = mkt_comp,
+            n = n,
+            opt_args = opt_args,
+            opt_kwargs = opt_kwargs,
+        )
+    end
+
+    if jlogo
+        codep = cov2cor(kurt)
+        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
+        kurt .= inv(JLogo(kurt, separators, cliques))
+
+        codep = cov2cor(skurt)
+        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
+        skurt .= inv(JLogo(skurt, separators, cliques))
+    end
+
+    posdef_fix!(
+        kurt,
+        posdef_fix;
+        msg = "Kurtosis ",
+        posdef_args = posdef_args,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+    )
+    posdef_fix!(
+        skurt,
+        posdef_fix;
+        msg = "Semi Kurtosis ",
+        posdef_args = posdef_args,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+    )
 
     N = length(mu)
     missing, L_2, S_2 = dup_elim_sum_matrices(N)
@@ -603,7 +681,7 @@ function asset_statistics!(
     std_args::Tuple = (),
     std_func::Function = std,
     std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
     # mean_vec
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
@@ -696,8 +774,19 @@ function asset_statistics!(
             portfolio.kurt, portfolio.skurt, portfolio.L_2, portfolio.S_2 = cokurt_mtx(
                 returns,
                 portfolio.mu;
+                alpha = alpha,
                 custom_kurt = custom_kurt,
                 custom_skurt = custom_skurt,
+                denoise = denoise,
+                detone = detone,
+                jlogo = jlogo,
+                kernel = kernel,
+                m = m,
+                method = method,
+                mkt_comp = mkt_comp,
+                n = n,
+                opt_args = opt_args,
+                opt_kwargs = opt_kwargs,
                 posdef_args = posdef_args,
                 posdef_fix = posdef_fix,
                 posdef_func = posdef_func,
@@ -1254,7 +1343,7 @@ function risk_factors(
     std_args::Tuple = (),
     std_func::Function = std,
     std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
     # mean_vec
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
@@ -1408,7 +1497,7 @@ function black_litterman(
     std_args::Tuple = (),
     std_func::Function = std,
     std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
     # mean_vec
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
@@ -1504,7 +1593,7 @@ function augmented_black_litterman(
     std_args::Tuple = (),
     std_func::Function = std,
     std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
     # mean_vec
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
@@ -1725,7 +1814,7 @@ function bayesian_black_litterman(
     std_args::Tuple = (),
     std_func::Function = std,
     std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
     # mean_vec
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
@@ -1848,7 +1937,7 @@ function black_litterman_statistics!(
     std_args::Tuple = (),
     std_func::Function = std,
     std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
     # mean_vec
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
@@ -1944,7 +2033,7 @@ function factor_statistics!(
     std_args::Tuple = (),
     std_func::Function = std,
     std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
     # mean_vec
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
@@ -2078,7 +2167,7 @@ function black_litterman_factor_satistics!(
     std_args::Tuple = (),
     std_func::Function = std,
     std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, Vector{<:Real}} = 0.0,
+    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
     # mean_vec
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
