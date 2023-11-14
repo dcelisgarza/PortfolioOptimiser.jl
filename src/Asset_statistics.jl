@@ -77,13 +77,13 @@ function dup_elim_sum_matrices(n::Int)
     return d, l, s
 end
 
-const NCM = NearestCorrelationMatrix
-function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton())
+function nearest_cov(mtx::AbstractMatrix, method = NearestCorrelationMatrix.Newton())
     s = sqrt.(diag(mtx))
     corr = cov2cor(mtx)
-    NCM.nearest_cor!(corr, method)
+    NearestCorrelationMatrix.nearest_cor!(corr, method)
+    nmtx = cor2cov(corr, s)
 
-    return cor2cov(corr, s)
+    return any(!isfinite.(nmtx)) ? nmtx : mtx
 end
 
 function posdef_fix!(
