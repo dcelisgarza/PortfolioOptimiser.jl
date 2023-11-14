@@ -112,47 +112,50 @@ function posdef_fix!(
 
     return nothing
 end
+const ASH = AverageShiftedHistograms
+function errPDF(x, e_val, q, n = 1000, kernel = ASH.Kernels.gaussian, m = 10)
+    e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
+    rg = range(e_min, e_max, length = n)
+    pdf1 = q ./ (2 * pi * x * rg) .* sqrt.(clamp.((e_max .- rg) .* (rg .- e_min), 0, Inf))
 
-function fitKDE(x, eval, kw = 0.01, kernel = :Gaussian) end
-function mpPDF(x, q, n = 1000)
-    eMin, eMax = x * (1 - (1.0 / q)^0.5)^2, x * (1 + (1.0 / q)^0.5)^2
-    eVal = range(eMin, eMax, n)
-    pdf = q / (2 * pi * x * eVal) * ((eMax - eVal) * (eVal - eMin))^0.5
-    return pdf
-end
-
-function errPDF(x, eval, q, kw = 0.01, n = 1000, kernel = :Gaussian)
-    pdf0 = mpPDF(x, q, n)
-    pdf1 = fitKDE(pdf0, eval, kw, kernel)
-    sse = sum((pdf1 - pdf0)^2)
+    e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
+    res = ash(e_val; rng = range(e_min, e_max, length = n), kernel = kernel, m = m)
+    pdf2 = [AverageShiftedHistograms.pdf(res, i) for i in pdf1]
+    sse = sum((pdf2 - pdf1) .^ 2)
 
     return sse
 end
 
 function find_max_eval(
-    eval,
+    e_val,
     q,
-    kw = 0.01,
     n = 1000,
-    kernel = :Gaussian,
+    kernel = ASH.Kernels.gaussian,
+    m = 10,
     opt_args = (),
     opt_kwargs = (;),
 )
     res = Optim.optimize(
-        x -> errPDF(x, eval, q, kw, n, kernel),
+        x -> errPDF(x, e_val, q, n, kernel, m),
         0.0,
         1.0,
         opt_args...;
         opt_kwargs...,
     )
-    x = Optim.converged(res) ? Optim.minizer(res) : 1.0
+
+    x = Optim.converged(res) ? Optim.minimizer(res) : 1.0
+
+    e_max = x * (1.0 + sqrt(1.0 / q))^2
+
+    return e_max
 end
+export find_max_eval
 
 function denoise_cov(
     mtx::AbstractMatrix,
     q::Real,
     method::Symbol = :Fixed;
-    kw::Real = 0.01,
+    bandwidth::Real = 0.01,
     detone::Bool = false,
     n::Integer = 1,
     alpha::Real = 0.0,

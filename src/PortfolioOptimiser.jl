@@ -39,7 +39,8 @@ using Clustering,
     Statistics,
     StatsBase,
     NearestCorrelationMatrix,
-    Optim
+    Optim,
+    AverageShiftedHistograms
 
 include("Definitions.jl")
 include("DBHTs.jl")
