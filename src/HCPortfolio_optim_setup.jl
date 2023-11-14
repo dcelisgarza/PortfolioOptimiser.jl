@@ -431,8 +431,8 @@ function _hierarchical_recursive_bisection(
             )
         end
 
-        weights[lc] *= alpha_1
-        weights[rc] *= 1 - alpha_1
+        weights[ln] *= alpha_1
+        weights[rn] *= 1 - alpha_1
     end
 
     # If herc2, then each cluster contributes an equal amount of risk.

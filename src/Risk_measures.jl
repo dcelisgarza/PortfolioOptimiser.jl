@@ -253,7 +253,7 @@ function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     if term_status ∉ ValidTermination || !isfinite(obj_val)
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.ERM))"
         @warn(
-            "$funcname: model could not be optimised satisfactorily. Solvers: $solvers_tried"
+            "$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried."
         )
     end
 
@@ -356,7 +356,7 @@ function RRM(
     if term_status ∉ ValidTermination || !isfinite(obj_val)
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.RRM))"
         @warn(
-            "$funcname: model could not be optimised satisfactorily. Solvers: $solvers_tried"
+            "$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried."
         )
     end
 
@@ -1122,10 +1122,11 @@ function calc_risk(
         )
     elseif rm == :OWA
         OWA(x, w)
+    elseif rm == :Equal
+        1 / length(w)
     else
-        throw(ArgumentError("rm must be one of $(union(RiskMeasures, HRRiskMeasures))"))
+        throw(ArgumentError("rm = $rm, must be one of $(union(RiskMeasures, HRRiskMeasures))"))
     end
-
     return risk
 end
 

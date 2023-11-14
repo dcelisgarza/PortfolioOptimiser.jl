@@ -363,6 +363,8 @@ function _optimize_portfolio(portfolio, type, obj)
         )
     end
 
+    isempty(solvers_tried) && push!(solvers_tried, :error => term_status)
+
     return term_status, solvers_tried
 end
 
@@ -419,7 +421,7 @@ function _handle_errors_and_finalise(
         if term_status ∉ ValidTermination || any(.!isfinite.(value.(portfolio.model[:w])))
             funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.opt_port!))"
             @warn(
-                "$funcname: model could not be optimised satisfactorily.\nPortfolio type: $type\nClass: $class\nRisk measure: $rm\nKelly return: $kelly\nObjective: $obj\nSolvers: $solvers_tried"
+                "$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried."
             )
             portfolio.fail = solvers_tried
             DataFrame()

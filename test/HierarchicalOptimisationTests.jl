@@ -23,6 +23,15 @@ l = 2.0
 
 @testset "HRP" begin
     portfolio = HCPortfolio(
+        ret = Matrix(returns[!, 2:end]),
+        assets = names(returns[!, 2:end]),
+        timestamps = returns[!, 1],
+    )
+    @test portfolio.returns == Matrix(returns[!, 2:end])
+    @test portfolio.assets == names(returns[!, 2:end])
+    @test portfolio.timestamps == returns[!, 1]
+
+    portfolio = HCPortfolio(
         returns = returns,
         solvers = OrderedDict(
             :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
@@ -318,6 +327,80 @@ end
         0.06318857573731755,
         0.025847880704520494,
         0.06318857573731755,
+    ]
+    @test isapprox(w2.weights, w2t)
+
+    type = :HERC
+    rm = :Equal
+    kelly = :None
+    linkage = :DBHT
+    branchorder = :default
+    w1 = opt_port!(
+        portfolio;
+        type = type,
+        rm = rm,
+        kelly = kelly,
+        linkage = linkage,
+        branchorder = branchorder,
+    )
+    w1t = [
+        0.03571428571428571,
+        0.08333333333333333,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.08333333333333333,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.08333333333333333,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.08333333333333333,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.08333333333333333,
+        0.08333333333333333,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.03571428571428571,
+    ]
+    @test isapprox(w1.weights, w1t)
+
+    type = :HERC2
+    rm = :Equal
+    kelly = :None
+    linkage = :DBHT
+    branchorder = :default
+    w2 = opt_port!(
+        portfolio;
+        type = type,
+        rm = rm,
+        kelly = kelly,
+        linkage = linkage,
+        branchorder = branchorder,
+    )
+    w2t = [
+        0.03571428571428571,
+        0.08333333333333333,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.08333333333333333,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.08333333333333333,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.08333333333333333,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.08333333333333333,
+        0.08333333333333333,
+        0.03571428571428571,
+        0.03571428571428571,
+        0.03571428571428571,
     ]
     @test isapprox(w2.weights, w2t)
 end

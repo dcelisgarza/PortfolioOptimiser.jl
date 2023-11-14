@@ -19,10 +19,6 @@ function scokurt(x::AbstractMatrix, mu::AbstractArray, target_ret::Real = 0.0)
     return scokurt
 end
 
-function fix_cov!(covariance, args...; kwargs...)
-    println("IMPLEMENT ME")
-end
-
 function duplication_matrix(n::Int)
     cols = Int(n * (n + 1) / 2)
     rows = n * n

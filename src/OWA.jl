@@ -231,7 +231,7 @@ function owa_l_moment_crm(T; k = 4, method = :SD, g = 0.5, max_phi = 0.5, solver
             funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
 
             @warn(
-                "$funcname: model could not be optimised satisfactorily.\nMethod: $method\nSolvers: $solvers_tried. Reverting to crra method."
+                "$funcname: model could not be optimised satisfactorily.\nMethod: $method\nSolvers: $solvers_tried.\nReverting to crra method."
             )
             w = _crra_method(ws, k, g)
         else

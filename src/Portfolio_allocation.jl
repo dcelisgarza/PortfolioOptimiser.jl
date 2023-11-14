@@ -121,7 +121,7 @@ function _handle_alloc_errors_and_finalise(
     retval = if term_status ∉ ValidTermination
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._lp_sub_allocation!!))"
         @warn(
-            "$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried"
+            "$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried."
         )
         portfolio.alloc_fail[key] = solvers_tried
 
