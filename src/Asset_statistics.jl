@@ -113,30 +113,31 @@ function posdef_fix!(
     return nothing
 end
 const ASH = AverageShiftedHistograms
-function errPDF(x, e_val, q, n = 1000, kernel = ASH.Kernels.gaussian, m = 10)
+function errPDF(x, vals; kernel = ASH.Kernels.gaussian, m = 10, n = 1000, q = 1000)
     e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
     rg = range(e_min, e_max, length = n)
     pdf1 = q ./ (2 * pi * x * rg) .* sqrt.(clamp.((e_max .- rg) .* (rg .- e_min), 0, Inf))
 
     e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
-    res = ash(e_val; rng = range(e_min, e_max, length = n), kernel = kernel, m = m)
-    pdf2 = [AverageShiftedHistograms.pdf(res, i) for i in pdf1]
+    res = ash(vals; rng = range(e_min, e_max, length = n), kernel = kernel, m = m)
+    pdf2 = [ASH.pdf(res, i) for i in pdf1]
+    pdf2[.!isfinite.(pdf2)] .= 0.0
     sse = sum((pdf2 - pdf1) .^ 2)
 
     return sse
 end
 
 function find_max_eval(
-    e_val,
-    q,
-    n = 1000,
+    vals,
+    q;
     kernel = ASH.Kernels.gaussian,
-    m = 10,
+    m::Integer = 10,
+    n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
 )
     res = Optim.optimize(
-        x -> errPDF(x, e_val, q, n, kernel, m),
+        x -> errPDF(x, vals; kernel = kernel, m = m, n = n, q = q),
         0.0,
         1.0,
         opt_args...;
@@ -147,7 +148,7 @@ function find_max_eval(
 
     e_max = x * (1.0 + sqrt(1.0 / q))^2
 
-    return e_max
+    return e_max, x
 end
 export find_max_eval
 
@@ -155,10 +156,14 @@ function denoise_cov(
     mtx::AbstractMatrix,
     q::Real,
     method::Symbol = :Fixed;
-    bandwidth::Real = 0.01,
-    detone::Bool = false,
-    n::Integer = 1,
     alpha::Real = 0.0,
+    detone::Bool = false,
+    kernel = ASH.Kernels.gaussian,
+    m::Integer = 10,
+    n::Integer = 1000,
+    mkt_comp::Integer = 1,
+    opt_args = (),
+    opt_kwargs = (;),
 )
     corr = cov2cor(mtx)
     s = sqrt.(diag(mtx))
@@ -167,6 +172,8 @@ function denoise_cov(
     idx = sortperm(vals)
     vals .= vals[idx]
     vecs .= vecs[:, idx]
+
+    find_max_eval(vals, q; kernel = kernel, m = m, n = n, opt_args = (), opt_kwargs = (;))
 end
 
 function mu_esimator(
