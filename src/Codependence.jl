@@ -92,8 +92,6 @@ function mut_var_info_mtx(x, bins_info = :KN, normed = true)
 
     T, N = size(x)
 
-    isa(bins_info, Int) && (bins = bins_info)
-
     mut_mtx = Matrix{eltype(x)}(undef, N, N)
     var_mtx = Matrix{eltype(x)}(undef, N, N)
 
@@ -104,6 +102,8 @@ function mut_var_info_mtx(x, bins_info = :KN, normed = true)
             bins = if bins_info == :HGR
                 corr = cor(xj, xi)
                 corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
+            elseif isa(bins_info, Int)
+                bins_info
             else
                 _calc_num_bins(xj, xi, j, i, bin_width_func)
             end
