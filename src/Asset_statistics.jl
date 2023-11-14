@@ -93,22 +93,23 @@ function posdef_fix!(
     posdef_args::Tuple,
     posdef_kwargs::NamedTuple,
 )
-    posdef_fix == :None || isposdef(mtx) && return nothing
+    (posdef_fix == :None || isposdef(mtx)) && return nothing
 
     @assert(
         posdef_fix ∈ PosdefFixes,
         "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
     )
 
-    if posdef_fix == :Nearest
-        mtx .= nearest_cov(mtx, posdef_args...; posdef_kwargs...)
+    _mtx = if posdef_fix == :Nearest
+        nearest_cov(mtx, posdef_args...; posdef_kwargs...)
     elseif posdef_fix == :Custom_Func
-        mtx .= posdef_func(mtx, posdef_args...; posdef_kwargs...)
+        posdef_func(mtx, posdef_args...; posdef_kwargs...)
     end
 
-    !isposdef(mtx) && @warn(
+    !isposdef(_mtx) ?
+    @warn(
         "matrix could not be made postive definite, please try a different method or a tighter tolerance"
-    )
+    ) : mtx .= _mtx
 
     return nothing
 end
@@ -152,6 +153,45 @@ function find_max_eval(
 end
 export find_max_eval
 
+function denoise_cor(vals, vecs, num_factors, method = :Fixed)
+    @assert(
+        method ∈ (:Fixed, :Spectral),
+        "method = $method, must be one of $((:Fixed, :Spectral))"
+    )
+
+    _vals = copy(vals)
+
+    if method == :Fixed
+        _vals[1:num_factors] .= sum(_vals[1:num_factors]) / num_factors
+    else
+        _vals[1:num_factors] .= 0
+    end
+
+    corr = cov2cor(vecs * Diagonal(_vals) * transpose(vecs))
+
+    return corr
+end
+export denoise_cor
+
+function shrink_cor(vals, vecs, num_factors, alpha = 0)
+    @assert(0 <= alpha <= 1, "alpha = $alpha, must be 0 <= alpha <= 1")
+    # Small
+    vals_l = vals[1:num_factors]
+    vecs_l = vecs[:, 1:num_factors]
+
+    # Large
+    vals_r = vals[(num_factors + 1):end]
+    vecs_r = vecs[:, (num_factors + 1):end]
+
+    corr0 = vecs_r * Diagonal(vals_r) * transpose(vecs_r)
+    corr1 = vecs_l * Diagonal(vals_l) * transpose(vecs_l)
+
+    corr = corr0 + alpha * corr1 + (1 - alpha) * Diagonal(corr1)
+
+    return corr
+end
+export shrink_cor
+
 function denoise_cov(
     mtx::AbstractMatrix,
     q::Real,
@@ -160,21 +200,47 @@ function denoise_cov(
     detone::Bool = false,
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
+    mkt_comp::Integer = 0,
     n::Integer = 1000,
-    mkt_comp::Integer = 1,
     opt_args = (),
     opt_kwargs = (;),
 )
+    @assert(method ∈ DenoiseMethods, "method = $method, must be one of $DenoiseMethods")
+
     corr = cov2cor(mtx)
     s = sqrt.(diag(mtx))
 
     vals, vecs = eigen(corr)
-    idx = sortperm(vals)
-    vals .= vals[idx]
-    vecs .= vecs[:, idx]
 
-    find_max_eval(vals, q; kernel = kernel, m = m, n = n, opt_args = (), opt_kwargs = (;))
+    max_val, missing = find_max_eval(
+        vals,
+        q;
+        kernel = kernel,
+        m = m,
+        n = n,
+        opt_args = opt_args,
+        opt_kwargs = opt_kwargs,
+    )
+
+    num_factors = findlast(vals .< max_val)
+    corr = if method ∈ (:Fixed, :Spectral)
+        denoise_cor(vals, vecs, num_factors, method)
+    else
+        shrink_cor(vals, vecs, num_factors, alpha)
+    end
+
+    if detone
+        _vals = Diagonal(vals)[(end - mkt_comp):end, (end - mkt_comp):end]
+        _vecs = vecs[:, (end - mkt_comp):end]
+        _corr = _vecs * _vals * transpose(_vecs)
+        corr .-= _corr
+    end
+
+    cov_mtx = cor2cov(corr, s)
+
+    return cov_mtx
 end
+export denoise_cov
 
 function mu_esimator(
     returns::AbstractMatrix,
@@ -227,6 +293,7 @@ end
 
 function covar_mtx(
     returns::AbstractMatrix;
+    alpha::Real = 0.0,
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
@@ -234,8 +301,17 @@ function covar_mtx(
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    denoise::Bool = false,
+    detone::Bool = false,
     gs_threshold::Real = 0.5,
     jlogo::Bool = false,
+    kernel = ASH.Kernels.gaussian,
+    method::Symbol = :Fixed,
+    m::Integer = 10,
+    mkt_comp::Integer = 0,
+    n::Integer = 1000,
+    opt_args = (),
+    opt_kwargs = (;),
     posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
@@ -276,6 +352,22 @@ function covar_mtx(
         cov_func(returns, cov_args...; cov_kwargs...)
     elseif cov_type == :Custom_Val
         custom_cov
+    end
+
+    if denoise
+        cov_mtx = denoise_cov(
+            cov_mtx,
+            size(returns, 1) / size(returns, 2),
+            method;
+            alpha = alpha,
+            detone = detone,
+            kernel = kernel,
+            m = m,
+            mkt_comp = mkt_comp,
+            n = n,
+            opt_args = opt_args,
+            opt_kwargs = opt_kwargs,
+        )
     end
 
     if jlogo
@@ -476,6 +568,7 @@ asset_statistics!(
 )
 ```
 """
+
 function asset_statistics!(
     portfolio::AbstractPortfolio;
     # flags
@@ -484,6 +577,7 @@ function asset_statistics!(
     calc_mu::Bool = true,
     calc_kurt::Bool = true,
     # cov_mtx
+    alpha::Real = 0.0,
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
@@ -491,8 +585,17 @@ function asset_statistics!(
     cov_type::Symbol = portfolio.cov_type,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractVector, Nothing} = nothing,
+    denoise::Bool = false,
+    detone::Bool = false,
     gs_threshold::Real = portfolio.gs_threshold,
     jlogo::Bool = portfolio.jlogo,
+    kernel = ASH.Kernels.gaussian,
+    m::Integer = 10,
+    method::Symbol = :Fixed,
+    mkt_comp::Integer = 0,
+    n::Integer = 1000,
+    opt_args = (),
+    opt_kwargs = (;),
     posdef_args::Tuple = (),
     posdef_fix::Symbol = portfolio.posdef_fix,
     posdef_func::Function = x -> x,
@@ -533,6 +636,7 @@ function asset_statistics!(
     if calc_cov
         portfolio.cov = covar_mtx(
             returns;
+            alpha = alpha,
             cov_args = cov_args,
             cov_est = cov_est,
             cov_func = cov_func,
@@ -540,8 +644,17 @@ function asset_statistics!(
             cov_type = cov_type,
             cov_weights = cov_weights,
             custom_cov = custom_cov,
+            denoise = denoise,
+            detone = detone,
             gs_threshold = gs_threshold,
             jlogo = jlogo,
+            kernel = kernel,
+            m = m,
+            method = method,
+            mkt_comp = mkt_comp,
+            n = n,
+            opt_args = opt_args,
+            opt_kwargs = opt_kwargs,
             posdef_args = posdef_args,
             posdef_fix = posdef_fix,
             posdef_func = posdef_func,
@@ -1115,6 +1228,7 @@ function risk_factors(
     x::DataFrame,
     y::DataFrame;
     # cov_mtx
+    alpha::Real = 0.0,
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
@@ -1122,8 +1236,17 @@ function risk_factors(
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    denoise::Bool = false,
+    detone::Bool = false,
     gs_threshold::Real = 0.5,
     jlogo::Bool = false,
+    kernel = ASH.Kernels.gaussian,
+    m::Integer = 10,
+    method::Symbol = :Fixed,
+    mkt_comp::Integer = 0,
+    n::Integer = 1000,
+    opt_args = (),
+    opt_kwargs = (;),
     posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
@@ -1177,6 +1300,7 @@ function risk_factors(
 
     cov_f = covar_mtx(
         x1;
+        alpha = alpha,
         cov_args = cov_args,
         cov_est = cov_est,
         cov_func = cov_func,
@@ -1184,8 +1308,17 @@ function risk_factors(
         cov_type = cov_type,
         cov_weights = cov_weights,
         custom_cov = custom_cov,
+        denoise = denoise,
+        detone = detone,
         gs_threshold = gs_threshold,
         jlogo = jlogo,
+        kernel = kernel,
+        m = m,
+        method = method,
+        mkt_comp = mkt_comp,
+        n = n,
+        opt_args = opt_args,
+        opt_kwargs = opt_kwargs,
         posdef_args = posdef_args,
         posdef_fix = posdef_fix,
         posdef_func = posdef_func,
@@ -1249,6 +1382,7 @@ function black_litterman(
     P::AbstractMatrix,
     Q::AbstractVector;
     # cov_mtx
+    alpha::Real = 0.0,
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
@@ -1256,8 +1390,17 @@ function black_litterman(
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    denoise::Bool = false,
+    detone::Bool = false,
     gs_threshold::Real = 0.5,
     jlogo::Bool = false,
+    kernel = ASH.Kernels.gaussian,
+    m::Integer = 10,
+    method::Symbol = :Fixed,
+    mkt_comp::Integer = 0,
+    n::Integer = 1000,
+    opt_args = (),
+    opt_kwargs = (;),
     posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
@@ -1281,6 +1424,7 @@ function black_litterman(
 )
     sigma = covar_mtx(
         returns;
+        alpha = alpha,
         cov_args = cov_args,
         cov_est = cov_est,
         cov_func = cov_func,
@@ -1288,8 +1432,17 @@ function black_litterman(
         cov_type = cov_type,
         cov_weights = cov_weights,
         custom_cov = custom_cov,
+        denoise = denoise,
+        detone = detone,
         gs_threshold = gs_threshold,
         jlogo = jlogo,
+        kernel = kernel,
+        m = m,
+        method = method,
+        mkt_comp = mkt_comp,
+        n = n,
+        opt_args = opt_args,
+        opt_kwargs = opt_kwargs,
         posdef_args = posdef_args,
         posdef_fix = posdef_fix,
         posdef_func = posdef_func,
@@ -1325,6 +1478,7 @@ function augmented_black_litterman(
     returns::AbstractMatrix,
     w::AbstractVector;
     # cov_mtx
+    alpha::Real = 0.0,
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
@@ -1332,8 +1486,17 @@ function augmented_black_litterman(
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    denoise::Bool = false,
+    detone::Bool = false,
     gs_threshold::Real = 0.5,
     jlogo::Bool = false,
+    kernel = ASH.Kernels.gaussian,
+    m::Integer = 10,
+    method::Symbol = :Fixed,
+    mkt_comp::Integer = 0,
+    n::Integer = 1000,
+    opt_args = (),
+    opt_kwargs = (;),
     posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
@@ -1389,6 +1552,7 @@ function augmented_black_litterman(
     if all_asset_provided
         sigma = covar_mtx(
             returns;
+            alpha = alpha,
             cov_args = cov_args,
             cov_est = cov_est,
             cov_func = cov_func,
@@ -1396,8 +1560,17 @@ function augmented_black_litterman(
             cov_type = cov_type,
             cov_weights = cov_weights,
             custom_cov = custom_cov,
+            denoise = denoise,
+            detone = detone,
             gs_threshold = gs_threshold,
             jlogo = jlogo,
+            kernel = kernel,
+            m = m,
+            method = method,
+            mkt_comp = mkt_comp,
+            n = n,
+            opt_args = opt_args,
+            opt_kwargs = opt_kwargs,
             posdef_args = posdef_args,
             posdef_fix = posdef_fix,
             posdef_func = posdef_func,
@@ -1424,6 +1597,7 @@ function augmented_black_litterman(
     if all_factor_provided
         sigma_f = covar_mtx(
             F;
+            alpha = alpha,
             cov_args = cov_args,
             cov_est = cov_est,
             cov_func = cov_func,
@@ -1432,7 +1606,16 @@ function augmented_black_litterman(
             cov_weights = cov_weights,
             custom_cov = custom_cov,
             gs_threshold = gs_threshold,
+            denoise = denoise,
+            detone = detone,
             jlogo = jlogo,
+            kernel = kernel,
+            m = m,
+            method = method,
+            mkt_comp = mkt_comp,
+            n = n,
+            opt_args = opt_args,
+            opt_kwargs = opt_kwargs,
             posdef_args = posdef_args,
             posdef_fix = posdef_fix,
             posdef_func = posdef_func,
@@ -1516,6 +1699,7 @@ function bayesian_black_litterman(
     P_f::AbstractMatrix,
     Q_f::AbstractVector;
     # cov_mtx
+    alpha::Real = 0.0,
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
@@ -1523,8 +1707,17 @@ function bayesian_black_litterman(
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    denoise::Bool = false,
+    detone::Bool = false,
     gs_threshold::Real = 0.5,
     jlogo::Bool = false,
+    kernel = ASH.Kernels.gaussian,
+    m::Integer = 10,
+    method::Symbol = :Fixed,
+    mkt_comp::Integer = 0,
+    n::Integer = 1000,
+    opt_args = (),
+    opt_kwargs = (;),
     posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
@@ -1552,6 +1745,7 @@ function bayesian_black_litterman(
 )
     sigma_f = covar_mtx(
         F;
+        alpha = alpha,
         cov_args = cov_args,
         cov_est = cov_est,
         cov_func = cov_func,
@@ -1559,8 +1753,17 @@ function bayesian_black_litterman(
         cov_type = cov_type,
         cov_weights = cov_weights,
         custom_cov = custom_cov,
+        denoise = denoise,
+        detone = detone,
         gs_threshold = gs_threshold,
         jlogo = jlogo,
+        kernel = kernel,
+        m = m,
+        method = method,
+        mkt_comp = mkt_comp,
+        n = n,
+        opt_args = opt_args,
+        opt_kwargs = opt_kwargs,
         posdef_args = posdef_args,
         posdef_fix = posdef_fix,
         posdef_func = posdef_func,
@@ -1715,6 +1918,7 @@ end
 function factor_statistics!(
     portfolio::AbstractPortfolio;
     # cov_mtx
+    alpha::Real = 0.0,
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
@@ -1722,8 +1926,17 @@ function factor_statistics!(
     cov_type::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    denoise::Bool = false,
+    detone::Bool = false,
     gs_threshold::Real = portfolio.gs_threshold,
     jlogo::Bool = false,
+    kernel = ASH.Kernels.gaussian,
+    m::Integer = 10,
+    method::Symbol = :Fixed,
+    mkt_comp::Integer = 0,
+    n::Integer = 1000,
+    opt_args = (),
+    opt_kwargs = (;),
     posdef_args::Tuple = (),
     posdef_fix::Symbol = :None,
     posdef_func::Function = x -> x,
@@ -1758,6 +1971,7 @@ function factor_statistics!(
 
     portfolio.cov_f = covar_mtx(
         returns;
+        alpha = alpha,
         cov_args = cov_args,
         cov_est = cov_est,
         cov_func = cov_func,
@@ -1765,8 +1979,17 @@ function factor_statistics!(
         cov_type = cov_type,
         cov_weights = cov_weights,
         custom_cov = custom_cov,
+        denoise = denoise,
+        detone = detone,
         gs_threshold = gs_threshold,
         jlogo = jlogo,
+        kernel = kernel,
+        m = m,
+        method = method,
+        mkt_comp = mkt_comp,
+        n = n,
+        opt_args = opt_args,
+        opt_kwargs = opt_kwargs,
         posdef_args = posdef_args,
         posdef_fix = posdef_fix,
         posdef_func = posdef_func,
