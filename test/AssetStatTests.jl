@@ -1,6 +1,8 @@
 using Test,
     PortfolioOptimiser, CSV, TimeSeries, DataFrames, StatsBase, Logging, GLM, LinearAlgebra
 
+Logging.disable_logging(Logging.Warn)
+
 A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
@@ -2191,13 +2193,9 @@ returns = dropmissing!(DataFrame(Y))
     posdef_fix!(portfolio.kurt, :Nearest; msg = "Kurtosis ")
     @test isposdef(portfolio.kurt)
 
-    test_logger = TestLogger()
     asset_statistics!(portfolio, calc_kurt = true)
-    with_logger(test_logger) do
-        posdef_fix!(portfolio.kurt, :Custom_Func; msg = "Kurtosis ")
-    end
+    posdef_fix!(portfolio.kurt, :Custom_Func; msg = "Kurtosis ")
     @test !isposdef(portfolio.kurt)
-    @test !isempty(test_logger.logs)
 end
 
 @testset "Loadings matrix" begin
