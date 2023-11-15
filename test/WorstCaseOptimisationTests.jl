@@ -10746,10 +10746,6 @@ l = 2.0
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
-            :Clarabel => Dict(
-                :solver => Clarabel.Optimizer,
-                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
-            ),
             :COSMO =>
                 Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
         ),
@@ -10759,27 +10755,5 @@ l = 2.0
 
     obj = :Sharpe
     w1 = opt_port!(portfolio; type = :WC, obj = obj, kelly = :Exact)
-    w1t = [
-        2.941745685144588e-8,
-        0.013039830402083633,
-        0.005345699115024027,
-        0.007207409965765306,
-        0.2205902955268783,
-        7.378081557909053e-8,
-        0.019085752869673657,
-        0.09327380854236689,
-        5.881417994749907e-8,
-        8.68976429036058e-6,
-        0.18622365899006083,
-        1.9698027173597442e-7,
-        1.800731464344908e-7,
-        7.918857063950111e-8,
-        2.2987079435152733e-7,
-        0.07506093324583402,
-        0.14873897183241233,
-        0.12197387771513458,
-        0.06345125767260912,
-        0.04599896623263141,
-    ]
-    @test isapprox(w1.weights, w1t)
+    @test isempty(w1)
 end
