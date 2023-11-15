@@ -878,11 +878,6 @@ function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
         else
             @expression(model, ret, model[:_ret])
         end
-
-        obj == :Sharpe && (
-            kelly != :None ? @constraint(model, model[:risk] <= 1) :
-            @constraint(model, ret - rf * model[:k] >= 1)
-        )
     end
 
     # Cov uncertainty sets.
@@ -925,4 +920,9 @@ function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
     else
         @expression(model, risk, model[:dev_risk])
     end
+
+    obj == :Sharpe && (
+        kelly != :None ? @constraint(model, model[:risk] <= 1) :
+        @constraint(model, ret - rf * model[:k] >= 1)
+    )
 end

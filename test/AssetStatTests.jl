@@ -2186,6 +2186,20 @@ returns = dropmissing!(DataFrame(Y))
         mkt_comp = 4,
     )
     @test isapprox(dmtx, dmtxt)
+
+    portfolio = Portfolio(returns = returns)
+    asset_statistics!(portfolio, calc_kurt = true)
+
+    posdef_fix!(portfolio.kurt, :Nearest; msg = "Kurtosis ")
+    @test isposdef(portfolio.kurt)
+
+    test_logger = TestLogger()
+    asset_statistics!(portfolio, calc_kurt = true)
+    with_logger(test_logger) do
+        posdef_fix!(portfolio.kurt, :Custom_Func; msg = "Kurtosis ")
+    end
+    @test !isposdef(portfolio.kurt)
+    @test !isempty(test_logger.logs)
 end
 
 @testset "Loadings matrix" begin

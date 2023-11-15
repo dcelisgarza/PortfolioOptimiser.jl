@@ -78,9 +78,9 @@ function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton())
     s = sqrt.(diag(mtx))
     corr = cov2cor(mtx)
     NCM.nearest_cor!(corr, method)
-    nmtx = cor2cov(corr, s)
+    _mtx = cor2cov(corr, s)
 
-    return any(!isfinite.(nmtx)) ? nmtx : mtx
+    return any(.!isfinite.(_mtx)) ? mtx : _mtx
 end
 
 function posdef_fix!(
@@ -91,12 +91,12 @@ function posdef_fix!(
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
 )
-    (posdef_fix == :None || isposdef(mtx)) && return nothing
-
     @assert(
         posdef_fix ∈ PosdefFixes,
         "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
     )
+
+    (posdef_fix == :None || isposdef(mtx)) && return nothing
 
     _mtx = if posdef_fix == :Nearest
         nearest_cov(mtx, posdef_args...; posdef_kwargs...)
@@ -112,6 +112,8 @@ function posdef_fix!(
 
     return nothing
 end
+export posdef_fix!
+
 const ASH = AverageShiftedHistograms
 function errPDF(x, vals; kernel = ASH.Kernels.gaussian, m = 10, n = 1000, q = 1000)
     e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2

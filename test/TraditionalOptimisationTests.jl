@@ -1307,6 +1307,44 @@ end
     @test isapprox(w13.weights, w1.weights, rtol = 2e-3)
     @test isapprox(r13, r1, rtol = 2e-6)
     @test isapprox(m13, m1, rtol = 6e-3)
+
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio, calc_kurt = false)
+    opt_port!(portfolio)
+
+    portfolio.msv_target = 0.001
+    w1 = opt_port!(portfolio, rm = :SSD)
+    w1t = [
+        5.288396419886409e-9,
+        1.2302777357465362e-8,
+        9.504014767404476e-9,
+        6.148328353141244e-9,
+        0.6435672891812078,
+        1.7472079633388258e-9,
+        0.034236855014110446,
+        1.0532203898975037e-8,
+        1.0840405740331763e-8,
+        5.0672743552009475e-9,
+        1.4363529209380974e-8,
+        1.4435680251802362e-9,
+        9.793471616065267e-10,
+        3.49590050088464e-9,
+        1.0227394518080185e-9,
+        0.17177099640750684,
+        0.116712057563597,
+        1.4423486120078922e-8,
+        0.03371269432081524,
+        1.0353583287146099e-8,
+    ]
+    @test isapprox(w1.weights, w1t)
 end
 
 @testset "FLPM" begin
@@ -1717,6 +1755,44 @@ end
     @test isapprox(w13.weights, w3.weights, rtol = 3e-5)
     @test isapprox(r13, r3, rtol = 9e-6)
     @test isapprox(m13, m3, rtol = 8e-6)
+
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio, calc_kurt = false)
+    opt_port!(portfolio)
+
+    portfolio.lpm_target = 0.001
+    w1 = opt_port!(portfolio, rm = :FLPM)
+    w1t = [
+        2.3835802682026506e-9,
+        5.6430582004931394e-9,
+        5.616064473406895e-9,
+        3.4797996650725627e-9,
+        0.6963205811685206,
+        7.666551058455574e-10,
+        0.04151041228833468,
+        3.46734493913175e-9,
+        7.909347745266031e-9,
+        3.0931035900436392e-9,
+        5.066982390742188e-9,
+        5.691924956060981e-10,
+        3.9892490578127967e-10,
+        1.3833917478027042e-9,
+        4.3709991451948484e-10,
+        0.1384985508428439,
+        0.04996636775051199,
+        5.123377542078116e-9,
+        0.0737040372290451,
+        5.382820893588954e-9,
+    ]
+    @test isapprox(w1.weights, w1t)
 end
 
 @testset "SLPM" begin

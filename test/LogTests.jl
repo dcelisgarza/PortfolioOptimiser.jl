@@ -1,4 +1,4 @@
-using Logging, JuMP, PortfolioOptimiser, CSV, DataFrame, Dates
+using Logging, JuMP, PortfolioOptimiser, CSV, DataFrames, Dates
 
 A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
