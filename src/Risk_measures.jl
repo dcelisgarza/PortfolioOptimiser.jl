@@ -1045,6 +1045,8 @@ function calc_risk(
     owa_w = Vector{Float64}(undef, 0),
     solvers::Union{<:AbstractDict, Nothing} = nothing,
 )
+    @assert(rm ∈ HRRiskMeasures, "rm = $rm, must be one of $HRRiskMeasures")
+
     x = (rm != :Variance || rm != :SD) && returns * w
 
     risk = if rm == :SD
@@ -1143,6 +1145,202 @@ function calc_risk(
     @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
 
     return calc_risk(
+        portfolio.optimal[type].weights,
+        portfolio.returns;
+        rm = rm,
+        rf = rf,
+        cov = portfolio.cov,
+        alpha_i = portfolio.alpha_i,
+        alpha = portfolio.alpha,
+        a_sim = portfolio.a_sim,
+        beta_i = portfolio.beta_i,
+        beta = portfolio.beta,
+        b_sim = portfolio.b_sim,
+        kappa = portfolio.kappa,
+        owa_w = owa_w,
+        solvers = portfolio.solvers,
+    )
+end
+
+function risk_contribution(
+    w::AbstractVector,
+    returns::AbstractMatrix;
+    rm::Symbol = :SD,
+    rf::Real = 0.0,
+    cov::AbstractMatrix,
+    alpha_i::Real = 0.0001,
+    alpha::Real = 0.05,
+    a_sim::Int = 100,
+    beta_i::Union{<:Real, Nothing} = nothing,
+    beta::Union{<:Real, Nothing} = nothing,
+    b_sim::Union{<:Real, Nothing} = nothing,
+    di::Real = 1e-6,
+    kappa::Real = 0.3,
+    owa_w = Vector{Float64}(undef, 0),
+    solvers::Union{<:AbstractDict, Nothing} = nothing,
+)
+    ew = eltype(w)
+    rc = zeros(ew, length(w))
+    w1 = zeros(ew, length(w))
+    w2 = zeros(ew, length(w))
+
+    for i in 1:length(w)
+        w1 .= zero(ew)
+        w1 .= w
+        w1[i] += di
+
+        w2 .= zero(ew)
+        w2 .= w
+        w2[i] -= di
+
+        a1 = returns * w1
+        a2 = returns * w2
+
+        if rm == :SD
+            r1 = SD(w1, cov)
+            r2 = SD(w2, cov)
+        elseif rm == :Variance
+            r1 = Variance(w1, cov)
+            r2 = Variance(w2, cov)
+        elseif rm == :MAD
+            r1 = MAD(a1)
+            r2 = MAD(a2)
+        elseif rm == :SSD
+            r1 = SSD(a1)
+            r2 = SSD(a2)
+        elseif rm == :FLPM
+            r1 = FLPM(a1, rf)
+            r2 = FLPM(a2, rf)
+        elseif rm == :SLPM
+            r1 = SLPM(a1, rf)
+            r2 = SLPM(a2, rf)
+        elseif rm == :WR
+            r1 = WR(a1)
+            r2 = WR(a2)
+        elseif rm == :VaR
+            r1 = VaR(a1, alpha)
+            r2 = VaR(a2, alpha)
+        elseif rm == :CVaR
+            r1 = CVaR(a1, alpha)
+            r2 = CVaR(a2, alpha)
+        elseif rm == :EVaR
+            r1 = EVaR(a1, solvers, alpha)
+            r2 = EVaR(a2, solvers, alpha)
+        elseif rm == :RVaR
+            r1 = RVaR(a1, solvers, alpha, kappa)
+            r2 = RVaR(a2, solvers, alpha, kappa)
+        elseif rm == :DaR
+            r1 = DaR_abs(a1, alpha)
+            r2 = DaR_abs(a2, alpha)
+        elseif rm == :MDD
+            r1 = MDD_abs(a1)
+            r2 = MDD_abs(a2)
+        elseif rm == :ADD
+            r1 = ADD_abs(a1)
+            r2 = ADD_abs(a2)
+        elseif rm == :CDaR
+            r1 = CDaR_abs(a1, alpha)
+            r2 = CDaR_abs(a2, alpha)
+        elseif rm == :UCI
+            r1 = UCI_abs(a1)
+            r2 = UCI_abs(a2)
+        elseif rm == :EDaR
+            r1 = EDaR_abs(a1, solvers, alpha)
+            r2 = EDaR_abs(a2, solvers, alpha)
+        elseif rm == :RDaR
+            r1 = RDaR_abs(a1, solvers, alpha, kappa)
+            r2 = RDaR_abs(a2, solvers, alpha, kappa)
+        elseif rm == :DaR_r
+            r1 = DaR_rel(a1, alpha)
+            r2 = DaR_rel(a2, alpha)
+        elseif rm == :MDD_r
+            r1 = MDD_rel(a1)
+            r2 = MDD_rel(a2)
+        elseif rm == :ADD_r
+            r1 = ADD_rel(a1)
+            r2 = ADD_rel(a2)
+        elseif rm == :CDaR_r
+            r1 = CDaR_rel(a1, alpha)
+            r2 = CDaR_rel(a2, alpha)
+        elseif rm == :uci_r
+            r1 = UCI_rel(a1)
+            r2 = UCI_rel(a2)
+        elseif rm == :EDaR_r
+            r1 = EDaR_rel(a1, solvers, alpha)
+            r2 = EDaR_rel(a2, solvers, alpha)
+        elseif rm == :RDaR_r
+            r1 = RDaR_rel(a1, solvers, alpha, kappa)
+            r2 = RDaR_rel(a2, solvers, alpha, kappa)
+        elseif rm == :Kurt
+            r1 = Kurt(a1) * 0.5
+            r2 = Kurt(a2) * 0.5
+        elseif rm == :SKurt
+            r1 = SKurt(a1) * 0.5
+            r2 = SKurt(a2) * 0.5
+        elseif rm == :GMD
+            r1 = GMD(a1)
+            r2 = GMD(a2)
+        elseif rm == :RG
+            r1 = RG(a1)
+            r2 = RG(a2)
+        elseif rm == :RCVaR
+            r1 = RCVaR(a1; alpha = alpha, beta = beta)
+            r2 = RCVaR(a2; alpha = alpha, beta = beta)
+        elseif rm == :TG
+            r1 = TG(a1; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+            r2 = TG(a2; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+        elseif rm == :RTG
+            r1 = RTG(
+                a1;
+                alpha_i = alpha_i,
+                alpha = alpha,
+                a_sim = a_sim,
+                beta_i = beta_i,
+                beta = beta,
+                b_sim = b_sim,
+            )
+            r2 = RTG(
+                a2;
+                alpha_i = alpha_i,
+                alpha = alpha,
+                a_sim = a_sim,
+                beta_i = beta_i,
+                beta = beta,
+                b_sim = b_sim,
+            )
+        elseif rm == :OWA
+            T = size(returns, 1)
+            w = _owa_w_choice(owa_w, T)
+            r1 = OWA(a1, w)
+            r2 = OWA(a2, w)
+        elseif rm == :Equal
+            r1 = r2 = 1 / length(w)
+        else
+            throw(
+                ArgumentError(
+                    "rm = $rm, must be one of $(union(RiskMeasures, HRRiskMeasures))",
+                ),
+            )
+        end
+        rci = (r1 - r2) / (2 * di) * w[i]
+        rc[i] = rci
+    end
+
+    return rc
+end
+
+function risk_contribution(
+    portfolio::AbstractPortfolio;
+    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+    rm::Symbol = :SD,
+    rf::Real = 0.0,
+    owa_w = isa(portfolio, Portfolio) ? portfolio.owa_w : Vector{Float64}(undef, 0),
+)
+    isa(portfolio, Portfolio) ?
+    @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes") :
+    @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+
+    return risk_contribution(
         portfolio.optimal[type].weights,
         portfolio.returns;
         rm = rm,

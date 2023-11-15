@@ -266,7 +266,7 @@ struct ClusterNode{tid, tl, tr, td, tcnt}
         id,
         left::Union{ClusterNode, Nothing} = nothing,
         right::Union{ClusterNode, Nothing} = nothing,
-        dist::AbstractFloat = 0.0,
+        dist::Real = 0.0,
         count::Int = 1,
     )
         icount = isnothing(left) ? count : (left.count + right.count)
@@ -280,6 +280,7 @@ struct ClusterNode{tid, tl, tr, td, tcnt}
         )
     end
 end
+export ClusterNode
 import Base.>, Base.<, Base.==
 <(a::ClusterNode, b::ClusterNode) = a.dist < b.dist
 >(a::ClusterNode, b::ClusterNode) = a.dist > b.dist
@@ -526,7 +527,7 @@ end
 
 function _setup_hr_weights(w_max, w_min, N)
     @assert(
-        all(w_max .>= w_min),
+        (isnothing(w_max) || isnothing(w_min) || all(w_max .>= w_min)),
         "all upper bounds must be bigger than their corresponding lower bounds"
     )
 

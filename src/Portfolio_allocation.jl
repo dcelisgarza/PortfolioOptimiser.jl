@@ -102,7 +102,9 @@ function _combine_allocations(
     weights = [long_allocated_weights; -short_allocated_weights]
 
     portfolio.alloc_optimal[key] =
-        DataFrame(tickers = tickers, shares = shares, cost = cost, weights = weights)
+        !isempty(tickers) && !isempty(shares) && !isempty(cost) && !isempty(weights) ?
+        DataFrame(tickers = tickers, shares = shares, cost = cost, weights = weights) :
+        DataFrame()
 
     return portfolio.alloc_optimal[key]
 end
@@ -119,7 +121,7 @@ function _handle_alloc_errors_and_finalise(
     key = Symbol(string(key) * "_" * string(label))
 
     retval = if term_status ∉ ValidTermination
-        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._lp_sub_allocation!!))"
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._lp_sub_allocation!))"
         @warn(
             "$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried."
         )
@@ -130,8 +132,9 @@ function _handle_alloc_errors_and_finalise(
             Vector{eltype(latest_prices)}(undef, 0),
             Vector{eltype(latest_prices)}(undef, 0),
             Vector{eltype(latest_prices)}(undef, 0),
-            zero(eltype(latest_prices))
+            0
         )
+
     else
         shares = round.(Int, value.(model[:x]))
         cost = latest_prices .* shares
@@ -161,7 +164,7 @@ function _lp_sub_allocation!(
         Vector{eltype(latest_prices)}(undef, 0),
         Vector{eltype(latest_prices)}(undef, 0),
         Vector{eltype(latest_prices)}(undef, 0),
-        zero(eltype(latest_prices))
+        0
     )
 
     model = JuMP.Model()
@@ -255,6 +258,9 @@ function _lp_allocation!(
         long_allocated_weights,
         short_allocated_weights,
     )
+
+    !isa(long_leftover, Number) && (long_leftover = long_investment)
+    !isa(short_leftover, Number) && (short_leftover = short_investment)
 
     return retval, long_leftover + short_leftover
 end

@@ -22,6 +22,16 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "HRP" begin
+    portfolio = HCPortfolio(returns = returns)
+    asset_statistics!(portfolio, calc_kurt = false)
+    portfolio.w_max = nothing
+    portfolio.w_min = nothing
+    w1 = opt_port!(portfolio, linkage = :DBHT)
+    portfolio.w_max = 1
+    portfolio.w_min = 0
+    w2 = opt_port!(portfolio, linkage = :DBHT)
+    @test isapprox(w1.weights, w2.weights)
+
     portfolio = HCPortfolio(
         ret = Matrix(returns[!, 2:end]),
         assets = names(returns[!, 2:end]),

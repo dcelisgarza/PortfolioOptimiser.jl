@@ -229,7 +229,6 @@ function owa_l_moment_crm(T; k = 4, method = :SD, g = 0.5, max_phi = 0.5, solver
         # Error handling.
         if term_status ∉ ValidTermination
             funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
-
             @warn(
                 "$funcname: model could not be optimised satisfactorily.\nMethod: $method\nSolvers: $solvers_tried.\nReverting to crra method."
             )
