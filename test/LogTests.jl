@@ -1,6 +1,6 @@
 using Logging, JuMP, PortfolioOptimiser, CSV, DataFrames, Dates
 
-A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
+A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
 
