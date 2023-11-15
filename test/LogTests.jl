@@ -1,4 +1,4 @@
-using Logging, JuMP, PortfolioOptimiser, CSV, DataFrames, Dates, TimeSeries, ECOS, Clarabel, COSMO
+using Logging, OrderedCollections, JuMP, PortfolioOptimiser, CSV, DataFrames, Dates, TimeSeries, ECOS, Clarabel, COSMO
 
 A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
