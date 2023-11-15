@@ -478,6 +478,7 @@ const HRRiskMeasures = (
     :MDD_r,
     :ADD_r,
     :CDaR_r,
+    :UCI_r,
     :EDaR_r,
     :RDaR_r,
 )

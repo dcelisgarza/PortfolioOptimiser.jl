@@ -199,7 +199,7 @@ returns = dropmissing!(DataFrame(Y))
             w,
             portfolio.returns;
             cov = portfolio.cov,
-            rm = :uci_r,
+            rm = :UCI_r,
             solvers = portfolio.solvers,
         ) - 0.040563874281498415,
     ) < eps()

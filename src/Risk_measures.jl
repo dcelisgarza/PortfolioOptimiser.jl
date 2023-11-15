@@ -1093,7 +1093,7 @@ function calc_risk(
         ADD_rel(x)
     elseif rm == :CDaR_r
         CDaR_rel(x, alpha)
-    elseif rm == :uci_r
+    elseif rm == :UCI_r
         UCI_rel(x)
     elseif rm == :EDaR_r
         EDaR_rel(x, solvers, alpha)
@@ -1262,7 +1262,7 @@ function risk_contribution(
         elseif rm == :CDaR_r
             r1 = CDaR_rel(a1, alpha)
             r2 = CDaR_rel(a2, alpha)
-        elseif rm == :uci_r
+        elseif rm == :UCI_r
             r1 = UCI_rel(a1)
             r2 = UCI_rel(a2)
         elseif rm == :EDaR_r
