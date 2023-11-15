@@ -623,7 +623,7 @@ function Portfolio(;
     tg_u::Real = Inf,
     rtg_u::Real = Inf,
     owa_u::Real = Inf,
-    owa_w = Vector{Float64}(undef, 0),
+    owa_w::Union{AbstractVector, Real, Nothing} = Vector{Float64}(undef, 0),
     krt_u::Real = Inf,
     skrt_u::Real = Inf,
     rvar_u::Real = Inf,
@@ -683,8 +683,6 @@ function Portfolio(;
             length(assets) == size(ret, 2),
             "each column of returns must correspond to an asset"
         )
-        assets = assets
-        timestamps = timestamps
         returns = ret
     end
 
@@ -697,8 +695,6 @@ function Portfolio(;
             length(f_assets) == size(f_ret, 2),
             "each column of factor returns must correspond to a factor asset"
         )
-        f_assets = f_assets
-        f_timestamps = f_timestamps
         f_returns = f_ret
     end
 
@@ -770,7 +766,7 @@ function Portfolio(;
         typeof(tg_u),
         typeof(rtg_u),
         typeof(owa_u),
-        typeof(owa_w),
+        Union{AbstractVector, Nothing},
         typeof(krt_u),
         typeof(skrt_u),
         typeof(rvar_u),

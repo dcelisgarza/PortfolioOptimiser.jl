@@ -279,4 +279,59 @@ returns = dropmissing!(DataFrame(Y))
             solvers = portfolio.solvers,
         ) - 0.051977750343340984,
     ) < eps()
+
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :ECOS => Dict(
+                :solver => ECOS.Optimizer,
+                :params => Dict("verbose" => false, "maxit" => 200),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio, calc_kurt = false)
+    opt_port!(portfolio)
+    T = size(returns, 1)
+    owa_w = fill(1 / T, T)
+
+    @test isapprox(
+        dot(sort(portfolio.returns * portfolio.optimal[:Trad].weights), owa_gmd(T) / 2),
+        calc_risk(portfolio, rm = :OWA),
+    )
+    @test isapprox(
+        dot(sort(portfolio.returns * portfolio.optimal[:Trad].weights), owa_w),
+        calc_risk(portfolio, rm = :OWA, owa_w = owa_w),
+    )
+    @test isapprox(
+        dot(sort(portfolio.returns * portfolio.optimal[:Trad].weights), fill(1 / T, T)),
+        calc_risk(portfolio, rm = :OWA, owa_w = 1),
+    )
+
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio, calc_kurt = false)
+    opt_port!(portfolio, rm = :EVaR)
+    evar_r1 = calc_risk(portfolio, rm = :EVaR)
+    evar_r2 = ERM(
+        portfolio.returns * portfolio.optimal[:Trad].weights,
+        portfolio.z[:z_evar],
+        portfolio.alpha,
+    )
+    @test isapprox(evar_r1, evar_r2, rtol = 2e-6)
+
+    opt_port!(portfolio, rm = :EVaR, obj = :Min_Risk)
+    evar_r1 = calc_risk(portfolio, rm = :EVaR)
+    evar_r2 = ERM(
+        portfolio.returns * portfolio.optimal[:Trad].weights,
+        portfolio.z[:z_evar],
+        portfolio.alpha,
+    )
+    @test isapprox(evar_r1, evar_r2, rtol = 3e-6)
 end

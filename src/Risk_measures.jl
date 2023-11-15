@@ -246,10 +246,8 @@ function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     @objective(model, Min, risk)
 
     solvers_tried = _optimize_rm(model, solvers)
-
     term_status = termination_status(model)
     obj_val = objective_value(model)
-
     if term_status ∉ ValidTermination || !isfinite(obj_val)
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.ERM))"
         @warn(
@@ -1044,6 +1042,7 @@ function calc_risk(
     beta::Union{<:Real, Nothing} = nothing,
     b_sim::Union{<:Real, Nothing} = nothing,
     kappa::Real = 0.3,
+    owa_w = Vector{Float64}(undef, 0),
     solvers::Union{<:AbstractDict, Nothing} = nothing,
 )
     x = (rm != :Variance || rm != :SD) && returns * w
@@ -1121,6 +1120,8 @@ function calc_risk(
             b_sim = b_sim,
         )
     elseif rm == :OWA
+        T = size(returns, 1)
+        w = _owa_w_choice(owa_w, T)
         OWA(x, w)
     elseif rm == :Equal
         1 / length(w)
@@ -1135,6 +1136,7 @@ function calc_risk(
     type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
     rm::Symbol = :SD,
     rf::Real = 0.0,
+    owa_w = isa(portfolio, Portfolio) ? portfolio.owa_w : Vector{Float64}(undef, 0),
 )
     isa(portfolio, Portfolio) ?
     @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes") :
@@ -1153,6 +1155,7 @@ function calc_risk(
         beta = portfolio.beta,
         b_sim = portfolio.b_sim,
         kappa = portfolio.kappa,
+        owa_w = owa_w,
         solvers = portfolio.solvers,
     )
 end

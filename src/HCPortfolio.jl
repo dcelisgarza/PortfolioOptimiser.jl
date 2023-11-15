@@ -250,8 +250,6 @@ function HCPortfolio(;
             length(assets) == size(ret, 2),
             "each column of returns must correspond to an asset"
         )
-        assets = assets
-        timestamps = timestamps
         returns = ret
     end
 

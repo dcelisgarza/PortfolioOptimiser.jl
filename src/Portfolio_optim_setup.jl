@@ -321,7 +321,7 @@ function _optimize_portfolio(portfolio, type, obj)
         all_finite_weights = all(isfinite.(value.(model[:w])))
         all_non_zero_weights = all(abs.(0.0 .- value.(model[:w])) .> eps())
 
-        term_status in ValidTermination &&
+        term_status ∈ ValidTermination &&
             all_finite_weights &&
             all_non_zero_weights &&
             break
@@ -363,7 +363,9 @@ function _optimize_portfolio(portfolio, type, obj)
         )
     end
 
-    isempty(solvers_tried) && push!(solvers_tried, :error => term_status)
+    isempty(solvers_tried) &&
+        term_status ∉ ValidTermination &&
+        push!(solvers_tried, :error => term_status)
 
     return term_status, solvers_tried
 end
@@ -373,7 +375,10 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
 
     if (type == :Trad || type == :RP) && rm ∈ (:EVaR, :EDaR, :RVaR, :RDaR)
         z_key = Symbol("z_" * lowercase(string(rm)))
-        portfolio.z[z_key] = portfolio.model[z_key]
+        portfolio.z[z_key] = value(portfolio.model[z_key])
+        type == :Trad &&
+            obj == :Sharpe &&
+            (portfolio.z[z_key] /= value(portfolio.model[:k]))
     end
 
     weights = Vector{eltype(returns)}(undef, N)

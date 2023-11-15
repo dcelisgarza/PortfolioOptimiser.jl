@@ -20,6 +20,10 @@ end
     include("CodepDistTests.jl")
 end
 
+@safetestset "LogTests" begin
+    include("LogTests.jl")
+end
+
 @safetestset "Clustering" begin
     include("ClusteringTests.jl")
 end
