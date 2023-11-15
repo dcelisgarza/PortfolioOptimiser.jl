@@ -1,4 +1,15 @@
-using Logging, OrderedCollections, JuMP, PortfolioOptimiser, CSV, DataFrames, Dates, TimeSeries, ECOS, Clarabel, COSMO
+using Test,
+    Logging,
+    OrderedCollections,
+    JuMP,
+    PortfolioOptimiser,
+    CSV,
+    DataFrames,
+    Dates,
+    TimeSeries,
+    ECOS,
+    Clarabel,
+    COSMO
 
 A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
@@ -8,10 +19,8 @@ returns = dropmissing!(DataFrame(Y))
     portfolio = Portfolio(
         returns = returns,
         solvers = OrderedDict(
-            :ECOS => Dict(
-                :solver => ECOS.Optimizer,
-                :params => Dict("verbose" => false, "maxit" => 200),
-            ),
+            :ECOS =>
+                Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
         ),
     )
     asset_statistics!(portfolio, calc_kurt = false)
@@ -20,7 +29,7 @@ returns = dropmissing!(DataFrame(Y))
     portfolio.solvers = OrderedDict(
         :ECOS => Dict(
             :solver => ECOS.Optimizer,
-            :params => Dict("verbose" => false, "maxit" => 10),
+            :params => Dict("verbose" => false, "maxit" => 2),
         ),
     )
     test_logger = TestLogger()
@@ -32,7 +41,7 @@ returns = dropmissing!(DataFrame(Y))
     portfolio.solvers = OrderedDict(
         :ECOS => Dict(
             :solver => ECOS.Optimizer,
-            :params => Dict("verbose" => false, "maxit" => 10),
+            :params => Dict("verbose" => false, "maxit" => 2),
         ),
     )
     @test_throws JuMP.OptimizeNotCalled() calc_risk(portfolio; rm = :RVaR)
@@ -46,7 +55,7 @@ returns = dropmissing!(DataFrame(Y))
     portfolio.solvers = OrderedDict(
         :ECOS => Dict(
             :solver => ECOS.Optimizer,
-            :params => Dict("verbose" => false, "maxit" => 10),
+            :params => Dict("verbose" => false, "maxit" => 2),
         ),
     )
     test_logger = TestLogger()
@@ -56,17 +65,14 @@ returns = dropmissing!(DataFrame(Y))
     @test !isempty(test_logger.logs)
 
     portfolio.solvers = OrderedDict(
-        :ECOS => Dict(
-            :solver => ECOS.Optimizer,
-            :params => Dict("verbose" => false, "maxit" => 100),
-        ),
+        :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
     )
     opt_port!(portfolio)
 
     portfolio.solvers = OrderedDict(
         :Clarabel => Dict(
             :solver => Clarabel.Optimizer,
-            :params => Dict("verbose" => false, "max_iter" => 10),
+            :params => Dict("verbose" => false, "max_iter" => 2),
         ),
     )
     test_logger = TestLogger()

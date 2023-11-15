@@ -12,7 +12,2195 @@ using Test,
     LinearAlgebra,
     StatsBase,
     PyCall,
-    Clustering
+    Clustering,
+    HiGHS,
+    GLM,
+    MultivariateStats,
+    NearestCorrelationMatrix,
+    Optim,
+    AverageShiftedHistograms
+
+using Logging, JuMP
+
+A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
+Y = percentchange(A)
+returns = dropmissing!(DataFrame(Y))
+portfolio = Portfolio(
+    returns = returns,
+    solvers = OrderedDict(
+        :Clarabel => Dict(
+            :solver => Clarabel.Optimizer,
+            :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+        ),
+        :COSMO => Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+    ),
+)
+asset_statistics!(portfolio, calc_kurt = true)
+
+posdef_fix!(portfolio.kurt, :Nearest; msg = "Kurtosis ")
+@test isposdef(portfolio.kurt)
+
+test_logger = TestLogger()
+asset_statistics!(portfolio, calc_kurt = true)
+posdef_fix!(portfolio.kurt, :Custom_Func; msg = "Kurtosis ")
+@test !isposdef(portfolio.kurt)
+@test !isempty(test_logger.logs)
+
+opt_port!(portfolio)
+
+portfolio.lpm_target = 0.001
+w1 = opt_port!(portfolio, rm = :FLPM)
+w1t = [
+    2.3835802682026506e-9,
+    5.6430582004931394e-9,
+    5.616064473406895e-9,
+    3.4797996650725627e-9,
+    0.6963205811685206,
+    7.666551058455574e-10,
+    0.04151041228833468,
+    3.46734493913175e-9,
+    7.909347745266031e-9,
+    3.0931035900436392e-9,
+    5.066982390742188e-9,
+    5.691924956060981e-10,
+    3.9892490578127967e-10,
+    1.3833917478027042e-9,
+    4.3709991451948484e-10,
+    0.1384985508428439,
+    0.04996636775051199,
+    5.123377542078116e-9,
+    0.0737040372290451,
+    5.382820893588954e-9,
+]
+@test isapprox(w1.weights, w1t)
+py"""
+import numpy as np
+import pandas as pd
+import riskfolio as rp
+import riskfolio.src.ParamsEstimation as pe
+import riskfolio.src.DBHT as db
+import riskfolio.src.AuxFunctions as af
+from timeit import default_timer as timer
+import statsmodels.api as sm
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from numpy.linalg import inv
+"""
+
+A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
+Y = percentchange(A)
+returns = dropmissing!(DataFrame(Y))
+
+portfolio = HCPortfolio(
+    ret = Matrix(returns[!, 2:end]),
+    assets = names(returns[!, 2:end]),
+    timestamps = returns[!, 1],
+    # solvers = OrderedDict(
+    #     :ECOS => Dict(
+    #         :solver => ECOS.Optimizer,
+    #         :params => Dict("verbose" => false, "maxit" => 500),
+    #     ),
+    #     :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+    #     :Clarabel => Dict(
+    #         :solver => (Clarabel.Optimizer),
+    #         :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+    #     ),
+    #     :COSMO => Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+    # ),
+)
+asset_statistics!(portfolio)
+
+type = :NCO
+rm = :SD
+kelly = :None
+linkage = :DBHT
+branchorder = :default
+w1 = opt_port!(
+    portfolio;
+    type = type,
+    rm = rm,
+    kelly = kelly,
+    linkage = linkage,
+    branchorder = branchorder,
+)
+w1t = [
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.03571428571428571,
+]
+@test isapprox(w1.weights, w1t)
+
+type = :HERC2
+rm = :Equal
+kelly = :None
+linkage = :DBHT
+branchorder = :default
+w2 = opt_port!(
+    portfolio;
+    type = type,
+    rm = rm,
+    kelly = kelly,
+    linkage = linkage,
+    branchorder = branchorder,
+)
+w2t = [
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.03571428571428571,
+]
+@test isapprox(w2.weights, w2t)
+
+type = :HRP
+rm = :Equal
+kelly = :None
+linkage = :DBHT
+branchorder = :default
+w2 = opt_port!(
+    portfolio;
+    type = type,
+    rm = rm,
+    kelly = kelly,
+    linkage = linkage,
+    branchorder = branchorder,
+)
+w2t = [
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.08333333333333333,
+    0.08333333333333333,
+    0.03571428571428571,
+    0.03571428571428571,
+    0.03571428571428571,
+]
+@test isapprox(w2.weights, w2t)
+
+py"""
+port = rp.HCPortfolio(returns=pd.DataFrame($(Matrix(returns[!,2:end])), columns = $(names(returns[!,2:end]))))
+
+
+model='NCO' # Could be HRP or HERC
+codependence = 'pearson' # Correlation matrix used to group assets in clusters
+rm = 'equal' # Risk measure used, this time will be variance
+obj = 'ERC'
+rf = $rf # Risk free rate
+linkage = 'DBHT' # Linkage method used to build clusters
+max_k = 10 # Max number of clusters used in two difference gap statistic, only for HERC model
+leaf_order = True # Consider optimal order of leafs in dendrogram
+
+w = port.optimization(model=model,
+                      codependence=codependence,
+                      rm=rm,
+                    #   obj=obj,
+                      rf=rf,
+                      linkage=linkage,
+                      max_k=max_k,
+                      leaf_order=leaf_order)
+
+"""
+println(vec(py"np.array(w)"))
+
+##############################
+##############################
+##############################
+
+kr = TimeArray(CSV.File("./test/assets/KeyRates.csv"), timestamp = :Date) ./ 100
+assets = TimeArray(CSV.File("./test/assets/Assets.csv"), timestamp = :Date)
+a = merge(assets, kr, method = :inner)
+
+kr_returns = dropmissing!(DataFrame(diff(a[colnames(kr)])))
+sort!(kr_returns, :timestamp, rev = true)
+assets_returns = dropmissing!(DataFrame(percentchange(a[colnames(assets)])))
+sort!(assets_returns, :timestamp, rev = true)
+
+equity = ["APA", "CMCSA", "CNP", "HPQ", "PSA", "SEE", "ZION"]
+bonds = [
+    "PEP11900D031",
+    "PEP13000D012",
+    "PEP13000M088",
+    "PEP23900M103",
+    "PEP70101M530",
+    "PEP70101M571",
+    "PEP70310M156",
+]
+factors = ["MTUM", "QUAL", "SIZE", "USMV", "VLUE"]
+
+factor_returns = assets_returns[!, ["timestamp"; factors]]
+assets_returns = assets_returns[!, ["timestamp"; equity; bonds]]
+
+convexity = CSV.read("./test/assets/convexity.csv", DataFrame)
+durations = CSV.read("./test/assets/durations.csv", DataFrame)
+
+loadings = innerjoin(durations, convexity, on = "ticker")
+loadings[!, names(durations)[2:end]] .= -1 * Matrix(durations[!, 2:end])
+loadings[!, names(convexity)[2:end]] .= 0.5 * Matrix(convexity[!, 2:end])
+
+kr_returns_2 = copy(kr_returns)
+kr_returns_2[!, 2:end] .= Matrix(kr_returns_2[!, 2:end]) .^ 2
+X = DataFrames.rename!(
+    hcat(kr_returns, kr_returns_2[!, 2:end], makeunique = true),
+    ["timestamp"; names(loadings)[2:end]],
+)
+Y = assets_returns[!, ["timestamp"; bonds]]
+asset_classes = Dict(
+    "Assets" => bonds,
+    "Class 1" => [
+        "Equity",
+        "Equity",
+        "Fixed Income",
+        "Equity",
+        "Equity",
+        "Fixed Income",
+        "Fixed Income",
+    ],
+    "Class 2" => [
+        "Technology",
+        "Technology",
+        "Essentials",
+        "Financial",
+        "Financial",
+        "Treasury",
+        "Treasury",
+    ],
+)
+asset_classes = DataFrame(asset_classes)
+sort!(asset_classes, "Assets")
+views = Dict(
+    "Enabled" => [true, true, true, true, true],
+    "Type" => ["Assets", "Classes", "Classes", "Assets", "Classes"],
+    "Set" => ["", "Class 2", "Class 1", "", "Class 1"],
+    "Position" => [bonds[3], "Financial", "Equity", bonds[5], "Fixed Income"],
+    "Sign" => ["<=", ">=", ">=", ">=", "<="],
+    "Return" => [0.3, 0.1, 0.05, 0.03, 0.017],
+    "Type Relative" => ["Assets", "Classes", "Assets", "", ""],
+    "Relative Set" => ["", "Class 1", "", "", ""],
+    "Relative" => [bonds[2], "Fixed Income", bonds[3], "", ""],
+)
+views = DataFrame(views)
+P, Q = asset_views(views, asset_classes)
+
+f_views = DataFrame(
+    Dict(
+        "Enabled" => [true, true, true],
+        "Factor" => ["R 10800", "R 1800", "R 3600"],
+        "Sign" => [">=", "<=", "<="],
+        "Value" => [0.001, -0.001, -0.003],
+        "Relative Factor" => ["R 7200", "", ""],
+    ),
+)
+f_views = DataFrame(f_views)
+P_f, Q_f = factor_views(f_views, loadings)
+
+port = Portfolio(returns = Y, f_returns = X)
+black_litterman_factor_satistics!(
+    port;
+    # w;
+    # Black Litterman
+    B = loadings,
+    P = P,
+    P_f = P_f,
+    Q = Q / 252,
+    Q_f = Q_f / 252,
+    bl_type = :B,
+    # delta = 1.0,
+    # eq = true,
+    # rf = 0.0,
+    # # Loadings matrix
+    # criterion = :pval,
+    # diagonal = true,
+)
+mub1, covb1, wb1 = bayesian_black_litterman(
+    port.returns,
+    port.f_returns,
+    Matrix(loadings[!, 2:end]),
+    P_f,
+    Q_f / 252,
+    constant = false,
+)
+@test isapprox(port.mu_bl_fm, mub1)
+@test isapprox(port.cov_bl_fm, covb1)
+
+B = loadings_matrix(
+    DataFrame(port.f_returns, port.f_assets),
+    DataFrame(port.returns, port.assets),
+)
+P_f1, Q_f1 = factor_views(f_views, B)
+black_litterman_factor_satistics!(
+    port;
+    # w;
+    # Black Litterman
+    B = B,
+    P = P,
+    P_f = P_f1,
+    Q = Q / 252,
+    Q_f = Q_f1 / 252,
+    bl_type = :B,
+    # delta = 1.0,
+    eq = false,
+    rf = 0.0002,
+    # # Loadings matrix
+    # criterion = :pval,
+    # diagonal = true,
+)
+mub2, covb2, wb2 = bayesian_black_litterman(
+    port.returns,
+    port.f_returns,
+    Matrix(B[!, 2:end]),
+    P_f1,
+    Q_f1 / 252,
+    constant = true,
+    eq = false,
+    rf = 0.0002,
+)
+@test isapprox(port.mu_bl_fm, mub2)
+@test isapprox(port.cov_bl_fm, covb2)
+
+black_litterman_factor_satistics!(
+    port;
+    # w;
+    # Black Litterman
+    B = B,
+    P = P,
+    P_f = P_f1,
+    Q = Q / 252,
+    Q_f = Q_f1 / 252,
+    bl_type = :B,
+    # delta = 1.0,
+    # eq = true,
+    # rf = 0.0,
+    # # Loadings matrix
+    # criterion = :pval,
+    diagonal = false,
+)
+mub3, covb3, wb3 = bayesian_black_litterman(
+    port.returns,
+    port.f_returns,
+    Matrix(B[!, 2:end]),
+    P_f1,
+    Q_f1 / 252,
+    constant = true,
+    diagonal = false,
+)
+@test isapprox(port.mu_bl_fm, mub3)
+@test isapprox(port.cov_bl_fm, covb3)
+
+black_litterman_factor_satistics!(
+    port;
+    # w;
+    # Black Litterman
+    B = loadings,
+    P = P,
+    P_f = P_f,
+    Q = Q / 252,
+    Q_f = Q_f / 252,
+    bl_type = :A,
+    # delta = 1.0,
+    # eq = true,
+    # rf = 0.0,
+    # # Loadings matrix
+    # criterion = :pval,
+    # diagonal = true,
+)
+mub4, covb4, w4 = augmented_black_litterman(
+    port.returns,
+    fill(1 / length(port.assets), length(port.assets));
+    F = port.f_returns,
+    B = Matrix(loadings[!, 2:end]),
+    P = P,
+    Q = Q / 252,
+    P_f = P_f,
+    Q_f = Q_f / 252,
+    constant = false,
+)
+@test isapprox(port.mu_bl_fm, mub4)
+@test isapprox(port.cov_bl_fm, covb4)
+
+black_litterman_factor_satistics!(
+    port;
+    # w;
+    # Black Litterman
+    B = B,
+    P = P,
+    P_f = P_f1,
+    Q = Q / 252,
+    Q_f = Q_f1 / 252,
+    bl_type = :A,
+    # delta = 1.0,
+    # eq = true,
+    # rf = 0.0,
+    # # Loadings matrix
+    # criterion = :pval,
+    # diagonal = true,
+)
+mub5, covb5, wb5 = augmented_black_litterman(
+    port.returns,
+    fill(1 / length(port.assets), length(port.assets));
+    F = port.f_returns,
+    B = Matrix(B[!, 2:end]),
+    P = P,
+    Q = Q / 252,
+    P_f = P_f1,
+    Q_f = Q_f1 / 252,
+    constant = true,
+)
+@test isapprox(port.mu_bl_fm, mub5)
+@test isapprox(port.cov_bl_fm, covb5)
+
+black_litterman_factor_satistics!(
+    port;
+    # w;
+    # Black Litterman
+    B = loadings,
+    P = P,
+    P_f = P_f,
+    Q = Q / 252,
+    Q_f = Q_f / 252,
+    bl_type = :A,
+    # delta = 1.0,
+    eq = false,
+    rf = 0.001,
+    # # Loadings matrix
+    # criterion = :pval,
+    # diagonal = true,
+)
+mub6, covb6, w6 = augmented_black_litterman(
+    port.returns,
+    fill(1 / length(port.assets), length(port.assets));
+    F = port.f_returns,
+    B = Matrix(loadings[!, 2:end]),
+    P = P,
+    Q = Q / 252,
+    P_f = P_f,
+    Q_f = Q_f / 252,
+    constant = false,
+    eq = false,
+    rf = 0.001,
+)
+@test isapprox(port.mu_bl_fm, mub6)
+@test isapprox(port.cov_bl_fm, covb6)
+
+black_litterman_factor_satistics!(
+    port;
+    # w;
+    # Black Litterman
+    B = loadings,
+    P = P,
+    P_f = P_f,
+    Q = Q / 252,
+    Q_f = Q_f / 252,
+    bl_type = :A,
+    delta = 3.0,
+    eq = false,
+    rf = 0.001,
+    # # Loadings matrix
+    # criterion = :pval,
+    # diagonal = true,
+)
+mub7, covb7, w7 = augmented_black_litterman(
+    port.returns,
+    fill(1 / length(port.assets), length(port.assets));
+    F = port.f_returns,
+    B = Matrix(loadings[!, 2:end]),
+    P = P,
+    Q = Q / 252,
+    P_f = P_f,
+    Q_f = Q_f / 252,
+    constant = false,
+    eq = false,
+    rf = 0.001,
+    delta = 3.0,
+)
+@test isapprox(port.mu_bl_fm, mub7)
+@test isapprox(port.cov_bl_fm, covb7)
+
+port = Portfolio(returns = Y, f_returns = X)
+port.bl_bench_weights
+w = [
+    0.07450693966487602,
+    0.029403318177556658,
+    0.20041785373307464,
+    0.20303594718984663,
+    0.06576128444017476,
+    0.26640718347176473,
+    0.16046747332270658,
+]
+asset_statistics!(port)
+black_litterman_statistics!(port, P, Q / 252, w)
+@test isapprox(port.bl_bench_weights, w)
+
+######################
+######################
+
+mu1, cov1, w1 = augmented_black_litterman(
+    port.returns,
+    fill(1 / length(port.assets), length(port.assets));
+    P = P,
+    Q = Q / 252,
+)
+@test isapprox(mu1, port.mu_bl)
+@test isapprox(cov1, port.cov_bl)
+
+rf = 1.0329^(1 / 252) - 1
+delta = (dot(port.mu, bw) - rf) / dot(bw, port.cov, bw)
+black_litterman_statistics!(port, P, Q / 252; rf = rf)
+bw = fill(1 / length(port.assets), length(port.assets))
+mu2, cov2, w2 =
+    augmented_black_litterman(port.returns, bw; P = P, Q = Q / 252, rf = rf, delta = delta)
+@test isapprox(mu2, port.mu_bl)
+@test isapprox(cov2, port.cov_bl)
+
+mu3, cov3, w3 = black_litterman(port.returns, bw, P, Q / 252; rf = rf, delta = delta)
+@test isapprox(mu3, port.mu_bl)
+@test isapprox(cov3, port.cov_bl)
+
+mu2, cov2, w2 = augmented_black_litterman(
+    port.returns,
+    fill(1 / length(port.assets), length(port.assets));
+    F = port.f_returns,
+    B = Matrix(loadings[!, 2:end]),
+    P_f = P_f,
+    Q_f = Q_f / 252,
+    constant = false,
+)
+
+mu3, cov3, w2 = augmented_black_litterman(
+    port.returns,
+    fill(1 / length(port.assets), length(port.assets));
+    F = port.f_returns,
+    B = Matrix(loadings[!, 2:end]),
+    P = P,
+    Q = Q / 252,
+    P_f = P_f,
+    Q_f = Q_f / 252,
+    constant = false,
+)
+
+factor_statistics!(port; reg_type = :BReg)
+mu_ft = [
+    9.14199087663652e-5,
+    0.00011888557150746489,
+    0.0002507952281107193,
+    0.0001526701517709168,
+    0.00019984628913082334,
+    0.00019588947077146059,
+    0.0001330502135829032,
+]
+cov_ft = reshape(
+    [
+        1.9733861670583968e-5,
+        7.842849068861552e-6,
+        8.366261183033376e-6,
+        7.4548415456416025e-6,
+        1.15898988376771e-5,
+        1.7940550288745064e-5,
+        7.731423845318617e-6,
+        7.842849068861552e-6,
+        2.8702673540267946e-5,
+        1.2420388430250576e-5,
+        1.030344062358102e-5,
+        1.9570871791419014e-5,
+        1.8427926279124283e-5,
+        1.086919714112664e-5,
+        8.366261183033376e-6,
+        1.2420388430250576e-5,
+        6.054810637470125e-5,
+        1.091979644930212e-5,
+        1.8840340921297204e-5,
+        1.739093596942493e-5,
+        1.1495467004809538e-5,
+        7.4548415456416025e-6,
+        1.030344062358102e-5,
+        1.091979644930212e-5,
+        1.6931893494002995e-5,
+        1.5444455331490255e-5,
+        1.4179605661234799e-5,
+        1.010933816396797e-5,
+        1.15898988376771e-5,
+        1.9570871791419014e-5,
+        1.8840340921297204e-5,
+        1.5444455331490255e-5,
+        3.96561514210648e-5,
+        3.0305945008858823e-5,
+        1.6104151341073822e-5,
+        1.7940550288745064e-5,
+        1.8427926279124283e-5,
+        1.739093596942493e-5,
+        1.4179605661234799e-5,
+        3.0305945008858823e-5,
+        4.044062094298001e-5,
+        1.4743759389780284e-5,
+        7.731423845318617e-6,
+        1.086919714112664e-5,
+        1.1495467004809538e-5,
+        1.010933816396797e-5,
+        1.6104151341073822e-5,
+        1.4743759389780284e-5,
+        1.7199286016812874e-5,
+    ],
+    7,
+    7,
+)
+mu_fmt = [
+    9.141990876636845e-5,
+    0.00011888557150747776,
+    0.0002507952281107191,
+    0.00015267015177092099,
+    0.00019984628913084654,
+    0.0001958894707715255,
+    0.00013305021358293328,
+]
+cov_fmt = reshape(
+    [
+        1.9733861670583968e-5,
+        4.848496323269074e-6,
+        5.41952737165016e-6,
+        5.075813057871703e-6,
+        7.585660856677651e-6,
+        7.37489475153783e-6,
+        5.177129718706979e-6,
+        4.848496323269073e-6,
+        2.870267354026793e-5,
+        8.043223030730563e-6,
+        6.3757878210052454e-6,
+        1.2817707784638854e-5,
+        1.2508057810583204e-5,
+        6.274830289086978e-6,
+        5.4195273716501594e-6,
+        8.043223030730563e-6,
+        6.054810637470123e-5,
+        7.062815077274499e-6,
+        1.2718590310218615e-5,
+        1.2109659683943118e-5,
+        7.033801718371211e-6,
+        5.075813057871702e-6,
+        6.3757878210052454e-6,
+        7.062815077274499e-6,
+        1.6931893494002985e-5,
+        1.0004070938408941e-5,
+        9.671257708327071e-6,
+        6.474254723417463e-6,
+        7.585660856677651e-6,
+        1.2817707784638856e-5,
+        1.2718590310218615e-5,
+        1.000407093840894e-5,
+        3.965615142106479e-5,
+        2.187173659845087e-5,
+        9.746180733797309e-6,
+        7.37489475153783e-6,
+        1.2508057810583206e-5,
+        1.210965968394312e-5,
+        9.671257708327073e-6,
+        2.187173659845087e-5,
+        4.0440620942979996e-5,
+        9.475924702249967e-6,
+        5.17712971870698e-6,
+        6.27483028908698e-6,
+        7.033801718371214e-6,
+        6.474254723417465e-6,
+        9.746180733797309e-6,
+        9.475924702249967e-6,
+        1.719928601681286e-5,
+    ],
+    7,
+    7,
+)
+@test isapprox(port.mu_f, mu_ft)
+@test isapprox(port.cov_f, cov_ft)
+@test isapprox(port.mu_fm, mu_fmt)
+@test isapprox(port.cov_fm, cov_fmt)
+
+factor_statistics!(port; reg_type = :PCR)
+mu_ft = [
+    9.14199087663652e-5,
+    0.00011888557150746489,
+    0.0002507952281107193,
+    0.0001526701517709168,
+    0.00019984628913082334,
+    0.00019588947077146059,
+    0.0001330502135829032,
+]
+cov_ft = reshape(
+    [
+        1.9733861670583968e-5,
+        7.842849068861552e-6,
+        8.366261183033376e-6,
+        7.4548415456416025e-6,
+        1.15898988376771e-5,
+        1.7940550288745064e-5,
+        7.731423845318617e-6,
+        7.842849068861552e-6,
+        2.8702673540267946e-5,
+        1.2420388430250576e-5,
+        1.030344062358102e-5,
+        1.9570871791419014e-5,
+        1.8427926279124283e-5,
+        1.086919714112664e-5,
+        8.366261183033376e-6,
+        1.2420388430250576e-5,
+        6.054810637470125e-5,
+        1.091979644930212e-5,
+        1.8840340921297204e-5,
+        1.739093596942493e-5,
+        1.1495467004809538e-5,
+        7.4548415456416025e-6,
+        1.030344062358102e-5,
+        1.091979644930212e-5,
+        1.6931893494002995e-5,
+        1.5444455331490255e-5,
+        1.4179605661234799e-5,
+        1.010933816396797e-5,
+        1.15898988376771e-5,
+        1.9570871791419014e-5,
+        1.8840340921297204e-5,
+        1.5444455331490255e-5,
+        3.96561514210648e-5,
+        3.0305945008858823e-5,
+        1.6104151341073822e-5,
+        1.7940550288745064e-5,
+        1.8427926279124283e-5,
+        1.739093596942493e-5,
+        1.4179605661234799e-5,
+        3.0305945008858823e-5,
+        4.044062094298001e-5,
+        1.4743759389780284e-5,
+        7.731423845318617e-6,
+        1.086919714112664e-5,
+        1.1495467004809538e-5,
+        1.010933816396797e-5,
+        1.6104151341073822e-5,
+        1.4743759389780284e-5,
+        1.7199286016812874e-5,
+    ],
+    7,
+    7,
+)
+mu_fmt = [
+    9.141990876636525e-5,
+    0.00011888557150746489,
+    0.0002507952281107193,
+    0.0001526701517709168,
+    0.00019984628913082334,
+    0.0001958894707714606,
+    0.00013305021358290322,
+]
+cov_fmt = reshape(
+    [
+        1.9729635884430235e-5,
+        4.9256685676516726e-6,
+        5.475167197152441e-6,
+        4.9842764866188545e-6,
+        7.569703750155468e-6,
+        7.479526028846325e-6,
+        5.083272001768722e-6,
+        4.925668567651674e-6,
+        2.8694763391774985e-5,
+        7.702345457156184e-6,
+        6.474466225704216e-6,
+        1.2709184630705394e-5,
+        1.266308472567879e-5,
+        6.451729338171833e-6,
+        5.475167197152441e-6,
+        7.702345457156184e-6,
+        6.053949172152161e-5,
+        7.147646166798667e-6,
+        1.2271131973186004e-5,
+        1.1936556710055939e-5,
+        7.211882796391111e-6,
+        4.984276486618854e-6,
+        6.474466225704213e-6,
+        7.147646166798666e-6,
+        1.6925376235116648e-5,
+        1.0074586291727095e-5,
+        9.801112001375271e-6,
+        6.411575335778097e-6,
+        7.5697037501554695e-6,
+        1.2709184630705393e-5,
+        1.2271131973186002e-5,
+        1.0074586291727102e-5,
+        3.963385061121752e-5,
+        2.187699921533186e-5,
+        9.935758571166564e-6,
+        7.479526028846328e-6,
+        1.2663084725678786e-5,
+        1.1936556710055942e-5,
+        9.801112001375273e-6,
+        2.1876999215331867e-5,
+        4.041755162560434e-5,
+        9.627382005850791e-6,
+        5.083272001768722e-6,
+        6.451729338171832e-6,
+        7.211882796391111e-6,
+        6.411575335778097e-6,
+        9.93575857116656e-6,
+        9.62738200585079e-6,
+        1.7192561662549678e-5,
+    ],
+    7,
+    7,
+)
+@test isapprox(port.mu_f, mu_ft)
+@test isapprox(port.cov_f, cov_ft)
+@test isapprox(port.mu_fm, mu_fmt)
+@test isapprox(port.cov_fm, cov_fmt, rtol = 7.25e-3)
+
+factor_statistics!(port; reg_type = :FReg)
+mu_ft = [
+    9.14199087663652e-5,
+    0.00011888557150746489,
+    0.0002507952281107193,
+    0.0001526701517709168,
+    0.00019984628913082334,
+    0.00019588947077146059,
+    0.0001330502135829032,
+]
+cov_ft = reshape(
+    [
+        1.9733861670583968e-5,
+        7.842849068861552e-6,
+        8.366261183033376e-6,
+        7.4548415456416025e-6,
+        1.15898988376771e-5,
+        1.7940550288745064e-5,
+        7.731423845318617e-6,
+        7.842849068861552e-6,
+        2.8702673540267946e-5,
+        1.2420388430250576e-5,
+        1.030344062358102e-5,
+        1.9570871791419014e-5,
+        1.8427926279124283e-5,
+        1.086919714112664e-5,
+        8.366261183033376e-6,
+        1.2420388430250576e-5,
+        6.054810637470125e-5,
+        1.091979644930212e-5,
+        1.8840340921297204e-5,
+        1.739093596942493e-5,
+        1.1495467004809538e-5,
+        7.4548415456416025e-6,
+        1.030344062358102e-5,
+        1.091979644930212e-5,
+        1.6931893494002995e-5,
+        1.5444455331490255e-5,
+        1.4179605661234799e-5,
+        1.010933816396797e-5,
+        1.15898988376771e-5,
+        1.9570871791419014e-5,
+        1.8840340921297204e-5,
+        1.5444455331490255e-5,
+        3.96561514210648e-5,
+        3.0305945008858823e-5,
+        1.6104151341073822e-5,
+        1.7940550288745064e-5,
+        1.8427926279124283e-5,
+        1.739093596942493e-5,
+        1.4179605661234799e-5,
+        3.0305945008858823e-5,
+        4.044062094298001e-5,
+        1.4743759389780284e-5,
+        7.731423845318617e-6,
+        1.086919714112664e-5,
+        1.1495467004809538e-5,
+        1.010933816396797e-5,
+        1.6104151341073822e-5,
+        1.4743759389780284e-5,
+        1.7199286016812874e-5,
+    ],
+    7,
+    7,
+)
+mu_fmt = [
+    9.141990876636845e-5,
+    0.00011888557150747776,
+    0.0002507952281107191,
+    0.000152670151770921,
+    0.0001998462891308503,
+    0.0001958894707714722,
+    0.0001330502135829073,
+]
+cov_fmt = reshape(
+    [
+        1.9733861670583968e-5,
+        4.848496323269074e-6,
+        5.41952737165016e-6,
+        5.075813057871706e-6,
+        7.706722009436583e-6,
+        7.466949481823141e-6,
+        5.177129718706981e-6,
+        4.848496323269073e-6,
+        2.870267354026793e-5,
+        8.043223030730563e-6,
+        6.37578782100525e-6,
+        1.2817707784638842e-5,
+        1.2537204152117622e-5,
+        6.320683130163937e-6,
+        5.4195273716501594e-6,
+        8.043223030730563e-6,
+        6.054810637470123e-5,
+        7.062815077274504e-6,
+        1.2718590310218602e-5,
+        1.2154452899331862e-5,
+        7.033801718371215e-6,
+        5.075813057871706e-6,
+        6.37578782100525e-6,
+        7.062815077274504e-6,
+        1.693189349400299e-5,
+        1.012015951708397e-5,
+        9.769145969870943e-6,
+        6.47425472341747e-6,
+        7.706722009436583e-6,
+        1.2817707784638844e-5,
+        1.2718590310218603e-5,
+        1.0120159517083971e-5,
+        3.965615142106477e-5,
+        2.1969945134233947e-5,
+        1.003981474824968e-5,
+        7.466949481823141e-6,
+        1.2537204152117622e-5,
+        1.2154452899331862e-5,
+        9.769145969870945e-6,
+        2.1969945134233947e-5,
+        4.044062094297997e-5,
+        9.7097406572249e-6,
+        5.177129718706981e-6,
+        6.320683130163937e-6,
+        7.033801718371214e-6,
+        6.47425472341747e-6,
+        1.003981474824968e-5,
+        9.7097406572249e-6,
+        1.7199286016812867e-5,
+    ],
+    7,
+    7,
+)
+@test isapprox(port.mu_f, mu_ft)
+@test isapprox(port.cov_f, cov_ft)
+@test isapprox(port.mu_fm, mu_fmt)
+@test isapprox(port.cov_fm, cov_fmt)
+
+#####################
+#####################
+
+py"""
+import numpy as np
+import pandas as pd
+import riskfolio as rp
+import riskfolio.src.ParamsEstimation as pe
+import riskfolio.src.DBHT as db
+from timeit import default_timer as timer
+import statsmodels.api as sm
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from numpy.linalg import inv
+"""
+
+py"""
+X=pd.DataFrame($(Matrix(Y[!,2:end])))
+B=pd.DataFrame($(Matrix(loadings[!,2:end])))
+F=pd.DataFrame($(Matrix(X[!,2:end])))
+
+w=pd.DataFrame($(fill(1/7, 7)))
+P_f=pd.DataFrame($(P_f))
+Q_f=pd.DataFrame($(Q_f))/252
+
+P=pd.DataFrame($(P))
+Q=pd.DataFrame($(Q))/252
+const=False
+
+def PCR(X, y, n_components=0.95):
+    if not isinstance(X, pd.DataFrame):
+        raise ValueError("X must be a DataFrame")
+
+    if not isinstance(y, pd.DataFrame) and not isinstance(y, pd.Series):
+        raise ValueError("y must be a column DataFrame")
+
+    if isinstance(y, pd.DataFrame):
+        if y.shape[0] > 1 and y.shape[1] > 1:
+            raise ValueError("y must be a column DataFrame")
+
+    scaler = StandardScaler()
+    scaler.fit(X)
+    X_std = scaler.transform(X)
+    return X_std
+
+    pca = PCA(n_components=n_components)
+    pca.fit(X_std)
+    Z_p = pca.transform(X_std)
+    V_p = pca.components_.T
+
+    results = sm.OLS(y, sm.add_constant(Z_p)).fit()
+    beta_pc = results.params[1:]
+    beta_pc = np.array(beta_pc, ndmin=2)
+
+    std = np.array(np.std(X, axis=0, ddof=1), ndmin=2)
+    mean = np.array(np.mean(X, axis=0), ndmin=2)
+    beta = V_p @ beta_pc.T / std.T
+
+    beta_0 = np.array(y.mean(), ndmin=2) - np.sum(beta * mean.T)
+
+    beta = np.insert(beta, 0, beta_0)
+    beta = np.array(beta, ndmin=2)
+
+    return beta
+
+def loadings_matrix(
+    X,
+    Y,
+    feature_selection="stepwise",
+    stepwise="Forward",
+    criterion="pvalue",
+    threshold=0.05,
+    n_components=0.95,
+    verbose=False,
+):
+    if not isinstance(X, pd.DataFrame):
+        raise ValueError("X must be a DataFrame")
+
+    if not isinstance(Y, pd.DataFrame):
+        raise ValueError("Y must be a DataFrame")
+
+    rows = Y.columns.tolist()
+    cols = X.columns.tolist()
+    cols.insert(0, "const")
+    loadings = np.zeros((len(rows), len(cols)))
+    loadings = pd.DataFrame(loadings, index=rows, columns=cols)
+
+    for i in rows:
+        if feature_selection == "stepwise":
+            if stepwise == "Forward":
+                included = forward_regression(
+                    X, Y[i], criterion=criterion, threshold=threshold, verbose=verbose
+                )
+            elif stepwise == "Backward":
+                included = backward_regression(
+                    X, Y[i], criterion=criterion, threshold=threshold, verbose=verbose
+                )
+            else:
+                raise ValueError("Choose and adequate stepwise method")
+            results = sm.OLS(Y[i], sm.add_constant(X[included])).fit()
+            params = results.params
+            loadings.loc[i, params.index.tolist()] = params.T
+        elif feature_selection == "PCR":
+            beta = PCR(X, Y[i], n_components=n_components)
+            beta = pd.Series(np.ravel(beta), index=cols)
+            loadings.loc[i, cols] = beta.T
+
+    return loadings
+"""
+
+py"""
+X_std = PCR(F, X[0], n_components=0.95)
+
+# port = rp.Portfolio(returns = X, factors = F)
+# port.factors_stats(dict_risk={'feature_selection': 'stepwise', 'stepwise':'Forward'})
+
+# s = timer()
+# mu, cov, wb = pe.augmented_black_litterman(
+#             X=X,
+#             w=w,
+#             B=B,
+#             P=P,
+#             Q=Q,
+#             P_f=P_f,
+#             Q_f=Q_f,
+#             F=F,
+#             const=const,
+#             # diag=False,
+#             # delta=delta,
+#             # rf=rf,
+#             # eq=eq,
+#             # method_mu=method_mu,
+#             # method_cov=method_cov,
+#             # **kwargs,
+#         )
+# e = timer()
+# print(e-s)
+"""
+var(transpose(pcr(X[!, 2:end], Y[!, 1])), dims = 1)
+var(py"X_std", dims = 1)
+println("mu_ft = ", vec(py"np.array(port.mu_f)"))
+println("cov_ft = reshape(", vec(py"np.array(port.cov_f)"), ",7,7)")
+println("mu_fmt = ", vec(py"np.array(port.mu_fm)"))
+println("cov_fmt = reshape(", vec(py"np.array(port.cov_fm)"), ",7,7)")
+
+asset_classes = Dict(
+    "Assets" => names(returns)[2:end],
+    "Industry" => [
+        "Consumer Discretionary",
+        "Consumer Discretionary",
+        "Consumer Staples",
+        "Consumer Staples",
+        "Energy",
+        "Financials",
+        "Financials",
+        "Financials",
+        "Health Care",
+        "Health Care",
+        "Industrials",
+        "Industrials",
+        "Health care",
+        "Industrials",
+        "Information Technology",
+        "Information Technology",
+        "Materials",
+        "Telecommunications Services",
+        "Utilities",
+        "Financials",
+    ],
+)
+
+asset_classes = DataFrame(asset_classes)
+asset_classes = sort!(asset_classes, :Assets)
+
+views = Dict(
+    "Enabled" => [true, true, true],
+    "Type" => ["Classes", "Classes", "Classes"],
+    "Set" => ["Industry", "Industry", "Industry"],
+    "Position" => ["Energy", "Consumer Staples", "Materials"],
+    "Sign" => [">=", ">=", ">="],
+    "Return" => [0.08, 0.1, 0.09], # Annual terms 
+    "Type Relative" => ["Classes", "Classes", "Classes"],
+    "Relative Set" => ["Industry", "Industry", "Industry"],
+    "Relative" => ["Financials", "Utilities", "Industrials"],
+)
+
+views = DataFrame(views)
+
+P, Q = asset_views(views, asset_classes)
+
+X = Matrix(returns[!, 2:end])
+w = fill(1 / 20, 20)
+mu1, cov_mtx1, wb1 = black_litterman(X, w, P, Q)
+mu2, cov_mtx2, wb2 = augmented_black_litterman(X, w, P = P, Q = Q)
+@test isapprox(mu1, mu2)
+@test isapprox(cov_mtx1, cov_mtx2)
+@test isapprox(wb1, wb2)
+
+println(sort(["B", "F", "P", "P_f", "Q", "Q_f", "constant", "delta", "eq", "rf"]))
+
+wbt = [
+    0.04994419642839887,
+    -36.43505342391563,
+    145.9899346778055,
+    38.19762923314582,
+    0.04994419642867243,
+    0.04994419642855785,
+    38.197629233145825,
+    -36.43505342391561,
+    0.04994419642874348,
+    0.04994419642857295,
+    -76.24542587700597,
+    69.88661355431003,
+    0.04994419642857295,
+    0.049944196428551635,
+    -36.4350534239156,
+    0.049944196428576504,
+    -23.228945589532003,
+    -23.22894558953189,
+    -36.435053423915775,
+    -23.228945589531968,
+]
+cov_mtxt = reshape(
+    [
+        0.00021019372803673762,
+        9.814073696822803e-5,
+        0.00014089460579763032,
+        0.0001183384864749401,
+        0.00015855508698984152,
+        6.209596553886905e-5,
+        8.22975685311066e-5,
+        4.183022574848328e-5,
+        9.067141771050849e-5,
+        7.173426083922174e-5,
+        4.035654677616946e-5,
+        0.00010239654183710268,
+        3.58895347738626e-5,
+        5.338345680784469e-5,
+        2.4554319628138348e-5,
+        5.014139348676143e-5,
+        9.862887967338167e-5,
+        5.899907732521574e-5,
+        7.900678634747935e-5,
+        8.317071782107266e-5,
+        9.814073696822803e-5,
+        0.00021175486167171988,
+        0.00010926287107231252,
+        9.468695325627838e-5,
+        0.00010738963680672156,
+        5.824815415910256e-5,
+        0.0001303281405925459,
+        4.55503795780771e-5,
+        9.442418939594358e-5,
+        7.595943936350152e-5,
+        4.1840531207773575e-5,
+        9.143103991948571e-5,
+        7.152326073683382e-5,
+        5.8990702062783135e-5,
+        5.4196528349915624e-5,
+        7.441014007127945e-5,
+        9.268283422780716e-5,
+        5.101719691518799e-5,
+        8.578645730092226e-5,
+        7.170559134560567e-5,
+        0.00014089460579763032,
+        0.00010926287107231252,
+        0.0002574464719462557,
+        0.00011943713428833755,
+        0.0001534757246847234,
+        6.712382518273905e-5,
+        0.0001171647101931088,
+        3.869996028185736e-5,
+        9.457451171224822e-5,
+        7.620626380944493e-5,
+        3.904868634759729e-5,
+        0.0001380361667111408,
+        5.843400843950329e-5,
+        5.25446963255022e-5,
+        4.352899431627756e-5,
+        5.6524130190162446e-5,
+        0.0001017691211442463,
+        5.430475677066226e-5,
+        8.143381874305633e-5,
+        8.811290555373818e-5,
+        0.0001183384864749401,
+        9.468695325627838e-5,
+        0.00011943713428833755,
+        0.0004010053847728717,
+        0.0001327158452540512,
+        6.518088662452111e-5,
+        0.0002006877860966814,
+        3.4692524062064834e-5,
+        9.796039730265241e-5,
+        8.16394591837143e-5,
+        2.8632944028368108e-5,
+        0.0001110166930016184,
+        0.0001005546477458589,
+        5.6383706572802686e-5,
+        9.648891401981502e-5,
+        7.798069948053724e-5,
+        0.00010102936638412913,
+        5.228279286729776e-5,
+        8.456006602214185e-5,
+        6.922325042733573e-5,
+        0.00015855508698984152,
+        0.00010738963680672156,
+        0.0001534757246847234,
+        0.0001327158452540512,
+        0.00033145361964108004,
+        5.1702278730316985e-5,
+        0.00012084014635246575,
+        3.685462693695783e-5,
+        8.824241294836913e-5,
+        6.603052146528479e-5,
+        3.7336633685666965e-5,
+        0.000119287048586928,
+        1.9469575171790783e-5,
+        5.127173943603295e-5,
+        7.761647751672517e-5,
+        5.7170644642460245e-5,
+        0.00010459687632576076,
+        4.6500445739785534e-5,
+        7.532179344546002e-5,
+        9.997544696541581e-5,
+        6.209596553886905e-5,
+        5.824815415910256e-5,
+        6.712382518273905e-5,
+        6.518088662452111e-5,
+        5.1702278730316985e-5,
+        0.00017928520818153665,
+        9.465022633794337e-5,
+        3.832908345199822e-5,
+        9.972948243252036e-5,
+        8.68948697277735e-5,
+        5.283319336828808e-5,
+        0.00010681830912336068,
+        0.00011529019623067329,
+        6.954195527091396e-5,
+        0.00010078891821697432,
+        4.77570913061552e-5,
+        6.47822958428556e-5,
+        5.623134884245821e-5,
+        9.138793988145932e-5,
+        6.148438504369382e-5,
+        8.22975685311066e-5,
+        0.0001303281405925459,
+        0.0001171647101931088,
+        0.0002006877860966814,
+        0.00012084014635246575,
+        9.465022633794337e-5,
+        0.001649363491651328,
+        4.5223413328825034e-5,
+        0.00016784137181758126,
+        0.0001386850909657868,
+        6.458939755923189e-5,
+        0.00010589340734636572,
+        0.00014011446207689595,
+        8.976333622649406e-5,
+        0.00024098758150871094,
+        0.00012009725810408961,
+        0.00013067736145363487,
+        7.421418478073369e-5,
+        0.0001261200253519647,
+        5.35968653435065e-5,
+        4.183022574848328e-5,
+        4.55503795780771e-5,
+        3.869996028185736e-5,
+        3.4692524062064834e-5,
+        3.685462693695783e-5,
+        3.832908345199822e-5,
+        4.5223413328825034e-5,
+        0.00016371583720534307,
+        4.145051227987881e-5,
+        4.987929270759291e-5,
+        4.2438319829851895e-5,
+        6.412885304835658e-5,
+        0.0001118207982683004,
+        3.454468025870223e-5,
+        2.086534217872943e-5,
+        5.781803066827005e-5,
+        4.606752104626116e-5,
+        4.4550654075148215e-5,
+        4.728950626423971e-5,
+        4.882332406662685e-5,
+        9.067141771050849e-5,
+        9.442418939594358e-5,
+        9.457451171224822e-5,
+        9.796039730265241e-5,
+        8.824241294836913e-5,
+        9.972948243252036e-5,
+        0.00016784137181758126,
+        4.145051227987881e-5,
+        0.00027649791945834486,
+        0.0001259729089585305,
+        4.680226229882406e-5,
+        0.00014186361033472427,
+        0.00014860049111880655,
+        9.150244120620364e-5,
+        0.00013548711170023822,
+        0.00011856721969541951,
+        0.0001099720594647006,
+        7.765450504400617e-5,
+        0.00020139646917204595,
+        7.7970058613762e-5,
+        7.173426083922174e-5,
+        7.595943936350152e-5,
+        7.620626380944493e-5,
+        8.16394591837143e-5,
+        6.603052146528479e-5,
+        8.68948697277735e-5,
+        0.0001386850909657868,
+        4.987929270759291e-5,
+        0.0001259729089585305,
+        0.00024358720166818307,
+        4.770909506399242e-5,
+        0.00012828950523977845,
+        0.00014589380973957058,
+        6.572302569854488e-5,
+        0.00010419064086039876,
+        0.0001001626277238875,
+        7.69968436098602e-5,
+        6.028339725989123e-5,
+        0.00010829182738571201,
+        6.998325134810433e-5,
+        4.035654677616946e-5,
+        4.1840531207773575e-5,
+        3.904868634759729e-5,
+        2.8632944028368108e-5,
+        3.7336633685666965e-5,
+        5.283319336828808e-5,
+        6.458939755923189e-5,
+        4.2438319829851895e-5,
+        4.680226229882406e-5,
+        4.770909506399242e-5,
+        0.00010546409712361284,
+        4.8929129369513514e-5,
+        5.896108666334838e-5,
+        4.858651300669176e-5,
+        6.262720448187368e-5,
+        4.035544686685855e-5,
+        4.2701719087240345e-5,
+        3.7316927906384094e-5,
+        5.146903681941111e-5,
+        3.612480526163764e-5,
+        0.00010239654183710268,
+        9.143103991948571e-5,
+        0.0001380361667111408,
+        0.0001110166930016184,
+        0.000119287048586928,
+        0.00010681830912336068,
+        0.00010589340734636572,
+        6.412885304835658e-5,
+        0.00014186361033472427,
+        0.00012828950523977845,
+        4.8929129369513514e-5,
+        0.0007071294270311353,
+        0.00023036570341228548,
+        7.577351396199615e-5,
+        0.00013063845835111998,
+        0.00013765335885783806,
+        9.310648708686168e-5,
+        6.83762483768431e-5,
+        0.00012194120070538858,
+        0.00010822552101984676,
+        3.58895347738626e-5,
+        7.152326073683382e-5,
+        5.843400843950329e-5,
+        0.0001005546477458589,
+        1.9469575171790783e-5,
+        0.00011529019623067329,
+        0.00014011446207689595,
+        0.0001118207982683004,
+        0.00014860049111880655,
+        0.00014589380973957058,
+        5.896108666334838e-5,
+        0.00023036570341228548,
+        0.0019461027850529162,
+        7.840009478093784e-5,
+        0.0002218451937626271,
+        0.0002341094546003583,
+        5.970942481284993e-5,
+        5.5928282713946245e-5,
+        0.00010036337308436913,
+        9.48018264310036e-5,
+        5.338345680784469e-5,
+        5.8990702062783135e-5,
+        5.25446963255022e-5,
+        5.6383706572802686e-5,
+        5.127173943603295e-5,
+        6.954195527091396e-5,
+        8.976333622649406e-5,
+        3.454468025870223e-5,
+        9.150244120620364e-5,
+        6.572302569854488e-5,
+        4.858651300669176e-5,
+        7.577351396199615e-5,
+        7.840009478093784e-5,
+        0.000143792480348064,
+        0.00015468838723823786,
+        4.7345308377058936e-5,
+        6.451263640232723e-5,
+        5.130492003035679e-5,
+        8.783587312013415e-5,
+        4.020673361771947e-5,
+        2.4554319628138348e-5,
+        5.4196528349915624e-5,
+        4.352899431627756e-5,
+        9.648891401981502e-5,
+        7.761647751672517e-5,
+        0.00010078891821697432,
+        0.00024098758150871094,
+        2.086534217872943e-5,
+        0.00013548711170023822,
+        0.00010419064086039876,
+        6.262720448187368e-5,
+        0.00013063845835111998,
+        0.0002218451937626271,
+        0.00015468838723823786,
+        0.0009946578234570117,
+        0.00011460104418440797,
+        6.711857333430317e-5,
+        3.7676959871462685e-5,
+        0.00011646949598061786,
+        3.519383745244493e-5,
+        5.014139348676143e-5,
+        7.441014007127945e-5,
+        5.6524130190162446e-5,
+        7.798069948053724e-5,
+        5.7170644642460245e-5,
+        4.77570913061552e-5,
+        0.00012009725810408961,
+        5.781803066827005e-5,
+        0.00011856721969541951,
+        0.0001001626277238875,
+        4.035544686685855e-5,
+        0.00013765335885783806,
+        0.0002341094546003583,
+        4.7345308377058936e-5,
+        0.00011460104418440797,
+        0.0005060138824207279,
+        7.487467040330356e-5,
+        4.936187188815178e-5,
+        9.266612075095574e-5,
+        7.645805395118208e-5,
+        9.862887967338167e-5,
+        9.268283422780716e-5,
+        0.0001017691211442463,
+        0.00010102936638412913,
+        0.00010459687632576076,
+        6.47822958428556e-5,
+        0.00013067736145363487,
+        4.606752104626116e-5,
+        0.0001099720594647006,
+        7.69968436098602e-5,
+        4.2701719087240345e-5,
+        9.310648708686168e-5,
+        5.970942481284993e-5,
+        6.451263640232723e-5,
+        6.711857333430317e-5,
+        7.487467040330356e-5,
+        0.00016261411241525983,
+        6.134491065110071e-5,
+        9.84889216824726e-5,
+        7.744209739132543e-5,
+        5.899907732521574e-5,
+        5.101719691518799e-5,
+        5.430475677066226e-5,
+        5.228279286729776e-5,
+        4.6500445739785534e-5,
+        5.623134884245821e-5,
+        7.421418478073369e-5,
+        4.4550654075148215e-5,
+        7.765450504400617e-5,
+        6.028339725989123e-5,
+        3.7316927906384094e-5,
+        6.83762483768431e-5,
+        5.5928282713946245e-5,
+        5.130492003035679e-5,
+        3.7676959871462685e-5,
+        4.936187188815178e-5,
+        6.134491065110071e-5,
+        0.00012216128652920127,
+        7.24360662559272e-5,
+        4.462918750011317e-5,
+        7.900678634747935e-5,
+        8.578645730092226e-5,
+        8.143381874305633e-5,
+        8.456006602214185e-5,
+        7.532179344546002e-5,
+        9.138793988145932e-5,
+        0.0001261200253519647,
+        4.728950626423972e-5,
+        0.00020139646917204595,
+        0.00010829182738571201,
+        5.146903681941111e-5,
+        0.00012194120070538858,
+        0.00010036337308436913,
+        8.783587312013415e-5,
+        0.00011646949598061786,
+        9.266612075095574e-5,
+        9.84889216824726e-5,
+        7.24360662559272e-5,
+        0.00018510192027154697,
+        7.09780097642729e-5,
+        8.317071782107266e-5,
+        7.170559134560567e-5,
+        8.811290555373818e-5,
+        6.922325042733573e-5,
+        9.997544696541581e-5,
+        6.148438504369382e-5,
+        5.35968653435065e-5,
+        4.882332406662685e-5,
+        7.7970058613762e-5,
+        6.998325134810433e-5,
+        3.612480526163764e-5,
+        0.00010822552101984676,
+        9.48018264310036e-5,
+        4.020673361771947e-5,
+        3.519383745244493e-5,
+        7.645805395118208e-5,
+        7.744209739132543e-5,
+        4.462918750011317e-5,
+        7.09780097642729e-5,
+        0.00015806550547591282,
+    ],
+    20,
+    20,
+)
+mut = [
+    0.01788215049780121,
+    0.008299034563518402,
+    0.03771050756916562,
+    0.02955207837251922,
+    0.02096210070715395,
+    0.00461702040536412,
+    0.06451975912860629,
+    -0.003377902366384085,
+    0.006963261507811539,
+    0.007773327769429087,
+    -0.005267147027680203,
+    0.05304204065453175,
+    0.006155642613698241,
+    -0.000994094039101126,
+    -0.022823596819754384,
+    0.005387815348900928,
+    0.008901143775398971,
+    0.001922621478357743,
+    0.0031199916007543745,
+    0.0076272307297972726,
+]
+@test isapprox(wb, wbt)
+@test isapprox(cov_mtx, cov_mtxt)
+@test isapprox(mu, mut)
+
+w = [
+    0.08454031142379292,
+    0.03742613569034952,
+    0.00811626543723675,
+    0.04557497081761481,
+    0.09529326368486243,
+    0.06082192264285191,
+    0.06768140680640844,
+    0.0034378800052307194,
+    0.001945490978309011,
+    0.09146698265346637,
+    0.003124977384141323,
+    0.04521409857507437,
+    0.029836207702826512,
+    0.015564711797928397,
+    0.07424201222126192,
+    0.03952015210626435,
+    0.07672455015176545,
+    0.07637525289339532,
+    0.0689582593402907,
+    0.07413514768692882,
+]
+mu, cov_mtx, wb = black_litterman(X, w, P, Q)
+
+wbt = [
+    0.08444595839748814,
+    -36.448751083381346,
+    145.95264900242904,
+    38.184587394621076,
+    0.09518690959604825,
+    0.06075404103271964,
+    38.2066691582483,
+    -36.48270140574533,
+    0.0019433196715752388,
+    0.09136489896748401,
+    -76.27500508776644,
+    69.88682447509879,
+    0.029802908363878444,
+    0.015547340467723103,
+    -36.41197629599826,
+    0.03947604479364486,
+    -23.203914692822245,
+    -23.20426360023991,
+    -36.4172541518338,
+    -23.206501205329104,
+]
+cov_mtxt = reshape(
+    [
+        0.00021019372803673762,
+        9.814073696822803e-5,
+        0.00014089460579763032,
+        0.0001183384864749401,
+        0.00015855508698984152,
+        6.209596553886905e-5,
+        8.22975685311066e-5,
+        4.183022574848328e-5,
+        9.067141771050849e-5,
+        7.173426083922174e-5,
+        4.035654677616946e-5,
+        0.00010239654183710268,
+        3.58895347738626e-5,
+        5.338345680784469e-5,
+        2.4554319628138348e-5,
+        5.014139348676143e-5,
+        9.862887967338167e-5,
+        5.899907732521574e-5,
+        7.900678634747935e-5,
+        8.317071782107266e-5,
+        9.814073696822803e-5,
+        0.00021175486167171988,
+        0.00010926287107231252,
+        9.468695325627838e-5,
+        0.00010738963680672156,
+        5.824815415910256e-5,
+        0.0001303281405925459,
+        4.55503795780771e-5,
+        9.442418939594358e-5,
+        7.595943936350152e-5,
+        4.1840531207773575e-5,
+        9.143103991948571e-5,
+        7.152326073683382e-5,
+        5.8990702062783135e-5,
+        5.4196528349915624e-5,
+        7.441014007127945e-5,
+        9.268283422780716e-5,
+        5.101719691518799e-5,
+        8.578645730092226e-5,
+        7.170559134560567e-5,
+        0.00014089460579763032,
+        0.00010926287107231252,
+        0.0002574464719462557,
+        0.00011943713428833755,
+        0.0001534757246847234,
+        6.712382518273905e-5,
+        0.0001171647101931088,
+        3.869996028185736e-5,
+        9.457451171224822e-5,
+        7.620626380944493e-5,
+        3.904868634759729e-5,
+        0.0001380361667111408,
+        5.843400843950329e-5,
+        5.25446963255022e-5,
+        4.352899431627756e-5,
+        5.6524130190162446e-5,
+        0.0001017691211442463,
+        5.430475677066226e-5,
+        8.143381874305633e-5,
+        8.811290555373818e-5,
+        0.0001183384864749401,
+        9.468695325627838e-5,
+        0.00011943713428833755,
+        0.0004010053847728717,
+        0.0001327158452540512,
+        6.518088662452111e-5,
+        0.0002006877860966814,
+        3.4692524062064834e-5,
+        9.796039730265241e-5,
+        8.16394591837143e-5,
+        2.8632944028368108e-5,
+        0.0001110166930016184,
+        0.0001005546477458589,
+        5.6383706572802686e-5,
+        9.648891401981502e-5,
+        7.798069948053724e-5,
+        0.00010102936638412913,
+        5.228279286729776e-5,
+        8.456006602214185e-5,
+        6.922325042733573e-5,
+        0.00015855508698984152,
+        0.00010738963680672156,
+        0.0001534757246847234,
+        0.0001327158452540512,
+        0.00033145361964108004,
+        5.1702278730316985e-5,
+        0.00012084014635246575,
+        3.685462693695783e-5,
+        8.824241294836913e-5,
+        6.603052146528479e-5,
+        3.7336633685666965e-5,
+        0.000119287048586928,
+        1.9469575171790783e-5,
+        5.127173943603295e-5,
+        7.761647751672517e-5,
+        5.7170644642460245e-5,
+        0.00010459687632576076,
+        4.6500445739785534e-5,
+        7.532179344546002e-5,
+        9.997544696541581e-5,
+        6.209596553886905e-5,
+        5.824815415910256e-5,
+        6.712382518273905e-5,
+        6.518088662452111e-5,
+        5.1702278730316985e-5,
+        0.00017928520818153665,
+        9.465022633794337e-5,
+        3.832908345199822e-5,
+        9.972948243252036e-5,
+        8.68948697277735e-5,
+        5.283319336828808e-5,
+        0.00010681830912336068,
+        0.00011529019623067329,
+        6.954195527091396e-5,
+        0.00010078891821697432,
+        4.77570913061552e-5,
+        6.47822958428556e-5,
+        5.623134884245821e-5,
+        9.138793988145932e-5,
+        6.148438504369382e-5,
+        8.22975685311066e-5,
+        0.0001303281405925459,
+        0.0001171647101931088,
+        0.0002006877860966814,
+        0.00012084014635246575,
+        9.465022633794337e-5,
+        0.001649363491651328,
+        4.5223413328825034e-5,
+        0.00016784137181758126,
+        0.0001386850909657868,
+        6.458939755923189e-5,
+        0.00010589340734636572,
+        0.00014011446207689595,
+        8.976333622649406e-5,
+        0.00024098758150871094,
+        0.00012009725810408961,
+        0.00013067736145363487,
+        7.421418478073369e-5,
+        0.0001261200253519647,
+        5.35968653435065e-5,
+        4.183022574848328e-5,
+        4.55503795780771e-5,
+        3.869996028185736e-5,
+        3.4692524062064834e-5,
+        3.685462693695783e-5,
+        3.832908345199822e-5,
+        4.5223413328825034e-5,
+        0.00016371583720534307,
+        4.145051227987881e-5,
+        4.987929270759291e-5,
+        4.2438319829851895e-5,
+        6.412885304835658e-5,
+        0.0001118207982683004,
+        3.454468025870223e-5,
+        2.086534217872943e-5,
+        5.781803066827005e-5,
+        4.606752104626116e-5,
+        4.4550654075148215e-5,
+        4.728950626423971e-5,
+        4.882332406662685e-5,
+        9.067141771050849e-5,
+        9.442418939594358e-5,
+        9.457451171224822e-5,
+        9.796039730265241e-5,
+        8.824241294836913e-5,
+        9.972948243252036e-5,
+        0.00016784137181758126,
+        4.145051227987881e-5,
+        0.00027649791945834486,
+        0.0001259729089585305,
+        4.680226229882406e-5,
+        0.00014186361033472427,
+        0.00014860049111880655,
+        9.150244120620364e-5,
+        0.00013548711170023822,
+        0.00011856721969541951,
+        0.0001099720594647006,
+        7.765450504400617e-5,
+        0.00020139646917204595,
+        7.7970058613762e-5,
+        7.173426083922174e-5,
+        7.595943936350152e-5,
+        7.620626380944493e-5,
+        8.16394591837143e-5,
+        6.603052146528479e-5,
+        8.68948697277735e-5,
+        0.0001386850909657868,
+        4.987929270759291e-5,
+        0.0001259729089585305,
+        0.00024358720166818307,
+        4.770909506399242e-5,
+        0.00012828950523977845,
+        0.00014589380973957058,
+        6.572302569854488e-5,
+        0.00010419064086039876,
+        0.0001001626277238875,
+        7.69968436098602e-5,
+        6.028339725989123e-5,
+        0.00010829182738571201,
+        6.998325134810433e-5,
+        4.035654677616946e-5,
+        4.1840531207773575e-5,
+        3.904868634759729e-5,
+        2.8632944028368108e-5,
+        3.7336633685666965e-5,
+        5.283319336828808e-5,
+        6.458939755923189e-5,
+        4.2438319829851895e-5,
+        4.680226229882406e-5,
+        4.770909506399242e-5,
+        0.00010546409712361284,
+        4.8929129369513514e-5,
+        5.896108666334838e-5,
+        4.858651300669176e-5,
+        6.262720448187368e-5,
+        4.035544686685855e-5,
+        4.2701719087240345e-5,
+        3.7316927906384094e-5,
+        5.146903681941111e-5,
+        3.612480526163764e-5,
+        0.00010239654183710268,
+        9.143103991948571e-5,
+        0.0001380361667111408,
+        0.0001110166930016184,
+        0.000119287048586928,
+        0.00010681830912336068,
+        0.00010589340734636572,
+        6.412885304835658e-5,
+        0.00014186361033472427,
+        0.00012828950523977845,
+        4.8929129369513514e-5,
+        0.0007071294270311353,
+        0.00023036570341228548,
+        7.577351396199615e-5,
+        0.00013063845835111998,
+        0.00013765335885783806,
+        9.310648708686168e-5,
+        6.83762483768431e-5,
+        0.00012194120070538858,
+        0.00010822552101984676,
+        3.58895347738626e-5,
+        7.152326073683382e-5,
+        5.843400843950329e-5,
+        0.0001005546477458589,
+        1.9469575171790783e-5,
+        0.00011529019623067329,
+        0.00014011446207689595,
+        0.0001118207982683004,
+        0.00014860049111880655,
+        0.00014589380973957058,
+        5.896108666334838e-5,
+        0.00023036570341228548,
+        0.0019461027850529162,
+        7.840009478093784e-5,
+        0.0002218451937626271,
+        0.0002341094546003583,
+        5.970942481284993e-5,
+        5.5928282713946245e-5,
+        0.00010036337308436913,
+        9.48018264310036e-5,
+        5.338345680784469e-5,
+        5.8990702062783135e-5,
+        5.25446963255022e-5,
+        5.6383706572802686e-5,
+        5.127173943603295e-5,
+        6.954195527091396e-5,
+        8.976333622649406e-5,
+        3.454468025870223e-5,
+        9.150244120620364e-5,
+        6.572302569854488e-5,
+        4.858651300669176e-5,
+        7.577351396199615e-5,
+        7.840009478093784e-5,
+        0.000143792480348064,
+        0.00015468838723823786,
+        4.7345308377058936e-5,
+        6.451263640232723e-5,
+        5.130492003035679e-5,
+        8.783587312013415e-5,
+        4.020673361771947e-5,
+        2.4554319628138348e-5,
+        5.4196528349915624e-5,
+        4.352899431627756e-5,
+        9.648891401981502e-5,
+        7.761647751672517e-5,
+        0.00010078891821697432,
+        0.00024098758150871094,
+        2.086534217872943e-5,
+        0.00013548711170023822,
+        0.00010419064086039876,
+        6.262720448187368e-5,
+        0.00013063845835111998,
+        0.0002218451937626271,
+        0.00015468838723823786,
+        0.0009946578234570117,
+        0.00011460104418440797,
+        6.711857333430317e-5,
+        3.7676959871462685e-5,
+        0.00011646949598061786,
+        3.519383745244493e-5,
+        5.014139348676143e-5,
+        7.441014007127945e-5,
+        5.6524130190162446e-5,
+        7.798069948053724e-5,
+        5.7170644642460245e-5,
+        4.77570913061552e-5,
+        0.00012009725810408961,
+        5.781803066827005e-5,
+        0.00011856721969541951,
+        0.0001001626277238875,
+        4.035544686685855e-5,
+        0.00013765335885783806,
+        0.0002341094546003583,
+        4.7345308377058936e-5,
+        0.00011460104418440797,
+        0.0005060138824207279,
+        7.487467040330356e-5,
+        4.936187188815178e-5,
+        9.266612075095574e-5,
+        7.645805395118208e-5,
+        9.862887967338167e-5,
+        9.268283422780716e-5,
+        0.0001017691211442463,
+        0.00010102936638412913,
+        0.00010459687632576076,
+        6.47822958428556e-5,
+        0.00013067736145363487,
+        4.606752104626116e-5,
+        0.0001099720594647006,
+        7.69968436098602e-5,
+        4.2701719087240345e-5,
+        9.310648708686168e-5,
+        5.970942481284993e-5,
+        6.451263640232723e-5,
+        6.711857333430317e-5,
+        7.487467040330356e-5,
+        0.00016261411241525983,
+        6.134491065110071e-5,
+        9.84889216824726e-5,
+        7.744209739132543e-5,
+        5.899907732521574e-5,
+        5.101719691518799e-5,
+        5.430475677066226e-5,
+        5.228279286729776e-5,
+        4.6500445739785534e-5,
+        5.623134884245821e-5,
+        7.421418478073369e-5,
+        4.4550654075148215e-5,
+        7.765450504400617e-5,
+        6.028339725989123e-5,
+        3.7316927906384094e-5,
+        6.83762483768431e-5,
+        5.5928282713946245e-5,
+        5.130492003035679e-5,
+        3.7676959871462685e-5,
+        4.936187188815178e-5,
+        6.134491065110071e-5,
+        0.00012216128652920127,
+        7.24360662559272e-5,
+        4.462918750011317e-5,
+        7.900678634747935e-5,
+        8.578645730092226e-5,
+        8.143381874305633e-5,
+        8.456006602214185e-5,
+        7.532179344546002e-5,
+        9.138793988145932e-5,
+        0.0001261200253519647,
+        4.728950626423972e-5,
+        0.00020139646917204595,
+        0.00010829182738571201,
+        5.146903681941111e-5,
+        0.00012194120070538858,
+        0.00010036337308436913,
+        8.783587312013415e-5,
+        0.00011646949598061786,
+        9.266612075095574e-5,
+        9.84889216824726e-5,
+        7.24360662559272e-5,
+        0.00018510192027154697,
+        7.09780097642729e-5,
+        8.317071782107266e-5,
+        7.170559134560567e-5,
+        8.811290555373818e-5,
+        6.922325042733573e-5,
+        9.997544696541581e-5,
+        6.148438504369382e-5,
+        5.35968653435065e-5,
+        4.882332406662685e-5,
+        7.7970058613762e-5,
+        6.998325134810433e-5,
+        3.612480526163764e-5,
+        0.00010822552101984676,
+        9.48018264310036e-5,
+        4.020673361771947e-5,
+        3.519383745244493e-5,
+        7.645805395118208e-5,
+        7.744209739132543e-5,
+        4.462918750011317e-5,
+        7.09780097642729e-5,
+        0.00015806550547591282,
+    ],
+    20,
+    20,
+)
+mut = [
+    0.01788998459183981,
+    0.008299820326268045,
+    0.03771183401154889,
+    0.02955423090677379,
+    0.020977345429949813,
+    0.004618718511626486,
+    0.06453581774835698,
+    -0.0033848280023150825,
+    0.006961245640874746,
+    0.007779388719665253,
+    -0.005268833811381122,
+    0.05304233110704597,
+    0.006115255635197766,
+    -0.000994712949840736,
+    -0.02280716266830342,
+    0.005381589715613995,
+    0.00890566996442942,
+    0.001924494732875434,
+    0.0031198232898175006,
+    0.007630956707819302,
+]
+@test isapprox(wb, wbt)
+@test isapprox(cov_mtx, cov_mtxt)
+@test isapprox(mu, mut)
+
+py"""
+import numpy as np
+import pandas as pd
+import riskfolio as rp
+import riskfolio.src.ParamsEstimation as pe
+import riskfolio.src.DBHT as db
+from timeit import default_timer as timer
+import statsmodels.api as sm
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from numpy.linalg import inv
+"""
+
+py"""
+s = timer()
+mu, cov, wb = pe.black_litterman(
+            X=pd.DataFrame($(Matrix(returns[!, 2:end])), index=None, columns=$(names(returns[!, 2:end]))),
+            w=pd.DataFrame($([0.08454031142379292, 0.03742613569034952, 0.00811626543723675, 0.04557497081761481, 0.09529326368486243, 0.06082192264285191, 0.06768140680640844, 0.0034378800052307194, 0.001945490978309011, 0.09146698265346637, 0.003124977384141323, 0.04521409857507437, 0.029836207702826512, 0.015564711797928397, 0.07424201222126192, 0.03952015210626435, 0.07672455015176545, 0.07637525289339532, 0.0689582593402907, 0.07413514768692882])),
+            P=pd.DataFrame($P),
+            Q=pd.DataFrame($Q),
+            # delta=delta,
+            # rf=rf,
+            # eq=eq,
+            # method_mu=method_mu,
+            # method_cov=method_cov,
+            # **kwargs,
+        )
+e = timer()
+print(e-s)
+"""
+
+println("wbt = ", vec(py"np.array(wb)"))
+println("cov_mtxt = ", vec(py"np.array(cov)"))
+println("mut = ", vec(py"np.array(mu)"))
+
+println("returns1t = ", vec(py"np.array(returns1)"))
+println("returns2t = ", vec(py"np.array(returns2)"))
+
+println("lmtx4t = ", vec(py"np.array(lmtxt)"))
+
+println("betat = ", vec(py"np.array(beta)"))
+println("incl2t = ", py"incl2")
+println("incl3t = ", py"incl3")
+println("incl4t = ", py"incl4")
+println("incl5t = ", py"incl5")
+println("incl6t = ", py"incl6")
 
 A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
@@ -20,7 +2208,735 @@ returns = dropmissing!(DataFrame(Y))
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
-type = :trad
+
+portfolio = Portfolio(
+    returns = returns,
+    solvers = Dict(
+        :Clarabel =>
+            Dict(:solver => Clarabel.Optimizer, :params => Dict("verbose" => false)),
+    ),
+    alloc_solvers = Dict(
+        :HiGHS => Dict(
+            :solver => (HiGHS.Optimizer),
+            :params => Dict("log_to_console" => false),
+        ),
+    ),
+    latest_prices = Vector(DataFrame(A[end])[1, 2:end]),
+)
+
+asset_statistics!(portfolio, jlogo = true)
+
+covjt = reshape(
+    [
+        0.00020997582228184737,
+        9.803674633175464e-5,
+        0.00014077374362954793,
+        0.00011822768246482305,
+        0.00015839638863970605,
+        4.134249512939413e-5,
+        9.741361595383921e-5,
+        3.088472057695859e-5,
+        8.723400768938203e-5,
+        4.695561415789377e-5,
+        2.410793390349611e-5,
+        7.697761692810674e-5,
+        5.0213913154013506e-5,
+        4.657297911600372e-5,
+        6.041300540147265e-5,
+        4.007622815237787e-5,
+        9.852662188755091e-5,
+        4.2581217516476454e-5,
+        7.891750241335416e-5,
+        8.308464134357728e-5,
+        9.803674633175465e-5,
+        0.00021152344684106046,
+        8.070483057492823e-5,
+        7.345023656198462e-5,
+        8.622173019184438e-5,
+        4.428661971580518e-5,
+        0.0001302364476786511,
+        3.0805102198474415e-5,
+        9.441947447077707e-5,
+        5.079396190194336e-5,
+        2.5625742533149956e-5,
+        6.843664330541139e-5,
+        5.434336230275222e-5,
+        4.824450286505276e-5,
+        6.332376221790682e-5,
+        4.338668439198836e-5,
+        9.258430057865659e-5,
+        4.32569168917907e-5,
+        8.569427917973395e-5,
+        5.800692429397668e-5,
+        0.00014077374362954793,
+        8.070483057492824e-5,
+        0.0002572414426920628,
+        9.907520278111458e-5,
+        0.00015334295879523472,
+        3.9753234112169053e-5,
+        9.26118854903671e-5,
+        3.091630885459725e-5,
+        8.337939553449811e-5,
+        4.4888780957011246e-5,
+        2.328729997945842e-5,
+        7.756460767061063e-5,
+        4.799509093176798e-5,
+        4.566092116229601e-5,
+        5.8836037779678905e-5,
+        3.829743915517536e-5,
+        0.00010166996305493107,
+        4.2204522581317837e-5,
+        7.526496401459743e-5,
+        8.802924838121843e-5,
+        0.000118227682464823,
+        7.345023656198461e-5,
+        9.907520278111457e-5,
+        0.0004006277432140748,
+        0.00013259642444595363,
+        3.656822111047857e-5,
+        8.810273446710931e-5,
+        2.9742503351053496e-5,
+        7.622510549864202e-5,
+        4.1020950028742595e-5,
+        2.1533972054045348e-5,
+        6.244898023158406e-5,
+        4.386538350476626e-5,
+        4.293671627681013e-5,
+        5.492306428908416e-5,
+        3.499344009076798e-5,
+        0.00010093601577900456,
+        4.0169975051465906e-5,
+        6.85725638068425e-5,
+        6.258847359456458e-5,
+        0.00015839638863970608,
+        8.622173019184438e-5,
+        0.00015334295879523472,
+        0.00013259642444595363,
+        0.0003311044630153935,
+        4.038058059540701e-5,
+        9.583901646637e-5,
+        3.161780823422457e-5,
+        8.463726955701523e-5,
+        4.555542067291643e-5,
+        2.367290551940056e-5,
+        7.328255734548557e-5,
+        4.87135900731346e-5,
+        4.653304028701638e-5,
+        5.9897079161003374e-5,
+        3.886927014428788e-5,
+        0.00010448970386759234,
+        4.309114571855092e-5,
+        7.634401145955454e-5,
+        7.776687178020369e-5,
+        4.134249512939419e-5,
+        4.4286619715805225e-5,
+        3.9753234112169114e-5,
+        3.656822111047864e-5,
+        4.0380580595407055e-5,
+        0.00017908772525119732,
+        6.489402909991504e-5,
+        2.5028507197328273e-5,
+        9.962273724791334e-5,
+        8.680193208085993e-5,
+        5.277338640116081e-5,
+        6.097685395858871e-5,
+        7.124243170541165e-5,
+        6.946631411775527e-5,
+        0.00010068570060338062,
+        5.388381392162784e-5,
+        5.3206272630080165e-5,
+        4.00742109894251e-5,
+        9.128928696697807e-5,
+        3.6671470230580326e-5,
+        9.741361595383927e-5,
+        0.00013023644767865114,
+        9.261188549036715e-5,
+        8.810273446710938e-5,
+        9.583901646637e-5,
+        6.4894029099915e-5,
+        0.0016481856234771088,
+        4.424596013731999e-5,
+        0.00013873440279034985,
+        7.462295424808122e-5,
+        3.7471916631902144e-5,
+        9.514621072757057e-5,
+        7.984666848657677e-5,
+        7.004888096269947e-5,
+        9.22439789559985e-5,
+        6.375373838021073e-5,
+        0.00013058586088202266,
+        6.246142917350003e-5,
+        0.00012602293719272368,
+        7.362065024292618e-5,
+        3.08847205769586e-5,
+        3.080510219847442e-5,
+        3.091630885459727e-5,
+        2.9742503351053513e-5,
+        3.161780823422457e-5,
+        2.5028507197328253e-5,
+        4.4245960137319985e-5,
+        0.0001635354142723386,
+        5.178413394383976e-5,
+        2.8116150979283105e-5,
+        1.469733389523753e-5,
+        3.4709767831462856e-5,
+        2.991739160561292e-5,
+        2.901108129345606e-5,
+        3.718896301005846e-5,
+        2.3872325284642976e-5,
+        4.6014215745053086e-5,
+        4.450058196330504e-5,
+        4.723912468936465e-5,
+        2.5631155975938334e-5,
+        8.723400768938216e-5,
+        9.441947447077717e-5,
+        8.337939553449825e-5,
+        7.622510549864213e-5,
+        8.463726955701532e-5,
+        9.962273724791336e-5,
+        0.0001387344027903499,
+        5.1784133943839795e-5,
+        0.0002761997989142426,
+        0.0001258404123778019,
+        5.5197475609638086e-5,
+        0.0001417373885547038,
+        0.0001484507282492688,
+        9.14050552075807e-5,
+        0.0001353618737737425,
+        0.00011844433793628722,
+        0.00010985321115130256,
+        7.870483515637123e-5,
+        0.0002011793054113852,
+        7.788398396676904e-5,
+        4.6955614157893846e-5,
+        5.079396190194342e-5,
+        4.488878095701133e-5,
+        4.102095002874267e-5,
+        4.555542067291649e-5,
+        8.680193208085995e-5,
+        7.462295424808129e-5,
+        2.8116150979283132e-5,
+        0.00012584041237780196,
+        0.00024332211270197752,
+        3.679005664812949e-5,
+        7.277466203867336e-5,
+        0.0001457443295728806,
+        5.72686623984398e-5,
+        8.137270380669468e-5,
+        0.00010005844523863923,
+        5.910666680743218e-5,
+        4.341172302514207e-5,
+        0.00010817672206732099,
+        4.1999000458699494e-5,
+        2.4107933903496137e-5,
+        2.5625742533149973e-5,
+        2.3287299979458445e-5,
+        2.1533972054045372e-5,
+        2.3672905519400578e-5,
+        5.277338640116079e-5,
+        3.747191663190216e-5,
+        1.4697333895237537e-5,
+        5.5197475609638065e-5,
+        3.6790056648129484e-5,
+        0.00010534978848760097,
+        3.447283147876063e-5,
+        3.476298535587916e-5,
+        4.853189091930909e-5,
+        5.9253564059689923e-5,
+        2.7163178806229894e-5,
+        3.156891859240837e-5,
+        2.412239965940403e-5,
+        5.140975472359201e-5,
+        2.1234135644375778e-5,
+        7.697761692810682e-5,
+        6.843664330541146e-5,
+        7.75646076706107e-5,
+        6.244898023158416e-5,
+        7.328255734548563e-5,
+        6.097685395858872e-5,
+        9.514621072757063e-5,
+        3.4709767831462876e-5,
+        0.0001417373885547038,
+        7.277466203867336e-5,
+        3.447283147876066e-5,
+        0.0007066882567333448,
+        7.998599079162263e-5,
+        6.019307841605814e-5,
+        8.302509502935594e-5,
+        6.388032472082338e-5,
+        8.383990731316273e-5,
+        5.15179129885043e-5,
+        0.00012182889805680192,
+        0.00010811590662763465,
+        5.021391315401357e-5,
+        5.43433623027523e-5,
+        4.799509093176807e-5,
+        4.386538350476632e-5,
+        4.871359007313466e-5,
+        7.124243170541166e-5,
+        7.984666848657684e-5,
+        2.991739160561294e-5,
+        0.00014845072824926883,
+        0.0001457443295728806,
+        3.4762985355879176e-5,
+        7.998599079162263e-5,
+        0.0019439677607081564,
+        5.6091190985797525e-5,
+        8.143828238380116e-5,
+        0.00023386599375945137,
+        6.320360210863741e-5,
+        4.576565505327067e-5,
+        0.00011581541521370314,
+        4.487264327698091e-5,
+        4.657297911600371e-5,
+        4.824450286505274e-5,
+        4.5660921162296005e-5,
+        4.293671627681013e-5,
+        4.6533040287016354e-5,
+        6.94663141177552e-5,
+        7.00488809626994e-5,
+        2.901108129345604e-5,
+        9.140505520758058e-5,
+        5.72686623984397e-5,
+        4.853189091930907e-5,
+        6.019307841605804e-5,
+        5.609119098579743e-5,
+        0.00014363521728517984,
+        0.00015453720776819601,
+        4.42507949454857e-5,
+        6.444039069141756e-5,
+        5.124788460850674e-5,
+        8.774182747957663e-5,
+        4.0057278945382356e-5,
+        6.041300540147268e-5,
+        6.332376221790682e-5,
+        5.883603777967893e-5,
+        5.49230642890842e-5,
+        5.989707916100338e-5,
+        0.00010068570060338056,
+        9.224397895599845e-5,
+        3.718896301005845e-5,
+        0.00013536187377374235,
+        8.137270380669458e-5,
+        5.925356405968988e-5,
+        8.302509502935583e-5,
+        8.143828238380108e-5,
+        0.00015453720776819607,
+        0.0009937022125140933,
+        6.413867647869578e-5,
+        8.159223034002054e-5,
+        6.341331115400401e-5,
+        0.00012057821002300521,
+        5.249442561506602e-5,
+        4.007622815237791e-5,
+        4.33866843919884e-5,
+        3.8297439155175416e-5,
+        3.4993440090768036e-5,
+        3.8869270144287924e-5,
+        5.388381392162783e-5,
+        6.375373838021077e-5,
+        2.3872325284642983e-5,
+        0.00011844433793628725,
+        0.00010005844523863921,
+        2.7163178806229897e-5,
+        6.388032472082338e-5,
+        0.00023386599375945131,
+        4.4250794945485765e-5,
+        6.413867647869583e-5,
+        0.0005054585590745461,
+        5.040215722614181e-5,
+        3.648074552416068e-5,
+        9.256991406046881e-5,
+        3.582548495164837e-5,
+        9.85266218875509e-5,
+        9.258430057865655e-5,
+        0.00010166996305493103,
+        0.00010093601577900456,
+        0.00010448970386759227,
+        5.320627263008006e-5,
+        0.00013058586088202253,
+        4.601421574505306e-5,
+        0.00010985321115130236,
+        5.910666680743206e-5,
+        3.156891859240832e-5,
+        8.383990731316258e-5,
+        6.320360210863729e-5,
+        6.444039069141754e-5,
+        8.159223034002047e-5,
+        5.0402157226141716e-5,
+        0.00016243872736431124,
+        6.127832941435988e-5,
+        9.838072451447072e-5,
+        7.735879911530241e-5,
+        4.258121751647646e-5,
+        4.325691689179071e-5,
+        4.220452258131785e-5,
+        4.016997505146593e-5,
+        4.309114571855092e-5,
+        4.007421098942506e-5,
+        6.24614291735e-5,
+        4.450058196330504e-5,
+        7.870483515637113e-5,
+        4.341172302514201e-5,
+        2.412239965940402e-5,
+        5.151791298850423e-5,
+        4.576565505327062e-5,
+        5.124788460850676e-5,
+        6.341331115400401e-5,
+        3.6480745524160645e-5,
+        6.12783294143599e-5,
+        0.00012202561764009533,
+        7.235602099204436e-5,
+        3.5948219586652974e-5,
+        7.891750241335428e-5,
+        8.569427917973406e-5,
+        7.526496401459755e-5,
+        6.857256380684262e-5,
+        7.634401145955463e-5,
+        9.128928696697808e-5,
+        0.00012602293719272376,
+        4.723912468936469e-5,
+        0.0002011793054113852,
+        0.00010817672206732099,
+        5.140975472359204e-5,
+        0.00012182889805680191,
+        0.00011581541521370316,
+        8.774182747957677e-5,
+        0.00012057821002300536,
+        9.256991406046881e-5,
+        9.838072451447094e-5,
+        7.235602099204444e-5,
+        0.0001849011455817144,
+        7.089867226693533e-5,
+        8.308464134357728e-5,
+        5.800692429397668e-5,
+        8.802924838121843e-5,
+        6.25884735945646e-5,
+        7.776687178020369e-5,
+        3.667147023058028e-5,
+        7.362065024292616e-5,
+        2.5631155975938327e-5,
+        7.788398396676894e-5,
+        4.199900045869944e-5,
+        2.1234135644375764e-5,
+        0.00010811590662763458,
+        4.487264327698086e-5,
+        4.005727894538237e-5,
+        5.249442561506602e-5,
+        3.582548495164833e-5,
+        7.735879911530245e-5,
+        3.5948219586652974e-5,
+        7.089867226693525e-5,
+        0.00015789185651061675,
+    ],
+    20,
+    20,
+)
+
+@test isapprox(covjt, portfolio.cov)
+portfolio.jlogo
+py"""
+import numpy as np
+import pandas as pd
+import riskfolio as rp
+import riskfolio.src.ParamsEstimation as pe
+import riskfolio.src.DBHT as db
+
+Y = pd.DataFrame($(Matrix(returns[!,2:end])), index=None, columns=$(names(returns[!,2:end])))
+port = rp.Portfolio(returns=Y)
+
+X = port.returns
+S = np.cov(X.T)
+R = np.corrcoef(X.T)
+D = np.sqrt(np.clip((1 - R) / 2, a_min=0.0, a_max=1.0))
+(_, _, separators, cliques, _) = db.PMFG_T2s(1 - D**2, nargout=4)
+
+def j_LoGo(S, separators, cliques):
+    N = S.shape[0]
+    if isinstance(separators, dict) == False:
+        separators_temp = {}
+        for i in range(len(separators)):
+            separators_temp[i] = separators[i, :]
+    if isinstance(cliques, dict) == False:
+        cliques_temp = {}
+        for i in range(len(cliques)):
+            cliques_temp[i] = cliques[i, :]
+
+    Jlogo = np.zeros((N, N))
+    for i in cliques_temp.keys():
+        v = np.int32(cliques_temp[i])
+        Jlogo[np.ix_(v, v)] = Jlogo[np.ix_(v, v)] + np.linalg.inv(S[np.ix_(v, v)])
+
+    for i in separators_temp.keys():
+        v = np.int32(separators_temp[i])
+        Jlogo[np.ix_(v, v)] = Jlogo[np.ix_(v, v)] - np.linalg.inv(S[np.ix_(v, v)])
+
+    return Jlogo
+
+
+
+st = j_LoGo(S, separators, cliques)
+
+method_cov="jlogo" # Method to estimate covariance matrix based on historical data.
+
+port.assets_stats(method_cov=method_cov)
+"""
+
+println(py"st")
+println("cov = $(vec(py"np.array(port.cov)"))")
+
+investment = 69420
+opt_port!(portfolio, linkage = :complete, type = :HERC)
+alloc_type = :LP
+lp_alloc = allocate_port!(
+    portfolio;
+    port_type = :HERC,
+    alloc_type = alloc_type,
+    investment = investment,
+)
+
+alloc_type = :Greedy
+gr_alloc = allocate_port!(
+    portfolio;
+    port_type = :HERC,
+    alloc_type = alloc_type,
+    investment = investment,
+)
+
+lalloc, lleftover = Allocation(
+    LP(),
+    portfolio.assets,
+    portfolio.optimal[:HERC].weights,
+    portfolio.latest_prices,
+    investment,
+)
+
+galloc, gleftover = Allocation(
+    Greedy(),
+    portfolio.assets,
+    portfolio.optimal[:HERC].weights,
+    portfolio.latest_prices,
+    investment,
+)
+
+lp_alloct = DataFrame(
+    tickers = [
+        "GOOG",
+        "AAPL",
+        "FB",
+        "BABA",
+        "GE",
+        "AMD",
+        "WMT",
+        "BAC",
+        "GM",
+        "T",
+        "UAA",
+        "SHLD",
+        "XOM",
+        "RRC",
+        "BBY",
+        "MA",
+        "PFE",
+        "JPM",
+        "SBUX",
+    ],
+    shares = [1, 4, 4, 3, 47, 303, 335, 16, 13, 22, 21, 2533, 9, 256, 231, 4, 21, 5, 13],
+    weights = [
+        0.014693069123740864,
+        0.009936264561200548,
+        0.009583620808428936,
+        0.007578389627606793,
+        0.008781384022864722,
+        0.04286267311582058,
+        0.41458509282878303,
+        0.006891540406729905,
+        0.007303534670175715,
+        0.01117138291266522,
+        0.00506407214586503,
+        0.12041324645864256,
+        0.01003868679606578,
+        0.055279834486625434,
+        0.23596338932588753,
+        0.009931654777554406,
+        0.010826950248780262,
+        0.00796762354167102,
+        0.01112759014089158,
+    ],
+)
+
+gr_alloct = DataFrame(
+    tickers = [
+        "WMT",
+        "BBY",
+        "SHLD",
+        "RRC",
+        "AMD",
+        "T",
+        "SBUX",
+        "PFE",
+        "XOM",
+        "GOOG",
+        "AAPL",
+        "MA",
+        "GE",
+        "JPM",
+        "FB",
+        "GM",
+        "BAC",
+        "BABA",
+        "UAA",
+    ],
+    shares = [
+        335.0,
+        231.0,
+        2531.0,
+        255.0,
+        303.0,
+        23.0,
+        13.0,
+        21.0,
+        9.0,
+        1.0,
+        4.0,
+        4.0,
+        46.0,
+        5.0,
+        4.0,
+        13.0,
+        16.0,
+        3.0,
+        21.0,
+    ],
+    weights = [
+        0.41458097200928257,
+        0.2359610439387693,
+        0.1203169749421343,
+        0.05506335031878181,
+        0.04286224707701147,
+        0.01167905695848274,
+        0.011127479536841315,
+        0.010826842632977167,
+        0.010038587015304185,
+        0.014692923080173899,
+        0.009936165798477349,
+        0.009931556060650716,
+        0.008594460638384179,
+        0.007967544346497265,
+        0.00958352555085167,
+        0.007303462075794942,
+        0.006891471907416766,
+        0.007578314301271379,
+        0.005064021810897344,
+    ],
+)
+
+lp_leftovert = 1.5577120000156128
+gr_leftovert = 0.8677120000015961
+
+@test isapprox(lp_leftovert, portfolio.alloc_params[:LP_HERC][:leftover])
+@test isapprox(gr_leftovert, portfolio.alloc_params[:Greedy_HERC][:leftover])
+
+lp_allocjoin = outerjoin(lp_alloct, lp_alloc, on = :tickers, makeunique = true)
+lp_allocjoin.shares[ismissing.(lp_allocjoin.shares)] .= 0
+lp_allocjoin.weights[ismissing.(lp_allocjoin.weights)] .= 0
+
+gr_allocjoin = outerjoin(gr_alloct, gr_alloc, on = :tickers, makeunique = true)
+gr_allocjoin.shares[ismissing.(gr_allocjoin.shares)] .= 0
+gr_allocjoin.weights[ismissing.(gr_allocjoin.weights)] .= 0
+
+@test isapprox(lp_allocjoin.shares, lp_allocjoin.shares_1)
+@test isapprox(lp_allocjoin.weights, lp_allocjoin.weights_1)
+
+@test isapprox(gr_allocjoin.shares, gr_allocjoin.shares_1)
+@test isapprox(gr_allocjoin.weights, gr_allocjoin.weights_1)
+
+portfolio = Portfolio(
+    returns = returns,
+    solvers = OrderedDict(
+        :Clarabel =>
+            Dict(:solver => Clarabel.Optimizer, :params => Dict("verbose" => false)),
+        :COSMO => Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+        :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+    ),
+    alloc_solvers = Dict(
+        :HiGHS => Dict(
+            :solver => (HiGHS.Optimizer),
+            :params => Dict("log_to_console" => false),
+        ),
+    ),
+    latest_prices = Vector(DataFrame(A[end])[1, 2:end]),
+    short = true,
+)
+asset_statistics!(portfolio)
+
+opt_port!(portfolio, obj = :Sharpe)
+alloc_type = :LP
+allocation = allocate_port!(portfolio; alloc_type = alloc_type)
+
+alloc_type = :Greedy
+allocation = allocate_port!(portfolio; alloc_type = alloc_type)
+
+lalloc, lleftover = Allocation(
+    LP(),
+    portfolio.assets,
+    portfolio.optimal[:Trad].weights,
+    portfolio.latest_prices,
+)
+
+galloc, gleftover = Allocation(
+    Greedy(),
+    portfolio.assets,
+    portfolio.optimal[:Trad].weights,
+    portfolio.latest_prices,
+)
+
+portfolio = HCPortfolio(
+    returns = returns,
+    solvers = OrderedDict(
+        :Clarabel =>
+            Dict(:solver => Clarabel.Optimizer, :params => Dict("verbose" => false)),
+        :COSMO => Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+        :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+    ),
+    alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer)),
+    latest_prices = Vector(DataFrame(A[end])[1, 2:end]),
+)
+asset_statistics!(portfolio)
+
+opt_port!(portfolio)
+alloc_type = :LP
+allocation = allocate_port!(portfolio; alloc_type = alloc_type)
+
+alloc_type = :Greedy
+allocation = allocate_port!(portfolio; alloc_type = alloc_type)
+
+lalloc, lleftover = Allocation(
+    LP(),
+    portfolio.assets,
+    portfolio.optimal[:HRP].weights,
+    portfolio.latest_prices,
+)
+
+galloc, gleftover = Allocation(
+    Greedy(),
+    portfolio.assets,
+    portfolio.optimal[:HRP].weights,
+    portfolio.latest_prices,
+)
+
+portfolio = HCPortfolio(
+    returns = returns,
+    solvers = OrderedDict(
+        :Clarabel =>
+            Dict(:solver => (Clarabel.Optimizer), :params => Dict("verbose" => false)),
+        :COSMO => Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+        :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
+    ),
+)
 
 py"""
 import numpy as np
@@ -32,12 +2948,12 @@ port = rp.HCPortfolio(returns=Y)
 
 # Estimate optimal portfolio:
 
-model='HRP' # Could be HRP or HERC
-codependence = 'tail' # Correlation matrix used to group assets in clusters
-rm = 'MV' # Risk measure used, this time will be variance
+model="HRP" # Could be HRP or HERC
+codependence = "tail" # Correlation matrix used to group assets in clusters
+rm = "MV" # Risk measure used, this time will be variance
 rf = $rf # Risk free rate
-l = $l # Risk aversion factor, only useful when obj is 'Utility'
-linkage = 'single' # Linkage method used to build clusters
+l = $l # Risk aversion factor, only useful when obj is "Utility"
+linkage = "single" # Linkage method used to build clusters
 max_k = 10 # Max number of clusters used in two difference gap statistic, only for HERC model
 leaf_order = True # Consider optimal order of leafs in dendrogram
 w = port.optimization(model=model,
@@ -6502,9 +9418,9 @@ Y = pd.DataFrame($(Matrix(returns[!,2:end])), index=None, columns=["0","1","2","
 port = rp.Portfolio(returns=Y)
 port.n_max_kurt = 5
 
-method_mu='hist' # Method to estimate expected returns based on historical data.
-method_cov='hist' # Method to estimate covariance matrix based on historical data.
-method_kurt='hist' # Method to estimate cokurtosis square matrix based on historical data.
+method_mu="hist" # Method to estimate expected returns based on historical data.
+method_cov="hist" # Method to estimate covariance matrix based on historical data.
+method_kurt="hist" # Method to estimate cokurtosis square matrix based on historical data.
 
 port.assets_stats(method_mu=method_mu,
                   method_cov=method_cov,
@@ -6513,32 +9429,32 @@ port.assets_stats(method_mu=method_mu,
 
 # Estimate optimal portfolio:
 
-model='Classic' # Could be Classic (historical), BL (Black Litterman) or FM (Factor Model)
+model="Classic" # Could be Classic (historical), BL (Black Litterman) or FM (Factor Model)
 hist = True # Use historical scenarios for risk measures that depend on scenarios
 rf = $rf # Risk free rate
-l = $l # Risk aversion factor, only useful when obj is 'Utility'
+l = $l # Risk aversion factor, only useful when obj is "Utility"
 
 # port.solvers = ["CLARABEL","SCS"]#["CLARABEL","ECOS","SCS"]
 """
 
 py"""
 kelly = "exact"
-rm = 'SKT' # Risk measure used, this time will be variance
+rm = "SKT" # Risk measure used, this time will be variance
 """
 py"""
-obj = 'MinRisk' # Objective function, could be MinRisk, MaxRet, Utility or Sharpe
+obj = "MinRisk" # Objective function, could be MinRisk, MaxRet, Utility or Sharpe
 w1 = port.optimization(model=model, rm=rm, obj=obj, rf=rf, l=l, hist=hist, kelly=kelly)
 """
 py"""
-obj = 'Utility' # Objective function, could be MinRisk, MaxRet, Utility or Sharpe
+obj = "Utility" # Objective function, could be MinRisk, MaxRet, Utility or Sharpe
 w2 = port.optimization(model=model, rm=rm, obj=obj, rf=rf, l=l, hist=hist, kelly=kelly)
 """
 py"""
-obj = 'Sharpe' # Objective function, could be MinRisk, MaxRet, Utility or Sharpe
+obj = "Sharpe" # Objective function, could be MinRisk, MaxRet, Utility or Sharpe
 w3 = port.optimization(model=model, rm=rm, obj=obj, rf=rf, l=l, hist=hist, kelly=kelly)
 """
 py"""
-obj = 'MaxRet' # Objective function, could be MinRisk, MaxRet, Utility or Sharpe
+obj = "MaxRet" # Objective function, could be MinRisk, MaxRet, Utility or Sharpe
 w4 = port.optimization(model=model, rm=rm, obj=obj, rf=rf, l=l, hist=hist, kelly=kelly)
 """
 
