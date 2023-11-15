@@ -902,10 +902,12 @@ function wc_statistics!(
     dcov::Real = 0.1,
     dmu::Real = 0.1,
     ellipse::Symbol = :Stationary,
-    fix_cov_args::Tuple = (),
-    fix_cov_kwargs::NamedTuple = (;),
     n_samples::Integer = 10_000,
     n_sim::Integer = 3_000,
+    posdef_args::Tuple = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
+    posdef_kwargs::NamedTuple = (;),
     q::Real = 0.05,
     rng = Random.default_rng(),
     seed::Union{Integer, Nothing} = nothing,
@@ -941,10 +943,22 @@ function wc_statistics!(
             cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)], N, N)
             cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
 
-            args = ()
-            kwargs = (;)
-            !isposdef(cov_l) && fix_cov!(cov_l, fix_cov_args...; fix_cov_kwargs...)
-            !isposdef(cov_u) && fix_cov!(cov_u, fix_cov_args...; fix_cov_kwargs...)
+            !isposdef(cov_l) && posdef_fix!(
+                cov_l,
+                posdef_fix;
+                msg = "WC cov_l ",
+                posdef_args = posdef_args,
+                posdef_func = posdef_func,
+                posdef_kwargs = posdef_kwargs,
+            )
+            !isposdef(cov_u) && posdef_fix!(
+                cov_u,
+                posdef_fix;
+                msg = "WC cov_u ",
+                posdef_args = posdef_args,
+                posdef_func = posdef_func,
+                posdef_kwargs = posdef_kwargs,
+            )
 
             d_mu = (mu_u - mu_l) / 2
         elseif box == :Normal
@@ -954,10 +968,23 @@ function wc_statistics!(
 
             cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)], N, N)
             cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
-            args = ()
-            kwargs = (;)
-            !isposdef(cov_l) && fix_cov!(cov_l, args..., kwargs...)
-            !isposdef(cov_u) && fix_cov!(cov_u, args..., kwargs...)
+
+            !isposdef(cov_l) && posdef_fix!(
+                cov_l,
+                posdef_fix;
+                msg = "WC cov_l ",
+                posdef_args = posdef_args,
+                posdef_func = posdef_func,
+                posdef_kwargs = posdef_kwargs,
+            )
+            !isposdef(cov_u) && posdef_fix!(
+                cov_u,
+                posdef_fix;
+                msg = "WC cov_u ",
+                posdef_args = posdef_args,
+                posdef_func = posdef_func,
+                posdef_kwargs = posdef_kwargs,
+            )
         elseif box == :Delta
             d_mu = dmu * abs.(mu)
             cov_l = sigma - dcov * abs.(sigma)
@@ -2334,7 +2361,6 @@ export block_vec_pq,
     scokurt,
     asset_statistics!,
     wc_statistics!,
-    fix_cov!,
     forward_regression,
     backward_regression,
     pcr,
