@@ -1,5 +1,4 @@
 using Test,
-    Logging,
     OrderedCollections,
     JuMP,
     PortfolioOptimiser,
@@ -32,11 +31,17 @@ returns = dropmissing!(DataFrame(Y))
             :params => Dict("verbose" => false, "maxit" => 2),
         ),
     )
-    test_logger = TestLogger()
-    with_logger(test_logger) do
-        calc_risk(portfolio; rm = :EVaR)
-    end
-    @test !isempty(test_logger.logs)
+    asset_statistics!(portfolio, calc_kurt = false)
+
+    r1 = calc_risk(portfolio; rm = :EVaR)
+    portfolio.solvers = OrderedDict(
+        :ECOS => Dict(
+            :solver => ECOS.Optimizer,
+            :params => Dict("verbose" => false, "maxit" => 100),
+        ),
+    )
+    r2 = calc_risk(portfolio; rm = :EVaR)
+    @test r1 > r2
 
     portfolio.solvers = OrderedDict(
         :ECOS => Dict(
@@ -46,23 +51,14 @@ returns = dropmissing!(DataFrame(Y))
     )
     @test_throws JuMP.OptimizeNotCalled() calc_risk(portfolio; rm = :RVaR)
 
-    test_logger = TestLogger()
-    with_logger(test_logger) do
-        opt_port!(portfolio, rm = :RVaR)
-    end
-    @test !isempty(test_logger.logs)
-
     portfolio.solvers = OrderedDict(
         :ECOS => Dict(
             :solver => ECOS.Optimizer,
             :params => Dict("verbose" => false, "maxit" => 2),
         ),
     )
-    test_logger = TestLogger()
-    with_logger(test_logger) do
-        opt_port!(portfolio, rm = :EVaR)
-    end
-    @test !isempty(test_logger.logs)
+    w1 = opt_port!(portfolio, rm = :EVaR)
+    @test isempty(w1)
 
     portfolio.solvers = OrderedDict(
         :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
@@ -70,14 +66,12 @@ returns = dropmissing!(DataFrame(Y))
     opt_port!(portfolio)
 
     portfolio.solvers = OrderedDict(
-        :Clarabel => Dict(
-            :solver => Clarabel.Optimizer,
+        :ECOS => Dict(
+            :solver => ECOS.Optimizer,
             :params => Dict("verbose" => false, "max_iter" => 2),
         ),
     )
-    test_logger = TestLogger()
-    with_logger(test_logger) do
-        calc_risk(portfolio; rm = :RVaR)
-    end
-    @test !isempty(test_logger.logs)
+
+    w1 = opt_port!(portfolio; rm = :RVaR)
+    @test isempty(w1)
 end
