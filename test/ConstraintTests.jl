@@ -1,4 +1,4 @@
-using Test, PortfolioOptimiser, DataFrames, OrderedCollections
+using Test, PortfolioOptimiser, DataFrames, OrderedCollections, Clarabel, CSV, TimeSeries
 
 @testset "Asset constraints" begin
     asset_classes = Dict(
@@ -1660,7 +1660,7 @@ end
 end
 
 @testset "Factor views" begin
-    loadings = OrderedDict(
+    loadings = Dict(
         "const" => [0.0004, 0.0002, 0.0000, 0.0006, 0.0001, 0.0003, -0.0003],
         "MTUM" => [0.1916, 1.0061, 0.8695, 1.9996, 0.0000, 0.0000, 0.0000],
         "QUAL" => [0.0000, 2.0129, 1.4301, 0.0000, 0.0000, 0.0000, 0.0000],
@@ -1671,7 +1671,7 @@ end
 
     loadings = DataFrame(loadings)
 
-    views = OrderedDict(
+    views = Dict(
         "Enabled" => [true, true, true],
         "Factor" => ["MTUM", "USMV", "VLUE"],
         "Sign" => ["<=", "<=", ">="],
@@ -1688,7 +1688,7 @@ end
     @test isapprox(Pt, P)
     @test isapprox(Qt, Q)
 
-    loadings = OrderedDict(
+    loadings = Dict(
         "MTUM" => [0.1916, 1.0061, 0.8695, 1.9996, 0.0000, 0.0000, 0.0000],
         "QUAL" => [0.0000, 2.0129, 1.4301, 0.0000, 0.0000, 0.0000, 0.0000],
         "SIZE" => [0.0000, 0.0000, 0.0000, 0.4717, 0.0000, -0.1857, 0.0000],
@@ -1755,7 +1755,7 @@ end
 end
 
 @testset "RP constraints" begin
-    asset_classes = OrderedDict(
+    asset_classes = Dict(
         "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
         "Class 1" => [
             "Equity",
@@ -1810,9 +1810,13 @@ end
 end
 
 @testset "A and B inequalities" begin
+    A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
+    Y = percentchange(A)
+    returns = dropmissing!(DataFrame(Y))
+
     portfolio = Portfolio(
         returns = returns,
-        solvers = OrderedDict(
+        solvers = Dict(
             :Clarabel => Dict(
                 :solver => (Clarabel.Optimizer),
                 :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
