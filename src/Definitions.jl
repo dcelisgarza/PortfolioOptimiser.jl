@@ -489,7 +489,7 @@ HCPortTypes = (:HRP, :HERC, :HERC2, :NCO)
 """
 const HCPortTypes = (:HRP, :HERC, :HERC2, :NCO)
 
-const MuTypes = (:Default, :JS, :BS, :BOP, :Custom_Func, :Custom_Val)
+const MuTypes = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 const MuTargets = (:GM, :VW, :SE)
 const CovTypes = (:Full, :Semi, :Gerber1, :Gerber2, :Custom_Func, :Custom_Val)
 const PosdefFixes = (:None, :Nearest, :Custom_Func)

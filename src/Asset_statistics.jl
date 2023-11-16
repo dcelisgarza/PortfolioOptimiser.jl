@@ -294,8 +294,8 @@ function mu_esimator(
         betas = sigma[:, end] / sigma[end, end]
         betas = betas[1:(end - 1)]
         mkt_mean_ret =
-            isnothing(mu_weights) ? vec(mean(returns[!, end]; dims = dims)) :
-            vec(mean(returns[!, end], mu_weights; dims = dims))
+            isnothing(mu_weights) ? mean(returns[:, end]) :
+            mean(returns[:, end], mu_weights)
         mu = rf .+ betas * (mkt_mean_ret - rf)
     end
 
@@ -693,7 +693,7 @@ asset_statistics!(
 ```
 """
 
-function covar_mtx_mu_vec(
+function covar_mtx_mean_vec(
     returns;
     # cov_mtx
     alpha::Real = 0.0,
@@ -859,7 +859,7 @@ function asset_statistics!(
     returns = portfolio.returns
 
     if calc_cov || calc_mu
-        portfolio.cov, portfolio.mu = covar_mtx_mu_vec(
+        portfolio.cov, portfolio.mu = covar_mtx_mean_vec(
             returns;
             # cov_mtx
             alpha = alpha,
@@ -1559,7 +1559,7 @@ function risk_factors(
     x1 = "const" ∈ namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
     B = Matrix(B[!, setdiff(namesB, ["ticker"])])
 
-    cov_f, mu_f = covar_mtx_mu_vec(
+    cov_f, mu_f = covar_mtx_mean_vec(
         x1;
         # cov_mtx
         alpha = alpha,
@@ -1683,7 +1683,7 @@ function black_litterman(
     eq::Bool = true,
     rf::Real = 0.0,
 )
-    sigma, mu = covar_mtx_mu_vec(
+    sigma, mu = covar_mtx_mean_vec(
         returns;
         # cov_mtx
         alpha = alpha,
@@ -1811,7 +1811,7 @@ function augmented_black_litterman(
         )
 
     if all_asset_provided
-        sigma, mu = covar_mtx_mu_vec(
+        sigma, mu = covar_mtx_mean_vec(
             returns;
             # cov_mtx
             alpha = alpha,
@@ -1855,7 +1855,7 @@ function augmented_black_litterman(
     end
 
     if all_factor_provided
-        sigma_f, mu_f = covar_mtx_mu_vec(
+        sigma_f, mu_f = covar_mtx_mean_vec(
             F;
             # cov_mtx
             alpha = alpha,
@@ -2003,12 +2003,7 @@ function bayesian_black_litterman(
     var_func::Function = var,
     var_kwargs::NamedTuple = (;),
 )
-    @assert(
-        mu_type ∈ setdiff(MuTypes, (:CAPM,)),
-        "mu_type = $mu_type, must be one of $(setdiff(MuTypes, (:CAPM,)))"
-    )
-
-    sigma_f, mu_f = covar_mtx_mu_vec(
+    sigma_f, mu_f = covar_mtx_mean_vec(
         F;
         # cov_mtx
         alpha = alpha,
@@ -2127,11 +2122,6 @@ function black_litterman_statistics!(
     eq::Bool = true,
     rf::Real = 0.0,
 )
-    @assert(
-        mu_type ∈ setdiff(MuTypes, (:CAPM,)),
-        "mu_type = $mu_type, must be one of $(setdiff(MuTypes, (:CAPM,)))"
-    )
-
     returns = portfolio.returns
     if isempty(w)
         isempty(portfolio.bl_bench_weights) && (
@@ -2242,7 +2232,7 @@ function factor_statistics!(
     returns = portfolio.returns
     f_returns = portfolio.f_returns
 
-    portfolio.cov_f, portfolio.mu_f = covar_mtx_mu_vec(
+    portfolio.cov_f, portfolio.mu_f = covar_mtx_mean_vec(
         returns;
         # cov_mtx
         alpha = alpha,
@@ -2385,10 +2375,6 @@ function black_litterman_factor_satistics!(
     @assert(
         bl_type ∈ BlackLittermanType,
         "bl_type = $bl_type, must be one of $BlackLittermanType"
-    )
-    @assert(
-        mu_type ∈ setdiff(MuTypes, (:CAPM,)),
-        "mu_type = $mu_type, must be one of $(setdiff(MuTypes, (:CAPM,)))"
     )
 
     returns = portfolio.returns
