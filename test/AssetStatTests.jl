@@ -2264,6 +2264,20 @@ returns = dropmissing!(DataFrame(Y))
         custom_cor = corkendall(portfolio.returns),
     )
     @test isapprox(portfolio.codep, corkendall(portfolio.returns))
+
+    asset_statistics!(
+        portfolio,
+        cov_type = :Custom_Val,
+        custom_cov = covgerber1(portfolio.returns),
+    )
+    @test isapprox(portfolio.cov, covgerber1(portfolio.returns))
+
+    asset_statistics!(
+        portfolio,
+        mu_type = :Custom_Val,
+        custom_mu = vec(mean(portfolio.returns, dims = 1)),
+    )
+    @test isapprox(portfolio.mu, vec(mean(portfolio.returns, dims = 1)))
 end
 
 @testset "Loadings matrix" begin
