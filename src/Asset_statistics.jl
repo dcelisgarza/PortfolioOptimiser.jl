@@ -900,15 +900,6 @@ function asset_statistics!(
             mu_weights = mu_weights,
             rf = rf,
         )
-
-        portfolio.cov_type = cov_type
-
-        (cov_type == :Gerber1 || cov_type == :Gerber2) &&
-            (portfolio.gs_threshold = gs_threshold)
-
-        jlogo && (portfolio.jlogo = jlogo)
-
-        portfolio.mu_type = mu_type
     end
 
     # Type specific
@@ -958,15 +949,6 @@ function asset_statistics!(
                 std_kwargs = std_kwargs,
                 uplo = uplo,
             )
-
-            (cov_type == :Gerber1 || cov_type == :Gerber2) &&
-                (portfolio.gs_threshold = gs_threshold)
-
-            codep_type == :Mutual_Info && (portfolio.bins_info = bins_info)
-
-            codep_type == :Tail && (portfolio.alpha_tail = alpha_tail)
-
-            portfolio.codep_type = codep_type
         end
     end
 
