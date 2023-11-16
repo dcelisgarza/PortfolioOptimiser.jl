@@ -2265,6 +2265,7 @@ returns = dropmissing!(DataFrame(Y))
     )
     @test isapprox(portfolio.codep, corkendall(portfolio.returns))
 
+    portfolio = HCPortfolio(returns = returns)
     asset_statistics!(
         portfolio,
         cov_type = :Custom_Val,
@@ -2272,6 +2273,7 @@ returns = dropmissing!(DataFrame(Y))
     )
     @test isapprox(portfolio.cov, covgerber1(portfolio.returns))
 
+    portfolio = HCPortfolio(returns = returns)
     asset_statistics!(
         portfolio,
         mu_type = :Custom_Val,
