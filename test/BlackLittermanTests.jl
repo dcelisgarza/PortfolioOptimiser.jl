@@ -1,5 +1,5 @@
 using Test
-using PortfolioOptimiser, DataFrames, CSV, Statistics
+using PortfolioOptimiser, DataFrames, CSV, Statistics, Clarabel, TimeSeries
 
 @testset "Black Litterman" begin
     df = CSV.read("./assets/stock_prices.csv", DataFrame)

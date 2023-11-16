@@ -25,9 +25,9 @@ function _setup_ret(kelly, model, T, returns, mu, mu_l)
             [i = 1:T],
             [texact_kelly[i], 1, kret[i]] in MOI.ExponentialCone()
         )
-    elseif kelly == :Approx && (!isempty(mu) || !isempty(mu))
+    elseif kelly == :Approx && !isempty(mu)
         @expression(model, _ret, dot(mu, model[:w]) - 0.5 * model[:dev_risk])
-    elseif !isempty(mu) || !isempty(mu)
+    elseif !isempty(mu)
         @expression(model, _ret, dot(mu, model[:w]))
     end
 
@@ -47,7 +47,7 @@ function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l, trad = true)
             [texact_kelly[i], model[:k], kret[i]] in MOI.ExponentialCone()
         )
         trad && @constraint(model, model[:risk] <= 1)
-    elseif kelly == :Approx && (!isempty(mu) || !isempty(mu))
+    elseif kelly == :Approx && !isempty(mu)
         @variable(model, tapprox_kelly)
         @constraint(
             model,
@@ -59,7 +59,7 @@ function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l, trad = true)
         )
         @expression(model, _ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
         trad && @constraint(model, model[:risk] <= 1)
-    elseif !isempty(mu) || !isempty(mu)
+    elseif !isempty(mu)
         @expression(model, _ret, dot(mu, model[:w]))
         trad && @constraint(model, _ret - rf * model[:k] == 1)
     end
@@ -441,6 +441,7 @@ function _save_opt_params(
     portfolio,
     type,
     class,
+    hist,
     rm,
     obj,
     kelly,
@@ -464,6 +465,7 @@ function _save_opt_params(
             :rf => rf,
             :l => l,
             :string_names => string_names,
+            :hist => hist,
         )
     elseif type == :RP
         Dict(
@@ -473,6 +475,7 @@ function _save_opt_params(
             :kelly => (kelly == :Exact) ? :None : kelly,
             :rf => rf,
             :string_names => string_names,
+            :hist => hist,
         )
     elseif type == :RRP
         Dict(
@@ -483,6 +486,7 @@ function _save_opt_params(
             :rrp_penalty => rrp_penalty,
             :rrp_ver => rrp_ver,
             :string_names => string_names,
+            :hist => hist,
         )
     elseif type == :WC
         Dict(
@@ -494,6 +498,7 @@ function _save_opt_params(
             :u_mu => u_mu,
             :u_cov => u_cov,
             :string_names => string_names,
+            :hist => hist,
         )
     end
 
@@ -508,6 +513,8 @@ function _setup_model_class(portfolio, class, hist)
         Matrix{Float64}(undef, 0, 0),
         Matrix{Float64}(undef, 0, 0),
     )
+
+    class != :Classic && @assert(hist ∈ BLHist, "hist = $hist, must be one of $BLHist")
 
     if class == :Classic
         mu = portfolio.mu
@@ -528,18 +535,17 @@ function _setup_model_class(portfolio, class, hist)
         mu = portfolio.mu_bl
         if hist == 1
             sigma = portfolio.cov_bl
-            returns = portfolio.returns_bl
         elseif hist == 2
             sigma = portfolio.cov
-            returns = portfolio.returns
         else
             throw(AssertionError("for class = $class, hist = $hist can only be 1 or 2"))
         end
+        returns = portfolio.returns
     elseif class == :BL_FM
         mu = portfolio.mu_bl_fm
         if hist == 1
             sigma = portfolio.cov_bl_fm
-            returns = portfolio.returns_bl_fm
+            returns = portfolio.returns_fm
         elseif hist == 2
             sigma = portfolio.cov
             returns = portfolio.returns
@@ -571,7 +577,6 @@ function opt_port!(
 )
     @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
     @assert(class ∈ PortClasses, "class = $class, must be one of $PortClasses")
-    @assert(hist ∈ PortClassOption, "hist= $hist, must be one of $PortClassOption")
     @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
     @assert(obj ∈ ObjFuncs, "obj = $obj, must be one of $ObjFuncs")
     @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
@@ -595,6 +600,7 @@ function opt_port!(
         portfolio,
         type,
         class,
+        hist,
         rm,
         obj,
         kelly,

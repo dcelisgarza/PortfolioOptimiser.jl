@@ -1808,3 +1808,159 @@ end
     @test all(isapprox.(w7, 1 / 7))
     @test_throws ArgumentError rp_constraints(asset_classes, :Classes, "Wak")
 end
+
+@testset "A and B inequalities" begin
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    asset_classes = Dict(
+        "Assets" => names(returns[!, 2:end]),
+        "Industry" => [
+            "Consumer Discretionary",
+            "Consumer Discretionary",
+            "Consumer Staples",
+            "Consumer Staples",
+            "Energy",
+            "Financials",
+            "Financials",
+            "Health Care",
+            "Health Care",
+            "Industrials",
+            "Industrials",
+            "Health Care",
+            "Industrials",
+            "Information Technology",
+            "Materials",
+            "Telecommunications Services",
+            "Utilities",
+            "Utilities",
+            "Telecommunications Services",
+            "Financials",
+        ],
+    )
+    asset_classes = DataFrame(asset_classes)
+    sort!(asset_classes, "Assets")
+    constraints = Dict(
+        "Enabled" => [true, true, true, true, true],
+        "Type" => ["All Assets", "Classes", "Classes", "Classes", "Classes"],
+        "Set" => ["", "Industry", "Industry", "Industry", "Industry"],
+        "Position" =>
+            ["", "Financials", "Utilities", "Industrials", "Consumer Discretionary"],
+        "Sign" => ["<=", "<=", "<=", "<=", "<="],
+        "Weight" => [0.10, 0.2, 0.2, 0.2, 0.2],
+        "Type Relative" => ["", "", "", "", ""],
+        "Relative Set" => ["", "", "", "", ""],
+        "Relative" => ["", "", "", "", ""],
+        "Factor" => ["", "", "", "", ""],
+    )
+    constraints = DataFrame(constraints)
+    w1 = opt_port!(portfolio)
+    w1t = [
+        6.404242909815355e-9,
+        2.139687463536551e-8,
+        2.773303237720693e-8,
+        1.5328754075787494e-8,
+        0.4744710120183094,
+        1.903064320608223e-9,
+        0.05589665787782722,
+        2.7521145279052637e-8,
+        1.1762408653019186e-8,
+        7.397542568043182e-9,
+        1.8920129479125674e-8,
+        1.4436635231675774e-9,
+        1.0509898162704996e-9,
+        3.6757867384609326e-9,
+        1.0210021773260428e-9,
+        0.13875927538515884,
+        0.2221373459785268,
+        2.088612011559538e-8,
+        0.10873552381602443,
+        1.847939655895259e-8,
+    ]
+    @test isapprox(w1.weights, w1t, rtol = 7e-5)
+
+    w2 = opt_port!(portfolio, obj = :Min_Risk)
+    w2t = [
+        0.00790101350930099,
+        0.0306909139358808,
+        0.010506322670541511,
+        0.027487810990731512,
+        0.012278574123481116,
+        0.033410647094723245,
+        5.992768702616961e-10,
+        0.1398486652999066,
+        1.0318412667826644e-9,
+        1.1506529577820253e-8,
+        0.2878239722245232,
+        6.544625217911222e-10,
+        4.93689273689815e-10,
+        0.1252846767367913,
+        2.4717046303259267e-9,
+        0.015084330918903146,
+        1.814161154983086e-8,
+        0.19312632144038927,
+        1.2981261894646573e-9,
+        0.11655671485758536,
+    ]
+    @test isapprox(w2.weights, w2t, rtol = 9e-5)
+
+    A, B = asset_constraints(constraints, asset_classes)
+    portfolio.a_mtx_ineq = A
+    portfolio.b_vec_ineq = B
+    w3 = opt_port!(portfolio)
+    w3t = [
+        0.005337674597465762,
+        0.0999999328085889,
+        0.09999998551049004,
+        0.059054659420022665,
+        0.09999999785054277,
+        1.8783625308022804e-9,
+        0.06600399341467694,
+        0.04833717446345979,
+        1.3653878243927298e-8,
+        1.1794690581037013e-8,
+        0.05796280977060682,
+        1.4608612365759018e-9,
+        9.064398757224001e-10,
+        4.450158510374558e-9,
+        1.0162133156406168e-9,
+        0.09999998413955972,
+        0.09999998799261628,
+        0.06330380274630418,
+        0.09999998821855735,
+        0.09999997390650456,
+    ]
+    @test isapprox(w3.weights, w3t, rtol = 1e-4)
+    w4 = opt_port!(portfolio, obj = :Min_Risk)
+    w4t = [
+        0.061917908789090266,
+        0.08125925739913735,
+        0.0209663505365103,
+        0.026541298795123135,
+        0.01346199216116964,
+        0.09999999839649047,
+        6.762323459622066e-10,
+        0.09999999953536425,
+        1.4495721257709719e-9,
+        0.05294375358043678,
+        0.09999999963075093,
+        8.303950344629004e-10,
+        1.0162236692008542e-9,
+        0.09999999929260821,
+        0.010582248161957103,
+        0.03920313937613068,
+        0.09312402892645888,
+        0.09999999947467735,
+        2.313484329129996e-8,
+        0.09999999883682797,
+    ]
+    @test isapprox(w4.weights, w4t, rtol = 1e-4)
+end

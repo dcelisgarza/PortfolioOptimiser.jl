@@ -20,7 +20,7 @@ end
     include("CodepDistTests.jl")
 end
 
-@safetestset "LogTests" begin
+@safetestset "Log Tests" begin
     include("LogTests.jl")
 end
 

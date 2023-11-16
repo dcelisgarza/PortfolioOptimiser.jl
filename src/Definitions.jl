@@ -137,7 +137,6 @@ PortClasses = (:Classic,)
 Available classes for [`Portfolio`](@ref).
 """
 const PortClasses = (:Classic, :FM, :BL, :BL_FM)
-const PortClassOption = (1, 2, 3)
 
 """
 ```julia
@@ -498,6 +497,7 @@ const DenoiseMethods = (:Fixed, :Spectral, :Shrink)
 const RegCriteria = (:pval, GLM.aic, GLM.aicc, GLM.bic, GLM.r2, GLM.adjr2)
 const LoadingMtxType = (:FReg, :BReg, :PCR)
 const BlackLittermanType = (:A, :B)
+const BLHist = (1, 2, 3)
 
 """
 ```julia
