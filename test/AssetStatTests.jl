@@ -5693,7 +5693,7 @@ end
 
     port = Portfolio(returns = Y, f_returns = X)
     black_litterman_factor_satistics!(
-        port;
+        port,
         fill(1 / 20, 20);
         # Black Litterman
         P = P,

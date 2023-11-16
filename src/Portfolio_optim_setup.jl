@@ -437,7 +437,7 @@ function _handle_errors_and_finalise(
     return retval
 end
 
-function _save_opt_params(
+function _p_save_opt_params(
     portfolio,
     type,
     class,
@@ -596,7 +596,7 @@ function opt_port!(
         "portfolio.kind_tracking_err = $(portfolio.kind_tracking_err), must be one of $TrackingErrKinds"
     )
 
-    _save_opt_params(
+    _p_save_opt_params(
         portfolio,
         type,
         class,

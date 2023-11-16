@@ -569,7 +569,7 @@ function _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter = 100)
     return weights
 end
 
-function _save_opt_params(
+function _hcp_save_opt_params(
     portfolio,
     type,
     rm,
@@ -657,7 +657,7 @@ function opt_port!(
         "portfolio.kappa = $(portfolio.kappa) must be greater than 0 and smaller than 1"
     )
 
-    _save_opt_params(
+    _hcp_save_opt_params(
         portfolio,
         type,
         rm,
