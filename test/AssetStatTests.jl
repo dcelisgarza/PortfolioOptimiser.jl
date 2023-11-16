@@ -2204,6 +2204,65 @@ returns = dropmissing!(DataFrame(Y))
     asset_statistics!(portfolio, calc_kurt = true)
     posdef_fix!(portfolio.kurt, :Custom_Func; msg = "Kurtosis ")
     @test !isposdef(portfolio.kurt)
+
+    portfolio = Portfolio(returns = returns)
+    asset_statistics!(portfolio)
+    mtx = copy(portfolio.cov)
+    vc = copy(portfolio.mu)
+
+    asset_statistics!(
+        portfolio,
+        calc_kurt = false,
+        cov_type = :Custom_Func,
+        mu_type = :Custom_Func,
+    )
+    @test isapprox(portfolio.cov, mtx)
+    @test isapprox(portfolio.mu, vc)
+
+    portfolio = Portfolio(returns = returns)
+    asset_statistics!(portfolio)
+    krt = portfolio.kurt
+    skrt = portfolio.skurt
+    asset_statistics!(portfolio, denoise = true)
+    T, N = size(portfolio.returns)
+    dkrt = denoise_cov(krt, T / N)
+    dskrt = denoise_cov(skrt, T / N)
+    @test isapprox(portfolio.kurt, dkrt)
+    @test isapprox(portfolio.skurt, dskrt)
+    @test isposdef(dkrt)
+    @test isposdef(portfolio.kurt)
+    @test isposdef(dskrt)
+    @test isposdef(portfolio.skurt)
+    @test_throws ErrorException asset_statistics!(portfolio, jlogo = true)
+    asset_statistics!(portfolio, jlogo = true, denoise = true)
+    @test !isposdef(portfolio.kurt)
+    @test !isposdef(portfolio.skurt)
+
+    asset_statistics!(portfolio, jlogo = true, denoise = true, posdef_fix = :Nearest)
+    @test isposdef(portfolio.kurt)
+    @test isposdef(portfolio.skurt)
+
+    asset_statistics!(portfolio, posdef_fix = :Nearest)
+    @test isposdef(portfolio.kurt)
+    @test isposdef(portfolio.skurt)
+
+    portfolio = HCPortfolio(returns = returns)
+    asset_statistics!(portfolio, codep_type = :Cov_to_Cor)
+    @test isapprox(cov2cor(portfolio.cov), portfolio.codep)
+    function func(x)
+        return sqrt.(clamp!((1 .- x) / 2, 0, 1))
+    end
+    asset_statistics!(portfolio, codep_type = :Custom_Func, dist_func = func)
+    corr = cor(portfolio.returns)
+    @test isapprox(portfolio.codep, corr)
+    @test isapprox(portfolio.dist, func(corr))
+
+    asset_statistics!(
+        portfolio,
+        codep_type = :Custom_Val,
+        custom_cor = corkendall(portfolio.returns),
+    )
+    @test isapprox(portfolio.codep, corkendall(portfolio.returns))
 end
 
 @testset "Loadings matrix" begin
@@ -5196,7 +5255,12 @@ end
 
     port = Portfolio(returns = Y, f_returns = X)
     asset_statistics!(port)
-    black_litterman_statistics!(port, P, Q / 252; delta = 1)
+    black_litterman_statistics!(port, P, Q / 252, fill(1 / 20, 20); delta = 1)
+    @test isapprox(port.bl_bench_weights, fill(1 / 20, 20))
+
+    port = Portfolio(returns = Y, f_returns = X)
+    asset_statistics!(port)
+    black_litterman_statistics!(port, P, Q / 252, ; delta = 1)
     mu1, cov1, w1 = augmented_black_litterman(
         port.returns,
         fill(1 / length(port.assets), length(port.assets));
@@ -5626,6 +5690,25 @@ end
     @test isapprox(port.cov_f, cov_ft)
     @test isapprox(port.mu_fm, mu_fmt)
     @test isapprox(port.cov_fm, cov_fmt)
+
+    port = Portfolio(returns = Y, f_returns = X)
+    black_litterman_factor_satistics!(
+        port;
+        fill(1 / 20, 20);
+        # Black Litterman
+        P = P,
+        P_f = P_f,
+        Q = Q / 252,
+        Q_f = Q_f / 252,
+        bl_type = :B,
+        # delta = 1.0,
+        # eq = true,
+        # rf = 0.0,
+        # # Loadings matrix
+        # criterion = :pval,
+        # diagonal = true,
+    )
+    @test isapprox(port.bl_bench_weights, fill(1 / 20, 20))
 
     port = Portfolio(returns = Y, f_returns = X)
     black_litterman_factor_satistics!(

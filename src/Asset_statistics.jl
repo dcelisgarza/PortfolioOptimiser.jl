@@ -371,13 +371,6 @@ function covar_mtx(
         )
     end
 
-    if jlogo
-        codep = cov2cor(cov_mtx)
-        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
-        cov_mtx .= inv(JLogo(cov_mtx, separators, cliques))
-    end
-
     posdef_fix!(
         cov_mtx,
         posdef_fix;
@@ -387,6 +380,30 @@ function covar_mtx(
         posdef_kwargs = posdef_kwargs,
     )
 
+    if jlogo
+        try
+            codep = cov2cor(cov_mtx)
+            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+            separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
+            cov_mtx .= JLogo(cov_mtx, separators, cliques) \ I
+        catch SingularException
+            throw(
+                ErrorException(
+                    "Covariance matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set posdef_fix = $posdef_fix, to a different method from $PosdefFixes.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.\n\t Try a different cov_type = $cov_type, from $CovTypes.",
+                ),
+            )
+        end
+
+        posdef_fix!(
+            cov_mtx,
+            posdef_fix;
+            msg = "jlogo Covariance ",
+            posdef_args = posdef_args,
+            posdef_func = posdef_func,
+            posdef_kwargs = posdef_kwargs,
+        )
+    end
+
     return cov_mtx
 end
 
@@ -395,7 +412,7 @@ function mean_vec(
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
+    mean_kwargs::NamedTuple = (; dims = 1),
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -480,18 +497,6 @@ function cokurt_mtx(
         )
     end
 
-    if jlogo
-        codep = cov2cor(kurt)
-        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
-        kurt .= inv(JLogo(kurt, separators, cliques))
-
-        codep = cov2cor(skurt)
-        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-        separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
-        skurt .= inv(JLogo(skurt, separators, cliques))
-    end
-
     posdef_fix!(
         kurt,
         posdef_fix;
@@ -508,6 +513,52 @@ function cokurt_mtx(
         posdef_func = posdef_func,
         posdef_kwargs = posdef_kwargs,
     )
+
+    if jlogo
+        try
+            codep = cov2cor(kurt)
+            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+            separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
+            kurt .= JLogo(kurt, separators, cliques) \ I
+        catch SingularException
+            throw(
+                ErrorException(
+                    "Kurtosis matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set posdef_fix = $posdef_fix, to a different method from $PosdefFixes.\n\t* Set denoise = true, and recalculate.\n\t* Try both approaches at the same time.",
+                ),
+            )
+        end
+
+        posdef_fix!(
+            kurt,
+            posdef_fix;
+            msg = "jlogo Kurtosis ",
+            posdef_args = posdef_args,
+            posdef_func = posdef_func,
+            posdef_kwargs = posdef_kwargs,
+        )
+
+        try
+            codep = cov2cor(skurt)
+            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+            separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
+            skurt .= JLogo(skurt, separators, cliques) \ I
+        catch SingularException
+            throw(
+                ErrorException(
+                    "Semi Kurtosis matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set posdef_fix = $posdef_fix, to a different method from $PosdefFixes.\n\t* Set denoise = true, and recalculate.\n\t* Try both approaches at the same time.",
+                ),
+            )
+        end
+
+        posdef_fix!(
+            skurt,
+            posdef_fix;
+            msg = "jlogo Semi Kurtosis ",
+            posdef_args = posdef_args,
+            posdef_func = posdef_func,
+            posdef_kwargs = posdef_kwargs,
+        )
+    end
 
     N = length(mu)
     missing, L_2, S_2 = dup_elim_sum_matrices(N)
@@ -583,28 +634,13 @@ function codep_dist_mtx(
     elseif codep_type == :Tail
         codep = ltdi_mtx(returns, alpha_tail)
         dist = -log.(codep)
-
     elseif codep_type == :Cov_to_Cor
-        !isa(sigma, Matrix) &&
-            size(sigma, 1) == size(sigma, 2) &&
-            throw(
-                AssertionError(
-                    "sigma = $sigma, size(sigma) = $(size(sigma)), must be a square matrix",
-                ),
-            )
         codep = cov2cor(sigma)
         dist = dist_func(codep, dist_args...; dist_kwargs...)
     elseif codep_type == :Custom_Func
         codep = cor_func(returns, cor_args...; cor_kwargs...)
         dist = dist_func(codep, dist_args...; dist_kwargs...)
     elseif codep_type == :Custom_Val
-        !isa(custom_cor, Matrix) &&
-            size(custom_cor, 1) == size(custom_cor, 2) &&
-            throw(
-                AssertionError(
-                    "custom_cor = $custom_cor, size(custom_cor) = $(size(custom_cor)), must be a square matrix",
-                ),
-            )
         codep = custom_cor
         dist = dist_func(codep, dist_args...; dist_kwargs...)
     end
@@ -660,7 +696,7 @@ function asset_statistics!(
     cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = portfolio.cov_type,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov::Union{AbstractVector, Nothing} = nothing,
+    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
     detone::Bool = false,
     gs_threshold::Real = portfolio.gs_threshold,
@@ -684,7 +720,7 @@ function asset_statistics!(
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
+    mean_kwargs::NamedTuple = (; dims = 1),
     mu_target::Symbol = :GM,
     mu_type::Symbol = portfolio.mu_type,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -1242,7 +1278,7 @@ function pcr(
     y::Union{Vector, DataFrame};
     mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
+    mean_kwargs::NamedTuple = (; dims = 1),
     pca_kwargs::NamedTuple = (;),
     pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
@@ -1278,7 +1314,7 @@ function loadings_matrix(
     type::Symbol = :FReg;
     criterion::Union{Symbol, Function} = :pval,
     mean_args::Tuple = (),
-    mean_kwargs::NamedTuple = (;),
+    mean_kwargs::NamedTuple = (; dims = 1),
     pca_kwargs::NamedTuple = (;),
     pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
@@ -1373,7 +1409,7 @@ function risk_factors(
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
+    mean_kwargs::NamedTuple = (; dims = 1),
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -1527,7 +1563,7 @@ function black_litterman(
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
+    mean_kwargs::NamedTuple = (; dims = 1),
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -1623,7 +1659,7 @@ function augmented_black_litterman(
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
+    mean_kwargs::NamedTuple = (; dims = 1),
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -1844,7 +1880,7 @@ function bayesian_black_litterman(
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
+    mean_kwargs::NamedTuple = (; dims = 1),
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -1967,7 +2003,7 @@ function black_litterman_statistics!(
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
+    mean_kwargs::NamedTuple = (; dims = 1),
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -2063,7 +2099,7 @@ function factor_statistics!(
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
+    mean_kwargs::NamedTuple = (; dims = 1),
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -2197,7 +2233,7 @@ function black_litterman_factor_satistics!(
     custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
     mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
+    mean_kwargs::NamedTuple = (; dims = 1),
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
