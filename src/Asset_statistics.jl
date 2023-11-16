@@ -249,44 +249,54 @@ function mu_esimator(
     target::Symbol = :GM;
     dims::Integer = 1,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    rf::Real = 0.0,
     sigma::AbstractMatrix = cov(returns),
 )
     @assert(
-        mu_type ∈ (:JS, :BS, :BOP),
-        "mu_type = $mu_type, must be one of (:JS, :BS, :BOP)"
+        mu_type ∈ (:JS, :BS, :BOP, :CAPM),
+        "mu_type = $mu_type, must be one of (:JS, :BS, :BOP, :CAPM)"
     )
     @assert(target ∈ MuTargets, "target = $target, must be one of $MuTargets")
 
-    T, N = size(returns)
-    mu =
-        isnothing(mu_weights) ? vec(mean(returns; dims = dims)) :
-        vec(mean(returns, mu_weights; dims = dims))
+    if mu_type != :CAPM
+        T, N = size(returns)
+        mu =
+            isnothing(mu_weights) ? vec(mean(returns; dims = dims)) :
+            vec(mean(returns, mu_weights; dims = dims))
 
-    inv_sigma = inv(sigma)
-    evals = eigvals(sigma)
-    ones = range(1, stop = 1, length = N)
+        inv_sigma = sigma \ I
+        evals = eigvals(sigma)
+        ones = range(1, stop = 1, length = N)
 
-    b = if target == :GM
-        fill(mean(mu), N)
-    elseif target == :VW
-        fill(dot(ones, inv_sigma, mu) / dot(ones, inv_sigma, ones), N)
+        b = if target == :GM
+            fill(mean(mu), N)
+        elseif target == :VW
+            fill(dot(ones, inv_sigma, mu) / dot(ones, inv_sigma, ones), N)
+        else
+            fill(tr(sigma) / T, N)
+        end
+
+        if mu_type == :JS
+            alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
+            mu = (1 - alpha) * mu + alpha * b
+        elseif mu_type == :BS
+            alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
+            mu = (1 - alpha) * mu + alpha * b
+        else
+            alpha =
+                (dot(mu, inv_sigma, mu) - N / (T - N)) * dot(b, inv_sigma, b) -
+                dot(mu, inv_sigma, b)^2
+            alpha /= dot(mu, inv_sigma, mu) * dot(b, inv_sigma, b) - dot(mu, inv_sigma, b)^2
+            beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
+            mu = alpha * mu + beta * b
+        end
     else
-        fill(tr(sigma) / T, N)
-    end
-
-    if mu_type == :JS
-        alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
-        mu = (1 - alpha) * mu + alpha * b
-    elseif mu_type == :BS
-        alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
-        mu = (1 - alpha) * mu + alpha * b
-    else
-        alpha =
-            (dot(mu, inv_sigma, mu) - N / (T - N)) * dot(b, inv_sigma, b) -
-            dot(mu, inv_sigma, b)^2
-        alpha /= dot(mu, inv_sigma, mu) * dot(b, inv_sigma, b) - dot(mu, inv_sigma, b)^2
-        beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
-        mu = alpha * mu + beta * b
+        betas = sigma[:, end] / sigma[end, end]
+        betas = betas[1:(end - 1)]
+        mkt_mean_ret =
+            isnothing(mu_weights) ? vec(mean(returns[!, end]; dims = dims)) :
+            vec(mean(returns[!, end], mu_weights; dims = dims))
+        mu = rf .+ betas * (mkt_mean_ret - rf)
     end
 
     return mu
@@ -416,19 +426,21 @@ function mean_vec(
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    rf::Real = 0.0,
     sigma::Union{AbstractMatrix, Nothing} = nothing,
 )
     @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
     mu = if mu_type == :Default
         isnothing(mu_weights) ? vec(mean(returns; dims = 1)) :
         vec(mean(returns, mu_weights; dims = 1))
-    elseif mu_type ∈ (:JS, :BS, :BOP)
+    elseif mu_type ∈ (:JS, :BS, :BOP, :CAPM)
         mu_esimator(
             returns,
             mu_type,
             mu_target;
             dims = 1,
             mu_weights = mu_weights,
+            rf = rf,
             sigma = sigma,
         )
     elseif mu_type == :Custom_Func
@@ -681,6 +693,106 @@ asset_statistics!(
 ```
 """
 
+function covar_mtx_mu_vec(
+    returns;
+    # cov_mtx
+    alpha::Real = 0.0,
+    cov_args::Tuple = (),
+    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
+    cov_func::Function = cov,
+    cov_kwargs::NamedTuple = (;),
+    cov_type::Symbol = :Full,
+    cov_weights::Union{AbstractWeights, Nothing} = nothing,
+    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+    denoise::Bool = false,
+    detone::Bool = false,
+    gs_threshold::Real = 0.5,
+    jlogo::Bool = false,
+    kernel = ASH.Kernels.gaussian,
+    m::Integer = 10,
+    method::Symbol = :Fixed,
+    mkt_comp::Integer = 0,
+    n::Integer = 1000,
+    opt_args = (),
+    opt_kwargs = (;),
+    posdef_args::Tuple = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
+    posdef_kwargs::NamedTuple = (;),
+    std_args::Tuple = (),
+    std_func::Function = std,
+    std_kwargs::NamedTuple = (;),
+    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
+    # mean_vec
+    custom_mu::Union{AbstractVector, Nothing} = nothing,
+    mean_args::Tuple = (),
+    mean_func::Function = mean,
+    mean_kwargs::NamedTuple = (;),
+    mkt_ret::Union{AbstractVector, Nothing} = nothing,
+    mu_target::Symbol = :GM,
+    mu_type::Symbol = :Default,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    rf::Real = 0.0,
+)
+    if mu_type == :CAPM
+        if isnothing(mkt_ret)
+            returns = hcat(returns, mean(returns, dims = 2))
+        else
+            returns = hcat(returns, mkt_ret)
+        end
+    end
+
+    sigma = covar_mtx(
+        returns;
+        alpha = alpha,
+        cov_args = cov_args,
+        cov_est = cov_est,
+        cov_func = cov_func,
+        cov_kwargs = cov_kwargs,
+        cov_type = cov_type,
+        cov_weights = cov_weights,
+        custom_cov = custom_cov,
+        denoise = denoise,
+        detone = detone,
+        gs_threshold = gs_threshold,
+        jlogo = jlogo,
+        kernel = kernel,
+        m = m,
+        method = method,
+        mkt_comp = mkt_comp,
+        n = n,
+        opt_args = opt_args,
+        opt_kwargs = opt_kwargs,
+        posdef_args = posdef_args,
+        posdef_fix = posdef_fix,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+        std_args = std_args,
+        std_func = std_func,
+        std_kwargs = std_kwargs,
+        target_ret = target_ret,
+    )
+
+    mu = mean_vec(
+        returns;
+        custom_mu = custom_mu,
+        mean_args = mean_args,
+        mean_func = mean_func,
+        mean_kwargs = mean_kwargs,
+        mu_target = mu_target,
+        mu_type = mu_type,
+        mu_weights = mu_weights,
+        rf = rf,
+        sigma = isnothing(custom_cov) ? sigma : custom_cov,
+    )
+
+    if mu_type == :CAPM
+        sigma = sigma[1:(end - 1), 1:(end - 1)]
+    end
+
+    return sigma, mu
+end
+
 function asset_statistics!(
     portfolio::AbstractPortfolio;
     # flags
@@ -721,9 +833,11 @@ function asset_statistics!(
     mean_args::Tuple = (),
     mean_func::Function = mean,
     mean_kwargs::NamedTuple = (;),
+    mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
     mu_type::Symbol = portfolio.mu_type,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    rf::Real = 0.0,
     # codep_dist_mtx
     alpha_tail::Union{Real, Nothing} = isa(portfolio, HCPortfolio) ? portfolio.alpha_tail :
                                        nothing,
@@ -744,10 +858,10 @@ function asset_statistics!(
 )
     returns = portfolio.returns
 
-    # Covariance
-    if calc_cov
-        portfolio.cov = covar_mtx(
+    if calc_cov || calc_mu
+        portfolio.cov, portfolio.mu = covar_mtx_mu_vec(
             returns;
+            # cov_mtx
             alpha = alpha,
             cov_args = cov_args,
             cov_est = cov_est,
@@ -775,6 +889,16 @@ function asset_statistics!(
             std_func = std_func,
             std_kwargs = std_kwargs,
             target_ret = target_ret,
+            # mean_vec
+            custom_mu = custom_mu,
+            mean_args = mean_args,
+            mean_func = mean_func,
+            mean_kwargs = mean_kwargs,
+            mkt_ret = mkt_ret,
+            mu_target = mu_target,
+            mu_type = mu_type,
+            mu_weights = mu_weights,
+            rf = rf,
         )
 
         portfolio.cov_type = cov_type
@@ -783,21 +907,6 @@ function asset_statistics!(
             (portfolio.gs_threshold = gs_threshold)
 
         jlogo && (portfolio.jlogo = jlogo)
-    end
-
-    # Mu
-    if calc_mu
-        portfolio.mu = mean_vec(
-            returns;
-            custom_mu = custom_mu,
-            mean_args = mean_args,
-            mean_func = mean_func,
-            mean_kwargs = mean_kwargs,
-            mu_target = mu_target,
-            mu_type = mu_type,
-            mu_weights = mu_weights,
-            sigma = isnothing(custom_cov) ? portfolio.cov : custom_cov,
-        )
 
         portfolio.mu_type = mu_type
     end
@@ -1410,9 +1519,11 @@ function risk_factors(
     mean_args::Tuple = (),
     mean_func::Function = mean,
     mean_kwargs::NamedTuple = (;),
+    mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    rf = 0.0,
     # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
     criterion::Union{Symbol, Function} = :pval,
@@ -1448,8 +1559,9 @@ function risk_factors(
     x1 = "const" ∈ namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
     B = Matrix(B[!, setdiff(namesB, ["ticker"])])
 
-    cov_f = covar_mtx(
+    cov_f, mu_f = covar_mtx_mu_vec(
         x1;
+        # cov_mtx
         alpha = alpha,
         cov_args = cov_args,
         cov_est = cov_est,
@@ -1477,18 +1589,16 @@ function risk_factors(
         std_func = std_func,
         std_kwargs = std_kwargs,
         target_ret = target_ret,
-    )
-
-    mu_f = mean_vec(
-        x1;
+        # mean_vec
         custom_mu = custom_mu,
         mean_args = mean_args,
         mean_func = mean_func,
         mean_kwargs = mean_kwargs,
+        mkt_ret = mkt_ret,
         mu_target = mu_target,
         mu_type = mu_type,
         mu_weights = mu_weights,
-        sigma = isnothing(custom_cov) ? cov_f : custom_cov,
+        rf = rf,
     )
 
     returns = x1 * transpose(B)
@@ -1564,6 +1674,7 @@ function black_litterman(
     mean_args::Tuple = (),
     mean_func::Function = mean,
     mean_kwargs::NamedTuple = (;),
+    mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -1572,8 +1683,9 @@ function black_litterman(
     eq::Bool = true,
     rf::Real = 0.0,
 )
-    sigma = covar_mtx(
+    sigma, mu = covar_mtx_mu_vec(
         returns;
+        # cov_mtx
         alpha = alpha,
         cov_args = cov_args,
         cov_est = cov_est,
@@ -1601,18 +1713,16 @@ function black_litterman(
         std_func = std_func,
         std_kwargs = std_kwargs,
         target_ret = target_ret,
-    )
-
-    mu = mean_vec(
-        returns;
+        # mean_vec
         custom_mu = custom_mu,
         mean_args = mean_args,
         mean_func = mean_func,
         mean_kwargs = mean_kwargs,
+        mkt_ret = mkt_ret,
         mu_target = mu_target,
         mu_type = mu_type,
         mu_weights = mu_weights,
-        sigma = isnothing(custom_cov) ? sigma : custom_cov,
+        rf = rf,
     )
 
     tau = 1 / size(returns, 1)
@@ -1660,6 +1770,7 @@ function augmented_black_litterman(
     mean_args::Tuple = (),
     mean_func::Function = mean,
     mean_kwargs::NamedTuple = (;),
+    mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -1700,8 +1811,9 @@ function augmented_black_litterman(
         )
 
     if all_asset_provided
-        sigma = covar_mtx(
+        sigma, mu = covar_mtx_mu_vec(
             returns;
+            # cov_mtx
             alpha = alpha,
             cov_args = cov_args,
             cov_est = cov_est,
@@ -1729,24 +1841,23 @@ function augmented_black_litterman(
             std_func = std_func,
             std_kwargs = std_kwargs,
             target_ret = target_ret,
-        )
-
-        mu = mean_vec(
-            returns;
+            # mean_vec
             custom_mu = custom_mu,
             mean_args = mean_args,
             mean_func = mean_func,
             mean_kwargs = mean_kwargs,
+            mkt_ret = mkt_ret,
             mu_target = mu_target,
             mu_type = mu_type,
             mu_weights = mu_weights,
-            sigma = isnothing(custom_cov) ? sigma : custom_cov,
+            rf = rf,
         )
     end
 
     if all_factor_provided
-        sigma_f = covar_mtx(
+        sigma_f, mu_f = covar_mtx_mu_vec(
             F;
+            # cov_mtx
             alpha = alpha,
             cov_args = cov_args,
             cov_est = cov_est,
@@ -1755,9 +1866,9 @@ function augmented_black_litterman(
             cov_type = cov_type,
             cov_weights = cov_weights,
             custom_cov = custom_cov,
-            gs_threshold = gs_threshold,
             denoise = denoise,
             detone = detone,
+            gs_threshold = gs_threshold,
             jlogo = jlogo,
             kernel = kernel,
             m = m,
@@ -1774,18 +1885,16 @@ function augmented_black_litterman(
             std_func = std_func,
             std_kwargs = std_kwargs,
             target_ret = target_ret,
-        )
-
-        mu_f = mean_vec(
-            F;
+            # mean_vec
             custom_mu = custom_mu,
             mean_args = mean_args,
             mean_func = mean_func,
             mean_kwargs = mean_kwargs,
+            mkt_ret = mkt_ret,
             mu_target = mu_target,
             mu_type = mu_type,
             mu_weights = mu_weights,
-            sigma = isnothing(custom_cov) ? sigma_f : custom_cov,
+            rf = rf,
         )
     end
 
@@ -1881,6 +1990,7 @@ function bayesian_black_litterman(
     mean_args::Tuple = (),
     mean_func::Function = mean,
     mean_kwargs::NamedTuple = (;),
+    mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -1893,8 +2003,14 @@ function bayesian_black_litterman(
     var_func::Function = var,
     var_kwargs::NamedTuple = (;),
 )
-    sigma_f = covar_mtx(
+    @assert(
+        mu_type ∈ setdiff(MuTypes, (:CAPM,)),
+        "mu_type = $mu_type, must be one of $(setdiff(MuTypes, (:CAPM,)))"
+    )
+
+    sigma_f, mu_f = covar_mtx_mu_vec(
         F;
+        # cov_mtx
         alpha = alpha,
         cov_args = cov_args,
         cov_est = cov_est,
@@ -1922,18 +2038,16 @@ function bayesian_black_litterman(
         std_func = std_func,
         std_kwargs = std_kwargs,
         target_ret = target_ret,
-    )
-
-    mu_f = mean_vec(
-        F;
+        # mean_vec
         custom_mu = custom_mu,
         mean_args = mean_args,
         mean_func = mean_func,
         mean_kwargs = mean_kwargs,
+        mkt_ret = mkt_ret,
         mu_target = mu_target,
         mu_type = mu_type,
         mu_weights = mu_weights,
-        sigma = isnothing(custom_cov) ? sigma_f : custom_cov,
+        rf = rf,
     )
 
     mu_f .-= rf
@@ -2004,6 +2118,7 @@ function black_litterman_statistics!(
     mean_args::Tuple = (),
     mean_func::Function = mean,
     mean_kwargs::NamedTuple = (;),
+    mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -2012,6 +2127,11 @@ function black_litterman_statistics!(
     eq::Bool = true,
     rf::Real = 0.0,
 )
+    @assert(
+        mu_type ∈ setdiff(MuTypes, (:CAPM,)),
+        "mu_type = $mu_type, must be one of $(setdiff(MuTypes, (:CAPM,)))"
+    )
+
     returns = portfolio.returns
     if isempty(w)
         isempty(portfolio.bl_bench_weights) && (
@@ -2053,6 +2173,7 @@ function black_litterman_statistics!(
         mean_args = mean_args,
         mean_func = mean_func,
         mean_kwargs = mean_kwargs,
+        mkt_ret = mkt_ret,
         mu_target = mu_target,
         mu_type = mu_type,
         mu_weights = mu_weights,
@@ -2100,9 +2221,11 @@ function factor_statistics!(
     mean_args::Tuple = (),
     mean_func::Function = mean,
     mean_kwargs::NamedTuple = (;),
+    mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    rf = 0.0,
     # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
     criterion::Union{Symbol, Function} = :pval,
@@ -2119,8 +2242,9 @@ function factor_statistics!(
     returns = portfolio.returns
     f_returns = portfolio.f_returns
 
-    portfolio.cov_f = covar_mtx(
+    portfolio.cov_f, portfolio.mu_f = covar_mtx_mu_vec(
         returns;
+        # cov_mtx
         alpha = alpha,
         cov_args = cov_args,
         cov_est = cov_est,
@@ -2148,18 +2272,16 @@ function factor_statistics!(
         std_func = std_func,
         std_kwargs = std_kwargs,
         target_ret = target_ret,
-    )
-
-    portfolio.mu_f = mean_vec(
-        returns;
+        # mean_vec
         custom_mu = custom_mu,
         mean_args = mean_args,
         mean_func = mean_func,
         mean_kwargs = mean_kwargs,
+        mkt_ret = mkt_ret,
         mu_target = mu_target,
         mu_type = mu_type,
         mu_weights = mu_weights,
-        sigma = isnothing(custom_cov) ? portfolio.cov_f : custom_cov,
+        rf = rf,
     )
 
     portfolio.mu_fm, portfolio.cov_fm, portfolio.returns_fm = risk_factors(
@@ -2234,6 +2356,7 @@ function black_litterman_factor_satistics!(
     mean_args::Tuple = (),
     mean_func::Function = mean,
     mean_kwargs::NamedTuple = (;),
+    mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
     mu_type::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
@@ -2262,6 +2385,10 @@ function black_litterman_factor_satistics!(
     @assert(
         bl_type ∈ BlackLittermanType,
         "bl_type = $bl_type, must be one of $BlackLittermanType"
+    )
+    @assert(
+        mu_type ∈ setdiff(MuTypes, (:CAPM,)),
+        "mu_type = $mu_type, must be one of $(setdiff(MuTypes, (:CAPM,)))"
     )
 
     returns = portfolio.returns
@@ -2331,6 +2458,7 @@ function black_litterman_factor_satistics!(
             mean_args = mean_args,
             mean_func = mean_func,
             mean_kwargs = mean_kwargs,
+            mkt_ret = mkt_ret,
             mu_target = mu_target,
             mu_type = mu_type,
             mu_weights = mu_weights,
@@ -2370,6 +2498,7 @@ function black_litterman_factor_satistics!(
             mean_args = mean_args,
             mean_func = mean_func,
             mean_kwargs = mean_kwargs,
+            mkt_ret = mkt_ret,
             mu_target = mu_target,
             mu_type = mu_type,
             mu_weights = mu_weights,
