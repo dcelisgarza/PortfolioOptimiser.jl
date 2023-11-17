@@ -2316,7 +2316,7 @@ returns = dropmissing!(DataFrame(Y))
 
     span = ceil(Int, 4 * size(portfolio.returns, 1) / log(size(portfolio.returns, 1) + 2))
     N = size(portfolio.returns, 1)
-    wghts = eweights(N, 2 / (span + 1))
+    wghts = eweights(N, 2 / (span + 1), scale = true)
     asset_statistics!(
         portfolio,
         mu_type = :CAPM,

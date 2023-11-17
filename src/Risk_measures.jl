@@ -1176,7 +1176,7 @@ function risk_contribution(
     b_sim::Union{<:Real, Nothing} = nothing,
     di::Real = 1e-6,
     kappa::Real = 0.3,
-    owa_w = Vector{Float64}(undef, 0),
+    owa_w::AbstractVector = Vector{Float64}(undef, 0),
     solvers::Union{<:AbstractDict, Nothing} = nothing,
 )
     ew = eltype(w)
@@ -1331,6 +1331,7 @@ end
 
 function risk_contribution(
     portfolio::AbstractPortfolio;
+    di::Real = 1e-6,
     type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
     rm::Symbol = :SD,
     rf::Real = 0.0,
@@ -1352,6 +1353,7 @@ function risk_contribution(
         beta_i = portfolio.beta_i,
         beta = portfolio.beta,
         b_sim = portfolio.b_sim,
+        di = di,
         kappa = portfolio.kappa,
         owa_w = owa_w,
         solvers = portfolio.solvers,
@@ -1393,4 +1395,5 @@ export Variance,
     TG,
     RTG,
     OWA,
-    calc_risk
+    calc_risk,
+    risk_contribution
