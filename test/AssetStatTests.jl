@@ -2280,6 +2280,84 @@ returns = dropmissing!(DataFrame(Y))
         custom_mu = vec(mean(portfolio.returns, dims = 1)),
     )
     @test isapprox(portfolio.mu, vec(mean(portfolio.returns, dims = 1)))
+
+    portfolio = HCPortfolio(returns = returns)
+    asset_statistics!(portfolio, mu_type = :CAPM, rf = 1.02^(1 / 252) - 1)
+    mut1 = [
+        0.00040040334444405826,
+        0.0004038223404295389,
+        0.00043573757119759937,
+        0.00048053128316640257,
+        0.00044477704799634137,
+        0.0003755978488611824,
+        0.0008152649427990807,
+        0.0002780600524203449,
+        0.0005188105786435606,
+        0.0004425636876927541,
+        0.00026282174415698657,
+        0.0006142834273403131,
+        0.0008405692490530579,
+        0.00034645235281702806,
+        0.0006147361886335554,
+        0.000482278303725291,
+        0.0004056677912614036,
+        0.000301139624596775,
+        0.00045281490145370775,
+        0.0003559206722359082,
+    ]
+    @test isapprox(mu1t, portfolio.mu)
+    asset_statistics!(
+        portfolio,
+        mu_type = :CAPM,
+        rf = 1.02^(1 / 252) - 1,
+        mkt_ret = vec(mean(portfolio.returns, dims = 2)),
+    )
+    @test isapprox(mu1t, portfolio.mu)
+
+    span = ceil(Int, 4 * size(portfolio.returns, 1) / log(size(portfolio.returns, 1) + 2))
+    N = size(portfolio.returns, 1)
+    wghts = eweights(N, 2 / (span + 1))
+    asset_statistics!(
+        portfolio,
+        mu_type = :CAPM,
+        rf = 1.02^(1 / 252) - 1,
+        cov_weights = wghts,
+        mu_weights = wghts,
+        cov_est = StatsBase.SimpleCovariance(; corrected = false),
+    )
+    mu2t = [
+        0.0003517892086598427,
+        0.00033163914158950656,
+        0.00036637944877043646,
+        0.00040784177144941367,
+        0.0003507030860866231,
+        0.00032057983604707964,
+        0.0006169144442016192,
+        0.00026170999252808223,
+        0.00040878236562676596,
+        0.0003713423873400815,
+        0.0002369398063429353,
+        0.0005470124258263283,
+        0.0007622471414574865,
+        0.00026912184696135905,
+        0.0005212683718308435,
+        0.0003814681417250051,
+        0.0003231376352264016,
+        0.0002583315517364582,
+        0.0003579816177607234,
+        0.00026075454245967395,
+    ]
+    @test isapprox(mu2t, portfolio.mu)
+    asset_statistics!(
+        portfolio,
+        mu_type = :CAPM,
+        rf = 1.02^(1 / 252) - 1,
+        cov_weights = wghts,
+        mu_weights = wghts,
+        cov_est = StatsBase.SimpleCovariance(; corrected = false),
+        mkt_ret = vec(mean(portfolio.returns, dims = 2)),
+    )
+    @test isapprox(mu2t, portfolio.mu)
 end
 
 @testset "Loadings matrix" begin
