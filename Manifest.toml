@@ -2,7 +2,7 @@
 
 julia_version = "1.9.1"
 manifest_format = "2.0"
-project_hash = "cddaab692b7645d9ed4a37868ca622915a7a4f43"
+project_hash = "5a9c653dbde3c0db1a7bdfc33a76df936cdc77bf"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
@@ -847,6 +847,20 @@ version = "3.6.0"
     IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
     Term = "22787eb5-b846-44ae-b979-8e399b8463ab"
     Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
+
+[[deps.Unitful]]
+deps = ["Dates", "LinearAlgebra", "Random"]
+git-tree-sha1 = "242982d62ff0d1671e9029b52743062739255c7e"
+uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
+version = "1.18.0"
+
+    [deps.Unitful.extensions]
+    ConstructionBaseUnitfulExt = "ConstructionBase"
+    InverseFunctionsUnitfulExt = "InverseFunctions"
+
+    [deps.Unitful.weakdeps]
+    ConstructionBase = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
+    InverseFunctions = "3587e190-3f89-42d0-90ee-14403ec27112"
 
 [[deps.VersionParsing]]
 git-tree-sha1 = "58d6e80b4ee071f5efd07fda82cb9fbe17200868"
