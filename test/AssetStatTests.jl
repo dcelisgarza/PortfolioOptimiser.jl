@@ -2283,7 +2283,7 @@ returns = dropmissing!(DataFrame(Y))
 
     portfolio = HCPortfolio(returns = returns)
     asset_statistics!(portfolio, mu_type = :CAPM, rf = 1.02^(1 / 252) - 1)
-    mut1 = [
+    mu1t = [
         0.00040040334444405826,
         0.0004038223404295389,
         0.00043573757119759937,

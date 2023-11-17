@@ -84,7 +84,7 @@ function PMFG_T2s(W, nargout = 3)
 
     cliqueTree = if nargout > 4
         M = size(cliques, 1)
-        cliqueTree = zeros(Int, M, M)
+        cliqueTree = spzeros(Int, M, M)
         ss = zeros(Int, M)
         for i in 1:M
             ss .= 0
