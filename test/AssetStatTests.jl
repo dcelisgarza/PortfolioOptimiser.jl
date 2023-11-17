@@ -18,6 +18,10 @@ returns = dropmissing!(DataFrame(Y))
 @testset "Asset statistics" begin
     portfolio = HCPortfolio(returns = returns)
 
+    asset_statistics!(portfolio)
+    ret = cov_returns(portfolio.cov, seed = 0)
+    @test isapprox(cov(ret), portfolio.cov)
+
     asset_statistics!(portfolio, codep_type = :Gerber0, cov_type = :Gerber0)
     covg0t = reshape(
         [
