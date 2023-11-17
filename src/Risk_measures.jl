@@ -1184,7 +1184,7 @@ function risk_contribution(
     w1 = zeros(ew, length(w))
     w2 = zeros(ew, length(w))
 
-    for i in 1:length(w)
+    for i in eachindex(w)
         w1 .= zero(ew)
         w1 .= w
         w1[i] += di
@@ -1310,11 +1310,12 @@ function risk_contribution(
             )
         elseif rm == :OWA
             T = size(returns, 1)
-            w = _owa_w_choice(owa_w, T)
-            r1 = OWA(a1, w)
-            r2 = OWA(a2, w)
+            owa_w = _owa_w_choice(owa_w, T)
+            r1 = OWA(a1, owa_w)
+            r2 = OWA(a2, owa_w)
         elseif rm == :Equal
-            r1 = r2 = 1 / length(w)
+            r1 = 1 / length(w) + di
+            r2 = 1 / length(w) - di
         else
             throw(
                 ArgumentError(
