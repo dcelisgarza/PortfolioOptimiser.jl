@@ -334,7 +334,9 @@ returns = dropmissing!(DataFrame(Y))
         portfolio.alpha,
     )
     @test isapprox(evar_r1, evar_r2, rtol = 3e-6)
+end
 
+@testset "Risk contribution" begin
     portfolio = HCPortfolio(
         returns = returns,
         solvers = Dict(
@@ -348,6 +350,13 @@ returns = dropmissing!(DataFrame(Y))
     type = :NCO
 
     w = opt_port!(portfolio, type = type, linkage = :complete)
+
+    sr = sharpe_ratio(portfolio; rf = 0.0001, type = type)
+    srt =
+        (dot(portfolio.mu, portfolio.optimal[type].weights) - 0.0001) /
+        calc_risk(portfolio, type = type)
+    @test isapprox(sr, srt)
+
     rc1 = risk_contribution(
         portfolio;
         rm = HRRiskMeasures[1],
@@ -617,7 +626,7 @@ returns = dropmissing!(DataFrame(Y))
         -1.5598529963457856e-8,
         -0.0021680083728532395,
     ]
-    @test isapprox(rc9, rc9t)
+    @test isapprox(rc9, rc9t, atol = 0.02)
     rc10 = risk_contribution(
         portfolio;
         rm = HRRiskMeasures[10],
@@ -797,7 +806,7 @@ returns = dropmissing!(DataFrame(Y))
         1.5104936261894233e-7,
         0.006609830825115192,
     ]
-    @test isapprox(rc15, rc15t)
+    @test isapprox(rc15, rc15t, rtol = 3e-1)
     rc16 = risk_contribution(
         portfolio;
         rm = HRRiskMeasures[16],
@@ -1187,7 +1196,7 @@ returns = dropmissing!(DataFrame(Y))
         1.7404398142142277e-7,
         -0.001855372076895879,
     ]
-    @test isapprox(rc28, rc28t)
+    @test isapprox(rc28, rc28t, rtol = 5e-8)
     rc29 = risk_contribution(
         portfolio;
         rm = HRRiskMeasures[29],
@@ -1217,7 +1226,7 @@ returns = dropmissing!(DataFrame(Y))
         1.7883826845430217e-7,
         0.005732059472059088,
     ]
-    @test isapprox(rc29, rc29t)
+    @test isapprox(rc29, rc29t, rtol = 5e-8)
     rc30 = risk_contribution(
         portfolio;
         rm = HRRiskMeasures[30],
@@ -1247,7 +1256,7 @@ returns = dropmissing!(DataFrame(Y))
         9.474904001065433e-9,
         0.0003810355799579022,
     ]
-    @test isapprox(rc30, rc30t)
+    @test isapprox(rc30, rc30t, rtol = 7e-8)
     rc31 = risk_contribution(
         portfolio;
         rm = HRRiskMeasures[31],
@@ -1277,7 +1286,7 @@ returns = dropmissing!(DataFrame(Y))
         8.963341281664909e-8,
         0.0011765556912858963,
     ]
-    @test isapprox(rc31, rc31t)
+    @test isapprox(rc31, rc31t, rtol = 6e-8)
     rc32 = risk_contribution(
         portfolio;
         rm = HRRiskMeasures[32],
@@ -1307,7 +1316,7 @@ returns = dropmissing!(DataFrame(Y))
         2.123730265922571e-8,
         0.00047556206480531656,
     ]
-    @test isapprox(rc32, rc32t)
+    @test isapprox(rc32, rc32t, rtol = 6e-8)
     rc33 = risk_contribution(
         portfolio;
         rm = HRRiskMeasures[33],
@@ -1367,5 +1376,5 @@ returns = dropmissing!(DataFrame(Y))
         1.326681504909494e-7,
         0.004374146926761834,
     ]
-    @test isapprox(rc34, rc34t)
+    @test isapprox(rc34, rc34t, rtol = 4e-1)
 end

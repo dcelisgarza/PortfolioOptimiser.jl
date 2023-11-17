@@ -1361,6 +1361,75 @@ function risk_contribution(
     )
 end
 
+function sharpe_ratio(
+    w::AbstractVector,
+    mu::AbstractVector,
+    returns::AbstractMatrix;
+    rm::Symbol = :SD,
+    rf::Real = 0.0,
+    cov::AbstractMatrix,
+    alpha_i::Real = 0.0001,
+    alpha::Real = 0.05,
+    a_sim::Int = 100,
+    beta_i::Union{<:Real, Nothing} = nothing,
+    beta::Union{<:Real, Nothing} = nothing,
+    b_sim::Union{<:Real, Nothing} = nothing,
+    kappa::Real = 0.3,
+    owa_w = Vector{Float64}(undef, 0),
+    solvers::Union{<:AbstractDict, Nothing} = nothing,
+)
+    ret = dot(mu, w)
+
+    risk = calc_risk(
+        w,
+        returns;
+        rm = rm,
+        rf = rf,
+        cov = cov,
+        alpha_i = alpha_i,
+        alpha = alpha,
+        a_sim = a_sim,
+        beta_i = beta_i,
+        beta = beta,
+        b_sim = b_sim,
+        kappa = kappa,
+        owa_w = owa_w,
+        solvers = solvers,
+    )
+
+    return (ret - rf) / risk
+end
+
+function sharpe_ratio(
+    portfolio::AbstractPortfolio;
+    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+    rm::Symbol = :SD,
+    rf::Real = 0.0,
+    owa_w = isa(portfolio, Portfolio) ? portfolio.owa_w : Vector{Float64}(undef, 0),
+)
+    isa(portfolio, Portfolio) ?
+    @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes") :
+    @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+
+    return sharpe_ratio(
+        portfolio.optimal[type].weights,
+        portfolio.mu,
+        portfolio.returns;
+        rm = rm,
+        rf = rf,
+        cov = portfolio.cov,
+        alpha_i = portfolio.alpha_i,
+        alpha = portfolio.alpha,
+        a_sim = portfolio.a_sim,
+        beta_i = portfolio.beta_i,
+        beta = portfolio.beta,
+        b_sim = portfolio.b_sim,
+        kappa = portfolio.kappa,
+        owa_w = owa_w,
+        solvers = portfolio.solvers,
+    )
+end
+
 export Variance,
     SD,
     MAD,
@@ -1397,4 +1466,5 @@ export Variance,
     RTG,
     OWA,
     calc_risk,
-    risk_contribution
+    risk_contribution,
+    sharpe_ratio
