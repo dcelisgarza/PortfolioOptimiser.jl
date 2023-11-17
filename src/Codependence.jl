@@ -188,6 +188,71 @@ function ltdi_mtx(x, alpha = 0.05)
     return Symmetric(mtx, :L)
 end
 
+function covgerber0(
+    x,
+    threshold = 0.5;
+    posdef_args::Tuple = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
+    posdef_kwargs::NamedTuple = (;),
+    std_func = std,
+    std_args = (),
+    std_kwargs = (;),
+)
+    @assert(
+        0 < threshold < 1,
+        "threshold = $threshold, must be greater than zero and smaller than one"
+    )
+
+    T, N = size(x)
+
+    std_vec = vec(
+        !haskey(std_kwargs, :dims) ? std_func(x, std_args...; dims = 1, std_kwargs...) :
+        std_func(x, std_args...; std_kwargs...),
+    )
+
+    mtx = Matrix{eltype(x)}(undef, N, N)
+    for j in 1:N
+        for i in 1:j
+            neg = 0
+            pos = 0
+            for k in 1:T
+                if (
+                    (x[k, i] >= threshold * std_vec[i]) &&
+                    (x[k, j] >= threshold * std_vec[j])
+                ) || (
+                    (x[k, i] <= -threshold * std_vec[i]) &&
+                    (x[k, j] <= -threshold * std_vec[j])
+                )
+                    pos += 1
+                elseif (
+                    (x[k, i] >= threshold * std_vec[i]) &&
+                    (x[k, j] <= -threshold * std_vec[j])
+                ) || (
+                    (x[k, i] <= -threshold * std_vec[i]) &&
+                    (x[k, j] >= threshold * std_vec[j])
+                )
+                    neg += 1
+                end
+            end
+            mtx[i, j] = (pos - neg) / (pos + neg)
+        end
+    end
+
+    mtx .= Matrix(Symmetric(mtx, :U))
+
+    posdef_fix!(
+        mtx,
+        posdef_fix;
+        msg = "Covariance ",
+        posdef_args = posdef_args,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+    )
+
+    return mtx .* (std_vec * transpose(std_vec))
+end
+
 function covgerber1(x, threshold = 0.5; std_func = std, std_args = (), std_kwargs = (;))
     @assert(
         0 < threshold < 1,
@@ -275,4 +340,4 @@ function covgerber2(x, threshold = 0.5; std_func = std, std_args = (), std_kwarg
     return mtx .* (std_vec * transpose(std_vec))
 end
 
-export covgerber1, covgerber2, mut_var_info_mtx
+export covgerber0, covgerber1, covgerber2, mut_var_info_mtx

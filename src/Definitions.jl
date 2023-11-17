@@ -491,7 +491,7 @@ const HCPortTypes = (:HRP, :HERC, :HERC2, :NCO)
 
 const MuTypes = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 const MuTargets = (:GM, :VW, :SE)
-const CovTypes = (:Full, :Semi, :Gerber1, :Gerber2, :Custom_Func, :Custom_Val)
+const CovTypes = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :Custom_Func, :Custom_Val)
 const PosdefFixes = (:None, :Nearest, :Custom_Func)
 const DenoiseMethods = (:Fixed, :Spectral, :Shrink)
 const RegCriteria = (:pval, GLM.aic, GLM.aicc, GLM.bic, GLM.r2, GLM.adjr2)
@@ -524,6 +524,7 @@ const CodepTypes = (
     :Pearson,
     :Spearman,
     :Kendall,
+    :Gerber0,
     :Gerber1,
     :Gerber2,
     :Abs_Pearson,

@@ -343,6 +343,18 @@ function covar_mtx(
         isnothing(cov_weights) ?
         StatsBase.cov(cov_est, semi_returns; mean = 0.0, cov_kwargs...) :
         StatsBase.cov(cov_est, semi_returns, cov_weights; mean = 0.0, cov_kwargs...)
+    elseif cov_type == :Gerber0
+        covgerber0(
+            returns,
+            gs_threshold;
+            posdef_args = posdef_args,
+            posdef_fix = posdef_fix,
+            posdef_func = posdef_func,
+            posdef_kwargs = posdef_kwargs,
+            std_func = std_func,
+            std_args = std_args,
+            std_kwargs = std_kwargs,
+        )
     elseif cov_type == :Gerber1
         covgerber1(
             returns,
@@ -591,6 +603,10 @@ function codep_dist_mtx(
     dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
     dist_kwargs::NamedTuple = (;),
     gs_threshold::Real = 0.5,
+    posdef_args::Tuple = (),
+    posdef_fix::Symbol = :None,
+    posdef_func::Function = x -> x,
+    posdef_kwargs::NamedTuple = (;),
     sigma::Union{AbstractMatrix, Nothing} = nothing,
     std_args::Tuple = (),
     std_func::Function = std,
@@ -616,6 +632,21 @@ function codep_dist_mtx(
     elseif codep_type == :Abs_Kendall
         codep = abs.(corkendall(returns))
         dist = sqrt.(clamp!(1 .- codep, 0, 1))
+    elseif codep_type == :Gerber0
+        codep = cov2cor(
+            covgerber0(
+                returns,
+                gs_threshold;
+                posdef_args = posdef_args,
+                posdef_fix = posdef_fix,
+                posdef_func = posdef_func,
+                posdef_kwargs = posdef_kwargs,
+                std_func = std_func,
+                std_args = std_args,
+                std_kwargs = std_kwargs,
+            ),
+        )
+        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
     elseif codep_type == :Gerber1
         codep = cov2cor(
             covgerber1(
@@ -943,6 +974,10 @@ function asset_statistics!(
                 dist_func = dist_func,
                 dist_kwargs = dist_kwargs,
                 gs_threshold = gs_threshold,
+                posdef_args = posdef_args,
+                posdef_fix = posdef_fix,
+                posdef_func = posdef_func,
+                posdef_kwargs = posdef_kwargs,
                 sigma = isnothing(custom_cov) ? portfolio.cov : custom_cov,
                 std_args = std_args,
                 std_func = std_func,
