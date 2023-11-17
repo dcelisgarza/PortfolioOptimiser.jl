@@ -16,7 +16,7 @@ function _naive_risk(portfolio, returns, covariance; rm = :SD, rf = 0.0)
                 returns;
                 rm = rm,
                 rf = rf,
-                cov = covariance,
+                sigma = covariance,
                 alpha = portfolio.alpha,
                 a_sim = portfolio.a_sim,
                 beta = portfolio.beta,
@@ -172,7 +172,7 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
         cret;
         rm = rm,
         rf = rf,
-        cov = ccov,
+        sigma = ccov,
         alpha = portfolio.alpha,
         a_sim = portfolio.a_sim,
         beta = portfolio.beta,

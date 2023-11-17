@@ -1034,7 +1034,7 @@ function calc_risk(
     returns::AbstractMatrix;
     rm::Symbol = :SD,
     rf::Real = 0.0,
-    cov::AbstractMatrix,
+    sigma::AbstractMatrix,
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
@@ -1050,9 +1050,9 @@ function calc_risk(
     x = (rm != :Variance || rm != :SD) && returns * w
 
     risk = if rm == :SD
-        SD(w, cov)
+        SD(w, sigma)
     elseif rm == :Variance
-        Variance(w, cov)
+        Variance(w, sigma)
     elseif rm == :MAD
         MAD(x)
     elseif rm == :SSD
@@ -1149,7 +1149,7 @@ function calc_risk(
         portfolio.returns;
         rm = rm,
         rf = rf,
-        cov = portfolio.cov,
+        sigma = portfolio.cov,
         alpha_i = portfolio.alpha_i,
         alpha = portfolio.alpha,
         a_sim = portfolio.a_sim,
@@ -1167,7 +1167,7 @@ function risk_contribution(
     returns::AbstractMatrix;
     rm::Symbol = :SD,
     rf::Real = 0.0,
-    cov::AbstractMatrix,
+    sigma::AbstractMatrix,
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
@@ -1197,11 +1197,11 @@ function risk_contribution(
         a2 = returns * w2
 
         if rm == :SD
-            r1 = SD(w1, cov)
-            r2 = SD(w2, cov)
+            r1 = SD(w1, sigma)
+            r2 = SD(w2, sigma)
         elseif rm == :Variance
-            r1 = Variance(w1, cov)
-            r2 = Variance(w2, cov)
+            r1 = Variance(w1, sigma)
+            r2 = Variance(w2, sigma)
         elseif rm == :MAD
             r1 = MAD(a1)
             r2 = MAD(a2)
@@ -1347,7 +1347,7 @@ function risk_contribution(
         portfolio.returns;
         rm = rm,
         rf = rf,
-        cov = portfolio.cov,
+        sigma = portfolio.cov,
         alpha_i = portfolio.alpha_i,
         alpha = portfolio.alpha,
         a_sim = portfolio.a_sim,
@@ -1367,7 +1367,7 @@ function sharpe_ratio(
     returns::AbstractMatrix;
     rm::Symbol = :SD,
     rf::Real = 0.0,
-    cov::AbstractMatrix,
+    sigma::AbstractMatrix,
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
@@ -1385,7 +1385,7 @@ function sharpe_ratio(
         returns;
         rm = rm,
         rf = rf,
-        cov = cov,
+        sigma = sigma,
         alpha_i = alpha_i,
         alpha = alpha,
         a_sim = a_sim,
@@ -1417,7 +1417,7 @@ function sharpe_ratio(
         portfolio.returns;
         rm = rm,
         rf = rf,
-        cov = portfolio.cov,
+        sigma = portfolio.cov,
         alpha_i = portfolio.alpha_i,
         alpha = portfolio.alpha,
         a_sim = portfolio.a_sim,

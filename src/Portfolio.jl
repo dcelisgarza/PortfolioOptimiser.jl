@@ -659,8 +659,8 @@ function Portfolio(;
     k_sigma::Real = Inf,
     # Optimal portfolios.
     optimal::AbstractDict = Dict(),
-    limits = Matrix{Float64}(undef, 0, 0),
-    frontier = Matrix{Float64}(undef, 0, 0),
+    limits::DataFrame = DataFrame(),
+    frontier::AbstractDict = Dict(),
     # Solutions.
     solvers::AbstractDict = Dict(),
     opt_params::AbstractDict = Dict(),
