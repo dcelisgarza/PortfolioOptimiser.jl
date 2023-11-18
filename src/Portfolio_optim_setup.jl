@@ -702,6 +702,18 @@ function frontier_limits!(
     rf::Real = 0.0,
     rm::Symbol = :SD,
 )
+    @assert(class ∈ PortClasses, "class = $class, must be one of $PortClasses")
+    @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
+    @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
+    @assert(
+        0 < portfolio.alpha < 1,
+        "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and smaller than 1"
+    )
+    @assert(
+        0 < portfolio.kappa < 1,
+        "portfolio.kappa = $(portfolio.kappa), must be greater than 0 and smaller than 1"
+    )
+
     w_min = opt_port!(
         portfolio;
         class = class,
@@ -740,6 +752,18 @@ function efficient_frontier!(
     rm::Symbol = :SD,
     points = 20,
 )
+    @assert(class ∈ PortClasses, "class = $class, must be one of $PortClasses")
+    @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
+    @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
+    @assert(
+        0 < portfolio.alpha < 1,
+        "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and smaller than 1"
+    )
+    @assert(
+        0 < portfolio.kappa < 1,
+        "portfolio.kappa = $(portfolio.kappa), must be greater than 0 and smaller than 1"
+    )
+
     mu, sigma, returns = _setup_model_class(portfolio, class, hist)
 
     fl = frontier_limits!(
@@ -767,106 +791,24 @@ function efficient_frontier!(
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    a1 = returns * w1
-    a2 = returns * w2
-
-    if rm == :SD
-        risk1 = SD(w1, sigma)
-        risk2 = SD(w2, sigma)
-    elseif rm == :Variance
-        risk1 = Variance(w1, sigma)
-        risk2 = Variance(w2, sigma)
-    elseif rm == :MAD
-        risk1 = MAD(a1)
-        risk2 = MAD(a2)
-    elseif rm == :SSD
-        risk1 = SSD(a1)
-        risk2 = SSD(a2)
-    elseif rm == :FLPM
-        risk1 = FLPM(a1, rf)
-        risk2 = FLPM(a2, rf)
-    elseif rm == :SLPM
-        risk1 = SLPM(a1, rf)
-        risk2 = SLPM(a2, rf)
-    elseif rm == :WR
-        risk1 = WR(a1)
-        risk2 = WR(a2)
-    elseif rm == :VaR
-        risk1 = VaR(a1, alpha)
-        risk2 = VaR(a2, alpha)
-    elseif rm == :CVaR
-        risk1 = CVaR(a1, alpha)
-        risk2 = CVaR(a2, alpha)
-    elseif rm == :EVaR
-        risk1 = EVaR(a1, solvers, alpha)
-        risk2 = EVaR(a2, solvers, alpha)
-    elseif rm == :RVaR
-        risk1 = RVaR(a1, solvers, alpha, kappa)
-        risk2 = RVaR(a2, solvers, alpha, kappa)
-    elseif rm == :DaR
-        risk1 = DaR_abs(a1, alpha)
-        risk2 = DaR_abs(a2, alpha)
-    elseif rm == :MDD
-        risk1 = MDD_abs(a1)
-        risk2 = MDD_abs(a2)
-    elseif rm == :ADD
-        risk1 = ADD_abs(a1)
-        risk2 = ADD_abs(a2)
-    elseif rm == :CDaR
-        risk1 = CDaR_abs(a1, alpha)
-        risk2 = CDaR_abs(a2, alpha)
-    elseif rm == :UCI
-        risk1 = UCI_abs(a1)
-        risk2 = UCI_abs(a2)
-    elseif rm == :EDaR
-        risk1 = EDaR_abs(a1, solvers, alpha)
-        risk2 = EDaR_abs(a2, solvers, alpha)
-    elseif rm == :RDaR
-        risk1 = RDaR_abs(a1, solvers, alpha, kappa)
-        risk2 = RDaR_abs(a2, solvers, alpha, kappa)
-    elseif rm == :Kurt
-        risk1 = Kurt(a1) * 0.5
-        risk2 = Kurt(a2) * 0.5
-    elseif rm == :SKurt
-        risk1 = SKurt(a1) * 0.5
-        risk2 = SKurt(a2) * 0.5
-    elseif rm == :GMD
-        risk1 = GMD(a1)
-        risk2 = GMD(a2)
-    elseif rm == :RG
-        risk1 = RG(a1)
-        risk2 = RG(a2)
-    elseif rm == :RCVaR
-        risk1 = RCVaR(a1; alpha = alpha, beta = beta)
-        risk2 = RCVaR(a2; alpha = alpha, beta = beta)
-    elseif rm == :TG
-        risk1 = TG(a1; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-        risk2 = TG(a2; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-    elseif rm == :RTG
-        risk1 = RTG(
-            a1;
-            alpha_i = alpha_i,
-            alpha = alpha,
-            a_sim = a_sim,
-            beta_i = beta_i,
-            beta = beta,
-            b_sim = b_sim,
-        )
-        risk2 = RTG(
-            a2;
-            alpha_i = alpha_i,
-            alpha = alpha,
-            a_sim = a_sim,
-            beta_i = beta_i,
-            beta = beta,
-            b_sim = b_sim,
-        )
-    elseif rm == :OWA
-        T = size(returns, 1)
-        owa_w = _owa_w_choice(owa_w, T)
-        risk1 = OWA(a1, owa_w)
-        risk2 = OWA(a2, owa_w)
-    end
+    risk1, risk2 = _ul_risk(
+        rm,
+        returns,
+        w1,
+        w2,
+        sigma,
+        rf,
+        solvers,
+        alpha,
+        kappa,
+        alpha_i,
+        beta,
+        a_sim,
+        beta_i,
+        b_sim,
+        owa_w,
+        0,
+    )
 
     mus = range(ret1, stop = ret2, length = points)
     risks = range(risk1, stop = risk2, length = points)

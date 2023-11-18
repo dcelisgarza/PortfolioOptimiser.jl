@@ -1162,6 +1162,153 @@ function calc_risk(
     )
 end
 
+function _ul_risk(
+    rm,
+    returns,
+    w1,
+    w2,
+    sigma,
+    rf,
+    solvers,
+    alpha,
+    kappa,
+    alpha_i,
+    beta,
+    a_sim,
+    beta_i,
+    b_sim,
+    owa_w,
+    di,
+)
+    a1 = returns * w1
+    a2 = returns * w2
+
+    if rm == :SD
+        r1 = SD(w1, sigma)
+        r2 = SD(w2, sigma)
+    elseif rm == :Variance
+        r1 = Variance(w1, sigma)
+        r2 = Variance(w2, sigma)
+    elseif rm == :MAD
+        r1 = MAD(a1)
+        r2 = MAD(a2)
+    elseif rm == :SSD
+        r1 = SSD(a1)
+        r2 = SSD(a2)
+    elseif rm == :FLPM
+        r1 = FLPM(a1, rf)
+        r2 = FLPM(a2, rf)
+    elseif rm == :SLPM
+        r1 = SLPM(a1, rf)
+        r2 = SLPM(a2, rf)
+    elseif rm == :WR
+        r1 = WR(a1)
+        r2 = WR(a2)
+    elseif rm == :VaR
+        r1 = VaR(a1, alpha)
+        r2 = VaR(a2, alpha)
+    elseif rm == :CVaR
+        r1 = CVaR(a1, alpha)
+        r2 = CVaR(a2, alpha)
+    elseif rm == :EVaR
+        r1 = EVaR(a1, solvers, alpha)
+        r2 = EVaR(a2, solvers, alpha)
+    elseif rm == :RVaR
+        r1 = RVaR(a1, solvers, alpha, kappa)
+        r2 = RVaR(a2, solvers, alpha, kappa)
+    elseif rm == :DaR
+        r1 = DaR_abs(a1, alpha)
+        r2 = DaR_abs(a2, alpha)
+    elseif rm == :MDD
+        r1 = MDD_abs(a1)
+        r2 = MDD_abs(a2)
+    elseif rm == :ADD
+        r1 = ADD_abs(a1)
+        r2 = ADD_abs(a2)
+    elseif rm == :CDaR
+        r1 = CDaR_abs(a1, alpha)
+        r2 = CDaR_abs(a2, alpha)
+    elseif rm == :UCI
+        r1 = UCI_abs(a1)
+        r2 = UCI_abs(a2)
+    elseif rm == :EDaR
+        r1 = EDaR_abs(a1, solvers, alpha)
+        r2 = EDaR_abs(a2, solvers, alpha)
+    elseif rm == :RDaR
+        r1 = RDaR_abs(a1, solvers, alpha, kappa)
+        r2 = RDaR_abs(a2, solvers, alpha, kappa)
+    elseif rm == :DaR_r
+        r1 = DaR_rel(a1, alpha)
+        r2 = DaR_rel(a2, alpha)
+    elseif rm == :MDD_r
+        r1 = MDD_rel(a1)
+        r2 = MDD_rel(a2)
+    elseif rm == :ADD_r
+        r1 = ADD_rel(a1)
+        r2 = ADD_rel(a2)
+    elseif rm == :CDaR_r
+        r1 = CDaR_rel(a1, alpha)
+        r2 = CDaR_rel(a2, alpha)
+    elseif rm == :UCI_r
+        r1 = UCI_rel(a1)
+        r2 = UCI_rel(a2)
+    elseif rm == :EDaR_r
+        r1 = EDaR_rel(a1, solvers, alpha)
+        r2 = EDaR_rel(a2, solvers, alpha)
+    elseif rm == :RDaR_r
+        r1 = RDaR_rel(a1, solvers, alpha, kappa)
+        r2 = RDaR_rel(a2, solvers, alpha, kappa)
+    elseif rm == :Kurt
+        r1 = Kurt(a1) * 0.5
+        r2 = Kurt(a2) * 0.5
+    elseif rm == :SKurt
+        r1 = SKurt(a1) * 0.5
+        r2 = SKurt(a2) * 0.5
+    elseif rm == :GMD
+        r1 = GMD(a1)
+        r2 = GMD(a2)
+    elseif rm == :RG
+        r1 = RG(a1)
+        r2 = RG(a2)
+    elseif rm == :RCVaR
+        r1 = RCVaR(a1; alpha = alpha, beta = beta)
+        r2 = RCVaR(a2; alpha = alpha, beta = beta)
+    elseif rm == :TG
+        r1 = TG(a1; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+        r2 = TG(a2; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+    elseif rm == :RTG
+        r1 = RTG(
+            a1;
+            alpha_i = alpha_i,
+            alpha = alpha,
+            a_sim = a_sim,
+            beta_i = beta_i,
+            beta = beta,
+            b_sim = b_sim,
+        )
+        r2 = RTG(
+            a2;
+            alpha_i = alpha_i,
+            alpha = alpha,
+            a_sim = a_sim,
+            beta_i = beta_i,
+            beta = beta,
+            b_sim = b_sim,
+        )
+    elseif rm == :OWA
+        T = size(returns, 1)
+        owa_w = _owa_w_choice(owa_w, T)
+        r1 = OWA(a1, owa_w)
+        r2 = OWA(a2, owa_w)
+    elseif rm == :Equal
+        r1 = 1 / length(w1) + di
+        r2 = 1 / length(w1) - di
+    else
+        throw(ArgumentError("rm = $rm, must be one of $HRRiskMeasures"))
+    end
+    return r1, r2
+end
+
 function risk_contribution(
     w::AbstractVector,
     returns::AbstractMatrix;
@@ -1193,136 +1340,25 @@ function risk_contribution(
         w2 .= w
         w2[i] -= di
 
-        a1 = returns * w1
-        a2 = returns * w2
+        r1, r2 = _ul_risk(
+            rm,
+            returns,
+            w1,
+            w2,
+            sigma,
+            rf,
+            solvers,
+            alpha,
+            kappa,
+            alpha_i,
+            beta,
+            a_sim,
+            beta_i,
+            b_sim,
+            owa_w,
+            di,
+        )
 
-        if rm == :SD
-            r1 = SD(w1, sigma)
-            r2 = SD(w2, sigma)
-        elseif rm == :Variance
-            r1 = Variance(w1, sigma)
-            r2 = Variance(w2, sigma)
-        elseif rm == :MAD
-            r1 = MAD(a1)
-            r2 = MAD(a2)
-        elseif rm == :SSD
-            r1 = SSD(a1)
-            r2 = SSD(a2)
-        elseif rm == :FLPM
-            r1 = FLPM(a1, rf)
-            r2 = FLPM(a2, rf)
-        elseif rm == :SLPM
-            r1 = SLPM(a1, rf)
-            r2 = SLPM(a2, rf)
-        elseif rm == :WR
-            r1 = WR(a1)
-            r2 = WR(a2)
-        elseif rm == :VaR
-            r1 = VaR(a1, alpha)
-            r2 = VaR(a2, alpha)
-        elseif rm == :CVaR
-            r1 = CVaR(a1, alpha)
-            r2 = CVaR(a2, alpha)
-        elseif rm == :EVaR
-            r1 = EVaR(a1, solvers, alpha)
-            r2 = EVaR(a2, solvers, alpha)
-        elseif rm == :RVaR
-            r1 = RVaR(a1, solvers, alpha, kappa)
-            r2 = RVaR(a2, solvers, alpha, kappa)
-        elseif rm == :DaR
-            r1 = DaR_abs(a1, alpha)
-            r2 = DaR_abs(a2, alpha)
-        elseif rm == :MDD
-            r1 = MDD_abs(a1)
-            r2 = MDD_abs(a2)
-        elseif rm == :ADD
-            r1 = ADD_abs(a1)
-            r2 = ADD_abs(a2)
-        elseif rm == :CDaR
-            r1 = CDaR_abs(a1, alpha)
-            r2 = CDaR_abs(a2, alpha)
-        elseif rm == :UCI
-            r1 = UCI_abs(a1)
-            r2 = UCI_abs(a2)
-        elseif rm == :EDaR
-            r1 = EDaR_abs(a1, solvers, alpha)
-            r2 = EDaR_abs(a2, solvers, alpha)
-        elseif rm == :RDaR
-            r1 = RDaR_abs(a1, solvers, alpha, kappa)
-            r2 = RDaR_abs(a2, solvers, alpha, kappa)
-        elseif rm == :DaR_r
-            r1 = DaR_rel(a1, alpha)
-            r2 = DaR_rel(a2, alpha)
-        elseif rm == :MDD_r
-            r1 = MDD_rel(a1)
-            r2 = MDD_rel(a2)
-        elseif rm == :ADD_r
-            r1 = ADD_rel(a1)
-            r2 = ADD_rel(a2)
-        elseif rm == :CDaR_r
-            r1 = CDaR_rel(a1, alpha)
-            r2 = CDaR_rel(a2, alpha)
-        elseif rm == :UCI_r
-            r1 = UCI_rel(a1)
-            r2 = UCI_rel(a2)
-        elseif rm == :EDaR_r
-            r1 = EDaR_rel(a1, solvers, alpha)
-            r2 = EDaR_rel(a2, solvers, alpha)
-        elseif rm == :RDaR_r
-            r1 = RDaR_rel(a1, solvers, alpha, kappa)
-            r2 = RDaR_rel(a2, solvers, alpha, kappa)
-        elseif rm == :Kurt
-            r1 = Kurt(a1) * 0.5
-            r2 = Kurt(a2) * 0.5
-        elseif rm == :SKurt
-            r1 = SKurt(a1) * 0.5
-            r2 = SKurt(a2) * 0.5
-        elseif rm == :GMD
-            r1 = GMD(a1)
-            r2 = GMD(a2)
-        elseif rm == :RG
-            r1 = RG(a1)
-            r2 = RG(a2)
-        elseif rm == :RCVaR
-            r1 = RCVaR(a1; alpha = alpha, beta = beta)
-            r2 = RCVaR(a2; alpha = alpha, beta = beta)
-        elseif rm == :TG
-            r1 = TG(a1; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-            r2 = TG(a2; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-        elseif rm == :RTG
-            r1 = RTG(
-                a1;
-                alpha_i = alpha_i,
-                alpha = alpha,
-                a_sim = a_sim,
-                beta_i = beta_i,
-                beta = beta,
-                b_sim = b_sim,
-            )
-            r2 = RTG(
-                a2;
-                alpha_i = alpha_i,
-                alpha = alpha,
-                a_sim = a_sim,
-                beta_i = beta_i,
-                beta = beta,
-                b_sim = b_sim,
-            )
-        elseif rm == :OWA
-            T = size(returns, 1)
-            owa_w = _owa_w_choice(owa_w, T)
-            r1 = OWA(a1, owa_w)
-            r2 = OWA(a2, owa_w)
-        elseif rm == :Equal
-            r1 = 1 / length(w) + di
-            r2 = 1 / length(w) - di
-        else
-            throw(
-                ArgumentError(
-                    "rm = $rm, must be one of $(union(RiskMeasures, HRRiskMeasures))",
-                ),
-            )
-        end
         rci = (r1 - r2) / (2 * di) * w[i]
         rc[i] = rci
     end
