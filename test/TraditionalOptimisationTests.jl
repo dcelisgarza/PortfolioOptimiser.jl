@@ -19,6 +19,37 @@ Logging.disable_logging(Logging.Warn)
 A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
+
+@testset "Efficient Frontier" begin
+    portfolio = Portfolio(
+        returns = returns,
+        solvers = Dict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio)
+    limits = frontier_limits!(portfolio, rm = :CVaR, kelly = :Approx)
+    frontier = efficient_frontier!(portfolio; kelly = :Approx, rm = :CVaR, points = 3)
+    @test isapprox(frontier[:CVaR][:weights][!, "1"], limits.w_min)
+    @test isapprox(frontier[:CVaR][:weights][!, "3"], limits.w_max)
+    r1 = calc_risk(limits.w_min, portfolio.returns; rm = :CVaR, alpha = portfolio.alpha)
+    r2 = calc_risk(limits.w_max, portfolio.returns; rm = :CVaR, alpha = portfolio.alpha)
+    risks = range(r1, stop = r2, length = 3)
+    portfolio.cvar_u = risks[2]
+    w = opt_port!(
+        portfolio;
+        kelly = :Approx,
+        obj = :Max_Ret,
+        rm = :CVaR,
+        save_opt_params = false,
+    )
+    portfolio.cvar_u = Inf
+    @test isapprox(w.weights, frontier[:CVaR][:weights][!, "2"])
+end
+
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 type = :Trad

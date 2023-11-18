@@ -702,18 +702,6 @@ function frontier_limits!(
     rf::Real = 0.0,
     rm::Symbol = :SD,
 )
-    @assert(class ∈ PortClasses, "class = $class, must be one of $PortClasses")
-    @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
-    @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
-    @assert(
-        0 < portfolio.alpha < 1,
-        "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and smaller than 1"
-    )
-    @assert(
-        0 < portfolio.kappa < 1,
-        "portfolio.kappa = $(portfolio.kappa), must be greater than 0 and smaller than 1"
-    )
-
     w_min = opt_port!(
         portfolio;
         class = class,
@@ -750,20 +738,8 @@ function efficient_frontier!(
     kelly::Symbol = :None,
     rf::Real = 0.0,#1.0329^(1 / 252) - 1
     rm::Symbol = :SD,
-    points = 20,
+    points::Integer = 20,
 )
-    @assert(class ∈ PortClasses, "class = $class, must be one of $PortClasses")
-    @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
-    @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
-    @assert(
-        0 < portfolio.alpha < 1,
-        "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and smaller than 1"
-    )
-    @assert(
-        0 < portfolio.kappa < 1,
-        "portfolio.kappa = $(portfolio.kappa), must be greater than 0 and smaller than 1"
-    )
-
     mu, sigma, returns = _setup_model_class(portfolio, class, hist)
 
     fl = frontier_limits!(
@@ -844,7 +820,7 @@ function efficient_frontier!(
     frontier = Vector{Float64}(undef, 0)
 
     i = 0
-    for r in risks
+    for (j, r) in enumerate(risks)
         try
             if i == 0
                 w = opt_port!(
@@ -858,7 +834,8 @@ function efficient_frontier!(
                     save_opt_params = false,
                 )
             else
-                setfield!(portfolio, rmf, r)
+                j != length(risks) ? setfield!(portfolio, rmf, r) :
+                setfield!(portfolio, rmf, Inf)
                 w = opt_port!(
                     portfolio;
                     class = class,
@@ -877,8 +854,8 @@ function efficient_frontier!(
         catch
         end
     end
-
     setfield!(portfolio, rmf, Inf)
+
     portfolio.frontier[rm] = Dict(
         :weights => hcat(
             DataFrame(tickers = portfolio.assets),

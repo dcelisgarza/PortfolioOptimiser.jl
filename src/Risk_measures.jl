@@ -1034,7 +1034,7 @@ function calc_risk(
     returns::AbstractMatrix;
     rm::Symbol = :SD,
     rf::Real = 0.0,
-    sigma::AbstractMatrix,
+    sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
@@ -1127,8 +1127,6 @@ function calc_risk(
         OWA(x, w)
     elseif rm == :Equal
         1 / length(w)
-    else
-        throw(ArgumentError("rm = $rm, must be one of $(union(RiskMeasures, HRRiskMeasures))"))
     end
     return risk
 end
@@ -1180,6 +1178,8 @@ function _ul_risk(
     owa_w,
     di,
 )
+    @assert(rm ∈ HRRiskMeasures, "rm = $rm, must be one of $HRRiskMeasures")
+
     a1 = returns * w1
     a2 = returns * w2
 
@@ -1303,8 +1303,6 @@ function _ul_risk(
     elseif rm == :Equal
         r1 = 1 / length(w1) + di
         r2 = 1 / length(w1) - di
-    else
-        throw(ArgumentError("rm = $rm, must be one of $HRRiskMeasures"))
     end
     return r1, r2
 end
