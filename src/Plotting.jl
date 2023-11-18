@@ -46,7 +46,7 @@ function plot_returns(
     )
 end
 
-function plot_bar(assets, weights, others = 0.05; kwargs...)
+function plot_bar(assets, weights; kwargs...)
     !haskey(kwargs, :ylabel) && (kwargs = (kwargs..., ylabel = "Percentage Composition"))
     !haskey(kwargs, :xlabel) && (kwargs = (kwargs..., xlabel = "Assets"))
     !haskey(kwargs, :xticks) && (
@@ -64,14 +64,8 @@ end
 function plot_bar(
     portfolio::AbstractPortfolio,
     type = isa(portfolio, HCPortfolio) ? :HRP : :Trad,
-    others = 0.05;
     kwargs...,
 )
-    return plot_bar(
-        portfolio.assets,
-        portfolio.optimal[type].weights,
-        others = others;
-        kwargs...,
-    )
+    return plot_bar(portfolio.assets, portfolio.optimal[type].weights, kwargs...)
 end
 export plot_returns, plot_bar
