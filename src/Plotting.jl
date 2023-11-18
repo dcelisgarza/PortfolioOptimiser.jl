@@ -10,26 +10,25 @@
 
 function plot_returns(timestamps, assets, returns, weights; per_asset = false, kwargs...)
     if per_asset
-        pret = returns .* transpose(weights)
-        pret = vcat(zeros(1, length(weights)), pret)
-        pret .+= 1
-        pret = cumprod(pret, dims = 1)
-        pret = pret[2:end, :]
+        ret = returns .* transpose(weights)
+        ret = vcat(zeros(1, length(weights)), ret)
+        ret .+= 1
+        ret = cumprod(ret, dims = 1)
+        ret = ret[2:end, :]
         !haskey(kwargs, :label) && (kwargs = (kwargs..., label = reshape(assets, 1, :)))
     else
-        pret = returns * weights
-        pushfirst!(pret, 0)
-        pret .+= 1
-        pret = cumprod(pret)
-        popfirst!(pret)
-        !haskey(kwargs, :label) && (kwargs = (kwargs..., label = "Portfolio"))
+        ret = returns * weights
+        pushfirst!(ret, 0)
+        ret .+= 1
+        ret = cumprod(ret)
+        popfirst!(ret)
+        !haskey(kwargs, :legend) && (kwargs = (kwargs..., legend = false))
     end
     !haskey(kwargs, :ylabel) && (kwargs = (kwargs..., ylabel = "Cummulative Return"))
     !haskey(kwargs, :xlabel) && (kwargs = (kwargs..., xlabel = "Date"))
 
-    plot(timestamps, pret; kwargs...)
+    plot(timestamps, ret; kwargs...)
 end
-
 function plot_returns(
     portfolio,
     type = isa(portfolio, HCPortfolio) ? :HRP : :Trad;
@@ -60,7 +59,6 @@ function plot_bar(assets, data; kwargs...)
 
     return bar(assets, data * 100; kwargs...)
 end
-
 function plot_bar(
     portfolio::AbstractPortfolio,
     type = isa(portfolio, HCPortfolio) ? :HRP : :Trad,
@@ -180,7 +178,6 @@ function plot_risk_contribution(
 
     return plt
 end
-
 function plot_risk_contribution(
     portfolio;
     di::Real = 1e-6,
@@ -236,13 +233,16 @@ function plot_frontier(w_frontier, rm = :SD; kwargs...)
 end
 
 function plot_drawdown(
-    timestamps,
+    timestamps::AbstractVector,
     w::AbstractVector,
     returns::AbstractMatrix;
     alpha::Real = 0.05,
     kappa::Real = 0.3,
     solvers::Union{<:AbstractDict, Nothing} = nothing,
-    kwargs_lines = (;),
+    kwargs_ret = (;),
+    kwargs_dd = (;),
+    kwargs_risks = (;),
+    kwargs_all = (;),
 )
     ret = returns * w
 
@@ -260,22 +260,177 @@ function plot_drawdown(
         dd[i] = prices2[i] - peak
     end
 
-    data = [prices, dd]
-    risks = (
-        -DaR_abs(ret, alpha),
-        -MDD_abs(ret),
-        -ADD_abs(ret),
-        -CDaR_abs(ret, alpha),
-        -UCI_abs(ret),
-        -EDaR_abs(ret, solvers, alpha),
-        -RDaR_abs(ret, solvers, alpha, kappa),
+    dd .*= 100
+
+    risks =
+        [
+            -ADD_abs(ret),
+            -UCI_abs(ret),
+            -DaR_abs(ret, alpha),
+            -CDaR_abs(ret, alpha),
+            -EDaR_abs(ret, solvers, alpha),
+            -RDaR_abs(ret, solvers, alpha, kappa),
+            -MDD_abs(ret),
+        ] * 100
+
+    conf = round((1 - alpha) * 100, digits = 2)
+
+    risk_labels = (
+        "Average Drawdown: $(round(risks[1], digits = 2))%",
+        "Ulcer Index: $(round(risks[2], digits = 2))%",
+        "$(conf)% Confidence DaR: $(round(risks[3], digits = 2))%",
+        "$(conf)% Confidence CDaR: $(round(risks[4], digits = 2))%",
+        "$(conf)% Confidence EDaR: $(round(risks[5], digits = 2))%",
+        "$(conf)% Confidence RDaR ($kappa): $(round(risks[6], digits = 2))%",
+        "Maximum Drawdown: $(round(risks[7], digits = 2))%",
     )
 
-    plt = plot(timestamps, dd)
-    for risk in risks
-        hline!([risk]; kwargs_lines...)
+    !haskey(kwargs_dd, :ylabel) &&
+        (kwargs_dd = (kwargs_dd..., ylabel = "Percentage Drawdown"))
+    !haskey(kwargs_ret, :yguidefontsize) &&
+        (kwargs_ret = (kwargs_ret..., yguidefontsize = 10))
+    !haskey(kwargs_dd, :xlabel) && (kwargs_dd = (kwargs_dd..., xlabel = "Date"))
+    !haskey(kwargs_dd, :ylim) &&
+        (kwargs_dd = (kwargs_dd..., ylim = [minimum(dd) * 1.5, 0.01]))
+    !haskey(kwargs_dd, :label) &&
+        (kwargs_dd = (kwargs_dd..., label = "Uncompounded Cummulative Drawdown"))
+    dd_plt = plot(timestamps, dd; kwargs_dd...)
+
+    for (risk, label) in zip(risks, risk_labels)
+        hline!([risk]; label = label, kwargs_risks...)
     end
+
+    !haskey(kwargs_ret, :ylabel) &&
+        (kwargs_ret = (kwargs_ret..., ylabel = "Cummulative Returns"))
+    !haskey(kwargs_ret, :yguidefontsize) &&
+        (kwargs_ret = (kwargs_ret..., yguidefontsize = 10))
+    !haskey(kwargs_ret, :legend) && (kwargs_ret = (kwargs_ret..., legend = false))
+    ret_plt = plot(timestamps, prices; kwargs_ret...)
+
+    !haskey(kwargs_all, :legend_font_pointsize) &&
+        (kwargs_all = (kwargs_all..., legend_font_pointsize = 8))
+    !haskey(kwargs_all, :size) &&
+        (kwargs_all = (kwargs_all..., size = (750, ceil(Integer, 750 / 1.618))))
+    full_plt = plot(ret_plt, dd_plt; layout = (2, 1), kwargs_all...)
+
+    return full_plt
+end
+function plot_drawdown(
+    portfolio::AbstractPortfolio;
+    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+    kwargs_ret = (;),
+    kwargs_dd = (;),
+    kwargs_risks = (;),
+    kwargs_all = (;),
+)
+    return plot_drawdown(
+        portfolio.timestamps,
+        portfolio.optimal[type].weights,
+        portfolio.returns;
+        alpha = portfolio.alpha,
+        kappa = portfolio.kappa,
+        solvers = portfolio.solvers,
+        kwargs_ret = kwargs_ret,
+        kwargs_dd = kwargs_dd,
+        kwargs_risks = kwargs_risks,
+        kwargs_all = kwargs_all,
+    )
+end
+
+function plot_hist(
+    w::AbstractVector,
+    returns::AbstractMatrix;
+    alpha_i::Real = 0.0001,
+    alpha::Real = 0.05,
+    a_sim::Int = 100,
+    kappa::Real = 0.3,
+    solvers::Union{<:AbstractDict, Nothing} = nothing,
+    points::Integer = ceil(Int, 4 * sqrt(size(returns, 1))),
+    kwargs_hist = (;),
+    kwargs_risks = (;),
+)
+    ret = returns * w * 100
+
+    mu = mean(ret)
+    sigma = std(ret)
+
+    x = range(minimum(ret), stop = maximum(ret), length = points)
+    D = fit(Normal, ret)
+
+    !haskey(kwargs_hist, :ylabel) &&
+        (kwargs_hist = (kwargs_hist..., ylabel = "Probability Density"))
+    !haskey(kwargs_hist, :xlabel) &&
+        (kwargs_hist = (kwargs_hist..., xlabel = "Percentage Returns"))
+
+    plt = histogram(ret; normalize = :pdf, label = "", kwargs_hist...)
+
+    mad = MAD(ret)
+    gmd = GMD(ret)
+    risks = [
+        mu,
+        mu - sigma,
+        mu - mad,
+        mu - gmd,
+        -VaR(ret, alpha),
+        -CVaR(ret, alpha),
+        -TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim),
+        -EVaR(ret, solvers, alpha),
+        -RVaR(x, solvers, alpha, kappa),
+        -WR(ret),
+    ]
+
+    conf = round((1 - alpha) * 100, digits = 2)
+
+    risk_labels = [
+        "Mean: $(round(risks[1], digits=2))%",
+        "Mean - Std. Dev. ($(round(sigma, digits=2))%): $(round(risks[2], digits=2))%",
+        "Mean - MAD ($(round(mad,digits=2))%): $(round(risks[3], digits=2))%",
+        "Mean - GMD ($(round(gmd,digits=2))%): $(round(risks[4], digits=2))%",
+        "$(conf)% Confidence VaR: $(round(risks[5], digits=2))%",
+        "$(conf)% Confidence CVaR: $(round(risks[6], digits=2))%",
+        "$(conf)% Confidence Tail Gini: $(round(risks[7], digits=2))%",
+        "$(conf)% Confidence EVaR: $(round(risks[8], digits=2))%",
+        "$(conf)% Confidence RVaR ($kappa): $(round(risks[9], digits=2))%",
+        "Worst Realisation: $(round(risks[10], digits=2))%",
+    ]
+
+    for (risk, label) in zip(risks, risk_labels)
+        vline!([risk]; label = label, kwargs_risks...)
+    end
+
+    !haskey(kwargs_hist, :size) &&
+        (kwargs_hist = (kwargs_hist..., size = (750, ceil(Integer, 750 / 1.618))))
+
+    plot!(
+        x,
+        pdf.(D, x),
+        label = "Normal: μ = $(round(mean(D), digits=2))%, σ = $(round(std(D), digits=2))%";
+        kwargs_hist...,
+    )
 
     return plt
 end
-export plot_returns, plot_bar, plot_risk_contribution, plot_frontier, plot_drawdown
+
+function plot_hist(
+    portfolio::AbstractPortfolio;
+    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+    points::Integer = ceil(Int, 4 * sqrt(size(portfolio.returns, 1))),
+    kwargs_hist = (;),
+    kwargs_risks = (;),
+)
+    return plot_hist(
+        portfolio.optimal[type].weights,
+        portfolio.returns;
+        alpha_i = portfolio.alpha_i,
+        alpha = portfolio.alpha,
+        a_sim = portfolio.a_sim,
+        kappa = portfolio.kappa,
+        solvers = portfolio.solvers,
+        points = points,
+        kwargs_hist = kwargs_hist,
+        kwargs_risks = kwargs_risks,
+    )
+end
+
+export plot_returns,
+    plot_bar, plot_risk_contribution, plot_frontier, plot_drawdown, plot_hist

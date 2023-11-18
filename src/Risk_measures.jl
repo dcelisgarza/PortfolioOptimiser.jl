@@ -406,7 +406,7 @@ Compute the Drawdown at Risk of uncompounded cumulative returns.
 """
 function DaR_abs(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
-    insert!(x, 1, 1)
+    pushfirst!(x, 1)
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
@@ -414,7 +414,7 @@ function DaR_abs(x::AbstractArray, alpha::Real = 0.05)
         i > peak && (peak = i)
         dd[idx] = i - peak
     end
-    deleteat!(dd, 1)
+    popfirst!(dd)
     sort!(dd)
     idx = ceil(Int, alpha * T)
     return -dd[idx]
@@ -433,7 +433,7 @@ where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumula
 - `x`: vector of portfolio returns.
 """
 function MDD_abs(x::AbstractVector)
-    insert!(x, 1, 1)
+    pushfirst!(x, 1)
     cs = cumsum(x)
     val = 0.0
     peak = -Inf
@@ -460,7 +460,7 @@ where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumula
 """
 function ADD_abs(x::AbstractVector)
     T = length(x)
-    insert!(x, 1, 1)
+    pushfirst!(x, 1)
     cs = cumsum(x)
     val = 0.0
     peak = -Inf
@@ -488,7 +488,7 @@ where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumula
 """
 function CDaR_abs(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
-    insert!(x, 1, 1)
+    pushfirst!(x, 1)
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
@@ -496,7 +496,7 @@ function CDaR_abs(x::AbstractVector, alpha::Real = 0.05)
         i > peak && (peak = i)
         dd[idx] = i - peak
     end
-    deleteat!(dd, 1)
+    popfirst!(dd)
     sort!(dd)
     idx = ceil(Int, alpha * T)
     var = -dd[idx]
@@ -521,7 +521,7 @@ where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumula
 """
 function UCI_abs(x::AbstractVector)
     T = length(x)
-    insert!(x, 1, 1)
+    pushfirst!(x, 1)
     cs = cumsum(x)
     val = 0.0
     peak = -Inf
@@ -552,7 +552,7 @@ where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure 
 - `α`: significance level, α ∈ (0, 1).
 """
 function EDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
-    insert!(x, 1, 1)
+    pushfirst!(x, 1)
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
@@ -560,7 +560,7 @@ function EDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
         i > peak && (peak = i)
         dd[idx] = -(peak - i)
     end
-    deleteat!(dd, 1)
+    popfirst!(dd)
     return ERM(dd, solvers, alpha)
 end
 
@@ -590,7 +590,7 @@ function RDaR_abs(
     alpha::Real = 0.05,
     kappa::Real = 0.3,
 )
-    insert!(x, 1, 1)
+    pushfirst!(x, 1)
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
@@ -598,7 +598,7 @@ function RDaR_abs(
         i > peak && (peak = i)
         dd[idx] = i - peak
     end
-    deleteat!(dd, 1)
+    popfirst!(dd)
     return RRM(dd, solvers, alpha, kappa)
 end
 
@@ -619,7 +619,7 @@ Compute the Drawdown at Risk of compounded cumulative returns.
 """
 function DaR_rel(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
-    x .= insert!(x, 1, 0) .+ 1
+    x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
@@ -627,7 +627,7 @@ function DaR_rel(x::AbstractArray, alpha::Real = 0.05)
         i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end
-    deleteat!(dd, 1)
+    popfirst!(dd)
     sort!(dd)
     idx = ceil(Int, alpha * T)
     return -dd[idx]
@@ -646,7 +646,7 @@ where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulati
 - `x`: vector of portfolio returns.
 """
 function MDD_rel(x::AbstractVector)
-    x .= insert!(x, 1, 0) .+ 1
+    x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     val = 0.0
     peak = -Inf
@@ -673,7 +673,7 @@ where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulati
 """
 function ADD_rel(x::AbstractVector)
     T = length(x)
-    x .= insert!(x, 1, 0) .+ 1
+    x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     val = 0.0
     peak = -Inf
@@ -701,7 +701,7 @@ where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulati
 """
 function CDaR_rel(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
-    x .= insert!(x, 1, 0) .+ 1
+    x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
@@ -709,7 +709,7 @@ function CDaR_rel(x::AbstractVector, alpha::Real = 0.05)
         i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end
-    deleteat!(dd, 1)
+    popfirst!(dd)
     sort!(dd)
     idx = ceil(Int, alpha * T)
     var = -dd[idx]
@@ -734,7 +734,7 @@ where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulati
 """
 function UCI_rel(x::AbstractVector)
     T = length(x)
-    x .= insert!(x, 1, 0) .+ 1
+    x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     val = 0.0
     peak = -Inf
@@ -766,7 +766,7 @@ where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure 
 - `κ`: relativistic deformation parameter.
 """
 function EDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
-    x .= insert!(x, 1, 0) .+ 1
+    x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
@@ -774,7 +774,7 @@ function EDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
         i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end
-    deleteat!(dd, 1)
+    popfirst!(dd)
     return ERM(dd, solvers, alpha)
 end
 
@@ -804,7 +804,7 @@ function RDaR_rel(
     alpha::Real = 0.05,
     kappa::Real = 0.3,
 )
-    x .= insert!(x, 1, 0) .+ 1
+    x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
@@ -812,7 +812,7 @@ function RDaR_rel(
         i > peak && (peak = i)
         dd[idx] = i / peak - 1
     end
-    deleteat!(dd, 1)
+    popfirst!(dd)
     return RRM(dd, solvers, alpha, kappa)
 end
 

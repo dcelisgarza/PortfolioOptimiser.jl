@@ -570,6 +570,8 @@ const HRObjFuncs = (ObjFuncs..., :Equal)
 
 const AllocTypes = (:LP, :Greedy)
 
+const ASH = AverageShiftedHistograms
+
 export AbstractPortfolio,
     RiskMeasures,
     KellyRet,

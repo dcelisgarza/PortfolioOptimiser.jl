@@ -114,7 +114,6 @@ function posdef_fix!(
 end
 export posdef_fix!
 
-const ASH = AverageShiftedHistograms
 function errPDF(x, vals; kernel = ASH.Kernels.gaussian, m = 10, n = 1000, q = 1000)
     e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
     rg = range(e_min, e_max, length = n)
