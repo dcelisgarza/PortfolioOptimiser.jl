@@ -432,5 +432,141 @@ function plot_hist(
     )
 end
 
+function plot_range(
+    w::AbstractVector,
+    returns::AbstractMatrix;
+    alpha_i::Real = 0.0001,
+    alpha::Real = 0.05,
+    a_sim::Int = 100,
+    beta_i = nothing,
+    beta = nothing,
+    b_sim = nothing,
+    points::Integer = ceil(Int, 4 * sqrt(size(returns, 1))),
+    kwargs_hist = (;),
+    kwargs_risks = (;),
+)
+    isnothing(beta) && (beta = alpha)
+
+    ret = returns * w * 100
+
+    mu = mean(ret)
+    sigma = std(ret)
+
+    !haskey(kwargs_hist, :ylabel) &&
+        (kwargs_hist = (kwargs_hist..., ylabel = "Probability Density"))
+    !haskey(kwargs_hist, :xlabel) &&
+        (kwargs_hist = (kwargs_hist..., xlabel = "Percentage Returns"))
+
+    plt = histogram(ret; normalize = :pdf, label = "", kwargs_hist...)
+
+    risks = (
+        RG(ret),
+        RCVaR(ret; alpha = alpha, beta = beta),
+        RTG(
+            ret;
+            alpha_i = alpha_i,
+            alpha = alpha,
+            a_sim = a_sim,
+            beta_i = beta_i,
+            beta = beta,
+            b_sim = b_sim,
+        ),
+    )
+
+    lo_conf = 1 - alpha
+    hi_conf = 1 - beta
+    risk_labels = (
+        "Range: $(round(risks[1], digits=2))%",
+        "Tail Gini Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[2], digits=2))%",
+        "CVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[3], digits=2))%",
+    )
+
+    bounds = [
+        minimum(ret) -TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) -CVaR(ret, alpha)
+        maximum(ret) TG(-ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) CVaR(-ret, alpha)
+    ]
+
+    D = fit(Normal, ret)
+    y = pdf(D, mean(D))
+    ys = (y / 4, y / 2, y * 3 / 4)
+
+    for i in eachindex(risks)
+        plot!(
+            [bounds[1, i], bounds[1, i], bounds[2, i], bounds[2, i]],
+            [0, ys[i], ys[i], 0],
+            label = risk_labels[i],
+            kwargs_risks...,
+        )
+    end
+
+    # mad = MAD(ret)
+    # gmd = GMD(ret)
+    # risks = [
+    #     mu,
+    #     mu - sigma,
+    #     mu - mad,
+    #     mu - gmd,
+    #     -VaR(ret, alpha),
+    #     -CVaR(ret, alpha),
+    #     -TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim),
+    #     -EVaR(ret, solvers, alpha),
+    #     -RVaR(x, solvers, alpha, kappa),
+    #     -WR(ret),
+    # ]
+
+    # conf = round((1 - alpha) * 100, digits = 2)
+
+    # risk_labels = [
+    #     "Mean: $(round(risks[1], digits=2))%",
+    #     "Mean - Std. Dev. ($(round(sigma, digits=2))%): $(round(risks[2], digits=2))%",
+    #     "Mean - MAD ($(round(mad,digits=2))%): $(round(risks[3], digits=2))%",
+    #     "Mean - GMD ($(round(gmd,digits=2))%): $(round(risks[4], digits=2))%",
+    #     "$(conf)% Confidence VaR: $(round(risks[5], digits=2))%",
+    #     "$(conf)% Confidence CVaR: $(round(risks[6], digits=2))%",
+    #     "$(conf)% Confidence Tail Gini: $(round(risks[7], digits=2))%",
+    #     "$(conf)% Confidence EVaR: $(round(risks[8], digits=2))%",
+    #     "$(conf)% Confidence RVaR ($kappa): $(round(risks[9], digits=2))%",
+    #     "Worst Realisation: $(round(risks[10], digits=2))%",
+    # ]
+
+    # for (risk, label) in zip(risks, risk_labels)
+    #     vline!([risk]; label = label, kwargs_risks...)
+    # end
+
+    # !haskey(kwargs_hist, :size) &&
+    #     (kwargs_hist = (kwargs_hist..., size = (750, ceil(Integer, 750 / 1.618))))
+
+    # plot!(
+    #     x,
+    #     pdf.(D, x),
+    #     label = "Normal: μ = $(round(mean(D), digits=2))%, σ = $(round(std(D), digits=2))%";
+    #     kwargs_hist...,
+    # )
+
+    return plt
+end
+
+function plot_range(
+    portfolio::AbstractPortfolio;
+    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+    points::Integer = ceil(Int, 4 * sqrt(size(portfolio.returns, 1))),
+    kwargs_hist = (;),
+    kwargs_risks = (;),
+)
+    return plot_range(
+        portfolio.optimal[type].weights::AbstractVector,
+        portfolio.returns::AbstractMatrix;
+        alpha_i = portfolio.alpha_i,
+        alpha = portfolio.alpha,
+        a_sim = portfolio.a_sim,
+        beta_i = portfolio.beta_i,
+        beta = portfolio.beta,
+        b_sim = portfolio.b_sim,
+        points = points,
+        kwargs_hist = kwargs_hist,
+        kwargs_risks = kwargs_risks,
+    )
+end
+
 export plot_returns,
-    plot_bar, plot_risk_contribution, plot_frontier, plot_drawdown, plot_hist
+    plot_bar, plot_risk_contribution, plot_frontier, plot_drawdown, plot_hist, plot_range
