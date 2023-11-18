@@ -866,6 +866,7 @@ function efficient_frontier!(
         :kelly => kelly,
         :rf => rf,
         :points => points,
+        :risk => collect(risks),
     )
 
     return portfolio.frontier
