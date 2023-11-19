@@ -978,6 +978,34 @@ function OWA(x::AbstractVector, w::AbstractVector)
     return dot(w, sort!(x))
 end
 
+# function L_moment(x::AbstractVector, k = 2)
+#     T = length(x)
+#     w = owa_l_moment(T, k)
+
+#     return dot(w, sort!(x))
+# end
+
+# function L_Moment_CRM(
+#     x::AbstractVector;
+#     k = 2,
+#     method = :SD,
+#     g = 0.5,
+#     max_phi = 0.5,
+#     solvers = Dict(),
+# )
+#     T = length(x)
+#     w = owa_l_moment_crm(
+#         T;
+#         k = k,
+#         method = method,
+#         g = g,
+#         max_phi = max_phi,
+#         solvers = solvers,
+#     )
+
+#     return dot(w, sort!(x))
+# end
+
 """
 ```julia
 calc_risk(
@@ -1501,4 +1529,5 @@ export Variance,
     OWA,
     calc_risk,
     risk_contribution,
-    sharpe_ratio
+    sharpe_ratio,
+    L_moment

@@ -168,7 +168,7 @@ end
 ```julia
 owa_l_moment_crm(
     T;
-    k = 4,
+    k = 2,
     method = :SD,
     g = 0.5,
     max_phi = 0.5,
@@ -177,7 +177,7 @@ owa_l_moment_crm(
 )
 ```
 """
-function owa_l_moment_crm(T; k = 4, method = :SD, g = 0.5, max_phi = 0.5, solvers = Dict())
+function owa_l_moment_crm(T; k = 2, method = :SD, g = 0.5, max_phi = 0.5, solvers = Dict())
     @assert(k >= 2, "k = $k, must be an integer bigger than or equal to 2")
     @assert(method ∈ OWAMethods, "method = $method, must be one of $OWAMethods")
     @assert(0 < g < 1, "risk aversion, g = $g, must be in the interval (0, 1)")
@@ -186,10 +186,11 @@ function owa_l_moment_crm(T; k = 4, method = :SD, g = 0.5, max_phi = 0.5, solver
         "the constraint on the maximum weight of the L-moments, max_phi = $max_phi, must be in the interval (0, 1)"
     )
 
-    ws = Matrix{typeof(max_phi)}(undef, T, 0)
-    for i in 2:k
+    rg = 2:k
+    ws = Matrix{typeof(max_phi)}(undef, T, length(rg))
+    for i in rg
         wi = (-1)^i * owa_l_moment(T, i)
-        ws = hcat(ws, wi)
+        ws[:, i - 1] .= wi
     end
 
     if method == :CRRA || isempty(solvers)
@@ -243,5 +244,13 @@ function owa_l_moment_crm(T; k = 4, method = :SD, g = 0.5, max_phi = 0.5, solver
     return w
 end
 
-export owa_l_moment_crm,
-    owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_rtg
+export owa_l_moment,
+    owa_l_moment_crm,
+    owa_gmd,
+    owa_cvar,
+    owa_wcvar,
+    owa_tg,
+    owa_wr,
+    owa_rg,
+    owa_rcvar,
+    owa_rtg
