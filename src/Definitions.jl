@@ -127,8 +127,14 @@ ValidTermination =
 ```
 Valid `JuMP` termination codes after optimising an instance of [`Portfolio`](@ref). If the termination code is different to these, then the failures are logged in the `.fail` field of [`HCPortfolio`](@ref) and [`Portfolio`](@ref).
 """
-const ValidTermination =
-    (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
+const ValidTermination = (
+    MOI.OPTIMAL,
+    MOI.ALMOST_OPTIMAL,
+    MOI.LOCALLY_SOLVED,
+    MOI.ALMOST_LOCALLY_SOLVED,
+    MOI.SOLUTION_LIMIT,
+    MOI.OBJECTIVE_LIMIT,
+)
 
 """
 ```julia
