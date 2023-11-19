@@ -25,4 +25,6 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
     plt4 = plot_drawdown(portfolio)
     plt5 = plot_hist(portfolio)
     plt6 = plot_range(portfolio)
+    plt7 = plot_returns(portfolio)
+    plt8 = plot_bar(portfolio)
 end
