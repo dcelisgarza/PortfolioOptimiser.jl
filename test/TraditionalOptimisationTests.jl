@@ -31,7 +31,7 @@ returns = dropmissing!(DataFrame(Y))
         ),
     )
     asset_statistics!(portfolio)
-    limits = frontier_limits!(portfolio, rm = :CVaR, kelly = :Approx)
+    limits = frontier_limits(portfolio, rm = :CVaR, kelly = :Approx)
     frontier = efficient_frontier!(portfolio; kelly = :Approx, rm = :CVaR, points = 3)
     @test isapprox(frontier[:CVaR][:weights][!, "1"], limits.w_min)
     @test isapprox(frontier[:CVaR][:weights][!, "3"], limits.w_max)
