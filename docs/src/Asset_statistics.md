@@ -3,4 +3,7 @@
 ```@docs
 asset_statistics!
 wc_statistics!
+factor_statistics!
+black_litterman_statistics!
+black_litterman_factor_satistics!
 ```

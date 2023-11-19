@@ -1,12 +1,5 @@
 using Documenter
 using PortfolioOptimiser
-# import PortfolioOptimiser:
-#     _short_allocation,
-#     _sub_allocation,
-#     _clean_zero_shares,
-#     _refresh_add_var_and_constraints,
-#     _val_compare_benchmark,
-#     max_return,
 
 DocMeta.setdocmeta!(
     PortfolioOptimiser,

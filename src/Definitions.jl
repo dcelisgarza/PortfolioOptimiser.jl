@@ -106,7 +106,9 @@ const KellyRet = (:None, :Approx, :Exact)
 TrackingErrKinds = (:Weights, :Returns)
 ```
 Available kinds of tracking errors for [`Portfolio`](@ref).
-- `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns;
+- `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns,
+    - ``\\bm{b} = \\mathbf{X} \\bm{w}``,
+where ``\\bm{b}`` is the benchmark returns vector, ``\\mathbf{X}`` the ``(T \\times{} N)`` asset returns matrix, and ``\\bm{w}`` the asset weights vector;
 - `:Returns`: directly provide the vector of benchmark returns.
 The benchmark is then used as a reference to optimise a portfolio that tracks it up to a given error.
 """
@@ -122,8 +124,14 @@ const ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 
 """
 ```julia
-ValidTermination =
-(MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
+ValidTermination = (
+    MOI.OPTIMAL,
+    MOI.ALMOST_OPTIMAL,
+    MOI.LOCALLY_SOLVED,
+    MOI.ALMOST_LOCALLY_SOLVED,
+    MOI.SOLUTION_LIMIT,
+    MOI.OBJECTIVE_LIMIT,
+)
 ```
 Valid `JuMP` termination codes after optimising an instance of [`Portfolio`](@ref). If the termination code is different to these, then the failures are logged in the `.fail` field of [`HCPortfolio`](@ref) and [`Portfolio`](@ref).
 """
@@ -138,11 +146,25 @@ const ValidTermination = (
 
 """
 ```julia
-PortClasses = (:Classic,)
+PortClasses = (:Classic, :FM, :BL, :BL_FM)
 ```
 Available classes for [`Portfolio`](@ref).
+- `:Classic`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from historical estimates computed by [`asset_statistics!`](@ref);
+- `:FM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor model computed by [`factor_statistics!`](@ref);
+- `:BL`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the Black-Litterman model computed by [`black_litterman_statistics!`](@ref).
+- `:BL_FM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor Black-Litterman model computed by [`black_litterman_factor_satistics!`](@ref). This model has two versions defined in [`BLFMType`](@ref).
 """
 const PortClasses = (:Classic, :FM, :BL, :BL_FM)
+
+"""
+```
+BLFMType = (:A, :B)
+```
+Versions of the factor Black-Litterman Model.
+- `:B`: Bayesian Black-Litterman, which uses the factors to generate the Black-Litterman estimates.
+- `:A`: Augmented Black-Litterman, which uses the factors to adjust the Black-Litterman views.
+"""
+const BLFMType = (:A, :B)
 
 """
 ```julia
@@ -309,6 +331,8 @@ U_{\\bm{\\mu}}^{\\mathrm{ellipse}} &= \\left\\{\\bm{\\mu}\\, \\vert\\, \\left(\\
     - and ``k_{\\bm{\\mu}}`` is a significance parameter of the distribution.
 - ``\\lambda`` is the risk aversion coefficient;
 - and ``r`` is the risk-free rate.
+
+The worst case uncertainty sets are computed by [`wc_statistics!`](@ref).
 """
 const PortTypes = (:Trad, :RP, :RRP, :WC)
 
@@ -326,27 +350,11 @@ const RRPVersions = (:None, :Reg, :Reg_Pen)
 
 """
 ```julia
-RPConstraintTypes = (:Assets, :Classes)
-```
-Types of risk parity constraints for building the set of linear constraints via [`rp_constraints`](@ref).
-"""
-const RPConstraintTypes = (:Assets, :Classes)
-
-"""
-```julia
 UncertaintyTypes = (:None, :Box, :Ellipse)
 ```
-Types of uncertainty sets for Worst Case Optimisations of [`Portfolio`](@ref) (see [`PortTypes`](@ref)).
+Available types of uncertainty sets that can be computed with [`wc_statistics!`](@ref), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](@ref), [`EllipseTypes`](@ref), and [`BoxTypes`](@ref)).
 """
 const UncertaintyTypes = (:None, :Box, :Ellipse)
-
-"""
-```
-KindBootstrap = (:Stationary, :Circular, :Moving)
-```
-Kind of bootstrap for computing the uncertainty sets with [`wc_statistics!`](@ref), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](@ref)).
-"""
-const KindBootstrap = (:Stationary, :Circular, :Moving)
 
 """
 ```
@@ -363,6 +371,24 @@ BoxTypes = (:Stationary, :Circular, :Moving, :Normal, :Delta)
 Available types of box sets that can be computed with [`wc_statistics!`](@ref), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](@ref)).
 """
 const BoxTypes = (EllipseTypes..., :Delta)
+
+"""
+```
+KindBootstrap = (:Stationary, :Circular, :Moving)
+```
+Kind of bootstrap for computing the uncertainty sets with [`wc_statistics!`](@ref), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](@ref)).
+"""
+const KindBootstrap = (:Stationary, :Circular, :Moving)
+
+"""
+```julia
+RPConstraintTypes = (:Assets, :Classes)
+```
+Types of risk parity constraints for building the set of linear constraints via [`rp_constraints`](@ref).
+- `:Assets`: Restrict the assets that meet the criteria;
+- `:Classes`: Restrict the assets in that class.
+"""
+const RPConstraintTypes = (:Assets, :Classes)
 
 """
 ```julia
@@ -395,8 +421,6 @@ InfoTypes = (:Mutual, :Variation)
 Type of information matrix to compute when choosing `:Mutual_Info` from [`CodepTypes`](@ref) in [`asset_statistics!`](@ref).
 """
 const InfoTypes = (:Mutual, :Variation)
-
-# Portfolio risk measures.
 
 # HRPortfolio risk measures.
 """
@@ -502,7 +526,7 @@ const PosdefFixes = (:None, :Nearest, :Custom_Func)
 const DenoiseMethods = (:Fixed, :Spectral, :Shrink)
 const RegCriteria = (:pval, GLM.aic, GLM.aicc, GLM.bic, GLM.r2, GLM.adjr2)
 const LoadingMtxType = (:FReg, :BReg, :PCR)
-const BlackLittermanType = (:A, :B)
+
 const BLHist = (1, 2, 3)
 
 """
@@ -605,4 +629,5 @@ export AbstractPortfolio,
     BranchOrderTypes,
     HRObjFuncs,
     AllocTypes,
-    RegCriteria
+    RegCriteria,
+    BLFMType

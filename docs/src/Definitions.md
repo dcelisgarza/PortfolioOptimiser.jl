@@ -1,7 +1,8 @@
-# Definitions
+# Constant Definitions
+
+Many functions only accept specific methods and/or require certain arguments to be within appropriate bounds. These constants ensure such requirements are met.
 
 ```@docs
-AbstractPortfolio
 RiskMeasures
 KellyRet
 TrackingErrKinds
@@ -10,11 +11,12 @@ ValidTermination
 PortClasses
 PortTypes
 RRPVersions
-RPConstraintTypes
 UncertaintyTypes
-KindBootstrap
 EllipseTypes
 BoxTypes
+KindBootstrap
+BLFMType
+RPConstraintTypes
 DBHTRootMethods
 OWAMethods
 BinTypes
