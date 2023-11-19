@@ -1,13 +1,3 @@
-# distinguishable_colors{T <: Color}(
-#     n::Integer,
-#     seed::AbstractVector{T};
-#     dropseed = false,
-#     transform::Function = identity,
-#     lchoices::AbstractVector = range(0, stop = 100, length = 15),
-#     cchoices::AbstractVector = range(0, stop = 100, length = 15),
-#     hchoices::AbstractVector = range(0, stop = 342, length = 20),
-# )
-
 function plot_returns(timestamps, assets, returns, weights; per_asset = false, kwargs...)
     if per_asset
         ret = returns .* transpose(weights)
@@ -218,7 +208,7 @@ function plot_risk_contribution(
     )
 end
 
-function plot_frontier(w_frontier, rm = :SD; kwargs...)
+function plot_frontier_area(w_frontier, rm = :SD; kwargs...)
     risks = w_frontier[rm][:risk]
     assets = reshape(w_frontier[rm][:weights][!, "tickers"], 1, :)
     weights = transpose(Matrix(w_frontier[rm][:weights][!, 2:end]))
@@ -499,50 +489,6 @@ function plot_range(
         )
     end
 
-    # mad = MAD(ret)
-    # gmd = GMD(ret)
-    # risks = [
-    #     mu,
-    #     mu - sigma,
-    #     mu - mad,
-    #     mu - gmd,
-    #     -VaR(ret, alpha),
-    #     -CVaR(ret, alpha),
-    #     -TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim),
-    #     -EVaR(ret, solvers, alpha),
-    #     -RVaR(x, solvers, alpha, kappa),
-    #     -WR(ret),
-    # ]
-
-    # conf = round((1 - alpha) * 100, digits = 2)
-
-    # risk_labels = [
-    #     "Mean: $(round(risks[1], digits=2))%",
-    #     "Mean - Std. Dev. ($(round(sigma, digits=2))%): $(round(risks[2], digits=2))%",
-    #     "Mean - MAD ($(round(mad,digits=2))%): $(round(risks[3], digits=2))%",
-    #     "Mean - GMD ($(round(gmd,digits=2))%): $(round(risks[4], digits=2))%",
-    #     "$(conf)% Confidence VaR: $(round(risks[5], digits=2))%",
-    #     "$(conf)% Confidence CVaR: $(round(risks[6], digits=2))%",
-    #     "$(conf)% Confidence Tail Gini: $(round(risks[7], digits=2))%",
-    #     "$(conf)% Confidence EVaR: $(round(risks[8], digits=2))%",
-    #     "$(conf)% Confidence RVaR ($kappa): $(round(risks[9], digits=2))%",
-    #     "Worst Realisation: $(round(risks[10], digits=2))%",
-    # ]
-
-    # for (risk, label) in zip(risks, risk_labels)
-    #     vline!([risk]; label = label, kwargs_risks...)
-    # end
-
-    # !haskey(kwargs_hist, :size) &&
-    #     (kwargs_hist = (kwargs_hist..., size = (750, ceil(Integer, 750 / 1.618))))
-
-    # plot!(
-    #     x,
-    #     pdf.(D, x),
-    #     label = "Normal: μ = $(round(mean(D), digits=2))%, σ = $(round(std(D), digits=2))%";
-    #     kwargs_hist...,
-    # )
-
     return plt
 end
 
@@ -554,8 +500,8 @@ function plot_range(
     kwargs_risks = (;),
 )
     return plot_range(
-        portfolio.optimal[type].weights::AbstractVector,
-        portfolio.returns::AbstractMatrix;
+        portfolio.optimal[type].weights,
+        portfolio.returns;
         alpha_i = portfolio.alpha_i,
         alpha = portfolio.alpha,
         a_sim = portfolio.a_sim,
@@ -569,4 +515,9 @@ function plot_range(
 end
 
 export plot_returns,
-    plot_bar, plot_risk_contribution, plot_frontier, plot_drawdown, plot_hist, plot_range
+    plot_bar,
+    plot_risk_contribution,
+    plot_frontier_area,
+    plot_drawdown,
+    plot_hist,
+    plot_range

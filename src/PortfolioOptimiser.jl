@@ -1,6 +1,5 @@
 module PortfolioOptimiser
 using AverageShiftedHistograms,
-    Colors,
     Clustering,
     DataFrames,
     Dates,
@@ -36,5 +35,8 @@ include("Portfolio_optim_setup.jl")
 include("HCPortfolio_optim_setup.jl")
 include("Portfolio_allocation.jl")
 
+# COV_EXCL_START
 include("Plotting.jl")
+# COV_EXCL_STOP
+
 end

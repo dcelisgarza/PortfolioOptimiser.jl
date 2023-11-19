@@ -702,6 +702,9 @@ function frontier_limits!(
     rf::Real = 0.0,
     rm::Symbol = :SD,
 )
+    optimal1 = deepcopy(portfolio.optimal)
+    fail1 = deepcopy(portfolio.fail)
+
     w_min = opt_port!(
         portfolio;
         class = class,
@@ -728,10 +731,13 @@ function frontier_limits!(
     rename!(limits, :weights => :w_min, :x1 => :w_max)
     portfolio.limits = limits
 
+    portfolio.optimal = optimal1
+    portfolio.fail = fail1
+
     return portfolio.limits
 end
 
-function efficient_frontier!(
+function efficient_frontier(
     portfolio::Portfolio;
     class::Symbol = :Classic,
     hist::Integer = 1,
@@ -740,6 +746,9 @@ function efficient_frontier!(
     rm::Symbol = :SD,
     points::Integer = 20,
 )
+    optimal1 = deepcopy(portfolio.optimal)
+    fail1 = deepcopy(portfolio.fail)
+
     mu, sigma, returns = _setup_model_class(portfolio, class, hist)
 
     fl = frontier_limits!(
@@ -869,7 +878,10 @@ function efficient_frontier!(
         :risk => collect(risks),
     )
 
+    portfolio.optimal = optimal1
+    portfolio.fail = fail1
+
     return portfolio.frontier
 end
 
-export opt_port!, frontier_limits!, efficient_frontier!
+export opt_port!, frontier_limits!, efficient_frontier
