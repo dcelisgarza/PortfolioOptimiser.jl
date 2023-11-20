@@ -77,6 +77,7 @@ const NCM = NearestCorrelationMatrix
 function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton())
     s = sqrt.(diag(mtx))
     corr = cov2cor(mtx)
+    corr[.!isfinite.(corr)] .= zero(eltype(corr))
     NCM.nearest_cor!(corr, method)
     _mtx = cor2cov(corr, s)
 
@@ -85,7 +86,7 @@ end
 
 function posdef_fix!(
     mtx::AbstractMatrix,
-    posdef_fix::Symbol = :None;
+    posdef_fix::Symbol = :Nearest;
     msg::String = "",
     posdef_args::Tuple = (),
     posdef_func::Function = x -> x,
@@ -323,7 +324,7 @@ function covar_mtx(
     opt_args = (),
     opt_kwargs = (;),
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),
@@ -480,7 +481,7 @@ function cokurt_mtx(
     opt_args = (),
     opt_kwargs = (;),
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
@@ -603,7 +604,7 @@ function codep_dist_mtx(
     dist_kwargs::NamedTuple = (;),
     gs_threshold::Real = 0.5,
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     sigma::Union{AbstractMatrix, Nothing} = nothing,
@@ -716,7 +717,7 @@ function covar_mtx_mean_vec(
     opt_args = (),
     opt_kwargs = (;),
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),
@@ -1068,7 +1069,7 @@ function wc_statistics!(
     n_samples::Integer = 10_000,
     n_sim::Integer = 3_000,
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     q::Real = 0.05,
@@ -1094,6 +1095,9 @@ function wc_statistics!(
         sigma = cov(returns)
     end
 
+    cov_l = Matrix{Float64}(undef, 0, 0)
+    cov_u = Matrix{Float64}(undef, 0, 0)
+
     if calc_box
         if box == :Stationary || box == :Circular || box == :Moving
             mus, covs = gen_bootstrap(returns, box, n_sim, window, seed, rng)
@@ -1106,23 +1110,6 @@ function wc_statistics!(
             cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)], N, N)
             cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
 
-            !isposdef(cov_l) && posdef_fix!(
-                cov_l,
-                posdef_fix;
-                msg = "WC cov_l ",
-                posdef_args = posdef_args,
-                posdef_func = posdef_func,
-                posdef_kwargs = posdef_kwargs,
-            )
-            !isposdef(cov_u) && posdef_fix!(
-                cov_u,
-                posdef_fix;
-                msg = "WC cov_u ",
-                posdef_args = posdef_args,
-                posdef_func = posdef_func,
-                posdef_kwargs = posdef_kwargs,
-            )
-
             d_mu = (mu_u - mu_l) / 2
         elseif box == :Normal
             !isnothing(seed) && Random.seed!(rng, seed)
@@ -1132,22 +1119,6 @@ function wc_statistics!(
             cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)], N, N)
             cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
 
-            !isposdef(cov_l) && posdef_fix!(
-                cov_l,
-                posdef_fix;
-                msg = "WC cov_l ",
-                posdef_args = posdef_args,
-                posdef_func = posdef_func,
-                posdef_kwargs = posdef_kwargs,
-            )
-            !isposdef(cov_u) && posdef_fix!(
-                cov_u,
-                posdef_fix;
-                msg = "WC cov_u ",
-                posdef_args = posdef_args,
-                posdef_func = posdef_func,
-                posdef_kwargs = posdef_kwargs,
-            )
         elseif box == :Delta
             d_mu = dmu * abs.(mu)
             cov_l = sigma - dcov * abs.(sigma)
@@ -1169,6 +1140,23 @@ function wc_statistics!(
             cov_sigma = T * Diagonal((I + K) * kron(cov_mu, cov_mu))
         end
     end
+
+    !isposdef(cov_l) && posdef_fix!(
+        cov_l,
+        posdef_fix;
+        msg = "WC cov_l ",
+        posdef_args = posdef_args,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+    )
+    !isposdef(cov_u) && posdef_fix!(
+        cov_u,
+        posdef_fix;
+        msg = "WC cov_u ",
+        posdef_args = posdef_args,
+        posdef_func = posdef_func,
+        posdef_kwargs = posdef_kwargs,
+    )
 
     k_mu = sqrt(cquantile(Chisq(N), q))
     k_sigma = sqrt(cquantile(Chisq(N * N), q))
@@ -1523,7 +1511,7 @@ function risk_factors(
     opt_args = (),
     opt_kwargs = (;),
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),
@@ -1678,7 +1666,7 @@ function black_litterman(
     opt_args = (),
     opt_kwargs = (;),
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),
@@ -1774,7 +1762,7 @@ function augmented_black_litterman(
     opt_args = (),
     opt_kwargs = (;),
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),
@@ -1994,7 +1982,7 @@ function bayesian_black_litterman(
     opt_args = (),
     opt_kwargs = (;),
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),
@@ -2119,7 +2107,7 @@ black_litterman_statistics!(
     gs_threshold::Real = portfolio.gs_threshold,
     jlogo::Bool = false,
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),
@@ -2158,7 +2146,7 @@ function black_litterman_statistics!(
     gs_threshold::Real = portfolio.gs_threshold,
     jlogo::Bool = false,
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),
@@ -2258,7 +2246,7 @@ factor_statistics!(
     opt_args = (),
     opt_kwargs = (;),
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),
@@ -2313,7 +2301,7 @@ function factor_statistics!(
     opt_args = (),
     opt_kwargs = (;),
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),
@@ -2450,7 +2438,7 @@ black_litterman_factor_satistics!(
     gs_threshold::Real = portfolio.gs_threshold,
     jlogo::Bool = false,
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),
@@ -2504,7 +2492,7 @@ function black_litterman_factor_satistics!(
     gs_threshold::Real = portfolio.gs_threshold,
     jlogo::Bool = false,
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_args::Tuple = (),

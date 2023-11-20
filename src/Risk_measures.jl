@@ -1070,7 +1070,7 @@ function calc_risk(
     beta::Union{<:Real, Nothing} = nothing,
     b_sim::Union{<:Real, Nothing} = nothing,
     kappa::Real = 0.3,
-    owa_w = Vector{Float64}(undef, 0),
+    owa_w::Union{<:Real, AbstractVector{<:Real}, Nothing} = Vector{Float64}(undef, 0),
     solvers::Union{<:AbstractDict, Nothing} = nothing,
 )
     @assert(rm ∈ HRRiskMeasures, "rm = $rm, must be one of $HRRiskMeasures")
@@ -1164,7 +1164,7 @@ function calc_risk(
     type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
     rm::Symbol = :SD,
     rf::Real = 0.0,
-    owa_w = isa(portfolio, Portfolio) ? portfolio.owa_w : Vector{Float64}(undef, 0),
+    owa_w::Union{<:Real, AbstractVector{<:Real}, Nothing} = portfolio.owa_w,
 )
     isa(portfolio, Portfolio) ?
     @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes") :
@@ -1349,7 +1349,7 @@ function risk_contribution(
     b_sim::Union{<:Real, Nothing} = nothing,
     di::Real = 1e-6,
     kappa::Real = 0.3,
-    owa_w::AbstractVector = Vector{Float64}(undef, 0),
+    owa_w::Union{<:Real, AbstractVector{<:Real}, Nothing} = Vector{Float64}(undef, 0),
     solvers::Union{<:AbstractDict, Nothing} = nothing,
 )
     ew = eltype(w)

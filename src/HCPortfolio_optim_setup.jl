@@ -22,6 +22,7 @@ function _naive_risk(portfolio, returns, covariance; rm = :SD, rf = 0.0)
                 beta = portfolio.beta,
                 b_sim = portfolio.b_sim,
                 kappa = portfolio.kappa,
+                owa_w = portfolio.owa_w,
                 solvers = portfolio.solvers,
             )
             inv_risk[i] = 1 / risk
@@ -44,7 +45,12 @@ function _opt_w(
     rf = 0.0,
     l = 2.0,
 )
-    port = Portfolio(assets = assets, ret = returns, solvers = portfolio.solvers)
+    port = Portfolio(
+        assets = assets,
+        ret = returns,
+        owa_w = portfolio.owa_w,
+        solvers = portfolio.solvers,
+    )
     asset_statistics!(port; calc_kurt = (rm == :Kurt || rm == :SKurt) ? true : false)
     port.cov = icov
 
@@ -178,6 +184,7 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
         beta = portfolio.beta,
         b_sim = portfolio.b_sim,
         kappa = portfolio.kappa,
+        owa_w = portfolio.owa_w,
         solvers = portfolio.solvers,
     )
 
@@ -349,6 +356,7 @@ function _hierarchical_recursive_bisection(
     portfolio;
     rm = :SD,
     rm_i = rm,
+    owa_w_i = portfolio.owa_w,
     rf = 0.0,
     upper_bound = nothing,
     lower_bound = nothing,
@@ -438,6 +446,14 @@ function _hierarchical_recursive_bisection(
     end
 
     # Treat each cluster as its own independent portfolio, and calculate the weights, cweights, as if this were the case. If herc2, then the weights inside each portfolio are equal. This makes the inter-cluster weights are all that matter.
+
+    flag = false
+    if owa_w_i != portfolio.owa_w
+        flag = true
+        og_owa_w = copy(portfolio.owa_w)
+        portfolio.owa_w = owa_w_i
+    end
+
     for i in 1:k
         cidx = clustering_idx .== i
         cret = returns[:, cidx]
@@ -447,6 +463,10 @@ function _hierarchical_recursive_bisection(
         weights[cidx] .*= cweights
     end
 
+    if flag
+        portfolio.owa_w = og_owa_w
+    end
+
     return weights
 end
 
@@ -454,6 +474,7 @@ function _intra_weights(
     portfolio;
     obj = :Min_Risk,
     kelly = :None,
+    owa_w = portfolio.owa_w,
     rm = :SD,
     rf = 0.0,
     l = 2.0,
@@ -467,6 +488,14 @@ function _intra_weights(
 
     intra_weights = zeros(eltype(covariance), length(portfolio.assets), k)
     cfails = Dict{Int, Dict}()
+
+    flag = false
+    if owa_w != portfolio.owa_w
+        flag = true
+        og_owa_w = copy(portfolio.owa_w)
+        portfolio.owa_w = owa_w
+    end
+
     for i in 1:k
         idx = clustering_idx .== i
         cmu = !isnothing(mu) ? mu[idx] : nothing
@@ -487,6 +516,10 @@ function _intra_weights(
         )
         intra_weights[idx, i] .= weights
         !isempty(cfail) && (cfails[i] = cfail)
+    end
+
+    if flag
+        portfolio.owa_w = og_owa_w
     end
 
     return intra_weights, cfails
@@ -629,6 +662,7 @@ function opt_port!(
     rm_i::Symbol = rm,
     obj::Symbol = :Min_Risk,
     obj_i::Symbol = obj,
+    owa_w_i::Union{<:Real, AbstractVector{<:Real}, Nothing} = portfolio.owa_w,
     kelly::Symbol = :None,
     kelly_i::Symbol = kelly,
     rf::Real = 0.0,
@@ -710,6 +744,7 @@ function opt_port!(
             portfolio;
             rm = rm,
             rm_i = rm_i,
+            owa_w_i = owa_w_i,
             rf = rf,
             upper_bound = upper_bound,
             lower_bound = lower_bound,
@@ -719,6 +754,7 @@ function opt_port!(
             portfolio;
             obj = obj_i,
             kelly = kelly_i,
+            owa_w = owa_w_i,
             rm = rm_i,
             rf = rf,
             l = l_i,

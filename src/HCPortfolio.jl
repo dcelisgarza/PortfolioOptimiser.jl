@@ -123,6 +123,7 @@ mutable struct HCPortfolio{
     k,
     ata,
     gst,
+    wowa,
     # Optimisation parameters.
     ttmu,
     tmu,
@@ -166,6 +167,7 @@ mutable struct HCPortfolio{
     kappa::k
     alpha_tail::ata
     gs_threshold::gst
+    owa_w::wowa
     # Optimisation parameters.
     mu_type::ttmu
     mu::tmu
@@ -212,6 +214,7 @@ function HCPortfolio(;
     kappa::Real = 0.3,
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
+    owa_w::Union{<:Real, AbstractVector{<:Real}, Nothing} = Vector{Float64}(undef, 0),
     # Optimisation parameters.
     mu_type::Symbol = :Default,
     mu = Vector{Float64}(undef, 0),
@@ -267,6 +270,7 @@ function HCPortfolio(;
         typeof(kappa),
         typeof(alpha_tail),
         typeof(gs_threshold),
+        Union{<:Real, AbstractVector{<:Real}, Nothing},
         # Optimisation parameters.
         typeof(mu_type),
         typeof(mu),
@@ -309,6 +313,7 @@ function HCPortfolio(;
         kappa,
         alpha_tail,
         gs_threshold,
+        owa_w,
         # Optimisation parameters.
         mu_type,
         mu,
