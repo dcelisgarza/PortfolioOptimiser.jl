@@ -445,15 +445,13 @@ function _hierarchical_recursive_bisection(
         weights[rn] *= 1 - alpha_1
     end
 
-    # Treat each cluster as its own independent portfolio, and calculate the weights, cweights, as if this were the case. If herc2, then the weights inside each portfolio are equal. This makes the inter-cluster weights are all that matter.
-
+    # Treat each cluster as its own independent portfolio, and calculate the weights, cweights, as if this were the case.
     flag = false
     if owa_w_i != portfolio.owa_w
         flag = true
         og_owa_w = copy(portfolio.owa_w)
         portfolio.owa_w = owa_w_i
     end
-
     for i in 1:k
         cidx = clustering_idx .== i
         cret = returns[:, cidx]
@@ -462,7 +460,6 @@ function _hierarchical_recursive_bisection(
         # Then multiply the weights of each sub-portfolio, cweights, by the weights of the cluster it belongs to.
         weights[cidx] .*= cweights
     end
-
     if flag
         portfolio.owa_w = og_owa_w
     end
@@ -474,7 +471,6 @@ function _intra_weights(
     portfolio;
     obj = :Min_Risk,
     kelly = :None,
-    owa_w = portfolio.owa_w,
     rm = :SD,
     rf = 0.0,
     l = 2.0,
@@ -488,13 +484,6 @@ function _intra_weights(
 
     intra_weights = zeros(eltype(covariance), length(portfolio.assets), k)
     cfails = Dict{Int, Dict}()
-
-    flag = false
-    if owa_w != portfolio.owa_w
-        flag = true
-        og_owa_w = copy(portfolio.owa_w)
-        portfolio.owa_w = owa_w
-    end
 
     for i in 1:k
         idx = clustering_idx .== i
@@ -516,10 +505,6 @@ function _intra_weights(
         )
         intra_weights[idx, i] .= weights
         !isempty(cfail) && (cfails[i] = cfail)
-    end
-
-    if flag
-        portfolio.owa_w = og_owa_w
     end
 
     return intra_weights, cfails
@@ -556,6 +541,46 @@ function _inter_weights(
     weights = intra_weights * inter_weights
 
     return weights, inter_fail
+end
+
+function _nco_weights(
+    portfolio;
+    obj = :Min_Risk,
+    kelly = :None,
+    rm = :SD,
+    rf = 0.0,
+    l = 2.0,
+    obj_i = obj,
+    kelly_i = kelly,
+    rm_i = rm,
+    l_i = l,
+    owa_w_i = portfolio.owa_w,
+)
+    flag = false
+    if owa_w_i != portfolio.owa_w
+        flag = true
+        og_owa_w = copy(portfolio.owa_w)
+        portfolio.owa_w = owa_w_i
+    end
+    intra_weights, intra_fails =
+        _intra_weights(portfolio; obj = obj_i, kelly = kelly_i, rm = rm_i, rf = rf, l = l_i)
+    if flag
+        portfolio.owa_w = og_owa_w
+    end
+
+    weights, inter_fails = _inter_weights(
+        portfolio,
+        intra_weights,
+        obj = obj,
+        kelly = kelly,
+        rm = rm,
+        rf = rf,
+        l = l,
+    )
+    !isempty(intra_fails) && (portfolio.fail[:intra] = intra_fails)
+    !isempty(inter_fails) && (portfolio.fail[:inter] = inter_fails)
+
+    return weights
 end
 
 function _setup_hr_weights(w_max, w_min, N)
@@ -659,11 +684,11 @@ function opt_port!(
     portfolio::HCPortfolio;
     type::Symbol = :HRP,
     rm::Symbol = :SD,
-    rm_i::Symbol = rm,
     obj::Symbol = :Min_Risk,
-    obj_i::Symbol = obj,
     owa_w_i::Union{<:Real, AbstractVector{<:Real}, Nothing} = portfolio.owa_w,
     kelly::Symbol = :None,
+    rm_i::Symbol = rm,
+    obj_i::Symbol = obj,
     kelly_i::Symbol = kelly,
     rf::Real = 0.0,
     l::Real = 2.0,
@@ -750,26 +775,21 @@ function opt_port!(
             lower_bound = lower_bound,
         )
     else
-        intra_weights, intra_fails = _intra_weights(
+        weights = _nco_weights(
             portfolio;
-            obj = obj_i,
-            kelly = kelly_i,
-            owa_w = owa_w_i,
-            rm = rm_i,
-            rf = rf,
-            l = l_i,
-        )
-        weights, inter_fails = _inter_weights(
-            portfolio,
-            intra_weights,
             obj = obj,
             kelly = kelly,
             rm = rm,
-            rf = rf,
             l = l,
+            # Intra cluster parameters.
+            obj_i = obj_i,
+            kelly_i = kelly_i,
+            rm_i = rm_i,
+            l_i = l_i,
+            owa_w_i = owa_w_i,
+            # Risk free rate.
+            rf = rf,
         )
-        !isempty(intra_fails) && (portfolio.fail[:intra] = intra_fails)
-        !isempty(inter_fails) && (portfolio.fail[:inter] = inter_fails)
     end
 
     weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
