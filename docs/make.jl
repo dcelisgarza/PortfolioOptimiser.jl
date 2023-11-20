@@ -49,5 +49,5 @@ makedocs(;
 deploydocs(;
     repo = "github.com/dcelisgarza/PortfolioOptimiser.jl.git",
     push_preview = true,
-    devbranch = "dev",
+    devbranch = "main",
 )
