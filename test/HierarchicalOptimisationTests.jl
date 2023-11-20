@@ -260,7 +260,7 @@ end
     )
     asset_statistics!(portfolio)
 
-    type = :HERC2
+    type = :HERC
     rm = :Variance
     obj = :Min_Risk
     kelly = :None
@@ -270,6 +270,7 @@ end
         portfolio;
         type = type,
         rm = rm,
+        rm_i = :Equal,
         obj = obj,
         kelly = kelly,
         rf = rf,
@@ -308,6 +309,7 @@ end
         portfolio;
         type = type,
         rm = rm,
+        rm_i = :Equal,
         obj = obj,
         kelly = kelly,
         rf = rf,
@@ -377,7 +379,7 @@ end
     ]
     @test isapprox(w1.weights, w1t)
 
-    type = :HERC2
+    type = :HERC
     rm = :Equal
     kelly = :None
     linkage = :DBHT
@@ -385,6 +387,7 @@ end
     w2 = opt_port!(
         portfolio;
         type = type,
+        rm_i = :Equal,
         rm = rm,
         kelly = kelly,
         linkage = linkage,
@@ -717,10 +720,11 @@ end
     ]
     @test isapprox(w2.weights, w2t)
 
-    type = :HERC2
+    type = :HERC
     w3 = opt_port!(
         portfolio;
         type = type,
+        rm_i = :Equal,
         rm = rm,
         obj = obj,
         kelly = kelly,

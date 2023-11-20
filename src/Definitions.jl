@@ -537,15 +537,16 @@ const HRRiskMeasures = (
 
 """
 ```julia
-HCPortTypes = (:HRP, :HERC, :HERC2, :NCO)
+HCPortTypes = (:HRP, :HERC, :NCO)
 ```
 Available optimisation types for [`HCPortfolio`](@ref).
+Where:
 - `:HRP`: Hierarchical Risk Parity;
 - `:HERC`: Hierarhical Equal Risk Contribution;
-- `:HERC2`: HERC but splitting weights evenly between clusters;
-- `:NCO`: Nested Clustered Optimisation, 
+- `:NCO`: Nested Clustered Optimisation.
+Both `:HERC` and `:NCO` accept two risk measures, one for computing the cluster weights, and one for computing the asset weights within each cluster. `:NCO` also accepts two kelly return ([`KellyRet`](@ref)), objective ([`HRObjFuncs`](@ref)) and risk aversion parameters for the same reason.
 """
-const HCPortTypes = (:HRP, :HERC, :HERC2, :NCO)
+const HCPortTypes = (:HRP, :HERC, :NCO)
 
 const MuTypes = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 const MuTargets = (:GM, :VW, :SE)

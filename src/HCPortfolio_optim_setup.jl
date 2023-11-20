@@ -139,7 +139,7 @@ function _hierarchical_clustering(
         )
     end
 
-    k = type ∈ (:HERC, :HERC2, :NCO) ? _two_diff_gap_stat(dist, clustering, max_k) : nothing
+    k = type ∈ (:HERC, :NCO) ? _two_diff_gap_stat(dist, clustering, max_k) : nothing
 
     return clustering, k
 end
@@ -348,8 +348,8 @@ end
 function _hierarchical_recursive_bisection(
     portfolio;
     rm = :SD,
+    rm_i = rm,
     rf = 0.0,
-    type = :HERC,
     upper_bound = nothing,
     lower_bound = nothing,
 )
@@ -438,12 +438,11 @@ function _hierarchical_recursive_bisection(
     end
 
     # Treat each cluster as its own independent portfolio, and calculate the weights, cweights, as if this were the case. If herc2, then the weights inside each portfolio are equal. This makes the inter-cluster weights are all that matter.
-    type == :HERC2 && (rm = :Equal)
     for i in 1:k
         cidx = clustering_idx .== i
         cret = returns[:, cidx]
         ccov = covariance[cidx, cidx]
-        cweights = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf)
+        cweights = _naive_risk(portfolio, cret, ccov; rm = rm_i, rf = rf)
         # Then multiply the weights of each sub-portfolio, cweights, by the weights of the cluster it belongs to.
         weights[cidx] .*= cweights
     end
@@ -627,10 +626,14 @@ function opt_port!(
     portfolio::HCPortfolio;
     type::Symbol = :HRP,
     rm::Symbol = :SD,
+    rm_i::Symbol = rm,
     obj::Symbol = :Min_Risk,
+    obj_i::Symbol = obj,
     kelly::Symbol = :None,
+    kelly_i::Symbol = kelly,
     rf::Real = 0.0,
     l::Real = 2.0,
+    l_i::Real = l,
     cluster = true,
     linkage::Symbol = :single,
     k = cluster ? nothing : portfolio.k,
@@ -643,7 +646,9 @@ function opt_port!(
     @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
     @assert(rm ∈ HRRiskMeasures, "rm = $rm, must be one of $HRRiskMeasures")
     @assert(obj ∈ HRObjFuncs, "obj = $obj, must be one of $HRObjFuncs")
+    @assert(obj_i ∈ HRObjFuncs, "obj_i = $obj_i, must be one of $HRObjFuncs")
     @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
+    @assert(kelly_i ∈ KellyRet, "kelly_i = $kelly_i, must be one of $KellyRet")
     @assert(linkage ∈ LinkageTypes, "linkage = $linkage, must be one of $LinkageTypes")
     @assert(
         portfolio.codep_type ∈ CodepTypes,
@@ -700,18 +705,24 @@ function opt_port!(
             upper_bound = upper_bound,
             lower_bound = lower_bound,
         )
-    elseif type == :HERC || type == :HERC2
+    elseif type == :HERC
         weights = _hierarchical_recursive_bisection(
             portfolio;
             rm = rm,
+            rm_i = rm_i,
             rf = rf,
-            type = type,
             upper_bound = upper_bound,
             lower_bound = lower_bound,
         )
     else
-        intra_weights, intra_fails =
-            _intra_weights(portfolio; obj = obj, kelly = kelly, rm = rm, rf = rf, l = l)
+        intra_weights, intra_fails = _intra_weights(
+            portfolio;
+            obj = obj_i,
+            kelly = kelly_i,
+            rm = rm_i,
+            rf = rf,
+            l = l_i,
+        )
         weights, inter_fails = _inter_weights(
             portfolio,
             intra_weights,
