@@ -756,4 +756,20 @@ end
         0.07439403001797913,
     ]
     @test isapprox(w3.weights, w3t)
+
+    portfolio = HCPortfolio(
+        returns = returns,
+        solvers = Dict(
+            :Clarabel => Dict(
+                :solver => (Clarabel.Optimizer),
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+        ),
+    )
+    asset_statistics!(portfolio)
+    portfolio.owa_w = nothing
+    w = opt_port!(portfolio; type = :NCO, owa_w_i = owa_gmd(size(returns, 1)))
+    @test isnothing(portfolio.owa_w)
+    w = opt_port!(portfolio; type = :HERC, owa_w_i = owa_gmd(size(returns, 1)))
+    @test isnothing(portfolio.owa_w)
 end

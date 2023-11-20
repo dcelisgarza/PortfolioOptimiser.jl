@@ -449,7 +449,7 @@ function _hierarchical_recursive_bisection(
     flag = false
     if owa_w_i != portfolio.owa_w
         flag = true
-        og_owa_w = copy(portfolio.owa_w)
+        og_owa_w = portfolio.owa_w
         portfolio.owa_w = owa_w_i
     end
     for i in 1:k
@@ -559,7 +559,7 @@ function _nco_weights(
     flag = false
     if owa_w_i != portfolio.owa_w
         flag = true
-        og_owa_w = copy(portfolio.owa_w)
+        og_owa_w = portfolio.owa_w
         portfolio.owa_w = owa_w_i
     end
     intra_weights, intra_fails =
