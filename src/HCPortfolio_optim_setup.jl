@@ -377,10 +377,11 @@ function _hierarchical_recursive_bisection(
         clusters[i] = findall(clustering_idx .== i)
     end
 
-    # Calculate intra cluster weights. Drill down into clusters closer in similarity.
+    # Calculate the weight of each cluster relative to the other clusters.
     for i in nodes[1:(k - 1)]
         is_leaf(i) && continue
 
+        # Do this recursively accounting for the dendrogram structure.
         ln = pre_order(i.left)
         rn = pre_order(i.right)
 
@@ -436,14 +437,14 @@ function _hierarchical_recursive_bisection(
         weights[rn] *= 1 - alpha_1
     end
 
-    # If herc2, then each cluster contributes an equal amount of risk.
+    # Treat each cluster as its own independent portfolio, and calculate the weights, cweights, as if this were the case. If herc2, then the weights inside each portfolio are equal. This makes the inter-cluster weights are all that matter.
     type == :HERC2 && (rm = :Equal)
-    # We multiply the intra cluster weights by the weights by the weights of the cluster.
     for i in 1:k
         cidx = clustering_idx .== i
         cret = returns[:, cidx]
         ccov = covariance[cidx, cidx]
         cweights = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf)
+        # Then multiply the weights of each sub-portfolio, cweights, by the weights of the cluster it belongs to.
         weights[cidx] .*= cweights
     end
 

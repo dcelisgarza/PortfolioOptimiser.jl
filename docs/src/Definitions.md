@@ -20,7 +20,6 @@ RPConstraintTypes
 DBHTRootMethods
 OWAMethods
 BinTypes
-InfoTypes
 HRRiskMeasures
 HCPortTypes
 CodepTypes

@@ -1529,5 +1529,4 @@ export Variance,
     OWA,
     calc_risk,
     risk_contribution,
-    sharpe_ratio,
-    L_moment
+    sharpe_ratio
