@@ -1,26 +1,40 @@
 module PortfolioOptimiser
+using AverageShiftedHistograms,
+    Clustering,
+    DataFrames,
+    Dates,
+    Distances,
+    Distributions,
+    GLM,
+    JuMP,
+    LinearAlgebra,
+    MultivariateStats,
+    NearestCorrelationMatrix,
+    Optim,
+    Plots,
+    PyCall,
+    Random,
+    SparseArrays,
+    Statistics,
+    StatsBase
 
-# Risk models
-include("./RiskModels/RiskModels.jl")
+include("Definitions.jl")
+include("DBHTs.jl")
+include("Constraint_functions.jl")
+include("OWA.jl")
+include("Codependence.jl")
+include("Aux_functions.jl")
 
-# Expected returns
-include("./ExpectedReturns/ExpectedReturns.jl")
+include("Portfolio.jl")
+include("HCPortfolio.jl")
 
-# Optimisers
-## Base functionality
-include("./BaseOptimiser/BaseOptimiser.jl")
-## Efficient frontier
-include("./EfficientFrontierOptimiser/EfficientFrontierOptimiser.jl")
-## Near optimal centering
-include("./NearOptCenteringOptimiser/NearOptCenteringOptimiser.jl")
-## Hierarchical risk parity
-include("./HierarchicalOptimiser/HierarchicalOptimiser.jl")
-## Critical line
-include("./CriticalLineOptimiser/CriticalLineOptimiser.jl")
-## Black-Litterman
-include("./BlackLittermanOptimiser/BlackLittermanOptimiser.jl")
+include("Asset_statistics.jl")
+include("Risk_measures.jl")
+include("Portfolio_risk_setup.jl")
+include("Portfolio_optim_setup.jl")
+include("HCPortfolio_optim_setup.jl")
+include("Portfolio_allocation.jl")
 
-# Asset allocation
-include("./AssetAllocation/AssetAllocation.jl")
+include("Plotting.jl")
 
 end

@@ -6,4 +6,4 @@
 [![Coverage](https://codecov.io/gh/dcelisgarza/PortfolioOptimiser.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/dcelisgarza/PortfolioOptimiser.jl)
 <!-- [![Coverage](https://coveralls.io/repos/github/dcelisgarza/PortfolioOptimiser.jl/badge.svg?branch=main)](https://coveralls.io/github/dcelisgarza/PortfolioOptimiser.jl?branch=main) -->
 
-Similar to [PyPortfolioOpt](https://github.com/robertmartin8/PyPortfolioOpt). Work in progress.
+Work in progress.

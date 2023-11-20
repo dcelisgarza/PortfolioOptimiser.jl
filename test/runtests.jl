@@ -1,29 +1,57 @@
 using SafeTestsets
 
-@safetestset "Expected returns" begin
-    include("ExpectedReturnsTests.jl")
+@safetestset "Misc" begin
+    include("MiscTests.jl")
 end
 
-@safetestset "Risk models" begin
-    include("RiskModelsTests.jl")
+@safetestset "Risk measures" begin
+    include("RiskMeasureTests.jl")
 end
 
-@safetestset "Black Litterman" begin
-    include("BlackLittermanTests.jl")
+@safetestset "Constraint functions" begin
+    include("ConstraintTests.jl")
 end
 
-@safetestset "Efficient Frontier" begin
-    include("EfficientFrontierTests.jl")
+@safetestset "Asset stats" begin
+    include("AssetStatTests.jl")
 end
 
-@safetestset "Hierarchical Risk Parity" begin
-    include("HRPOptTests.jl")
+@safetestset "Codependence and distance functions" begin
+    include("CodepDistTests.jl")
 end
 
-@safetestset "Critical Line" begin
-    include("CriticalLineTests.jl")
+@safetestset "Log Tests" begin
+    include("LogTests.jl")
 end
 
-@safetestset "Custom optimiser" begin
-    include("CustomOptimiserTests.jl")
+@safetestset "Clustering" begin
+    include("ClusteringTests.jl")
+end
+
+@safetestset "Portfolio allocation" begin
+    include("PortfolioAllocationTests.jl")
+end
+
+@safetestset "OWA weights" begin
+    include("OWAWeightsTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
+@safetestset "Hierarchical optimisations" begin
+    include("HierarchicalOptimisationTests.jl")
+end
+
+@safetestset "Risk parity optimisations" begin
+    include("RiskParityTests.jl")
+end
+
+@safetestset "Worst case optimisations" begin
+    include("WorstCaseOptimisationTests.jl")
+end
+
+@safetestset "Traditional optimisations" begin
+    include("TraditionalOptimisationTests.jl")
 end
