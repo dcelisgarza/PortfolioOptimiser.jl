@@ -541,7 +541,7 @@ function _setup_model_class(portfolio, class, hist)
             throw(AssertionError("for class = $class, hist = $hist can only be 1 or 2"))
         end
         returns = portfolio.returns
-    elseif class == :BL_FM
+    elseif class == :BLFM
         mu = portfolio.mu_bl_fm
         if hist == 1
             sigma = portfolio.cov_bl_fm

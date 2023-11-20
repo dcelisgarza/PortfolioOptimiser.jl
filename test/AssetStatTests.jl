@@ -8562,21 +8562,21 @@ end
     asset_statistics!(portfolio, calc_kurt = false)
 
     w1 = opt_port!(portfolio, hist = 5)
-    w2 = opt_port!(portfolio, class = :BL_FM, hist = 1)
+    w2 = opt_port!(portfolio, class = :BLFM, hist = 1)
     @test isempty(w2)
     portfolio.mu_bl_fm = portfolio.mu
-    w3 = opt_port!(portfolio, class = :BL_FM, hist = 2)
+    w3 = opt_port!(portfolio, class = :BLFM, hist = 2)
     @test isapprox(w1.weights, w3.weights)
-    @test_throws DimensionMismatch opt_port!(portfolio, class = :BL_FM, hist = 3)
+    @test_throws DimensionMismatch opt_port!(portfolio, class = :BLFM, hist = 3)
 
     portfolio.cov_bl_fm = portfolio.cov
     portfolio.returns_fm = portfolio.returns
-    w4 = opt_port!(portfolio, class = :BL_FM, hist = 1)
+    w4 = opt_port!(portfolio, class = :BLFM, hist = 1)
     @test isapprox(w1.weights, w4.weights)
-    w5 = opt_port!(portfolio, class = :BL_FM, hist = 2)
+    w5 = opt_port!(portfolio, class = :BLFM, hist = 2)
     @test isapprox(w1.weights, w5.weights)
-    @test_throws DimensionMismatch opt_port!(portfolio, class = :BL_FM, hist = 3)
+    @test_throws DimensionMismatch opt_port!(portfolio, class = :BLFM, hist = 3)
     portfolio.cov_fm = portfolio.cov
-    w6 = opt_port!(portfolio, class = :BL_FM, hist = 3)
+    w6 = opt_port!(portfolio, class = :BLFM, hist = 3)
     @test isapprox(w1.weights, w6.weights)
 end

@@ -26,4 +26,11 @@ CodepTypes
 LinkageTypes
 BranchOrderTypes
 HRObjFuncs
+MuTypes
+MuTargets
+CovTypes
+PosdefFixes
+RegCriteria
+FSType
+BLHist
 ```

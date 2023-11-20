@@ -243,7 +243,12 @@ function denoise_cov(
 end
 export denoise_cov
 
-function mu_esimator(
+"""
+```julia
+mu_estimator
+```
+"""
+function mu_estimator(
     returns::AbstractMatrix,
     mu_type::Symbol = :JS,
     target::Symbol = :GM;
@@ -302,6 +307,11 @@ function mu_esimator(
     return mu
 end
 
+"""
+```julia
+covar_mtx
+```
+"""
 function covar_mtx(
     returns::AbstractMatrix;
     alpha::Real = 0.0,
@@ -429,6 +439,22 @@ function covar_mtx(
     return cov_mtx
 end
 
+"""
+```julia
+mean_vec(
+    returns::AbstractMatrix;
+    custom_mu::Union{AbstractVector, Nothing} = nothing,
+    mean_args::Tuple = (),
+    mean_func::Function = mean,
+    mean_kwargs::NamedTuple = (;),
+    mu_target::Symbol = :GM,
+    mu_type::Symbol = :Default,
+    mu_weights::Union{AbstractWeights, Nothing} = nothing,
+    rf::Real = 0.0,
+    sigma::Union{AbstractMatrix, Nothing} = nothing,
+)
+```
+"""
 function mean_vec(
     returns::AbstractMatrix;
     custom_mu::Union{AbstractVector, Nothing} = nothing,
@@ -446,7 +472,7 @@ function mean_vec(
         isnothing(mu_weights) ? vec(mean(returns; dims = 1)) :
         vec(mean(returns, mu_weights; dims = 1))
     elseif mu_type ∈ (:JS, :BS, :BOP, :CAPM)
-        mu_esimator(
+        mu_estimator(
             returns,
             mu_type,
             mu_target;
@@ -1437,7 +1463,7 @@ function loadings_matrix(
     std_kwargs::NamedTuple = (;),
     threshold::Real = 0.05,
 )
-    @assert(type ∈ LoadingMtxType, "type = $type, must be one of $LoadingMtxType")
+    @assert(type ∈ FSType, "type = $type, must be one of $FSType")
     features = names(x)
     rows = ncol(y)
     cols = ncol(x) + 1
@@ -2680,4 +2706,7 @@ export block_vec_pq,
     black_litterman_statistics!,
     factor_statistics!,
     black_litterman_factor_satistics!,
-    nearest_cov
+    nearest_cov,
+    covar_mtx,
+    mean_vec,
+    mu_estimator
