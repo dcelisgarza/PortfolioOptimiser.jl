@@ -1,5 +1,6 @@
 module PortfolioOptimiser
 using AverageShiftedHistograms,
+    CairoMakie,
     Clustering,
     DataFrames,
     Dates,

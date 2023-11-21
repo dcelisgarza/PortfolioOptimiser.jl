@@ -18,14 +18,354 @@ using Test,
     MultivariateStats,
     NearestCorrelationMatrix,
     Optim,
-    AverageShiftedHistograms
+    AverageShiftedHistograms,
+    Plots,
+    Distributions
 
-using Logging, JuMP
+# using PortfolioOptimiser, Aqua
+using Dates
+d0 = today() - Date(2018, 1, 14)
+d1 = today() - Date(2020, 2, 2)
+d2 = today() - Date(2021, 12, 12)
+dt = d0 + d1 + d2
+x0 = d0 / dt
+x1 = d1 / dt
+x2 = d2 / dt
+println(round.(23_000 * [x0, x1, x2], digits = 2))
 
-A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
+A = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
-portfolio = Portfolio(
+
+portfolio = HCPortfolio(;
+    returns = returns,
+    solvers = Dict(
+        :Clarabel => Dict(
+            :solver => (Clarabel.Optimizer),
+            :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+        ),
+    ),
+    cov_type = :Gerber2,
+    codep_type = :Gerber2,
+)
+asset_statistics!(portfolio; calc_kurt = false)
+w = opt_port!(portfolio; rm = :RDaR, type = :NCO, linkage = :ward)
+
+plot_returns(portfolio; type = :NCO)
+
+p(x, n) = 1 - exp(1 / n * log(x))
+q = p(0.2, 6)
+
+ws = []
+for rm in (:CVaR, :EVaR, :RVaR, :CDaR, :EDaR, :RDaR)
+    w = opt_port!(portfolio; rm = rm, type = :HERC, linkage = :ward)
+    display(plot_hist(portfolio; type = :HERC))
+    display(plot_drawdown(portfolio; type = :HERC))
+    push!(ws, w)
+    idx = w.weights .>= quantile(w.weights, q)
+    portfolio.returns = portfolio.returns[:, idx]
+    portfolio.assets = portfolio.assets[idx]
+    asset_statistics!(portfolio; calc_kurt = false)
+end
+
+ws[1].tickers[ws[1].weights .>= quantile(ws[1].weights, q)]
+
+rm = :SD
+obj = :Min_Risk
+w = opt_port!(portfolio; rm = rm, obj = obj, save_opt_params = true)
+plt1 = plot_risk_contribution(portfolio; rm = rm, percentage = true)
+plt2 = plot_risk_contribution(portfolio; rm = rm, percentage = false)
+frontier = efficient_frontier(portfolio; rm = rm)
+plt3 = plot_frontier_area(frontier, rm)
+plt4 = plot_drawdown(portfolio)
+plt5 = plot_hist(portfolio)
+plt6 = plot_range(portfolio)
+
+deepcopy(portfolio)
+D = fit(Normal, portfolio.returns * portfolio.optimal[:Trad].weights)
+pdf(D, mean(D))
+
+bins = ceil(Int, sqrt(N))
+
+py"""
+import numpy as np
+import pandas as pd
+import riskfolio as rp
+import riskfolio.src.ParamsEstimation as pe
+import riskfolio.src.PlotFunctions as pt
+import riskfolio.src.RiskFunctions as rk
+import riskfolio.src.DBHT as db
+import riskfolio.src.AuxFunctions as af
+from timeit import default_timer as timer
+import statsmodels.api as sm
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from numpy.linalg import inv
+import matplotlib.pyplot as plt
+"""
+
+py"""
+pl = pt.plot_range(
+    pd.DataFrame($(portfolio.returns)),
+    pd.DataFrame($(portfolio.optimal[:Trad].weights)),
+    alpha=0.05,
+    a_sim=100,
+    beta=None,
+    b_sim=None,
+    bins=50,
+    height=6,
+    width=10,
+    ax=None,
+)
+plt.show()
+"""
+display(py"plt")
+
+portfolio = HCPortfolio(; returns = returns)
+asset_statistics!(portfolio)
+opt_port!(portfolio; linkage = :complete)
+
+plot_returns(portfolio; per_asset = false)
+
+plot_bar(portfolio)
+
+println(
+    sort(
+        [
+            "type"
+            "class"
+            "hist"
+            "rm"
+            "obj"
+            "kelly"
+            "rrp_ver"
+            "rf"
+            "l"
+            "rrp_penalty"
+            "u_mu"
+            "u_cov"
+            "string_names"
+            "save_opt_params"
+        ],
+    ),
+)
+
+py"""
+w = $(w.weights)
+cov = $(portfolio.cov)
+returns = $(portfolio.returns)
+
+rc = rk.Risk_Contribution(w, rm="EDaR_Rel", cov=cov, returns = returns, solver = "SCS")
+"""
+
+py"""
+w = pd.DataFrame($(portfolio.optimal[:HRP][!,2]))
+returns = pd.DataFrame($(Matrix(returns[!,2:end])), columns = $(names(returns[!,2:end])))
+
+fig = pt.plot_series(returns, w, cmap="tab20", n_colors=20, height=6, width=10, ax=None)
+plt.show()
+"""
+
+println(py"rc")
+
+py"""
+RMS = [
+    "MV",
+    "KT",
+    "MAD",
+    "GMD",
+    "MSV",
+    "SKT",
+    "FLPM",
+    "SLPM",
+    "VaR",
+    "CVaR",
+    "TG",
+    "EVaR",
+    # "RLVaR",
+    "WR",
+    "RG",
+    "CVRG",
+    "TGRG",
+    "MDD",
+    "ADD",
+    "DaR",
+    "CDaR",
+    "EDaR",
+    # "RLDaR",
+    "UCI",
+    "MDD_Rel",
+    "ADD_Rel",
+    "CDaR_Rel",
+    "EDaR_Rel",
+    # "RLDaR_Rel",
+    "UCI_Rel"
+]
+rcs = {}
+for rm in RMS:
+    print(rm)
+    rcs[rm] = rk.Risk_Contribution(w, rm=rm, cov=cov, returns = returns, solver = "SCS")
+"""
+println("rcst = Dict(")
+for rm in py"RMS"
+    rm = replace(rm, "_Rel" => "_r")
+    println(":", rm, " => ", py"rcs[rm]", ",")
+end
+println(")")
+
+py"""
+port = rp.Portfolio(returns=pd.DataFrame($(Matrix(returns[!,2:end])), columns = $(names(returns[!,2:end]))))
+
+method_mu='hist' # Method to estimate expected returns based on historical data.
+method_cov='hist' # Method to estimate covariance matrix based on historical data.
+
+port.assets_stats(method_mu=method_mu, method_cov=method_cov, d=0.94)
+
+# Estimate optimal portfolio:
+
+model='Classic' # Could be Classic (historical), BL (Black Litterman) or FM (Factor Model)
+rm = 'MV' # Risk measure used, this time will be variance
+obj = 'Sharpe' # Objective function, could be MinRisk, MaxRet, Utility or Sharpe
+hist = True # Use historical scenarios for risk measures that depend on scenarios
+rf = 0 # Risk free rate
+l = 0 # Risk aversion factor, only useful when obj is 'Utility'
+"""
+
+py"""
+w1 = port.optimization(model=model, rm=rm, obj=obj, rf=rf, l=l, hist=hist)
+w2 = port.optimization(model=model, rm=rm, obj="MinRisk", rf=rf, l=l, hist=hist)
+"""
+
+py"""
+port.ainequality = A
+port.binequality = B
+w3 = port.optimization(model=model, rm=rm, obj=obj, rf=rf, l=l, hist=hist)
+w4 = port.optimization(model=model, rm=rm, obj="MinRisk", rf=rf, l=l, hist=hist)
+"""
+
+display(
+    hcat(
+        w1,
+        DataFrame(;
+            weights2 = vec(py"np.array(w1)"),
+            dif = w1.weights - vec(py"np.array(w1)"),
+        ),
+    ),
+)
+
+display(
+    hcat(
+        w2,
+        DataFrame(;
+            weights2 = vec(py"np.array(w2)"),
+            dif = w2.weights - vec(py"np.array(w2)"),
+        ),
+    ),
+)
+
+display(
+    hcat(
+        w3,
+        DataFrame(;
+            weights2 = vec(py"np.array(w3)"),
+            dif = w3.weights - vec(py"np.array(w3)"),
+        ),
+    ),
+)
+
+display(
+    hcat(
+        w4,
+        DataFrame(;
+            weights2 = vec(py"np.array(w4)"),
+            dif = w4.weights - vec(py"np.array(w4)"),
+        ),
+    ),
+)
+
+###############################
+###############################
+
+owa_l_moment_crm(
+    50;
+    k       = 8,
+    method  = :E,
+    g       = 0.5,
+    max_phi = 0.5,
+    solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer, :params => Dict("verbose" => false, "max_iter" => 1))),
+)
+
+portfolio = HCPortfolio(; returns = returns)
+asset_statistics!(portfolio; calc_kurt = false)
+portfolio.w_max = nothing
+portfolio.w_min = nothing
+w1 = opt_port!(portfolio; linkage = :DBHT)
+portfolio.w_max = 1
+portfolio.w_min = 0
+w2 = opt_port!(portfolio; linkage = :DBHT)
+@test isapprox(w1.weights, w2.weights)
+
+a = ClusterNode(1, nothing, nothing, 1, 1)
+b = ClusterNode(1, nothing, nothing, 1, 1)
+c = ClusterNode(1, nothing, nothing, 2, 1)
+@test a == b
+@test a < c
+@test c > b
+
+portfolio = Portfolio(;
+    returns = returns,
+    solvers = OrderedDict(
+        :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
+    ),
+)
+asset_statistics!(portfolio; calc_kurt = false)
+opt_port!(portfolio)
+
+calc_risk(portfolio; rm = :RVaR)
+
+!isempty(portfolio.alloc_params)
+
+portfolio.alloc_solvers = OrderedDict(
+    :Clarabel => Dict(:solver => Clarabel.Optimizer, :params => Dict(
+        # "simplex_iteration_limit" => 1,
+        # "ipm_iteration_limit" => 1,
+        # "log_to_console" => false,
+        "verbose" => false,
+    )),
+)
+alloc = allocate_port!(
+    portfolio;
+    alloc_type = :LP,
+    latest_prices = Vector(DataFrame(A)[end, 2:end]),
+)
+
+@test !isempty(portfolio.fail[:Clarabel_RP])
+opt_port!(portfolio; type = :RRP)
+@test !isempty(portfolio.fail[:Clarabel_RRP])
+
+portfolio = Portfolio(;
+    returns = returns,
+    solvers = OrderedDict(
+        :Clarabel =>
+            Dict(:solver => Clarabel.Optimizer, :params => Dict("verbose" => false)),
+    ),
+)
+asset_statistics!(portfolio; calc_kurt = false)
+opt_port!(portfolio)
+
+portfolio.solvers = OrderedDict(
+    :Clarabel => Dict(
+        :solver => Clarabel.Optimizer,
+        :params => Dict("verbose" => false, "max_iter" => 100),
+    ),
+)
+calc_risk(portfolio; rm = :RVaR)
+
+@test isapprox(calc_risk(portfolio; rm = :Equal), 1 / length(portfolio.assets))
+
+##################
+###################
+portfolio = Portfolio(;
     returns = returns,
     solvers = OrderedDict(
         :Clarabel => Dict(
@@ -35,13 +375,13 @@ portfolio = Portfolio(
         :COSMO => Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
     ),
 )
-asset_statistics!(portfolio, calc_kurt = true)
+asset_statistics!(portfolio; calc_kurt = true)
 
 posdef_fix!(portfolio.kurt, :Nearest; msg = "Kurtosis ")
 @test isposdef(portfolio.kurt)
 
 test_logger = TestLogger()
-asset_statistics!(portfolio, calc_kurt = true)
+asset_statistics!(portfolio; calc_kurt = true)
 posdef_fix!(portfolio.kurt, :Custom_Func; msg = "Kurtosis ")
 @test !isposdef(portfolio.kurt)
 @test !isempty(test_logger.logs)
@@ -49,7 +389,7 @@ posdef_fix!(portfolio.kurt, :Custom_Func; msg = "Kurtosis ")
 opt_port!(portfolio)
 
 portfolio.lpm_target = 0.001
-w1 = opt_port!(portfolio, rm = :FLPM)
+w1 = opt_port!(portfolio; rm = :FLPM)
 w1t = [
     2.3835802682026506e-9,
     5.6430582004931394e-9,
@@ -87,11 +427,11 @@ from sklearn.decomposition import PCA
 from numpy.linalg import inv
 """
 
-A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
+A = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
 
-portfolio = HCPortfolio(
+portfolio = HCPortfolio(;
     ret = Matrix(returns[!, 2:end]),
     assets = names(returns[!, 2:end]),
     timestamps = returns[!, 1],
@@ -156,6 +496,7 @@ w2 = opt_port!(
     portfolio;
     type = type,
     rm = rm,
+    rm_i = :Equal,
     kelly = kelly,
     linkage = linkage,
     branchorder = branchorder,
@@ -250,14 +591,14 @@ println(vec(py"np.array(w)"))
 ##############################
 ##############################
 
-kr = TimeArray(CSV.File("./test/assets/KeyRates.csv"), timestamp = :Date) ./ 100
-assets = TimeArray(CSV.File("./test/assets/Assets.csv"), timestamp = :Date)
-a = merge(assets, kr, method = :inner)
+kr = TimeArray(CSV.File("./test/assets/KeyRates.csv"); timestamp = :Date) ./ 100
+assets = TimeArray(CSV.File("./test/assets/Assets.csv"); timestamp = :Date)
+a = merge(assets, kr; method = :inner)
 
 kr_returns = dropmissing!(DataFrame(diff(a[colnames(kr)])))
-sort!(kr_returns, :timestamp, rev = true)
+sort!(kr_returns, :timestamp; rev = true)
 assets_returns = dropmissing!(DataFrame(percentchange(a[colnames(assets)])))
-sort!(assets_returns, :timestamp, rev = true)
+sort!(assets_returns, :timestamp; rev = true)
 
 equity = ["APA", "CMCSA", "CNP", "HPQ", "PSA", "SEE", "ZION"]
 bonds = [
@@ -277,14 +618,14 @@ assets_returns = assets_returns[!, ["timestamp"; equity; bonds]]
 convexity = CSV.read("./test/assets/convexity.csv", DataFrame)
 durations = CSV.read("./test/assets/durations.csv", DataFrame)
 
-loadings = innerjoin(durations, convexity, on = "ticker")
+loadings = innerjoin(durations, convexity; on = "ticker")
 loadings[!, names(durations)[2:end]] .= -1 * Matrix(durations[!, 2:end])
 loadings[!, names(convexity)[2:end]] .= 0.5 * Matrix(convexity[!, 2:end])
 
 kr_returns_2 = copy(kr_returns)
 kr_returns_2[!, 2:end] .= Matrix(kr_returns_2[!, 2:end]) .^ 2
 X = DataFrames.rename!(
-    hcat(kr_returns, kr_returns_2[!, 2:end], makeunique = true),
+    hcat(kr_returns, kr_returns_2[!, 2:end]; makeunique = true),
     ["timestamp"; names(loadings)[2:end]],
 )
 Y = assets_returns[!, ["timestamp"; bonds]]
@@ -337,7 +678,7 @@ f_views = DataFrame(
 f_views = DataFrame(f_views)
 P_f, Q_f = factor_views(f_views, loadings)
 
-port = Portfolio(returns = Y, f_returns = X)
+port = Portfolio(; returns = Y, f_returns = X)
 black_litterman_factor_satistics!(
     port;
     # w;
@@ -360,7 +701,7 @@ mub1, covb1, wb1 = bayesian_black_litterman(
     port.f_returns,
     Matrix(loadings[!, 2:end]),
     P_f,
-    Q_f / 252,
+    Q_f / 252;
     constant = false,
 )
 @test isapprox(port.mu_bl_fm, mub1)
@@ -393,7 +734,7 @@ mub2, covb2, wb2 = bayesian_black_litterman(
     port.f_returns,
     Matrix(B[!, 2:end]),
     P_f1,
-    Q_f1 / 252,
+    Q_f1 / 252;
     constant = true,
     eq = false,
     rf = 0.0002,
@@ -423,7 +764,7 @@ mub3, covb3, wb3 = bayesian_black_litterman(
     port.f_returns,
     Matrix(B[!, 2:end]),
     P_f1,
-    Q_f1 / 252,
+    Q_f1 / 252;
     constant = true,
     diagonal = false,
 )
@@ -559,7 +900,7 @@ mub7, covb7, w7 = augmented_black_litterman(
 @test isapprox(port.mu_bl_fm, mub7)
 @test isapprox(port.cov_bl_fm, covb7)
 
-port = Portfolio(returns = Y, f_returns = X)
+port = Portfolio(; returns = Y, f_returns = X)
 port.bl_bench_weights
 w = [
     0.07450693966487602,
@@ -1161,8 +1502,8 @@ X_std = PCR(F, X[0], n_components=0.95)
 # e = timer()
 # print(e-s)
 """
-var(transpose(pcr(X[!, 2:end], Y[!, 1])), dims = 1)
-var(py"X_std", dims = 1)
+var(transpose(pcr(X[!, 2:end], Y[!, 1])); dims = 1)
+var(py"X_std"; dims = 1)
 println("mu_ft = ", vec(py"np.array(port.mu_f)"))
 println("cov_ft = reshape(", vec(py"np.array(port.cov_f)"), ",7,7)")
 println("mu_fmt = ", vec(py"np.array(port.mu_fm)"))
@@ -1216,7 +1557,7 @@ P, Q = asset_views(views, asset_classes)
 X = Matrix(returns[!, 2:end])
 w = fill(1 / 20, 20)
 mu1, cov_mtx1, wb1 = black_litterman(X, w, P, Q)
-mu2, cov_mtx2, wb2 = augmented_black_litterman(X, w, P = P, Q = Q)
+mu2, cov_mtx2, wb2 = augmented_black_litterman(X, w; P = P, Q = Q)
 @test isapprox(mu1, mu2)
 @test isapprox(cov_mtx1, cov_mtx2)
 @test isapprox(wb1, wb2)
@@ -2202,29 +2543,21 @@ println("incl4t = ", py"incl4")
 println("incl5t = ", py"incl5")
 println("incl6t = ", py"incl6")
 
-A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
+A = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-portfolio = Portfolio(
-    returns = returns,
-    solvers = Dict(
-        :Clarabel =>
-            Dict(:solver => Clarabel.Optimizer, :params => Dict("verbose" => false)),
-    ),
-    alloc_solvers = Dict(
-        :HiGHS => Dict(
-            :solver => (HiGHS.Optimizer),
-            :params => Dict("log_to_console" => false),
-        ),
-    ),
+portfolio = Portfolio(;
+    returns       = returns,
+    solvers       = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer, :params => Dict("verbose" => false))),
+    alloc_solvers = Dict(:HiGHS => Dict(:solver => (HiGHS.Optimizer), :params => Dict("log_to_console" => false))),
     latest_prices = Vector(DataFrame(A[end])[1, 2:end]),
 )
 
-asset_statistics!(portfolio, jlogo = true)
+asset_statistics!(portfolio; jlogo = true)
 
 covjt = reshape(
     [
@@ -2686,7 +3019,7 @@ println(py"st")
 println("cov = $(vec(py"np.array(port.cov)"))")
 
 investment = 69420
-opt_port!(portfolio, linkage = :complete, type = :HERC)
+opt_port!(portfolio; linkage = :complete, type = :HERC)
 alloc_type = :LP
 lp_alloc = allocate_port!(
     portfolio;
@@ -2719,116 +3052,16 @@ galloc, gleftover = Allocation(
     investment,
 )
 
-lp_alloct = DataFrame(
-    tickers = [
-        "GOOG",
-        "AAPL",
-        "FB",
-        "BABA",
-        "GE",
-        "AMD",
-        "WMT",
-        "BAC",
-        "GM",
-        "T",
-        "UAA",
-        "SHLD",
-        "XOM",
-        "RRC",
-        "BBY",
-        "MA",
-        "PFE",
-        "JPM",
-        "SBUX",
-    ],
-    shares = [1, 4, 4, 3, 47, 303, 335, 16, 13, 22, 21, 2533, 9, 256, 231, 4, 21, 5, 13],
-    weights = [
-        0.014693069123740864,
-        0.009936264561200548,
-        0.009583620808428936,
-        0.007578389627606793,
-        0.008781384022864722,
-        0.04286267311582058,
-        0.41458509282878303,
-        0.006891540406729905,
-        0.007303534670175715,
-        0.01117138291266522,
-        0.00506407214586503,
-        0.12041324645864256,
-        0.01003868679606578,
-        0.055279834486625434,
-        0.23596338932588753,
-        0.009931654777554406,
-        0.010826950248780262,
-        0.00796762354167102,
-        0.01112759014089158,
-    ],
+lp_alloct = DataFrame(;
+    tickers = ["GOOG", "AAPL", "FB", "BABA", "GE", "AMD", "WMT", "BAC", "GM", "T", "UAA", "SHLD", "XOM", "RRC", "BBY", "MA", "PFE", "JPM", "SBUX"],
+    shares  = [1, 4, 4, 3, 47, 303, 335, 16, 13, 22, 21, 2533, 9, 256, 231, 4, 21, 5, 13],
+    weights = [0.014693069123740864, 0.009936264561200548, 0.009583620808428936, 0.007578389627606793, 0.008781384022864722, 0.04286267311582058, 0.41458509282878303, 0.006891540406729905, 0.007303534670175715, 0.01117138291266522, 0.00506407214586503, 0.12041324645864256, 0.01003868679606578, 0.055279834486625434, 0.23596338932588753, 0.009931654777554406, 0.010826950248780262, 0.00796762354167102, 0.01112759014089158],
 )
 
-gr_alloct = DataFrame(
-    tickers = [
-        "WMT",
-        "BBY",
-        "SHLD",
-        "RRC",
-        "AMD",
-        "T",
-        "SBUX",
-        "PFE",
-        "XOM",
-        "GOOG",
-        "AAPL",
-        "MA",
-        "GE",
-        "JPM",
-        "FB",
-        "GM",
-        "BAC",
-        "BABA",
-        "UAA",
-    ],
-    shares = [
-        335.0,
-        231.0,
-        2531.0,
-        255.0,
-        303.0,
-        23.0,
-        13.0,
-        21.0,
-        9.0,
-        1.0,
-        4.0,
-        4.0,
-        46.0,
-        5.0,
-        4.0,
-        13.0,
-        16.0,
-        3.0,
-        21.0,
-    ],
-    weights = [
-        0.41458097200928257,
-        0.2359610439387693,
-        0.1203169749421343,
-        0.05506335031878181,
-        0.04286224707701147,
-        0.01167905695848274,
-        0.011127479536841315,
-        0.010826842632977167,
-        0.010038587015304185,
-        0.014692923080173899,
-        0.009936165798477349,
-        0.009931556060650716,
-        0.008594460638384179,
-        0.007967544346497265,
-        0.00958352555085167,
-        0.007303462075794942,
-        0.006891471907416766,
-        0.007578314301271379,
-        0.005064021810897344,
-    ],
+gr_alloct = DataFrame(;
+    tickers = ["WMT", "BBY", "SHLD", "RRC", "AMD", "T", "SBUX", "PFE", "XOM", "GOOG", "AAPL", "MA", "GE", "JPM", "FB", "GM", "BAC", "BABA", "UAA"],
+    shares  = [335.0, 231.0, 2531.0, 255.0, 303.0, 23.0, 13.0, 21.0, 9.0, 1.0, 4.0, 4.0, 46.0, 5.0, 4.0, 13.0, 16.0, 3.0, 21.0],
+    weights = [0.41458097200928257, 0.2359610439387693, 0.1203169749421343, 0.05506335031878181, 0.04286224707701147, 0.01167905695848274, 0.011127479536841315, 0.010826842632977167, 0.010038587015304185, 0.014692923080173899, 0.009936165798477349, 0.009931556060650716, 0.008594460638384179, 0.007967544346497265, 0.00958352555085167, 0.007303462075794942, 0.006891471907416766, 0.007578314301271379, 0.005064021810897344],
 )
 
 lp_leftovert = 1.5577120000156128
@@ -2837,11 +3070,11 @@ gr_leftovert = 0.8677120000015961
 @test isapprox(lp_leftovert, portfolio.alloc_params[:LP_HERC][:leftover])
 @test isapprox(gr_leftovert, portfolio.alloc_params[:Greedy_HERC][:leftover])
 
-lp_allocjoin = outerjoin(lp_alloct, lp_alloc, on = :tickers, makeunique = true)
+lp_allocjoin = outerjoin(lp_alloct, lp_alloc; on = :tickers, makeunique = true)
 lp_allocjoin.shares[ismissing.(lp_allocjoin.shares)] .= 0
 lp_allocjoin.weights[ismissing.(lp_allocjoin.weights)] .= 0
 
-gr_allocjoin = outerjoin(gr_alloct, gr_alloc, on = :tickers, makeunique = true)
+gr_allocjoin = outerjoin(gr_alloct, gr_alloc; on = :tickers, makeunique = true)
 gr_allocjoin.shares[ismissing.(gr_allocjoin.shares)] .= 0
 gr_allocjoin.weights[ismissing.(gr_allocjoin.weights)] .= 0
 
@@ -2851,27 +3084,16 @@ gr_allocjoin.weights[ismissing.(gr_allocjoin.weights)] .= 0
 @test isapprox(gr_allocjoin.shares, gr_allocjoin.shares_1)
 @test isapprox(gr_allocjoin.weights, gr_allocjoin.weights_1)
 
-portfolio = Portfolio(
-    returns = returns,
-    solvers = OrderedDict(
-        :Clarabel =>
-            Dict(:solver => Clarabel.Optimizer, :params => Dict("verbose" => false)),
-        :COSMO => Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
-        :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
-        :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
-    ),
-    alloc_solvers = Dict(
-        :HiGHS => Dict(
-            :solver => (HiGHS.Optimizer),
-            :params => Dict("log_to_console" => false),
-        ),
-    ),
+portfolio = Portfolio(;
+    returns       = returns,
+    solvers       = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer, :params => Dict("verbose" => false)), :COSMO => Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)), :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)), :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0))),
+    alloc_solvers = Dict(:HiGHS => Dict(:solver => (HiGHS.Optimizer), :params => Dict("log_to_console" => false))),
     latest_prices = Vector(DataFrame(A[end])[1, 2:end]),
-    short = true,
+    short         = true,
 )
 asset_statistics!(portfolio)
 
-opt_port!(portfolio, obj = :Sharpe)
+opt_port!(portfolio; obj = :Sharpe)
 alloc_type = :LP
 allocation = allocate_port!(portfolio; alloc_type = alloc_type)
 
@@ -2892,15 +3114,9 @@ galloc, gleftover = Allocation(
     portfolio.latest_prices,
 )
 
-portfolio = HCPortfolio(
-    returns = returns,
-    solvers = OrderedDict(
-        :Clarabel =>
-            Dict(:solver => Clarabel.Optimizer, :params => Dict("verbose" => false)),
-        :COSMO => Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
-        :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)),
-        :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
-    ),
+portfolio = HCPortfolio(;
+    returns       = returns,
+    solvers       = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer, :params => Dict("verbose" => false)), :COSMO => Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)), :ECOS => Dict(:solver => ECOS.Optimizer, :params => Dict("verbose" => false)), :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0))),
     alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer)),
     latest_prices = Vector(DataFrame(A[end])[1, 2:end]),
 )
@@ -2927,7 +3143,7 @@ galloc, gleftover = Allocation(
     portfolio.latest_prices,
 )
 
-portfolio = HCPortfolio(
+portfolio = HCPortfolio(;
     returns = returns,
     solvers = OrderedDict(
         :Clarabel =>
@@ -2967,7 +3183,7 @@ w = port.optimization(model=model,
 
 println("codept = reshape($(vec(py"np.array(port.codep)")), 20,20)")
 
-portfolio = HCPortfolio(
+portfolio = HCPortfolio(;
     returns = returns,
     solvers = OrderedDict(
         :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
@@ -3008,11 +3224,11 @@ asset_statistics!(portfolio)
 abs_kendall = portfolio.codep
 
 portfolio.codep_type = :gerber1
-asset_statistics!(portfolio, std_kwargs = (; corrected = false))
+asset_statistics!(portfolio; std_kwargs = (; corrected = false))
 gerber1 = portfolio.codep
 
 portfolio.codep_type = :gerber2
-asset_statistics!(portfolio, std_kwargs = (; corrected = false))
+asset_statistics!(portfolio; std_kwargs = (; corrected = false))
 gerber2 = portfolio.codep
 
 portfolio.codep_type = :distance
@@ -9382,9 +9598,9 @@ S = reshape(
 # println([Int.(Z[i, 1:2]) for i in 1:size(Z, 1)])
 # println([Z[i, 3] for i in 1:size(Z, 1)])
 clustering = hclust(D; linkage = :ward, branchorder = :optimal)
-T8, Rpm, Adjv, Dpm, Mv, Z, dbht = DBHTs(D, S, branchorder = :optimal)
+T8, Rpm, Adjv, Dpm, Mv, Z, dbht = DBHTs(D, S; branchorder = :optimal)
 
-A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
+A = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
 
@@ -9392,7 +9608,7 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 type = :trad
 
-portfolio = Portfolio(
+portfolio = Portfolio(;
     returns = returns,
     solvers = OrderedDict(
         :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
@@ -9760,7 +9976,7 @@ sum(
         w,
         portfolio.returns,
         portfolio.cov;
-        rm = :uci_r,
+        rm = :UCI_r,
         solvers = portfolio.solvers,
     ) - 0.040563874281498415,
 ) < eps()
@@ -9822,7 +10038,7 @@ sum(
 
 py"df.shape"
 
-port2 = HCPortfolio(returns = returns)
+port2 = HCPortfolio(; returns = returns)
 asset_statistics!(port2)
 
 PortfolioOptimiser.CodepTypes
@@ -9831,7 +10047,7 @@ opt_port!(hcport)
 wak = Matrix(RET[1:50, 2:end])
 println([wak[i, :] for i in 1:size(wak, 1)])
 
-mtx = covgerber2(wak, std_kwargs = (; corrected = true))
+mtx = covgerber2(wak; std_kwargs = (; corrected = true))
 issymmetric(mtx)
 
 pmtx = [
@@ -19470,7 +19686,7 @@ norm(Sb - pSb)
 #################################
 He = CliqHierarchyTree2s(A, :equal)
 
-CliqHierarchyTree2s(A, method1 = "uniqueroot")
+CliqHierarchyTree2s(A; method1 = "uniqueroot")
 
 H2 = [
     [
@@ -20888,7 +21104,7 @@ Ap, trip, clq3p, cliquesp, cliqueTreep = db.PMFG_T2s(W)
 Dp, Bp = db.distance_wei(Ap)
 K3p, Ep, cliquep = db.clique3(copy(A))
 
-A = TimeArray(CSV.File("./test/assets/stock_prices.csv"), timestamp = :date)
+A = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 Y = percentchange(A)
 RET = dropmissing!(DataFrame(Y))
 

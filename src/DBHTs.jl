@@ -406,7 +406,7 @@ Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy 
 - `H2`: `Nb×Nb` adjacency matrix for the bubble hierarchical tree where `Nb` is the number of bubbles.
 - `Mb`: `Nc×Nb` bubble membership matrix. `Mb[n, bi] = 1` indicates that 3-clique `n`, belongs to bubble `bi`.
 - `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
-- `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates the n'th 3-clique is separating.
+- `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates 3-clique `n` is separating.
 [^NHPG]:
     [Song, W. M., Di Matteo, T., & Aste, T. (2011). Nested hierarchies in planar graphs. Discrete Applied Mathematics, 159(17), 2135-2146.](https://www.sciencedirect.com/science/article/pii/S0166218X11002794)
 """
@@ -528,8 +528,26 @@ end
 ```julia
 BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
 ```
+Obtains non-discrete and discrete clusterings from the bubble topology of the Planar Maximally Filtered Graph (PMFG).
+# Inputs
+- `Rpm`: `N×N` sparse weighted adjacency matrix of the PMFG.
+- `Dpm`: `N×N` shortest path lengths matrix of the PMFG.
+- `Hb`: undirected bubble tree of the PMFG.
+- `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
+- `Mv`: `N×Nb` bubble membership matrix for vertices.
+- `CliqList`: `Nc×3` matrix of 3-cliques. Each row vector contains the list of vertices for a particular 3-clique.
+# Outputs
+- `Adjv`: `N×Nk` cluster membership matrix for vertices for non-discrete clustering via the bubble topology. `Adjv[n, k] = 1` indicates cluster membership of vertex `n` to the `k`'th non-discrete cluster.
+- `Tc`: `N×1` cluster membership vector. `Tc[n] = k` indicates cluster membership of vertex `n` to the `k`'th discrete cluster.
 """
-function BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
+function BubbleCluster8s(
+    Rpm::AbstractMatrix{<:Number},
+    Dpm::AbstractMatrix{<:Number},
+    Hb::AbstractMatrix{<:Number},
+    Mb::AbstractMatrix{<:Number},
+    Mv::AbstractMatrix{<:Number},
+    CliqList::AbstractMatrix{<:Number},
+)
     Hc, Sep = DirectHb(Rpm, Hb, Mb, Mv, CliqList)
 
     N = size(Rpm, 1)

@@ -17,7 +17,18 @@ function plot_returns(timestamps, assets, returns, weights; per_asset = false, k
     !haskey(kwargs, :ylabel) && (kwargs = (kwargs..., ylabel = "Cummulative Return"))
     !haskey(kwargs, :xlabel) && (kwargs = (kwargs..., xlabel = "Date"))
 
-    plot(timestamps, ret; kwargs...)
+    # plot(timestamps, ret; kwargs...)
+    lines(
+        datetime2rata.(timestamps),
+        ret,
+        axis = (;
+            xticks = (
+                datetime2rata.(timestamps)[1:60:end],
+                Dates.format.(timestamps, "dd/mm/yyyy")[1:60:end],
+            ),
+            xticklabelrotation = pi / 4,
+        ),
+    )
 end
 function plot_returns(
     portfolio,
