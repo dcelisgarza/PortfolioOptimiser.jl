@@ -1,10 +1,22 @@
 """
 ```julia
-PMFG_T2s(W::AbstractMatrix, nargout::Integer = 3)
+PMFG_T2s(W::AbstractMatrix{<:Number}, nargout::Integer = 3)
 ```
-Constructs a Triangulated Maximally Filtered Graph (TMFG) starting from a tetrahedron and recursively inserting vertices inside existing triangles (T2 move) in order to approximate a maximal planar graph with the largest total non-negative weight. [`Guido Previde Massara, T. Di Matteo, Tomaso Aste, Network Filtering for Big Data: Triangulated Maximally Filtered Graph, Journal of Complex Networks, Volume 5, Issue 2, June 2017, Pages 161–178, https://doi.org/10.1093/comnet/cnw015`](https://academic.oup.com/comnet/article-abstract/5/2/161/2555365).
+Constructs a Triangulated Maximally Filtered Graph (TMFG) starting from a tetrahedron and recursively inserting vertices inside existing triangles (T2 move) in order to approximate a Maximal Planar Graph with the largest total weight, aka Planar Maximally Filtered Graph (PMFG). All weights are non-negative [^PMFG].
+# Arguments
+- `W`: `N×N` matrix of non-negative weights.
+- `nargout`: number of output arguments, the same arguments are always returne, this only controls whether some arguments are empty or not.
+# Outputs
+- `A`: adjacency matrix of the PMFG with weights.
+- `tri`: list of triangles (triangular faces).
+- `clique3`: list of 3-cliques taht are not triangular faces, all 3-cliques are given by `[tri; clique3]`.
+- `cliques`: list of all 4-cliques, if `nargout <= 3`, this will be returned as an empty array.
+- `cliqueTree`: 4-cliques tree structure (adjacency matrix), if `nargout <= 4`, it is returned as an empty array.
+
+[^PMFG]:
+    [Guido Previde Massara, T. Di Matteo, Tomaso Aste, Network Filtering for Big Data: Triangulated Maximally Filtered Graph, Journal of Complex Networks, Volume 5, Issue 2, June 2017, Pages 161–178, https://doi.org/10.1093/comnet/cnw015](https://academic.oup.com/comnet/article-abstract/5/2/161/2555365).
 """
-function PMFG_T2s(W::AbstractMatrix, nargout::Integer = 3)
+function PMFG_T2s(W::AbstractMatrix{<:Number}, nargout::Integer = 3)
     N = size(W, 1)
 
     @assert(N >= 9, "W Matrix too small")
@@ -107,7 +119,24 @@ function PMFG_T2s(W::AbstractMatrix, nargout::Integer = 3)
     return A, tri, clique3, cliques, cliqueTree
 end
 
-function distance_wei(L)
+"""
+```julia
+distance_wei(L::AbstractMatrix{<:Number})
+```
+The distance matrix contains lengths of shortest paths between all node pairs. An entry `[u, v]` represents the length of the shortest path from node `u` to node `v`. The average shortest path length is the characteristic path length of the network. The function uses Dijkstra's algorithm.
+# Inputs
+- `L`: Directed/undirected connection-length matrix. 
+    - Lengths between disconnected nodes are set to `Inf`.
+    - Lengths on the main diagonal are set to 0.
+!!! note
+    The input matrix must be a connection-length matrix typically obtained via a mapping from weight to length. For instance, in a weighted correlation network, higher correlations are more naturally interpreted as shorter distances, and the input matrix should therefore be some inverse of the connectivity matrix, i.e. a distance matrix.
+
+    The number of edges in the shortest weighted path may in general exceed the number of edges in the shortest binary paths (i.e. the shortest weighted paths computed on the binarised connectivity matrix), because the shortest weighted paths have the minimal weighted distance, not necessarily the minimal number of edges.
+# Outputs
+- `D`: distance (shortest weighted path) matrix.
+- `B`: number of edged in the shortest weigthed path matrix.
+"""
+function distance_wei(L::AbstractMatrix{<:Number})
     N = size(L, 1)
     D = fill(Inf, N, N)
     D[diagind(D)] .= 0
@@ -145,7 +174,19 @@ function distance_wei(L)
     return D, B
 end
 
-function clique3(A)
+"""
+```julia
+clique3(A::AbstractMatrix{<:Number})
+```
+Computes the list of 3-cliques.
+# Inputs
+- `A`: `N×N` adjacency matrix of a Maximal Planar Graph (MPG).
+# Outputs
+- `K3`: vector of vectors with the corresponding indices of candidate cliques.
+- `E`: matrix with non-zero indices and entries of candidate cliques.
+- `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
+"""
+function clique3(A::AbstractMatrix{<:Number})
     A = A - Diagonal(A)
     A = A .!= 0
     A2 = A * A
@@ -192,7 +233,21 @@ function clique3(A)
     return K3, E, clique
 end
 
-function breadth(CIJ, source)
+"""
+```julia
+breadth(CIJ::AbstractMatrix{<:Number}, source::Integer)
+```
+Breadth-first search.
+# Inputs
+- `CIJ`: binary (directed/undirected) connection matrix.
+- `source`: source vertex.
+# Outputs
+- `distance`: distance between `source` and i'th vertex (0 for source vertex).
+- `branch`: vertex that precedes i in teh breadth-first search treee (-1 for source vertex).
+!!! note
+    Breadth-first search tree does not contain all paths (or all shortest paths), but allows the determination of at least one path with minimum distace. The entire graph is explored, starting from source vertex `source`.
+"""
+function breadth(CIJ::AbstractMatrix{<:Number}, source::Integer)
     N = size(CIJ, 1)
     white = 0
     gray = 1
@@ -328,7 +383,34 @@ function BubbleHierarchy(Pred, Sb)
     return H, Mb
 end
 
-function CliqHierarchyTree2s(Apm, method = :Unique)
+"""
+```julia
+DBHTRootMethods = (:Unique, :Equal)
+```
+Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in [`DBHTs`](@ref), in case there is more than one candidate.
+- `:Unique`: create a unique root.
+- `:Equal`: the root is created from the candidate's adjacency tree. 
+"""
+const DBHTRootMethods = (:Unique, :Equal)
+
+"""
+```julia
+CliqHierarchyTree2s(Apm::AbstractMatrix{<:Number}, method::Symbol = :Unique)
+```
+Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy of the cliques with the definition of "inside" a clique being a subgraph of smaller size when the entire graph is made disjoint by removing the clique [^NHPG].
+# Inputs
+- `Apm`: `N×N` adjacency matrix of an MPG.
+- `method`: method for finding the root of the graph [`DBHTRootMethods`](@ref). Uses Voronoi tesselation between tiling triangles.
+# Outputs
+- `H1`: `Nc×Nc` adjacency matrix for 3-clique hierarchical tree where `Nc` is the number of 3-cliques.
+- `H2`: `Nb×Nb` adjacency matrix for the bubble hierarchical tree where `Nb` is the number of bubbles.
+- `Mb`: `Nc×Nb` bubble membership matrix. `Mb[n, bi] = 1` indicates that 3-clique `n`, belongs to bubble `bi`.
+- `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
+- `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates the n'th 3-clique is separating.
+[^NHPG]:
+    [Song, W. M., Di Matteo, T., & Aste, T. (2011). Nested hierarchies in planar graphs. Discrete Applied Mathematics, 159(17), 2135-2146.](https://www.sciencedirect.com/science/article/pii/S0166218X11002794)
+"""
+function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Number}, method::Symbol = :Unique)
     @assert(method ∈ DBHTRootMethods, "method = $method, must be one of $DBHTRootMethods")
     N = size(Apm, 1)
     A = Apm .!= 0
@@ -443,7 +525,7 @@ function DirectHb(Rpm, Hb, Mb, Mv, CliqList)
 end
 
 """
-```
+```julia
 BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
 ```
 """
@@ -661,41 +743,34 @@ end
 
 """
 ```julia
-DBHTRootMethods = (:Unique, :Equal)
-```
-Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in [`DBHTs`](@ref), in case there is more than one candidate.
-- `:Unique`: create a unique root.
-- `:Equal`: the root is created from the candidate's adjacency tree. 
-"""
-const DBHTRootMethods = (:Unique, :Equal)
-
-"""
-```julia
 DBHTs(
-    D::AbstractMatrix,
-    S::AbstractMatrix;
+    D::AbstractMatrix{<:Number},
+    S::AbstractMatrix{<:Number};
     branchorder::Symbol = :optimal,
     method::Symbol = :Unique,
 )
 ```
-Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering algorithm developed by [Song, Won-Min, T. Di Matteo, and Tomaso Aste. "Hierarchical information clustering by means of topologically embedded graphs." PloS one 7.3 (2012): e31929](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031929). This version uses a graph-theoretic filtering technique called Triangulated Maximally Filtered Graph (TMFG).
+Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering algorithm [^DBHTs]. This version uses a graph-theoretic filtering technique called Triangulated Maximally Filtered Graph (TMFG).
 # Arguments
-- `D`: `N × N` dissimilarity matrix, e.g. a distance matrix.
-- `S`: `N × N` non-negative similarity matrix, e.g. a correlation matrix + 1, `S = 2 .- D .^2 / 2`; or another choice could be `S = exp.(-D).`
+- `D`: `N×N` dissimilarity matrix, e.g. a distance matrix.
+- `S`: `N×N` non-negative similarity matrix, e.g. a correlation matrix + 1, `S = 2 .- D .^2 / 2`; or another choice could be `S = exp.(-D).`
 - `branchorder`: is a parameter for ordering the final dendrogram's branches. The choices are defined by [`BranchOrderTypes`](@ref).
 - `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethods`](@ref).
 # Outputs
-- `T8`: `N × 1` cluster membership vector.
-- `Rpm`: `N × N` adjacency matrix of the Planar Maximally Filtered Graph (PMFG).
+- `T8`: `N×1` cluster membership vector.
+- `Rpm`: `N×N` adjacency matrix of the Planar Maximally Filtered Graph (PMFG).
 - `Adjv`: Bubble cluster membership matrix from [`BubbleCluster8s`](@ref).
-- `Dpm`: `N × N` shortest path length matrix of the PMFG.
-- `Mv`: `N × N_b` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
-- `Z`: DBHT hierarchy.
-- `Z_hclust`: Z hierarchy in [Clustering.Hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) format.
+- `Dpm`: `N×N` shortest path length matrix of the PMFG.
+- `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
+- `Z`: DBHT hierarchy matrix.
+- `Z_hclust`: Z matrix in [Clustering.Hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) format.
+
+[^DBHTs]:
+    [Song, Won-Min, T. Di Matteo, and Tomaso Aste. "Hierarchical information clustering by means of topologically embedded graphs." PloS one 7.3 (2012): e31929](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031929).
 """
 function DBHTs(
-    D::AbstractMatrix,
-    S::AbstractMatrix;
+    D::AbstractMatrix{<:Number},
+    S::AbstractMatrix{<:Number};
     branchorder::Symbol = :optimal,
     method::Symbol = :Unique,
 )
