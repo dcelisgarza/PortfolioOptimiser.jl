@@ -17,7 +17,6 @@ BoxTypes
 KindBootstrap
 BLFMType
 RPConstraintTypes
-DBHTRootMethods
 OWAMethods
 BinTypes
 HRRiskMeasures

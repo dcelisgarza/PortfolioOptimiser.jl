@@ -1,4 +1,10 @@
-function PMFG_T2s(W, nargout = 3)
+"""
+```julia
+PMFG_T2s(W::AbstractMatrix, nargout::Integer = 3)
+```
+Constructs a Triangulated Maximally Filtered Graph (TMFG) starting from a tetrahedron and recursively inserting vertices inside existing triangles (T2 move) in order to approximate a maximal planar graph with the largest total non-negative weight. [`Guido Previde Massara, T. Di Matteo, Tomaso Aste, Network Filtering for Big Data: Triangulated Maximally Filtered Graph, Journal of Complex Networks, Volume 5, Issue 2, June 2017, Pages 161–178, https://doi.org/10.1093/comnet/cnw015`](https://academic.oup.com/comnet/article-abstract/5/2/161/2555365).
+"""
+function PMFG_T2s(W::AbstractMatrix, nargout::Integer = 3)
     N = size(W, 1)
 
     @assert(N >= 9, "W Matrix too small")
@@ -436,6 +442,11 @@ function DirectHb(Rpm, Hb, Mb, Mv, CliqList)
     return Hc, Sep
 end
 
+"""
+```
+BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
+```
+"""
 function BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
     Hc, Sep = DirectHb(Rpm, Hb, Mb, Mv, CliqList)
 
@@ -650,10 +661,44 @@ end
 
 """
 ```julia
-DBHTs(D, S; branchorder = :optimal, method = :Unique)
+DBHTRootMethods = (:Unique, :Equal)
 ```
+Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in [`DBHTs`](@ref), in case there is more than one candidate.
+- `:Unique`: create a unique root.
+- `:Equal`: the root is created from the candidate's adjacency tree. 
 """
-function DBHTs(D, S; branchorder = :optimal, method = :Unique)
+const DBHTRootMethods = (:Unique, :Equal)
+
+"""
+```julia
+DBHTs(
+    D::AbstractMatrix,
+    S::AbstractMatrix;
+    branchorder::Symbol = :optimal,
+    method::Symbol = :Unique,
+)
+```
+Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering algorithm developed by [Song, Won-Min, T. Di Matteo, and Tomaso Aste. "Hierarchical information clustering by means of topologically embedded graphs." PloS one 7.3 (2012): e31929](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031929). This version uses a graph-theoretic filtering technique called Triangulated Maximally Filtered Graph (TMFG).
+# Arguments
+- `D`: `N × N` dissimilarity matrix, e.g. a distance matrix.
+- `S`: `N × N` non-negative similarity matrix, e.g. a correlation matrix + 1, `S = 2 .- D .^2 / 2`; or another choice could be `S = exp.(-D).`
+- `branchorder`: is a parameter for ordering the final dendrogram's branches. The choices are defined by [`BranchOrderTypes`](@ref).
+- `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethods`](@ref).
+# Outputs
+- `T8`: `N × 1` cluster membership vector.
+- `Rpm`: `N × N` adjacency matrix of the Planar Maximally Filtered Graph (PMFG).
+- `Adjv`: Bubble cluster membership matrix from [`BubbleCluster8s`](@ref).
+- `Dpm`: `N × N` shortest path length matrix of the PMFG.
+- `Mv`: `N × N_b` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
+- `Z`: DBHT hierarchy.
+- `Z_hclust`: Z hierarchy in [Clustering.Hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) format.
+"""
+function DBHTs(
+    D::AbstractMatrix,
+    S::AbstractMatrix;
+    branchorder::Symbol = :optimal,
+    method::Symbol = :Unique,
+)
     @assert(
         branchorder ∈ BranchOrderTypes,
         "branchorder = $branchorder, must be one of $BranchOrderTypes"
@@ -697,9 +742,9 @@ function DBHTs(D, S; branchorder = :optimal, method = :Unique)
         Clustering.orderbranches_r!(hmer)
     end
 
-    hclust = Hclust(hmer, :DBHT)
+    Z_hclust = Hclust(hmer, :DBHT)
 
-    return T8, Rpm, Adjv, Dpm, Mv, Z, hclust
+    return T8, Rpm, Adjv, Dpm, Mv, Z, Z_hclust
 end
 
 function _jlogo!(jlogo, sigma, source, sign)
@@ -730,4 +775,12 @@ function JLogo(sigma, separators, cliques)
 end
 
 export DBHTs,
-    PMFG_T2s, distance_wei, clique3, breadth, FindDisjoint, CliqHierarchyTree2s, JLogo
+    PMFG_T2s,
+    distance_wei,
+    clique3,
+    breadth,
+    FindDisjoint,
+    CliqHierarchyTree2s,
+    JLogo,
+    DBHTRootMethods,
+    BubbleCluster8s

@@ -108,7 +108,7 @@ TrackingErrKinds = (:Weights, :Returns)
 Available kinds of tracking errors for [`Portfolio`](@ref).
 - `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns,
     - ``\\bm{b} = \\mathbf{X} \\bm{w}``,
-where ``\\bm{b}`` is the benchmark returns vector, ``\\mathbf{X}`` the ``(T \\times{} N)`` asset returns matrix, and ``\\bm{w}`` the asset weights vector.
+where ``\\bm{b}`` is the benchmark returns vector, ``\\mathbf{X}`` the ``T \\times{} N`` asset returns matrix, and ``\\bm{w}`` the asset weights vector.
 - `:Returns`: directly provide the vector of benchmark returns.
 The benchmark is then used as a reference to optimise a portfolio that tracks it up to a given error.
 """
@@ -171,7 +171,7 @@ const BLFMType = (:A, :B)
 PortTypes = (:Trad, :RP, :RRP, :WC)
 ```
 Available optimisation types for [`Portfolio`](@ref).
-### `:Trad` -- Traditional Optimisations
+# `:Trad` -- Traditional Optimisations
 Available objective functions for `:Trad` optimisations. We can chose any of the objective functions in [`ObjFuncs`](@ref) and risk measures in [`RiskMeasures`](@ref).
 - `:Min_Risk`: minimum risk portfolio,
 ```math
@@ -219,7 +219,7 @@ Where:
 - ``\\lambda`` is the risk aversion coefficient.
 - and ``r`` is the risk-free rate.
 
-### `:RP` -- Risk Parity Optimisations
+# `:RP` -- Risk Parity Optimisations
 Optimises portfolios based on a vector of risk contributions per asset. We can chose any of the risk measures in [`RiskMeasures`](@ref).
 ```math
 \\begin{align*}
@@ -239,7 +239,7 @@ Where:
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref).
 - and ``\\overline{\\mu}`` is the minimum acceptable return of the optimised portfolio.
 
-### `:RRP` -- Relaxed Risk Parity Optimisations
+# `:RRP` -- Relaxed Risk Parity Optimisations
 Optimises portfolios based on a vector of risk contributions per asset. Defines its own risk measure using the portfolio returns covariance.
 ```math
 \\begin{align*}
@@ -270,7 +270,7 @@ Where:
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref).
 - and ``\\overline{\\mu}`` is the minimum acceptable return of the optimised portfolio.
 
-### `:WC` -- Worst Case Mean Variance Optimisations
+# `:WC` -- Worst Case Mean Variance Optimisations
 Computes the worst case mean variance portfolio according to user-selected uncertainty sets (see [`UncertaintyTypes`](@ref)) for the portfolio return and covariance. We can chose any of the objective functions in [`ObjFuncs`](@ref).
 - `:Min_Risk`: worst case minimum risk mean-variance portfolio,
 ```math
@@ -402,16 +402,6 @@ Types of risk parity constraints for building the set of linear constraints via 
 - `:Classes`: restrict the assets in that class.
 """
 const RPConstraintTypes = (:Assets, :Classes)
-
-"""
-```julia
-DBHTRootMethods = (:Unique, :Equal)
-```
-Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in [`DBHTs`](@ref), in case there is more than one candidate.
-- `:Unique`: create a unique root.
-- `:Equal`: the root is created from the candidate's adjacency tree. 
-"""
-const DBHTRootMethods = (:Unique, :Equal)
 
 """
 ```julia
@@ -715,7 +705,7 @@ const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :DB
 ```julia
 BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
 ```
-Algorithm to order leaves and branches.
+Choice of algorithm for ordering hierarchical clustering dendrogram leaves and branches.
 - `:default`: if linkage is `:DBHT`, the leaves and branches remain as the algorithm orders them. If any other linkage is used, they fall back to `:r` as that is their default according to [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
 - All other branch orders are as defined by [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
 """
@@ -742,6 +732,7 @@ Methods for allocating assets to an [`AbstractPortfolio`](@ref) according to the
 const AllocTypes = (:LP, :Greedy)
 
 const ASH = AverageShiftedHistograms
+const NCM = NearestCorrelationMatrix
 
 export AbstractPortfolio,
     RiskMeasures,
@@ -757,7 +748,6 @@ export AbstractPortfolio,
     KindBootstrap,
     EllipseTypes,
     BoxTypes,
-    DBHTRootMethods,
     OWAMethods,
     BinTypes,
     HRRiskMeasures,

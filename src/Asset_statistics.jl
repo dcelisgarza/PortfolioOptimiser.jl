@@ -73,7 +73,6 @@ function dup_elim_sum_matrices(n::Int)
     return d, l, s
 end
 
-const NCM = NearestCorrelationMatrix
 function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton())
     s = sqrt.(diag(mtx))
     corr = cov2cor(mtx)

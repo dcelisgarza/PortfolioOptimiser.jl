@@ -569,11 +569,11 @@ function opt_port!(
     rm::Symbol = :SD,
     rrp_penalty::Real = 1.0,
     rrp_ver::Symbol = :None,
-    save_opt_params = true,
-    string_names = false,
+    save_opt_params::Bool = true,
+    string_names::Bool = false,
     type::Symbol = :Trad,
-    u_cov = :Box,
-    u_mu = :Box,
+    u_cov::Symbol = :Box,
+    u_mu::Symbol = :Box,
 )
     @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
     @assert(class ∈ PortClasses, "class = $class, must be one of $PortClasses")
