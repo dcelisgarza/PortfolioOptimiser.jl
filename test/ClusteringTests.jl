@@ -9,7 +9,7 @@ returns = dropmissing!(DataFrame(Y))
 @testset "Clustering" begin
     port = HCPortfolio(returns = returns)
     asset_statistics!(port)
-    clusters = cluster_assets(port, linkage = :DBHT)
+    clusters, missing, missing = cluster_assets(port, linkage = :DBHT)
     sort!(clusters, "Assets")
 
     at = [

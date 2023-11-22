@@ -734,6 +734,32 @@ const AllocTypes = (:LP, :Greedy)
 const ASH = AverageShiftedHistograms
 const NCM = NearestCorrelationMatrix
 
+const RiskMeasureNames = (
+    SD = "Standard Deviation",
+    MAD = "Mean Absolute Deviation",
+    SSD = "Semi Standard Deviation",
+    FLPM = "First Lower Partial Moment",
+    SLPM = "Second Lower Partial Moment",
+    WR = "Worst Realisation",
+    CVaR = "Conditional Value at Risk",
+    EVaR = "Entropic Value at Risk",
+    RVaR = "Relativistic Value at Risk",
+    MDD = "Max Drawdown",
+    ADD = "Average Drawdown",
+    CDaR = "Conditional Drawdown at Risk",
+    UCI = "Ulcer Index",
+    EDaR = "Entropic Drawdown at Risk",
+    RDaR = "Relativistic Drawdown at Risk",
+    Kurt = "Square Root Kurtosis",
+    SKurt = "Square Root Semi Kurtosis",
+    GMD = "Gini Mean Difference",
+    RG = "Range",
+    RCVaR = "Conditional Value at Risk Range",
+    TG = "Tail Gini",
+    RTG = "Tail Gini Range",
+    OWA = "Ordered Weight Average",
+)
+
 export AbstractPortfolio,
     RiskMeasures,
     KellyRet,

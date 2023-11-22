@@ -165,7 +165,7 @@ function cluster_assets(
 
     clustering_idx = cutree(clustering; k = k)
 
-    return DataFrame(Assets = portfolio.assets, Clusters = clustering_idx)
+    return DataFrame(Assets = portfolio.assets, Clusters = clustering_idx), clustering, k
 end
 export cluster_assets
 
