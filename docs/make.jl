@@ -20,6 +20,7 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
+        "Examples" => "Examples.md",
         "API" => [
             "Definitions" => "Definitions.md",
             "Types" => "Types.md",
