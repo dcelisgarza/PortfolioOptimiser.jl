@@ -664,10 +664,10 @@ function plot_clusters(
     clustering_idx = df.Clusters
     uidx = minimum(clustering_idx):maximum(clustering_idx)
 
-    clusters = Vector{Vector{Int}}(undef, length(uidx))
-    for i in eachindex(clusters)
-        clusters[i] = findall(clustering_idx .== i)
-    end
+    # clusters = Vector{Vector{Int}}(undef, length(uidx))
+    # for i in eachindex(clusters)
+    #     clusters[i] = findall(clustering_idx .== i)
+    # end
 
     codeps1 = (:Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
     if codep_type ∈ codeps1
@@ -675,16 +675,44 @@ function plot_clusters(
     else
         clim = (0, 1)
     end
-    # https://docs.juliaplots.org/stable/generated/statsplots/#Dendrograms
-    heatmap(
-        ordered_assets,
-        ordered_assets,
-        ordered_codep,
-        xticks = :all,
-        yticks = :all,
-        xrotation = 90,
-        clim = clim,
+    # https://docs.juliaplots.org/latest/generated/statsplots/#Dendrogram-on-the-right-side
+
+    l = grid(2, 2, heights = [0.2, 0.8, 0.2, 0.8], widths = [0.8, 0.2, 0.8, 0.2])
+
+    plt = plot(
+        plot(clusters, xticks = false),
+        plot(ticks = nothing, border = :none),
+        plot(
+            ordered_codep,
+            st = :heatmap,
+            #yticks=(1:nrows,rowlabels),
+            yticks = (1:length(assets), ordered_assets),
+            xticks = (1:length(assets), ordered_assets),
+            xrotation = 90,
+            colorbar = false,
+            clim = clim,
+        ),
+        plot(
+            clusters,
+            yticks = false,
+            xrotation = 90,
+            orientation = :horizontal,
+            xlim = (0, 1),
+        ),
+        layout = l,
+        size = (600, 600),
     )
+
+    return plt
+end
+
+function plot_dendrogram()
+    # https://docs.juliaplots.org/stable/generated/statsplots/#Dendrograms
+end
+
+function plot_network()
+    # https://docs.juliaplots.org/latest/GraphRecipes/introduction/
+    # https://juliagraphs.org/GraphPlot.jl/index.html#usage
 end
 
 export plot_returns,
@@ -695,4 +723,6 @@ export plot_returns,
     plot_hist,
     plot_range,
     plot_frontier,
-    plot_clusters
+    plot_clusters,
+    plot_dendrogram,
+    plot_network

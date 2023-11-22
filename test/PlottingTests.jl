@@ -29,4 +29,22 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
     plt7 = plot_returns(portfolio)
     plt8 = plot_returns(portfolio; per_asset = true)
     plt9 = plot_bar(portfolio)
+
+    hcportfolio = HCPortfolio(;
+        returns = returns,
+        solvers = Dict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+        ),
+    )
+    asset_statistics!(hcportfolio; calc_cov = false, calc_mu = false, calc_kurt = false)
+    plot_clusters(
+        hcportfolio;
+        max_k = 10,
+        linkage = :DBHT,
+        branchorder = :r,
+        dbht_method = :Unique,
+    )
 end
