@@ -831,55 +831,87 @@ function efficient_frontier(
 
     i = 0
     for (j, r) in enumerate(risks)
-        try
-            if i == 0
-                w = opt_port!(
-                    portfolio;
-                    class = class,
-                    hist = hist,
-                    kelly = kelly,
-                    obj = :Min_Risk,
-                    rf = rf,
-                    rm = rm,
-                    save_opt_params = false,
-                )
-            else
-                j != length(risks) ? setfield!(portfolio, rmf, r) :
-                setfield!(portfolio, rmf, Inf)
-                w = opt_port!(
-                    portfolio;
-                    class = class,
-                    hist = hist,
-                    kelly = kelly,
-                    obj = :Max_Ret,
-                    rf = rf,
-                    rm = rm,
-                    save_opt_params = false,
-                )
-            end
-            rk = calc_risk(
-                w.weights,
-                returns;
-                rm = rm,
+        if i == 0
+            w = opt_port!(
+                portfolio;
+                class = class,
+                hist = hist,
+                kelly = kelly,
+                obj = :Min_Risk,
                 rf = rf,
-                sigma = sigma,
-                alpha_i = alpha_i,
-                alpha = alpha,
-                a_sim = a_sim,
-                beta_i = beta_i,
-                beta = beta,
-                b_sim = b_sim,
-                kappa = kappa,
-                owa_w = owa_w,
-                solvers = solvers,
+                rm = rm,
+                save_opt_params = false,
             )
-            append!(frontier, w.weights)
-            push!(srisk, rk)
-            i += 1
-        catch
+        else
+            j != length(risks) ? setfield!(portfolio, rmf, r) :
+            setfield!(portfolio, rmf, Inf)
+            w = opt_port!(
+                portfolio;
+                class = class,
+                hist = hist,
+                kelly = kelly,
+                obj = :Max_Ret,
+                rf = rf,
+                rm = rm,
+                save_opt_params = false,
+            )
         end
+        isempty(w) && continue
+        rk = calc_risk(
+            w.weights,
+            returns;
+            rm = rm,
+            rf = rf,
+            sigma = sigma,
+            alpha_i = alpha_i,
+            alpha = alpha,
+            a_sim = a_sim,
+            beta_i = beta_i,
+            beta = beta,
+            b_sim = b_sim,
+            kappa = kappa,
+            owa_w = owa_w,
+            solvers = solvers,
+        )
+        append!(frontier, w.weights)
+        push!(srisk, rk)
+        i += 1
     end
     setfield!(portfolio, rmf, Inf)
+
+    w = opt_port!(
+        portfolio;
+        class = class,
+        hist = hist,
+        kelly = kelly,
+        obj = :Sharpe,
+        rf = rf,
+        rm = rm,
+        save_opt_params = false,
+    )
+    sharpe = false
+    if !isempty(w)
+        rk = calc_risk(
+            w.weights,
+            returns;
+            rm = rm,
+            rf = rf,
+            sigma = sigma,
+            alpha_i = alpha_i,
+            alpha = alpha,
+            a_sim = a_sim,
+            beta_i = beta_i,
+            beta = beta,
+            b_sim = b_sim,
+            kappa = kappa,
+            owa_w = owa_w,
+            solvers = solvers,
+        )
+        append!(frontier, w.weights)
+        push!(srisk, rk)
+        i += 1
+        sharpe = true
+    end
 
     portfolio.frontier[rm] = Dict(
         :weights => hcat(
@@ -891,7 +923,8 @@ function efficient_frontier(
         :kelly => kelly,
         :rf => rf,
         :points => points,
-        :risk => collect(risks),
+        :risk => srisk,
+        :sharpe => sharpe,
     )
 
     portfolio.optimal = optimal1

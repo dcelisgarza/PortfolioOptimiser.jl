@@ -240,7 +240,7 @@ function plot_frontier(
     end
     !haskey(f_kwargs, :xlabel) && (f_kwargs = (f_kwargs..., xlabel = "Expected Risk"))
 
-    risks = frontier[rm][:risk]
+    risks = copy(frontier[rm][:risk])
     weights = Matrix(frontier[rm][:weights][!, 2:end])
 
     rets = if kelly
@@ -256,7 +256,26 @@ function plot_frontier(
 
     ratios = (rets .- rf) ./ risks
 
-    return scatter(risks, rets)
+    plt = if frontier[rm][:sharpe]
+        scatter(
+            risks[1:(end - 1)],
+            rets[1:(end - 1)],
+            c = :viridis,
+            colorbar = true,
+            zcolor = ratios[1:(end - 1)],
+            label = "",
+        )
+        scatter!(
+            [risks[end]],
+            [rets[end]],
+            label = "Max Risk Adjusted Return Ratio",
+            markershape = :star,
+            color = :red,
+        )
+    else
+        scatter(risks[1:end], rets[1:end], c = :viridis, colorbar = true, zcolor = ratios)
+    end
+    return plt
 end
 
 function plot_frontier(
@@ -293,13 +312,17 @@ function plot_frontier(
 end
 
 function plot_frontier_area(frontier, rm = :SD; t_factor = 252, kwargs...)
-    risks = frontier[rm][:risk]
+    risks = copy(frontier[rm][:risk])
     assets = reshape(frontier[rm][:weights][!, "tickers"], 1, :)
     weights = transpose(Matrix(frontier[rm][:weights][!, 2:end]))
 
     !haskey(kwargs, :ylabel) && (kwargs = (kwargs..., ylabel = "Percentage Composition"))
     !haskey(kwargs, :xlabel) && (kwargs = (kwargs..., xlabel = "Risk"))
     !haskey(kwargs, :label) && (kwargs = (kwargs..., label = assets))
+    if frontier[rm][:sharpe]
+        risks = risks[1:(end - 1)]
+        weights = weights[:, 1:(end - 1)]
+    end
     if rm ∉ (:MDD, :ADD, :CDaR, :EDaR, :RLDaR, :UCI)
         risks .*= sqrt(t_factor)
     end

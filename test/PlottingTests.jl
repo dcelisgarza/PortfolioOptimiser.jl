@@ -28,4 +28,5 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
     plt7 = plot_returns(portfolio)
     plt8 = plot_returns(portfolio; per_asset = true)
     plt9 = plot_bar(portfolio)
+    plt10 = plot_frontier(portfolio; rm = rm)
 end
