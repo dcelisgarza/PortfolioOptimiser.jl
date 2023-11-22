@@ -78,7 +78,7 @@ function plot_risk_contribution(
     # Plot args
     percentage::Bool = false,
     erc_line::Bool = true,
-    factor = 252,
+    t_factor = 252,
     kwargs_bar = (;),
     kwargs_line = (;),
 )
@@ -117,7 +117,7 @@ function plot_risk_contribution(
         :UCI_r,
     )
 
-    rm ∉ DDs && (rc *= sqrt(factor))
+    rm ∉ DDs && (rc *= sqrt(t_factor))
     msg = ""
     if percentage
         rc /= sum(rc)
@@ -160,7 +160,7 @@ function plot_risk_contribution(
             )
 
             erc /= length(rc)
-            rm ∉ DDs && (erc *= sqrt(factor))
+            rm ∉ DDs && (erc *= sqrt(t_factor))
         end
 
         hline!([erc]; kwargs_line...)
@@ -177,7 +177,7 @@ function plot_risk_contribution(
     owa_w = isa(portfolio, Portfolio) ? portfolio.owa_w : Vector{Float64}(undef, 0),
     percentage::Bool = false,
     erc_line::Bool = true,
-    factor = 252,
+    t_factor = 252,
     kwargs_bar = (;),
     kwargs_line = (;),
 )
@@ -202,20 +202,107 @@ function plot_risk_contribution(
         # Plot args
         percentage = percentage,
         erc_line = erc_line,
-        factor = factor,
+        t_factor = t_factor,
         kwargs_bar = kwargs_bar,
         kwargs_line = kwargs_line,
     )
 end
 
-function plot_frontier_area(w_frontier, rm = :SD; kwargs...)
-    risks = w_frontier[rm][:risk]
-    assets = reshape(w_frontier[rm][:weights][!, "tickers"], 1, :)
-    weights = transpose(Matrix(w_frontier[rm][:weights][!, 2:end]))
+function plot_frontier(
+    frontier;
+    alpha_i::Real = 0.0001,
+    alpha::Real = 0.05,
+    a_sim::Int = 100,
+    beta_i::Union{<:Real, Nothing} = nothing,
+    beta::Union{<:Real, Nothing} = nothing,
+    b_sim::Union{<:Real, Nothing} = nothing,
+    kappa::Real = 0.3,
+    owa_w::AbstractVector = Vector{Float64}(undef, 0),
+    sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+    returns::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+    t_factor = 252,
+    kelly::Bool = false,
+    mu::AbstractVector = Vector{Float64}(undef, 0),
+    rf::Real = 0.0,
+    rm::Symbol = :SD,
+    f_kwargs = (;),
+    e_kwargs = (;),
+    w::AbstractVector = Vector{Float64}(undef, 0),
+)
+    @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
+
+    if haskey(f_kwargs, :ylabel)
+        f_kwargs = if kelly
+            (f_kwargs..., ylabel = "Expected Arithmetic Return")
+        else
+            (f_kwargs..., ylabel = "Expected Kelly Return")
+        end
+    end
+    !haskey(f_kwargs, :xlabel) && (f_kwargs = (f_kwargs..., xlabel = "Expected Risk"))
+
+    risks = frontier[rm][:risk]
+    weights = Matrix(frontier[rm][:weights][!, 2:end])
+
+    rets = if kelly
+        1 / size(returns, 1) * vec(sum(log.(1 .+ returns * weights), dims = 1))
+    else
+        transpose(weights) * mu
+    end
+    rets .*= t_factor
+
+    if rm ∉ (:MDD, :ADD, :CDaR, :EDaR, :RLDaR, :UCI)
+        risks .*= sqrt(t_factor)
+    end
+
+    ratios = (rets .- rf) ./ risks
+
+    return scatter(risks, rets)
+end
+
+function plot_frontier(
+    portfolio::AbstractPortfolio;
+    rm::Symbol = :SD,
+    rf::Real = 0.0,
+    kelly::Bool = false,
+    t_factor = 252,
+    f_kwargs = (;),
+    e_kwargs = (;),
+    w::AbstractVector = Vector{Float64}(undef, 0),
+)
+    plot_frontier(
+        portfolio.frontier;
+        alpha_i = portfolio.alpha_i,
+        alpha = portfolio.alpha,
+        a_sim = portfolio.a_sim,
+        beta_i = portfolio.beta_i,
+        beta = portfolio.beta,
+        b_sim = portfolio.b_sim,
+        kappa = portfolio.kappa,
+        owa_w = portfolio.owa_w,
+        sigma = portfolio.cov,
+        mu = portfolio.mu,
+        returns = portfolio.returns,
+        t_factor = t_factor,
+        kelly = kelly,
+        rf = rf,
+        rm = rm,
+        f_kwargs = f_kwargs,
+        e_kwargs = e_kwargs,
+        w = w,
+    )
+end
+
+function plot_frontier_area(frontier, rm = :SD; t_factor = 252, kwargs...)
+    risks = frontier[rm][:risk]
+    assets = reshape(frontier[rm][:weights][!, "tickers"], 1, :)
+    weights = transpose(Matrix(frontier[rm][:weights][!, 2:end]))
 
     !haskey(kwargs, :ylabel) && (kwargs = (kwargs..., ylabel = "Percentage Composition"))
     !haskey(kwargs, :xlabel) && (kwargs = (kwargs..., xlabel = "Risk"))
     !haskey(kwargs, :label) && (kwargs = (kwargs..., label = assets))
+    if rm ∉ (:MDD, :ADD, :CDaR, :EDaR, :RLDaR, :UCI)
+        risks .*= sqrt(t_factor)
+    end
     !haskey(kwargs, :xtick) && (kwargs = (kwargs..., xtick = round.(risks, digits = 3)))
     !haskey(kwargs, :xrotation) && (kwargs = (kwargs..., xrotation = 60))
 
@@ -520,4 +607,5 @@ export plot_returns,
     plot_frontier_area,
     plot_drawdown,
     plot_hist,
-    plot_range
+    plot_range,
+    plot_frontier

@@ -827,6 +827,7 @@ function efficient_frontier(
     rmf = ur[rm]
 
     frontier = Vector{Float64}(undef, 0)
+    srisk = Vector{Float64}(undef, 0)
 
     i = 0
     for (j, r) in enumerate(risks)
@@ -856,10 +857,25 @@ function efficient_frontier(
                     save_opt_params = false,
                 )
             end
-            if !isempty(w)
-                i += 1
-                append!(frontier, w.weights)
-            end
+            rk = calc_risk(
+                w.weights,
+                returns;
+                rm = rm,
+                rf = rf,
+                sigma = sigma,
+                alpha_i = alpha_i,
+                alpha = alpha,
+                a_sim = a_sim,
+                beta_i = beta_i,
+                beta = beta,
+                b_sim = b_sim,
+                kappa = kappa,
+                owa_w = owa_w,
+                solvers = solvers,
+            )
+            append!(frontier, w.weights)
+            push!(srisk, rk)
+            i += 1
         catch
         end
     end
