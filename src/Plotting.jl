@@ -705,15 +705,15 @@ function plot_clusters(
         for cluster in clusters
             a = [findfirst(x -> x == c, sort_order) for c in cluster]
             a = a[.!isnothing.(a)]
-            amin = minimum(a)
-            xmin, xmax = amin, amin + length(cluster)
+            xmin = minimum(a)
+            xmax = xmin + length(cluster)
 
             i1 = [findfirst(x -> x == c, nodes[:, 1]) for c in cluster]
             i1 = i1[.!isnothing.(i1)]
             i2 = [findfirst(x -> x == c, nodes[:, 2]) for c in cluster]
             i2 = i2[.!isnothing.(i2)]
             i3 = unique([i1; i2])
-            h = maximum(heights[i3])
+            h = min(maximum(heights[i3]) * 1.1, 1)
 
             plot!(
                 hmap,
@@ -754,7 +754,7 @@ function plot_clusters(
                     xmin - 0.25,
                     xmin - 0.25,
                 ],
-                [0, 0, 0, h + 0.1, h + 0.1, h + 0.1, h + 0.1, 0],
+                [0, 0, 0, h, h, h, h, 0],
                 color = nothing,
                 legend = false,
                 linewidth = 3,
