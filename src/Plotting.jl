@@ -864,7 +864,7 @@ function plot_dendrogram(
             i2 = [findfirst(x -> x == c, nodes[:, 2]) for c in cluster]
             i2 = i2[.!isnothing.(i2)]
             i3 = unique([i1; i2])
-            h = min(maximum(heights[i3]), 1)
+            h = min(maximum(heights[i3]) * 1.1, 1)
 
             plot!(
                 dend1,
