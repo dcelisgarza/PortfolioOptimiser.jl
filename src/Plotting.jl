@@ -298,7 +298,6 @@ function plot_frontier(
 
     return plt
 end
-
 function plot_frontier(
     portfolio::AbstractPortfolio;
     rm::Symbol = :SD,
@@ -344,7 +343,6 @@ function plot_frontier_area(frontier; rm = :SD, t_factor = 252, kwargs...)
 
     return areaplot(risks, weights; kwargs...)
 end
-
 function plot_frontier_area(
     portfolio::AbstractPortfolio;
     rm = :SD,
@@ -530,7 +528,6 @@ function plot_hist(
 
     return plt
 end
-
 function plot_hist(
     portfolio::AbstractPortfolio;
     type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,

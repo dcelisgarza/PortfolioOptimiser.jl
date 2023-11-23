@@ -30,19 +30,6 @@ makedocs(;
             "DBHT" => "DBHT.md",
             "OWA" => "OWA.md",
         ],
-        # "API" => [
-        #     "obj_func_api.md",
-        #     "exp_ret_api.md",
-        #     "risk_models_api.md",
-        #     "Optimisers" => [
-        #         "base_optimiser_api.md",
-        #         "efficient_frontier_api.md",
-        #         "hrpopt_api.md",
-        #         "black_litterman_api.md",
-        #         "cla_api.md",
-        #     ],
-        #     "asset_allocation_api.md",
-        # ],
         "Index" => "idx.md",
     ],
 )
