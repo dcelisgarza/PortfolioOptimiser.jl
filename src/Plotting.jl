@@ -703,7 +703,9 @@ function plot_clusters(
     nodes = -clustering.merges
     if show_clusters
         for cluster in clusters
-            amin = findfirst(x -> x == cluster[1], sort_order)
+            a = [findfirst(x -> x == c, sort_order) for c in cluster]
+            a = a[.!isnothing.(a)]
+            amin = minimum(a)
             xmin, xmax = amin, amin + length(cluster)
 
             i1 = [findfirst(x -> x == c, nodes[:, 1]) for c in cluster]
@@ -713,13 +715,6 @@ function plot_clusters(
             i3 = unique([i1; i2])
             h = maximum(heights[i3])
 
-            for c in cluster
-                a = findfirst(x -> x == c, sort_order)
-                if a < amin
-                    xmin, xmax = a, a + length(cluster)
-                    amin = a
-                end
-            end
             plot!(
                 hmap,
                 [
