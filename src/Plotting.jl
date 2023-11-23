@@ -643,6 +643,10 @@ function plot_clusters(
     branchorder = :optimal,
     dbht_method = :Unique,
     show_clusters = true,
+    theme_d = :Spectral,
+    theme_h = :Spectral,
+    theme_h_kwargs = (;),
+    kwargs_l = (;),
     kwargs = (;),
 )
     codep = portfolio.codep
@@ -679,6 +683,9 @@ function plot_clusters(
         clim = (0, 1)
     end
 
+    colours = palette(theme_d, k)
+    colgrad = cgrad(theme_h; theme_h_kwargs...)
+
     hmap = plot(
         ordered_codep,
         st = :heatmap,
@@ -690,6 +697,7 @@ function plot_clusters(
         clim = clim,
         xlim = (0.5, N + 0.5),
         ylim = (0.5, N + 0.5),
+        color = colgrad,
     )
     dend1 = plot(clustering, xticks = false, ylim = (0, 1))
     dend2 = plot(
@@ -700,9 +708,12 @@ function plot_clusters(
         xlim = (0, 1),
     )
 
+    !haskey(kwargs_l, :color) && (kwargs_l = (kwargs_l..., color = :black))
+    !haskey(kwargs_l, :linewidth) && (kwargs_l = (kwargs_l..., linewidth = 3))
+
     nodes = -clustering.merges
     if show_clusters
-        for cluster in clusters
+        for (i, cluster) in enumerate(clusters)
             a = [findfirst(x -> x == c, sort_order) for c in cluster]
             a = a[.!isnothing.(a)]
             xmin = minimum(a)
@@ -736,10 +747,9 @@ function plot_clusters(
                     xmax - 0.5,
                     xmax - 0.5,
                     xmin - 0.5,
-                ],
-                color = :black,
+                ];
                 legend = false,
-                linewidth = 3,
+                kwargs_l...,
             )
 
             plot!(
@@ -757,13 +767,12 @@ function plot_clusters(
                 [0, 0, 0, h, h, h, h, 0],
                 color = nothing,
                 legend = false,
-                linewidth = 3,
-                fill = (0, 0.5, :auto),
+                fill = (0, 0.5, colours[(i - 1) % k + 1]),
             )
 
             plot!(
                 dend2,
-                [0, 0, 0, h + 0.1, h + 0.1, h + 0.1, h + 0.1, 0],
+                [0, 0, 0, h, h, h, h, 0],
                 [
                     xmin - 0.25,
                     xmax - 0.75,
@@ -776,31 +785,108 @@ function plot_clusters(
                 ],
                 color = nothing,
                 legend = false,
-                linewidth = 3,
-                fill = (0, 0.5, :auto),
+                fill = (0, 0.5, colours[(i - 1) % k + 1]),
             )
         end
     end
 
-    if show_clusters
-    end
+    !haskey(kwargs, :size) && (kwargs = (kwargs..., size = (600, 600)))
 
     # https://docs.juliaplots.org/latest/generated/statsplots/#Dendrogram-on-the-right-side
     l = grid(2, 2, heights = [0.2, 0.8, 0.2, 0.8], widths = [0.8, 0.2, 0.8, 0.2])
     plt = plot(
         dend1,
-        plot(ticks = nothing, border = :none),
+        plot(ticks = nothing, border = :none, background_color = nothing),
         hmap,
-        dend2,
+        dend2;
         layout = l,
-        size = (600, 600),
+        kwargs...,
     )
 
     return plt
 end
 
-function plot_dendrogram()
-    # https://docs.juliaplots.org/stable/generated/statsplots/#Dendrograms
+function plot_dendrogram(
+    portfolio;
+    max_k = 10,
+    linkage = :single,
+    branchorder = :optimal,
+    dbht_method = :Unique,
+    show_clusters = true,
+    theme = :Spectral,
+    kwargs = (;),
+)
+    codep = portfolio.codep
+    assets = portfolio.assets
+    codep_type = portfolio.codep_type
+    N = length(assets)
+
+    df, clustering, k = cluster_assets(
+        portfolio;
+        linkage = linkage,
+        max_k = max_k,
+        branchorder = branchorder,
+        k = portfolio.k,
+        dbht_method = dbht_method,
+    )
+    sort_order = clustering.order
+    heights = clustering.heights
+
+    ordered_codep = codep[sort_order, sort_order]
+    ordered_assets = assets[sort_order]
+
+    clustering_idx = df.Clusters
+    uidx = minimum(clustering_idx):maximum(clustering_idx)
+
+    clusters = Vector{Vector{Int}}(undef, length(uidx))
+    for i in eachindex(clusters)
+        clusters[i] = findall(clustering_idx .== i)
+    end
+
+    colours = palette(theme, k)
+    dend1 = plot(
+        clustering,
+        xticks = (sort_order, ordered_assets),
+        xrotation = 90,
+        ylim = (0, 1),
+    )
+
+    nodes = -clustering.merges
+    if show_clusters
+        for (i, cluster) in enumerate(clusters)
+            a = [findfirst(x -> x == c, sort_order) for c in cluster]
+            a = a[.!isnothing.(a)]
+            xmin = minimum(a)
+            xmax = xmin + length(cluster)
+
+            i1 = [findfirst(x -> x == c, nodes[:, 1]) for c in cluster]
+            i1 = i1[.!isnothing.(i1)]
+            i2 = [findfirst(x -> x == c, nodes[:, 2]) for c in cluster]
+            i2 = i2[.!isnothing.(i2)]
+            i3 = unique([i1; i2])
+            h = min(maximum(heights[i3]) * 1.1, 1)
+
+            plot!(
+                dend1,
+                [
+                    xmin - 0.25,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                ],
+                [0, 0, 0, h, h, h, h, 0],
+                color = nothing,
+                legend = false,
+                fill = (0, 0.5, colours[(i - 1) % k + 1]),
+            )
+        end
+    end
+
+    return plot(dend1; kwargs...)
 end
 
 function plot_network()
