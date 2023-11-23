@@ -642,13 +642,15 @@ function plot_clusters(
     linkage = :single,
     branchorder = :optimal,
     dbht_method = :Unique,
+    show_clusters = true,
     kwargs = (;),
 )
     codep = portfolio.codep
     assets = portfolio.assets
     codep_type = portfolio.codep_type
+    N = length(assets)
 
-    df, clusters, k = cluster_assets(
+    df, clustering, k = cluster_assets(
         portfolio;
         linkage = linkage,
         max_k = max_k,
@@ -656,7 +658,8 @@ function plot_clusters(
         k = portfolio.k,
         dbht_method = dbht_method,
     )
-    sort_order = clusters.order
+    sort_order = clustering.order
+    heights = clustering.heights
 
     ordered_codep = codep[sort_order, sort_order]
     ordered_assets = assets[sort_order]
@@ -664,10 +667,10 @@ function plot_clusters(
     clustering_idx = df.Clusters
     uidx = minimum(clustering_idx):maximum(clustering_idx)
 
-    # clusters = Vector{Vector{Int}}(undef, length(uidx))
-    # for i in eachindex(clusters)
-    #     clusters[i] = findall(clustering_idx .== i)
-    # end
+    clusters = Vector{Vector{Int}}(undef, length(uidx))
+    for i in eachindex(clusters)
+        clusters[i] = findall(clustering_idx .== i)
+    end
 
     codeps1 = (:Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
     if codep_type ∈ codeps1
@@ -675,30 +678,125 @@ function plot_clusters(
     else
         clim = (0, 1)
     end
+
+    hmap = plot(
+        ordered_codep,
+        st = :heatmap,
+        #yticks=(1:nrows,rowlabels),
+        yticks = (1:length(assets), ordered_assets),
+        xticks = (1:length(assets), ordered_assets),
+        xrotation = 90,
+        colorbar = false,
+        clim = clim,
+        xlim = (0.5, N + 0.5),
+        ylim = (0.5, N + 0.5),
+    )
+    dend1 = plot(clustering, xticks = false, ylim = (0, 1))
+    dend2 = plot(
+        clustering,
+        yticks = false,
+        xrotation = 90,
+        orientation = :horizontal,
+        xlim = (0, 1),
+    )
+
+    nodes = -clustering.merges
+    if show_clusters
+        for cluster in clusters
+            amin = findfirst(x -> x == cluster[1], sort_order)
+            xmin, xmax = amin, amin + length(cluster)
+
+            i1 = [findfirst(x -> x == c, nodes[:, 1]) for c in cluster]
+            i1 = i1[.!isnothing.(i1)]
+            i2 = [findfirst(x -> x == c, nodes[:, 2]) for c in cluster]
+            i2 = i2[.!isnothing.(i2)]
+            i3 = unique([i1; i2])
+            h = maximum(heights[i3])
+
+            for c in cluster
+                a = findfirst(x -> x == c, sort_order)
+                if a < amin
+                    xmin, xmax = a, a + length(cluster)
+                    amin = a
+                end
+            end
+            plot!(
+                hmap,
+                [
+                    xmin - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmin - 0.5,
+                    xmin - 0.5,
+                    xmin - 0.5,
+                ],
+                [
+                    xmin - 0.5,
+                    xmin - 0.5,
+                    xmin - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmin - 0.5,
+                ],
+                color = :black,
+                legend = false,
+                linewidth = 3,
+            )
+
+            plot!(
+                dend1,
+                [
+                    xmin - 0.25,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                ],
+                [0, 0, 0, h + 0.1, h + 0.1, h + 0.1, h + 0.1, 0],
+                color = nothing,
+                legend = false,
+                linewidth = 3,
+                fill = (0, 0.5, :auto),
+            )
+
+            plot!(
+                dend2,
+                [0, 0, 0, h + 0.1, h + 0.1, h + 0.1, h + 0.1, 0],
+                [
+                    xmin - 0.25,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                ],
+                color = nothing,
+                legend = false,
+                linewidth = 3,
+                fill = (0, 0.5, :auto),
+            )
+        end
+    end
+
+    if show_clusters
+    end
+
     # https://docs.juliaplots.org/latest/generated/statsplots/#Dendrogram-on-the-right-side
-
     l = grid(2, 2, heights = [0.2, 0.8, 0.2, 0.8], widths = [0.8, 0.2, 0.8, 0.2])
-
     plt = plot(
-        plot(clusters, xticks = false),
+        dend1,
         plot(ticks = nothing, border = :none),
-        plot(
-            ordered_codep,
-            st = :heatmap,
-            #yticks=(1:nrows,rowlabels),
-            yticks = (1:length(assets), ordered_assets),
-            xticks = (1:length(assets), ordered_assets),
-            xrotation = 90,
-            colorbar = false,
-            clim = clim,
-        ),
-        plot(
-            clusters,
-            yticks = false,
-            xrotation = 90,
-            orientation = :horizontal,
-            xlim = (0, 1),
-        ),
+        hmap,
+        dend2,
         layout = l,
         size = (600, 600),
     )
