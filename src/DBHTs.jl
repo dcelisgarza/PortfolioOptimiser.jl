@@ -748,6 +748,9 @@ Looks for the pair of clusters with the best linkage.
 # Inputs
 - `d`: `Nv×Nv` distance matrix for a list of vertices assigned to a bubble.
 - `labelvec`: label vector for the vertices in the bubble.
+# Outputs
+- `PairLink`: pair of links with the best linkage.
+- `dvu`: value of the best linkage.
 """
 function LinkageFunction(d::AbstractMatrix{<:Number}, labelvec::AbstractVector{<:Number})
     lvec = sort!(unique(labelvec))
@@ -792,6 +795,10 @@ Computes iterates over the vertices to construct the linkage matrix iteration by
 - `LabelVec`: vector labels of all vertices.
 - `LabelVec1`: label vector for the vertices in the bubble for the previous valid iteration.
 - `LabelVec2`: label vector for the vertices in the bubble for the trial iteration.
+# Outputs
+- `Z`: updated linkage matrix in the same format as the output from Matlab.
+- `nc`: updated inverse of the linkage distance.
+- `LabelVec1`: updated `LabelVec1` for the next iteration.
 """
 function _build_link_and_dendro(
     rg::AbstractRange,
@@ -964,7 +971,7 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
 - `Adjv`: Bubble cluster membership matrix from [`BubbleCluster8s`](@ref).
 - `Dpm`: `N×N` shortest path length matrix of the PMFG.
 - `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
-- `Z`: DBHT hierarchy matrix.
+- `Z`: `(N-1)×3` linkage matrix in the same format as the output from Matlab.
 - `Z_hclust`: Z matrix in [Clustering.Hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) format.
 
 [^DBHTs]:
