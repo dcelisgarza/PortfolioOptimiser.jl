@@ -42,10 +42,10 @@ makedocs(;
         "Examples" => "Examples.md",
         "DBHT" => "DBHT.md",
         "Risk Measures" => "Risk_measures.md",
+        "Constraint Functions" => "Constraint_functions.md",
         "API" => [
             "Definitions" => "Definitions.md",
             "Types" => "Types.md",
-            "Constraint Functions" => "Constraint_functions.md",
             "Asset Statistics" => "Asset_statistics.md",
             "OWA" => "OWA.md",
         ],

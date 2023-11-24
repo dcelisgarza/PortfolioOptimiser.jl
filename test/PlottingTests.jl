@@ -21,14 +21,14 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
     plt1 = plot_risk_contribution(portfolio; rm = rm, percentage = true)
     plt2 = plot_risk_contribution(portfolio; rm = rm, percentage = false)
     frontier = efficient_frontier(portfolio; rm = rm)
-    plt10 = plot_frontier(portfolio; rm = rm)
-    plt3 = plot_frontier_area(frontier; rm = rm)
-    plt4 = plot_drawdown(portfolio)
-    plt5 = plot_hist(portfolio)
-    plt6 = plot_range(portfolio)
-    plt7 = plot_returns(portfolio)
-    plt8 = plot_returns(portfolio; per_asset = true)
-    plt9 = plot_bar(portfolio)
+    plt3 = plot_frontier(portfolio; rm = rm)
+    plt4 = plot_frontier_area(frontier; rm = rm)
+    plt5 = plot_drawdown(portfolio)
+    plt6 = plot_hist(portfolio)
+    plt7 = plot_range(portfolio)
+    plt8 = plot_returns(portfolio)
+    plt9 = plot_returns(portfolio; per_asset = true)
+    plt10 = plot_bar(portfolio)
 
     hcportfolio = HCPortfolio(;
         returns = returns,
@@ -40,11 +40,18 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
         ),
     )
     asset_statistics!(hcportfolio; calc_cov = false, calc_mu = false, calc_kurt = false)
-    plot_clusters(
+    plt11 = plot_clusters(
         hcportfolio;
         max_k = 10,
         linkage = :DBHT,
         branchorder = :r,
+        dbht_method = :Unique,
+    )
+    plt12 = plot_dendrogram(
+        hcportfolio;
+        max_k = 10,
+        linkage = :DBHT,
+        branchorder = :optimal,
         dbht_method = :Unique,
     )
 end

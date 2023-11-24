@@ -266,9 +266,9 @@ Breadth-first search.
 function breadth(CIJ::AbstractMatrix{<:Number}, source::Integer)
     N = size(CIJ, 1)
     # Colours
-    const white = 0
-    const gray = 1
-    const black = 2
+    white = 0
+    gray = 1
+    black = 2
     # Initialise colours
     color = zeros(Int, N)
     # Initialise distances
