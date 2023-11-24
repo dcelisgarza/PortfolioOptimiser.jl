@@ -1,6 +1,25 @@
 using Documenter
 using PortfolioOptimiser
 
+# DBHTs internals.
+import PortfolioOptimiser.distance_wei,
+    PortfolioOptimiser.clique3,
+    PortfolioOptimiser.breadth,
+    PortfolioOptimiser.FindDisjoint,
+    PortfolioOptimiser.CliqHierarchyTree2s,
+    PortfolioOptimiser.DBHTRootMethods,
+    PortfolioOptimiser.BubbleCluster8s,
+    PortfolioOptimiser.BuildHierarchy,
+    PortfolioOptimiser.AdjCliq,
+    PortfolioOptimiser.BubbleHierarchy,
+    PortfolioOptimiser.DirectHb,
+    PortfolioOptimiser.HierarchyConstruct4s,
+    PortfolioOptimiser.LinkageFunction,
+    PortfolioOptimiser._build_link_and_dendro,
+    PortfolioOptimiser.DendroConstruct,
+    PortfolioOptimiser.BubbleMember,
+    PortfolioOptimiser.turn_into_Hclust_merges
+
 DocMeta.setdocmeta!(
     PortfolioOptimiser,
     :DocTestSetup,
@@ -21,13 +40,13 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "Examples" => "Examples.md",
+        "DBHT" => "DBHT.md",
+        "Risk Measures" => "Risk_measures.md",
         "API" => [
             "Definitions" => "Definitions.md",
             "Types" => "Types.md",
-            "Risk Measures" => "Risk_measures.md",
             "Constraint Functions" => "Constraint_functions.md",
             "Asset Statistics" => "Asset_statistics.md",
-            "DBHT" => "DBHT.md",
             "OWA" => "OWA.md",
         ],
         "Index" => "idx.md",
