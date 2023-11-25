@@ -37,6 +37,7 @@ Optim = "1"
 PyCall = "1"
 Statistics = "1"
 StatsBase = "0.34"
+StatsPlots = "0.15"
 julia = "1.9"
 
 [extras]
