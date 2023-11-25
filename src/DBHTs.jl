@@ -1103,7 +1103,7 @@ JLogo(sigma, separators, cliques)
 Compute the sparse inverse covariance from a clique tree and separators [^JLogo].
 # Inputs
 - `sigma`: `N×N` covariance matrix.
-- `clique3`: list of 3-cliques taht are not triangular faces.
+- `separators`: list of 3-cliques taht are not triangular faces.
 - `cliques`: list of all 4-cliques.
 # Outputs
 - `jlogo`: JLogo covariance matrix.

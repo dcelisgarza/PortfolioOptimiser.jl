@@ -170,7 +170,12 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
     return A, B
 end
 
-function factor_constraints(constraints, loadings)
+"""
+```julia
+factor_constraints(constraints::DataFrame, loadings::DataFrame)
+```
+"""
+function factor_constraints(constraints::DataFrame, loadings::DataFrame)
     N = nrow(loadings)
 
     C = Matrix{Float64}(undef, 0, N)

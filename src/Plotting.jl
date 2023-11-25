@@ -273,8 +273,13 @@ function plot_frontier(
     end
     !haskey(kwargs_f, :xlabel) &&
         (kwargs_f = (kwargs_f..., xlabel = "Expected Risk - " * msg))
-    !haskey(kwargs_f, :seriescolor) && (kwargs_f = (kwargs_f..., seriescolor = :viridis))
+    !haskey(kwargs_f, :seriescolor) && (kwargs_f = (kwargs_f..., seriescolor = :Spectral))
     !haskey(kwargs_f, :colorbar) && (kwargs_f = (kwargs_f..., colorbar = true))
+    !haskey(kwargs_f, :colorbar_title) &&
+        (kwargs_f = (kwargs_f..., colorbar_title = "\nRisk Adjusted Return Ratio"))
+    !haskey(kwargs_f, :right_margin) &&
+        (kwargs_f = (kwargs_f..., right_margin = 4.5 * Plots.mm))
+
     if !haskey(kwargs_f, :marker_z)
         if frontier[rm][:sharpe]
             kwargs_f = (kwargs_f..., marker_z = ratios[1:(end - 1)])
@@ -323,33 +328,90 @@ function plot_frontier(
     )
 end
 
-function plot_frontier_area(frontier; rm = :SD, t_factor = 252, kwargs...)
+function plot_frontier_area(
+    frontier;
+    alpha::Real = 0.05,
+    beta::Union{<:Real, Nothing} = nothing,
+    kappa::Real = 0.3,
+    rm = :SD,
+    t_factor = 252,
+    kwargs_a = (;),
+    kwargs_l = (;),
+    show_sharpe = true,
+)
     risks = copy(frontier[rm][:risk])
     assets = reshape(frontier[rm][:weights][!, "tickers"], 1, :)
     weights = transpose(Matrix(frontier[rm][:weights][!, 2:end]))
+    isnothing(beta) && (beta = alpha)
 
-    !haskey(kwargs, :ylabel) && (kwargs = (kwargs..., ylabel = "Percentage Composition"))
-    !haskey(kwargs, :xlabel) && (kwargs = (kwargs..., xlabel = "Risk"))
-    !haskey(kwargs, :label) && (kwargs = (kwargs..., label = assets))
-    if frontier[rm][:sharpe]
-        risks = risks[1:(end - 1)]
-        weights = weights[:, 1:(end - 1)]
-    end
     if rm ∉ (:MDD, :ADD, :CDaR, :EDaR, :RDaR, :UCI)
         risks .*= sqrt(t_factor)
     end
-    !haskey(kwargs, :xtick) && (kwargs = (kwargs..., xtick = round.(risks, digits = 3)))
-    !haskey(kwargs, :xrotation) && (kwargs = (kwargs..., xrotation = 60))
 
-    return areaplot(risks, weights; kwargs...)
+    sharpe = nothing
+    if frontier[rm][:sharpe]
+        sharpe = risks[end]
+        risks = risks[1:(end - 1)]
+        weights = weights[1:(end - 1), :]
+    end
+
+    msg = "$(RiskMeasureNames[rm]) ($(rm))"
+    if rm ∈ (:CVaR, :TG, :EVaR, :RVaR, :RCVaR, :RTG, :CDaR, :EDaR, :RDaR)
+        msg *= " α = $(round(alpha*100, digits=2))%"
+    end
+    if rm ∈ (:RCVaR, :RTG)
+        msg *= ", β = $(round(beta*100, digits=2))%"
+    end
+    if rm ∈ (:RVaR, :RDaR)
+        msg *= ", κ = $(round(kappa, digits=2))"
+    end
+
+    !haskey(kwargs_a, :xlabel) &&
+        (kwargs_a = (kwargs_a..., xlabel = "Expected Risk - " * msg))
+    !haskey(kwargs_a, :ylabel) && (kwargs_a = (kwargs_a..., ylabel = "Composition"))
+    !haskey(kwargs_a, :label) && (kwargs_a = (kwargs_a..., label = assets))
+    !haskey(kwargs_a, :legend) && (kwargs_a = (kwargs_a..., legend = :outerright))
+    !haskey(kwargs_a, :xtick) && (kwargs_a = (kwargs_a..., xtick = :auto))
+    !haskey(kwargs_a, :xlim) && (kwargs_a = (kwargs_a..., xlim = extrema(risks)))
+    !haskey(kwargs_a, :ylim) && (kwargs_a = (kwargs_a..., ylim = (0, 1)))
+    !haskey(kwargs_a, :ylim) && (kwargs_a = (kwargs_a..., ylim = (0, 1)))
+    !haskey(kwargs_a, :seriescolor) && (
+        kwargs_a = (
+            kwargs_a...,
+            seriescolor = reshape(collect(palette(:Spectral, length(assets))), 1, :),
+        )
+    )
+
+    plt = areaplot(risks, weights; kwargs_a...)
+
+    if !isnothing(sharpe) && show_sharpe
+        !haskey(kwargs_l, :color) && (kwargs_l = (kwargs_l..., color = :black))
+        !haskey(kwargs_l, :linewidth) && (kwargs_l = (kwargs_l..., linewidth = 3))
+        plot!(plt, [sharpe, sharpe], [0, 1]; label = nothing, kwargs_l...)
+        annotate!([sharpe * 1.1], [0.5], text("Max Risk\nAdjusted\nReturn Ratio", :left, 8))
+    end
+
+    return plt
 end
 function plot_frontier_area(
     portfolio::AbstractPortfolio;
     rm = :SD,
     t_factor = 252,
-    kwargs...,
+    kwargs_a = (;),
+    kwargs_l = (;),
+    show_sharpe = true,
 )
-    plot_frontier_area(portfolio.frontier; rm = rm, t_factor = t_factor, kwargs...)
+    plot_frontier_area(
+        portfolio.frontier;
+        alpha = portfolio.alpha,
+        beta = portfolio.beta,
+        kappa = portfolio.kappa,
+        rm = rm,
+        t_factor = t_factor,
+        kwargs_a = kwargs_a,
+        kwargs_l = kwargs_l,
+        show_sharpe = show_sharpe,
+    )
 end
 
 function plot_drawdown(
