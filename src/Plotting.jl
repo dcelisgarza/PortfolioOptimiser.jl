@@ -44,7 +44,7 @@ function plot_bar(assets, data; kwargs...)
             xticks = (range(0.5, step = 1, length = length(assets)), assets),
         )
     )
-    !haskey(kwargs, :xrotation) && (kwargs = (kwargs..., xrotation = 60))
+    !haskey(kwargs, :xrotation) && (kwargs = (kwargs..., xrotation = 90))
     !haskey(kwargs, :legend) && (kwargs = (kwargs..., legend = false))
 
     return bar(assets, data * 100; kwargs...)
@@ -144,7 +144,7 @@ function plot_risk_contribution(
             xticks = (range(0.5, step = 1, length = length(assets)), assets),
         )
     )
-    !haskey(kwargs_bar, :xrotation) && (kwargs_bar = (kwargs_bar..., xrotation = 60))
+    !haskey(kwargs_bar, :xrotation) && (kwargs_bar = (kwargs_bar..., xrotation = 90))
     !haskey(kwargs_bar, :legend) && (kwargs_bar = (kwargs_bar..., legend = false))
 
     plt = bar(assets, rc; kwargs_bar...)
@@ -230,6 +230,7 @@ function plot_frontier(
     mu::AbstractVector = Vector{Float64}(undef, 0),
     rf::Real = 0.0,
     rm::Symbol = :SD,
+    theme = :Spectral,
     kwargs_f = (;),
     kwargs_s = (;),
 )
@@ -273,26 +274,25 @@ function plot_frontier(
     end
     !haskey(kwargs_f, :xlabel) &&
         (kwargs_f = (kwargs_f..., xlabel = "Expected Risk - " * msg))
-    !haskey(kwargs_f, :seriescolor) && (kwargs_f = (kwargs_f..., seriescolor = :Spectral))
+    !haskey(kwargs_f, :seriescolor) && (kwargs_f = (kwargs_f..., seriescolor = theme))
     !haskey(kwargs_f, :colorbar) && (kwargs_f = (kwargs_f..., colorbar = true))
     !haskey(kwargs_f, :colorbar_title) &&
         (kwargs_f = (kwargs_f..., colorbar_title = "\nRisk Adjusted Return Ratio"))
     !haskey(kwargs_f, :right_margin) &&
         (kwargs_f = (kwargs_f..., right_margin = 4.5 * Plots.mm))
 
-    if !haskey(kwargs_f, :marker_z)
-        if frontier[rm][:sharpe]
-            kwargs_f = (kwargs_f..., marker_z = ratios[1:(end - 1)])
-        else
-            kwargs_f = (kwargs_f..., marker_z = ratios)
-        end
-    end
+    !haskey(kwargs_f, :marker_z) && (kwargs_f = (kwargs_f..., marker_z = ratios))
+
     !haskey(kwargs_f, :label) && (kwargs_f = (kwargs_f..., label = ""))
 
-    !haskey(kwargs_s, :label) &&
-        (kwargs_s = (kwargs_s..., label = "Max Risk Adjusted Return Ratio"))
-    !haskey(kwargs_s, :markershape) && (kwargs_s = (kwargs_s..., markershape = :star))
-    !haskey(kwargs_s, :seriescolor) && (kwargs_s = (kwargs_s..., seriescolor = :red))
+    if frontier[rm][:sharpe]
+        !haskey(kwargs_s, :label) &&
+            (kwargs_s = (kwargs_s..., label = "Max Risk Adjusted Return Ratio"))
+        !haskey(kwargs_s, :markershape) && (kwargs_s = (kwargs_s..., markershape = :star))
+        colour = palette(theme, length(ratios))[findlast(x -> x < ratios[end], ratios) + 1]
+        !haskey(kwargs_s, :color) && (kwargs_s = (kwargs_s..., color = colour))
+        !haskey(kwargs_s, :markersize) && (kwargs_s = (kwargs_s..., markersize = 8))
+    end
 
     plt = if frontier[rm][:sharpe]
         scatter(risks[1:(end - 1)], rets[1:(end - 1)]; kwargs_f...)
@@ -309,6 +309,7 @@ function plot_frontier(
     rf::Real = 0.0,
     kelly::Bool = false,
     t_factor = 252,
+    theme = :Spectral,
     kwargs_f = (;),
     kwargs_s = (;),
 )
@@ -323,6 +324,7 @@ function plot_frontier(
         kelly = kelly,
         rf = rf,
         rm = rm,
+        theme = theme,
         kwargs_f = kwargs_f,
         kwargs_s = kwargs_s,
     )
@@ -701,6 +703,7 @@ function plot_clusters(
     linkage = :single,
     branchorder = :optimal,
     dbht_method = :Unique,
+    cluster = true,
     show_clusters = true,
     theme_d = :Spectral,
     theme_h = :Spectral,
@@ -713,21 +716,29 @@ function plot_clusters(
     codep_type = portfolio.codep_type
     N = length(assets)
 
-    df, clustering, k = cluster_assets(
-        portfolio;
-        linkage = linkage,
-        max_k = max_k,
-        branchorder = branchorder,
-        k = portfolio.k,
-        dbht_method = dbht_method,
-    )
-    sort_order = clustering.order
-    heights = clustering.heights
+    if cluster
+        df, clustering, k = cluster_assets(
+            portfolio;
+            linkage = linkage,
+            max_k = max_k,
+            branchorder = branchorder,
+            k = portfolio.k,
+            dbht_method = dbht_method,
+        )
+        clustering_idx = df.Clusters
+        sort_order = clustering.order
+        heights = clustering.heights
+    else
+        clustering = portfolio.clusters
+        sort_order = clustering.order
+        heights = clustering.heights
+        k = portfolio.k
+        clustering_idx = cutree(clustering; k = k)
+    end
 
     ordered_codep = codep[sort_order, sort_order]
     ordered_assets = assets[sort_order]
 
-    clustering_idx = df.Clusters
     uidx = minimum(clustering_idx):maximum(clustering_idx)
 
     clusters = Vector{Vector{Int}}(undef, length(uidx))
@@ -872,6 +883,7 @@ function plot_dendrogram(
     branchorder = :optimal,
     dbht_method = :Unique,
     show_clusters = true,
+    cluster = true,
     theme = :Spectral,
     kwargs = (;),
 )
@@ -880,21 +892,29 @@ function plot_dendrogram(
     codep_type = portfolio.codep_type
     N = length(assets)
 
-    df, clustering, k = cluster_assets(
-        portfolio;
-        linkage = linkage,
-        max_k = max_k,
-        branchorder = branchorder,
-        k = portfolio.k,
-        dbht_method = dbht_method,
-    )
-    sort_order = clustering.order
-    heights = clustering.heights
+    if cluster
+        df, clustering, k = cluster_assets(
+            portfolio;
+            linkage = linkage,
+            max_k = max_k,
+            branchorder = branchorder,
+            k = portfolio.k,
+            dbht_method = dbht_method,
+        )
+        clustering_idx = df.Clusters
+        sort_order = clustering.order
+        heights = clustering.heights
+    else
+        clustering = portfolio.clusters
+        sort_order = clustering.order
+        heights = clustering.heights
+        k = portfolio.k
+        clustering_idx = cutree(clustering; k = k)
+    end
 
     ordered_codep = codep[sort_order, sort_order]
     ordered_assets = assets[sort_order]
 
-    clustering_idx = df.Clusters
     uidx = minimum(clustering_idx):maximum(clustering_idx)
 
     clusters = Vector{Vector{Int}}(undef, length(uidx))
