@@ -80,9 +80,9 @@ function PMFG_T2s(W::AbstractMatrix{<:Number}, nargout::Integer = 3)
         clique3[k - 4, :] .= tri[tr, :]
 
         # Update triangle list replacing 1 and adding 2 triangles
-        tri[kk + 1, :] .= vcat(tri[tr, [1, 3]], ve)
-        tri[kk + 2, :] .= vcat(tri[tr, [2, 3]], ve)
-        tri[tr, :] .= vcat(tri[tr, [1, 2]], ve)
+        tri[kk + 1, :] .= vcat(tri[tr, [1, 3]], ve) # add
+        tri[kk + 2, :] .= vcat(tri[tr, [2, 3]], ve) # add
+        tri[tr, :] .= vcat(tri[tr, [1, 2]], ve)     # replace
 
         # # Update gain table
         gain[ve, :] .= 0
@@ -135,36 +135,49 @@ The distance matrix contains lengths of shortest paths between all node pairs. A
 # Outputs
 - `D`: distance (shortest weighted path) matrix.
 - `B`: number of edged in the shortest weigthed path matrix.
+
+!!! note
+    Based on a Matlab implementation by:
+    - Mika Rubinov, UNSW/U Cambridge, 2007-2012.
+    - Rick Betzel and Andrea Avena, IU, 2012
+
+    Modification history:
+    - 2007: original (MR)
+    - 2009-08-04: min() function vectorized (MR)
+    - 2012: added number of edges in shortest path as additional output (RB/AA)
+    - 2013: variable names changed for consistency with other functions (MR)
 """
 function distance_wei(L::AbstractMatrix{<:Number})
     N = size(L, 1)
     D = fill(Inf, N, N)
-    D[diagind(D)] .= 0
-    B = zeros(N, N)
+    D[diagind(D)] .= 0  # Distance matrix
+    B = zeros(N, N)     # Number of edges matrix
 
     for u in 1:N
-        S = fill(true, N)
+        S = fill(true, N)   # Distance permanence (true is temporary)
         L1 = copy(L)
         V = [u]
         while true
-            S[V] .= false
-            L1[:, V] .= 0
+            S[V] .= false   # Distance u -> V is now permanent
+            L1[:, V] .= 0   # No inside edges as already shortest
             dropzeros!(L1)
             for v in V
-                T = findnz(L1[v, :])[1]
+                T = findnz(L1[v, :])[1] # neighbours of shortest nodes
                 d, wi = findmin(
                     vcat(vcat(transpose(D[u, T]), transpose(D[u, v] .+ L1[v, T]))),
                     dims = 1,
                 )
                 wi = vec(getindex.(wi, 2))
-                D[u, T] .= vec(d)
-                ind = T[wi .== 3]
-                B[u, ind] .= B[u, v] + 1
+                D[u, T] .= vec(d)   # Smallest of old/new path lengths
+                ind = T[wi .== 3]   # Indices of lengthened paths
+                B[u, ind] .= B[u, v] + 1    # Increment number of edges in lengthened paths
             end
 
             dus = D[u, S]
             minD = !isempty(dus) ? minimum(dus) : Float64[]
 
+            # isempty: all nodes reached
+            # isinf: some nodes cannot be reached
             (isempty(minD) || isinf(minD)) && break
 
             V = findall(D[u, :] .== minD)
@@ -243,26 +256,36 @@ Breadth-first search.
 - `source`: source vertex.
 # Outputs
 - `distance`: distance between `source` and i'th vertex (0 for source vertex).
-- `branch`: vertex that precedes i in teh breadth-first search treee (-1 for source vertex).
+- `branch`: vertex that precedes i in the breadth-first search tree (-1 for source vertex).
 !!! note
     Breadth-first search tree does not contain all paths (or all shortest paths), but allows the determination of at least one path with minimum distace. The entire graph is explored, starting from source vertex `source`.
+
+    Original written by:
+    Olaf Sporns, Indiana University, 2002/2007/2008
 """
 function breadth(CIJ::AbstractMatrix{<:Number}, source::Integer)
     N = size(CIJ, 1)
+    # Colours
     white = 0
     gray = 1
     black = 2
+    # Initialise colours
     color = zeros(Int, N)
+    # Initialise distances
     distance = fill(Inf, N)
+    # Initialise branches
     branch = zeros(Int, N)
+    # Start on vertex `source`
     color[source] = gray
     distance[source] = 0
     branch[source] = -1
     Q = [source]
+    # Keep going until the entire graph is explored
     while !isempty(Q)
         u = Q[1]
         ns = findnz(CIJ[u, :])[1]
         for v in ns
+            # This allows the `source` distance to itself to be recorded
             all(distance[v] .== 0) && (distance[v] = distance[u] + 1)
             if all(color[v] .== white)
                 color[v] = gray
@@ -278,7 +301,19 @@ function breadth(CIJ::AbstractMatrix{<:Number}, source::Integer)
     return distance, branch
 end
 
-function FindDisjoint(Adj, Cliq)
+"""
+```julia
+FindDisjoint(Adj::AbstractMatrix{<:Number}, Cliq::AbstractVector{<:Number})
+```
+Finds disjointed cliques in adjacency matrix.
+# Inputs
+- `Adj`: `N×N` adjacency matrix.
+- `Cliq`: `3×1` vector of 3-cliques.
+# Outputs
+- `T`: `N×1` vector containing the adjacency number of each node.
+- `IndxNot`: `N×1` vector of nodes with no adjacencies.
+"""
+function FindDisjoint(Adj::AbstractMatrix{<:Number}, Cliq::AbstractVector{<:Number})
     N = size(Adj, 1)
     Temp = copy(Adj)
     T = zeros(Int, N)
@@ -299,7 +334,17 @@ function FindDisjoint(Adj, Cliq)
     return T, IndxNot
 end
 
-function BuildHierarchy(M)
+"""
+```julia
+BuildHierarchy(M::AbstractMatrix{<:Number})
+```
+Builds the predicted hierarchy.
+# Inputs
+- `M`: `N×Nc` matrix of nodes and 3-cliques.
+# Outputs
+- `Pred`: `Nc×1` vector of predicted hierarchies.
+"""
+function BuildHierarchy(M::AbstractMatrix{<:Number})
     N = size(M, 2)
     Pred = zeros(Int, N)
     dropzeros!(M)
@@ -319,7 +364,27 @@ function BuildHierarchy(M)
     return Pred
 end
 
-function AdjCliq(A, CliqList, CliqRoot)
+"""
+```julia
+AdjCliq(
+    A::AbstractMatrix{<:Number},
+    CliqList::AbstractMatrix{<:Number},
+    CliqRoot::AbstractVector{<:Number},
+)
+```
+Find adjacent clique to the root candidates.
+# Inputs
+- `A`: `N×N` adjacency matrix.
+- `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
+- `CliqRoot`: `Nc×1` vector of root cliques.
+# Outputs
+- `Adj`: `Nc×Nc` adjacency matrix of the cliques with the root cliques.
+"""
+function AdjCliq(
+    A::AbstractMatrix{<:Number},
+    CliqList::AbstractMatrix{<:Number},
+    CliqRoot::AbstractVector{<:Number},
+)
     Nc = size(CliqList, 1)
     N = size(A, 1)
     Adj = spzeros(Nc, Nc)
@@ -338,7 +403,19 @@ function AdjCliq(A, CliqList, CliqRoot)
     Adj = Adj + transpose(Adj)
 end
 
-function BubbleHierarchy(Pred, Sb)
+"""
+```julia
+BubbleHierarchy(Pred::AbstractVector{<:Number}, Sb::AbstractVector{<:Number})
+```
+Build the bubble hierarchy.
+# Inputs
+- `Pred`: `Nc×1` vector of predicted hierarchies.
+- `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates 3-clique `n` is separating.
+# Outputs
+- `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
+- `H2`: `Nb×Nb` adjacency matrix for the bubble hierarchical tree where `Nb` is the number of bubbles.
+"""
+function BubbleHierarchy(Pred::AbstractVector{<:Number}, Sb::AbstractVector{<:Number})
     Nc = size(Pred, 1)
     Root = findall(Pred .== 0)
     CliqCount = zeros(Nc)
@@ -404,7 +481,7 @@ Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy 
 # Outputs
 - `H1`: `Nc×Nc` adjacency matrix for 3-clique hierarchical tree where `Nc` is the number of 3-cliques.
 - `H2`: `Nb×Nb` adjacency matrix for the bubble hierarchical tree where `Nb` is the number of bubbles.
-- `Mb`: `Nc×Nb` bubble membership matrix. `Mb[n, bi] = 1` indicates that 3-clique `n`, belongs to bubble `bi`.
+- `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
 - `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
 - `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates 3-clique `n` is separating.
 [^NHPG]:
@@ -477,7 +554,33 @@ function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Number}, method::Symbol = :Un
     return H, H2, Mb, CliqList, Sb
 end
 
-function DirectHb(Rpm, Hb, Mb, Mv, CliqList)
+"""
+```julia
+DirectHb(
+    Rpm::AbstractMatrix{<:Number},
+    Hb::AbstractMatrix{<:Number},
+    Mb::AbstractMatrix{<:Number},
+    Mv::AbstractMatrix{<:Number},
+    CliqList::AbstractMatrix{<:Number},
+)
+```
+Computes the directions on each separating 3-clique of a Maximal Planar Graph (MPH), hence computes the Directed Bubble Hierarchy Tree (DBHT).
+# Inputs
+- `Rpm`: `N×N` sparse weighted adjacency matrix of the Planar Maximally Filtered Graph (MPFG).
+- `Hb`: Undirected bubble tree of the PMFG.
+- `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
+- `Mv`: `N×Nb` bubble membership matrix for vertices.
+- `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
+# Outputs
+- `Hc`: `Nb×Nb` unweighted directed adjacency matrix of the DBHT. `Hc[i, j]=1` indicates a directed edge from bubble `i` to bubble `j`.
+"""
+function DirectHb(
+    Rpm::AbstractMatrix{<:Number},
+    Hb::AbstractMatrix{<:Number},
+    Mb::AbstractMatrix{<:Number},
+    Mv::AbstractMatrix{<:Number},
+    CliqList::AbstractMatrix{<:Number},
+)
     Hb = Hb .!= 0
     r, c, _ = findnz(sparse(UpperTriangular(Hb) .!= 0))
     CliqEdge = Matrix{Int}(undef, 0, 3)
@@ -535,7 +638,7 @@ Obtains non-discrete and discrete clusterings from the bubble topology of the Pl
 - `Hb`: undirected bubble tree of the PMFG.
 - `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
 - `Mv`: `N×Nb` bubble membership matrix for vertices.
-- `CliqList`: `Nc×3` matrix of 3-cliques. Each row vector contains the list of vertices for a particular 3-clique.
+- `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
 # Outputs
 - `Adjv`: `N×Nk` cluster membership matrix for vertices for non-discrete clustering via the bubble topology. `Adjv[n, k] = 1` indicates cluster membership of vertex `n` to the `k`'th non-discrete cluster.
 - `Tc`: `N×1` cluster membership vector. `Tc[n] = k` indicates cluster membership of vertex `n` to the `k`'th discrete cluster.
@@ -548,17 +651,18 @@ function BubbleCluster8s(
     Mv::AbstractMatrix{<:Number},
     CliqList::AbstractMatrix{<:Number},
 )
-    Hc, Sep = DirectHb(Rpm, Hb, Mb, Mv, CliqList)
+    Hc, Sep = DirectHb(Rpm, Hb, Mb, Mv, CliqList)   # Assign directions on the bubble tree
 
-    N = size(Rpm, 1)
-    indx = findall(Sep .== 1)
+    N = size(Rpm, 1)    # Number of vertices in the PMFG
+    indx = findall(Sep .== 1)   # Look for the converging bubbles
     Adjv = spzeros(0, 0)
 
     dropzeros!(Hc)
     lidx = length(indx)
     if lidx > 1
-        Adjv = spzeros(size(Mv, 1), lidx)
+        Adjv = spzeros(size(Mv, 1), lidx)   # Set the non-discrete cluster membership matrix 'Adjv' at default
 
+        # Identify the non-discrete cluster membership of vertices by each converging bubble
         for n in eachindex(indx)
             d, _ = breadth(transpose(Hc), indx[n])
             d[isinf.(d)] .= -1
@@ -566,39 +670,60 @@ function BubbleCluster8s(
             r = getindex.(findall(Mv[:, d .!= -1] .!= 0), 1)
             Adjv[unique(r), n] .= 1
         end
-        Tc = zeros(Int, N)
-        Bubv = Mv[:, indx]
-        cv = findall(vec(sum(Bubv, dims = 2) .== 1))
-        uv = findall(vec(sum(Bubv, dims = 2) .> 1))
-        Mdjv = spzeros(N, lidx)
-        Mdjv[cv, :] = Bubv[cv, :]
+
+        Tc = zeros(Int, N)  # Set the discrete cluster membership vector at default
+        Bubv = Mv[:, indx]  # Gather the list of vertices in the converging bubbles
+        cv = findall(vec(sum(Bubv, dims = 2) .== 1))    # Identify vertices which belong to single converging bubbles
+        uv = findall(vec(sum(Bubv, dims = 2) .> 1)) # Identify vertices which belong to more than one converging bubbles
+        Mdjv = spzeros(N, lidx) # Set the cluster membership matrix for vertices in the converging bubbles at default
+        Mdjv[cv, :] = Bubv[cv, :]   # Assign vertices which belong to single converging bubbles to the rightful clusters
+
+        # Assign converging bubble membership of vertices in `uv'
         for v in eachindex(uv)
-            v_cont = vec(sum(Rpm[:, uv[v]] .* Bubv, dims = 1))
-            all_cont = vec(3 * (sum(Bubv, dims = 1) .- 2))
-            imx = argmax(v_cont ./ all_cont)
-            Mdjv[uv[v], imx] = 1
+            v_cont = vec(sum(Rpm[:, uv[v]] .* Bubv, dims = 1))  # sum of edge weights linked to uv(v) in each converging bubble
+            all_cont = vec(3 * (sum(Bubv, dims = 1) .- 2))  # number of edges in converging bubble
+            imx = argmax(v_cont ./ all_cont)    # computing chi(v,b_{alpha})
+            Mdjv[uv[v], imx] = 1    # Pick the most strongly associated converging bubble
         end
+
+        # Assign discrete cluster memebership of vertices in the converging bubbles
         v, ci, _ = findnz(Mdjv)
         Tc[v] .= ci
 
+        # Compute the distance between a vertex and the converging bubbles
         Udjv = Dpm * Mdjv * diagm(1 ./ vec(sum(Mdjv .!= 0, dims = 1)))
         Udjv[Adjv .== 0] .= Inf
-        imn = vec(getindex.(argmin(Udjv[vec(sum(Mdjv, dims = 2)) .== 0, :], dims = 2), 2))
-        Tc[Tc .== 0] .= imn
+
+        imn = vec(getindex.(argmin(Udjv[vec(sum(Mdjv, dims = 2)) .== 0, :], dims = 2), 2))  # Look for the closest converging bubble
+        Tc[Tc .== 0] .= imn # Assign discrete cluster membership according to the distances to the converging bubbles
     else
-        Tc = ones(Int, N)
+        Tc = ones(Int, N)   # If there is one converging bubble, all vertices belong to a single cluster
     end
 
     return Adjv, Tc
 end
 
-function DendroConstruct(Zi, LabelVec1, LabelVec2, LinkageDist)
-    indx = LabelVec1 .!= LabelVec2
-    Z = vcat(Zi, hcat(transpose(sort!(unique(LabelVec1[indx]))), LinkageDist))
-    return Z
-end
-
-function BubbleMember(Dpm, Rpm, Mv, Mc)
+"""
+```julia
+BubbleMember(
+    Rpm::AbstractMatrix{<:Number},
+    Mv::AbstractMatrix{<:Number},
+    Mc::AbstractMatrix{<:Number},
+)
+```
+Assigns each vertex in the to a specific bubble.
+# Inputs
+- `Rpm`: `N×N` sparse weighted adjacency matrix of the PMFG.
+- `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
+- `Mc`: Matrix of the bubbles which coincide with the cluster.
+# Outputs
+- `Mvv`: Matrix of the vertices belonging to the bubble.
+"""
+function BubbleMember(
+    Rpm::AbstractMatrix{<:Number},
+    Mv::AbstractMatrix{<:Number},
+    Mc::AbstractMatrix{<:Number},
+)
     Mvv = zeros(size(Mv, 1), size(Mv, 2))
 
     vu = findall(vec(sum(Mc, dims = 2) .> 1))
@@ -618,7 +743,47 @@ function BubbleMember(Dpm, Rpm, Mv, Mc)
     return Mvv
 end
 
-function LinkageFunction(d, labelvec)
+"""
+```julia
+DendroConstruct(
+    Zi::AbstractMatrix{<:Number},
+    LabelVec1::AbstractVector{<:Number},
+    LabelVec2::AbstractVector{<:Number},
+    LinkageDist::Union{<:Number, AbstractVector{<:Number}},
+)
+```
+Construct the linkage matrix by continuially adding rows to the matrix.
+# Inputs
+- `Zi`: Linkage matrix at iteration `i` in the same format as the output from Matlab.
+- `LabelVec1`: label vector for the vertices in the bubble for the previous valid iteration.
+- `LabelVec2`: label vector for the vertices in the bubble for the trial iteration.
+# Outputs
+- `Z`: Linkage matrix at iteration `i + 1` in the same format as the output from Matlab.
+"""
+function DendroConstruct(
+    Zi::AbstractMatrix{<:Number},
+    LabelVec1::AbstractVector{<:Number},
+    LabelVec2::AbstractVector{<:Number},
+    LinkageDist::Union{<:Number, AbstractVector{<:Number}},
+)
+    indx = LabelVec1 .!= LabelVec2
+    Z = vcat(Zi, hcat(transpose(sort!(unique(LabelVec1[indx]))), LinkageDist))
+    return Z
+end
+
+"""
+```julia
+LinkageFunction(d::AbstractMatrix{<:Number}, labelvec::AbstractVector{<:Number})
+```
+Looks for the pair of clusters with the best linkage.
+# Inputs
+- `d`: `Nv×Nv` distance matrix for a list of vertices assigned to a bubble.
+- `labelvec`: label vector for the vertices in the bubble.
+# Outputs
+- `PairLink`: pair of links with the best linkage.
+- `dvu`: value of the best linkage.
+"""
+function LinkageFunction(d::AbstractMatrix{<:Number}, labelvec::AbstractVector{<:Number})
     lvec = sort!(unique(labelvec))
     Links = Matrix{Int}(undef, 0, 3)
     for r in 1:(length(lvec) - 1)
@@ -641,11 +806,45 @@ function LinkageFunction(d, labelvec)
     return PairLink, dvu
 end
 
-function _build_link_and_dendro(rg, dpm, LabelVec, LabelVec1, LabelVec2, V, nc, Z)
+"""
+```julia
+_build_link_and_dendro(
+    rg::AbstractRange,
+    dpm::AbstractMatrix{<:Number},
+    LabelVec::AbstractVector{<:Number},
+    LabelVec1::AbstractVector{<:Number},
+    LabelVec2::AbstractVector{<:Number},
+    V::AbstractVector{<:Number},
+    nc::Number,
+    Z::AbstractMatrix{<:Number},
+)
+```
+Computes iterates over the vertices to construct the linkage matrix iteration by iteration.
+# Inputs
+- `rg`: range of indices of the vertices in a bubble.
+- `dpm`: `Nv×Nv` distance matrix for a list of vertices assigned to a bubble.
+- `LabelVec`: vector labels of all vertices.
+- `LabelVec1`: label vector for the vertices in the bubble for the previous valid iteration.
+- `LabelVec2`: label vector for the vertices in the bubble for the trial iteration.
+# Outputs
+- `Z`: updated linkage matrix in the same format as the output from Matlab.
+- `nc`: updated inverse of the linkage distance.
+- `LabelVec1`: updated `LabelVec1` for the next iteration.
+"""
+function _build_link_and_dendro(
+    rg::AbstractRange,
+    dpm::AbstractMatrix{<:Number},
+    LabelVec::AbstractVector{<:Number},
+    LabelVec1::AbstractVector{<:Number},
+    LabelVec2::AbstractVector{<:Number},
+    V::AbstractVector{<:Number},
+    nc::Number,
+    Z::AbstractMatrix{<:Number},
+)
     for _ in rg
-        PairLink, dvu = LinkageFunction(dpm, LabelVec)
+        PairLink, dvu = LinkageFunction(dpm, LabelVec)  # Look for the pair of clusters which produces the best linkage
         LabelVec[LabelVec .== PairLink[1] .|| LabelVec .== PairLink[2]] .=
-            maximum(LabelVec1) + 1
+            maximum(LabelVec1) + 1  # Merge the cluster pair by updating the label vector with a same label.
         LabelVec2[V] = LabelVec
         Z = DendroConstruct(Z, LabelVec1, LabelVec2, 1 / nc)
         nc -= 1
@@ -654,23 +853,49 @@ function _build_link_and_dendro(rg, dpm, LabelVec, LabelVec1, LabelVec2, V, nc, 
     return Z, nc, LabelVec1
 end
 
-function HierarchyConstruct4s(Rpm, Dpm, Tc, Adjv, Mv)
+"""
+```julia
+HierarchyConstruct4s(
+    Rpm::AbstractMatrix{<:Number},
+    Dpm::AbstractMatrix{<:Number},
+    Tc::AbstractVector{<:Number},
+    Mv::AbstractMatrix{<:Number},
+)
+```
+Constructs the intra- and inter-cluster hierarchy by utilizing Bubble Hierarchy structure of a Maximal Planar graph, in this a Planar Maximally Filtered Graph (PMFG). 
+# Inputs
+- `Rpm`: `N×N` sparse weighted adjacency matrix of the PMFG.
+- `Dpm`: `N×N` shortest path lengths matrix of the PMFG.
+- `Tc`: `N×1` cluster membership vector. `Tc[n] = k` indicates cluster membership of vertex `n` to the `k`'th discrete cluster.
+- `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
+# Outputs
+- `Z`: `(N-1)×3` linkage matrix in the same format as the output from Matlab.
+"""
+function HierarchyConstruct4s(
+    Rpm::AbstractMatrix{<:Number},
+    Dpm::AbstractMatrix{<:Number},
+    Tc::AbstractVector{<:Number},
+    Mv::AbstractMatrix{<:Number},
+)
     N = size(Dpm, 1)
     kvec = sort!(unique(Tc))
     LabelVec1 = collect(1:N)
     E = sparse(LabelVec1, Tc, ones(Int, N), N, maximum(Tc))
     Z = Matrix{Float64}(undef, 0, 3)
 
+    # Intra-cluster hierarchy construction
     for n in eachindex(kvec)
-        Mc = vec(E[:, kvec[n]]) .* Mv
-        Mvv = BubbleMember(Dpm, Rpm, Mv, Mc)
-        Bub = findall(vec(sum(Mvv, dims = 1) .> 0))
+        Mc = vec(E[:, kvec[n]]) .* Mv   # Get the list of bubbles which coincide with nth cluster
+        Mvv = BubbleMember(Rpm, Mv, Mc) # Assign each vertex in the nth cluster to a specific bubble
+        Bub = findall(vec(sum(Mvv, dims = 1) .> 0)) # Get the list of bubbles which contain the vertices of nth cluster 
         nc = sum(Tc .== kvec[n]) - 1
+
+        # Apply the linkage within the bubbles.
         for m in eachindex(Bub)
-            V = vec(findall(Mvv[:, Bub[m]] .!= 0))
+            V = vec(findall(Mvv[:, Bub[m]] .!= 0)) # Retrieve the list of vertices assigned to mth bubble
             if length(V) > 1
-                dpm = Dpm[V, V]
-                LabelVec = LabelVec1[V]
+                dpm = Dpm[V, V] # Retrieve the distance matrix for the vertices in V
+                LabelVec = LabelVec1[V] # Initiate the label vector which labels for the clusters
                 LabelVec2 = copy(LabelVec1)
                 Z, nc, LabelVec1 = _build_link_and_dendro(
                     1:(length(V) - 1),
@@ -688,7 +913,8 @@ function HierarchyConstruct4s(Rpm, Dpm, Tc, Adjv, Mv)
         V = findall(E[:, kvec[n]] .!= 0)
         dpm = Dpm[V, V]
 
-        LabelVec = LabelVec1[V]
+        # Perform linkage merging between the bubbles
+        LabelVec = LabelVec1[V] # Initiate the label vector which labels for the clusters.
         LabelVec2 = copy(LabelVec1)
         Z, nc, LabelVec1 = _build_link_and_dendro(
             1:(length(Bub) - 1),
@@ -702,9 +928,10 @@ function HierarchyConstruct4s(Rpm, Dpm, Tc, Adjv, Mv)
         )
     end
 
+    # Inter-cluster hierarchy construction
     LabelVec2 = copy(LabelVec1)
     dcl = ones(Int, length(LabelVec1))
-    for n in 1:(length(kvec) - 1)
+    for _ in 1:(length(kvec) - 1)
         PairLink, dvu = LinkageFunction(Dpm, LabelVec1)
         LabelVec2[LabelVec1 .== PairLink[1] .|| LabelVec1 .== PairLink[2]] .=
             maximum(LabelVec1) + 1
@@ -717,10 +944,21 @@ function HierarchyConstruct4s(Rpm, Dpm, Tc, Adjv, Mv)
         Z = DendroConstruct(Z, LabelVec1, LabelVec2, dvu)
         LabelVec1 = copy(LabelVec2)
     end
+
     return Z
 end
 
-function turn_into_Hclust_merges(Z)
+"""
+```julia
+turn_into_Hclust_merges(Z::AbstractMatrix{<:Number})
+```
+Turns a Matlab-style linkage matrix to a useable format for [`Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust).
+# Inputs
+- `Z`: Matlab-style linkage matrix.
+# Outputs
+- `Z`: Hclust-style linkage matrix.
+"""
+function turn_into_Hclust_merges(Z::AbstractMatrix{<:Number})
     N = size(Z, 1) + 1
     Z = hcat(Z, zeros(N - 1))
 
@@ -780,7 +1018,7 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
 - `Adjv`: Bubble cluster membership matrix from [`BubbleCluster8s`](@ref).
 - `Dpm`: `N×N` shortest path length matrix of the PMFG.
 - `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
-- `Z`: DBHT hierarchy matrix.
+- `Z`: `(N-1)×3` linkage matrix in the same format as the output from Matlab.
 - `Z_hclust`: Z matrix in [Clustering.Hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) format.
 
 [^DBHTs]:
@@ -820,7 +1058,7 @@ function DBHTs(
 
     Adjv, T8 = BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
 
-    Z = HierarchyConstruct4s(Rpm, Dpm, T8, Adjv, Mv)
+    Z = HierarchyConstruct4s(Rpm, Dpm, T8, Mv)
     Z = turn_into_Hclust_merges(Z)
 
     n = size(Z, 1)
@@ -858,6 +1096,21 @@ function _jlogo!(jlogo, sigma, source, sign)
     return nothing
 end
 
+"""
+```julia
+JLogo(sigma, separators, cliques)
+```
+Compute the sparse inverse covariance from a clique tree and separators [^JLogo].
+# Inputs
+- `sigma`: `N×N` covariance matrix.
+- `separators`: list of 3-cliques taht are not triangular faces.
+- `cliques`: list of all 4-cliques.
+# Outputs
+- `jlogo`: JLogo covariance matrix.
+
+[^JLogo]:
+    [Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016). Parsimonious modeling with information filtering networks. Physical Review E, 94(6), 062306.](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.94.062306)
+"""
 function JLogo(sigma, separators, cliques)
     jlogo = zeros(eltype(sigma), size(sigma))
 
@@ -867,13 +1120,4 @@ function JLogo(sigma, separators, cliques)
     return jlogo
 end
 
-export DBHTs,
-    PMFG_T2s,
-    distance_wei,
-    clique3,
-    breadth,
-    FindDisjoint,
-    CliqHierarchyTree2s,
-    JLogo,
-    DBHTRootMethods,
-    BubbleCluster8s
+export DBHTs, PMFG_T2s, JLogo

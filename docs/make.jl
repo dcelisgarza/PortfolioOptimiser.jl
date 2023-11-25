@@ -1,6 +1,25 @@
 using Documenter
 using PortfolioOptimiser
 
+# DBHTs internals.
+import PortfolioOptimiser.distance_wei,
+    PortfolioOptimiser.clique3,
+    PortfolioOptimiser.breadth,
+    PortfolioOptimiser.FindDisjoint,
+    PortfolioOptimiser.CliqHierarchyTree2s,
+    PortfolioOptimiser.DBHTRootMethods,
+    PortfolioOptimiser.BubbleCluster8s,
+    PortfolioOptimiser.BuildHierarchy,
+    PortfolioOptimiser.AdjCliq,
+    PortfolioOptimiser.BubbleHierarchy,
+    PortfolioOptimiser.DirectHb,
+    PortfolioOptimiser.HierarchyConstruct4s,
+    PortfolioOptimiser.LinkageFunction,
+    PortfolioOptimiser._build_link_and_dendro,
+    PortfolioOptimiser.DendroConstruct,
+    PortfolioOptimiser.BubbleMember,
+    PortfolioOptimiser.turn_into_Hclust_merges
+
 DocMeta.setdocmeta!(
     PortfolioOptimiser,
     :DocTestSetup,
@@ -21,28 +40,15 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "Examples" => "Examples.md",
+        "DBHT" => "DBHT.md",
+        "Risk Measures" => "Risk_measures.md",
+        "Constraint Functions" => "Constraint_functions.md",
         "API" => [
             "Definitions" => "Definitions.md",
             "Types" => "Types.md",
-            "Risk Measures" => "Risk_measures.md",
-            "Constraint Functions" => "Constraint_functions.md",
             "Asset Statistics" => "Asset_statistics.md",
-            "DBHT" => "DBHT.md",
             "OWA" => "OWA.md",
         ],
-        # "API" => [
-        #     "obj_func_api.md",
-        #     "exp_ret_api.md",
-        #     "risk_models_api.md",
-        #     "Optimisers" => [
-        #         "base_optimiser_api.md",
-        #         "efficient_frontier_api.md",
-        #         "hrpopt_api.md",
-        #         "black_litterman_api.md",
-        #         "cla_api.md",
-        #     ],
-        #     "asset_allocation_api.md",
-        # ],
         "Index" => "idx.md",
     ],
 )

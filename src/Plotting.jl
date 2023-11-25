@@ -273,8 +273,13 @@ function plot_frontier(
     end
     !haskey(kwargs_f, :xlabel) &&
         (kwargs_f = (kwargs_f..., xlabel = "Expected Risk - " * msg))
-    !haskey(kwargs_f, :seriescolor) && (kwargs_f = (kwargs_f..., seriescolor = :viridis))
+    !haskey(kwargs_f, :seriescolor) && (kwargs_f = (kwargs_f..., seriescolor = :Spectral))
     !haskey(kwargs_f, :colorbar) && (kwargs_f = (kwargs_f..., colorbar = true))
+    !haskey(kwargs_f, :colorbar_title) &&
+        (kwargs_f = (kwargs_f..., colorbar_title = "\nRisk Adjusted Return Ratio"))
+    !haskey(kwargs_f, :right_margin) &&
+        (kwargs_f = (kwargs_f..., right_margin = 4.5 * Plots.mm))
+
     if !haskey(kwargs_f, :marker_z)
         if frontier[rm][:sharpe]
             kwargs_f = (kwargs_f..., marker_z = ratios[1:(end - 1)])
@@ -298,7 +303,6 @@ function plot_frontier(
 
     return plt
 end
-
 function plot_frontier(
     portfolio::AbstractPortfolio;
     rm::Symbol = :SD,
@@ -324,34 +328,90 @@ function plot_frontier(
     )
 end
 
-function plot_frontier_area(frontier; rm = :SD, t_factor = 252, kwargs...)
+function plot_frontier_area(
+    frontier;
+    alpha::Real = 0.05,
+    beta::Union{<:Real, Nothing} = nothing,
+    kappa::Real = 0.3,
+    rm = :SD,
+    t_factor = 252,
+    kwargs_a = (;),
+    kwargs_l = (;),
+    show_sharpe = true,
+)
     risks = copy(frontier[rm][:risk])
     assets = reshape(frontier[rm][:weights][!, "tickers"], 1, :)
     weights = transpose(Matrix(frontier[rm][:weights][!, 2:end]))
+    isnothing(beta) && (beta = alpha)
 
-    !haskey(kwargs, :ylabel) && (kwargs = (kwargs..., ylabel = "Percentage Composition"))
-    !haskey(kwargs, :xlabel) && (kwargs = (kwargs..., xlabel = "Risk"))
-    !haskey(kwargs, :label) && (kwargs = (kwargs..., label = assets))
-    if frontier[rm][:sharpe]
-        risks = risks[1:(end - 1)]
-        weights = weights[:, 1:(end - 1)]
-    end
     if rm ∉ (:MDD, :ADD, :CDaR, :EDaR, :RDaR, :UCI)
         risks .*= sqrt(t_factor)
     end
-    !haskey(kwargs, :xtick) && (kwargs = (kwargs..., xtick = round.(risks, digits = 3)))
-    !haskey(kwargs, :xrotation) && (kwargs = (kwargs..., xrotation = 60))
 
-    return areaplot(risks, weights; kwargs...)
+    sharpe = nothing
+    if frontier[rm][:sharpe]
+        sharpe = risks[end]
+        risks = risks[1:(end - 1)]
+        weights = weights[1:(end - 1), :]
+    end
+
+    msg = "$(RiskMeasureNames[rm]) ($(rm))"
+    if rm ∈ (:CVaR, :TG, :EVaR, :RVaR, :RCVaR, :RTG, :CDaR, :EDaR, :RDaR)
+        msg *= " α = $(round(alpha*100, digits=2))%"
+    end
+    if rm ∈ (:RCVaR, :RTG)
+        msg *= ", β = $(round(beta*100, digits=2))%"
+    end
+    if rm ∈ (:RVaR, :RDaR)
+        msg *= ", κ = $(round(kappa, digits=2))"
+    end
+
+    !haskey(kwargs_a, :xlabel) &&
+        (kwargs_a = (kwargs_a..., xlabel = "Expected Risk - " * msg))
+    !haskey(kwargs_a, :ylabel) && (kwargs_a = (kwargs_a..., ylabel = "Composition"))
+    !haskey(kwargs_a, :label) && (kwargs_a = (kwargs_a..., label = assets))
+    !haskey(kwargs_a, :legend) && (kwargs_a = (kwargs_a..., legend = :outerright))
+    !haskey(kwargs_a, :xtick) && (kwargs_a = (kwargs_a..., xtick = :auto))
+    !haskey(kwargs_a, :xlim) && (kwargs_a = (kwargs_a..., xlim = extrema(risks)))
+    !haskey(kwargs_a, :ylim) && (kwargs_a = (kwargs_a..., ylim = (0, 1)))
+    !haskey(kwargs_a, :ylim) && (kwargs_a = (kwargs_a..., ylim = (0, 1)))
+    !haskey(kwargs_a, :seriescolor) && (
+        kwargs_a = (
+            kwargs_a...,
+            seriescolor = reshape(collect(palette(:Spectral, length(assets))), 1, :),
+        )
+    )
+
+    plt = areaplot(risks, weights; kwargs_a...)
+
+    if !isnothing(sharpe) && show_sharpe
+        !haskey(kwargs_l, :color) && (kwargs_l = (kwargs_l..., color = :black))
+        !haskey(kwargs_l, :linewidth) && (kwargs_l = (kwargs_l..., linewidth = 3))
+        plot!(plt, [sharpe, sharpe], [0, 1]; label = nothing, kwargs_l...)
+        annotate!([sharpe * 1.1], [0.5], text("Max Risk\nAdjusted\nReturn Ratio", :left, 8))
+    end
+
+    return plt
 end
-
 function plot_frontier_area(
     portfolio::AbstractPortfolio;
     rm = :SD,
     t_factor = 252,
-    kwargs...,
+    kwargs_a = (;),
+    kwargs_l = (;),
+    show_sharpe = true,
 )
-    plot_frontier_area(portfolio.frontier; rm = rm, t_factor = t_factor, kwargs...)
+    plot_frontier_area(
+        portfolio.frontier;
+        alpha = portfolio.alpha,
+        beta = portfolio.beta,
+        kappa = portfolio.kappa,
+        rm = rm,
+        t_factor = t_factor,
+        kwargs_a = kwargs_a,
+        kwargs_l = kwargs_l,
+        show_sharpe = show_sharpe,
+    )
 end
 
 function plot_drawdown(
@@ -530,7 +590,6 @@ function plot_hist(
 
     return plt
 end
-
 function plot_hist(
     portfolio::AbstractPortfolio;
     type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
@@ -642,13 +701,19 @@ function plot_clusters(
     linkage = :single,
     branchorder = :optimal,
     dbht_method = :Unique,
+    show_clusters = true,
+    theme_d = :Spectral,
+    theme_h = :Spectral,
+    theme_h_kwargs = (;),
+    kwargs_l = (;),
     kwargs = (;),
 )
     codep = portfolio.codep
     assets = portfolio.assets
     codep_type = portfolio.codep_type
+    N = length(assets)
 
-    df, clusters, k = cluster_assets(
+    df, clustering, k = cluster_assets(
         portfolio;
         linkage = linkage,
         max_k = max_k,
@@ -656,7 +721,8 @@ function plot_clusters(
         k = portfolio.k,
         dbht_method = dbht_method,
     )
-    sort_order = clusters.order
+    sort_order = clustering.order
+    heights = clustering.heights
 
     ordered_codep = codep[sort_order, sort_order]
     ordered_assets = assets[sort_order]
@@ -664,10 +730,10 @@ function plot_clusters(
     clustering_idx = df.Clusters
     uidx = minimum(clustering_idx):maximum(clustering_idx)
 
-    # clusters = Vector{Vector{Int}}(undef, length(uidx))
-    # for i in eachindex(clusters)
-    #     clusters[i] = findall(clustering_idx .== i)
-    # end
+    clusters = Vector{Vector{Int}}(undef, length(uidx))
+    for i in eachindex(clusters)
+        clusters[i] = findall(clustering_idx .== i)
+    end
 
     codeps1 = (:Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
     if codep_type ∈ codeps1
@@ -675,39 +741,211 @@ function plot_clusters(
     else
         clim = (0, 1)
     end
+
+    colours = palette(theme_d, k)
+    colgrad = cgrad(theme_h; theme_h_kwargs...)
+
+    hmap = plot(
+        ordered_codep,
+        st = :heatmap,
+        #yticks=(1:nrows,rowlabels),
+        yticks = (1:length(assets), ordered_assets),
+        xticks = (1:length(assets), ordered_assets),
+        xrotation = 90,
+        colorbar = false,
+        clim = clim,
+        xlim = (0.5, N + 0.5),
+        ylim = (0.5, N + 0.5),
+        color = colgrad,
+    )
+    dend1 = plot(clustering, xticks = false, ylim = (0, 1))
+    dend2 = plot(
+        clustering,
+        yticks = false,
+        xrotation = 90,
+        orientation = :horizontal,
+        xlim = (0, 1),
+    )
+
+    !haskey(kwargs_l, :color) && (kwargs_l = (kwargs_l..., color = :black))
+    !haskey(kwargs_l, :linewidth) && (kwargs_l = (kwargs_l..., linewidth = 3))
+
+    nodes = -clustering.merges
+    if show_clusters
+        for (i, cluster) in enumerate(clusters)
+            a = [findfirst(x -> x == c, sort_order) for c in cluster]
+            a = a[.!isnothing.(a)]
+            xmin = minimum(a)
+            xmax = xmin + length(cluster)
+
+            i1 = [findfirst(x -> x == c, nodes[:, 1]) for c in cluster]
+            i1 = i1[.!isnothing.(i1)]
+            i2 = [findfirst(x -> x == c, nodes[:, 2]) for c in cluster]
+            i2 = i2[.!isnothing.(i2)]
+            i3 = unique([i1; i2])
+            h = min(maximum(heights[i3]) * 1.1, 1)
+
+            plot!(
+                hmap,
+                [
+                    xmin - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmin - 0.5,
+                    xmin - 0.5,
+                    xmin - 0.5,
+                ],
+                [
+                    xmin - 0.5,
+                    xmin - 0.5,
+                    xmin - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmin - 0.5,
+                ];
+                legend = false,
+                kwargs_l...,
+            )
+
+            plot!(
+                dend1,
+                [
+                    xmin - 0.25,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                ],
+                [0, 0, 0, h, h, h, h, 0],
+                color = nothing,
+                legend = false,
+                fill = (0, 0.5, colours[(i - 1) % k + 1]),
+            )
+
+            plot!(
+                dend2,
+                [0, 0, 0, h, h, h, h, 0],
+                [
+                    xmin - 0.25,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                ],
+                color = nothing,
+                legend = false,
+                fill = (0, 0.5, colours[(i - 1) % k + 1]),
+            )
+        end
+    end
+
+    !haskey(kwargs, :size) && (kwargs = (kwargs..., size = (600, 600)))
+
     # https://docs.juliaplots.org/latest/generated/statsplots/#Dendrogram-on-the-right-side
-
     l = grid(2, 2, heights = [0.2, 0.8, 0.2, 0.8], widths = [0.8, 0.2, 0.8, 0.2])
-
     plt = plot(
-        plot(clusters, xticks = false),
-        plot(ticks = nothing, border = :none),
-        plot(
-            ordered_codep,
-            st = :heatmap,
-            #yticks=(1:nrows,rowlabels),
-            yticks = (1:length(assets), ordered_assets),
-            xticks = (1:length(assets), ordered_assets),
-            xrotation = 90,
-            colorbar = false,
-            clim = clim,
-        ),
-        plot(
-            clusters,
-            yticks = false,
-            xrotation = 90,
-            orientation = :horizontal,
-            xlim = (0, 1),
-        ),
+        dend1,
+        plot(ticks = nothing, border = :none, background_color = nothing),
+        hmap,
+        dend2;
         layout = l,
-        size = (600, 600),
+        kwargs...,
     )
 
     return plt
 end
 
-function plot_dendrogram()
-    # https://docs.juliaplots.org/stable/generated/statsplots/#Dendrograms
+function plot_dendrogram(
+    portfolio;
+    max_k = 10,
+    linkage = :single,
+    branchorder = :optimal,
+    dbht_method = :Unique,
+    show_clusters = true,
+    theme = :Spectral,
+    kwargs = (;),
+)
+    codep = portfolio.codep
+    assets = portfolio.assets
+    codep_type = portfolio.codep_type
+    N = length(assets)
+
+    df, clustering, k = cluster_assets(
+        portfolio;
+        linkage = linkage,
+        max_k = max_k,
+        branchorder = branchorder,
+        k = portfolio.k,
+        dbht_method = dbht_method,
+    )
+    sort_order = clustering.order
+    heights = clustering.heights
+
+    ordered_codep = codep[sort_order, sort_order]
+    ordered_assets = assets[sort_order]
+
+    clustering_idx = df.Clusters
+    uidx = minimum(clustering_idx):maximum(clustering_idx)
+
+    clusters = Vector{Vector{Int}}(undef, length(uidx))
+    for i in eachindex(clusters)
+        clusters[i] = findall(clustering_idx .== i)
+    end
+
+    colours = palette(theme, k)
+    dend1 = plot(
+        clustering,
+        xticks = (sort_order, ordered_assets),
+        xrotation = 90,
+        ylim = (0, 1),
+    )
+
+    nodes = -clustering.merges
+    if show_clusters
+        for (i, cluster) in enumerate(clusters)
+            a = [findfirst(x -> x == c, sort_order) for c in cluster]
+            a = a[.!isnothing.(a)]
+            xmin = minimum(a)
+            xmax = xmin + length(cluster)
+
+            i1 = [findfirst(x -> x == c, nodes[:, 1]) for c in cluster]
+            i1 = i1[.!isnothing.(i1)]
+            i2 = [findfirst(x -> x == c, nodes[:, 2]) for c in cluster]
+            i2 = i2[.!isnothing.(i2)]
+            i3 = unique([i1; i2])
+            h = min(maximum(heights[i3]) * 1.1, 1)
+
+            plot!(
+                dend1,
+                [
+                    xmin - 0.25,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                ],
+                [0, 0, 0, h, h, h, h, 0],
+                color = nothing,
+                legend = false,
+                fill = (0, 0.5, colours[(i - 1) % k + 1]),
+            )
+        end
+    end
+
+    return plot(dend1; kwargs...)
 end
 
 function plot_network()

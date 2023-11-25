@@ -1,4 +1,40 @@
-function asset_constraints(constraints, asset_classes)
+"""
+```julia
+asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
+```
+Create the linear constraint matrix `A` and vector `B` of the constraint:
+- ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``.
+# Inputs
+- `constraints`: `Nc×10` Dataframe, where `Nc` is the number of constraints. The required columns are:
+    - `Enabled`: (Bool) indicates if the constraint is enabled.
+    - `Type`: (String) specifies the object(s) to which a constraint applies:
+        - `Assets`: specific asset.
+        - `Classes`: whole class.
+        - `All Assets`: all assets.
+        - `All Classes`: all asset classes.
+        - `Each Asset in Class`: specific assets in a class.
+    - `Set`: (String) if `Type` is `Classes`, `All Classes` or `Each Asset in Class`, specifies the asset class set.
+    - `Position`: (String) name of the asset or asset class to which the constraint applies.
+    - `Sign`: (String) specifies whether the constraint is a lower or upper bound:
+        - `>=`: lower bound.
+        - `<=`: upper bound.
+    - `Weight`: (<:Real) value of the constraint.
+    - `Type Relative`: (String) specifies to what the constraint is relative to:
+        - Empty string: nothing.
+        - `Assets`: other asset.
+        - `Classes`: other class.
+    - `Relative Set`: (String) if `Type Relative` is `Classes`, specifies the name of the set of asset classes.
+    - `Relative`: (String) name of the asset or asset class of the relative constraint.
+    - `Factor`: (<:Real) the factor of the relative constraint.
+- `asset_classes`: `Na×C` DataFrame where `Na` is the number of assets and `C` the number of columns.
+    - `Assets`: list of assets, this is the only mandatory column.
+    - Subsequent columns specify the asset class sets.
+# Outputs
+- `A`: `C×N` matrix of constraints where `C` is the number of constraints and `N` the number of assets.
+- `A`: `C×1` vector of constraints where `C` is the number of constraints.
+# Examples
+"""
+function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
     N = nrow(asset_classes)
     asset_list = asset_classes[!, "Assets"]
 
@@ -99,7 +135,7 @@ function asset_constraints(constraints, asset_classes)
                     push!(B, 0)
                 end
             end
-        elseif row["Type"] == "Each asset in a class"
+        elseif row["Type"] == "Each Asset in Class"
             A1 = asset_classes[!, row["Set"]] .== row["Position"]
             if row["Weight"] != ""
                 for (i, j) in pairs(A1)
@@ -134,7 +170,12 @@ function asset_constraints(constraints, asset_classes)
     return A, B
 end
 
-function factor_constraints(constraints, loadings)
+"""
+```julia
+factor_constraints(constraints::DataFrame, loadings::DataFrame)
+```
+"""
+function factor_constraints(constraints::DataFrame, loadings::DataFrame)
     N = nrow(loadings)
 
     C = Matrix{Float64}(undef, 0, N)
@@ -279,7 +320,7 @@ function hrp_constraints(constraints, asset_classes)
         elseif row["Type"] == "All Assets"
             !isempty(w[op.(w[:, i], row["Weight"]), i]) &&
                 (w[op.(w[:, i], row["Weight"]), i] .= row["Weight"])
-        elseif row["Type"] == "Each asset in a class"
+        elseif row["Type"] == "Each Asset in Class"
             assets =
                 asset_classes[asset_classes[!, row["Set"]] .== row["Position"], "Assets"]
             idx =
