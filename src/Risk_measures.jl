@@ -1340,7 +1340,7 @@ function risk_contribution(
     returns::AbstractMatrix;
     rm::Symbol = :SD,
     rf::Real = 0.0,
-    sigma::AbstractMatrix,
+    sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
@@ -1429,7 +1429,7 @@ function sharpe_ratio(
     returns::AbstractMatrix;
     rm::Symbol = :SD,
     rf::Real = 0.0,
-    sigma::AbstractMatrix,
+    sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,

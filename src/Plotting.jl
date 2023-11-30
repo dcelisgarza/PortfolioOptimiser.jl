@@ -426,7 +426,7 @@ function plot_drawdown(
     kwargs_ret = (;),
     kwargs_dd = (;),
     kwargs_risks = (;),
-    kwargs_all = (;),
+    kwargs = (;),
 )
     ret = returns * w
 
@@ -491,11 +491,11 @@ function plot_drawdown(
     !haskey(kwargs_ret, :legend) && (kwargs_ret = (kwargs_ret..., legend = false))
     ret_plt = plot(timestamps, prices; kwargs_ret...)
 
-    !haskey(kwargs_all, :legend_font_pointsize) &&
-        (kwargs_all = (kwargs_all..., legend_font_pointsize = 8))
-    !haskey(kwargs_all, :size) &&
-        (kwargs_all = (kwargs_all..., size = (750, ceil(Integer, 750 / 1.618))))
-    full_plt = plot(ret_plt, dd_plt; layout = (2, 1), kwargs_all...)
+    !haskey(kwargs, :legend_font_pointsize) &&
+        (kwargs = (kwargs..., legend_font_pointsize = 8))
+    !haskey(kwargs, :size) &&
+        (kwargs = (kwargs..., size = (750, ceil(Integer, 750 / 1.618))))
+    full_plt = plot(ret_plt, dd_plt; layout = (2, 1), kwargs...)
 
     return full_plt
 end
@@ -505,7 +505,7 @@ function plot_drawdown(
     kwargs_ret = (;),
     kwargs_dd = (;),
     kwargs_risks = (;),
-    kwargs_all = (;),
+    kwargs = (;),
 )
     return plot_drawdown(
         portfolio.timestamps,
@@ -517,7 +517,7 @@ function plot_drawdown(
         kwargs_ret = kwargs_ret,
         kwargs_dd = kwargs_dd,
         kwargs_risks = kwargs_risks,
-        kwargs_all = kwargs_all,
+        kwargs = kwargs,
     )
 end
 
@@ -708,6 +708,9 @@ function plot_clusters(
     theme_d = :Spectral,
     theme_h = :Spectral,
     theme_h_kwargs = (;),
+    kwargs_d1 = (;),
+    kwargs_d2 = (;),
+    kwargs_h = (;),
     kwargs_l = (;),
     kwargs = (;),
 )
@@ -757,7 +760,7 @@ function plot_clusters(
     colgrad = cgrad(theme_h; theme_h_kwargs...)
 
     hmap = plot(
-        ordered_codep,
+        ordered_codep;
         st = :heatmap,
         #yticks=(1:nrows,rowlabels),
         yticks = (1:length(assets), ordered_assets),
@@ -768,14 +771,16 @@ function plot_clusters(
         xlim = (0.5, N + 0.5),
         ylim = (0.5, N + 0.5),
         color = colgrad,
+        kwargs_h...,
     )
-    dend1 = plot(clustering, xticks = false, ylim = (0, 1))
+    dend1 = plot(clustering; xticks = false, ylim = (0, 1), kwargs_d1...)
     dend2 = plot(
-        clustering,
+        clustering;
         yticks = false,
         xrotation = 90,
         orientation = :horizontal,
         xlim = (0, 1),
+        kwargs_d2...,
     )
 
     !haskey(kwargs_l, :color) && (kwargs_l = (kwargs_l..., color = :black))
