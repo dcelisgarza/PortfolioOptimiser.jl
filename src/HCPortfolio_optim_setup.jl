@@ -75,7 +75,7 @@ function _opt_w(
     return w, port.fail
 end
 
-function _two_diff_gap_stat(dist, clustering, max_k = 10)
+function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 1))))
     N = size(dist, 1)
     cluster_lvls = [cutree(clustering; k = i) for i in 1:N]
 
@@ -123,7 +123,7 @@ function _hierarchical_clustering(
     portfolio::HCPortfolio,
     type = :HRP,
     linkage = :single,
-    max_k = 10,
+    max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
     branchorder = :optimal,
     dbht_method = :Unique,
 )
@@ -153,7 +153,7 @@ end
 function cluster_assets(
     portfolio::HCPortfolio;
     linkage = :single,
-    max_k = 10,
+    max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
     branchorder = :optimal,
     k = portfolio.k,
     dbht_method = :Unique,

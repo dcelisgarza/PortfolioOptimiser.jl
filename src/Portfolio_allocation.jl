@@ -136,11 +136,10 @@ function _handle_alloc_errors_and_finalise(
         portfolio.alloc_fail[key] = solvers_tried
 
         (
-            return String[],
+            String[],
             Vector{eltype(latest_prices)}(undef, 0),
             Vector{eltype(latest_prices)}(undef, 0),
-            Vector{eltype(latest_prices)}(undef, 0),
-            0
+            zero(eltype(latest_prices)),
         )
 
     else
@@ -388,7 +387,7 @@ function _greedy_allocation!(
         rounding,
     )
 
-    retval = _combine_allocations(
+    missing = _combine_allocations(
         portfolio,
         key,
         long_tickers,
@@ -403,7 +402,10 @@ function _greedy_allocation!(
         short_allocated_weights,
     )
 
-    return retval, long_leftover + short_leftover
+    idx = [findfirst(x -> x == t, portfolio.alloc_optimal[key].tickers) for t in tickers]
+    portfolio.alloc_optimal[key] = portfolio.alloc_optimal[key][idx, :]
+
+    return portfolio.alloc_optimal[key], long_leftover + short_leftover
 end
 
 function _save_alloc_opt_params(

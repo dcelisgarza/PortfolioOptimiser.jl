@@ -639,17 +639,13 @@ function plot_range(
     beta_i = nothing,
     beta = nothing,
     b_sim = nothing,
+    theme = :Set1_5,
     kwargs_h = (;),
     kwargs_risks = (;),
 )
     isnothing(beta) && (beta = alpha)
 
     ret = returns * w * 100
-
-    !haskey(kwargs_h, :ylabel) && (kwargs_h = (kwargs_h..., ylabel = "Probability Density"))
-    !haskey(kwargs_h, :xlabel) && (kwargs_h = (kwargs_h..., xlabel = "Percentage Returns"))
-
-    plt = histogram(ret; normalize = :pdf, label = "", kwargs_h...)
 
     risks = (
         RG(ret),
@@ -673,6 +669,13 @@ function plot_range(
         "CVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[3], digits=2))%",
     )
 
+    colours = palette(theme, length(risk_labels) + 1)
+
+    !haskey(kwargs_h, :ylabel) && (kwargs_h = (kwargs_h..., ylabel = "Probability Density"))
+    !haskey(kwargs_h, :xlabel) && (kwargs_h = (kwargs_h..., xlabel = "Percentage Returns"))
+
+    plt = histogram(ret; normalize = :pdf, label = "", color = colours[1], kwargs_h...)
+
     bounds = [
         minimum(ret) -TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) -CVaR(ret, alpha)
         maximum(ret) TG(-ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) CVaR(-ret, alpha)
@@ -682,12 +685,13 @@ function plot_range(
     y = pdf(D, mean(D))
     ys = (y / 4, y / 2, y * 3 / 4)
 
+    !haskey(kwargs_risks, :linewidth) && (kwargs_risks = (kwargs_risks..., linewidth = 2))
     for i in eachindex(risks)
         plot!(
-            plt,
             [bounds[1, i], bounds[1, i], bounds[2, i], bounds[2, i]],
-            [0, ys[i], ys[i], 0],
+            [0, ys[i], ys[i], 0];
             label = risk_labels[i],
+            color = colours[i + 1],
             kwargs_risks...,
         )
     end
@@ -698,6 +702,7 @@ end
 function plot_range(
     portfolio::AbstractPortfolio;
     type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+    theme = :Set1_5,
     kwargs_h = (;),
     kwargs_risks = (;),
 )
@@ -710,6 +715,7 @@ function plot_range(
         beta_i = portfolio.beta_i,
         beta = portfolio.beta,
         b_sim = portfolio.b_sim,
+        theme = theme,
         kwargs_h = kwargs_h,
         kwargs_risks = kwargs_risks,
     )
@@ -717,7 +723,7 @@ end
 
 function plot_clusters(
     portfolio;
-    max_k = 10,
+    max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
     linkage = :single,
     branchorder = :optimal,
     dbht_method = :Unique,
@@ -901,7 +907,7 @@ end
 
 function plot_dendrogram(
     portfolio;
-    max_k = 10,
+    max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
     linkage = :single,
     branchorder = :optimal,
     dbht_method = :Unique,
