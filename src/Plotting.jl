@@ -423,6 +423,7 @@ function plot_drawdown(
     alpha::Real = 0.05,
     kappa::Real = 0.3,
     solvers::Union{<:AbstractDict, Nothing} = nothing,
+    theme = :Dark2_5,
     kwargs_ret = (;),
     kwargs_dd = (;),
     kwargs_risks = (;),
@@ -469,6 +470,8 @@ function plot_drawdown(
         "Maximum Drawdown: $(round(risks[7], digits = 2))%",
     )
 
+    colours = palette(theme, length(risk_labels) + 1)
+
     !haskey(kwargs_dd, :ylabel) &&
         (kwargs_dd = (kwargs_dd..., ylabel = "Percentage Drawdown"))
     !haskey(kwargs_ret, :yguidefontsize) &&
@@ -478,10 +481,12 @@ function plot_drawdown(
         (kwargs_dd = (kwargs_dd..., ylim = [minimum(dd) * 1.5, 0.01]))
     !haskey(kwargs_dd, :label) &&
         (kwargs_dd = (kwargs_dd..., label = "Uncompounded Cummulative Drawdown"))
-    dd_plt = plot(timestamps, dd; kwargs_dd...)
+    !haskey(kwargs_dd, :linewidth) && (kwargs_dd = (kwargs_dd..., linewidth = 2))
+    dd_plt = plot(timestamps, dd; color = colours[1], kwargs_dd...)
 
-    for (risk, label) in zip(risks, risk_labels)
-        hline!([risk]; label = label, kwargs_risks...)
+    !haskey(kwargs_risks, :linewidth) && (kwargs_risks = (kwargs_risks..., linewidth = 2))
+    for (i, (risk, label)) in enumerate(zip(risks, risk_labels))
+        hline!([risk]; label = label, color = colours[i + 1], kwargs_risks...)
     end
 
     !haskey(kwargs_ret, :ylabel) &&
@@ -489,7 +494,8 @@ function plot_drawdown(
     !haskey(kwargs_ret, :yguidefontsize) &&
         (kwargs_ret = (kwargs_ret..., yguidefontsize = 10))
     !haskey(kwargs_ret, :legend) && (kwargs_ret = (kwargs_ret..., legend = false))
-    ret_plt = plot(timestamps, prices; kwargs_ret...)
+    !haskey(kwargs_ret, :linewidth) && (kwargs_ret = (kwargs_ret..., linewidth = 2))
+    ret_plt = plot(timestamps, prices; color = colours[1], kwargs_ret...)
 
     !haskey(kwargs, :legend_font_pointsize) &&
         (kwargs = (kwargs..., legend_font_pointsize = 8))
@@ -502,6 +508,7 @@ end
 function plot_drawdown(
     portfolio::AbstractPortfolio;
     type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+    theme = :Dark2_5,
     kwargs_ret = (;),
     kwargs_dd = (;),
     kwargs_risks = (;),
@@ -514,6 +521,7 @@ function plot_drawdown(
         alpha = portfolio.alpha,
         kappa = portfolio.kappa,
         solvers = portfolio.solvers,
+        theme = theme,
         kwargs_ret = kwargs_ret,
         kwargs_dd = kwargs_dd,
         kwargs_risks = kwargs_risks,
@@ -530,6 +538,7 @@ function plot_hist(
     kappa::Real = 0.3,
     solvers::Union{<:AbstractDict, Nothing} = nothing,
     points::Integer = ceil(Int, 4 * sqrt(size(returns, 1))),
+    theme = :Paired_10,
     kwargs_h = (;),
     kwargs_risks = (;),
 )
@@ -539,16 +548,10 @@ function plot_hist(
     sigma = std(ret)
 
     x = range(minimum(ret), stop = maximum(ret), length = points)
-    D = fit(Normal, ret)
-
-    !haskey(kwargs_h, :ylabel) && (kwargs_h = (kwargs_h..., ylabel = "Probability Density"))
-    !haskey(kwargs_h, :xlabel) && (kwargs_h = (kwargs_h..., xlabel = "Percentage Returns"))
-
-    plt = histogram(ret; normalize = :pdf, label = "", kwargs_h...)
 
     mad = MAD(ret)
     gmd = GMD(ret)
-    risks = [
+    risks = (
         mu,
         mu - sigma,
         mu - mad,
@@ -559,11 +562,11 @@ function plot_hist(
         -EVaR(ret, solvers, alpha),
         -RVaR(x, solvers, alpha, kappa),
         -WR(ret),
-    ]
+    )
 
     conf = round((1 - alpha) * 100, digits = 2)
 
-    risk_labels = [
+    risk_labels = (
         "Mean: $(round(risks[1], digits=2))%",
         "Mean - Std. Dev. ($(round(sigma, digits=2))%): $(round(risks[2], digits=2))%",
         "Mean - MAD ($(round(mad,digits=2))%): $(round(risks[3], digits=2))%",
@@ -574,19 +577,31 @@ function plot_hist(
         "$(conf)% Confidence EVaR: $(round(risks[8], digits=2))%",
         "$(conf)% Confidence RVaR ($(round(kappa, digits=2))): $(round(risks[9], digits=2))%",
         "Worst Realisation: $(round(risks[10], digits=2))%",
-    ]
+    )
 
-    for (risk, label) in zip(risks, risk_labels)
-        vline!([risk]; label = label, kwargs_risks...)
+    D = fit(Normal, ret)
+
+    !haskey(kwargs_h, :ylabel) && (kwargs_h = (kwargs_h..., ylabel = "Probability Density"))
+    !haskey(kwargs_h, :xlabel) && (kwargs_h = (kwargs_h..., xlabel = "Percentage Returns"))
+
+    colours = palette(theme, length(risk_labels) + 2)
+
+    plt = histogram(ret; normalize = :pdf, label = "", color = colours[1], kwargs_h...)
+
+    !haskey(kwargs_risks, :linewidth) && (kwargs_risks = (kwargs_risks..., linewidth = 2))
+    for (i, (risk, label)) in enumerate(zip(risks, risk_labels))
+        vline!([risk]; label = label, color = colours[i + 1], kwargs_risks...)
     end
 
     !haskey(kwargs_h, :size) &&
         (kwargs_h = (kwargs_h..., size = (750, ceil(Integer, 750 / 1.618))))
 
+    !haskey(kwargs_h, :linewidth) && (kwargs_h = (kwargs_h..., linewidth = 2))
     plot!(
         x,
         pdf.(D, x),
         label = "Normal: μ = $(round(mean(D), digits=2))%, σ = $(round(std(D), digits=2))%";
+        color = colours[end],
         kwargs_h...,
     )
 
@@ -596,6 +611,7 @@ function plot_hist(
     portfolio::AbstractPortfolio;
     type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
     points::Integer = ceil(Int, 4 * sqrt(size(portfolio.returns, 1))),
+    theme = :Paired_10,
     kwargs_h = (;),
     kwargs_risks = (;),
 )
@@ -607,6 +623,7 @@ function plot_hist(
         a_sim = portfolio.a_sim,
         kappa = portfolio.kappa,
         solvers = portfolio.solvers,
+        theme = theme,
         points = points,
         kwargs_h = kwargs_h,
         kwargs_risks = kwargs_risks,
@@ -667,6 +684,7 @@ function plot_range(
 
     for i in eachindex(risks)
         plot!(
+            plt,
             [bounds[1, i], bounds[1, i], bounds[2, i], bounds[2, i]],
             [0, ys[i], ys[i], 0],
             label = risk_labels[i],
