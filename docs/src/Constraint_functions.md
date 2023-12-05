@@ -1,10 +1,9 @@
 # Constraint Functions
 
-```@setup constraint_examples
-using DataFrames, PortfolioOptimiser
-```
-
 ```@docs
 asset_constraints
+factor_constraints
+asset_views
+factor_views
 rp_constraints
 ```
