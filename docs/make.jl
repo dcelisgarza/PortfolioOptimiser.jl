@@ -39,10 +39,10 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
-        "Examples" => "Examples.md",
+        # "Examples" => "Examples.md",
         "DBHT" => "DBHT.md",
-        "Risk Measures" => "Risk_measures.md",
         "Constraint Functions" => "Constraint_functions.md",
+        "Risk Measures" => "Risk_measures.md",
         "API" => [
             "Definitions" => "Definitions.md",
             "Types" => "Types.md",

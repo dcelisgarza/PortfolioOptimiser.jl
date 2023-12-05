@@ -2,7 +2,7 @@
 ```julia
 asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
 ```
-Create the linear constraint matrix `A` and vector `B` of the constraint:
+Create the linear constraint matrix `A` and vector `B` of the constraints:
 - ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``.
 # Inputs
 - `constraints`: `Nc×10` Dataframe, where `Nc` is the number of constraints. The required columns are:
@@ -33,6 +33,28 @@ Create the linear constraint matrix `A` and vector `B` of the constraint:
 - `A`: `C×N` matrix of constraints where `C` is the number of constraints and `N` the number of assets.
 - `A`: `C×1` vector of constraints where `C` is the number of constraints.
 # Examples
+```@repl constraint_examples
+asset_classes = DataFrame(
+    "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV", "FCN", "TKO", "ZOO", "ZVO", "ZX", "ZZA", "ZZB", "ZZC"],
+    "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Fixed Income", "Equity"],
+    "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury", "Financial", "Entertainment", "Treasury", "Financial", "Financial", "Entertainment", "Technology", "Treasury"],
+)
+constraints = DataFrame(
+    "Enabled" => [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+    "Type" => ["Classes", "All Classes", "Assets", "Assets", "Classes", "All Assets", "Each Asset in Class", "Assets", "All Assets", "All Assets", "Classes", "All Classes", "All Classes", "Each Asset in Class", "Each Asset in Class"],
+    "Set" => ["Class 1", "Class 1", "", "", "Class 2", "", "Class 1", "Class 1", "Class 2", "", "Class 1", "Class 2", "Class 2", "Class 2", "Class 1"],
+    "Position" => ["Equity", "Fixed Income", "BAC", "WFC", "Financial", "", "Equity", "FCN", "TKO", "ZOO", "Fixed Income", "Treasury", "Entertainment", "Treasury", "Equity"],
+    "Sign" => ["<=", "<=", "<=", "<=", ">=", ">=", ">=", "<=", ">=", "<=", ">=", "<=", ">=", "<=", ">="],
+    "Weight" => [0.6, 0.5, 0.1, "", "", 0.02, "", "", "", "", "", "", "", 0.27, ""],
+    "Type Relative" => ["", "", "", "Assets", "Classes", "", "Assets", "Classes", "Assets", "Classes", "Assets", "Assets", "Classes", "", "Classes"],
+    "Relative Set" => ["", "", "", "", "Class 1", "", "", "Class 1", "", "Class 2", "", "Class 2", "Class 2", "", "Class 2"],
+    "Relative" => ["", "", "", "FB", "Fixed Income", "", "TLT", "Equity", "NTFX", "Financial", "WFC", "ZOO", "Entertainment", "", "Entertainment"],
+    "Factor" => ["", "", "", 1.2, 0.5, "", 0.4, 0.7, 0.21, 0.11, 0.13, -0.17, 0.23, "", -0.31],
+)
+A, B = asset_constraints(constraints, asset_classes)
+A
+B
+```
 """
 function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
     N = nrow(asset_classes)
@@ -173,6 +195,38 @@ end
 """
 ```julia
 factor_constraints(constraints::DataFrame, loadings::DataFrame)
+```
+Create the factor constraints matrix `C` and vector `D` of the constraints:
+- ``\\mathbf{C} \\bm{w} \\geq \\bm{D}``.
+# Inputs
+- `constraints`: `Nc×4` Dataframe, where `Nc` is the number of constraints. The required columns are:
+    - `Enabled`: (Bool) indicates if the constraint is enabled.
+    - `Factor`: (String) name of the constraint's factor.
+    - `Sign`: (String) specifies whether the constraint is a lower or upper bound:
+        - `>=`: lower bound.
+        - `<=`: upper bound.
+    - `Value`: (<:Real) the upper or lower bound of the factor's value.
+- `loadings`: `Na×Nf` where `Na` is the number of assets and `Nf` is the number of factors.
+# Examples
+```@repl constraint_examples
+loadings = DataFrame(
+        "const" => [0.0004, 0.0002, 0.0000, 0.0006, 0.0001, 0.0003, -0.0003],
+        "MTUM" => [0.1916, 1.0061, 0.8695, 1.9996, 0.0000, 0.0000, 0.0000],
+        "QUAL" => [0.0000, 2.0129, 1.4301, 0.0000, 0.0000, 0.0000, 0.0000],
+        "SIZE" => [0.0000, 0.0000, 0.0000, 0.4717, 0.0000, -0.1857, 0.0000],
+        "USMV" => [-0.7838, -1.6439, -1.0176, -1.4407, 0.0055, 0.5781, 0.0000],
+        "VLUE" => [1.4772, -0.7590, -0.4090, 0.0000, -0.0054, -0.4844, 0.9435],
+    )
+constraints = DataFrame(
+        "Enabled" => [true, true, true, true],
+        "Factor" => ["MTUM", "USMV", "VLUE", "const"],
+        "Sign" => ["<=", "<=", ">=", ">="],
+        "Value" => [0.9, -1.2, 0.3, -0.1],
+        "Relative Factor" => ["USMV", "", "", "SIZE"],
+    )
+C, D = factor_constraints(constraints, loadings)
+C
+D
 ```
 """
 function factor_constraints(constraints::DataFrame, loadings::DataFrame)

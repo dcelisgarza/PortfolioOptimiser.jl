@@ -696,7 +696,7 @@ function opt_port!(
     cluster = true,
     linkage::Symbol = :single,
     k = cluster ? nothing : portfolio.k,
-    max_k::Int = 10,
+    max_k::Int = ceil(Int, sqrt(length(portfolio.assets))),
     branchorder = :optimal,
     dbht_method = :Unique,
     max_iter = 100,
