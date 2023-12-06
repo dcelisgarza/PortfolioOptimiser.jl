@@ -16,7 +16,6 @@ EllipseTypes
 BoxTypes
 KindBootstrap
 BLFMType
-RPConstraintTypes
 OWAMethods
 BinTypes
 HRRiskMeasures

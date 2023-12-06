@@ -26,7 +26,7 @@ Create the linear constraint matrix `A` and vector `B`:
     - `Relative Set`: (String) if `Type Relative` is `Classes`, specifies the name of the set of asset classes.
     - `Relative`: (String) name of the asset or asset class of the relative constraint.
     - `Factor`: (<:Real) the factor of the relative constraint.
-- `asset_classes`: `Na×C` DataFrame where `Na` is the number of assets and `C` the number of columns.
+- `asset_classes`: `Na×Nc` DataFrame where `Na` is the number of assets and `Nc` the number of columns.
     - `Assets`: list of assets, this is the only mandatory column.
     - Subsequent columns specify the asset class sets.
 # Outputs
@@ -280,7 +280,7 @@ Create the asset views matrix `P` and vector `Q`:
         - `Classes`: other class.
     - `Relative Set`: (String) if `Type Relative` is `Classes`, specifies the name of the set of asset classes.
     - `Relative`: (String) name of the asset or asset class of the relative view.
-- `asset_classes`: `Na×C` DataFrame where `Na` is the number of assets and `C` the number of columns.
+- `asset_classes`: `Na×Nc` DataFrame where `Na` is the number of assets and `Nc` the number of columns.
     - `Assets`: list of assets, this is the only mandatory column.
     - Subsequent columns specify the asset class sets.
 # Outputs
@@ -447,6 +447,42 @@ end
 ```julia
 hrp_constraints(constraints::DataFrame, asset_classes::DataFrame)
 ```
+Create the upper and lower bounds constraints for hierarchical risk parity portfolios.
+# Inputs
+- `constraints`: `Nc×4` Dataframe, where `Nc` is the number of constraints. The required columns are:
+    - `Enabled`: (Bool) indicates if the constraint is enabled.
+    - `Type`: (String) specifies the object(s) to which a constraint applies:
+        - `Assets`: specific asset.
+        - `All Assets`: all assets.
+        - `Each Asset in Class`: specific assets in a class.
+    - `Position`: (String) name of the asset or asset class to which the constraint applies.
+    - `Sign`: (String) specifies whether the constraint is a lower or upper bound:
+        - `>=`: lower bound.
+        - `<=`: upper bound.
+    - `Weight`: (<:Real) value of the constraint.
+- `asset_classes`: `Na×Nc` DataFrame where `Na` is the number of assets and `Nc` the number of columns.
+    - `Assets`: list of assets, this is the only mandatory column.
+    - Subsequent columns specify the asset class sets.
+# Outputs
+- `w_min`: `Na×1` vector of the lower bounds for asset weights.
+- `w_max`: `Na×1` vector of the upper bounds for asset weights.
+# Examples
+```julia
+asset_classes = DataFrame(
+        "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
+        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],
+        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],
+    )
+constraints = DataFrame(
+    "Enabled" => [true, true, true, true, true, true],
+    "Type" => ["Assets", "Assets", "All Assets", "All Assets", "Each Asset in Class", "Each Asset in Class"],
+    "Set" => ["", "", "", "", "Class 1", "Class 2"],
+    "Position" => ["BAC", "FB", "", "", "Fixed Income", "Financial"],
+    "Sign" => [">=", "<=", "<=", ">=", "<=", "<="],
+    "Weight" => [0.02, 0.085, 0.09, 0.01, 0.07, 0.06],
+)
+w_min, w_max = hrp_constraints(constraints, asset_classes)
+```
 """
 function hrp_constraints(constraints::DataFrame, asset_classes::DataFrame)
     N = nrow(asset_classes)
@@ -486,24 +522,59 @@ function hrp_constraints(constraints::DataFrame, asset_classes::DataFrame)
 end
 
 """
+```julia
+RPConstraintTypes = (:Assets, :Classes)
+```
+Types of risk parity constraints for building the set of linear constraints via [`rp_constraints`](@ref).
+- `:Assets`: equal risk contribution per asset.
+- `:Classes`: equal risk contribution per class.
 """
-function rp_constraints(asset_classes, type = :Assets, class_col = nothing)
+const RPConstraintTypes = (:Assets, :Classes)
+
+"""
+```julia
+rp_constraints(
+    asset_classes::DataFrame,
+    type::Symbol = :Assets,
+    class_col::Union{String, Symbol, Nothing} = nothing,
+)
+```
+Constructs risk contribution constraint vector for the risk parity optimisation (`:RP` and `:RRP` types of [`PortTypes`](@ref)).
+# Inputs
+- `asset_classes`: `Na×Nc` DataFrame where `Na` is the number of assets and `Nc` the number of columns.
+    - `Assets`: list of assets, this is the only mandatory column.
+    - Subsequent columns specify the asset class sets. They are only used if `type == :Classes`.
+- `type`: what the risk parity is applied relative to, must be one of [`RPConstraintTypes`](@ref).
+- `class_col`: index of set of classes from `asset_classes` to use in when `type == :Classes`.
+# Outputs
+- `rw`: risk contribution constraint vector.
+# Examples
+asset_classes = DataFrame(
+        "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
+        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],
+        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],
+    )
+
+rw_a = rp_constraints(asset_classes, :Assets)
+rw_c = rp_constraints(asset_classes, :Classes, "Class 2")
+"""
+function rp_constraints(
+    asset_classes::DataFrame,
+    type::Symbol = :Assets,
+    class_col::Union{String, Symbol, Int, Nothing} = nothing,
+)
     @assert(type ∈ RPConstraintTypes, "type = $type, must be one of $RPConstraintTypes")
     N = nrow(asset_classes)
 
-    w = if type == :Assets
+    rw = if type == :Assets
         fill(1 / N, N)
     else
         classes = names(asset_classes)
-        isa(class_col, Symbol) && (class_col = String(class_col))
-        if class_col ∈ classes
-            A = DataFrame(a = asset_classes[!, class_col])
+        A = DataFrame(a = asset_classes[!, class_col])
+        if isa(class_col, String) || isa(class_col, Symbol)
             rename!(A, [class_col])
-        elseif isa(class_col, Int) && class_col < N
-            A = DataFrame(a = asset_classes[!, class_col])
+        elseif isa(class_col, Int)
             rename!(A, [classes[class_col]])
-        else
-            throw(ArgumentError("class_col must be a valid index of asset_classes"))
         end
 
         col = names(A)[1]
@@ -515,7 +586,7 @@ function rp_constraints(asset_classes, type = :Assets, class_col = nothing)
         A[!, :weight]
     end
 
-    return w
+    return rw
 end
 
 export asset_constraints,

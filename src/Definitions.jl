@@ -395,16 +395,6 @@ const KindBootstrap = (:Stationary, :Circular, :Moving)
 
 """
 ```julia
-RPConstraintTypes = (:Assets, :Classes)
-```
-Types of risk parity constraints for building the set of linear constraints via [`rp_constraints`](@ref).
-- `:Assets`: restrict the assets that meet the criteria.
-- `:Classes`: restrict the assets in that class.
-"""
-const RPConstraintTypes = (:Assets, :Classes)
-
-"""
-```julia
 OWAMethods = (:CRRA, :E, :SS, :SD)
 ```
 Methods for computing the weights used to combine higher order L-moments in [`owa_l_moment_crm`](@ref).
