@@ -18,7 +18,10 @@ import PortfolioOptimiser.distance_wei,
     PortfolioOptimiser._build_link_and_dendro,
     PortfolioOptimiser.DendroConstruct,
     PortfolioOptimiser.BubbleMember,
-    PortfolioOptimiser.turn_into_Hclust_merges
+    PortfolioOptimiser.turn_into_Hclust_merges,
+    # OWA
+    PortfolioOptimiser._optimize_owa,
+    PortfolioOptimiser._crra_method
 
 DocMeta.setdocmeta!(
     PortfolioOptimiser,
