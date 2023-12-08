@@ -1,4 +1,18 @@
-function owa_l_moment(T, k = 2)
+"""
+```julia
+owa_l_moment(T::Integer, k::Integer = 2)
+```
+Calculates the OWA weights of the k'th linear moment (l-moment) of a returns series [^OWAL].
+# Inputs
+- `T`: number of observations of the returns series.
+- `k`: order of the l-moment.
+# Outputs
+- `w`: `T×1` ordered weight vector.
+
+[^OWAL]:
+    [Cajas, Dany, Higher Order Moment Portfolio Optimization with L-Moments (March 19, 2023). Available at SSRN: https://ssrn.com/abstract=4393155 or http://dx.doi.org/10.2139/ssrn.4393155](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4393155)
+"""
+function owa_l_moment(T::Integer, k::Integer = 2)
     w = Vector(undef, T)
     for i in 1:T
         a = 0.0
@@ -17,7 +31,20 @@ function owa_l_moment(T, k = 2)
     return w
 end
 
-function owa_gmd(T)
+"""
+```julia
+owa_gmd(T::Integer)
+```
+Computes the Gini Mean Difference (GMD) of a returns series [^OWA].
+# Inputs
+- `T`: number of observations of the returns series.
+# Outputs
+- `w`: `T×1` ordered weight vector.
+
+[^OWA]:
+    [Cajas, Dany, OWA Portfolio Optimization: A Disciplined Convex Programming Framework (December 18, 2021). Available at SSRN: https://ssrn.com/abstract=3988927 or http://dx.doi.org/10.2139/ssrn.3988927](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3988927)
+"""
+function owa_gmd(T::Integer)
     w = Vector(undef, T)
     for i in 1:T
         w[i] = 2 * i - 1 - T
