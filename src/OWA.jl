@@ -374,6 +374,7 @@ owa_l_moment_crm(
     solvers = Dict(),
 )
 ```
+Compute the OWA weights for the convex risk measure considering higher order L-moments [^OWAL].
 """
 function owa_l_moment_crm(
     T::Integer;
