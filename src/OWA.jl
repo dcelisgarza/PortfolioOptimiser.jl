@@ -247,6 +247,19 @@ end
 ```julia
 _optimize_owa(model, solvers)
 ```
+Internal function to optimise an OWA JuMP model.
+# Inputs
+- `model`: JuMP model.
+- `solver`: `Dict` or `NamedTuple` with the keys:
+    - `:solver`: which contains the JuMP optimiser.
+    - `:params`: for the solver-specific parameters.
+# Outputs
+- `term_status`: JuMP termination status.
+- `solvers_tried`: Dictionary that contains a dictionary of failed optimisations. `Dict(key => Dict(...))`, where `key` is the solver key used for the iteration of `solver` that failed.
+    - If an MOI call fails on a model:
+        - `Dict(:jump_error => jump_error)`: [`JuMP`](https://jump.dev/JuMP.jl/stable/moi/reference/errors/) error code.
+    - If the optimiser fails to optimise the model satisfactorily:
+        - `Dict(:objective_val => JuMP.objective_value(model), :term_status => term_status, :params => haskey(val, :params) ? val[:params] : missing)`, where `val` is the value of the dictionary corresponding to `key`.
 """
 function _optimize_owa(model, solvers)
     term_status = termination_status(model)
@@ -289,6 +302,13 @@ end
 ```julia
 _crra_method(ws::AbstractMatrix, k::Integer, g::Real)
 ```
+Internal function for computing the Normalized Constant Relative Risk Aversion coefficients.
+# Inputs
+- `ws`: `T×(k-1)` matrix where T is the number of observations and `k` the order of the l-moments to combine, the `i`'th column contains the weights for the `(i+1)`'th l-moment.
+- `k`: the maximum order of the l-moments.
+- `g`: the risk aversion coefficient.
+# Outputs
+- `w`: `T×1` ordered weight vector of the combined l-moments.
 """
 function _crra_method(ws::AbstractMatrix, k::Integer, g::Real)
     phis = Vector{eltype(ws)}(undef, k - 1)
@@ -346,17 +366,23 @@ end
 """
 ```julia
 owa_l_moment_crm(
-    T;
-    k = 2,
-    method = :SD,
-    g = 0.5,
-    max_phi = 0.5,
+    T::Integer;
+    k::Integer = 2,
+    method::Symbol = :SD,
+    g::Real = 0.5,
+    max_phi::Real = 0.5,
     solvers = Dict(),
-    sol_params = Dict(),
 )
 ```
 """
-function owa_l_moment_crm(T; k = 2, method = :SD, g = 0.5, max_phi = 0.5, solvers = Dict())
+function owa_l_moment_crm(
+    T::Integer;
+    k::Integer = 2,
+    method::Symbol = :SD,
+    g::Real = 0.5,
+    max_phi::Real = 0.5,
+    solvers = Dict(),
+)
     @assert(k >= 2, "k = $k, must be an integer bigger than or equal to 2")
     @assert(method ∈ OWAMethods, "method = $method, must be one of $OWAMethods")
     @assert(0 < g < 1, "risk aversion, g = $g, must be in the interval (0, 1)")
@@ -432,4 +458,5 @@ export owa_l_moment,
     owa_wr,
     owa_rg,
     owa_rcvar,
+    owa_rwcvar,
     owa_rtg
