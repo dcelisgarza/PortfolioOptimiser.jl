@@ -54,7 +54,18 @@ function owa_gmd(T::Integer)
     return w
 end
 
-function owa_cvar(T, alpha = 0.05)
+"""
+```julia
+owa_cvar(T::Integer, α::Real = 0.05)
+```
+Calculate the OWA weights corresponding to the Critical Value at Risk (CVaR) of a returns series [^OWA].
+# Inputs
+- `T`: number of observations of the returns series.
+- `α`: significance level of CVaR, α ∈ (0, 1);
+# Outputs
+- `w`: `T×1` ordered weight vector.
+"""
+function owa_cvar(T::Integer, alpha::Real = 0.05)
     @assert(0 < alpha < 1, "alpha = $alpha, must be between 0 and 1")
 
     k = floor(Int, T * alpha)
