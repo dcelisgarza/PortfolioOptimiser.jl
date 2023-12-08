@@ -1,38 +1,5 @@
 """
 ```julia
-owa_l_moment(T::Integer, k::Integer = 2)
-```
-Calculates the OWA weights of the k'th linear moment (l-moment) of a returns series [^OWAL].
-# Inputs
-- `T`: number of observations of the returns series.
-- `k`: order of the l-moment.
-# Outputs
-- `w`: `T×1` ordered weight vector.
-
-[^OWAL]:
-    [Cajas, Dany, Higher Order Moment Portfolio Optimization with L-Moments (March 19, 2023). Available at SSRN: https://ssrn.com/abstract=4393155 or http://dx.doi.org/10.2139/ssrn.4393155](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4393155)
-"""
-function owa_l_moment(T::Integer, k::Integer = 2)
-    w = Vector(undef, T)
-    for i in 1:T
-        a = 0.0
-        for j in 0:(k - 1)
-            a +=
-                (-1)^j *
-                binomial(k - 1, j) *
-                binomial(i - 1, k - 1 - j) *
-                binomial(T - i, j)
-        end
-        a *= 1 / (k * binomial(T, k))
-        w[i] = a
-    end
-    w = 1 / convert(typeof(T), 1) * w
-
-    return w
-end
-
-"""
-```julia
 owa_gmd(T::Integer)
 ```
 Computes the Gini Mean Difference (GMD) of a returns series [^OWA].
@@ -61,7 +28,7 @@ owa_cvar(T::Integer, α::Real = 0.05)
 Calculate the OWA weights corresponding to the Critical Value at Risk (CVaR) of a returns series [^OWA].
 # Inputs
 - `T`: number of observations of the returns series.
-- `α`: significance level of CVaR, α ∈ (0, 1);
+- `α`: significance level of CVaR, α ∈ (0, 1).
 # Outputs
 - `w`: `T×1` ordered weight vector.
 """
@@ -76,7 +43,27 @@ function owa_cvar(T::Integer, alpha::Real = 0.05)
     return w
 end
 
-function owa_wcvar(T, alphas, weights)
+"""
+```julia
+owa_wcvar(
+    T::Integer,
+    αs::AbstractVector{<:Real},
+    ws::AbstractVector{<:Real},
+)
+```
+Compute the OWA weights for the Weighted Conditional Value at Risk (WCVaR) of a returns series [^OWA].
+# Inputs
+- `T`: number of observations of the returns series.
+- `αs`: `N×1` vector of significance levels of each CVaR model, where `N` is the number of models, each α_n ∈ (0, 1).
+- `ws`: `N×1` vector of weights of each CVaR model, where `N` is the number of models.
+# Outputs
+- `w`: `T×1` ordered weight vector.
+"""
+function owa_wcvar(
+    T::Integer,
+    alphas::AbstractVector{<:Real},
+    weights::AbstractVector{<:Real},
+)
     w = zeros(T)
     for (i, j) in zip(alphas, weights)
         w .+= owa_cvar(T, i) * j
@@ -85,9 +72,29 @@ function owa_wcvar(T, alphas, weights)
     return w
 end
 
-function owa_tg(T; alpha_i = 0.0001, alpha = 0.05, a_sim = 100)
-    @assert(0 < alpha < 1, "alpha = $alpha, must be between 0 and 1")
-    @assert(0 < alpha_i < alpha, "alpha_i = $alpha_i, must be between 0 and alpha")
+"""
+```julia
+owa_tg(
+    T::Integer;
+    alpha_i::Real = 0.0001,
+    alpha::Real = 0.05,
+    a_sim::Integer = 100,
+)
+```
+Compute the OWA weights for the Tail Gini of a returns series [^OWA].
+# Inputs
+- `T`: number of observations of the returns series.
+- `alpha_i`: initial significance level of Tail Gini.
+- `alpha`: significance level of Tail Gini.
+- `a_sim`: number of CVaRs to approximate the Tail Gini.
+# Outputs
+- `w`: `T×1` ordered weight vector.
+"""
+function owa_tg(T::Integer; alpha_i::Real = 1e-4, alpha::Real = 0.05, a_sim::Integer = 100)
+    @assert(
+        0 < alpha_i < alpha < 1,
+        "alpha_i = $alpha_i, alpha = $alpha, please ensure 0 < alpha_i < alpha < 1, holds"
+    )
 
     alphas = range(start = alpha_i, stop = alpha, length = a_sim)
     n = length(alphas)
@@ -104,35 +111,126 @@ function owa_tg(T; alpha_i = 0.0001, alpha = 0.05, a_sim = 100)
     return w
 end
 
-function owa_wr(T)
+"""
+```julia
+owa_wr(T::Integer)
+```
+Compute the OWA weights for the Worst Realisation (WR) of a returns series [^OWA].
+# Inputs
+- `T`: number of observations of the returns series.
+# Outputs
+- `w`: `T×1` ordered weight vector.
+"""
+function owa_wr(T::Integer)
     w = zeros(T)
     w[1] = -1
 
     return w
 end
 
-function owa_rg(T)
+"""
+```julia
+owa_rg(T::Integer)
+```
+Compute the OWA weights for the Range of a returns series [^OWA].
+# Inputs
+- `T`: number of observations of the returns series.
+# Outputs
+- `w`: `T×1` ordered weight vector.
+"""
+function owa_rg(T::Integer)
     w = zeros(T)
     w[1] = -1
     w[T] = 1
     return w
 end
 
-function owa_rcvar(T; alpha = 0.05, beta = nothing)
+"""
+```julia
+owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Union{<:Real, Nothing} = nothing)
+```
+Compute the OWA weights for the CVaR Range of a returns series [^OWA].
+# Inputs
+- `T`: number of observations of the returns series.
+- `alpha`: significance level of CVaR losses, alpha ∈ (0, 1).
+- `beta`: significance level of CVaR gains, beta ∈ (0, 1).
+# Outputs
+- `w`: `T×1` ordered weight vector.
+"""
+function owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Union{<:Real, Nothing} = nothing)
     isnothing(beta) && (beta = alpha)
     w = owa_cvar(T, alpha) .- reverse(owa_cvar(T, beta))
 
     return w
 end
 
+"""
+```julia
+owa_rwcvar(
+    T::Integer,
+    αs::AbstractVector{<:Real},
+    wα::AbstractVector{<:Real},
+    βs::Union{AbstractVector{<:Real}, Nothing} = nothing,
+    wβ::Union{AbstractVector{<:Real}, Nothing} = nothing,
+)
+```
+Compute the OWA weights for the Weighted Conditional Value at Risk (WCVaR) of a returns series [^OWA].
+# Inputs
+- `T`: number of observations of the returns series.
+- `αs`: `N×1` vector of significance levels of the losses for each CVaR model, where `N` is the number of losses models, each α_n ∈ (0, 1).
+- `wα`: `N×1` vector of weights of the losses for each CVaR model, where `N` is the number of losses models.
+- `βs`: `M×1` vector of significance levels of the gains for each CVaR model, where `M` is the number of gains models, each β_m ∈ (0, 1).
+- `wβ`: `M×1` vector of weights of the gains for each CVaR model, where `M` is the number of gains models.
+# Outputs
+- `w`: `T×1` ordered weight vector.
+"""
+function owa_rwcvar(
+    T::Integer,
+    alphas::AbstractVector{<:Real},
+    weights_a::AbstractVector{<:Real},
+    betas::Union{AbstractVector{<:Real}, Nothing} = nothing,
+    weights_b::Union{AbstractVector{<:Real}, Nothing} = nothing,
+)
+    isnothing(betas) && (betas = alphas)
+    isnothing(weights_b) && (weights_b = weights_a)
+
+    w = owa_wcvar(T, alphas, weights_a) .- reverse(owa_wcvar(T, betas, weights_b))
+
+    return w
+end
+
+"""
+```julia
+owa_rtg(
+    T::Integer;
+    alpha_i::Real = 0.0001,
+    alpha::Real = 0.05,
+    a_sim::Integer = 100,
+    beta_i::Union{<:Real, Nothing} = nothing,
+    beta::Union{<:Real, Nothing} = nothing,
+    b_sim::Union{<:Integer, Nothing} = nothing,
+)
+```
+Compute the OWA weights for the Tail Gini Range of a returns series [^OWA].
+# Inputs
+- `T`: number of observations of the returns series.
+- `alpha_i`: initial significance level of Tail Gini losses.
+- `alpha`: significance level of Tail Gini losses.
+- `a_sim`: number of CVaRs to approximate the Tail Gini losses.
+- `beta_i`: initial significance level of Tail Gini gains.
+- `beta`: significance level of Tail Gini gains.
+- `b_sim`: number of CVaRs to approximate the Tail Gini gains.
+# Outputs
+- `w`: `T×1` ordered weight vector.
+"""
 function owa_rtg(
-    T;
-    alpha_i = 0.0001,
-    alpha = 0.05,
-    a_sim = 100,
-    beta_i = nothing,
-    beta = nothing,
-    b_sim = nothing,
+    T::Integer;
+    alpha_i::Real = 0.0001,
+    alpha::Real = 0.05,
+    a_sim::Integer = 100,
+    beta_i::Union{<:Real, Nothing} = nothing,
+    beta::Union{<:Real, Nothing} = nothing,
+    b_sim::Union{<:Integer, Nothing} = nothing,
 )
     isnothing(beta) && (beta = alpha)
     isnothing(b_sim) && (b_sim = a_sim)
@@ -145,6 +243,11 @@ function owa_rtg(
     return w
 end
 
+"""
+```julia
+_optimize_owa(model, solvers)
+```
+"""
 function _optimize_owa(model, solvers)
     term_status = termination_status(model)
     solvers_tried = Dict()
@@ -182,7 +285,12 @@ function _optimize_owa(model, solvers)
     return term_status, solvers_tried
 end
 
-function _crra_method(ws, k, g)
+"""
+```julia
+_crra_method(ws::AbstractMatrix, k::Integer, g::Real)
+```
+"""
+function _crra_method(ws::AbstractMatrix, k::Integer, g::Real)
     phis = Vector{eltype(ws)}(undef, k - 1)
     e = 1
     for i in 1:(k - 1)
@@ -198,6 +306,39 @@ function _crra_method(ws, k, g)
     for i in 2:length(a)
         w[i] = maximum(a[1:i])
     end
+
+    return w
+end
+
+"""
+```julia
+owa_l_moment(T::Integer, k::Integer = 2)
+```
+Calculates the OWA weights of the k'th linear moment (l-moment) of a returns series [^OWAL].
+# Inputs
+- `T`: number of observations of the returns series.
+- `k`: order of the l-moment.
+# Outputs
+- `w`: `T×1` ordered weight vector.
+
+[^OWAL]:
+    [Cajas, Dany, Higher Order Moment Portfolio Optimization with L-Moments (March 19, 2023). Available at SSRN: https://ssrn.com/abstract=4393155 or http://dx.doi.org/10.2139/ssrn.4393155](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4393155)
+"""
+function owa_l_moment(T::Integer, k::Integer = 2)
+    w = Vector(undef, T)
+    for i in 1:T
+        a = 0.0
+        for j in 0:(k - 1)
+            a +=
+                (-1)^j *
+                binomial(k - 1, j) *
+                binomial(i - 1, k - 1 - j) *
+                binomial(T - i, j)
+        end
+        a *= 1 / (k * binomial(T, k))
+        w[i] = a
+    end
+    w = 1 / convert(typeof(T), 1) * w
 
     return w
 end

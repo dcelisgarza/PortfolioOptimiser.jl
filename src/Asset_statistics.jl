@@ -1030,7 +1030,7 @@ function gen_bootstrap(
     kind::Symbol = :Stationary,
     n_sim::Integer = 3_000,
     window::Integer = 3,
-    seed::Union{Integer, Nothing} = nothing,
+    seed::Union{<:Integer, Nothing} = nothing,
     rng = Random.default_rng(),
 )
     @assert(kind ∈ KindBootstrap, "kind = $kind, must be one of $KindBootstrap")
@@ -1099,7 +1099,7 @@ function wc_statistics!(
     posdef_kwargs::NamedTuple = (;),
     q::Real = 0.05,
     rng = Random.default_rng(),
-    seed::Union{Integer, Nothing} = nothing,
+    seed::Union{<:Integer, Nothing} = nothing,
     window::Integer = 3,
 )
     @assert(box ∈ BoxTypes, "box = $box, must be one of $BoxTypes")
