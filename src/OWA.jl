@@ -98,7 +98,7 @@ function owa_tg(T::Integer; alpha_i::Real = 1e-4, alpha::Real = 0.05, a_sim::Int
 
     alphas = range(start = alpha_i, stop = alpha, length = a_sim)
     n = length(alphas)
-    w = Vector(undef, n)
+    w = Vector{typeof(alpha)}(undef, n)
 
     w[1] = alphas[2] * alphas[1] / alphas[n]^2
     for i in 2:(n - 1)
