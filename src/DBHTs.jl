@@ -47,7 +47,7 @@ function PMFG_T2s(W::AbstractMatrix{<:Real}, nargout::Integer = 3)
     A[in_v[3], in_v[4]] = 1
 
     # Build initial gain table
-    gain = zeros(N, 2 * N - 4)
+    gain = zeros(eltype(W), N, 2 * N - 4)
     gain[ou_v, 1] .= sum(W[ou_v, tri[1, :]], dims = 2)
     gain[ou_v, 2] .= sum(W[ou_v, tri[2, :]], dims = 2)
     gain[ou_v, 3] .= sum(W[ou_v, tri[3, :]], dims = 2)
@@ -151,7 +151,7 @@ function distance_wei(L::AbstractMatrix{<:Real})
     N = size(L, 1)
     D = fill(Inf, N, N)
     D[diagind(D)] .= 0  # Distance matrix
-    B = zeros(N, N)     # Number of edges matrix
+    B = zeros(Int, N, N)     # Number of edges matrix
 
     for u in 1:N
         S = fill(true, N)   # Distance permanence (true is temporary)
@@ -418,12 +418,12 @@ Build the bubble hierarchy.
 function BubbleHierarchy(Pred::AbstractVector{<:Real}, Sb::AbstractVector{<:Real})
     Nc = size(Pred, 1)
     Root = findall(Pred .== 0)
-    CliqCount = zeros(Nc)
+    CliqCount = zeros(Int, Nc)
     CliqCount[Root] .= 1
     Mb = Matrix{Int}(undef, Nc, 0)
 
     if length(Root) > 1
-        TempVec = zeros(Nc)
+        TempVec = zeros(Int, Nc)
         TempVec[Root] .= 1
         Mb = hcat(Mb, TempVec)
     end
@@ -726,7 +726,7 @@ function BubbleMember(
     Mv::AbstractMatrix{<:Real},
     Mc::AbstractMatrix{<:Real},
 )
-    Mvv = zeros(size(Mv, 1), size(Mv, 2))
+    Mvv = zeros(Int, size(Mv, 1), size(Mv, 2))
 
     vu = findall(vec(sum(Mc, dims = 2) .> 1))
     v = findall(vec(sum(Mc, dims = 2) .== 1))
@@ -962,7 +962,7 @@ Turns a Matlab-style linkage matrix to a useable format for [`Hclust`](https://j
 """
 function turn_into_Hclust_merges(Z::AbstractMatrix{<:Real})
     N = size(Z, 1) + 1
-    Z = hcat(Z, zeros(N - 1))
+    Z = hcat(Z, zeros(eltype(Z), N - 1))
 
     for i in eachindex(view(Z, :, 1))
 

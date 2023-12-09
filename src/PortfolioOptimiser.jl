@@ -19,9 +19,9 @@ using AverageShiftedHistograms,
     StatsBase
 
 include("Definitions.jl")
-include("DBHTs.jl")
-include("Constraint_functions.jl")
-include("OWA.jl")
+include("DBHTs.jl") # Type checked.
+include("Constraint_functions.jl") # Type checked.
+include("OWA.jl") # Type checked.
 include("Codependence.jl")
 include("Aux_functions.jl")
 

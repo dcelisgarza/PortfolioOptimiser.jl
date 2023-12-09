@@ -58,8 +58,8 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
     N = nrow(asset_classes)
     asset_list = asset_classes[!, "Assets"]
 
-    A = Matrix{Float64}(undef, 0, N)
-    B = Float64[]
+    A = Matrix(undef, 0, N)
+    B = Vector(undef, 0)
 
     for row in eachrow(constraints)
         !row["Enabled"] && continue
@@ -187,6 +187,9 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
         end
     end
 
+    A = convert.(typeof(promote(A...)[1]), A)
+    B = convert.(typeof(promote(B...)[1]), B)
+
     return A, B
 end
 
@@ -232,8 +235,9 @@ C, D = factor_constraints(constraints, loadings)
 function factor_constraints(constraints::DataFrame, loadings::DataFrame)
     N = nrow(loadings)
 
-    C = Matrix{Float64}(undef, 0, N)
-    D = Float64[]
+    C = Matrix(undef, 0, N)
+    D = Vector(undef, 0)
+
     for row in eachrow(constraints)
         !row["Enabled"] && continue
 
@@ -252,6 +256,9 @@ function factor_constraints(constraints::DataFrame, loadings::DataFrame)
         C = vcat(C, transpose(C1) * d)
         push!(D, row["Value"] * d)
     end
+
+    C = convert.(typeof(promote(C...)[1]), C)
+    D = convert.(typeof(promote(D...)[1]), D)
 
     return C, D
 end
@@ -311,8 +318,8 @@ function asset_views(views::DataFrame, asset_classes::DataFrame)
     N = nrow(asset_classes)
     asset_list = asset_classes[!, "Assets"]
 
-    P = Matrix{Float64}(undef, 0, N)
-    Q = Float64[]
+    P = Matrix(undef, 0, N)
+    Q = Vector(undef, 0)
 
     for row in eachrow(views)
         valid = false
@@ -366,6 +373,9 @@ function asset_views(views::DataFrame, asset_classes::DataFrame)
         end
     end
 
+    P = convert.(typeof(promote(P...)[1]), P)
+    Q = convert.(typeof(promote(Q...)[1]), Q)
+
     return P, Q
 end
 
@@ -415,8 +425,8 @@ function factor_views(views::DataFrame, loadings::DataFrame)
 
     N = length(factor_list)
 
-    P = Matrix{Float64}(undef, 0, N)
-    Q = Float64[]
+    P = Matrix(undef, 0, N)
+    Q = Vector(undef, 0)
 
     for row in eachrow(views)
         !row["Enabled"] && continue
@@ -439,6 +449,9 @@ function factor_views(views::DataFrame, loadings::DataFrame)
         P = vcat(P, transpose(P1))
         push!(Q, row["Value"] * d)
     end
+
+    P = convert.(typeof(promote(P...)[1]), P)
+    Q = convert.(typeof(promote(Q...)[1]), Q)
 
     return P, Q
 end
@@ -486,7 +499,8 @@ w_min, w_max = hrp_constraints(constraints, asset_classes)
 """
 function hrp_constraints(constraints::DataFrame, asset_classes::DataFrame)
     N = nrow(asset_classes)
-    w = zeros(N, 2)
+    w = Matrix(undef, N, 2)
+    w .= 0
     w[:, 2] .= 1
     for row in eachrow(constraints)
         !row["Enabled"] && continue
@@ -518,6 +532,9 @@ function hrp_constraints(constraints::DataFrame, asset_classes::DataFrame)
             end
         end
     end
+
+    w = convert.(typeof(promote(w...)[1]), w)
+
     return w[:, 1], w[:, 2]
 end
 

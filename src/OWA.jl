@@ -12,7 +12,7 @@ Computes the Gini Mean Difference (GMD) of a returns series [^OWA].
     [Cajas, Dany, OWA Portfolio Optimization: A Disciplined Convex Programming Framework (December 18, 2021). Available at SSRN: https://ssrn.com/abstract=3988927 or http://dx.doi.org/10.2139/ssrn.3988927](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3988927)
 """
 function owa_gmd(T::Integer)
-    w = Vector{typeof(1 / T)}(undef, T)
+    w = Vector{typeof(inv(T))}(undef, T)
     for i in 1:T
         w[i] = 2 * i - 1 - T
     end
@@ -36,7 +36,7 @@ function owa_cvar(T::Integer, alpha::Real = 0.05)
     @assert(0 < alpha < 1, "alpha = $alpha, must be between 0 and 1")
 
     k = floor(Int, T * alpha)
-    w = zeros(T)
+    w = zeros(typeof(alpha), T)
     w[1:k] .= -1 / (T * alpha)
     w[k + 1] = -1 - sum(w[1:k])
 
@@ -64,7 +64,7 @@ function owa_wcvar(
     alphas::AbstractVector{<:Real},
     weights::AbstractVector{<:Real},
 )
-    w = zeros(T)
+    w = zeros(promote_type(eltype(alphas), eltype(weights)), T)
     for (i, j) in zip(alphas, weights)
         w .+= owa_cvar(T, i) * j
     end
@@ -122,7 +122,7 @@ Compute the OWA weights for the Worst Realisation (WR) of a returns series [^OWA
 - `w`: `T×1` ordered weight vector.
 """
 function owa_wr(T::Integer)
-    w = zeros(T)
+    w = zeros(typeof(inv(T)), T)
     w[1] = -1
 
     return w
@@ -139,7 +139,7 @@ Compute the OWA weights for the Range of a returns series [^OWA].
 - `w`: `T×1` ordered weight vector.
 """
 function owa_rg(T::Integer)
-    w = zeros(T)
+    w = zeros(typeof(inv(T)), T)
     w[1] = -1
     w[T] = 1
     return w
@@ -300,7 +300,7 @@ end
 
 """
 ```julia
-_crra_method(ws::AbstractMatrix, k::Integer, g::Real)
+_crra_method(ws::AbstractMatrix{<:Real}, k::Integer, g::Real)
 ```
 Internal function for computing the Normalized Constant Relative Risk Aversion coefficients.
 # Inputs
@@ -310,7 +310,7 @@ Internal function for computing the Normalized Constant Relative Risk Aversion c
 # Outputs
 - `w`: `T×1` ordered weight vector of the combined L-moments.
 """
-function _crra_method(ws::AbstractMatrix, k::Integer, g::Real)
+function _crra_method(ws::AbstractMatrix{<:Real}, k::Integer, g::Real)
     phis = Vector{eltype(ws)}(undef, k - 1)
     e = 1
     for i in 1:(k - 1)
@@ -345,7 +345,7 @@ Calculates the OWA weights of the k'th linear moment (l-moment) of a returns ser
     [Cajas, Dany, Higher Order Moment Portfolio Optimization with L-Moments (March 19, 2023). Available at SSRN: https://ssrn.com/abstract=4393155 or http://dx.doi.org/10.2139/ssrn.4393155](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4393155)
 """
 function owa_l_moment(T::Integer, k::Integer = 2)
-    w = Vector{typeof(1 / (T * k))}(undef, T)
+    w = Vector{typeof(inv(T * k))}(undef, T)
     T, k = promote(T, k)
     for i in 1:T
         a = 0.0
@@ -420,7 +420,7 @@ function owa_l_moment_crm(
     )
 
     rg = 2:k
-    ws = Matrix{typeof(1 / (T * k))}(undef, T, length(rg))
+    ws = Matrix{typeof(inv(T * k))}(undef, T, length(rg))
     for i in rg
         wi = (-1)^i * owa_l_moment(T, i)
         ws[:, i - 1] .= wi
@@ -478,9 +478,7 @@ function owa_l_moment_crm(
     return w
 end
 
-export owa_l_moment,
-    owa_l_moment_crm,
-    owa_gmd,
+export owa_gmd,
     owa_cvar,
     owa_wcvar,
     owa_tg,
@@ -488,4 +486,6 @@ export owa_l_moment,
     owa_rg,
     owa_rcvar,
     owa_rwcvar,
-    owa_rtg
+    owa_rtg,
+    owa_l_moment,
+    owa_l_moment_crm
