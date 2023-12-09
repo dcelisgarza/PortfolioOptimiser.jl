@@ -21,7 +21,8 @@ import PortfolioOptimiser.distance_wei,
     PortfolioOptimiser.turn_into_Hclust_merges,
     # OWA
     PortfolioOptimiser._optimize_owa,
-    PortfolioOptimiser._crra_method
+    PortfolioOptimiser._crra_method,
+    PortfolioOptimiser.OWAMethods
 
 DocMeta.setdocmeta!(
     PortfolioOptimiser,

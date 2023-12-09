@@ -395,18 +395,6 @@ const KindBootstrap = (:Stationary, :Circular, :Moving)
 
 """
 ```julia
-OWAMethods = (:CRRA, :E, :SS, :SD)
-```
-Methods for computing the weights used to combine higher order L-moments in [`owa_l_moment_crm`](@ref).
-- `CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
-- `:E`: Maximum Entropy.
-- `:SS`: Minimum Sum of Squares.
-- `:SD`: Minimum Square Distance.
-"""
-const OWAMethods = (:CRRA, :E, :SS, :SD)
-
-"""
-```julia
 BinTypes = (:KN, :FD, :SC, :HGR)
 ```
 Methods for calculating bin widths for mutual and variational information matrices computed by [`mut_var_info_mtx`](@ref).
@@ -764,7 +752,6 @@ export AbstractPortfolio,
     KindBootstrap,
     EllipseTypes,
     BoxTypes,
-    OWAMethods,
     BinTypes,
     HRRiskMeasures,
     HCPortTypes,

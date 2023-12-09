@@ -19,6 +19,7 @@ owa_l_moment_crm
 ## Private API
 
 ```@docs
+OWAMethods
 _optimize_owa
 _crra_method
 ```

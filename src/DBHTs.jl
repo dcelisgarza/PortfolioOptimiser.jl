@@ -478,6 +478,8 @@ Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy 
 # Inputs
 - `Apm`: `N×N` adjacency matrix of an MPG.
 - `method`: method for finding the root of the graph [`DBHTRootMethods`](@ref). Uses Voronoi tesselation between tiling triangles.
+    - `:Unique`: create a unique root.
+    - `:Equal`: the root is created from the candidate's adjacency tree. 
 # Outputs
 - `H1`: `Nc×Nc` adjacency matrix for 3-clique hierarchical tree where `Nc` is the number of 3-cliques.
 - `H2`: `Nb×Nb` adjacency matrix for the bubble hierarchical tree where `Nb` is the number of bubbles.
@@ -1012,6 +1014,8 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
 - `S`: `N×N` non-negative similarity matrix, e.g. a correlation matrix + 1, `S = 2 .- D .^2 / 2`; or another choice could be `S = exp.(-D).`
 - `branchorder`: is a parameter for ordering the final dendrogram's branches. The choices are defined by [`BranchOrderTypes`](@ref).
 - `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethods`](@ref).
+    - `:Unique`: create a unique root.
+    - `:Equal`: the root is created from the candidate's adjacency tree. 
 # Outputs
 - `T8`: `N×1` cluster membership vector.
 - `Rpm`: `N×N` adjacency matrix of the Planar Maximally Filtered Graph (PMFG).

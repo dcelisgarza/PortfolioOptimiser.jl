@@ -250,7 +250,7 @@ _optimize_owa(model, solvers)
 Internal function to optimise an OWA JuMP model.
 # Inputs
 - `model`: JuMP model.
-- `solver`: `Dict` or `NamedTuple` with the keys:
+- `solvers`: `Dict` or `NamedTuple` with the keys:
     - `:solver`: which contains the JuMP optimiser.
     - `:params`: for the solver-specific parameters.
 # Outputs
@@ -304,11 +304,11 @@ _crra_method(ws::AbstractMatrix, k::Integer, g::Real)
 ```
 Internal function for computing the Normalized Constant Relative Risk Aversion coefficients.
 # Inputs
-- `ws`: `T×(k-1)` matrix where T is the number of observations and `k` the order of the l-moments to combine, the `i`'th column contains the weights for the `(i+1)`'th l-moment.
-- `k`: the maximum order of the l-moments.
+- `ws`: `T×(k-1)` matrix where T is the number of observations and `k` the order of the L-moments to combine, the `i`'th column contains the weights for the `(i+1)`'th l-moment.
+- `k`: the maximum order of the L-moments.
 - `g`: the risk aversion coefficient.
 # Outputs
-- `w`: `T×1` ordered weight vector of the combined l-moments.
+- `w`: `T×1` ordered weight vector of the combined L-moments.
 """
 function _crra_method(ws::AbstractMatrix, k::Integer, g::Real)
     phis = Vector{eltype(ws)}(undef, k - 1)
@@ -365,6 +365,18 @@ end
 
 """
 ```julia
+OWAMethods = (:CRRA, :E, :SS, :SD)
+```
+Methods for computing the weights used to combine L-moments higher than 2, used in [`owa_l_moment_crm`](@ref).
+- `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
+- `:E`: Maximum Entropy.
+- `:SS`: Minimum Sum of Squares.
+- `:SD`: Minimum Square Distance.
+"""
+const OWAMethods = (:CRRA, :E, :SS, :SD)
+
+"""
+```julia
 owa_l_moment_crm(
     T::Integer;
     k::Integer = 2,
@@ -375,6 +387,21 @@ owa_l_moment_crm(
 )
 ```
 Compute the OWA weights for the convex risk measure considering higher order L-moments [^OWAL].
+# Inputs
+- `T`: number of observations of the returns series.
+- `k`: order of the l-moment, `k ≥ 2`.
+- `method`: method for computing the weights used to combine L-moments higher than 2, used in [`OWAMethods`](@ref).
+    - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
+    - `:E`: Maximum Entropy.
+    - `:SS`: Minimum Sum of Squares.
+    - `:SD`: Minimum Square Distance.
+- `g`: the risk aversion coefficient.
+- `max_phi`: maximum weight constraint of the L-moments.
+- `solvers`: `Dict` or `NamedTuple` with the keys:
+    - `:solver`: which contains the JuMP optimiser.
+    - `:params`: for the solver-specific parameters.
+# Outputs
+- `w`: `T×1` ordered weight vector.
 """
 function owa_l_moment_crm(
     T::Integer;
@@ -418,14 +445,17 @@ function owa_l_moment_crm(
             @variable(model, x[1:T])
             @constraint(model, sum(x) == 1)
             @constraint(model, [t; ones(T); x] in MOI.RelativeEntropyCone(2 * T + 1))
-            @constraint(model, x .>= theta)
-            @constraint(model, x .>= -theta)
+            # @constraint(model, x .>= theta)
+            # @constraint(model, x .>= -theta)
+            @constraint(model, [i = 1:T], [x[i]; theta[i]] in MOI.NormOneCone(2))
             @objective(model, Max, -t)
         elseif method == :SS
+            # Minimum sum of squares.
             @variable(model, t)
             @constraint(model, [t; theta] in SecondOrderCone())
             @objective(model, Min, t)
         elseif method == :SD
+            # Minimum square distance.
             @variable(model, t)
             @expression(model, theta_diff, theta[2:end] .- theta[1:(end - 1)])
             @constraint(model, [t; theta_diff] in SecondOrderCone())
