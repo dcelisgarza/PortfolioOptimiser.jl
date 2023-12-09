@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Types · PortfolioOptimiser.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://dcelisgarza.github.io/PortfolioOptimiser.jl/Types/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.044/juliamono.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.svg" alt="PortfolioOptimiser.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">PortfolioOptimiser.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../DBHT/">DBHT</a></li><li><a class="tocitem" href="../Constraint_functions/">Constraint Functions</a></li><li><a class="tocitem" href="../OWA/">OWA</a></li><li><a class="tocitem" href="../Risk_measures/">Risk Measures</a></li><li><span class="tocitem">API</span><ul><li><a class="tocitem" href="../Definitions/">Definitions</a></li><li class="is-active"><a class="tocitem" href>Types</a></li><li><a class="tocitem" href="../Asset_statistics/">Asset Statistics</a></li></ul></li><li><a class="tocitem" href="../idx/">Index</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">API</a></li><li class="is-active"><a href>Types</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Types</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/master/docs/src/Types.md#" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Types"><a class="docs-heading-anchor" href="#Types">Types</a><a id="Types-1"></a><a class="docs-heading-anchor-permalink" href="#Types" title="Permalink"></a></h1><article class="docstring"><header><a class="docstring-binding" id="PortfolioOptimiser.AbstractPortfolio" href="#PortfolioOptimiser.AbstractPortfolio"><code>PortfolioOptimiser.AbstractPortfolio</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">AbstractPortfolio</code></pre><p>Abstract type for portfolios. Concrete portfolios subtype this see <a href="#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a> and <a href="#PortfolioOptimiser.HCPortfolio"><code>HCPortfolio</code></a>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/7702afc22fe98f5751c72a52c44da2afa8c7b2aa/src/Definitions.jl#L1-L6">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PortfolioOptimiser.Portfolio" href="#PortfolioOptimiser.Portfolio"><code>PortfolioOptimiser.Portfolio</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">mutable struct Portfolio{
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Types · PortfolioOptimiser.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://dcelisgarza.github.io/PortfolioOptimiser.jl/Types/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.044/juliamono.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.svg" alt="PortfolioOptimiser.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">PortfolioOptimiser.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../DBHT/">DBHT</a></li><li><a class="tocitem" href="../Constraint_functions/">Constraint Functions</a></li><li><a class="tocitem" href="../OWA/">OWA</a></li><li><a class="tocitem" href="../Risk_measures/">Risk Measures</a></li><li><span class="tocitem">API</span><ul><li><a class="tocitem" href="../Definitions/">Definitions</a></li><li class="is-active"><a class="tocitem" href>Types</a></li><li><a class="tocitem" href="../Asset_statistics/">Asset Statistics</a></li></ul></li><li><a class="tocitem" href="../idx/">Index</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">API</a></li><li class="is-active"><a href>Types</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Types</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/master/docs/src/Types.md#" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Types"><a class="docs-heading-anchor" href="#Types">Types</a><a id="Types-1"></a><a class="docs-heading-anchor-permalink" href="#Types" title="Permalink"></a></h1><article class="docstring"><header><a class="docstring-binding" id="PortfolioOptimiser.AbstractPortfolio" href="#PortfolioOptimiser.AbstractPortfolio"><code>PortfolioOptimiser.AbstractPortfolio</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">AbstractPortfolio</code></pre><p>Abstract type for portfolios. Concrete portfolios subtype this see <a href="#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a> and <a href="#PortfolioOptimiser.HCPortfolio"><code>HCPortfolio</code></a>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/64002f2101a4810eff2f836e03b9f7b14e8a14d9/src/Portfolio.jl#L1-L6">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PortfolioOptimiser.Portfolio" href="#PortfolioOptimiser.Portfolio"><code>PortfolioOptimiser.Portfolio</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">mutable struct Portfolio{
     # Portfolio characteristics
     ast,
     dat,
@@ -34,6 +34,7 @@
     tkinv,
     tinvopk,
     tinvomk,
+    gst,
     mnak,
     # Benchmark constraints
     to,
@@ -73,10 +74,14 @@
     urvar,
     urdar,
     # Optimisation model inputs
+    ttmu,
     tmu,
+    ttcov,
+    tjlogo,
     tcov,
     tkurt,
     tskurt,
+    tpdf,
     tl2,
     ts2,
     tmuf,
@@ -88,10 +93,7 @@
     tmublf,
     tcovblf,
     trfm,
-    tevar,
-    tedar,
-    trvar,
-    trdar,
+    tz,
     tcovl,
     tcovu,
     tcovmu,
@@ -100,15 +102,19 @@
     tkmu,
     tks,
     topt,
-    trpopt,
-    trrpopt,
-    twcopt,
     tlim,
     tfront,
     tsolv,
     tf,
     toptpar,
     tmod,
+    # Allocation
+    tlp,
+    taopt,
+    tasolv,
+    taoptpar,
+    taf,
+    tamod,
 } &lt;: AbstractPortfolio
     # Portfolio characteristics.
     assets::ast
@@ -144,6 +150,7 @@
     invk::tkinv
     invopk::tinvopk
     invomk::tinvomk
+    gs_threshold::gst
     max_num_assets_kurt::mnak
     # Benchmark constraints.
     turnover::to
@@ -183,10 +190,14 @@
     rvar_u::urvar
     rdar_u::urdar
     # Optimisation model inputs.
+    mu_type::ttmu
     mu::tmu
+    cov_type::ttcov
+    jlogo::tjlogo
     cov::tcov
     kurt::tkurt
     skurt::tskurt
+    posdef_fix::tpdf
     L_2::tl2
     S_2::ts2
     mu_f::tmuf
@@ -216,107 +227,14 @@
     opt_params::toptpar
     fail::tf
     model::tmod
-end</code></pre><pre><code class="language-julia hljs">Portfolio(;
-    # Portfolio characteristics.
-    returns = DataFrame(),
-    ret::Matrix{&lt;:Real} = Matrix{Float64}(undef, 0, 0),
-    timestamps::Vector{&lt;:Dates.AbstractTime} = Vector{Date}(undef, 0),
-    assets = Vector{String}(undef, 0),
-    short::Bool = false,
-    short_u::Real = 0.2,
-    long_u::Real = 1.0,
-    sum_short_long::Real = 1.0,
-    min_number_effective_assets::Integer = 0,
-    max_number_assets::Integer = 0,
-    max_number_assets_factor::Real = 100_000.0,
-    f_returns = DataFrame(),
-    loadings = Matrix{Float64}(undef, 0, 0),
-    # Risk parameters.
-    msv_target = Inf,
-    lpm_target = Inf,
-    alpha_i::Real = 0.0001,
-    alpha::Real = 0.05,
-    a_sim::Integer = 100,
-    beta_i::Union{&lt;:Real, Nothing} = nothing,
-    beta::Union{&lt;:Real, Nothing} = nothing,
-    b_sim::Union{&lt;:Integer, Nothing} = nothing,
-    kappa::Real = 0.3,
-    max_num_assets_kurt::Integer = 0,
-    # Benchmark constraints.
-    turnover::Real = Inf,
-    turnover_weights = Vector{Float64}(undef, 0),
-    kind_tracking_err::Symbol = :Weights,
-    tracking_err::Real = Inf,
-    tracking_err_returns = Vector{Float64}(undef, 0),
-    tracking_err_weights = Vector{Float64}(undef, 0),
-    bl_bench_weights = Vector{Float64}(undef, 0),
-    # Risk and return constraints.
-    a_mtx_ineq = Matrix{Float64}(undef, 0, 0),
-    b_vec_ineq = Vector{Float64}(undef, 0),
-    risk_budget::Union{&lt;:Real, AbstractVector{&lt;:Real}} = Vector{Float64}(undef, 0),
-    mu_l::Real = Inf,
-    dev_u::Real = Inf,
-    mad_u::Real = Inf,
-    sdev_u::Real = Inf,
-    cvar_u::Real = Inf,
-    wr_u::Real = Inf,
-    flpm_u::Real = Inf,
-    slpm_u::Real = Inf,
-    mdd_u::Real = Inf,
-    add_u::Real = Inf,
-    cdar_u::Real = Inf,
-    uci_u::Real = Inf,
-    evar_u::Real = Inf,
-    edar_u::Real = Inf,
-    gmd_u::Real = Inf,
-    rg_u::Real = Inf,
-    rcvar_u::Real = Inf,
-    tg_u::Real = Inf,
-    rtg_u::Real = Inf,
-    owa_u::Real = Inf,
-    owa_w = Vector{Float64}(undef, 0),
-    krt_u::Real = Inf,
-    skrt_u::Real = Inf,
-    rvar_u::Real = Inf,
-    rdar_u::Real = Inf,
-    # Optimisation model inputs.
-    mu = Vector{Float64}(undef, 0),
-    cov = Matrix{Float64}(undef, 0, 0),
-    kurt = Matrix{Float64}(undef, 0, 0),
-    skurt = Matrix{Float64}(undef, 0, 0),
-    L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
-    S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
-    mu_f = Vector{Float64}(undef, 0),
-    cov_f = Matrix{Float64}(undef, 0, 0),
-    mu_fm = Vector{Float64}(undef, 0),
-    cov_fm = Matrix{Float64}(undef, 0, 0),
-    mu_bl = Vector{Float64}(undef, 0),
-    cov_bl = Matrix{Float64}(undef, 0, 0),
-    mu_bl_fm = Vector{Float64}(undef, 0),
-    cov_bl_fm = Matrix{Float64}(undef, 0, 0),
-    returns_fm = Matrix{Float64}(undef, 0, 0),
-    z_evar::Real = Inf,
-    z_edar::Real = Inf,
-    z_rvar::Real = Inf,
-    z_rdar::Real = Inf,
-    # Inputs of Worst Case Optimization Models.
-    cov_l = Matrix{Float64}(undef, 0, 0),
-    cov_u = Matrix{Float64}(undef, 0, 0),
-    cov_mu = Diagonal{Float64}(undef, 0),
-    cov_sigma = Diagonal{Float64}(undef, 0),
-    d_mu = Vector{Float64}(undef, 0),
-    k_mu::Real = Inf,
-    k_sigma::Real = Inf,
-    # Optimal portfolios.
-    optimal::AbstractDict = Dict(),
-    limits = Matrix{Float64}(undef, 0, 0),
-    frontier = Matrix{Float64}(undef, 0, 0),
-    # Solutions.
-    solvers::AbstractDict = Dict(),
-    opt_params::AbstractDict = Dict(),
-    fail::AbstractDict = Dict(),
-    model = JuMP.Model(),
-)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/7702afc22fe98f5751c72a52c44da2afa8c7b2aa/src/Portfolio.jl#L1-L326">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PortfolioOptimiser.HCPortfolio" href="#PortfolioOptimiser.HCPortfolio"><code>PortfolioOptimiser.HCPortfolio</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">mutable struct HCPortfolio{
+    # Allocation
+    latest_prices::tlp
+    alloc_optimal::taopt
+    alloc_solvers::tasolv
+    alloc_params::taoptpar
+    alloc_fail::taf
+    alloc_model::tamod
+end</code></pre><p>Structure for optimising portfolios.</p><p><strong>Fieldnames</strong></p><p><strong>Portfolio characteristics.</strong></p><ul><li><code>assets</code>: <code>N×1</code> vector of assets in the portfolio.</li><li><code>timestamps</code>: <code>T×1</code> vector of timestamps of the returns series.</li><li><code>returns</code>: <code>T×N</code> matrix of the returns series.</li><li><code>short</code>: whether or not to enable short investments (produce negative weights).</li><li><code>short_u</code>: sum of the absolute values of the short (negative) weights.</li><li><code>long_u</code>: sum of the absolute values of the long (positive) weights.</li><li><code>sum_short_long</code>: if shorting is enabled, the maximum value of the sum of the long (positive) weights and short (negative) weights, <code>sum_short_long = long_u - short_u</code>.</li><li><code>min_number_effective_assets</code>: if finite, constraints are added to the optimisations such that at least this amount of assets significantly contribute to the final weights vector.</li><li><code>max_number_assets</code>: if finite, maximum number of assets with non-zero weights in the final weights vector.</li><li><code>max_number_assets_factor</code>: factor to use in the binary decision variable used when <code>max_number_assets</code> is in finite.</li><li><code>f_assets</code>:</li><li><code>f_timestamps</code>:</li><li><code>f_returns</code>:</li><li><code>loadings</code>:</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/64002f2101a4810eff2f836e03b9f7b14e8a14d9/src/Portfolio.jl#L88-L344">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PortfolioOptimiser.HCPortfolio" href="#PortfolioOptimiser.HCPortfolio"><code>PortfolioOptimiser.HCPortfolio</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">mutable struct HCPortfolio{
     ast,
     dat,
     r,
@@ -418,4 +336,4 @@ end</code></pre><pre><code class="language-julia hljs">HCPortfolio(;
     solvers::AbstractDict = Dict(),
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
-)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/7702afc22fe98f5751c72a52c44da2afa8c7b2aa/src/HCPortfolio.jl#L1-L111">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Definitions/">« Definitions</a><a class="docs-footer-nextpage" href="../Asset_statistics/">Asset Statistics »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.17 on <span class="colophon-date" title="Saturday 9 December 2023 18:35">Saturday 9 December 2023</span>. Using Julia version 1.9.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/64002f2101a4810eff2f836e03b9f7b14e8a14d9/src/Portfolio.jl#L1165-L1277">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Definitions/">« Definitions</a><a class="docs-footer-nextpage" href="../Asset_statistics/">Asset Statistics »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.17 on <span class="colophon-date" title="Saturday 9 December 2023 22:17">Saturday 9 December 2023</span>. Using Julia version 1.9.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
