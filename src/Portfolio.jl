@@ -334,13 +334,34 @@ Structure for optimising portfolios.
 - `short_u`: sum of the absolute values of the short (negative) weights.
 - `long_u`: sum of the absolute values of the long (positive) weights.
 - `sum_short_long`: if shorting is enabled, the maximum value of the sum of the long (positive) weights and short (negative) weights, `sum_short_long = long_u - short_u`.
-- `min_number_effective_assets`: if finite, constraints are added to the optimisations such that at least this amount of assets significantly contribute to the final weights vector.
+- `min_number_effective_assets`: if finite, constraints are added to the optimisations such that at least this amount of assets have non-negligible weights in the optimised portfolio.
 - `max_number_assets`: if finite, maximum number of assets with non-zero weights in the final weights vector.
-- `max_number_assets_factor`: factor to use in the binary decision variable used when `max_number_assets` is in finite.
-- `f_assets`:
-- `f_timestamps`:
-- `f_returns`:
-- `loadings`:
+- `max_number_assets_factor`: if `max_number_assets` is finite, factor to use in the binary decision variable.
+- `f_assets`: factor assets for use in factor model optimisations.
+- `f_timestamps`: factor timestamps for use in factor model optimisations.
+- `f_returns`: factor returns for use in factor model optimisations.
+- `loadings`: loadings matrix for use in factor model optimisations.
+## Risk Parameters
+- `msv_target`:
+- `lpm_target`:
+- `alpha_i`:
+- `alpha`:
+- `a_sim`:
+- `at`:
+- `beta_i`:
+- `beta`:
+- `b_sim`:
+- `kappa`:
+- `invat`:
+- `ln_k`:
+- `opk`:
+- `omk`:
+- `invkappa2`:
+- `invk`:
+- `invopk`:
+- `invomk`:
+- `gs_threshold`:
+- `max_num_assets_kurt`:
 """
 mutable struct Portfolio{
     # Portfolio characteristics
