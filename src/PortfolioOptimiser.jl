@@ -22,12 +22,7 @@ include("Definitions.jl")
 include("DBHTs.jl")
 include("Constraint_functions.jl")
 include("OWA.jl")
-include("Codependence.jl") # Checking types
-include("Aux_functions.jl")
-
 include("Portfolio.jl")
-include("HCPortfolio.jl")
-
 include("Asset_statistics.jl")
 include("Risk_measures.jl")
 include("Portfolio_risk_setup.jl")

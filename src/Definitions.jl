@@ -1,92 +1,5 @@
 """
 ```julia
-AbstractPortfolio
-```
-Abstract type for portfolios. Concrete portfolios subtype this see [`Portfolio`](@ref) and [`HCPortfolio`](@ref).
-"""
-abstract type AbstractPortfolio end
-
-"""
-```julia
-RiskMeasures = (
-    :SD,
-    :MAD,
-    :SSD,
-    :FLPM,
-    :SLPM,
-    :WR,
-    :CVaR,
-    :EVaR,
-    :RVaR,
-    :MDD,
-    :ADD,
-    :CDaR,
-    :UCI,
-    :EDaR,
-    :RDaR,
-    :Kurt,
-    :SKurt,
-    :GMD,
-    :RG,
-    :RCVaR,
-    :TG,
-    :RTG,
-    :OWA,
-)
-```
-Available risk measures for `:Trad` and `:RP` type (see [`PortTypes`](@ref)) of [`Portfolio`](@ref).
-- `:SD` = standard deviation ([`SD`](@ref)).
-- `:MAD` = max absolute deviation ([`MAD`](@ref)).
-- `:SSD` = semi standard deviation ([`SSD`](@ref)).
-- `:FLPM` = first lower partial moment (omega ratio) ([`FLPM`](@ref)).
-- `:SLPM` = second lower partial moment (sortino ratio) ([`SLPM`](@ref)).
-- `:WR` = worst realisation ([`WR`](@ref)).
-- `:CVaR` = conditional value at risk ([`CVaR`](@ref)).
-- `:EVaR` = entropic value at risk ([`EVaR`](@ref)).
-- `:RVaR` = relativistic value at risk ([`RVaR`](@ref)).
-- `:MDD` = maximum drawdown of uncompounded cumulative returns ([`MDD_abs`](@ref)).
-- `:ADD` = average drawdown of uncompounded cumulative returns ([`ADD_abs`](@ref)).
-- `:CDaR` = conditional drawdown at risk of uncompounded cumulative returns ([`CDaR_abs`](@ref)).
-- `:UCI` = ulcer index of uncompounded cumulative returns ([`UCI_abs`](@ref)).
-- `:EDaR` = entropic drawdown at risk of uncompounded cumulative returns ([`EDaR_abs`](@ref)).
-- `:RDaR` = relativistic drawdown at risk of uncompounded cumulative returns ([`RDaR_abs`](@ref)).
-- `:Kurt` = square root kurtosis ([`Kurt`](@ref)).
-- `:SKurt` = square root semi-kurtosis ([`SKurt`](@ref)).
-- `:GMD` = gini mean difference ([`GMD`](@ref)).
-- `:RG` = range of returns ([`RG`](@ref)).
-- `:RCVaR` = range of conditional value at risk ([`RCVaR`](@ref)).
-- `:TG` = tail gini ([`TG`](@ref)).
-- `:RTG` = range of tail gini ([`RTG`](@ref)).
-- `:OWA` = ordered weight array (generic OWA weights) ([`OWA`](@ref)).
-"""
-const RiskMeasures = (
-    :SD,    # _mv
-    :MAD,   # _mad
-    :SSD,   # _mad
-    :FLPM,  # _lpm
-    :SLPM,  # _lpm
-    :WR,    # _wr
-    :CVaR,  # _var
-    :EVaR,  # _var
-    :RVaR,  # _var
-    :MDD,   # _dar
-    :ADD,   # _dar
-    :CDaR,  # _dar
-    :UCI,   # _dar
-    :EDaR,  # _dar
-    :RDaR,  # _dar
-    :Kurt,  # _krt
-    :SKurt, # _krt
-    :GMD,   # _owa
-    :RG,    # _owa
-    :RCVaR, # _owa
-    :TG,    # _owa
-    :RTG,   # _owa
-    :OWA,   # _owa
-)
-
-"""
-```julia
 KellyRet = (:None, :Approx, :Exact)
 ```
 Available types of Kelly returns for [`Portfolio`](@ref).
@@ -395,95 +308,6 @@ const KindBootstrap = (:Stationary, :Circular, :Moving)
 
 """
 ```julia
-HRRiskMeasures = (
-    :SD,
-    :MAD,
-    :SSD,
-    :FLPM,
-    :SLPM,
-    :WR,
-    :CVaR,
-    :EVaR,
-    :RVaR,
-    :MDD,
-    :ADD,
-    :CDaR,
-    :UCI,
-    :EDaR,
-    :RDaR,
-    :Kurt,
-    :SKurt,
-    :GMD,
-    :RG,
-    :RCVaR,
-    :TG,
-    :RTG,
-    :OWA,
-    :Variance,
-    :Equal,
-    :VaR,
-    :DaR,
-    :DaR_r,
-    :MDD_r,
-    :ADD_r,
-    :CDaR_r,
-    :EDaR_r,
-    :RDaR_r,
-)
-```
-Available risk measures for optimisations of [`HCPortfolio`](@ref).
-- `:SD` = standard deviation ([`SD`](@ref)).
-- `:MAD` = max absolute deviation ([`MAD`](@ref)).
-- `:SSD` = semi standard deviation ([`SSD`](@ref)).
-- `:FLPM` = first lower partial moment (Omega ratio) ([`FLPM`](@ref)).
-- `:SLPM` = second lower partial moment (Sortino ratio) ([`SLPM`](@ref)).
-- `:WR` = worst realisation ([`WR`](@ref)).
-- `:CVaR` = conditional value at risk ([`CVaR`](@ref)).
-- `:EVaR` = entropic value at risk ([`EVaR`](@ref)).
-- `:RVaR` = relativistic value at risk ([`RVaR`](@ref)).
-- `:MDD` = maximum drawdown of uncompounded cumulative returns (Calmar ratio) ([`MDD_abs`](@ref)).
-- `:ADD` = average drawdown of uncompounded cumulative returns ([`ADD_abs`](@ref)).
-- `:CDaR` = conditional drawdown at risk of uncompounded cumulative returns ([`CDaR_abs`](@ref)).
-- `:UCI` = ulcer index of uncompounded cumulative returns ([`UCI_abs`](@ref)).
-- `:EDaR` = entropic drawdown at risk of uncompounded cumulative returns ([`EDaR_abs`](@ref)).
-- `:RDaR` = relativistic drawdown at risk of uncompounded cumulative returns ([`RDaR_abs`](@ref)).
-- `:Kurt` = square root kurtosis ([`Kurt`](@ref)).
-- `:SKurt` = square root semi-kurtosis ([`SKurt`](@ref)).
-- `:GMD` = gini mean difference ([`GMD`](@ref)).
-- `:RG` = range of returns ([`RG`](@ref)).
-- `:RCVaR` = range of conditional value at risk ([`RCVaR`](@ref)).
-- `:TG` = tail gini ([`TG`](@ref)).
-- `:RTG` = range of tail gini ([`RTG`](@ref)).
-- `:OWA` = ordered weight array (generic OWA weights) ([`OWA`](@ref)).
-- `:Variance` = variance ([`Variance`](@ref)).
-- `:Equal` = equal risk contribution, `1/N` where N is the number of assets.
-- `:VaR` = value at risk ([`VaR`](@ref)).
-- `:DaR` = drawdown at risk of uncompounded cumulative returns ([`DaR_abs`](@ref)).
-- `:DaR_r` = drawdown at risk of compounded cumulative returns ([`DaR_rel`](@ref)).
-- `:MDD_r` = maximum drawdown of compounded cumulative returns ([`MDD_rel`](@ref)).
-- `:ADD_r` = average drawdown of compounded cumulative returns ([`ADD_rel`](@ref)).
-- `:CDaR_r` = conditional drawdown at risk of compounded cumulative returns ([`CDaR_rel`](@ref)).
-- `:UCI_r` = ulcer index of compounded cumulative returns ([`UCI_rel`](@ref)).
-- `:EDaR_r` = entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`](@ref)).
-- `:RDaR_r` = relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`](@ref)).
-"""
-const HRRiskMeasures = (
-    RiskMeasures...,
-    :Variance,
-    :Equal,
-    :VaR,
-    :DaR,
-    :DaR_r,
-    :MDD_r,
-    :ADD_r,
-    :CDaR_r,
-    :UCI_r,
-    :EDaR_r,
-    :RDaR_r,
-)
-
-"""
-```julia
 HCPortTypes = (:HRP, :HERC, :NCO)
 ```
 Available optimisation types for [`HCPortfolio`](@ref).
@@ -726,9 +550,7 @@ const RiskMeasureNames = (
     OWA = "Ordered Weight Average",
 )
 
-export AbstractPortfolio,
-    RiskMeasures,
-    KellyRet,
+export KellyRet,
     TrackingErrKinds,
     ObjFuncs,
     ValidTermination,
@@ -740,7 +562,6 @@ export AbstractPortfolio,
     KindBootstrap,
     EllipseTypes,
     BoxTypes,
-    HRRiskMeasures,
     HCPortTypes,
     MuTypes,
     CovTypes,

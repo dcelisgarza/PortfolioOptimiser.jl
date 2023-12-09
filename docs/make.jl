@@ -23,7 +23,11 @@ import PortfolioOptimiser.distance_wei,
     PortfolioOptimiser._optimize_owa,
     PortfolioOptimiser._crra_method,
     PortfolioOptimiser.OWAMethods,
-    # Codependence
+    # Portfolio
+    PortfolioOptimiser.AbstractPortfolio,
+    PortfolioOptimiser.RiskMeasures,
+    PortfolioOptimiser.HRRiskMeasures,
+    # Asset Statistics
     PortfolioOptimiser.BinTypes
 
 DocMeta.setdocmeta!(

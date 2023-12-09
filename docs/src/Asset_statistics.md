@@ -1,5 +1,7 @@
 # Asset Statistics
 
+## Public API
+
 ```@docs
 asset_statistics!
 wc_statistics!
@@ -9,4 +11,10 @@ black_litterman_factor_satistics!
 mean_vec
 mu_estimator
 covar_mtx
+```
+
+## Private API
+
+```@docs
+BinTypes
 ```
