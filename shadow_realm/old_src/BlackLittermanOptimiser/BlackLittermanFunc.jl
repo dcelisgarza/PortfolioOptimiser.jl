@@ -32,7 +32,7 @@ end
 
 function idzorek(view_confidence, cov_mtx, Q, P, tau)
     lq = length(Q)
-    view_omegas = Vector{Float64}(undef, lq)
+    view_omegas = Vector{eltype(cov_mtx)}(undef, lq)
 
     for i in 1:lq
         conf = view_confidence[i]

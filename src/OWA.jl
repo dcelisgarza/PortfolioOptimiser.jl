@@ -12,7 +12,7 @@ Computes the Gini Mean Difference (GMD) of a returns series [^OWA].
     [Cajas, Dany, OWA Portfolio Optimization: A Disciplined Convex Programming Framework (December 18, 2021). Available at SSRN: https://ssrn.com/abstract=3988927 or http://dx.doi.org/10.2139/ssrn.3988927](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3988927)
 """
 function owa_gmd(T::Integer)
-    w = Vector(undef, T)
+    w = Vector{typeof(1 / T)}(undef, T)
     for i in 1:T
         w[i] = 2 * i - 1 - T
     end
@@ -345,7 +345,8 @@ Calculates the OWA weights of the k'th linear moment (l-moment) of a returns ser
     [Cajas, Dany, Higher Order Moment Portfolio Optimization with L-Moments (March 19, 2023). Available at SSRN: https://ssrn.com/abstract=4393155 or http://dx.doi.org/10.2139/ssrn.4393155](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4393155)
 """
 function owa_l_moment(T::Integer, k::Integer = 2)
-    w = Vector(undef, T)
+    w = Vector{typeof(1 / (T * k))}(undef, T)
+    T, k = promote(T, k)
     for i in 1:T
         a = 0.0
         for j in 0:(k - 1)
@@ -358,7 +359,6 @@ function owa_l_moment(T::Integer, k::Integer = 2)
         a *= 1 / (k * binomial(T, k))
         w[i] = a
     end
-    w = 1 / convert(typeof(T), 1) * w
 
     return w
 end
@@ -397,7 +397,7 @@ Compute the OWA weights for the convex risk measure considering higher order L-m
     - `:SD`: Minimum Square Distance.
 - `g`: the risk aversion coefficient.
 - `max_phi`: maximum weight constraint of the L-moments.
-- `solvers`: `Dict` or `NamedTuple` with the keys:
+- `solvers`: `Dict` or `NamedTuple` with key value pairs where the values are other `Dict`s or `NamedTuple`s, e.g. `Dict(solver_key => Dict(...))`, the keys of the sub-dictionary/tuple must be:
     - `:solver`: which contains the JuMP optimiser.
     - `:params`: for the solver-specific parameters.
 # Outputs
@@ -420,7 +420,7 @@ function owa_l_moment_crm(
     )
 
     rg = 2:k
-    ws = Matrix{typeof(max_phi)}(undef, T, length(rg))
+    ws = Matrix{typeof(1 / (T * k))}(undef, T, length(rg))
     for i in rg
         wi = (-1)^i * owa_l_moment(T, i)
         ws[:, i - 1] .= wi
@@ -445,8 +445,6 @@ function owa_l_moment_crm(
             @variable(model, x[1:T])
             @constraint(model, sum(x) == 1)
             @constraint(model, [t; ones(T); x] in MOI.RelativeEntropyCone(2 * T + 1))
-            # @constraint(model, x .>= theta)
-            # @constraint(model, x .>= -theta)
             @constraint(model, [i = 1:T], [x[i]; theta[i]] in MOI.NormOneCone(2))
             @objective(model, Max, -t)
         elseif method == :SS

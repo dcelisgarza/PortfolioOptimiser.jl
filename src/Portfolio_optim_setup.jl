@@ -509,9 +509,9 @@ end
 
 function _setup_model_class(portfolio, class, hist)
     mu, sigma, returns = (
-        Vector{Float64}(undef, 0),
-        Matrix{Float64}(undef, 0, 0),
-        Matrix{Float64}(undef, 0, 0),
+        Vector{eltype(portfolio.mu)}(undef, 0),
+        Matrix{eltype(portfolio.cov)}(undef, 0, 0),
+        Matrix{eltype(portfolio.returns)}(undef, 0, 0),
     )
 
     class != :Classic && @assert(hist ∈ BLHist, "hist = $hist, must be one of $BLHist")
@@ -826,8 +826,8 @@ function efficient_frontier(
 
     rmf = ur[rm]
 
-    frontier = Vector{Float64}(undef, 0)
-    srisk = Vector{Float64}(undef, 0)
+    frontier = Vector{typeof(risk1)}(undef, 0)
+    srisk = Vector{typeof(risk1)}(undef, 0)
 
     i = 0
     for (j, r) in enumerate(risks)

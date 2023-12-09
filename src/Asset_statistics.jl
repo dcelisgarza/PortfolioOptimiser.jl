@@ -1120,8 +1120,8 @@ function wc_statistics!(
         sigma = cov(returns)
     end
 
-    cov_l = Matrix{Float64}(undef, 0, 0)
-    cov_u = Matrix{Float64}(undef, 0, 0)
+    cov_l = Matrix{eltype(returns)}(undef, 0, 0)
+    cov_u = Matrix{eltype(returns)}(undef, 0, 0)
 
     if calc_box
         if box == :Stationary || box == :Circular || box == :Moving
