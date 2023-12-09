@@ -16,7 +16,6 @@ EllipseTypes
 BoxTypes
 KindBootstrap
 BLFMType
-BinTypes
 HRRiskMeasures
 HCPortTypes
 CodepTypes

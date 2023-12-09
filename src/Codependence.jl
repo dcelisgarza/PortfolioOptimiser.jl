@@ -73,10 +73,40 @@ end
 
 """
 ```julia
-mut_var_info_mtx(x, bins_info = :KN, normed = true)
+BinTypes = (:KN, :FD, :SC, :HGR)
 ```
+Methods for calculating optimal bin widths for the mutual and variational information matrices computed by [`mut_var_info_mtx`](@ref).
+- `:KN`: Knuth's choice.
+- `:FD`: Freedman-Diaconis' choice.
+- `:SC`: Schotts' choice.
+- `:HGR`: Hacine-Gharbi and Ravier's choice.
 """
-function mut_var_info_mtx(x, bins_info = :KN, normed = true)
+const BinTypes = (:KN, :FD, :SC, :HGR)
+
+"""
+```julia
+mut_var_info_mtx(
+    x::AbstractMatrix{<:Real},
+    bins_info::Union{Symbol, <:Integer} = :KN,
+    normed::Bool = true,
+)
+```
+Compute the mutual information and variation of information matrices.
+# Inputs
+- `x`: `T×N` array containing the returns series of the assets. `T` is the number of observations and `N` the number of assets.
+- `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics. Can take on an integer value or the following values:
+    - An integer value explicitly defines the number of bins.
+    - A choice of optimal bin width selection algorithms from [`BinTypes`](@ref).
+        - `:KN`: Knuth's choice.
+        - `:FD`: Freedman-Diaconis' choice.
+        - `:SC`: Schotts' choice.
+        - `:HGR`: Hacine-Gharbi and Ravier's choice.
+"""
+function mut_var_info_mtx(
+    x::AbstractMatrix{<:Real},
+    bins_info::Union{Symbol, <:Integer} = :KN,
+    normed::Bool = true,
+)
     @assert(
         bins_info ∈ BinTypes || isa(bins_info, Int),
         "bins_info = $bins_info, has to either be in $BinTypes, or an integer value"

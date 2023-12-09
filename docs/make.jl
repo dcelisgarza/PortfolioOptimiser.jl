@@ -22,7 +22,9 @@ import PortfolioOptimiser.distance_wei,
     # OWA
     PortfolioOptimiser._optimize_owa,
     PortfolioOptimiser._crra_method,
-    PortfolioOptimiser.OWAMethods
+    PortfolioOptimiser.OWAMethods,
+    # Codependence
+    PortfolioOptimiser.BinTypes
 
 DocMeta.setdocmeta!(
     PortfolioOptimiser,

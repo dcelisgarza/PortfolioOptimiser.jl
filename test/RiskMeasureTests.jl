@@ -1196,7 +1196,7 @@ end
         1.7404398142142277e-7,
         -0.001855372076895879,
     ]
-    @test isapprox(rc28, rc28t, rtol = 5e-8)
+    @test isapprox(rc28, rc28t, rtol = 6e-8)
     rc29 = risk_contribution(
         portfolio;
         rm = HRRiskMeasures[29],

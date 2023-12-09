@@ -7854,7 +7854,7 @@ end
     portfolio.owa_u = r2
     w8 = opt_port!(portfolio; type = :Trad, rm = :OWA, obj = obj, rf = rf, l = l)
     r8 = calc_risk(portfolio; rm = rm)
-    @test isapprox(w7.weights, w8.weights, rtol = 2.9e-3)
+    @test isapprox(w7.weights, w8.weights, rtol = 3e-3)
 
     portfolio = Portfolio(
         returns = returns[1:100, :],

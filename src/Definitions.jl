@@ -395,18 +395,6 @@ const KindBootstrap = (:Stationary, :Circular, :Moving)
 
 """
 ```julia
-BinTypes = (:KN, :FD, :SC, :HGR)
-```
-Methods for calculating bin widths for mutual and variational information matrices computed by [`mut_var_info_mtx`](@ref).
-- `:KN`: Knuth's choice.
-- `:FD`: Freedman-Diaconis' choice.
-- `:SC`: Schotts' choice.
-- `:HGR`: Hacine-Gharbi and Ravier's choice.
-"""
-const BinTypes = (:KN, :FD, :SC, :HGR)
-
-"""
-```julia
 HRRiskMeasures = (
     :SD,
     :MAD,
@@ -752,7 +740,6 @@ export AbstractPortfolio,
     KindBootstrap,
     EllipseTypes,
     BoxTypes,
-    BinTypes,
     HRRiskMeasures,
     HCPortTypes,
     MuTypes,
