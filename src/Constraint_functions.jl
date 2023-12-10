@@ -589,9 +589,9 @@ function rp_constraints(
         classes = names(asset_classes)
         A = DataFrame(a = asset_classes[!, class_col])
         if isa(class_col, String) || isa(class_col, Symbol)
-            rename!(A, [class_col])
+            DataFrames.rename!(A, [class_col])
         elseif isa(class_col, Int)
-            rename!(A, [classes[class_col]])
+            DataFrames.rename!(A, [classes[class_col]])
         end
 
         col = names(A)[1]

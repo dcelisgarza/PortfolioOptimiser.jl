@@ -866,6 +866,16 @@ function Portfolio(;
         f_returns = f_ret
     end
 
+    # at = alpha * size(returns, 1)
+    # invat = 1 / at
+    # ln_k = (invat^kappa - invat^(-kappa)) / (2 * kappa)
+    # opk = 1 + kappa
+    # omk = 1 - kappa
+    # invkappa2 = 1 / (2 * kappa)
+    # invk = 1 / kappa
+    # invopk = 1 / opk
+    # invomk = 1 / omk
+
     return Portfolio{# Portfolio characteristics.
         typeof(assets),
         typeof(timestamps),
@@ -1104,6 +1114,15 @@ function Portfolio(;
         alloc_fail,
         alloc_model,
     )
+end
+
+function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
+    if sym == :short_u || sym == :long_u || sym == :short
+        setfield!(obj, sym, val)
+        setfield!(obj, :sum_short_long, obj.short ? obj.long_u - obj.short_u : 1.0)
+    elseif sym == :sum_short_long
+        throw(ArgumentError("$sym is automatically calculated from other fields"))
+    end
 end
 
 """
