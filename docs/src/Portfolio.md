@@ -1,13 +1,13 @@
 # Portfolio Optimisation
 
-## External API
+## Public API
 
 ```@docs
 Portfolio
 HCPortfolio
 ```
 
-## Internal API
+## Private API
 
 ```@docs
 AbstractPortfolio

@@ -607,11 +607,7 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
 end
 
 function _owa_w_choice(owa_w, T)
-    return if isempty(owa_w)
-        owa_gmd(T) / 2
-    else
-        owa_w
-    end
+    return isempty(owa_w) ? owa_gmd(T) / 2 : owa_w
 end
 
 function _owa_setup(portfolio, rm, T, returns, obj, type)

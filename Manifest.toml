@@ -2,7 +2,7 @@
 
 julia_version = "1.9.4"
 manifest_format = "2.0"
-project_hash = "0a9b0ff9a6478561d832e6cbd585123100d4090b"
+project_hash = "0106291c221c7fc2caf7d3c4ff22f25c9af1dc16"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1257,6 +1257,12 @@ version = "0.1.1"
 [[deps.Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[[deps.TimeSeries]]
+deps = ["Dates", "DelimitedFiles", "DocStringExtensions", "PrettyTables", "RecipesBase", "Reexport", "Statistics", "Tables"]
+git-tree-sha1 = "bd810d088a8ab8091172658a8d33cbc7699edc1a"
+uuid = "9e3dc215-6440-5c97-bce1-76c03772f85e"
+version = "0.24.1"
 
 [[deps.TranscodingStreams]]
 git-tree-sha1 = "1fbeaaca45801b4ba17c251dd8603ef24801dd84"

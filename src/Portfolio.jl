@@ -570,9 +570,9 @@ end
 Portfolio(;
     # Portfolio characteristics.
     returns::DataFrame = DataFrame(),
-    ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
-    assets = Vector{String}(undef, 0),
+    ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    timestamps::AbstractVector = Vector{Date}(undef, 0),
+    assets::AbstractVector = Vector{String}(undef, 0),
     short::Bool = false,
     short_u::Real = 0.2,
     long_u::Real = 1.0,
@@ -580,14 +580,14 @@ Portfolio(;
     min_number_effective_assets::Integer = 0,
     max_number_assets::Integer = 0,
     max_number_assets_factor::Real = 100_000.0,
-    f_returns = DataFrame(),
-    f_ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    f_timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
-    f_assets = Vector{String}(undef, 0),
-    loadings = Matrix{Float64}(undef, 0, 0),
+    f_returns::DataFrame = DataFrame(),
+    f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    f_timestamps::AbstractVector = Vector{Date}(undef, 0),
+    f_assets::AbstractVector = Vector{String}(undef, 0),
+    loadings::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     # Risk parameters.
-    msv_target::Union{<:Real, AbstractVector{<:Real}, Nothing} = Inf,
-    lpm_target::Union{<:Real, AbstractVector{<:Real}, Nothing} = Inf,
+    msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
+    lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
@@ -720,6 +720,7 @@ Portfolio(;
 """
 function Portfolio(;
     # Portfolio characteristics.
+    prices::TimeArray = TimeArray(TimeType[], []),
     returns::DataFrame = DataFrame(),
     ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     timestamps::AbstractVector = Vector{Date}(undef, 0),
@@ -731,6 +732,7 @@ function Portfolio(;
     min_number_effective_assets::Integer = 0,
     max_number_assets::Integer = 0,
     max_number_assets_factor::Real = 100_000.0,
+    f_prices::TimeArray = TimeArray(TimeType[], []),
     f_returns::DataFrame = DataFrame(),
     f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     f_timestamps::AbstractVector = Vector{Date}(undef, 0),
@@ -750,15 +752,15 @@ function Portfolio(;
     max_num_assets_kurt::Integer = 0,
     # Benchmark constraints.
     turnover::Real = Inf,
-    turnover_weights = Vector{Float64}(undef, 0),
+    turnover_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     kind_tracking_err::Symbol = :Weights,
     tracking_err::Real = Inf,
-    tracking_err_returns = Vector{Float64}(undef, 0),
-    tracking_err_weights = Vector{Float64}(undef, 0),
-    bl_bench_weights = Vector{Float64}(undef, 0),
+    tracking_err_returns::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Risk and return constraints.
-    a_mtx_ineq = Matrix{Float64}(undef, 0, 0),
-    b_vec_ineq = Vector{Float64}(undef, 0),
+    a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     risk_budget::Union{<:Real, AbstractVector{<:Real}} = Vector{Float64}(undef, 0),
     mu_l::Real = Inf,
     dev_u::Real = Inf,
@@ -790,28 +792,28 @@ function Portfolio(;
     mu = Vector{Float64}(undef, 0),
     cov_type::Symbol = :Full,
     jlogo::Bool = false,
-    cov = Matrix{Float64}(undef, 0, 0),
-    kurt = Matrix{Float64}(undef, 0, 0),
-    skurt = Matrix{Float64}(undef, 0, 0),
+    cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
-    L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
-    S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
-    mu_f = Vector{Float64}(undef, 0),
-    cov_f = Matrix{Float64}(undef, 0, 0),
-    mu_fm = Vector{Float64}(undef, 0),
-    cov_fm = Matrix{Float64}(undef, 0, 0),
-    mu_bl = Vector{Float64}(undef, 0),
-    cov_bl = Matrix{Float64}(undef, 0, 0),
-    mu_bl_fm = Vector{Float64}(undef, 0),
-    cov_bl_fm = Matrix{Float64}(undef, 0, 0),
-    returns_fm = Matrix{Float64}(undef, 0, 0),
+    L_2::AbstractMatrix = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
+    S_2::AbstractMatrix = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
+    mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    cov_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    mu_bl::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    cov_bl::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    mu_bl_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    cov_bl_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    returns_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     z::AbstractDict = Dict(),
     # Inputs of Worst Case Optimization Models.
-    cov_l = Matrix{Float64}(undef, 0, 0),
-    cov_u = Matrix{Float64}(undef, 0, 0),
-    cov_mu = Diagonal{Float64}(undef, 0),
-    cov_sigma = Diagonal{Float64}(undef, 0),
-    d_mu = Vector{Float64}(undef, 0),
+    cov_l::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    cov_u::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    cov_mu::AbstractMatrix{<:Real} = Diagonal{Float64}(undef, 0),
+    cov_sigma::AbstractMatrix{<:Real} = Diagonal{Float64}(undef, 0),
+    d_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     k_mu::Real = Inf,
     k_sigma::Real = Inf,
     # Optimal portfolios.
@@ -824,13 +826,18 @@ function Portfolio(;
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
     # Allocation.
-    latest_prices = Vector{Float64}(undef, 0),
+    latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     alloc_optimal::AbstractDict = Dict(),
     alloc_solvers::AbstractDict = Dict(),
     alloc_params::AbstractDict = Dict(),
     alloc_fail::AbstractDict = Dict(),
     alloc_model::AbstractDict = Dict(),
 )
+    if !isempty(prices)
+        returns = dropmissing!(DataFrame(percentchange(prices)))
+        latest_prices = Vector(returns[end, setdiff(names(returns), ("timestamp",))])
+    end
+
     if !isempty(returns)
         assets = setdiff(names(returns), ("timestamp",))
         timestamps = returns[!, "timestamp"]
@@ -841,6 +848,10 @@ function Portfolio(;
             "each column of returns must correspond to an asset"
         )
         returns = ret
+    end
+
+    if !isempty(f_prices)
+        f_returns = dropmissing!(DataFrame(percentchange(f_prices)))
     end
 
     if isa(f_returns, DataFrame) && !isempty(f_returns)
@@ -1257,8 +1268,6 @@ mutable struct HCPortfolio{
 end
 ```
 
-
-
 ```julia
 HCPortfolio(;
     # Portfolio characteristics.
@@ -1388,6 +1397,7 @@ end
 
 function HCPortfolio(;
     # Portfolio characteristics.
+    prices::TimeArray = TimeArray(TimeType[], []),
     returns = DataFrame(),
     ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
@@ -1432,6 +1442,11 @@ function HCPortfolio(;
     alloc_fail::AbstractDict = Dict(),
     alloc_model::AbstractDict = Dict(),
 )
+    if !isempty(prices)
+        returns = dropmissing!(DataFrame(percentchange(prices)))
+        latest_prices = Vector(returns[end, setdiff(names(returns), ("timestamp",))])
+    end
+
     if isa(returns, DataFrame) && !isempty(returns)
         assets = setdiff(names(returns), ("timestamp",))
         timestamps = returns[!, "timestamp"]

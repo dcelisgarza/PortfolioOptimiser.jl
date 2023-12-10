@@ -57,7 +57,6 @@ makedocs(;
         "Portfolio Optimisation" => "Portfolio.md",
         "API" => [
             "Definitions" => "Definitions.md",
-            "Types" => "Types.md",
             "Asset Statistics" => "Asset_statistics.md",
         ],
         "Index" => "idx.md",

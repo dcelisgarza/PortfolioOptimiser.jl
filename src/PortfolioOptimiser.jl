@@ -16,7 +16,8 @@ using AverageShiftedHistograms,
     Random,
     SparseArrays,
     Statistics,
-    StatsBase
+    StatsBase,
+    TimeSeries
 
 include("Definitions.jl")
 include("DBHTs.jl")
