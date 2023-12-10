@@ -68,12 +68,12 @@ function plot_risk_contribution(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
-    beta_i::Union{<:Real, Nothing} = nothing,
-    beta::Union{<:Real, Nothing} = nothing,
-    b_sim::Union{<:Real, Nothing} = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
     di::Real = 1e-6,
     kappa::Real = 0.3,
-    owa_w::AbstractVector = Vector{Float64}(undef, 0),
+    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     solvers::Union{<:AbstractDict, Nothing} = nothing,
     # Plot args
     percentage::Bool = false,
@@ -185,7 +185,8 @@ function plot_risk_contribution(
     type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
     rm::Symbol = :SD,
     rf::Real = 0.0,
-    owa_w = isa(portfolio, Portfolio) ? portfolio.owa_w : Vector{Float64}(undef, 0),
+    owa_w::AbstractVector{<:Real} = isa(portfolio, Portfolio) ? portfolio.owa_w :
+                                    Vector{Float64}(undef, 0),
     percentage::Bool = false,
     erc_line::Bool = true,
     t_factor = 252,
@@ -222,7 +223,7 @@ end
 function plot_frontier(
     frontier;
     alpha::Real = 0.05,
-    beta::Union{<:Real, Nothing} = nothing,
+    beta::Real = Inf,
     kappa::Real = 0.3,
     returns::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
     t_factor = 252,
@@ -236,7 +237,7 @@ function plot_frontier(
 )
     @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
 
-    isnothing(beta) && (beta = alpha)
+    isinf(beta) && (beta = alpha)
 
     risks = copy(frontier[rm][:risk])
     weights = Matrix(frontier[rm][:weights][!, 2:end])
@@ -333,7 +334,7 @@ end
 function plot_frontier_area(
     frontier;
     alpha::Real = 0.05,
-    beta::Union{<:Real, Nothing} = nothing,
+    beta::Real = Inf,
     kappa::Real = 0.3,
     rm = :SD,
     t_factor = 252,
@@ -344,7 +345,7 @@ function plot_frontier_area(
     risks = copy(frontier[rm][:risk])
     assets = reshape(frontier[rm][:weights][!, "tickers"], 1, :)
     weights = transpose(Matrix(frontier[rm][:weights][!, 2:end]))
-    isnothing(beta) && (beta = alpha)
+    isinf(beta) && (beta = alpha)
 
     if rm ∉ (:MDD, :ADD, :CDaR, :EDaR, :RDaR, :UCI)
         risks .*= sqrt(t_factor)
@@ -636,14 +637,14 @@ function plot_range(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
-    beta_i = nothing,
-    beta = nothing,
-    b_sim = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
     theme = :Set1_5,
     kwargs_h = (;),
     kwargs_risks = (;),
 )
-    isnothing(beta) && (beta = alpha)
+    isinf(beta) && (beta = alpha)
 
     ret = returns * w * 100
 

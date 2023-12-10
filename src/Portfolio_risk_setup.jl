@@ -68,8 +68,7 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
 
     abs_dev =
         if (isa(msv_target, Real) && isinf(msv_target)) ||
-           isempty(msv_target) ||
-           isnothing(msv_target)
+           (isa(msv_target, AbstractVector) && isempty(msv_target))
             returns .- transpose(mu)
         elseif isa(msv_target, Real) && isfinite(msv_target)
             returns .- msv_target
@@ -125,8 +124,7 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
 
     lpm_t =
         if (isa(lpm_target, Real) && isinf(lpm_target)) ||
-           isempty(lpm_target) ||
-           isnothing(lpm_target)
+           (isa(lpm_target, AbstractVector) && isempty(lpm_target))
             rf
         elseif isa(lpm_target, Real) && isfinite(lpm_target)
             lpm_target
@@ -611,10 +609,8 @@ end
 function _owa_w_choice(owa_w, T)
     return if isempty(owa_w)
         owa_gmd(T) / 2
-    elseif isa(owa_w, Vector)
-        owa_w
     else
-        fill(1 / T, T)
+        owa_w
     end
 end
 

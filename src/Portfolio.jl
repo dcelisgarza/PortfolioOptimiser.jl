@@ -327,41 +327,6 @@ end
 Structure for optimising portfolios.
 # Fieldnames
 ## Portfolio characteristics.
-- `assets`: `N×1` vector of assets in the portfolio.
-- `timestamps`: `T×1` vector of timestamps of the returns series.
-- `returns`: `T×N` matrix of the returns series.
-- `short`: whether or not to enable short investments (produce negative weights).
-- `short_u`: sum of the absolute values of the short (negative) weights.
-- `long_u`: sum of the absolute values of the long (positive) weights.
-- `sum_short_long`: if shorting is enabled, the maximum value of the sum of the long (positive) weights and short (negative) weights, `sum_short_long = long_u - short_u`.
-- `min_number_effective_assets`: if finite, constraints are added to the optimisations such that at least this amount of assets have non-negligible weights in the optimised portfolio.
-- `max_number_assets`: if finite, maximum number of assets with non-zero weights in the final weights vector.
-- `max_number_assets_factor`: if `max_number_assets` is finite, factor to use in the binary decision variable.
-- `f_assets`: factor assets for use in factor model optimisations.
-- `f_timestamps`: factor timestamps for use in factor model optimisations.
-- `f_returns`: factor returns for use in factor model optimisations.
-- `loadings`: loadings matrix for use in factor model optimisations.
-## Risk Parameters
-- `msv_target`:
-- `lpm_target`:
-- `alpha_i`:
-- `alpha`:
-- `a_sim`:
-- `at`:
-- `beta_i`:
-- `beta`:
-- `b_sim`:
-- `kappa`:
-- `invat`:
-- `ln_k`:
-- `opk`:
-- `omk`:
-- `invkappa2`:
-- `invk`:
-- `invopk`:
-- `invomk`:
-- `gs_threshold`:
-- `max_num_assets_kurt`:
 """
 mutable struct Portfolio{
     # Portfolio characteristics
@@ -604,7 +569,7 @@ end
 ```julia
 Portfolio(;
     # Portfolio characteristics.
-    returns = DataFrame(),
+    returns::DataFrame = DataFrame(),
     ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
     assets = Vector{String}(undef, 0),
@@ -626,9 +591,9 @@ Portfolio(;
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Union{<:Real, Nothing} = nothing,
-    beta::Union{<:Real, Nothing} = nothing,
-    b_sim::Union{<:Integer, Nothing} = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
     kappa::Real = 0.3,
     gs_threshold::Real = 0.5,
     max_num_assets_kurt::Integer = 0,
@@ -664,7 +629,7 @@ Portfolio(;
     tg_u::Real = Inf,
     rtg_u::Real = Inf,
     owa_u::Real = Inf,
-    owa_w::Union{<:Real, AbstractVector{<:Real}, Nothing} = Vector{Float64}(undef, 0),
+    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     krt_u::Real = Inf,
     skrt_u::Real = Inf,
     rvar_u::Real = Inf,
@@ -716,13 +681,49 @@ Portfolio(;
     alloc_model::AbstractDict = Dict(),
 )
 ```
+# Inputs
+- `assets`: `N×1` vector of assets in the portfolio.
+- `timestamps`: `T×1` vector of timestamps of the returns series.
+- `returns`: `T×N` matrix of the returns series.
+- `short`: whether or not to enable short investments (produce negative weights).
+- `short_u`: sum of the absolute values of the short (negative) weights.
+- `long_u`: sum of the absolute values of the long (positive) weights.
+- `sum_short_long`: if shorting is enabled, the maximum value of the sum of the long (positive) weights and short (negative) weights, `sum_short_long = long_u - short_u`.
+- `min_number_effective_assets`: if finite, constraints are added to the optimisations such that at least this amount of assets have non-negligible weights in the optimised portfolio.
+- `max_number_assets`: if finite, maximum number of assets with non-zero weights in the final weights vector.
+- `max_number_assets_factor`: if `max_number_assets` is finite, factor to use in the binary decision variable.
+- `f_assets`: factor assets for use in factor model optimisations.
+- `f_timestamps`: factor timestamps for use in factor model optimisations.
+- `f_returns`: factor returns for use in factor model optimisations.
+- `loadings`: loadings matrix for use in factor model optimisations.
+## Risk Parameters
+- `msv_target`: mean semivariance target.
+- `lpm_target`:
+- `alpha_i`:
+- `alpha`:
+- `a_sim`:
+- `at`:
+- `beta_i`:
+- `beta`:
+- `b_sim`:
+- `kappa`:
+- `invat`:
+- `ln_k`:
+- `opk`:
+- `omk`:
+- `invkappa2`:
+- `invk`:
+- `invopk`:
+- `invomk`:
+- `gs_threshold`:
+- `max_num_assets_kurt`:
 """
 function Portfolio(;
     # Portfolio characteristics.
-    returns = DataFrame(),
-    ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
-    assets = Vector{String}(undef, 0),
+    returns::DataFrame = DataFrame(),
+    ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    timestamps::AbstractVector = Vector{Date}(undef, 0),
+    assets::AbstractVector = Vector{String}(undef, 0),
     short::Bool = false,
     short_u::Real = 0.2,
     long_u::Real = 1.0,
@@ -730,20 +731,20 @@ function Portfolio(;
     min_number_effective_assets::Integer = 0,
     max_number_assets::Integer = 0,
     max_number_assets_factor::Real = 100_000.0,
-    f_returns = DataFrame(),
-    f_ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    f_timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
-    f_assets = Vector{String}(undef, 0),
-    loadings = Matrix{Float64}(undef, 0, 0),
+    f_returns::DataFrame = DataFrame(),
+    f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    f_timestamps::AbstractVector = Vector{Date}(undef, 0),
+    f_assets::AbstractVector = Vector{String}(undef, 0),
+    loadings::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     # Risk parameters.
-    msv_target::Union{<:Real, AbstractVector{<:Real}, Nothing} = Inf,
-    lpm_target::Union{<:Real, AbstractVector{<:Real}, Nothing} = Inf,
+    msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
+    lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Union{<:Real, Nothing} = nothing,
-    beta::Union{<:Real, Nothing} = nothing,
-    b_sim::Union{<:Integer, Nothing} = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
     kappa::Real = 0.3,
     gs_threshold::Real = 0.5,
     max_num_assets_kurt::Integer = 0,
@@ -779,7 +780,7 @@ function Portfolio(;
     tg_u::Real = Inf,
     rtg_u::Real = Inf,
     owa_u::Real = Inf,
-    owa_w::Union{<:Real, AbstractVector{<:Real}, Nothing} = Vector{Float64}(undef, 0),
+    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     krt_u::Real = Inf,
     skrt_u::Real = Inf,
     rvar_u::Real = Inf,
@@ -830,7 +831,7 @@ function Portfolio(;
     alloc_fail::AbstractDict = Dict(),
     alloc_model::AbstractDict = Dict(),
 )
-    if isa(returns, DataFrame) && !isempty(returns)
+    if !isempty(returns)
         assets = setdiff(names(returns), ("timestamp",))
         timestamps = returns[!, "timestamp"]
         returns = Matrix(returns[!, assets])
@@ -870,15 +871,15 @@ function Portfolio(;
         typeof(f_returns),
         typeof(loadings),
         # Risk parameters.
-        Union{<:Real, AbstractVector{<:Real}, Nothing},
-        Union{<:Real, AbstractVector{<:Real}, Nothing},
+        Union{<:Real, AbstractVector{<:Real}},
+        Union{<:Real, AbstractVector{<:Real}},
         typeof(alpha_i),
         typeof(alpha),
         typeof(a_sim),
         typeof(alpha),
-        Union{<:Real, Nothing},
-        Union{<:Real, Nothing},
-        Union{<:Integer, Nothing},
+        typeof(beta_i),
+        typeof(beta),
+        typeof(b_sim),
         typeof(kappa),
         typeof(kappa),
         typeof(kappa),
@@ -922,7 +923,7 @@ function Portfolio(;
         typeof(tg_u),
         typeof(rtg_u),
         typeof(owa_u),
-        Union{<:Real, AbstractVector{<:Real}, Nothing},
+        typeof(owa_w),
         typeof(krt_u),
         typeof(skrt_u),
         typeof(rvar_u),
@@ -1269,9 +1270,9 @@ HCPortfolio(;
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Union{<:Real, Nothing} = nothing,
-    beta::Union{<:Real, Nothing} = nothing,
-    b_sim::Union{<:Integer, Nothing} = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
     kappa::Real = 0.3,
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
@@ -1282,8 +1283,8 @@ HCPortfolio(;
     tjlogo::Bool = false,
     cov = Matrix{Float64}(undef, 0, 0),
     bins_info::Union{Symbol, Int} = :KN,
-    w_min::Union{<:Real, AbstractVector{<:Real}, Nothing} = 0.0,
-    w_max::Union{<:Real, AbstractVector{<:Real}, Nothing} = 1.0,
+    w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
+    w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
     codep_type::Symbol = :Pearson,
     codep = Matrix{Float64}(undef, 0, 0),
     dist = Matrix{Float64}(undef, 0, 0),
@@ -1395,13 +1396,13 @@ function HCPortfolio(;
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Union{<:Real, Nothing} = nothing,
-    beta::Union{<:Real, Nothing} = nothing,
-    b_sim::Union{<:Integer, Nothing} = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
     kappa::Real = 0.3,
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
-    owa_w::Union{<:Real, AbstractVector{<:Real}, Nothing} = Vector{Float64}(undef, 0),
+    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Optimisation parameters.
     mu_type::Symbol = :Default,
     mu = Vector{Float64}(undef, 0),
@@ -1410,13 +1411,13 @@ function HCPortfolio(;
     cov = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
     bins_info::Union{Symbol, <:Integer} = :KN,
-    w_min::Union{<:Real, AbstractVector{<:Real}, Nothing} = 0.0,
-    w_max::Union{<:Real, AbstractVector{<:Real}, Nothing} = 1.0,
+    w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
+    w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
     codep_type::Symbol = :Pearson,
     codep = Matrix{Float64}(undef, 0, 0),
     dist = Matrix{Float64}(undef, 0, 0),
     clusters = Hclust{Float64}(Matrix{Int64}(undef, 0, 2), Float64[], Int64[], :nothing),
-    k::Union{<:Integer, Nothing} = nothing,
+    k::Integer = 0,
     # Optimal portfolios.
     optimal::AbstractDict = Dict(),
     # Solutions.
@@ -1451,13 +1452,13 @@ function HCPortfolio(;
         typeof(alpha_i),
         typeof(alpha),
         typeof(a_sim),
-        Union{<:Real, Nothing},
-        Union{<:Real, Nothing},
-        Union{<:Integer, Nothing},
+        typeof(beta_i),
+        typeof(beta),
+        typeof(b_sim),
         typeof(kappa),
         typeof(alpha_tail),
         typeof(gs_threshold),
-        Union{<:Real, AbstractVector{<:Real}, Nothing},
+        typeof(owa_w),
         # Optimisation parameters.
         typeof(mu_type),
         typeof(mu),
@@ -1466,13 +1467,13 @@ function HCPortfolio(;
         typeof(cov),
         typeof(posdef_fix),
         Union{Symbol, <:Integer},
-        Union{<:Real, AbstractVector{<:Real}, Nothing},
-        Union{<:Real, AbstractVector{<:Real}, Nothing},
+        Union{<:Real, AbstractVector{<:Real}},
+        Union{<:Real, AbstractVector{<:Real}},
         typeof(codep_type),
         typeof(codep),
         typeof(dist),
         typeof(clusters),
-        Union{<:Integer, Nothing},
+        typeof(k),
         # Optimal portfolios.
         typeof(optimal),
         # Solutions.

@@ -304,10 +304,6 @@ returns = dropmissing!(DataFrame(Y))
         dot(sort(portfolio.returns * portfolio.optimal[:Trad].weights), owa_w),
         calc_risk(portfolio, rm = :OWA, owa_w = owa_w),
     )
-    @test isapprox(
-        dot(sort(portfolio.returns * portfolio.optimal[:Trad].weights), fill(1 / T, T)),
-        calc_risk(portfolio, rm = :OWA, owa_w = 1),
-    )
 
     portfolio = Portfolio(
         returns = returns,

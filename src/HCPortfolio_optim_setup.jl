@@ -145,7 +145,7 @@ function _hierarchical_clustering(
         )
     end
 
-    k = type ∈ (:HERC, :NCO) ? _two_diff_gap_stat(dist, clustering, max_k) : nothing
+    k = type ∈ (:HERC, :NCO) ? _two_diff_gap_stat(dist, clustering, max_k) : 0
 
     return clustering, k
 end
@@ -161,7 +161,7 @@ function cluster_assets(
     clustering, tk =
         _hierarchical_clustering(portfolio, :HERC, linkage, max_k, branchorder, dbht_method)
 
-    k = isnothing(k) ? tk : k
+    k = iszero(k) ? tk : k
 
     clustering_idx = cutree(clustering; k = k)
 
@@ -584,26 +584,26 @@ function _nco_weights(
 end
 
 function _setup_hr_weights(w_max, w_min, N)
+    upper_bound = if isa(w_max, AbstractVector) && isempty(w_max)
+        ones(N)
+    elseif isa(w_max, AbstractVector) && !isempty(w_max)
+        min.(1.0, w_max)
+    else
+        fill(min(1.0, w_max), N)
+    end
+
+    lower_bound = if isa(w_min, AbstractVector) && isempty(w_min)
+        zeros(N)
+    elseif isa(w_min, AbstractVector) && !isempty(w_min)
+        max.(0.0, w_min)
+    else
+        fill(max(0.0, w_min), N)
+    end
+
     @assert(
-        (isnothing(w_max) || isnothing(w_min) || all(w_max .>= w_min)),
+        all(upper_bound .>= lower_bound),
         "all upper bounds must be bigger than their corresponding lower bounds"
     )
-
-    upper_bound = if isnothing(w_max)
-        ones(N)
-    elseif isa(w_max, Real)
-        fill(min(1.0, w_max), N)
-    else
-        min.(1.0, w_max)
-    end
-
-    lower_bound = if isnothing(w_min)
-        zeros(N)
-    elseif isa(w_min, Real)
-        fill(max(0.0, w_min), N)
-    else
-        max.(0.0, w_min)
-    end
 
     return upper_bound, lower_bound
 end
@@ -685,7 +685,7 @@ function opt_port!(
     type::Symbol = :HRP,
     rm::Symbol = :SD,
     obj::Symbol = :Min_Risk,
-    owa_w_i::Union{<:Real, AbstractVector{<:Real}, Nothing} = portfolio.owa_w,
+    owa_w_i::AbstractVector{<:Real} = portfolio.owa_w,
     kelly::Symbol = :None,
     rm_i::Symbol = rm,
     obj_i::Symbol = obj,
@@ -695,7 +695,7 @@ function opt_port!(
     l_i::Real = l,
     cluster = true,
     linkage::Symbol = :single,
-    k = cluster ? nothing : portfolio.k,
+    k = cluster ? 0 : portfolio.k,
     max_k::Int = ceil(Int, sqrt(length(portfolio.assets))),
     branchorder = :optimal,
     dbht_method = :Unique,
@@ -751,7 +751,7 @@ function opt_port!(
             branchorder,
             dbht_method,
         )
-        portfolio.k = isnothing(k) ? tk : k
+        portfolio.k = iszero(k) ? tk : k
     end
 
     upper_bound, lower_bound = _setup_hr_weights(portfolio.w_max, portfolio.w_min, N)

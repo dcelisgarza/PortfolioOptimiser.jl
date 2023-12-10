@@ -54,6 +54,7 @@ makedocs(;
         "Constraint Functions" => "Constraint_functions.md",
         "OWA" => "OWA.md",
         "Risk Measures" => "Risk_measures.md",
+        "Portfolio Optimisation" => "Portfolio.md",
         "API" => [
             "Definitions" => "Definitions.md",
             "Types" => "Types.md",

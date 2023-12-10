@@ -894,11 +894,7 @@ Compute the CVaR Range.
 - `α`: significance level of CVaR losses, `α ∈ (0, 1)`.
 - `β`: significance level of CVaR gains, `β ∈ (0, 1)`, if `nothing` it takes the value of `α`.
 """
-function RCVaR(
-    x::AbstractVector;
-    alpha::Real = 0.05,
-    beta::Union{<:Real, Nothing} = nothing,
-)
+function RCVaR(x::AbstractVector; alpha::Real = 0.05, beta::Real = Inf)
     T = length(x)
     w = owa_rcvar(T; alpha = alpha, beta = beta)
     return dot(w, sort!(x))
@@ -948,9 +944,9 @@ function RTG(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Real = 100,
-    beta_i::Union{<:Real, Nothing} = nothing,
-    beta::Union{<:Real, Nothing} = nothing,
-    b_sim::Union{Int, Nothing} = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
 )
     T = length(x)
     w = owa_rtg(
@@ -1066,11 +1062,11 @@ function calc_risk(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
-    beta_i::Union{<:Real, Nothing} = nothing,
-    beta::Union{<:Real, Nothing} = nothing,
-    b_sim::Union{<:Real, Nothing} = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
     kappa::Real = 0.3,
-    owa_w::Union{<:Real, AbstractVector{<:Real}, Nothing} = Vector{Float64}(undef, 0),
+    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     solvers::Union{<:AbstractDict, Nothing} = nothing,
 )
     @assert(rm ∈ HRRiskMeasures, "rm = $rm, must be one of $HRRiskMeasures")
@@ -1164,7 +1160,7 @@ function calc_risk(
     type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
     rm::Symbol = :SD,
     rf::Real = 0.0,
-    owa_w::Union{<:Real, AbstractVector{<:Real}, Nothing} = portfolio.owa_w,
+    owa_w::AbstractVector{<:Real} = portfolio.owa_w,
 )
     isa(portfolio, Portfolio) ?
     @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes") :
@@ -1344,12 +1340,12 @@ function risk_contribution(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
-    beta_i::Union{<:Real, Nothing} = nothing,
-    beta::Union{<:Real, Nothing} = nothing,
-    b_sim::Union{<:Real, Nothing} = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
     di::Real = 1e-6,
     kappa::Real = 0.3,
-    owa_w::Union{<:Real, AbstractVector{<:Real}, Nothing} = Vector{Float64}(undef, 0),
+    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     solvers::Union{<:AbstractDict, Nothing} = nothing,
 )
     ew = eltype(w)
@@ -1433,9 +1429,9 @@ function sharpe_ratio(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
-    beta_i::Union{<:Real, Nothing} = nothing,
-    beta::Union{<:Real, Nothing} = nothing,
-    b_sim::Union{<:Real, Nothing} = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
     kappa::Real = 0.3,
     owa_w = Vector{Float64}(undef, 0),
     solvers::Union{<:AbstractDict, Nothing} = nothing,

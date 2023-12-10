@@ -24,8 +24,8 @@ l = 2.0
 @testset "HRP" begin
     portfolio = HCPortfolio(returns = returns)
     asset_statistics!(portfolio, calc_kurt = false)
-    portfolio.w_max = nothing
-    portfolio.w_min = nothing
+    portfolio.w_max = Float64[]
+    portfolio.w_min = Float64[]
     w1 = opt_port!(portfolio, linkage = :DBHT)
     portfolio.w_max = 1
     portfolio.w_min = 0
@@ -767,9 +767,9 @@ end
         ),
     )
     asset_statistics!(portfolio)
-    portfolio.owa_w = nothing
+    portfolio.owa_w = Float64[]
     w = opt_port!(portfolio; type = :NCO, owa_w_i = owa_gmd(size(returns, 1)))
-    @test isnothing(portfolio.owa_w)
+    @test isempty(portfolio.owa_w)
     w = opt_port!(portfolio; type = :HERC, owa_w_i = owa_gmd(size(returns, 1)))
-    @test isnothing(portfolio.owa_w)
+    @test isempty(portfolio.owa_w)
 end

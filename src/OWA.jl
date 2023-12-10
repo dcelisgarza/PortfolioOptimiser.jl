@@ -147,7 +147,7 @@ end
 
 """
 ```julia
-owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Union{<:Real, Nothing} = nothing)
+owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = Inf)
 ```
 Compute the OWA weights for the CVaR Range of a returns series [^OWA].
 # Inputs
@@ -157,8 +157,8 @@ Compute the OWA weights for the CVaR Range of a returns series [^OWA].
 # Outputs
 - `w`: `T×1` ordered weight vector.
 """
-function owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Union{<:Real, Nothing} = nothing)
-    isnothing(beta) && (beta = alpha)
+function owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = Inf)
+    isinf(beta) && (beta = alpha)
     w = owa_cvar(T, alpha) .- reverse(owa_cvar(T, beta))
 
     return w
@@ -206,9 +206,9 @@ owa_rtg(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Union{<:Real, Nothing} = nothing,
-    beta::Union{<:Real, Nothing} = nothing,
-    b_sim::Union{<:Integer, Nothing} = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
 )
 ```
 Compute the OWA weights for the Tail Gini Range of a returns series [^OWA].
@@ -228,13 +228,13 @@ function owa_rtg(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Union{<:Real, Nothing} = nothing,
-    beta::Union{<:Real, Nothing} = nothing,
-    b_sim::Union{<:Integer, Nothing} = nothing,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
 )
-    isnothing(beta) && (beta = alpha)
-    isnothing(b_sim) && (b_sim = a_sim)
-    isnothing(beta_i) && (beta_i = alpha_i)
+    isinf(beta) && (beta = alpha)
+    iszero(b_sim) && (b_sim = a_sim)
+    isinf(beta_i) && (beta_i = alpha_i)
 
     w =
         owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) .-
