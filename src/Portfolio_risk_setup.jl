@@ -9,21 +9,11 @@ function _calc_var_dar_constants(portfolio, rm, T)
         rm == :RDaR
     ) && (return nothing)
 
-    alpha = portfolio.alpha
-    portfolio.at = alpha * T
-    portfolio.invat = 1 / portfolio.at
+    iszero(portfolio.invat) && (portfolio.alpha = portfolio.alpha)
 
     !(rm == :RVaR || rm == :RDaR) && (return nothing)
 
-    kappa = portfolio.kappa
-    invat = portfolio.invat
-    portfolio.ln_k = (invat^kappa - invat^(-kappa)) / (2 * kappa)
-    portfolio.opk = 1 + kappa
-    portfolio.omk = 1 - kappa
-    portfolio.invkappa2 = 1 / (2 * kappa)
-    portfolio.invk = 1 / kappa
-    portfolio.invopk = 1 / portfolio.opk
-    portfolio.invomk = 1 / portfolio.omk
+    iszero(portfolio.invk) && (portfolio.kappa = portfolio.kappa)
 
     return nothing
 end
@@ -257,7 +247,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     ln_k = portfolio.ln_k
     opk = portfolio.opk
     omk = portfolio.omk
-    invkappa2 = portfolio.invkappa2
+    invk2 = portfolio.invk2
     invk = portfolio.invk
     invopk = portfolio.invopk
     invomk = portfolio.invomk
@@ -271,13 +261,13 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     @constraint(
         model,
         [i = 1:T],
-        [z_rvar * opk * invkappa2, psi_rvar[i] * opk * invk, epsilon_rvar[i]] in
+        [z_rvar * opk * invk2, psi_rvar[i] * opk * invk, epsilon_rvar[i]] in
         MOI.PowerCone(invopk)
     )
     @constraint(
         model,
         [i = 1:T],
-        [omega_rvar[i] * invomk, theta_rvar[i] * invk, -z_rvar * invkappa2] in
+        [omega_rvar[i] * invomk, theta_rvar[i] * invk, -z_rvar * invk2] in
         MOI.PowerCone(omk)
     )
     @constraint(model, -model[:hist_ret] .- t_rvar .+ epsilon_rvar .+ omega_rvar .<= 0)
@@ -414,7 +404,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     ln_k = portfolio.ln_k
     opk = portfolio.opk
     omk = portfolio.omk
-    invkappa2 = portfolio.invkappa2
+    invk2 = portfolio.invk2
     invk = portfolio.invk
     invopk = portfolio.invopk
     invomk = portfolio.invomk
@@ -428,13 +418,13 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     @constraint(
         model,
         [i = 1:T],
-        [z_rdar * opk * invkappa2, psi_rdar[i] * opk * invk, epsilon_rdar[i]] in
+        [z_rdar * opk * invk2, psi_rdar[i] * opk * invk, epsilon_rdar[i]] in
         MOI.PowerCone(invopk)
     )
     @constraint(
         model,
         [i = 1:T],
-        [omega_rdar[i] * invomk, theta_rdar[i] * invk, -z_rdar * invkappa2] in
+        [omega_rdar[i] * invomk, theta_rdar[i] * invk, -z_rdar * invk2] in
         MOI.PowerCone(omk)
     )
     @constraint(model, dd[2:end] .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0)

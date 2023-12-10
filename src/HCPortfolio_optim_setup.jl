@@ -45,7 +45,7 @@ function _opt_w(
     rf = 0.0,
     l = 2.0,
 )
-    port = Portfolio(
+    port = Portfolio(;
         assets = assets,
         ret = returns,
         owa_w = portfolio.owa_w,
@@ -715,11 +715,11 @@ function opt_port!(
     )
     @assert(
         0 < portfolio.alpha < 1,
-        "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and smaller than 1"
+        "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and less than 1"
     )
     @assert(
         0 < portfolio.kappa < 1,
-        "portfolio.kappa = $(portfolio.kappa) must be greater than 0 and smaller than 1"
+        "portfolio.kappa = $(portfolio.kappa) must be greater than 0 and less than 1"
     )
 
     _hcp_save_opt_params(

@@ -234,7 +234,7 @@ mutable struct Portfolio{
     ln_k::lnk
     opk::topk
     omk::tomk
-    invkappa2::tk2
+    invk2::tk2
     invk::tkinv
     invopk::tinvopk
     invomk::tinvomk
@@ -475,7 +475,7 @@ mutable struct Portfolio{
     ln_k::lnk
     opk::topk
     omk::tomk
-    invkappa2::tk2
+    invk2::tk2
     invk::tkinv
     invopk::tinvopk
     invomk::tinvomk
@@ -711,7 +711,7 @@ Portfolio(;
 - `ln_k`:
 - `opk`:
 - `omk`:
-- `invkappa2`:
+- `invk2`:
 - `invk`:
 - `invopk`:
 - `invomk`:
@@ -761,7 +761,7 @@ function Portfolio(;
     # Risk and return constraints.
     a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-    risk_budget::Union{<:Real, AbstractVector{<:Real}} = Vector{Float64}(undef, 0),
+    risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     mu_l::Real = Inf,
     dev_u::Real = Inf,
     mad_u::Real = Inf,
@@ -789,7 +789,7 @@ function Portfolio(;
     rdar_u::Real = Inf,
     # Optimisation model inputs.
     mu_type::Symbol = :Default,
-    mu = Vector{Float64}(undef, 0),
+    mu::AbstractVector = Vector{Float64}(undef, 0),
     cov_type::Symbol = :Full,
     jlogo::Bool = false,
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -833,6 +833,40 @@ function Portfolio(;
     alloc_fail::AbstractDict = Dict(),
     alloc_model::AbstractDict = Dict(),
 )
+    @assert(
+        0 < alpha_i < alpha < 1,
+        "0 < alpha_i < alpha < 1: 0 < $alpha_i < $alpha < 1, must hold"
+    )
+    @assert(
+        a_sim >= zero(typeof(a_sim)),
+        "a_sim = $a_sim, must be greater than or equal to zero"
+    )
+    if isfinite(beta_i) || isfinite(beta) || !iszero(b_sim)
+        @assert(
+            0 < beta_i < beta < 1,
+            "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
+        )
+        @assert(
+            b_sim >= zero(typeof(b_sim)),
+            "a_sim = $b_sim, must be greater than or equal to zero"
+        )
+    end
+    @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
+    @assert(
+        kind_tracking_err ∈ TrackingErrKinds,
+        "kind_tracking_err = $(kind_tracking_err), must be one of $TrackingErrKinds"
+    )
+    @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
+    @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
+    @assert(
+        posdef_fix ∈ PosdefFixes,
+        "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
+    )
+    @assert(
+        0 < gs_threshold < 1,
+        "gs_threshold = $gs_threshold, must be greater than 0 and less than 1"
+    )
+
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
         latest_prices = Vector(returns[end, setdiff(names(returns), ("timestamp",))])
@@ -866,15 +900,15 @@ function Portfolio(;
         f_returns = f_ret
     end
 
-    # at = alpha * size(returns, 1)
-    # invat = 1 / at
-    # ln_k = (invat^kappa - invat^(-kappa)) / (2 * kappa)
-    # opk = 1 + kappa
-    # omk = 1 - kappa
-    # invkappa2 = 1 / (2 * kappa)
-    # invk = 1 / kappa
-    # invopk = 1 / opk
-    # invomk = 1 / omk
+    at = zero(alpha)
+    invat = zero(alpha)
+    ln_k = zero(promote_type(typeof(alpha), typeof(kappa)))
+    opk = zero(kappa)
+    omk = zero(kappa)
+    invk2 = zero(kappa)
+    invk = zero(kappa)
+    invopk = zero(kappa)
+    invomk = zero(kappa)
 
     return Portfolio{# Portfolio characteristics.
         typeof(assets),
@@ -897,19 +931,19 @@ function Portfolio(;
         typeof(alpha_i),
         typeof(alpha),
         typeof(a_sim),
-        typeof(alpha),
+        typeof(at),
         typeof(beta_i),
         typeof(beta),
         typeof(b_sim),
         typeof(kappa),
-        typeof(kappa),
-        typeof(kappa),
-        typeof(kappa),
-        typeof(kappa),
-        typeof(kappa),
-        typeof(kappa),
-        typeof(kappa),
-        typeof(kappa),
+        typeof(invat),
+        typeof(ln_k),
+        typeof(opk),
+        typeof(omk),
+        typeof(invk2),
+        typeof(invk),
+        typeof(invopk),
+        typeof(invomk),
         typeof(gs_threshold),
         typeof(max_num_assets_kurt),
         # Benchmark constraints.
@@ -923,7 +957,7 @@ function Portfolio(;
         # Risk and return constraints.
         typeof(a_mtx_ineq),
         typeof(b_vec_ineq),
-        Union{<:Real, Vector{<:Real}},
+        typeof(risk_budget),
         typeof(mu_l),
         typeof(dev_u),
         typeof(mad_u),
@@ -1016,19 +1050,19 @@ function Portfolio(;
         alpha_i,
         alpha,
         a_sim,
-        zero(typeof(alpha)),
+        at,
         beta_i,
         beta,
         b_sim,
         kappa,
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
-        zero(typeof(kappa)),
+        invat,
+        ln_k,
+        opk,
+        omk,
+        invk2,
+        invk,
+        invopk,
+        invomk,
         gs_threshold,
         max_num_assets_kurt,
         # Benchmark constraints.
@@ -1117,12 +1151,121 @@ function Portfolio(;
 end
 
 function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
-    if sym == :short_u || sym == :long_u || sym == :short
-        setfield!(obj, sym, val)
-        setfield!(obj, :sum_short_long, obj.short ? obj.long_u - obj.short_u : 1.0)
-    elseif sym == :sum_short_long
-        throw(ArgumentError("$sym is automatically calculated from other fields"))
+    if sym == :short
+        setfield!(obj, :sum_short_long, val ? obj.long_u - obj.short_u : 1.0)
+    elseif sym == :short_u
+        setfield!(obj, :sum_short_long, obj.short ? obj.long_u - val : 1.0)
+    elseif sym == :long_u
+        setfield!(obj, :sum_short_long, obj.short ? val - obj.short_u : 1.0)
+    elseif sym == :alpha
+        @assert(
+            0 < obj.alpha_i < val < 1,
+            "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold"
+        )
+        at = val * size(obj.returns, 1)
+        invat = 1 / at
+        ln_k = (invat^obj.kappa - invat^(-obj.kappa)) / (2 * obj.kappa)
+        setfield!(obj, :at, at)
+        setfield!(obj, :invat, invat)
+        setfield!(obj, :ln_k, ln_k)
+    elseif sym == :alpha_i
+        @assert(
+            0 < obj.alpha_i < val < 1,
+            "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold"
+        )
+    elseif sym == :a_sim
+        @assert(
+            val >= zero(typeof(val)),
+            "a_sim = $val, must be greater than or equal to zero"
+        )
+    elseif sym == :beta
+        @assert(
+            0 < obj.beta_i < val < 1,
+            "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
+        )
+    elseif sym == :beta_i
+        @assert(
+            0 < obj.beta_i < val < 1,
+            "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
+        )
+    elseif sym == :b_sim
+        @assert(
+            val >= zero(typeof(val)),
+            "b_sim = $val, must be greater than or equal to zero"
+        )
+    elseif sym == :kappa
+        @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
+        ln_k = (obj.invat^val - obj.invat^(-val)) / (2 * val)
+        opk = 1 + val
+        omk = 1 - val
+        invk2 = 1 / (2 * val)
+        invk = 1 / val
+        invopk = 1 / opk
+        invomk = 1 / omk
+        setfield!(obj, :ln_k, ln_k)
+        setfield!(obj, :opk, opk)
+        setfield!(obj, :omk, omk)
+        setfield!(obj, :invk2, invk2)
+        setfield!(obj, :invk, invk)
+        setfield!(obj, :invopk, invopk)
+        setfield!(obj, :invomk, invomk)
+    elseif sym == :kind_tracking_err
+        @assert(
+            val ∈ TrackingErrKinds,
+            "kind_tracking_err = $(val), must be one of $TrackingErrKinds"
+        )
+    elseif sym == :cov_type
+        @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
+    elseif sym == :mu_type
+        @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
+    elseif sym == :posdef_fix
+        @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
+    elseif sym == :gs_threshold
+        @assert(
+            0 < val < 1,
+            "gs_threshold = $val, must be greater than zero and smaller than one"
+        )
+    elseif sym ∈ (
+        :sum_short_long,
+        :at,
+        :invat,
+        :ln_k,
+        :opk,
+        :omk,
+        :invk2,
+        :invk,
+        :invopk,
+        :invomk,
+    )
+        throw(
+            ArgumentError(
+                "$sym is computed from other fields and therefore cannot be manually changed",
+            ),
+        )
+    elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns)
+        throw(
+            ArgumentError(
+                "$sym is related to other fields and therefore cannot be manually changed without compromising correctness, please create a new instance of Portfolio instead",
+            ),
+        )
+    elseif sym == :risk_budget
+        if isempty(val)
+            N = size(obj.returns, 2)
+            val = fill(1 / N, N)
+        else
+            @assert(
+                length(val) == size(obj.returns, 2),
+                "length(risk_budget) == size(obj.returns, 2) must hold: $(length(val)) == $(size(obj.returns, 2))"
+            )
+            isa(val, AbstractRange) ? (val = collect(val / sum(val))) : (val ./= sum(val))
+        end
+    else
+        if (isa(getfield(obj, sym), AbstractArray) && isa(val, AbstractArray)) ||
+           (isa(getfield(obj, sym), Real) && isa(val, Real))
+            val = convert(typeof(getfield(obj, sym)), val)
+        end
     end
+    setfield!(obj, sym, val)
 end
 
 """
@@ -1417,10 +1560,10 @@ end
 function HCPortfolio(;
     # Portfolio characteristics.
     prices::TimeArray = TimeArray(TimeType[], []),
-    returns = DataFrame(),
+    returns::DataFrame = DataFrame(),
     ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
-    assets = Vector{String}(undef, 0),
+    assets::AbstractVector = Vector{String}(undef, 0),
     # Risk parmeters.
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
@@ -1434,17 +1577,17 @@ function HCPortfolio(;
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Optimisation parameters.
     mu_type::Symbol = :Default,
-    mu = Vector{Float64}(undef, 0),
+    mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_type::Symbol = :Full,
     jlogo::Bool = false,
-    cov = Matrix{Float64}(undef, 0, 0),
+    cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
     bins_info::Union{Symbol, <:Integer} = :KN,
     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
     codep_type::Symbol = :Pearson,
-    codep = Matrix{Float64}(undef, 0, 0),
-    dist = Matrix{Float64}(undef, 0, 0),
+    codep::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     clusters = Hclust{Float64}(Matrix{Int64}(undef, 0, 2), Float64[], Int64[], :nothing),
     k::Integer = 0,
     # Optimal portfolios.
@@ -1461,6 +1604,40 @@ function HCPortfolio(;
     alloc_fail::AbstractDict = Dict(),
     alloc_model::AbstractDict = Dict(),
 )
+    @assert(
+        0 < alpha_i < alpha < 1,
+        "0 < alpha_i < alpha < 1: 0 < $alpha_i < $alpha < 1, must hold"
+    )
+    @assert(
+        a_sim >= zero(typeof(a_sim)),
+        "a_sim = $a_sim, must be greater than or equal to zero"
+    )
+    if isfinite(beta_i) || isfinite(beta) || !iszero(b_sim)
+        @assert(
+            0 < beta_i < beta < 1,
+            "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
+        )
+        @assert(
+            b_sim >= zero(typeof(b_sim)),
+            "a_sim = $b_sim, must be greater than or equal to zero"
+        )
+    end
+    @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and smaller than 1")
+    @assert(
+        0 < alpha_tail < 1,
+        "alpha_tail = $alpha_tail, must be greater than 0 and smaller than 1"
+    )
+    @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
+    @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
+    @assert(
+        posdef_fix ∈ PosdefFixes,
+        "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
+    )
+    @assert(
+        0 < gs_threshold < 1,
+        "gs_threshold = $gs_threshold, must be greater than zero and smaller than one"
+    )
+
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
         latest_prices = Vector(returns[end, setdiff(names(returns), ("timestamp",))])
@@ -1565,6 +1742,69 @@ function HCPortfolio(;
         alloc_fail,
         alloc_model,
     )
+end
+
+function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
+    if sym == :alpha
+        @assert(
+            0 < obj.alpha_i < val < 1,
+            "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold"
+        )
+    elseif sym == :alpha_i
+        @assert(
+            0 < obj.alpha_i < val < 1,
+            "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold"
+        )
+    elseif sym == :a_sim
+        @assert(
+            val >= zero(typeof(val)),
+            "a_sim = $val, must be greater than or equal to zero"
+        )
+    elseif sym == :beta
+        @assert(
+            0 < obj.beta_i < val < 1,
+            "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
+        )
+    elseif sym == :beta_i
+        @assert(
+            0 < obj.beta_i < val < 1,
+            "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
+        )
+    elseif sym == :b_sim
+        @assert(
+            val >= zero(typeof(val)),
+            "b_sim = $val, must be greater than or equal to zero"
+        )
+    elseif sym == :kappa
+        @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
+    elseif sym == :alpha_tail
+        @assert(0 < val < 1, "alpha_tail = $val, must be greater than 0 and smaller than 1")
+    elseif sym == :cov_type
+        @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
+    elseif sym == :mu_type
+        @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
+    elseif sym == :codep_type
+        @assert(val ∈ CodepTypes, "codep_type = $val, must be one of $CodepTypes")
+    elseif sym == :posdef_fix
+        @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
+    elseif sym == :gs_threshold
+        @assert(
+            0 < val < 1,
+            "gs_threshold = $val, must be greater than zero and smaller than one"
+        )
+    elseif sym ∈ (:assets, :timestamps, :returns)
+        throw(
+            ArgumentError(
+                "$sym is related to other fields and therefore cannot be manually changed without compromising correctness, please create a new instance of Portfolio instead",
+            ),
+        )
+    else
+        if (isa(getfield(obj, sym), AbstractArray) && isa(val, AbstractArray)) ||
+           (isa(getfield(obj, sym), Real) && isa(val, Real))
+            val = convert(typeof(getfield(obj, sym)), val)
+        end
+    end
+    setfield!(obj, sym, val)
 end
 
 export Portfolio, HCPortfolio

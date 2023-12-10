@@ -23,7 +23,7 @@ l = 2.0
                 :params => Dict("log_to_console" => false),
             ),
         ),
-        latest_prices = Vector(DataFrame(A[end])[1, 2:end]),
+        latest_prices = Vector(dropmissing(DataFrame(A))[end, 2:end]),
     )
     asset_statistics!(portfolio)
 
@@ -110,7 +110,7 @@ l = 2.0
                 :params => Dict("log_to_console" => false),
             ),
         ),
-        latest_prices = Vector(DataFrame(A[end])[1, 2:end]),
+        latest_prices = Vector(dropmissing(DataFrame(A))[end, 2:end]),
         short = true,
     )
     asset_statistics!(portfolio)
@@ -248,7 +248,7 @@ l = 2.0
                 :params => Dict("log_to_console" => false),
             ),
         ),
-        latest_prices = Vector(DataFrame(A[end])[1, 2:end]),
+        latest_prices = Vector(dropmissing(DataFrame(A))[end, 2:end]),
     )
     asset_statistics!(portfolio)
 

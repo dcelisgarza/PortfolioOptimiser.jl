@@ -321,7 +321,7 @@ function RRM(
     ln_k = (invat^kappa - invat^(-kappa)) / (2 * kappa)
     opk = 1 + kappa
     omk = 1 - kappa
-    invkappa2 = 1 / (2 * kappa)
+    invk2 = 1 / (2 * kappa)
     invk = 1 / kappa
     invopk = 1 / opk
     invomk = 1 / omk
@@ -335,12 +335,12 @@ function RRM(
     @constraint(
         model,
         [i = 1:T],
-        [z * opk * invkappa2, psi[i] * opk * invk, epsilon[i]] in MOI.PowerCone(invopk)
+        [z * opk * invk2, psi[i] * opk * invk, epsilon[i]] in MOI.PowerCone(invopk)
     )
     @constraint(
         model,
         [i = 1:T],
-        [omega[i] * invomk, theta[i] * invk, -z * invkappa2] in MOI.PowerCone(omk)
+        [omega[i] * invomk, theta[i] * invk, -z * invk2] in MOI.PowerCone(omk)
     )
     @constraint(model, -x .- t .+ epsilon .+ omega .<= 0)
     @expression(model, risk, t + ln_k * z + sum(psi .+ theta))

@@ -20,6 +20,10 @@ A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
 
+rf = 1.0329^(1 / 252) - 1
+l = 2.0
+type = :Trad
+
 @testset "Efficient Frontier" begin
     portfolio = Portfolio(
         returns = returns,
@@ -49,10 +53,6 @@ returns = dropmissing!(DataFrame(Y))
     portfolio.cvar_u = Inf
     @test isapprox(w.weights, frontier[:CVaR][:weights][!, "2"])
 end
-
-rf = 1.0329^(1 / 252) - 1
-l = 2.0
-type = :Trad
 
 @testset "SD" begin
     portfolio = Portfolio(
@@ -8235,7 +8235,7 @@ end
 
     portfolio.short_u = 0.3
     portfolio.long_u = 1.3
-    portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
+    # portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
 
     obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -8297,7 +8297,7 @@ end
 
     portfolio.short_u = 0.11
     portfolio.long_u = 1.23
-    portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
+    # portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
 
     obj = :Min_Risk
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -8650,7 +8650,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.4
     portfolio.long_u = 0.6
-    portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
+    # portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
 
     obj = :Min_Risk
     portfolio.max_number_assets = 10

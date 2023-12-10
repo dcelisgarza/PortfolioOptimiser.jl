@@ -33,7 +33,7 @@ Calculate the OWA weights corresponding to the Critical Value at Risk (CVaR) of 
 - `w`: `T×1` ordered weight vector.
 """
 function owa_cvar(T::Integer, alpha::Real = 0.05)
-    @assert(0 < alpha < 1, "alpha = $alpha, must be between 0 and 1")
+    @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and less than 1")
 
     k = floor(Int, T * alpha)
     w = zeros(typeof(alpha), T)
@@ -413,10 +413,10 @@ function owa_l_moment_crm(
 )
     @assert(k >= 2, "k = $k, must be an integer bigger than or equal to 2")
     @assert(method ∈ OWAMethods, "method = $method, must be one of $OWAMethods")
-    @assert(0 < g < 1, "risk aversion, g = $g, must be in the interval (0, 1)")
+    @assert(0 < g < 1, "risk aversion, g = $g, must be greater than 0 and less than 1")
     @assert(
         0 < max_phi < 1,
-        "the constraint on the maximum weight of the L-moments, max_phi = $max_phi, must be in the interval (0, 1)"
+        "the constraint on the maximum weight of the L-moments, max_phi = $max_phi, must be greater than 0 and less than 1"
     )
 
     rg = 2:k

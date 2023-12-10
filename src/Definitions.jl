@@ -550,6 +550,10 @@ const RiskMeasureNames = (
     OWA = "Ordered Weight Average",
 )
 
+function _assert_value_message(lo::Real, hi::Real, args...) end
+function _assert_category_message(sym::Symbol, collection) end
+function _assert_generic_message(cmp, message) end
+
 export KellyRet,
     TrackingErrKinds,
     ObjFuncs,

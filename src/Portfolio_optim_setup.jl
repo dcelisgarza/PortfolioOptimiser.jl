@@ -4,12 +4,13 @@ function _setup_sharpe_k(model, obj)
     return nothing
 end
 
-function _setup_risk_budget(portfolio, N)
+function _setup_risk_budget(portfolio)
     model = portfolio.model
-    if isempty(portfolio.risk_budget) || isa(portfolio.risk_budget, Real)
-        portfolio.risk_budget = fill(1 / N, N)
+    if isempty(portfolio.risk_budget)
+        portfolio.risk_budget = ()
     else
-        portfolio.risk_budget ./= sum(portfolio.risk_budget)
+        !isapprox(sum(portfolio.risk_budget), one(eltype(portfolio.risk_budget))) &&
+            (portfolio.risk_budget .= portfolio.risk_budget)
     end
     @variable(model, k >= 0)
     return nothing
@@ -585,11 +586,11 @@ function opt_port!(
     @assert(u_cov ∈ UncertaintyTypes, "u_cov = $u_cov, must be one of $UncertaintyTypes")
     @assert(
         0 < portfolio.alpha < 1,
-        "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and smaller than 1"
+        "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and less than 1"
     )
     @assert(
         0 < portfolio.kappa < 1,
-        "portfolio.kappa = $(portfolio.kappa), must be greater than 0 and smaller than 1"
+        "portfolio.kappa = $(portfolio.kappa), must be greater than 0 and less than 1"
     )
     @assert(
         portfolio.kind_tracking_err ∈ TrackingErrKinds,
@@ -647,7 +648,7 @@ function opt_port!(
         _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
         _setup_trad_wc_constraints(portfolio, obj, T, N, :Trad, class, kelly, l, returns)
     elseif type == :RP
-        _setup_risk_budget(portfolio, N)
+        _setup_risk_budget(portfolio)
         _rp_setup(portfolio, N)
         _risk_setup(
             portfolio,
@@ -666,7 +667,7 @@ function opt_port!(
         )
         _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
     elseif type == :RRP
-        _setup_risk_budget(portfolio, N)
+        _setup_risk_budget(portfolio)
         _mv_setup(portfolio, sigma, rm, kelly, obj, :RRP)
         _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
         _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)

@@ -197,6 +197,7 @@ function cordistance(x::AbstractMatrix)
 end
 
 function ltdi_mtx(x, alpha = 0.05)
+    @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and less than 1")
     T, N = size(x)
     k = ceil(Int, T * alpha)
     mtx = Matrix{eltype(x)}(undef, N, N)
@@ -231,7 +232,7 @@ function covgerber0(
 )
     @assert(
         0 < threshold < 1,
-        "threshold = $threshold, must be greater than zero and smaller than one"
+        "threshold = $threshold, must be greater than 0 and less than 1"
     )
 
     T, N = size(x)
@@ -286,7 +287,7 @@ end
 function covgerber1(x, threshold = 0.5; std_func = std, std_args = (), std_kwargs = (;))
     @assert(
         0 < threshold < 1,
-        "threshold = $threshold, must be greater than zero and smaller than one"
+        "threshold = $threshold, must be greater than 0 and less than 1"
     )
 
     T, N = size(x)
@@ -338,7 +339,7 @@ end
 function covgerber2(x, threshold = 0.5; std_func = std, std_args = (), std_kwargs = (;))
     @assert(
         0 < threshold < 1,
-        "threshold = $threshold, must be greater than zero and smaller than one"
+        "threshold = $threshold, must be greater than 0 and less than 1"
     )
 
     T, N = size(x)
