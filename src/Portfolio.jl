@@ -569,6 +569,7 @@ end
 ```julia
 Portfolio(;
     # Portfolio characteristics.
+    prices::TimeArray = TimeArray(TimeType[], []),
     returns::DataFrame = DataFrame(),
     ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     timestamps::AbstractVector = Vector{Date}(undef, 0),
@@ -580,6 +581,7 @@ Portfolio(;
     min_number_effective_assets::Integer = 0,
     max_number_assets::Integer = 0,
     max_number_assets_factor::Real = 100_000.0,
+    f_prices::TimeArray = TimeArray(TimeType[], []),
     f_returns::DataFrame = DataFrame(),
     f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     f_timestamps::AbstractVector = Vector{Date}(undef, 0),
@@ -599,16 +601,16 @@ Portfolio(;
     max_num_assets_kurt::Integer = 0,
     # Benchmark constraints.
     turnover::Real = Inf,
-    turnover_weights = Vector{Float64}(undef, 0),
+    turnover_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     kind_tracking_err::Symbol = :Weights,
     tracking_err::Real = Inf,
-    tracking_err_returns = Vector{Float64}(undef, 0),
-    tracking_err_weights = Vector{Float64}(undef, 0),
-    bl_bench_weights = Vector{Float64}(undef, 0),
+    tracking_err_returns::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Risk and return constraints.
-    a_mtx_ineq = Matrix{Float64}(undef, 0, 0),
-    b_vec_ineq = Vector{Float64}(undef, 0),
-    risk_budget::Union{<:Real, AbstractVector{<:Real}} = Vector{Float64}(undef, 0),
+    a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     mu_l::Real = Inf,
     dev_u::Real = Inf,
     mad_u::Real = Inf,
@@ -636,31 +638,31 @@ Portfolio(;
     rdar_u::Real = Inf,
     # Optimisation model inputs.
     mu_type::Symbol = :Default,
-    mu = Vector{Float64}(undef, 0),
+    mu::AbstractVector = Vector{Float64}(undef, 0),
     cov_type::Symbol = :Full,
     jlogo::Bool = false,
-    cov = Matrix{Float64}(undef, 0, 0),
-    kurt = Matrix{Float64}(undef, 0, 0),
-    skurt = Matrix{Float64}(undef, 0, 0),
+    cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
-    L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
-    S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
-    mu_f = Vector{Float64}(undef, 0),
-    cov_f = Matrix{Float64}(undef, 0, 0),
-    mu_fm = Vector{Float64}(undef, 0),
-    cov_fm = Matrix{Float64}(undef, 0, 0),
-    mu_bl = Vector{Float64}(undef, 0),
-    cov_bl = Matrix{Float64}(undef, 0, 0),
-    mu_bl_fm = Vector{Float64}(undef, 0),
-    cov_bl_fm = Matrix{Float64}(undef, 0, 0),
-    returns_fm = Matrix{Float64}(undef, 0, 0),
+    L_2::AbstractMatrix = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
+    S_2::AbstractMatrix = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
+    mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    cov_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    mu_bl::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    cov_bl::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    mu_bl_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    cov_bl_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    returns_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     z::AbstractDict = Dict(),
     # Inputs of Worst Case Optimization Models.
-    cov_l = Matrix{Float64}(undef, 0, 0),
-    cov_u = Matrix{Float64}(undef, 0, 0),
-    cov_mu = Diagonal{Float64}(undef, 0),
-    cov_sigma = Diagonal{Float64}(undef, 0),
-    d_mu = Vector{Float64}(undef, 0),
+    cov_l::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    cov_u::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    cov_mu::AbstractMatrix{<:Real} = Diagonal{Float64}(undef, 0),
+    cov_sigma::AbstractMatrix{<:Real} = Diagonal{Float64}(undef, 0),
+    d_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     k_mu::Real = Inf,
     k_sigma::Real = Inf,
     # Optimal portfolios.
@@ -673,7 +675,7 @@ Portfolio(;
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
     # Allocation.
-    latest_prices = Vector{Float64}(undef, 0),
+    latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     alloc_optimal::AbstractDict = Dict(),
     alloc_solvers::AbstractDict = Dict(),
     alloc_params::AbstractDict = Dict(),
@@ -682,41 +684,119 @@ Portfolio(;
 )
 ```
 # Inputs
-- `assets`: `N×1` vector of assets in the portfolio.
-- `timestamps`: `T×1` vector of timestamps of the returns series.
-- `returns`: `T×N` matrix of the returns series.
-- `short`: whether or not to enable short investments (produce negative weights).
-- `short_u`: sum of the absolute values of the short (negative) weights.
-- `long_u`: sum of the absolute values of the long (positive) weights.
-- `sum_short_long`: if shorting is enabled, the maximum value of the sum of the long (positive) weights and short (negative) weights, `sum_short_long = long_u - short_u`.
-- `min_number_effective_assets`: if finite, constraints are added to the optimisations such that at least this amount of assets have non-negligible weights in the optimised portfolio.
-- `max_number_assets`: if finite, maximum number of assets with non-zero weights in the final weights vector.
-- `max_number_assets_factor`: if `max_number_assets` is finite, factor to use in the binary decision variable.
-- `f_assets`: factor assets for use in factor model optimisations.
-- `f_timestamps`: factor timestamps for use in factor model optimisations.
-- `f_returns`: factor returns for use in factor model optimisations.
-- `loadings`: loadings matrix for use in factor model optimisations.
-## Risk Parameters
-- `msv_target`: mean semivariance target.
-- `lpm_target`:
-- `alpha_i`:
-- `alpha`:
-- `a_sim`:
-- `at`:
-- `beta_i`:
-- `beta`:
-- `b_sim`:
-- `kappa`:
-- `invat`:
-- `ln_k`:
-- `opk`:
-- `omk`:
-- `invk2`:
-- `invk`:
-- `invopk`:
-- `invomk`:
-- `gs_threshold`:
-- `max_num_assets_kurt`:
+## Portfolio characteristics.
+- `prices`: `(T+1)×N` `TimeArray` with asset pricing information where the time stamp field is `timestamp`, `T` is the number of returns observations and `N` the number of assets.
+- `returns`:
+- `ret`:
+- `timestamps`:
+- `assets`:
+- `short`:
+- `short_u`:
+- `long_u`:
+- `sum_short_long`:
+- `min_number_effective_assets`:
+- `max_number_assets`:
+- `max_number_assets_factor`:
+- `f_prices`:
+- `f_returns`:
+- `f_ret`:
+- `f_timestamps`:
+- `f_assets`:
+- `loadings`:
+## Risk parameters.
+`msv_target`:
+`lpm_target`:
+`alpha_i`:
+`alpha`:
+`a_sim`:
+`beta_i`:
+`beta`:
+`b_sim`:
+`kappa`:
+`gs_threshold`:
+`max_num_assets_kurt`:
+## Benchmark constraints.
+- `turnover`:
+- `turnover_weights`:
+- `kind_tracking_err`:
+- `tracking_err`:
+- `tracking_err_returns`:
+- `tracking_err_weights`:
+- `bl_bench_weights`:
+## Risk and return constraints.
+- `a_mtx_ineq`:
+- `b_vec_ineq`:
+- `risk_budget`:
+- `mu_l`:
+- `dev_u`:
+- `mad_u`:
+- `sdev_u`:
+- `cvar_u`:
+- `wr_u`:
+- `flpm_u`:
+- `slpm_u`:
+- `mdd_u`:
+- `add_u`:
+- `cdar_u`:
+- `uci_u`:
+- `evar_u`:
+- `edar_u`:
+- `gmd_u`:
+- `rg_u`:
+- `rcvar_u`:
+- `tg_u`:
+- `rtg_u`:
+- `owa_u`:
+- `owa_w`:
+- `krt_u`:
+- `skrt_u`:
+- `rvar_u`:
+- `rdar_u`:
+## Optimisation model inputs.
+- `mu_type`:
+- `mu`:
+- `cov_type`:
+- `jlogo`:
+- `cov`:
+- `kurt`:
+- `skurt`:
+- `posdef_fix`:
+- `L_2`:
+- `S_2`:
+- `mu_f`:
+- `cov_f`:
+- `mu_fm`:
+- `cov_fm`:
+- `mu_bl`:
+- `cov_bl`:
+- `mu_bl_fm`:
+- `cov_bl_fm`:
+- `returns_fm`:
+- `z`:
+## Inputs of Worst Case Optimization Models.
+- `cov_l`:
+- `cov_u`:
+- `cov_mu`:
+- `cov_sigma`:
+- `d_mu`:
+- `k_mu`:
+- `k_sigma`:
+## Optimal portfolios.
+- `optimal`:
+- `limits`:
+- `frontier`:
+## Solutions.
+- `solvers`:
+- `opt_params`:
+- `fail`:
+- `model`:
+## Allocation.
+- `latest_prices`:
+- `alloc_optimal`:
+- `alloc_solvers`:
+- `alloc_params`:
+- `alloc_fail`:
+- `alloc_model`:
 """
 function Portfolio(;
     # Portfolio characteristics.

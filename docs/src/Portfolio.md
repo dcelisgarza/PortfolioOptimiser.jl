@@ -4,7 +4,9 @@
 
 ```@docs
 Portfolio
+Portfolio()
 HCPortfolio
+HCPortfolio()
 ```
 
 ## Private API
