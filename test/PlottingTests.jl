@@ -55,6 +55,6 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
         branchorder = :optimal,
         dbht_method = :Unique,
     )
-    opt_port!(hcportfolio)
+    opt_port!(hcportfolio; type = :HERC)
     plt14 = plot_clusters(hcportfolio; cluster = false)
 end

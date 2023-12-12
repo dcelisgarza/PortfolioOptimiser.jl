@@ -709,12 +709,12 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `lpm_target`: target value for the first and second lower partial moment risk measures. It can have two meanings depending on its type and value.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`opt_port!`](@ref) function.
     - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where `Na` is the number of assets.
-- `alpha_i`:
-- `alpha`:
-- `a_sim`:
-- `beta_i`:
+- `alpha_i`: initial significance level of Tail Gini losses, `alpha_i < alpha`.
+- `alpha`: significance level of CVaR losses, `alpha ∈ (0, 1)`.
+- `a_sim`: number of CVaRs to approximate the Tail Gini losses.
+- `beta_i`: initial significance level of Tail Gini gains.
 - `beta`:
-- `b_sim`:
+- `b_sim`: number of CVaRs to approximate the Tail Gini gains.
 - `kappa`:
 - `gs_threshold`:
 - `max_num_assets_kurt`:
@@ -1263,14 +1263,11 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         setfield!(obj, :invat, invat)
         setfield!(obj, :ln_k, ln_k)
     elseif sym == :alpha_i
-        @assert(
-            0 < obj.alpha_i < val < 1,
-            "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold"
-        )
+        @assert(val < obj.alpha, "alpha_i = $val must be less than alpha = $(obj.alpha)")
     elseif sym == :a_sim
         @assert(
             val >= zero(typeof(val)),
-            "a_sim = $val, must be greater than or equal to 0"
+            "a_sim = $val, must be greater than or equal to zero"
         )
     elseif sym == :beta
         @assert(
@@ -1278,14 +1275,11 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
         )
     elseif sym == :beta_i
-        @assert(
-            0 < obj.beta_i < val < 1,
-            "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
-        )
+        @assert(val < obj.beta, "beta_i = $val must be less than alpha = $(obj.beta)")
     elseif sym == :b_sim
         @assert(
             val >= zero(typeof(val)),
-            "b_sim = $val, must be greater than or equal to 0"
+            "b_sim = $val, must be greater than or equal to zero"
         )
     elseif sym == :kappa
         @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
@@ -1899,10 +1893,7 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold"
         )
     elseif sym == :alpha_i
-        @assert(
-            0 < obj.alpha_i < val < 1,
-            "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold"
-        )
+        @assert(val < obj.alpha, "alpha_i = $val must be less than alpha = $(obj.alpha)")
     elseif sym == :a_sim
         @assert(
             val >= zero(typeof(val)),
@@ -1914,10 +1905,7 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
         )
     elseif sym == :beta_i
-        @assert(
-            0 < obj.beta_i < val < 1,
-            "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
-        )
+        @assert(val < obj.beta, "beta_i = $val must be less than alpha = $(obj.beta)")
     elseif sym == :b_sim
         @assert(
             val >= zero(typeof(val)),
