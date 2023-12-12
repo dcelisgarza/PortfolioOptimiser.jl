@@ -903,7 +903,7 @@ TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 1
 Compute the Tail Gini.
 # Inputs
 - `x`: vector of portfolio returns.
-- `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha`.
+- `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
 - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
 - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
 """
@@ -928,10 +928,10 @@ RTG(
 Compute the Tail Gini Range.
 # Inputs
 - `x`: vector of portfolio returns.
-- `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha`.
+- `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
 - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
 - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
-- `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta`.
+- `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
 - `beta`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`.
 - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 """
@@ -1024,12 +1024,12 @@ Compute the value of a risk measure given a vector of asset weights and returns.
 - `rm`: risk measure from [`RiskMeasures`](@ref) and [`HRRiskMeasures`](@ref).
 - `rf`: risk-free rate at the frequency of `returns`, used as the minimum return target, `r`, in [`FLPM`](@ref) and [`SLPM`](@ref).
 - `sigma`: covariance matrix of asset returns.
-- `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha`.
+- `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
 - `alpha`: `alpha ∈ (0, 1)`
     - if `rm` *is not* an OWA range measure: significance level; 
     - if `rm` *is* an OWA range measure: end value of the significance level of CVaR losses.
 - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
-- `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta`.
+- `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
 - `beta`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`.
 - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 - `solvers`: dictionary of `JuMP`-supported solvers;
