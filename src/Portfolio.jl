@@ -710,11 +710,11 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
     - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`opt_port!`](@ref) function.
     - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where `Na` is the number of assets.
 - `alpha_i`: initial significance level of Tail Gini losses, `alpha_i < alpha`.
-- `alpha`: significance level of CVaR losses or Tail Gini losses, `alpha ∈ (0, 1)`.
+- `alpha`: significance level of CVaR losses and Tail Gini losses, `alpha ∈ (0, 1)`.
 - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim`.
 - `beta_i`: initial significance level of Tail Gini gains, `beta_i < beta`. 
 - `beta`: significance level of CVaR gains, `beta ∈ (0, 1)`.
-- `b_sim`: number of CVaRs to approximate the Tail Gini gains.
+- `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 - `kappa`:
 - `gs_threshold`:
 - `max_num_assets_kurt`:

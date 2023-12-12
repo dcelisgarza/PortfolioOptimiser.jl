@@ -905,7 +905,7 @@ Compute the Tail Gini.
 - `x`: vector of portfolio returns.
 - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha`.
 - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
-- `a_sim`: number of steps between `alpha_i` and `alpha`.
+- `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
 """
 function TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100)
     T = length(x)
@@ -930,10 +930,10 @@ Compute the Tail Gini Range.
 - `x`: vector of portfolio returns.
 - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha`.
 - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
-- `a_sim`: number of steps between `alpha_i` and `alpha`.
-- `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta`, if `nothing` it takes the value of `alpha_i`.
-- `beta`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`, if `nothing` it takes the value of `alpha`.
-- `b_sim`: number of steps between `beta_i` and `beta`, if `nothing` it takes the value of `a_sim`.
+- `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
+- `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta`.
+- `beta`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`.
+- `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 """
 function RTG(
     x::AbstractVector;
@@ -1028,10 +1028,10 @@ Compute the value of a risk measure given a vector of asset weights and returns.
 - `alpha`: `alpha ∈ (0, 1)`
     - if `rm` *is not* an OWA range measure: significance level; 
     - if `rm` *is* an OWA range measure: end value of the significance level of CVaR losses.
-- `a_sim`: number of steps between `alpha_i` and `alpha`.
+- `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
 - `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta`.
 - `beta`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`.
-- `b_sim`: number of steps between `beta_i` and `beta`.
+- `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 - `solvers`: dictionary of `JuMP`-supported solvers;
     - if `rm` is an entropic risk measure, they need Exponential Cone support;
     - if `rm` is a relativistic risk measure, they need 3D Power Cone.

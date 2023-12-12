@@ -84,9 +84,9 @@ owa_tg(
 Compute the OWA weights for the Tail Gini of a returns series [^OWA].
 # Inputs
 - `T`: number of observations of the returns series.
-- `alpha_i`: initial significance level of Tail Gini, `0 < alpha_i < alpha < 1`.
-- `alpha`: significance level of Tail Gini, `alpha ∈ (0, 1)`.
-- `a_sim`: number of CVaRs to approximate the Tail Gini `a_sim > 0`.
+- `alpha_i`: initial significance level of Tail Gini losses, `0 < alpha_i < alpha < 1`.
+- `alpha`: significance level of Tail Gini losses, `alpha ∈ (0, 1)`.
+- `a_sim`: number of CVaRs to approximate the Tail Gini losses `a_sim > 0`.
 # Outputs
 - `w`: `T×1` ordered weight vector.
 """
@@ -212,7 +212,7 @@ Compute the OWA weights for the Tail Gini Range of a returns series [^OWA].
 - `T`: number of observations of the returns series.
 - `alpha_i`: initial significance level of Tail Gini losses, `0 < alpha_i < alpha < 1`.
 - `alpha`: significance level of Tail Gini losses, `alpha ∈ (0, 1)`.
-- `a_sim`: number of CVaRs to approximate the Tail Gini `a_sim > 0`.
+- `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
 - `beta_i`: initial significance level of Tail Gini gains, `beta_i < beta`.
 - `beta`: significance level of Tail Gini gains, `beta ∈ (0, 1)`.
 - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
