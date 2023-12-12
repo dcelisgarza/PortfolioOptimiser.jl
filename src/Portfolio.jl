@@ -703,15 +703,15 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `f_assets`: `Nf×1` vector of assets. Its value is saved in the `f_assets` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
 - `loadings`: loadings matrix for black litterman models.
 ## Risk parameters.
-- `msv_target`: target value for for mean absolute deviation and mean semivariance risk measures. It can have two meanings depending on its type and value.
+- `msv_target`: target value for for Absolute Deviation and Semivariance risk measures. It can have two meanings depending on its type and value.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
     - Else the target is the value of `msv_target`. If `msv_target` is a vector, its length should be `Na`, where `Na` is the number of assets.
-- `lpm_target`: target value for the first and second lower partial moment risk measures. It can have two meanings depending on its type and value.
+- `lpm_target`: target value for the First and Second Lower Partial Moment risk measures. It can have two meanings depending on its type and value.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`opt_port!`](@ref) function.
     - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where `Na` is the number of assets.
 - `alpha_i`: initial significance level of Tail Gini losses, `alpha_i < alpha`.
-- `alpha`: significance level of CVaR losses, `alpha ∈ (0, 1)`.
-- `a_sim`: number of CVaRs to approximate the Tail Gini losses.
+- `alpha`: significance level of CVaR losses or Tail Gini losses, `alpha ∈ (0, 1)`.
+- `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim`.
 - `beta_i`: initial significance level of Tail Gini gains, `beta_i < beta`. 
 - `beta`: significance level of CVaR gains, `beta ∈ (0, 1)`.
 - `b_sim`: number of CVaRs to approximate the Tail Gini gains.
@@ -919,18 +919,12 @@ function Portfolio(;
         0 < alpha_i < alpha < 1,
         "0 < alpha_i < alpha < 1: 0 < $alpha_i < $alpha < 1, must hold"
     )
-    @assert(
-        a_sim >= zero(typeof(a_sim)),
-        "a_sim = $a_sim, must be greater than or equal to zero"
-    )
+    @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
     @assert(
         0 < beta_i < beta < 1,
         "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
     )
-    @assert(
-        b_sim >= zero(typeof(b_sim)),
-        "a_sim = $b_sim, must be greater than or equal to zero"
-    )
+    @assert(b_sim > zero(b_sim), "a_sim = $b_sim, must be greater than or equal to zero")
     @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
     @assert(
         kind_tracking_err ∈ TrackingErrKinds,
@@ -1261,24 +1255,24 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         setfield!(obj, :invat, invat)
         setfield!(obj, :ln_k, ln_k)
     elseif sym == :alpha_i
-        @assert(val < obj.alpha, "alpha_i = $val must be less than alpha = $(obj.alpha)")
-    elseif sym == :a_sim
         @assert(
-            val >= zero(typeof(val)),
-            "a_sim = $val, must be greater than or equal to zero"
+            0 < val < obj.alpha < 1,
+            "0 < alpha_i < alpha < 1: 0 < $val < $(obj.alpha) < 1 must hold"
         )
+    elseif sym == :a_sim
+        @assert(val > zero(val), "a_sim = $val, must be greater than zero")
     elseif sym == :beta
         @assert(
             0 < obj.beta_i < val < 1,
             "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
         )
     elseif sym == :beta_i
-        @assert(val < obj.beta, "beta_i = $val must be less than beta = $(obj.beta)")
-    elseif sym == :b_sim
         @assert(
-            val >= zero(typeof(val)),
-            "b_sim = $val, must be greater than or equal to zero"
+            0 < val < obj.beta < 1,
+            "0 < beta_i < beta < 1: : 0 < $val < $(obj.beta) < 1 must hold"
         )
+    elseif sym == :b_sim
+        @assert(val > zero(val), "b_sim = $val, must be greater than zero")
     elseif sym == :kappa
         @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
         ln_k = (obj.invat^val - obj.invat^(-val)) / (2 * val)
@@ -1530,9 +1524,9 @@ HCPortfolio(;
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Real = Inf,
-    beta::Real = Inf,
-    b_sim::Integer = 0,
+    beta_i::Real = alpha_i,
+    beta::Real = alpha,
+    b_sim::Integer = a_sim,
     kappa::Real = 0.3,
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
@@ -1659,9 +1653,9 @@ HCPortfolio(;
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Real = Inf,
-    beta::Real = Inf,
-    b_sim::Integer = 0,
+    beta_i::Real = alpha_i,
+    beta::Real = alpha,
+    b_sim::Integer = a_sim,
     kappa::Real = 0.3,
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
@@ -1708,9 +1702,9 @@ function HCPortfolio(;
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Real = Inf,
-    beta::Real = Inf,
-    b_sim::Integer = 0,
+    beta_i::Real = alpha_i,
+    beta::Real = alpha,
+    b_sim::Integer = a_sim,
     kappa::Real = 0.3,
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
@@ -1748,20 +1742,14 @@ function HCPortfolio(;
         0 < alpha_i < alpha < 1,
         "0 < alpha_i < alpha < 1: 0 < $alpha_i < $alpha < 1, must hold"
     )
+    @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
+
     @assert(
-        a_sim >= zero(typeof(a_sim)),
-        "a_sim = $a_sim, must be greater than or equal to zero"
+        0 < beta_i < beta < 1,
+        "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
     )
-    if isfinite(beta_i) || isfinite(beta) || !iszero(b_sim)
-        @assert(
-            0 < beta_i < beta < 1,
-            "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
-        )
-        @assert(
-            b_sim >= zero(typeof(b_sim)),
-            "a_sim = $b_sim, must be greater than or equal to zero"
-        )
-    end
+    @assert(b_sim > zero(b_sim), "a_sim = $b_sim, must be greater than zero")
+
     @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and smaller than 1")
     @assert(
         0 < alpha_tail < 1,
@@ -1891,24 +1879,24 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold"
         )
     elseif sym == :alpha_i
-        @assert(val < obj.alpha, "alpha_i = $val must be less than alpha = $(obj.alpha)")
-    elseif sym == :a_sim
         @assert(
-            val >= zero(typeof(val)),
-            "a_sim = $val, must be greater than or equal to zero"
+            0 < val < obj.alpha < 1,
+            "0 < alpha_i < alpha < 1: 0 < $val < $(obj.alpha) < 1 must hold"
         )
+    elseif sym == :a_sim
+        @assert(val > zero(val), "a_sim = $val, must be greater than zero")
     elseif sym == :beta
         @assert(
             0 < obj.beta_i < val < 1,
             "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
         )
     elseif sym == :beta_i
-        @assert(val < obj.beta, "beta_i = $val must be less than beta = $(obj.beta)")
-    elseif sym == :b_sim
         @assert(
-            val >= zero(typeof(val)),
-            "b_sim = $val, must be greater than or equal to zero"
+            0 < val < obj.beta < 1,
+            "0 < beta_i < beta < 1: 0 < $val < $(obj.beta) < 1 must hold"
         )
+    elseif sym == :b_sim
+        @assert(val >= zero(val), "b_sim = $val, must be greater than zero")
     elseif sym == :kappa
         @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
     elseif sym == :alpha_tail

@@ -693,7 +693,7 @@ function opt_port!(
     rf::Real = 0.0,
     l::Real = 2.0,
     l_i::Real = l,
-    cluster = true,
+    cluster::Bool = true,
     linkage::Symbol = :single,
     k = cluster ? 0 : portfolio.k,
     max_k::Int = ceil(Int, sqrt(length(portfolio.assets))),

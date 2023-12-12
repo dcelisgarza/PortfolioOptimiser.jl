@@ -68,9 +68,9 @@ function plot_risk_contribution(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
-    beta_i::Real = Inf,
-    beta::Real = Inf,
-    b_sim::Integer = 0,
+    beta_i::Real = alpha_i,
+    beta::Real = alpha,
+    b_sim::Integer = a_sim,
     di::Real = 1e-6,
     kappa::Real = 0.3,
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -223,7 +223,7 @@ end
 function plot_frontier(
     frontier;
     alpha::Real = 0.05,
-    beta::Real = Inf,
+    beta::Real = alpha,
     kappa::Real = 0.3,
     returns::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
     t_factor = 252,
@@ -334,7 +334,7 @@ end
 function plot_frontier_area(
     frontier;
     alpha::Real = 0.05,
-    beta::Real = Inf,
+    beta::Real = alpha,
     kappa::Real = 0.3,
     rm = :SD,
     t_factor = 252,
@@ -637,9 +637,9 @@ function plot_range(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Int = 100,
-    beta_i::Real = Inf,
-    beta::Real = Inf,
-    b_sim::Integer = 0,
+    beta_i::Real = alpha_i,
+    beta::Real = alpha,
+    b_sim::Integer = a_sim,
     theme = :Set1_5,
     kwargs_h = (;),
     kwargs_risks = (;),

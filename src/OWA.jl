@@ -95,6 +95,7 @@ function owa_tg(T::Integer; alpha_i::Real = 1e-4, alpha::Real = 0.05, a_sim::Int
         0 < alpha_i < alpha < 1,
         "alpha_i = $alpha_i, alpha = $alpha, please ensure 0 < alpha_i < alpha < 1, holds"
     )
+    @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
 
     alphas = range(start = alpha_i, stop = alpha, length = a_sim)
     n = length(alphas)
@@ -211,10 +212,10 @@ Compute the OWA weights for the Tail Gini Range of a returns series [^OWA].
 - `T`: number of observations of the returns series.
 - `alpha_i`: initial significance level of Tail Gini losses, `0 < alpha_i < alpha < 1`.
 - `alpha`: significance level of Tail Gini losses, `alpha ∈ (0, 1)`.
-- `a_sim`: number of CVaRs to approximate the Tail Gini losses.
+- `a_sim`: number of CVaRs to approximate the Tail Gini `a_sim > 0`.
 - `beta_i`: initial significance level of Tail Gini gains, `beta_i < beta`.
-- `beta`: significance level of Tail Gini gains.
-- `b_sim`: number of CVaRs to approximate the Tail Gini gains, `beta ∈ (0, 1)`.
+- `beta`: significance level of Tail Gini gains, `beta ∈ (0, 1)`.
+- `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 # Outputs
 - `w`: `T×1` ordered weight vector.
 """
