@@ -147,7 +147,7 @@ end
 
 """
 ```julia
-owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = Inf)
+owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = alpha)
 ```
 Compute the OWA weights for the CVaR Range of a returns series [^OWA].
 # Inputs
@@ -157,10 +157,8 @@ Compute the OWA weights for the CVaR Range of a returns series [^OWA].
 # Outputs
 - `w`: `T×1` ordered weight vector.
 """
-function owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = Inf)
-    isinf(beta) && (beta = alpha)
+function owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = alpha)
     w = owa_cvar(T, alpha) .- reverse(owa_cvar(T, beta))
-
     return w
 end
 
@@ -169,9 +167,9 @@ end
 owa_rwcvar(
     T::Integer,
     alphas::AbstractVector{<:Real},
-    walpha::AbstractVector{<:Real},
-    betas::Union{AbstractVector{<:Real}, Nothing} = nothing,
-    wbeta::Union{AbstractVector{<:Real}, Nothing} = nothing,
+    weights_a::AbstractVector{<:Real},
+    betas::AbstractVector{<:Real} = alphas,
+    weights_b::AbstractVector{<:Real} = weights_b,
 )
 ```
 Compute the OWA weights for the Weighted Conditional Value at Risk (WCVaR) of a returns series [^OWA].
@@ -188,12 +186,9 @@ function owa_rwcvar(
     T::Integer,
     alphas::AbstractVector{<:Real},
     weights_a::AbstractVector{<:Real},
-    betas::Union{AbstractVector{<:Real}, Nothing} = nothing,
-    weights_b::Union{AbstractVector{<:Real}, Nothing} = nothing,
+    betas::AbstractVector{<:Real} = alphas,
+    weights_b::AbstractVector{<:Real} = weights_b,
 )
-    isnothing(betas) && (betas = alphas)
-    isnothing(weights_b) && (weights_b = weights_a)
-
     w = owa_wcvar(T, alphas, weights_a) .- reverse(owa_wcvar(T, betas, weights_b))
 
     return w
@@ -206,9 +201,9 @@ owa_rtg(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Real = Inf,
-    beta::Real = Inf,
-    b_sim::Integer = 0,
+    beta_i::Real = alpha_i,
+    beta::Real = alpha,
+    b_sim::Integer = a_sim,
 )
 ```
 Compute the OWA weights for the Tail Gini Range of a returns series [^OWA].
@@ -228,14 +223,10 @@ function owa_rtg(
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Real = Inf,
-    beta::Real = Inf,
-    b_sim::Integer = 0,
+    beta_i::Real = alpha_i,
+    beta::Real = alpha,
+    b_sim::Integer = a_sim,
 )
-    isinf(beta) && (beta = alpha)
-    iszero(b_sim) && (b_sim = a_sim)
-    isinf(beta_i) && (beta_i = alpha_i)
-
     w =
         owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) .-
         reverse(owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim))

@@ -592,9 +592,9 @@ Portfolio(;
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Real = Inf,
-    beta::Real = Inf,
-    b_sim::Integer = 0,
+    beta_i::Real = alpha_i,
+    beta::Real = alpha,
+    b_sim::Integer = a_sim,
     kappa::Real = 0.3,
     gs_threshold::Real = 0.5,
     max_num_assets_kurt::Integer = 0,
@@ -712,8 +712,8 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `alpha_i`: initial significance level of Tail Gini losses, `alpha_i < alpha`.
 - `alpha`: significance level of CVaR losses, `alpha ∈ (0, 1)`.
 - `a_sim`: number of CVaRs to approximate the Tail Gini losses.
-- `beta_i`: initial significance level of Tail Gini gains.
-- `beta`:
+- `beta_i`: initial significance level of Tail Gini gains, `beta_i < beta`. 
+- `beta`: significance level of CVaR gains, `beta ∈ (0, 1)`.
 - `b_sim`: number of CVaRs to approximate the Tail Gini gains.
 - `kappa`:
 - `gs_threshold`:
@@ -826,9 +826,9 @@ function Portfolio(;
     alpha_i::Real = 0.0001,
     alpha::Real = 0.05,
     a_sim::Integer = 100,
-    beta_i::Real = Inf,
-    beta::Real = Inf,
-    b_sim::Integer = 0,
+    beta_i::Real = alpha_i,
+    beta::Real = alpha,
+    b_sim::Integer = a_sim,
     kappa::Real = 0.3,
     gs_threshold::Real = 0.5,
     max_num_assets_kurt::Integer = 0,
@@ -923,16 +923,14 @@ function Portfolio(;
         a_sim >= zero(typeof(a_sim)),
         "a_sim = $a_sim, must be greater than or equal to zero"
     )
-    if isfinite(beta_i) || isfinite(beta) || !iszero(b_sim)
-        @assert(
-            0 < beta_i < beta < 1,
-            "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
-        )
-        @assert(
-            b_sim >= zero(typeof(b_sim)),
-            "a_sim = $b_sim, must be greater than or equal to zero"
-        )
-    end
+    @assert(
+        0 < beta_i < beta < 1,
+        "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
+    )
+    @assert(
+        b_sim >= zero(typeof(b_sim)),
+        "a_sim = $b_sim, must be greater than or equal to zero"
+    )
     @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
     @assert(
         kind_tracking_err ∈ TrackingErrKinds,
@@ -1275,7 +1273,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
         )
     elseif sym == :beta_i
-        @assert(val < obj.beta, "beta_i = $val must be less than alpha = $(obj.beta)")
+        @assert(val < obj.beta, "beta_i = $val must be less than beta = $(obj.beta)")
     elseif sym == :b_sim
         @assert(
             val >= zero(typeof(val)),
@@ -1905,7 +1903,7 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold"
         )
     elseif sym == :beta_i
-        @assert(val < obj.beta, "beta_i = $val must be less than alpha = $(obj.beta)")
+        @assert(val < obj.beta, "beta_i = $val must be less than beta = $(obj.beta)")
     elseif sym == :b_sim
         @assert(
             val >= zero(typeof(val)),
