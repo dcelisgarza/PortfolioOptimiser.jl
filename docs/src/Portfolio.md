@@ -3,9 +3,8 @@
 ## Public API
 
 ```@docs
-Portfolio
 Portfolio()
-HCPortfolio
+opt_port!
 HCPortfolio()
 ```
 
@@ -13,6 +12,8 @@ HCPortfolio()
 
 ```@docs
 AbstractPortfolio
+Portfolio
+HCPortfolio
 RiskMeasures
 HRRiskMeasures
 ```

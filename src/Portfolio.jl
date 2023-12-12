@@ -577,7 +577,6 @@ Portfolio(;
     short::Bool = false,
     short_u::Real = 0.2,
     long_u::Real = 1.0,
-    sum_short_long::Real = short ? long_u - short_u : 1.0,
     min_number_effective_assets::Integer = 0,
     max_number_assets::Integer = 0,
     max_number_assets_factor::Real = 100_000.0,
@@ -683,38 +682,42 @@ Portfolio(;
     alloc_model::AbstractDict = Dict(),
 )
 ```
+Creates an instance of [`Portfolio`](@ref) containing all internal data necessary for convex portfolio optimisations as well as failed and successful results.
 # Inputs
 ## Portfolio characteristics.
-- `prices`: `(T+1)×N` `TimeArray` with asset pricing information where the time stamp field is `timestamp`, `T` is the number of returns observations and `N` the number of assets.
-- `returns`:
-- `ret`:
-- `timestamps`:
-- `assets`:
-- `short`:
-- `short_u`:
-- `long_u`:
-- `sum_short_long`:
-- `min_number_effective_assets`:
-- `max_number_assets`:
-- `max_number_assets_factor`:
-- `f_prices`:
-- `f_returns`:
-- `f_ret`:
-- `f_timestamps`:
-- `f_assets`:
-- `loadings`:
+- `prices`: `(T+1)×Na` `TimeArray` with asset pricing information where the time stamp field is `timestamp`, `T` is the number of returns observations and `Na` the number of assets. If `prices` is not empty, then `returns`, `ret`, `timestamps`, `assets` and `latest_prices` are ignored because their respective fields are obtained from `prices`.
+- `returns`: `T×(Na+1)` `DataFrame` where `T` is the number of returns observations, `Na` is the number of assets, the extra column is `timestamp`, which contains the timestamps of the returns. If `prices` is empty and `returns` is not empty, `ret`, `timestamps` and `assets` are ignored because their respective fields are obtained from `returns`.
+- `ret`: `T×Na` matrix of returns. Its value is saved in the `returns` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
+- `timestamps`: `T×1` vector of timestamps. Its value is saved in the `timestamps` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
+- `assets`: `Na×1` vector of assets. Its value is saved in the `assets` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
+- `short`: whether or not to allow negative weights, i.e. whether a portfolio accepts shorting.
+- `short_u`: absolute value of the sum of all short (negative) weights.
+- `long_u`: sum of all long (positive) weights.
+- `min_number_effective_assets`: if non-zero, guarantees that at least number of assets make significant contributions to the final portfolio weights.
+- `max_number_assets`: if non-zero, guarantees at most this number of assets make non-zero contributions to the final portfolio weights. Requires an optimiser that supports binary variables.
+- `max_number_assets_factor`: scaling factor needed to create a decision variable when `max_number_assets` is non-zero.
+- `f_prices`: `(T+1)×Nf` `TimeArray` with factor pricing information where the time stamp field is `f_timestamp`, `T` is the number of factors returns observations and `Nf` the number of factors. If `f_prices` is not empty, then `f_returns`, `f_ret`, `f_timestamps`, `f_assets` and `latest_prices` are ignored because their respective fields are obtained from `f_prices`.
+- `f_returns`: `T×(Nf+1)` `DataFrame` where `T` is the number of factor returns observations, `Nf` is the number of factors, the extra column is `f_timestamp`, which contains the timestamps of the factor returns. If `f_prices` is empty and `f_returns` is not empty, `f_ret`, `f_timestamps` and `f_assets` are ignored because their respective fields are obtained from `f_returns`.
+- `f_ret`: `T×Nf` matrix of factor returns. Its value is saved in the `f_returns` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
+- `f_timestamps`: `T×1` vector of factor timestamps. Its value is saved in the `f_timestamps` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
+- `f_assets`: `Nf×1` vector of assets. Its value is saved in the `f_assets` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
+- `loadings`: loadings matrix for black litterman models.
 ## Risk parameters.
-`msv_target`:
-`lpm_target`:
-`alpha_i`:
-`alpha`:
-`a_sim`:
-`beta_i`:
-`beta`:
-`b_sim`:
-`kappa`:
-`gs_threshold`:
-`max_num_assets_kurt`:
+- `msv_target`: target value for for mean absolute deviation and mean semivariance risk measures. It can have two meanings depending on its type and value.
+    - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
+    - Else the target is the value of `msv_target`. If `msv_target` is a vector, its length should be `Na`, where `Na` is the number of assets.
+- `lpm_target`: target value for the first and second lower partial moment risk measures. It can have two meanings depending on its type and value.
+    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`opt_port!`](@ref) function.
+    - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where `Na` is the number of assets.
+- `alpha_i`:
+- `alpha`:
+- `a_sim`:
+- `beta_i`:
+- `beta`:
+- `b_sim`:
+- `kappa`:
+- `gs_threshold`:
+- `max_num_assets_kurt`:
 ## Benchmark constraints.
 - `turnover`:
 - `turnover_weights`:
@@ -808,7 +811,6 @@ function Portfolio(;
     short::Bool = false,
     short_u::Real = 0.2,
     long_u::Real = 1.0,
-    sum_short_long::Real = short ? long_u - short_u : 1.0,
     min_number_effective_assets::Integer = 0,
     max_number_assets::Integer = 0,
     max_number_assets_factor::Real = 100_000.0,
@@ -946,6 +948,18 @@ function Portfolio(;
         0 < gs_threshold < 1,
         "gs_threshold = $gs_threshold, must be greater than 0 and less than 1"
     )
+    @assert(
+        min_number_effective_assets >= 0,
+        "min_number_effective_assets = $min_number_effective_assets, must be greater than or equal to 0"
+    )
+    @assert(
+        max_number_assets >= 0,
+        "max_number_assets = $max_number_assets, must be greater than or equal to 0"
+    )
+    @assert(
+        max_number_assets_factor >= 0,
+        "max_number_assets_factor = $max_number_assets_factor, must be greater than or equal to 0"
+    )
 
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
@@ -997,7 +1011,7 @@ function Portfolio(;
         typeof(short),
         typeof(short_u),
         typeof(long_u),
-        typeof(sum_short_long),
+        promote_type(typeof(short_u), typeof(long_u)),
         typeof(min_number_effective_assets),
         typeof(max_number_assets),
         typeof(max_number_assets_factor),
@@ -1116,7 +1130,7 @@ function Portfolio(;
         short,
         short_u,
         long_u,
-        sum_short_long,
+        short ? long_u - short_u : 1.0,
         min_number_effective_assets,
         max_number_assets,
         max_number_assets_factor,
@@ -1256,7 +1270,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
     elseif sym == :a_sim
         @assert(
             val >= zero(typeof(val)),
-            "a_sim = $val, must be greater than or equal to zero"
+            "a_sim = $val, must be greater than or equal to 0"
         )
     elseif sym == :beta
         @assert(
@@ -1271,7 +1285,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
     elseif sym == :b_sim
         @assert(
             val >= zero(typeof(val)),
-            "b_sim = $val, must be greater than or equal to zero"
+            "b_sim = $val, must be greater than or equal to 0"
         )
     elseif sym == :kappa
         @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
@@ -1305,6 +1319,20 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             0 < val < 1,
             "gs_threshold = $val, must be greater than zero and smaller than one"
         )
+    elseif sym == :risk_budget
+        if isempty(val)
+            N = size(obj.returns, 2)
+            val = fill(1 / N, N)
+        else
+            @assert(
+                length(val) == size(obj.returns, 2),
+                "length(risk_budget) == size(obj.returns, 2) must hold: $(length(val)) == $(size(obj.returns, 2))"
+            )
+            isa(val, AbstractRange) ? (val = collect(val / sum(val))) : (val ./= sum(val))
+        end
+    elseif sym ∈
+           (:min_number_effective_assets, :max_number_assets, :max_number_assets_factor)
+        @assert(val >= 0, "$sym = $val, must be greater than or equal to 0")
     elseif sym ∈ (
         :sum_short_long,
         :at,
@@ -1328,17 +1356,6 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
                 "$sym is related to other fields and therefore cannot be manually changed without compromising correctness, please create a new instance of Portfolio instead",
             ),
         )
-    elseif sym == :risk_budget
-        if isempty(val)
-            N = size(obj.returns, 2)
-            val = fill(1 / N, N)
-        else
-            @assert(
-                length(val) == size(obj.returns, 2),
-                "length(risk_budget) == size(obj.returns, 2) must hold: $(length(val)) == $(size(obj.returns, 2))"
-            )
-            isa(val, AbstractRange) ? (val = collect(val / sum(val))) : (val ./= sum(val))
-        end
     else
         if (isa(getfield(obj, sym), AbstractArray) && isa(val, AbstractArray)) ||
            (isa(getfield(obj, sym), Real) && isa(val, Real))
@@ -1637,6 +1654,57 @@ mutable struct HCPortfolio{
     alloc_model::tamod
 end
 
+"""
+```julia
+HCPortfolio(;
+    # Portfolio characteristics.
+    prices::TimeArray = TimeArray(TimeType[], []),
+    returns::DataFrame = DataFrame(),
+    ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
+    assets::AbstractVector = Vector{String}(undef, 0),
+    # Risk parmeters.
+    alpha_i::Real = 0.0001,
+    alpha::Real = 0.05,
+    a_sim::Integer = 100,
+    beta_i::Real = Inf,
+    beta::Real = Inf,
+    b_sim::Integer = 0,
+    kappa::Real = 0.3,
+    alpha_tail::Real = 0.05,
+    gs_threshold::Real = 0.5,
+    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    # Optimisation parameters.
+    mu_type::Symbol = :Default,
+    mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    cov_type::Symbol = :Full,
+    jlogo::Bool = false,
+    cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    posdef_fix::Symbol = :None,
+    bins_info::Union{Symbol, <:Integer} = :KN,
+    w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
+    w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
+    codep_type::Symbol = :Pearson,
+    codep::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    clusters = Hclust{Float64}(Matrix{Int64}(undef, 0, 2), Float64[], Int64[], :nothing),
+    k::Integer = 0,
+    # Optimal portfolios.
+    optimal::AbstractDict = Dict(),
+    # Solutions.
+    solvers::AbstractDict = Dict(),
+    opt_params::AbstractDict = Dict(),
+    fail::AbstractDict = Dict(),
+    # Allocation.
+    latest_prices::AbstractVector = Vector{Float64}(undef, 0),
+    alloc_optimal::AbstractDict = Dict(),
+    alloc_solvers::AbstractDict = Dict(),
+    alloc_params::AbstractDict = Dict(),
+    alloc_fail::AbstractDict = Dict(),
+    alloc_model::AbstractDict = Dict(),
+)
+```
+"""
 function HCPortfolio(;
     # Portfolio characteristics.
     prices::TimeArray = TimeArray(TimeType[], []),

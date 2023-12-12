@@ -559,6 +559,27 @@ function _setup_model_class(portfolio, class, hist)
     return mu, sigma, returns
 end
 
+"""
+```julia
+opt_port!(
+    portfolio::Portfolio;
+    class::Symbol = :Classic,
+    hist::Integer = 1,
+    kelly::Symbol = :None,
+    l::Real = 2.0,
+    obj::Symbol = :Sharpe,
+    rf::Real = 0.0,#1.0329^(1 / 252) - 1
+    rm::Symbol = :SD,
+    rrp_penalty::Real = 1.0,
+    rrp_ver::Symbol = :None,
+    save_opt_params::Bool = true,
+    string_names::Bool = false,
+    type::Symbol = :Trad,
+    u_cov::Symbol = :Box,
+    u_mu::Symbol = :Box,
+)
+```
+"""
 function opt_port!(
     portfolio::Portfolio;
     class::Symbol = :Classic,
