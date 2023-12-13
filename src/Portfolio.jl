@@ -655,7 +655,6 @@ Portfolio(;
     mu_bl_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_bl_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     returns_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    z::AbstractDict = Dict(),
     # Inputs of Worst Case Optimization Models.
     cov_l::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     cov_u::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -673,6 +672,7 @@ Portfolio(;
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
+    z::AbstractDict = Dict(),
     # Allocation.
     latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     alloc_optimal::AbstractDict = Dict(),
@@ -709,18 +709,18 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `lpm_target`: target value for the First and Second Lower Partial Moment risk measures. It can have two meanings depending on its type and value.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`opt_port!`](@ref) function.
     - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where `Na` is the number of assets.
-- `alpha_i`: initial significance level of Tail Gini losses, `alpha_i < alpha`.
-- `alpha`: significance level of CVaR losses and Tail Gini losses, `alpha ∈ (0, 1)`.
+- `alpha_i`: initial significance level of Tail Gini losses, `0 < alpha_i < alpha < 1`.
+- `alpha`: significance level of VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses or Tail Gini losses, `alpha ∈ (0, 1)`.
 - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim`.
-- `beta_i`: initial significance level of Tail Gini gains, `beta_i < beta`. 
+- `beta_i`: initial significance level of Tail Gini gains, `0 < beta_i < beta < 1`. 
 - `beta`: significance level of CVaR gains, `beta ∈ (0, 1)`.
 - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
-- `kappa`:
-- `gs_threshold`:
-- `max_num_assets_kurt`:
+- `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
+- `gs_threshold`: Gerber statistic threshold.
+- `max_num_assets_kurt`: maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
 ## Benchmark constraints.
-- `turnover`:
-- `turnover_weights`:
+- `turnover`: if is not infinite, maximum turnover deviation from `turnover_weights` to the optimised portfolio. Else there is no turnover constraint.
+- `turnover_weights`: target weights for turnover constraint.
 - `kind_tracking_err`:
 - `tracking_err`:
 - `tracking_err_returns`:
@@ -775,7 +775,6 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `mu_bl_fm`:
 - `cov_bl_fm`:
 - `returns_fm`:
-- `z`:
 ## Inputs of Worst Case Optimization Models.
 - `cov_l`:
 - `cov_u`:
@@ -793,6 +792,7 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `opt_params`:
 - `fail`:
 - `model`:
+- `z`:
 ## Allocation.
 - `latest_prices`:
 - `alloc_optimal`:
@@ -889,7 +889,6 @@ function Portfolio(;
     mu_bl_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_bl_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     returns_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    z::AbstractDict = Dict(),
     # Inputs of Worst Case Optimization Models.
     cov_l::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     cov_u::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -907,6 +906,7 @@ function Portfolio(;
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
+    z::AbstractDict = Dict(),
     # Allocation.
     latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     alloc_optimal::AbstractDict = Dict(),
@@ -1089,7 +1089,6 @@ function Portfolio(;
         typeof(mu_bl_fm),
         typeof(cov_bl_fm),
         typeof(returns_fm),
-        typeof(z),
         # Inputs of Worst Case Optimization Models.
         typeof(cov_l),
         typeof(cov_u),
@@ -1107,6 +1106,7 @@ function Portfolio(;
         typeof(opt_params),
         typeof(fail),
         typeof(model),
+        typeof(z),
         # Allocation.
         typeof(latest_prices),
         typeof(alloc_optimal),
@@ -1208,7 +1208,6 @@ function Portfolio(;
         mu_bl_fm,
         cov_bl_fm,
         returns_fm,
-        z,
         # Inputs of Worst Case Optimization Models.
         cov_l,
         cov_u,
@@ -1226,6 +1225,7 @@ function Portfolio(;
         opt_params,
         fail,
         model,
+        z,
         # Allocation.
         latest_prices,
         alloc_optimal,

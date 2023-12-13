@@ -213,7 +213,7 @@ Compute the OWA weights for the Tail Gini Range of a returns series [^OWA].
 - `alpha_i`: initial significance level of Tail Gini losses, `0 < alpha_i < alpha < 1`.
 - `alpha`: significance level of Tail Gini losses, `alpha ∈ (0, 1)`.
 - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
-- `beta_i`: initial significance level of Tail Gini gains, `beta_i < beta`.
+- `beta_i`: initial significance level of Tail Gini gains, `0 < beta_i < beta < 1`.
 - `beta`: significance level of Tail Gini gains, `beta ∈ (0, 1)`.
 - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 # Outputs
