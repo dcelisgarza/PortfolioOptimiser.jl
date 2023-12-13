@@ -87,6 +87,19 @@ const RiskMeasures = (
 
 """
 ```julia
+TrackingErrKinds = (:Weights, :Returns)
+```
+Available kinds of tracking errors for [`Portfolio`](@ref).
+- `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns,
+    - ``\\bm{b} = \\mathbf{X} \\bm{w}``,
+where ``\\bm{b}`` is the benchmark returns vector, ``\\mathbf{X}`` the ``T \\times{} N`` asset returns matrix, and ``\\bm{w}`` the asset weights vector.
+- `:Returns`: directly provide the vector of benchmark returns.
+The benchmark is then used as a reference to optimise a portfolio that tracks it up to a given error.
+"""
+const TrackingErrKinds = (:Weights, :Returns)
+
+"""
+```julia
 mutable struct Portfolio{
     # Portfolio characteristics
     ast,
@@ -719,12 +732,14 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `gs_threshold`: Gerber statistic threshold.
 - `max_num_assets_kurt`: maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
 ## Benchmark constraints.
-- `turnover`: if is not infinite, maximum turnover deviation from `turnover_weights` to the optimised portfolio. Else there is no turnover constraint.
+- `turnover`: if finite, define the maximum turnover deviations from `turnover_weights` to the optimised portfolio. Else the constraint is disabled.
 - `turnover_weights`: target weights for turnover constraint.
-- `kind_tracking_err`:
-- `tracking_err`:
-- `tracking_err_returns`:
-- `tracking_err_weights`:
+    - The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the i'th asset, ``\\hat{w}_i`` target weight for the i'th asset, ``t`` is the value of the turnover, and ``N`` the number of assets.
+- `kind_tracking_err`: `:Weights` when providing a vector of asset weights for computing the tracking error benchmark from the asset returns, or `:Returns` to directly providing the tracking benchmark. See [`TrackingErrKinds`](@ref) for more information.
+- `tracking_err`: if finite, define the maximum tracking error deviation. Else the constraint is disabled.
+- `tracking_err_returns`: `T×1` vector of returns to be tracked, when `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
+- `tracking_err_weights`: `N×1` vector of weights, when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
+    - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathrm{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t``, where ``\\mathrm{X}_{i}`` is the i'th observation (row) of the returns matrix ``\\mathrm{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the i'th observation of the benchmark returns vector, ``t`` the tracking error, and ``T`` the total number of observations in the returns series.
 - `bl_bench_weights`:
 ## Risk and return constraints.
 - `a_mtx_ineq`:

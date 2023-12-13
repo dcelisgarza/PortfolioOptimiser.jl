@@ -16,19 +16,6 @@ const KellyRet = (:None, :Approx, :Exact)
 
 """
 ```julia
-TrackingErrKinds = (:Weights, :Returns)
-```
-Available kinds of tracking errors for [`Portfolio`](@ref).
-- `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns,
-    - ``\\bm{b} = \\mathbf{X} \\bm{w}``,
-where ``\\bm{b}`` is the benchmark returns vector, ``\\mathbf{X}`` the ``T \\times{} N`` asset returns matrix, and ``\\bm{w}`` the asset weights vector.
-- `:Returns`: directly provide the vector of benchmark returns.
-The benchmark is then used as a reference to optimise a portfolio that tracks it up to a given error.
-"""
-const TrackingErrKinds = (:Weights, :Returns)
-
-"""
-```julia
 ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 ```
 Objective functions available for use in `:Trad` and `:WC` optimisations of [`Portfolio`](@ref) (see [`PortTypes`](@ref)).
@@ -555,7 +542,6 @@ function _assert_category_message(sym::Symbol, collection) end
 function _assert_generic_message(cmp, message) end
 
 export KellyRet,
-    TrackingErrKinds,
     ObjFuncs,
     ValidTermination,
     PortClasses,

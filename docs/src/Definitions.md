@@ -4,7 +4,6 @@ Many functions only accept specific methods and/or require certain arguments to 
 
 ```@docs
 KellyRet
-TrackingErrKinds
 ObjFuncs
 ValidTermination
 PortClasses

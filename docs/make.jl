@@ -27,6 +27,7 @@ import PortfolioOptimiser.distance_wei,
     PortfolioOptimiser.AbstractPortfolio,
     PortfolioOptimiser.RiskMeasures,
     PortfolioOptimiser.HRRiskMeasures,
+    PortfolioOptimiser.TrackingErrKinds,
     # Asset Statistics
     PortfolioOptimiser.BinTypes
 

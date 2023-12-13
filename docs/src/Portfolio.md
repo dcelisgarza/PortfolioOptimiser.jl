@@ -16,4 +16,5 @@ Portfolio
 HCPortfolio
 RiskMeasures
 HRRiskMeasures
+TrackingErrKinds
 ```
