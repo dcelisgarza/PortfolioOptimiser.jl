@@ -739,12 +739,12 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `tracking_err`: if finite, define the maximum tracking error deviation. Else the constraint is disabled.
 - `tracking_err_returns`: `T×1` vector of returns to be tracked, when `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
 - `tracking_err_weights`: `N×1` vector of weights, when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
-    - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathrm{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t``, where ``\\mathrm{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathrm{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and ``T`` the total number of observations in the returns series.
+    - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and ``T`` the total number of observations in the returns series.
 - `bl_bench_weights`: `N×1` vector of benchmark weights for Black Litterman models.
 ## Risk and return constraints.
-- `a_mtx_ineq`:
-- `b_vec_ineq`:
-- `risk_budget`:
+- `a_mtx_ineq`: A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``.
+- `b_vec_ineq`: B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``.
+- `risk_budget`: `N×1` risk budget constraint vector for risk parity optimisations.
 - `mu_l`:
 - `dev_u`:
 - `mad_u`:
@@ -1007,6 +1007,18 @@ function Portfolio(;
         @assert(
             length(bl_bench_weights) == length(assets),
             "length(bl_bench_weights) = $bl_bench_weights and length(assets) = $(length(assets)), must be equal"
+        )
+    end
+    if !isempty(a_mtx_ineq)
+        @assert(
+            size(a_mtx_ineq, 2) == length(assets),
+            "size(a_mtx_ineq, 2) = a_mtx_ineq must have the same number of columns size(a_mtx_ineq, 2) = $(size(a_mtx_ineq, 2)), as there are assets, length(assets) = $(length(assets))"
+        )
+    end
+    if !isempty(risk_budget)
+        @assert(
+            length(risk_budget) == length(assets),
+            "length(risk_budget) = $(length(risk_budget)), and length(assets) = $(length(assets)) must be equal"
         )
     end
 
@@ -1365,6 +1377,20 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             @assert(
                 length(val) == length(obj.assets),
                 "length(bl_bench_weights) = $val and length(assets) = $(length(obj.assets)), must be equal"
+            )
+        end
+    elseif sym == :a_mtx_ineq
+        if !isempty(val)
+            @assert(
+                size(val, 2) == length(obj.assets),
+                "size(a_mtx_ineq, 2) = a_mtx_ineq must have the same number of columns size(a_mtx_ineq, 2) = $(size(val, 2)), as there are assets, length(assets) = $(length(obj.assets))"
+            )
+        end
+    elseif sym == :risk_budget
+        if !isempty(val)
+            @assert(
+                length(val) == length(obj.assets),
+                "length(risk_budget) = $(length(val)), and length(assets) = $(length(obj.assets)) must be equal"
             )
         end
     elseif sym == :cov_type

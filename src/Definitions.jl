@@ -77,7 +77,7 @@ Available objective functions for `:Trad` optimisations. We can chose any of the
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\min} &\\qquad \\phi_{j}(\\bm{w}) \\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
 &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
 &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
@@ -86,7 +86,7 @@ Available objective functions for `:Trad` optimisations. We can chose any of the
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) - \\lambda \\phi_{j}(\\bm{w}) \\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
 &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
 &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
@@ -95,7 +95,7 @@ Available objective functions for `:Trad` optimisations. We can chose any of the
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\dfrac{R(\\bm{w}) - r}{\\phi_{j}(\\bm{w})} \\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
 &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
 &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
@@ -104,7 +104,7 @@ Available objective functions for `:Trad` optimisations. We can chose any of the
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) \\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
 &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
 &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
@@ -112,7 +112,7 @@ Available objective functions for `:Trad` optimisations. We can chose any of the
 Where:
 - ``\\bm{w}`` are the asset weights.
 - ``\\phi_{i}`` is risk measure ``i`` from the set of available risk measures ``\\left\\{\\Phi\\right\\}`` (see [`RiskMeasures`](@ref)).
-- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` is a set of linear constraints.
+- ``\\mathbf{A} \\bm{w} \\geq \\bm{B}`` is a set of linear constraints.
 - ``c_{i}`` is the maximum acceptable value for risk measure ``\\phi_{i}`` of the optimised portfolio.
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref).
 - ``\\overline{\\mu}`` is the minimum acceptable return of the optimised portfolio.
@@ -124,7 +124,7 @@ Optimises portfolios based on a vector of risk contributions per asset. We can c
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\min} &\\qquad \\phi(\\bm{w}) \\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
 &\\qquad \\bm{b} \\cdot \\ln(\\bm{w}) \\geq c \\\\
 &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}\\\\
 &\\qquad \\bm{w} \\geq \\bm{0}
@@ -133,7 +133,7 @@ Optimises portfolios based on a vector of risk contributions per asset. We can c
 Where:
 - ``\\bm{w}`` are the asset weights.
 - ``\\phi`` a risk measure from the set of available risk measures (see [`RiskMeasures`](@ref)).
-- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` is a set of linear constraints.
+- ``\\mathbf{A} \\bm{w} \\geq \\bm{B}`` is a set of linear constraints.
 - ``\\bm{b}`` is the vector of maximum allowable risk contribution per asset to the optimised portfolio.
 - ``c`` is an auxiliary variable.
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref).
@@ -144,7 +144,7 @@ Optimises portfolios based on a vector of risk contributions per asset. Defines 
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\min} &\\qquad \\psi - \\gamma \\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B} \\\\
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
 &\\qquad \\bm{w}^\\intercal \\, \\mathbf{\\Sigma}\\, \\bm{w} \\leq (\\psi^{2} - \\rho^{2})\\\\
 &\\qquad \\lambda \\bm{w}^\\intercal \\, \\mathbf{\\Theta}\\, \\bm{w} \\leq \\rho^{2}\\\\
 &\\qquad \\bm{\\zeta} = \\mathbf{\\Sigma} \\bm{w}\\\\
@@ -159,7 +159,7 @@ Where:
 - ``\\bm{w}`` are the asset weights.
 - ``\\psi`` is the average risk of the portfolio.
 - ``\\gamma`` is the lower bound of the risk contribution for each asset.
-- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` is a set of linear constraints.
+- ``\\mathbf{A} \\bm{w} \\geq \\bm{B}`` is a set of linear constraints.
 - ``\\mathbf{\\Sigma}`` is the portfolio covariance.
 - ``\\rho`` is a regularisation variable.
 - ``\\mathbf{\\Theta} = \\mathrm{diag}\\left(\\mathbf{\\Sigma}\\right)`` .
@@ -176,28 +176,28 @@ Computes the worst case mean variance portfolio according to user-selected uncer
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B}\\,.
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
 \\end{align*}
 ```
 - `:Utility`: worst case maximum utility mean-variance portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w})\\, -\\, \\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\lambda \\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B}\\,.
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
 \\end{align*}
 ```
 - `:Sharpe`: worst case maximum risk-adjusted return ratio mean-variance portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\dfrac{\\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w}) - r}{\\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\left(\\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\right)^{1/2}} \\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B}\\,.
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
 \\end{align*}
 ```
 - `:Max_Ret`: worst case maximum return mean-variance portfolio,
 ```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w})\\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\mathbf{B}\\,.
+\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
 \\end{align*}
 ```
 Where:
@@ -215,7 +215,7 @@ U_{\\Sigma}^{\\mathrm{ellipse}} &= \\left\\{\\mathbf{\\Sigma}\\, \\vert\\, \\lef
     - ``\\mathbf{\\Sigma}_{\\mathbf{\\Sigma}}`` is the covariance of the samples.
     - ``\\hat{\\mathbf{\\Sigma}}`` the expected covariance given the samples.
     - and ``k_{\\mathbf{\\Sigma}}`` is a significance parameter of the matrix distribution.
-- ``\\mathbf{A} \\bm{w} \\geq \\mathbf{B}`` is a set of linear constraints.
+- ``\\mathbf{A} \\bm{w} \\geq \\bm{B}`` is a set of linear constraints.
 - ``\\bm{\\mu}`` is the vector of expected returns for each asset. 
 - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref).
 - ``U_{\\bm{\\mu}}`` is the uncertainty set for the asset returns, they can be:
