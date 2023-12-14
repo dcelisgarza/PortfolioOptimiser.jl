@@ -286,8 +286,8 @@ mutable struct Portfolio{
     rtg_u::urtg
     owa_u::uowa
     owa_w::wowa
-    krt_u::uk
-    skrt_u::usk
+    kurt_u::uk
+    skurt_u::usk
     rvar_u::urvar
     rdar_u::urdar
     # Optimisation model inputs.
@@ -523,8 +523,8 @@ mutable struct Portfolio{
     edar_u::uedar
     rvar_u::urvar
     rdar_u::urdar
-    krt_u::uk
-    skrt_u::usk
+    kurt_u::uk
+    skurt_u::usk
     gmd_u::ugmd
     rg_u::ur
     rcvar_u::urcvar
@@ -641,8 +641,8 @@ Portfolio(;
     edar_u::Real = Inf,
     rvar_u::Real = Inf,
     rdar_u::Real = Inf,
-    krt_u::Real = Inf,
-    skrt_u::Real = Inf,
+    kurt_u::Real = Inf,
+    skurt_u::Real = Inf,
     gmd_u::Real = Inf,
     rg_u::Real = Inf,
     rcvar_u::Real = Inf,
@@ -756,26 +756,26 @@ The bounds constraints are only active if they are finite. They define return lo
 - `sdev_u`: semi standard deviation.
 - `cvar_u`: critical value at risk.
 - `wr_u`: worst realisation.
-- `flpm_u`: worst realisation.
-- `slpm_u`:
-- `mdd_u`:
-- `add_u`:
-- `cdar_u`:
-- `uci_u`:
-- `evar_u`:
-- `edar_u`:
-- `rvar_u`:
-- `rdar_u`:
-- `krt_u`:
-- `skrt_u`:
-- `gmd_u`:
-- `rg_u`:
-- `rcvar_u`:
-- `tg_u`:
-- `rtg_u`:
-- `owa_u`:
+- `flpm_u`: first lower partial moment.
+- `slpm_u`: second lower partial moment.
+- `mdd_u`: max drawdown.
+- `add_u`: average drawdown.
+- `cdar_u`: critical drawdown at risk.
+- `uci_u`: ulcer index.
+- `evar_u`: entropic value at risk.
+- `edar_u`: entropic drawdown at risk.
+- `rvar_u`: relativistic value at risk.
+- `rdar_u`: relativistic drawdown at risk.
+- `kurt_u`: square root kurtosis.
+- `skurt_u`: square root semi kurtosis.
+- `gmd_u`: gini mean difference.
+- `rg_u`: range.
+- `rcvar_u`: critical value at risk range.
+- `tg_u`: tail gini.
+- `rtg_u`: tail gini range.
+- `owa_u`: custom ordered weight risk (for when using `owa_w`).
 ## Custom OWA weights.
-- `owa_w`:
+- `owa_w`: `T×1` vector where `T` is the number of returns observations containing ordered weights array, for example when using higher l-moments as an OWA risk measure.
 ## Optimisation model inputs.
 - `mu_type`:
 - `mu`:
@@ -881,8 +881,8 @@ function Portfolio(;
     edar_u::Real = Inf,
     rvar_u::Real = Inf,
     rdar_u::Real = Inf,
-    krt_u::Real = Inf,
-    skrt_u::Real = Inf,
+    kurt_u::Real = Inf,
+    skurt_u::Real = Inf,
     gmd_u::Real = Inf,
     rg_u::Real = Inf,
     rcvar_u::Real = Inf,
@@ -1119,8 +1119,8 @@ function Portfolio(;
         typeof(edar_u),
         typeof(rvar_u),
         typeof(rdar_u),
-        typeof(krt_u),
-        typeof(skrt_u),
+        typeof(kurt_u),
+        typeof(skurt_u),
         typeof(gmd_u),
         typeof(rg_u),
         typeof(rcvar_u),
@@ -1239,8 +1239,8 @@ function Portfolio(;
         edar_u,
         rvar_u,
         rdar_u,
-        krt_u,
-        skrt_u,
+        kurt_u,
+        skurt_u,
         gmd_u,
         rg_u,
         rcvar_u,

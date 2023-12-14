@@ -496,15 +496,15 @@ function block_vec_pq(A, p, q)
 end
 
 function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
-    krt_u = portfolio.krt_u
-    skrt_u = portfolio.skrt_u
+    kurt_u = portfolio.kurt_u
+    skurt_u = portfolio.skurt_u
 
-    !(rm == :Kurt || rm == :SKurt || isfinite(krt_u) || isfinite(skrt_u)) &&
+    !(rm == :Kurt || rm == :SKurt || isfinite(kurt_u) || isfinite(skurt_u)) &&
         (return nothing)
 
     model = portfolio.model
 
-    if rm == :Kurt || isfinite(krt_u)
+    if rm == :Kurt || isfinite(kurt_u)
         max_num_assets_kurt = portfolio.max_num_assets_kurt
         @variable(model, W[1:N, 1:N], Symmetric)
         @expression(model, M1, vcat(W, transpose(model[:w])))
@@ -539,17 +539,17 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         end
         @expression(model, kurt_risk, t_kurt)
 
-        isfinite(krt_u) &&
+        isfinite(kurt_u) &&
             type == :Trad &&
             (
-                obj == :Sharpe ? @constraint(model, kurt_risk <= krt_u * model[:k]) :
-                @constraint(model, kurt_risk <= krt_u)
+                obj == :Sharpe ? @constraint(model, kurt_risk <= kurt_u * model[:k]) :
+                @constraint(model, kurt_risk <= kurt_u)
             )
 
         rm == :Kurt && @expression(model, risk, kurt_risk)
     end
 
-    if rm == :SKurt || isfinite(skrt_u)
+    if rm == :SKurt || isfinite(skurt_u)
         max_num_assets_kurt = portfolio.max_num_assets_kurt
         @variable(model, SW[1:N, 1:N], Symmetric)
         @expression(model, SM1, vcat(SW, transpose(model[:w])))
@@ -585,11 +585,11 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         end
         @expression(model, skurt_risk, t_skurt)
 
-        isfinite(skrt_u) &&
+        isfinite(skurt_u) &&
             type == :Trad &&
             (
-                obj == :Sharpe ? @constraint(model, skurt_risk <= skrt_u * model[:k]) :
-                @constraint(model, skurt_risk <= skrt_u)
+                obj == :Sharpe ? @constraint(model, skurt_risk <= skurt_u * model[:k]) :
+                @constraint(model, skurt_risk <= skurt_u)
             )
 
         rm == :SKurt && @expression(model, risk, skurt_risk)
