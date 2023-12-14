@@ -310,7 +310,6 @@ mutable struct Portfolio{
     mu_bl_fm::tmublf
     cov_bl_fm::tcovblf
     returns_fm::trfm
-    z::tz
     # Inputs of Worst Case Optimization Models.
     cov_l::tcovl
     cov_u::tcovu
@@ -328,6 +327,7 @@ mutable struct Portfolio{
     opt_params::toptpar
     fail::tf
     model::tmod
+    z::tz
     # Allocation
     latest_prices::tlp
     alloc_optimal::taopt
@@ -435,7 +435,6 @@ mutable struct Portfolio{
     tmublf,
     tcovblf,
     trfm,
-    tz,
     tcovl,
     tcovu,
     tcovmu,
@@ -450,6 +449,7 @@ mutable struct Portfolio{
     tf,
     toptpar,
     tmod,
+    tz,
     # Allocation
     tlp,
     taopt,
@@ -551,7 +551,6 @@ mutable struct Portfolio{
     mu_bl_fm::tmublf
     cov_bl_fm::tcovblf
     returns_fm::trfm
-    z::tz
     # Inputs of Worst Case Optimization Models.
     cov_l::tcovl
     cov_u::tcovu
@@ -569,6 +568,7 @@ mutable struct Portfolio{
     opt_params::toptpar
     fail::tf
     model::tmod
+    z::tz
     # Allocation
     latest_prices::tlp
     alloc_optimal::taopt
