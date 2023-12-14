@@ -8244,7 +8244,7 @@ end
     port = Portfolio(returns = Y, f_returns = X)
     black_litterman_factor_satistics!(
         port,
-        fill(1 / 20, 20);
+        fill(1 / length(port.assets), length(port.assets));
         # Black Litterman
         P = P,
         P_f = P_f,
@@ -8258,7 +8258,10 @@ end
         # criterion = :pval,
         # diagonal = true,
     )
-    @test isapprox(port.bl_bench_weights, fill(1 / 20, 20))
+    @test isapprox(
+        port.bl_bench_weights,
+        fill(1 / length(port.assets), length(port.assets)),
+    )
 
     port = Portfolio(returns = Y, f_returns = X)
     black_litterman_factor_satistics!(

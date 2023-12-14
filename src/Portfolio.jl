@@ -734,13 +734,13 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 ## Benchmark constraints.
 - `turnover`: if finite, define the maximum turnover deviations from `turnover_weights` to the optimised portfolio. Else the constraint is disabled.
 - `turnover_weights`: target weights for turnover constraint.
-    - The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the i'th asset, ``\\hat{w}_i`` target weight for the i'th asset, ``t`` is the value of the turnover, and ``N`` the number of assets.
+    - The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``t`` is the value of the turnover, and ``N`` the number of assets.
 - `kind_tracking_err`: `:Weights` when providing a vector of asset weights for computing the tracking error benchmark from the asset returns, or `:Returns` to directly providing the tracking benchmark. See [`TrackingErrKinds`](@ref) for more information.
 - `tracking_err`: if finite, define the maximum tracking error deviation. Else the constraint is disabled.
 - `tracking_err_returns`: `T×1` vector of returns to be tracked, when `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
 - `tracking_err_weights`: `N×1` vector of weights, when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
-    - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathrm{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t``, where ``\\mathrm{X}_{i}`` is the i'th observation (row) of the returns matrix ``\\mathrm{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the i'th observation of the benchmark returns vector, ``t`` the tracking error, and ``T`` the total number of observations in the returns series.
-- `bl_bench_weights`:
+    - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathrm{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t``, where ``\\mathrm{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathrm{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and ``T`` the total number of observations in the returns series.
+- `bl_bench_weights`: `N×1` vector of benchmark weights for Black Litterman models.
 ## Risk and return constraints.
 - `a_mtx_ineq`:
 - `b_vec_ineq`:
@@ -942,6 +942,10 @@ function Portfolio(;
     @assert(b_sim > zero(b_sim), "a_sim = $b_sim, must be greater than or equal to zero")
     @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
     @assert(
+        0 < gs_threshold < 1,
+        "gs_threshold = $gs_threshold, must be greater than 0 and less than 1"
+    )
+    @assert(
         kind_tracking_err ∈ TrackingErrKinds,
         "kind_tracking_err = $(kind_tracking_err), must be one of $TrackingErrKinds"
     )
@@ -950,10 +954,6 @@ function Portfolio(;
     @assert(
         posdef_fix ∈ PosdefFixes,
         "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
-    )
-    @assert(
-        0 < gs_threshold < 1,
-        "gs_threshold = $gs_threshold, must be greater than 0 and less than 1"
     )
     @assert(
         min_number_effective_assets >= 0,
@@ -983,6 +983,31 @@ function Portfolio(;
             "each column of returns must correspond to an asset"
         )
         returns = ret
+    end
+
+    if !isempty(turnover_weights)
+        @assert(
+            length(turnover_weights) == length(assets),
+            "length(turnover_weights) = $(turnover_weights) and length(assets) = $(length(assets)), must be equal"
+        )
+    end
+    if !isempty(tracking_err_returns)
+        @assert(
+            length(tracking_err_returns) == size(returns, 1),
+            "length(tracking_err_returns) = $tracking_err_returns and size(returns, 1) = $(size(returns,1)), must be equal"
+        )
+    end
+    if !isempty(tracking_err_weights)
+        @assert(
+            length(tracking_err_weights) == length(assets),
+            "length(tracking_err_weights) = $tracking_err_weights and length(assets) = $(length(assets)), must be equal"
+        )
+    end
+    if !isempty(bl_bench_weights)
+        @assert(
+            length(bl_bench_weights) == length(assets),
+            "length(bl_bench_weights) = $bl_bench_weights and length(assets) = $(length(assets)), must be equal"
+        )
     end
 
     if !isempty(f_prices)
@@ -1304,22 +1329,50 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         setfield!(obj, :invk, invk)
         setfield!(obj, :invopk, invopk)
         setfield!(obj, :invomk, invomk)
+    elseif sym == :gs_threshold
+        @assert(
+            0 < val < 1,
+            "gs_threshold = $val, must be greater than zero and smaller than one"
+        )
     elseif sym == :kind_tracking_err
         @assert(
             val ∈ TrackingErrKinds,
             "kind_tracking_err = $(val), must be one of $TrackingErrKinds"
         )
+    elseif sym == :turnover_weights
+        if !isempty(val)
+            @assert(
+                length(val) == length(obj.assets),
+                "length(turnover_weights) = $val and length(assets) = $(length(obj.assets)), must be equal"
+            )
+        end
+    elseif sym == :tracking_err_returns
+        if !isempty(val)
+            @assert(
+                length(val) == size(obj.returns, 1),
+                "length(tracking_err_returns) = $val and size(returns, 1) = $(size(obj.returns,1)), must be equal"
+            )
+        end
+    elseif sym == :tracking_err_weights
+        if !isempty(val)
+            @assert(
+                length(val) == length(obj.assets),
+                "length(tracking_err_weights) = $val and length(assets) = $(length(obj.assets)), must be equal"
+            )
+        end
+    elseif sym == :bl_bench_weights
+        if !isempty(val)
+            @assert(
+                length(val) == length(obj.assets),
+                "length(bl_bench_weights) = $val and length(assets) = $(length(obj.assets)), must be equal"
+            )
+        end
     elseif sym == :cov_type
         @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
     elseif sym == :mu_type
         @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
     elseif sym == :posdef_fix
         @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
-    elseif sym == :gs_threshold
-        @assert(
-            0 < val < 1,
-            "gs_threshold = $val, must be greater than zero and smaller than one"
-        )
     elseif sym == :risk_budget
         if isempty(val)
             N = size(obj.returns, 2)
