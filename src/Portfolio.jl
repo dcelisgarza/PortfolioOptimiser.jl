@@ -404,17 +404,18 @@ mutable struct Portfolio{
     uuci,
     uevar,
     uedar,
+    urvar,
+    urdar,
+    uk,
+    usk,
     ugmd,
     ur,
     urcvar,
     utg,
     urtg,
     uowa,
+    # Cusom OWA weights.
     wowa,
-    uk,
-    usk,
-    urvar,
-    urdar,
     # Optimisation model inputs
     ttmu,
     tmu,
@@ -520,17 +521,18 @@ mutable struct Portfolio{
     uci_u::uuci
     evar_u::uevar
     edar_u::uedar
+    rvar_u::urvar
+    rdar_u::urdar
+    krt_u::uk
+    skrt_u::usk
     gmd_u::ugmd
     rg_u::ur
     rcvar_u::urcvar
     tg_u::utg
     rtg_u::urtg
     owa_u::uowa
+    # Custom OWA weights.
     owa_w::wowa
-    krt_u::uk
-    skrt_u::usk
-    rvar_u::urvar
-    rdar_u::urdar
     # Optimisation model inputs.
     mu_type::ttmu
     mu::tmu
@@ -637,17 +639,18 @@ Portfolio(;
     uci_u::Real = Inf,
     evar_u::Real = Inf,
     edar_u::Real = Inf,
+    rvar_u::Real = Inf,
+    rdar_u::Real = Inf,
+    krt_u::Real = Inf,
+    skrt_u::Real = Inf,
     gmd_u::Real = Inf,
     rg_u::Real = Inf,
     rcvar_u::Real = Inf,
     tg_u::Real = Inf,
     rtg_u::Real = Inf,
     owa_u::Real = Inf,
+    # Custom OWA weights.
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-    krt_u::Real = Inf,
-    skrt_u::Real = Inf,
-    rvar_u::Real = Inf,
-    rdar_u::Real = Inf,
     # Optimisation model inputs.
     mu_type::Symbol = :Default,
     mu::AbstractVector = Vector{Float64}(undef, 0),
@@ -737,21 +740,23 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
     - The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``t`` is the value of the turnover, and ``N`` the number of assets.
 - `kind_tracking_err`: `:Weights` when providing a vector of asset weights for computing the tracking error benchmark from the asset returns, or `:Returns` to directly providing the tracking benchmark. See [`TrackingErrKinds`](@ref) for more information.
 - `tracking_err`: if finite, define the maximum tracking error deviation. Else the constraint is disabled.
-- `tracking_err_returns`: `T×1` vector of returns to be tracked, when `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
-- `tracking_err_weights`: `N×1` vector of weights, when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
+- `tracking_err_returns`: `T×1` vector of returns to be tracked where `T` is the number of returns observations, when `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
+- `tracking_err_weights`: `N×1` vector of weights where `N` is the number of assets, when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
     - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and ``T`` the total number of observations in the returns series.
-- `bl_bench_weights`: `N×1` vector of benchmark weights for Black Litterman models.
+- `bl_bench_weights`: `N×1` vector of benchmark weights for Black Litterman models where `N` is the number of assets.
 ## Risk and return constraints.
-- `a_mtx_ineq`: A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``.
-- `b_vec_ineq`: B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``.
-- `risk_budget`: `N×1` risk budget constraint vector for risk parity optimisations.
-- `mu_l`:
-- `dev_u`:
-- `mad_u`:
-- `sdev_u`:
-- `cvar_u`:
-- `wr_u`:
-- `flpm_u`:
+- `a_mtx_ineq`: `C×N` A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints and `N` the number of assets.
+- `b_vec_ineq`: `C×1` B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints.
+- `risk_budget`: `N×1` risk budget constraint vector for risk parity optimisations where `N` is the number of assets.
+### Bounds constraints
+The bounds constraints are only active if they are finite. They define return lower bound (`_l`) and risk upper bounds (`_u`) of the optimised portfolio. Risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case. Multiple bounds constraints can be active at any time but may make solutions infeasable.
+- `mu_l`: mean expected return.
+- `dev_u`: standard deviation.
+- `mad_u`: max absolute devia.
+- `sdev_u`: semi standard deviation.
+- `cvar_u`: critical value at risk.
+- `wr_u`: worst realisation.
+- `flpm_u`: worst realisation.
 - `slpm_u`:
 - `mdd_u`:
 - `add_u`:
@@ -759,17 +764,18 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `uci_u`:
 - `evar_u`:
 - `edar_u`:
+- `rvar_u`:
+- `rdar_u`:
+- `krt_u`:
+- `skrt_u`:
 - `gmd_u`:
 - `rg_u`:
 - `rcvar_u`:
 - `tg_u`:
 - `rtg_u`:
 - `owa_u`:
+## Custom OWA weights.
 - `owa_w`:
-- `krt_u`:
-- `skrt_u`:
-- `rvar_u`:
-- `rdar_u`:
 ## Optimisation model inputs.
 - `mu_type`:
 - `mu`:
@@ -873,17 +879,18 @@ function Portfolio(;
     uci_u::Real = Inf,
     evar_u::Real = Inf,
     edar_u::Real = Inf,
+    rvar_u::Real = Inf,
+    rdar_u::Real = Inf,
+    krt_u::Real = Inf,
+    skrt_u::Real = Inf,
     gmd_u::Real = Inf,
     rg_u::Real = Inf,
     rcvar_u::Real = Inf,
     tg_u::Real = Inf,
     rtg_u::Real = Inf,
     owa_u::Real = Inf,
+    # Custom OWA weights.
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-    krt_u::Real = Inf,
-    skrt_u::Real = Inf,
-    rvar_u::Real = Inf,
-    rdar_u::Real = Inf,
     # Optimisation model inputs.
     mu_type::Symbol = :Default,
     mu::AbstractVector = Vector{Float64}(undef, 0),
@@ -987,38 +994,38 @@ function Portfolio(;
 
     if !isempty(turnover_weights)
         @assert(
-            length(turnover_weights) == length(assets),
-            "length(turnover_weights) = $(turnover_weights) and length(assets) = $(length(assets)), must be equal"
+            length(turnover_weights) == size(returns, 2),
+            "length(turnover_weights) = $(turnover_weights) and size(returns, 2) = $(size(returns, 2)), must be equal"
         )
     end
     if !isempty(tracking_err_returns)
         @assert(
             length(tracking_err_returns) == size(returns, 1),
-            "length(tracking_err_returns) = $tracking_err_returns and size(returns, 1) = $(size(returns,1)), must be equal"
+            "length(tracking_err_returns) = $tracking_err_returns and size(returns, 1) = $(size(returns, 1)), must be equal"
         )
     end
     if !isempty(tracking_err_weights)
         @assert(
-            length(tracking_err_weights) == length(assets),
-            "length(tracking_err_weights) = $tracking_err_weights and length(assets) = $(length(assets)), must be equal"
+            length(tracking_err_weights) == size(returns, 2),
+            "length(tracking_err_weights) = $tracking_err_weights and size(returns, 2) = $(size(returns, 2)), must be equal"
         )
     end
     if !isempty(bl_bench_weights)
         @assert(
-            length(bl_bench_weights) == length(assets),
-            "length(bl_bench_weights) = $bl_bench_weights and length(assets) = $(length(assets)), must be equal"
+            length(bl_bench_weights) == size(returns, 2),
+            "length(bl_bench_weights) = $bl_bench_weights and size(returns, 2) = $(size(returns, 2)), must be equal"
         )
     end
     if !isempty(a_mtx_ineq)
         @assert(
-            size(a_mtx_ineq, 2) == length(assets),
-            "size(a_mtx_ineq, 2) = a_mtx_ineq must have the same number of columns size(a_mtx_ineq, 2) = $(size(a_mtx_ineq, 2)), as there are assets, length(assets) = $(length(assets))"
+            size(a_mtx_ineq, 2) == size(returns, 2),
+            "size(a_mtx_ineq, 2) = a_mtx_ineq must have the same number of columns size(a_mtx_ineq, 2) = $(size(a_mtx_ineq, 2)), as there are assets, size(returns, 2) = $(size(returns, 2))"
         )
     end
     if !isempty(risk_budget)
         @assert(
-            length(risk_budget) == length(assets),
-            "length(risk_budget) = $(length(risk_budget)), and length(assets) = $(length(assets)) must be equal"
+            length(risk_budget) == size(returns, 2),
+            "length(risk_budget) = $(length(risk_budget)), and size(returns, 2) = $(size(returns, 2)) must be equal"
         )
     end
 
@@ -1110,17 +1117,18 @@ function Portfolio(;
         typeof(uci_u),
         typeof(evar_u),
         typeof(edar_u),
+        typeof(rvar_u),
+        typeof(rdar_u),
+        typeof(krt_u),
+        typeof(skrt_u),
         typeof(gmd_u),
         typeof(rg_u),
         typeof(rcvar_u),
         typeof(tg_u),
         typeof(rtg_u),
         typeof(owa_u),
+        # Custom OWA weights.
         typeof(owa_w),
-        typeof(krt_u),
-        typeof(skrt_u),
-        typeof(rvar_u),
-        typeof(rdar_u),
         # Optimisation model inputs.
         typeof(mu_type),
         typeof(mu),
@@ -1229,17 +1237,18 @@ function Portfolio(;
         uci_u,
         evar_u,
         edar_u,
+        rvar_u,
+        rdar_u,
+        krt_u,
+        skrt_u,
         gmd_u,
         rg_u,
         rcvar_u,
         tg_u,
         rtg_u,
         owa_u,
+        # Custom OWA weights.
         owa_w,
-        krt_u,
-        skrt_u,
-        rvar_u,
-        rdar_u,
         # Optimisation model inputs.
         mu_type,
         mu,
@@ -1354,10 +1363,11 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
     elseif sym == :turnover_weights
         if !isempty(val)
             @assert(
-                length(val) == length(obj.assets),
-                "length(turnover_weights) = $val and length(assets) = $(length(obj.assets)), must be equal"
+                length(val) == size(obj.returns, 2),
+                "length(turnover_weights) = $val and size(returns, 2) = $(size(obj.returns, 2)), must be equal"
             )
         end
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :tracking_err_returns
         if !isempty(val)
             @assert(
@@ -1365,51 +1375,41 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
                 "length(tracking_err_returns) = $val and size(returns, 1) = $(size(obj.returns,1)), must be equal"
             )
         end
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :tracking_err_weights
         if !isempty(val)
             @assert(
-                length(val) == length(obj.assets),
-                "length(tracking_err_weights) = $val and length(assets) = $(length(obj.assets)), must be equal"
+                length(val) == size(obj.returns, 2),
+                "length(tracking_err_weights) = $val and size(returns, 2) = $(size(obj.returns, 2)), must be equal"
             )
         end
-    elseif sym == :bl_bench_weights
-        if !isempty(val)
-            @assert(
-                length(val) == length(obj.assets),
-                "length(bl_bench_weights) = $val and length(assets) = $(length(obj.assets)), must be equal"
-            )
-        end
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :a_mtx_ineq
         if !isempty(val)
             @assert(
-                size(val, 2) == length(obj.assets),
-                "size(a_mtx_ineq, 2) = a_mtx_ineq must have the same number of columns size(a_mtx_ineq, 2) = $(size(val, 2)), as there are assets, length(assets) = $(length(obj.assets))"
+                size(val, 2) == size(obj.returns, 2),
+                "size(a_mtx_ineq, 2) = a_mtx_ineq must have the same number of columns size(a_mtx_ineq, 2) = $(size(val, 2)), as there are assets, size(returns, 2) = $(size(obj.returns, 2))"
             )
         end
-    elseif sym == :risk_budget
-        if !isempty(val)
-            @assert(
-                length(val) == length(obj.assets),
-                "length(risk_budget) = $(length(val)), and length(assets) = $(length(obj.assets)) must be equal"
-            )
-        end
-    elseif sym == :cov_type
-        @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
-    elseif sym == :mu_type
-        @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
-    elseif sym == :posdef_fix
-        @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
-    elseif sym == :risk_budget
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym ∈ (:risk_budget, :bl_bench_weights)
         if isempty(val)
             N = size(obj.returns, 2)
             val = fill(1 / N, N)
         else
             @assert(
                 length(val) == size(obj.returns, 2),
-                "length(risk_budget) == size(obj.returns, 2) must hold: $(length(val)) == $(size(obj.returns, 2))"
+                "length($sym) == size(obj.returns, 2) must hold: $(length(val)) == $(size(obj.returns, 2))"
             )
             isa(val, AbstractRange) ? (val = collect(val / sum(val))) : (val ./= sum(val))
         end
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :cov_type
+        @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
+    elseif sym == :mu_type
+        @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
+    elseif sym == :posdef_fix
+        @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
     elseif sym ∈
            (:min_number_effective_assets, :max_number_assets, :max_number_assets_factor)
         @assert(val >= 0, "$sym = $val, must be greater than or equal to 0")
@@ -1849,15 +1849,15 @@ function HCPortfolio(;
         0 < alpha_tail < 1,
         "alpha_tail = $alpha_tail, must be greater than 0 and smaller than 1"
     )
+    @assert(
+        0 < gs_threshold < 1,
+        "gs_threshold = $gs_threshold, must be greater than zero and smaller than one"
+    )
     @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
     @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
     @assert(
         posdef_fix ∈ PosdefFixes,
         "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
-    )
-    @assert(
-        0 < gs_threshold < 1,
-        "gs_threshold = $gs_threshold, must be greater than zero and smaller than one"
     )
 
     if !isempty(prices)
@@ -1995,6 +1995,11 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
     elseif sym == :alpha_tail
         @assert(0 < val < 1, "alpha_tail = $val, must be greater than 0 and smaller than 1")
+    elseif sym == :gs_threshold
+        @assert(
+            0 < val < 1,
+            "gs_threshold = $val, must be greater than zero and smaller than one"
+        )
     elseif sym == :cov_type
         @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
     elseif sym == :mu_type
@@ -2003,11 +2008,6 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         @assert(val ∈ CodepTypes, "codep_type = $val, must be one of $CodepTypes")
     elseif sym == :posdef_fix
         @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
-    elseif sym == :gs_threshold
-        @assert(
-            0 < val < 1,
-            "gs_threshold = $val, must be greater than zero and smaller than one"
-        )
     elseif sym ∈ (:assets, :timestamps, :returns)
         throw(
             ArgumentError(
