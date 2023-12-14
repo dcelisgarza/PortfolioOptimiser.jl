@@ -319,7 +319,7 @@ returns = dropmissing!(DataFrame(Y))
     evar_r1 = calc_risk(portfolio, rm = :EVaR)
     evar_r2 = ERM(
         portfolio.returns * portfolio.optimal[:Trad].weights,
-        portfolio.z[:z_evar],
+        portfolio.z[:Trad_z_evar],
         portfolio.alpha,
     )
     @test isapprox(evar_r1, evar_r2, rtol = 2e-6)
@@ -328,7 +328,7 @@ returns = dropmissing!(DataFrame(Y))
     evar_r1 = calc_risk(portfolio, rm = :EVaR)
     evar_r2 = ERM(
         portfolio.returns * portfolio.optimal[:Trad].weights,
-        portfolio.z[:z_evar],
+        portfolio.z[:Trad_z_evar],
         portfolio.alpha,
     )
     @test isapprox(evar_r1, evar_r2, rtol = 3e-6)

@@ -290,7 +290,7 @@ mutable struct Portfolio{
     skurt_u::usk
     rvar_u::urvar
     rdar_u::urdar
-    # Optimisation model inputs.
+    # Model statistics.
     mu_type::ttmu
     mu::tmu
     cov_type::ttcov
@@ -320,6 +320,7 @@ mutable struct Portfolio{
     k_sigma::tks
     # Optimal portfolios.
     optimal::topt
+    z::tz
     limits::tlim
     frontier::tfront
     # Solver params.
@@ -327,7 +328,6 @@ mutable struct Portfolio{
     opt_params::toptpar
     fail::tf
     model::tmod
-    z::tz
     # Allocation
     latest_prices::tlp
     alloc_optimal::taopt
@@ -339,7 +339,7 @@ end
 ```
 Structure for optimising portfolios.
 # Fieldnames
-## Portfolio characteristics.
+## Portfolio characteristics
 """
 mutable struct Portfolio{
     # Portfolio characteristics
@@ -444,13 +444,13 @@ mutable struct Portfolio{
     tkmu,
     tks,
     topt,
+    tz,
     tlim,
     tfront,
     tsolv,
     tf,
     toptpar,
     tmod,
-    tz,
     # Allocation
     tlp,
     taopt,
@@ -533,7 +533,7 @@ mutable struct Portfolio{
     owa_u::uowa
     # Custom OWA weights.
     owa_w::wowa
-    # Optimisation model inputs.
+    # Model statistics.
     mu_type::ttmu
     mu::tmu
     cov_type::ttcov
@@ -563,6 +563,7 @@ mutable struct Portfolio{
     k_sigma::tks
     # Optimal portfolios.
     optimal::topt
+    z::tz
     limits::tlim
     frontier::tfront
     # Solver params.
@@ -570,7 +571,6 @@ mutable struct Portfolio{
     opt_params::toptpar
     fail::tf
     model::tmod
-    z::tz
     # Allocation
     latest_prices::tlp
     alloc_optimal::taopt
@@ -651,7 +651,7 @@ Portfolio(;
     owa_u::Real = Inf,
     # Custom OWA weights.
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-    # Optimisation model inputs.
+    # Model statistics.
     mu_type::Symbol = :Default,
     mu::AbstractVector = Vector{Float64}(undef, 0),
     cov_type::Symbol = :Full,
@@ -681,6 +681,7 @@ Portfolio(;
     k_sigma::Real = Inf,
     # Optimal portfolios.
     optimal::AbstractDict = Dict(),
+    z::AbstractDict = Dict(),
     limits::DataFrame = DataFrame(),
     frontier::AbstractDict = Dict(),
     # Solutions.
@@ -688,7 +689,6 @@ Portfolio(;
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
-    z::AbstractDict = Dict(),
     # Allocation.
     latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     alloc_optimal::AbstractDict = Dict(),
@@ -700,7 +700,7 @@ Portfolio(;
 ```
 Creates an instance of [`Portfolio`](@ref) containing all internal data necessary for convex portfolio optimisations as well as failed and successful results.
 # Inputs
-## Portfolio characteristics.
+## Portfolio characteristics
 - `prices`: `(T+1)×Na` `TimeArray` with asset pricing information where the time stamp field is `timestamp`, `T` is the number of returns observations and `Na` the number of assets. If `prices` is not empty, then `returns`, `ret`, `timestamps`, `assets` and `latest_prices` are ignored because their respective fields are obtained from `prices`.
 - `returns`: `T×(Na+1)` `DataFrame` where `T` is the number of returns observations, `Na` is the number of assets, the extra column is `timestamp`, which contains the timestamps of the returns. If `prices` is empty and `returns` is not empty, `ret`, `timestamps` and `assets` are ignored because their respective fields are obtained from `returns`.
 - `ret`: `T×Na` matrix of returns. Its value is saved in the `returns` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
@@ -718,7 +718,7 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `f_timestamps`: `T×1` vector of factor timestamps. Its value is saved in the `f_timestamps` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
 - `f_assets`: `Nf×1` vector of assets. Its value is saved in the `f_assets` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
 - `loadings`: loadings matrix for black litterman models.
-## Risk parameters.
+## Risk parameters
 - `msv_target`: target value for for Absolute Deviation and Semivariance risk measures. It can have two meanings depending on its type and value.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
     - Else the target is the value of `msv_target`. If `msv_target` is a vector, its length should be `Na`, where `Na` is the number of assets.
@@ -734,7 +734,7 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
 - `gs_threshold`: Gerber statistic threshold.
 - `max_num_assets_kurt`: maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
-## Benchmark constraints.
+## Benchmark constraints
 - `turnover`: if finite, define the maximum turnover deviations from `turnover_weights` to the optimised portfolio. Else the constraint is disabled.
 - `turnover_weights`: target weights for turnover constraint.
     - The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``t`` is the value of the turnover, and ``N`` the number of assets.
@@ -744,12 +744,12 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `tracking_err_weights`: `N×1` vector of weights where `N` is the number of assets, when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
     - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and ``T`` the total number of observations in the returns series.
 - `bl_bench_weights`: `N×1` vector of benchmark weights for Black Litterman models where `N` is the number of assets.
-## Risk and return constraints.
+## Risk and return constraints
 - `a_mtx_ineq`: `C×N` A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints and `N` the number of assets.
 - `b_vec_ineq`: `C×1` B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints.
 - `risk_budget`: `N×1` risk budget constraint vector for risk parity optimisations where `N` is the number of assets.
 ### Bounds constraints
-The bounds constraints are only active if they are finite. They define return lower bound (`_l`) and risk upper bounds (`_u`) of the optimised portfolio. Risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case. Multiple bounds constraints can be active at any time but may make solutions infeasable.
+The bounds constraints are only active if they are finite. They define return lower bounds (`_l`) and risk upper bounds (`_u`) of the optimised portfolio. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
 - `mu_l`: mean expected return.
 - `dev_u`: standard deviation.
 - `mad_u`: max absolute devia.
@@ -773,10 +773,10 @@ The bounds constraints are only active if they are finite. They define return lo
 - `rcvar_u`: critical value at risk range.
 - `tg_u`: tail gini.
 - `rtg_u`: tail gini range.
-- `owa_u`: custom ordered weight risk (for when using `owa_w`).
-## Custom OWA weights.
+- `owa_u`: custom ordered weight risk (use with `owa_w`).
+## Custom OWA weights
 - `owa_w`: `T×1` vector where `T` is the number of returns observations containing ordered weights array, for example when using higher l-moments as an OWA risk measure.
-## Optimisation model inputs.
+## Model statistics
 - `mu_type`:
 - `mu`:
 - `cov_type`:
@@ -796,7 +796,7 @@ The bounds constraints are only active if they are finite. They define return lo
 - `mu_bl_fm`:
 - `cov_bl_fm`:
 - `returns_fm`:
-## Inputs of Worst Case Optimization Models.
+## Inputs of Worst Case Optimization Models
 - `cov_l`:
 - `cov_u`:
 - `cov_mu`:
@@ -804,17 +804,17 @@ The bounds constraints are only active if they are finite. They define return lo
 - `d_mu`:
 - `k_mu`:
 - `k_sigma`:
-## Optimal portfolios.
+## Optimal portfolios
 - `optimal`:
+- `z`:
 - `limits`:
 - `frontier`:
-## Solutions.
+## Solutions
 - `solvers`:
 - `opt_params`:
 - `fail`:
 - `model`:
-- `z`:
-## Allocation.
+## Allocation
 - `latest_prices`:
 - `alloc_optimal`:
 - `alloc_solvers`:
@@ -891,7 +891,7 @@ function Portfolio(;
     owa_u::Real = Inf,
     # Custom OWA weights.
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-    # Optimisation model inputs.
+    # Model statistics.
     mu_type::Symbol = :Default,
     mu::AbstractVector = Vector{Float64}(undef, 0),
     cov_type::Symbol = :Full,
@@ -921,6 +921,7 @@ function Portfolio(;
     k_sigma::Real = Inf,
     # Optimal portfolios.
     optimal::AbstractDict = Dict(),
+    z::AbstractDict = Dict(),
     limits::DataFrame = DataFrame(),
     frontier::AbstractDict = Dict(),
     # Solutions.
@@ -928,7 +929,6 @@ function Portfolio(;
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
-    z::AbstractDict = Dict(),
     # Allocation.
     latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     alloc_optimal::AbstractDict = Dict(),
@@ -1026,6 +1026,12 @@ function Portfolio(;
         @assert(
             length(risk_budget) == size(returns, 2),
             "length(risk_budget) = $(length(risk_budget)), and size(returns, 2) = $(size(returns, 2)) must be equal"
+        )
+    end
+    if !isempty(owa_w)
+        @assert(
+            length(owa_w) == size(returns, 1),
+            "length(owa) = $(length(owa_w)), and size(returns, 1) = $(size(returns, 1)) must be equal"
         )
     end
 
@@ -1129,7 +1135,7 @@ function Portfolio(;
         typeof(owa_u),
         # Custom OWA weights.
         typeof(owa_w),
-        # Optimisation model inputs.
+        # Model statistics.
         typeof(mu_type),
         typeof(mu),
         typeof(cov_type),
@@ -1159,6 +1165,7 @@ function Portfolio(;
         typeof(k_sigma),
         # Optimal portfolios.
         typeof(optimal),
+        typeof(z),
         typeof(limits),
         typeof(frontier),
         # Solutions.
@@ -1166,7 +1173,6 @@ function Portfolio(;
         typeof(opt_params),
         typeof(fail),
         typeof(model),
-        typeof(z),
         # Allocation.
         typeof(latest_prices),
         typeof(alloc_optimal),
@@ -1249,7 +1255,7 @@ function Portfolio(;
         owa_u,
         # Custom OWA weights.
         owa_w,
-        # Optimisation model inputs.
+        # Model statistics.
         mu_type,
         mu,
         cov_type,
@@ -1279,6 +1285,7 @@ function Portfolio(;
         k_sigma,
         # Optimal portfolios.
         optimal,
+        z,
         limits,
         frontier,
         # Solutions.
@@ -1286,7 +1293,6 @@ function Portfolio(;
         opt_params,
         fail,
         model,
-        z,
         # Allocation.
         latest_prices,
         alloc_optimal,
@@ -1372,7 +1378,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         if !isempty(val)
             @assert(
                 length(val) == size(obj.returns, 1),
-                "length(tracking_err_returns) = $val and size(returns, 1) = $(size(obj.returns,1)), must be equal"
+                "length(tracking_err_returns) = $val and size(returns, 1) = $(size(obj.returns, 1)), must be equal"
             )
         end
         val = convert(typeof(getfield(obj, sym)), val)
@@ -1389,6 +1395,14 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             @assert(
                 size(val, 2) == size(obj.returns, 2),
                 "size(a_mtx_ineq, 2) = a_mtx_ineq must have the same number of columns size(a_mtx_ineq, 2) = $(size(val, 2)), as there are assets, size(returns, 2) = $(size(obj.returns, 2))"
+            )
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :owa_w
+        if !isempty(val)
+            @assert(
+                length(val) == size(obj.returns, 1),
+                "length(owa_w) = $val and size(returns, 1) = $(size(obj.returns, 1)), must be equal"
             )
         end
         val = convert(typeof(getfield(obj, sym)), val)

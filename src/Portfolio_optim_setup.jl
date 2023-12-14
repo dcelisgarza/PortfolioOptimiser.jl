@@ -375,11 +375,12 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
     model = portfolio.model
 
     if (type == :Trad || type == :RP) && rm ∈ (:EVaR, :EDaR, :RVaR, :RDaR)
-        z_key = Symbol("z_" * lowercase(string(rm)))
-        portfolio.z[z_key] = value(portfolio.model[z_key])
+        z_key = "z_" * lowercase(string(rm))
+        z_key2 = Symbol(string(type) * "_" * z_key)
+        portfolio.z[z_key2] = value(portfolio.model[Symbol(z_key)])
         type == :Trad &&
             obj == :Sharpe &&
-            (portfolio.z[z_key] /= value(portfolio.model[:k]))
+            (portfolio.z[z_key2] /= value(portfolio.model[:k]))
     end
 
     weights = Vector{eltype(returns)}(undef, N)
