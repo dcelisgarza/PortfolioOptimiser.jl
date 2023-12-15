@@ -701,8 +701,8 @@ Portfolio(;
 Creates an instance of [`Portfolio`](@ref) containing all internal data necessary for convex portfolio optimisations as well as failed and successful results.
 # Inputs
 ## Portfolio characteristics
-- `prices`: `(T+1)×Na` `TimeArray` with asset pricing information where the time stamp field is `timestamp`, `T` is the number of returns observations and `Na` the number of assets. If `prices` is not empty, then `returns`, `ret`, `timestamps`, `assets` and `latest_prices` are ignored because their respective fields are obtained from `prices`.
-- `returns`: `T×(Na+1)` `DataFrame` where `T` is the number of returns observations, `Na` is the number of assets, the extra column is `timestamp`, which contains the timestamps of the returns. If `prices` is empty and `returns` is not empty, `ret`, `timestamps` and `assets` are ignored because their respective fields are obtained from `returns`.
+- `prices`: `(T+1)×Na` `TimeArray` with asset pricing information, where the time stamp field is `timestamp`, `T` is the number of returns observations and `Na` the number of assets. If `prices` is not empty, then `returns`, `ret`, `timestamps`, `assets` and `latest_prices` are ignored because their respective fields are obtained from `prices`.
+- `returns`: `T×(Na+1)` `DataFrame`, where `T` is the number of returns observations, `Na` is the number of assets, the extra column is `timestamp`, which contains the timestamps of the returns. If `prices` is empty and `returns` is not empty, `ret`, `timestamps` and `assets` are ignored because their respective fields are obtained from `returns`.
 - `ret`: `T×Na` matrix of returns. Its value is saved in the `returns` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
 - `timestamps`: `T×1` vector of timestamps. Its value is saved in the `timestamps` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
 - `assets`: `Na×1` vector of assets. Its value is saved in the `assets` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
@@ -712,8 +712,8 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `min_number_effective_assets`: if non-zero, guarantees that at least number of assets make significant contributions to the final portfolio weights.
 - `max_number_assets`: if non-zero, guarantees at most this number of assets make non-zero contributions to the final portfolio weights. Requires an optimiser that supports binary variables.
 - `max_number_assets_factor`: scaling factor needed to create a decision variable when `max_number_assets` is non-zero.
-- `f_prices`: `(T+1)×Nf` `TimeArray` with factor pricing information where the time stamp field is `f_timestamp`, `T` is the number of factors returns observations and `Nf` the number of factors. If `f_prices` is not empty, then `f_returns`, `f_ret`, `f_timestamps`, `f_assets` and `latest_prices` are ignored because their respective fields are obtained from `f_prices`.
-- `f_returns`: `T×(Nf+1)` `DataFrame` where `T` is the number of factor returns observations, `Nf` is the number of factors, the extra column is `f_timestamp`, which contains the timestamps of the factor returns. If `f_prices` is empty and `f_returns` is not empty, `f_ret`, `f_timestamps` and `f_assets` are ignored because their respective fields are obtained from `f_returns`.
+- `f_prices`: `(T+1)×Nf` `TimeArray` with factor pricing information, where the time stamp field is `f_timestamp`, `T` is the number of factors returns observations and `Nf` the number of factors. If `f_prices` is not empty, then `f_returns`, `f_ret`, `f_timestamps`, `f_assets` and `latest_prices` are ignored because their respective fields are obtained from `f_prices`.
+- `f_returns`: `T×(Nf+1)` `DataFrame`, where `T` is the number of factor returns observations, `Nf` is the number of factors, the extra column is `f_timestamp`, which contains the timestamps of the factor returns. If `f_prices` is empty and `f_returns` is not empty, `f_ret`, `f_timestamps` and `f_assets` are ignored because their respective fields are obtained from `f_returns`.
 - `f_ret`: `T×Nf` matrix of factor returns. Its value is saved in the `f_returns` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
 - `f_timestamps`: `T×1` vector of factor timestamps. Its value is saved in the `f_timestamps` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
 - `f_assets`: `Nf×1` vector of assets. Its value is saved in the `f_assets` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
@@ -740,14 +740,14 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
     - The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``t`` is the value of the turnover, and ``N`` the number of assets.
 - `kind_tracking_err`: `:Weights` when providing a vector of asset weights for computing the tracking error benchmark from the asset returns, or `:Returns` to directly providing the tracking benchmark. See [`TrackingErrKinds`](@ref) for more information.
 - `tracking_err`: if finite, define the maximum tracking error deviation. Else the constraint is disabled.
-- `tracking_err_returns`: `T×1` vector of returns to be tracked where `T` is the number of returns observations, when `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
-- `tracking_err_weights`: `N×1` vector of weights where `N` is the number of assets, when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
+- `tracking_err_returns`: `T×1` vector of returns to be tracked, where `T` is the number of returns observations. When `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
+- `tracking_err_weights`: `N×1` vector of weights, where `N` is the number of assets, when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
     - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and ``T`` the total number of observations in the returns series.
-- `bl_bench_weights`: `N×1` vector of benchmark weights for Black Litterman models where `N` is the number of assets.
+- `bl_bench_weights`: `N×1` vector of benchmark weights for Black Litterman models, where `N` is the number of assets.
 ## Risk and return constraints
 - `a_mtx_ineq`: `C×N` A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints and `N` the number of assets.
 - `b_vec_ineq`: `C×1` B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints.
-- `risk_budget`: `N×1` risk budget constraint vector for risk parity optimisations where `N` is the number of assets.
+- `risk_budget`: `N×1` risk budget constraint vector for risk parity optimisations, where `N` is the number of assets.
 ### Bounds constraints
 The bounds constraints are only active if they are finite. They define return lower bounds (`_l`) and risk upper bounds (`_u`) of the optimised portfolio. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
 - `mu_l`: mean expected return.
@@ -775,7 +775,7 @@ The bounds constraints are only active if they are finite. They define return lo
 - `rtg_u`: tail gini range.
 - `owa_u`: custom ordered weight risk (use with `owa_w`).
 ## Custom OWA weights
-- `owa_w`: `T×1` vector where `T` is the number of returns observations containing ordered weights array, for example when using higher l-moments as an OWA risk measure.
+- `owa_w`: `T×1` OWA vector, where `T` is the number of returns observations containing. Useful for optimising higher L-moments.
 ## Model statistics
 - `mu_type`:
 - `mu`:

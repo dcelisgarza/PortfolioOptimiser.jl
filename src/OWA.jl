@@ -296,7 +296,7 @@ _crra_method(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
 ```
 Internal function for computing the Normalized Constant Relative Risk Aversion coefficients.
 # Inputs
-- `weights`: `T×(k-1)` matrix where T is the number of observations and `k` the order of the L-moments to combine, the `i`'th column contains the weights for the `(i+1)`'th l-moment.
+- `weights`: `T×(k-1)` matrix where T is the number of observations and `k` the order of the L-moments to combine, the `i`'th column contains the weights for the `(i+1)`'th L-moment.
 - `k`: the maximum order of the L-moments.
 - `g`: the risk aversion coefficient.
 # Outputs
@@ -326,10 +326,10 @@ end
 ```julia
 owa_l_moment(T::Integer, k::Integer = 2)
 ```
-Calculates the OWA weights of the k'th linear moment (l-moment) of a returns series [^OWAL].
+Calculates the OWA weights of the k'th linear moment (L-moment) of a returns series [^OWAL].
 # Inputs
 - `T`: number of observations of the returns series.
-- `k`: order of the l-moment.
+- `k`: order of the L-moment.
 # Outputs
 - `w`: `T×1` ordered weight vector.
 
@@ -381,7 +381,7 @@ owa_l_moment_crm(
 Compute the OWA weights for the convex risk measure considering higher order L-moments [^OWAL].
 # Inputs
 - `T`: number of observations of the returns series.
-- `k`: order of the l-moment, `k ≥ 2`.
+- `k`: order of the L-moment, `k ≥ 2`.
 - `method`: method for computing the weights used to combine L-moments higher than 2, used in [`OWAMethods`](@ref).
     - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
     - `:E`: Maximum Entropy.
