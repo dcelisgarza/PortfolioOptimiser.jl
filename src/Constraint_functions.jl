@@ -5,7 +5,7 @@ asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
 Create the linear constraint matrix `A` and vector `B`:
 - ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``.
 # Inputs
-- `constraints`: `Nc×10` Dataframe, where `Nc` is the number of constraints. The required columns are:
+- `constraints`: `Nc×10` Dataframe, where $(_ndef(:c1)). The required columns are:
     - `Enabled`: (Bool) indicates if the constraint is enabled.
     - `Type`: (String) specifies the object(s) to which a constraint applies:
         - `Assets`: specific asset.
@@ -26,12 +26,12 @@ Create the linear constraint matrix `A` and vector `B`:
     - `Relative Set`: (String) if `Type Relative` is `Classes`, specifies the name of the set of asset classes.
     - `Relative`: (String) name of the asset or asset class of the relative constraint.
     - `Factor`: (<:Real) the factor of the relative constraint.
-- `asset_classes`: `Na×Nc` DataFrame where `Na` is the number of assets and `Nc` the number of columns.
+- `asset_classes`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
     - `Assets`: list of assets, this is the only mandatory column.
     - Subsequent columns specify the asset class sets.
 # Outputs
-- `A`: `Nc×Na` matrix of constraints where `Nc` is the number of constraints and `Na` the number of assets.
-- `B`: `Nc×1` vector of constraints where `Nc` is the number of constraints.
+- `A`: `Nc×Na` matrix of constraints where $(_ndef(:c1)) and $(_ndef(:a2)).
+- `B`: `Nc×1` vector of constraints where $(_ndef(:c1)).
 # Examples
 ```julia
 asset_classes = DataFrame(
@@ -200,7 +200,7 @@ factor_constraints(constraints::DataFrame, loadings::DataFrame)
 Create the factor constraints matrix `C` and vector `D`:
 - ``\\mathbf{C} \\bm{w} \\geq \\bm{D}``.
 # Inputs
-- `constraints`: `Nc×4` Dataframe, where `Nc` is the number of constraints. The required columns are:
+- `constraints`: `Nc×4` Dataframe, where $(_ndef(:c1)). The required columns are:
     - `Enabled`: (Bool) indicates if the constraint is enabled.
     - `Factor`: (String) name of the constraint's factor.
     - `Sign`: (String) specifies whether the constraint is a lower or upper bound:
@@ -208,10 +208,10 @@ Create the factor constraints matrix `C` and vector `D`:
         - `<=`: upper bound.
     - `Value`: (<:Real) the upper or lower bound of the factor's value.
     - `Relative Factor`: (String) factor to which the constraint is relative.
-- `loadings`: `Nl×Nf` loadings DataFrame, where `Nl` is the number of data points, and `Nf` is the number of factors.
+- `loadings`: `Nl×Nf` loadings DataFrame, where `Nl` is the number of data points, and $(_ndef(:f2)).
 # Outputs
-- `C`: `Nc×Nf` matrix of constraints where `Nc` is the number of constraints and `Nf` the number of factors.
-- `D`: `Nc×1` vector of constraints where `Nc` is the number of constraints.
+- `C`: `Nc×Nf` matrix of constraints where $(_ndef(:c1)) and $(_ndef(:f2)).
+- `D`: `Nc×1` vector of constraints where $(_ndef(:c1)).
 # Examples
 ```julia
 loadings = DataFrame(
@@ -287,11 +287,11 @@ Create the asset views matrix `P` and vector `Q`:
         - `Classes`: other class.
     - `Relative Set`: (String) if `Type Relative` is `Classes`, specifies the name of the set of asset classes.
     - `Relative`: (String) name of the asset or asset class of the relative view.
-- `asset_classes`: `Na×Nc` DataFrame where `Na` is the number of assets and `Nc` the number of columns.
+- `asset_classes`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
     - `Assets`: list of assets, this is the only mandatory column.
     - Subsequent columns specify the asset class sets.
 # Outputs
-- `P`: `Nv×Na` matrix of views where `Nv` is the number of views and `Na` the number of assets.
+- `P`: `Nv×Na` matrix of views where `Nv` is the number of views and $(_ndef(:a2)).
 - `Q`: `Nv×1` vector of views where `Nv` is the number of views.
 # Examples
 ```julia
@@ -394,9 +394,9 @@ Create the factor views matrix `P` and vector `Q`:
         - `<=`: upper bound.
     - `Value`: (<:Real) the upper or lower bound of the factor's value.
     - `Relative Factor`: (String) factor to which the view is relative.
-- `loadings`: `Nl×Nf` loadings DataFrame, where `Nl` is the number of data points, and `Nf` is the number of factors.
+- `loadings`: `Nl×Nf` loadings DataFrame, where `Nl` is the number of data points, and $(_ndef(:f2)).
 # Outputs
-- `P`: `Nv×Nf` matrix of views where `Nv` is the number of views and `Nf` the number of factors.
+- `P`: `Nv×Nf` matrix of views where `Nv` is the number of views and $(_ndef(:f2)).
 - `Q`: `Nv×1` vector of views where `Nv` is the number of views.
 # Examples
 ```julia
@@ -462,7 +462,7 @@ hrp_constraints(constraints::DataFrame, asset_classes::DataFrame)
 ```
 Create the upper and lower bounds constraints for hierarchical risk parity portfolios.
 # Inputs
-- `constraints`: `Nc×4` Dataframe, where `Nc` is the number of constraints. The required columns are:
+- `constraints`: `Nc×4` Dataframe, where $(_ndef(:c1)). The required columns are:
     - `Enabled`: (Bool) indicates if the constraint is enabled.
     - `Type`: (String) specifies the object(s) to which a constraint applies:
         - `Assets`: specific asset.
@@ -473,7 +473,7 @@ Create the upper and lower bounds constraints for hierarchical risk parity portf
         - `>=`: lower bound.
         - `<=`: upper bound.
     - `Weight`: (<:Real) value of the constraint.
-- `asset_classes`: `Na×Nc` DataFrame where `Na` is the number of assets and `Nc` the number of columns.
+- `asset_classes`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
     - `Assets`: list of assets, this is the only mandatory column.
     - Subsequent columns specify the asset class sets.
 # Outputs
@@ -558,7 +558,7 @@ rp_constraints(
 ```
 Constructs risk contribution constraint vector for the risk parity optimisation (`:RP` and `:RRP` types of [`PortTypes`](@ref)).
 # Inputs
-- `asset_classes`: `Na×Nc` DataFrame where `Na` is the number of assets and `Nc` the number of columns.
+- `asset_classes`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
     - `Assets`: list of assets, this is the only mandatory column.
     - Subsequent columns specify the asset class sets. They are only used if `type == :Classes`.
 - `type`: what the risk parity is applied relative to, must be one of [`RPConstraintTypes`](@ref).

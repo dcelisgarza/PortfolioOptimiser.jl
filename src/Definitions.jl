@@ -537,6 +537,38 @@ const RiskMeasureNames = (
     OWA = "Ordered Weight Average",
 )
 
+function _sigdom(sym::Symbol)
+    return if sym == :a
+        "alpha"
+    elseif sym == :b
+        "beta"
+    end * " ∈ (0, 1)"
+end
+
+function _ndef(sym::Symbol)
+    return if sym == :a1
+        "`N` is the number of assets"
+    elseif sym == :a2
+        "`Na` is the number of assets"
+    elseif sym == :a3
+        "``N`` is the number of assets"
+    elseif sym == :f1
+        "`N` is the number of factors"
+    elseif sym == :f2
+        "`Nf` is the number of factors"
+    elseif sym == :c1
+        "`Nc` is the number of constraints"
+    end
+end
+
+function _tstr(sym::Symbol)
+    if sym == :t1
+        "`T` is the number of returns observations"
+    elseif sym == :t2
+        "``T`` is the number of returns observations"
+    end
+end
+
 function _assert_value_message(lo::Real, hi::Real, args...) end
 function _assert_category_message(sym::Symbol, collection) end
 function _assert_generic_message(cmp, message) end
