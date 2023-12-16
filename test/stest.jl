@@ -20,13 +20,356 @@ using Test,
     Optim,
     AverageShiftedHistograms,
     Plots,
-    Distributions
+    Distributions,
+    GLPK,
+    Statistics
+
+A = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+prices = dropmissing!(DataFrame(A))
+returns = dropmissing!(DataFrame(percentchange(A)))
+portfolio = Portfolio(;
+    returns = returns,
+    solvers = Dict(
+        :Clarabel => Dict(
+            :solver => Clarabel.Optimizer,
+            :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+        ),
+    ),
+)
+asset_statistics!(portfolio; calc_kurt = false)
+opt_port!(portfolio; linkage = :complete)
+portfolio.alpha_i = 0.03
+portfolio.alpha = 0.05
+
+portfolio.beta_i = 0.08
+portfolio.beta = 1
+
+plt14 = plot_clusters(hcportfolio; cluster = false)
+
+hcportfolio = HCPortfolio(;
+    returns = returns,
+    solvers = Dict(
+        :Clarabel => Dict(
+            :solver => Clarabel.Optimizer,
+            :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+        ),
+    ),
+)
+
+asset_classes = DataFrame(
+    "Assets" => [
+        "FB",
+        "GOOGL",
+        "NTFX",
+        "BAC",
+        "WFC",
+        "TLT",
+        "SHV",
+        "FCN",
+        "TKO",
+        "ZOO",
+        "ZVO",
+        "ZX",
+        "ZZA",
+        "ZZB",
+        "ZZC",
+    ],
+    "Class 1" => [
+        "Equity",
+        "Equity",
+        "Equity",
+        "Equity",
+        "Equity",
+        "Fixed Income",
+        "Fixed Income",
+        "Equity",
+        "Equity",
+        "Equity",
+        "Fixed Income",
+        "Fixed Income",
+        "Equity",
+        "Fixed Income",
+        "Equity",
+    ],
+    "Class 2" => [
+        "Technology",
+        "Technology",
+        "Technology",
+        "Financial",
+        "Financial",
+        "Treasury",
+        "Treasury",
+        "Financial",
+        "Entertainment",
+        "Treasury",
+        "Financial",
+        "Financial",
+        "Entertainment",
+        "Technology",
+        "Treasury",
+    ],
+)
+
+constraints = DataFrame(
+    "Enabled" => [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+    ],
+    "Type" => [
+        "Classes",
+        "All Classes",
+        "Assets",
+        "Assets",
+        "Classes",
+        "All Assets",
+        "Each Asset in Class",
+        "Assets",
+        "All Assets",
+        "All Assets",
+        "Classes",
+        "All Classes",
+        "All Classes",
+        "Each Asset in Class",
+        "Each Asset in Class",
+    ],
+    "Set" => [
+        "Class 1",
+        "Class 1",
+        "",
+        "",
+        "Class 2",
+        "",
+        "Class 1",
+        "Class 1",
+        "Class 2",
+        "",
+        "Class 1",
+        "Class 2",
+        "Class 2",
+        "Class 2",
+        "Class 1",
+    ],
+    "Position" => [
+        "Equity",
+        "Fixed Income",
+        "BAC",
+        "WFC",
+        "Financial",
+        "",
+        "Equity",
+        "FCN",
+        "TKO",
+        "ZOO",
+        "Fixed Income",
+        "Treasury",
+        "Entertainment",
+        "Treasury",
+        "Equity",
+    ],
+    "Sign" => [
+        "<=",
+        "<=",
+        "<=",
+        "<=",
+        ">=",
+        ">=",
+        ">=",
+        "<=",
+        ">=",
+        "<=",
+        ">=",
+        "<=",
+        ">=",
+        "<=",
+        ">=",
+    ],
+    "Weight" => [0.6, 0.5, 0.1, "", "", 0.02, "", "", "", "", "", "", "", 0.27, ""],
+    "Type Relative" => [
+        "",
+        "",
+        "",
+        "Assets",
+        "Classes",
+        "",
+        "Assets",
+        "Classes",
+        "Assets",
+        "Classes",
+        "Assets",
+        "Assets",
+        "Classes",
+        "",
+        "Classes",
+    ],
+    "Relative Set" => [
+        "",
+        "",
+        "",
+        "",
+        "Class 1",
+        "",
+        "",
+        "Class 1",
+        "",
+        "Class 2",
+        "",
+        "Class 2",
+        "Class 2",
+        "",
+        "Class 2",
+    ],
+    "Relative" => [
+        "",
+        "",
+        "",
+        "FB",
+        "Fixed Income",
+        "",
+        "TLT",
+        "Equity",
+        "NTFX",
+        "Financial",
+        "WFC",
+        "ZOO",
+        "Entertainment",
+        "",
+        "Entertainment",
+    ],
+    "Factor" =>
+        ["", "", "", 1.2, 0.5, "", 0.4, 0.7, 0.21, 0.11, 0.13, -0.17, 0.23, "", -0.31],
+)
+
+constraints = DataFrame(constraints)
+asset_classes = DataFrame(asset_classes)
+
+gen_q(x, n) = 1 - exp(1 / n * log(x))
+
+# tickers = names(returns)[2:end]
+# etickers = names(returns)[2:2:end]
+# prices = dropmissing!(DataFrame(A))[!, tickers]
+# eprices = dropmissing!(DataFrame(A))[!, etickers]
+# timestamps = returns[!, 1]
+# ereturns = Matrix(returns[!, etickers])
+# returns = Matrix(returns[!, tickers])
+solvers = Dict(
+    :Clarabel => Dict(
+        :solver => (Clarabel.Optimizer),
+        :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+    ),
+)
+# alloc_solvers = Dict(:GLPK => Dict(:solver => GLPK.Optimizer))
+# investment = 3000
+# lpdict = gen_portfolios(
+#     timestamps,
+#     tickers,
+#     returns,
+#     prices,
+#     etickers,
+#     ereturns,
+#     eprices,
+#     solvers,
+#     alloc_solvers,
+#     investment;
+#     rms = [:CDaR],
+#     atype = :LP,
+#     # cov_type = :Gerber2,
+#     # codep_type = :Gerber2,
+# )
+
+# grdict = gen_portfolios(
+#     timestamps,
+#     tickers,
+#     returns,
+#     prices,
+#     etickers,
+#     ereturns,
+#     eprices,
+#     solvers,
+#     alloc_solvers,
+#     investment;
+#     rms = [:CDaR],
+#     atype = :Greedy,
+#     # cov_type = :Gerber2,
+#     # codep_type = :Gerber2,
+#     # name = "",
+#     # io = nothing,
+# )
+
+function filter_tickers(
+    returns,
+    solvers;
+    cov_type = :Gerber2,
+    codep_type = :Gerber2,
+    linkage = :ward,
+    xs = [0.2, 0.1],
+    rms = (:SSD, :VaR, :DaR_r, :CVaR, :CDaR_r, :EVaR, :EDaR_r, :RVaR, :RDaR_r),
+)
+    !isa(xs, AbstractArray) && (xs = [xs])
+
+    ticker_vec = Vector{Vector{String}}(undef, 0)
+    for x in xs
+        tickers = names(returns)[2:end]
+        q = gen_q(x, length(rms))
+        println("HERC: $(x*100)%:")
+        for rm in rms
+            println("\t- $rm")
+            N = length(tickers)
+            max_k = floor(Int, sqrt(N))
+
+            hp = HCPortfolio(;
+                returns = returns[!, ["timestamp"; tickers]],
+                solvers = solvers,
+                cov_type = cov_type,
+                codep_type = codep_type,
+            )
+            asset_statistics!(hp; calc_kurt = false)
+
+            w =
+                opt_port!(
+                    hp;
+                    type = :HERC,
+                    linkage = linkage,
+                    rm = rm,
+                    max_k = max_k,
+                ).weights
+
+            qidx = w .>= quantile(w, q)
+            tickers = tickers[qidx]
+        end
+        push!(ticker_vec, tickers)
+    end
+
+    return ticker_vec
+end
+
+tvec = filter_tickers(returns, solvers)
+
+freturns = filter_tickers(
+    returns,
+    solvers,
+    # xs = 0.5,
+    # method = :entropy,
+    rms = (:VaR, :DaR_r, :CVaR, :CDaR_r, :EVaR, :EDaR_r, :RVaR, :RDaR_r),
+)
 
 # using PortfolioOptimiser, Aqua
 using Dates
-d0 = today() - Date(2018, 1, 14)
-d1 = today() - Date(2020, 2, 2)
-d2 = today() - Date(2021, 12, 12)
+d0 = Date(2023, 12, 4) - Date(2018, 1, 14)
+d1 = Date(2023, 12, 4) - Date(2020, 2, 2)
+d2 = Date(2023, 12, 4) - Date(2021, 12, 12)
 dt = d0 + d1 + d2
 x0 = d0 / dt
 x1 = d1 / dt
@@ -37,7 +380,49 @@ A = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 Y = percentchange(A)
 returns = dropmissing!(DataFrame(Y))
 
-portfolio = HCPortfolio(;
+portfolio = Portfolio(;
+    returns = returns,
+    solvers = Dict(
+        :Clarabel => Dict(
+            :solver => (Clarabel.Optimizer),
+            :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+        ),
+    ),
+    alloc_solvers = Dict(:GLPK => Dict(:solver => GLPK.Optimizer)),
+    cov_type = :Full,
+    latest_prices = Vector(DataFrame(A)[end, 2:end]),
+)
+asset_statistics!(portfolio; calc_kurt = false)
+w1 = opt_port!(portfolio, rm = :CVaR)
+a1 = allocate_port!(portfolio, alloc_type = :Greedy, investment = 10000)
+# portfolio.alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer))
+w2 = allocate_port!(portfolio)
+w3 = allocate_port!(portfolio, alloc_type = :Greedy)
+fig2 = plot_frontier(portfolio)
+
+frontier = efficient_frontier(portfolio; points = 50)
+plot_frontier(portfolio)
+plot_drawdown(portfolio)
+plot_hist(portfolio)
+plot_range(portfolio)
+
+hportfolio = HCPortfolio(;
+    returns = returns,
+    solvers = Dict(
+        :Clarabel => Dict(
+            :solver => (Clarabel.Optimizer),
+            :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+        ),
+    ),
+    alloc_solvers = Dict(:GLPK => Dict(:solver => GLPK.Optimizer)),
+    cov_type = :Gerber2,
+    codep_type = :Gerber2,
+    latest_prices = Vector(returns[end, 2:end]),
+)
+asset_statistics!(hportfolio; calc_kurt = false)
+plot_clusters(hportfolio, linkage = :ward)
+
+hcportfolio = HCPortfolio(;
     returns = returns,
     solvers = Dict(
         :Clarabel => Dict(
@@ -48,7 +433,10 @@ portfolio = HCPortfolio(;
     cov_type = :Gerber2,
     codep_type = :Gerber2,
 )
-asset_statistics!(portfolio; calc_kurt = false)
+asset_statistics!(hcportfolio; calc_kurt = false)
+plot_clusters(hcportfolio; linkage = :ward)
+plot_dendrogram(hcportfolio; linkage = :ward)
+
 w = opt_port!(portfolio; rm = :RDaR, type = :NCO, linkage = :ward)
 
 plot_returns(portfolio; type = :NCO)
