@@ -185,8 +185,6 @@ mutable struct Portfolio{
     tpdf,
     tl2,
     ts2,
-    tmuf,
-    tcovf,
     tmufm,
     tcovfm,
     tmubl,
@@ -301,8 +299,6 @@ mutable struct Portfolio{
     posdef_fix::tpdf
     L_2::tl2
     S_2::ts2
-    mu_f::tmuf
-    cov_f::tcovf
     mu_fm::tmufm
     cov_fm::tcovfm
     mu_bl::tmubl
@@ -427,8 +423,6 @@ mutable struct Portfolio{
     tpdf,
     tl2,
     ts2,
-    tmuf,
-    tcovf,
     tmufm,
     tcovfm,
     tmubl,
@@ -544,8 +538,6 @@ mutable struct Portfolio{
     posdef_fix::tpdf
     L_2::tl2
     S_2::ts2
-    mu_f::tmuf
-    cov_f::tcovf
     mu_fm::tmufm
     cov_fm::tcovfm
     mu_bl::tmubl
@@ -660,8 +652,6 @@ Portfolio(;
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
-    mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-    cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_bl::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -737,13 +727,13 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `kind_tracking_err`: `:Weights` when providing a vector of asset weights for computing the tracking error benchmark from the asset returns, or `:Returns` to directly providing the tracking benchmark. See [`TrackingErrKinds`](@ref) for more information.
 - `tracking_err`: if finite, define the maximum tracking error deviation. Else the constraint is disabled.
 - `tracking_err_returns`: `T×1` vector of returns to be tracked, where $(_tstr(:t1)). When `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
-- `tracking_err_weights`: `N×1` vector of weights, where $(_ndef(:a1)), when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
+- `tracking_err_weights`: `Na×1` vector of weights, where $(_ndef(:a2)), when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
     - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq e_{2}``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``e_{2}`` the tracking error, and $(_tstr(:t2)).
-- `bl_bench_weights`: `N×1` vector of benchmark weights for Black Litterman models, where $(_ndef(:a1)).
+- `bl_bench_weights`: `Na×1` vector of benchmark weights for Black Litterman models, where $(_ndef(:a2)).
 ## Risk and return constraints
-- `a_mtx_ineq`: `C×N` A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints, and $(_ndef(:a1)).
+- `a_mtx_ineq`: `C×Na` A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints, and $(_ndef(:a2)).
 - `b_vec_ineq`: `C×1` B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints.
-- `risk_budget`: `N×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:a1)).
+- `risk_budget`: `Na×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:a2)).
 ### Bounds constraints
 The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
 - `mu_l`: mean expected return.
@@ -773,23 +763,21 @@ The bounds constraints are only active if they are finite. They define lower bou
 ## Custom OWA weights
 - `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 ## Model statistics
-- `mu_type`: method for estimating the mean returns vector `mu` in [`mean_vec`](@ref), see [`MuTypes`](@ref) for available choices.
-- `mu`: `N×1` mean returns vector, where $(_ndef(:a1))). When choosing `:Custom_Val` in `mu_type`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new.
-- `cov_type`: methods for estimating the covariance matrix `cov` in [`covar_mtx`](@ref), see [`CovTypes`](@ref) for available choices.
+- `mu_type`: method for estimating the mean returns vectors `mu`, `mu_fm`, `mu_bl`, `mu_bl_fm` in [`mean_vec`](@ref), see [`MuTypes`](@ref) for available choices.
+- `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
+- `cov_type`: methods for estimating the covariance matrices `cov`, `cov_fm`, `cov_bl`, `cov_bl_fm` in [`covar_mtx`](@ref), see [`CovTypes`](@ref) for available choices.
 - `jlogo`: if `true`, apply the j-LoGo transformation to the portfolio covariance matrix in [`covar_mtx`](@ref) [^jLoGo].
-- `cov`: `N×N` matrix, where $(_ndef(:a1)). Sets the value of the covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `cov` used by the function.
-- `kurt`: `(N×N)×(N×N)` matrix, where $(_ndef(:a1)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `skurt`: `(N×N)×(N×N)` matrix, where $(_ndef(:a1)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
+- `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
 - `posdef_fix`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
-- `mu_f`:
-- `cov_f`:
-- `mu_fm`:
-- `cov_fm`:
-- `mu_bl`:
-- `cov_bl`:
-- `mu_bl_fm`:
-- `cov_bl_fm`:
-- `returns_fm`:
+- `mu_fm`: $(_mudef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
+- `cov_fm`: $(_covdef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
+- `mu_bl`: $(_mudef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`](@ref)"))
+- `cov_bl`: $(_covdef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`](@ref)"))
+- `mu_bl_fm`: $(_mudef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`](@ref)"))
+- `cov_bl_fm`: $(_covdef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`](@ref)"))
+- `returns_fm`: `T×Na` matrix of feature selcted adjusted returns, where $(_tstr(:t1)) and $(_ndef(:a2)). $(_dircomp("[`factor_statistics!`](@ref)"))
 ## Inputs of Worst Case Optimization Models
 - `cov_l`:
 - `cov_u`:
@@ -897,8 +885,6 @@ function Portfolio(;
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
-    mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-    cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_bl::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -1162,8 +1148,6 @@ function Portfolio(;
         typeof(posdef_fix),
         typeof(L_2),
         typeof(S_2),
-        typeof(mu_f),
-        typeof(cov_f),
         typeof(mu_fm),
         typeof(cov_fm),
         typeof(mu_bl),
@@ -1282,8 +1266,6 @@ function Portfolio(;
         posdef_fix,
         L_2,
         S_2,
-        mu_f,
-        cov_f,
         mu_fm,
         cov_fm,
         mu_bl,

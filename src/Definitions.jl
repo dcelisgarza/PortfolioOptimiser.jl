@@ -589,6 +589,18 @@ function _tstr(sym::Symbol)
     end
 end
 
+function _mudef(msg::String)
+    "`Na×1` vector, where $(_ndef(:a2))). Set the value of the $(msg) mean returns at instance construction. When choosing `:Custom_Val` in `mu_type`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new."
+end
+
+function _covdef(msg::String)
+    "`Na×Na` matrix, where $(_ndef(:a2)). Set the value of the $(msg) covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `cov` used by [`covar_mtx`](@ref)."
+end
+
+function _dircomp(msg::String)
+    "Can be directly computed by $msg."
+end
+
 const _tdef = "- `T`: number of returns observations."
 const _owaw = "- `w`: `T×1` ordered weight vector."
 

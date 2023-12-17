@@ -2756,48 +2756,6 @@ function factor_statistics!(
     returns = portfolio.returns
     f_returns = portfolio.f_returns
 
-    portfolio.cov_f, portfolio.mu_f = covar_mtx_mean_vec(
-        returns;
-        # cov_mtx
-        alpha = alpha,
-        cov_args = cov_args,
-        cov_est = cov_est,
-        cov_func = cov_func,
-        cov_kwargs = cov_kwargs,
-        cov_type = cov_type,
-        cov_weights = cov_weights,
-        custom_cov = custom_cov,
-        denoise = denoise,
-        detone = detone,
-        gs_threshold = gs_threshold,
-        jlogo = jlogo,
-        kernel = kernel,
-        m = m,
-        method = method,
-        mkt_comp = mkt_comp,
-        n = n,
-        opt_args = opt_args,
-        opt_kwargs = opt_kwargs,
-        posdef_args = posdef_args,
-        posdef_fix = posdef_fix,
-        posdef_func = posdef_func,
-        posdef_kwargs = posdef_kwargs,
-        std_args = std_args,
-        std_func = std_func,
-        std_kwargs = std_kwargs,
-        target_ret = target_ret,
-        # mean_vec
-        custom_mu = custom_mu,
-        mean_args = mean_args,
-        mean_func = mean_func,
-        mean_kwargs = mean_kwargs,
-        mkt_ret = mkt_ret,
-        mu_target = mu_target,
-        mu_type = mu_type,
-        mu_weights = mu_weights,
-        rf = rf,
-    )
-
     portfolio.mu_fm, portfolio.cov_fm, portfolio.returns_fm = risk_factors(
         DataFrame(f_returns, portfolio.f_assets),
         DataFrame(returns, portfolio.assets);
