@@ -779,8 +779,8 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `cov_bl_fm`: $(_covdef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`](@ref)"))
 - `returns_fm`: `T×Na` matrix of feature selcted adjusted returns, where $(_tstr(:t1)) and $(_ndef(:a2)). $(_dircomp("[`factor_statistics!`](@ref)"))
 ## Inputs of Worst Case Optimization Models
-- `cov_l`:
-- `cov_u`:
+- `cov_l`: $(_covdef("worst case lower bound asset")) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `cov_u`: $(_covdef("worst case upper bound asset")) $(_dircomp("[`wc_statistics!`](@ref)"))
 - `cov_mu`:
 - `cov_sigma`:
 - `d_mu`:

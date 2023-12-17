@@ -1423,7 +1423,7 @@ function commutation_matrix(x::AbstractMatrix)
 end
 
 function gen_bootstrap(
-    returns::AbstractVector,
+    returns::AbstractMatrix,
     kind::Symbol = :Stationary,
     n_sim::Integer = 3_000,
     window::Integer = 3,
@@ -1433,8 +1433,8 @@ function gen_bootstrap(
     @assert(kind ∈ KindBootstrap, "kind = $kind, must be one of $KindBootstrap")
     !isnothing(seed) && Random.seed!(rng, seed)
 
-    mus = Vector{Vector{eltype(returns)}}(undef, n_sim)
-    covs = Vector{Matrix{eltype(returns)}}(undef, n_sim)
+    mus = []
+    covs = []
 
     bootstrap_func = if kind == :Stationary
         pyimport("arch.bootstrap").StationaryBootstrap
@@ -1447,14 +1447,15 @@ function gen_bootstrap(
     gen = bootstrap_func(window, returns, seed = seed)
     for (i, data) in pairs(gen.bootstrap(n_sim))
         A = data[1][1]
-        mus[i] = vec(mean(A, dims = 1))
-        covs[i] = cov(A)
+
+        push!(mus, vec(mean(A, dims = 1)))
+        push!(covs, cov(A))
     end
 
     return mus, covs
 end
 
-function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractVector})
+function vec_of_vecs_to_mtx(x::AbstractVector)
     return vcat(transpose.(x)...)
 end
 
