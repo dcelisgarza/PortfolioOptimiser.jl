@@ -56,10 +56,7 @@ makedocs(;
         "OWA" => "OWA.md",
         "Risk Measures" => "Risk_measures.md",
         "Portfolio Optimisation" => "Portfolio.md",
-        "API" => [
-            "Definitions" => "Definitions.md",
-            "Asset Statistics" => "Asset_statistics.md",
-        ],
+        "API" => ["Definitions" => "Definitions.md", "Statistics" => "Statistics.md"],
         "Index" => "idx.md",
     ],
 )

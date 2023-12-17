@@ -660,8 +660,6 @@ Portfolio(;
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
-    L_2::AbstractMatrix = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
-    S_2::AbstractMatrix = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
     mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -779,12 +777,10 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `mu`: `N×1` mean returns vector, where $(_ndef(:a1))). When choosing `:Custom_Val` in `mu_type`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new.
 - `cov_type`: methods for estimating the covariance matrix `cov` in [`covar_mtx`](@ref), see [`CovTypes`](@ref) for available choices.
 - `jlogo`: if `true`, apply the j-LoGo transformation to the portfolio covariance matrix in [`covar_mtx`](@ref) [^jLoGo].
-- `cov`: `N×N` covariance matrix, where $(_ndef(:a1))). When choosing `:Custom_Val` in `cov_type`, this is the value of `cov` used, can also be set after a call to [`covar_mtx`](@ref) to replace the old value with the new.
-- `kurt`:
-- `skurt`:
-- `posdef_fix`:
-- `L_2`:
-- `S_2`:
+- `cov`: `N×N` matrix, where $(_ndef(:a1)). Sets the value of the covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `cov` used by the function.
+- `kurt`: `(N×N)×(N×N)` matrix, where $(_ndef(:a1)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `skurt`: `(N×N)×(N×N)` matrix, where $(_ndef(:a1)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `posdef_fix`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
 - `mu_f`:
 - `cov_f`:
 - `mu_fm`:
@@ -901,8 +897,6 @@ function Portfolio(;
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
-    L_2::AbstractMatrix = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
-    S_2::AbstractMatrix = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
     mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -957,8 +951,8 @@ function Portfolio(;
         kind_tracking_err ∈ TrackingErrKinds,
         "kind_tracking_err = $(kind_tracking_err), must be one of $TrackingErrKinds"
     )
-    @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
     @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
+    @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
     @assert(
         posdef_fix ∈ PosdefFixes,
         "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
@@ -1035,6 +1029,24 @@ function Portfolio(;
             "length(owa) = $(length(owa_w)), and size(returns, 1) = $(size(returns, 1)) must be equal"
         )
     end
+    if !isempty(cov)
+        @assert(
+            size(cov, 1) == size(cov, 2) == size(returns, 2),
+            "cov must be a square matrix, size(cov) = $(size(cov)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
+        )
+    end
+    if !isempty(kurt)
+        @assert(
+            size(kurt, 1) == size(kurt, 2) == size(returns, 2)^2,
+            "kurt must be a square matrix, size(kurt) = $(size(kurt)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2"
+        )
+    end
+    if !isempty(skurt)
+        @assert(
+            size(skurt, 1) == size(skurt, 2) == size(returns, 2)^2,
+            "skurt must be a square matrix, size(skurt) = $(size(skurt)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2"
+        )
+    end
 
     if !isempty(f_prices)
         f_returns = dropmissing!(DataFrame(percentchange(f_prices)))
@@ -1061,6 +1073,9 @@ function Portfolio(;
     invk = zero(kappa)
     invopk = zero(kappa)
     invomk = zero(kappa)
+
+    L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
+    S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
 
     return Portfolio{# Portfolio characteristics.
         typeof(assets),
@@ -1407,6 +1422,38 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             )
         end
         val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :mu_type
+        @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
+    elseif sym == :mu
+        @assert(
+            length(val) == size(obj.returns, 2),
+            "length(mu) = $(length(val)), must be equal to the number of assets size(returns, 2) = $(size(obj.returns, 2))"
+        )
+    elseif sym == :cov_type
+        @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
+    elseif sym == :cov
+        if !isempty(val)
+            @assert(
+                size(val, 1) == size(val, 2) == size(obj.returns, 2),
+                "cov must be a square matrix, size(cov) = $(size(val)), with side length equal to the number of assets, size(returns, 2) = $(size(obj.returns, 2))"
+            )
+        end
+    elseif sym == :kurt
+        if !isempty(val)
+            @assert(
+                size(val, 1) == size(val, 2) == size(obj.returns, 2)^2,
+                "kurt must be a square matrix, size(kurt) = $(size(val)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(obj.returns, 2))^2"
+            )
+        end
+    elseif sym == :skurt
+        if !isempty(val)
+            @assert(
+                size(val, 1) == size(val, 2) == size(obj.returns, 2)^2,
+                "skurt must be a square matrix, size(skurt) = $(size(val)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(obj.returns, 2))^2"
+            )
+        end
+    elseif sym == :posdef_fix
+        @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
     elseif sym ∈ (:risk_budget, :bl_bench_weights)
         if isempty(val)
             N = size(obj.returns, 2)
@@ -1419,17 +1466,6 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             isa(val, AbstractRange) ? (val = collect(val / sum(val))) : (val ./= sum(val))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym == :cov_type
-        @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
-    elseif sym == :mu_type
-        @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
-    elseif sym == :mu
-        @assert(
-            length(val) == size(obj.returns, 2),
-            "length(mu) = $(length(val)), must be equal to the number of assets size(returns, 2) = $(size(obj.returns, 2))"
-        )
-    elseif sym == :posdef_fix
-        @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
     elseif sym ∈
            (:min_number_effective_assets, :max_number_assets, :max_number_assets_factor)
         @assert(val >= 0, "$sym = $val, must be greater than or equal to 0")

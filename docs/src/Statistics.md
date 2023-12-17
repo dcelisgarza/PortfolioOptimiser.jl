@@ -12,6 +12,7 @@ mean_vec
 mu_estimator
 covar_mtx
 mut_var_info_mtx
+cokurt_mtx
 ```
 
 ## Private API

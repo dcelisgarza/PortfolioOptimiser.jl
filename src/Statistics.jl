@@ -881,6 +881,11 @@ function mean_vec(
     return mu
 end
 
+"""
+```julia
+cokurt_mtx
+```
+"""
 function cokurt_mtx(
     returns::AbstractMatrix,
     mu::AbstractVector;
@@ -3105,4 +3110,5 @@ export covgerber0,
     nearest_cov,
     covar_mtx,
     mean_vec,
+    cokurt_mtx,
     mu_estimator

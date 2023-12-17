@@ -12,8 +12,8 @@ end
     include("ConstraintTests.jl")
 end
 
-@safetestset "Asset stats" begin
-    include("AssetStatTests.jl")
+@safetestset "Stats" begin
+    include("StatTests.jl")
 end
 
 @safetestset "Codependence and distance functions" begin
