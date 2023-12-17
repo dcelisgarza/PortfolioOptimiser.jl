@@ -701,55 +701,53 @@ Portfolio(;
 Creates an instance of [`Portfolio`](@ref) containing all internal data necessary for convex portfolio optimisations as well as failed and successful results.
 # Inputs
 ## Portfolio characteristics
-- `prices`: `(T+1)×Na` `TimeArray` with asset pricing information, where the time stamp field is `timestamp`, `T` is the number of returns observations and `Na` the number of assets. If `prices` is not empty, then `returns`, `ret`, `timestamps`, `assets` and `latest_prices` are ignored because their respective fields are obtained from `prices`.
-- `returns`: `T×(Na+1)` `DataFrame`, where `T` is the number of returns observations, `Na` is the number of assets, the extra column is `timestamp`, which contains the timestamps of the returns. If `prices` is empty and `returns` is not empty, `ret`, `timestamps` and `assets` are ignored because their respective fields are obtained from `returns`.
-- `ret`: `T×Na` matrix of returns. Its value is saved in the `returns` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
-- `timestamps`: `T×1` vector of timestamps. Its value is saved in the `timestamps` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
-- `assets`: `Na×1` vector of assets. Its value is saved in the `assets` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
+- `prices`: `(T+1)×Na` `TimeArray` with asset pricing information, where the time stamp field is `timestamp`, where $(_tstr(:t1)) and $(_ndef(:a2)). If `prices` is not empty, then `returns`, `ret`, `timestamps`, `assets`, and `latest_prices` are ignored because their respective fields are obtained from `prices`.
+- `returns`: `T×(Na+1)` `DataFrame`, where $(_tstr(:t1)) and $(_ndef(:a2)), the extra column is `timestamp`, which contains the timestamps of the returns. If `prices` is empty and `returns` is not empty, `ret`, `timestamps`, and `assets` are ignored because their respective fields are obtained from `returns`.
+- `ret`: `T×Na` matrix of returns, where $(_tstr(:t1)) and $(_ndef(:a2)). Its value is saved in the `returns` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function, where $(_tstr(:t1)) and $(_ndef(:a2)).
+- `timestamps`: `T×1` vector of timestamps, where $(_tstr(:t1)). Its value is saved in the `timestamps` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
+- `assets`: `Na×1` vector of assets, where $(_ndef(:a2)). Its value is saved in the `assets` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
 - `short`: whether or not to allow negative weights, i.e. whether a portfolio accepts shorting.
 - `short_u`: absolute value of the sum of all short (negative) weights.
 - `long_u`: sum of all long (positive) weights.
 - `min_number_effective_assets`: if non-zero, guarantees that at least number of assets make significant contributions to the final portfolio weights.
 - `max_number_assets`: if non-zero, guarantees at most this number of assets make non-zero contributions to the final portfolio weights. Requires an optimiser that supports binary variables.
 - `max_number_assets_factor`: scaling factor needed to create a decision variable when `max_number_assets` is non-zero.
-- `f_prices`: `(T+1)×Nf` `TimeArray` with factor pricing information, where the time stamp field is `f_timestamp`, `T` is the number of factors returns observations and `Nf` the number of factors. If `f_prices` is not empty, then `f_returns`, `f_ret`, `f_timestamps`, `f_assets` and `latest_prices` are ignored because their respective fields are obtained from `f_prices`.
-- `f_returns`: `T×(Nf+1)` `DataFrame`, where `T` is the number of factor returns observations, `Nf` is the number of factors, the extra column is `f_timestamp`, which contains the timestamps of the factor returns. If `f_prices` is empty and `f_returns` is not empty, `f_ret`, `f_timestamps` and `f_assets` are ignored because their respective fields are obtained from `f_returns`.
-- `f_ret`: `T×Nf` matrix of factor returns. Its value is saved in the `f_returns` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
-- `f_timestamps`: `T×1` vector of factor timestamps. Its value is saved in the `f_timestamps` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
-- `f_assets`: `Nf×1` vector of assets. Its value is saved in the `f_assets` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
+- `f_prices`: `(T+1)×Nf` `TimeArray` with factor pricing information, where the time stamp field is `f_timestamp`, where $(_tstr(:t1)) and $(_ndef(:f2)). If `f_prices` is not empty, then `f_returns`, `f_ret`, `f_timestamps`, `f_assets`, and `latest_prices` are ignored because their respective fields are obtained from `f_prices`.
+- `f_returns`: `T×(Nf+1)` `DataFrame`, where $(_tstr(:t1)) and $(_ndef(:f2)), the extra column is `f_timestamp`, which contains the timestamps of the factor returns. If `f_prices` is empty and `f_returns` is not empty, `f_ret`, `f_timestamps`, and `f_assets` are ignored because their respective fields are obtained from `f_returns`.
+- `f_ret`: `T×Nf` matrix of factor returns, where $(_ndef(:f2)). Its value is saved in the `f_returns` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function, where $(_tstr(:t1)) and $(_ndef(:f2)).
+- `f_timestamps`: `T×1` vector of factor timestamps, where $(_tstr(:t1)). Its value is saved in the `f_timestamps` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
+- `f_assets`: `Nf×1` vector of assets, where $(_ndef(:f2)). Its value is saved in the `f_assets` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
 - `loadings`: loadings matrix for black litterman models.
 ## Risk parameters
 - `msv_target`: target value for for Absolute Deviation and Semivariance risk measures. It can have two meanings depending on its type and value.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
-    - Else the target is the value of `msv_target`. If `msv_target` is a vector, its length should be `Na`, where `Na` is the number of assets.
+    - Else the target is the value of `msv_target`. If `msv_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 - `lpm_target`: target value for the First and Second Lower Partial Moment risk measures. It can have two meanings depending on its type and value.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`opt_port!`](@ref) function.
-    - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where `Na` is the number of assets.
-- `alpha_i`: initial significance level of Tail Gini losses, `0 < alpha_i < alpha < 1`.
-- `alpha`: significance level of VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses or Tail Gini losses, `alpha ∈ (0, 1)`.
-- `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim`.
-- `beta_i`: initial significance level of Tail Gini gains, `0 < beta_i < beta < 1`. 
-- `beta`: significance level of CVaR gains, `beta ∈ (0, 1)`.
-- `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
+    - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
+$(_isigdef("Tail Gini losses", :a))
+$(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :a))
+$(_isigdef("Tail Gini gains", :b))
+$(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :b))
 - `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
 - `gs_threshold`: Gerber statistic threshold.
 - `max_num_assets_kurt`: maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
 ## Benchmark constraints
 - `turnover`: if finite, define the maximum turnover deviations from `turnover_weights` to the optimised portfolio. Else the constraint is disabled.
 - `turnover_weights`: target weights for turnover constraint.
-    - The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``t`` is the value of the turnover, and ``N`` the number of assets.
+    - The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq e_{1} \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``e_{1}`` is the value of the turnover, and $(_ndef(:a3)).
 - `kind_tracking_err`: `:Weights` when providing a vector of asset weights for computing the tracking error benchmark from the asset returns, or `:Returns` to directly providing the tracking benchmark. See [`TrackingErrKinds`](@ref) for more information.
 - `tracking_err`: if finite, define the maximum tracking error deviation. Else the constraint is disabled.
-- `tracking_err_returns`: `T×1` vector of returns to be tracked, where `T` is the number of returns observations. When `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
-- `tracking_err_weights`: `N×1` vector of weights, where `N` is the number of assets, when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
-    - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and ``T`` the total number of observations in the returns series.
-- `bl_bench_weights`: `N×1` vector of benchmark weights for Black Litterman models, where `N` is the number of assets.
+- `tracking_err_returns`: `T×1` vector of returns to be tracked, where $(_tstr(:t1)). When `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
+- `tracking_err_weights`: `N×1` vector of weights, where $(_ndef(:a1)), when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
+    - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq e_{2}``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``e_{2}`` the tracking error, and $(_tstr(:t2)).
+- `bl_bench_weights`: `N×1` vector of benchmark weights for Black Litterman models, where $(_ndef(:a1)).
 ## Risk and return constraints
-- `a_mtx_ineq`: `C×N` A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints and `N` the number of assets.
+- `a_mtx_ineq`: `C×N` A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints, and $(_ndef(:a1)).
 - `b_vec_ineq`: `C×1` B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints.
-- `risk_budget`: `N×1` risk budget constraint vector for risk parity optimisations, where `N` is the number of assets.
+- `risk_budget`: `N×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:a1)).
 ### Bounds constraints
-The bounds constraints are only active if they are finite. They define return lower bounds (`_l`) and risk upper bounds (`_u`) of the optimised portfolio. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
+The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
 - `mu_l`: mean expected return.
 - `dev_u`: standard deviation.
 - `mad_u`: max absolute devia.
@@ -775,7 +773,7 @@ The bounds constraints are only active if they are finite. They define return lo
 - `rtg_u`: tail gini range.
 - `owa_u`: custom ordered weight risk (use with `owa_w`).
 ## Custom OWA weights
-- `owa_w`: `T×1` OWA vector, where `T` is the number of returns observations containing. Useful for optimising higher L-moments.
+- `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 ## Model statistics
 - `mu_type`:
 - `mu`:
