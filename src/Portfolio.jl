@@ -775,11 +775,11 @@ The bounds constraints are only active if they are finite. They define lower bou
 ## Custom OWA weights
 - `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 ## Model statistics
-- `mu_type`:
-- `mu`:
-- `cov_type`:
-- `jlogo`:
-- `cov`:
+- `mu_type`: method for estimating the mean returns vector `mu` in [`mean_vec`](@ref), see [`MuTypes`](@ref) for available choices.
+- `mu`: `N×1` mean returns vector, where $(_ndef(:a1))). When choosing `:Custom_Val` in `mu_type`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new.
+- `cov_type`: methods for estimating the covariance matrix `cov` in [`covar_mtx`](@ref), see [`CovTypes`](@ref) for available choices.
+- `jlogo`: if `true`, apply the j-LoGo transformation to the portfolio covariance matrix in [`covar_mtx`](@ref) [^jLoGo].
+- `cov`: `N×N` covariance matrix, where $(_ndef(:a1))). When choosing `:Custom_Val` in `cov_type`, this is the value of `cov` used, can also be set after a call to [`covar_mtx`](@ref) to replace the old value with the new.
 - `kurt`:
 - `skurt`:
 - `posdef_fix`:
@@ -819,6 +819,9 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `alloc_params`:
 - `alloc_fail`:
 - `alloc_model`:
+
+[^jLoGo]:
+    [Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016). Parsimonious modeling with information filtering networks. Physical Review E, 94(6), 062306.](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.94.062306)
 """
 function Portfolio(;
     # Portfolio characteristics.
@@ -1420,6 +1423,11 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
     elseif sym == :mu_type
         @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
+    elseif sym == :mu
+        @assert(
+            length(val) == size(obj.returns, 2),
+            "length(mu) = $(length(val)), must be equal to the number of assets size(returns, 2) = $(size(obj.returns, 2))"
+        )
     elseif sym == :posdef_fix
         @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
     elseif sym ∈
