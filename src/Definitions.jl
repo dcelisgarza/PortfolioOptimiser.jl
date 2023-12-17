@@ -545,6 +545,26 @@ function _sigdom(sym::Symbol)
     end * " ∈ (0, 1)"
 end
 
+function _sigdef(msg::String, sym::Symbol)
+    ab = if sym == :a
+        "alpha"
+    elseif sym == :b
+        "beta"
+    end
+
+    return "- `$ab`: significance level of $msg, `$(_sigdom(sym))`."
+end
+
+function _isigdef(msg::String, sym::Symbol)
+    alfbet, ab = if sym == :a
+        "alpha", "a"
+    elseif sym == :b
+        "beta", "b"
+    end
+
+    return "- `$(alfbet)_i`: initial significance level of $msg, `0 < $(alfbet)_i < $(alfbet) < 1`.\n- `$(ab)_sim`: number of CVaRs to approximate the $msg, `$(ab)_sim > 0`."
+end
+
 function _ndef(sym::Symbol)
     return if sym == :a1
         "`N` is the number of assets"
@@ -568,6 +588,9 @@ function _tstr(sym::Symbol)
         "``T`` is the number of returns observations"
     end
 end
+
+const _tdef = "- `T`: number of returns observations."
+const _owaw = "- `w`: `T×1` ordered weight vector."
 
 function _assert_value_message(lo::Real, hi::Real, args...) end
 function _assert_category_message(sym::Symbol, collection) end

@@ -4,9 +4,9 @@ owa_gmd(T::Integer)
 ```
 Computes the Gini Mean Difference (GMD) of a returns series [^OWA].
 # Inputs
-- `T`: number of observations of the returns series.
+$_tdef
 # Outputs
-- `w`: `T×1` ordered weight vector.
+$_owaw
 
 [^OWA]:
     [Cajas, Dany, OWA Portfolio Optimization: A Disciplined Convex Programming Framework (December 18, 2021). Available at SSRN: https://ssrn.com/abstract=3988927 or http://dx.doi.org/10.2139/ssrn.3988927](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3988927)
@@ -27,10 +27,10 @@ owa_cvar(T::Integer, alpha::Real = 0.05)
 ```
 Calculate the OWA weights corresponding to the Critical Value at Risk (CVaR) of a returns series [^OWA].
 # Inputs
-- `T`: number of observations of the returns series.
-- `alpha`: significance level of CVaR, alpha ∈ (0, 1).
+$_tdef
+$(_sigdef("CVaR", :a))
 # Outputs
-- `w`: `T×1` ordered weight vector.
+$_owaw
 """
 function owa_cvar(T::Integer, alpha::Real = 0.05)
     @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and less than 1")
@@ -53,11 +53,11 @@ owa_wcvar(
 ```
 Compute the OWA weights for the Weighted Conditional Value at Risk (WCVaR) of a returns series [^OWA].
 # Inputs
-- `T`: number of observations of the returns series.
-- `alphas`: `N×1` vector of significance levels of each CVaR model, where `N` is the number of models, each `alpha ∈ (0, 1)`.
+$_tdef
+- `alphas`: `N×1` vector of significance levels of each CVaR model, where `N` is the number of models, each `$(_sigdom(:a))`.
 - `weights`: `N×1` vector of weights of each CVaR model, where `N` is the number of models.
 # Outputs
-- `w`: `T×1` ordered weight vector.
+$_owaw
 """
 function owa_wcvar(
     T::Integer,
@@ -83,12 +83,11 @@ owa_tg(
 ```
 Compute the OWA weights for the Tail Gini of a returns series [^OWA].
 # Inputs
-- `T`: number of observations of the returns series.
-- `alpha_i`: initial significance level of Tail Gini losses, `0 < alpha_i < alpha < 1`.
-- `alpha`: significance level of Tail Gini losses, `alpha ∈ (0, 1)`.
-- `a_sim`: number of CVaRs to approximate the Tail Gini losses `a_sim > 0`.
+$_tdef
+$(_isigdef("Tail Gini losses", :a))
+$(_sigdef("Tail Gini losses", :a))
 # Outputs
-- `w`: `T×1` ordered weight vector.
+$_owaw
 """
 function owa_tg(T::Integer; alpha_i::Real = 1e-4, alpha::Real = 0.05, a_sim::Integer = 100)
     @assert(
@@ -118,9 +117,9 @@ owa_wr(T::Integer)
 ```
 Compute the OWA weights for the Worst Realisation (WR) of a returns series [^OWA].
 # Inputs
-- `T`: number of observations of the returns series.
+$_tdef
 # Outputs
-- `w`: `T×1` ordered weight vector.
+$_owaw
 """
 function owa_wr(T::Integer)
     w = zeros(typeof(inv(T)), T)
@@ -135,9 +134,9 @@ owa_rg(T::Integer)
 ```
 Compute the OWA weights for the Range of a returns series [^OWA].
 # Inputs
-- `T`: number of observations of the returns series.
+$_tdef
 # Outputs
-- `w`: `T×1` ordered weight vector.
+$_owaw
 """
 function owa_rg(T::Integer)
     w = zeros(typeof(inv(T)), T)
@@ -152,11 +151,11 @@ owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = alpha)
 ```
 Compute the OWA weights for the CVaR Range of a returns series [^OWA].
 # Inputs
-- `T`: number of observations of the returns series.
-- `alpha`: significance level of CVaR losses, `alpha ∈ (0, 1)`.
-- `beta`: significance level of CVaR gains, `beta ∈ (0, 1)`.
+$_tdef
+$(_sigdef("CVaR losses", :a))
+$(_sigdef("CVaR gains", :b))
 # Outputs
-- `w`: `T×1` ordered weight vector.
+$_owaw
 """
 function owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = alpha)
     w = owa_cvar(T, alpha) .- reverse(owa_cvar(T, beta))
@@ -175,13 +174,13 @@ owa_rwcvar(
 ```
 Compute the OWA weights for the Weighted Conditional Value at Risk (WCVaR) of a returns series [^OWA].
 # Inputs
-- `T`: number of observations of the returns series.
-- `alphas`: `N×1` vector of significance levels of the losses for each CVaR model, where `N` is the number of losses models, each `alpha ∈ (0, 1)`.
+$_tdef
+- `alphas`: `N×1` vector of significance levels of the losses for each CVaR model, where `N` is the number of losses models, each `$(_sigdom(:a))`.
 - `weights_a`: `N×1` vector of weights of the losses for each CVaR model, where `N` is the number of losses models.
-- `betas`: `M×1` vector of significance levels of the gains for each CVaR model, where `M` is the number of gains models, each `beta ∈ (0, 1)`.
+- `betas`: `M×1` vector of significance levels of the gains for each CVaR model, where `M` is the number of gains models, each `$(_sigdom(:b))`.
 - `weights_b`: `M×1` vector of weights of the gains for each CVaR model, where `M` is the number of gains models.
 # Outputs
-- `w`: `T×1` ordered weight vector.
+$_owaw
 """
 function owa_rwcvar(
     T::Integer,
@@ -209,15 +208,13 @@ owa_rtg(
 ```
 Compute the OWA weights for the Tail Gini Range of a returns series [^OWA].
 # Inputs
-- `T`: number of observations of the returns series.
-- `alpha_i`: initial significance level of Tail Gini losses, `0 < alpha_i < alpha < 1`.
-- `alpha`: significance level of Tail Gini losses, `alpha ∈ (0, 1)`.
-- `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
-- `beta_i`: initial significance level of Tail Gini gains, `0 < beta_i < beta < 1`.
-- `beta`: significance level of Tail Gini gains, `beta ∈ (0, 1)`.
-- `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
+$_tdef
+$(_isigdef("Tail Gini losses", :a))
+$(_sigdef("Tail Gini losses", :a))
+$(_isigdef("Tail Gini gains", :b))
+$(_sigdef("Tail Gini gains", :b))
 # Outputs
-- `w`: `T×1` ordered weight vector.
+$_owaw
 """
 function owa_rtg(
     T::Integer;
@@ -328,10 +325,10 @@ owa_l_moment(T::Integer, k::Integer = 2)
 ```
 Calculates the OWA weights of the k'th linear moment (L-moment) of a returns series [^OWAL].
 # Inputs
-- `T`: number of observations of the returns series.
+$_tdef
 - `k`: order of the L-moment.
 # Outputs
-- `w`: `T×1` ordered weight vector.
+$_owaw
 
 [^OWAL]:
     [Cajas, Dany, Higher Order Moment Portfolio Optimization with L-Moments (March 19, 2023). Available at SSRN: https://ssrn.com/abstract=4393155 or http://dx.doi.org/10.2139/ssrn.4393155](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4393155)
@@ -380,7 +377,7 @@ owa_l_moment_crm(
 ```
 Compute the OWA weights for the convex risk measure considering higher order L-moments [^OWAL].
 # Inputs
-- `T`: number of observations of the returns series.
+$_tdef
 - `k`: order of the L-moment, `k ≥ 2`.
 - `method`: method for computing the weights used to combine L-moments higher than 2, used in [`OWAMethods`](@ref).
     - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
@@ -393,7 +390,7 @@ Compute the OWA weights for the convex risk measure considering higher order L-m
     - `:solver`: which contains the JuMP optimiser.
     - `:params`: for the solver-specific parameters.
 # Outputs
-- `w`: `T×1` ordered weight vector.
+$_owaw
 """
 function owa_l_moment_crm(
     T::Integer;
