@@ -32,7 +32,8 @@ function _setup_alloc_optim(weights, short_ratio, investment, reinvest)
     return long_idx, short_idx, long_investment, short_investment
 end
 
-function _optimise_allocation(portfolio, model, tickers, latest_prices)
+function _optimise_allocation(portfolio, tickers, latest_prices)
+    model = portfolio.alloc_model
     solvers = portfolio.alloc_solvers
     term_status = termination_status(model)
     solvers_tried = Dict()
@@ -119,13 +120,13 @@ end
 
 function _handle_alloc_errors_and_finalise(
     portfolio,
-    model,
     term_status,
     solvers_tried,
     key,
     label,
     latest_prices,
 )
+    model = portfolio.alloc_model
     key = Symbol(string(key) * "_" * string(label))
 
     retval = if term_status ∉ ValidTermination
@@ -147,8 +148,6 @@ function _handle_alloc_errors_and_finalise(
         cost = latest_prices .* shares
         weights = cost / sum(cost)
         available_funds = value(model[:r])
-
-        portfolio.alloc_model[key] = model
 
         (shares, cost, weights, available_funds)
     end
@@ -175,7 +174,9 @@ function _lp_sub_allocation!(
         zero(eltype(latest_prices))
     )
 
-    model = JuMP.Model()
+    portfolio.alloc_model = JuMP.Model()
+    model = portfolio.alloc_model
+
     set_string_names_on_creation(model, string_names)
 
     weights /= sum(weights)
@@ -197,12 +198,10 @@ function _lp_sub_allocation!(
 
     @objective(model, Min, u + r)
 
-    term_status, solvers_tried =
-        _optimise_allocation(portfolio, model, tickers, latest_prices)
+    term_status, solvers_tried = _optimise_allocation(portfolio, tickers, latest_prices)
 
     shares, cost, allocated_weights, available_funds = _handle_alloc_errors_and_finalise(
         portfolio,
-        model,
         term_status,
         solvers_tried,
         key,
@@ -434,6 +433,22 @@ function _save_alloc_opt_params(
     return nothing
 end
 
+"""
+```julia
+allocate_port!(
+    portfolio;
+    port_type = isa(portfolio, Portfolio) ? :Trad : :HRP,
+    alloc_type = :LP,
+    latest_prices = portfolio.latest_prices,
+    investment = 1e4,
+    rounding = 1,
+    reinvest = false,
+    short_ratio = nothing,
+    string_names = false,
+    save_opt_params = true,
+)
+```
+"""
 function allocate_port!(
     portfolio;
     port_type = isa(portfolio, Portfolio) ? :Trad : :HRP,

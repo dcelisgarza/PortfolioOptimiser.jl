@@ -6,6 +6,9 @@
 Portfolio()
 opt_port!
 HCPortfolio()
+frontier_limits!
+efficient_frontier!
+allocate_port!
 ```
 
 ## Private API

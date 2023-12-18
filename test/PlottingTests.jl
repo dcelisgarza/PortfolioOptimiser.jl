@@ -20,7 +20,7 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
     w = opt_port!(portfolio; rm = rm, obj = obj, save_opt_params = true)
     plt1 = plot_risk_contribution(portfolio; rm = rm, percentage = true)
     plt2 = plot_risk_contribution(portfolio; rm = rm, percentage = false)
-    frontier = efficient_frontier(portfolio; rm = rm)
+    frontier = efficient_frontier!(portfolio; rm = rm)
     plt3 = plot_frontier(portfolio; rm = rm)
     plt4 = plot_frontier_area(portfolio; rm = rm)
     plt5 = plot_frontier_area(frontier; rm = rm)

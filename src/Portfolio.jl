@@ -680,20 +680,21 @@ Portfolio(;
     # Optimal portfolios.
     optimal::AbstractDict = Dict(),
     z::AbstractDict = Dict(),
-    limits::DataFrame = DataFrame(),
+    limits::AbstractDict = Dict(),
     frontier::AbstractDict = Dict(),
     # Solutions.
-    solvers::AbstractDict = Dict(),
+    solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
     # Allocation.
     latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     alloc_optimal::AbstractDict = Dict(),
-    alloc_solvers::AbstractDict = Dict(),
+    alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
     alloc_params::AbstractDict = Dict(),
     alloc_fail::AbstractDict = Dict(),
-    alloc_model::AbstractDict = Dict(),
+    alloc_model = JuMP.Model(),
+)
 )
 ```
 Creates an instance of [`Portfolio`](@ref) containing all internal data necessary for convex portfolio optimisations as well as failed and successful results.
@@ -799,22 +800,22 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `k_mu`: set the percentile of a sample of size `Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
 - `k_sigma`: set the percentile of a sample of size `Na×Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
 ## Optimal portfolios
-- `optimal`: $_edst for storing optimal portfolios.
-- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures.
-- `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures.
-- `frontier`: $_edst containing points in the efficient frontier for given risk measures. 
+- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`opt_port!`](@ref)"))
+- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`opt_port!`](@ref)"))
+- `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures. $(_filled_by("[`frontier_limits!`](@ref)"))
+- `frontier`: $_edst containing points in the efficient frontier for given risk measures. $(_filled_by("[`efficient_frontier!`](@ref)"))
 ## Solutions
-- `solvers`:
-- `opt_params`: $_edst for storing parameters used for optimising.
-- `fail`: $_edst for storing failed optimisation attempts.
-- `model`: `JuMP.Model()` for optimising a portfolio.
+$(_solver_desc("risk measure `JuMP` model."))
+- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`opt_port!`](@ref)"))
+- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`opt_port!`](@ref)"))
+- `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`opt_port!`](@ref)"))
 ## Allocation
-- `latest_prices`:
-- `alloc_optimal`:
-- `alloc_solvers`:
-- `alloc_params`:
-- `alloc_fail`:
-- `alloc_model`:
+- `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
+- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate_port!`](@ref)"))
+$(_solver_desc("discrete allocation `JuMP` model.", "alloc_"))
+- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
+- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate_port!`](@ref)"))
+- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
 
 [^jLoGo]:
     [Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016). Parsimonious modeling with information filtering networks. Physical Review E, 94(6), 062306.](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.94.062306)
@@ -920,17 +921,17 @@ function Portfolio(;
     limits::AbstractDict = Dict(),
     frontier::AbstractDict = Dict(),
     # Solutions.
-    solvers::AbstractDict = Dict(),
+    solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     model = JuMP.Model(),
     # Allocation.
     latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     alloc_optimal::AbstractDict = Dict(),
-    alloc_solvers::AbstractDict = Dict(),
+    alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
     alloc_params::AbstractDict = Dict(),
     alloc_fail::AbstractDict = Dict(),
-    alloc_model::AbstractDict = Dict(),
+    alloc_model = JuMP.Model(),
 )
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
@@ -1278,14 +1279,14 @@ function Portfolio(;
         typeof(limits),
         typeof(frontier),
         # Solutions.
-        typeof(solvers),
+        Union{<:AbstractDict, NamedTuple},
         typeof(opt_params),
         typeof(fail),
         typeof(model),
         # Allocation.
         typeof(latest_prices),
         typeof(alloc_optimal),
-        typeof(alloc_solvers),
+        Union{<:AbstractDict, NamedTuple},
         typeof(alloc_params),
         typeof(alloc_fail),
         typeof(alloc_model),
@@ -1941,16 +1942,16 @@ HCPortfolio(;
     # Optimal portfolios.
     optimal::AbstractDict = Dict(),
     # Solutions.
-    solvers::AbstractDict = Dict(),
+    solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     # Allocation.
     latest_prices::AbstractVector = Vector{Float64}(undef, 0),
     alloc_optimal::AbstractDict = Dict(),
-    alloc_solvers::AbstractDict = Dict(),
+    alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
     alloc_params::AbstractDict = Dict(),
     alloc_fail::AbstractDict = Dict(),
-    alloc_model::AbstractDict = Dict(),
+    alloc_model = JuMP.Model(),
 )
 ```
 """
@@ -1990,16 +1991,16 @@ function HCPortfolio(;
     # Optimal portfolios.
     optimal::AbstractDict = Dict(),
     # Solutions.
-    solvers::AbstractDict = Dict(),
+    solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
     opt_params::AbstractDict = Dict(),
     fail::AbstractDict = Dict(),
     # Allocation.
     latest_prices::AbstractVector = Vector{Float64}(undef, 0),
     alloc_optimal::AbstractDict = Dict(),
-    alloc_solvers::AbstractDict = Dict(),
+    alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
     alloc_params::AbstractDict = Dict(),
     alloc_fail::AbstractDict = Dict(),
-    alloc_model::AbstractDict = Dict(),
+    alloc_model = JuMP.Model(),
 )
     @assert(
         0 < alpha_i < alpha < 1,
@@ -2079,13 +2080,13 @@ function HCPortfolio(;
         # Optimal portfolios.
         typeof(optimal),
         # Solutions.
-        typeof(solvers),
+        Union{<:AbstractDict, NamedTuple},
         typeof(opt_params),
         typeof(fail),
         # Allocation.
         typeof(latest_prices),
         typeof(alloc_optimal),
-        typeof(alloc_solvers),
+        Union{<:AbstractDict, NamedTuple},
         typeof(alloc_params),
         typeof(alloc_fail),
         typeof(alloc_model),

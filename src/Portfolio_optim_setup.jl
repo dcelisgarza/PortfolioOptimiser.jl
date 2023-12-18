@@ -588,7 +588,7 @@ function opt_port!(
     kelly::Symbol = :None,
     l::Real = 2.0,
     obj::Symbol = :Sharpe,
-    rf::Real = 0.0,#1.0329^(1 / 252) - 1
+    rf::Real = 0.0,
     rm::Symbol = :SD,
     rrp_penalty::Real = 1.0,
     rrp_ver::Symbol = :None,
@@ -717,6 +717,18 @@ function opt_port!(
     return retval
 end
 
+"""
+```julia
+frontier_limits!(
+    portfolio::Portfolio;
+    class::Symbol = :Classic,
+    hist::Integer = 1,
+    kelly::Symbol = :None,
+    rf::Real = 0.0,
+    rm::Symbol = :SD,
+)
+```
+"""
 function frontier_limits!(
     portfolio::Portfolio;
     class::Symbol = :Classic,
@@ -760,12 +772,25 @@ function frontier_limits!(
     return portfolio.limits[rm]
 end
 
-function efficient_frontier(
+"""
+```julia
+efficient_frontier!(
     portfolio::Portfolio;
     class::Symbol = :Classic,
     hist::Integer = 1,
     kelly::Symbol = :None,
-    rf::Real = 0.0,#1.0329^(1 / 252) - 1
+    rf::Real = 0.0,
+    rm::Symbol = :SD,
+    points::Integer = 20,
+)
+```
+"""
+function efficient_frontier!(
+    portfolio::Portfolio;
+    class::Symbol = :Classic,
+    hist::Integer = 1,
+    kelly::Symbol = :None,
+    rf::Real = 0.0,
     rm::Symbol = :SD,
     points::Integer = 20,
 )
@@ -956,4 +981,4 @@ function efficient_frontier(
     return portfolio.frontier
 end
 
-export opt_port!, frontier_limits!, efficient_frontier
+export opt_port!, frontier_limits!, efficient_frontier!

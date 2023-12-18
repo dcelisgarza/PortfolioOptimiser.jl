@@ -36,7 +36,7 @@ type = :Trad
     )
     asset_statistics!(portfolio)
     limits = frontier_limits!(portfolio, rm = :CVaR, kelly = :Approx)
-    frontier = efficient_frontier(portfolio; kelly = :Approx, rm = :CVaR, points = 3)
+    frontier = efficient_frontier!(portfolio; kelly = :Approx, rm = :CVaR, points = 3)
     @test isapprox(frontier[:CVaR][:weights][!, "1"], limits.w_min)
     @test isapprox(frontier[:CVaR][:weights][!, "3"], limits.w_max)
     r1 = calc_risk(limits.w_min, portfolio.returns; rm = :CVaR, alpha = portfolio.alpha)

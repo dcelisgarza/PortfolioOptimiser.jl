@@ -239,9 +239,7 @@ _optimize_owa(model, solvers)
 Internal function to optimise an OWA JuMP model.
 # Inputs
 - `model`: JuMP model.
-- `solvers`: `Dict` or `NamedTuple` with the keys:
-    - `:solver`: which contains the JuMP optimiser.
-    - `:params`: for the solver-specific parameters.
+$(_solver_desc("the OWA L-Moment `JuMP` model."))
 # Outputs
 - `term_status`: JuMP termination status.
 - `solvers_tried`: Dictionary that contains a dictionary of failed optimisations. `Dict(key => Dict(...))`, where `key` is the solver key used for the iteration of `solver` that failed.
@@ -358,7 +356,7 @@ OWAMethods = (:CRRA, :E, :SS, :SD)
 ```
 Methods for computing the weights used to combine L-moments higher than 2, used in [`owa_l_moment_crm`](@ref).
 - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
-- `:E`: Maximum Entropy.
+- `:E`: Maximum Entropy. Uses `MOI.RelativeEntropyCone` and `MOI.NormOneCone`, in order for the optimisation to succeed `JuMP` needs to be able to transform these into supported forms for a solver.
 - `:SS`: Minimum Sum of Squares.
 - `:SD`: Minimum Square Distance.
 """
@@ -381,14 +379,12 @@ $_tdef
 - `k`: order of the L-moment, `k ≥ 2`.
 - `method`: method for computing the weights used to combine L-moments higher than 2, used in [`OWAMethods`](@ref).
     - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
-    - `:E`: Maximum Entropy.
-    - `:SS`: Minimum Sum of Squares.
-    - `:SD`: Minimum Square Distance.
+    - `:E`: Maximum Entropy. $(_req_cone("`MOI.RelativeEntropyCone` and `MOI.NormOneCone`"))
+    - `:SS`: Minimum Sum of Squares. $(_req_cone("`MOI.SecondOrderCone`"))
+    - `:SD`: Minimum Square Distance. $(_req_cone("`MOI.SecondOrderCone`"))
 - `g`: the risk aversion coefficient.
 - `max_phi`: maximum weight constraint of the L-moments.
-- `solvers`: `Dict` or `NamedTuple` with key value pairs where the values are other `Dict`s or `NamedTuple`s, e.g. `Dict(solver_key => Dict(...))`, the keys of the sub-dictionary/tuple must be:
-    - `:solver`: which contains the JuMP optimiser.
-    - `:params`: for the solver-specific parameters.
+$(_solver_desc("the OWA L-Moment `JuMP` model."))
 # Outputs
 $_owaw
 """
