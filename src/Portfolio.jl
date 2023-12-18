@@ -695,7 +695,6 @@ Portfolio(;
     alloc_fail::AbstractDict = Dict(),
     alloc_model = JuMP.Model(),
 )
-)
 ```
 Creates an instance of [`Portfolio`](@ref) containing all internal data necessary for convex portfolio optimisations as well as failed and successful results.
 # Inputs
