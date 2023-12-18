@@ -806,6 +806,8 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `frontier`: $_edst containing points in the efficient frontier for given risk measures. $(_filled_by("[`efficient_frontier!`](@ref)"))
 ## Solutions
 $(_solver_desc("risk measure `JuMP` model."))
+!!! note
+    $(_req_cone("a variety of cones and constraints depending on the risk measure, bounds, and constraints"))
 - `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`opt_port!`](@ref)"))
 - `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`opt_port!`](@ref)"))
 - `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`opt_port!`](@ref)"))
@@ -813,6 +815,8 @@ $(_solver_desc("risk measure `JuMP` model."))
 - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
 - `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate_port!`](@ref)"))
 $(_solver_desc("discrete allocation `JuMP` model.", "alloc_"))
+!!! note
+    $(_req_cone("mixed-integer problems"))
 - `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
 - `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate_port!`](@ref)"))
 - `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))

@@ -627,11 +627,8 @@ function _solver_desc(msg::String = "the `JuMP` model.", pref::String = "")
     """
 end
 function _req_cone(msg::String)
-    txt = count("MOI", msg) == 1 ? "it" : "them"
-
-    return "Uses $msg, in order for the optimisation to succeed the solver needs to support $txt, or `JuMP` must be able to transform $txt into a supported form."
+    return "In order for the optimisation to succeed, a solver needs to support $msg. Alternatively, `JuMP` must be able to transform it/them, into a supported form."
 end
-
 function _filled_by(msg::String)
     return "This parameter is filled after calling $msg."
 end
