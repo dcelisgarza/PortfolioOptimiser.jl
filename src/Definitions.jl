@@ -589,12 +589,27 @@ function _tstr(sym::Symbol)
     end
 end
 
-function _mudef(msg::String)
-    "`Na×1` vector, where $(_ndef(:a2))). Set the value of the $(msg) mean returns at instance construction. When choosing `:Custom_Val` in `mu_type`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new."
+function _mudef(msg::String, sym::Symbol = :a2)
+    if sym == :a2
+        n = "Na"
+    elseif sym == :f2
+        n = "Nf"
+    end
+
+    "`$n×1` vector, where $(_ndef(sym))). Set the value of the $(msg) mean returns at instance construction. When choosing `:Custom_Val` in `mu_type`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new."
 end
 
-function _covdef(msg::String)
-    "`Na×Na` matrix, where $(_ndef(:a2)). Set the value of the $(msg) covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `cov` used by [`covar_mtx`](@ref)."
+function _covdef(msg::String, sym::Symbol = :a2)
+    if sym == :a2
+        n = "Na"
+    elseif sym == :f2
+        n = "Nf"
+    elseif sym == :a22
+        n = "(Na×Na)"
+        sym = :a2
+    end
+
+    "`$n×$n` matrix, where $(_ndef(sym)). Set the value of the $(msg) covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `cov` used by [`covar_mtx`](@ref)."
 end
 
 function _dircomp(msg::String)
@@ -603,6 +618,11 @@ end
 
 const _tdef = "- `T`: number of returns observations."
 const _owaw = "- `w`: `T×1` ordered weight vector."
+const _edst = "Empty concrete subtype of `AbstractDictionary`"
+
+function _filled_by(msg::String)
+    return "Filled by $msg."
+end
 
 function _assert_value_message(lo::Real, hi::Real, args...) end
 function _assert_category_message(sym::Symbol, collection) end

@@ -752,12 +752,12 @@ function frontier_limits!(
 
     limits = hcat(w_min, DataFrame(x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
-    portfolio.limits = limits
+    portfolio.limits[rm] = limits
 
     portfolio.optimal = optimal1
     portfolio.fail = fail1
 
-    return portfolio.limits
+    return portfolio.limits[rm]
 end
 
 function efficient_frontier(

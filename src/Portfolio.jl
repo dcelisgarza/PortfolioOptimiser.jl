@@ -185,6 +185,8 @@ mutable struct Portfolio{
     tpdf,
     tl2,
     ts2,
+    tmuf,
+    tcovf,
     tmufm,
     tcovfm,
     tmubl,
@@ -299,6 +301,8 @@ mutable struct Portfolio{
     posdef_fix::tpdf
     L_2::tl2
     S_2::ts2
+    mu_f::tmuf
+    cov_f::tcovf
     mu_fm::tmufm
     cov_fm::tcovfm
     mu_bl::tmubl
@@ -423,6 +427,8 @@ mutable struct Portfolio{
     tpdf,
     tl2,
     ts2,
+    tmuf,
+    tcovf,
     tmufm,
     tcovfm,
     tmubl,
@@ -538,6 +544,8 @@ mutable struct Portfolio{
     posdef_fix::tpdf
     L_2::tl2
     S_2::ts2
+    mu_f::tmuf
+    cov_f::tcovf
     mu_fm::tmufm
     cov_fm::tcovfm
     mu_bl::tmubl
@@ -652,6 +660,8 @@ Portfolio(;
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
+    mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_bl::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -771,6 +781,8 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
 - `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
 - `posdef_fix`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
+- `mu_f`: $(_mudef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
+- `cov_f`: $(_covdef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
 - `mu_fm`: $(_mudef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
 - `cov_fm`: $(_covdef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
 - `mu_bl`: $(_mudef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`](@ref)"))
@@ -781,21 +793,21 @@ The bounds constraints are only active if they are finite. They define lower bou
 ## Inputs of Worst Case Optimization Models
 - `cov_l`: $(_covdef("worst case lower bound asset")) $(_dircomp("[`wc_statistics!`](@ref)"))
 - `cov_u`: $(_covdef("worst case upper bound asset")) $(_dircomp("[`wc_statistics!`](@ref)"))
-- `cov_mu`:
-- `cov_sigma`:
-- `d_mu`:
-- `k_mu`:
-- `k_sigma`:
+- `cov_mu`: $(_covdef("estimation errors of the mean vector")) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `cov_sigma`: $(_covdef("estimation errors of the covariance matrix", :a22)) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `d_mu`: $(_mudef("delta", :a2)) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `k_mu`: set the percentile of a sample of size `Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
+- `k_sigma`: set the percentile of a sample of size `Na×Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
 ## Optimal portfolios
-- `optimal`:
-- `z`:
-- `limits`:
-- `frontier`:
+- `optimal`: $_edst for storing optimal portfolios.
+- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures.
+- `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures.
+- `frontier`: $_edst containing points in the efficient frontier for given risk measures. 
 ## Solutions
 - `solvers`:
-- `opt_params`:
-- `fail`:
-- `model`:
+- `opt_params`: $_edst for storing parameters used for optimising.
+- `fail`: $_edst for storing failed optimisation attempts.
+- `model`: `JuMP.Model()` for optimising a portfolio.
 ## Allocation
 - `latest_prices`:
 - `alloc_optimal`:
@@ -885,6 +897,8 @@ function Portfolio(;
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     posdef_fix::Symbol = :None,
+    mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_bl::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -903,7 +917,7 @@ function Portfolio(;
     # Optimal portfolios.
     optimal::AbstractDict = Dict(),
     z::AbstractDict = Dict(),
-    limits::DataFrame = DataFrame(),
+    limits::AbstractDict = Dict(),
     frontier::AbstractDict = Dict(),
     # Solutions.
     solvers::AbstractDict = Dict(),
@@ -918,44 +932,6 @@ function Portfolio(;
     alloc_fail::AbstractDict = Dict(),
     alloc_model::AbstractDict = Dict(),
 )
-    @assert(
-        0 < alpha_i < alpha < 1,
-        "0 < alpha_i < alpha < 1: 0 < $alpha_i < $alpha < 1, must hold"
-    )
-    @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
-    @assert(
-        0 < beta_i < beta < 1,
-        "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
-    )
-    @assert(b_sim > zero(b_sim), "a_sim = $b_sim, must be greater than or equal to zero")
-    @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
-    @assert(
-        0 < gs_threshold < 1,
-        "gs_threshold = $gs_threshold, must be greater than 0 and less than 1"
-    )
-    @assert(
-        kind_tracking_err ∈ TrackingErrKinds,
-        "kind_tracking_err = $(kind_tracking_err), must be one of $TrackingErrKinds"
-    )
-    @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
-    @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
-    @assert(
-        posdef_fix ∈ PosdefFixes,
-        "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
-    )
-    @assert(
-        min_number_effective_assets >= 0,
-        "min_number_effective_assets = $min_number_effective_assets, must be greater than or equal to 0"
-    )
-    @assert(
-        max_number_assets >= 0,
-        "max_number_assets = $max_number_assets, must be greater than or equal to 0"
-    )
-    @assert(
-        max_number_assets_factor >= 0,
-        "max_number_assets_factor = $max_number_assets_factor, must be greater than or equal to 0"
-    )
-
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
         latest_prices = Vector(returns[end, setdiff(names(returns), ("timestamp",))])
@@ -973,12 +949,63 @@ function Portfolio(;
         returns = ret
     end
 
+    if !isempty(f_prices)
+        f_returns = dropmissing!(DataFrame(percentchange(f_prices)))
+    end
+
+    if !isempty(f_returns)
+        f_assets = setdiff(names(f_returns), ("timestamp",))
+        f_timestamps = f_returns[!, "timestamp"]
+        f_returns = Matrix(f_returns[!, f_assets])
+    else
+        @assert(
+            length(f_assets) == size(f_ret, 2),
+            "each column of factor returns must correspond to a factor asset"
+        )
+        f_returns = f_ret
+    end
+
+    @assert(
+        min_number_effective_assets >= 0,
+        "min_number_effective_assets = $min_number_effective_assets, must be greater than or equal to 0"
+    )
+    @assert(
+        max_number_assets >= 0,
+        "max_number_assets = $max_number_assets, must be greater than or equal to 0"
+    )
+    @assert(
+        max_number_assets_factor >= 0,
+        "max_number_assets_factor = $max_number_assets_factor, must be greater than or equal to 0"
+    )
+    @assert(
+        0 < alpha_i < alpha < 1,
+        "0 < alpha_i < alpha < 1: 0 < $alpha_i < $alpha < 1, must hold"
+    )
+    @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
+    @assert(
+        0 < beta_i < beta < 1,
+        "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
+    )
+    @assert(b_sim > zero(b_sim), "a_sim = $b_sim, must be greater than or equal to zero")
+    @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
+    @assert(
+        0 < gs_threshold < 1,
+        "gs_threshold = $gs_threshold, must be greater than 0 and less than 1"
+    )
+    @assert(
+        max_num_assets_kurt >= 0,
+        "max_num_assets_kurt = $max_num_assets_kurt must be greater than or equal to zero"
+    )
     if !isempty(turnover_weights)
         @assert(
             length(turnover_weights) == size(returns, 2),
             "length(turnover_weights) = $(turnover_weights) and size(returns, 2) = $(size(returns, 2)), must be equal"
         )
     end
+    @assert(
+        kind_tracking_err ∈ TrackingErrKinds,
+        "kind_tracking_err = $(kind_tracking_err), must be one of $TrackingErrKinds"
+    )
     if !isempty(tracking_err_returns)
         @assert(
             length(tracking_err_returns) == size(returns, 1),
@@ -1012,9 +1039,17 @@ function Portfolio(;
     if !isempty(owa_w)
         @assert(
             length(owa_w) == size(returns, 1),
-            "length(owa) = $(length(owa_w)), and size(returns, 1) = $(size(returns, 1)) must be equal"
+            "length(owa_w) = $(length(owa_w)), and size(returns, 1) = $(size(returns, 1)) must be equal"
         )
     end
+    @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
+    if !isempty(mu)
+        @assert(
+            length(mu) == size(returns, 2),
+            "length(mu) = $(length(mu)), and size(returns, 2) = $(size(returns, 2)) must be equal"
+        )
+    end
+    @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
     if !isempty(cov)
         @assert(
             size(cov, 1) == size(cov, 2) == size(returns, 2),
@@ -1033,21 +1068,93 @@ function Portfolio(;
             "skurt must be a square matrix, size(skurt) = $(size(skurt)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2"
         )
     end
-
-    if !isempty(f_prices)
-        f_returns = dropmissing!(DataFrame(percentchange(f_prices)))
-    end
-
-    if isa(f_returns, DataFrame) && !isempty(f_returns)
-        f_assets = setdiff(names(f_returns), ("timestamp",))
-        f_timestamps = f_returns[!, "timestamp"]
-        f_returns = Matrix(f_returns[!, f_assets])
-    else
+    @assert(
+        posdef_fix ∈ PosdefFixes,
+        "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
+    )
+    if !isempty(mu_f)
         @assert(
-            length(f_assets) == size(f_ret, 2),
-            "each column of factor returns must correspond to a factor asset"
+            length(mu_f) == size(f_returns, 2),
+            "length(mu_f) = $(length(mu_f)), and size(f_returns, 2) = $(size(f_returns, 2)) must be equal"
         )
-        f_returns = f_ret
+    end
+    if !isempty(cov_f)
+        @assert(
+            size(cov_f, 1) == size(cov_f, 2) == size(f_returns, 2),
+            "cov_f must be a square matrix, size(cov_f) = $(size(cov_f)), with side length equal to the number of assets, size(f_returns, 2) = $(size(f_returns, 2))"
+        )
+    end
+    if !isempty(mu_fm)
+        @assert(
+            length(mu_fm) == size(returns, 2),
+            "length(mu_fm) = $(length(mu_fm)), and size(returns, 2) = $(size(returns, 2)) must be equal"
+        )
+    end
+    if !isempty(cov_fm)
+        @assert(
+            size(cov_fm, 1) == size(cov_fm, 2) == size(returns, 2),
+            "cov_fm must be a square matrix, size(cov_fm) = $(size(cov_fm)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
+        )
+    end
+    if !isempty(mu_bl)
+        @assert(
+            length(mu_bl) == size(returns, 2),
+            "length(mu_bl) = $(length(mu_bl)), and size(returns, 2) = $(size(returns, 2)) must be equal"
+        )
+    end
+    if !isempty(cov_bl)
+        @assert(
+            size(cov_bl, 1) == size(cov_bl, 2) == size(returns, 2),
+            "cov_bl must be a square matrix, size(cov_bl) = $(size(cov_bl)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
+        )
+    end
+    if !isempty(mu_bl_fm)
+        @assert(
+            length(mu_bl_fm) == size(returns, 2),
+            "length(mu_bl_fm) = $(length(mu_bl_fm)), and size(returns, 2) = $(size(returns, 2)) must be equal"
+        )
+    end
+    if !isempty(cov_bl_fm)
+        @assert(
+            size(cov_bl_fm, 1) == size(cov_bl_fm, 2) == size(returns, 2),
+            "cov_bl_fm must be a square matrix, size(cov_bl_fm) = $(size(cov_bl_fm)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
+        )
+    end
+    if !isempty(cov_l)
+        @assert(
+            size(cov_l, 1) == size(cov_l, 2) == size(returns, 2),
+            "cov_l must be a square matrix, size(cov_l) = $(size(cov_l)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
+        )
+    end
+    if !isempty(cov_u)
+        @assert(
+            size(cov_u, 1) == size(cov_u, 2) == size(returns, 2),
+            "cov_u must be a square matrix, size(cov_u) = $(size(cov_u)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
+        )
+    end
+    if !isempty(cov_mu)
+        @assert(
+            size(cov_mu, 1) == size(cov_mu, 2) == size(returns, 2),
+            "cov_mu must be a square matrix, size(cov_mu) = $(size(cov_mu)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
+        )
+    end
+    if !isempty(cov_sigma)
+        @assert(
+            size(cov_sigma, 1) == size(cov_sigma, 2) == size(returns, 2)^2,
+            "cov_sigma must be a square matrix, size(cov_sigma) = $(size(cov_sigma)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2"
+        )
+    end
+    if !isempty(d_mu)
+        @assert(
+            length(d_mu) == size(returns, 2),
+            "length(d_mu) = $(length(d_mu)), and size(returns, 2) = $(size(returns, 2)) must be equal"
+        )
+    end
+    if !isempty(latest_prices)
+        @assert(
+            length(latest_prices) == size(returns, 2),
+            "length(latest_prices) = $(length(latest_prices)), and size(returns, 2) = $(size(returns, 2)) must be equal"
+        )
     end
 
     at = zero(alpha)
@@ -1148,6 +1255,8 @@ function Portfolio(;
         typeof(posdef_fix),
         typeof(L_2),
         typeof(S_2),
+        typeof(mu_f),
+        typeof(cov_f),
         typeof(mu_fm),
         typeof(cov_fm),
         typeof(mu_bl),
@@ -1266,6 +1375,8 @@ function Portfolio(;
         posdef_fix,
         L_2,
         S_2,
+        mu_f,
+        cov_f,
         mu_fm,
         cov_fm,
         mu_bl,
@@ -1359,10 +1470,10 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             0 < val < 1,
             "gs_threshold = $val, must be greater than zero and smaller than one"
         )
-    elseif sym == :kind_tracking_err
+    elseif sym == :max_num_assets_kurt
         @assert(
-            val ∈ TrackingErrKinds,
-            "kind_tracking_err = $(val), must be one of $TrackingErrKinds"
+            val >= 0,
+            "max_num_assets_kurt = $val must be greater than or equal to zero"
         )
     elseif sym == :turnover_weights
         if !isempty(val)
@@ -1372,6 +1483,11 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             )
         end
         val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :kind_tracking_err
+        @assert(
+            val ∈ TrackingErrKinds,
+            "kind_tracking_err = $(val), must be one of $TrackingErrKinds"
+        )
     elseif sym == :tracking_err_returns
         if !isempty(val)
             @assert(
@@ -1406,36 +1522,26 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :mu_type
         @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
-    elseif sym == :mu
-        @assert(
-            length(val) == size(obj.returns, 2),
-            "length(mu) = $(length(val)), must be equal to the number of assets size(returns, 2) = $(size(obj.returns, 2))"
-        )
     elseif sym == :cov_type
         @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
-    elseif sym == :cov
-        if !isempty(val)
-            @assert(
-                size(val, 1) == size(val, 2) == size(obj.returns, 2),
-                "cov must be a square matrix, size(cov) = $(size(val)), with side length equal to the number of assets, size(returns, 2) = $(size(obj.returns, 2))"
-            )
-        end
-    elseif sym == :kurt
-        if !isempty(val)
-            @assert(
-                size(val, 1) == size(val, 2) == size(obj.returns, 2)^2,
-                "kurt must be a square matrix, size(kurt) = $(size(val)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(obj.returns, 2))^2"
-            )
-        end
-    elseif sym == :skurt
-        if !isempty(val)
-            @assert(
-                size(val, 1) == size(val, 2) == size(obj.returns, 2)^2,
-                "skurt must be a square matrix, size(skurt) = $(size(val)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(obj.returns, 2))^2"
-            )
-        end
     elseif sym == :posdef_fix
         @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
+    elseif sym == :mu_f
+        if !isempty(val)
+            @assert(
+                length(val) == size(obj.f_returns, 2),
+                "length(mu_f) = $(length(val)), and size(f_returns, 2) = $(size(obj.f_returns, 2)) must be equal"
+            )
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :cov_f
+        if !isempty(val)
+            @assert(
+                size(val, 1) == size(val, 2) == size(obj.f_returns, 2),
+                "cov_f must be a square matrix, size(cov_f) = $(size(val)), with side length equal to the number of assets, size(f_returns, 2) = $(size(obj.f_returns, 2))"
+            )
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym ∈ (:risk_budget, :bl_bench_weights)
         if isempty(val)
             N = size(obj.returns, 2)
@@ -1451,6 +1557,36 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
     elseif sym ∈
            (:min_number_effective_assets, :max_number_assets, :max_number_assets_factor)
         @assert(val >= 0, "$sym = $val, must be greater than or equal to 0")
+    elseif sym ∈ (:kurt, :skurt, :cov_sigma)
+        if !isempty(val)
+            @assert(
+                size(val, 1) == size(val, 2) == size(obj.returns, 2)^2,
+                "$sym must be a square matrix, size($sym) = $(size(val)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(obj.returns, 2))^2"
+            )
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns)
+        throw(
+            ArgumentError(
+                "$sym is related to other fields and therefore cannot be manually changed without compromising correctness, please create a new instance of Portfolio instead",
+            ),
+        )
+    elseif sym ∈ (:mu, :mu_fm, :mu_bl, :mu_bl_fm, :d_mu, :latest_prices)
+        if !isempty(val)
+            @assert(
+                length(val) == size(obj.returns, 2),
+                "length($sym) = $(length(val)), and size(returns, 2) = $(size(obj.returns, 2)) must be equal"
+            )
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym ∈ (:cov, :cov_fm, :cov_bl, :cov_bl_fm, :cov_l, :cov_u, :cov_mu)
+        if !isempty(val)
+            @assert(
+                size(val, 1) == size(val, 2) == size(obj.returns, 2),
+                "$sym must be a square matrix, size($sym) = $(size(val)), with side length equal to the number of assets, size(returns, 2) = $(size(obj.returns, 2))"
+            )
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym ∈ (
         :sum_short_long,
         :at,
@@ -1468,18 +1604,13 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
                 "$sym is computed from other fields and therefore cannot be manually changed",
             ),
         )
-    elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns)
-        throw(
-            ArgumentError(
-                "$sym is related to other fields and therefore cannot be manually changed without compromising correctness, please create a new instance of Portfolio instead",
-            ),
-        )
     else
         if (isa(getfield(obj, sym), AbstractArray) && isa(val, AbstractArray)) ||
            (isa(getfield(obj, sym), Real) && isa(val, Real))
             val = convert(typeof(getfield(obj, sym)), val)
         end
     end
+
     setfield!(obj, sym, val)
 end
 
