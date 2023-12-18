@@ -1433,8 +1433,10 @@ function gen_bootstrap(
     @assert(kind ∈ KindBootstrap, "kind = $kind, must be one of $KindBootstrap")
     !isnothing(seed) && Random.seed!(rng, seed)
 
-    mus = []
-    covs = []
+    mus = Vector{Vector{eltype(returns)}}(undef, 0)
+    sizehint!(mus, n_sim)
+    covs = Vector{Matrix{eltype(returns)}}(undef, 0)
+    sizehint!(covs, n_sim)
 
     bootstrap_func = if kind == :Stationary
         pyimport("arch.bootstrap").StationaryBootstrap
@@ -1445,9 +1447,8 @@ function gen_bootstrap(
     end
 
     gen = bootstrap_func(window, returns, seed = seed)
-    for (i, data) in pairs(gen.bootstrap(n_sim))
+    for data in gen.bootstrap(n_sim)
         A = data[1][1]
-
         push!(mus, vec(mean(A, dims = 1)))
         push!(covs, cov(A))
     end
@@ -1455,7 +1456,7 @@ function gen_bootstrap(
     return mus, covs
 end
 
-function vec_of_vecs_to_mtx(x::AbstractVector)
+function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
     return vcat(transpose.(x)...)
 end
 
