@@ -569,7 +569,7 @@ opt_port!(
     kelly::Symbol = :None,
     l::Real = 2.0,
     obj::Symbol = :Sharpe,
-    rf::Real = 0.0,#1.0329^(1 / 252) - 1
+    rf::Real = 0.0,
     rm::Symbol = :SD,
     rrp_penalty::Real = 1.0,
     rrp_ver::Symbol = :None,

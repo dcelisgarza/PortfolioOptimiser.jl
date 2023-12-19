@@ -938,7 +938,7 @@ function Portfolio(;
 )
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
-        latest_prices = Vector(returns[end, setdiff(names(returns), ("timestamp",))])
+        latest_prices = Vector(dropmissing!(DataFrame(prices))[end, colnames(prices)])
     end
 
     if !isempty(returns)
@@ -2035,10 +2035,10 @@ function HCPortfolio(;
 
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
-        latest_prices = Vector(returns[end, setdiff(names(returns), ("timestamp",))])
+        latest_prices = Vector(dropmissing!(DataFrame(prices))[end, colnames(prices)])
     end
 
-    if isa(returns, DataFrame) && !isempty(returns)
+    if !isempty(returns)
         assets = setdiff(names(returns), ("timestamp",))
         timestamps = returns[!, "timestamp"]
         returns = Matrix(returns[!, assets])
