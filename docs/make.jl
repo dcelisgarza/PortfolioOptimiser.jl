@@ -47,7 +47,8 @@ makedocs(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
         assets = String[],
-        size_threshold_ignore = ["Examples.md"],
+        #size_threshold_ignore = ["Examples.md"],
+        example_size_threshold = 0,
     ),
     pages = [
         "Home" => "index.md",
