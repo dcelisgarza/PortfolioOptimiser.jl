@@ -43,11 +43,12 @@ makedocs(;
     authors = "Daniel Celis Garza",
     repo = "https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/{commit}{path}#{line}",
     sitename = "PortfolioOptimiser.jl",
-    format = Documenter.HTMLWriter.HTML(;
+    format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
         assets = String[],
-        size_threshold_ignore = ["Examples.md"],
+        size_threshold = 500 * 2^10,
+        #size_threshold_ignore = ["Examples.md"],
         #example_size_threshold = 0,
     ),
     pages = [
