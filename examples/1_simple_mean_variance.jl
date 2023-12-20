@@ -68,7 +68,7 @@ returns == hcat(
 
 pretty_table(DataFrame(assets = portfolio.assets, latest_prices = portfolio.latest_prices))
 
-# ## Optimal Risk-Return Ratio
+# ## Optimal Risk-adjusted Return Ratio
 
 # For some risk measures/constraints, we need to compute some statistical quantities. Since we're going to showcase a mean-variance optimisation, we need to estimate the asset mean returns and covariance. We can do this by calling [`asset_statistics!`](@ref). This function also has myriad keyword options, but we'll stick to the basics.
 
@@ -99,7 +99,7 @@ fig4 = plot_drawdown(portfolio)
 
 # ## Efficient Frontier
 
-# We can also efficiently compute the asset weights of the portfolio's efficient frontier. This can be done manually but having a dedicated function is nice. We compute linearly distributed points along the frontier.
+# We can also efficiently compute the asset weights of the portfolio's efficient frontier. This can be done manually but having a dedicated function is nice. We compute 50 linearly distributed points along the frontier, plus the point that maximises the risk adjusted return ratio in the final column.
 
 frontier = efficient_frontier!(portfolio; points = 50)
 pretty_table(frontier[:SD][:weights]; formatters = fmt)
@@ -119,7 +119,7 @@ fig6 = plot_frontier_area(portfolio)
 
 # For this we need to create an instance of [`HCPortfolio`](@ref).
 
-hcportfolio = HCPortfolio(; prices = prices)
+hcportfolio = HCPortfolio(; prices = prices);
 
 # Compute the codependence matrix with [`asset_statistics!`](@ref).
 
