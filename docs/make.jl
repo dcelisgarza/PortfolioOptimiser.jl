@@ -1,5 +1,4 @@
-using Documenter
-using PortfolioOptimiser
+using Documenter, DocumenterTools, Literate, PortfolioOptimiser
 
 # DBHTs internals.
 import PortfolioOptimiser.distance_wei,
@@ -31,12 +30,40 @@ import PortfolioOptimiser.distance_wei,
     # Asset Statistics
     PortfolioOptimiser.BinTypes
 
-DocMeta.setdocmeta!(
-    PortfolioOptimiser,
-    :DocTestSetup,
-    :(using PortfolioOptimiser);
-    recursive = true,
-)
+# utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
+fix_math_md(content) = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
+fix_suffix(filename) = replace(filename, ".jl" => ".md")
+function postprocess(cont)
+    """
+    The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+    """ * cont
+end
+
+example_path = joinpath(@__DIR__, "../examples/")
+build_path = joinpath(@__DIR__, "src", "examples/")
+files = readdir(example_path)
+code_files = filter(x -> endswith(x, ".jl"), files)
+data_files = filter(x -> endswith(x, ".csv"), files)
+examples_nav = fix_suffix.("./examples/" .* code_files)
+
+for file in data_files
+    cp(
+        joinpath(@__DIR__, "../examples/" * file),
+        joinpath(@__DIR__, "src/examples/" * file);
+        force = true,
+    )
+end
+
+for file in code_files
+    Literate.markdown(
+        example_path * file,
+        build_path;
+        preprocess = fix_math_md,
+        postprocess = postprocess,
+        documenter = true,
+        credit = true,
+    )
+end
 
 makedocs(;
     # modules = [PortfolioOptimiser],
@@ -47,9 +74,6 @@ makedocs(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
         assets = String[],
-        #size_threshold = 500 * 2^10,
-        #size_threshold_ignore = ["Examples.md"],
-        #example_size_threshold = 0,
     ),
     pages = [
         "Home" => "index.md",
@@ -58,7 +82,7 @@ makedocs(;
         "OWA" => "OWA.md",
         "Risk Measures" => "Risk_measures.md",
         "Portfolio Optimisation" => "Portfolio.md",
-        # "Examples" => "Examples.md",
+        "Examples" => examples_nav,
         "API" => ["Definitions" => "Definitions.md", "Statistics" => "Statistics.md"],
         "Index" => "idx.md",
     ],
