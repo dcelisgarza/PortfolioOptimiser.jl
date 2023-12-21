@@ -808,7 +808,7 @@ function covar_mtx(
             codep = cov2cor(cov_mtx)
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
             separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
-            cov_mtx .= JLogo(cov_mtx, separators, cliques) \ I
+            cov_mtx .= J_LoGo(cov_mtx, separators, cliques) \ I
         catch SingularException
             throw(
                 ErrorException(
@@ -965,7 +965,7 @@ function cokurt_mtx(
             codep = cov2cor(kurt)
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
             separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
-            kurt .= JLogo(kurt, separators, cliques) \ I
+            kurt .= J_LoGo(kurt, separators, cliques) \ I
         catch SingularException
             throw(
                 ErrorException(
@@ -987,7 +987,7 @@ function cokurt_mtx(
             codep = cov2cor(skurt)
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
             separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
-            skurt .= JLogo(skurt, separators, cliques) \ I
+            skurt .= J_LoGo(skurt, separators, cliques) \ I
         catch SingularException
             throw(
                 ErrorException(

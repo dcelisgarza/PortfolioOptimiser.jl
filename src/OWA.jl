@@ -379,9 +379,9 @@ $_tdef
 - `k`: order of the L-moment, `k ≥ 2`.
 - `method`: method for computing the weights used to combine L-moments higher than 2, used in [`OWAMethods`](@ref).
     - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
-    - `:E`: Maximum Entropy. $(_req_cone("`MOI.RelativeEntropyCone` and `MOI.NormOneCone`"))
-    - `:SS`: Minimum Sum of Squares. $(_req_cone("`MOI.SecondOrderCone`"))
-    - `:SD`: Minimum Square Distance. $(_req_cone("`MOI.SecondOrderCone`"))
+    - `:E`: Maximum Entropy.$(_solver_reqs("`MOI.RelativeEntropyCone` and `MOI.NormOneCone`"))
+    - `:SS`: Minimum Sum of Squares.$(_solver_reqs("`MOI.SecondOrderCone`"))
+    - `:SD`: Minimum Square Distance.$(_solver_reqs("`MOI.SecondOrderCone`"))
 - `g`: the risk aversion coefficient.
 - `max_phi`: maximum weight constraint of the L-moments.
 $(_solver_desc("the OWA L-Moment `JuMP` model."))

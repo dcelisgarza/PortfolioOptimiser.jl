@@ -220,9 +220,7 @@ Compute the Entropic Risk Measure by minimising the function with respect to `z`
 where ``\\mathcal{K}_{\\exp}`` is the exponential cone.
 # Inputs
 - `x`: vector.
-$(_solver_desc("the `JuMP` model."))
-!!! note
-    $(_req_cone("`MOI.ExponentialCone`"))
+$(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
 - `alpha`: significance level, alpha ∈ (0, 1).
 
 """
@@ -272,9 +270,7 @@ Compute the Entropic Value at Risk.
 where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-$(_solver_desc("the `JuMP` model."))
-!!! note
-    $(_req_cone("`MOI.ExponentialCone`"))
+$(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
 - `alpha`: significance level, alpha ∈ (0, 1).
 """
 function EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
@@ -304,9 +300,7 @@ Compute the Relativistic Risk Measure.
 where ``\\ln_{\\kappa}(x) = \\dfrac{x^{\\kappa} - x^{-\\kappa}}{2 \\kappa}`` and ``\\mathcal{P}_3^{\\alpha,\\, 1-\\alpha}`` is the 3D Power Cone.
 # Inputs
 - `x`: vector.
-$(_solver_desc("the `JuMP` model."))
-!!! note
-    $(_req_cone("`MOI.PowerCone`"))
+$(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 - `alpha`: significance level, alpha ∈ (0, 1).
 - `κ`: relativistic deformation parameter.
 """
@@ -383,9 +377,7 @@ Compute the Relativistic Value at Risk.
 where ``\\mathrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-$(_solver_desc("the `JuMP` model."))
-!!! note
-    $(_req_cone("`MOI.PowerCone`"))
+$(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 - `alpha`: significance level, alpha ∈ (0, 1).
 - `κ`: relativistic deformation parameter.
 """
@@ -557,9 +549,7 @@ Compute the Entropic Drawdown at Risk of uncompounded cumulative returns.
 where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` the drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-$(_solver_desc("the `JuMP` model."))
-!!! note
-    $(_req_cone("`MOI.ExponentialCone`"))
+$(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
 - `alpha`: significance level, alpha ∈ (0, 1).
 """
 function EDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
@@ -591,9 +581,7 @@ Compute the Relativistic Drawdown at Risk of uncompounded cumulative returns.
 where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the relativistic risk measure as defined in [`RRM`](@ref), and ``\\mathrm{DD_{a}}(\\bm{x})`` the drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-$(_solver_desc("the `JuMP` model."))
-!!! note
-    $(_req_cone("`MOI.PowerCone`"))
+$(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 - `alpha`: significance level, alpha ∈ (0, 1).
 - `κ`: relativistic deformation parameter.
 """
@@ -774,9 +762,7 @@ Compute the Entropic Drawdown at Risk of compounded cumulative returns.
 where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` the drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-$(_solver_desc("the `JuMP` model."))
-!!! note
-    $(_req_cone("`MOI.PowerCone`"))
+$(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
 - `alpha`: significance level, alpha ∈ (0, 1).
 - `κ`: relativistic deformation parameter.
 """
@@ -809,9 +795,7 @@ Compute the Relativistic Drawdown at Risk of compounded cumulative returns.
 where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, and ``\\mathrm{DD_{r}}(\\bm{x})`` the drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-$(_solver_desc("the `JuMP` model."))
-!!! note
-    $(_req_cone("`MOI.PowerCone`"))
+$(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 - `alpha`: significance level, alpha ∈ (0, 1).
 - `κ`: relativistic deformation parameter.
 """
@@ -1049,9 +1033,7 @@ Compute the value of a risk measure given a vector of asset weights and returns.
 - `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
 - `beta`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`.
 - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
-$(_solver_desc("the `JuMP` model."))
-!!! note
-    Only used for solving Entropic and Relativistic risk measures. $(_req_cone("`MOI.ExponentialCone` and `MOI.PowerCone` respectively,"))
+$(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone` and `MOI.PowerCone` respectively"))
 ```julia
 calc_risk(
     portfolio::AbstractPortfolio;

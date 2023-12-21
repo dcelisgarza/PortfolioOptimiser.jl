@@ -619,15 +619,20 @@ end
 const _tdef = "- `T`: number of returns observations."
 const _owaw = "- `w`: `T×1` ordered weight vector."
 const _edst = "Empty concrete subtype of `AbstractDictionary`"
-function _solver_desc(msg::String = "the `JuMP` model.", pref::String = "")
+function _solver_desc(
+    msg::String = "the `JuMP` model.",
+    pref::String = "",
+    req::String = "",
+)
     """
     - `$(pref*"solvers")`: Provides the solvers and corresponding parameters for solving $msg `Dict` or `NamedTuple` with key value pairs where the values are other `Dict`s or `NamedTuple`s, e.g. `Dict(solver_key => Dict(...))`, the keys of the sub-dictionary/tuple must be:
-        - `:solver`: which contains the JuMP optimiser.
+        - `:solver`: which contains the JuMP optimiser.$(_solver_reqs(req))
         - `:params`: (optional) for the solver-specific parameters.
     """
 end
-function _req_cone(msg::String)
-    return "In order for the optimisation to succeed, a solver needs to support $msg. Alternatively, `JuMP` must be able to transform it/them, into a supported form."
+function _solver_reqs(msg::String)
+    return isempty(msg) ? "" :
+           " Solver must support $msg, or `JuMP` must be able to transform it/them into a supported form."
 end
 function _filled_by(msg::String)
     return "This parameter is filled after calling $msg."

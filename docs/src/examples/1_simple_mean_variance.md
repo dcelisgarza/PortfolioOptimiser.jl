@@ -84,7 +84,7 @@ Another nice thing about [`Portfolio()`](@ref) and [`HCPortfolio()`](@ref) is th
 pretty_table(DataFrame(assets = portfolio.assets, latest_prices = portfolio.latest_prices))
 ````
 
-## Optimal Risk-Return Ratio of the Mean Variance Portfolio
+## Optimal Risk-adjusted Return Ratio
 
 For some risk measures/constraints, we need to compute some statistical quantities. Since we're going to showcase a mean-variance optimisation, we need to estimate the asset mean returns and covariance. We can do this by calling [`asset_statistics!`](@ref). This function also has myriad keyword options, but we'll stick to the basics.
 
@@ -92,7 +92,7 @@ For some risk measures/constraints, we need to compute some statistical quantiti
 asset_statistics!(portfolio)
 ````
 
-We can then call [`opt_port!`](@ref) with default arguments, which optimises for the risk adjusted return ratio of the mean variance portfolio.
+We can then call [`opt_port!`](@ref) with default arguments, which optimises for the risk-adjusted return ratio of the mean variance portfolio.
 
 ````@example 1_simple_mean_variance
 w = opt_port!(portfolio)
@@ -127,7 +127,7 @@ fig4 = plot_drawdown(portfolio)
 
 ## Efficient Frontier
 
-We can also efficiently compute the asset weights of the portfolio's efficient frontier. This can be done manually but having a dedicated function is nice. We compute linearly distributed points along the frontier.
+We can also efficiently compute the asset weights of the portfolio's efficient frontier. This can be done manually but having a dedicated function is nice. We compute 50 linearly distributed points along the frontier, plus the point that maximises the risk-adjusted return ratio in the final column.
 
 ````@example 1_simple_mean_variance
 frontier = efficient_frontier!(portfolio; points = 50)
@@ -155,7 +155,8 @@ Since we also provide various hierarchical optimisation methods we can use some 
 For this we need to create an instance of [`HCPortfolio`](@ref).
 
 ````@example 1_simple_mean_variance
-hcportfolio = HCPortfolio(; prices = prices)
+hcportfolio = HCPortfolio(; prices = prices);
+nothing #hide
 ````
 
 Compute the codependence matrix with [`asset_statistics!`](@ref).

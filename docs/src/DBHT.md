@@ -7,7 +7,7 @@ Based on the Matlab implementation [`DBHT`](https://www.mathworks.com/matlabcent
 ```@docs
 DBHTs
 PMFG_T2s
-JLogo
+J_LoGo
 ```
 
 ## Private API

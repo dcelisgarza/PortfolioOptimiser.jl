@@ -1102,20 +1102,20 @@ end
 
 """
 ```julia
-JLogo(sigma, separators, cliques)
+J_LoGo(sigma, separators, cliques)
 ```
-Compute the sparse inverse covariance from a clique tree and separators [^JLogo].
+Compute the sparse inverse covariance from a clique tree and separators [^J_LoGo].
 # Inputs
 - `sigma`: `N×N` covariance matrix.
 - `separators`: list of 3-cliques taht are not triangular faces.
 - `cliques`: list of all 4-cliques.
 # Outputs
-- `jlogo`: JLogo covariance matrix.
+- `jlogo`: J_LoGo covariance matrix.
 
-[^JLogo]:
+[^J_LoGo]:
     [Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016). Parsimonious modeling with information filtering networks. Physical Review E, 94(6), 062306.](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.94.062306)
 """
-function JLogo(sigma, separators, cliques)
+function J_LoGo(sigma, separators, cliques)
     jlogo = zeros(eltype(sigma), size(sigma))
 
     _jlogo!(jlogo, sigma, cliques, 1)
@@ -1124,4 +1124,4 @@ function JLogo(sigma, separators, cliques)
     return jlogo
 end
 
-export DBHTs, PMFG_T2s, JLogo
+export DBHTs, PMFG_T2s, J_LoGo
