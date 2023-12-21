@@ -2023,26 +2023,28 @@ function HCPortfolio(;
             zero(w_min) <= w_min <= one(w_min),
             "w_min = $w_min, must be greater than or equal to 0 and less than or equal to 1"
         )
-    elseif !isempty(w_min)
-        @assert(
-            length(w_min) == size(returns, 2) &&
-            all(x -> x >= zero(eltype(w_min))) &&
-            all(x -> x <= one(eltype(w_min))),
-            "length(w_min) = $(length(w_min)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)) and all entries must be greater than or equal to zero all(x -> x >= zero(eltype(w_min))) = $(all(x -> x >= zero(eltype(w_min)))), and less than or equal to one all(x -> x <= one(eltype(w_min))) = $(all(x -> x <= one(eltype(w_min))))"
-        )
+    elseif isa(w_min, AbstractVector)
+        if !isempty(w_min)
+            @assert(
+                length(w_min) == size(returns, 2) &&
+                all(x -> zero(eltype(w_min)) <= x <= one(eltype(w_min)), w_min),
+                "length(w_min) = $(length(w_min)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)) and all entries must be greater than or equal to zero all(x -> x >= zero(eltype(w_min))) = $(all(x -> x >= zero(eltype(w_min)))), and less than or equal to one all(x -> x <= one(eltype(w_min))) = $(all(x -> x <= one(eltype(w_min))))"
+            )
+        end
     end
     if isa(w_max, Real)
         @assert(
             zero(w_max) <= w_max <= one(w_max),
             "w_max = $w_max, must be greater than or equal to 0 and less than or equal to 1"
         )
-    elseif !isempty(w_max)
-        @assert(
-            length(w_max) == size(returns, 2) &&
-            all(x -> x >= zero(eltype(w_max))) &&
-            all(x -> x <= one(eltype(w_max))),
-            "length(w_max) = $(length(w_max)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)) and all entries must be greater than or equal to zero all(x -> x >= zero(eltype(w_max))) = $(all(x -> x >= zero(eltype(w_max)))), and less than or equal to one all(x -> x <= one(eltype(w_max))) = $(all(x -> x <= one(eltype(w_max))))"
-        )
+    elseif isa(w_max, AbstractVector)
+        if !isempty(w_max)
+            @assert(
+                length(w_max) == size(returns, 2) &&
+                all(x -> zero(eltype(w_max)) <= x <= one(eltype(w_max)), w_max),
+                "length(w_max) = $(length(w_max)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)) and all entries must be greater than or equal to zero all(x -> x >= zero(eltype(w_max))) = $(all(x -> x >= zero(eltype(w_max)))), and less than or equal to one all(x -> x <= one(eltype(w_max))) = $(all(x -> x <= one(eltype(w_max))))"
+            )
+        end
     end
 
     return HCPortfolio{
@@ -2197,15 +2199,19 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
                 zero(val) <= val <= one(val),
                 "w_min = $val, must be greater than or equal to 0 and less than or equal to 1"
             )
-        elseif !isempty(val)
-            @assert(
-                length(val) == size(obj.returns, 2) &&
-                all(x -> x >= zero(eltype(val))) &&
-                all(x -> x <= one(eltype(val))),
-                "length(w_min) = $(length(val)) must be equal to the number of assets size(returns, 2) = $(size(obj.returns, 2)) and all entries must be greater than or equal to zero all(x -> x >= zero(eltype(w_min))) = $(all(x -> x >= zero(eltype(val)))), and less than or equal to one all(x -> x <= one(eltype(w_min))) = $(all(x -> x <= one(eltype(val))))"
-            )
+        elseif isa(val, AbstractVector)
+            if !isempty(val)
+                @assert(
+                    length(val) == size(obj.returns, 2) &&
+                    all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val),
+                    "length(w_min) = $(length(val)) must be equal to the number of assets size(returns, 2) = $(size(obj.returns, 2)) and all entries must be greater than or equal to zero all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val) = $(all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val))"
+                )
+                isa(val, AbstractRange) && (val = collect(val))
+                isa(getfield(obj, sym), AbstractVector) &&
+                    isa(val, AbstractVector) &&
+                    (val = convert(typeof(getfield(obj, sym)), val))
+            end
         end
-        val = convert(typeof(getfield(obj, sym)), val)
     else
         if (isa(getfield(obj, sym), AbstractArray) && isa(val, AbstractArray)) ||
            (isa(getfield(obj, sym), Real) && isa(val, Real))
