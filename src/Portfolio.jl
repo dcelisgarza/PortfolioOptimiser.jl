@@ -6,6 +6,32 @@ Abstract type for portfolios. Concrete portfolios subtype this see [`Portfolio`]
 """
 abstract type AbstractPortfolio end
 
+const _rmstr = """
+                - `:SD`: standard deviation ([`SD`](@ref)).$(_solver_reqs("`MOI.SecondOrderCone`"))
+                - `:MAD`: max absolute deviation ([`MAD`](@ref)).
+                - `:SSD`: semi standard deviation ([`SSD`](@ref)).$(_solver_reqs("`MOI.SecondOrderCone`"))
+                - `:FLPM`: first lower partial moment (omega ratio) ([`FLPM`](@ref)).
+                - `:SLPM`: second lower partial moment (sortino ratio) ([`SLPM`](@ref)).$(_solver_reqs("`MOI.SecondOrderCone`"))
+                - `:WR`: worst realisation ([`WR`](@ref)).
+                - `:CVaR`: conditional value at risk ([`CVaR`](@ref)).
+                - `:EVaR`: entropic value at risk ([`EVaR`](@ref)).$(_solver_reqs("`MOI.ExponentialCone`"))
+                - `:RVaR`: relativistic value at risk ([`RVaR`](@ref)).$(_solver_reqs("`MOI.PowerCone`"))
+                - `:MDD`: maximum drawdown of uncompounded cumulative returns ([`MDD_abs`](@ref)).
+                - `:ADD`: average drawdown of uncompounded cumulative returns ([`ADD_abs`](@ref)).
+                - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns ([`CDaR_abs`](@ref)).
+                - `:UCI`: ulcer index of uncompounded cumulative returns ([`UCI_abs`](@ref)).$(_solver_reqs("`MOI.SecondOrderCone`"))
+                - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns ([`EDaR_abs`](@ref)).$(_solver_reqs("`MOI.ExponentialCone`"))
+                - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns ([`RDaR_abs`](@ref)).$(_solver_reqs("`MOI.PowerCone`"))
+                - `:Kurt`: square root kurtosis ([`Kurt`](@ref)).$(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+                - `:SKurt`: square root semi-kurtosis ([`SKurt`](@ref)).$(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+                - `:GMD`: gini mean difference ([`GMD`](@ref)).
+                - `:RG`: range of returns ([`RG`](@ref)).
+                - `:RCVaR`: range of conditional value at risk ([`RCVaR`](@ref)).
+                - `:TG`: tail gini ([`TG`](@ref)).
+                - `:RTG`: range of tail gini ([`RTG`](@ref)).
+                - `:OWA`: ordered weight array (generic OWA weights) ([`OWA`](@ref)).
+               """
+
 """
 ```julia
 RiskMeasures = (
@@ -35,29 +61,7 @@ RiskMeasures = (
 )
 ```
 Available risk measures for `:Trad` and `:RP` type (see [`PortTypes`](@ref)) of [`Portfolio`](@ref).
-- `:SD` = standard deviation ([`SD`](@ref)).
-- `:MAD` = max absolute deviation ([`MAD`](@ref)).
-- `:SSD` = semi standard deviation ([`SSD`](@ref)).
-- `:FLPM` = first lower partial moment (omega ratio) ([`FLPM`](@ref)).
-- `:SLPM` = second lower partial moment (sortino ratio) ([`SLPM`](@ref)).
-- `:WR` = worst realisation ([`WR`](@ref)).
-- `:CVaR` = conditional value at risk ([`CVaR`](@ref)).
-- `:EVaR` = entropic value at risk ([`EVaR`](@ref)).
-- `:RVaR` = relativistic value at risk ([`RVaR`](@ref)).
-- `:MDD` = maximum drawdown of uncompounded cumulative returns ([`MDD_abs`](@ref)).
-- `:ADD` = average drawdown of uncompounded cumulative returns ([`ADD_abs`](@ref)).
-- `:CDaR` = conditional drawdown at risk of uncompounded cumulative returns ([`CDaR_abs`](@ref)).
-- `:UCI` = ulcer index of uncompounded cumulative returns ([`UCI_abs`](@ref)).
-- `:EDaR` = entropic drawdown at risk of uncompounded cumulative returns ([`EDaR_abs`](@ref)).
-- `:RDaR` = relativistic drawdown at risk of uncompounded cumulative returns ([`RDaR_abs`](@ref)).
-- `:Kurt` = square root kurtosis ([`Kurt`](@ref)).
-- `:SKurt` = square root semi-kurtosis ([`SKurt`](@ref)).
-- `:GMD` = gini mean difference ([`GMD`](@ref)).
-- `:RG` = range of returns ([`RG`](@ref)).
-- `:RCVaR` = range of conditional value at risk ([`RCVaR`](@ref)).
-- `:TG` = tail gini ([`TG`](@ref)).
-- `:RTG` = range of tail gini ([`RTG`](@ref)).
-- `:OWA` = ordered weight array (generic OWA weights) ([`OWA`](@ref)).
+$_rmstr
 """
 const RiskMeasures = (
     :SD,    # _mv
@@ -745,7 +749,7 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `b_vec_ineq`: `C×1` B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints.
 - `risk_budget`: `Na×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:a2)).
 ### Bounds constraints
-The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
+The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case, they also bring the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
 - `mu_l`: mean expected return.
 - `dev_u`: standard deviation.
 - `mad_u`: max absolute devia.
@@ -1652,41 +1656,19 @@ HRRiskMeasures = (
     :RDaR_r,
 )
 ```
-Available risk measures for optimisations of [`HCPortfolio`](@ref).
-- `:SD` = standard deviation ([`SD`](@ref)).
-- `:MAD` = max absolute deviation ([`MAD`](@ref)).
-- `:SSD` = semi standard deviation ([`SSD`](@ref)).
-- `:FLPM` = first lower partial moment (Omega ratio) ([`FLPM`](@ref)).
-- `:SLPM` = second lower partial moment (Sortino ratio) ([`SLPM`](@ref)).
-- `:WR` = worst realisation ([`WR`](@ref)).
-- `:CVaR` = conditional value at risk ([`CVaR`](@ref)).
-- `:EVaR` = entropic value at risk ([`EVaR`](@ref)).
-- `:RVaR` = relativistic value at risk ([`RVaR`](@ref)).
-- `:MDD` = maximum drawdown of uncompounded cumulative returns (Calmar ratio) ([`MDD_abs`](@ref)).
-- `:ADD` = average drawdown of uncompounded cumulative returns ([`ADD_abs`](@ref)).
-- `:CDaR` = conditional drawdown at risk of uncompounded cumulative returns ([`CDaR_abs`](@ref)).
-- `:UCI` = ulcer index of uncompounded cumulative returns ([`UCI_abs`](@ref)).
-- `:EDaR` = entropic drawdown at risk of uncompounded cumulative returns ([`EDaR_abs`](@ref)).
-- `:RDaR` = relativistic drawdown at risk of uncompounded cumulative returns ([`RDaR_abs`](@ref)).
-- `:Kurt` = square root kurtosis ([`Kurt`](@ref)).
-- `:SKurt` = square root semi-kurtosis ([`SKurt`](@ref)).
-- `:GMD` = gini mean difference ([`GMD`](@ref)).
-- `:RG` = range of returns ([`RG`](@ref)).
-- `:RCVaR` = range of conditional value at risk ([`RCVaR`](@ref)).
-- `:TG` = tail gini ([`TG`](@ref)).
-- `:RTG` = range of tail gini ([`RTG`](@ref)).
-- `:OWA` = ordered weight array (generic OWA weights) ([`OWA`](@ref)).
-- `:Variance` = variance ([`Variance`](@ref)).
-- `:Equal` = equal risk contribution, `1/N` where N is the number of assets.
-- `:VaR` = value at risk ([`VaR`](@ref)).
-- `:DaR` = drawdown at risk of uncompounded cumulative returns ([`DaR_abs`](@ref)).
-- `:DaR_r` = drawdown at risk of compounded cumulative returns ([`DaR_rel`](@ref)).
-- `:MDD_r` = maximum drawdown of compounded cumulative returns ([`MDD_rel`](@ref)).
-- `:ADD_r` = average drawdown of compounded cumulative returns ([`ADD_rel`](@ref)).
-- `:CDaR_r` = conditional drawdown at risk of compounded cumulative returns ([`CDaR_rel`](@ref)).
-- `:UCI_r` = ulcer index of compounded cumulative returns ([`UCI_rel`](@ref)).
-- `:EDaR_r` = entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`](@ref)).
-- `:RDaR_r` = relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`](@ref)).
+Available risk measures for optimisations of [`HCPortfolio`](@ref). When performing an `:NCO` optimisation, or using an entropic or relativistic risk measure, the solver must meet the stated requirements.
+$_rmstr
+- `:Variance`: variance ([`Variance`](@ref)).
+- `:Equal`: equal risk contribution, `1/N` where N is the number of assets.
+- `:VaR`: value at risk ([`VaR`](@ref)).
+- `:DaR`: drawdown at risk of uncompounded cumulative returns ([`DaR_abs`](@ref)).
+- `:DaR_r`: drawdown at risk of compounded cumulative returns ([`DaR_rel`](@ref)).
+- `:MDD_r`: maximum drawdown of compounded cumulative returns ([`MDD_rel`](@ref)).
+- `:ADD_r`: average drawdown of compounded cumulative returns ([`ADD_rel`](@ref)).
+- `:CDaR_r`: conditional drawdown at risk of compounded cumulative returns ([`CDaR_rel`](@ref)).
+- `:UCI_r`: ulcer index of compounded cumulative returns ([`UCI_rel`](@ref)).$(_solver_reqs("`MOI.SecondOrderCone`"))
+- `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`](@ref)).$(_solver_reqs("`MOI.ExponentialCone`"))
+- `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`](@ref)).$(_solver_reqs("`MOI.PowerCone`"))
 """
 const HRRiskMeasures = (
     RiskMeasures...,

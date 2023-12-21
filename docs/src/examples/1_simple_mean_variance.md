@@ -92,7 +92,7 @@ For some risk measures/constraints, we need to compute some statistical quantiti
 asset_statistics!(portfolio)
 ````
 
-We can then call [`opt_port!`](@ref) with default arguments, which optimises for the risk-adjusted return ratio of the mean variance portfolio.
+We can then call [`opt_port!`](@ref) with default arguments, which optimises for the risk adjusted return ratio of the mean variance portfolio.
 
 ````@example 1_simple_mean_variance
 w = opt_port!(portfolio)
@@ -127,7 +127,7 @@ fig4 = plot_drawdown(portfolio)
 
 ## Efficient Frontier
 
-We can also efficiently compute the asset weights of the portfolio's efficient frontier. This can be done manually but having a dedicated function is nice. We compute 50 linearly distributed points along the frontier, plus the point that maximises the risk-adjusted return ratio in the final column.
+We can also efficiently compute the asset weights of the portfolio's efficient frontier. This can be done manually but having a dedicated function is nice. We compute 50 linearly distributed points along the frontier, plus the point that maximises the risk adjusted return ratio in the final column.
 
 ````@example 1_simple_mean_variance
 frontier = efficient_frontier!(portfolio; points = 50)
