@@ -73,18 +73,6 @@ end
 
 """
 ```julia
-BinTypes = (:KN, :FD, :SC, :HGR)
-```
-Methods for calculating optimal bin widths for the mutual and variational information matrices computed by [`mut_var_info_mtx`](@ref).
-- `:KN`: Knuth's choice.
-- `:FD`: Freedman-Diaconis' choice.
-- `:SC`: Schotts' choice.
-- `:HGR`: Hacine-Gharbi and Ravier's choice.
-"""
-const BinTypes = (:KN, :FD, :SC, :HGR)
-
-"""
-```julia
 mut_var_info_mtx(
     x::AbstractMatrix{<:Real},
     bins_info::Union{Symbol, <:Integer} = :KN,
@@ -108,8 +96,8 @@ function mut_var_info_mtx(
     normed::Bool = true,
 )
     @assert(
-        bins_info ∈ BinTypes || isa(bins_info, Int),
-        "bins_info = $bins_info, has to either be in $BinTypes, or an integer value"
+        bins_info ∈ BinTypes || isa(bins_info, Int) && bins_info > zero(bins_info),
+        "bins_info = $bins_info, has to either be in $BinTypes, or an integer value greater than 0"
     )
 
     bin_width_func = if bins_info == :KN

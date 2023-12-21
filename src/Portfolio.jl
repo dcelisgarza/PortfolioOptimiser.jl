@@ -33,6 +33,7 @@ const _rmstr = """
                """
 
 """
+
 ```julia
 RiskMeasures = (
     :SD,
@@ -87,6 +88,73 @@ const RiskMeasures = (
     :TG,    # _owa
     :RTG,   # _owa
     :OWA,   # _owa
+)
+
+"""
+```julia
+HRRiskMeasures = (
+    :SD,
+    :MAD,
+    :SSD,
+    :FLPM,
+    :SLPM,
+    :WR,
+    :CVaR,
+    :EVaR,
+    :RVaR,
+    :MDD,
+    :ADD,
+    :CDaR,
+    :UCI,
+    :EDaR,
+    :RDaR,
+    :Kurt,
+    :SKurt,
+    :GMD,
+    :RG,
+    :RCVaR,
+    :TG,
+    :RTG,
+    :OWA,
+    :Variance,
+    :Equal,
+    :VaR,
+    :DaR,
+    :DaR_r,
+    :MDD_r,
+    :ADD_r,
+    :CDaR_r,
+    :EDaR_r,
+    :RDaR_r,
+)
+```
+Available risk measures for optimisations of [`HCPortfolio`](@ref). When performing an `:NCO` optimisation, or using an entropic or relativistic risk measure, the solver must meet the stated requirements.
+$_rmstr
+- `:Variance`: variance ([`Variance`](@ref)).
+- `:Equal`: equal risk contribution, `1/N` where N is the number of assets.
+- `:VaR`: value at risk ([`VaR`](@ref)).
+- `:DaR`: drawdown at risk of uncompounded cumulative returns ([`DaR_abs`](@ref)).
+- `:DaR_r`: drawdown at risk of compounded cumulative returns ([`DaR_rel`](@ref)).
+- `:MDD_r`: maximum drawdown of compounded cumulative returns ([`MDD_rel`](@ref)).
+- `:ADD_r`: average drawdown of compounded cumulative returns ([`ADD_rel`](@ref)).
+- `:CDaR_r`: conditional drawdown at risk of compounded cumulative returns ([`CDaR_rel`](@ref)).
+- `:UCI_r`: ulcer index of compounded cumulative returns ([`UCI_rel`](@ref)).$(_solver_reqs("`MOI.SecondOrderCone`"))
+- `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`](@ref)).$(_solver_reqs("`MOI.ExponentialCone`"))
+- `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`](@ref)).$(_solver_reqs("`MOI.PowerCone`"))
+"""
+const HRRiskMeasures = (
+    RiskMeasures...,
+    :Variance,
+    :Equal,
+    :VaR,
+    :DaR,
+    :DaR_r,
+    :MDD_r,
+    :ADD_r,
+    :CDaR_r,
+    :UCI_r,
+    :EDaR_r,
+    :RDaR_r,
 )
 
 """
@@ -1423,6 +1491,11 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         setfield!(obj, :sum_short_long, obj.short ? obj.long_u - val : 1.0)
     elseif sym == :long_u
         setfield!(obj, :sum_short_long, obj.short ? val - obj.short_u : 1.0)
+    elseif sym == :alpha_i
+        @assert(
+            0 < val < obj.alpha < 1,
+            "0 < alpha_i < alpha < 1: 0 < $val < $(obj.alpha) < 1 must hold"
+        )
     elseif sym == :alpha
         @assert(
             0 < obj.alpha_i < val < 1,
@@ -1434,11 +1507,6 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         setfield!(obj, :at, at)
         setfield!(obj, :invat, invat)
         setfield!(obj, :ln_k, ln_k)
-    elseif sym == :alpha_i
-        @assert(
-            0 < val < obj.alpha < 1,
-            "0 < alpha_i < alpha < 1: 0 < $val < $(obj.alpha) < 1 must hold"
-        )
     elseif sym == :a_sim
         @assert(val > zero(val), "a_sim = $val, must be greater than zero")
     elseif sym == :beta
@@ -1620,70 +1688,15 @@ end
 
 """
 ```julia
-HRRiskMeasures = (
-    :SD,
-    :MAD,
-    :SSD,
-    :FLPM,
-    :SLPM,
-    :WR,
-    :CVaR,
-    :EVaR,
-    :RVaR,
-    :MDD,
-    :ADD,
-    :CDaR,
-    :UCI,
-    :EDaR,
-    :RDaR,
-    :Kurt,
-    :SKurt,
-    :GMD,
-    :RG,
-    :RCVaR,
-    :TG,
-    :RTG,
-    :OWA,
-    :Variance,
-    :Equal,
-    :VaR,
-    :DaR,
-    :DaR_r,
-    :MDD_r,
-    :ADD_r,
-    :CDaR_r,
-    :EDaR_r,
-    :RDaR_r,
-)
+BinTypes = (:KN, :FD, :SC, :HGR)
 ```
-Available risk measures for optimisations of [`HCPortfolio`](@ref). When performing an `:NCO` optimisation, or using an entropic or relativistic risk measure, the solver must meet the stated requirements.
-$_rmstr
-- `:Variance`: variance ([`Variance`](@ref)).
-- `:Equal`: equal risk contribution, `1/N` where N is the number of assets.
-- `:VaR`: value at risk ([`VaR`](@ref)).
-- `:DaR`: drawdown at risk of uncompounded cumulative returns ([`DaR_abs`](@ref)).
-- `:DaR_r`: drawdown at risk of compounded cumulative returns ([`DaR_rel`](@ref)).
-- `:MDD_r`: maximum drawdown of compounded cumulative returns ([`MDD_rel`](@ref)).
-- `:ADD_r`: average drawdown of compounded cumulative returns ([`ADD_rel`](@ref)).
-- `:CDaR_r`: conditional drawdown at risk of compounded cumulative returns ([`CDaR_rel`](@ref)).
-- `:UCI_r`: ulcer index of compounded cumulative returns ([`UCI_rel`](@ref)).$(_solver_reqs("`MOI.SecondOrderCone`"))
-- `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`](@ref)).$(_solver_reqs("`MOI.ExponentialCone`"))
-- `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`](@ref)).$(_solver_reqs("`MOI.PowerCone`"))
+Methods for calculating optimal bin widths for the mutual and variational information matrices computed by [`mut_var_info_mtx`](@ref).
+- `:KN`: Knuth's choice.
+- `:FD`: Freedman-Diaconis' choice.
+- `:SC`: Schotts' choice.
+- `:HGR`: Hacine-Gharbi and Ravier's choice.
 """
-const HRRiskMeasures = (
-    RiskMeasures...,
-    :Variance,
-    :Equal,
-    :VaR,
-    :DaR,
-    :DaR_r,
-    :MDD_r,
-    :ADD_r,
-    :CDaR_r,
-    :UCI_r,
-    :EDaR_r,
-    :RDaR_r,
-)
+const BinTypes = (:KN, :FD, :SC, :HGR)
 
 """
 ```julia
@@ -1756,44 +1769,6 @@ mutable struct HCPortfolio{
     opt_params::toptpar
     fail::tf
 end
-```
-
-```julia
-HCPortfolio(;
-    # Portfolio characteristics.
-    returns = DataFrame(),
-    ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
-    assets = Vector{String}(undef, 0),
-    # Risk parmeters.
-    alpha_i::Real = 0.0001,
-    alpha::Real = 0.05,
-    a_sim::Integer = 100,
-    beta_i::Real = alpha_i,
-    beta::Real = alpha,
-    b_sim::Integer = a_sim,
-    kappa::Real = 0.3,
-    alpha_tail::Real = 0.05,
-    gs_threshold::Real = 0.5,
-    # Optimisation parameters.
-    mu_type::Symbol = :Default,
-    mu = Vector{Float64}(undef, 0),
-    cov_type::Symbol = :Full,
-    tjlogo::Bool = false,
-    cov = Matrix{Float64}(undef, 0, 0),
-    bins_info::Union{Symbol, Int} = :KN,
-    w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
-    w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
-    codep_type::Symbol = :Pearson,
-    codep = Matrix{Float64}(undef, 0, 0),
-    dist = Matrix{Float64}(undef, 0, 0),
-    clusters = Hclust{Float64}(Matrix{Int64}(undef, 0, 2), Float64[], Int64[], :nothing),
-    k::Union{Int, Nothing} = nothing,
-    # Solutions.
-    solvers::AbstractDict = Dict(),
-    opt_params::AbstractDict = Dict(),
-    fail::AbstractDict = Dict(),
-)
 ```
 """
 mutable struct HCPortfolio{
@@ -1983,34 +1958,6 @@ function HCPortfolio(;
     alloc_fail::AbstractDict = Dict(),
     alloc_model = JuMP.Model(),
 )
-    @assert(
-        0 < alpha_i < alpha < 1,
-        "0 < alpha_i < alpha < 1: 0 < $alpha_i < $alpha < 1, must hold"
-    )
-    @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
-
-    @assert(
-        0 < beta_i < beta < 1,
-        "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
-    )
-    @assert(b_sim > zero(b_sim), "a_sim = $b_sim, must be greater than zero")
-
-    @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and smaller than 1")
-    @assert(
-        0 < alpha_tail < 1,
-        "alpha_tail = $alpha_tail, must be greater than 0 and smaller than 1"
-    )
-    @assert(
-        0 < gs_threshold < 1,
-        "gs_threshold = $gs_threshold, must be greater than zero and smaller than one"
-    )
-    @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
-    @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
-    @assert(
-        posdef_fix ∈ PosdefFixes,
-        "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
-    )
-
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
         latest_prices = Vector(dropmissing!(DataFrame(prices))[end, colnames(prices)])
@@ -2026,6 +1973,76 @@ function HCPortfolio(;
             "each column of returns must correspond to an asset"
         )
         returns = ret
+    end
+
+    @assert(
+        0 < alpha_i < alpha < 1,
+        "0 < alpha_i < alpha < 1: 0 < $alpha_i < $alpha < 1, must hold"
+    )
+    @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
+    @assert(
+        0 < beta_i < beta < 1,
+        "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
+    )
+    @assert(b_sim > zero(b_sim), "a_sim = $b_sim, must be greater than or equal to zero")
+    @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
+    @assert(
+        0 < gs_threshold < 1,
+        "gs_threshold = $gs_threshold, must be greater than 0 and less than 1"
+    )
+    if !isempty(owa_w)
+        @assert(
+            length(owa_w) == size(returns, 1),
+            "length(owa_w) = $(length(owa_w)), and size(returns, 1) = $(size(returns, 1)) must be equal"
+        )
+    end
+    @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
+    if !isempty(mu)
+        @assert(
+            length(mu) == size(returns, 2),
+            "length(mu) = $(length(mu)), and size(returns, 2) = $(size(returns, 2)) must be equal"
+        )
+    end
+    @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
+    if !isempty(cov)
+        @assert(
+            size(cov, 1) == size(cov, 2) == size(returns, 2),
+            "cov must be a square matrix, size(cov) = $(size(cov)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
+        )
+    end
+    @assert(
+        posdef_fix ∈ PosdefFixes,
+        "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
+    )
+    @assert(
+        bins_info ∈ BinTypes || isa(bins_info, Int) && bins_info > zero(bins_info),
+        "bins_info = $bins_info, has to either be in $BinTypes, or an integer value greater than 0"
+    )
+    if isa(w_min, Real)
+        @assert(
+            zero(w_min) <= w_min <= one(w_min),
+            "w_min = $w_min, must be greater than or equal to 0 and less than or equal to 1"
+        )
+    elseif !isempty(w_min)
+        @assert(
+            length(w_min) == size(returns, 2) &&
+            all(x -> x >= zero(eltype(w_min))) &&
+            all(x -> x <= one(eltype(w_min))),
+            "length(w_min) = $(length(w_min)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)) and all entries must be greater than or equal to zero all(x -> x >= zero(eltype(w_min))) = $(all(x -> x >= zero(eltype(w_min)))), and less than or equal to one all(x -> x <= one(eltype(w_min))) = $(all(x -> x <= one(eltype(w_min))))"
+        )
+    end
+    if isa(w_max, Real)
+        @assert(
+            zero(w_max) <= w_max <= one(w_max),
+            "w_max = $w_max, must be greater than or equal to 0 and less than or equal to 1"
+        )
+    elseif !isempty(w_max)
+        @assert(
+            length(w_max) == size(returns, 2) &&
+            all(x -> x >= zero(eltype(w_max))) &&
+            all(x -> x <= one(eltype(w_max))),
+            "length(w_max) = $(length(w_max)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)) and all entries must be greater than or equal to zero all(x -> x >= zero(eltype(w_max))) = $(all(x -> x >= zero(eltype(w_max)))), and less than or equal to one all(x -> x <= one(eltype(w_max))) = $(all(x -> x <= one(eltype(w_max))))"
+        )
     end
 
     return HCPortfolio{
@@ -2118,16 +2135,22 @@ function HCPortfolio(;
 end
 
 function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
-    if sym == :alpha
-        @assert(
-            0 < obj.alpha_i < val < 1,
-            "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold"
-        )
-    elseif sym == :alpha_i
+    if sym == :alpha_i
         @assert(
             0 < val < obj.alpha < 1,
             "0 < alpha_i < alpha < 1: 0 < $val < $(obj.alpha) < 1 must hold"
         )
+    elseif sym == :alpha
+        @assert(
+            0 < obj.alpha_i < val < 1,
+            "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold"
+        )
+        at = val * size(obj.returns, 1)
+        invat = 1 / at
+        ln_k = (invat^obj.kappa - invat^(-obj.kappa)) / (2 * obj.kappa)
+        setfield!(obj, :at, at)
+        setfield!(obj, :invat, invat)
+        setfield!(obj, :ln_k, ln_k)
     elseif sym == :a_sim
         @assert(val > zero(val), "a_sim = $val, must be greater than zero")
     elseif sym == :beta
@@ -2138,33 +2161,51 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
     elseif sym == :beta_i
         @assert(
             0 < val < obj.beta < 1,
-            "0 < beta_i < beta < 1: 0 < $val < $(obj.beta) < 1 must hold"
+            "0 < beta_i < beta < 1: : 0 < $val < $(obj.beta) < 1 must hold"
         )
     elseif sym == :b_sim
-        @assert(val >= zero(val), "b_sim = $val, must be greater than zero")
+        @assert(val > zero(val), "b_sim = $val, must be greater than zero")
     elseif sym == :kappa
         @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
-    elseif sym == :alpha_tail
-        @assert(0 < val < 1, "alpha_tail = $val, must be greater than 0 and smaller than 1")
     elseif sym == :gs_threshold
         @assert(
             0 < val < 1,
             "gs_threshold = $val, must be greater than zero and smaller than one"
         )
-    elseif sym == :cov_type
-        @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
+    elseif sym == :owa_w
+        if !isempty(val)
+            @assert(
+                length(val) == size(obj.returns, 1),
+                "length(owa_w) = $val and size(returns, 1) = $(size(obj.returns, 1)), must be equal"
+            )
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :mu_type
         @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
-    elseif sym == :codep_type
-        @assert(val ∈ CodepTypes, "codep_type = $val, must be one of $CodepTypes")
+    elseif sym == :cov_type
+        @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
     elseif sym == :posdef_fix
         @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
-    elseif sym ∈ (:assets, :timestamps, :returns)
-        throw(
-            ArgumentError(
-                "$sym is related to other fields and therefore cannot be manually changed without compromising correctness, please create a new instance of Portfolio instead",
-            ),
+    elseif sym == :bins_info
+        @assert(
+            val ∈ BinTypes || isa(val, Int) && val > zero(val),
+            "bins_info = $val, has to either be in $BinTypes, or an integer value greater than 0"
         )
+    elseif sym ∈ (:w_min, :w_max)
+        if isa(val, Real)
+            @assert(
+                zero(val) <= val <= one(val),
+                "w_min = $val, must be greater than or equal to 0 and less than or equal to 1"
+            )
+        elseif !isempty(val)
+            @assert(
+                length(val) == size(obj.returns, 2) &&
+                all(x -> x >= zero(eltype(val))) &&
+                all(x -> x <= one(eltype(val))),
+                "length(w_min) = $(length(val)) must be equal to the number of assets size(returns, 2) = $(size(obj.returns, 2)) and all entries must be greater than or equal to zero all(x -> x >= zero(eltype(w_min))) = $(all(x -> x >= zero(eltype(val)))), and less than or equal to one all(x -> x <= one(eltype(w_min))) = $(all(x -> x <= one(eltype(val))))"
+            )
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
     else
         if (isa(getfield(obj, sym), AbstractArray) && isa(val, AbstractArray)) ||
            (isa(getfield(obj, sym), Real) && isa(val, Real))
