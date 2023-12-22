@@ -2020,29 +2020,55 @@ function HCPortfolio(;
     )
     if isa(w_min, Real)
         @assert(
-            zero(w_min) <= w_min <= one(w_min),
-            "w_min = $w_min, must be greater than or equal to 0 and less than or equal to 1"
+            zero(w_min) <= w_min <= one(w_min) && all(w_min .<= w_max),
+            "0 <= w_min .<= w_max <= 1: 0 <= $w_min .<= $w_max <= 1, must be true"
         )
     elseif isa(w_min, AbstractVector)
         if !isempty(w_min)
             @assert(
                 length(w_min) == size(returns, 2) &&
-                all(x -> zero(eltype(w_min)) <= x <= one(eltype(w_min)), w_min),
-                "length(w_min) = $(length(w_min)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)) and all entries must be greater than or equal to zero all(x -> x >= zero(eltype(w_min))) = $(all(x -> x >= zero(eltype(w_min)))), and less than or equal to one all(x -> x <= one(eltype(w_min))) = $(all(x -> x <= one(eltype(w_min))))"
+                all(x -> zero(eltype(w_min)) <= x <= one(eltype(w_min)), w_min) &&
+                begin
+                    try
+                        all(w_min .<= w_max)
+                    catch DimensionMismatch
+                        false
+                    end
+                end,
+                "length(w_min) = $(length(w_min)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)); all entries must be greater than or equal to zero, and less than or equal to one all(x -> 0 <= x <= 1, w_min) = $(all(x -> zero(eltype(w_min)) <= x <= one(eltype(w_min)), w_min)); and all(w_min .<= w_max) = $(begin
+                    try
+                        all(w_min .<= w_max)
+                    catch DimensionMismatch
+                        false
+                    end
+                end)"
             )
         end
     end
     if isa(w_max, Real)
         @assert(
-            zero(w_max) <= w_max <= one(w_max),
-            "w_max = $w_max, must be greater than or equal to 0 and less than or equal to 1"
+            zero(w_max) <= w_max <= one(w_max) && all(w_min .<= w_max),
+            "0 <= w_min .<= w_max <= 1: 0 <= $w_min .<= $w_max <= 1, must be true"
         )
     elseif isa(w_max, AbstractVector)
         if !isempty(w_max)
             @assert(
                 length(w_max) == size(returns, 2) &&
-                all(x -> zero(eltype(w_max)) <= x <= one(eltype(w_max)), w_max),
-                "length(w_max) = $(length(w_max)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)) and all entries must be greater than or equal to zero all(x -> x >= zero(eltype(w_max))) = $(all(x -> x >= zero(eltype(w_max)))), and less than or equal to one all(x -> x <= one(eltype(w_max))) = $(all(x -> x <= one(eltype(w_max))))"
+                all(x -> zero(eltype(w_max)) <= x <= one(eltype(w_max)), w_max) &&
+                begin
+                    try
+                        all(w_min .<= w_max)
+                    catch DimensionMismatch
+                        false
+                    end
+                end,
+                "length(w_max) = $(length(w_max)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)); all entries must be greater than or equal to zero, and less than or equal to one all(x -> 0 <= x <= 1, w_max) = $(all(x -> zero(eltype(w_max)) <= x <= one(eltype(w_max)), w_max)); and all(w_min .<= w_max) = $(begin
+                    try
+                        all(w_min .<= w_max)
+                    catch DimensionMismatch
+                        false
+                    end
+                end)"
             )
         end
     end
@@ -2194,22 +2220,50 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             "bins_info = $val, has to either be in $BinTypes, or an integer value greater than 0"
         )
     elseif sym ∈ (:w_min, :w_max)
+        if sym == :w_min
+            smin = sym
+            smax = :w_max
+            vmin = val
+            vmax = getfield(obj, smax)
+        else
+            smin = :w_min
+            smax = sym
+            vmin = getfield(obj, smin)
+            vmax = val
+        end
+
         if isa(val, Real)
             @assert(
-                zero(val) <= val <= one(val),
-                "w_min = $val, must be greater than or equal to 0 and less than or equal to 1"
+                zero(val) <= val <= one(val) && all(vmin .<= vmax),
+                "0 <= w_min .<= w_max <= 1: 0 <= $vmin .<= $vmax <= 1, must be true"
             )
         elseif isa(val, AbstractVector)
             if !isempty(val)
                 @assert(
                     length(val) == size(obj.returns, 2) &&
-                    all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val),
-                    "length(w_min) = $(length(val)) must be equal to the number of assets size(returns, 2) = $(size(obj.returns, 2)) and all entries must be greater than or equal to zero all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val) = $(all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val))"
+                    all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val) &&
+                    begin
+                        try
+                            all(vmin .<= vmax)
+                        catch DimensionMismatch
+                            false
+                        end
+                    end,
+                    "length(w_min) = $(length(val)) must be equal to the number of assets size(returns, 2) = $(size(obj.returns, 2)); all entries must be greater than or equal to zero all(x -> 0 <= x <= 1, val) = $(all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val)); and all(w_min .<= w_max) = $(begin
+                        try
+                            all(vmin .<= vmax)
+                        catch DimensionMismatch
+                            false
+                        end
+                    end)"
                 )
-                isa(val, AbstractRange) && (val = collect(val))
-                isa(getfield(obj, sym), AbstractVector) &&
-                    isa(val, AbstractVector) &&
-                    (val = convert(typeof(getfield(obj, sym)), val))
+
+                if isa(getfield(obj, sym), AbstractVector) &&
+                   !isa(getfield(obj, sym), AbstractRange)
+                    val =
+                        isa(val, AbstractRange) ? collect(val) :
+                        convert(typeof(getfield(obj, sym)), val)
+                end
             end
         end
     else
