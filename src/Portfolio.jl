@@ -1058,7 +1058,7 @@ function Portfolio(;
         0 < beta_i < beta < 1,
         "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
     )
-    @assert(b_sim > zero(b_sim), "a_sim = $b_sim, must be greater than or equal to zero")
+    @assert(b_sim > zero(b_sim), "b_sim = $b_sim, must be greater than or equal to zero")
     @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
     @assert(
         0 < gs_threshold < 1,
@@ -1984,7 +1984,7 @@ function HCPortfolio(;
         0 < beta_i < beta < 1,
         "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold"
     )
-    @assert(b_sim > zero(b_sim), "a_sim = $b_sim, must be greater than or equal to zero")
+    @assert(b_sim > zero(b_sim), "b_sim = $b_sim, must be greater than or equal to zero")
     @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
     @assert(
         0 < gs_threshold < 1,
@@ -2085,6 +2085,7 @@ function HCPortfolio(;
             "dist must be a square matrix, size(dist) = $(size(dist)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
         )
     end
+    @assert(k >= zero(k), "a_sim = $k, must be greater than or equal to zero")
 
     return HCPortfolio{
         typeof(assets),
@@ -2234,6 +2235,8 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         )
     elseif sym == :codep_type
         @assert(val ∈ CodepTypes, "codep_type = $val, must be one of $CodepTypes")
+    elseif sym == :k
+        @assert(val >= zero(val), "k = $val, must be greater than or equal to zero")
     elseif sym ∈ (:w_min, :w_max)
         if sym == :w_min
             smin = sym
