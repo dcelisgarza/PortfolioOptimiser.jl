@@ -2072,6 +2072,19 @@ function HCPortfolio(;
             )
         end
     end
+    @assert(codep_type ∈ CodepTypes, "codep_type = $codep_type, must be one of $CodepTypes")
+    if !isempty(codep)
+        @assert(
+            size(codep, 1) == size(codep, 2) == size(returns, 2),
+            "codep must be a square matrix, size(codep) = $(size(codep)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
+        )
+    end
+    if !isempty(dist)
+        @assert(
+            size(dist, 1) == size(dist, 2) == size(returns, 2),
+            "dist must be a square matrix, size(dist) = $(size(dist)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
+        )
+    end
 
     return HCPortfolio{
         typeof(assets),
@@ -2219,6 +2232,8 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             val ∈ BinTypes || isa(val, Int) && val > zero(val),
             "bins_info = $val, has to either be in $BinTypes, or an integer value greater than 0"
         )
+    elseif sym == :codep_type
+        @assert(val ∈ CodepTypes, "codep_type = $val, must be one of $CodepTypes")
     elseif sym ∈ (:w_min, :w_max)
         if sym == :w_min
             smin = sym
@@ -2266,6 +2281,14 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
                 end
             end
         end
+    elseif sym ∈ (:cov, :codep, :dist)
+        if !isempty(val)
+            @assert(
+                size(val, 1) == size(val, 2) == size(obj.returns, 2),
+                "$sym must be a square matrix, size($sym) = $(size(val)), with side length equal to the number of assets, size(returns, 2) = $(size(obj.returns, 2))"
+            )
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
     else
         if (isa(getfield(obj, sym), AbstractArray) && isa(val, AbstractArray)) ||
            (isa(getfield(obj, sym), Real) && isa(val, Real))
