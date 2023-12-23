@@ -502,5 +502,3 @@ function allocate_port!(
 
     return retval
 end
-
-export allocate_port!

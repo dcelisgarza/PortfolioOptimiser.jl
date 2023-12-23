@@ -26,11 +26,6 @@ include("OWA.jl")
 include("Portfolio.jl")
 include("Statistics.jl")
 include("Risk_measures.jl")
-include("Portfolio_risk_setup.jl")
-include("Portfolio_optim_setup.jl")
-include("HCPortfolio_optim_setup.jl")
-include("Portfolio_allocation.jl")
-
 include("Plotting.jl")
 
 end

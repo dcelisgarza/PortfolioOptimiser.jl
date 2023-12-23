@@ -19,4 +19,18 @@ cokurt_mtx
 
 ```@docs
 BinTypes
+BLFMType
+EllipseTypes
+BoxTypes
+KindBootstrap
+MuTypes
+MuTargets
+CovTypes
+PosdefFixes
+DenoiseMethods
+RegCriteria
+FSType
+CodepTypes
+RRPVersions
+UncertaintyTypes
 ```

@@ -1,4 +1,3 @@
-
 function _naive_risk(portfolio, returns, covariance; rm = :SD, rf = 0.0)
     N = size(returns, 2)
     tcov = eltype(covariance)
@@ -798,5 +797,3 @@ function opt_port!(
 
     return portfolio.optimal[type]
 end
-
-export opt_port!
