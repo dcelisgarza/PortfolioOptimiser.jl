@@ -49,6 +49,7 @@ function _opt_w(
         ret = returns,
         owa_w = portfolio.owa_w,
         solvers = portfolio.solvers,
+        max_num_assets_kurt = portfolio.max_num_assets_kurt,
     )
     asset_statistics!(port; calc_kurt = (rm == :Kurt || rm == :SKurt) ? true : false)
     port.cov = icov
@@ -554,17 +555,29 @@ function _nco_weights(
     rm_i = rm,
     l_i = l,
     owa_w_i = portfolio.owa_w,
+    max_num_assets_kurt_i = portfolio.max_num_assets_kurt,
 )
-    flag = false
+    flag1 = false
+    flag2 = false
     if owa_w_i != portfolio.owa_w
-        flag = true
+        flag1 = true
         og_owa_w = portfolio.owa_w
         portfolio.owa_w = owa_w_i
     end
+    if !isapprox(max_num_assets_kurt_i, portfolio.max_num_assets_kurt)
+        flag2 = true
+        og_max_num_assets_kurt = portfolio.max_num_assets_kurt
+        portfolio.max_num_assets_kurt = max_num_assets_kurt_i
+    end
+
     intra_weights, intra_fails =
         _intra_weights(portfolio; obj = obj_i, kelly = kelly_i, rm = rm_i, rf = rf, l = l_i)
-    if flag
+
+    if flag1
         portfolio.owa_w = og_owa_w
+    end
+    if flag2
+        portfolio.max_num_assets_kurt = og_max_num_assets_kurt
     end
 
     weights, inter_fails = _inter_weights(
@@ -685,6 +698,7 @@ function opt_port!(
     rm::Symbol = :SD,
     obj::Symbol = :Min_Risk,
     owa_w_i::AbstractVector{<:Real} = portfolio.owa_w,
+    max_num_assets_kurt_i::Integer = portfolio.max_num_assets_kurt,
     kelly::Symbol = :None,
     rm_i::Symbol = rm,
     obj_i::Symbol = obj,
@@ -720,6 +734,16 @@ function opt_port!(
         0 < portfolio.kappa < 1,
         "portfolio.kappa = $(portfolio.kappa) must be greater than 0 and less than 1"
     )
+    @assert(
+        max_num_assets_kurt_i >= 0,
+        "max_num_assets_kurt_i = $max_num_assets_kurt_i must be greater than or equal to zero"
+    )
+    if !isempty(owa_w_i)
+        @assert(
+            length(owa_w_i) == size(portfolio.returns, 1),
+            "length(owa_w) = $(length(owa_w_i)), and size(returns, 1) = $(size(portfolio.returns, 1)) must be equal"
+        )
+    end
 
     _hcp_save_opt_params(
         portfolio,
@@ -786,6 +810,7 @@ function opt_port!(
             rm_i = rm_i,
             l_i = l_i,
             owa_w_i = owa_w_i,
+            max_num_assets_kurt_i = max_num_assets_kurt_i,
             # Risk free rate.
             rf = rf,
         )

@@ -1585,6 +1585,7 @@ mutable struct HCPortfolio{
     kappa::k
     alpha_tail::ata
     gs_threshold::gst
+    max_num_assets_kurt::mnak
     # Optimisation parameters.
     mu_type::tymu
     mu::tmu
@@ -1622,6 +1623,8 @@ mutable struct HCPortfolio{
     k,
     ata,
     gst,
+    mnak,
+    # Custom OWA weights.
     wowa,
     # Optimisation parameters.
     ttmu,
@@ -1666,6 +1669,8 @@ mutable struct HCPortfolio{
     kappa::k
     alpha_tail::ata
     gs_threshold::gst
+    max_num_assets_kurt::mnak
+    # Custom OWA weights.
     owa_w::wowa
     # Optimisation parameters.
     mu_type::ttmu
@@ -1716,6 +1721,8 @@ HCPortfolio(;
     kappa::Real = 0.3,
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
+    max_num_assets_kurt::Integer = 0,
+    # Custom OWA weights.
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Optimisation parameters.
     mu_type::Symbol = :Default,
@@ -1765,6 +1772,8 @@ function HCPortfolio(;
     kappa::Real = 0.3,
     alpha_tail::Real = 0.05,
     gs_threshold::Real = 0.5,
+    max_num_assets_kurt::Integer = 0,
+    # Custom OWA weights.
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Optimisation parameters.
     mu_type::Symbol = :Default,
@@ -1826,6 +1835,10 @@ function HCPortfolio(;
     @assert(
         0 < gs_threshold < 1,
         "gs_threshold = $gs_threshold, must be greater than 0 and less than 1"
+    )
+    @assert(
+        max_num_assets_kurt >= 0,
+        "max_num_assets_kurt = $max_num_assets_kurt must be greater than or equal to zero"
     )
     if !isempty(owa_w)
         @assert(
@@ -1944,6 +1957,8 @@ function HCPortfolio(;
         typeof(kappa),
         typeof(alpha_tail),
         typeof(gs_threshold),
+        typeof(max_num_assets_kurt),
+        # Custom OWA weights.
         typeof(owa_w),
         # Optimisation parameters.
         typeof(mu_type),
@@ -1987,6 +2002,8 @@ function HCPortfolio(;
         kappa,
         alpha_tail,
         gs_threshold,
+        max_num_assets_kurt,
+        # Custom OWA weights.
         owa_w,
         # Optimisation parameters.
         mu_type,
@@ -2056,6 +2073,11 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         @assert(
             0 < val < 1,
             "gs_threshold = $val, must be greater than zero and smaller than one"
+        )
+    elseif sym == :max_num_assets_kurt
+        @assert(
+            val >= 0,
+            "max_num_assets_kurt = $val must be greater than or equal to zero"
         )
     elseif sym == :owa_w
         if !isempty(val)

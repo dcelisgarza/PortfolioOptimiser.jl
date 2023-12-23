@@ -24,8 +24,6 @@ import PortfolioOptimiser.distance_wei,
     PortfolioOptimiser.OWAMethods,
     # Portfolio
     PortfolioOptimiser.AbstractPortfolio,
-    PortfolioOptimiser.RiskMeasures,
-    PortfolioOptimiser.HRRiskMeasures,
     PortfolioOptimiser.TrackingErrKinds,
     # Asset Statistics
     PortfolioOptimiser.BLFMType,
@@ -42,7 +40,10 @@ import PortfolioOptimiser.distance_wei,
     PortfolioOptimiser.FSType,
     PortfolioOptimiser.CodepTypes,
     PortfolioOptimiser.RRPVersions,
-    PortfolioOptimiser.UncertaintyTypes
+    PortfolioOptimiser.UncertaintyTypes,
+    # Risk Measures
+    PortfolioOptimiser.RiskMeasures,
+    PortfolioOptimiser.HRRiskMeasures
 
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
 fix_math_md(content) = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
