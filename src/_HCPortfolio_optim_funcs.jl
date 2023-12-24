@@ -51,7 +51,7 @@ function _opt_w(
         solvers = portfolio.solvers,
         max_num_assets_kurt = portfolio.max_num_assets_kurt,
     )
-    asset_statistics!(port; calc_kurt = (rm == :Kurt || rm == :SKurt) ? true : false)
+    asset_statistics!(port; calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false)
     port.cov = icov
 
     weights = if obj != :Equal

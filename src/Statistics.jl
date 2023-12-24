@@ -1218,6 +1218,33 @@ function cokurt_mtx(
     return kurt, skurt, L_2, S_2
 end
 
+"""
+```
+codep_dist_mtx(
+    returns::AbstractMatrix;
+    alpha_tail::Real = 0.05,
+    bins_info::Union{Symbol, Integer} = :KN,
+    codep_type::Symbol = :Pearson,
+    cor_args::Tuple = (),
+    cor_func::Function = cor,
+    cor_kwargs::NamedTuple = (;),
+    custom_cor::Union{AbstractMatrix, Nothing} = nothing,
+    dist_args::Tuple = (),
+    dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
+    dist_kwargs::NamedTuple = (;),
+    gs_threshold::Real = 0.5,
+    posdef_args::Tuple = (),
+    posdef_fix::Symbol = :Nearest,
+    posdef_func::Function = x -> x,
+    posdef_kwargs::NamedTuple = (;),
+    sigma::Union{AbstractMatrix, Nothing} = nothing,
+    std_args::Tuple = (),
+    std_func::Function = std,
+    std_kwargs::NamedTuple = (;),
+    uplo::Symbol = :L,
+)
+```
+"""
 function codep_dist_mtx(
     returns::AbstractMatrix;
     alpha_tail::Real = 0.05,
@@ -1561,58 +1588,56 @@ function asset_statistics!(
         )
     end
 
+    if calc_kurt
+        portfolio.kurt, portfolio.skurt, portfolio.L_2, portfolio.S_2 = cokurt_mtx(
+            returns,
+            portfolio.mu;
+            alpha = alpha,
+            custom_kurt = custom_kurt,
+            custom_skurt = custom_skurt,
+            denoise = denoise,
+            detone = detone,
+            jlogo = jlogo,
+            kernel = kernel,
+            m = m,
+            method = method,
+            mkt_comp = mkt_comp,
+            n = n,
+            opt_args = opt_args,
+            opt_kwargs = opt_kwargs,
+            posdef_args = posdef_args,
+            posdef_fix = posdef_fix,
+            posdef_func = posdef_func,
+            posdef_kwargs = posdef_kwargs,
+            target_ret = target_ret,
+        )
+    end
+
     # Type specific
-    if isa(portfolio, Portfolio)
-        if calc_kurt
-            portfolio.kurt, portfolio.skurt, portfolio.L_2, portfolio.S_2 = cokurt_mtx(
-                returns,
-                portfolio.mu;
-                alpha = alpha,
-                custom_kurt = custom_kurt,
-                custom_skurt = custom_skurt,
-                denoise = denoise,
-                detone = detone,
-                jlogo = jlogo,
-                kernel = kernel,
-                m = m,
-                method = method,
-                mkt_comp = mkt_comp,
-                n = n,
-                opt_args = opt_args,
-                opt_kwargs = opt_kwargs,
-                posdef_args = posdef_args,
-                posdef_fix = posdef_fix,
-                posdef_func = posdef_func,
-                posdef_kwargs = posdef_kwargs,
-                target_ret = target_ret,
-            )
-        end
-    else
-        if calc_codep
-            portfolio.codep, portfolio.dist = codep_dist_mtx(
-                returns;
-                alpha_tail = alpha_tail,
-                bins_info = bins_info,
-                codep_type = codep_type,
-                cor_args = cor_args,
-                cor_func = cor_func,
-                cor_kwargs = cor_kwargs,
-                custom_cor = custom_cor,
-                dist_args = dist_args,
-                dist_func = dist_func,
-                dist_kwargs = dist_kwargs,
-                gs_threshold = gs_threshold,
-                posdef_args = posdef_args,
-                posdef_fix = posdef_fix,
-                posdef_func = posdef_func,
-                posdef_kwargs = posdef_kwargs,
-                sigma = isnothing(custom_cov) ? portfolio.cov : custom_cov,
-                std_args = std_args,
-                std_func = std_func,
-                std_kwargs = std_kwargs,
-                uplo = uplo,
-            )
-        end
+    if isa(portfolio, HCPortfolio) && calc_codep
+        portfolio.codep, portfolio.dist = codep_dist_mtx(
+            returns;
+            alpha_tail = alpha_tail,
+            bins_info = bins_info,
+            codep_type = codep_type,
+            cor_args = cor_args,
+            cor_func = cor_func,
+            cor_kwargs = cor_kwargs,
+            custom_cor = custom_cor,
+            dist_args = dist_args,
+            dist_func = dist_func,
+            dist_kwargs = dist_kwargs,
+            gs_threshold = gs_threshold,
+            posdef_args = posdef_args,
+            posdef_fix = posdef_fix,
+            posdef_func = posdef_func,
+            posdef_kwargs = posdef_kwargs,
+            sigma = isnothing(custom_cov) ? portfolio.cov : custom_cov,
+            std_args = std_args,
+            std_func = std_func,
+            std_kwargs = std_kwargs,
+            uplo = uplo,
+        )
     end
 
     return nothing
@@ -3319,4 +3344,5 @@ export covgerber0,
     covar_mtx,
     mean_vec,
     cokurt_mtx,
-    mu_estimator
+    mu_estimator,
+    codep_dist_mtx

@@ -13,6 +13,7 @@ mu_estimator
 covar_mtx
 mut_var_info_mtx
 cokurt_mtx
+codep_dist_mtx
 ```
 
 ## Private API

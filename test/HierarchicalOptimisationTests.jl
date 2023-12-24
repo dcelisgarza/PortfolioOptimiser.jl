@@ -57,7 +57,7 @@ l = 2.0
             ),
         ),
     )
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio, calc_kurt = false)
 
     type = :HRP
     rm = :Variance
@@ -158,7 +158,7 @@ end
             ),
         ),
     )
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio, calc_kurt = false)
 
     type = :HERC
     rm = :Variance
@@ -258,7 +258,7 @@ end
             ),
         ),
     )
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio, calc_kurt = false)
 
     type = :HERC
     rm = :Variance
@@ -436,7 +436,7 @@ end
         ),
     )
     portfolio.codep_type = :Pearson
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio, calc_kurt = false)
 
     type = :NCO
     rm = :SD
@@ -538,7 +538,7 @@ end
             ),
         ),
     )
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio, calc_kurt = false)
 
     type = :HRP
     rm = :Variance
@@ -766,13 +766,12 @@ end
             ),
         ),
     )
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio, calc_kurt = false)
     portfolio.owa_w = Float64[]
     w = opt_port!(portfolio; type = :NCO, owa_w_i = owa_gmd(size(returns, 1)))
     @test isempty(portfolio.owa_w)
     w = opt_port!(portfolio; type = :HERC, owa_w_i = owa_gmd(size(returns, 1)))
     @test isempty(portfolio.owa_w)
-
     portfolio.max_num_assets_kurt = 5
     w = opt_port!(portfolio; type = :NCO, max_num_assets_kurt_i = 69)
     @test portfolio.max_num_assets_kurt == 5

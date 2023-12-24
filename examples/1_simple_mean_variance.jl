@@ -72,7 +72,7 @@ pretty_table(DataFrame(assets = portfolio.assets, latest_prices = portfolio.late
 
 # For some risk measures/constraints, we need to compute some statistical quantities. Since we're going to showcase a mean-variance optimisation, we need to estimate the asset mean returns and covariance. We can do this by calling [`asset_statistics!`](@ref). This function also has myriad keyword options, but we'll stick to the basics.
 
-asset_statistics!(portfolio)
+asset_statistics!(portfolio, calc_kurt = false)
 
 # We can then call [`opt_port!`](@ref) with default arguments, which optimises for the risk adjusted return ratio of the mean variance portfolio.
 
@@ -123,7 +123,7 @@ hcportfolio = HCPortfolio(; prices = prices);
 
 # Compute the codependence matrix with [`asset_statistics!`](@ref).
 
-asset_statistics!(hcportfolio)
+asset_statistics!(hcportfolio, calc_kurt = false)
 
 # And plot the clusters defined by it, we use Ward's linkage function because it gives the best cluster separation.
 
