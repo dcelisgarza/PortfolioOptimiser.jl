@@ -12,3 +12,6 @@ using Test, PortfolioOptimiser
     @test a < c
     @test c > b
 end
+
+@testset "Docs functions" begin
+end

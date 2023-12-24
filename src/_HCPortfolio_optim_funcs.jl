@@ -557,15 +557,16 @@ function _nco_weights(
     owa_w_i = portfolio.owa_w,
     max_num_assets_kurt_i = portfolio.max_num_assets_kurt,
 )
-    flag1 = false
-    flag2 = false
-    if owa_w_i != portfolio.owa_w
-        flag1 = true
+    og_owa_w = nothing
+    og_max_num_assets_kurt = nothing
+
+    if (
+        length(owa_w_i) == length(portfolio.owa_w) && !isapprox(owa_w_i, portfolio.owa_w)
+    ) || length(owa_w_i) != length(portfolio.owa_w)
         og_owa_w = portfolio.owa_w
         portfolio.owa_w = owa_w_i
     end
-    if !isapprox(max_num_assets_kurt_i, portfolio.max_num_assets_kurt)
-        flag2 = true
+    if max_num_assets_kurt_i != portfolio.max_num_assets_kurt
         og_max_num_assets_kurt = portfolio.max_num_assets_kurt
         portfolio.max_num_assets_kurt = max_num_assets_kurt_i
     end
@@ -573,10 +574,10 @@ function _nco_weights(
     intra_weights, intra_fails =
         _intra_weights(portfolio; obj = obj_i, kelly = kelly_i, rm = rm_i, rf = rf, l = l_i)
 
-    if flag1
+    if !isnothing(og_owa_w)
         portfolio.owa_w = og_owa_w
     end
-    if flag2
+    if !isnothing(og_max_num_assets_kurt)
         portfolio.max_num_assets_kurt = og_max_num_assets_kurt
     end
 

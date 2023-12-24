@@ -1787,7 +1787,7 @@ function efficient_frontier!(
     srisk = Vector{typeof(risk1)}(undef, 0)
 
     i = 0
-    for (j, r) in enumerate(risks)
+    for (j, (r, m)) in enumerate(zip(risks, mus))
         if i == 0
             w = opt_port!(
                 portfolio;
@@ -1800,8 +1800,8 @@ function efficient_frontier!(
                 save_opt_params = false,
             )
         else
-            j != length(risks) ? setfield!(portfolio, rmf, r) :
-            setfield!(portfolio, rmf, Inf)
+            j != length(risks) ? setproperty!(portfolio, rmf, r) :
+            setproperty!(portfolio, rmf, Inf)
             w = opt_port!(
                 portfolio;
                 class = class,
@@ -1812,6 +1812,21 @@ function efficient_frontier!(
                 rm = rm,
                 save_opt_params = false,
             )
+            # Fallback in case :Max_Ret with maximum risk bounds fails.
+            if isempty(w)
+                setproperty!(portfolio, rmf, Inf)
+                j != length(risks) ? portfolio.mu_l = m : portfolio.mu_l = Inf
+                w = opt_port!(
+                    portfolio;
+                    class = class,
+                    hist = hist,
+                    kelly = kelly,
+                    obj = :Min_Risk,
+                    rf = rf,
+                    rm = rm,
+                    save_opt_params = false,
+                )
+            end
         end
         isempty(w) && continue
         rk = calc_risk(
@@ -1834,7 +1849,7 @@ function efficient_frontier!(
         push!(srisk, rk)
         i += 1
     end
-    setfield!(portfolio, rmf, Inf)
+    setproperty!(portfolio, rmf, Inf)
 
     w = opt_port!(
         portfolio;

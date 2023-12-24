@@ -772,4 +772,8 @@ end
     @test isempty(portfolio.owa_w)
     w = opt_port!(portfolio; type = :HERC, owa_w_i = owa_gmd(size(returns, 1)))
     @test isempty(portfolio.owa_w)
+
+    portfolio.max_num_assets_kurt = 5
+    w = opt_port!(portfolio; type = :NCO, max_num_assets_kurt_i = 69)
+    @test portfolio.max_num_assets_kurt == 5
 end

@@ -432,6 +432,10 @@ function _filled_by(msg::String)
     return "This parameter is filled after calling $msg."
 end
 
+function _rrm_protected(msg::String)
+    return "protected value of $msg, used when optimising a relativistic risk measure (RVaR and RDaR)."
+end
+
 function _assert_value_message(lo::Real, hi::Real, args...) end
 function _assert_category_message(sym::Symbol, collection) end
 function _assert_generic_message(cmp, message) end
