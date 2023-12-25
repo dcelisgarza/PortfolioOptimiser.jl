@@ -566,6 +566,7 @@ Constructs risk contribution constraint vector for the risk parity optimisation 
 # Outputs
 - `rw`: risk contribution constraint vector.
 # Examples
+```julia
 asset_classes = DataFrame(
         "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
         "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],
@@ -574,6 +575,7 @@ asset_classes = DataFrame(
 
 rw_a = rp_constraints(asset_classes, :Assets)
 rw_c = rp_constraints(asset_classes, :Classes, "Class 2")
+```
 """
 function rp_constraints(
     asset_classes::DataFrame,
