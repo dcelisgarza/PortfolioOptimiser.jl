@@ -43,19 +43,10 @@ mutable struct Portfolio{
     ai,
     a,
     as,
-    tat,
     bi,
     b,
     bs,
     k,
-    tiat,
-    lnk,
-    topk,
-    tomk,
-    tk2,
-    tkinv,
-    tinvopk,
-    tinvomk,
     gst,
     mnak,
     # Benchmark constraints
@@ -146,7 +137,6 @@ mutable struct Portfolio{
     short::s
     short_u::us
     long_u::ul
-    sum_short_long::ssl
     min_number_effective_assets::mnea
     max_number_assets::mna
     max_number_assets_factor::mnaf
@@ -160,19 +150,10 @@ mutable struct Portfolio{
     alpha_i::ai
     alpha::a
     a_sim::as
-    at::tat
     beta_i::bi
     beta::b
     b_sim::bs
     kappa::k
-    invat::tiat
-    ln_k::lnk
-    opk::topk
-    omk::tomk
-    invk2::tk2
-    invk::tkinv
-    invopk::tinvopk
-    invomk::tinvomk
     gs_threshold::gst
     max_num_assets_kurt::mnak
     # Benchmark constraints
@@ -187,6 +168,7 @@ mutable struct Portfolio{
     a_mtx_ineq::ami
     b_vec_ineq::bvi
     risk_budget::rbv
+    # Bounds constraints
     mu_l::ler
     dev_u::ud
     mad_u::umad
@@ -284,18 +266,9 @@ Structure for convex portfolio optimisation.
     - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 $(_isigdef("Tail Gini losses", :a))
 $(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :a))
-- `at`: protected value of `alpha * T`, where $(_tstr(:t1)). Used when optimising a entropic risk measures (EVaR and EDaR).
 $(_isigdef("Tail Gini gains", :b))
 $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :b))
 - `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
-- `invat`: $(_rrm_protected("`1 / (alpha * T)`, where $(_tstr(:t1))"))
-- `ln_k`: $(_rrm_protected("`( (1 / (alpha * T))^kappa - (1 / (alpha * T))^(-kappa)) / (2 * kappa)`"))
-- `omk`: $(_rrm_protected("`1 - kappa`"))
-- `opk`: $(_rrm_protected("`1 + kappa`"))
-- `invk2`: $(_rrm_protected("`1 / (2 * kappa)`"))
-- `invk`: $(_rrm_protected("`1 / kappa`"))
-- `invopk`: $(_rrm_protected("`1 / (1 + kappa)`"))
-- `invomk`: $(_rrm_protected("`1 / (1 - kappa)`"))
 - `gs_threshold`: Gerber statistic threshold.
 - `max_num_assets_kurt`: maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
 # Benchmark constraints
@@ -394,7 +367,6 @@ mutable struct Portfolio{
     s,
     us,
     ul,
-    ssl,
     mnea,
     mna,
     mnaf,
@@ -408,19 +380,10 @@ mutable struct Portfolio{
     ai,
     a,
     as,
-    tat,
     bi,
     b,
     bs,
     k,
-    tiat,
-    lnk,
-    topk,
-    tomk,
-    tk2,
-    tkinv,
-    tinvopk,
-    tinvomk,
     gst,
     mnak,
     # Benchmark constraints
@@ -511,7 +474,6 @@ mutable struct Portfolio{
     short::s
     short_u::us
     long_u::ul
-    sum_short_long::ssl
     min_number_effective_assets::mnea
     max_number_assets::mna
     max_number_assets_factor::mnaf
@@ -525,19 +487,10 @@ mutable struct Portfolio{
     alpha_i::ai
     alpha::a
     a_sim::as
-    at::tat
     beta_i::bi
     beta::b
     b_sim::bs
     kappa::k
-    invat::tiat
-    ln_k::lnk
-    opk::topk
-    omk::tomk
-    invk2::tk2
-    invk::tkinv
-    invopk::tinvopk
-    invomk::tinvomk
     gs_threshold::gst
     max_num_assets_kurt::mnak
     # Benchmark constraints
@@ -671,6 +624,7 @@ Portfolio(;
     a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+    # Bounds constraints
     mu_l::Real = Inf,
     dev_u::Real = Inf,
     mad_u::Real = Inf,
@@ -1207,16 +1161,6 @@ function Portfolio(;
         )
     end
 
-    at = zero(alpha)
-    invat = zero(alpha)
-    ln_k = zero(promote_type(typeof(alpha), typeof(kappa)))
-    opk = zero(kappa)
-    omk = zero(kappa)
-    invk2 = zero(kappa)
-    invk = zero(kappa)
-    invopk = zero(kappa)
-    invomk = zero(kappa)
-
     L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
 
@@ -1227,7 +1171,6 @@ function Portfolio(;
         typeof(short),
         typeof(short_u),
         typeof(long_u),
-        promote_type(typeof(short_u), typeof(long_u)),
         typeof(min_number_effective_assets),
         typeof(max_number_assets),
         typeof(max_number_assets_factor),
@@ -1241,19 +1184,10 @@ function Portfolio(;
         typeof(alpha_i),
         typeof(alpha),
         typeof(a_sim),
-        typeof(at),
         typeof(beta_i),
         typeof(beta),
         typeof(b_sim),
         typeof(kappa),
-        typeof(invat),
-        typeof(ln_k),
-        typeof(opk),
-        typeof(omk),
-        typeof(invk2),
-        typeof(invk),
-        typeof(invopk),
-        typeof(invomk),
         typeof(gs_threshold),
         typeof(max_num_assets_kurt),
         # Benchmark constraints
@@ -1347,7 +1281,6 @@ function Portfolio(;
         short,
         short_u,
         long_u,
-        short ? long_u - short_u : 1.0,
         min_number_effective_assets,
         max_number_assets,
         max_number_assets_factor,
@@ -1361,19 +1294,10 @@ function Portfolio(;
         alpha_i,
         alpha,
         a_sim,
-        at,
         beta_i,
         beta,
         b_sim,
         kappa,
-        invat,
-        ln_k,
-        opk,
-        omk,
-        invk2,
-        invk,
-        invopk,
-        invomk,
         gs_threshold,
         max_num_assets_kurt,
         # Benchmark constraints
@@ -1462,14 +1386,34 @@ function Portfolio(;
     )
 end
 
+function Base.getproperty(obj::Portfolio, sym::Symbol)
+    if sym == :sum_short_long
+        obj.short ? obj.long_u - obj.short_u : one(eltype(obj.returns))
+    elseif sym == :at
+        obj.alpha * size(obj.returns, 1)
+    elseif sym == :invat
+        one(typeof(obj.at)) / (obj.at)
+    elseif sym == :ln_k
+        (obj.invat^obj.kappa - obj.invat^(-obj.kappa)) / (2 * obj.kappa)
+    elseif sym == :omk
+        one(typeof(obj.kappa)) - obj.kappa
+    elseif sym == :opk
+        one(typeof(obj.kappa)) + obj.kappa
+    elseif sym == :invk2
+        one(typeof(obj.kappa)) / (2 * obj.kappa)
+    elseif sym == :invk
+        one(typeof(obj.kappa)) / obj.kappa
+    elseif sym == :invopk
+        one(typeof(obj.kappa)) / obj.opk
+    elseif sym == :invomk
+        one(typeof(obj.kappa)) / obj.omk
+    else
+        getfield(obj, sym)
+    end
+end
+
 function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
-    if sym == :short
-        setfield!(obj, :sum_short_long, val ? obj.long_u - obj.short_u : 1.0)
-    elseif sym == :short_u
-        setfield!(obj, :sum_short_long, obj.short ? obj.long_u - val : 1.0)
-    elseif sym == :long_u
-        setfield!(obj, :sum_short_long, obj.short ? val - obj.short_u : 1.0)
-    elseif sym == :alpha_i
+    if sym == :alpha_i
         @assert(
             0 < val < obj.alpha < 1,
             "0 < alpha_i < alpha < 1: 0 < $val < $(obj.alpha) < 1 must hold"
@@ -1479,12 +1423,6 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             0 < obj.alpha_i < val < 1,
             "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold"
         )
-        at = val * size(obj.returns, 1)
-        invat = 1 / at
-        ln_k = (invat^obj.kappa - invat^(-obj.kappa)) / (2 * obj.kappa)
-        setfield!(obj, :at, at)
-        setfield!(obj, :invat, invat)
-        setfield!(obj, :ln_k, ln_k)
     elseif sym == :a_sim
         @assert(val > zero(val), "a_sim = $val, must be greater than zero")
     elseif sym == :beta
@@ -1501,20 +1439,6 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         @assert(val > zero(val), "b_sim = $val, must be greater than zero")
     elseif sym == :kappa
         @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
-        ln_k = (obj.invat^val - obj.invat^(-val)) / (2 * val)
-        omk = 1 - val
-        opk = 1 + val
-        invk2 = 1 / (2 * val)
-        invk = 1 / val
-        invopk = 1 / opk
-        invomk = 1 / omk
-        setfield!(obj, :ln_k, ln_k)
-        setfield!(obj, :opk, opk)
-        setfield!(obj, :omk, omk)
-        setfield!(obj, :invk2, invk2)
-        setfield!(obj, :invk, invk)
-        setfield!(obj, :invopk, invopk)
-        setfield!(obj, :invomk, invomk)
     elseif sym == :gs_threshold
         @assert(
             0 < val < 1,
@@ -1646,30 +1570,13 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             )
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (
-        :sum_short_long,
-        :at,
-        :invat,
-        :ln_k,
-        :opk,
-        :omk,
-        :invk2,
-        :invk,
-        :invopk,
-        :invomk,
-    )
-        throw(
-            ArgumentError(
-                "$sym is computed from other fields and therefore cannot be manually changed",
-            ),
-        )
+
     else
         if (isa(getfield(obj, sym), AbstractArray) && isa(val, AbstractArray)) ||
            (isa(getfield(obj, sym), Real) && isa(val, Real))
             val = convert(typeof(getfield(obj, sym)), val)
         end
     end
-
     setfield!(obj, sym, val)
 end
 
@@ -1701,8 +1608,8 @@ mutable struct HCPortfolio{
     tkurt,
     tskurt,
     tpdf,
-    tl2
-    ts2
+    tl2,
+    ts2,
     tbin,
     wmi,
     wma,
@@ -1975,7 +1882,7 @@ HCPortfolio(;
     k::Integer = 0,
     # Optimal portfolios
     optimal::AbstractDict = Dict(),
-    # Solutions.
+    # Solutions
     solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
     opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),
     fail::AbstractDict = Dict(),

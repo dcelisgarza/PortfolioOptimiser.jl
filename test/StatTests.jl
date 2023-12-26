@@ -3572,7 +3572,7 @@ returns = dropmissing!(DataFrame(Y))
 
     portfolio = HCPortfolio(returns = returns)
 
-    asset_statistics!(portfolio, calc_kurt = false, jlogo = true)
+    asset_statistics!(portfolio; calc_kurt = false, jlogo = true)
 
     covj = copy(portfolio.cov)
     covjt = reshape(

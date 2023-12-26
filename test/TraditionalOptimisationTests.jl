@@ -8235,7 +8235,6 @@ end
 
     portfolio.short_u = 0.3
     portfolio.long_u = 1.3
-    # portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
 
     obj = :Min_Risk
     w1 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -8297,7 +8296,6 @@ end
 
     portfolio.short_u = 0.11
     portfolio.long_u = 1.23
-    # portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
 
     obj = :Min_Risk
     w3 = opt_port!(portfolio; rm = rm, obj = obj, kelly = kelly, rf = rf, l = l)
@@ -8650,7 +8648,6 @@ end
     portfolio.short = true
     portfolio.short_u = 0.4
     portfolio.long_u = 0.6
-    # portfolio.sum_short_long = portfolio.long_u - portfolio.short_u
 
     obj = :Min_Risk
     portfolio.max_number_assets = 10

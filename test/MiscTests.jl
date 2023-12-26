@@ -1,4 +1,18 @@
-using Test, PortfolioOptimiser
+using Test,
+    PortfolioOptimiser,
+    DataFrames,
+    TimeSeries,
+    CSV,
+    Dates,
+    ECOS,
+    SCS,
+    Clarabel,
+    COSMO,
+    OrderedCollections,
+    LinearAlgebra,
+    StatsBase,
+    HiGHS,
+    Logging
 
 @testset "Miscelaneous" begin
     d = PortfolioOptimiser.duplication_matrix(11)
@@ -13,5 +27,4 @@ using Test, PortfolioOptimiser
     @test c > b
 end
 
-@testset "Docs functions" begin
-end
+@testset "Portfolio setfield" begin end

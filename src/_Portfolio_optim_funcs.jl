@@ -1,22 +1,3 @@
-function _calc_var_dar_constants(portfolio, rm, T)
-    !(
-        rm == :CVaR ||
-        rm == :EVaR ||
-        rm == :RVaR ||
-        rm == :CDaR ||
-        rm == :EDaR ||
-        rm == :RDaR
-    ) && (return nothing)
-
-    iszero(portfolio.invat) && (portfolio.alpha = portfolio.alpha)
-
-    !(rm == :RVaR || rm == :RDaR) && (return nothing)
-
-    iszero(portfolio.invk) && (portfolio.kappa = portfolio.kappa)
-
-    return nothing
-end
-
 function _mv_risk(model, sigma)
     G = sqrt(sigma)
     @variable(model, dev)
@@ -456,7 +437,6 @@ function _risk_setup(
     kurtosis,
     skurtosis,
 )
-    _calc_var_dar_constants(portfolio, rm, T)
     _mv_setup(portfolio, sigma, rm, kelly, obj, type)
     _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
