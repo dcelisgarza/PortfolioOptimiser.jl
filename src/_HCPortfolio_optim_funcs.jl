@@ -213,7 +213,7 @@ function _recursive_bisection(
     upper_bound = nothing,
     lower_bound = nothing,
 )
-    N = size(portfolio.returns, 2)
+    N = length(portfolio.assets)
     weights = ones(N)
     sort_order = portfolio.clusters.order
     upper_bound = upper_bound[sort_order]
@@ -374,7 +374,7 @@ function _hierarchical_recursive_bisection(
     idx = sortperm(dists, rev = true)
     nodes = nodes[idx]
 
-    weights = ones(size(portfolio.returns, 2))
+    weights = ones(length(portfolio.assets))
 
     clustering_idx = cutree(clustering; k = k)
 
@@ -482,7 +482,7 @@ function _intra_weights(
     k = portfolio.k
     clustering_idx = cutree(clustering; k = k)
 
-    intra_weights = zeros(eltype(covariance), size(portfolio.returns, 2), k)
+    intra_weights = zeros(eltype(covariance), length(portfolio.assets), k)
     cfails = Dict{Int, Dict}()
 
     for i in 1:k
@@ -710,7 +710,7 @@ function opt_port!(
     cluster::Bool = true,
     linkage::Symbol = :single,
     k = cluster ? 0 : portfolio.k,
-    max_k::Int = ceil(Int, sqrt(size(portfolio.returns, 2))),
+    max_k::Int = ceil(Int, sqrt(length(portfolio.assets))),
     branchorder = :optimal,
     dbht_method = :Unique,
     max_iter = 100,
@@ -764,7 +764,7 @@ function opt_port!(
         save_opt_params,
     )
 
-    N = size(portfolio.returns, 2)
+    N = length(portfolio.assets)
 
     if cluster
         portfolio.clusters, tk = _hierarchical_clustering(

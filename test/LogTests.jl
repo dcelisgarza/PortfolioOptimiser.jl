@@ -95,7 +95,7 @@ returns = dropmissing!(DataFrame(Y))
         ),
     )
     @test calc_risk(portfolio, rm = :RVaR) < 0
-    @test isapprox(calc_risk(portfolio, rm = :Equal), 1 / size(portfolio.returns, 2))
+    @test isapprox(calc_risk(portfolio, rm = :Equal), 1 / length(portfolio.assets))
 
     opt_port!(portfolio, type = :RP)
     @test !isempty(portfolio.fail[:Clarabel_RP])

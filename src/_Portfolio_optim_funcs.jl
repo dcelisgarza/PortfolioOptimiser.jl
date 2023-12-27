@@ -1183,7 +1183,7 @@ function _optimize_portfolio(portfolio, type, obj)
     solvers = portfolio.solvers
     model = portfolio.model
 
-    N = size(portfolio.returns, 2)
+    N = length(portfolio.assets)
     rtype = eltype(portfolio.returns)
     term_status = termination_status(model)
     solvers_tried = Dict()

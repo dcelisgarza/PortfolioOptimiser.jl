@@ -38,7 +38,7 @@ returns = dropmissing!(DataFrame(Y))
     )
     asset_statistics!(portfolio)
 
-    N = size(portfolio.returns, 2)
+    N = length(portfolio.assets)
     w = fill(1 / N, N)
 
     @test abs(

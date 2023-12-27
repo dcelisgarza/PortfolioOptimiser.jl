@@ -2826,7 +2826,7 @@ function black_litterman_statistics!(
     if isempty(w)
         isempty(portfolio.bl_bench_weights) && (
             portfolio.bl_bench_weights =
-                fill(1 / size(portfolio.returns, 2), size(portfolio.returns, 2))
+                fill(1 / length(portfolio.assets), length(portfolio.assets))
         )
         w = portfolio.bl_bench_weights
     else
@@ -3193,7 +3193,7 @@ function black_litterman_factor_satistics!(
     if isempty(w)
         isempty(portfolio.bl_bench_weights) && (
             portfolio.bl_bench_weights =
-                fill(1 / size(portfolio.returns, 2), size(portfolio.returns, 2))
+                fill(1 / length(portfolio.assets), length(portfolio.assets))
         )
         w = portfolio.bl_bench_weights
     else
