@@ -1710,7 +1710,7 @@ function opt_port!(
     u_mu::Symbol = :Box,
     w_ini::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
     near_opt::Bool = false,
-    M::Integer = near_opt ? ceil(Int, sqrt(size(portfolio.returns, 2))) : 0,
+    M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
     w_min::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
     w_max::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
 )

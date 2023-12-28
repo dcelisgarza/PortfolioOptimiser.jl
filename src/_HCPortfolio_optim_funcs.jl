@@ -43,6 +43,8 @@ function _opt_w(
     rm = :SD,
     rf = 0.0,
     l = 2.0,
+    near_opt::Bool = false,
+    M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
 )
     port = Portfolio(;
         assets = assets,
@@ -53,6 +55,8 @@ function _opt_w(
     )
     asset_statistics!(port; calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false)
     port.cov = icov
+
+    near_opt && iszero(M) && (M = ceil(sqrt(size(portfolio.returns, 2))))
 
     weights = if obj != :Equal
         !isnothing(mu) && (port.mu = mu)
@@ -65,9 +69,20 @@ function _opt_w(
             kelly = kelly,
             rf = rf,
             l = l,
+            near_opt = near_opt,
+            M = M,
         )
     else
-        opt_port!(port; type = :RP, class = :Classic, rm = rm, kelly = kelly, rf = rf)
+        opt_port!(
+            port;
+            type = :RP,
+            class = :Classic,
+            rm = rm,
+            kelly = kelly,
+            rf = rf,
+            near_opt = near_opt,
+            M = M,
+        )
     end
 
     w = !isempty(weights) ? weights.weights : zeros(eltype(returns), length(assets))
@@ -474,6 +489,8 @@ function _intra_weights(
     rm = :SD,
     rf = 0.0,
     l = 2.0,
+    near_opt::Bool = false,
+    M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
 )
     returns = portfolio.returns
     mu = portfolio.mu
@@ -502,6 +519,8 @@ function _intra_weights(
             rm = rm,
             rf = rf,
             l = l,
+            near_opt = near_opt,
+            M = M,
         )
         intra_weights[idx, i] .= weights
         !isempty(cfail) && (cfails[i] = cfail)
@@ -518,6 +537,8 @@ function _inter_weights(
     rm = :SD,
     rf = 0.0,
     l = 2.0,
+    near_opt::Bool = false,
+    M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
 )
     mu = portfolio.mu
     returns = portfolio.returns
@@ -527,7 +548,7 @@ function _inter_weights(
     tret = returns * intra_weights
     inter_weights, inter_fail = _opt_w(
         portfolio,
-        1:length(tmu),
+        1:size(tret, 2),
         tret,
         tmu,
         tcov;
@@ -536,6 +557,8 @@ function _inter_weights(
         rm = rm,
         rf = rf,
         l = l,
+        near_opt = near_opt,
+        M = M,
     )
 
     weights = intra_weights * inter_weights
@@ -556,6 +579,9 @@ function _nco_weights(
     l_i = l,
     owa_w_i = portfolio.owa_w,
     max_num_assets_kurt_i = portfolio.max_num_assets_kurt,
+    near_opt::Bool = false,
+    M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+    M_i::Integer = M,
 )
     og_owa_w = nothing
     og_max_num_assets_kurt = nothing
@@ -571,8 +597,16 @@ function _nco_weights(
         portfolio.max_num_assets_kurt = max_num_assets_kurt_i
     end
 
-    intra_weights, intra_fails =
-        _intra_weights(portfolio; obj = obj_i, kelly = kelly_i, rm = rm_i, rf = rf, l = l_i)
+    intra_weights, intra_fails = _intra_weights(
+        portfolio;
+        obj = obj_i,
+        kelly = kelly_i,
+        rm = rm_i,
+        rf = rf,
+        l = l_i,
+        near_opt = near_opt,
+        M = M_i,
+    )
 
     if !isnothing(og_owa_w)
         portfolio.owa_w = og_owa_w
@@ -589,6 +623,8 @@ function _nco_weights(
         rm = rm,
         rf = rf,
         l = l,
+        near_opt = near_opt,
+        M = M,
     )
     !isempty(intra_fails) && (portfolio.fail[:intra] = intra_fails)
     !isempty(inter_fails) && (portfolio.fail[:inter] = inter_fails)
@@ -707,6 +743,9 @@ function opt_port!(
     rf::Real = 0.0,
     l::Real = 2.0,
     l_i::Real = l,
+    near_opt::Bool = false,
+    M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+    M_i::Integer = M,
     cluster::Bool = true,
     linkage::Symbol = :single,
     k = cluster ? 0 : portfolio.k,
@@ -814,6 +853,10 @@ function opt_port!(
             max_num_assets_kurt_i = max_num_assets_kurt_i,
             # Risk free rate.
             rf = rf,
+            # Near optimal centering.
+            near_opt = near_opt,
+            M = M,
+            M_i = M_i,
         )
     end
 
