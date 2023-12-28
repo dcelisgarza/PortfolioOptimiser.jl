@@ -1179,7 +1179,7 @@ function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l
     return nothing
 end
 
-function _optimize_portfolio(portfolio, type, obj, near_opt = false)
+function _optimize_portfolio(portfolio, type, obj, near_opt = false, coneopt = true)
     solvers = portfolio.solvers
     model = portfolio.model
 
@@ -1188,7 +1188,17 @@ function _optimize_portfolio(portfolio, type, obj, near_opt = false)
     term_status = termination_status(model)
     solvers_tried = Dict()
 
-    strtype = !near_opt ? "_" * String(type) : "_Near_" * String(type)
+    strtype = if !near_opt
+        "_" * String(type)
+    else
+        tmp = "_Near_"
+        tmp = if coneopt
+            tmp * "Cone_"
+        else
+            tmp * "NL_"
+        end
+        tmp * String(type)
+    end
 
     for (key, val) in solvers
         key = Symbol(String(key) * strtype)
@@ -1271,10 +1281,21 @@ function _finalise_portfolio(
     rm,
     obj,
     near_opt = false,
+    coneopt = true,
 )
     model = portfolio.model
 
-    strtype = !near_opt ? String(type) : "Near_" * String(type)
+    strtype = if !near_opt
+        String(type)
+    else
+        tmp = "Near_"
+        tmp = if coneopt
+            tmp * "Cone_"
+        else
+            tmp * "NL_"
+        end
+        tmp * String(type)
+    end
 
     if (type == :Trad || type == :RP) && rm ∈ (:EVaR, :EDaR, :RVaR, :RDaR)
         z_key = "z_" * lowercase(string(rm))
@@ -1328,6 +1349,7 @@ function _handle_errors_and_finalise(
     rm,
     obj,
     near_opt = false,
+    coneopt = true,
 )
     retval =
         if term_status ∉ ValidTermination || any(.!isfinite.(value.(portfolio.model[:w])))
@@ -1347,6 +1369,7 @@ function _handle_errors_and_finalise(
                 rm,
                 obj,
                 near_opt,
+                coneopt,
             )
         end
 
@@ -1368,7 +1391,10 @@ function _p_save_opt_params(
     u_mu,
     u_cov,
     string_names,
-    m,
+    w_ini,
+    M,
+    w_min,
+    w_max,
     save_opt_params,
 )
     !save_opt_params && return nothing
@@ -1383,7 +1409,10 @@ function _p_save_opt_params(
             :l => l,
             :string_names => string_names,
             :hist => hist,
-            :m => m,
+            :M => M,
+            :w_ini => w_ini,
+            :w_min => w_min,
+            :w_max => w_max,
         )
     elseif type == :RP
         Dict(
@@ -1394,7 +1423,10 @@ function _p_save_opt_params(
             :rf => rf,
             :string_names => string_names,
             :hist => hist,
-            :m => m,
+            :M => M,
+            :w_ini => w_ini,
+            :w_min => w_min,
+            :w_max => w_max,
         )
     elseif type == :RRP
         Dict(
@@ -1406,7 +1438,10 @@ function _p_save_opt_params(
             :rrp_ver => rrp_ver,
             :string_names => string_names,
             :hist => hist,
-            :m => m,
+            :M => M,
+            :w_ini => w_ini,
+            :w_min => w_min,
+            :w_max => w_max,
         )
     elseif type == :WC
         Dict(
@@ -1419,7 +1454,10 @@ function _p_save_opt_params(
             :u_cov => u_cov,
             :string_names => string_names,
             :hist => hist,
-            :m => m,
+            :M => M,
+            :w_ini => w_ini,
+            :w_min => w_min,
+            :w_max => w_max,
         )
     end
 
@@ -1489,23 +1527,27 @@ function _near_optimal_centering(
     mu,
     returns,
     sigma,
-    retval,
-    m,
+    w_opt,
+    M,
     type,
     N,
     obj,
+    w1 = Vector{eltype(returns)}(undef, 0),
+    w2 = Vector{eltype(returns)}(undef, 0),
 )
-    fl = frontier_limits!(
-        portfolio;
-        class = class,
-        hist = hist,
-        kelly = kelly,
-        rf = rf,
-        rm = rm,
-    )
+    if isempty(w1) || isempty(w2)
+        fl = frontier_limits!(
+            portfolio;
+            class = class,
+            hist = hist,
+            kelly = kelly,
+            rf = rf,
+            rm = rm,
+        )
 
-    w1 = fl.w_min
-    w2 = fl.w_max
+        w1 = fl.w_min
+        w2 = fl.w_max
+    end
 
     ret1 = dot(mu, w1)
     ret2 = dot(mu, w2)
@@ -1539,7 +1581,7 @@ function _near_optimal_centering(
         0,
     )
 
-    w3 = retval.weights
+    w3 = w_opt.weights
     ret3 = dot(mu, w3)
     risk3 = calc_risk(
         w3,
@@ -1558,8 +1600,8 @@ function _near_optimal_centering(
         solvers = solvers,
     )
 
-    c1 = (ret2 - ret1) / m
-    c2 = (risk2 - risk1) / m
+    c1 = (ret2 - ret1) / M
+    c2 = (risk2 - risk1) / M
     e1 = ret3 - c1
     e2 = risk3 + c2
 
@@ -1585,18 +1627,7 @@ function _near_optimal_centering(
     @expression(model, near_opt_risk, log_ret + log_risk + neg_sum_log_ws)
     @objective(model, Min, near_opt_risk)
 
-    term_status, solvers_tried = _optimize_portfolio(portfolio, type, obj, true)
-
-    if term_status ∉ ValidTermination || any(.!isfinite.(value.(portfolio.model[:w])))
-        model = portfolio.model = copy(model1)
-        @expression(model, lret, -log(model[:ret] - e1))
-        @expression(model, lrisk, -log(e2 - model[:risk]))
-        @expression(model, nslws, -sum(log.(1 .+ model[:w]) .+ log.(model[:w])))
-        @expression(model, nor, lret + lrisk + nslws)
-        @objective(model, Min, nor)
-        term_status, solvers_tried = _optimize_portfolio(portfolio, type, obj, true)
-    end
-
+    term_status, solvers_tried = _optimize_portfolio(portfolio, type, obj, true, true)
     retval = _handle_errors_and_finalise(
         portfolio,
         term_status,
@@ -1607,7 +1638,31 @@ function _near_optimal_centering(
         rm,
         obj,
         true,
+        true,
     )
+
+    if term_status ∉ ValidTermination || any(.!isfinite.(value.(portfolio.model[:w])))
+        model = portfolio.model = copy(model1)
+        @expression(model, lret, -log(model[:ret] - e1))
+        @expression(model, lrisk, -log(e2 - model[:risk]))
+        @expression(model, nslws, -sum(log.(1 .+ model[:w]) .+ log.(model[:w])))
+        @expression(model, nor, lret + lrisk + nslws)
+        @objective(model, Min, nor)
+        term_status2, solvers_tried2 =
+            _optimize_portfolio(portfolio, type, obj, true, false)
+        retval = _handle_errors_and_finalise(
+            portfolio,
+            term_status2,
+            returns,
+            N,
+            merge(solvers_tried, solvers_tried2),
+            type,
+            rm,
+            obj,
+            true,
+            false,
+        )
+    end
 
     return retval
 end
@@ -1649,8 +1704,11 @@ function opt_port!(
     type::Symbol = :Trad,
     u_cov::Symbol = :Box,
     u_mu::Symbol = :Box,
+    w_ini::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
     near_opt::Bool = false,
     M::Integer = near_opt ? ceil(Int, sqrt(size(portfolio.returns, 2))) : 0,
+    w_min::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
+    w_max::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
 )
     @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
     @assert(class ∈ PortClasses, "class = $class, must be one of $PortClasses")
@@ -1672,10 +1730,30 @@ function opt_port!(
         portfolio.kind_tracking_err ∈ TrackingErrKinds,
         "portfolio.kind_tracking_err = $(portfolio.kind_tracking_err), must be one of $TrackingErrKinds"
     )
+    if !isempty(w_ini)
+        @assert(
+            length(w_ini) == size(portfolio.returns, 2),
+            "length(w_ini) = $(length(w_ini)) must be equal to the number of assets size(portfolio.returns, 2) = $(size(portfolio.returns, 2))"
+        )
+    end
+    if near_opt
+        @assert(M > 0, "M = $M, must be greater than 0")
+    end
+    if !isempty(w_min)
+        @assert(
+            length(w_min) == size(portfolio.returns, 2),
+            "length(w_min) = $(length(w_min)) must be equal to the number of assets size(portfolio.returns, 2) = $(size(portfolio.returns, 2))"
+        )
+    end
+    if !isempty(w_max)
+        @assert(
+            length(w_max) == size(portfolio.returns, 2),
+            "length(w_max) = $(length(w_max)) must be equal to the number of assets size(portfolio.returns, 2) = $(size(portfolio.returns, 2))"
+        )
+    end
 
     portfolio.model = JuMP.Model()
 
-    # mu, sigma, returns
     mu, sigma, returns = _setup_model_class(portfolio, class, hist)
     T, N = size(returns)
     kurtosis = portfolio.kurt
@@ -1685,6 +1763,10 @@ function opt_port!(
     model = portfolio.model
     set_string_names_on_creation(model, string_names)
     @variable(model, w[1:N])
+
+    if !isempty(w_ini)
+        set_start_value.(w, w_ini)
+    end
 
     if type == :Trad
         _setup_sharpe_k(model, obj)
@@ -1765,6 +1847,8 @@ function opt_port!(
             type,
             N,
             obj,
+            w_min,
+            w_max,
         )
     end
 
@@ -1783,7 +1867,10 @@ function opt_port!(
         u_mu,
         u_cov,
         string_names,
+        w_ini,
         M,
+        w_min,
+        w_max,
         save_opt_params,
     )
 
