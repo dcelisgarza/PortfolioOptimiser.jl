@@ -1615,8 +1615,12 @@ function _near_optimal_centering(
     @constraint(model, [-log_ret, 1, model[:ret] - e1] in MOI.ExponentialCone())
     @variable(model, log_risk)
     @constraint(model, [-log_risk, 1, e2 - model[:risk]] in MOI.ExponentialCone())
-    @variable(model, log_w[1:N])
-    @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] in MOI.ExponentialCone())
+    if !haskey(model, :log_w)
+        @variable(model, log_w[1:N])
+        @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] in MOI.ExponentialCone())
+    else
+        log_w = model[:log_w]
+    end
     @variable(model, log_omw[1:N])
     @constraint(
         model,
@@ -1643,11 +1647,11 @@ function _near_optimal_centering(
 
     if term_status ∉ ValidTermination || any(.!isfinite.(value.(portfolio.model[:w])))
         model = portfolio.model = copy(model1)
-        @expression(model, lret, -log(model[:ret] - e1))
-        @expression(model, lrisk, -log(e2 - model[:risk]))
-        @expression(model, nslws, -sum(log.(1 .+ model[:w]) .+ log.(model[:w])))
-        @expression(model, nor, lret + lrisk + nslws)
-        @objective(model, Min, nor)
+        @expression(model, log_ret, -log(model[:ret] - e1))
+        @expression(model, log_risk, -log(e2 - model[:risk]))
+        @expression(model, neg_sum_log_ws, -sum(log.(1 .+ model[:w]) .+ log.(model[:w])))
+        @expression(model, near_opt_risk, log_ret + log_risk + neg_sum_log_ws)
+        @objective(model, Min, near_opt_risk)
         term_status2, solvers_tried2 =
             _optimize_portfolio(portfolio, type, obj, true, false)
         retval = _handle_errors_and_finalise(
