@@ -7,19 +7,19 @@ function _mv_risk(model, sigma)
 end
 
 function _mv_setup(portfolio, sigma, rm, kelly, obj, type)
-    dev_u = portfolio.dev_u
+    sd_u = portfolio.sd_u
 
-    !(rm == :SD || kelly == :Approx || isfinite(dev_u)) && (return nothing)
+    !(rm == :SD || kelly == :Approx || isfinite(sd_u)) && (return nothing)
 
     model = portfolio.model
 
     _mv_risk(model, sigma)
 
-    isfinite(dev_u) &&
+    isfinite(sd_u) &&
         type == :Trad &&
         (
-            obj == :Sharpe ? @constraint(model, model[:dev] <= dev_u * model[:k]) :
-            @constraint(model, model[:dev] <= dev_u)
+            obj == :Sharpe ? @constraint(model, model[:dev] <= sd_u * model[:k]) :
+            @constraint(model, model[:dev] <= sd_u)
         )
 
     rm == :SD && type != :RRP && @expression(model, risk, model[:dev_risk])
@@ -29,9 +29,9 @@ end
 
 function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     mad_u = portfolio.mad_u
-    sdev_u = portfolio.sdev_u
+    ssd_u = portfolio.ssd_u
 
-    !(rm == :MAD || rm == :SSD || isfinite(mad_u) || isfinite(sdev_u)) && (return nothing)
+    !(rm == :MAD || rm == :SSD || isfinite(mad_u) || isfinite(ssd_u)) && (return nothing)
 
     model = portfolio.model
     msv_target = portfolio.msv_target
@@ -62,18 +62,18 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
         rm == :MAD && @expression(model, risk, mad_risk)
     end
 
-    !(rm == :SSD || isfinite(sdev_u)) && (return nothing)
+    !(rm == :SSD || isfinite(ssd_u)) && (return nothing)
 
     @variable(model, sdev)
     @constraint(model, [sdev; mad] in SecondOrderCone())
 
     @expression(model, sdev_risk, sdev / sqrt(T - 1))
 
-    isfinite(sdev_u) &&
+    isfinite(ssd_u) &&
         type == :Trad &&
         (
-            obj == :Sharpe ? @constraint(model, sdev_risk <= sdev_u * model[:k]) :
-            @constraint(model, sdev_risk <= sdev_u)
+            obj == :Sharpe ? @constraint(model, sdev_risk <= ssd_u * model[:k]) :
+            @constraint(model, sdev_risk <= ssd_u)
         )
 
     rm == :SSD && @expression(model, risk, sdev_risk)
@@ -2012,33 +2012,7 @@ function efficient_frontier!(
     mus = range(ret1, stop = ret2, length = points)
     risks = range(risk1, stop = risk2, length = points)
 
-    ur = (
-        SD = :dev_u,
-        MAD = :mad_u,
-        SSD = :sdev_u,
-        FLPM = :flpm_u,
-        SLPM = :slpm_u,
-        WR = :wr_u,
-        CVaR = :cvar_u,
-        EVaR = :evar_u,
-        RVaR = :rvar_u,
-        MDD = :mdd_u,
-        ADD = :add_u,
-        CDaR = :cdar_u,
-        UCI = :uci_u,
-        EDaR = :edar_u,
-        RDaR = :rdar_u,
-        Kurt = :kurt_u,
-        SKurt = :skurt_u,
-        GMD = :gmd_u,
-        RG = :rg_u,
-        RCVaR = :rcvar_u,
-        TG = :tg_u,
-        RTG = :rtg_u,
-        OWA = :owa_u,
-    )
-
-    rmf = ur[rm]
+    rmf = Symbol(lowercase(string(rm)) * "_u")
 
     frontier = Vector{typeof(risk1)}(undef, 0)
     srisk = Vector{typeof(risk1)}(undef, 0)

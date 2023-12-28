@@ -43,7 +43,7 @@ import PortfolioOptimiser.distance_wei,
     PortfolioOptimiser.UncertaintyTypes,
     # Risk Measures
     PortfolioOptimiser.RiskMeasures,
-    PortfolioOptimiser.HRRiskMeasures
+    PortfolioOptimiser.HCRiskMeasures
 
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
 fix_math_md(content) = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")

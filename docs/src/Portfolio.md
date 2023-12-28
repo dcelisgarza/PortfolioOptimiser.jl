@@ -18,6 +18,6 @@ AbstractPortfolio
 Portfolio
 HCPortfolio
 RiskMeasures
-HRRiskMeasures
+HCRiskMeasures
 TrackingErrKinds
 ```

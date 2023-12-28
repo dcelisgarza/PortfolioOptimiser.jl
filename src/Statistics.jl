@@ -429,7 +429,7 @@ function covgerber0(
     x,
     threshold = 0.5;
     posdef_args::Tuple = (),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
     std_func = std,

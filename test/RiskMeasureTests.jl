@@ -13,7 +13,7 @@ using Test,
     StatsBase,
     Logging
 
-import PortfolioOptimiser.HRRiskMeasures
+import PortfolioOptimiser.HCRiskMeasures
 
 Logging.disable_logging(Logging.Warn)
 
@@ -357,7 +357,7 @@ end
 
     rc1 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[1],
+        rm = HCRiskMeasures[1],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -387,7 +387,7 @@ end
     @test isapprox(rc1, rc1t)
     rc2 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[2],
+        rm = HCRiskMeasures[2],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -417,7 +417,7 @@ end
     @test isapprox(rc2, rc2t)
     rc3 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[3],
+        rm = HCRiskMeasures[3],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -447,7 +447,7 @@ end
     @test isapprox(rc3, rc3t)
     rc4 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[4],
+        rm = HCRiskMeasures[4],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -477,7 +477,7 @@ end
     @test isapprox(rc4, rc4t)
     rc5 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[5],
+        rm = HCRiskMeasures[5],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -507,7 +507,7 @@ end
     @test isapprox(rc5, rc5t)
     rc6 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[6],
+        rm = HCRiskMeasures[6],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -537,7 +537,7 @@ end
     @test isapprox(rc6, rc6t)
     rc7 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[7],
+        rm = HCRiskMeasures[7],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -567,7 +567,7 @@ end
     @test isapprox(rc7, rc7t)
     rc8 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[8],
+        rm = HCRiskMeasures[8],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -597,7 +597,7 @@ end
     @test isapprox(rc8, rc8t, rtol = 5e-3)
     rc9 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[9],
+        rm = HCRiskMeasures[9],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -627,7 +627,7 @@ end
     @test isapprox(rc9, rc9t, atol = 0.02)
     rc10 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[10],
+        rm = HCRiskMeasures[10],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -657,7 +657,7 @@ end
     @test isapprox(rc10, rc10t, rtol = 4e-8)
     rc11 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[11],
+        rm = HCRiskMeasures[11],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -687,7 +687,7 @@ end
     @test isapprox(rc11, rc11t, rtol = 3e-8)
     rc12 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[12],
+        rm = HCRiskMeasures[12],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -717,7 +717,7 @@ end
     @test isapprox(rc12, rc12t, rtol = 4e-8)
     rc13 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[13],
+        rm = HCRiskMeasures[13],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -747,7 +747,7 @@ end
     @test isapprox(rc13, rc13t, rtol = 3e-8)
     rc14 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[14],
+        rm = HCRiskMeasures[14],
         rf = 0.0,
         type = type,
         di = 1e-6,
@@ -777,7 +777,7 @@ end
     @test isapprox(rc14, rc14t, rtol = 5e-1)
     rc15 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[15],
+        rm = HCRiskMeasures[15],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -807,7 +807,7 @@ end
     @test isapprox(rc15, rc15t, rtol = 3e-1)
     rc16 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[16],
+        rm = HCRiskMeasures[16],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -837,7 +837,7 @@ end
     @test isapprox(rc16, rc16t)
     rc17 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[17],
+        rm = HCRiskMeasures[17],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -867,7 +867,7 @@ end
     @test isapprox(rc17, rc17t)
     rc18 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[18],
+        rm = HCRiskMeasures[18],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -897,7 +897,7 @@ end
     @test isapprox(rc18, rc18t)
     rc19 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[19],
+        rm = HCRiskMeasures[19],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -927,7 +927,7 @@ end
     @test isapprox(rc19, rc19t)
     rc20 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[20],
+        rm = HCRiskMeasures[20],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -957,7 +957,7 @@ end
     @test isapprox(rc20, rc20t)
     rc21 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[21],
+        rm = HCRiskMeasures[21],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -987,7 +987,7 @@ end
     @test isapprox(rc21, rc21t)
     rc22 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[22],
+        rm = HCRiskMeasures[22],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1017,7 +1017,7 @@ end
     @test isapprox(rc22, rc22t)
     rc23 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[23],
+        rm = HCRiskMeasures[23],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1047,7 +1047,7 @@ end
     @test isapprox(rc23, rc23t)
     rc24 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[24],
+        rm = HCRiskMeasures[24],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1077,7 +1077,7 @@ end
     @test isapprox(rc24, rc24t)
     rc25 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[25],
+        rm = HCRiskMeasures[25],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1107,7 +1107,7 @@ end
     @test isapprox(rc25, rc25t)
     rc26 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[26],
+        rm = HCRiskMeasures[26],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1137,7 +1137,7 @@ end
     @test isapprox(rc26, rc26t)
     rc27 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[27],
+        rm = HCRiskMeasures[27],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1167,7 +1167,7 @@ end
     @test isapprox(rc27, rc27t, rtol = 8e-8)
     rc28 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[28],
+        rm = HCRiskMeasures[28],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1197,7 +1197,7 @@ end
     @test isapprox(rc28, rc28t, rtol = 6e-8)
     rc29 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[29],
+        rm = HCRiskMeasures[29],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1227,7 +1227,7 @@ end
     @test isapprox(rc29, rc29t, rtol = 5e-8)
     rc30 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[30],
+        rm = HCRiskMeasures[30],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1257,7 +1257,7 @@ end
     @test isapprox(rc30, rc30t, rtol = 7e-8)
     rc31 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[31],
+        rm = HCRiskMeasures[31],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1287,7 +1287,7 @@ end
     @test isapprox(rc31, rc31t, rtol = 6e-8)
     rc32 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[32],
+        rm = HCRiskMeasures[32],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1317,7 +1317,7 @@ end
     @test isapprox(rc32, rc32t, rtol = 6e-8)
     rc33 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[33],
+        rm = HCRiskMeasures[33],
         rf = 0.0,
         type = type,
         di = 1e-7,
@@ -1347,7 +1347,7 @@ end
     @test isapprox(rc33, rc33t, rtol = 9e-1)
     rc34 = risk_contribution(
         portfolio;
-        rm = HRRiskMeasures[34],
+        rm = HCRiskMeasures[34],
         rf = 0.0,
         type = type,
         di = 1e-7,

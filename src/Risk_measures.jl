@@ -83,7 +83,7 @@ const RiskMeasures = (
 
 """
 ```julia
-HRRiskMeasures = (
+HCRiskMeasures = (
     :SD,
     :MAD,
     :SSD,
@@ -133,7 +133,7 @@ $_rmstr
 - `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`](@ref)).$(_solver_reqs("`MOI.ExponentialCone`"))
 - `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`](@ref)).$(_solver_reqs("`MOI.PowerCone`"))
 """
-const HRRiskMeasures = (
+const HCRiskMeasures = (
     RiskMeasures...,
     :Variance,
     :Equal,
@@ -1172,7 +1172,7 @@ Compute the value of a risk measure given a vector of asset weights and returns.
 # Inputs
 - `w`: vector of asset weights.
 - `returns`: matrix of asset returns where columns are assets and rows are timesteps.
-- `rm`: risk measure from [`RiskMeasures`](@ref) and [`HRRiskMeasures`](@ref).
+- `rm`: risk measure from [`RiskMeasures`](@ref) and [`HCRiskMeasures`](@ref).
 - `rf`: risk-free rate at the frequency of `returns`, used as the minimum return target, `r`, in [`FLPM`](@ref) and [`SLPM`](@ref).
 - `sigma`: covariance matrix of asset returns.
 - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
@@ -1196,7 +1196,7 @@ Compute the value of a risk measure given a portfolio.
 # Inputs
 - `portfolio`: optimised portfolio.
 - `type`: type of portfolio from [`PortTypes`](@ref) or [`HCPortTypes`](@ref).
-- `rm`: risk measure from [`RiskMeasures`](@ref) and [`HRRiskMeasures`](@ref).
+- `rm`: risk measure from [`RiskMeasures`](@ref) and [`HCRiskMeasures`](@ref).
 - `rf`: risk-free rate at the frequency of `portfolio.returns`, used as the minimum return target, `r`, in [`FLPM`](@ref) and [`SLPM`](@ref).
 """
 function calc_risk(
@@ -1215,7 +1215,7 @@ function calc_risk(
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     solvers::Union{<:AbstractDict, Nothing} = nothing,
 )
-    @assert(rm ∈ HRRiskMeasures, "rm = $rm, must be one of $HRRiskMeasures")
+    @assert(rm ∈ HCRiskMeasures, "rm = $rm, must be one of $HCRiskMeasures")
 
     x = (rm != :Variance || rm != :SD) && returns * w
 
@@ -1348,7 +1348,7 @@ function _ul_risk(
     owa_w,
     di,
 )
-    @assert(rm ∈ HRRiskMeasures, "rm = $rm, must be one of $HRRiskMeasures")
+    @assert(rm ∈ HCRiskMeasures, "rm = $rm, must be one of $HCRiskMeasures")
 
     a1 = returns * w1
     a2 = returns * w2

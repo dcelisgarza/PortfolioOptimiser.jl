@@ -756,7 +756,7 @@ function opt_port!(
     save_opt_params = true,
 )
     @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
-    @assert(rm ∈ HRRiskMeasures, "rm = $rm, must be one of $HRRiskMeasures")
+    @assert(rm ∈ HCRiskMeasures, "rm = $rm, must be one of $HCRiskMeasures")
     @assert(obj ∈ HRObjFuncs, "obj = $obj, must be one of $HRObjFuncs")
     @assert(obj_i ∈ HRObjFuncs, "obj_i = $obj_i, must be one of $HRObjFuncs")
     @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")

@@ -170,9 +170,9 @@ mutable struct Portfolio{
     risk_budget::rbv
     # Bounds constraints
     mu_l::ler
-    dev_u::ud
+    sd_u::ud
     mad_u::umad
-    sdev_u::usd
+    ssd_u::usd
     cvar_u::ucvar
     wr_u::uwr
     flpm_u::uflpm
@@ -288,9 +288,9 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 ## Bounds constraints
 The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case, they also bring the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
 - `mu_l`: mean expected return.
-- `dev_u`: standard deviation.
+- `sd_u`: standard deviation.
 - `mad_u`: max absolute devia.
-- `sdev_u`: semi standard deviation.
+- `ssd_u`: semi standard deviation.
 - `cvar_u`: critical value at risk.
 - `wr_u`: worst realisation.
 - `flpm_u`: first lower partial moment.
@@ -507,9 +507,9 @@ mutable struct Portfolio{
     risk_budget::rbv
     # Bounds constraints
     mu_l::ler
-    dev_u::ud
+    sd_u::ud
     mad_u::umad
-    sdev_u::usd
+    ssd_u::usd
     cvar_u::ucvar
     wr_u::uwr
     flpm_u::uflpm
@@ -626,9 +626,9 @@ Portfolio(;
     risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Bounds constraints
     mu_l::Real = Inf,
-    dev_u::Real = Inf,
+    sd_u::Real = Inf,
     mad_u::Real = Inf,
-    sdev_u::Real = Inf,
+    ssd_u::Real = Inf,
     cvar_u::Real = Inf,
     wr_u::Real = Inf,
     flpm_u::Real = Inf,
@@ -659,7 +659,7 @@ Portfolio(;
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -747,9 +747,9 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 ### Bounds constraints
 The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case, they also bring the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
 - `mu_l`: mean expected return.
-- `dev_u`: standard deviation.
+- `sd_u`: standard deviation.
 - `mad_u`: max absolute devia.
-- `sdev_u`: semi standard deviation.
+- `ssd_u`: semi standard deviation.
 - `cvar_u`: critical value at risk.
 - `wr_u`: worst realisation.
 - `flpm_u`: first lower partial moment.
@@ -867,9 +867,9 @@ function Portfolio(;
     risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Bounds constraints
     mu_l::Real = Inf,
-    dev_u::Real = Inf,
+    sd_u::Real = Inf,
     mad_u::Real = Inf,
-    sdev_u::Real = Inf,
+    ssd_u::Real = Inf,
     cvar_u::Real = Inf,
     wr_u::Real = Inf,
     flpm_u::Real = Inf,
@@ -900,7 +900,7 @@ function Portfolio(;
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -1203,9 +1203,9 @@ function Portfolio(;
         typeof(b_vec_ineq),
         typeof(risk_budget),
         typeof(mu_l),
-        typeof(dev_u),
+        typeof(sd_u),
         typeof(mad_u),
-        typeof(sdev_u),
+        typeof(ssd_u),
         typeof(cvar_u),
         typeof(wr_u),
         typeof(flpm_u),
@@ -1313,9 +1313,9 @@ function Portfolio(;
         b_vec_ineq,
         risk_budget,
         mu_l,
-        dev_u,
+        sd_u,
         mad_u,
-        sdev_u,
+        ssd_u,
         cvar_u,
         wr_u,
         flpm_u,
@@ -1866,7 +1866,7 @@ HCPortfolio(;
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     bins_info::Union{Symbol, <:Integer} = :KN,
     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
@@ -1980,7 +1980,7 @@ function HCPortfolio(;
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef_fix::Symbol = :None,
+    posdef_fix::Symbol = :Nearest,
     bins_info::Union{Symbol, <:Integer} = :KN,
     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
