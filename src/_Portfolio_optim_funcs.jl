@@ -1540,6 +1540,7 @@ function _near_optimal_centering(
             kelly = kelly,
             rf = rf,
             rm = rm,
+            save_model = true,
         )
 
         w1 = fl.w_min
@@ -1887,6 +1888,7 @@ frontier_limits!(
     kelly::Symbol = :None,
     rf::Real = 0.0,
     rm::Symbol = :SD,
+    save_model::Bool = false,
 )
 ```
 """
@@ -1897,10 +1899,11 @@ function frontier_limits!(
     kelly::Symbol = :None,
     rf::Real = 0.0,
     rm::Symbol = :SD,
+    save_model::Bool = false,
 )
     optimal1 = deepcopy(portfolio.optimal)
     fail1 = deepcopy(portfolio.fail)
-    model1 = copy(portfolio.model)
+    save_model && (model1 = copy(portfolio.model))
 
     w_min = opt_port!(
         portfolio;
@@ -1930,7 +1933,7 @@ function frontier_limits!(
 
     portfolio.optimal = optimal1
     portfolio.fail = fail1
-    portfolio.model = model1
+    save_model && (portfolio.model = model1)
 
     return portfolio.limits[rm]
 end
