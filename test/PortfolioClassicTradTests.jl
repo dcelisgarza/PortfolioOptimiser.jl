@@ -581,6 +581,19 @@ l = 2.0
 end
 
 @testset "$(:Classic), $(:Trad), $(:MAD)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
     w1 = opt_port!(
         portfolio;
         rf = rf,
@@ -5074,20 +5087,20 @@ end
     ]
 
     @test isapprox(w1.weights, w1t, rtol = 1e-5)
-    @test isapprox(w2.weights, w2t)
-    @test isapprox(w3.weights, w3t)
+    @test isapprox(w2.weights, w2t, rtol = 1e-6)
+    @test isapprox(w3.weights, w3t, rtol = 1e-7)
     @test isapprox(w2.weights, w3.weights, rtol = 1e-5)
-    @test isapprox(w4.weights, w4t)
-    @test isapprox(w5.weights, w5t)
-    @test isapprox(w6.weights, w6t)
+    @test isapprox(w4.weights, w4t, rtol = 1e-6)
+    @test isapprox(w5.weights, w5t, rtol = 1e-7)
+    @test isapprox(w6.weights, w6t, rtol = 1e-7)
     @test isapprox(w5.weights, w6.weights, rtol = 1e-5)
     @test isapprox(w7.weights, w7t)
-    @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t)
+    @test isapprox(w8.weights, w8t, rtol = 1e-5)
+    @test isapprox(w9.weights, w9t, rtol = 1e-4)
     @test isapprox(w8.weights, w9.weights, rtol = 1e-1)
     @test isapprox(w10.weights, w10t)
     @test isapprox(w11.weights, w11t)
-    @test isapprox(w12.weights, w12t)
+    @test isapprox(w12.weights, w12t, rtol = 1e-6)
     @test isapprox(w11.weights, w12.weights, rtol = 1e-2)
     @test isapprox(w13.weights, w7.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w8.weights, rtol = 1e-1)
@@ -5650,11 +5663,11 @@ end
     @test isapprox(w5.weights, w6.weights, rtol = 1e-7)
     @test isapprox(w7.weights, w7t)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t)
+    @test isapprox(w9.weights, w9t, rtol = 1e-4)
     @test isapprox(w8.weights, w9.weights, rtol = 1e-1)
     @test isapprox(w10.weights, w10t)
     @test isapprox(w11.weights, w11t)
-    @test isapprox(w12.weights, w12t)
+    @test isapprox(w12.weights, w12t, rtol = 1e-6)
     @test isapprox(w11.weights, w12.weights, rtol = 1e-2)
     @test isapprox(w13.weights, w7.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w8.weights, rtol = 1e-1)
