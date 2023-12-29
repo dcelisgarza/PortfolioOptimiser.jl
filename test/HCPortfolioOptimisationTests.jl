@@ -14,6 +14,743 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "$(:HRP), $(:HERC), $(:Variance)" begin
+    portfolio = HCPortfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; type = :HRP, rm = :Variance, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :Variance, rf = rf, l = l, cluster = false)
+
+    w1t = [
+        0.03360421525593201,
+        0.053460257098811775,
+        0.027429766590708997,
+        0.04363053745921338,
+        0.05279180956461212,
+        0.07434468966041922,
+        0.012386194792256387,
+        0.06206960160806503,
+        0.025502890164538234,
+        0.0542097204834031,
+        0.12168116639250848,
+        0.023275086688903004,
+        0.009124639465879256,
+        0.08924750757276853,
+        0.017850423121104797,
+        0.032541204698588386,
+        0.07175228284814082,
+        0.08318399209117079,
+        0.03809545426566615,
+        0.07381856017730955,
+    ]
+
+    w2t = [
+        0.13800615465420732,
+        0.13699642397207687,
+        0.11264886209708354,
+        0.07233137568305816,
+        0.08751907340531916,
+        0.009581461151939705,
+        0.0007004061571764884,
+        0.010492663561092904,
+        0.006212611627629623,
+        0.00705205977060239,
+        0.016287855029586056,
+        0.0013749807973220346,
+        0.0004998451118074947,
+        0.0119463883211645,
+        0.0011617155968008514,
+        0.0019223787296834098,
+        0.17839314721102417,
+        0.014061982356398075,
+        0.009280213364201473,
+        0.1835304014018258,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+end
+
+@testset "$(:HRP), $(:HERC), $(:Equal)" begin
+    portfolio = HCPortfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; type = :HRP, rm = :Equal, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :Equal, rf = rf, l = l, cluster = false)
+
+    w1t = [
+        0.05,
+        0.05000000000000001,
+        0.05,
+        0.04999999999999999,
+        0.04999999999999999,
+        0.05000000000000001,
+        0.05000000000000001,
+        0.05,
+        0.05,
+        0.05000000000000001,
+        0.04999999999999999,
+        0.04999999999999999,
+        0.05,
+        0.04999999999999999,
+        0.05,
+        0.04999999999999999,
+        0.04999999999999999,
+        0.05,
+        0.05,
+        0.04999999999999999,
+    ]
+
+    w2t = [
+        0.07142857142857142,
+        0.07142857142857142,
+        0.07142857142857142,
+        0.07142857142857142,
+        0.07142857142857142,
+        0.03125,
+        0.0625,
+        0.03125,
+        0.03125,
+        0.03125,
+        0.03125,
+        0.041666666666666664,
+        0.041666666666666664,
+        0.03125,
+        0.0625,
+        0.041666666666666664,
+        0.07142857142857142,
+        0.03125,
+        0.03125,
+        0.07142857142857142,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+end
+
+@testset "$(:HRP), $(:HERC), $(:VaR)" begin
+    portfolio = HCPortfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; type = :HRP, rm = :VaR, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :VaR, rf = rf, l = l, cluster = false)
+
+    w1t = [
+        0.03403717939776512,
+        0.05917176810341441,
+        0.029281627698577888,
+        0.04641795773733506,
+        0.06002080678226616,
+        0.07336909341225178,
+        0.032392046758139795,
+        0.05383361136188931,
+        0.02967264551919885,
+        0.05284095110693102,
+        0.09521120378350553,
+        0.04261320776949539,
+        0.01642971834566978,
+        0.07971670573840162,
+        0.021147864266696195,
+        0.050803448662520866,
+        0.06563107532995796,
+        0.05200824347813839,
+        0.034112945793535646,
+        0.07128789895430926,
+    ]
+
+    w2t = [
+        0.1222084816173884,
+        0.11583540405051508,
+        0.10513395421254644,
+        0.08866154813050656,
+        0.11464394188711771,
+        0.016863032234098897,
+        0.0059686096771524475,
+        0.021059028209158923,
+        0.014259774155937018,
+        0.012863730547405552,
+        0.02249853175108946,
+        0.006126655748708131,
+        0.0034383158452341027,
+        0.01883716163515616,
+        0.006236656022174368,
+        0.007304196447403886,
+        0.13484974793201304,
+        0.02034496736903449,
+        0.016393647896841584,
+        0.14647261463051786,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+end
+
+@testset "$(:HRP), $(:HERC), $(:DaR)" begin
+    portfolio = HCPortfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; type = :HRP, rm = :DaR, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :DaR, rf = rf, l = l, cluster = false)
+
+    w1t = [
+        0.057660532702867646,
+        0.04125282312548106,
+        0.05922785740065619,
+        0.03223509018499126,
+        0.10384639449297382,
+        0.02480551517770064,
+        0.030513023620218654,
+        0.037564939241009405,
+        0.02260728843785307,
+        0.05164502511939685,
+        0.08286147806113833,
+        0.01696931547695469,
+        0.00418787314771699,
+        0.06308172456210165,
+        0.007685315296496237,
+        0.0694006227527249,
+        0.09119842783020647,
+        0.09248808273195344,
+        0.044542968010494795,
+        0.06622570262706394,
+    ]
+
+    w2t = [
+        0.1701404475464932,
+        0.07638344260207078,
+        0.1747651936775527,
+        0.04109306170754365,
+        0.13238263868709735,
+        0.0028613693978136656,
+        0.0016917034088304406,
+        0.005506828348909748,
+        0.007271557723278589,
+        0.00881539538992607,
+        0.013886556103133895,
+        0.0011199824930143113,
+        0.0005555866493336682,
+        0.01057171471848145,
+        0.0008438908860668867,
+        0.0045804724765062576,
+        0.18517556078524808,
+        0.01355828083886835,
+        0.014327094730747983,
+        0.13446922182908289,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+end
+
+@testset "$(:HRP), $(:HERC), $(:DaR_r)" begin
+    portfolio = HCPortfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; type = :HRP, rm = :DaR_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :DaR_r, rf = rf, l = l, cluster = false)
+
+    w1t = [
+        0.05820921825149978,
+        0.04281381004716568,
+        0.061012991673039425,
+        0.037261284520695284,
+        0.10225280827507012,
+        0.03171774621579708,
+        0.029035913030571646,
+        0.03777811595747374,
+        0.021478656618637317,
+        0.05210098246314737,
+        0.08336111731195082,
+        0.0224554330786605,
+        0.008018398540074134,
+        0.060923985355596684,
+        0.009489132849269694,
+        0.06345531419794387,
+        0.0883323204747975,
+        0.08122137323769983,
+        0.039962166984027804,
+        0.06911923091688174,
+    ]
+
+    w2t = [
+        0.16874447006595797,
+        0.07816019153235057,
+        0.17687241396237915,
+        0.04705400540938272,
+        0.1291260957744874,
+        0.004014765701962503,
+        0.002242550056592231,
+        0.0065510390777111125,
+        0.007600261482623489,
+        0.00943061657876077,
+        0.01472146817205825,
+        0.001425690397995053,
+        0.0011045182084335246,
+        0.010759098969019928,
+        0.0014474645444072503,
+        0.004028763633142286,
+        0.17306761705614934,
+        0.014084460713300013,
+        0.014140685047654714,
+        0.13542382361563188,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+end
+
+@testset "$(:HRP), $(:HERC), $(:MDD_r)" begin
+    portfolio = HCPortfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; type = :HRP, rm = :MDD_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :MDD_r, rf = rf, l = l, cluster = false)
+
+    w1t = [
+        0.054750291482807016,
+        0.05626561538767235,
+        0.044927537922610235,
+        0.037029800949262545,
+        0.06286000734501392,
+        0.038964408950160866,
+        0.033959752237812064,
+        0.04828571977339982,
+        0.01937785058895953,
+        0.05279062837229332,
+        0.10144994531515807,
+        0.02678668518638289,
+        0.010335110450233378,
+        0.07434568383344507,
+        0.01192345099055306,
+        0.05711412672965212,
+        0.06785463405921893,
+        0.09152771438398988,
+        0.032677346602089874,
+        0.07677368943928506,
+    ]
+
+    w2t = [
+        0.17104752030306927,
+        0.09758633651253908,
+        0.14035987292228014,
+        0.05731582169176853,
+        0.09729657951622964,
+        0.006490357032465085,
+        0.003774508434103719,
+        0.010468316007290817,
+        0.009743238790322482,
+        0.013111339815220875,
+        0.01911681539964793,
+        0.0025610974496129077,
+        0.002087345569174382,
+        0.014009398518544134,
+        0.002625694702940452,
+        0.005460729585851846,
+        0.1457564315681359,
+        0.019843155328182448,
+        0.016430263486482476,
+        0.16491517736613784,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+end
+
+@testset "$(:HRP), $(:HERC), $(:ADD_r)" begin
+    portfolio = HCPortfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; type = :HRP, rm = :ADD_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :ADD_r, rf = rf, l = l, cluster = false)
+
+    w1t = [
+        0.05216718533133331,
+        0.04708278318245931,
+        0.07158823871210457,
+        0.029511984859220904,
+        0.12867669205129983,
+        0.03859596234440916,
+        0.022402839001206605,
+        0.026020360199894607,
+        0.030904469636691148,
+        0.054239105004183275,
+        0.07390114503735276,
+        0.019880342325388017,
+        0.00476824739544596,
+        0.03991945523395664,
+        0.0054480039590591904,
+        0.059645486519252305,
+        0.11611402694084015,
+        0.06374794181935534,
+        0.059893035563107475,
+        0.055492694883439435,
+    ]
+
+    w2t = [
+        0.13890862306303717,
+        0.08228316085187799,
+        0.19062220060076038,
+        0.0376608731562768,
+        0.16420707047086863,
+        0.004049747911676121,
+        0.0010032139460889077,
+        0.003527291070945844,
+        0.005572836327743504,
+        0.005073150708805675,
+        0.00944543436815572,
+        0.0006304771418018664,
+        0.0003491418749030239,
+        0.00510217526716653,
+        0.00046085571672364276,
+        0.0018915728535527608,
+        0.22313209611423993,
+        0.008641600048699478,
+        0.010800188072752029,
+        0.10663829043392409,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+end
+
+@testset "$(:HRP), $(:HERC), $(:CDaR_r)" begin
+    portfolio = HCPortfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; type = :HRP, rm = :CDaR_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :CDaR_r, rf = rf, l = l, cluster = false)
+
+    w1t = [
+        0.055226953695215866,
+        0.047934679854074826,
+        0.05395157314076186,
+        0.036982877818185954,
+        0.08463665680704126,
+        0.033820937721103415,
+        0.03026563101495272,
+        0.04118023926554901,
+        0.02122427296619385,
+        0.05288666614109493,
+        0.09090289747478623,
+        0.02380032651263032,
+        0.008673469487824291,
+        0.06662055705080387,
+        0.010138402407857017,
+        0.060505269563432176,
+        0.08319151689594376,
+        0.08557053458440436,
+        0.038056791259321536,
+        0.07442974633882277,
+    ]
+
+    w2t = [
+        0.16846747751771426,
+        0.08591113823174364,
+        0.16457698328423234,
+        0.05092696726556376,
+        0.11654821109025226,
+        0.004667997713321575,
+        0.002674675556412607,
+        0.007614693522228413,
+        0.008486192959268507,
+        0.010644988460622687,
+        0.015943951734485443,
+        0.001707522465728183,
+        0.0013538099954179237,
+        0.011684940476591212,
+        0.0017689365595525885,
+        0.00434086931621184,
+        0.1644823128266498,
+        0.015822962833987302,
+        0.015216411631701775,
+        0.14715895655831404,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+end
+
+@testset "$(:HRP), $(:HERC), $(:UCI_r)" begin
+    portfolio = HCPortfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; type = :HRP, rm = :UCI_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :UCI_r, rf = rf, l = l, cluster = false)
+
+    w1t = [
+        0.05276898612268049,
+        0.04614128625526376,
+        0.06552577565455027,
+        0.0320518739448942,
+        0.1111735166748811,
+        0.039154188455666976,
+        0.025443440854672504,
+        0.03239581981059534,
+        0.027120969094009423,
+        0.05445935205465669,
+        0.08028963951603105,
+        0.02075298500986429,
+        0.0058131044419531056,
+        0.04948420047533672,
+        0.006850658262213453,
+        0.06288836730781266,
+        0.1025592250558978,
+        0.07454814435900761,
+        0.050977607512044276,
+        0.05960085913796832,
+    ]
+
+    w2t = [
+        0.1501837250682415,
+        0.08259927626457764,
+        0.18649031938774657,
+        0.04170422746342093,
+        0.1446531842502841,
+        0.004263883183046831,
+        0.0014374151705198273,
+        0.004783915640419804,
+        0.006617526444512656,
+        0.006838136394927828,
+        0.01190964018972853,
+        0.0008787383805666955,
+        0.000561846197512641,
+        0.007340162769319486,
+        0.0007311475573957215,
+        0.0026628661861550773,
+        0.2042182645680465,
+        0.011008581843225654,
+        0.012438555002205073,
+        0.1186785880381469,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+end
+
+@testset "$(:HRP), $(:HERC), $(:EDaR_r)" begin
+    portfolio = HCPortfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; type = :HRP, rm = :EDaR_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :EDaR_r, rf = rf, l = l, cluster = false)
+
+    w1t = [
+        0.055560530905066345,
+        0.052522781694077786,
+        0.049959310773007755,
+        0.036469678098098916,
+        0.07360442657586366,
+        0.03548425014502784,
+        0.03187063039148397,
+        0.0436214861869137,
+        0.021541877133471526,
+        0.054356898936874475,
+        0.09401419407671989,
+        0.02488151447327445,
+        0.00927044194799896,
+        0.06971379898104886,
+        0.010782028044547592,
+        0.05939091195793561,
+        0.07729538157400358,
+        0.0873665609377898,
+        0.03800313067616797,
+        0.07429016649062732,
+    ]
+
+    w2t = [
+        0.16963428529708452,
+        0.09078600538624318,
+        0.15253295529869249,
+        0.05340267954721342,
+        0.10777922402041004,
+        0.005306170775073565,
+        0.0030429171807580635,
+        0.008660510613916286,
+        0.009155535775430703,
+        0.011632505241297782,
+        0.01716208530372885,
+        0.0019606924950173106,
+        0.0015657603782719826,
+        0.012726101379791875,
+        0.0020325036173781956,
+        0.004680073452652399,
+        0.16033828870014744,
+        0.017345558220115884,
+        0.01615175039427739,
+        0.15410439692249855,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+end
+
+@testset "$(:HRP), $(:HERC), $(:RDaR_r)" begin
+    portfolio = HCPortfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; type = :HRP, rm = :RDaR_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :RDaR_r, rf = rf, l = l, cluster = false)
+
+    w1t = [
+        0.055263517441901736,
+        0.054708858603147746,
+        0.04729258532814955,
+        0.03659066794751168,
+        0.0676324029986855,
+        0.03707186730732357,
+        0.033016951008785926,
+        0.045900281002362715,
+        0.020741988813931238,
+        0.0538929592253236,
+        0.09778300255005679,
+        0.025642106596742546,
+        0.009710156615873208,
+        0.07161140464324384,
+        0.01126211156930582,
+        0.05878170411220516,
+        0.072570206971881,
+        0.0896251644842965,
+        0.03569138424980898,
+        0.07521067852946291,
+    ]
+
+    w2t = [
+        0.17052233941267297,
+        0.09426844763519557,
+        0.1459270538743326,
+        0.055157074857946624,
+        0.10194964247092934,
+        0.005871233303277968,
+        0.0033888341936536746,
+        0.009563250089046411,
+        0.009611660038404808,
+        0.01244378207125877,
+        0.018260353360027827,
+        0.0022046154504783517,
+        0.001770193681777923,
+        0.013372974027098031,
+        0.002283257185457951,
+        0.005053838014528687,
+        0.1537720515286175,
+        0.0186732595861696,
+        0.016539081897432605,
+        0.1593670573216927,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+end
+
 @testset "$(:HRP), $(:HERC), $(:NCO), $(:SD)" begin
     portfolio = HCPortfolio(
         prices = prices,
@@ -29,7 +766,7 @@ l = 2.0
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :SD, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :SD, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :SD, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -397,7 +1134,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :MAD, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :MAD, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :MAD, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -765,7 +1502,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :SSD, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :SSD, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :SSD, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -1133,7 +1870,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :FLPM, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :FLPM, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :FLPM, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -1501,7 +2238,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :SLPM, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :SLPM, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :SLPM, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -1869,7 +2606,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :WR, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :WR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :WR, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -2237,7 +2974,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :CVaR, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :CVaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :CVaR, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -2605,7 +3342,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :EVaR, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :EVaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :EVaR, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -2972,7 +3709,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :RVaR, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :RVaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :RVaR, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -3340,7 +4077,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :MDD, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :MDD, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :MDD, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -3708,7 +4445,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :ADD, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :ADD, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :ADD, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -4074,7 +4811,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :CDaR, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :CDaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :CDaR, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -4442,7 +5179,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :UCI, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :UCI, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :UCI, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -4810,7 +5547,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :EDaR, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :EDaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :EDaR, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -5178,7 +5915,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :RDaR, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :RDaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :RDaR, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -5546,7 +6283,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :Kurt, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :Kurt, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :Kurt, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,
@@ -6132,7 +6869,7 @@ end
     asset_statistics!(portfolio)
 
     w1 = opt_port!(portfolio; type = :HRP, rm = :SKurt, rf = rf, l = l, linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :SKurt, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :SKurt, rf = rf, l = l, cluster = false)
     w3 = opt_port!(
         portfolio;
         type = :NCO,

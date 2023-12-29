@@ -136,7 +136,6 @@ end
 
 function _hierarchical_clustering(
     portfolio::HCPortfolio,
-    type = :HRP,
     linkage = :single,
     max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
     branchorder = :optimal,
@@ -160,7 +159,7 @@ function _hierarchical_clustering(
         )
     end
 
-    k = type ∈ (:HERC, :NCO) ? _two_diff_gap_stat(dist, clustering, max_k) : 0
+    k = _two_diff_gap_stat(dist, clustering, max_k)
 
     return clustering, k
 end
@@ -174,7 +173,7 @@ function cluster_assets(
     dbht_method = :Unique,
 )
     clustering, tk =
-        _hierarchical_clustering(portfolio, :HERC, linkage, max_k, branchorder, dbht_method)
+        _hierarchical_clustering(portfolio, linkage, max_k, branchorder, dbht_method)
 
     k = iszero(k) ? tk : k
 
@@ -811,14 +810,8 @@ function opt_port!(
     N = size(portfolio.returns, 2)
 
     if cluster
-        portfolio.clusters, tk = _hierarchical_clustering(
-            portfolio,
-            type,
-            linkage,
-            max_k,
-            branchorder,
-            dbht_method,
-        )
+        portfolio.clusters, tk =
+            _hierarchical_clustering(portfolio, linkage, max_k, branchorder, dbht_method)
         portfolio.k = iszero(k) ? tk : k
     end
 
