@@ -239,8 +239,8 @@ function plot_frontier(
 
     isinf(beta) && (beta = alpha)
 
-    risks = copy(frontier[rm][:risk])
-    weights = Matrix(frontier[rm][:weights][!, 2:end])
+    risks = copy(frontier[:risk])
+    weights = Matrix(frontier[:weights][!, 2:end])
 
     rets = if kelly
         1 / size(returns, 1) * vec(sum(log.(1 .+ returns * weights), dims = 1))
@@ -286,7 +286,7 @@ function plot_frontier(
 
     !haskey(kwargs_f, :label) && (kwargs_f = (kwargs_f..., label = ""))
 
-    if frontier[rm][:sharpe]
+    if frontier[:sharpe]
         !haskey(kwargs_s, :label) &&
             (kwargs_s = (kwargs_s..., label = "Max Risk Adjusted Return Ratio"))
         !haskey(kwargs_s, :markershape) && (kwargs_s = (kwargs_s..., markershape = :star))
@@ -295,7 +295,7 @@ function plot_frontier(
         !haskey(kwargs_s, :markersize) && (kwargs_s = (kwargs_s..., markersize = 8))
     end
 
-    plt = if frontier[rm][:sharpe]
+    plt = if frontier[:sharpe]
         scatter(risks[1:(end - 1)], rets[1:(end - 1)]; kwargs_f...)
         scatter!([risks[end]], [rets[end]]; kwargs_s...)
     else
@@ -315,7 +315,7 @@ function plot_frontier(
     kwargs_s = (;),
 )
     plot_frontier(
-        portfolio.frontier;
+        portfolio.frontier[rm];
         alpha = portfolio.alpha,
         beta = portfolio.beta,
         kappa = portfolio.kappa,

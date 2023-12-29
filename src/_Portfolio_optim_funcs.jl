@@ -2016,6 +2016,7 @@ function efficient_frontier!(
 
     frontier = Vector{typeof(risk1)}(undef, 0)
     srisk = Vector{typeof(risk1)}(undef, 0)
+    w_ini = Vector{typeof(risk1)}(undef, 0)
 
     i = 0
     for (j, (r, m)) in enumerate(zip(risks, mus))
@@ -2031,6 +2032,7 @@ function efficient_frontier!(
                 save_opt_params = false,
             )
         else
+            !isempty(w) && (w_ini = w.weights)
             j != length(risks) ? setproperty!(portfolio, rmf, r) :
             setproperty!(portfolio, rmf, Inf)
             w = opt_port!(
@@ -2042,6 +2044,7 @@ function efficient_frontier!(
                 rf = rf,
                 rm = rm,
                 save_opt_params = false,
+                w_ini = w_ini,
             )
             # Fallback in case :Max_Ret with maximum risk bounds fails.
             if isempty(w)
@@ -2056,7 +2059,9 @@ function efficient_frontier!(
                     rf = rf,
                     rm = rm,
                     save_opt_params = false,
+                    w_ini = w_ini,
                 )
+                portfolio.mu_l = Inf
             end
         end
         isempty(w) && continue
@@ -2133,5 +2138,5 @@ function efficient_frontier!(
     portfolio.optimal = optimal1
     portfolio.fail = fail1
 
-    return portfolio.frontier
+    return portfolio.frontier[rm]
 end
