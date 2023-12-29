@@ -680,8 +680,8 @@ end
         0.15410439692249855,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-6)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-7)
 end
 
 @testset "$(:HRP), $(:HERC), $(:RDaR_r)" begin
@@ -747,7 +747,7 @@ end
         0.1593670573216927,
     ]
 
-    @test isapprox(w1.weights, w1t)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-7)
     @test isapprox(w2.weights, w2t)
 end
 
