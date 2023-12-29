@@ -102,7 +102,7 @@ fig4 = plot_drawdown(portfolio)
 # We can also efficiently compute the asset weights of the portfolio's efficient frontier. This can be done manually but having a dedicated function is nice. We compute 50 linearly distributed points along the frontier, plus the point that maximises the risk adjusted return ratio in the final column.
 
 frontier = efficient_frontier!(portfolio; points = 50)
-pretty_table(frontier[:SD][:weights]; formatters = fmt)
+pretty_table(frontier[:weights]; formatters = fmt)
 
 # ### Informative Plots
 

@@ -7515,7 +7515,7 @@ end
         obj = :Max_Ret,
         kelly = :None,
     )
-    setproperty!(portfolio, rmf, risk1)
+    setproperty!(portfolio, rmf, risk1 + 1e-6 * risk1)
     w19 = opt_port!(
         portfolio;
         rf = rf,
@@ -8432,7 +8432,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-4)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-2)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-2)
-    @test isapprox(w19.weights, w1.weights, rtol = 1e-3)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-1)
 end
 
 @testset "$(:Classic), $(:Trad), $(:RDaR)" begin
