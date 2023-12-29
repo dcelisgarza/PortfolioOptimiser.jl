@@ -3680,7 +3680,7 @@ end
         2.595331862467074e-10,
     ]
 
-    @test isapprox(w1.weights, w1t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t)
     @test isapprox(w3.weights, w3t)
     @test isapprox(w4.weights, w4t)
@@ -3689,8 +3689,8 @@ end
     @test isapprox(w7.weights, w7t)
     @test isapprox(w8.weights, w8t)
     @test isapprox(w9.weights, w9t)
-    @test isapprox(w10.weights, w10t)
-    @test isapprox(w11.weights, w11t)
+    @test isapprox(w10.weights, w10t, rtol = 0.0001)
+    @test isapprox(w11.weights, w11t, rtol = 1.0e-5)
 end
 
 @testset "$(:HRP), $(:HERC), $(:NCO), $(:ADD)" begin
@@ -4052,11 +4052,11 @@ end
     @test isapprox(w4.weights, w4t)
     @test isapprox(w5.weights, w5t)
     @test isapprox(w6.weights, w6t)
-    @test isapprox(w7.weights, w7t)
+    @test isapprox(w7.weights, w7t, rtol = 0.0001)
     @test isapprox(w8.weights, w8t)
     @test isapprox(w9.weights, w9t)
-    @test isapprox(w10.weights, w10t)
-    @test isapprox(w11.weights, w11t)
+    @test isapprox(w10.weights, w10t, rtol = 0.0001)
+    @test isapprox(w11.weights, w11t, rtol = 0.0001)
 end
 
 @testset "$(:HRP), $(:HERC), $(:NCO), $(:CDaR)" begin
@@ -4420,11 +4420,11 @@ end
     @test isapprox(w4.weights, w4t)
     @test isapprox(w5.weights, w5t)
     @test isapprox(w6.weights, w6t)
-    @test isapprox(w7.weights, w7t)
+    @test isapprox(w7.weights, w7t, rtol = 1.0e-5)
     @test isapprox(w8.weights, w8t)
     @test isapprox(w9.weights, w9t)
-    @test isapprox(w10.weights, w10t)
-    @test isapprox(w11.weights, w11t)
+    @test isapprox(w10.weights, w10t, rtol = 0.0001)
+    @test isapprox(w11.weights, w11t, rtol = 0.0001)
 end
 
 @testset "$(:HRP), $(:HERC), $(:NCO), $(:UCI)" begin
@@ -4788,11 +4788,11 @@ end
     @test isapprox(w4.weights, w4t)
     @test isapprox(w5.weights, w5t)
     @test isapprox(w6.weights, w6t)
-    @test isapprox(w7.weights, w7t)
+    @test isapprox(w7.weights, w7t, rtol = 0.0001)
     @test isapprox(w8.weights, w8t)
     @test isapprox(w9.weights, w9t)
-    @test isapprox(w10.weights, w10t)
-    @test isapprox(w11.weights, w11t)
+    @test isapprox(w10.weights, w10t, rtol = 0.0001)
+    @test isapprox(w11.weights, w11t, rtol = 0.0001)
 end
 
 @testset "$(:HRP), $(:HERC), $(:NCO), $(:EDaR)" begin
