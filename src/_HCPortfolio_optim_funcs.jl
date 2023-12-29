@@ -370,8 +370,8 @@ end
 function _hierarchical_recursive_bisection(
     portfolio;
     rm = :SD,
-    rm_i = rm,
-    owa_w_i = portfolio.owa_w,
+    rm_o = rm,
+    owa_w_o = portfolio.owa_w,
     rf = 0.0,
     upper_bound = nothing,
     lower_bound = nothing,
@@ -461,21 +461,24 @@ function _hierarchical_recursive_bisection(
     end
 
     # Treat each cluster as its own independent portfolio, and calculate the weights, cweights, as if this were the case.
-    flag = false
-    if owa_w_i != portfolio.owa_w
-        flag = true
+    og_owa_w = nothing
+    if (
+        length(owa_w_o) == length(portfolio.owa_w) && !isapprox(owa_w_o, portfolio.owa_w)
+    ) || length(owa_w_o) != length(portfolio.owa_w)
         og_owa_w = portfolio.owa_w
-        portfolio.owa_w = owa_w_i
+        portfolio.owa_w = owa_w_o
     end
+
     for i in 1:k
         cidx = clustering_idx .== i
         cret = returns[:, cidx]
         ccov = covariance[cidx, cidx]
-        cweights = _naive_risk(portfolio, cret, ccov; rm = rm_i, rf = rf)
+        cweights = _naive_risk(portfolio, cret, ccov; rm = rm_o, rf = rf)
         # Then multiply the weights of each sub-portfolio, cweights, by the weights of the cluster it belongs to.
         weights[cidx] .*= cweights
     end
-    if flag
+
+    if !isnothing(og_owa_w)
         portfolio.owa_w = og_owa_w
     end
 
@@ -573,39 +576,40 @@ function _nco_weights(
     rm = :SD,
     rf = 0.0,
     l = 2.0,
-    obj_i = obj,
-    kelly_i = kelly,
-    rm_i = rm,
-    l_i = l,
-    owa_w_i = portfolio.owa_w,
-    max_num_assets_kurt_i = portfolio.max_num_assets_kurt,
+    obj_o = obj,
+    kelly_o = kelly,
+    rm_o = rm,
+    l_o = l,
+    owa_w_o = portfolio.owa_w,
+    max_num_assets_kurt_o = portfolio.max_num_assets_kurt,
     near_opt::Bool = false,
+    near_opt_o::Bool = near_opt,
     M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
-    M_i::Integer = M,
+    M_o::Integer = M,
 )
     og_owa_w = nothing
     og_max_num_assets_kurt = nothing
 
     if (
-        length(owa_w_i) == length(portfolio.owa_w) && !isapprox(owa_w_i, portfolio.owa_w)
-    ) || length(owa_w_i) != length(portfolio.owa_w)
+        length(owa_w_o) == length(portfolio.owa_w) && !isapprox(owa_w_o, portfolio.owa_w)
+    ) || length(owa_w_o) != length(portfolio.owa_w)
         og_owa_w = portfolio.owa_w
-        portfolio.owa_w = owa_w_i
+        portfolio.owa_w = owa_w_o
     end
-    if max_num_assets_kurt_i != portfolio.max_num_assets_kurt
+    if max_num_assets_kurt_o != portfolio.max_num_assets_kurt
         og_max_num_assets_kurt = portfolio.max_num_assets_kurt
-        portfolio.max_num_assets_kurt = max_num_assets_kurt_i
+        portfolio.max_num_assets_kurt = max_num_assets_kurt_o
     end
 
     intra_weights, intra_fails = _intra_weights(
         portfolio;
-        obj = obj_i,
-        kelly = kelly_i,
-        rm = rm_i,
+        obj = obj,
+        kelly = kelly,
+        rm = rm,
         rf = rf,
-        l = l_i,
+        l = l,
         near_opt = near_opt,
-        M = M_i,
+        M = M,
     )
 
     if !isnothing(og_owa_w)
@@ -618,13 +622,13 @@ function _nco_weights(
     weights, inter_fails = _inter_weights(
         portfolio,
         intra_weights,
-        obj = obj,
-        kelly = kelly,
-        rm = rm,
+        obj = obj_o,
+        kelly = kelly_o,
+        rm = rm_o,
         rf = rf,
-        l = l,
-        near_opt = near_opt,
-        M = M,
+        l = l_o,
+        near_opt = near_opt_o,
+        M = M_o,
     )
     !isempty(intra_fails) && (portfolio.fail[:intra] = intra_fails)
     !isempty(inter_fails) && (portfolio.fail[:inter] = inter_fails)
@@ -734,18 +738,19 @@ function opt_port!(
     type::Symbol = :HRP,
     rm::Symbol = :SD,
     obj::Symbol = :Min_Risk,
-    owa_w_i::AbstractVector{<:Real} = portfolio.owa_w,
-    max_num_assets_kurt_i::Integer = portfolio.max_num_assets_kurt,
+    owa_w_o::AbstractVector{<:Real} = portfolio.owa_w,
+    max_num_assets_kurt_o::Integer = portfolio.max_num_assets_kurt,
     kelly::Symbol = :None,
-    rm_i::Symbol = rm,
-    obj_i::Symbol = obj,
-    kelly_i::Symbol = kelly,
+    rm_o::Symbol = rm,
+    obj_o::Symbol = obj,
+    kelly_o::Symbol = kelly,
     rf::Real = 0.0,
     l::Real = 2.0,
-    l_i::Real = l,
+    l_o::Real = l,
     near_opt::Bool = false,
+    near_opt_o::Bool = near_opt,
     M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
-    M_i::Integer = M,
+    M_o::Integer = M,
     cluster::Bool = true,
     linkage::Symbol = :single,
     k = cluster ? 0 : portfolio.k,
@@ -757,10 +762,10 @@ function opt_port!(
 )
     @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
     @assert(rm ∈ HCRiskMeasures, "rm = $rm, must be one of $HCRiskMeasures")
-    @assert(obj ∈ HRObjFuncs, "obj = $obj, must be one of $HRObjFuncs")
-    @assert(obj_i ∈ HRObjFuncs, "obj_i = $obj_i, must be one of $HRObjFuncs")
+    @assert(obj ∈ HCObjFuncs, "obj = $obj, must be one of $HCObjFuncs")
+    @assert(obj_o ∈ HCObjFuncs, "obj_o = $obj_o, must be one of $HCObjFuncs")
     @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
-    @assert(kelly_i ∈ KellyRet, "kelly_i = $kelly_i, must be one of $KellyRet")
+    @assert(kelly_o ∈ KellyRet, "kelly_o = $kelly_o, must be one of $KellyRet")
     @assert(linkage ∈ LinkageTypes, "linkage = $linkage, must be one of $LinkageTypes")
     @assert(
         portfolio.codep_type ∈ CodepTypes,
@@ -775,13 +780,13 @@ function opt_port!(
         "portfolio.kappa = $(portfolio.kappa) must be greater than 0 and less than 1"
     )
     @assert(
-        max_num_assets_kurt_i >= 0,
-        "max_num_assets_kurt_i = $max_num_assets_kurt_i must be greater than or equal to zero"
+        max_num_assets_kurt_o >= 0,
+        "max_num_assets_kurt_o = $max_num_assets_kurt_o must be greater than or equal to zero"
     )
-    if !isempty(owa_w_i)
+    if !isempty(owa_w_o)
         @assert(
-            length(owa_w_i) == size(portfolio.returns, 1),
-            "length(owa_w) = $(length(owa_w_i)), and size(returns, 1) = $(size(portfolio.returns, 1)) must be equal"
+            length(owa_w_o) == size(portfolio.returns, 1),
+            "length(owa_w) = $(length(owa_w_o)), and size(returns, 1) = $(size(portfolio.returns, 1)) must be equal"
         )
     end
 
@@ -831,8 +836,8 @@ function opt_port!(
         weights = _hierarchical_recursive_bisection(
             portfolio;
             rm = rm,
-            rm_i = rm_i,
-            owa_w_i = owa_w_i,
+            rm_o = rm_o,
+            owa_w_o = owa_w_o,
             rf = rf,
             upper_bound = upper_bound,
             lower_bound = lower_bound,
@@ -844,19 +849,20 @@ function opt_port!(
             kelly = kelly,
             rm = rm,
             l = l,
-            # Intra cluster parameters.
-            obj_i = obj_i,
-            kelly_i = kelly_i,
-            rm_i = rm_i,
-            l_i = l_i,
-            owa_w_i = owa_w_i,
-            max_num_assets_kurt_i = max_num_assets_kurt_i,
+            # Outer cluster parameters.
+            obj_o = obj_o,
+            kelly_o = kelly_o,
+            rm_o = rm_o,
+            l_o = l_o,
+            owa_w_o = owa_w_o,
+            max_num_assets_kurt_o = max_num_assets_kurt_o,
             # Risk free rate.
             rf = rf,
             # Near optimal centering.
             near_opt = near_opt,
+            near_opt_o = near_opt_o,
             M = M,
-            M_i = M_i,
+            M_o = M_o,
         )
     end
 

@@ -284,13 +284,13 @@ const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
 
 """
 ```julia
-HRObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret, :Equal)
+HCObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret, :Equal)
 ```
 Objective funcions for `:NCO` [`HCPortTypes`](@ref) of [`HCPortfolio`](@ref). 
 - `:Min_Risk`, `:Utility`, `:Sharpe` and `:Max_Ret`: optimise the sub-portfolios as `:Trad` [`PortTypes`](@ref) of [`Portfolio`](@ref) according to their respective definitions in [`ObjFuncs`](@ref). 
 - `:Equal`: optimises the sub-portfolios as `:RP` optimisations with equal risk contribution per asset/cluster. We can't offer customiseable risk contributions because the size and composition of the clusters is initially unknown and depends on the chosen linkage method.
 """
-const HRObjFuncs = (ObjFuncs..., :Equal)
+const HCObjFuncs = (ObjFuncs..., :Equal)
 
 """
 ```julia
@@ -449,6 +449,6 @@ export KellyRet,
     HCPortTypes,
     LinkageTypes,
     BranchOrderTypes,
-    HRObjFuncs,
+    HCObjFuncs,
     AllocTypes,
     BLHist

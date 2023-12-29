@@ -11,6 +11,6 @@ PortTypes
 HCPortTypes
 LinkageTypes
 BranchOrderTypes
-HRObjFuncs
+HCObjFuncs
 BLHist
 ```
