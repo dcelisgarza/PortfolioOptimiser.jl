@@ -41,6 +41,7 @@ l = 2.0
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -274,6 +275,20 @@ l = 2.0
         u_cov = :None,
         rm = :SD,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :SD,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -578,6 +593,7 @@ l = 2.0
     @test isapprox(w13.weights, w16.weights, rtol = 1e-4)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-5)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-5)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-2)
 end
 
 @testset "$(:Classic), $(:Trad), $(:MAD)" begin
@@ -607,6 +623,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :MAD, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -840,6 +857,20 @@ end
         u_cov = :None,
         rm = :MAD,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w18 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :MAD,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -1143,6 +1174,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-3)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
+    @test isapprox(w19.weights, w1.weights, rtol = 2e-1)
 end
 
 @testset "$(:Classic), $(:Trad), $(:SSD)" begin
@@ -1172,6 +1204,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :SSD, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -1405,6 +1438,20 @@ end
         u_cov = :None,
         rm = :SSD,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :SSD,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -1710,6 +1757,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-3)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-3)
 end
 
 @testset "$(:Classic), $(:Trad), $(:FLPM)" begin
@@ -1739,6 +1787,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :FLPM, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -1972,6 +2021,20 @@ end
         u_cov = :None,
         rm = :FLPM,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :FLPM,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -2277,6 +2340,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-4)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-4)
 end
 
 @testset "$(:Classic), $(:Trad), $(:SLPM)" begin
@@ -2306,6 +2370,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :SLPM, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -2539,6 +2604,20 @@ end
         u_cov = :None,
         rm = :SLPM,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :SLPM,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -2844,6 +2923,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-3)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-3)
 end
 
 @testset "$(:Classic), $(:Trad), $(:WR)" begin
@@ -2873,6 +2953,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :WR, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -3106,6 +3187,20 @@ end
         u_cov = :None,
         rm = :WR,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :WR,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -3411,6 +3506,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-6)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-6)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-4)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-8)
 end
 
 @testset "$(:Classic), $(:Trad), $(:CVaR)" begin
@@ -3440,6 +3536,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :CVaR, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -3673,6 +3770,20 @@ end
         u_cov = :None,
         rm = :CVaR,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :CVaR,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -3978,6 +4089,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-6)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-6)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-5)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-5)
 end
 
 @testset "$(:Classic), $(:Trad), $(:EVaR)" begin
@@ -4007,6 +4119,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :EVaR, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -4240,6 +4353,20 @@ end
         u_cov = :None,
         rm = :EVaR,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :EVaR,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -4544,6 +4671,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-2)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-2)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-2)
 end
 
 @testset "$(:Classic), $(:Trad), $(:RVaR)" begin
@@ -4573,6 +4701,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :RVaR, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -4806,6 +4935,20 @@ end
         u_cov = :None,
         rm = :RVaR,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1 + 1e-6 * risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :RVaR,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -5111,6 +5254,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-2)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-2)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-3)
 end
 
 @testset "$(:Classic), $(:Trad), $(:MDD)" begin
@@ -5140,6 +5284,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :MDD, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -5373,6 +5518,20 @@ end
         u_cov = :None,
         rm = :MDD,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :MDD,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -5678,6 +5837,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-6)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-2)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-2)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-5)
 end
 
 @testset "$(:Classic), $(:Trad), $(:ADD)" begin
@@ -5707,6 +5867,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :ADD, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -5940,6 +6101,20 @@ end
         u_cov = :None,
         rm = :ADD,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :ADD,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -6245,6 +6420,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-3)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-3)
 end
 
 @testset "$(:Classic), $(:Trad), $(:CDaR)" begin
@@ -6274,6 +6450,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :CDaR, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -6507,6 +6684,20 @@ end
         u_cov = :None,
         rm = :CDaR,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :CDaR,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -6812,6 +7003,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-6)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-4)
 end
 
 @testset "$(:Classic), $(:Trad), $(:UCI)" begin
@@ -6841,6 +7033,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :UCI, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -7074,6 +7267,20 @@ end
         u_cov = :None,
         rm = :UCI,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :UCI,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -7379,6 +7586,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-4)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-3)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-2)
 end
 
 @testset "$(:Classic), $(:Trad), $(:EDaR)" begin
@@ -7408,6 +7616,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :EDaR, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -7641,6 +7850,20 @@ end
         u_cov = :None,
         rm = :EDaR,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1 + 1e-6 * risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :EDaR,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -7943,6 +8166,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-4)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-2)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-2)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-3)
 end
 
 @testset "$(:Classic), $(:Trad), $(:RDaR)" begin
@@ -7972,6 +8196,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :RDaR, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -8205,6 +8430,20 @@ end
         u_cov = :None,
         rm = :RDaR,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1 + 1e-6 * risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :RDaR,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -8509,6 +8748,7 @@ end
     @test isapprox(w13.weights, w16.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-2)
     @test isapprox(w15.weights, w18.weights, rtol = 1e-2)
+    @test isapprox(w19.weights, w1.weights, rtol = 1e-2)
 end
 
 @testset "$(:Classic), $(:Trad), Full $(:Kurt)" begin
@@ -8538,6 +8778,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :Kurt, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -8715,6 +8956,20 @@ end
         u_cov = :None,
         rm = :Kurt,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w18 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :Kurt,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -8966,6 +9221,7 @@ end
     @test isapprox(w17.weights, w8.weights, rtol = 1e-1)
     @test isapprox(w13.weights, w16.weights, rtol = 1e-5)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-3)
+    @test isapprox(w18.weights, w1.weights, rtol = 1e-3)
 end
 
 @testset "$(:Classic), $(:Trad), Reduced $(:Kurt)" begin
@@ -9366,6 +9622,7 @@ end
         obj = :Min_Risk,
         kelly = :None,
     )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :SKurt, rf = rf)
     w2 = opt_port!(
         portfolio;
         rf = rf,
@@ -9543,6 +9800,20 @@ end
         u_cov = :None,
         rm = :SKurt,
         obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1 + 4e-2 * risk1)
+    w18 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
+        rm = :SKurt,
+        obj = :Sharpe,
         kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
@@ -9795,6 +10066,7 @@ end
     @test isapprox(w17.weights, w8.weights, rtol = 1e-1)
     @test isapprox(w13.weights, w16.weights, rtol = 1e-1)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-1)
+    @test isapprox(w18.weights, w1.weights, rtol = 2e-1)
 end
 
 @testset "$(:Classic), $(:Trad), Reduced $(:SKurt)" begin
