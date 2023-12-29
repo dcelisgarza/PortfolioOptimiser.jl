@@ -7,7 +7,10 @@ using COSMO,
     PortfolioOptimiser,
     Statistics,
     Test,
-    TimeSeries
+    TimeSeries,
+    Logging
+
+Logging.disable_logging(Logging.Warn)
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
