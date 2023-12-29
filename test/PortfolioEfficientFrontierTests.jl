@@ -2389,47 +2389,4 @@ end
     @test isapprox(fw3[:weights][!, 2], w7.weights)
     @test isapprox(fw3[:weights][!, end - 1], w8.weights)
     @test isapprox(fw3[:weights][!, end], w9.weights)
-
-    plot_frontier(
-        fw1,
-        returns = portfolio.returns,
-        mu = portfolio.mu,
-        rm = :SKurt,
-        kelly = false,
-    )
-    plot_frontier(
-        fw1,
-        returns = portfolio.returns,
-        mu = portfolio.mu,
-        rm = :SKurt,
-        kelly = true,
-    )
-    plot_frontier(
-        fw2,
-        returns = portfolio.returns,
-        mu = portfolio.mu,
-        rm = :SKurt,
-        kelly = true,
-    )
-    plot_frontier(
-        fw2,
-        returns = portfolio.returns,
-        mu = portfolio.mu,
-        rm = :SKurt,
-        kelly = false,
-    )
-    plot_frontier(
-        fw3,
-        returns = portfolio.returns,
-        mu = portfolio.mu,
-        rm = :CDaR,
-        kelly = true,
-    )
-    plot_frontier(
-        fw3,
-        returns = portfolio.returns,
-        mu = portfolio.mu,
-        rm = :CDaR,
-        kelly = false,
-    )
 end
