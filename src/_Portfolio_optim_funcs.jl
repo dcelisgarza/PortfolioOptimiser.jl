@@ -1192,11 +1192,7 @@ function _optimize_portfolio(portfolio, type, obj, near_opt = false, coneopt = t
         "_" * String(type)
     else
         tmp = "_Near_"
-        tmp = if coneopt
-            tmp * "Cone_"
-        else
-            tmp * "NL_"
-        end
+        tmp = coneopt ? tmp * "Cone_" : tmp * "NL_"
         tmp * String(type)
     end
 
@@ -1289,11 +1285,7 @@ function _finalise_portfolio(
         String(type)
     else
         tmp = "Near_"
-        tmp = if coneopt
-            tmp * "Cone_"
-        else
-            tmp * "NL_"
-        end
+        tmp = coneopt ? tmp * "Cone_" : tmp * "NL_"
         tmp * String(type)
     end
 
@@ -1358,7 +1350,12 @@ function _handle_errors_and_finalise(
                 "$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried."
             )
             portfolio.fail = solvers_tried
-            DataFrame()
+            if near_opt
+                tmp = "Near_"
+                tmp = coneopt ? tmp * "Cone_" : tmp * "NL_"
+                type = Symbol(tmp * String(type))
+            end
+            portfolio.optimal[type] = DataFrame()
         else
             _finalise_portfolio(
                 portfolio,
