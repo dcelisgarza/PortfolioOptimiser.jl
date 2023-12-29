@@ -14,16 +14,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-classes = PortfolioOptimiser.PortClasses
-types = PortfolioOptimiser.PortTypes
-rrpvs = PortfolioOptimiser.RRPVersions
-rms = PortfolioOptimiser.RiskMeasures
-objs = PortfolioOptimiser.ObjFuncs
-krets = PortfolioOptimiser.KellyRet
-umus = PortfolioOptimiser.UncertaintyTypes
-ucovs = PortfolioOptimiser.UncertaintyTypes
-
-@testset "$(classes[1]), $(types[1]), $(:SD)" begin
+@testset "$(:Classic), $(:Trad), $(:SD)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -41,205 +32,205 @@ ucovs = PortfolioOptimiser.UncertaintyTypes
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :SD, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :SD, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :SD, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:SD)) * "_u")
@@ -248,42 +239,42 @@ ucovs = PortfolioOptimiser.UncertaintyTypes
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -589,210 +580,210 @@ ucovs = PortfolioOptimiser.UncertaintyTypes
     @test isapprox(w15.weights, w18.weights, rtol = 1e-5)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:MAD)" begin
+@testset "$(:Classic), $(:Trad), $(:MAD)" begin
     w1 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :MAD, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :MAD, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :MAD, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :MAD, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :MAD, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :MAD, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:MAD)) * "_u")
@@ -801,42 +792,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MAD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -1141,7 +1132,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:SSD)" begin
+@testset "$(:Classic), $(:Trad), $(:SSD)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -1159,205 +1150,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :SSD, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :SSD, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :SSD, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :SSD, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :SSD, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :SSD, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:SSD)) * "_u")
@@ -1366,42 +1357,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SSD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -1708,7 +1699,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:FLPM)" begin
+@testset "$(:Classic), $(:Trad), $(:FLPM)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -1726,205 +1717,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :FLPM, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :FLPM, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :FLPM, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :FLPM, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :FLPM, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :FLPM, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:FLPM)) * "_u")
@@ -1933,42 +1924,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :FLPM,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -2275,7 +2266,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:SLPM)" begin
+@testset "$(:Classic), $(:Trad), $(:SLPM)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -2293,205 +2284,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :SLPM, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :SLPM, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :SLPM, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :SLPM, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :SLPM, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :SLPM, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:SLPM)) * "_u")
@@ -2500,42 +2491,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SLPM,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -2842,7 +2833,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:WR)" begin
+@testset "$(:Classic), $(:Trad), $(:WR)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -2860,205 +2851,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :WR, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :WR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :WR, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :WR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :WR, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :WR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:WR)) * "_u")
@@ -3067,42 +3058,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :WR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -3409,7 +3400,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-4)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:CVaR)" begin
+@testset "$(:Classic), $(:Trad), $(:CVaR)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -3427,205 +3418,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :CVaR, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :CVaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :CVaR, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :CVaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :CVaR, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :CVaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:CVaR)) * "_u")
@@ -3634,42 +3625,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -3976,7 +3967,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-5)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:EVaR)" begin
+@testset "$(:Classic), $(:Trad), $(:EVaR)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -3994,205 +3985,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :EVaR, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :EVaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :EVaR, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :EVaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :EVaR, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :EVaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:EVaR)) * "_u")
@@ -4201,42 +4192,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -4542,7 +4533,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-2)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:RVaR)" begin
+@testset "$(:Classic), $(:Trad), $(:RVaR)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -4560,205 +4551,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :RVaR, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :RVaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :RVaR, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :RVaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :RVaR, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :RVaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:RVaR)) * "_u")
@@ -4767,42 +4758,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RVaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -5109,7 +5100,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-2)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:MDD)" begin
+@testset "$(:Classic), $(:Trad), $(:MDD)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -5127,205 +5118,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :MDD, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :MDD, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :MDD, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :MDD, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :MDD, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :MDD, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:MDD)) * "_u")
@@ -5334,42 +5325,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :MDD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -5676,7 +5667,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-2)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:ADD)" begin
+@testset "$(:Classic), $(:Trad), $(:ADD)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -5694,205 +5685,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :ADD, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :ADD, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :ADD, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :ADD, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :ADD, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :ADD, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:ADD)) * "_u")
@@ -5901,42 +5892,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :ADD,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -6243,7 +6234,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:CDaR)" begin
+@testset "$(:Classic), $(:Trad), $(:CDaR)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -6261,205 +6252,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :CDaR, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :CDaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :CDaR, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :CDaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :CDaR, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :CDaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:CDaR)) * "_u")
@@ -6468,42 +6459,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :CDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -6810,7 +6801,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:UCI)" begin
+@testset "$(:Classic), $(:Trad), $(:UCI)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -6828,205 +6819,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :UCI, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :UCI, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :UCI, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :UCI, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :UCI, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :UCI, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:UCI)) * "_u")
@@ -7035,42 +7026,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :UCI,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -7377,7 +7368,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-3)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:EDaR)" begin
+@testset "$(:Classic), $(:Trad), $(:EDaR)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -7395,205 +7386,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :EDaR, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :EDaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :EDaR, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :EDaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :EDaR, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :EDaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:EDaR)) * "_u")
@@ -7602,42 +7593,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :EDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -7941,7 +7932,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-2)
 end
 
-@testset "$(classes[1]), $(types[1]), $(:RDaR)" begin
+@testset "$(:Classic), $(:Trad), $(:RDaR)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -7959,205 +7950,205 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :RDaR, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :RDaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :RDaR, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :RDaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w9 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[3],
-        kelly = krets[3],
+        obj = :Sharpe,
+        kelly = :Exact,
     )
-    risk9 = calc_risk(portfolio; type = types[1], rm = :RDaR, rf = rf)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :RDaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     w12 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[4],
-        kelly = krets[3],
+        obj = :Max_Ret,
+        kelly = :Exact,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret9)
     w15 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:RDaR)) * "_u")
@@ -8166,42 +8157,42 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk9)
     w18 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :RDaR,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -8507,7 +8498,7 @@ end
     @test isapprox(w15.weights, w18.weights, rtol = 1e-2)
 end
 
-@testset "$(classes[1]), $(types[1]), Full $(:Kurt)" begin
+@testset "$(:Classic), $(:Trad), Full $(:Kurt)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -8525,163 +8516,163 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :Kurt, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :Kurt, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :Kurt, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :Kurt, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:Kurt)) * "_u")
@@ -8690,28 +8681,28 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -8964,7 +8955,7 @@ end
     @test isapprox(w14.weights, w17.weights, rtol = 1e-3)
 end
 
-@testset "$(classes[1]), $(types[1]), Reduced $(:Kurt)" begin
+@testset "$(:Classic), $(:Trad), Reduced $(:Kurt)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -8983,134 +8974,134 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :Kurt, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :Kurt, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :Kurt,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
 
@@ -9335,7 +9326,7 @@ end
     @test isapprox(w13.weights, w7.weights, rtol = 2e-1)
 end
 
-@testset "$(classes[1]), $(types[1]), Full $(:SKurt)" begin
+@testset "$(:Classic), $(:Trad), Full $(:SKurt)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -9353,163 +9344,163 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :SKurt, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :SKurt, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w8 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[3],
-        kelly = krets[2],
+        obj = :Sharpe,
+        kelly = :Approx,
     )
-    risk8 = calc_risk(portfolio; type = types[1], rm = :SKurt, rf = rf)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :SKurt, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, ret8)
     w14 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:SKurt)) * "_u")
@@ -9518,28 +9509,28 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, risk8)
     w17 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     setproperty!(portfolio, rmf, Inf)
 
@@ -9793,7 +9784,7 @@ end
     @test isapprox(w14.weights, w17.weights, rtol = 1e-1)
 end
 
-@testset "$(classes[1]), $(types[1]), Reduced $(:SKurt)" begin
+@testset "$(:Classic), $(:Trad), Reduced $(:SKurt)" begin
     portfolio = Portfolio(
         prices = prices,
         solvers = OrderedDict(
@@ -9812,134 +9803,134 @@ end
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     w2 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[1],
-        kelly = krets[2],
+        obj = :Min_Risk,
+        kelly = :Approx,
     )
     w3 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[1],
-        kelly = krets[3],
+        obj = :Min_Risk,
+        kelly = :Exact,
     )
     w4 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[2],
-        kelly = krets[1],
+        obj = :Utility,
+        kelly = :None,
     )
     w5 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[2],
-        kelly = krets[2],
+        obj = :Utility,
+        kelly = :Approx,
     )
     w6 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[2],
-        kelly = krets[3],
+        obj = :Utility,
+        kelly = :Exact,
     )
     w7 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[3],
-        kelly = krets[1],
+        obj = :Sharpe,
+        kelly = :None,
     )
-    risk7 = calc_risk(portfolio; type = types[1], rm = :SKurt, rf = rf)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :SKurt, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
     w10 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[4],
-        kelly = krets[1],
+        obj = :Max_Ret,
+        kelly = :None,
     )
     w11 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[4],
-        kelly = krets[2],
+        obj = :Max_Ret,
+        kelly = :Approx,
     )
     setproperty!(portfolio, :mu_l, ret7)
     w13 = opt_port!(
         portfolio;
         rf = rf,
         l = l,
-        class = classes[1],
-        type = types[1],
-        rrp_ver = rrpvs[1],
-        u_mu = umus[1],
-        u_cov = ucovs[1],
+        class = :Classic,
+        type = :Trad,
+        rrp_ver = :None,
+        u_mu = :None,
+        u_cov = :None,
         rm = :SKurt,
-        obj = objs[1],
-        kelly = krets[1],
+        obj = :Min_Risk,
+        kelly = :None,
     )
     setproperty!(portfolio, :mu_l, Inf)
 
