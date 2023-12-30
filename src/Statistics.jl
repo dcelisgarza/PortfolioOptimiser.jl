@@ -1773,7 +1773,6 @@ function wc_statistics!(
 
             cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)], N, N)
             cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
-
         elseif box == :Delta
             d_mu = dmu * abs.(mu)
             cov_l = sigma - dcov * abs.(sigma)

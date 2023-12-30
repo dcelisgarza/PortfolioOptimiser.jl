@@ -875,7 +875,7 @@ function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
 
         @expression(model, x_ge, G_sigma * vec(E1_p_E2))
         @variable(model, t_ge)
-        @constraint(model, [t_ge; x_gw] in SecondOrderCone())
+        @constraint(model, [t_ge; x_ge] in SecondOrderCone())
 
         @expression(model, risk, tr(sigma * E1_p_E2) + k_sigma * t_ge)
     else
