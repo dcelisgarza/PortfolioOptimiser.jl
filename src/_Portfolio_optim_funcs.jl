@@ -1766,9 +1766,7 @@ function opt_port!(
     set_string_names_on_creation(model, string_names)
     @variable(model, w[1:N])
 
-    if !isempty(w_ini)
-        set_start_value.(w, w_ini)
-    end
+    !isempty(w_ini) && set_start_value.(w, w_ini)
 
     if type == :Trad
         _setup_sharpe_k(model, obj)

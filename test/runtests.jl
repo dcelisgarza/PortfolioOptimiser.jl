@@ -60,6 +60,10 @@ using SafeTestsets
     include("HCPortfolioOptimisationTests.jl")
 end
 
+@safetestset "Portfolio Classic RP Optimisation" begin
+    include("PortfolioClassicRPTests.jl")
+end
+
 @safetestset "Portfolio Classic Traditional Optimisation" begin
     include("PortfolioClassicTradTests.jl")
 end
