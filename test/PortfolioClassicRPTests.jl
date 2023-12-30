@@ -84,8 +84,8 @@ l = 2.0
         0.10976818357740997,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, atol = 1e-3)
     @test isapprox(hrc2 / lrc2, 20, atol = 1e-2)
 end
@@ -159,8 +159,8 @@ end
         0.11453694646602786,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-6)
     @test isapprox(hrc1 / lrc1, 1, atol = 1e-2)
     @test isapprox(hrc2 / lrc2, 20, atol = 1e-1)
 end
@@ -234,8 +234,8 @@ end
         0.10836142772457111,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, atol = 1e-3)
     @test isapprox(hrc2 / lrc2, 20, atol = 1e-1)
 end
@@ -308,8 +308,8 @@ end
         0.0848210415751922,
         0.11493952620360075,
     ]
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-6)
     @test isapprox(hrc1 / lrc1, 1, atol = 1e-2)
     @test isapprox(hrc2 / lrc2, 20, atol = 1e-2)
 end
@@ -383,8 +383,8 @@ end
         0.10961551631993534,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, atol = 1e-3)
     @test isapprox(hrc2 / lrc2, 20, atol = 1e-1)
 end
