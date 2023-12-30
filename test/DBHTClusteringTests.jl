@@ -1824,7 +1824,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     Z1[m1, 1] .= -Z1[m1, 1]
     Z1[m2, 2] .= -Z1[m2, 2]
     Z1[:, 1:2] .-= 1
-    Zt2 = reshape(
+    Zt1 = reshape(
         [
             17.0,
             2.0,
