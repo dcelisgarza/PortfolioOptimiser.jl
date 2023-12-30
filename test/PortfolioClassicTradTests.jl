@@ -14,6 +14,923 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "$(:Classic), $(:RP), $(:GMD) and blank $(:OWA)" begin
+    portfolio = Portfolio(
+        prices = prices[(end - 200):end],
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict(
+                    "verbose" => false,
+                    "max_step_fraction" => 0.75,
+                    "max_iter" => 100,
+                    "equilibrate_max_iter" => 20,
+                ),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Min_Risk,
+        kelly = :None,
+    )
+    risk1 = calc_risk(portfolio; type = :Trad, rm = :GMD, rf = rf)
+    w2 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Min_Risk,
+        kelly = :Approx,
+    )
+    w3 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Min_Risk,
+        kelly = :Exact,
+    )
+    w4 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Utility,
+        kelly = :None,
+    )
+    w5 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Utility,
+        kelly = :Approx,
+    )
+    w6 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Utility,
+        kelly = :Exact,
+    )
+    w7 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Sharpe,
+        kelly = :None,
+    )
+    risk7 = calc_risk(portfolio; type = :Trad, rm = :GMD, rf = rf)
+    ret7 = dot(portfolio.mu, w7.weights)
+    w8 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Sharpe,
+        kelly = :Approx,
+    )
+    risk8 = calc_risk(portfolio; type = :Trad, rm = :GMD, rf = rf)
+    ret8 = dot(portfolio.mu, w8.weights)
+    w9 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Sharpe,
+        kelly = :Exact,
+    )
+    risk9 = calc_risk(portfolio; type = :Trad, rm = :GMD, rf = rf)
+    ret9 = dot(portfolio.mu, w9.weights)
+    w10 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Max_Ret,
+        kelly = :None,
+    )
+    w11 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Max_Ret,
+        kelly = :Approx,
+    )
+    w12 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Max_Ret,
+        kelly = :Exact,
+    )
+    setproperty!(portfolio, :mu_l, ret7)
+    w13 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Min_Risk,
+        kelly = :None,
+    )
+    setproperty!(portfolio, :mu_l, ret8)
+    w14 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Min_Risk,
+        kelly = :None,
+    )
+    setproperty!(portfolio, :mu_l, ret9)
+    w15 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Min_Risk,
+        kelly = :None,
+    )
+    setproperty!(portfolio, :mu_l, Inf)
+    rmf = Symbol(lowercase(string(:GMD)) * "_u")
+    setproperty!(portfolio, rmf, risk7)
+    w16 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk8)
+    w17 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk9)
+    w18 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk1)
+    w19 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :GMD,
+        obj = :Sharpe,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, Inf)
+    w20 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Min_Risk,
+        kelly = :None,
+    )
+    risk20 = calc_risk(portfolio; type = :Trad, rm = :OWA, rf = rf)
+    w21 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Min_Risk,
+        kelly = :Approx,
+    )
+    w22 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Min_Risk,
+        kelly = :Exact,
+    )
+    w23 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Utility,
+        kelly = :None,
+    )
+    w24 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Utility,
+        kelly = :Approx,
+    )
+    w25 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Utility,
+        kelly = :Exact,
+    )
+    w26 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Sharpe,
+        kelly = :None,
+    )
+    risk26 = calc_risk(portfolio; type = :Trad, rm = :OWA, rf = rf)
+    ret26 = dot(portfolio.mu, w26.weights)
+    w27 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Sharpe,
+        kelly = :Approx,
+    )
+    risk27 = calc_risk(portfolio; type = :Trad, rm = :OWA, rf = rf)
+    ret27 = dot(portfolio.mu, w27.weights)
+    w28 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Sharpe,
+        kelly = :Exact,
+    )
+    risk28 = calc_risk(portfolio; type = :Trad, rm = :OWA, rf = rf)
+    ret28 = dot(portfolio.mu, w28.weights)
+    w29 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Max_Ret,
+        kelly = :None,
+    )
+    w30 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Max_Ret,
+        kelly = :Approx,
+    )
+    w31 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Max_Ret,
+        kelly = :Exact,
+    )
+    setproperty!(portfolio, :mu_l, ret26)
+    w32 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Min_Risk,
+        kelly = :None,
+    )
+    setproperty!(portfolio, :mu_l, ret27)
+    w33 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Min_Risk,
+        kelly = :None,
+    )
+    setproperty!(portfolio, :mu_l, ret28)
+    w34 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Min_Risk,
+        kelly = :None,
+    )
+    setproperty!(portfolio, :mu_l, Inf)
+    rmf = Symbol(lowercase(string(:OWA)) * "_u")
+    setproperty!(portfolio, rmf, risk26)
+    w35 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk27)
+    w36 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk28)
+    w37 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Max_Ret,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, risk20)
+    w38 = opt_port!(
+        portfolio;
+        rf = rf,
+        l = l,
+        class = :Classic,
+        type = :Trad,
+        rm = :OWA,
+        obj = :Sharpe,
+        kelly = :None,
+    )
+    setproperty!(portfolio, rmf, Inf)
+
+    w1t = [
+        7.357452304869383e-10,
+        3.177401371914762e-9,
+        1.6758454800358923e-9,
+        0.011316382126028236,
+        0.041142006934146026,
+        0.02104181724348948,
+        2.7228623046739314e-10,
+        0.04730862758900115,
+        1.4555570358647493e-9,
+        1.1560432782519804e-9,
+        0.07087606105471202,
+        9.130060152297445e-11,
+        2.0294327044443676e-10,
+        0.2926243962844163,
+        9.769321015658524e-11,
+        0.014803635839912763,
+        0.05529306157609208,
+        0.22580362468573179,
+        0.008022761309902367,
+        0.21176761649175213,
+    ]
+
+    w2t = [
+        1.1755309340520077e-9,
+        5.066221805605882e-9,
+        2.6644592406607168e-9,
+        0.011277402166575284,
+        0.04115895349786001,
+        0.021133088522621586,
+        4.3804862669188816e-10,
+        0.04732772098593868,
+        2.3169519437113107e-9,
+        1.843484582457524e-9,
+        0.07085882814408086,
+        1.517288036394281e-10,
+        3.259911461960703e-10,
+        0.29246765977237216,
+        1.6164852415242034e-10,
+        0.014797290559518858,
+        0.055390298562536626,
+        0.2257212498614358,
+        0.008065550683837134,
+        0.2118019430991575,
+    ]
+
+    w3t = [
+        1.0513859491328279e-9,
+        4.3829053411273074e-9,
+        2.316316288620066e-9,
+        0.011295938266839788,
+        0.04115715878609242,
+        0.021129175535421128,
+        4.237110496780436e-10,
+        0.04734125455551203,
+        2.011512850383592e-9,
+        1.6095014019510867e-9,
+        0.07083239566334563,
+        1.7760186605710172e-10,
+        3.305758094456937e-10,
+        0.2925407419516629,
+        1.8549836491205675e-10,
+        0.014792816092021894,
+        0.055332437704589454,
+        0.22577390216193355,
+        0.008062232499659778,
+        0.21174193429391244,
+    ]
+
+    w4t = [
+        6.855765400234745e-10,
+        2.942042930875353e-9,
+        1.0919193540140255e-9,
+        1.0357428876679786e-8,
+        0.06930929631718706,
+        4.4407863177326123e-10,
+        1.7375483144033197e-10,
+        0.07033086117464278,
+        2.753533387846985e-9,
+        3.792178502650503e-8,
+        0.05598983526631091,
+        1.444110071495141e-10,
+        1.9056798246479558e-10,
+        0.18567410996862643,
+        1.7763832851374672e-10,
+        0.02572842720375101,
+        0.11909835655611185,
+        0.19734203162560857,
+        0.10103546969452848,
+        0.17549155531049604,
+    ]
+
+    w5t = [
+        3.250062971326882e-10,
+        1.414191775504294e-9,
+        5.190013236234179e-10,
+        5.269521483922792e-9,
+        0.06928000390714624,
+        2.131120083183485e-10,
+        8.341327386336781e-11,
+        0.0703456651292807,
+        1.2869204537918775e-9,
+        1.6122060095504553e-8,
+        0.05646986760619511,
+        6.900303994215775e-11,
+        9.060925751233175e-11,
+        0.18609488714415687,
+        8.493211581758976e-11,
+        0.025587855730713493,
+        0.11849970807768176,
+        0.19752125139120266,
+        0.10063794414618865,
+        0.1755627913896634,
+    ]
+
+    w6t = [
+        6.465284008896649e-7,
+        2.240910054716067e-6,
+        9.19359267736936e-7,
+        6.428147030610671e-6,
+        0.06921457694672695,
+        3.794718590774738e-7,
+        2.1672796808726586e-7,
+        0.07191765691264303,
+        4.490153765208857e-6,
+        1.7422610559957634e-5,
+        0.05600753007652711,
+        2.284250772077709e-7,
+        2.2190065673099255e-7,
+        0.18566173481477355,
+        2.2129401752262518e-7,
+        0.025490758602752895,
+        0.11912562604313144,
+        0.19648490031269028,
+        0.10025213332453674,
+        0.17581166743756024,
+    ]
+
+    w7t = [
+        3.526610294965523e-11,
+        1.3058628204969703e-10,
+        4.4831959254311085e-11,
+        1.2048294852288708e-10,
+        0.21079238246602586,
+        1.503292059650865e-11,
+        1.0850231547679128e-11,
+        0.011059963221897881,
+        0.02156058893234421,
+        3.76944314314021e-10,
+        8.463177949378685e-11,
+        2.524927235912178e-12,
+        1.153548500565494e-11,
+        5.971856866560493e-11,
+        2.7919269098107935e-12,
+        0.09771854865733576,
+        0.39859876991934695,
+        1.5764324676528608e-10,
+        0.26026974565279765,
+        9.741102952692179e-11,
+    ]
+
+    w8t = [
+        1.7513023223227617e-10,
+        4.0883532886762075e-10,
+        1.9955882532611365e-10,
+        3.729394242476209e-10,
+        0.20153188794966248,
+        5.304215100702231e-11,
+        6.397408687963343e-11,
+        0.02863421777418654,
+        0.005804305844726176,
+        1.1167458649780586e-9,
+        3.1887804078889393e-10,
+        9.600644104100861e-11,
+        6.342618133288103e-11,
+        2.481024658755537e-10,
+        8.41572723099288e-11,
+        0.09660683900379992,
+        0.38225267062330714,
+        5.319236987131409e-10,
+        0.28517007470055566,
+        3.710422258451856e-10,
+    ]
+
+    w9t = [
+        1.9820004515042486e-7,
+        4.4864254867153387e-7,
+        2.2300406243306642e-7,
+        4.321489531152086e-7,
+        0.20699701342994295,
+        6.088604207344e-8,
+        7.638339246097253e-8,
+        0.015777386263571443,
+        0.013629197092753289,
+        1.0381805969863394e-6,
+        3.183897821013321e-7,
+        1.1384215374240989e-7,
+        7.259983369586772e-8,
+        2.5780645297700105e-7,
+        9.512107171506217e-8,
+        0.09830720801975816,
+        0.3975593978000191,
+        4.969007531442979e-7,
+        0.26772561247567533,
+        3.5281259159486205e-7,
+    ]
+
+    w10t = [
+        8.712542711199698e-10,
+        1.4654151905551637e-9,
+        9.339052013945676e-10,
+        2.1821049519915846e-9,
+        0.9999999341550859,
+        3.1511893006800266e-10,
+        4.623354282083954e-10,
+        1.3312982280285038e-9,
+        5.685859426666017e-9,
+        1.3717955401443492e-9,
+        7.145915905035212e-10,
+        5.739900239751245e-10,
+        3.664040976959083e-10,
+        6.999422864177907e-10,
+        4.5028243287517754e-10,
+        6.995963489557039e-9,
+        3.6287502647382875e-8,
+        8.999745199898909e-10,
+        3.476311468593159e-9,
+        7.60864322824287e-10,
+    ]
+    w11t = [
+        5.993977771484114e-12,
+        1.778354569389172e-11,
+        7.420434625095061e-12,
+        2.5849155857086827e-11,
+        0.8577737311598522,
+        5.083348726888264e-12,
+        1.891529487797355e-12,
+        1.7868991687856732e-11,
+        9.125141989901717e-11,
+        1.8167163626017277e-11,
+        3.849406626890314e-12,
+        2.5482546019966897e-13,
+        4.0208940395341015e-12,
+        3.338055192566509e-12,
+        2.065684339025522e-12,
+        1.8565373070409797e-10,
+        0.14222626838043026,
+        8.071363164330904e-12,
+        5.6546845889818266e-11,
+        4.607266079839951e-12,
+    ]
+
+    w12t = [
+        5.281732660436822e-9,
+        9.419037695239505e-9,
+        5.520434444023928e-9,
+        1.239429971089012e-8,
+        0.892633132842242,
+        1.7376428817709362e-9,
+        2.3619131030770845e-9,
+        9.135101873512987e-9,
+        4.106859242165867e-8,
+        8.91342343822351e-9,
+        4.42222741610075e-9,
+        3.2092641333224004e-9,
+        1.836533109671395e-9,
+        4.2254267691398205e-9,
+        2.268748888169778e-9,
+        7.336116178740828e-8,
+        0.10736664677420021,
+        5.780713471779663e-9,
+        2.4855646106661036e-8,
+        4.591657831988204e-9,
+    ]
+
+    w13t = [
+        3.2806777625645716e-11,
+        1.2214175380411153e-10,
+        4.20313615616236e-11,
+        1.1364987174762136e-10,
+        0.21090547148797514,
+        1.6149835291238382e-11,
+        1.1501832839782884e-11,
+        0.011070595685421875,
+        0.021608351748747905,
+        3.630237718568261e-10,
+        8.280718899425529e-11,
+        1.0327509073671578e-12,
+        1.17703753929535e-11,
+        5.790289573190607e-11,
+        3.371039094171205e-12,
+        0.09763871988543413,
+        0.39847306394908566,
+        1.5631938064615913e-10,
+        0.2603037961324081,
+        9.641830955155782e-11,
+    ]
+
+    w14t = [
+        4.1512565593614613e-11,
+        1.3592320874457727e-10,
+        5.169329356503904e-11,
+        1.2027953890881494e-10,
+        0.20468018066255256,
+        8.066827379265787e-12,
+        4.2170463934191235e-12,
+        0.028930791705795926,
+        0.00950583422643243,
+        4.5436522646719774e-10,
+        1.050938764430075e-10,
+        8.289695735864693e-12,
+        3.762771557405701e-12,
+        7.364364061615015e-11,
+        4.878653548875974e-12,
+        0.09543455517085414,
+        0.37744885001299117,
+        2.00859657509425e-10,
+        0.2839997868804146,
+        1.2837309899999664e-10,
+    ]
+
+    w15t = [
+        5.273512157742768e-11,
+        1.740854242042238e-10,
+        6.530648446715544e-11,
+        1.6061353798437457e-10,
+        0.20879415368975204,
+        1.3159210724758696e-11,
+        7.044123283940867e-12,
+        0.015870734663733226,
+        0.018939325985410312,
+        5.094223622511029e-10,
+        1.2329073685408418e-10,
+        9.881265671221502e-12,
+        7.289256794820406e-12,
+        8.824904941319298e-11,
+        4.096981093812919e-12,
+        0.09742344535960716,
+        0.3936926603004473,
+        2.2738787125965633e-10,
+        0.2652796784133174,
+        1.4517115145526506e-10,
+    ]
+
+    w16t = [
+        1.99332519692679e-9,
+        4.655767910338692e-9,
+        2.1903337498440663e-9,
+        4.476704009655584e-9,
+        0.19346342031702263,
+        6.810803102247774e-10,
+        8.940090096650499e-10,
+        1.5390202547822813e-8,
+        0.03277655920800197,
+        7.472771291871688e-9,
+        2.6806804335141874e-9,
+        1.3533889021956257e-9,
+        7.778560488994917e-10,
+        2.34040970558556e-9,
+        9.781264203472405e-10,
+        0.1312522830286661,
+        0.520922127467356,
+        3.6438098332427882e-9,
+        0.12158555755719234,
+        2.893295493798585e-9,
+    ]
+
+    w17t = [
+        1.0405550278729751e-9,
+        2.5305672472128673e-9,
+        1.1499033651057866e-9,
+        2.2701927347874765e-9,
+        0.18318471515217213,
+        3.5901376191688357e-10,
+        4.637145620499474e-10,
+        1.4832215371869706e-8,
+        3.492561201341369e-7,
+        4.3145877282420994e-9,
+        1.5133207048126471e-9,
+        7.065409899801491e-10,
+        4.092308581797896e-10,
+        1.2960175358130399e-9,
+        5.120717230704013e-10,
+        0.1279798779873609,
+        0.5002261698848763,
+        2.0810622184479906e-9,
+        0.1886088525711015,
+        1.6693752751978569e-9,
+    ]
+
+    w18t = [
+        2.4703586859074436e-9,
+        5.804961860582147e-9,
+        2.717865809093217e-9,
+        5.514595433985599e-9,
+        0.19130643830930427,
+        8.437872881271356e-10,
+        1.1062143731503003e-9,
+        2.086717510015402e-8,
+        0.02153157681979584,
+        9.386975185658348e-9,
+        3.3544220076803636e-9,
+        1.6754314132944337e-9,
+        9.64965422461678e-10,
+        2.920130709469279e-9,
+        1.2112333794137468e-9,
+        0.13053543470882867,
+        0.5158773592370964,
+        4.5701301483715476e-9,
+        0.14074912388012994,
+        3.636598106117453e-9,
+    ]
+
+    w19t = [
+        1.4897427550272286e-12,
+        6.91340055635408e-11,
+        5.846946381116147e-13,
+        2.218697022019545e-11,
+        0.07164634535050776,
+        2.24586610728254e-12,
+        3.3685832424629096e-12,
+        0.07477242432762915,
+        7.567920813717239e-12,
+        1.9499551953799934e-11,
+        0.08193323881599128,
+        3.0928275160177068e-12,
+        3.720985621168358e-12,
+        0.15273603351568146,
+        3.204587197954447e-12,
+        0.04479637882475555,
+        0.1364172780343808,
+        0.195653318278048,
+        0.06785138273452716,
+        0.17419359998238312,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(w3.weights, w3t)
+    @test isapprox(w2.weights, w3.weights, rtol = 0.001)
+    @test isapprox(w4.weights, w4t)
+    @test isapprox(w5.weights, w5t)
+    @test isapprox(w6.weights, w6t)
+    @test isapprox(w5.weights, w6.weights, rtol = 0.01)
+    @test isapprox(w7.weights, w7t)
+    @test isapprox(w8.weights, w8t)
+    @test isapprox(w9.weights, w9t)
+    @test isapprox(w8.weights, w9.weights, rtol = 0.1)
+    @test isapprox(w10.weights, w10t)
+    @test isapprox(w11.weights, w11t)
+    @test isapprox(w12.weights, w12t)
+    @test isapprox(w11.weights, w12.weights, rtol = 0.1)
+    @test isapprox(w13.weights, w7.weights, rtol = 0.001)
+    @test isapprox(w14.weights, w8.weights, rtol = 0.1)
+    @test isapprox(w15.weights, w9.weights, rtol = 0.1)
+    @test isapprox(w16.weights, w7.weights, rtol = 0.001)
+    @test isapprox(w17.weights, w8.weights, rtol = 0.1)
+    @test isapprox(w18.weights, w9.weights, rtol = 0.1)
+    @test isapprox(w13.weights, w16.weights, rtol = 0.001)
+    @test isapprox(w14.weights, w17.weights, rtol = 0.01)
+    @test isapprox(w15.weights, w18.weights, rtol = 0.001)
+    @test isapprox(w19.weights, w1.weights, rtol = 0.01)
+    @test isapprox(w1.weights, w20.weights)
+    @test isapprox(w2.weights, w21.weights)
+    @test isapprox(w3.weights, w22.weights)
+    @test isapprox(w4.weights, w23.weights)
+    @test isapprox(w5.weights, w24.weights)
+    @test isapprox(w6.weights, w25.weights)
+    @test isapprox(w7.weights, w26.weights)
+    @test isapprox(w8.weights, w27.weights)
+    @test isapprox(w9.weights, w28.weights)
+    @test isapprox(w10.weights, w29.weights)
+    @test isapprox(w11.weights, w30.weights)
+    @test isapprox(w12.weights, w31.weights)
+    @test isapprox(w13.weights, w32.weights)
+    @test isapprox(w14.weights, w33.weights)
+    @test isapprox(w15.weights, w34.weights)
+    @test isapprox(w16.weights, w35.weights)
+    @test isapprox(w17.weights, w36.weights)
+    @test isapprox(w18.weights, w37.weights)
+    @test isapprox(w19.weights, w38.weights)
+end
+
 @testset "$(:Classic), $(:Trad), $(:SD)" begin
     portfolio = Portfolio(
         prices = prices,
