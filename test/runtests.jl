@@ -56,12 +56,12 @@ using SafeTestsets
 #     include("TraditionalOptimisationTests.jl")
 # end
 
-@safetestset "HCPortfolio Optimisation Tests" begin
-    include("HCPortfolioOptimisationTests.jl")
-end
-
 @safetestset "Portfolio Classic RP Optimisation" begin
     include("PortfolioClassicRPTests.jl")
+end
+
+@safetestset "HCPortfolio Optimisation Tests" begin
+    include("HCPortfolioOptimisationTests.jl")
 end
 
 @safetestset "Portfolio Classic Traditional Optimisation" begin

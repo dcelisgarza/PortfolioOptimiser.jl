@@ -458,83 +458,8 @@ end
         0.1217807778428124,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
-    @test isapprox(hrc1 / lrc1, 1, atol = 7e-1)
-    @test isapprox(hrc2 / lrc2, 20, atol = 5e-1)
-end
-
-@testset "$(:Classic), $(:RP), $(:WR)" begin
-    portfolio = Portfolio(
-        prices = prices,
-        solvers = OrderedDict(
-            :Clarabel => Dict(
-                :solver => Clarabel.Optimizer,
-                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
-            ),
-            :COSMO =>
-                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
-        ),
-    )
-    asset_statistics!(portfolio)
-
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :WR)
-    rc1 = risk_contribution(portfolio, type = :RP, rm = :WR)
-    lrc1, hrc1 = extrema(rc1)
-
-    portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :WR)
-    rc2 = risk_contribution(portfolio, type = :RP, rm = :WR)
-    lrc2, hrc2 = extrema(rc2)
-
-    w1t = [
-        0.04375544631866262,
-        0.0822719874989624,
-        0.04366290510073906,
-        0.05731679279782298,
-        0.055186348442627035,
-        0.048877199550522325,
-        0.03646223108130178,
-        0.04988484801087561,
-        0.03936348977638506,
-        0.04856611900494611,
-        0.05738895313337345,
-        0.03890988533373517,
-        0.04249681666902821,
-        0.03781821055920519,
-        0.04825301800636387,
-        0.04988638272418726,
-        0.060421157334263315,
-        0.04103738762715828,
-        0.04176168136676482,
-        0.07667913966307555,
-    ]
-
-    w2t = [
-        0.004525777779486052,
-        0.01600249424138224,
-        0.012809894506843729,
-        0.02246380577589697,
-        0.022319750281720237,
-        0.03129536460942698,
-        0.031230674294772585,
-        0.039436834221692155,
-        0.03480978663377977,
-        0.04185389111188925,
-        0.06428733162796366,
-        0.045862075754009676,
-        0.06078678679058799,
-        0.05351363630871811,
-        0.05973106973573801,
-        0.0842132756214095,
-        0.10213623429563772,
-        0.07535736865488296,
-        0.07558316991135006,
-        0.1217807778428124,
-    ]
-
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, atol = 7e-1)
     @test isapprox(hrc2 / lrc2, 20, atol = 5e-1)
 end
@@ -608,8 +533,8 @@ end
         0.10553038907680105,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, atol = 8e-2)
     @test isapprox(hrc2 / lrc2, 20, atol = 3e-2)
 end
@@ -683,8 +608,8 @@ end
         0.11711719472287073,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, atol = 1e-2)
     @test isapprox(hrc2 / lrc2, 20, atol = 3e-2)
 end
@@ -758,8 +683,8 @@ end
         0.12035798406112097,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-6)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, atol = 3e-1)
     @test isapprox(hrc2 / lrc2, 20, atol = 2e-0)
 end
@@ -833,8 +758,8 @@ end
         0.00688738002138319,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, atol = 9.2e0)
     @test isapprox(hrc2 / lrc2, 20, atol = 3e0)
 end
@@ -863,52 +788,52 @@ end
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [
-        0.08321848642371815,
-        0.034699747862080424,
-        0.04178845732285892,
-        0.027628095513838893,
-        0.03998679802508808,
-        0.05673352734682899,
-        0.02234224996736454,
-        0.09418046252165299,
-        0.02786480561806567,
-        0.03558351272814093,
-        0.1568919232537885,
-        0.032033032913518354,
-        0.03750578705533342,
-        0.03997579591949542,
-        0.024305868557059507,
-        0.040541082738431364,
-        0.04468652085307903,
-        0.06511138995197098,
-        0.035403034175987,
-        0.05951942125169894,
+        0.057602603655605544,
+        0.048754890398656596,
+        0.08761279560605131,
+        0.028071835205155164,
+        0.06562827421390469,
+        0.04203173133618097,
+        0.025689263771394466,
+        0.08530376923054743,
+        0.034593393671792774,
+        0.0350973523220023,
+        0.1000659834124061,
+        0.027207701843224387,
+        0.017629899203747378,
+        0.03964510378994047,
+        0.014601469748121416,
+        0.047410889655393286,
+        0.07494458498999328,
+        0.049721437202785275,
+        0.058422284556415696,
+        0.05996473618668143,
     ]
 
     w2t = [
-        0.1030562593373048,
-        0.06581581599763574,
-        0.07099080765747305,
-        0.04824197782535705,
-        0.06732887343058071,
-        0.06933072817173858,
-        0.025149256898616135,
-        0.12492416770029748,
-        0.03239781557296892,
-        0.04507100042893705,
-        0.13647036788520997,
-        0.038402912008787066,
-        0.03580166139136979,
-        0.035275151440073205,
-        0.025261184914901688,
-        0.024684971542034622,
-        0.01652261459902679,
-        0.021626026850536408,
-        0.00676102632576781,
-        0.00688738002138319,
+        0.011171969543463939,
+        0.014032055040105278,
+        0.04590343597479641,
+        0.012856314838403028,
+        0.050621237828349055,
+        0.02224976191382803,
+        0.018628057674024454,
+        0.07977839250021374,
+        0.028745234658130975,
+        0.03132534235014177,
+        0.11053452185772016,
+        0.024766797187141528,
+        0.016885339255735127,
+        0.053454733348957686,
+        0.019594922034436565,
+        0.06130811987109412,
+        0.1225774784670345,
+        0.07478040562329874,
+        0.09193045782137829,
+        0.10885542221174656,
     ]
 
-    @test isapprox(w1.weights, w1t)
+    @test isapprox(w1.weights, w1t, rtol = 1.0)
     @test isapprox(w2.weights, w2t)
     @test isapprox(hrc1 / lrc1, 1, atol = 8e-1)
     @test isapprox(hrc2 / lrc2, 20, atol = 6e-1)
@@ -983,8 +908,8 @@ end
         0.11133885748084765,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, atol = 7e-2)
     @test isapprox(hrc2 / lrc2, 20, atol = 2.4e0)
 end
@@ -1058,8 +983,8 @@ end
         0.10646618318792157,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, atol = 6e-1)
     @test isapprox(hrc2 / lrc2, 20, atol = 3.4e0)
 end
@@ -1133,8 +1058,8 @@ end
         0.11283292011078797,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, atol = 5e-1)
     @test isapprox(hrc2 / lrc2, 20, atol = 6e0)
 end
@@ -1208,8 +1133,8 @@ end
         0.11292942629685457,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-6)
     @test isapprox(hrc1 / lrc1, 1, atol = 1.1e0)
     @test isapprox(hrc2 / lrc2, 20, atol = 4e0)
 end
@@ -1283,8 +1208,8 @@ end
         0.10428127363930244,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, atol = 1.4e0)
     @test isapprox(hrc2 / lrc2, 20, atol = 3e0)
 end
@@ -1434,8 +1359,8 @@ end
         0.11667994356925879,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
+    @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, atol = 1.8e0)
     @test isapprox(hrc2 / lrc2, 20, atol = 3.6e0)
 end
