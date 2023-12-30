@@ -1,4 +1,4 @@
-using LinearAlgebra, PortfolioOptimiser, Test, TimeSeries
+using CSV, LinearAlgebra, PortfolioOptimiser, Test, TimeSeries
 
 prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
