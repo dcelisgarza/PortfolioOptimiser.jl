@@ -388,3 +388,1130 @@ end
     @test isapprox(hrc1 / lrc1, 1, atol = 1e-3)
     @test isapprox(hrc2 / lrc2, 20, atol = 1e-1)
 end
+
+@testset "$(:Classic), $(:RP), $(:WR)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :WR)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :WR)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :WR)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :WR)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.04375544631866262,
+        0.0822719874989624,
+        0.04366290510073906,
+        0.05731679279782298,
+        0.055186348442627035,
+        0.048877199550522325,
+        0.03646223108130178,
+        0.04988484801087561,
+        0.03936348977638506,
+        0.04856611900494611,
+        0.05738895313337345,
+        0.03890988533373517,
+        0.04249681666902821,
+        0.03781821055920519,
+        0.04825301800636387,
+        0.04988638272418726,
+        0.060421157334263315,
+        0.04103738762715828,
+        0.04176168136676482,
+        0.07667913966307555,
+    ]
+
+    w2t = [
+        0.004525777779486052,
+        0.01600249424138224,
+        0.012809894506843729,
+        0.02246380577589697,
+        0.022319750281720237,
+        0.03129536460942698,
+        0.031230674294772585,
+        0.039436834221692155,
+        0.03480978663377977,
+        0.04185389111188925,
+        0.06428733162796366,
+        0.045862075754009676,
+        0.06078678679058799,
+        0.05351363630871811,
+        0.05973106973573801,
+        0.0842132756214095,
+        0.10213623429563772,
+        0.07535736865488296,
+        0.07558316991135006,
+        0.1217807778428124,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 7e-1)
+    @test isapprox(hrc2 / lrc2, 20, atol = 5e-1)
+end
+
+@testset "$(:Classic), $(:RP), $(:WR)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :WR)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :WR)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :WR)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :WR)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.04375544631866262,
+        0.0822719874989624,
+        0.04366290510073906,
+        0.05731679279782298,
+        0.055186348442627035,
+        0.048877199550522325,
+        0.03646223108130178,
+        0.04988484801087561,
+        0.03936348977638506,
+        0.04856611900494611,
+        0.05738895313337345,
+        0.03890988533373517,
+        0.04249681666902821,
+        0.03781821055920519,
+        0.04825301800636387,
+        0.04988638272418726,
+        0.060421157334263315,
+        0.04103738762715828,
+        0.04176168136676482,
+        0.07667913966307555,
+    ]
+
+    w2t = [
+        0.004525777779486052,
+        0.01600249424138224,
+        0.012809894506843729,
+        0.02246380577589697,
+        0.022319750281720237,
+        0.03129536460942698,
+        0.031230674294772585,
+        0.039436834221692155,
+        0.03480978663377977,
+        0.04185389111188925,
+        0.06428733162796366,
+        0.045862075754009676,
+        0.06078678679058799,
+        0.05351363630871811,
+        0.05973106973573801,
+        0.0842132756214095,
+        0.10213623429563772,
+        0.07535736865488296,
+        0.07558316991135006,
+        0.1217807778428124,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 7e-1)
+    @test isapprox(hrc2 / lrc2, 20, atol = 5e-1)
+end
+
+@testset "$(:Classic), $(:RP), $(:CVaR)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :CVaR)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :CVaR)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :CVaR)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :CVaR)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.04939116495315467,
+        0.04880387529683067,
+        0.04173386007462713,
+        0.038407529094372325,
+        0.041841616464888244,
+        0.0537805463808844,
+        0.02642475939870094,
+        0.07736763363606748,
+        0.03544320173223963,
+        0.04094159908193833,
+        0.09252002945495828,
+        0.04267908264079304,
+        0.03238824553768926,
+        0.06577667031467883,
+        0.04019656986160158,
+        0.04220518109849602,
+        0.048723879166031436,
+        0.0807120181128111,
+        0.042769022520414895,
+        0.057893515178821846,
+    ]
+
+    w2t = [
+        0.004958109406241485,
+        0.0107224327723124,
+        0.013512957542224755,
+        0.01594190083444675,
+        0.022145907961592437,
+        0.0292363773236835,
+        0.019155305967957673,
+        0.062200051891773384,
+        0.029580061677280296,
+        0.040354715673165176,
+        0.09432204761488663,
+        0.04011163430048787,
+        0.03580028151869949,
+        0.07561073585707774,
+        0.050815793682588054,
+        0.06895391725449458,
+        0.07714754455472057,
+        0.1289861323859113,
+        0.07491370270365476,
+        0.10553038907680105,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 8e-2)
+    @test isapprox(hrc2 / lrc2, 20, atol = 3e-2)
+end
+
+@testset "$(:Classic), $(:RP), $(:EVaR)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :EVaR)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :EVaR)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :EVaR)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :EVaR)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.04644475994411915,
+        0.06366515916971194,
+        0.04378790416499597,
+        0.05092225480518606,
+        0.04640694402649698,
+        0.05062044463599438,
+        0.03894494558893378,
+        0.06586562327514726,
+        0.038418534157235326,
+        0.04445916135386437,
+        0.06810153544170035,
+        0.04257037598193672,
+        0.04132495187560881,
+        0.0491623656772855,
+        0.04438603883039922,
+        0.05344782724074077,
+        0.05368763740936749,
+        0.05226851563551302,
+        0.041780998049112186,
+        0.06373402273665076,
+    ]
+
+    w2t = [
+        0.004648685027050885,
+        0.013021960551074779,
+        0.013063415300891827,
+        0.020516403357401368,
+        0.022279072321956556,
+        0.030140059799560755,
+        0.028175828803923143,
+        0.04961319752572847,
+        0.033207697951002486,
+        0.04171667117992843,
+        0.07294546571134636,
+        0.04732334552499035,
+        0.051085335258754014,
+        0.06410412619041492,
+        0.05750784225541883,
+        0.07959865715930929,
+        0.08923956925095108,
+        0.08898375126505782,
+        0.07571172084236806,
+        0.11711719472287073,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 1e-2)
+    @test isapprox(hrc2 / lrc2, 20, atol = 3e-2)
+end
+
+@testset "$(:Classic), $(:RP), $(:RVaR)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :RVaR)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :RVaR)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :RVaR)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :RVaR)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.0454954710262226,
+        0.07569593270295329,
+        0.043957575337114425,
+        0.0558672104019315,
+        0.049249599264164855,
+        0.050662448382239635,
+        0.0411080172961597,
+        0.054494904862553206,
+        0.039378742292816286,
+        0.04560094224359964,
+        0.061323104595475,
+        0.04070776601332359,
+        0.043671592040505906,
+        0.041843737184590446,
+        0.045099547484967584,
+        0.05279627013440978,
+        0.05840797678650866,
+        0.04473954015902149,
+        0.0415993684979389,
+        0.06830025329350349,
+    ]
+
+    w2t = [
+        0.0045790854398911835,
+        0.015157430365661917,
+        0.012920946665213115,
+        0.022042694386569334,
+        0.022252268553027848,
+        0.031006204188333178,
+        0.03102398500428025,
+        0.04188782110186774,
+        0.03446522704826401,
+        0.04173267131315385,
+        0.06662187192278156,
+        0.046533375703627526,
+        0.05758111935388933,
+        0.05644204922297197,
+        0.058812278592592686,
+        0.08358005446007924,
+        0.09852243256021069,
+        0.07880025382420974,
+        0.07568024623225383,
+        0.12035798406112097,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 3e-1)
+    @test isapprox(hrc2 / lrc2, 20, atol = 2e-0)
+end
+
+@testset "$(:Classic), $(:RP), $(:MDD)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :MDD)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :MDD)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = reverse(1:size(portfolio.returns, 2))
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :MDD)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :MDD)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.08321848642371815,
+        0.034699747862080424,
+        0.04178845732285892,
+        0.027628095513838893,
+        0.03998679802508808,
+        0.05673352734682899,
+        0.02234224996736454,
+        0.09418046252165299,
+        0.02786480561806567,
+        0.03558351272814093,
+        0.1568919232537885,
+        0.032033032913518354,
+        0.03750578705533342,
+        0.03997579591949542,
+        0.024305868557059507,
+        0.040541082738431364,
+        0.04468652085307903,
+        0.06511138995197098,
+        0.035403034175987,
+        0.05951942125169894,
+    ]
+
+    w2t = [
+        0.1030562593373048,
+        0.06581581599763574,
+        0.07099080765747305,
+        0.04824197782535705,
+        0.06732887343058071,
+        0.06933072817173858,
+        0.025149256898616135,
+        0.12492416770029748,
+        0.03239781557296892,
+        0.04507100042893705,
+        0.13647036788520997,
+        0.038402912008787066,
+        0.03580166139136979,
+        0.035275151440073205,
+        0.025261184914901688,
+        0.024684971542034622,
+        0.01652261459902679,
+        0.021626026850536408,
+        0.00676102632576781,
+        0.00688738002138319,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 9.2e0)
+    @test isapprox(hrc2 / lrc2, 20, atol = 3e0)
+end
+
+@testset "$(:Classic), $(:RP), $(:ADD)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :ADD)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :ADD)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :ADD)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :ADD)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.08321848642371815,
+        0.034699747862080424,
+        0.04178845732285892,
+        0.027628095513838893,
+        0.03998679802508808,
+        0.05673352734682899,
+        0.02234224996736454,
+        0.09418046252165299,
+        0.02786480561806567,
+        0.03558351272814093,
+        0.1568919232537885,
+        0.032033032913518354,
+        0.03750578705533342,
+        0.03997579591949542,
+        0.024305868557059507,
+        0.040541082738431364,
+        0.04468652085307903,
+        0.06511138995197098,
+        0.035403034175987,
+        0.05951942125169894,
+    ]
+
+    w2t = [
+        0.1030562593373048,
+        0.06581581599763574,
+        0.07099080765747305,
+        0.04824197782535705,
+        0.06732887343058071,
+        0.06933072817173858,
+        0.025149256898616135,
+        0.12492416770029748,
+        0.03239781557296892,
+        0.04507100042893705,
+        0.13647036788520997,
+        0.038402912008787066,
+        0.03580166139136979,
+        0.035275151440073205,
+        0.025261184914901688,
+        0.024684971542034622,
+        0.01652261459902679,
+        0.021626026850536408,
+        0.00676102632576781,
+        0.00688738002138319,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 8e-1)
+    @test isapprox(hrc2 / lrc2, 20, atol = 6e-1)
+end
+
+@testset "$(:Classic), $(:RP), $(:CDaR)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :CDaR)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :CDaR)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :CDaR)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :CDaR)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.046949957960303226,
+        0.03661834983962574,
+        0.03822640513283658,
+        0.027780437795411443,
+        0.05445137396022303,
+        0.034218467225507525,
+        0.02235614079811853,
+        0.0891415257915432,
+        0.027308820539438314,
+        0.028300876725765575,
+        0.215773637466577,
+        0.04030484034802265,
+        0.020911760438324007,
+        0.04004758507289081,
+        0.026363442746335643,
+        0.04469907928877756,
+        0.05886961718462183,
+        0.04952351192386208,
+        0.03915000538744693,
+        0.05900416437436812,
+    ]
+
+    w2t = [
+        0.007052521038851694,
+        0.005446130240302941,
+        0.012413366117503868,
+        0.009361457504379896,
+        0.04021174933870001,
+        0.019329482728429888,
+        0.01774853717564121,
+        0.08718247989210944,
+        0.022002271917744995,
+        0.022399906586733978,
+        0.2516705125798999,
+        0.035193041076863406,
+        0.017721842358012378,
+        0.04550543515629949,
+        0.02342205740199043,
+        0.0475332023321547,
+        0.08640083338898245,
+        0.07370827507677156,
+        0.06435804060778014,
+        0.11133885748084765,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 7e-2)
+    @test isapprox(hrc2 / lrc2, 20, atol = 2.4e0)
+end
+
+@testset "$(:Classic), $(:RP), $(:UCI)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :UCI)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :UCI)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :UCI)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :UCI)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.054827613042077956,
+        0.04136400954967725,
+        0.061656164141309144,
+        0.026847010940154726,
+        0.059539021845281426,
+        0.03569968719646861,
+        0.023356382439714538,
+        0.09683090264644328,
+        0.02981299842184919,
+        0.03221047945907848,
+        0.1475969425769354,
+        0.0354329253877475,
+        0.019401357981471416,
+        0.0419699225147063,
+        0.017242238058303782,
+        0.049644465993875175,
+        0.06573071618936731,
+        0.05394698803639865,
+        0.04624964010900936,
+        0.06064053347013054,
+    ]
+
+    w2t = [
+        0.008156570938968257,
+        0.008780638346363395,
+        0.023214200309550456,
+        0.011186981914492702,
+        0.03977999188357741,
+        0.02070319042256038,
+        0.018310761229369563,
+        0.09098077821910543,
+        0.025010549901705176,
+        0.028897935613459404,
+        0.17117718500851792,
+        0.03038975118172605,
+        0.018936996741878136,
+        0.05298425069392209,
+        0.021213339647566398,
+        0.05902511193454757,
+        0.10466281388482923,
+        0.08144284262526359,
+        0.07867992631467524,
+        0.10646618318792157,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 6e-1)
+    @test isapprox(hrc2 / lrc2, 20, atol = 3.4e0)
+end
+
+@testset "$(:Classic), $(:RP), $(:EDaR)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :EDaR)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :EDaR)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :EDaR)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :EDaR)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.055323158669307405,
+        0.03578993243944283,
+        0.04077459842398797,
+        0.029605864612833273,
+        0.04696622602935098,
+        0.04084436026235602,
+        0.02530074053427011,
+        0.0889187240110895,
+        0.02689567043466572,
+        0.03134448423619236,
+        0.19601825114090862,
+        0.03903196702101247,
+        0.02653347429940722,
+        0.04068540522040772,
+        0.02503564183517531,
+        0.047051944079435214,
+        0.053530806932799296,
+        0.05549058281069559,
+        0.038349807839047685,
+        0.05650835916761447,
+    ]
+
+    w2t = [
+        0.015858049127086833,
+        0.005699781835910997,
+        0.015409495770182134,
+        0.009983767427105456,
+        0.03722670417801105,
+        0.024786580037670154,
+        0.01694267172076037,
+        0.08449335249808726,
+        0.02263515396947177,
+        0.024486630264501656,
+        0.2132583216134145,
+        0.03791614518718178,
+        0.023056163846423814,
+        0.05053848499284413,
+        0.024578702156905028,
+        0.05223422190109789,
+        0.07671411552429791,
+        0.0878537243106757,
+        0.0634950135275836,
+        0.11283292011078797,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 5e-1)
+    @test isapprox(hrc2 / lrc2, 20, atol = 6e0)
+end
+
+@testset "$(:Classic), $(:RP), $(:RDaR)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :RDaR)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :RDaR)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :RDaR)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :RDaR)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.0679360351869923,
+        0.035313686084449736,
+        0.04202344537462854,
+        0.030665075865734883,
+        0.04581754161249088,
+        0.04694819503920259,
+        0.025815132059665905,
+        0.09117721014952683,
+        0.027341586028619608,
+        0.03291529498681437,
+        0.17193311027355093,
+        0.03568419702139943,
+        0.032304737633277854,
+        0.04018806182043081,
+        0.02462777369887237,
+        0.047065236361888634,
+        0.04992591548643504,
+        0.05846703540464668,
+        0.03735766646844597,
+        0.056493063442926726,
+    ]
+
+    w2t = [
+        0.0282967978475588,
+        0.0057954592491625415,
+        0.015516211638368615,
+        0.010367413865032052,
+        0.03458953098651808,
+        0.02878597498106382,
+        0.01641041327188177,
+        0.0800448228536231,
+        0.023281481505302917,
+        0.025784330130272357,
+        0.19331586499292608,
+        0.03679769961485477,
+        0.028435128294964508,
+        0.05165443128889416,
+        0.025444554657274337,
+        0.0527094547050732,
+        0.07210154519268194,
+        0.09516075182364081,
+        0.06257870680405152,
+        0.11292942629685457,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 1.1e0)
+    @test isapprox(hrc2 / lrc2, 20, atol = 4e0)
+end
+
+@testset "$(:Classic), $(:RP), Full $(:Kurt)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :Kurt)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :Kurt)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.03922265228200221,
+        0.04918890700389464,
+        0.03789038013384901,
+        0.04964943280810259,
+        0.03592393225345682,
+        0.05445687828419427,
+        0.026300844036386613,
+        0.10497991002479666,
+        0.031077649700123843,
+        0.04292805860205612,
+        0.12713395600746077,
+        0.03206210834279925,
+        0.026002501014891655,
+        0.056812526930387235,
+        0.03142454091482859,
+        0.041823272333257604,
+        0.04443212280977936,
+        0.07509639236063076,
+        0.036052465522254135,
+        0.057541468634847937,
+    ]
+
+    w2t = [
+        0.004144915332218853,
+        0.010547873695475172,
+        0.012586127709339912,
+        0.023258316452256424,
+        0.01936681212786137,
+        0.03210055314795179,
+        0.019494819360002687,
+        0.08359459443512143,
+        0.02612806193145197,
+        0.041577133864953375,
+        0.13457666907118945,
+        0.036402224805583,
+        0.03041072158857224,
+        0.07162725738900827,
+        0.039680319663114305,
+        0.05692184096609248,
+        0.07140379225584388,
+        0.11868158990958652,
+        0.06321510265507445,
+        0.10428127363930244,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 1.4e0)
+    @test isapprox(hrc2 / lrc2, 20, atol = 3e0)
+end
+
+@testset "$(:Classic), $(:RP), Reduced $(:Kurt)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+        max_num_assets_kurt = 1,
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :Kurt)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :Kurt)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.0500000000000011,
+        0.05000000000000058,
+        0.0500000000000005,
+        0.050000000000001134,
+        0.05000000000000087,
+        0.0500000000000012,
+        0.05000000000000044,
+        0.050000000000000794,
+        0.05000000000000046,
+        0.05000000000000119,
+        0.0500000000000009,
+        0.050000000000001155,
+        0.049999999999997845,
+        0.04999999999999776,
+        0.050000000000000905,
+        0.04999999999999878,
+        0.049999999999997484,
+        0.049999999999998525,
+        0.05000000000000055,
+        0.04999999999999802,
+    ]
+
+    w2t = [
+        0.02610708275409532,
+        0.02837943088274139,
+        0.030651303698748616,
+        0.03292296592900042,
+        0.03519875334620729,
+        0.03748347710210248,
+        0.039781527753448405,
+        0.042099870335476915,
+        0.044453433199575766,
+        0.04686708624986517,
+        0.04937400472746767,
+        0.05201270392712209,
+        0.054818393390558565,
+        0.05781799869836054,
+        0.061024063467002496,
+        0.06442370351110903,
+        0.06809573346857908,
+        0.0719652815702216,
+        0.07608875958076423,
+        0.08043442640755293,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 2.1e0)
+    @test isapprox(hrc2 / lrc2, 20, atol = 17e0)
+end
+
+@testset "$(:Classic), $(:RP), Full $(:SKurt)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :SKurt)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :SKurt)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.041170947272951605,
+        0.055151102657145686,
+        0.03582026711008352,
+        0.03810281647100041,
+        0.03551958231813474,
+        0.054217762490842675,
+        0.021569898487818123,
+        0.09467152302998202,
+        0.030283020031477308,
+        0.03821071007217146,
+        0.1240516019281326,
+        0.034933363590817265,
+        0.028499637129673648,
+        0.06128622298896649,
+        0.03461265007418104,
+        0.044610124033738624,
+        0.04779839493700672,
+        0.07608146521350194,
+        0.03653809970499657,
+        0.06687081045737765,
+    ]
+
+    w2t = [
+        0.004175205263429701,
+        0.011765748187100822,
+        0.011015252491488306,
+        0.01577359455014908,
+        0.017593349506285338,
+        0.03187177049780766,
+        0.01523068356780147,
+        0.0720093728891317,
+        0.02536718681887658,
+        0.035781514103165026,
+        0.13000234588810786,
+        0.037090729040813834,
+        0.0335443668308728,
+        0.0755080628731996,
+        0.043604346172737944,
+        0.06299741499421682,
+        0.07703658809323406,
+        0.11862869961574692,
+        0.06432382504657572,
+        0.11667994356925879,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 1.8e0)
+    @test isapprox(hrc2 / lrc2, 20, atol = 3.6e0)
+end
+
+@testset "$(:Classic), $(:RP), Reduced $(:SKurt)" begin
+    portfolio = Portfolio(
+        prices = prices,
+        solvers = OrderedDict(
+            :Clarabel => Dict(
+                :solver => Clarabel.Optimizer,
+                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+            ),
+            :COSMO =>
+                Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+        ),
+        max_num_assets_kurt = 1,
+    )
+    asset_statistics!(portfolio)
+
+    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
+    rc1 = risk_contribution(portfolio, type = :RP, rm = :SKurt)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
+    rc2 = risk_contribution(portfolio, type = :RP, rm = :SKurt)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [
+        0.0500000000000011,
+        0.05000000000000058,
+        0.0500000000000005,
+        0.050000000000001134,
+        0.05000000000000087,
+        0.0500000000000012,
+        0.05000000000000044,
+        0.050000000000000794,
+        0.05000000000000046,
+        0.05000000000000119,
+        0.0500000000000009,
+        0.050000000000001155,
+        0.049999999999997845,
+        0.04999999999999776,
+        0.050000000000000905,
+        0.04999999999999878,
+        0.049999999999997484,
+        0.049999999999998525,
+        0.05000000000000055,
+        0.04999999999999802,
+    ]
+
+    w2t = [
+        0.02610708275409532,
+        0.02837943088274139,
+        0.030651303698748616,
+        0.03292296592900042,
+        0.03519875334620729,
+        0.03748347710210248,
+        0.039781527753448405,
+        0.042099870335476915,
+        0.044453433199575766,
+        0.04686708624986517,
+        0.04937400472746767,
+        0.05201270392712209,
+        0.054818393390558565,
+        0.05781799869836054,
+        0.061024063467002496,
+        0.06442370351110903,
+        0.06809573346857908,
+        0.0719652815702216,
+        0.07608875958076423,
+        0.08043442640755293,
+    ]
+
+    @test isapprox(w1.weights, w1t)
+    @test isapprox(w2.weights, w2t)
+    @test isapprox(hrc1 / lrc1, 1, atol = 2.1e0)
+    @test isapprox(hrc2 / lrc2, 20, atol = 17e0)
+end
