@@ -1,6 +1,6 @@
 using CSV, LinearAlgebra, PortfolioOptimiser, Test, TimeSeries
 
-prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 @testset "DBHT Clustering tests" begin
     D = reshape(
