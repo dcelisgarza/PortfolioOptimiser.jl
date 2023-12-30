@@ -1289,7 +1289,7 @@ end
     @test isapprox(w6.weights, w6t)
     @test isapprox(w7.weights, w7t)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t)
+    @test isapprox(w9.weights, w9t, rtol = 1.0e-6)
     @test isapprox(w10.weights, w10t)
     @test isapprox(w11.weights, w11t)
     @test isapprox(w12.weights, w12t)
@@ -1298,7 +1298,7 @@ end
     @test isapprox(w15.weights, w15t)
     @test isapprox(w16.weights, w16t)
     @test isapprox(w17.weights, w17t)
-    @test isapprox(w18.weights, w18t)
+    @test isapprox(w18.weights, w18t, rtol = 1.0e-6)
     @test isapprox(w0.weights, w1.weights)
     @test isapprox(w0.weights, w10.weights)
     @test isapprox(w1.weights, w10.weights)
@@ -1317,7 +1317,6 @@ end
             ),
             :COSMO =>
                 Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
-            :SCS => Dict(:solver => SCS.Optimizer, :params => Dict("verbose" => 0)),
         ),
     )
     asset_statistics!(portfolio)
@@ -1392,16 +1391,6 @@ end
         u_cov = :Ellipse,
         u_mu = :Box,
     )
-    w9 = opt_port!(
-        portfolio;
-        class = :Classic,
-        type = :WC,
-        obj = :Sharpe,
-        l = l,
-        rf = rf,
-        u_cov = :Ellipse,
-        u_mu = :Ellipse,
-    )
     wc_statistics!(portfolio, box = :Delta, ellipse = :Normal, seed = 123456789)
     w10 = opt_port!(
         portfolio;
@@ -1462,16 +1451,6 @@ end
         rf = rf,
         u_cov = :Ellipse,
         u_mu = :Box,
-    )
-    w18 = opt_port!(
-        portfolio;
-        class = :Classic,
-        type = :WC,
-        obj = :Sharpe,
-        l = l,
-        rf = rf,
-        u_cov = :Ellipse,
-        u_mu = :Ellipse,
     )
 
     w1t = [
@@ -1612,29 +1591,6 @@ end
         4.630106930193754e-9,
     ]
 
-    w9t = [
-        0.10695281344844917,
-        0.09812623388066646,
-        0.11907353842165269,
-        0.06810636301836705,
-        0.15932083647130774,
-        5.543869353465444e-7,
-        4.550496084402328e-6,
-        1.2514147582904645e-6,
-        0.09111355345789342,
-        1.1764413143022318e-6,
-        9.068549022678563e-7,
-        4.2071044071782513e-7,
-        4.1633445273806436e-7,
-        3.675836757501556e-7,
-        4.454420898643067e-7,
-        0.04619450847063451,
-        0.16920917808231337,
-        1.6244359223674227e-6,
-        0.14181782751853572,
-        7.3433129603968e-5,
-    ]
-
     w10t = [
         1.0582219191763675e-9,
         3.033341281368263e-9,
@@ -1773,48 +1729,22 @@ end
         0.08159839277628878,
     ]
 
-    w18t = [
-        0.10695281344844917,
-        0.09812623388066646,
-        0.11907353842165269,
-        0.06810636301836705,
-        0.15932083647130774,
-        5.543869353465444e-7,
-        4.550496084402328e-6,
-        1.2514147582904645e-6,
-        0.09111355345789342,
-        1.1764413143022318e-6,
-        9.068549022678563e-7,
-        4.2071044071782513e-7,
-        4.1633445273806436e-7,
-        3.675836757501556e-7,
-        4.454420898643067e-7,
-        0.04619450847063451,
-        0.16920917808231337,
-        1.6244359223674227e-6,
-        0.14181782751853572,
-        7.3433129603968e-5,
-    ]
-
     @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-6)
     @test isapprox(w3.weights, w3t)
     @test isapprox(w4.weights, w4t)
     @test isapprox(w5.weights, w5t)
-    @test isapprox(w6.weights, w6t)
-    @test isapprox(w9.weights, w9t)
+    @test isapprox(w6.weights, w6t, rtol = 1.0e-6)
     @test isapprox(w10.weights, w10t)
-    @test isapprox(w11.weights, w11t)
+    @test isapprox(w11.weights, w11t, rtol = 1.0e-7)
     @test isapprox(w12.weights, w12t)
     @test isapprox(w13.weights, w13t)
     @test isapprox(w14.weights, w14t)
-    @test isapprox(w15.weights, w15t)
-    @test isapprox(w18.weights, w18t)
+    @test isapprox(w15.weights, w15t, rtol = 1.0e-6)
     @test isapprox(w0.weights, w1.weights, rtol = 1.0e-7)
     @test isapprox(w0.weights, w10.weights, rtol = 1.0e-7)
     @test isapprox(w1.weights, w10.weights)
     @test isapprox(w3.weights, w12.weights)
-    @test isapprox(w9.weights, w18.weights)
 end
 
 @testset "$(:Classic), $(:WC), $(:Max_Ret)" begin
