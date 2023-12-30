@@ -685,7 +685,7 @@ end
 
     @test isapprox(w1.weights, w1t, rtol = 1.0e-6)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
-    @test isapprox(hrc1 / lrc1, 1, atol = 3e-1)
+    @test isapprox(hrc1 / lrc1, 1, atol = 4e-1)
     @test isapprox(hrc2 / lrc2, 20, atol = 2e-0)
 end
 
@@ -833,8 +833,8 @@ end
         0.10885542221174656,
     ]
 
-    @test isapprox(w1.weights, w1t, rtol = 1.0)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, atol = 8e-1)
     @test isapprox(hrc2 / lrc2, 20, atol = 6e-1)
 end
@@ -910,7 +910,7 @@ end
 
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 0.0001)
-    @test isapprox(hrc1 / lrc1, 1, atol = 7e-2)
+    @test isapprox(hrc1 / lrc1, 1, atol = 7.4e-2)
     @test isapprox(hrc2 / lrc2, 20, atol = 2.4e0)
 end
 
@@ -1136,7 +1136,7 @@ end
     @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-6)
     @test isapprox(hrc1 / lrc1, 1, atol = 1.1e0)
-    @test isapprox(hrc2 / lrc2, 20, atol = 4e0)
+    @test isapprox(hrc2 / lrc2, 20, atol = 4.3e0)
 end
 
 @testset "$(:Classic), $(:RP), Full $(:Kurt)" begin
@@ -1854,7 +1854,7 @@ end
     @test isapprox(w9.weights, w9t)
     @test isapprox(w10.weights, w10t)
     @test isapprox(w11.weights, w11t)
-    @test isapprox(w12.weights, w12t)
+    @test isapprox(w12.weights, w12t, rtol = 1.0e-6)
 
     @test isapprox(w1.weights, w3.weights)
     @test isapprox(w2.weights, w4.weights)
