@@ -575,10 +575,6 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
     end
 end
 
-function _owa_w_choice(owa_w, T)
-    return isempty(owa_w) ? owa_gmd(T) / 2 : owa_w
-end
-
 function _owa_setup(portfolio, rm, T, returns, obj, type)
     gmd_u = portfolio.gmd_u
     rg_u = portfolio.rg_u
@@ -740,7 +736,7 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
     @variable(model, owa_b[1:T])
     @expression(model, owa_risk, sum(owa_a .+ owa_b))
 
-    owa_w = _owa_w_choice(portfolio.owa_w, T)
+    owa_w = isempty(portfolio.owa_w) ? owa_gmd(T) / 2 : portfolio.owa_w
 
     @constraint(
         model,

@@ -1293,7 +1293,7 @@ function calc_risk(
         )
     elseif rm == :OWA
         T = size(returns, 1)
-        w = _owa_w_choice(owa_w, T)
+        w = isempty(owa_w) ? owa_gmd(T) : owa_w
         OWA(x, w)
     elseif rm == :Equal
         1 / length(w)
@@ -1467,9 +1467,9 @@ function _ul_risk(
         )
     elseif rm == :OWA
         T = size(returns, 1)
-        owa_w = _owa_w_choice(owa_w, T)
-        r1 = OWA(a1, owa_w)
-        r2 = OWA(a2, owa_w)
+        w = isempty(owa_w) ? owa_gmd(T) : owa_w
+        r1 = OWA(a1, w)
+        r2 = OWA(a2, w)
     elseif rm == :Equal
         r1 = 1 / length(w1) + di
         r2 = 1 / length(w1) - di
