@@ -55,6 +55,9 @@ using SafeTestsets
 # @safetestset "Traditional optimisations" begin
 #     include("TraditionalOptimisationTests.jl")
 # end
+@safetestset "DBHT Clustering" begin
+    include("DBHTClusteringTests.jl")
+end
 
 @safetestset "Portfolio Classic WC Optimisation" begin
     include("PortfolioClassicWCTests.jl")
@@ -64,7 +67,7 @@ end
     include("PortfolioClassicRPTests.jl")
 end
 
-@safetestset "HCPortfolio Optimisation Tests" begin
+@safetestset "HCPortfolio Optimisation" begin
     include("HCPortfolioOptimisationTests.jl")
 end
 
