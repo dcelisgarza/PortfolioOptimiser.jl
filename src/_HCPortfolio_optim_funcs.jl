@@ -36,7 +36,7 @@ function _opt_w(
     portfolio,
     assets,
     returns,
-    mu,
+    imu,
     icov;
     obj = :Min_Risk,
     kelly = :None,
@@ -45,6 +45,11 @@ function _opt_w(
     l = 2.0,
     near_opt::Bool = false,
     M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+    asset_stat_kwargs = (;
+        calc_mu = false,
+        calc_cov = false,
+        calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false,
+    ),
 )
     port = Portfolio(;
         assets = assets,
@@ -52,14 +57,17 @@ function _opt_w(
         owa_w = portfolio.owa_w,
         solvers = portfolio.solvers,
         max_num_assets_kurt = portfolio.max_num_assets_kurt,
+        jlogo = portfolio.jlogo,
+        posdef_fix = portfolio.posdef_fix,
     )
-    asset_statistics!(port; calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false)
+
+    !isnothing(imu) && (port.mu = imu)
+    asset_statistics!(port; asset_stat_kwargs...)
     port.cov = icov
 
     near_opt && iszero(M) && (M = ceil(sqrt(size(portfolio.returns, 2))))
 
     weights = if obj != :Equal
-        !isnothing(mu) && (port.mu = mu)
         opt_port!(
             port;
             type = :Trad,
@@ -493,6 +501,11 @@ function _intra_weights(
     l = 2.0,
     near_opt::Bool = false,
     M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+    asset_stat_kwargs = (;
+        calc_mu = false,
+        calc_cov = false,
+        calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false,
+    ),
 )
     returns = portfolio.returns
     mu = portfolio.mu
@@ -523,6 +536,7 @@ function _intra_weights(
             l = l,
             near_opt = near_opt,
             M = M,
+            asset_stat_kwargs = asset_stat_kwargs,
         )
         intra_weights[idx, i] .= weights
         !isempty(cfail) && (cfails[i] = cfail)
@@ -541,6 +555,11 @@ function _inter_weights(
     l = 2.0,
     near_opt::Bool = false,
     M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+    asset_stat_kwargs = (;
+        calc_mu = false,
+        calc_cov = false,
+        calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false,
+    ),
 )
     mu = portfolio.mu
     returns = portfolio.returns
@@ -561,6 +580,7 @@ function _inter_weights(
         l = l,
         near_opt = near_opt,
         M = M,
+        asset_stat_kwargs = asset_stat_kwargs,
     )
 
     weights = intra_weights * inter_weights
@@ -575,15 +595,21 @@ function _nco_weights(
     rm = :SD,
     rf = 0.0,
     l = 2.0,
+    asset_stat_kwargs = (;
+        calc_mu = false,
+        calc_cov = false,
+        calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false,
+    ),
+    near_opt::Bool = false,
+    M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
     obj_o = obj,
     kelly_o = kelly,
     rm_o = rm,
     l_o = l,
+    asset_stat_kwargs_o = asset_stat_kwargs,
     owa_w_o = portfolio.owa_w,
     max_num_assets_kurt_o = portfolio.max_num_assets_kurt,
-    near_opt::Bool = false,
     near_opt_o::Bool = near_opt,
-    M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
     M_o::Integer = M,
 )
     og_owa_w = nothing
@@ -609,6 +635,7 @@ function _nco_weights(
         l = l,
         near_opt = near_opt,
         M = M,
+        asset_stat_kwargs = asset_stat_kwargs,
     )
 
     if !isnothing(og_owa_w)
@@ -628,6 +655,7 @@ function _nco_weights(
         l = l_o,
         near_opt = near_opt_o,
         M = M_o,
+        asset_stat_kwargs = asset_stat_kwargs_o,
     )
     !isempty(intra_fails) && (portfolio.fail[:intra] = intra_fails)
     !isempty(inter_fails) && (portfolio.fail[:inter] = inter_fails)
@@ -757,6 +785,12 @@ function opt_port!(
     branchorder = :optimal,
     dbht_method = :Unique,
     max_iter = 100,
+    asset_stat_kwargs = (;
+        calc_mu = false,
+        calc_cov = false,
+        calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false,
+    ),
+    asset_stat_kwargs_o = asset_stat_kwargs,
     save_opt_params = true,
 )
     @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
@@ -842,6 +876,7 @@ function opt_port!(
             kelly = kelly,
             rm = rm,
             l = l,
+            asset_stat_kwargs = asset_stat_kwargs,
             # Outer cluster parameters.
             obj_o = obj_o,
             kelly_o = kelly_o,
@@ -849,6 +884,7 @@ function opt_port!(
             l_o = l_o,
             owa_w_o = owa_w_o,
             max_num_assets_kurt_o = max_num_assets_kurt_o,
+            asset_stat_kwargs_o = asset_stat_kwargs_o,
             # Risk free rate.
             rf = rf,
             # Near optimal centering.

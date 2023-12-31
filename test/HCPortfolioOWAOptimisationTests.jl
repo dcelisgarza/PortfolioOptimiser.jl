@@ -14,4 +14,4 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "$(:NCO), $(:GMD), blank $(:OWA) and owa_w = owa_gmd(T)" begin end
+@testset "$(:HRP), $(:HERC), $(:NCO), $(:GMD), blank $(:OWA) and owa_w = owa_gmd(T)" begin end
