@@ -15,7 +15,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "$(:Classic), $(:RP), $(:GMD) and blank $(:OWA)" begin
+@testset "$(:Classic), $(:RP), $(:GMD), blank $(:OWA) and owa_w = owa_gmd(T)" begin
     portfolio = Portfolio(
         prices = prices[(end - 200):end],
         solvers = OrderedDict(

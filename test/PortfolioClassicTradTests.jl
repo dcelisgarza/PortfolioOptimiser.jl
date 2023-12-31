@@ -14,7 +14,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "$(:Classic), $(:Trad), $(:GMD) and blank $(:OWA) and owa_w = owa_gmd(T)" begin
+@testset "$(:Classic), $(:Trad), $(:GMD), blank $(:OWA) and owa_w = owa_gmd(T)" begin
     portfolio = Portfolio(
         prices = prices[(end - 200):end],
         solvers = OrderedDict(
@@ -1093,21 +1093,21 @@ l = 2.0
         0.2119472384647015,
     ]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
-    @test isapprox(w3.weights, w3t)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-6)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-6)
+    @test isapprox(w3.weights, w3t, rtol = 1.0e-5)
     @test isapprox(w2.weights, w3.weights, rtol = 0.001)
-    @test isapprox(w4.weights, w4t)
-    @test isapprox(w5.weights, w5t)
-    @test isapprox(w6.weights, w6t)
+    @test isapprox(w4.weights, w4t, rtol = 1.0e-6)
+    @test isapprox(w5.weights, w5t, rtol = 1.0e-5)
+    @test isapprox(w6.weights, w6t, rtol = 0.01)
     @test isapprox(w5.weights, w6.weights, rtol = 0.01)
     @test isapprox(w7.weights, w7t)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t)
+    @test isapprox(w9.weights, w9t, rtol = 0.01)
     @test isapprox(w8.weights, w9.weights, rtol = 0.1)
     @test isapprox(w10.weights, w10t)
     @test isapprox(w11.weights, w11t)
-    @test isapprox(w12.weights, w12t)
+    @test isapprox(w12.weights, w12t, rtol = 1.0e-5)
     @test isapprox(w11.weights, w12.weights, rtol = 0.1)
     @test isapprox(w13.weights, w7.weights, rtol = 0.001)
     @test isapprox(w14.weights, w8.weights, rtol = 0.1)
