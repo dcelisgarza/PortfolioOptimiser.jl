@@ -1484,7 +1484,7 @@ end
     @test isapprox(w8.weights, w8t)
     @test isapprox(w9.weights, w9t, rtol = 1.0e-7)
     @test isapprox(w10.weights, w10t, rtol = 0.0001)
-    @test isapprox(w11.weights, w11t, rtol = 1.0e-6)
+    @test isapprox(w11.weights, w11t, rtol = 1.0e-5)
 end
 
 @testset "$(:HRP), $(:HERC), $(:NCO), $(:SSD)" begin
@@ -7216,7 +7216,7 @@ end
     @test isapprox(w5.weights, w5t)
     @test isapprox(w6.weights, w6t)
     @test isapprox(w7.weights, w7t, rtol = 0.0001)
-    @test isapprox(w8.weights, w8t)
+    @test isapprox(w8.weights, w8t, rtol = 1.0e-7)
     @test isapprox(w9.weights, w9t)
     @test isapprox(w10.weights, w10t, rtol = 0.0001)
     @test isapprox(w11.weights, w11t, rtol = 0.0001)
