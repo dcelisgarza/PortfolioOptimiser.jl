@@ -609,7 +609,7 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
         @variable(model, gmda[1:T])
         @variable(model, gmdb[1:T])
         @expression(model, gmd_risk, sum(gmda .+ gmdb))
-        gmd_w = owa_gmd(T) / 2
+        gmd_w = owa_gmd(T)
         @constraint(
             model,
             owa * transpose(gmd_w) .<=
@@ -619,8 +619,8 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
         isfinite(gmd_u) &&
             type == :Trad &&
             (
-                obj == :Sharpe ? @constraint(model, gmd_risk <= gmd_u * model[:k] * 0.5) :
-                @constraint(model, gmd_risk <= gmd_u * 0.5)
+                obj == :Sharpe ? @constraint(model, gmd_risk <= gmd_u * model[:k]) :
+                @constraint(model, gmd_risk <= gmd_u)
             )
 
         rm == :GMD && @expression(model, risk, gmd_risk)
@@ -736,7 +736,7 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
     @variable(model, owa_b[1:T])
     @expression(model, owa_risk, sum(owa_a .+ owa_b))
 
-    owa_w = isempty(portfolio.owa_w) ? owa_gmd(T) / 2 : portfolio.owa_w
+    owa_w = isempty(portfolio.owa_w) ? owa_gmd(T) : portfolio.owa_w
 
     @constraint(
         model,
