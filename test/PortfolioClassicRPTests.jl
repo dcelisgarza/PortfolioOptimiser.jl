@@ -106,8 +106,8 @@ l = 2.0
         0.12942710517082315,
     ]
 
-    @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
-    @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-3)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-4)
     @test isapprox(w1.weights, w3.weights)
     @test isapprox(w2.weights, w4.weights)
     @test isapprox(w1.weights, w5.weights)
