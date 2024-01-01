@@ -62,8 +62,8 @@ function _opt_w(
     )
 
     !isnothing(imu) && (port.mu = imu)
-    asset_statistics!(port; asset_stat_kwargs...)
     port.cov = icov
+    rm ∈ (:Kurt, :SKurt) && asset_statistics!(port; asset_stat_kwargs...)
 
     near_opt && iszero(M) && (M = ceil(sqrt(size(portfolio.returns, 2))))
 
