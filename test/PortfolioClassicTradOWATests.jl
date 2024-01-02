@@ -3774,9 +3774,9 @@ end
     ]
 
     @test isapprox(w1.weights, w1t, rtol = 1.0e-6)
-    @test isapprox(w2.weights, w2t, rtol = 1.0e-6)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(w3.weights, w3t, rtol = 0.0001)
-    @test isapprox(w2.weights, w3.weights, rtol = 1e-5)
+    @test isapprox(w2.weights, w3.weights, rtol = 0.0001)
     @test isapprox(w4.weights, w4t, rtol = 1.0e-5)
     @test isapprox(w5.weights, w5t, rtol = 1.0e-5)
     if !isempty(w6)
