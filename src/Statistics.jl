@@ -1031,7 +1031,7 @@ function covar_mtx(
         posdef_fix!(
             cov_mtx,
             posdef_fix;
-            msg = "jlogo Covariance ",
+            msg = "J-LoGo Covariance ",
             posdef_args = posdef_args,
             posdef_func = posdef_func,
             posdef_kwargs = posdef_kwargs,
