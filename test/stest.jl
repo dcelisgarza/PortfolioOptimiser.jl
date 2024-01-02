@@ -18,9 +18,8 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 cols = [:RRC, :AMZN, :JPM, :MA, :WMT]
-PortfolioOptimiser.CovTypes
+PortfolioOptimiser.DenoiseMethods
 
-println("mut = ", portfolio.mu)
 println("covt = reshape(", vec(portfolio.cov), ", 20, 20)")
 
 # println("kurtt = reshape(", vec(portfolio.kurt), ", 5^2, 5^2)")

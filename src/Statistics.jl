@@ -672,6 +672,7 @@ function dup_elim_sum_matrices(n::Int)
 end
 
 function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton())
+    clamp!(mtx, zero(eltype(mtx)), Inf)
     s = sqrt.(diag(mtx))
     corr = cov2cor(mtx)
     corr[.!isfinite.(corr)] .= zero(eltype(corr))
@@ -798,7 +799,7 @@ function denoise_cov(
     detone::Bool = false,
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
-    mkt_comp::Integer = 0,
+    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
@@ -828,6 +829,11 @@ function denoise_cov(
     end
 
     if detone
+        @assert(
+            one(size(mtx, 1)) <= mkt_comp <= size(mtx, 1),
+            "mkt_comp = $mkt_comp, must be greater than or equal to 1 and less than or equal to size(mtx, 1) = $(size(mtx, 1))"
+        )
+        mkt_comp -= 1
         _vals = Diagonal(vals)[(end - mkt_comp):end, (end - mkt_comp):end]
         _vecs = vecs[:, (end - mkt_comp):end]
         _corr = _vecs * _vals * transpose(_vecs)
@@ -926,7 +932,7 @@ function covar_mtx(
     kernel = ASH.Kernels.gaussian,
     method::Symbol = :Fixed,
     m::Integer = 10,
-    mkt_comp::Integer = 0,
+    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
@@ -1103,7 +1109,7 @@ function cokurt_mtx(
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
     method::Symbol = :Fixed,
-    mkt_comp::Integer = 0,
+    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
@@ -1366,7 +1372,7 @@ function covar_mtx_mean_vec(
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
     method::Symbol = :Fixed,
-    mkt_comp::Integer = 0,
+    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
@@ -1502,7 +1508,7 @@ function asset_statistics!(
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
     method::Symbol = :Fixed,
-    mkt_comp::Integer = 0,
+    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
@@ -2160,7 +2166,7 @@ function risk_factors(
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
     method::Symbol = :Fixed,
-    mkt_comp::Integer = 0,
+    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
@@ -2315,7 +2321,7 @@ function black_litterman(
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
     method::Symbol = :Fixed,
-    mkt_comp::Integer = 0,
+    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
@@ -2411,7 +2417,7 @@ function augmented_black_litterman(
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
     method::Symbol = :Fixed,
-    mkt_comp::Integer = 0,
+    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
@@ -2631,7 +2637,7 @@ function bayesian_black_litterman(
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
     method::Symbol = :Fixed,
-    mkt_comp::Integer = 0,
+    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
@@ -2896,7 +2902,7 @@ factor_statistics!(
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
     method::Symbol = :Fixed,
-    mkt_comp::Integer = 0,
+    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
@@ -2952,7 +2958,7 @@ function factor_statistics!(
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
     method::Symbol = :Fixed,
-    mkt_comp::Integer = 0,
+    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
