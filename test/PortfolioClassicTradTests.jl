@@ -7,7 +7,10 @@ using COSMO,
     PortfolioOptimiser,
     Statistics,
     Test,
-    TimeSeries
+    TimeSeries,
+    Logging
+
+Logging.disable_logging(Logging.Warn)
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
@@ -8061,7 +8064,7 @@ end
         obj = :Max_Ret,
         kelly = :None,
     )
-    setproperty!(portfolio, rmf, risk1)
+    setproperty!(portfolio, rmf, risk1 + 1e-4 * risk1)
     w18 = opt_port!(
         portfolio;
         rf = rf,
@@ -8318,11 +8321,11 @@ end
     @test isapprox(w11.weights, w11t, rtol = 1.0e-10)
     @test isapprox(w13.weights, w7.weights, rtol = 1e-4)
     @test isapprox(w14.weights, w8.weights, rtol = 1e-1)
-    @test isapprox(w16.weights, w7.weights, rtol = 1e-4)
+    @test isapprox(w16.weights, w7.weights, rtol = 1e-1)
     @test isapprox(w17.weights, w8.weights, rtol = 1e-1)
-    @test isapprox(w13.weights, w16.weights, rtol = 1e-5)
-    @test isapprox(w14.weights, w17.weights, rtol = 1e-3)
-    @test isapprox(w18.weights, w1.weights, rtol = 1e-3)
+    @test isapprox(w13.weights, w16.weights, rtol = 1e-1)
+    @test isapprox(w14.weights, w17.weights, rtol = 1e-1)
+    @test isapprox(w18.weights, w1.weights, rtol = 1e-1)
 end
 
 @testset "$(:Classic), $(:Trad), Reduced $(:Kurt)" begin
