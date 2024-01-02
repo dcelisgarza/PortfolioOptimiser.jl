@@ -945,8 +945,8 @@ function covar_mtx(
         StatsBase.cov(cov_est, returns, cov_weights; cov_kwargs...)
     elseif cov_type == :Semi
         semi_returns =
-            isa(target_ret, Real) ? min.(returns .- target_ret, zero(target_ret)) :
-            min.(returns .- transpose(target_ret), zero(target_ret))
+            isa(target_ret, Real) ? min.(returns .- target_ret, zero(eltype(returns))) :
+            min.(returns .- transpose(target_ret), zero(eltype(returns)))
         isnothing(cov_weights) ? StatsBase.cov(cov_est, semi_returns; cov_kwargs...) :
         StatsBase.cov(cov_est, semi_returns, cov_weights; cov_kwargs...)
     elseif cov_type == :Gerber0
