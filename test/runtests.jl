@@ -55,12 +55,13 @@ using SafeTestsets
 # @safetestset "Traditional optimisations" begin
 #     include("TraditionalOptimisationTests.jl")
 # end
-@safetestset "Portfolio Classic RP OWA Optimisation" begin
-    include("PortfolioClassicRPOWATests.jl")
-end
 
 @safetestset "Portfolio Classic Traditional OWA Optimisation" begin
     include("PortfolioClassicTradOWATests.jl")
+end
+
+@safetestset "Portfolio Classic RP OWA Optimisation" begin
+    include("PortfolioClassicRPOWATests.jl")
 end
 
 @safetestset "HCPortfolio OWA Optimisation" begin
