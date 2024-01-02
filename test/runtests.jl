@@ -60,12 +60,12 @@ using SafeTestsets
     include("PortfolioClassicTradOWATests.jl")
 end
 
-@safetestset "Portfolio Classic RP OWA Optimisation" begin
-    include("PortfolioClassicRPOWATests.jl")
-end
-
 @safetestset "HCPortfolio OWA Optimisation" begin
     include("HCPortfolioOWAOptimisationTests.jl")
+end
+
+@safetestset "Portfolio Classic RP OWA Optimisation" begin
+    include("PortfolioClassicRPOWATests.jl")
 end
 
 @safetestset "DBHT Clustering" begin
