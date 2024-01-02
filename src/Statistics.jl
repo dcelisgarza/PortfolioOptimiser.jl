@@ -481,7 +481,7 @@ function covgerber0(
     posdef_fix!(
         mtx,
         posdef_fix;
-        msg = "Covariance ",
+        msg = "Gerber0 Covariance ",
         posdef_args = posdef_args,
         posdef_func = posdef_func,
         posdef_kwargs = posdef_kwargs,

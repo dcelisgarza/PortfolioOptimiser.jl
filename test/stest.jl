@@ -19,10 +19,6 @@ l = 2.0
 
 cols = [:RRC, :AMZN, :JPM, :MA, :WMT]
 PortfolioOptimiser.CovTypes
-portfolio = Portfolio(; prices = prices)
-asset_statistics!(portfolio; calc_kurt = false, cov_type = :Gerber0)
-mu1 = portfolio.mu
-cov1 = portfolio.cov
 
 println("mut = ", portfolio.mu)
 println("covt = reshape(", vec(portfolio.cov), ", 20, 20)")
