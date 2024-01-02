@@ -10015,6 +10015,28 @@ l = 2.0
     @test !isapprox(mu23, mu24)
 end
 
+@testset "Custom Func and Val for Mean" begin
+    portfolio = Portfolio(; prices = prices)
+    asset_statistics!(
+        portfolio;
+        calc_kurt = false,
+        mu_type = :Custom_Func,
+        mean_func = x -> 3 * vec(mean(x, dims = 1)),
+    )
+    mu1 = portfolio.mu
+
+    asset_statistics!(
+        portfolio;
+        calc_kurt = false,
+        mu_type = :Custom_Val,
+        custom_mu = 2 * vec(mean(portfolio.returns, dims = 1)),
+    )
+    mu2 = portfolio.mu
+
+    @test isapprox(mu1, 3 * vec(mean(portfolio.returns, dims = 1)))
+    @test isapprox(mu2, 2 * vec(mean(portfolio.returns, dims = 1)))
+end
+
 @testset "Full and Semi Covariance Estimation" begin
     portfolio = Portfolio(; prices = prices)
     asset_statistics!(portfolio; calc_kurt = false)
