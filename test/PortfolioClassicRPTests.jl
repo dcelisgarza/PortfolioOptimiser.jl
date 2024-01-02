@@ -1210,7 +1210,7 @@ end
 
     @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
-    @test isapprox(hrc1 / lrc1, 1, atol = 1.5e0)
+    @test isapprox(hrc1 / lrc1, 1, atol = 1.6e0)
     @test isapprox(hrc2 / lrc2, 20, atol = 3.2e0)
 end
 

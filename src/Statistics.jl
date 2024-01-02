@@ -1551,7 +1551,7 @@ function asset_statistics!(
     returns = portfolio.returns
 
     if calc_cov || calc_mu
-        portfolio.cov, portfolio.mu = covar_mtx_mean_vec(
+        covariance, mu = covar_mtx_mean_vec(
             returns;
             # cov_mtx
             alpha = alpha,
@@ -1593,6 +1593,8 @@ function asset_statistics!(
             rf = rf,
         )
     end
+    calc_cov && (portfolio.cov = covariance)
+    calc_mu && (portfolio.mu = mu)
 
     if calc_kurt
         portfolio.kurt, portfolio.skurt, portfolio.L_2, portfolio.S_2 = cokurt_mtx(
