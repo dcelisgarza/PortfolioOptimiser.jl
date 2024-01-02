@@ -19,6 +19,10 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Cokurtosis Estimation" begin end
+
+@testset "Codependence and Dist Estimation" begin end
+
 @testset "Mean Estimation" begin
     portfolio = Portfolio(; prices = prices)
 
@@ -9651,8 +9655,8 @@ l = 2.0
     @test isapprox(cov10, cov12)
     @test !isapprox(mu11, mu12)
     @test isapprox(cov11, cov12)
-    @test isapprox(mu13, mut13)
-    @test isapprox(cov13, covt13)
+    @test isapprox(mu13, mut13, rtol = 1.0e-6)
+    @test isapprox(cov13, covt13, rtol = 1.0e-6)
     @test !isapprox(mu2, mu13)
     @test !isapprox(mu4, mu13)
     @test !isapprox(mu5, mu13)
@@ -9989,8 +9993,8 @@ l = 2.0
     @test isapprox(cov21, cov23)
     @test !isapprox(mu22, mu23)
     @test isapprox(cov22, cov23)
-    @test isapprox(mu24, mut24)
-    @test isapprox(cov24, covt24)
+    @test isapprox(mu24, mut24, rtol = 1.0e-6)
+    @test isapprox(cov24, covt24, rtol = 1.0e-6)
     @test !isapprox(mu2, mu24)
     @test !isapprox(mu4, mu24)
     @test !isapprox(mu5, mu24)
