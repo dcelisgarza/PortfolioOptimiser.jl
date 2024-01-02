@@ -19,6 +19,8 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Mean vector" begin end
+
 @testset "Full and Semi Covariance Estimation" begin
     portfolio = Portfolio(; prices = prices)
     asset_statistics!(portfolio; calc_kurt = false)
