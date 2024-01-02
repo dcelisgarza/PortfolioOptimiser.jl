@@ -11105,3 +11105,25 @@ end
     @test !isapprox(cov10, cov13)
     @test !isapprox(cov7, cov13)
 end
+
+@testset "Custom Func and Val for Covariance" begin
+    portfolio = Portfolio(; prices = prices)
+    asset_statistics!(
+        portfolio;
+        calc_kurt = false,
+        cov_type = :Custom_Func,
+        cov_func = x -> 3 * cov(x),
+    )
+    cov1 = portfolio.cov
+
+    asset_statistics!(
+        portfolio;
+        calc_kurt = false,
+        cov_type = :Custom_Val,
+        custom_cov = 2 * cov(portfolio.returns),
+    )
+    cov2 = portfolio.cov
+
+    @test isapprox(cov1, 3 * cov(portfolio.returns))
+    @test isapprox(cov2, 2 * cov(portfolio.returns))
+end
