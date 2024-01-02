@@ -915,8 +915,8 @@ function covar_mtx(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(eltype(returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -947,9 +947,8 @@ function covar_mtx(
         semi_returns =
             isa(target_ret, Real) ? min.(returns .- target_ret, 0) :
             min.(returns .- transpose(target_ret), 0)
-        isnothing(cov_weights) ?
-        StatsBase.cov(cov_est, semi_returns; mean = 0.0, cov_kwargs...) :
-        StatsBase.cov(cov_est, semi_returns, cov_weights; mean = 0.0, cov_kwargs...)
+        isnothing(cov_weights) ? StatsBase.cov(cov_est, semi_returns; cov_kwargs...) :
+        StatsBase.cov(cov_est, semi_returns, cov_weights; cov_kwargs...)
     elseif cov_type == :Gerber0
         covgerber0(
             returns,
@@ -1356,8 +1355,8 @@ function covar_mtx_mean_vec(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(eltype(returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -1491,8 +1490,9 @@ function asset_statistics!(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = portfolio.cov_type,
+    cov_kwargs::NamedTuple = cov_type == :Semi ?
+                             (; mean = zero(eltype(portfolio.returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -2149,8 +2149,8 @@ function risk_factors(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(Float64)) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -2304,8 +2304,8 @@ function black_litterman(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(eltype(returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -2400,8 +2400,8 @@ function augmented_black_litterman(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(eltype(returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -2620,8 +2620,8 @@ function bayesian_black_litterman(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(eltype(returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -2793,8 +2793,9 @@ function black_litterman_statistics!(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_type == :Semi ?
+                             (; mean = zero(eltype(portfolio.returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     gs_threshold::Real = portfolio.gs_threshold,
@@ -2939,8 +2940,9 @@ function factor_statistics!(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_type == :Semi ?
+                             (; mean = zero(eltype(portfolio.returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -3139,8 +3141,9 @@ function black_litterman_factor_satistics!(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_kwargs::NamedTuple = (;),
     cov_type::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_type == :Semi ?
+                             (; mean = zero(eltype(portfolio.returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     gs_threshold::Real = portfolio.gs_threshold,
