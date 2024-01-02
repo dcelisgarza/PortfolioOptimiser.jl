@@ -21,7 +21,7 @@ l = 2.0
 
 @testset "Cokurtosis Estimation" begin end
 
-@testset "Codependence and Dist Estimation" begin end
+@testset "Codependence and Distance Matrix Estimation" begin end
 
 @testset "Mean Estimation" begin
     portfolio = Portfolio(; prices = prices)
