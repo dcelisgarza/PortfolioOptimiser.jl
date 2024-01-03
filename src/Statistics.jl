@@ -690,12 +690,12 @@ function posdef_fix!(
     posdef_func::Function = x -> x,
     posdef_kwargs::NamedTuple = (;),
 )
+    (posdef_fix == :None || isposdef(mtx)) && return nothing
+
     @assert(
         posdef_fix ∈ PosdefFixes,
         "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
     )
-
-    (posdef_fix == :None || isposdef(mtx)) && return nothing
 
     _mtx = if posdef_fix == :Nearest
         nearest_cov(mtx, posdef_args...; posdef_kwargs...)
