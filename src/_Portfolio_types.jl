@@ -2417,3 +2417,152 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
     end
     setfield!(obj, sym, val)
 end
+
+@kwdef mutable struct CovEstSettings
+    estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
+    weights::Union{<:AbstractWeights, Nothing} = nothing
+    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
+    func::Function = cov
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+    custom::Union{<:AbstractMatrix, Nothing} = nothing
+end
+
+mutable struct PosdefFixSettings
+    enabled::Bool
+    method::Symbol
+    func::Function
+    args::Tuple
+    kwargs::NamedTuple
+end
+function PosdefFixSettings(;
+    enabled = true,
+    method::Symbol = :Nearest,
+    func::Function = x -> x,
+    args::Tuple = (),
+    kwargs::NamedTuple = (;),
+)
+    @assert(method ∈ PosdefFixes, "method = $method, must be one of $PosdefFixes")
+
+    return PosdefFixSettings(enabled, method, func, args, kwargs)
+end
+function Base.setproperty!(obj::PosdefFixSettings, sym::Symbol, val)
+    if sym == :method
+        @assert(val ∈ PosdefFixes, "$sym = $val, must be one of $PosdefFixes")
+    end
+    setfield!(obj, sym, val)
+end
+
+mutable struct GerberSettings{T1 <: Real}
+    threshold::T1
+    std_args::Tuple
+    std_func::Function
+    std_kwargs::NamedTuple
+    posdef_fix::PosdefFixSettings
+end
+function GerberSettings(;
+    threshold::Real = 0.5,
+    std_args::Tuple = (),
+    std_func::Function = std,
+    std_kwargs::NamedTuple = (;),
+    posdef_fix::PosdefFixSettings = PosdefFixSettings(;),
+)
+    @assert(
+        0 < threshold < 1,
+        "threshold = $threshold, must be greater than 0 and less than 1"
+    )
+
+    return GerberSettings(threshold, std_args, std_func, std_kwargs, posdef_fix)
+end
+function Base.setproperty!(obj::GerberSettings, sym::Symbol, val)
+    if sym == :threshold
+        @assert(0 < val < 1, "$sym = $val, must be greater than 0 and less than 1")
+    end
+    setfield!(obj, sym, val)
+end
+
+mutable struct DenoiseSettings{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 <: Integer}
+    enabled::Bool
+    method::Symbol
+    alpha::T1
+    detone::Bool
+    mkt_comp::T2
+    kernel::T3
+    m::T4
+    n::T5
+    opt_args::Tuple
+    opt_kwargs::NamedTuple
+end
+function DenoiseSettings(;
+    enabled::Bool = false,
+    method::Symbol = :Fixed,
+    alpha::Real = 0.0,
+    detone::Bool = false,
+    mkt_comp::Integer = 1,
+    kernel = ASH.Kernels.gaussian,
+    m::Integer = 10,
+    n::Integer = 1000,
+    opt_args::Tuple = (),
+    opt_kwargs::NamedTuple = (;),
+)
+    return DenoiseSettings{
+        typeof(alpha),
+        typeof(mkt_comp),
+        typeof(kernel),
+        typeof(m),
+        typeof(n),
+    }(
+        enabled,
+        method,
+        alpha,
+        detone,
+        mkt_comp,
+        kernel,
+        m,
+        n,
+        opt_args,
+        opt_kwargs,
+    )
+end
+function Base.setproperty!(obj::DenoiseSettings, sym::Symbol, val)
+    if sym == :method
+        @assert(val ∈ DenoiseMethods, "$sym = $val, must be one of $DenoiseMethods")
+    elseif sym == :alpha
+        @assert(0 <= val <= 1, "$sym = $val, must be 0 <= alpha <= 1")
+    end
+    setfield!(obj, sym, val)
+end
+
+mutable struct CovSettings
+    # Cov type.
+    type::Symbol
+    # Estimation.
+    estimation::CovEstSettings
+    # Gerber
+    gerber::GerberSettings
+    # Denoise
+    denoise::DenoiseSettings
+    # Posdef fix
+    posdef::PosdefFixSettings
+    # J-LoGo
+    jlogo::Bool
+end
+function CovSettings(;
+    type::Symbol = :Full,
+    estimation::CovEstSettings = CovEstSettings(;),
+    gerber::GerberSettings = GerberSettings(;),
+    denoise::DenoiseSettings = DenoiseSettings(;),
+    posdef::PosdefFixSettings = PosdefFixSettings(;),
+    jlogo::Bool = false,
+)
+    @assert(type ∈ CovTypes, "type = $type, must be one of $CovTypes")
+
+    return CovSettings(type, estimation, gerber, denoise, posdef, jlogo)
+end
+function Base.setproperty!(obj::CovSettings, sym::Symbol, val)
+    if sym == :type
+        @assert(val ∈ CovTypes, "$sym = $val, must be one of $CovTypes")
+    end
+    setfield!(obj, sym, val)
+end
+export CovSettings, CovEstSettings, GerberSettings, DenoiseSettings, PosdefFixSettings

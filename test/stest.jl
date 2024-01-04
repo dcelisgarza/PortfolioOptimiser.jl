@@ -17,6 +17,10 @@ prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+settings = CovSettings()
+settings.estimation.weights = eweights(100, 0.3)
+settings.gerber.posdef_fix.func
+
 cols = [:RRC, :AMZN, :JPM, :MA]
 PortfolioOptimiser.MuTypes
 PortfolioOptimiser.MuTargets

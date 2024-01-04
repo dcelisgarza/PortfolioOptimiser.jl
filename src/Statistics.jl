@@ -797,9 +797,9 @@ function denoise_cov(
     method::Symbol = :Fixed;
     alpha::Real = 0.0,
     detone::Bool = false,
+    mkt_comp::Integer = 1,
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
-    mkt_comp::Integer = 1,
     n::Integer = 1000,
     opt_args = (),
     opt_kwargs = (;),
