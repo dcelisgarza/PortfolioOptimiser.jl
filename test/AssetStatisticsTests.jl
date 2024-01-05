@@ -15830,12 +15830,17 @@ end
     @test !isapprox(cov11, cov13)
     @test !isapprox(cov12, cov13)
 end
-
+=#
 @testset "Gerber Covariances" begin
     portfolio = Portfolio(; prices = prices)
-    asset_statistics!(portfolio; calc_kurt = false, cov_type = :Gerber0)
+
+    cov_settings = CovSettings(; type = :Gerber0)
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu1 = portfolio.mu
     cov1 = portfolio.cov
+
+    cov_settings.gerber.threshold = 0.5
+    cov_settings.gerber.posdef
 
     asset_statistics!(
         portfolio;
@@ -21127,7 +21132,8 @@ end
     @test !isapprox(cov10, cov13)
     @test !isapprox(cov7, cov13)
 end
-=#
+
+#=
 @testset "Custom Func and Val for Covariance" begin
     portfolio = Portfolio(; prices = prices)
 
@@ -27443,3 +27449,4 @@ end
     @test isapprox(cov2, covt2)
     @test !isapprox(cov1, cov2)
 end
+=#

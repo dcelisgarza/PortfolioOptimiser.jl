@@ -203,7 +203,7 @@ mutable struct Portfolio{
     cov::tcov
     kurt::tkurt
     skurt::tskurt
-    posdef_fix::tpdf
+    posdef::tpdf
     L_2::tl2
     S_2::ts2
     mu_f::tmuf
@@ -321,7 +321,7 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
 - `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
 - `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `posdef_fix`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
+- `posdef`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
 - `L_2`: `(Na×Na) × ((Na×(Na+1)/2))` elimination matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
 - `S_2`: `((Na×(Na+1)/2)) × (Na×Na)` summation matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
 - `mu_f`: $(_mudef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
@@ -540,7 +540,7 @@ mutable struct Portfolio{
     cov::tcov
     kurt::tkurt
     skurt::tskurt
-    posdef_fix::tpdf
+    posdef::tpdf
     L_2::tl2
     S_2::ts2
     mu_f::tmuf
@@ -659,7 +659,7 @@ Portfolio(;
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef_fix::Symbol = :Nearest,
+    posdef::Symbol = :Nearest,
     mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -780,7 +780,7 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
 - `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
 - `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `posdef_fix`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
+- `posdef`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
 - `mu_f`: $(_mudef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
 - `cov_f`: $(_covdef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
 - `mu_fm`: $(_mudef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
@@ -900,7 +900,7 @@ function Portfolio(;
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef_fix::Symbol = :Nearest,
+    posdef::Symbol = :Nearest,
     mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -1072,10 +1072,7 @@ function Portfolio(;
             "skurt must be a square matrix, size(skurt) = $(size(skurt)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2"
         )
     end
-    @assert(
-        posdef_fix ∈ PosdefFixes,
-        "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
-    )
+    @assert(posdef ∈ PosdefFixes, "posdef = $posdef, must be one of $PosdefFixes")
     if !isempty(mu_f)
         @assert(
             length(mu_f) == size(f_returns, 2),
@@ -1236,7 +1233,7 @@ function Portfolio(;
         typeof(cov),
         typeof(kurt),
         typeof(skurt),
-        typeof(posdef_fix),
+        typeof(posdef),
         typeof(L_2),
         typeof(S_2),
         typeof(mu_f),
@@ -1346,7 +1343,7 @@ function Portfolio(;
         cov,
         kurt,
         skurt,
-        posdef_fix,
+        posdef,
         L_2,
         S_2,
         mu_f,
@@ -1498,8 +1495,8 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
     elseif sym == :cov_type
         @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
-    elseif sym == :posdef_fix
-        @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
+    elseif sym == :posdef
+        @assert(val ∈ PosdefFixes, "posdef = $val, must be one of $PosdefFixes")
     elseif sym == :mu_f
         if !isempty(val)
             @assert(
@@ -1657,7 +1654,7 @@ mutable struct HCPortfolio{
     cov::tcov
     kurt::tkurt
     skurt::tskurt
-    posdef_fix::tpdf
+    posdef::tpdf
     L_2::tl2
     S_2::ts2
     bins_info::tbin
@@ -1708,7 +1705,7 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
 - `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
 - `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `posdef_fix`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
+- `posdef`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
 - `L_2`: `(Na×Na) × ((Na×(Na+1)/2))` elimination matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
 - `S_2`: `((Na×(Na+1)/2)) × (Na×Na)` summation matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
 - `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`](@ref) for available choices.
@@ -1810,7 +1807,7 @@ mutable struct HCPortfolio{
     cov::tcov
     kurt::tkurt
     skurt::tskurt
-    posdef_fix::tpdf
+    posdef::tpdf
     L_2::tl2
     S_2::ts2
     bins_info::tbin
@@ -1866,7 +1863,7 @@ HCPortfolio(;
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef_fix::Symbol = :Nearest,
+    posdef::Symbol = :Nearest,
     bins_info::Union{Symbol, <:Integer} = :KN,
     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
@@ -1922,7 +1919,7 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
 - `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
 - `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `posdef_fix`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
+- `posdef`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
 - `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`](@ref) for available choices.
 - `w_min`: `Na×1` vector of the lower bounds for asset weights, where $(_ndef(:a2)).
 - `w_max`: `Na×1` vector of the upper bounds for asset weights, where $(_ndef(:a2)).
@@ -1980,7 +1977,7 @@ function HCPortfolio(;
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef_fix::Symbol = :Nearest,
+    posdef::Symbol = :Nearest,
     bins_info::Union{Symbol, <:Integer} = :KN,
     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
@@ -2080,10 +2077,7 @@ function HCPortfolio(;
             "skurt must be a square matrix, size(skurt) = $(size(skurt)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2"
         )
     end
-    @assert(
-        posdef_fix ∈ PosdefFixes,
-        "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
-    )
+    @assert(posdef ∈ PosdefFixes, "posdef = $posdef, must be one of $PosdefFixes")
     @assert(
         bins_info ∈ BinTypes || isa(bins_info, Int) && bins_info > zero(bins_info),
         "bins_info = $bins_info, has to either be in $BinTypes, or an integer value greater than 0"
@@ -2191,7 +2185,7 @@ function HCPortfolio(;
         typeof(cov),
         typeof(kurt),
         typeof(skurt),
-        typeof(posdef_fix),
+        typeof(posdef),
         typeof(L_2),
         typeof(S_2),
         Union{Symbol, <:Integer},
@@ -2240,7 +2234,7 @@ function HCPortfolio(;
         cov,
         kurt,
         skurt,
-        posdef_fix,
+        posdef,
         L_2,
         S_2,
         bins_info,
@@ -2318,8 +2312,8 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
     elseif sym == :cov_type
         @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
-    elseif sym == :posdef_fix
-        @assert(val ∈ PosdefFixes, "posdef_fix = $val, must be one of $PosdefFixes")
+    elseif sym == :posdef
+        @assert(val ∈ PosdefFixes, "posdef = $val, must be one of $PosdefFixes")
     elseif sym == :bins_info
         @assert(
             val ∈ BinTypes || isa(val, Int) && val > zero(val),
@@ -2453,19 +2447,19 @@ end
 mutable struct GerberSettings{T1 <: Real}
     threshold::T1
     genfunc::GenericFunc
-    posdef_fix::PosdefFixSettings
+    posdef::PosdefFixSettings
 end
 function GerberSettings(;
     threshold::Real = 0.5,
     genfunc::GenericFunc = GenericFunc(; func = StatsBase.std, kwargs = (; dims = 1)),
-    posdef_fix::PosdefFixSettings = PosdefFixSettings(;),
+    posdef::PosdefFixSettings = PosdefFixSettings(;),
 )
     @assert(
         0 < threshold < 1,
         "threshold = $threshold, must be greater than 0 and less than 1"
     )
 
-    return GerberSettings{typeof(threshold)}(threshold, genfunc, posdef_fix)
+    return GerberSettings{typeof(threshold)}(threshold, genfunc, posdef)
 end
 function Base.setproperty!(obj::GerberSettings, sym::Symbol, val)
     if sym == :threshold

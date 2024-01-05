@@ -57,8 +57,6 @@ function _opt_w(
         owa_w = portfolio.owa_w,
         solvers = portfolio.solvers,
         max_num_assets_kurt = portfolio.max_num_assets_kurt,
-        jlogo = portfolio.jlogo,
-        posdef_fix = portfolio.posdef_fix,
     )
 
     !isnothing(imu) && (port.mu = imu)

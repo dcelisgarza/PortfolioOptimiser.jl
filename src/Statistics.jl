@@ -432,8 +432,8 @@ function covgerber0(x, settings::GerberSettings = GerberSettings(;))
     threshold = settings.threshold
     func = settings.genfunc.func
     args = settings.genfunc.args
-    std_kwargs = settings.genfunc.kwargs
-    std_vec = vec(func(x, args...; std_kwargs...))
+    kwargs = settings.genfunc.kwargs
+    std_vec = vec(func(x, args...; kwargs...))
 
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
