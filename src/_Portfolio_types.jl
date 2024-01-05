@@ -2418,33 +2418,30 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
     setfield!(obj, sym, val)
 end
 
-@kwdef mutable struct CovEstSettings
-    estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    weights::Union{<:AbstractWeights, Nothing} = nothing
-    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
-    func::Function = cov
+@kwdef mutable struct GenericFunc
+    func::Function = x -> x
     args::Tuple = ()
     kwargs::NamedTuple = (;)
-    custom::Union{<:AbstractMatrix, Nothing} = nothing
+end
+
+@kwdef mutable struct CovEstSettings
+    estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
+    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
+    genfunc::GenericFunc = GenericFunc(; func = StatsBase.cov)
+    custom::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
 end
 
 mutable struct PosdefFixSettings
-    enabled::Bool
     method::Symbol
-    func::Function
-    args::Tuple
-    kwargs::NamedTuple
+    genfunc::GenericFunc
 end
 function PosdefFixSettings(;
-    enabled = true,
     method::Symbol = :Nearest,
-    func::Function = x -> x,
-    args::Tuple = (),
-    kwargs::NamedTuple = (;),
+    genfunc::GenericFunc = GenericFunc(;),
 )
     @assert(method ∈ PosdefFixes, "method = $method, must be one of $PosdefFixes")
 
-    return PosdefFixSettings(enabled, method, func, args, kwargs)
+    return PosdefFixSettings(method, genfunc)
 end
 function Base.setproperty!(obj::PosdefFixSettings, sym::Symbol, val)
     if sym == :method
@@ -2455,16 +2452,12 @@ end
 
 mutable struct GerberSettings{T1 <: Real}
     threshold::T1
-    std_args::Tuple
-    std_func::Function
-    std_kwargs::NamedTuple
+    genfunc::GenericFunc
     posdef_fix::PosdefFixSettings
 end
 function GerberSettings(;
     threshold::Real = 0.5,
-    std_args::Tuple = (),
-    std_func::Function = std,
-    std_kwargs::NamedTuple = (;),
+    genfunc::GenericFunc = GenericFunc(; func = StatsBase.std, kwargs = (; dims = 1)),
     posdef_fix::PosdefFixSettings = PosdefFixSettings(;),
 )
     @assert(
@@ -2472,7 +2465,7 @@ function GerberSettings(;
         "threshold = $threshold, must be greater than 0 and less than 1"
     )
 
-    return GerberSettings(threshold, std_args, std_func, std_kwargs, posdef_fix)
+    return GerberSettings{typeof(threshold)}(threshold, genfunc, posdef_fix)
 end
 function Base.setproperty!(obj::GerberSettings, sym::Symbol, val)
     if sym == :threshold
@@ -2482,7 +2475,6 @@ function Base.setproperty!(obj::GerberSettings, sym::Symbol, val)
 end
 
 mutable struct DenoiseSettings{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 <: Integer}
-    enabled::Bool
     method::Symbol
     alpha::T1
     detone::Bool
@@ -2490,21 +2482,21 @@ mutable struct DenoiseSettings{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 
     kernel::T3
     m::T4
     n::T5
-    opt_args::Tuple
-    opt_kwargs::NamedTuple
+    genfunc::GenericFunc
 end
 function DenoiseSettings(;
-    enabled::Bool = false,
-    method::Symbol = :Fixed,
+    method::Symbol = :None,
     alpha::Real = 0.0,
     detone::Bool = false,
     mkt_comp::Integer = 1,
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
     n::Integer = 1000,
-    opt_args::Tuple = (),
-    opt_kwargs::NamedTuple = (;),
+    genfunc::GenericFunc = GenericFunc(; func = x -> nothing),
 )
+    @assert(method ∈ DenoiseMethods, "method = $method, must be one of $DenoiseMethods")
+    @assert(0 <= alpha <= 1, "alpha = $alpha, must be 0 <= alpha <= 1")
+
     return DenoiseSettings{
         typeof(alpha),
         typeof(mkt_comp),
@@ -2512,7 +2504,6 @@ function DenoiseSettings(;
         typeof(m),
         typeof(n),
     }(
-        enabled,
         method,
         alpha,
         detone,
@@ -2520,8 +2511,7 @@ function DenoiseSettings(;
         kernel,
         m,
         n,
-        opt_args,
-        opt_kwargs,
+        genfunc,
     )
 end
 function Base.setproperty!(obj::DenoiseSettings, sym::Symbol, val)
@@ -2534,9 +2524,9 @@ function Base.setproperty!(obj::DenoiseSettings, sym::Symbol, val)
 end
 
 mutable struct CovSettings
-    # Cov type.
+    # Cov type
     type::Symbol
-    # Estimation.
+    # Estimation
     estimation::CovEstSettings
     # Gerber
     gerber::GerberSettings
@@ -2565,4 +2555,180 @@ function Base.setproperty!(obj::CovSettings, sym::Symbol, val)
     end
     setfield!(obj, sym, val)
 end
-export CovSettings, CovEstSettings, GerberSettings, DenoiseSettings, PosdefFixSettings
+
+mutable struct MuSettings{T1 <: Real}
+    type::Symbol
+    target::Symbol
+    rf::T1
+    genfunc::GenericFunc
+    custom::Union{<:AbstractVector{<:Real}, Nothing}
+    mkt_ret::Union{<:AbstractVector{<:Real}, Nothing}
+    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
+end
+function MuSettings(;
+    type::Symbol = :Default,
+    target::Symbol = :GM,
+    rf::Real = 0.0,
+    genfunc::GenericFunc = GenericFunc(; func = StatsBase.mean, kwargs = (; dims = 1)),
+    custom::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
+    mkt_ret::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
+    sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
+)
+    @assert(type ∈ MuTypes, "type = $type, must be one of $MuTypes")
+    @assert(target ∈ MuTargets, "target = $target, must be one of $MuTargets")
+
+    return MuSettings{typeof(rf)}(type, target, rf, genfunc, custom, mkt_ret, sigma)
+end
+function Base.setproperty!(obj::MuSettings, sym::Symbol, val)
+    if sym == :type
+        @assert(val ∈ MuTypes, "$sym = $val, must be one of $MuTypes")
+    elseif sym == :target
+        @assert(val ∈ MuTargets, "$sym = $val, must be one of $MuTargets")
+    end
+    setfield!(obj, sym, val)
+end
+
+@kwdef mutable struct KurtEstSettings
+    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
+    custom_kurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
+    custom_skurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
+end
+mutable struct KurtSettings
+    # Estimation
+    estimation::KurtEstSettings
+    # Gerber
+    gerber::GerberSettings
+    # Denoise
+    denoise::DenoiseSettings
+    # Posdef fix
+    posdef::PosdefFixSettings
+    # J-LoGo
+    jlogo::Bool
+end
+function KurtSettings(;
+    estimation::KurtEstSettings = KurtEstSettings(;),
+    gerber::GerberSettings = GerberSettings(;),
+    denoise::DenoiseSettings = DenoiseSettings(;),
+    posdef::PosdefFixSettings = PosdefFixSettings(;),
+    jlogo::Bool = false,
+)
+    return KurtSettings(estimation, gerber, denoise, posdef, jlogo)
+end
+
+mutable struct CodepEstSettings{T1 <: Real}
+    alpha::T1
+    bins_info::Union{Symbol, <:Integer}
+    cor_genfunc::GenericFunc
+    dist_genfunc::GenericFunc
+    custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing}
+    custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing}
+    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
+end
+function CodepEstSettings(;
+    alpha::Real = 0.05,
+    bins_info::Union{Symbol, <:Integer} = :KN,
+    cor_genfunc::GenericFunc = GenericFunc(; func = StatsBase.cor),
+    dist_genfunc::GenericFunc = GenericFunc(;
+        func = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
+    ),
+    custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
+    custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
+    sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
+)
+    @assert(
+        0 <= alpha <= 1,
+        "alpha = $alpha, must be greater than or equal to 0 and less than or equal to 1"
+    )
+    @assert(
+        bins_info ∈ BinTypes || isa(bins_info, Int) && bins_info > zero(bins_info),
+        "bins_info = $bins_info, has to either be in $BinTypes, or an integer value greater than 0"
+    )
+    # @assert(
+    #     size(custom_cor) == size(custom_dist) == size(sigma),
+    #     "size(custom_cor) == $(size(custom_cor)), size(custom_dist) == $(size(custom_dist)) and size(sigma) == $(size(sigma)), must all be equal"
+    # )
+    # @assert(
+    #     size(custom_cor, 1) == size(custom_cor, 2),
+    #     "custom_cor must be a square matrix, size(custom_cor) = $(size(custom_cor))"
+    # )
+    # @assert(
+    #     size(custom_dist, 1) == size(custom_dist, 2),
+    #     "custom_dist must be a square matrix, size(custom_dist) = $(size(custom_dist))"
+    # )
+    # @assert(
+    #     size(sigma, 1) == size(sigma, 2),
+    #     "sigma must be a square matrix, size(sigma) = $(size(sigma))"
+    # )
+
+    return CodepEstSettings{typeof(alpha)}(
+        alpha,
+        bins_info,
+        cor_genfunc,
+        dist_genfunc,
+        custom_cor,
+        custom_dist,
+        sigma,
+    )
+end
+function Base.setproperty!(obj::CodepEstSettings, sym::Symbol, val)
+    if sym == :alpha
+        @assert(
+            0 <= val <= 1,
+            "$sym = $val, must be greater than or equal to 0 and less than or equal to 1"
+        )
+    elseif sym == :bins_info
+        @assert(
+            val ∈ BinTypes || isa(val, Int) && val > zero(val),
+            "$sym = $val, has to either be in $BinTypes, or an integer value greater than 0"
+        )
+    elseif sym ∈ (:custom_cor, :custom_dist, :sigma)
+        # @assert(
+        #     size(obj.custom_cor) == size(obj.custom_dist) == size(obj.sigma),
+        #     "size(custom_cor) == $(size(obj.custom_cor)), size(custom_dist) == $(size(obj.custom_dist)) and size(sigma) == $(size(obj.sigma)), must all be equal"
+        # )
+        # @assert(
+        #     size(val, 1) == size(val, 2),
+        #     "$sym must be a square matrix, size($sym) = $(size(val))"
+        # )
+    end
+    setfield!(obj, sym, val)
+end
+
+mutable struct CodepSettings
+    # Cov type
+    type::Symbol
+    # Estimation
+    estimation::CodepEstSettings
+    # Gerber
+    gerber::GerberSettings
+    # Denoise
+    denoise::DenoiseSettings
+    # Posdef fix
+    posdef::PosdefFixSettings
+    # J-LoGo
+    jlogo::Bool
+    # uplo
+    uplo::Symbol
+end
+function CodepSettings(;
+    type::Symbol = :Pearson,
+    estimation::CodepEstSettings = CodepEstSettings(;),
+    gerber::GerberSettings = GerberSettings(;),
+    denoise::DenoiseSettings = DenoiseSettings(;),
+    posdef::PosdefFixSettings = PosdefFixSettings(;),
+    jlogo::Bool = false,
+    uplo::Symbol = :L,
+)
+    @assert(type ∈ CodepTypes, "type = $type, must be one of $CodepTypes")
+
+    return CodepSettings(type, estimation, gerber, denoise, posdef, jlogo, uplo)
+end
+function Base.setproperty!(obj::CodepSettings, sym::Symbol, val)
+    if sym == :type
+        @assert(val ∈ CodepTypes, "$sym = $val, must be one of $CodepTypes")
+    end
+    setfield!(obj, sym, val)
+end
+
+export CovSettings,
+    CovEstSettings, GerberSettings, DenoiseSettings, PosdefFixSettings, GenericFunc

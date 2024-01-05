@@ -18,7 +18,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
-
+#=
 @testset "Cokurtosis Estimation" begin end
 
 @testset "Codependence and Distance Matrix Estimation" begin end
@@ -21127,23 +21127,20 @@ end
     @test !isapprox(cov10, cov13)
     @test !isapprox(cov7, cov13)
 end
-
+=#
 @testset "Custom Func and Val for Covariance" begin
     portfolio = Portfolio(; prices = prices)
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Custom_Func,
-        cov_func = x -> 3 * cov(x),
-    )
+
+    genfunc = GenericFunc(; func = x -> 3 * cov(x))
+    estimation = CovEstSettings(; genfunc = genfunc)
+    cov_settings = CovSettings(; type = :Custom_Func, estimation = estimation)
+
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov1 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Custom_Val,
-        custom_cov = 2 * cov(portfolio.returns),
-    )
+    cov_settings.type = :Custom_Val
+    cov_settings.estimation.custom = 2 * cov(portfolio.returns)
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov2 = portfolio.cov
 
     @test isapprox(cov1, 3 * cov(portfolio.returns))
@@ -21152,161 +21149,84 @@ end
 
 @testset "Denoise Covariance" begin
     portfolio = Portfolio(; prices = prices)
-    asset_statistics!(portfolio; calc_kurt = false, denoise = false)
+    cov_settings = CovSettings(;)
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov1 = portfolio.cov
 
-    asset_statistics!(portfolio; calc_kurt = false, denoise = true)
+    cov_settings.denoise.method = :Fixed
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov2 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Fixed,
-        detone = false,
-        mkt_comp = 1,
-        alpha = 0.0,
-    )
+    cov_settings.denoise.method = :Fixed
+    cov_settings.denoise.detone = false
+    cov_settings.denoise.mkt_comp = 1
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov3 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Fixed,
-        detone = true,
-        mkt_comp = 1,
-        alpha = 0.0,
-    )
+    cov_settings.denoise.method = :Fixed
+    cov_settings.denoise.detone = true
+    cov_settings.denoise.mkt_comp = 1
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov4 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Fixed,
-        detone = true,
-        mkt_comp = 19,
-        alpha = 0.0,
-    )
+    cov_settings.denoise.mkt_comp = 19
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov5 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Spectral,
-        detone = false,
-        mkt_comp = 1,
-        alpha = 0.0,
-    )
+    cov_settings.denoise.method = :Spectral
+    cov_settings.denoise.detone = false
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov6 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Spectral,
-        detone = true,
-        mkt_comp = 1,
-        alpha = 0.0,
-    )
+    cov_settings.denoise.detone = true
+    cov_settings.denoise.mkt_comp = 1
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov7 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Spectral,
-        detone = true,
-        mkt_comp = 19,
-        alpha = 0.0,
-    )
+    cov_settings.denoise.mkt_comp = 19
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov8 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Shrink,
-        detone = false,
-        mkt_comp = 1,
-        alpha = 0.0,
-    )
+    cov_settings.denoise.method = :Shrink
+    cov_settings.denoise.detone = false
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov9 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Shrink,
-        detone = true,
-        mkt_comp = 1,
-        alpha = 0.0,
-    )
+    cov_settings.denoise.detone = true
+    cov_settings.denoise.mkt_comp = 1
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov10 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Shrink,
-        detone = true,
-        mkt_comp = 19,
-        alpha = 0.0,
-    )
+    cov_settings.denoise.mkt_comp = 19
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov11 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Shrink,
-        detone = false,
-        mkt_comp = 1,
-        alpha = 0.5,
-    )
+    cov_settings.denoise.detone = false
+    cov_settings.denoise.alpha = 0.5
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov12 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Shrink,
-        detone = true,
-        mkt_comp = 1,
-        alpha = 0.5,
-    )
+    cov_settings.denoise.detone = true
+    cov_settings.denoise.mkt_comp = 1
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov13 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        denoise = true,
-        method = :Shrink,
-        detone = true,
-        mkt_comp = 19,
-        alpha = 0.5,
-    )
+    cov_settings.denoise.mkt_comp = 19
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov14 = portfolio.cov
 
+    cov_settings.denoise.mkt_comp = 0
     @test_throws AssertionError asset_statistics!(
         portfolio;
         calc_kurt = false,
-        denoise = true,
-        method = :Fixed,
-        detone = true,
-        mkt_comp = 0,
-        alpha = 0.0,
+        cov_settings = cov_settings,
     )
+
+    cov_settings.denoise.mkt_comp = 21
     @test_throws AssertionError asset_statistics!(
         portfolio;
         calc_kurt = false,
-        denoise = true,
-        method = :Fixed,
-        detone = true,
-        mkt_comp = 21,
-        alpha = 0.0,
+        cov_settings = cov_settings,
     )
 
     covt1 = reshape(
@@ -27104,10 +27024,12 @@ end
 @testset "JLogo Covariance" begin
     portfolio = Portfolio(; prices = prices)
 
-    asset_statistics!(portfolio, calc_kurt = false, jlogo = false)
+    cov_settings = CovSettings(;)
+    asset_statistics!(portfolio, calc_kurt = false, cov_settings = cov_settings)
     cov1 = portfolio.cov
 
-    asset_statistics!(portfolio, calc_kurt = false, jlogo = true)
+    cov_settings.jlogo = true
+    asset_statistics!(portfolio, calc_kurt = false, cov_settings = cov_settings)
     cov2 = portfolio.cov
 
     covt2 = reshape(

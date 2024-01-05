@@ -599,6 +599,7 @@ function _nco_weights(
         calc_mu = false,
         calc_cov = false,
         calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false,
+        kurt_settings = KurtSettings(;),
     ),
     near_opt::Bool = false,
     M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,

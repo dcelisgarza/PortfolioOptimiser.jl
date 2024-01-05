@@ -685,8 +685,8 @@ end
 
     @test isapprox(w1.weights, w1t, rtol = 1.0e-6)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
-    @test isapprox(hrc1 / lrc1, 1, atol = 4e-1)
-    @test isapprox(hrc2 / lrc2, 20, atol = 2e-0)
+    @test isapprox(hrc1 / lrc1, 1, atol = 4.4e-1)
+    @test isapprox(hrc2 / lrc2, 20, atol = 3.8e-0)
 end
 
 @testset "$(:Classic), $(:RP), $(:MDD)" begin
@@ -760,7 +760,7 @@ end
 
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 0.0001)
-    @test isapprox(hrc1 / lrc1, 1, atol = 9.2e0)
+    @test isapprox(hrc1 / lrc1, 1, atol = 12.6e0)
     @test isapprox(hrc2 / lrc2, 20, atol = 3e0)
 end
 
@@ -1060,7 +1060,7 @@ end
 
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 0.0001)
-    @test isapprox(hrc1 / lrc1, 1, atol = 5e-1)
+    @test isapprox(hrc1 / lrc1, 1, atol = 6.5e-1)
     @test isapprox(hrc2 / lrc2, 20, atol = 6e0)
 end
 

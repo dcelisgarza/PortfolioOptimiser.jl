@@ -126,7 +126,7 @@ Methods for matrix denoising.
 - `:Spectral`: spectral.
 - `:Shrink`: shrink.
 """
-const DenoiseMethods = (:Fixed, :Spectral, :Shrink)
+const DenoiseMethods = (:None, :Fixed, :Spectral, :Shrink)
 
 """
 ```julia
@@ -403,7 +403,10 @@ function cordistance(x::AbstractMatrix)
 end
 
 function ltdi_mtx(x, alpha = 0.05)
-    @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and less than 1")
+    @assert(
+        0 <= alpha <= 1,
+        "alpha = $alpha, must be greater than or equal to 0 and less than or equal to 1"
+    )
     T, N = size(x)
     k = ceil(Int, T * alpha)
     mtx = Matrix{eltype(x)}(undef, N, N)
@@ -425,30 +428,16 @@ function ltdi_mtx(x, alpha = 0.05)
     return Symmetric(mtx, :L)
 end
 
-function covgerber0(
-    x,
-    threshold = 0.5;
-    posdef_args::Tuple = (),
-    posdef_fix::Symbol = :Nearest,
-    posdef_func::Function = x -> x,
-    posdef_kwargs::NamedTuple = (;),
-    std_func = std,
-    std_args = (),
-    std_kwargs = (;),
-)
-    @assert(
-        0 < threshold < 1,
-        "threshold = $threshold, must be greater than 0 and less than 1"
-    )
+function covgerber0(x, settings::GerberSettings = GerberSettings(;))
+    threshold = settings.threshold
+    func = settings.genfunc.func
+    args = settings.genfunc.args
+    std_kwargs = settings.genfunc.kwargs
+    std_vec = vec(func(x, args...; std_kwargs...))
 
     T, N = size(x)
-
-    std_vec = vec(
-        !haskey(std_kwargs, :dims) ? std_func(x, std_args...; dims = 1, std_kwargs...) :
-        std_func(x, std_args...; std_kwargs...),
-    )
-
     mtx = Matrix{eltype(x)}(undef, N, N)
+
     for j in 1:N
         for i in 1:j
             neg = 0
@@ -478,31 +467,19 @@ function covgerber0(
 
     mtx .= Matrix(Symmetric(mtx, :U))
 
-    posdef_fix!(
-        mtx,
-        posdef_fix;
-        msg = "Gerber0 Covariance ",
-        posdef_args = posdef_args,
-        posdef_func = posdef_func,
-        posdef_kwargs = posdef_kwargs,
-    )
+    posdef_fix!(mtx, settings.posdef; msg = "Gerber0 Covariance ")
 
     return mtx .* (std_vec * transpose(std_vec))
 end
 
-function covgerber1(x, threshold = 0.5; std_func = std, std_args = (), std_kwargs = (;))
-    @assert(
-        0 < threshold < 1,
-        "threshold = $threshold, must be greater than 0 and less than 1"
-    )
+function covgerber1(x, settings::GerberSettings = GerberSettings(;))
+    threshold = settings.threshold
+    func = settings.genfunc.func
+    args = settings.genfunc.args
+    std_kwargs = settings.genfunc.kwargs
+    std_vec = vec(func(x, args...; std_kwargs...))
 
     T, N = size(x)
-
-    std_vec = vec(
-        !haskey(std_kwargs, :dims) ? std_func(x, std_args...; dims = 1, std_kwargs...) :
-        std_func(x, std_args...; std_kwargs...),
-    )
-
     mtx = Matrix{eltype(x)}(undef, N, N)
     for j in 1:N
         for i in 1:j
@@ -542,19 +519,14 @@ function covgerber1(x, threshold = 0.5; std_func = std, std_args = (), std_kwarg
     return mtx .* (std_vec * transpose(std_vec))
 end
 
-function covgerber2(x, threshold = 0.5; std_func = std, std_args = (), std_kwargs = (;))
-    @assert(
-        0 < threshold < 1,
-        "threshold = $threshold, must be greater than 0 and less than 1"
-    )
+function covgerber2(x, settings::GerberSettings = GerberSettings(;))
+    threshold = settings.threshold
+    func = settings.genfunc.func
+    args = settings.genfunc.args
+    std_kwargs = settings.genfunc.kwargs
+    std_vec = vec(func(x, args...; std_kwargs...))
 
     T, N = size(x)
-
-    std_vec = vec(
-        !haskey(std_kwargs, :dims) ? std_func(x, std_args...; dims = 1, std_kwargs...) :
-        std_func(x, std_args...; std_kwargs...),
-    )
-
     U = Matrix{Bool}(undef, T, N)
     D = Matrix{Bool}(undef, T, N)
 
@@ -684,23 +656,22 @@ end
 
 function posdef_fix!(
     mtx::AbstractMatrix,
-    posdef_fix::Symbol = :Nearest;
+    settings::PosdefFixSettings = PosdefFixSettings(;);
     msg::String = "",
-    posdef_args::Tuple = (),
-    posdef_func::Function = x -> x,
-    posdef_kwargs::NamedTuple = (;),
 )
-    (posdef_fix == :None || isposdef(mtx)) && return nothing
+    method = settings.method
+    func = settings.genfunc.func
+    args = settings.genfunc.args
+    kwargs = settings.genfunc.kwargs
 
-    @assert(
-        posdef_fix ∈ PosdefFixes,
-        "posdef_fix = $posdef_fix, must be one of $PosdefFixes"
-    )
+    (method == :None || isposdef(mtx)) && return nothing
 
-    _mtx = if posdef_fix == :Nearest
-        nearest_cov(mtx, posdef_args...; posdef_kwargs...)
-    elseif posdef_fix == :Custom_Func
-        posdef_func(mtx, posdef_args...; posdef_kwargs...)
+    @assert(method ∈ PosdefFixes, "method = $method, must be one of $PosdefFixes")
+
+    _mtx = if method == :Nearest
+        nearest_cov(mtx, args...; kwargs...)
+    elseif method == :Custom_Func
+        func(mtx, args...; kwargs...)
     end
 
     !isposdef(_mtx) ?
@@ -733,15 +704,15 @@ function find_max_eval(
     kernel = ASH.Kernels.gaussian,
     m::Integer = 10,
     n::Integer = 1000,
-    opt_args = (),
-    opt_kwargs = (;),
+    args = (),
+    kwargs = (;),
 )
     res = Optim.optimize(
         x -> errPDF(x, vals; kernel = kernel, m = m, n = n, q = q),
         0.0,
         1.0,
-        opt_args...;
-        opt_kwargs...,
+        args...;
+        kwargs...,
     )
 
     x = Optim.converged(res) ? Optim.minimizer(res) : 1.0
@@ -791,35 +762,27 @@ function shrink_cor(vals, vecs, num_factors, alpha = 0)
 end
 export shrink_cor
 
-function denoise_cov(
-    mtx::AbstractMatrix,
-    q::Real,
-    method::Symbol = :Fixed;
-    alpha::Real = 0.0,
-    detone::Bool = false,
-    mkt_comp::Integer = 1,
-    kernel = ASH.Kernels.gaussian,
-    m::Integer = 10,
-    n::Integer = 1000,
-    opt_args = (),
-    opt_kwargs = (;),
-)
-    @assert(method ∈ DenoiseMethods, "method = $method, must be one of $DenoiseMethods")
+function denoise_cov(mtx::AbstractMatrix, q::Real, settings::DenoiseSettings)
+    method = settings.method
+
+    method == :None && (return mtx)
+
+    alpha = settings.alpha
+    detone = settings.detone
+    mkt_comp = settings.mkt_comp
+    kernel = settings.kernel
+    m = settings.m
+    n = settings.n
+    args = settings.genfunc.args
+    kwargs = settings.genfunc.kwargs
 
     corr = cov2cor(mtx)
     s = sqrt.(diag(mtx))
 
     vals, vecs = eigen(corr)
 
-    max_val, missing = find_max_eval(
-        vals,
-        q;
-        kernel = kernel,
-        m = m,
-        n = n,
-        opt_args = opt_args,
-        opt_kwargs = opt_kwargs,
-    )
+    max_val, missing =
+        find_max_eval(vals, q; kernel = kernel, m = m, n = n, args = args, kwargs = kwargs)
 
     num_factors = findlast(vals .< max_val)
     corr = if method ∈ (:Fixed, :Spectral)
@@ -851,26 +814,22 @@ export denoise_cov
 mu_estimator
 ```
 """
-function mu_estimator(
-    returns::AbstractMatrix,
-    mu_type::Symbol = :JS,
-    target::Symbol = :GM;
-    dims::Integer = 1,
-    mu_weights::Union{AbstractWeights, Nothing} = nothing,
-    rf::Real = 0.0,
-    sigma::AbstractMatrix = cov(returns),
-)
+function mu_estimator(returns::AbstractMatrix, settings::MuSettings = MuSettings(;))
+    type = settings.type
     @assert(
-        mu_type ∈ (:JS, :BS, :BOP, :CAPM),
-        "mu_type = $mu_type, must be one of (:JS, :BS, :BOP, :CAPM)"
+        type ∈ (:JS, :BS, :BOP, :CAPM),
+        "type = $type, must be one of (:JS, :BS, :BOP, :CAPM)"
     )
-    @assert(target ∈ MuTargets, "target = $target, must be one of $MuTargets")
 
-    if mu_type != :CAPM
+    target = settings.target
+    func = settings.genfunc.func
+    args = settings.genfunc.args
+    kwargs = settings.genfunc.kwargs
+    sigma = settings.genfunc.sigma
+
+    if type != :CAPM
         T, N = size(returns)
-        mu =
-            isnothing(mu_weights) ? vec(mean(returns; dims = dims)) :
-            vec(mean(returns, mu_weights; dims = dims))
+        mu = vec(func(returns, args...; kwargs...))
 
         inv_sigma = sigma \ I
         evals = eigvals(sigma)
@@ -884,10 +843,10 @@ function mu_estimator(
             fill(tr(sigma) / T, N)
         end
 
-        if mu_type == :JS
+        if type == :JS
             alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
             mu = (1 - alpha) * mu + alpha * b
-        elseif mu_type == :BS
+        elseif type == :BS
             alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
             mu = (1 - alpha) * mu + alpha * b
         else
@@ -899,11 +858,10 @@ function mu_estimator(
             mu = alpha * mu + beta * b
         end
     else
+        rf = settings.rf
         betas = sigma[:, end] / sigma[end, end]
         betas = betas[1:(end - 1)]
-        mkt_mean_ret =
-            isnothing(mu_weights) ? mean(returns[:, end]) :
-            mean(returns[:, end], mu_weights)
+        mkt_mean_ret = func(returns[:, end], args...; kwargs...)[1]
         mu = rf .+ betas * (mkt_mean_ret - rf)
     end
 
@@ -915,130 +873,63 @@ end
 covar_mtx
 ```
 """
-function covar_mtx(
-    returns::AbstractMatrix;
-    alpha::Real = 0.0,
-    cov_args::Tuple = (),
-    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
-    cov_func::Function = cov,
-    cov_type::Symbol = :Full,
-    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(eltype(returns))) : (;),
-    cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
-    denoise::Bool = false,
-    detone::Bool = false,
-    gs_threshold::Real = 0.5,
-    jlogo::Bool = false,
-    kernel = ASH.Kernels.gaussian,
-    method::Symbol = :Fixed,
-    m::Integer = 10,
-    mkt_comp::Integer = 1,
-    n::Integer = 1000,
-    opt_args = (),
-    opt_kwargs = (;),
-    posdef_args::Tuple = (),
-    posdef_fix::Symbol = :Nearest,
-    posdef_func::Function = x -> x,
-    posdef_kwargs::NamedTuple = (;),
-    std_args::Tuple = (),
-    std_func::Function = std,
-    std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
-)
-    @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
-    cov_mtx = if cov_type == :Full
-        isnothing(cov_weights) ? StatsBase.cov(cov_est, returns; cov_kwargs...) :
-        StatsBase.cov(cov_est, returns, cov_weights; cov_kwargs...)
-    elseif cov_type == :Semi
-        semi_returns =
-            isa(target_ret, Real) ? min.(returns .- target_ret, zero(eltype(returns))) :
-            min.(returns .- transpose(target_ret), zero(eltype(returns)))
-        isnothing(cov_weights) ? StatsBase.cov(cov_est, semi_returns; cov_kwargs...) :
-        StatsBase.cov(cov_est, semi_returns, cov_weights; cov_kwargs...)
-    elseif cov_type == :Gerber0
-        covgerber0(
-            returns,
-            gs_threshold;
-            posdef_args = posdef_args,
-            posdef_fix = posdef_fix,
-            posdef_func = posdef_func,
-            posdef_kwargs = posdef_kwargs,
-            std_func = std_func,
-            std_args = std_args,
-            std_kwargs = std_kwargs,
-        )
-    elseif cov_type == :Gerber1
-        covgerber1(
-            returns,
-            gs_threshold;
-            std_func = std_func,
-            std_args = std_args,
-            std_kwargs = std_kwargs,
-        )
-    elseif cov_type == :Gerber2
-        covgerber2(
-            returns,
-            gs_threshold;
-            std_func = std_func,
-            std_args = std_args,
-            std_kwargs = std_kwargs,
-        )
-    elseif cov_type == :Custom_Func
-        cov_func(returns, cov_args...; cov_kwargs...)
-    elseif cov_type == :Custom_Val
-        custom_cov
+function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(;))
+    type = settings.type
+
+    @assert(type ∈ CovTypes, "type = $type, must be one of $CovTypes")
+
+    mtx = if type ∈ (:Full, :Semi)
+        estimation = settings.estimation
+        estimator = estimation.estimator
+        args = estimation.genfunc.args
+        kwargs = estimation.genfunc.kwargs
+        if type == :Semi
+            target_ret = settings.estimation.target_ret
+            returns =
+                isa(target_ret, Real) ?
+                min.(returns .- target_ret, zero(eltype(returns))) :
+                min.(returns .- transpose(target_ret), zero(eltype(returns)))
+        end
+        StatsBase.cov(estimator, returns, args...; kwargs...)
+    elseif type == :Gerber0
+        covgerber0(returns, settings.gerber)
+    elseif type == :Gerber1
+        covgerber1(returns, settings.gerber)
+    elseif type == :Gerber2
+        covgerber2(returns, settings.gerber)
+    elseif type == :Custom_Func
+        estimation = settings.estimation
+        func = estimation.genfunc.func
+        args = estimation.genfunc.args
+        kwargs = estimation.genfunc.kwargs
+        func(returns, args...; kwargs...)
+    elseif type == :Custom_Val
+        settings.estimation.custom
     end
 
-    if denoise
-        cov_mtx = denoise_cov(
-            cov_mtx,
-            size(returns, 1) / size(returns, 2),
-            method;
-            alpha = alpha,
-            detone = detone,
-            kernel = kernel,
-            m = m,
-            mkt_comp = mkt_comp,
-            n = n,
-            opt_args = opt_args,
-            opt_kwargs = opt_kwargs,
-        )
-    end
+    T, N = size(returns)
+    mtx = denoise_cov(mtx, T / N, settings.denoise)
 
-    posdef_fix!(
-        cov_mtx,
-        posdef_fix;
-        msg = "Covariance ",
-        posdef_args = posdef_args,
-        posdef_func = posdef_func,
-        posdef_kwargs = posdef_kwargs,
-    )
+    posdef_fix!(mtx, settings.posdef; msg = "Covariance ")
 
-    if jlogo
+    if settings.jlogo
         try
-            codep = cov2cor(cov_mtx)
+            codep = cov2cor(mtx)
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
             separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
-            cov_mtx .= J_LoGo(cov_mtx, separators, cliques) \ I
+            mtx .= J_LoGo(mtx, separators, cliques) \ I
         catch SingularException
             throw(
                 ErrorException(
-                    "Covariance matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set posdef_fix = $posdef_fix, to a different method from $PosdefFixes.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.\n\t Try a different cov_type = $cov_type, from $CovTypes.",
+                    "Covariance matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set posdef_fix = $posdef_fix, to a different method from $PosdefFixes.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.\n\t Try a different type = $type, from $CovTypes.",
                 ),
             )
         end
 
-        posdef_fix!(
-            cov_mtx,
-            posdef_fix;
-            msg = "J-LoGo Covariance ",
-            posdef_args = posdef_args,
-            posdef_func = posdef_func,
-            posdef_kwargs = posdef_kwargs,
-        )
+        posdef_fix!(mtx, settings.posdef; msg = "J-LoGo Covariance ")
     end
 
-    return cov_mtx
+    return mtx
 end
 
 """
@@ -1057,36 +948,17 @@ mean_vec(
 )
 ```
 """
-function mean_vec(
-    returns::AbstractMatrix;
-    custom_mu::Union{AbstractVector, Nothing} = nothing,
-    mean_args::Tuple = (),
-    mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
-    mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
-    mu_weights::Union{AbstractWeights, Nothing} = nothing,
-    rf::Real = 0.0,
-    sigma::Union{AbstractMatrix, Nothing} = nothing,
-)
-    @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
-    mu = if mu_type == :Default
-        isnothing(mu_weights) ? vec(mean(returns; dims = 1)) :
-        vec(mean(returns, mu_weights; dims = 1))
-    elseif mu_type ∈ (:JS, :BS, :BOP, :CAPM)
-        mu_estimator(
-            returns,
-            mu_type,
-            mu_target;
-            dims = 1,
-            mu_weights = mu_weights,
-            rf = rf,
-            sigma = sigma,
-        )
-    elseif mu_type == :Custom_Func
-        vec(mean_func(returns, mean_args...; mean_kwargs...))
-    elseif mu_type == :Custom_Val
-        custom_mu
+function mean_vec(returns::AbstractMatrix, settings::MuSettings = MuSettings(;))
+    type = settings.type
+    mu = if type ∈ (:Default, :Custom_Func)
+        func = settings.genfunc.func
+        args = settings.genfunc.args
+        kwargs = settings.genfunc.kwargs
+        vec(func(returns, args...; kwargs...))
+    elseif type ∈ (:JS, :BS, :BOP, :CAPM)
+        mu_estimator(returns, settings)
+    elseif type == :Custom_Val
+        settings.custom
     end
 
     return mu
@@ -1099,79 +971,26 @@ cokurt_mtx
 """
 function cokurt_mtx(
     returns::AbstractMatrix,
-    mu::AbstractVector;
-    alpha::Real = 0.0,
-    custom_kurt::Union{AbstractMatrix, Nothing} = nothing,
-    custom_skurt::Union{AbstractMatrix, Nothing} = nothing,
-    denoise::Bool = false,
-    detone::Bool = false,
-    jlogo = false,
-    kernel = ASH.Kernels.gaussian,
-    m::Integer = 10,
-    method::Symbol = :Fixed,
-    mkt_comp::Integer = 1,
-    n::Integer = 1000,
-    opt_args = (),
-    opt_kwargs = (;),
-    posdef_args::Tuple = (),
-    posdef_fix::Symbol = :Nearest,
-    posdef_func::Function = x -> x,
-    posdef_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
+    mu::AbstractVector,
+    settings::KurtSettings = KurtSettings(;),
 )
+    custom_kurt = settings.estimation.custom_kurt
     kurt = isnothing(custom_kurt) ? cokurt(returns, transpose(mu)) : custom_kurt
 
+    target_ret = settings.estimation.target_ret
+    custom_skurt = settings.estimation.custom_skurt
     skurt =
         isnothing(custom_skurt) ? scokurt(returns, transpose(mu), target_ret) : custom_skurt
 
-    if denoise
-        kurt = denoise_cov(
-            kurt,
-            size(returns, 1) / size(returns, 2),
-            method;
-            alpha = alpha,
-            detone = detone,
-            kernel = kernel,
-            m = m,
-            mkt_comp = mkt_comp,
-            n = n,
-            opt_args = opt_args,
-            opt_kwargs = opt_kwargs,
-        )
+    T, N = size(returns)
 
-        skurt = denoise_cov(
-            skurt,
-            size(returns, 1) / size(returns, 2),
-            method;
-            alpha = alpha,
-            detone = detone,
-            kernel = kernel,
-            m = m,
-            mkt_comp = mkt_comp,
-            n = n,
-            opt_args = opt_args,
-            opt_kwargs = opt_kwargs,
-        )
-    end
+    kurt = denoise_cov(kurt, T / N, settings.denoise)
+    posdef_fix!(kurt, settings.posdef; msg = "Kurtosis ")
 
-    posdef_fix!(
-        kurt,
-        posdef_fix;
-        msg = "Kurtosis ",
-        posdef_args = posdef_args,
-        posdef_func = posdef_func,
-        posdef_kwargs = posdef_kwargs,
-    )
-    posdef_fix!(
-        skurt,
-        posdef_fix;
-        msg = "Semi Kurtosis ",
-        posdef_args = posdef_args,
-        posdef_func = posdef_func,
-        posdef_kwargs = posdef_kwargs,
-    )
+    skurt = denoise_cov(skurt, T / N, settings.denoise)
+    posdef_fix!(skurt, settings.posdef; msg = "Semi Kurtosis ")
 
-    if jlogo
+    if settings.jlogo
         try
             codep = cov2cor(kurt)
             dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
@@ -1185,14 +1004,7 @@ function cokurt_mtx(
             )
         end
 
-        posdef_fix!(
-            kurt,
-            posdef_fix;
-            msg = "jlogo Kurtosis ",
-            posdef_args = posdef_args,
-            posdef_func = posdef_func,
-            posdef_kwargs = posdef_kwargs,
-        )
+        posdef_fix!(kurt, settings.posdef; msg = "J-LoGo Kurtosis ")
 
         try
             codep = cov2cor(skurt)
@@ -1207,14 +1019,7 @@ function cokurt_mtx(
             )
         end
 
-        posdef_fix!(
-            skurt,
-            posdef_fix;
-            msg = "jlogo Semi Kurtosis ",
-            posdef_args = posdef_args,
-            posdef_func = posdef_func,
-            posdef_kwargs = posdef_kwargs,
-        )
+        posdef_fix!(skurt, settings.posdef; msg = "J-LoGo Semi Kurtosis ")
     end
 
     N = length(mu)
@@ -1250,152 +1055,81 @@ codep_dist_mtx(
 )
 ```
 """
-function codep_dist_mtx(
-    returns::AbstractMatrix;
-    alpha_tail::Real = 0.05,
-    bins_info::Union{Symbol, Integer} = :KN,
-    codep_type::Symbol = :Pearson,
-    cor_args::Tuple = (),
-    cor_func::Function = cor,
-    cor_kwargs::NamedTuple = (;),
-    custom_cor::Union{AbstractMatrix, Nothing} = nothing,
-    dist_args::Tuple = (),
-    dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-    dist_kwargs::NamedTuple = (;),
-    gs_threshold::Real = 0.5,
-    posdef_args::Tuple = (),
-    posdef_fix::Symbol = :Nearest,
-    posdef_func::Function = x -> x,
-    posdef_kwargs::NamedTuple = (;),
-    sigma::Union{AbstractMatrix, Nothing} = nothing,
-    std_args::Tuple = (),
-    std_func::Function = std,
-    std_kwargs::NamedTuple = (;),
-    uplo::Symbol = :L,
-)
-    @assert(codep_type ∈ CodepTypes, "codep_type = $codep_type, must be one of $CodepTypes")
-    if codep_type == :Pearson
+function codep_dist_mtx(returns::AbstractMatrix, settings::CodepSettings = CodepSettings(;))
+    type = settings.type
+    if type == :Pearson
         codep = cor(returns)
         dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-    elseif codep_type == :Spearman
+    elseif type == :Spearman
         codep = corspearman(returns)
         dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-    elseif codep_type == :Kendall
+    elseif type == :Kendall
         codep = corkendall(returns)
         dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-    elseif codep_type == :Abs_Pearson
+    elseif type == :Abs_Pearson
         codep = abs.(cor(returns))
         dist = sqrt.(clamp!(1 .- codep, 0, 1))
-    elseif codep_type == :Abs_Spearman
+    elseif type == :Abs_Spearman
         codep = abs.(corspearman(returns))
         dist = sqrt.(clamp!(1 .- codep, 0, 1))
-    elseif codep_type == :Abs_Kendall
+    elseif type == :Abs_Kendall
         codep = abs.(corkendall(returns))
         dist = sqrt.(clamp!(1 .- codep, 0, 1))
-    elseif codep_type == :Gerber0
-        codep = cov2cor(
-            covgerber0(
-                returns,
-                gs_threshold;
-                posdef_args = posdef_args,
-                posdef_fix = posdef_fix,
-                posdef_func = posdef_func,
-                posdef_kwargs = posdef_kwargs,
-                std_func = std_func,
-                std_args = std_args,
-                std_kwargs = std_kwargs,
-            ),
-        )
+    elseif type == :Gerber0
+        codep = cov2cor(covgerber0(returns, settings.gerber))
         dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-    elseif codep_type == :Gerber1
-        codep = cov2cor(
-            covgerber1(
-                returns,
-                gs_threshold;
-                std_func = std_func,
-                std_args = std_args,
-                std_kwargs = std_kwargs,
-            ),
-        )
+    elseif type == :Gerber1
+        codep = cov2cor(covgerber1(returns, settings.gerber))
         dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-    elseif codep_type == :Gerber2
-        codep = cov2cor(
-            covgerber2(
-                returns,
-                gs_threshold;
-                std_func = std_func,
-                std_args = std_args,
-                std_kwargs = std_kwargs,
-            ),
-        )
+    elseif type == :Gerber2
+        codep = cov2cor(covgerber2(returns, settings.gerber))
         dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
-    elseif codep_type == :Distance
+    elseif type == :Distance
         codep = cordistance(returns)
         dist = sqrt.(clamp!(1 .- codep, 0, 1))
-    elseif codep_type == :Mutual_Info
-        codep, dist = mut_var_info_mtx(returns, bins_info)
-    elseif codep_type == :Tail
-        codep = ltdi_mtx(returns, alpha_tail)
+    elseif type == :Mutual_Info
+        codep, dist = mut_var_info_mtx(returns, settings.estimation.bins_info)
+    elseif type == :Tail
+        codep = ltdi_mtx(returns, settings.estimation.alpha)
         dist = -log.(codep)
-    elseif codep_type == :Cov_to_Cor
+    elseif type == :Cov_to_Cor
+        estimation = settings.estimation
+        sigma = estimation.sigma
+        dist_func = estimation.dist_genfunc.func
+        dist_args = estimation.dist_genfunc.args
+        dist_kwargs = estimation.dist_genfunc.kwargs
         codep = cov2cor(sigma)
         dist = dist_func(codep, dist_args...; dist_kwargs...)
-    elseif codep_type == :Custom_Func
+    elseif type == :Custom_Func
+        estimation = settings.estimation
+        cor_func = estimation.cor_genfunc.func
+        cor_args = estimation.cor_genfunc.args
+        cor_kwargs = estimation.cor_genfunc.kwargs
+        dist_func = estimation.dist_genfunc.func
+        dist_args = estimation.dist_genfunc.args
+        dist_kwargs = estimation.dist_genfunc.kwargs
         codep = cor_func(returns, cor_args...; cor_kwargs...)
         dist = dist_func(codep, dist_args...; dist_kwargs...)
-    elseif codep_type == :Custom_Val
-        codep = custom_cor
-        dist = dist_func(codep, dist_args...; dist_kwargs...)
+    elseif type == :Custom_Val
+        estimation = settings.estimation
+        codep = estimation.custom_cor
+        dist = estimation.custom_dist
     end
 
-    codep = issymmetric(codep) ? codep : Symmetric(codep, uplo)
-    dist = issymmetric(dist) ? dist : Symmetric(dist, uplo)
+    codep = issymmetric(codep) ? codep : Symmetric(codep, settings.uplo)
+    dist = issymmetric(dist) ? dist : Symmetric(dist, settings.uplo)
 
     return codep, dist
 end
 
 function covar_mtx_mean_vec(
     returns;
-    # cov_mtx
-    alpha::Real = 0.0,
-    cov_args::Tuple = (),
-    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
-    cov_func::Function = cov,
-    cov_type::Symbol = :Full,
-    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(eltype(returns))) : (;),
-    cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
-    denoise::Bool = false,
-    detone::Bool = false,
-    gs_threshold::Real = 0.5,
-    jlogo::Bool = false,
-    kernel = ASH.Kernels.gaussian,
-    m::Integer = 10,
-    method::Symbol = :Fixed,
-    mkt_comp::Integer = 1,
-    n::Integer = 1000,
-    opt_args = (),
-    opt_kwargs = (;),
-    posdef_args::Tuple = (),
-    posdef_fix::Symbol = :Nearest,
-    posdef_func::Function = x -> x,
-    posdef_kwargs::NamedTuple = (;),
-    std_args::Tuple = (),
-    std_func::Function = std,
-    std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
-    # mean_vec
-    custom_mu::Union{AbstractVector, Nothing} = nothing,
-    mean_args::Tuple = (),
-    mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
-    mkt_ret::Union{AbstractVector, Nothing} = nothing,
-    mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
-    mu_weights::Union{AbstractWeights, Nothing} = nothing,
-    rf::Real = 0.0,
+    cov_settings::CovSettings = CovSettings(;),
+    mu_settings::MuSettings = MuSettings(;),
 )
+    mu_type = mu_settings.type
     if mu_type == :CAPM
+        mkt_ret = mu_settings.mkt_ret
         if isnothing(mkt_ret)
             returns = hcat(returns, mean(returns, dims = 2))
         else
@@ -1403,49 +1137,10 @@ function covar_mtx_mean_vec(
         end
     end
 
-    sigma = covar_mtx(
-        returns;
-        alpha = alpha,
-        cov_args = cov_args,
-        cov_est = cov_est,
-        cov_func = cov_func,
-        cov_kwargs = cov_kwargs,
-        cov_type = cov_type,
-        cov_weights = cov_weights,
-        custom_cov = custom_cov,
-        denoise = denoise,
-        detone = detone,
-        gs_threshold = gs_threshold,
-        jlogo = jlogo,
-        kernel = kernel,
-        m = m,
-        method = method,
-        mkt_comp = mkt_comp,
-        n = n,
-        opt_args = opt_args,
-        opt_kwargs = opt_kwargs,
-        posdef_args = posdef_args,
-        posdef_fix = posdef_fix,
-        posdef_func = posdef_func,
-        posdef_kwargs = posdef_kwargs,
-        std_args = std_args,
-        std_func = std_func,
-        std_kwargs = std_kwargs,
-        target_ret = target_ret,
-    )
+    sigma = covar_mtx(returns, cov_settings)
 
-    mu = mean_vec(
-        returns;
-        custom_mu = custom_mu,
-        mean_args = mean_args,
-        mean_func = mean_func,
-        mean_kwargs = mean_kwargs,
-        mu_target = mu_target,
-        mu_type = mu_type,
-        mu_weights = mu_weights,
-        rf = rf,
-        sigma = isnothing(custom_cov) ? sigma : custom_cov,
-    )
+    mu_settings.sigma = sigma
+    mu = mean_vec(returns, mu_settings)
 
     if mu_type == :CAPM
         sigma = sigma[1:(end - 1), 1:(end - 1)]
@@ -1492,160 +1187,32 @@ function asset_statistics!(
     calc_mu::Bool = true,
     calc_kurt::Bool = true,
     # cov_mtx
-    alpha::Real = 0.0,
-    cov_args::Tuple = (),
-    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
-    cov_func::Function = cov,
-    cov_type::Symbol = portfolio.cov_type,
-    cov_kwargs::NamedTuple = cov_type == :Semi ?
-                             (; mean = zero(eltype(portfolio.returns))) : (;),
-    cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
-    denoise::Bool = false,
-    detone::Bool = false,
-    gs_threshold::Real = portfolio.gs_threshold,
-    jlogo::Bool = portfolio.jlogo,
-    kernel = ASH.Kernels.gaussian,
-    m::Integer = 10,
-    method::Symbol = :Fixed,
-    mkt_comp::Integer = 1,
-    n::Integer = 1000,
-    opt_args = (),
-    opt_kwargs = (;),
-    posdef_args::Tuple = (),
-    posdef_fix::Symbol = portfolio.posdef_fix,
-    posdef_func::Function = x -> x,
-    posdef_kwargs::NamedTuple = (;),
-    std_args::Tuple = (),
-    std_func::Function = std,
-    std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
-    # mean_vec
-    custom_mu::Union{AbstractVector, Nothing} = nothing,
-    mean_args::Tuple = (),
-    mean_func::Function = mean,
-    mean_kwargs::NamedTuple = (;),
-    mkt_ret::Union{AbstractVector, Nothing} = nothing,
-    mu_target::Symbol = :GM,
-    mu_type::Symbol = portfolio.mu_type,
-    mu_weights::Union{AbstractWeights, Nothing} = nothing,
-    rf::Real = 0.0,
-    # codep_dist_mtx
-    alpha_tail::Union{Real, Nothing} = isa(portfolio, HCPortfolio) ? portfolio.alpha_tail :
-                                       nothing,
-    bins_info::Union{Symbol, Integer, Nothing} = isa(portfolio, HCPortfolio) ?
-                                                 portfolio.bins_info : nothing,
-    codep_type::Union{Symbol, Nothing} = isa(portfolio, HCPortfolio) ?
-                                         portfolio.codep_type : nothing,
-    cor_args::Tuple = (),
-    cor_func::Function = cor,
-    cor_kwargs::NamedTuple = (;),
-    custom_cor::Union{AbstractMatrix, Nothing} = nothing,
-    dist_args::Tuple = (),
-    dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-    dist_kwargs::NamedTuple = (;),
-    custom_kurt::Union{AbstractMatrix, Nothing} = nothing,
-    custom_skurt::Union{AbstractMatrix, Nothing} = nothing,
-    uplo::Symbol = :L,
+    cov_settings::CovSettings = CovSettings(;),
+    mu_settings::MuSettings = MuSettings(;),
+    kurt_settings::KurtSettings = KurtSettings(;),
+    codep_settings::CodepSettings = CodepSettings(;),
 )
     returns = portfolio.returns
 
     if calc_cov || calc_mu
-        covariance, mu = covar_mtx_mean_vec(
+        sigma, mu = covar_mtx_mean_vec(
             returns;
-            # cov_mtx
-            alpha = alpha,
-            cov_args = cov_args,
-            cov_est = cov_est,
-            cov_func = cov_func,
-            cov_kwargs = cov_kwargs,
-            cov_type = cov_type,
-            cov_weights = cov_weights,
-            custom_cov = custom_cov,
-            denoise = denoise,
-            detone = detone,
-            gs_threshold = gs_threshold,
-            jlogo = jlogo,
-            kernel = kernel,
-            m = m,
-            method = method,
-            mkt_comp = mkt_comp,
-            n = n,
-            opt_args = opt_args,
-            opt_kwargs = opt_kwargs,
-            posdef_args = posdef_args,
-            posdef_fix = posdef_fix,
-            posdef_func = posdef_func,
-            posdef_kwargs = posdef_kwargs,
-            std_args = std_args,
-            std_func = std_func,
-            std_kwargs = std_kwargs,
-            target_ret = target_ret,
-            # mean_vec
-            custom_mu = custom_mu,
-            mean_args = mean_args,
-            mean_func = mean_func,
-            mean_kwargs = mean_kwargs,
-            mkt_ret = mkt_ret,
-            mu_target = mu_target,
-            mu_type = mu_type,
-            mu_weights = mu_weights,
-            rf = rf,
+            cov_settings = cov_settings,
+            mu_settings = mu_settings,
         )
     end
-    calc_cov && (portfolio.cov = covariance)
+    calc_cov && (portfolio.cov = sigma)
     calc_mu && (portfolio.mu = mu)
 
     if calc_kurt
-        portfolio.kurt, portfolio.skurt, portfolio.L_2, portfolio.S_2 = cokurt_mtx(
-            returns,
-            portfolio.mu;
-            alpha = alpha,
-            custom_kurt = custom_kurt,
-            custom_skurt = custom_skurt,
-            denoise = denoise,
-            detone = detone,
-            jlogo = jlogo,
-            kernel = kernel,
-            m = m,
-            method = method,
-            mkt_comp = mkt_comp,
-            n = n,
-            opt_args = opt_args,
-            opt_kwargs = opt_kwargs,
-            posdef_args = posdef_args,
-            posdef_fix = posdef_fix,
-            posdef_func = posdef_func,
-            posdef_kwargs = posdef_kwargs,
-            target_ret = target_ret,
-        )
+        portfolio.kurt, portfolio.skurt, portfolio.L_2, portfolio.S_2 =
+            cokurt_mtx(returns, portfolio.mu, kurt_settings)
     end
 
     # Type specific
     if isa(portfolio, HCPortfolio) && calc_codep
-        portfolio.codep, portfolio.dist = codep_dist_mtx(
-            returns;
-            alpha_tail = alpha_tail,
-            bins_info = bins_info,
-            codep_type = codep_type,
-            cor_args = cor_args,
-            cor_func = cor_func,
-            cor_kwargs = cor_kwargs,
-            custom_cor = custom_cor,
-            dist_args = dist_args,
-            dist_func = dist_func,
-            dist_kwargs = dist_kwargs,
-            gs_threshold = gs_threshold,
-            posdef_args = posdef_args,
-            posdef_fix = posdef_fix,
-            posdef_func = posdef_func,
-            posdef_kwargs = posdef_kwargs,
-            sigma = isnothing(custom_cov) ? portfolio.cov : custom_cov,
-            std_args = std_args,
-            std_func = std_func,
-            std_kwargs = std_kwargs,
-            uplo = uplo,
-        )
+        codep_settings.estimation.sigma = portfolio.cov
+        portfolio.codep, portfolio.dist = codep_dist_mtx(returns, codep_settings)
     end
 
     return nothing
@@ -2153,43 +1720,15 @@ function risk_factors(
     x::DataFrame,
     y::DataFrame;
     # cov_mtx
-    alpha::Real = 0.0,
-    cov_args::Tuple = (),
-    cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
-    cov_func::Function = cov,
-    cov_type::Symbol = :Full,
-    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(Float64)) : (;),
-    cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    custom_cov::Union{AbstractMatrix, Nothing} = nothing,
-    denoise::Bool = false,
-    detone::Bool = false,
-    gs_threshold::Real = 0.5,
-    jlogo::Bool = false,
-    kernel = ASH.Kernels.gaussian,
-    m::Integer = 10,
-    method::Symbol = :Fixed,
-    mkt_comp::Integer = 1,
-    n::Integer = 1000,
-    opt_args = (),
-    opt_kwargs = (;),
-    posdef_args::Tuple = (),
-    posdef_fix::Symbol = :Nearest,
-    posdef_func::Function = x -> x,
-    posdef_kwargs::NamedTuple = (;),
+    cov_settings::CovSettings = CovSettings(;),
+    mu_settings::MuSettings = MuSettings(;),
     std_args::Tuple = (),
     std_func::Function = std,
     std_kwargs::NamedTuple = (;),
-    target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
     # mean_vec
-    custom_mu::Union{AbstractVector, Nothing} = nothing,
     mean_args::Tuple = (),
     mean_func::Function = mean,
     mean_kwargs::NamedTuple = (;),
-    mkt_ret::Union{AbstractVector, Nothing} = nothing,
-    mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
-    mu_weights::Union{AbstractWeights, Nothing} = nothing,
-    rf = 0.0,
     # Loadings matrix
     B::Union{DataFrame, Nothing} = nothing,
     criterion::Union{Symbol, Function} = :pval,
@@ -2225,47 +1764,11 @@ function risk_factors(
     x1 = "const" ∈ namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
     B = Matrix(B[!, setdiff(namesB, ["ticker"])])
 
-    cov_f, mu_f = covar_mtx_mean_vec(
-        x1;
-        # cov_mtx
-        alpha = alpha,
-        cov_args = cov_args,
-        cov_est = cov_est,
-        cov_func = cov_func,
-        cov_kwargs = cov_kwargs,
-        cov_type = cov_type,
-        cov_weights = cov_weights,
-        custom_cov = custom_cov,
-        denoise = denoise,
-        detone = detone,
-        gs_threshold = gs_threshold,
-        jlogo = jlogo,
-        kernel = kernel,
-        m = m,
-        method = method,
-        mkt_comp = mkt_comp,
-        n = n,
-        opt_args = opt_args,
-        opt_kwargs = opt_kwargs,
-        posdef_args = posdef_args,
-        posdef_fix = posdef_fix,
-        posdef_func = posdef_func,
-        posdef_kwargs = posdef_kwargs,
-        std_args = std_args,
-        std_func = std_func,
-        std_kwargs = std_kwargs,
-        target_ret = target_ret,
-        # mean_vec
-        custom_mu = custom_mu,
-        mean_args = mean_args,
-        mean_func = mean_func,
-        mean_kwargs = mean_kwargs,
-        mkt_ret = mkt_ret,
-        mu_target = mu_target,
-        mu_type = mu_type,
-        mu_weights = mu_weights,
-        rf = rf,
-    )
+    # cov_settings::CovSettings = CovSettings(;), 
+    # mu_settings::MuSettings = MuSettings(;),
+    # covar_mtx_mean_vec(returns; cov_settings = cov_settings, mu_settings = mu_settings)
+    cov_f, mu_f =
+        covar_mtx_mean_vec(x1; cov_settings = cov_settings, mu_settings = mu_settings)
 
     returns = x1 * transpose(B)
     mu = B * mu_f
@@ -2308,6 +1811,7 @@ function black_litterman(
     P::AbstractMatrix,
     Q::AbstractVector;
     # cov_mtx
+    cov_settings::CovSettings = CovSettings(;),
     alpha::Real = 0.0,
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
@@ -2352,6 +1856,7 @@ function black_litterman(
     sigma, mu = covar_mtx_mean_vec(
         returns;
         # cov_mtx
+        cov_settings = cov_settings,
         alpha = alpha,
         cov_args = cov_args,
         cov_est = cov_est,
@@ -2404,6 +1909,7 @@ function augmented_black_litterman(
     returns::AbstractMatrix,
     w::AbstractVector;
     # cov_mtx
+    cov_settings::CovSettings = CovSettings(;),
     alpha::Real = 0.0,
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
@@ -2480,6 +1986,7 @@ function augmented_black_litterman(
         sigma, mu = covar_mtx_mean_vec(
             returns;
             # cov_mtx
+            cov_settings = cov_settings,
             alpha = alpha,
             cov_args = cov_args,
             cov_est = cov_est,
@@ -2524,6 +2031,7 @@ function augmented_black_litterman(
         sigma_f, mu_f = covar_mtx_mean_vec(
             F;
             # cov_mtx
+            cov_settings = cov_settings,
             alpha = alpha,
             cov_args = cov_args,
             cov_est = cov_est,
@@ -2624,6 +2132,7 @@ function bayesian_black_litterman(
     P_f::AbstractMatrix,
     Q_f::AbstractVector;
     # cov_mtx
+    cov_settings::CovSettings = CovSettings(;),
     alpha::Real = 0.0,
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
@@ -2672,6 +2181,7 @@ function bayesian_black_litterman(
     sigma_f, mu_f = covar_mtx_mean_vec(
         F;
         # cov_mtx
+        cov_settings = cov_settings,
         alpha = alpha,
         cov_args = cov_args,
         cov_est = cov_est,
@@ -2944,6 +2454,7 @@ factor_statistics!(
 function factor_statistics!(
     portfolio::AbstractPortfolio;
     # cov_mtx
+    cov_settings::CovSettings = CovSettings(;),
     alpha::Real = 0.0,
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
@@ -3001,6 +2512,7 @@ function factor_statistics!(
     portfolio.cov_f, portfolio.mu_f = covar_mtx_mean_vec(
         f_returns;
         # cov_mtx
+        cov_settings = cov_settings,
         alpha = alpha,
         cov_args = cov_args,
         cov_est = cov_est,
