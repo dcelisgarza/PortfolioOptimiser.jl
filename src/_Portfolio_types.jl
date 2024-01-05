@@ -47,7 +47,6 @@ mutable struct Portfolio{
     b,
     bs,
     k,
-    gst,
     mnak,
     # Benchmark constraints
     to,
@@ -88,14 +87,10 @@ mutable struct Portfolio{
     # Cusom OWA weights
     wowa,
     # Optimisation model inputs
-    ttmu,
     tmu,
-    ttcov,
-    tjlogo,
     tcov,
     tkurt,
     tskurt,
-    tpdf,
     tl2,
     ts2,
     tmuf,
@@ -154,7 +149,6 @@ mutable struct Portfolio{
     beta::b
     b_sim::bs
     kappa::k
-    gs_threshold::gst
     max_num_assets_kurt::mnak
     # Benchmark constraints
     turnover::to
@@ -196,14 +190,10 @@ mutable struct Portfolio{
     # Custom OWA weights
     owa_w::wowa
     # Model statistics
-    mu_type::ttmu
     mu::tmu
-    cov_type::ttcov
-    jlogo::tjlogo
     cov::tcov
     kurt::tkurt
     skurt::tskurt
-    posdef::tpdf
     L_2::tl2
     S_2::ts2
     mu_f::tmuf
@@ -269,7 +259,6 @@ $(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gi
 $(_isigdef("Tail Gini gains", :b))
 $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :b))
 - `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
-- `gs_threshold`: Gerber statistic threshold.
 - `max_num_assets_kurt`: maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
 # Benchmark constraints
 - `turnover`: if finite, define the maximum turnover deviations from `turnover_weights` to the optimised portfolio. Else the constraint is disabled.
@@ -314,14 +303,10 @@ The bounds constraints are only active if they are finite. They define lower bou
 # Custom OWA weights
 - `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 # Model statistics
-- `mu_type`: method for estimating the mean returns vectors `mu`, `mu_fm`, `mu_bl`, `mu_bl_fm` in [`mean_vec`](@ref), see [`MuTypes`](@ref) for available choices.
 - `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
-- `cov_type`: method for estimating the covariance matrices `cov`, `cov_fm`, `cov_bl`, `cov_bl_fm` in [`covar_mtx`](@ref), see [`CovTypes`](@ref) for available choices.
-- `jlogo`: if `true`, apply the j-LoGo transformation to the portfolio covariance matrix in [`covar_mtx`](@ref) [^jLoGo].
 - `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
 - `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
 - `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `posdef`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
 - `L_2`: `(Na×Na) × ((Na×(Na+1)/2))` elimination matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
 - `S_2`: `((Na×(Na+1)/2)) × (Na×Na)` summation matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
 - `mu_f`: $(_mudef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
@@ -384,7 +369,6 @@ mutable struct Portfolio{
     b,
     bs,
     k,
-    gst,
     mnak,
     # Benchmark constraints
     to,
@@ -425,14 +409,10 @@ mutable struct Portfolio{
     # Cusom OWA weights
     wowa,
     # Optimisation model inputs
-    ttmu,
     tmu,
-    ttcov,
-    tjlogo,
     tcov,
     tkurt,
     tskurt,
-    tpdf,
     tl2,
     ts2,
     tmuf,
@@ -491,7 +471,6 @@ mutable struct Portfolio{
     beta::b
     b_sim::bs
     kappa::k
-    gs_threshold::gst
     max_num_assets_kurt::mnak
     # Benchmark constraints
     turnover::to
@@ -533,14 +512,10 @@ mutable struct Portfolio{
     # Custom OWA weights
     owa_w::wowa
     # Model statistics
-    mu_type::ttmu
     mu::tmu
-    cov_type::ttcov
-    jlogo::tjlogo
     cov::tcov
     kurt::tkurt
     skurt::tskurt
-    posdef::tpdf
     L_2::tl2
     S_2::ts2
     mu_f::tmuf
@@ -610,7 +585,6 @@ Portfolio(;
     beta::Real = alpha,
     b_sim::Integer = a_sim,
     kappa::Real = 0.3,
-    gs_threshold::Real = 0.5,
     max_num_assets_kurt::Integer = 0,
     # Benchmark constraints
     turnover::Real = Inf,
@@ -652,14 +626,10 @@ Portfolio(;
     # Custom OWA weights
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Model statistics
-    mu_type::Symbol = :Default,
     mu::AbstractVector = Vector{Float64}(undef, 0),
-    cov_type::Symbol = :Full,
-    jlogo::Bool = false,
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef::Symbol = :Nearest,
     mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -728,7 +698,6 @@ $(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gi
 $(_isigdef("Tail Gini gains", :b))
 $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :b))
 - `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
-- `gs_threshold`: Gerber statistic threshold.
 - `max_num_assets_kurt`: maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
 ## Benchmark constraints
 - `turnover`: if finite, define the maximum turnover deviations from `turnover_weights` to the optimised portfolio. Else the constraint is disabled.
@@ -773,14 +742,10 @@ The bounds constraints are only active if they are finite. They define lower bou
 ## Custom OWA weights
 - `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 ## Model statistics
-- `mu_type`: method for estimating the mean returns vectors `mu`, `mu_fm`, `mu_bl`, `mu_bl_fm` in [`mean_vec`](@ref), see [`MuTypes`](@ref) for available choices.
 - `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
-- `cov_type`: method for estimating the covariance matrices `cov`, `cov_fm`, `cov_bl`, `cov_bl_fm` in [`covar_mtx`](@ref), see [`CovTypes`](@ref) for available choices.
-- `jlogo`: if `true`, apply the j-LoGo transformation to the portfolio covariance matrix in [`covar_mtx`](@ref) [^jLoGo].
 - `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
 - `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
 - `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `posdef`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
 - `mu_f`: $(_mudef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
 - `cov_f`: $(_covdef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
 - `mu_fm`: $(_mudef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
@@ -851,7 +816,6 @@ function Portfolio(;
     beta::Real = alpha,
     b_sim::Integer = a_sim,
     kappa::Real = 0.3,
-    gs_threshold::Real = 0.5,
     max_num_assets_kurt::Integer = 0,
     # Benchmark constraints
     turnover::Real = Inf,
@@ -893,14 +857,10 @@ function Portfolio(;
     # Custom OWA weights
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Model statistics
-    mu_type::Symbol = :Default,
     mu::AbstractVector = Vector{Float64}(undef, 0),
-    cov_type::Symbol = :Full,
-    jlogo::Bool = false,
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef::Symbol = :Nearest,
     mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -993,10 +953,6 @@ function Portfolio(;
     @assert(b_sim > zero(b_sim), "b_sim = $b_sim, must be greater than or equal to zero")
     @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
     @assert(
-        0 < gs_threshold < 1,
-        "gs_threshold = $gs_threshold, must be greater than 0 and less than 1"
-    )
-    @assert(
         max_num_assets_kurt >= 0,
         "max_num_assets_kurt = $max_num_assets_kurt must be greater than or equal to zero"
     )
@@ -1046,14 +1002,12 @@ function Portfolio(;
             "length(owa_w) = $(length(owa_w)), and size(returns, 1) = $(size(returns, 1)) must be equal"
         )
     end
-    @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
     if !isempty(mu)
         @assert(
             length(mu) == size(returns, 2),
             "length(mu) = $(length(mu)), and size(returns, 2) = $(size(returns, 2)) must be equal"
         )
     end
-    @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
     if !isempty(cov)
         @assert(
             size(cov, 1) == size(cov, 2) == size(returns, 2),
@@ -1072,7 +1026,6 @@ function Portfolio(;
             "skurt must be a square matrix, size(skurt) = $(size(skurt)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2"
         )
     end
-    @assert(posdef ∈ PosdefFixes, "posdef = $posdef, must be one of $PosdefFixes")
     if !isempty(mu_f)
         @assert(
             length(mu_f) == size(f_returns, 2),
@@ -1185,7 +1138,6 @@ function Portfolio(;
         typeof(beta),
         typeof(b_sim),
         typeof(kappa),
-        typeof(gs_threshold),
         typeof(max_num_assets_kurt),
         # Benchmark constraints
         typeof(turnover),
@@ -1226,14 +1178,10 @@ function Portfolio(;
         # Custom OWA weights
         typeof(owa_w),
         # Model statistics
-        typeof(mu_type),
         typeof(mu),
-        typeof(cov_type),
-        typeof(jlogo),
         typeof(cov),
         typeof(kurt),
         typeof(skurt),
-        typeof(posdef),
         typeof(L_2),
         typeof(S_2),
         typeof(mu_f),
@@ -1295,7 +1243,6 @@ function Portfolio(;
         beta,
         b_sim,
         kappa,
-        gs_threshold,
         max_num_assets_kurt,
         # Benchmark constraints
         turnover,
@@ -1336,14 +1283,10 @@ function Portfolio(;
         # Custom OWA weights
         owa_w,
         # Model statistics
-        mu_type,
         mu,
-        cov_type,
-        jlogo,
         cov,
         kurt,
         skurt,
-        posdef,
         L_2,
         S_2,
         mu_f,
@@ -1436,11 +1379,6 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         @assert(val > zero(val), "b_sim = $val, must be greater than zero")
     elseif sym == :kappa
         @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
-    elseif sym == :gs_threshold
-        @assert(
-            0 < val < 1,
-            "gs_threshold = $val, must be greater than zero and smaller than one"
-        )
     elseif sym == :max_num_assets_kurt
         @assert(
             val >= 0,
@@ -1491,12 +1429,6 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             )
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym == :mu_type
-        @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
-    elseif sym == :cov_type
-        @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
-    elseif sym == :posdef
-        @assert(val ∈ PosdefFixes, "posdef = $val, must be one of $PosdefFixes")
     elseif sym == :mu_f
         if !isempty(val)
             @assert(
@@ -1592,19 +1524,14 @@ mutable struct HCPortfolio{
     bs,
     k,
     ata,
-    gst,
     mnak,
     # Custom OWA weights
     wowa,
     # Optimisation parameters
-    ttmu,
     tmu,
-    ttcov,
-    tjlogo,
     tcov,
     tkurt,
     tskurt,
-    tpdf,
     tl2,
     ts2,
     tbin,
@@ -1642,19 +1569,14 @@ mutable struct HCPortfolio{
     b_sim::bs
     kappa::k
     alpha_tail::ata
-    gs_threshold::gst
     max_num_assets_kurt::mnak
     # Custom OWA weights
     owa_w::wowa
     # Optimisation parameters
-    mu_type::ttmu
     mu::tmu
-    cov_type::ttcov
-    jlogo::tjlogo
     cov::tcov
     kurt::tkurt
     skurt::tskurt
-    posdef::tpdf
     L_2::tl2
     S_2::ts2
     bins_info::tbin
@@ -1693,19 +1615,14 @@ $(_isigdef("Tail Gini gains", :b))
 $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :b))
 - `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
 - `alpha_tail`: significance level for lower tail dependence index, `0 < alpha_tail < 1`.
-- `gs_threshold`: Gerber statistic threshold.
 - `max_num_assets_kurt`: maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
 # Custom OWA weights
 - `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 # Model statistics
-- `mu_type`: method for estimating the mean returns vectors `mu`, `mu_fm`, `mu_bl`, `mu_bl_fm` in [`mean_vec`](@ref), see [`MuTypes`](@ref) for available choices.
 - `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
-- `cov_type`: method for estimating the covariance matrices `cov`, `cov_fm`, `cov_bl`, `cov_bl_fm` in [`covar_mtx`](@ref), see [`CovTypes`](@ref) for available choices.
-- `jlogo`: if `true`, apply the j-LoGo transformation to the portfolio covariance matrix in [`covar_mtx`](@ref) [^jLoGo].
 - `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
 - `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
 - `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `posdef`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
 - `L_2`: `(Na×Na) × ((Na×(Na+1)/2))` elimination matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
 - `S_2`: `((Na×(Na+1)/2)) × (Na×Na)` summation matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
 - `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`](@ref) for available choices.
@@ -1745,19 +1662,14 @@ mutable struct HCPortfolio{
     bs,
     k,
     ata,
-    gst,
     mnak,
     # Custom OWA weights
     wowa,
     # Optimisation parameters
-    ttmu,
     tmu,
-    ttcov,
-    tjlogo,
     tcov,
     tkurt,
     tskurt,
-    tpdf,
     tl2,
     ts2,
     tbin,
@@ -1795,19 +1707,14 @@ mutable struct HCPortfolio{
     b_sim::bs
     kappa::k
     alpha_tail::ata
-    gs_threshold::gst
     max_num_assets_kurt::mnak
     # Custom OWA weights
     owa_w::wowa
     # Optimisation parameters
-    mu_type::ttmu
     mu::tmu
-    cov_type::ttcov
-    jlogo::tjlogo
     cov::tcov
     kurt::tkurt
     skurt::tskurt
-    posdef::tpdf
     L_2::tl2
     S_2::ts2
     bins_info::tbin
@@ -1851,19 +1758,14 @@ HCPortfolio(;
     b_sim::Integer = a_sim,
     kappa::Real = 0.3,
     alpha_tail::Real = 0.05,
-    gs_threshold::Real = 0.5,
     max_num_assets_kurt::Integer = 0,
     # Custom OWA weights
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Optimisation parameters
-    mu_type::Symbol = :Default,
     mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-    cov_type::Symbol = :Full,
-    jlogo::Bool = false,
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef::Symbol = :Nearest,
     bins_info::Union{Symbol, <:Integer} = :KN,
     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
@@ -1907,19 +1809,14 @@ $(_isigdef("Tail Gini gains", :b))
 $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :b))
 - `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
 - `alpha_tail`: significance level for lower tail dependence index, `0 < alpha_tail < 1`.
-- `gs_threshold`: Gerber statistic threshold.
 - `max_num_assets_kurt`: when optimising `:NCO` type of [`HCPortfolio`](@ref), maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
 ## Custom OWA weights
 - `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 ## Model statistics
-- `mu_type`: method for estimating the mean returns vectors `mu`, `mu_fm`, `mu_bl`, `mu_bl_fm` in [`mean_vec`](@ref), see [`MuTypes`](@ref) for available choices.
 - `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
-- `cov_type`: method for estimating the covariance matrices `cov`, `cov_fm`, `cov_bl`, `cov_bl_fm` in [`covar_mtx`](@ref), see [`CovTypes`](@ref) for available choices.
-- `jlogo`: if `true`, apply the j-LoGo transformation to the portfolio covariance matrix in [`covar_mtx`](@ref) [^jLoGo].
 - `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
 - `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
 - `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `posdef`: method for fixing non positive definite matrices when computing portfolio statistics, see [`PosdefFixes`](@ref) for available choices.
 - `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`](@ref) for available choices.
 - `w_min`: `Na×1` vector of the lower bounds for asset weights, where $(_ndef(:a2)).
 - `w_max`: `Na×1` vector of the upper bounds for asset weights, where $(_ndef(:a2)).
@@ -1965,19 +1862,14 @@ function HCPortfolio(;
     b_sim::Integer = a_sim,
     kappa::Real = 0.3,
     alpha_tail::Real = 0.05,
-    gs_threshold::Real = 0.5,
     max_num_assets_kurt::Integer = 0,
     # Custom OWA weights
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
     # Optimisation parameters
-    mu_type::Symbol = :Default,
     mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-    cov_type::Symbol = :Full,
-    jlogo::Bool = false,
     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-    posdef::Symbol = :Nearest,
     bins_info::Union{Symbol, <:Integer} = :KN,
     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
@@ -2038,10 +1930,6 @@ function HCPortfolio(;
         "alpha_tail = $alpha_tail, must be greater than 0 and less than 1"
     )
     @assert(
-        0 < gs_threshold < 1,
-        "gs_threshold = $gs_threshold, must be greater than 0 and less than 1"
-    )
-    @assert(
         max_num_assets_kurt >= 0,
         "max_num_assets_kurt = $max_num_assets_kurt must be greater than or equal to zero"
     )
@@ -2051,14 +1939,12 @@ function HCPortfolio(;
             "length(owa_w) = $(length(owa_w)), and size(returns, 1) = $(size(returns, 1)) must be equal"
         )
     end
-    @assert(mu_type ∈ MuTypes, "mu_type = $mu_type, must be one of $MuTypes")
     if !isempty(mu)
         @assert(
             length(mu) == size(returns, 2),
             "length(mu) = $(length(mu)), and size(returns, 2) = $(size(returns, 2)) must be equal"
         )
     end
-    @assert(cov_type ∈ CovTypes, "cov_type = $cov_type, must be one of $CovTypes")
     if !isempty(cov)
         @assert(
             size(cov, 1) == size(cov, 2) == size(returns, 2),
@@ -2077,7 +1963,6 @@ function HCPortfolio(;
             "skurt must be a square matrix, size(skurt) = $(size(skurt)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2"
         )
     end
-    @assert(posdef ∈ PosdefFixes, "posdef = $posdef, must be one of $PosdefFixes")
     @assert(
         bins_info ∈ BinTypes || isa(bins_info, Int) && bins_info > zero(bins_info),
         "bins_info = $bins_info, has to either be in $BinTypes, or an integer value greater than 0"
@@ -2173,19 +2058,14 @@ function HCPortfolio(;
         typeof(b_sim),
         typeof(kappa),
         typeof(alpha_tail),
-        typeof(gs_threshold),
         typeof(max_num_assets_kurt),
         # Custom OWA weights
         typeof(owa_w),
         # Optimisation parameters
-        typeof(mu_type),
         typeof(mu),
-        typeof(cov_type),
-        typeof(jlogo),
         typeof(cov),
         typeof(kurt),
         typeof(skurt),
-        typeof(posdef),
         typeof(L_2),
         typeof(S_2),
         Union{Symbol, <:Integer},
@@ -2222,19 +2102,14 @@ function HCPortfolio(;
         b_sim,
         kappa,
         alpha_tail,
-        gs_threshold,
         max_num_assets_kurt,
         # Custom OWA weights
         owa_w,
         # Optimisation parameters
-        mu_type,
         mu,
-        cov_type,
-        jlogo,
         cov,
         kurt,
         skurt,
-        posdef,
         L_2,
         S_2,
         bins_info,
@@ -2290,11 +2165,6 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
     elseif sym == :alpha_tail
         @assert(0 < val < 1, "alpha_tail = $val, must be greater than 0 and less than 1")
-    elseif sym == :gs_threshold
-        @assert(
-            0 < val < 1,
-            "gs_threshold = $val, must be greater than zero and smaller than one"
-        )
     elseif sym == :max_num_assets_kurt
         @assert(
             val >= 0,
@@ -2308,12 +2178,6 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             )
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym == :mu_type
-        @assert(val ∈ MuTypes, "mu_type = $val, must be one of $MuTypes")
-    elseif sym == :cov_type
-        @assert(val ∈ CovTypes, "cov_type = $val, must be one of $CovTypes")
-    elseif sym == :posdef
-        @assert(val ∈ PosdefFixes, "posdef = $val, must be one of $PosdefFixes")
     elseif sym == :bins_info
         @assert(
             val ∈ BinTypes || isa(val, Int) && val > zero(val),
@@ -2411,318 +2275,3 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
     end
     setfield!(obj, sym, val)
 end
-
-@kwdef mutable struct GenericFunc
-    func::Function = x -> x
-    args::Tuple = ()
-    kwargs::NamedTuple = (;)
-end
-
-@kwdef mutable struct CovEstSettings
-    estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
-    genfunc::GenericFunc = GenericFunc(; func = StatsBase.cov)
-    custom::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
-end
-
-mutable struct PosdefFixSettings
-    method::Symbol
-    genfunc::GenericFunc
-end
-function PosdefFixSettings(;
-    method::Symbol = :Nearest,
-    genfunc::GenericFunc = GenericFunc(;),
-)
-    @assert(method ∈ PosdefFixes, "method = $method, must be one of $PosdefFixes")
-
-    return PosdefFixSettings(method, genfunc)
-end
-function Base.setproperty!(obj::PosdefFixSettings, sym::Symbol, val)
-    if sym == :method
-        @assert(val ∈ PosdefFixes, "$sym = $val, must be one of $PosdefFixes")
-    end
-    setfield!(obj, sym, val)
-end
-
-mutable struct GerberSettings{T1 <: Real}
-    threshold::T1
-    genfunc::GenericFunc
-    posdef::PosdefFixSettings
-end
-function GerberSettings(;
-    threshold::Real = 0.5,
-    genfunc::GenericFunc = GenericFunc(; func = StatsBase.std, kwargs = (; dims = 1)),
-    posdef::PosdefFixSettings = PosdefFixSettings(;),
-)
-    @assert(
-        0 < threshold < 1,
-        "threshold = $threshold, must be greater than 0 and less than 1"
-    )
-
-    return GerberSettings{typeof(threshold)}(threshold, genfunc, posdef)
-end
-function Base.setproperty!(obj::GerberSettings, sym::Symbol, val)
-    if sym == :threshold
-        @assert(0 < val < 1, "$sym = $val, must be greater than 0 and less than 1")
-    end
-    setfield!(obj, sym, val)
-end
-
-mutable struct DenoiseSettings{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 <: Integer}
-    method::Symbol
-    alpha::T1
-    detone::Bool
-    mkt_comp::T2
-    kernel::T3
-    m::T4
-    n::T5
-    genfunc::GenericFunc
-end
-function DenoiseSettings(;
-    method::Symbol = :None,
-    alpha::Real = 0.0,
-    detone::Bool = false,
-    mkt_comp::Integer = 1,
-    kernel = ASH.Kernels.gaussian,
-    m::Integer = 10,
-    n::Integer = 1000,
-    genfunc::GenericFunc = GenericFunc(; func = x -> nothing),
-)
-    @assert(method ∈ DenoiseMethods, "method = $method, must be one of $DenoiseMethods")
-    @assert(0 <= alpha <= 1, "alpha = $alpha, must be 0 <= alpha <= 1")
-
-    return DenoiseSettings{
-        typeof(alpha),
-        typeof(mkt_comp),
-        typeof(kernel),
-        typeof(m),
-        typeof(n),
-    }(
-        method,
-        alpha,
-        detone,
-        mkt_comp,
-        kernel,
-        m,
-        n,
-        genfunc,
-    )
-end
-function Base.setproperty!(obj::DenoiseSettings, sym::Symbol, val)
-    if sym == :method
-        @assert(val ∈ DenoiseMethods, "$sym = $val, must be one of $DenoiseMethods")
-    elseif sym == :alpha
-        @assert(0 <= val <= 1, "$sym = $val, must be 0 <= alpha <= 1")
-    end
-    setfield!(obj, sym, val)
-end
-
-mutable struct CovSettings
-    # Cov type
-    type::Symbol
-    # Estimation
-    estimation::CovEstSettings
-    # Gerber
-    gerber::GerberSettings
-    # Denoise
-    denoise::DenoiseSettings
-    # Posdef fix
-    posdef::PosdefFixSettings
-    # J-LoGo
-    jlogo::Bool
-end
-function CovSettings(;
-    type::Symbol = :Full,
-    estimation::CovEstSettings = CovEstSettings(;),
-    gerber::GerberSettings = GerberSettings(;),
-    denoise::DenoiseSettings = DenoiseSettings(;),
-    posdef::PosdefFixSettings = PosdefFixSettings(;),
-    jlogo::Bool = false,
-)
-    @assert(type ∈ CovTypes, "type = $type, must be one of $CovTypes")
-
-    return CovSettings(type, estimation, gerber, denoise, posdef, jlogo)
-end
-function Base.setproperty!(obj::CovSettings, sym::Symbol, val)
-    if sym == :type
-        @assert(val ∈ CovTypes, "$sym = $val, must be one of $CovTypes")
-    end
-    setfield!(obj, sym, val)
-end
-
-mutable struct MuSettings{T1 <: Real}
-    type::Symbol
-    target::Symbol
-    rf::T1
-    genfunc::GenericFunc
-    custom::Union{<:AbstractVector{<:Real}, Nothing}
-    mkt_ret::Union{<:AbstractVector{<:Real}, Nothing}
-    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
-end
-function MuSettings(;
-    type::Symbol = :Default,
-    target::Symbol = :GM,
-    rf::Real = 0.0,
-    genfunc::GenericFunc = GenericFunc(; func = StatsBase.mean, kwargs = (; dims = 1)),
-    custom::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
-    mkt_ret::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
-    sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-)
-    @assert(type ∈ MuTypes, "type = $type, must be one of $MuTypes")
-    @assert(target ∈ MuTargets, "target = $target, must be one of $MuTargets")
-
-    return MuSettings{typeof(rf)}(type, target, rf, genfunc, custom, mkt_ret, sigma)
-end
-function Base.setproperty!(obj::MuSettings, sym::Symbol, val)
-    if sym == :type
-        @assert(val ∈ MuTypes, "$sym = $val, must be one of $MuTypes")
-    elseif sym == :target
-        @assert(val ∈ MuTargets, "$sym = $val, must be one of $MuTargets")
-    end
-    setfield!(obj, sym, val)
-end
-
-@kwdef mutable struct KurtEstSettings
-    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
-    custom_kurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
-    custom_skurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
-end
-mutable struct KurtSettings
-    # Estimation
-    estimation::KurtEstSettings
-    # Gerber
-    gerber::GerberSettings
-    # Denoise
-    denoise::DenoiseSettings
-    # Posdef fix
-    posdef::PosdefFixSettings
-    # J-LoGo
-    jlogo::Bool
-end
-function KurtSettings(;
-    estimation::KurtEstSettings = KurtEstSettings(;),
-    gerber::GerberSettings = GerberSettings(;),
-    denoise::DenoiseSettings = DenoiseSettings(;),
-    posdef::PosdefFixSettings = PosdefFixSettings(;),
-    jlogo::Bool = false,
-)
-    return KurtSettings(estimation, gerber, denoise, posdef, jlogo)
-end
-
-mutable struct CodepEstSettings{T1 <: Real}
-    alpha::T1
-    bins_info::Union{Symbol, <:Integer}
-    cor_genfunc::GenericFunc
-    dist_genfunc::GenericFunc
-    custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing}
-    custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing}
-    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
-end
-function CodepEstSettings(;
-    alpha::Real = 0.05,
-    bins_info::Union{Symbol, <:Integer} = :KN,
-    cor_genfunc::GenericFunc = GenericFunc(; func = StatsBase.cor),
-    dist_genfunc::GenericFunc = GenericFunc(;
-        func = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-    ),
-    custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-    custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-    sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-)
-    @assert(
-        0 <= alpha <= 1,
-        "alpha = $alpha, must be greater than or equal to 0 and less than or equal to 1"
-    )
-    @assert(
-        bins_info ∈ BinTypes || isa(bins_info, Int) && bins_info > zero(bins_info),
-        "bins_info = $bins_info, has to either be in $BinTypes, or an integer value greater than 0"
-    )
-    # @assert(
-    #     size(custom_cor) == size(custom_dist) == size(sigma),
-    #     "size(custom_cor) == $(size(custom_cor)), size(custom_dist) == $(size(custom_dist)) and size(sigma) == $(size(sigma)), must all be equal"
-    # )
-    # @assert(
-    #     size(custom_cor, 1) == size(custom_cor, 2),
-    #     "custom_cor must be a square matrix, size(custom_cor) = $(size(custom_cor))"
-    # )
-    # @assert(
-    #     size(custom_dist, 1) == size(custom_dist, 2),
-    #     "custom_dist must be a square matrix, size(custom_dist) = $(size(custom_dist))"
-    # )
-    # @assert(
-    #     size(sigma, 1) == size(sigma, 2),
-    #     "sigma must be a square matrix, size(sigma) = $(size(sigma))"
-    # )
-
-    return CodepEstSettings{typeof(alpha)}(
-        alpha,
-        bins_info,
-        cor_genfunc,
-        dist_genfunc,
-        custom_cor,
-        custom_dist,
-        sigma,
-    )
-end
-function Base.setproperty!(obj::CodepEstSettings, sym::Symbol, val)
-    if sym == :alpha
-        @assert(
-            0 <= val <= 1,
-            "$sym = $val, must be greater than or equal to 0 and less than or equal to 1"
-        )
-    elseif sym == :bins_info
-        @assert(
-            val ∈ BinTypes || isa(val, Int) && val > zero(val),
-            "$sym = $val, has to either be in $BinTypes, or an integer value greater than 0"
-        )
-    elseif sym ∈ (:custom_cor, :custom_dist, :sigma)
-        # @assert(
-        #     size(obj.custom_cor) == size(obj.custom_dist) == size(obj.sigma),
-        #     "size(custom_cor) == $(size(obj.custom_cor)), size(custom_dist) == $(size(obj.custom_dist)) and size(sigma) == $(size(obj.sigma)), must all be equal"
-        # )
-        # @assert(
-        #     size(val, 1) == size(val, 2),
-        #     "$sym must be a square matrix, size($sym) = $(size(val))"
-        # )
-    end
-    setfield!(obj, sym, val)
-end
-
-mutable struct CodepSettings
-    # Cov type
-    type::Symbol
-    # Estimation
-    estimation::CodepEstSettings
-    # Gerber
-    gerber::GerberSettings
-    # Denoise
-    denoise::DenoiseSettings
-    # Posdef fix
-    posdef::PosdefFixSettings
-    # J-LoGo
-    jlogo::Bool
-    # uplo
-    uplo::Symbol
-end
-function CodepSettings(;
-    type::Symbol = :Pearson,
-    estimation::CodepEstSettings = CodepEstSettings(;),
-    gerber::GerberSettings = GerberSettings(;),
-    denoise::DenoiseSettings = DenoiseSettings(;),
-    posdef::PosdefFixSettings = PosdefFixSettings(;),
-    jlogo::Bool = false,
-    uplo::Symbol = :L,
-)
-    @assert(type ∈ CodepTypes, "type = $type, must be one of $CodepTypes")
-
-    return CodepSettings(type, estimation, gerber, denoise, posdef, jlogo, uplo)
-end
-function Base.setproperty!(obj::CodepSettings, sym::Symbol, val)
-    if sym == :type
-        @assert(val ∈ CodepTypes, "$sym = $val, must be one of $CodepTypes")
-    end
-    setfield!(obj, sym, val)
-end
-
-export CovSettings,
-    CovEstSettings, GerberSettings, DenoiseSettings, PosdefFixSettings, GenericFunc

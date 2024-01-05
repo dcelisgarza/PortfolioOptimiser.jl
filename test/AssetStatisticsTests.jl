@@ -20,107 +20,137 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 #=
 @testset "Cokurtosis Estimation" begin end
-
+=#
 @testset "Codependence and Distance Matrix Estimation" begin end
 
 @testset "Mean Estimation" begin
     portfolio = Portfolio(; prices = prices)
 
+    mu_settings = MuSettings(;)
     asset_statistics!(portfolio;)
     mu1 = portfolio.mu
     cov1 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :Default)
+    mu_settings.type = :Default
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu2 = portfolio.mu
     cov2 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :JS)
+    mu_settings.type = :JS
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu3 = portfolio.mu
     cov3 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :JS, mu_target = :GM)
+    mu_settings.target = :GM
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu4 = portfolio.mu
     cov4 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :JS, mu_target = :VW)
+    mu_settings.target = :VW
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu5 = portfolio.mu
     cov5 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :JS, mu_target = :SE)
+    mu_settings.target = :SE
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu6 = portfolio.mu
     cov6 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BS, mu_target = :GM)
+    mu_settings.type = :BS
+    mu_settings.target = :GM
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu7 = portfolio.mu
     cov7 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BS, mu_target = :VW)
+    mu_settings.target = :VW
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu8 = portfolio.mu
     cov8 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BS, mu_target = :SE)
+    mu_settings.target = :SE
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu9 = portfolio.mu
     cov9 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BOP, mu_target = :GM)
+    mu_settings.type = :BOP
+    mu_settings.target = :GM
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu10 = portfolio.mu
     cov10 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BOP, mu_target = :VW)
+    mu_settings.target = :VW
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu11 = portfolio.mu
     cov11 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BOP, mu_target = :SE)
+    mu_settings.target = :SE
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu12 = portfolio.mu
     cov12 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :CAPM)
+    mu_settings.type = :CAPM
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu13 = portfolio.mu
     cov13 = portfolio.cov
 
     mu_weights = eweights(size(portfolio.returns, 1), 0.03; scale = true)
-
-    asset_statistics!(portfolio; mu_type = :Default, mu_weights = mu_weights)
+    mu_settings = MuSettings(;)
+    mu_settings.type = :Default
+    mu_settings.genfunc.args = (mu_weights,)
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu14 = portfolio.mu
     cov14 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :JS, mu_target = :GM, mu_weights = mu_weights)
+    mu_settings.type = :JS
+    mu_settings.target = :GM
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu15 = portfolio.mu
     cov15 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :JS, mu_target = :VW, mu_weights = mu_weights)
+    mu_settings.target = :VW
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu16 = portfolio.mu
     cov16 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :JS, mu_target = :SE, mu_weights = mu_weights)
+    mu_settings.target = :SE
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu17 = portfolio.mu
     cov17 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BS, mu_target = :GM, mu_weights = mu_weights)
+    mu_settings.type = :BS
+    mu_settings.target = :GM
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu18 = portfolio.mu
     cov18 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BS, mu_target = :VW, mu_weights = mu_weights)
+    mu_settings.target = :VW
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu19 = portfolio.mu
     cov19 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BS, mu_target = :SE, mu_weights = mu_weights)
+    mu_settings.target = :SE
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu20 = portfolio.mu
     cov20 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BOP, mu_target = :GM, mu_weights = mu_weights)
+    mu_settings.type = :BOP
+    mu_settings.target = :GM
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu21 = portfolio.mu
     cov21 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BOP, mu_target = :VW, mu_weights = mu_weights)
+    mu_settings.target = :VW
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu22 = portfolio.mu
     cov22 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :BOP, mu_target = :SE, mu_weights = mu_weights)
+    mu_settings.target = :SE
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu23 = portfolio.mu
     cov23 = portfolio.cov
 
-    asset_statistics!(portfolio; mu_type = :CAPM, mu_weights = mu_weights)
+    mu_settings.type = :CAPM
+    asset_statistics!(portfolio; mu_settings = mu_settings)
     mu24 = portfolio.mu
     cov24 = portfolio.cov
 
@@ -10021,20 +10051,16 @@ end
 
 @testset "Custom Func and Val for Mean" begin
     portfolio = Portfolio(; prices = prices)
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        mu_type = :Custom_Func,
-        mean_func = x -> 3 * vec(mean(x, dims = 1)),
+    mu_settings = MuSettings(
+        type = :Custom_Func,
+        genfunc = GenericFunc(; func = x -> 3 * vec(mean(x, dims = 1))),
     )
+    asset_statistics!(portfolio; calc_kurt = false, mu_settings = mu_settings)
     mu1 = portfolio.mu
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        mu_type = :Custom_Val,
-        custom_mu = 2 * vec(mean(portfolio.returns, dims = 1)),
-    )
+    mu_settings.type = :Custom_Val
+    mu_settings.custom = 2 * vec(mean(portfolio.returns, dims = 1))
+    asset_statistics!(portfolio; calc_kurt = false, mu_settings = mu_settings)
     mu2 = portfolio.mu
 
     @test isapprox(mu1, 3 * vec(mean(portfolio.returns, dims = 1)))
@@ -10047,104 +10073,73 @@ end
     mu1 = portfolio.mu
     cov1 = portfolio.cov
 
-    asset_statistics!(portfolio; calc_kurt = false, cov_type = :Full)
+    cov_settings = CovSettings(; type = :Full)
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu2 = portfolio.mu
     cov2 = portfolio.cov
 
-    asset_statistics!(portfolio; calc_kurt = false, cov_type = :Semi)
+    cov_settings.type = :Semi
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu3 = portfolio.mu
     cov3 = portfolio.cov
 
-    asset_statistics!(portfolio; calc_kurt = false, cov_type = :Semi, target_ret = rf)
+    cov_settings.estimation.target_ret = rf
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu4 = portfolio.mu
     cov4 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Semi,
-        target_ret = [i * rf for i in 1:20],
-    )
+    cov_settings.estimation.target_ret = [i * rf for i in 1:20]
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu5 = portfolio.mu
     cov5 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Full,
-        cov_est = AnalyticalNonlinearShrinkage(),
-    )
+    cov_settings.type = :Full
+    cov_settings.estimation.estimator = AnalyticalNonlinearShrinkage()
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu6 = portfolio.mu
     cov6 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Full,
-        cov_est = AnalyticalNonlinearShrinkage(),
-        cov_weights = fweights(1:size(portfolio.returns, 1)),
-    )
+    cov_settings.estimation.genfunc.args = (fweights(1:size(portfolio.returns, 1)),)
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu7 = portfolio.mu
     cov7 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Semi,
-        cov_est = AnalyticalNonlinearShrinkage(),
+    cov_settings = CovSettings(;
+        type = :Semi,
+        estimation = CovEstSettings(; estimator = AnalyticalNonlinearShrinkage()),
     )
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu8 = portfolio.mu
     cov8 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Semi,
-        target_ret = rf,
-        cov_est = AnalyticalNonlinearShrinkage(),
-    )
+    cov_settings.estimation.target_ret = rf
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu9 = portfolio.mu
     cov9 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Semi,
-        target_ret = [i * rf for i in 1:20],
-        cov_est = AnalyticalNonlinearShrinkage(),
-    )
+    cov_settings.estimation.target_ret = [i * rf for i in 1:20]
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu10 = portfolio.mu
     cov10 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Semi,
-        cov_est = AnalyticalNonlinearShrinkage(),
-        cov_weights = fweights(1:size(portfolio.returns, 1)),
+    cov_settings = CovSettings(;
+        type = :Semi,
+        estimation = CovEstSettings(;
+            estimator = AnalyticalNonlinearShrinkage(),
+            genfunc = GenericFunc(args = (fweights(1:size(portfolio.returns, 1)),)),
+        ),
     )
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu11 = portfolio.mu
     cov11 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Semi,
-        target_ret = rf,
-        cov_est = AnalyticalNonlinearShrinkage(),
-        cov_weights = fweights(1:size(portfolio.returns, 1)),
-    )
+    cov_settings.estimation.target_ret = rf
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu12 = portfolio.mu
     cov12 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Semi,
-        target_ret = [i * rf for i in 1:20],
-        cov_est = AnalyticalNonlinearShrinkage(),
-        cov_weights = fweights(1:size(portfolio.returns, 1)),
-    )
+    cov_settings.estimation.target_ret = [i * rf for i in 1:20]
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu13 = portfolio.mu
     cov13 = portfolio.cov
 
@@ -15830,7 +15825,7 @@ end
     @test !isapprox(cov11, cov13)
     @test !isapprox(cov12, cov13)
 end
-=#
+
 @testset "Gerber Covariances" begin
     portfolio = Portfolio(; prices = prices)
 
@@ -15841,98 +15836,67 @@ end
 
     cov_settings.gerber.threshold = 0.5
     cov_settings.gerber.posdef
-
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Gerber0,
-        gs_threshold = 0.5,
-        posdef_fix = :Nearest,
-    )
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu2 = portfolio.mu
     cov2 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Gerber0,
-        gs_threshold = 0.5,
-        posdef_fix = :None,
-    )
+    cov_settings.gerber.posdef.method = :None
+    cov_settings.posdef.method = :None
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu3 = portfolio.mu
     cov3 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Gerber0,
-        gs_threshold = 0.5,
-        posdef_fix = :Custom_Func,
-    )
+    cov_settings.gerber.posdef.method = :Custom_Func
+    cov_settings.posdef.method = :Custom_Func
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu4 = portfolio.mu
     cov4 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Gerber0,
-        gs_threshold = 0.5,
-        posdef_fix = :Custom_Func,
-        posdef_func = x -> 5 * x,
-    )
+    cov_settings.gerber.posdef.genfunc.func = x -> 5 * x
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu5 = portfolio.mu
     cov5 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        gs_threshold = 0.25,
-        cov_type = :Gerber0,
-    )
+    cov_settings =
+        CovSettings(; type = :Gerber0, gerber = GerberSettings(; threshold = 0.25))
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu6 = portfolio.mu
     cov6 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        gs_threshold = 0.75,
-        posdef_fix = :Custom_Func,
-        cov_type = :Gerber0,
-    )
+    cov_settings.gerber.threshold = 0.75
+    cov_settings.gerber.posdef.method = :Custom_Func
+    cov_settings.posdef.method = :Custom_Func
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu7 = portfolio.mu
     cov7 = portfolio.cov
 
-    asset_statistics!(portfolio; calc_kurt = false, cov_type = :Gerber1)
+    cov_settings = CovSettings(; type = :Gerber1)
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu8 = portfolio.mu
     cov8 = portfolio.cov
 
-    asset_statistics!(portfolio; calc_kurt = false, cov_type = :Gerber1, gs_threshold = 0.5)
+    cov_settings.gerber.threshold = 0.5
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu9 = portfolio.mu
     cov9 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Gerber1,
-        gs_threshold = 0.75,
-    )
+    cov_settings.gerber.threshold = 0.75
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu10 = portfolio.mu
     cov10 = portfolio.cov
 
-    asset_statistics!(portfolio; calc_kurt = false, cov_type = :Gerber2)
+    cov_settings = CovSettings(; type = :Gerber2)
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu11 = portfolio.mu
     cov11 = portfolio.cov
 
-    asset_statistics!(portfolio; calc_kurt = false, cov_type = :Gerber2, gs_threshold = 0.5)
+    cov_settings.gerber.threshold = 0.5
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu12 = portfolio.mu
     cov12 = portfolio.cov
 
-    asset_statistics!(
-        portfolio;
-        calc_kurt = false,
-        cov_type = :Gerber2,
-        gs_threshold = 0.75,
-    )
+    cov_settings.gerber.threshold = 0.75
+    asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu13 = portfolio.mu
     cov13 = portfolio.cov
 
@@ -21133,7 +21097,6 @@ end
     @test !isapprox(cov7, cov13)
 end
 
-#=
 @testset "Custom Func and Val for Covariance" begin
     portfolio = Portfolio(; prices = prices)
 
@@ -27449,4 +27412,3 @@ end
     @test isapprox(cov2, covt2)
     @test !isapprox(cov1, cov2)
 end
-=#
