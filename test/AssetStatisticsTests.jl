@@ -24,76 +24,76 @@ l = 2.0
 @testset "Codependence and Distance Matrix Estimation" begin
     portfolio = HCPortfolio(; prices = prices)
 
-    codep_settings = CodepSettings(;)
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings = CorSettings(;)
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep1 = portfolio.cor
     dist1 = portfolio.dist
 
-    codep_settings.type = :Pearson
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Pearson
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep2 = portfolio.cor
     dist2 = portfolio.dist
 
-    codep_settings.type = :Spearman
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Spearman
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep3 = portfolio.cor
     dist3 = portfolio.dist
 
-    codep_settings.type = :Kendall
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Kendall
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep4 = portfolio.cor
     dist4 = portfolio.dist
 
-    codep_settings.type = :Abs_Pearson
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Abs_Pearson
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep5 = portfolio.cor
     dist5 = portfolio.dist
 
-    codep_settings.type = :Abs_Spearman
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Abs_Spearman
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep6 = portfolio.cor
     dist6 = portfolio.dist
 
-    codep_settings.type = :Abs_Kendall
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Abs_Kendall
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep7 = portfolio.cor
     dist7 = portfolio.dist
 
-    codep_settings.type = :Gerber0
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Gerber0
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep8 = portfolio.cor
     dist8 = portfolio.dist
 
-    codep_settings.type = :Gerber1
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Gerber1
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep9 = portfolio.cor
     dist9 = portfolio.dist
 
-    codep_settings.type = :Gerber2
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Gerber2
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep10 = portfolio.cor
     dist10 = portfolio.dist
 
-    codep_settings.type = :Distance
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Distance
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep11 = portfolio.cor
     dist11 = portfolio.dist
 
-    codep_settings.type = :Mutual_Info
+    cor_settings.type = :Mutual_Info
     pyfail = false
     try
-        codep_settings.estimation.bins_info = :KN
-        asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+        cor_settings.estimation.bins_info = :KN
+        asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
         codep12 = portfolio.cor
         dist12 = portfolio.dist
 
-        codep_settings.estimation.bins_info = :FD
-        asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+        cor_settings.estimation.bins_info = :FD
+        asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
         codep13 = portfolio.cor
         dist13 = portfolio.dist
 
-        codep_settings.estimation.bins_info = :SC
-        asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+        cor_settings.estimation.bins_info = :SC
+        asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
         codep14 = portfolio.cor
         dist14 = portfolio.dist
     catch
@@ -103,48 +103,48 @@ l = 2.0
         codep14 = []
     end
 
-    codep_settings.estimation.bins_info = :HGR
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.estimation.bins_info = :HGR
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep15 = portfolio.cor
     dist15 = portfolio.dist
 
-    codep_settings.estimation.bins_info = 3
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.estimation.bins_info = 3
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep16 = portfolio.cor
     dist16 = portfolio.dist
 
-    codep_settings.estimation.bins_info = 10
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.estimation.bins_info = 10
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep17 = portfolio.cor
     dist17 = portfolio.dist
 
-    codep_settings.type = :Tail
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Tail
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep18 = portfolio.cor
     dist18 = portfolio.dist
 
-    codep_settings.estimation.alpha = 0.2
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.estimation.alpha = 0.2
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep19 = portfolio.cor
     dist19 = portfolio.dist
 
-    codep_settings.type = :Cov_to_Cor
-    codep_settings.estimation.dist_genfunc.func = x -> 2 * x
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Cov_to_Cor
+    cor_settings.estimation.dist_genfunc.func = x -> 2 * x
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep20 = portfolio.cor
     dist20 = portfolio.dist
 
-    codep_settings.type = :Custom_Func
-    codep_settings.estimation.cor_genfunc.func = x -> -2 * cor(x)
-    codep_settings.estimation.dist_genfunc.func = x -> 3 * x
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Custom_Func
+    cor_settings.estimation.cor_genfunc.func = x -> -2 * cor(x)
+    cor_settings.estimation.dist_genfunc.func = x -> 3 * x
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep21 = portfolio.cor
     dist21 = portfolio.dist
 
-    codep_settings.type = :Custom_Val
-    codep_settings.estimation.custom_cor = 3 * cor(portfolio.returns)
-    codep_settings.estimation.custom_dist = -7 * cor(portfolio.returns)
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+    cor_settings.type = :Custom_Val
+    cor_settings.estimation.custom_cor = 3 * cor(portfolio.returns)
+    cor_settings.estimation.custom_dist = -7 * cor(portfolio.returns)
+    asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep22 = portfolio.cor
     dist22 = portfolio.dist
 

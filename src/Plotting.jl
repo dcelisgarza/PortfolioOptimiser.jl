@@ -741,7 +741,7 @@ function plot_clusters(
 )
     corr = portfolio.cor
     assets = portfolio.assets
-    codep_type = portfolio.codep_type
+    cor_type = portfolio.cor_type
     N = length(assets)
 
     if cluster
@@ -764,7 +764,7 @@ function plot_clusters(
         clustering_idx = cutree(clustering; k = k)
     end
 
-    ordered_codep = codep[sort_order, sort_order]
+    ordered_codep = corr[sort_order, sort_order]
     ordered_assets = assets[sort_order]
 
     uidx = minimum(clustering_idx):maximum(clustering_idx)
@@ -775,7 +775,7 @@ function plot_clusters(
     end
 
     codeps1 = (:Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
-    if codep_type ∈ codeps1
+    if cor_type ∈ codeps1
         clim = (-1, 1)
     else
         clim = (0, 1)
@@ -919,7 +919,7 @@ function plot_dendrogram(
 )
     corr = portfolio.cor
     assets = portfolio.assets
-    codep_type = portfolio.codep_type
+    cor_type = portfolio.cor_type
     N = length(assets)
 
     if cluster
@@ -942,7 +942,7 @@ function plot_dendrogram(
         clustering_idx = cutree(clustering; k = k)
     end
 
-    ordered_codep = codep[sort_order, sort_order]
+    ordered_codep = corr[sort_order, sort_order]
     ordered_assets = assets[sort_order]
 
     uidx = minimum(clustering_idx):maximum(clustering_idx)

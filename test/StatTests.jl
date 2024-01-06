@@ -22,7 +22,7 @@ returns = dropmissing!(DataFrame(Y))
     ret = cov_returns(portfolio.cov, seed = 0)
     @test isapprox(cov(ret), portfolio.cov)
 
-    asset_statistics!(portfolio, codep_type = :Gerber0, cov_type = :Gerber0)
+    asset_statistics!(portfolio, cor_type = :Gerber0, cov_type = :Gerber0)
     covg0t = reshape(
         [
             0.00020997582228184753,
@@ -1247,7 +1247,7 @@ returns = dropmissing!(DataFrame(Y))
 
     asset_statistics!(
         portfolio,
-        codep_type = :Gerber0,
+        cor_type = :Gerber0,
         cov_type = :Gerber0,
         posdef_fix = :Nearest,
     )
@@ -4703,19 +4703,19 @@ returns = dropmissing!(DataFrame(Y))
     @test isposdef(portfolio.skurt)
 
     portfolio = HCPortfolio(returns = returns)
-    asset_statistics!(portfolio, codep_type = :Cov_to_Cor)
+    asset_statistics!(portfolio, cor_type = :Cov_to_Cor)
     @test isapprox(cov2cor(portfolio.cov), portfolio.cor)
     function func(x)
         return sqrt.(clamp!((1 .- x) / 2, 0, 1))
     end
-    asset_statistics!(portfolio, codep_type = :Custom_Func, dist_func = func)
+    asset_statistics!(portfolio, cor_type = :Custom_Func, dist_func = func)
     corr = cor(portfolio.returns)
     @test isapprox(portfolio.cor, corr)
     @test isapprox(portfolio.dist, func(corr))
 
     asset_statistics!(
         portfolio,
-        codep_type = :Custom_Val,
+        cor_type = :Custom_Val,
         custom_cor = corkendall(portfolio.returns),
     )
     @test isapprox(portfolio.cor, corkendall(portfolio.returns))

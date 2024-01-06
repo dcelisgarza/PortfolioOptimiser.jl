@@ -821,7 +821,7 @@ codep_dist_mtx(
     returns::AbstractMatrix;
     alpha_tail::Real = 0.05,
     bins_info::Union{Symbol, Integer} = :KN,
-    codep_type::Symbol = :Pearson,
+    cor_type::Symbol = :Pearson,
     cor_args::Tuple = (),
     cor_func::Function = cor,
     cor_kwargs::NamedTuple = (;),
@@ -842,7 +842,7 @@ codep_dist_mtx(
 )
 ```
 """
-function codep_dist_mtx(returns::AbstractMatrix, settings::CodepSettings = CodepSettings(;))
+function codep_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettings(;))
     type = settings.type
     if type == :Pearson
         corr = cor(returns)
@@ -946,7 +946,7 @@ asset_statistics!(
     cor_func::Function = cor,
     std_func = std,
     dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-    codep_type::Symbol = isa(portfolio, HCPortfolio) ? portfolio.codep_type : :Pearson,
+    cor_type::Symbol = isa(portfolio, HCPortfolio) ? portfolio.cor_type : :Pearson,
     custom_mu = nothing,
     custom_cov = nothing,
     custom_kurt = nothing,
@@ -977,7 +977,7 @@ function asset_statistics!(
     cov_settings::CovSettings = CovSettings(;),
     mu_settings::MuSettings = MuSettings(;),
     kurt_settings::KurtSettings = KurtSettings(;),
-    codep_settings::CodepSettings = CodepSettings(;),
+    cor_settings::CorSettings = CorSettings(;),
 )
     returns = portfolio.returns
 
@@ -998,8 +998,9 @@ function asset_statistics!(
 
     # Type specific
     if isa(portfolio, HCPortfolio) && calc_codep
-        codep_settings.estimation.sigma = portfolio.cov
-        portfolio.cor, portfolio.dist = codep_dist_mtx(returns, codep_settings)
+        cor_settings.estimation.sigma = portfolio.cov
+        portfolio.cor, portfolio.dist = codep_dist_mtx(returns, cor_settings)
+        portfolio.cor_type = cor_settings.type
     end
 
     return nothing
