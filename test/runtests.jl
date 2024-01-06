@@ -56,14 +56,11 @@ using SafeTestsets
 #     include("TraditionalOptimisationTests.jl")
 # end
 
-@safetestset "BL Statistics" begin
-end
+@safetestset "BL Statistics" begin end
 
-@safetestset "Factor Statistics" begin
-end
+@safetestset "Factor Statistics" begin end
 
-@safetestset "WC Statistics" begin
-end
+@safetestset "WC Statistics" begin end
 
 @safetestset "DBHT Clustering" begin
     include("DBHTClusteringTests.jl")
