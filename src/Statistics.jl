@@ -1081,25 +1081,7 @@ wc_statistics!(
 ```
 Worst case optimisation statistics.
 """
-function wc_statistics!(
-    portfolio::AbstractPortfolio,
-    settings = WCSettings(;),
-    # box::Symbol = :Stationary,
-    # calc_box::Bool = true,
-    # calc_ellipse::Bool = true,
-    # dcov::Real = 0.1,
-    # dmu::Real = 0.1,
-    # ellipse::Symbol = :Stationary,
-    # n_sim::Integer = 3_000,
-    # rng = Random.default_rng(),
-    # seed::Union{<:Integer, Nothing} = nothing,
-    # window::Integer = 3,
-    # posdef_args::Tuple = (),
-    # posdef_fix::Symbol = :Nearest,
-    # posdef_func::Function = x -> x,
-    # posdef_kwargs::NamedTuple = (;),
-    # q::Real = 0.05,
-)
+function wc_statistics!(portfolio::AbstractPortfolio, settings::WCSettings = WCSettings(;))
     calc_box = settings.calc_box
     calc_ellipse = settings.calc_ellipse
     box = settings.box
