@@ -38,7 +38,10 @@ l = 2.0
         rm = :SD,
     )
 
-    wc_statistics!(portfolio, box = :Normal, ellipse = :Normal, seed = 123456789)
+    wc_statistics!(
+        portfolio,
+        WCSettings(box = :Normal, ellipse = :Normal, seed = 123456789),
+    )
     w1 = opt_port!(
         portfolio;
         class = :Classic,
@@ -684,7 +687,10 @@ end
         rm = :SD,
     )
 
-    wc_statistics!(portfolio, box = :Normal, ellipse = :Normal, seed = 123456789)
+    wc_statistics!(
+        portfolio,
+        WCSettings(box = :Normal, ellipse = :Normal, seed = 123456789),
+    )
     w1 = opt_port!(
         portfolio;
         class = :Classic,
@@ -1330,7 +1336,10 @@ end
         rm = :SD,
     )
 
-    wc_statistics!(portfolio, box = :Normal, ellipse = :Normal, seed = 123456789)
+    wc_statistics!(
+        portfolio,
+        WCSettings(box = :Normal, ellipse = :Normal, seed = 123456789),
+    )
     w1 = opt_port!(
         portfolio;
         class = :Classic,
@@ -1770,7 +1779,10 @@ end
         rm = :SD,
     )
 
-    wc_statistics!(portfolio, box = :Normal, ellipse = :Normal, seed = 123456789)
+    wc_statistics!(
+        portfolio,
+        WCSettings(box = :Normal, ellipse = :Normal, seed = 123456789),
+    )
     w1 = opt_port!(
         portfolio;
         class = :Classic,

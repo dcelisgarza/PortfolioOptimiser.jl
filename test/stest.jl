@@ -14,13 +14,13 @@ using COSMO,
 
 prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
-cov_settings = CovSettings(;
-    type = :Semi,
-    estimation = CovEstSettings(;
-        estimator = AnalyticalNonlinearShrinkage(),
-        genfunc = GenericFunc(args = (fweights(1:size(portfolio.returns, 1)),)),
-    ),
-)
+portfolio = Portfolio(; prices = prices)
+
+wc_settings = WCSettings(box = :Normal, ellipse = :Normal, seed = 123456789)
+wc_settings.seed = 0.2
+
+wc_statistics!(portfolio, WCSettings(box = :Normal, ellipse = :Normal, seed = 123456789))
+
 asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
 mu11 = portfolio.mu
 cov11 = portfolio.cov

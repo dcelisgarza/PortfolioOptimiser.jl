@@ -18,9 +18,9 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
-#=
+
 @testset "Cokurtosis Estimation" begin end
-=#
+
 @testset "Codependence and Distance Matrix Estimation" begin
     portfolio = HCPortfolio(; prices = prices)
 
