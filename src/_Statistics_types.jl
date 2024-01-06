@@ -609,6 +609,108 @@ function Base.setproperty!(obj::WCSettings, sym::Symbol, val)
     setfield!(obj, sym, val)
 end
 
+mutable struct PCRSettings
+    mean_genfunc::GenericFunc
+    std_genfunc::GenericFunc
+    pca_s_genfunc::GenericFunc
+    pca_genfunc::GenericFunc
+end
+function PCRSettings(;
+    mean_genfunc::GenericFunc = GenericFunc(; func = StatsBase.mean, kwargs = (; dims = 2)),
+    std_genfunc::GenericFunc = GenericFunc(; func = StatsBase.std, kwargs = (; dims = 2)),
+    pca_s_genfunc::GenericFunc = GenericFunc(;
+        func = StatsBase.standardize,
+        args = (StatsBase.ZScoreTransform,),
+        kwargs = (; dims = 2),
+    ),
+    pca_genfunc::GenericFunc = GenericFunc(;
+        func = MultivariateStats.fit,
+        args = (MultivariateStats.PCA,),
+    ),
+)
+    return PCRSettings(mean_genfunc, std_genfunc, pca_s_genfunc, pca_genfunc)
+end
+
+mutable struct LoadingsSettings{T1 <: Real}
+    method::Symbol
+    criterion::Union{Symbol, Function}
+    threshold::T1
+    pcr_settings::PCRSettings
+end
+function LoadingsSettings(;
+    method::Symbol = :FReg,
+    criterion::Union{Symbol, Function} = :pval,
+    threshold::Real = 0.05,
+    pcr_settings::PCRSettings = PCRSettings(;),
+)
+    @assert(method ∈ FSMethods, "method = $method, must be one of $FSMethods")
+    @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
+    return LoadingsSettings{typeof(threshold)}(method, criterion, threshold, pcr_settings)
+end
+function Base.setproperty!(obj::LoadingsSettings, sym::Symbol, val)
+    if sym == :method
+        @smart_assert(val ∈ FSMethods, "$sym = $val, must be one of $FSMethods")
+    elseif sym == :criterion
+        @smart_assert(val ∈ RegCriteria, "$sym = $val, must be one of $RegCriteria")
+    end
+    setfield!(obj, sym, val)
+end
+
+mutable struct RiskFactSettings
+    B::Union{DataFrame, Nothing}
+    loadings_settings::LoadingsSettings
+    cov_settings::CovSettings
+    mu_settings::MuSettings
+    error::Bool
+    var_genfunc::GenericFunc
+end
+function RiskFactSettings(;
+    B::Union{DataFrame, Nothing} = nothing,
+    loadings_settings::LoadingsSettings = LoadingsSettings(;),
+    cov_settings::CovSettings = CovSettings(;),
+    mu_settings::MuSettings = MuSettings(;),
+    error::Bool = true,
+    var_genfunc::GenericFunc = GenericFunc(; func = StatsBase.var, kwargs = (; dims = 1)),
+)
+    return RiskFactSettings(
+        B,
+        loadings_settings,
+        cov_settings,
+        mu_settings,
+        error,
+        var_genfunc,
+    )
+end
+
+mutable struct BLSettings{T1 <: Real}
+    method::Symbol
+    constant::Bool
+    diagonal::Bool
+    eq::Bool
+    delta::Union{Nothing, <:Real}
+    rf::T1
+    var_genfunc::GenericFunc
+end
+function BLSettings(;
+    method::Symbol = :B,
+    constant::Bool = true,
+    eq::Bool = true,
+    diagonal::Bool = true,
+    delta::Real = 1.0,
+    rf::Real = 0.0,
+    var_genfunc::GenericFunc = GenericFunc(; func = StatsBase.var, kwargs = (; dims = 1)),
+)
+    @assert(method ∈ BLFMMethods, "method = $method, must be one of $BLFMMethods")
+
+    return BLSettings{typeof(rf)}(method, constant, eq, diagonal, delta, rf, var_genfunc)
+end
+function Base.setproperty!(obj::BLSettings, sym::Symbol, val)
+    if sym == :method
+        @smart_assert(val ∈ BLFMMethods, "$sym = $val, must be one of $BLFMMethods")
+    end
+    setfield!(obj, sym, val)
+end
+
 export CovSettings,
     CovEstSettings,
     GerberSettings,
@@ -619,4 +721,6 @@ export CovSettings,
     CorSettings,
     CorEstSettings,
     WCSettings,
-    KurtSettings
+    KurtSettings,
+    PCRSettings,
+    LoadingsSettings

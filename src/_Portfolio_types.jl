@@ -1629,8 +1629,8 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `w_min`: `Na×1` vector of the lower bounds for asset weights, where $(_ndef(:a2)).
 - `w_max`: `Na×1` vector of the upper bounds for asset weights, where $(_ndef(:a2)).
 - `cor_method`: method for estimating the codependence matrix.
-- `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cor` used by [`codep_dist_mtx`](@ref).
-- `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `dist` used by [`codep_dist_mtx`](@ref).
+- `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cor` used by [`cor_dist_mtx`](@ref).
+- `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `dist` used by [`cor_dist_mtx`](@ref).
 - `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
 - `k`: number of clusters to cut the dendrogram into.
     - If `k == 0`, automatically compute `k` using the two difference gap statistic [^TDGS]. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
@@ -1821,8 +1821,8 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `w_min`: `Na×1` vector of the lower bounds for asset weights, where $(_ndef(:a2)).
 - `w_max`: `Na×1` vector of the upper bounds for asset weights, where $(_ndef(:a2)).
 - `cor_method`: method for estimating the codependence matrix.
-- `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cor` used by [`codep_dist_mtx`](@ref).
-- `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `dist` used by [`codep_dist_mtx`](@ref).
+- `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cor` used by [`cor_dist_mtx`](@ref).
+- `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `dist` used by [`cor_dist_mtx`](@ref).
 - `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
 - `k`: number of clusters to cut the dendrogram into.
     - If `k == 0`, automatically compute `k` using the two difference gap statistic [^TDGS]. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
