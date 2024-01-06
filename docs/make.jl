@@ -26,7 +26,7 @@ import PortfolioOptimiser.distance_wei,
     PortfolioOptimiser.AbstractPortfolio,
     PortfolioOptimiser.TrackingErrKinds,
     # Asset Statistics
-    PortfolioOptimiser.BLFMType,
+    PortfolioOptimiser.BLFMMethods,
     PortfolioOptimiser.BinMethods,
     PortfolioOptimiser.EllipseMethods,
     PortfolioOptimiser.BoxMethods,

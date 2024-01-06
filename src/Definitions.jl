@@ -52,7 +52,7 @@ Available choicees of summary parameters ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` [`
 - `:Classic`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from historical estimates computed by [`asset_statistics!`](@ref).
 - `:FM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor model computed by [`factor_statistics!`](@ref).
 - `:BL`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the Black-Litterman model computed by [`black_litterman_statistics!`](@ref).
-- `:BLFM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor Black-Litterman model computed by [`black_litterman_factor_satistics!`](@ref). This model has two versions defined in [`BLFMType`](@ref).
+- `:BLFM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor Black-Litterman model computed by [`black_litterman_factor_satistics!`](@ref). This model has two versions defined in [`BLFMMethods`](@ref).
 """
 const PortClasses = (:Classic, :FM, :BL, :BLFM)
 

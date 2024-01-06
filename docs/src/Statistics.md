@@ -20,7 +20,7 @@ codep_dist_mtx
 
 ```@docs
 BinMethods
-BLFMType
+BLFMMethods
 EllipseMethods
 BoxMethods
 BootstrapMethods
