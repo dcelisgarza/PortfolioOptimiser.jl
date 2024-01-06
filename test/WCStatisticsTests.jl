@@ -99,6 +99,7 @@ l = 2.0
     catch
     end
 
+    wc_settings.ellipse = :Normal
     wc_settings.box = :Delta
     wc_settings.dmu = 0.1
     wc_settings.dcov = 0.1
