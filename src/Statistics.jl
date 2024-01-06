@@ -1404,14 +1404,14 @@ function pcr(
     N = nrow(x)
     X = transpose(Matrix(x))
 
-    pca_s_func = pca_s_genfunc.pca_s_func
-    pca_s_args = pca_s_genfunc.pca_s_args
-    pca_s_kwargs = pca_s_genfunc.pca_s_kwargs
+    pca_s_func = pca_s_genfunc.func
+    pca_s_args = pca_s_genfunc.args
+    pca_s_kwargs = pca_s_genfunc.kwargs
     X_std = pca_s_func(pca_s_args..., X; pca_s_kwargs...)
 
-    pca_func = pca_genfunc.pca_func
-    pca_args = pca_genfunc.pca_args
-    pca_kwargs = pca_genfunc.pca_kwargs
+    pca_func = pca_genfunc.func
+    pca_args = pca_genfunc.args
+    pca_kwargs = pca_genfunc.kwargs
     model = pca_func(pca_args..., X_std; pca_kwargs...)
     Xp = transpose(predict(model, X_std))
     Vp = projection(model)
@@ -1420,14 +1420,14 @@ function pcr(
     fit_result = lm(x1, y)
     beta_pc = coef(fit_result)[2:end]
 
-    mean_func = mean_genfunc.mean_func
-    mean_args = mean_genfunc.mean_args
-    mean_kwargs = mean_genfunc.mean_kwargs
+    mean_func = mean_genfunc.func
+    mean_args = mean_genfunc.args
+    mean_kwargs = mean_genfunc.kwargs
     avg = vec(mean_func(X, mean_args...; mean_kwargs...))
 
-    std_func = std_genfunc.std_func
-    std_args = std_genfunc.std_args
-    std_kwargs = std_genfunc.std_kwargs
+    std_func = std_genfunc.func
+    std_args = std_genfunc.args
+    std_kwargs = std_genfunc.kwargs
     sdev = vec(std_func(X, std_args...; std_kwargs...))
 
     beta = Vp * beta_pc ./ sdev
@@ -1451,20 +1451,18 @@ function loadings_matrix(
 
     loadings = zeros(rows, cols)
 
-    flag = settings.method ∈ (:FReg, :BReg)
+    method = settings.method
+    flag = method ∈ (:FReg, :BReg)
     criterion = settings.criterion
     threshold = settings.threshold
     pcr_settings = settings.pcr_settings
     for i in 1:rows
         if flag
-            included = if method == :FReg
-                forward_regression(x, y[!, i], criterion, threshold)
-            else
+            included =
+                method == :FReg ? forward_regression(x, y[!, i], criterion, threshold) :
                 backward_regression(x, y[!, i], criterion, threshold)
-            end
 
-            !isempty(included) ? (x1 = [ovec Matrix(x[!, included])]) :
-            x1 = reshape(ovec, :, 1)
+            x1 = !isempty(included) ? [ovec Matrix(x[!, included])] : reshape(ovec, :, 1)
 
             fit_result = lm(x1, y[!, i])
 
