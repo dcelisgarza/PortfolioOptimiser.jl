@@ -677,7 +677,7 @@ function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(
                 min.(returns .- transpose(target_ret), zro)
             !haskey(kwargs, :mean) && (kwargs = (kwargs..., mean = zro))
         end
-        func(estimator, returns, args...; kwargs...)
+        StatsBase.cov(estimator, returns, args...; kwargs...)
     elseif type == :Gerber0
         covgerber0(returns, settings.gerber)
     elseif type == :Gerber1

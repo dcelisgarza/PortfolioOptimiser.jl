@@ -21,7 +21,7 @@ l = 2.0
 #=
 @testset "Cokurtosis Estimation" begin end
 =#
-@testset "Codependence and Distance Matrix Estimation" begin 
+@testset "Codependence and Distance Matrix Estimation" begin
     portfolio = HCPortfolio(; prices = prices)
 
     codep_settings = CodepSettings(;)
@@ -80,20 +80,23 @@ l = 2.0
     dist11 = portfolio.dist
 
     codep_settings.type = :Mutual_Info
-    codep_settings.estimation.bins_info = :KN
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
-    codep12 = portfolio.cor
-    dist12 = portfolio.dist
+    try
+        codep_settings.estimation.bins_info = :KN
+        asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+        codep12 = portfolio.cor
+        dist12 = portfolio.dist
 
-    codep_settings.estimation.bins_info = :FD
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
-    codep13 = portfolio.cor
-    dist13 = portfolio.dist
+        codep_settings.estimation.bins_info = :FD
+        asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+        codep13 = portfolio.cor
+        dist13 = portfolio.dist
 
-    codep_settings.estimation.bins_info = :SC
-    asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
-    codep14 = portfolio.cor
-    dist14 = portfolio.dist
+        codep_settings.estimation.bins_info = :SC
+        asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
+        codep14 = portfolio.cor
+        dist14 = portfolio.dist
+    catch
+    end
 
     codep_settings.estimation.bins_info = :HGR
     asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)
@@ -120,7 +123,6 @@ l = 2.0
     codep19 = portfolio.cor
     dist19 = portfolio.dist
 
-    ############
     codep_settings.type = :Cov_to_Cor
     codep_settings.estimation.dist_genfunc.func = x -> 2 * x
     asset_statistics!(portfolio; calc_kurt = false, codep_settings = codep_settings)

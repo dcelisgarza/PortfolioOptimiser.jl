@@ -14,6 +14,28 @@ using COSMO,
 
 prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
+cov_settings = CovSettings(;
+    type = :Semi,
+    estimation = CovEstSettings(;
+        estimator = AnalyticalNonlinearShrinkage(),
+        genfunc = GenericFunc(args = (fweights(1:size(portfolio.returns, 1)),)),
+    ),
+)
+asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
+mu11 = portfolio.mu
+cov11 = portfolio.cov
+
+estimation = CovEstSettings(;
+    estimator = AnalyticalNonlinearShrinkage(),
+    genfunc = GenericFunc(func = cov, args = (fweights(1:size(portfolio.returns, 1)),)),
+)
+estimation.genfunc.func(
+    estimation.estimator,
+    portfolio.returns,
+    fweights(1:size(portfolio.returns, 1));
+    mean = 0,
+)
+
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
