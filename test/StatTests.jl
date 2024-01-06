@@ -1242,7 +1242,7 @@ returns = dropmissing!(DataFrame(Y))
         20,
     )
     @test isapprox(covg0t, portfolio.cov)
-    @test isapprox(codepg0t, portfolio.codep)
+    @test isapprox(codepg0t, portfolio.cor)
     @test isapprox(distg0t, portfolio.dist)
 
     asset_statistics!(
@@ -2470,7 +2470,7 @@ returns = dropmissing!(DataFrame(Y))
         20,
     )
     @test isapprox(covg1t, portfolio.cov)
-    @test isapprox(codepg1t, portfolio.codep)
+    @test isapprox(codepg1t, portfolio.cor)
     @test isapprox(distg1t, portfolio.dist)
 
     asset_statistics!(portfolio, mu_type = :JS, mu_target = :GM)
@@ -4704,13 +4704,13 @@ returns = dropmissing!(DataFrame(Y))
 
     portfolio = HCPortfolio(returns = returns)
     asset_statistics!(portfolio, codep_type = :Cov_to_Cor)
-    @test isapprox(cov2cor(portfolio.cov), portfolio.codep)
+    @test isapprox(cov2cor(portfolio.cov), portfolio.cor)
     function func(x)
         return sqrt.(clamp!((1 .- x) / 2, 0, 1))
     end
     asset_statistics!(portfolio, codep_type = :Custom_Func, dist_func = func)
     corr = cor(portfolio.returns)
-    @test isapprox(portfolio.codep, corr)
+    @test isapprox(portfolio.cor, corr)
     @test isapprox(portfolio.dist, func(corr))
 
     asset_statistics!(
@@ -4718,7 +4718,7 @@ returns = dropmissing!(DataFrame(Y))
         codep_type = :Custom_Val,
         custom_cor = corkendall(portfolio.returns),
     )
-    @test isapprox(portfolio.codep, corkendall(portfolio.returns))
+    @test isapprox(portfolio.cor, corkendall(portfolio.returns))
 
     portfolio = HCPortfolio(returns = returns)
     asset_statistics!(

@@ -2210,7 +2210,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     portfolio = HCPortfolio(; prices = prices)
     asset_statistics!(portfolio)
 
-    A, tri, separators, cliques, cliqueTree = PMFG_T2s(portfolio.codep, 5)
+    A, tri, separators, cliques, cliqueTree = PMFG_T2s(portfolio.cor, 5)
     At = reshape(
         [
             0.0,

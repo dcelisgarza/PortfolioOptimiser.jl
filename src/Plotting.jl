@@ -739,7 +739,7 @@ function plot_clusters(
     kwargs_l = (;),
     kwargs = (;),
 )
-    codep = portfolio.codep
+    corr = portfolio.cor
     assets = portfolio.assets
     codep_type = portfolio.codep_type
     N = length(assets)
@@ -917,7 +917,7 @@ function plot_dendrogram(
     theme = :Spectral,
     kwargs = (;),
 )
-    codep = portfolio.codep
+    corr = portfolio.cor
     assets = portfolio.assets
     codep_type = portfolio.codep_type
     N = length(assets)

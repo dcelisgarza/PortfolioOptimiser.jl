@@ -1583,7 +1583,7 @@ mutable struct HCPortfolio{
     w_min::wmi
     w_max::wma
     codep_type::ttco
-    codep::tco
+    cor::tco
     dist::tdist
     clusters::tcl
     k::tk
@@ -1629,7 +1629,7 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `w_min`: `Na×1` vector of the lower bounds for asset weights, where $(_ndef(:a2)).
 - `w_max`: `Na×1` vector of the upper bounds for asset weights, where $(_ndef(:a2)).
 - `codep_type`: method for estimating the codependence matrix.
-- `codep`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `codep` used by [`codep_dist_mtx`](@ref).
+- `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `cor` used by [`codep_dist_mtx`](@ref).
 - `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `dist` used by [`codep_dist_mtx`](@ref).
 - `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
 - `k`: number of clusters to cut the dendrogram into.
@@ -1721,7 +1721,7 @@ mutable struct HCPortfolio{
     w_min::wmi
     w_max::wma
     codep_type::ttco
-    codep::tco
+    cor::tco
     dist::tdist
     clusters::tcl
     k::tk
@@ -1770,7 +1770,7 @@ HCPortfolio(;
     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
     codep_type::Symbol = :Pearson,
-    codep::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     clusters::Clustering.Hclust = Hclust{Float64}(
         Matrix{Int64}(undef, 0, 2),
@@ -1821,7 +1821,7 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `w_min`: `Na×1` vector of the lower bounds for asset weights, where $(_ndef(:a2)).
 - `w_max`: `Na×1` vector of the upper bounds for asset weights, where $(_ndef(:a2)).
 - `codep_type`: method for estimating the codependence matrix.
-- `codep`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `codep` used by [`codep_dist_mtx`](@ref).
+- `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `cor` used by [`codep_dist_mtx`](@ref).
 - `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `dist` used by [`codep_dist_mtx`](@ref).
 - `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
 - `k`: number of clusters to cut the dendrogram into.
@@ -1874,7 +1874,7 @@ function HCPortfolio(;
     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
     codep_type::Symbol = :Pearson,
-    codep::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+    cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     clusters::Clustering.Hclust = Hclust{Float64}(
         Matrix{Int64}(undef, 0, 2),
@@ -2022,10 +2022,10 @@ function HCPortfolio(;
         end
     end
     @assert(codep_type ∈ CodepTypes, "codep_type = $codep_type, must be one of $CodepTypes")
-    if !isempty(codep)
+    if !isempty(cor)
         @assert(
-            size(codep, 1) == size(codep, 2) == size(returns, 2),
-            "codep must be a square matrix, size(codep) = $(size(codep)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
+            size(cor, 1) == size(cor, 2) == size(returns, 2),
+            "cor must be a square matrix, size(cor) = $(size(cor)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))"
         )
     end
     if !isempty(dist)
@@ -2072,7 +2072,7 @@ function HCPortfolio(;
         Union{<:Real, AbstractVector{<:Real}},
         Union{<:Real, AbstractVector{<:Real}},
         typeof(codep_type),
-        typeof(codep),
+        typeof(cor),
         typeof(dist),
         typeof(clusters),
         typeof(k),
@@ -2116,7 +2116,7 @@ function HCPortfolio(;
         w_min,
         w_max,
         codep_type,
-        codep,
+        cor,
         dist,
         clusters,
         k,
@@ -2259,7 +2259,7 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             )
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (:cov, :codep, :dist)
+    elseif sym ∈ (:cov, :cor, :dist)
         if !isempty(val)
             @assert(
                 size(val, 1) == size(val, 2) == size(obj.returns, 2),

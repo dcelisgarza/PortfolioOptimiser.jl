@@ -17,86 +17,10 @@ prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-cols = [:RRC, :AMZN, :JPM, :MA, :WMT]
-PortfolioOptimiser.MuTypes
-PortfolioOptimiser.MuTargets
-
-wc_statistics!(portfolio)
-asset_statistics!(portfolio)
-mu13 = portfolio.mu
-cov13 = portfolio.cov
-
-println("mut = ", portfolio.mu)
-println("covt = reshape(", vec(portfolio.cov), ", 20, 20)")
-
-# println("kurtt = reshape(", vec(portfolio.kurt), ", 5^2, 5^2)")
-# println("skurtt = reshape(", vec(portfolio.skurt), ", 5^2, 5^2)")
-
-asset_statistics!(
-    portfolio::AbstractPortfolio;
-    # # flags
-    # calc_codep::Bool = true,
-    # calc_cov::Bool = true,
-    # calc_mu::Bool = true,
-    # calc_kurt::Bool = true,
-    # # cov_mtx
-    # alpha::Real = 0.0,
-    # cov_args::Tuple = (),
-    # cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
-    # cov_func::Function = cov,
-    # cov_kwargs::NamedTuple = (;),
-    # cov_type::Symbol = portfolio.cov_type,
-    # cov_weights::Union{AbstractWeights, Nothing} = nothing,
-    # custom_cov::Union{AbstractMatrix, Nothing} = nothing,
-    # denoise::Bool = false,
-    # detone::Bool = false,
-    # gs_threshold::Real = portfolio.gs_threshold,
-    # jlogo::Bool = portfolio.jlogo,
-    # kernel = ASH.Kernels.gaussian,
-    # m::Integer = 10,
-    # method::Symbol = :Fixed,
-    # mkt_comp::Integer = 0,
-    # n::Integer = 1000,
-    # opt_args = (),
-    # opt_kwargs = (;),
-    # posdef_args::Tuple = (),
-    # posdef_fix::Symbol = portfolio.posdef_fix,
-    # posdef_func::Function = x -> x,
-    # posdef_kwargs::NamedTuple = (;),
-    # std_args::Tuple = (),
-    # std_func::Function = std,
-    # std_kwargs::NamedTuple = (;),
-    # target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,
-    # # mean_vec
-    # custom_mu::Union{AbstractVector, Nothing} = nothing,
-    # mean_args::Tuple = (),
-    # mean_func::Function = mean,
-    # mean_kwargs::NamedTuple = (;),
-    # mkt_ret::Union{AbstractVector, Nothing} = nothing,
-    # mu_target::Symbol = :GM,
-    # mu_type::Symbol = portfolio.mu_type,
-    # mu_weights::Union{AbstractWeights, Nothing} = nothing,
-    # rf::Real = 0.0,
-    # # codep_dist_mtx
-    # alpha_tail::Union{Real, Nothing} = isa(portfolio, HCPortfolio) ? portfolio.alpha_tail :
-    #                                    nothing,
-    # bins_info::Union{Symbol, Integer, Nothing} = isa(portfolio, HCPortfolio) ?
-    #                                              portfolio.bins_info : nothing,
-    # codep_type::Union{Symbol, Nothing} = isa(portfolio, HCPortfolio) ?
-    #                                      portfolio.codep_type : nothing,
-    # cor_args::Tuple = (),
-    # cor_func::Function = cor,
-    # cor_kwargs::NamedTuple = (;),
-    # custom_cor::Union{AbstractMatrix, Nothing} = nothing,
-    # dist_args::Tuple = (),
-    # dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-    # dist_kwargs::NamedTuple = (;),
-    # custom_kurt::Union{AbstractMatrix, Nothing} = nothing,
-    # custom_skurt::Union{AbstractMatrix, Nothing} = nothing,
-    # uplo::Symbol = :L,
-)
-
 ########################################
+println("codept = reshape(", vec(portfolio.cor), ", 20, 20)")
+println("distt = reshape(", vec(portfolio.dist), ", 20, 20)")
+
 println("w1t = ", w1.weights, "\n")
 println("w2t = ", w2.weights, "\n")
 println("w3t = ", w3.weights, "\n")

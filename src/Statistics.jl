@@ -701,8 +701,8 @@ function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(
 
     if settings.jlogo
         try
-            codep = cov2cor(mtx)
-            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+            corr = cov2cor(mtx)
+            dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
             separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
             mtx .= J_LoGo(mtx, separators, cliques) \ I
         catch SingularException
@@ -779,8 +779,8 @@ function cokurt_mtx(
 
     if settings.jlogo
         try
-            codep = cov2cor(kurt)
-            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+            corr = cov2cor(kurt)
+            dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
             separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
             kurt .= J_LoGo(kurt, separators, cliques) \ I
         catch SingularException
@@ -794,8 +794,8 @@ function cokurt_mtx(
         posdef_fix!(kurt, settings.posdef; msg = "J-LoGo Kurtosis ")
 
         try
-            codep = cov2cor(skurt)
-            dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+            corr = cov2cor(skurt)
+            dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
             separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
             skurt .= J_LoGo(skurt, separators, cliques) \ I
         catch SingularException
@@ -845,48 +845,48 @@ codep_dist_mtx(
 function codep_dist_mtx(returns::AbstractMatrix, settings::CodepSettings = CodepSettings(;))
     type = settings.type
     if type == :Pearson
-        codep = cor(returns)
-        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        corr = cor(returns)
+        dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif type == :Spearman
-        codep = corspearman(returns)
-        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        corr = corspearman(returns)
+        dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif type == :Kendall
-        codep = corkendall(returns)
-        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        corr = corkendall(returns)
+        dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif type == :Abs_Pearson
-        codep = abs.(cor(returns))
-        dist = sqrt.(clamp!(1 .- codep, 0, 1))
+        corr = abs.(cor(returns))
+        dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif type == :Abs_Spearman
-        codep = abs.(corspearman(returns))
-        dist = sqrt.(clamp!(1 .- codep, 0, 1))
+        corr = abs.(corspearman(returns))
+        dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif type == :Abs_Kendall
-        codep = abs.(corkendall(returns))
-        dist = sqrt.(clamp!(1 .- codep, 0, 1))
+        corr = abs.(corkendall(returns))
+        dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif type == :Gerber0
-        codep = cov2cor(covgerber0(returns, settings.gerber))
-        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        corr = cov2cor(covgerber0(returns, settings.gerber))
+        dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif type == :Gerber1
-        codep = cov2cor(covgerber1(returns, settings.gerber))
-        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        corr = cov2cor(covgerber1(returns, settings.gerber))
+        dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif type == :Gerber2
-        codep = cov2cor(covgerber2(returns, settings.gerber))
-        dist = sqrt.(clamp!((1 .- codep) / 2, 0, 1))
+        corr = cov2cor(covgerber2(returns, settings.gerber))
+        dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif type == :Distance
-        codep = cordistance(returns)
-        dist = sqrt.(clamp!(1 .- codep, 0, 1))
+        corr = cordistance(returns)
+        dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif type == :Mutual_Info
-        codep, dist = mut_var_info_mtx(returns, settings.estimation.bins_info)
+        corr, dist = mut_var_info_mtx(returns, settings.estimation.bins_info)
     elseif type == :Tail
-        codep = ltdi_mtx(returns, settings.estimation.alpha)
-        dist = -log.(codep)
+        corr = ltdi_mtx(returns, settings.estimation.alpha)
+        dist = -log.(corr)
     elseif type == :Cov_to_Cor
         estimation = settings.estimation
         sigma = estimation.sigma
         dist_func = estimation.dist_genfunc.func
         dist_args = estimation.dist_genfunc.args
         dist_kwargs = estimation.dist_genfunc.kwargs
-        codep = cov2cor(sigma)
-        dist = dist_func(codep, dist_args...; dist_kwargs...)
+        corr = cov2cor(sigma)
+        dist = dist_func(corr, dist_args...; dist_kwargs...)
     elseif type == :Custom_Func
         estimation = settings.estimation
         cor_func = estimation.cor_genfunc.func
@@ -895,18 +895,18 @@ function codep_dist_mtx(returns::AbstractMatrix, settings::CodepSettings = Codep
         dist_func = estimation.dist_genfunc.func
         dist_args = estimation.dist_genfunc.args
         dist_kwargs = estimation.dist_genfunc.kwargs
-        codep = cor_func(returns, cor_args...; cor_kwargs...)
-        dist = dist_func(codep, dist_args...; dist_kwargs...)
+        corr = cor_func(returns, cor_args...; cor_kwargs...)
+        dist = dist_func(corr, dist_args...; dist_kwargs...)
     elseif type == :Custom_Val
         estimation = settings.estimation
-        codep = estimation.custom_cor
+        corr = estimation.custom_cor
         dist = estimation.custom_dist
     end
 
-    codep = issymmetric(codep) ? codep : Symmetric(codep, settings.uplo)
+    corr = issymmetric(corr) ? corr : Symmetric(corr, settings.uplo)
     dist = issymmetric(dist) ? dist : Symmetric(dist, settings.uplo)
 
-    return codep, dist
+    return corr, dist
 end
 
 function covar_mtx_mean_vec(
@@ -999,7 +999,7 @@ function asset_statistics!(
     # Type specific
     if isa(portfolio, HCPortfolio) && calc_codep
         codep_settings.estimation.sigma = portfolio.cov
-        portfolio.codep, portfolio.dist = codep_dist_mtx(returns, codep_settings)
+        portfolio.cor, portfolio.dist = codep_dist_mtx(returns, codep_settings)
     end
 
     return nothing

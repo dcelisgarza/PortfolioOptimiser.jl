@@ -608,4 +608,5 @@ export CovSettings,
     DenoiseSettings,
     PosdefFixSettings,
     GenericFunc,
-    MuSettings
+    MuSettings,
+    CodepSettings

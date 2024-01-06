@@ -11,44 +11,44 @@ returns = dropmissing!(DataFrame(Y))
 
     portfolio.codep_type = :Pearson
     asset_statistics!(portfolio)
-    pearson = portfolio.codep
+    pearson = portfolio.cor
 
     portfolio.codep_type = :Spearman
     asset_statistics!(portfolio)
-    spearman = portfolio.codep
+    spearman = portfolio.cor
 
     portfolio.codep_type = :Kendall
     asset_statistics!(portfolio)
-    kendall = portfolio.codep
+    kendall = portfolio.cor
 
     portfolio.codep_type = :Abs_Pearson
     asset_statistics!(portfolio)
-    abs_pearson = portfolio.codep
+    abs_pearson = portfolio.cor
 
     portfolio.codep_type = :Abs_Spearman
     asset_statistics!(portfolio)
-    abs_spearman = portfolio.codep
+    abs_spearman = portfolio.cor
 
     portfolio.codep_type = :Abs_Kendall
     asset_statistics!(portfolio)
-    abs_kendall = portfolio.codep
+    abs_kendall = portfolio.cor
 
     portfolio.codep_type = :Gerber1
     asset_statistics!(portfolio, std_kwargs = (; corrected = false))
-    gerber1 = portfolio.codep
+    gerber1 = portfolio.cor
 
     portfolio.codep_type = :Gerber2
     asset_statistics!(portfolio, std_kwargs = (; corrected = false))
-    gerber2 = portfolio.codep
+    gerber2 = portfolio.cor
 
     portfolio.codep_type = :Distance
     asset_statistics!(portfolio)
-    distance = portfolio.codep
+    distance = portfolio.cor
 
     try
         portfolio.codep_type = :Mutual_Info
         asset_statistics!(portfolio)
-        mutual_info = portfolio.codep
+        mutual_info = portfolio.cor
         var_info = portfolio.dist
         mutual_infot = reshape(
             [
@@ -876,7 +876,7 @@ returns = dropmissing!(DataFrame(Y))
     portfolio.codep_type = :Mutual_Info
     portfolio.bins_info = 10
     asset_statistics!(portfolio)
-    codep1 = copy(portfolio.codep)
+    codep1 = copy(portfolio.cor)
     dist1 = copy(portfolio.dist)
 
     codep1t = reshape(
@@ -1697,7 +1697,7 @@ returns = dropmissing!(DataFrame(Y))
 
     portfolio.bins_info = :HGR
     asset_statistics!(portfolio)
-    codep2 = copy(portfolio.codep)
+    codep2 = copy(portfolio.cor)
     dist2 = copy(portfolio.dist)
 
     codep2t = reshape(
@@ -2518,7 +2518,7 @@ returns = dropmissing!(DataFrame(Y))
 
     portfolio.codep_type = :Tail
     asset_statistics!(portfolio)
-    tail = portfolio.codep
+    tail = portfolio.cor
 
     pearsont = reshape(
         [

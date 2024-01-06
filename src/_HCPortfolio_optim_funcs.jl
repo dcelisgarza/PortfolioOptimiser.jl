@@ -148,13 +148,13 @@ function _hierarchical_clustering(
     dbht_method = :Unique,
 )
     codep_type = portfolio.codep_type
-    codep = portfolio.codep
+    corr = portfolio.cor
     dist = portfolio.dist
 
     codeps1 = (:Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
 
     if linkage == :DBHT
-        codep = codep_type ∈ codeps1 ? 1 .- dist .^ 2 : codep
+        corr = codep_type ∈ codeps1 ? 1 .- dist .^ 2 : codep
         missing, missing, missing, missing, missing, missing, clustering =
             DBHTs(dist, codep; branchorder = branchorder, method = dbht_method)
     else

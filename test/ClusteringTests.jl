@@ -2273,7 +2273,7 @@ end
 
     portfolio = HCPortfolio(returns = returns)
     asset_statistics!(portfolio)
-    A, tri, separators, cliques, cliqueTree = PMFG_T2s(portfolio.codep, 5)
+    A, tri, separators, cliques, cliqueTree = PMFG_T2s(portfolio.cor, 5)
     At = reshape(
         [
             0.0,
