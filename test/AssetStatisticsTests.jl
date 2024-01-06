@@ -21,7 +21,7 @@ l = 2.0
 #=
 @testset "Cokurtosis Estimation" begin end
 =#
-@testset "Codependence and Distance Matrix Estimation" begin 
+@testset "Codependence and Distance Matrix Estimation" begin
     portfolio = HCPortfolio(; prices = prices)
 
     codep_settings = CodepSettings(;)
