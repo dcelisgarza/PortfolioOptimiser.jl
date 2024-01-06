@@ -334,7 +334,13 @@ function covgerber2(x, settings::GerberSettings = GerberSettings(;))
     return mtx .* (std_vec * transpose(std_vec))
 end
 
-function cov_returns(x; iters = 5, len = 10, rng = Random.default_rng(), seed = nothing)
+function cov_returns(
+    x::AbstractMatrix;
+    iters::Integer = 5,
+    len::Integer = 10,
+    rng = Random.default_rng(),
+    seed::Union{Nothing, <:Integer} = nothing,
+)
     !isnothing(seed) && Random.seed!(rng, seed)
 
     n = size(x, 1)
