@@ -132,7 +132,7 @@ l = 2.0
         u_cov = :Ellipse,
         u_mu = :Ellipse,
     )
-    wc_statistics!(portfolio, box = :Delta, ellipse = :Normal, seed = 123456789)
+    wc_statistics!(portfolio, WCSettings(box = :Delta, ellipse = :Normal, seed = 123456789))
     w10 = opt_port!(
         portfolio;
         class = :Classic,
@@ -781,7 +781,7 @@ end
         u_cov = :Ellipse,
         u_mu = :Ellipse,
     )
-    wc_statistics!(portfolio, box = :Delta, ellipse = :Normal, seed = 123456789)
+    wc_statistics!(portfolio, WCSettings(box = :Delta, ellipse = :Normal, seed = 123456789))
     w10 = opt_port!(
         portfolio;
         class = :Classic,
@@ -1400,7 +1400,7 @@ end
         u_cov = :Ellipse,
         u_mu = :Box,
     )
-    wc_statistics!(portfolio, box = :Delta, ellipse = :Normal, seed = 123456789)
+    wc_statistics!(portfolio, WCSettings(box = :Delta, ellipse = :Normal, seed = 123456789))
     w10 = opt_port!(
         portfolio;
         class = :Classic,
@@ -1873,7 +1873,7 @@ end
         u_cov = :Ellipse,
         u_mu = :Ellipse,
     )
-    wc_statistics!(portfolio, box = :Delta, ellipse = :Normal, seed = 123456789)
+    wc_statistics!(portfolio, WCSettings(box = :Delta, ellipse = :Normal, seed = 123456789))
     w10 = opt_port!(
         portfolio;
         class = :Classic,

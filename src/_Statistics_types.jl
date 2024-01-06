@@ -406,8 +406,6 @@ end
 mutable struct KurtSettings
     # Estimation
     estimation::KurtEstSettings
-    # Gerber
-    gerber::GerberSettings
     # Denoise
     denoise::DenoiseSettings
     # Posdef fix
@@ -417,12 +415,11 @@ mutable struct KurtSettings
 end
 function KurtSettings(;
     estimation::KurtEstSettings = KurtEstSettings(;),
-    gerber::GerberSettings = GerberSettings(;),
     denoise::DenoiseSettings = DenoiseSettings(;),
     posdef::PosdefFixSettings = PosdefFixSettings(;),
     jlogo::Bool = false,
 )
-    return KurtSettings(estimation, gerber, denoise, posdef, jlogo)
+    return KurtSettings(estimation, denoise, posdef, jlogo)
 end
 
 mutable struct CorEstSettings{T1 <: Real}
@@ -621,4 +618,5 @@ export CovSettings,
     MuSettings,
     CorSettings,
     CorEstSettings,
-    WCSettings
+    WCSettings,
+    KurtSettings

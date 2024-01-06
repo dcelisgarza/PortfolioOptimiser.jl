@@ -14,34 +14,107 @@ using COSMO,
 
 prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
-portfolio = Portfolio(; prices = prices)
-
-wc_settings = WCSettings(box = :Normal, ellipse = :Normal, seed = 123456789)
-wc_settings.seed = 0.2
-
-wc_statistics!(portfolio, WCSettings(box = :Normal, ellipse = :Normal, seed = 123456789))
-
-asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
-mu11 = portfolio.mu
-cov11 = portfolio.cov
-
-estimation = CovEstSettings(;
-    estimator = AnalyticalNonlinearShrinkage(),
-    genfunc = GenericFunc(func = cov, args = (fweights(1:size(portfolio.returns, 1)),)),
-)
-estimation.genfunc.func(
-    estimation.estimator,
-    portfolio.returns,
-    fweights(1:size(portfolio.returns, 1));
-    mean = 0,
-)
-
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+cols = [:FB, :BBY, :AMD, :AMZN]
+portfolio = Portfolio(; prices = prices[cols])
+
+kurt_settings = KurtSettings(;)
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt1 = portfolio.kurt
+skurt1 = portfolio.skurt
+
+kurt_settings.denoise.method = :Fixed
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt2 = portfolio.kurt
+skurt2 = portfolio.skurt
+
+kurt_settings.denoise.method = :Fixed
+kurt_settings.denoise.detone = false
+kurt_settings.denoise.mkt_comp = 1
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt3 = portfolio.kurt
+skurt3 = portfolio.skurt
+
+kurt_settings.denoise.method = :Fixed
+kurt_settings.denoise.detone = true
+kurt_settings.denoise.mkt_comp = 1
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt4 = portfolio.kurt
+skurt4 = portfolio.skurt
+
+kurt_settings.denoise.mkt_comp = 19
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt5 = portfolio.kurt
+skurt5 = portfolio.skurt
+
+kurt_settings.denoise.method = :Spectral
+kurt_settings.denoise.detone = false
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt6 = portfolio.kurt
+skurt6 = portfolio.skurt
+
+kurt_settings.denoise.detone = true
+kurt_settings.denoise.mkt_comp = 1
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt7 = portfolio.kurt
+skurt7 = portfolio.skurt
+
+kurt_settings.denoise.mkt_comp = 19
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt8 = portfolio.kurt
+skurt8 = portfolio.skurt
+
+kurt_settings.denoise.method = :Shrink
+kurt_settings.denoise.detone = false
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt9 = portfolio.kurt
+skurt9 = portfolio.skurt
+
+kurt_settings.denoise.detone = true
+kurt_settings.denoise.mkt_comp = 1
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt10 = portfolio.kurt
+skurt10 = portfolio.skurt
+
+kurt_settings.denoise.mkt_comp = 19
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt11 = portfolio.kurt
+skurt11 = portfolio.skurt
+
+kurt_settings.denoise.detone = false
+kurt_settings.denoise.alpha = 0.5
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt12 = portfolio.kurt
+skurt12 = portfolio.skurt
+
+kurt_settings.denoise.detone = true
+kurt_settings.denoise.mkt_comp = 1
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt13 = portfolio.kurt
+skurt13 = portfolio.skurt
+
+kurt_settings.denoise.mkt_comp = 19
+asset_statistics!(portfolio; kurt_settings = kurt_settings)
+kurt14 = portfolio.kurt
+skurt14 = portfolio.skurt
+
+kurt_settings.denoise.mkt_comp = 0
+@test_throws AssertionError asset_statistics!(
+    portfolio;
+    kurt_settings = kurt_settings,
+)
+
+kurt_settings.denoise.mkt_comp = 21
+@test_throws AssertionError asset_statistics!(
+    portfolio;
+    kurt_settings = kurt_settings,
+)
+
 ########################################
-println("codept = reshape(", vec(portfolio.cor), ", 20, 20)")
-println("distt = reshape(", vec(portfolio.dist), ", 20, 20)")
+println("kurtt = reshape(", vec(portfolio.kurt), ", 16, 16)")
+println("skurtt = reshape(", vec(portfolio.skurt), ", 16, 16)")
 
 println("w1t = ", w1.weights, "\n")
 println("w2t = ", w2.weights, "\n")
