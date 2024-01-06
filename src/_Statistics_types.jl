@@ -656,30 +656,19 @@ function Base.setproperty!(obj::LoadingsSettings, sym::Symbol, val)
     setfield!(obj, sym, val)
 end
 
-mutable struct RiskFactSettings
+mutable struct FactorSettings
     B::Union{DataFrame, Nothing}
     loadings_settings::LoadingsSettings
-    cov_settings::CovSettings
-    mu_settings::MuSettings
     error::Bool
     var_genfunc::GenericFunc
 end
-function RiskFactSettings(;
+function FactorSettings(;
     B::Union{DataFrame, Nothing} = nothing,
     loadings_settings::LoadingsSettings = LoadingsSettings(;),
-    cov_settings::CovSettings = CovSettings(;),
-    mu_settings::MuSettings = MuSettings(;),
     error::Bool = true,
     var_genfunc::GenericFunc = GenericFunc(; func = StatsBase.var, kwargs = (; dims = 1)),
 )
-    return RiskFactSettings(
-        B,
-        loadings_settings,
-        cov_settings,
-        mu_settings,
-        error,
-        var_genfunc,
-    )
+    return FactorSettings(B, loadings_settings, error, var_genfunc)
 end
 
 mutable struct BLSettings{T1 <: Real}
@@ -723,4 +712,5 @@ export CovSettings,
     WCSettings,
     KurtSettings,
     PCRSettings,
-    LoadingsSettings
+    LoadingsSettings,
+    FactorSettings

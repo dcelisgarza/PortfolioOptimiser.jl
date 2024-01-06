@@ -1489,35 +1489,36 @@ end
 
 function risk_factors(
     x::DataFrame,
-    y::DataFrame,
-    settings::RiskFactSettings = RiskFactSettings(;),
+    y::DataFrame;
+    factor_settings::FactorSettings = FactorSettings(;),
+    cov_settings::CovSettings = CovSettings(;),
+    mu_settings::MuSettings = MuSettings(;),
 )
-    B = settings.B
+    B = factor_settings.B
 
-    isnothing(B) && (B = loadings_matrix(x, y, settings.loadings_settings))
+    isnothing(B) && (B = loadings_matrix(x, y, factor_settings.loadings_settings))
     namesB = names(B)
     x1 = "const" ∈ namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
     B = Matrix(B[!, setdiff(namesB, ["ticker"])])
 
-    cov_f, mu_f = covar_mtx_mean_vec(
-        x1;
-        cov_settings = settings.cov_settings,
-        mu_settings = settings.mu_settings,
-    )
+    cov_f, mu_f =
+        covar_mtx_mean_vec(x1; cov_settings = cov_settings, mu_settings = mu_settings)
 
     returns = x1 * transpose(B)
     mu = B * mu_f
 
-    sigma = if settings.error
-        var_func = settings.var_genfunc.func
-        var_args = settings.var_genfunc.args
-        var_kwargs = settings.var_genfunc.kwargs
+    sigma = if factor_settings.error
+        var_func = factor_settings.var_genfunc.func
+        var_args = factor_settings.var_genfunc.args
+        var_kwargs = factor_settings.var_genfunc.kwargs
         e = Matrix(y) - returns
         S_e = diagm(vec(var_func(e, var_args...; var_kwargs...)))
         B * cov_f * transpose(B) + S_e
     else
         B * cov_f * transpose(B)
     end
+
+    posdef_fix!(sigma, cov_settings.posdef; msg = "Factor Covariance ")
 
     return mu, sigma, returns
 end
@@ -1877,23 +1878,27 @@ factor_statistics!(
 """
 function factor_statistics!(
     portfolio::AbstractPortfolio;
-    cov_settings::CovSettings = CovSettings(;),
-    mu_settings::MuSettings = MuSettings(;),
-    risk_fact_settings::RiskFactSettings = RiskFactSettings(;),
+    cov_f_settings::CovSettings = CovSettings(;),
+    mu_f_settings::MuSettings = MuSettings(;),
+    cov_fm_settings::CovSettings = CovSettings(;),
+    mu_fm_settings::MuSettings = MuSettings(;),
+    factor_settings::FactorSettings = FactorSettings(;),
 )
     returns = portfolio.returns
     f_returns = portfolio.f_returns
 
     portfolio.cov_f, portfolio.mu_f = covar_mtx_mean_vec(
         f_returns;
-        cov_settings = cov_settings,
-        mu_settings = mu_settings,
+        cov_settings = cov_f_settings,
+        mu_settings = mu_f_settings,
     )
 
     portfolio.mu_fm, portfolio.cov_fm, portfolio.returns_fm = risk_factors(
         DataFrame(f_returns, portfolio.f_assets),
-        DataFrame(returns, portfolio.assets),
-        risk_fact_settings,
+        DataFrame(returns, portfolio.assets);
+        factor_settings = factor_settings,
+        cov_settings = cov_fm_settings,
+        mu_settings = mu_fm_settings,
     )
 
     return nothing

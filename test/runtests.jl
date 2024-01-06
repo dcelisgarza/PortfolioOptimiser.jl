@@ -62,7 +62,9 @@ end
 
 @safetestset "BL Statistics" begin end
 
-@safetestset "Factor Statistics" begin end
+@safetestset "Factor Statistics" begin
+    include("FactorStatisticsTests.jl")
+end
 
 @safetestset "WC Statistics" begin
     include("WCStatisticsTests.jl")
