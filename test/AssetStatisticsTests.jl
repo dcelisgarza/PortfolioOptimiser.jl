@@ -80,7 +80,12 @@ l = 2.0
     dist11 = portfolio.dist
 
     cor_settings.type = :Mutual_Info
-    pyfail = false
+    codep12 = []
+    codep13 = []
+    codep14 = []
+    dist12 = []
+    dist13 = []
+    dist14 = []
     try
         cor_settings.estimation.bins_info = :KN
         asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
@@ -97,10 +102,6 @@ l = 2.0
         codep14 = portfolio.cor
         dist14 = portfolio.dist
     catch
-        pyfail = true
-        codep12 = []
-        codep13 = []
-        codep14 = []
     end
 
     cor_settings.estimation.bins_info = :HGR
@@ -14877,7 +14878,7 @@ l = 2.0
     @test !isapprox(dist9, dist11)
     @test !isapprox(codep10, codep11)
     @test !isapprox(dist10, dist11)
-    if pyfail
+    if !isempty(codep12)
         @test isapprox(codep12, codept12)
         @test isapprox(dist12, distt12)
         @test !isapprox(codep1, codep12)
@@ -14950,6 +14951,13 @@ l = 2.0
         @test !isapprox(dist12, dist14)
         @test !isapprox(codep13, codep14)
         @test !isapprox(dist13, dist14)
+    else
+        codep12 = similar(codep11)
+        codep13 = similar(codep11)
+        codep14 = similar(codep11)
+        dist12 = similar(codep11)
+        dist13 = similar(codep11)
+        dist14 = similar(codep11)
     end
     @test isapprox(codep15, codept15)
     @test isapprox(dist15, distt15)

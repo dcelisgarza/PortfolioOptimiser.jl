@@ -577,7 +577,7 @@ function WCSettings(;
 )
     @assert(box ∈ BoxTypes, "box = $box, must be one of $BoxTypes")
     @assert(ellipse ∈ EllipseTypes, "ellipse = $ellipse, must be one of $EllipseTypes")
-    @assert(0 < q < 1)
+    @smart_assert(0 < q < 1)
 
     return WCSettings{
         typeof(dcov),
@@ -601,6 +601,16 @@ function WCSettings(;
         posdef,
     )
 end
+function Base.setproperty!(obj::WCSettings, sym::Symbol, val)
+    if sym == :box
+        @smart_assert(val ∈ BoxTypes, "$sym = $val, must be one of $BoxTypes")
+    elseif sym == :ellipse
+        @smart_assert(val ∈ EllipseTypes, "$sym = $val, must be one of $EllipseTypes")
+    elseif sym == :q
+        @smart_assert(0 < val < 1)
+    end
+    setfield!(obj, sym, val)
+end
 
 export CovSettings,
     CovEstSettings,
@@ -609,4 +619,6 @@ export CovSettings,
     PosdefFixSettings,
     GenericFunc,
     MuSettings,
-    CorSettings
+    CorSettings,
+    CorEstSettings,
+    WCSettings
