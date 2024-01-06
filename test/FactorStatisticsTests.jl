@@ -14,8 +14,8 @@ using COSMO,
 
 Logging.disable_logging(Logging.Warn)
 
-prices_assets  = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
-prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
+prices_assets  = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
