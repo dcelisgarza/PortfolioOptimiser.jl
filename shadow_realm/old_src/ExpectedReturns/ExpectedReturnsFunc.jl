@@ -31,7 +31,7 @@ Compute the Capital Asset Price Model (CAPM) returns.
 
 If the market returns are not provided, it estimates them by averaging across all assets and uses those as the market returns. These methods require computing the covariance between asset and market returns. These methods give a fairer value to a stock returns according to how they relate to the market.
 
-- `cov_type`: a concrete type of [`AbstractRiskModel`](@ref) for computing the covariance of the assets to the market.
+- `cov_method`: a concrete type of [`AbstractRiskModel`](@ref) for computing the covariance of the assets to the market.
 
 ### CAPM with arithmetic mean
 
@@ -42,7 +42,7 @@ ret_model(
     market_returns = nothing;
     rf = 1.02^(1 / 252) - 1,
     compound = true,
-    cov_type::AbstractRiskModel = Cov(),
+    cov_method::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
     span = ceil(Int,4*size(returns, 1) / log(size(returns, 1) + 2)),
@@ -54,7 +54,7 @@ ret_model(
 
 Capital Asset Pricing Model (CAPM) returns. `CAPMRet()` uses the normal mean to estimate the mean market returns.
 
-- `target`, `fix_method`, and `span` correspond to the same keyword arguments of [`cov`](@ref) for computing the covariance specified by `cov_type`.
+- `target`, `fix_method`, and `span` correspond to the same keyword arguments of [`cov`](@ref) for computing the covariance specified by `cov_method`.
 
 ### CAPM with exponentially weighted arithmetic mean
 
@@ -66,7 +66,7 @@ ret_model(
     rf = 1.02^(1 / 252) - 1,
     compound = true,
     rspan = ceil(Int,4*size(returns, 1) / log(size(returns, 1) + 2)),
-    cov_type::AbstractRiskModel = ECov(),
+    cov_method::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
     cspan = ceil(Int,4*size(returns, 1) / log(size(returns, 1) + 2)),
@@ -113,7 +113,7 @@ function ret_model(
     rf = 1.02^(1 / 252) - 1,
     compound = true,
     frequency = 1,
-    cov_type::AbstractRiskModel = Cov(),
+    cov_method::AbstractRiskModel = Cov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
     span = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
@@ -125,7 +125,7 @@ function ret_model(
     β, returns = _compute_betas(
         market_returns,
         returns,
-        cov_type,
+        cov_method,
         target,
         fix_method,
         span,
@@ -151,7 +151,7 @@ function ret_model(
     compound = true,
     frequency = 1,
     rspan = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
-    cov_type::AbstractRiskModel = ECov(),
+    cov_method::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
     cspan = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
@@ -163,7 +163,7 @@ function ret_model(
     β, returns = _compute_betas(
         market_returns,
         returns,
-        cov_type,
+        cov_method,
         target,
         fix_method,
         cspan,
@@ -189,7 +189,7 @@ end
 function _compute_betas(
     market_returns,
     returns,
-    cov_type,
+    cov_method,
     target,
     fix_method,
     cspan,
@@ -208,7 +208,7 @@ function _compute_betas(
     end
     # Covariance with the market returns.
     cov_mtx = cov(
-        cov_type,
+        cov_method,
         returns,
         target,
         fix_method,
@@ -242,7 +242,7 @@ function returns_from_prices(
     capm = false,
     market_returns = nothing,
     rf = 1.02^(1 / 252) - 1,
-    cov_type::AbstractRiskModel = ECov(),
+    cov_method::AbstractRiskModel = ECov(),
     target = 1.02^(1 / 252) - 1,
     fix_method::AbstractFixPosDef = SFix(),
     span = size(prices, 1) != 0 ?
@@ -268,7 +268,7 @@ function returns_from_prices(
         β, returns = _compute_betas(
             market_returns,
             returns,
-            cov_type,
+            cov_method,
             target,
             fix_method,
             span,

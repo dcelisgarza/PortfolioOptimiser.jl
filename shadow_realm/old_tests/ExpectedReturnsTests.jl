@@ -302,7 +302,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, CovarianceEstimation
     capm_ret = ret_model(
         CAPMRet(),
         Matrix(returns),
-        cov_type = CustomCov(),
+        cov_method = CustomCov(),
         custom_cov_estimator = method,
     )
 
@@ -334,7 +334,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, CovarianceEstimation
         Matrix(returns),
         cspan = 1503,
         rspan = 1503,
-        cov_type = CustomCov(),
+        cov_method = CustomCov(),
         custom_cov_estimator = method,
     )
     @test exp_capm_ret ≈ [
@@ -367,7 +367,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, CovarianceEstimation
     mean_ret = ret_model(
         CAPMRet(),
         Matrix(returns),
-        cov_type = CustomSCov(),
+        cov_method = CustomSCov(),
         custom_cov_estimator = method,
     )
     @test mean_ret ≈ [
@@ -398,7 +398,7 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, CovarianceEstimation
         Matrix(returns),
         cspan = 447.5,
         rspan = 447.5,
-        cov_type = CustomSCov(),
+        cov_method = CustomSCov(),
         custom_cov_estimator = method,
     )
 

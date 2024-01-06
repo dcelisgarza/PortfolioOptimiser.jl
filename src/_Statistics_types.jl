@@ -325,10 +325,10 @@ end
 ```
 CovSettings
 ```
-- `cov_type`: method for estimating the covariance matrices `cov`, `cov_fm`, `cov_bl`, `cov_bl_fm` in [`covar_mtx`](@ref), see [`CovMethods`](@ref) for available choices.
+- `cov_method`: method for estimating the covariance matrices `cov`, `cov_fm`, `cov_bl`, `cov_bl_fm` in [`covar_mtx`](@ref), see [`CovMethods`](@ref) for available choices.
 """
 mutable struct CovSettings
-    # Cov type
+    # Cov method
     method::Symbol
     # Estimation
     estimation::CovEstSettings
@@ -349,7 +349,7 @@ function CovSettings(;
     posdef::PosdefFixSettings = PosdefFixSettings(;),
     jlogo::Bool = false,
 )
-    @assert(method ∈ CovMethods, "type = $type, must be one of $CovMethods")
+    @assert(method ∈ CovMethods, "method = $method, must be one of $CovMethods")
 
     return CovSettings(method, estimation, gerber, denoise, posdef, jlogo)
 end
@@ -364,7 +364,7 @@ end
 ```
 MuSettings
 ```
-- `mu_type`: method for estimating the mean returns vectors `mu`, `mu_fm`, `mu_bl`, `mu_bl_fm` in [`mean_vec`](@ref), see [`MuMethods`](@ref) for available choices.
+- `mu_method`: method for estimating the mean returns vectors `mu`, `mu_fm`, `mu_bl`, `mu_bl_fm` in [`mean_vec`](@ref), see [`MuMethods`](@ref) for available choices.
 """
 mutable struct MuSettings{T1 <: Real}
     method::Symbol
@@ -384,7 +384,7 @@ function MuSettings(;
     mkt_ret::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
     sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
 )
-    @assert(method ∈ MuMethods, "type = $type, must be one of $MuMethods")
+    @assert(method ∈ MuMethods, "method = $method, must be one of $MuMethods")
     @assert(target ∈ MuTargets, "target = $target, must be one of $MuTargets")
 
     return MuSettings{typeof(rf)}(method, target, rf, genfunc, custom, mkt_ret, sigma)
@@ -502,7 +502,7 @@ function Base.setproperty!(obj::CorEstSettings, sym::Symbol, val)
 end
 
 mutable struct CorSettings
-    # Cov type
+    # Cov method
     method::Symbol
     # Estimation
     estimation::CorEstSettings
@@ -526,7 +526,7 @@ function CorSettings(;
     jlogo::Bool = false,
     uplo::Symbol = :L,
 )
-    @assert(method ∈ CorMethods, "type = $type, must be one of $CorMethods")
+    @assert(method ∈ CorMethods, "method = $method, must be one of $CorMethods")
 
     return CorSettings(method, estimation, gerber, denoise, posdef, jlogo, uplo)
 end

@@ -600,10 +600,10 @@ mu_estimator
 ```
 """
 function mu_estimator(returns::AbstractMatrix, settings::MuSettings = MuSettings(;))
-    type = settings.method
+    method = settings.method
     @assert(
-        type ∈ (:JS, :BS, :BOP, :CAPM),
-        "type = $type, must be one of (:JS, :BS, :BOP, :CAPM)"
+        method ∈ (:JS, :BS, :BOP, :CAPM),
+        "method = $method, must be one of (:JS, :BS, :BOP, :CAPM)"
     )
 
     target = settings.target
@@ -612,7 +612,7 @@ function mu_estimator(returns::AbstractMatrix, settings::MuSettings = MuSettings
     kwargs = settings.genfunc.kwargs
     sigma = settings.sigma
 
-    if type != :CAPM
+    if method != :CAPM
         T, N = size(returns)
         mu = vec(func(returns, args...; kwargs...))
 
@@ -628,10 +628,10 @@ function mu_estimator(returns::AbstractMatrix, settings::MuSettings = MuSettings
             fill(tr(sigma) / T, N)
         end
 
-        if type == :JS
+        if method == :JS
             alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
             mu = (1 - alpha) * mu + alpha * b
-        elseif type == :BS
+        elseif method == :BS
             alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
             mu = (1 - alpha) * mu + alpha * b
         else
@@ -659,17 +659,17 @@ covar_mtx
 ```
 """
 function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(;))
-    type = settings.method
+    method = settings.method
 
-    @assert(type ∈ CovMethods, "type = $type, must be one of $CovMethods")
+    @assert(method ∈ CovMethods, "method = $method, must be one of $CovMethods")
 
-    mtx = if type ∈ (:Full, :Semi)
+    mtx = if method ∈ (:Full, :Semi)
         estimation = settings.estimation
         estimator = estimation.estimator
         func = estimation.genfunc.func
         args = estimation.genfunc.args
         kwargs = estimation.genfunc.kwargs
-        if type == :Semi
+        if method == :Semi
             target_ret = settings.estimation.target_ret
             zro = zero(eltype(returns))
             returns =
@@ -678,19 +678,19 @@ function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(
             !haskey(kwargs, :mean) && (kwargs = (kwargs..., mean = zro))
         end
         StatsBase.cov(estimator, returns, args...; kwargs...)
-    elseif type == :Gerber0
+    elseif method == :Gerber0
         covgerber0(returns, settings.gerber)
-    elseif type == :Gerber1
+    elseif method == :Gerber1
         covgerber1(returns, settings.gerber)
-    elseif type == :Gerber2
+    elseif method == :Gerber2
         covgerber2(returns, settings.gerber)
-    elseif type == :Custom_Func
+    elseif method == :Custom_Func
         estimation = settings.estimation
         func = estimation.genfunc.func
         args = estimation.genfunc.args
         kwargs = estimation.genfunc.kwargs
         func(returns, args...; kwargs...)
-    elseif type == :Custom_Val
+    elseif method == :Custom_Val
         settings.estimation.custom
     end
 
@@ -708,7 +708,7 @@ function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(
         catch SingularException
             throw(
                 ErrorException(
-                    "Covariance matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set settings.posdef.method = $(settings.posdef.method), to a different method from $PosdefFixMethods.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.\n\t Try a different type = $type, from $CovMethods.",
+                    "Covariance matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set settings.posdef.method = $(settings.posdef.method), to a different method from $PosdefFixMethods.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.\n\t Try a different method = $method, from $CovMethods.",
                 ),
             )
         end
@@ -728,7 +728,7 @@ mean_vec(
     mean_func::Function = mean,
     mean_kwargs::NamedTuple = (;),
     mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
+    mu_method::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     rf::Real = 0.0,
     sigma::Union{AbstractMatrix, Nothing} = nothing,
@@ -736,15 +736,15 @@ mean_vec(
 ```
 """
 function mean_vec(returns::AbstractMatrix, settings::MuSettings = MuSettings(;))
-    type = settings.method
-    mu = if type ∈ (:Default, :Custom_Func)
+    method = settings.method
+    mu = if method ∈ (:Default, :Custom_Func)
         func = settings.genfunc.func
         args = settings.genfunc.args
         kwargs = settings.genfunc.kwargs
         vec(func(returns, args...; kwargs...))
-    elseif type ∈ (:JS, :BS, :BOP, :CAPM)
+    elseif method ∈ (:JS, :BS, :BOP, :CAPM)
         mu_estimator(returns, settings)
-    elseif type == :Custom_Val
+    elseif method == :Custom_Val
         settings.custom
     end
 
@@ -843,43 +843,43 @@ codep_dist_mtx(
 ```
 """
 function codep_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettings(;))
-    type = settings.method
-    if type == :Pearson
+    method = settings.method
+    if method == :Pearson
         corr = cor(returns)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-    elseif type == :Spearman
+    elseif method == :Spearman
         corr = corspearman(returns)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-    elseif type == :Kendall
+    elseif method == :Kendall
         corr = corkendall(returns)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-    elseif type == :Abs_Pearson
+    elseif method == :Abs_Pearson
         corr = abs.(cor(returns))
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
-    elseif type == :Abs_Spearman
+    elseif method == :Abs_Spearman
         corr = abs.(corspearman(returns))
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
-    elseif type == :Abs_Kendall
+    elseif method == :Abs_Kendall
         corr = abs.(corkendall(returns))
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
-    elseif type == :Gerber0
+    elseif method == :Gerber0
         corr = cov2cor(covgerber0(returns, settings.gerber))
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-    elseif type == :Gerber1
+    elseif method == :Gerber1
         corr = cov2cor(covgerber1(returns, settings.gerber))
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-    elseif type == :Gerber2
+    elseif method == :Gerber2
         corr = cov2cor(covgerber2(returns, settings.gerber))
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-    elseif type == :Distance
+    elseif method == :Distance
         corr = cordistance(returns)
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
-    elseif type == :Mutual_Info
+    elseif method == :Mutual_Info
         corr, dist = mut_var_info_mtx(returns, settings.estimation.bins_info)
-    elseif type == :Tail
+    elseif method == :Tail
         corr = ltdi_mtx(returns, settings.estimation.alpha)
         dist = -log.(corr)
-    elseif type == :Cov_to_Cor
+    elseif method == :Cov_to_Cor
         estimation = settings.estimation
         sigma = estimation.sigma
         dist_func = estimation.dist_genfunc.func
@@ -887,7 +887,7 @@ function codep_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSett
         dist_kwargs = estimation.dist_genfunc.kwargs
         corr = cov2cor(sigma)
         dist = dist_func(corr, dist_args...; dist_kwargs...)
-    elseif type == :Custom_Func
+    elseif method == :Custom_Func
         estimation = settings.estimation
         cor_func = estimation.cor_genfunc.func
         cor_args = estimation.cor_genfunc.args
@@ -897,7 +897,7 @@ function codep_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSett
         dist_kwargs = estimation.dist_genfunc.kwargs
         corr = cor_func(returns, cor_args...; cor_kwargs...)
         dist = dist_func(corr, dist_args...; dist_kwargs...)
-    elseif type == :Custom_Val
+    elseif method == :Custom_Val
         estimation = settings.estimation
         corr = estimation.custom_cor
         dist = estimation.custom_dist
@@ -914,8 +914,8 @@ function covar_mtx_mean_vec(
     cov_settings::CovSettings = CovSettings(;),
     mu_settings::MuSettings = MuSettings(;),
 )
-    mu_type = mu_settings.method
-    if mu_type == :CAPM
+    mu_method = mu_settings.method
+    if mu_method == :CAPM
         mkt_ret = mu_settings.mkt_ret
         if isnothing(mkt_ret)
             returns = hcat(returns, mean(returns, dims = 2))
@@ -929,7 +929,7 @@ function covar_mtx_mean_vec(
     mu_settings.sigma = sigma
     mu = mean_vec(returns, mu_settings)
 
-    if mu_type == :CAPM
+    if mu_method == :CAPM
         sigma = sigma[1:(end - 1), 1:(end - 1)]
     end
 
@@ -1437,7 +1437,7 @@ end
 function loadings_matrix(
     x::DataFrame,
     y::DataFrame,
-    type::Symbol = :FReg;
+    method::Symbol = :FReg;
     criterion::Union{Symbol, Function} = :pval,
     mean_args::Tuple = (),
     mean_kwargs::NamedTuple = (;),
@@ -1450,7 +1450,7 @@ function loadings_matrix(
     std_kwargs::NamedTuple = (;),
     threshold::Real = 0.05,
 )
-    @assert(type ∈ FSMethods, "type = $type, must be one of $FSMethods")
+    @assert(method ∈ FSMethods, "method = $method, must be one of $FSMethods")
     features = names(x)
     rows = ncol(y)
     cols = ncol(x) + 1
@@ -1461,8 +1461,8 @@ function loadings_matrix(
     loadings = zeros(rows, cols)
 
     for i in 1:rows
-        if type == :FReg || type == :BReg
-            included = if type == :FReg
+        if method == :FReg || method == :BReg
+            included = if method == :FReg
                 forward_regression(x, y[!, i], criterion, threshold)
             else
                 backward_regression(x, y[!, i], criterion, threshold)
@@ -1520,7 +1520,7 @@ function risk_factors(
     pca_kwargs::NamedTuple = (;),
     pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
-    reg_type::Symbol = :FReg,
+    reg_method::Symbol = :FReg,
     threshold::Real = 0.05,
     var_func::Function = var,
     var_args::Tuple = (),
@@ -1530,7 +1530,7 @@ function risk_factors(
         B = loadings_matrix(
             x,
             y,
-            reg_type;
+            reg_method;
             criterion = criterion,
             mean_args = mean_args,
             mean_func = mean_func,
@@ -1600,8 +1600,8 @@ function black_litterman(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_type::Symbol = :Full,
-    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(eltype(returns))) : (;),
+    cov_method::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_method == :Semi ? (; mean = zero(eltype(returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -1630,7 +1630,7 @@ function black_litterman(
     mean_kwargs::NamedTuple = (;),
     mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
+    mu_method::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
     delta::Real = 1.0,
@@ -1646,7 +1646,7 @@ function black_litterman(
         cov_est = cov_est,
         cov_func = cov_func,
         cov_kwargs = cov_kwargs,
-        cov_type = cov_type,
+        cov_method = cov_method,
         cov_weights = cov_weights,
         custom_cov = custom_cov,
         denoise = denoise,
@@ -1675,7 +1675,7 @@ function black_litterman(
         mean_kwargs = mean_kwargs,
         mkt_ret = mkt_ret,
         mu_target = mu_target,
-        mu_type = mu_type,
+        mu_method = mu_method,
         mu_weights = mu_weights,
         rf = rf,
     )
@@ -1698,8 +1698,8 @@ function augmented_black_litterman(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_type::Symbol = :Full,
-    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(eltype(returns))) : (;),
+    cov_method::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_method == :Semi ? (; mean = zero(eltype(returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -1728,7 +1728,7 @@ function augmented_black_litterman(
     mean_kwargs::NamedTuple = (;),
     mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
+    mu_method::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
     B::Union{AbstractMatrix, Nothing} = nothing,
@@ -1776,7 +1776,7 @@ function augmented_black_litterman(
             cov_est = cov_est,
             cov_func = cov_func,
             cov_kwargs = cov_kwargs,
-            cov_type = cov_type,
+            cov_method = cov_method,
             cov_weights = cov_weights,
             custom_cov = custom_cov,
             denoise = denoise,
@@ -1805,7 +1805,7 @@ function augmented_black_litterman(
             mean_kwargs = mean_kwargs,
             mkt_ret = mkt_ret,
             mu_target = mu_target,
-            mu_type = mu_type,
+            mu_method = mu_method,
             mu_weights = mu_weights,
             rf = rf,
         )
@@ -1821,7 +1821,7 @@ function augmented_black_litterman(
             cov_est = cov_est,
             cov_func = cov_func,
             cov_kwargs = cov_kwargs,
-            cov_type = cov_type,
+            cov_method = cov_method,
             cov_weights = cov_weights,
             custom_cov = custom_cov,
             denoise = denoise,
@@ -1850,7 +1850,7 @@ function augmented_black_litterman(
             mean_kwargs = mean_kwargs,
             mkt_ret = mkt_ret,
             mu_target = mu_target,
-            mu_type = mu_type,
+            mu_method = mu_method,
             mu_weights = mu_weights,
             rf = rf,
         )
@@ -1921,8 +1921,8 @@ function bayesian_black_litterman(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_type::Symbol = :Full,
-    cov_kwargs::NamedTuple = cov_type == :Semi ? (; mean = zero(eltype(returns))) : (;),
+    cov_method::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_method == :Semi ? (; mean = zero(eltype(returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -1951,7 +1951,7 @@ function bayesian_black_litterman(
     mean_kwargs::NamedTuple = (;),
     mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
+    mu_method::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
     constant::Bool = true,
@@ -1971,7 +1971,7 @@ function bayesian_black_litterman(
         cov_est = cov_est,
         cov_func = cov_func,
         cov_kwargs = cov_kwargs,
-        cov_type = cov_type,
+        cov_method = cov_method,
         cov_weights = cov_weights,
         custom_cov = custom_cov,
         denoise = denoise,
@@ -2000,7 +2000,7 @@ function bayesian_black_litterman(
         mean_kwargs = mean_kwargs,
         mkt_ret = mkt_ret,
         mu_target = mu_target,
-        mu_type = mu_type,
+        mu_method = mu_method,
         mu_weights = mu_weights,
         rf = rf,
     )
@@ -2057,7 +2057,7 @@ black_litterman_statistics!(
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
     cov_kwargs::NamedTuple = (;),
-    cov_type::Symbol = :Full,
+    cov_method::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     gs_threshold::Real = portfolio.gs_threshold,
@@ -2077,7 +2077,7 @@ black_litterman_statistics!(
     mean_kwargs::NamedTuple = (;),
     mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
+    mu_method::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
     delta::Union{Real, Nothing} = nothing,
@@ -2095,8 +2095,8 @@ function black_litterman_statistics!(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_type::Symbol = :Full,
-    cov_kwargs::NamedTuple = cov_type == :Semi ?
+    cov_method::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_method == :Semi ?
                              (; mean = zero(eltype(portfolio.returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
@@ -2117,7 +2117,7 @@ function black_litterman_statistics!(
     mean_kwargs::NamedTuple = (;),
     mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
+    mu_method::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
     delta::Union{Real, Nothing} = nothing,
@@ -2147,7 +2147,7 @@ function black_litterman_statistics!(
         cov_est = cov_est,
         cov_func = cov_func,
         cov_kwargs = cov_kwargs,
-        cov_type = cov_type,
+        cov_method = cov_method,
         cov_weights = cov_weights,
         custom_cov = custom_cov,
         gs_threshold = gs_threshold,
@@ -2167,7 +2167,7 @@ function black_litterman_statistics!(
         mean_kwargs = mean_kwargs,
         mkt_ret = mkt_ret,
         mu_target = mu_target,
-        mu_type = mu_type,
+        mu_method = mu_method,
         mu_weights = mu_weights,
         # Black Litterman
         delta = delta,
@@ -2188,7 +2188,7 @@ factor_statistics!(
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
     cov_kwargs::NamedTuple = (;),
-    cov_type::Symbol = :Full,
+    cov_method::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     denoise::Bool = false,
@@ -2217,7 +2217,7 @@ factor_statistics!(
     mean_kwargs::NamedTuple = (;),
     mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
+    mu_method::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     rf = 0.0,
     # Loadings matrix
@@ -2227,7 +2227,7 @@ factor_statistics!(
     pca_kwargs::NamedTuple = (;),
     pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
-    reg_type::Symbol = :FReg,
+    reg_method::Symbol = :FReg,
     threshold::Real = 0.05,
     var_func::Function = var,
     var_args::Tuple = (),
@@ -2243,8 +2243,8 @@ function factor_statistics!(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_type::Symbol = :Full,
-    cov_kwargs::NamedTuple = cov_type == :Semi ?
+    cov_method::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_method == :Semi ?
                              (; mean = zero(eltype(portfolio.returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
@@ -2274,7 +2274,7 @@ function factor_statistics!(
     mean_kwargs::NamedTuple = (;),
     mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
+    mu_method::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     rf = 0.0,
     # Loadings matrix
@@ -2284,7 +2284,7 @@ function factor_statistics!(
     pca_kwargs::NamedTuple = (;),
     pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
-    reg_type::Symbol = :FReg,
+    reg_method::Symbol = :FReg,
     threshold::Real = 0.05,
     var_func::Function = var,
     var_args::Tuple = (),
@@ -2302,7 +2302,7 @@ function factor_statistics!(
         cov_est = cov_est,
         cov_func = cov_func,
         cov_kwargs = cov_kwargs,
-        cov_type = cov_type,
+        cov_method = cov_method,
         cov_weights = cov_weights,
         custom_cov = custom_cov,
         denoise = denoise,
@@ -2331,7 +2331,7 @@ function factor_statistics!(
         mean_kwargs = mean_kwargs,
         mkt_ret = mkt_ret,
         mu_target = mu_target,
-        mu_type = mu_type,
+        mu_method = mu_method,
         mu_weights = mu_weights,
         rf = rf,
     )
@@ -2344,7 +2344,7 @@ function factor_statistics!(
         cov_est = cov_est,
         cov_func = cov_func,
         cov_kwargs = cov_kwargs,
-        cov_type = cov_type,
+        cov_method = cov_method,
         cov_weights = cov_weights,
         custom_cov = custom_cov,
         gs_threshold = gs_threshold,
@@ -2363,12 +2363,12 @@ function factor_statistics!(
         mean_func = mean_func,
         mean_kwargs = mean_kwargs,
         mu_target = mu_target,
-        mu_type = mu_type,
+        mu_method = mu_method,
         mu_weights = mu_weights,
         # Loadings matrix
         B = B,
         error = error,
-        reg_type = reg_type,
+        reg_method = reg_method,
         criterion = criterion,
         threshold = threshold,
         pca_kwargs = pca_kwargs,
@@ -2392,7 +2392,7 @@ black_litterman_factor_satistics!(
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
     cov_kwargs::NamedTuple = (;),
-    cov_type::Symbol = :Full,
+    cov_method::Symbol = :Full,
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
     gs_threshold::Real = portfolio.gs_threshold,
@@ -2412,7 +2412,7 @@ black_litterman_factor_satistics!(
     mean_kwargs::NamedTuple = (;),
     mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
+    mu_method::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
     B::Union{DataFrame, Nothing} = nothing,
@@ -2420,7 +2420,7 @@ black_litterman_factor_satistics!(
     P_f::Union{AbstractMatrix, Nothing} = nothing,
     Q::Union{AbstractVector, Nothing} = nothing,
     Q_f::Union{AbstractVector, Nothing} = nothing,
-    bl_type::Symbol = :B,
+    bl_method::Symbol = :B,
     delta::Real = 1.0,
     diagonal::Bool = true,
     eq::Bool = true,
@@ -2433,7 +2433,7 @@ black_litterman_factor_satistics!(
     pca_kwargs::NamedTuple = (;),
     pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
-    reg_type::Symbol = :FReg,
+    reg_method::Symbol = :FReg,
     threshold::Real = 0.05,
 )
 ```
@@ -2445,8 +2445,8 @@ function black_litterman_factor_satistics!(
     cov_args::Tuple = (),
     cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     cov_func::Function = cov,
-    cov_type::Symbol = :Full,
-    cov_kwargs::NamedTuple = cov_type == :Semi ?
+    cov_method::Symbol = :Full,
+    cov_kwargs::NamedTuple = cov_method == :Semi ?
                              (; mean = zero(eltype(portfolio.returns))) : (;),
     cov_weights::Union{AbstractWeights, Nothing} = nothing,
     custom_cov::Union{AbstractMatrix, Nothing} = nothing,
@@ -2467,7 +2467,7 @@ function black_litterman_factor_satistics!(
     mean_kwargs::NamedTuple = (;),
     mkt_ret::Union{AbstractVector, Nothing} = nothing,
     mu_target::Symbol = :GM,
-    mu_type::Symbol = :Default,
+    mu_method::Symbol = :Default,
     mu_weights::Union{AbstractWeights, Nothing} = nothing,
     # Black Litterman
     B::Union{DataFrame, Nothing} = nothing,
@@ -2475,7 +2475,7 @@ function black_litterman_factor_satistics!(
     P_f::Union{AbstractMatrix, Nothing} = nothing,
     Q::Union{AbstractVector, Nothing} = nothing,
     Q_f::Union{AbstractVector, Nothing} = nothing,
-    bl_type::Symbol = :B,
+    bl_method::Symbol = :B,
     delta::Real = 1.0,
     diagonal::Bool = true,
     eq::Bool = true,
@@ -2488,10 +2488,10 @@ function black_litterman_factor_satistics!(
     pca_kwargs::NamedTuple = (;),
     pca_std_kwargs::NamedTuple = (;),
     pca_std_type = ZScoreTransform,
-    reg_type::Symbol = :FReg,
+    reg_method::Symbol = :FReg,
     threshold::Real = 0.05,
 )
-    @assert(bl_type ∈ BLFMMethods, "bl_type = $bl_type, must be one of $BLFMMethods")
+    @assert(bl_method ∈ BLFMMethods, "bl_method = $bl_method, must be one of $BLFMMethods")
 
     returns = portfolio.returns
     f_returns = portfolio.f_returns
@@ -2512,7 +2512,7 @@ function black_litterman_factor_satistics!(
         B = loadings_matrix(
             DataFrame(f_returns, portfolio.f_assets),
             DataFrame(returns, portfolio.assets),
-            reg_type;
+            reg_method;
             criterion = criterion,
             mean_args = mean_args,
             mean_func = mean_func,
@@ -2530,7 +2530,7 @@ function black_litterman_factor_satistics!(
     constant = "const" ∈ namesB
     B = Matrix(B[!, setdiff(namesB, ["ticker"])])
 
-    portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_type == :B
+    portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_method == :B
         bayesian_black_litterman(
             returns,
             f_returns,
@@ -2542,7 +2542,7 @@ function black_litterman_factor_satistics!(
             cov_est = cov_est,
             cov_func = cov_func,
             cov_kwargs = cov_kwargs,
-            cov_type = cov_type,
+            cov_method = cov_method,
             cov_weights = cov_weights,
             custom_cov = custom_cov,
             gs_threshold = gs_threshold,
@@ -2562,7 +2562,7 @@ function black_litterman_factor_satistics!(
             mean_kwargs = mean_kwargs,
             mkt_ret = mkt_ret,
             mu_target = mu_target,
-            mu_type = mu_type,
+            mu_method = mu_method,
             mu_weights = mu_weights,
             # Black Litterman
             constant = constant,
@@ -2582,7 +2582,7 @@ function black_litterman_factor_satistics!(
             cov_est = cov_est,
             cov_func = cov_func,
             cov_kwargs = cov_kwargs,
-            cov_type = cov_type,
+            cov_method = cov_method,
             cov_weights = cov_weights,
             custom_cov = custom_cov,
             gs_threshold = gs_threshold,
@@ -2602,7 +2602,7 @@ function black_litterman_factor_satistics!(
             mean_kwargs = mean_kwargs,
             mkt_ret = mkt_ret,
             mu_target = mu_target,
-            mu_type = mu_type,
+            mu_method = mu_method,
             mu_weights = mu_weights,
             # Black Litterman
             B = B,

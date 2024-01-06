@@ -390,7 +390,7 @@ function _mudef(msg::String, sym::Symbol = :a2)
         n = "Nf"
     end
 
-    "`$n×1` vector, where $(_ndef(sym))). Set the value of the $(msg) mean returns at instance construction. When choosing `:Custom_Val` in `mu_type`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new."
+    "`$n×1` vector, where $(_ndef(sym))). Set the value of the $(msg) mean returns at instance construction. When choosing `:Custom_Val` in `mu_method`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new."
 end
 
 function _covdef(msg::String, sym::Symbol = :a2)
@@ -403,7 +403,7 @@ function _covdef(msg::String, sym::Symbol = :a2)
         sym = :a2
     end
 
-    "`$n×$n` matrix, where $(_ndef(sym)). Set the value of the $(msg) covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `cov` used by [`covar_mtx`](@ref)."
+    "`$n×$n` matrix, where $(_ndef(sym)). Set the value of the $(msg) covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cov` used by [`covar_mtx`](@ref)."
 end
 
 function _dircomp(msg::String)

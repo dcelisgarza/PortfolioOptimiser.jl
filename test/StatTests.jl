@@ -22,7 +22,7 @@ returns = dropmissing!(DataFrame(Y))
     ret = cov_returns(portfolio.cov, seed = 0)
     @test isapprox(cov(ret), portfolio.cov)
 
-    asset_statistics!(portfolio, cor_method = :Gerber0, cov_type = :Gerber0)
+    asset_statistics!(portfolio, cor_method = :Gerber0, cov_method = :Gerber0)
     covg0t = reshape(
         [
             0.00020997582228184753,
@@ -1248,7 +1248,7 @@ returns = dropmissing!(DataFrame(Y))
     asset_statistics!(
         portfolio,
         cor_method = :Gerber0,
-        cov_type = :Gerber0,
+        cov_method = :Gerber0,
         posdef_fix = :Nearest,
     )
     covg1t = reshape(
@@ -2473,7 +2473,7 @@ returns = dropmissing!(DataFrame(Y))
     @test isapprox(codepg1t, portfolio.cor)
     @test isapprox(distg1t, portfolio.dist)
 
-    asset_statistics!(portfolio, mu_type = :JS, mu_target = :GM)
+    asset_statistics!(portfolio, cov_method = :JS, mu_target = :GM)
     jsgm = copy(portfolio.mu)
     jsgmt = [
         0.0006341475601844101,
@@ -2499,7 +2499,7 @@ returns = dropmissing!(DataFrame(Y))
     ]
     @test isapprox(jsgm, jsgmt)
 
-    asset_statistics!(portfolio, mu_type = :BS, mu_target = :GM)
+    asset_statistics!(portfolio, cov_method = :BS, mu_target = :GM)
     bsgm = copy(portfolio.mu)
     bsgmt = [
         0.000596098181618497,
@@ -2525,7 +2525,7 @@ returns = dropmissing!(DataFrame(Y))
     ]
     @test isapprox(bsgm, bsgmt)
 
-    asset_statistics!(portfolio, mu_type = :BOP, mu_target = :GM)
+    asset_statistics!(portfolio, cov_method = :BOP, mu_target = :GM)
     bopgm = copy(portfolio.mu)
     bopgmt = [
         0.00016917378887231472,
@@ -2551,7 +2551,7 @@ returns = dropmissing!(DataFrame(Y))
     ]
     @test isapprox(bsgm, bsgmt)
 
-    asset_statistics!(portfolio, mu_type = :JS, mu_target = :VW)
+    asset_statistics!(portfolio, cov_method = :JS, mu_target = :VW)
     jsvw = copy(portfolio.mu)
     jsvwt = [
         0.0005962555831924726,
@@ -2577,7 +2577,7 @@ returns = dropmissing!(DataFrame(Y))
     ]
     @test isapprox(jsvw, jsvwt)
 
-    asset_statistics!(portfolio, mu_type = :BS, mu_target = :VW)
+    asset_statistics!(portfolio, cov_method = :BS, mu_target = :VW)
     bsvw = copy(portfolio.mu)
     bsvwt = [
         0.0005338285186301338,
@@ -2603,7 +2603,7 @@ returns = dropmissing!(DataFrame(Y))
     ]
     @test isapprox(bsvw, bsvwt)
 
-    asset_statistics!(portfolio, mu_type = :BOP, mu_target = :VW)
+    asset_statistics!(portfolio, cov_method = :BOP, mu_target = :VW)
     bopvw = copy(portfolio.mu)
     bopvwt = [
         0.00015313828431741356,
@@ -2629,7 +2629,7 @@ returns = dropmissing!(DataFrame(Y))
     ]
     @test isapprox(bsvw, bsvwt)
 
-    asset_statistics!(portfolio, mu_type = :JS, mu_target = :SE)
+    asset_statistics!(portfolio, cov_method = :JS, mu_target = :SE)
     jsse = copy(portfolio.mu)
     jsset = [
         0.0005441589609781389,
@@ -2655,7 +2655,7 @@ returns = dropmissing!(DataFrame(Y))
     ]
     @test isapprox(jsse, jsset)
 
-    asset_statistics!(portfolio, mu_type = :BS, mu_target = :SE)
+    asset_statistics!(portfolio, cov_method = :BS, mu_target = :SE)
     bsse = copy(portfolio.mu)
     bsset = [
         0.00039511694346837297,
@@ -2681,7 +2681,7 @@ returns = dropmissing!(DataFrame(Y))
     ]
     @test isapprox(bsse, bsset)
 
-    asset_statistics!(portfolio, mu_type = :BOP, mu_target = :SE)
+    asset_statistics!(portfolio, cov_method = :BOP, mu_target = :SE)
     bopse = copy(portfolio.mu)
     bopset = [
         0.00013646827659120816,
@@ -2707,7 +2707,7 @@ returns = dropmissing!(DataFrame(Y))
     ]
     @test isapprox(bsse, bsset)
 
-    portfolio.mu_type = :Default
+    portfolio.cov_method = :Default
     asset_statistics!(portfolio)
     mu1 = copy(portfolio.mu)
     asset_statistics!(
@@ -2723,12 +2723,12 @@ returns = dropmissing!(DataFrame(Y))
     mu3 = copy(portfolio.mu)
     @test isapprox(mu3, portfolio.returns[end, 1:end])
 
-    asset_statistics!(portfolio, cov_type = :Full)
+    asset_statistics!(portfolio, cov_method = :Full)
     cov1 = copy(portfolio.cov)
     cov2 = cov(portfolio.returns)
     @test isapprox(cov1, cov2)
 
-    asset_statistics!(portfolio, cov_type = :Semi)
+    asset_statistics!(portfolio, cov_method = :Semi)
     cov3 = copy(portfolio.cov)
 
     semiret = min.(portfolio.returns .- 0, 0)
@@ -2740,7 +2740,7 @@ returns = dropmissing!(DataFrame(Y))
 
     asset_statistics!(
         portfolio,
-        cov_type = :Semi,
+        cov_method = :Semi,
         cov_est = StatsBase.SimpleCovariance(; corrected = false),
     )
     cov6 = copy(portfolio.cov)
@@ -2749,9 +2749,9 @@ returns = dropmissing!(DataFrame(Y))
 
     portfolio = Portfolio(returns = returns)
 
-    asset_statistics!(portfolio, cov_type = :Gerber1, std_kwargs = (; corrected = false))
+    asset_statistics!(portfolio, cov_method = :Gerber1, std_kwargs = (; corrected = false))
     covg1 = copy(portfolio.cov)
-    asset_statistics!(portfolio, cov_type = :Gerber2, std_kwargs = (; corrected = false))
+    asset_statistics!(portfolio, cov_method = :Gerber2, std_kwargs = (; corrected = false))
     covg2 = copy(portfolio.cov)
 
     covgt1 = reshape(
@@ -4668,8 +4668,8 @@ returns = dropmissing!(DataFrame(Y))
     asset_statistics!(
         portfolio,
         calc_kurt = false,
-        cov_type = :Custom_Func,
-        mu_type = :Custom_Func,
+        cov_method = :Custom_Func,
+        cov_method = :Custom_Func,
         mean_kwargs = (; dims = 1),
     )
     @test isapprox(portfolio.cov, mtx)
@@ -4723,7 +4723,7 @@ returns = dropmissing!(DataFrame(Y))
     portfolio = HCPortfolio(returns = returns)
     asset_statistics!(
         portfolio,
-        cov_type = :Custom_Val,
+        cov_method = :Custom_Val,
         custom_cov = covgerber1(portfolio.returns),
     )
     @test isapprox(portfolio.cov, covgerber1(portfolio.returns))
@@ -4731,13 +4731,13 @@ returns = dropmissing!(DataFrame(Y))
     portfolio = HCPortfolio(returns = returns)
     asset_statistics!(
         portfolio,
-        mu_type = :Custom_Val,
+        cov_method = :Custom_Val,
         custom_mu = vec(mean(portfolio.returns, dims = 1)),
     )
     @test isapprox(portfolio.mu, vec(mean(portfolio.returns, dims = 1)))
 
     portfolio = HCPortfolio(returns = returns)
-    asset_statistics!(portfolio, mu_type = :CAPM, rf = 1.02^(1 / 252) - 1)
+    asset_statistics!(portfolio, cov_method = :CAPM, rf = 1.02^(1 / 252) - 1)
     mu1t = [
         0.00040040334444405826,
         0.0004038223404295389,
@@ -4763,7 +4763,7 @@ returns = dropmissing!(DataFrame(Y))
     @test isapprox(mu1t, portfolio.mu)
     asset_statistics!(
         portfolio,
-        mu_type = :CAPM,
+        cov_method = :CAPM,
         rf = 1.02^(1 / 252) - 1,
         mkt_ret = vec(mean(portfolio.returns, dims = 2)),
     )
@@ -4774,7 +4774,7 @@ returns = dropmissing!(DataFrame(Y))
     wghts = eweights(N, 2 / (span + 1), scale = true)
     asset_statistics!(
         portfolio,
-        mu_type = :CAPM,
+        cov_method = :CAPM,
         rf = 1.02^(1 / 252) - 1,
         cov_weights = wghts,
         mu_weights = wghts,
@@ -4805,7 +4805,7 @@ returns = dropmissing!(DataFrame(Y))
     @test isapprox(mu2t, portfolio.mu)
     asset_statistics!(
         portfolio,
-        mu_type = :CAPM,
+        cov_method = :CAPM,
         rf = 1.02^(1 / 252) - 1,
         cov_weights = wghts,
         mu_weights = wghts,
@@ -5557,8 +5557,8 @@ end
     @test isapprox(Matrix(lmtx3[!, 2:end]), lmtx3t)
     @test isapprox(Matrix(lmtx4[!, 2:end]), lmtx4t)
 
-    mu1, sigma1, returns1 = risk_factors(X, Y; reg_type = :BReg, error = true)
-    mu2, sigma2, returns2 = risk_factors(X, Y; reg_type = :BReg, error = false)
+    mu1, sigma1, returns1 = risk_factors(X, Y; reg_method = :BReg, error = true)
+    mu2, sigma2, returns2 = risk_factors(X, Y; reg_method = :BReg, error = false)
 
     mu1t = [
         -0.3740749325681081,
@@ -7839,7 +7839,7 @@ end
     @test isapprox(mu3, port.mu_bl)
     @test isapprox(cov3, port.cov_bl)
 
-    factor_statistics!(port; reg_type = :BReg)
+    factor_statistics!(port; reg_method = :BReg)
 
     mu_fmt = [
         9.141990876636845e-5,
@@ -7908,7 +7908,7 @@ end
     @test isapprox(port.mu_fm, mu_fmt)
     @test isapprox(port.cov_fm, cov_fmt)
 
-    factor_statistics!(port; reg_type = :PCR)
+    factor_statistics!(port; reg_method = :PCR)
 
     mu_fmt = [
         9.141990876636525e-5,
@@ -7977,7 +7977,7 @@ end
     @test isapprox(port.mu_fm, mu_fmt)
     @test isapprox(port.cov_fm, cov_fmt, rtol = 7.25e-3)
 
-    factor_statistics!(port; reg_type = :FReg)
+    factor_statistics!(port; reg_method = :FReg)
 
     mu_fmt = [
         9.141990876636845e-5,
@@ -8055,7 +8055,7 @@ end
         P_f = P_f,
         Q = Q / 252,
         Q_f = Q_f / 252,
-        bl_type = :B,
+        bl_method = :B,
         # delta = 1.0,
         # eq = true,
         # rf = 0.0,
@@ -8078,7 +8078,7 @@ end
         P_f = P_f,
         Q = Q / 252,
         Q_f = Q_f / 252,
-        bl_type = :B,
+        bl_method = :B,
         # delta = 1.0,
         # eq = true,
         # rf = 0.0,
@@ -8121,7 +8121,7 @@ end
         P_f = P_f1,
         Q = Q / 252,
         Q_f = Q_f1 / 252,
-        bl_type = :B,
+        bl_method = :B,
         # delta = 1.0,
         eq = false,
         rf = 0.0002,
@@ -8151,7 +8151,7 @@ end
             P_f = P_f1,
             Q = Q / 252,
             Q_f = Q_f1 / 252,
-            bl_type = :B,
+            bl_method = :B,
             # delta = 1.0,
             # eq = true,
             # rf = 0.0,
@@ -8182,7 +8182,7 @@ end
         P_f = P_f,
         Q = Q / 252,
         Q_f = Q_f / 252,
-        bl_type = :A,
+        bl_method = :A,
         # delta = 1.0,
         # eq = true,
         # rf = 0.0,
@@ -8213,7 +8213,7 @@ end
         P_f = P_f1,
         Q = Q / 252,
         Q_f = Q_f1 / 252,
-        bl_type = :A,
+        bl_method = :A,
         # delta = 1.0,
         # eq = true,
         # rf = 0.0,
@@ -8244,7 +8244,7 @@ end
         P_f = P_f,
         Q = Q / 252,
         Q_f = Q_f / 252,
-        bl_type = :A,
+        bl_method = :A,
         # delta = 1.0,
         eq = false,
         rf = 0.001,
@@ -8277,7 +8277,7 @@ end
         P_f = P_f,
         Q = Q / 252,
         Q_f = Q_f / 252,
-        bl_type = :A,
+        bl_method = :A,
         delta = 3.0,
         eq = false,
         rf = 0.001,

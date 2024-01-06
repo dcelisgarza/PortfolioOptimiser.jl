@@ -24529,6 +24529,11 @@ end
     mu24 = portfolio.mu
     cov24 = portfolio.cov
 
+    mu_settings.mkt_ret = mean(portfolio.returns, dims = 2)
+    asset_statistics!(portfolio; mu_settings = mu_settings)
+    mu25 = portfolio.mu
+    cov25 = portfolio.cov
+
     mut1 = [
         0.0007099776753465249,
         0.000774638268659505,
@@ -34422,6 +34427,8 @@ end
     @test !isapprox(mu21, mu24)
     @test !isapprox(mu22, mu24)
     @test !isapprox(mu23, mu24)
+    @test isapprox(mu25, mu24)
+    @test isapprox(cov25, cov24)
 end
 
 @testset "Custom Func and Val for Mean" begin
