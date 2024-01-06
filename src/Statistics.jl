@@ -600,7 +600,7 @@ mu_estimator
 ```
 """
 function mu_estimator(returns::AbstractMatrix, settings::MuSettings = MuSettings(;))
-    type = settings.type
+    type = settings.method
     @assert(
         type ∈ (:JS, :BS, :BOP, :CAPM),
         "type = $type, must be one of (:JS, :BS, :BOP, :CAPM)"
@@ -659,9 +659,9 @@ covar_mtx
 ```
 """
 function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(;))
-    type = settings.type
+    type = settings.method
 
-    @assert(type ∈ CovTypes, "type = $type, must be one of $CovTypes")
+    @assert(type ∈ CovMethods, "type = $type, must be one of $CovMethods")
 
     mtx = if type ∈ (:Full, :Semi)
         estimation = settings.estimation
@@ -708,7 +708,7 @@ function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(
         catch SingularException
             throw(
                 ErrorException(
-                    "Covariance matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set settings.posdef.method = $(settings.posdef.method), to a different method from $PosdefFixes.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.\n\t Try a different type = $type, from $CovTypes.",
+                    "Covariance matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set settings.posdef.method = $(settings.posdef.method), to a different method from $PosdefFixes.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.\n\t Try a different type = $type, from $CovMethods.",
                 ),
             )
         end
@@ -736,7 +736,7 @@ mean_vec(
 ```
 """
 function mean_vec(returns::AbstractMatrix, settings::MuSettings = MuSettings(;))
-    type = settings.type
+    type = settings.method
     mu = if type ∈ (:Default, :Custom_Func)
         func = settings.genfunc.func
         args = settings.genfunc.args
@@ -821,7 +821,7 @@ codep_dist_mtx(
     returns::AbstractMatrix;
     alpha_tail::Real = 0.05,
     bins_info::Union{Symbol, Integer} = :KN,
-    cor_type::Symbol = :Pearson,
+    cor_method::Symbol = :Pearson,
     cor_args::Tuple = (),
     cor_func::Function = cor,
     cor_kwargs::NamedTuple = (;),
@@ -843,7 +843,7 @@ codep_dist_mtx(
 ```
 """
 function codep_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettings(;))
-    type = settings.type
+    type = settings.method
     if type == :Pearson
         corr = cor(returns)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
@@ -914,7 +914,7 @@ function covar_mtx_mean_vec(
     cov_settings::CovSettings = CovSettings(;),
     mu_settings::MuSettings = MuSettings(;),
 )
-    mu_type = mu_settings.type
+    mu_type = mu_settings.method
     if mu_type == :CAPM
         mkt_ret = mu_settings.mkt_ret
         if isnothing(mkt_ret)
@@ -946,7 +946,7 @@ asset_statistics!(
     cor_func::Function = cor,
     std_func = std,
     dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-    cor_type::Symbol = isa(portfolio, HCPortfolio) ? portfolio.cor_type : :Pearson,
+    cor_method::Symbol = isa(portfolio, HCPortfolio) ? portfolio.cor_method : :Pearson,
     custom_mu = nothing,
     custom_cov = nothing,
     custom_kurt = nothing,
@@ -1000,7 +1000,7 @@ function asset_statistics!(
     if isa(portfolio, HCPortfolio) && calc_codep
         cor_settings.estimation.sigma = portfolio.cov
         portfolio.cor, portfolio.dist = codep_dist_mtx(returns, cor_settings)
-        portfolio.cor_type = cor_settings.type
+        portfolio.cor_method = cor_settings.method
     end
 
     return nothing

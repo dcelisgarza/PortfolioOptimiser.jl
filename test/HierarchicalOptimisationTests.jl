@@ -435,7 +435,7 @@ end
                 Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
         ),
     )
-    portfolio.cor_type = :Pearson
+    portfolio.cor_method = :Pearson
     asset_statistics!(portfolio, calc_kurt = false)
 
     type = :NCO

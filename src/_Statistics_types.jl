@@ -67,7 +67,7 @@ const KindBootstrap = (:Stationary, :Circular, :Moving)
 
 """
 ```julia
-MuTypes = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
+MuMethods = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 ```
 Methods for estimating the mean returns vector ``\\bm{\\mu}`` in [`mean_vec`](@ref).
 - `:Default`: is the standard historical.
@@ -78,7 +78,7 @@ Methods for estimating the mean returns vector ``\\bm{\\mu}`` in [`mean_vec`](@r
 - `:Custom_Func`: custom function provided.
 - `:Custom_Val`: custom value provided.
 """
-const MuTypes = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
+const MuMethods = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 
 """
 ```julia
@@ -93,7 +93,7 @@ const MuTargets = (:GM, :VW, :SE)
 
 """
 ```julia
-CovTypes = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :Custom_Func, :Custom_Val)
+CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :Custom_Func, :Custom_Val)
 ```
 Methods for estimating the covariance matrix ``\\mathbf{\\Sigma}``.
 - `:Full`: full covariance matrix.
@@ -104,7 +104,7 @@ Methods for estimating the covariance matrix ``\\mathbf{\\Sigma}``.
 - `:Custom_Func`: custom function provided.
 - `:Custom_Val`: custom value provided.
 """
-const CovTypes = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :Custom_Func, :Custom_Val)
+const CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :Custom_Func, :Custom_Val)
 
 """
 ```julia
@@ -151,7 +151,7 @@ const FSType = (:FReg, :BReg, :PCR)
 
 """
 ```julia
-CodepTypes = (
+CorMethods = (
     :Pearson,
     :Spearman,
     :Kendall,
@@ -186,7 +186,7 @@ Methods for estimating the codependence (correlation) matrix ``\\mathbf{P}``, an
 - `:Custom_Func`: custom function provided, the distance matrix is computed by a distance function which defaults to ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{P}_{i,\\,j} \\right)}``.
 - `:Custom_Val`: custom value provided, the distance matrix is computed by a distance function which defaults to ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{P}_{i,\\,j} \\right)}``.
 """
-const CodepTypes = (
+const CorMethods = (
     :Pearson,
     :Spearman,
     :Kendall,
@@ -325,11 +325,11 @@ end
 ```
 CovSettings
 ```
-- `cov_type`: method for estimating the covariance matrices `cov`, `cov_fm`, `cov_bl`, `cov_bl_fm` in [`covar_mtx`](@ref), see [`CovTypes`](@ref) for available choices.
+- `cov_type`: method for estimating the covariance matrices `cov`, `cov_fm`, `cov_bl`, `cov_bl_fm` in [`covar_mtx`](@ref), see [`CovMethods`](@ref) for available choices.
 """
 mutable struct CovSettings
     # Cov type
-    type::Symbol
+    method::Symbol
     # Estimation
     estimation::CovEstSettings
     # Gerber
@@ -342,20 +342,20 @@ mutable struct CovSettings
     jlogo::Bool
 end
 function CovSettings(;
-    type::Symbol = :Full,
+    method::Symbol = :Full,
     estimation::CovEstSettings = CovEstSettings(;),
     gerber::GerberSettings = GerberSettings(;),
     denoise::DenoiseSettings = DenoiseSettings(;),
     posdef::PosdefFixSettings = PosdefFixSettings(;),
     jlogo::Bool = false,
 )
-    @assert(type ∈ CovTypes, "type = $type, must be one of $CovTypes")
+    @assert(method ∈ CovMethods, "type = $type, must be one of $CovMethods")
 
-    return CovSettings(type, estimation, gerber, denoise, posdef, jlogo)
+    return CovSettings(method, estimation, gerber, denoise, posdef, jlogo)
 end
 function Base.setproperty!(obj::CovSettings, sym::Symbol, val)
-    if sym == :type
-        @assert(val ∈ CovTypes, "$sym = $val, must be one of $CovTypes")
+    if sym == :method
+        @assert(val ∈ CovMethods, "$sym = $val, must be one of $CovMethods")
     end
     setfield!(obj, sym, val)
 end
@@ -364,10 +364,10 @@ end
 ```
 MuSettings
 ```
-- `mu_type`: method for estimating the mean returns vectors `mu`, `mu_fm`, `mu_bl`, `mu_bl_fm` in [`mean_vec`](@ref), see [`MuTypes`](@ref) for available choices.
+- `mu_type`: method for estimating the mean returns vectors `mu`, `mu_fm`, `mu_bl`, `mu_bl_fm` in [`mean_vec`](@ref), see [`MuMethods`](@ref) for available choices.
 """
 mutable struct MuSettings{T1 <: Real}
-    type::Symbol
+    method::Symbol
     target::Symbol
     rf::T1
     genfunc::GenericFunc
@@ -376,7 +376,7 @@ mutable struct MuSettings{T1 <: Real}
     sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
 end
 function MuSettings(;
-    type::Symbol = :Default,
+    method::Symbol = :Default,
     target::Symbol = :GM,
     rf::Real = 0.0,
     genfunc::GenericFunc = GenericFunc(; func = StatsBase.mean, kwargs = (; dims = 1)),
@@ -384,14 +384,14 @@ function MuSettings(;
     mkt_ret::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
     sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
 )
-    @assert(type ∈ MuTypes, "type = $type, must be one of $MuTypes")
+    @assert(method ∈ MuMethods, "type = $type, must be one of $MuMethods")
     @assert(target ∈ MuTargets, "target = $target, must be one of $MuTargets")
 
-    return MuSettings{typeof(rf)}(type, target, rf, genfunc, custom, mkt_ret, sigma)
+    return MuSettings{typeof(rf)}(method, target, rf, genfunc, custom, mkt_ret, sigma)
 end
 function Base.setproperty!(obj::MuSettings, sym::Symbol, val)
-    if sym == :type
-        @assert(val ∈ MuTypes, "$sym = $val, must be one of $MuTypes")
+    if sym == :method
+        @assert(val ∈ MuMethods, "$sym = $val, must be one of $MuMethods")
     elseif sym == :target
         @assert(val ∈ MuTargets, "$sym = $val, must be one of $MuTargets")
     end
@@ -503,7 +503,7 @@ end
 
 mutable struct CorSettings
     # Cov type
-    type::Symbol
+    method::Symbol
     # Estimation
     estimation::CorEstSettings
     # Gerber
@@ -518,7 +518,7 @@ mutable struct CorSettings
     uplo::Symbol
 end
 function CorSettings(;
-    type::Symbol = :Pearson,
+    method::Symbol = :Pearson,
     estimation::CorEstSettings = CorEstSettings(;),
     gerber::GerberSettings = GerberSettings(;),
     denoise::DenoiseSettings = DenoiseSettings(;),
@@ -526,13 +526,13 @@ function CorSettings(;
     jlogo::Bool = false,
     uplo::Symbol = :L,
 )
-    @assert(type ∈ CodepTypes, "type = $type, must be one of $CodepTypes")
+    @assert(method ∈ CorMethods, "type = $type, must be one of $CorMethods")
 
-    return CorSettings(type, estimation, gerber, denoise, posdef, jlogo, uplo)
+    return CorSettings(method, estimation, gerber, denoise, posdef, jlogo, uplo)
 end
 function Base.setproperty!(obj::CorSettings, sym::Symbol, val)
-    if sym == :type
-        @assert(val ∈ CodepTypes, "$sym = $val, must be one of $CodepTypes")
+    if sym == :method
+        @assert(val ∈ CorMethods, "$sym = $val, must be one of $CorMethods")
     end
     setfield!(obj, sym, val)
 end

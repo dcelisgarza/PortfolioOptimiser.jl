@@ -741,7 +741,7 @@ function plot_clusters(
 )
     corr = portfolio.cor
     assets = portfolio.assets
-    cor_type = portfolio.cor_type
+    cor_method = portfolio.cor_method
     N = length(assets)
 
     if cluster
@@ -775,7 +775,7 @@ function plot_clusters(
     end
 
     codeps1 = (:Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
-    if cor_type ∈ codeps1
+    if cor_method ∈ codeps1
         clim = (-1, 1)
     else
         clim = (0, 1)
@@ -919,7 +919,7 @@ function plot_dendrogram(
 )
     corr = portfolio.cor
     assets = portfolio.assets
-    cor_type = portfolio.cor_type
+    cor_method = portfolio.cor_method
     N = length(assets)
 
     if cluster

@@ -147,14 +147,14 @@ function _hierarchical_clustering(
     branchorder = :optimal,
     dbht_method = :Unique,
 )
-    cor_type = portfolio.cor_type
+    cor_method = portfolio.cor_method
     corr = portfolio.cor
     dist = portfolio.dist
 
     codeps1 = (:Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
 
     if linkage == :DBHT
-        corr = cor_type ∈ codeps1 ? 1 .- dist .^ 2 : corr
+        corr = cor_method ∈ codeps1 ? 1 .- dist .^ 2 : corr
         missing, missing, missing, missing, missing, missing, clustering =
             DBHTs(dist, corr; branchorder = branchorder, method = dbht_method)
     else
@@ -800,8 +800,8 @@ function opt_port!(
     @assert(kelly_o ∈ KellyRet, "kelly_o = $kelly_o, must be one of $KellyRet")
     @assert(linkage ∈ LinkageTypes, "linkage = $linkage, must be one of $LinkageTypes")
     @assert(
-        portfolio.cor_type ∈ CodepTypes,
-        "portfolio.cor_type = $(portfolio.cor_type), must be one of $CodepTypes"
+        portfolio.cor_method ∈ CorMethods,
+        "portfolio.cor_method = $(portfolio.cor_method), must be one of $CorMethods"
     )
     @assert(
         0 < portfolio.alpha < 1,

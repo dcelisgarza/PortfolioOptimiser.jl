@@ -17,104 +17,54 @@ prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-cols = [:FB, :BBY, :AMD, :AMZN]
-portfolio = Portfolio(; prices = prices[cols])
-
-kurt_settings = KurtSettings(;)
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt1 = portfolio.kurt
-skurt1 = portfolio.skurt
-
-kurt_settings.denoise.method = :Fixed
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt2 = portfolio.kurt
-skurt2 = portfolio.skurt
-
-kurt_settings.denoise.method = :Fixed
-kurt_settings.denoise.detone = false
-kurt_settings.denoise.mkt_comp = 1
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt3 = portfolio.kurt
-skurt3 = portfolio.skurt
-
-kurt_settings.denoise.method = :Fixed
-kurt_settings.denoise.detone = true
-kurt_settings.denoise.mkt_comp = 1
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt4 = portfolio.kurt
-skurt4 = portfolio.skurt
-
-kurt_settings.denoise.mkt_comp = 19
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt5 = portfolio.kurt
-skurt5 = portfolio.skurt
-
-kurt_settings.denoise.method = :Spectral
-kurt_settings.denoise.detone = false
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt6 = portfolio.kurt
-skurt6 = portfolio.skurt
-
-kurt_settings.denoise.detone = true
-kurt_settings.denoise.mkt_comp = 1
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt7 = portfolio.kurt
-skurt7 = portfolio.skurt
-
-kurt_settings.denoise.mkt_comp = 19
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt8 = portfolio.kurt
-skurt8 = portfolio.skurt
-
-kurt_settings.denoise.method = :Shrink
-kurt_settings.denoise.detone = false
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt9 = portfolio.kurt
-skurt9 = portfolio.skurt
-
-kurt_settings.denoise.detone = true
-kurt_settings.denoise.mkt_comp = 1
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt10 = portfolio.kurt
-skurt10 = portfolio.skurt
-
-kurt_settings.denoise.mkt_comp = 19
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt11 = portfolio.kurt
-skurt11 = portfolio.skurt
-
-kurt_settings.denoise.detone = false
-kurt_settings.denoise.alpha = 0.5
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt12 = portfolio.kurt
-skurt12 = portfolio.skurt
-
-kurt_settings.denoise.detone = true
-kurt_settings.denoise.mkt_comp = 1
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt13 = portfolio.kurt
-skurt13 = portfolio.skurt
-
-kurt_settings.denoise.mkt_comp = 19
-asset_statistics!(portfolio; kurt_settings = kurt_settings)
-kurt14 = portfolio.kurt
-skurt14 = portfolio.skurt
-
-kurt_settings.denoise.mkt_comp = 0
-@test_throws AssertionError asset_statistics!(
-    portfolio;
-    kurt_settings = kurt_settings,
+portfolio = Portfolio(
+    prices = prices,
+    solvers = OrderedDict(
+        :Clarabel => Dict(
+            :solver => Clarabel.Optimizer,
+            :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
+        ),
+        :COSMO => Dict(:solver => COSMO.Optimizer, :params => Dict("verbose" => false)),
+    ),
 )
-
-kurt_settings.denoise.mkt_comp = 21
-@test_throws AssertionError asset_statistics!(
+asset_statistics!(portfolio)
+wc_statistics!(portfolio, WCSettings(box = :Normal, ellipse = :Normal, seed = 123456789))
+w5 = opt_port!(
     portfolio;
-    kurt_settings = kurt_settings,
+    class = :Classic,
+    type = :WC,
+    obj = :Sharpe,
+    l = l,
+    rf = rf,
+    u_cov = :Box,
+    u_mu = :Box,
 )
-
+w5t = [
+    1.9270878658506116e-10,
+    3.137216142815297e-10,
+    3.22478003768024e-10,
+    1.4903535779915166e-10,
+    0.7010284428697937,
+    5.017984087342434e-11,
+    8.771879737391066e-11,
+    1.826273745564694e-10,
+    2.5568500045549557e-10,
+    1.403283806606418e-10,
+    2.548148826267939e-10,
+    3.263978848475229e-11,
+    1.7876358571386225e-11,
+    9.668786005750116e-11,
+    2.172978679053518e-11,
+    2.800239391685582e-10,
+    0.2989715525789651,
+    2.92297326137468e-10,
+    1.5049465921925983e-9,
+    3.5574147449785123e-10,
+]
 ########################################
-println("kurtt = reshape(", vec(portfolio.kurt), ", 16, 16)")
-println("skurtt = reshape(", vec(portfolio.skurt), ", 16, 16)")
+
+println("kurtt = reshape(", vec(kurt), ", 16, 16)")
+println("skurtt = reshape(", vec(skurt), ", 16, 16)")
 
 println("w1t = ", w1.weights, "\n")
 println("w2t = ", w2.weights, "\n")
@@ -139,48 +89,48 @@ println("w19t = ", w19.weights, "\n")
 
 for rtol in [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 2.5e-1, 5e-1, 1e0]
     a1, a2 = [
-        2.2949070746008037e-8,
-        0.07862103098428591,
-        0.028690330225763734,
-        0.041797618479146446,
-        0.07052441510277652,
-        1.0743279258561809e-9,
-        0.017595646157397248,
-        0.054628541087563695,
-        1.8265014563430735e-8,
-        0.1351050063008835,
-        0.12122098251732577,
-        1.263239051300145e-9,
-        5.078849694989507e-10,
-        3.285198119257091e-9,
-        5.427466295155012e-10,
-        0.06427232816654586,
-        0.12118491493452929,
-        0.0788234076071059,
-        0.1536082138881483,
-        0.033927516661045876,
+        0.010490720965613475,
+        0.027638562976896618,
+        0.005157935454787538,
+        0.014733203690891882,
+        0.001093266647285114,
+        0.02532695683718382,
+        4.1693837439425117e-7,
+        0.1342437272400356,
+        1.6506785927756833e-6,
+        2.097670384814251e-5,
+        0.30785405406384075,
+        6.251970691408918e-7,
+        3.4608589721196204e-7,
+        0.12812746072176984,
+        1.365011443706727e-6,
+        9.210330518075474e-5,
+        0.008584753808698897,
+        0.20759432127914562,
+        2.922717534601414e-6,
+        0.12903462967591026,
     ],
     [
-        2.2949591000437564e-8,
-        0.07862140280004272,
-        0.02869102804312917,
-        0.04179863509696258,
-        0.07052613042310825,
-        1.0743043214203577e-9,
-        0.01759572987162657,
-        0.05462986978138373,
-        1.8264613447863318e-8,
-        0.13510328968013516,
-        0.12121833698499432,
-        1.263211295266761e-9,
-        5.080233997746973e-10,
-        3.285125923645572e-9,
-        5.427347059642022e-10,
-        0.06427151176750201,
-        0.12118548948978226,
-        0.07882532477834583,
-        0.1536048615354305,
-        0.03392834185995275,
+        0.011100928247540337,
+        0.028797601204028744,
+        0.00451697386063243,
+        0.015117169787606181,
+        0.0003076466235640585,
+        0.02549899349018155,
+        4.5392069132527076e-7,
+        0.13491962123190607,
+        1.681770276409214e-6,
+        2.0441542555369992e-5,
+        0.3061835873256772,
+        6.640161273806851e-7,
+        3.6474620983326474e-7,
+        0.12966556794012535,
+        1.4319449667839788e-6,
+        0.00012979857147209442,
+        0.008064036470981209,
+        0.20700779271517056,
+        2.9705961760174295e-6,
+        0.1286622739941112,
     ]
     if isapprox(a1, a2, rtol = rtol)
         println(", rtol = $(rtol)")

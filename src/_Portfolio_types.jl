@@ -1582,7 +1582,7 @@ mutable struct HCPortfolio{
     bins_info::tbin
     w_min::wmi
     w_max::wma
-    cor_type::ttco
+    cor_method::ttco
     cor::tco
     dist::tdist
     clusters::tcl
@@ -1628,7 +1628,7 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`](@ref) for available choices.
 - `w_min`: `Na×1` vector of the lower bounds for asset weights, where $(_ndef(:a2)).
 - `w_max`: `Na×1` vector of the upper bounds for asset weights, where $(_ndef(:a2)).
-- `cor_type`: method for estimating the codependence matrix.
+- `cor_method`: method for estimating the codependence matrix.
 - `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `cor` used by [`codep_dist_mtx`](@ref).
 - `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `dist` used by [`codep_dist_mtx`](@ref).
 - `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
@@ -1720,7 +1720,7 @@ mutable struct HCPortfolio{
     bins_info::tbin
     w_min::wmi
     w_max::wma
-    cor_type::ttco
+    cor_method::ttco
     cor::tco
     dist::tdist
     clusters::tcl
@@ -1769,7 +1769,7 @@ HCPortfolio(;
     bins_info::Union{Symbol, <:Integer} = :KN,
     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
-    cor_type::Symbol = :Pearson,
+    cor_method::Symbol = :Pearson,
     cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     clusters::Clustering.Hclust = Hclust{Float64}(
@@ -1820,7 +1820,7 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`](@ref) for available choices.
 - `w_min`: `Na×1` vector of the lower bounds for asset weights, where $(_ndef(:a2)).
 - `w_max`: `Na×1` vector of the upper bounds for asset weights, where $(_ndef(:a2)).
-- `cor_type`: method for estimating the codependence matrix.
+- `cor_method`: method for estimating the codependence matrix.
 - `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `cor` used by [`codep_dist_mtx`](@ref).
 - `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_type`, this is the value of `dist` used by [`codep_dist_mtx`](@ref).
 - `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
@@ -1873,7 +1873,7 @@ function HCPortfolio(;
     bins_info::Union{Symbol, <:Integer} = :KN,
     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
-    cor_type::Symbol = :Pearson,
+    cor_method::Symbol = :Pearson,
     cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     clusters::Clustering.Hclust = Hclust{Float64}(
@@ -2021,7 +2021,7 @@ function HCPortfolio(;
             )
         end
     end
-    @assert(cor_type ∈ CodepTypes, "cor_type = $cor_type, must be one of $CodepTypes")
+    @assert(cor_method ∈ CorMethods, "cor_method = $cor_method, must be one of $CorMethods")
     if !isempty(cor)
         @assert(
             size(cor, 1) == size(cor, 2) == size(returns, 2),
@@ -2071,7 +2071,7 @@ function HCPortfolio(;
         Union{Symbol, <:Integer},
         Union{<:Real, AbstractVector{<:Real}},
         Union{<:Real, AbstractVector{<:Real}},
-        typeof(cor_type),
+        typeof(cor_method),
         typeof(cor),
         typeof(dist),
         typeof(clusters),
@@ -2115,7 +2115,7 @@ function HCPortfolio(;
         bins_info,
         w_min,
         w_max,
-        cor_type,
+        cor_method,
         cor,
         dist,
         clusters,
@@ -2183,8 +2183,8 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             val ∈ BinTypes || isa(val, Int) && val > zero(val),
             "bins_info = $val, has to either be in $BinTypes, or an integer value greater than 0"
         )
-    elseif sym == :cor_type
-        @assert(val ∈ CodepTypes, "cor_type = $val, must be one of $CodepTypes")
+    elseif sym == :cor_method
+        @assert(val ∈ CorMethods, "cor_method = $val, must be one of $CorMethods")
     elseif sym == :k
         @assert(val >= zero(val), "k = $val, must be greater than or equal to zero")
     elseif sym ∈ (:w_min, :w_max)

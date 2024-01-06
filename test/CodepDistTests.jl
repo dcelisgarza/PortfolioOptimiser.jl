@@ -9,44 +9,44 @@ returns = dropmissing!(DataFrame(Y))
 @testset "Codependence and distance functions" begin
     portfolio = HCPortfolio(returns = returns)
 
-    portfolio.cor_type = :Pearson
+    portfolio.cor_method = :Pearson
     asset_statistics!(portfolio)
     pearson = portfolio.cor
 
-    portfolio.cor_type = :Spearman
+    portfolio.cor_method = :Spearman
     asset_statistics!(portfolio)
     spearman = portfolio.cor
 
-    portfolio.cor_type = :Kendall
+    portfolio.cor_method = :Kendall
     asset_statistics!(portfolio)
     kendall = portfolio.cor
 
-    portfolio.cor_type = :Abs_Pearson
+    portfolio.cor_method = :Abs_Pearson
     asset_statistics!(portfolio)
     abs_pearson = portfolio.cor
 
-    portfolio.cor_type = :Abs_Spearman
+    portfolio.cor_method = :Abs_Spearman
     asset_statistics!(portfolio)
     abs_spearman = portfolio.cor
 
-    portfolio.cor_type = :Abs_Kendall
+    portfolio.cor_method = :Abs_Kendall
     asset_statistics!(portfolio)
     abs_kendall = portfolio.cor
 
-    portfolio.cor_type = :Gerber1
+    portfolio.cor_method = :Gerber1
     asset_statistics!(portfolio, std_kwargs = (; corrected = false))
     gerber1 = portfolio.cor
 
-    portfolio.cor_type = :Gerber2
+    portfolio.cor_method = :Gerber2
     asset_statistics!(portfolio, std_kwargs = (; corrected = false))
     gerber2 = portfolio.cor
 
-    portfolio.cor_type = :Distance
+    portfolio.cor_method = :Distance
     asset_statistics!(portfolio)
     distance = portfolio.cor
 
     try
-        portfolio.cor_type = :Mutual_Info
+        portfolio.cor_method = :Mutual_Info
         asset_statistics!(portfolio)
         mutual_info = portfolio.cor
         var_info = portfolio.dist
@@ -873,7 +873,7 @@ returns = dropmissing!(DataFrame(Y))
     @test 15 == PortfolioOptimiser._calc_num_bins(1731, 0.9)
     @test 10 == PortfolioOptimiser._calc_num_bins(1731, 0.1)
 
-    portfolio.cor_type = :Mutual_Info
+    portfolio.cor_method = :Mutual_Info
     portfolio.bins_info = 10
     asset_statistics!(portfolio)
     codep1 = copy(portfolio.cor)
@@ -2516,7 +2516,7 @@ returns = dropmissing!(DataFrame(Y))
     @test isapprox(codep2, codep2t)
     @test isapprox(dist2, dist2t)
 
-    portfolio.cor_type = :Tail
+    portfolio.cor_method = :Tail
     asset_statistics!(portfolio)
     tail = portfolio.cor
 

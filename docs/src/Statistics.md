@@ -24,14 +24,14 @@ BLFMType
 EllipseTypes
 BoxTypes
 KindBootstrap
-MuTypes
+MuMethods
 MuTargets
-CovTypes
+CovMethods
 PosdefFixes
 DenoiseMethods
 RegCriteria
 FSType
-CodepTypes
+CorMethods
 RRPVersions
 UncertaintyTypes
 ```
