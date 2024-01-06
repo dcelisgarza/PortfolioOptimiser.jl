@@ -425,7 +425,7 @@ function KurtSettings(;
     return KurtSettings(estimation, gerber, denoise, posdef, jlogo)
 end
 
-mutable struct CodepEstSettings{T1 <: Real}
+mutable struct CorEstSettings{T1 <: Real}
     alpha::T1
     bins_info::Union{Symbol, <:Integer}
     cor_genfunc::GenericFunc
@@ -434,7 +434,7 @@ mutable struct CodepEstSettings{T1 <: Real}
     custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing}
     sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
 end
-function CodepEstSettings(;
+function CorEstSettings(;
     alpha::Real = 0.05,
     bins_info::Union{Symbol, <:Integer} = :KN,
     cor_genfunc::GenericFunc = GenericFunc(; func = StatsBase.cor),
@@ -470,7 +470,7 @@ function CodepEstSettings(;
     #     "sigma must be a square matrix, size(sigma) = $(size(sigma))"
     # )
 
-    return CodepEstSettings{typeof(alpha)}(
+    return CorEstSettings{typeof(alpha)}(
         alpha,
         bins_info,
         cor_genfunc,
@@ -480,7 +480,7 @@ function CodepEstSettings(;
         sigma,
     )
 end
-function Base.setproperty!(obj::CodepEstSettings, sym::Symbol, val)
+function Base.setproperty!(obj::CorEstSettings, sym::Symbol, val)
     if sym == :alpha
         @assert(
             0 <= val <= 1,
@@ -504,11 +504,11 @@ function Base.setproperty!(obj::CodepEstSettings, sym::Symbol, val)
     setfield!(obj, sym, val)
 end
 
-mutable struct CodepSettings
+mutable struct CorSettings
     # Cov type
     type::Symbol
     # Estimation
-    estimation::CodepEstSettings
+    estimation::CorEstSettings
     # Gerber
     gerber::GerberSettings
     # Denoise
@@ -520,9 +520,9 @@ mutable struct CodepSettings
     # uplo
     uplo::Symbol
 end
-function CodepSettings(;
+function CorSettings(;
     type::Symbol = :Pearson,
-    estimation::CodepEstSettings = CodepEstSettings(;),
+    estimation::CorEstSettings = CorEstSettings(;),
     gerber::GerberSettings = GerberSettings(;),
     denoise::DenoiseSettings = DenoiseSettings(;),
     posdef::PosdefFixSettings = PosdefFixSettings(;),
@@ -531,9 +531,9 @@ function CodepSettings(;
 )
     @assert(type ∈ CodepTypes, "type = $type, must be one of $CodepTypes")
 
-    return CodepSettings(type, estimation, gerber, denoise, posdef, jlogo, uplo)
+    return CorSettings(type, estimation, gerber, denoise, posdef, jlogo, uplo)
 end
-function Base.setproperty!(obj::CodepSettings, sym::Symbol, val)
+function Base.setproperty!(obj::CorSettings, sym::Symbol, val)
     if sym == :type
         @assert(val ∈ CodepTypes, "$sym = $val, must be one of $CodepTypes")
     end
@@ -609,4 +609,4 @@ export CovSettings,
     PosdefFixSettings,
     GenericFunc,
     MuSettings,
-    CodepSettings
+    CorSettings
