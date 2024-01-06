@@ -19,18 +19,18 @@ codep_dist_mtx
 ## Private API
 
 ```@docs
-BinTypes
+BinMethods
 BLFMType
-EllipseTypes
-BoxTypes
-KindBootstrap
+EllipseMethods
+BoxMethods
+BootstrapMethods
 MuMethods
 MuTargets
 CovMethods
-PosdefFixes
+PosdefFixMethods
 DenoiseMethods
 RegCriteria
-FSType
+FSMethods
 CorMethods
 RRPVersions
 UncertaintyTypes

@@ -34427,7 +34427,7 @@ end
 @testset "Custom Func and Val for Mean" begin
     portfolio = Portfolio(; prices = prices)
     mu_settings = MuSettings(
-        type = :Custom_Func,
+        method = :Custom_Func,
         genfunc = GenericFunc(; func = x -> 3 * vec(mean(x, dims = 1))),
     )
     asset_statistics!(portfolio; calc_kurt = false, mu_settings = mu_settings)
@@ -34448,7 +34448,7 @@ end
     mu1 = portfolio.mu
     cov1 = portfolio.cov
 
-    cov_settings = CovSettings(; type = :Full)
+    cov_settings = CovSettings(; method = :Full)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu2 = portfolio.mu
     cov2 = portfolio.cov
@@ -34480,7 +34480,7 @@ end
     cov7 = portfolio.cov
 
     cov_settings = CovSettings(;
-        type = :Semi,
+        method = :Semi,
         estimation = CovEstSettings(; estimator = AnalyticalNonlinearShrinkage()),
     )
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
@@ -34498,7 +34498,7 @@ end
     cov10 = portfolio.cov
 
     cov_settings = CovSettings(;
-        type = :Semi,
+        method = :Semi,
         estimation = CovEstSettings(;
             estimator = AnalyticalNonlinearShrinkage(),
             genfunc = GenericFunc(args = (fweights(1:size(portfolio.returns, 1)),)),
@@ -40204,7 +40204,7 @@ end
 @testset "Gerber Covariances" begin
     portfolio = Portfolio(; prices = prices)
 
-    cov_settings = CovSettings(; type = :Gerber0)
+    cov_settings = CovSettings(; method = :Gerber0)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu1 = portfolio.mu
     cov1 = portfolio.cov
@@ -40233,7 +40233,7 @@ end
     cov5 = portfolio.cov
 
     cov_settings =
-        CovSettings(; type = :Gerber0, gerber = GerberSettings(; threshold = 0.25))
+        CovSettings(; method = :Gerber0, gerber = GerberSettings(; threshold = 0.25))
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu6 = portfolio.mu
     cov6 = portfolio.cov
@@ -40245,7 +40245,7 @@ end
     mu7 = portfolio.mu
     cov7 = portfolio.cov
 
-    cov_settings = CovSettings(; type = :Gerber1)
+    cov_settings = CovSettings(; method = :Gerber1)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu8 = portfolio.mu
     cov8 = portfolio.cov
@@ -40260,7 +40260,7 @@ end
     mu10 = portfolio.mu
     cov10 = portfolio.cov
 
-    cov_settings = CovSettings(; type = :Gerber2)
+    cov_settings = CovSettings(; method = :Gerber2)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu11 = portfolio.mu
     cov11 = portfolio.cov
@@ -45477,7 +45477,7 @@ end
 
     genfunc = GenericFunc(; func = x -> 3 * cov(x))
     estimation = CovEstSettings(; genfunc = genfunc)
-    cov_settings = CovSettings(; type = :Custom_Func, estimation = estimation)
+    cov_settings = CovSettings(; method = :Custom_Func, estimation = estimation)
 
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov1 = portfolio.cov

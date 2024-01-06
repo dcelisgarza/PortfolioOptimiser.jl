@@ -87,7 +87,7 @@ Compute the mutual information and variation of information matrices.
 - `x`: `T×N` array containing the returns series of the assets. `T` is the number of observations and `N` the number of assets.
 - `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics. Can take on an integer value or the following values:
     - An integer value explicitly defines the number of bins.
-    - A choice of optimal bin width selection algorithms from [`BinTypes`](@ref).
+    - A choice of optimal bin width selection algorithms from [`BinMethods`](@ref).
         - `:KN`: Knuth's choice.
         - `:FD`: Freedman-Diaconis' choice.
         - `:SC`: Schotts' choice.
@@ -99,8 +99,8 @@ function mut_var_info_mtx(
     normed::Bool = true,
 )
     @assert(
-        bins_info ∈ BinTypes || isa(bins_info, Int) && bins_info > zero(bins_info),
-        "bins_info = $bins_info, has to either be in $BinTypes, or an integer value greater than 0"
+        bins_info ∈ BinMethods || isa(bins_info, Int) && bins_info > zero(bins_info),
+        "bins_info = $bins_info, has to either be in $BinMethods, or an integer value greater than 0"
     )
 
     bin_width_func = if bins_info == :KN
@@ -451,7 +451,7 @@ function posdef_fix!(
 
     (method == :None || isposdef(mtx)) && return nothing
 
-    @assert(method ∈ PosdefFixes, "method = $method, must be one of $PosdefFixes")
+    @assert(method ∈ PosdefFixMethods, "method = $method, must be one of $PosdefFixMethods")
 
     _mtx = if method == :Nearest
         nearest_cov(mtx, args...; kwargs...)
@@ -708,7 +708,7 @@ function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(
         catch SingularException
             throw(
                 ErrorException(
-                    "Covariance matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set settings.posdef.method = $(settings.posdef.method), to a different method from $PosdefFixes.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.\n\t Try a different type = $type, from $CovMethods.",
+                    "Covariance matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set settings.posdef.method = $(settings.posdef.method), to a different method from $PosdefFixMethods.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.\n\t Try a different type = $type, from $CovMethods.",
                 ),
             )
         end
@@ -786,7 +786,7 @@ function cokurt_mtx(
         catch SingularException
             throw(
                 ErrorException(
-                    "Kurtosis matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set settings.posdef.method = $(settings.posdef.method), to a different method from $PosdefFixes.\n\t* Set denoise = true, and recalculate.\n\t* Try both approaches at the same time.",
+                    "Kurtosis matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set settings.posdef.method = $(settings.posdef.method), to a different method from $PosdefFixMethods.\n\t* Set denoise = true, and recalculate.\n\t* Try both approaches at the same time.",
                 ),
             )
         end
@@ -801,7 +801,7 @@ function cokurt_mtx(
         catch SingularException
             throw(
                 ErrorException(
-                    "Semi Kurtosis matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set settings.posdef.method = $(settings.posdef.method), to a different method from $PosdefFixes.\n\t* Set denoise = true, and recalculate.\n\t* Try both approaches at the same time.",
+                    "Semi Kurtosis matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set settings.posdef.method = $(settings.posdef.method), to a different method from $PosdefFixMethods.\n\t* Set denoise = true, and recalculate.\n\t* Try both approaches at the same time.",
                 ),
             )
         end
@@ -1024,7 +1024,7 @@ function gen_bootstrap(
     seed::Union{<:Integer, Nothing} = nothing,
     rng = Random.default_rng(),
 )
-    @assert(kind ∈ KindBootstrap, "kind = $kind, must be one of $KindBootstrap")
+    @assert(kind ∈ BootstrapMethods, "kind = $kind, must be one of $BootstrapMethods")
     !isnothing(seed) && Random.seed!(rng, seed)
 
     mus = Vector{Vector{eltype(returns)}}(undef, 0)
@@ -1450,7 +1450,7 @@ function loadings_matrix(
     std_kwargs::NamedTuple = (;),
     threshold::Real = 0.05,
 )
-    @assert(type ∈ FSType, "type = $type, must be one of $FSType")
+    @assert(type ∈ FSMethods, "type = $type, must be one of $FSMethods")
     features = names(x)
     rows = ncol(y)
     cols = ncol(x) + 1
@@ -2491,7 +2491,7 @@ function black_litterman_factor_satistics!(
     reg_type::Symbol = :FReg,
     threshold::Real = 0.05,
 )
-    @assert(bl_type ∈ BLFMType, "bl_type = $bl_type, must be one of $BLFMType")
+    @assert(bl_type ∈ BLFMMethods, "bl_type = $bl_type, must be one of $BLFMMethods")
 
     returns = portfolio.returns
     f_returns = portfolio.f_returns

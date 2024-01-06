@@ -1964,8 +1964,8 @@ function HCPortfolio(;
         )
     end
     @assert(
-        bins_info ∈ BinTypes || isa(bins_info, Int) && bins_info > zero(bins_info),
-        "bins_info = $bins_info, has to either be in $BinTypes, or an integer value greater than 0"
+        bins_info ∈ BinMethods || isa(bins_info, Int) && bins_info > zero(bins_info),
+        "bins_info = $bins_info, has to either be in $BinMethods, or an integer value greater than 0"
     )
     if isa(w_min, Real)
         @assert(
@@ -2180,8 +2180,8 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :bins_info
         @assert(
-            val ∈ BinTypes || isa(val, Int) && val > zero(val),
-            "bins_info = $val, has to either be in $BinTypes, or an integer value greater than 0"
+            val ∈ BinMethods || isa(val, Int) && val > zero(val),
+            "bins_info = $val, has to either be in $BinMethods, or an integer value greater than 0"
         )
     elseif sym == :cor_method
         @assert(val ∈ CorMethods, "cor_method = $val, must be one of $CorMethods")
