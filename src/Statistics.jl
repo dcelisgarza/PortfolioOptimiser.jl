@@ -1249,11 +1249,7 @@ function forward_regression(
             push!(included, new_feature)
         end
     else
-        if criterion ∈ (GLM.aic, GLM.aicc, GLM.bic)
-            threshold = Inf
-        else
-            threshold = -Inf
-        end
+        threshold = criterion ∈ (GLM.aic, GLM.aicc, GLM.bic) ? Inf : -Inf
 
         excluded = namesx
         for _ in 1:N
