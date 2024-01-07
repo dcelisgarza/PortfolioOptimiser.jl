@@ -1493,7 +1493,7 @@ function risk_factors(
     isnothing(B) && (B = loadings_matrix(x, y, factor_settings.loadings_settings))
     namesB = names(B)
     x1 = "const" ∈ namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
-    B = Matrix(B[!, setdiff(namesB, ["ticker"])])
+    B = Matrix(B[!, setdiff(namesB, ("ticker",))])
 
     cov_f, mu_f =
         covar_mtx_mean_vec(x1; cov_settings = cov_settings, mu_settings = mu_settings)
@@ -1561,6 +1561,67 @@ function black_litterman(
     mu, cov_mtx, w, missing = _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta)
 
     return mu, cov_mtx, w
+end
+
+function bayesian_black_litterman(
+    returns::AbstractMatrix,
+    F::AbstractMatrix,
+    B::AbstractMatrix,
+    P_f::AbstractMatrix,
+    Q_f::AbstractVector;
+    cov_settings::CovSettings = CovSettings(;),
+    mu_settings::MuSettings = MuSettings(;),
+    bl_settings::BLSettings = BLSettings(;),
+)
+    sigma_f, mu_f =
+        covar_mtx_mean_vec(F; cov_settings = cov_settings, mu_settings = mu_settings)
+
+    constant = bl_settings.constant
+    diagonal = bl_settings.diagonal
+    delta = bl_settings.delta
+    rf = bl_settings.rf
+    var_args = bl_settings.var_genfunc.args
+    var_func = bl_settings.var_genfunc.func
+    var_kwargs = bl_settings.var_genfunc.kwargs
+
+    mu_f .-= rf
+
+    if constant
+        alpha = B[:, 1]
+        B = B[:, 2:end]
+    end
+
+    tau = 1 / size(returns, 1)
+
+    sigma = B * sigma_f * transpose(B)
+
+    if diagonal
+        D = returns - F * transpose(B)
+        D = Diagonal(vec(var_func(D, var_args...; var_kwargs...)))
+        sigma .+= D
+    end
+
+    omega_f = _omega(P_f, tau * sigma_f)
+
+    inv_sigma = sigma \ I
+    inv_sigma_f = sigma_f \ I
+    inv_omega_f = omega_f \ I
+    sigma_hat = (inv_sigma_f + transpose(P_f) * inv_omega_f * P_f) \ I
+    Pi_hat = sigma_hat * (inv_sigma_f * mu_f + transpose(P_f) * inv_omega_f * Q_f)
+    inv_sigma_hat = sigma_hat \ I
+    iish_b_is_b = (inv_sigma_hat + transpose(B) * inv_sigma * B) \ I
+    is_b_iish_b_is_b = inv_sigma * B * iish_b_is_b
+
+    sigma_bbl = (inv_sigma - is_b_iish_b_is_b * transpose(B) * inv_sigma) \ I
+    Pi_bbl = (sigma_bbl * is_b_iish_b_is_b * inv_sigma_hat * Pi_hat)
+
+    mu = Pi_bbl .+ rf
+
+    constant && (mu .+= alpha)
+
+    w = ((delta * sigma_bbl) \ I) * mu
+
+    return mu, sigma_bbl, w
 end
 
 function augmented_black_litterman(
@@ -1671,67 +1732,6 @@ function augmented_black_litterman(
     all_factor_provided && constant && (mu_a = mu_a[1:N] .+ alpha)
 
     return mu_a[1:N], cov_mtx_a[1:N, 1:N], w_a[1:N]
-end
-
-function bayesian_black_litterman(
-    returns::AbstractMatrix,
-    F::AbstractMatrix,
-    B::AbstractMatrix,
-    P_f::AbstractMatrix,
-    Q_f::AbstractVector;
-    cov_settings::CovSettings = CovSettings(;),
-    mu_settings::MuSettings = MuSettings(;),
-    bl_settings::BLSettings = BLSettings(;),
-)
-    sigma_f, mu_f =
-        covar_mtx_mean_vec(F; cov_settings = cov_settings, mu_settings = mu_settings)
-
-    constant = bl_settings.constant
-    diagonal = bl_settings.diagonal
-    delta = bl_settings.delta
-    rf = bl_settings.rf
-    var_args = bl_settings.var_genfunc.args
-    var_func = bl_settings.var_genfunc.func
-    var_kwargs = bl_settings.var_genfunc.kwargs
-
-    mu_f .-= rf
-
-    if constant
-        alpha = B[:, 1]
-        B = B[:, 2:end]
-    end
-
-    tau = 1 / size(returns, 1)
-
-    sigma = B * sigma_f * transpose(B)
-
-    if diagonal
-        D = returns - F * transpose(B)
-        D = Diagonal(vec(var_func(D, var_args...; var_kwargs...)))
-        sigma .+= D
-    end
-
-    omega_f = _omega(P_f, tau * sigma_f)
-
-    inv_sigma = sigma \ I
-    inv_sigma_f = sigma_f \ I
-    inv_omega_f = omega_f \ I
-    sigma_hat = (inv_sigma_f + transpose(P_f) * inv_omega_f * P_f) \ I
-    Pi_hat = sigma_hat * (inv_sigma_f * mu_f + transpose(P_f) * inv_omega_f * Q_f)
-    inv_sigma_hat = sigma_hat \ I
-    iish_b_is_b = (inv_sigma_hat + transpose(B) * inv_sigma * B) \ I
-    is_b_iish_b_is_b = inv_sigma * B * iish_b_is_b
-
-    sigma_bbl = (inv_sigma - is_b_iish_b_is_b * transpose(B) * inv_sigma) \ I
-    Pi_bbl = (sigma_bbl * is_b_iish_b_is_b * inv_sigma_hat * Pi_hat)
-
-    mu = Pi_bbl .+ rf
-
-    constant && (mu .+= alpha)
-
-    w = ((delta * sigma_bbl) \ I) * mu
-
-    return mu, sigma_bbl, w
 end
 
 """
@@ -1996,7 +1996,7 @@ function black_litterman_factor_satistics!(
     end
     namesB = names(B)
     bl_settings.constant = "const" ∈ namesB
-    B = Matrix(B[!, setdiff(namesB, ["ticker"])])
+    B = Matrix(B[!, setdiff(namesB, ("ticker",))])
 
     portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_settings.method == :B
         bayesian_black_litterman(

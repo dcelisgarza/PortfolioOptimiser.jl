@@ -60,6 +60,10 @@ using SafeTestsets
     include("MiscStatisticsTests.jl")
 end
 
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
+end
+
 @safetestset "BL Statistics" begin end
 
 @safetestset "Factor Statistics" begin

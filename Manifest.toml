@@ -560,9 +560,9 @@ version = "3.0.1+0"
 
 [[deps.JuMP]]
 deps = ["LinearAlgebra", "MacroTools", "MathOptInterface", "MutableArithmetics", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays"]
-git-tree-sha1 = "769d01cf0d3d1f3e59594cc43c8b319b36d7c2a3"
+git-tree-sha1 = "adef1dfbafeab635664fb3249b58be8d290ed49d"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
-version = "1.18.0"
+version = "1.18.1"
 
     [deps.JuMP.extensions]
     JuMPDimensionalDataExt = "DimensionalData"
@@ -752,9 +752,9 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[deps.MathOptInterface]]
 deps = ["BenchmarkTools", "CodecBzip2", "CodecZlib", "DataStructures", "ForwardDiff", "JSON", "LinearAlgebra", "MutableArithmetics", "NaNMath", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays", "SpecialFunctions", "Test", "Unicode"]
-git-tree-sha1 = "d2a140e551c9ec9028483e3c7d1244f417567ac0"
+git-tree-sha1 = "372dfbc815ddd820ae9a83990e4f625d95c9bca9"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "1.24.0"
+version = "1.25.0"
 
 [[deps.MbedTLS]]
 deps = ["Dates", "MbedTLS_jll", "MozillaCACerts_jll", "NetworkOptions", "Random", "Sockets"]
