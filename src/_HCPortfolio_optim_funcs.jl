@@ -151,10 +151,10 @@ function _hierarchical_clustering(
     corr = portfolio.cor
     dist = portfolio.dist
 
-    codeps1 = (:Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
+    cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
 
     if linkage == :DBHT
-        corr = cor_method ∈ codeps1 ? 1 .- dist .^ 2 : corr
+        corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
         missing, missing, missing, missing, missing, missing, clustering =
             DBHTs(dist, corr; branchorder = branchorder, method = dbht_method)
     else
@@ -187,7 +187,25 @@ function cluster_assets(
 
     return DataFrame(Assets = portfolio.assets, Clusters = clustering_idx), clustering, k
 end
-export cluster_assets
+function cluster_assets!(
+    portfolio::HCPortfolio;
+    linkage = :single,
+    max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
+    branchorder = :optimal,
+    k = portfolio.k,
+    dbht_method = :Unique,
+)
+    clustering, tk =
+        _hierarchical_clustering(portfolio, linkage, max_k, branchorder, dbht_method)
+
+    k = iszero(k) ? tk : k
+
+    portfolio.clusters = clustering
+    portfolio.k = k
+
+    return nothing
+end
+export cluster_assets, cluster_assets!
 
 function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0.0)
     cret = returns[:, cluster]

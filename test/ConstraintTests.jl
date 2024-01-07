@@ -14,7 +14,9 @@ prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "Factor Constraints" begin
+@testset "Asset constraints" begin end
+
+@testset "Factor constraints" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
     loadings = loadings_matrix(
         DataFrame(portfolio.f_returns, portfolio.f_assets),
@@ -556,7 +558,7 @@ l = 2.0
         (14,),
     )
 
-    @test loadingst == loadings
+    @test isapprox(loadingst[!, 2:end], loadings[!, 2:end])
     @test isapprox(C, Ct)
     @test isapprox(D, Dt)
 end

@@ -73,18 +73,18 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
         if row["Type"] == "Assets"
             idx = findfirst(x -> x == row["Position"], asset_list)
             A1 = zeros(N)
-            if row["Weight"] != ""
+            if !isempty(row["Weight"])
                 A1[idx] = d
                 push!(B, row["Weight"] * d)
             else
                 A1[idx] = 1
-                if row["Type Relative"] == "Assets" && row["Relative"] != ""
+                if row["Type Relative"] == "Assets" && !isempty(row["Relative"])
                     idx2 = findfirst(x -> x == row["Relative"], asset_list)
                     A2 = zeros(N)
                     A2[idx2] = 1
                 elseif row["Type Relative"] == "Classes" &&
-                       row["Relative Set"] != "" &&
-                       row["Relative"] != ""
+                       !isempty(row["Relative Set"]) &&
+                       !isempty(row["Relative"])
                     A2 = asset_classes[!, row["Relative Set"]] .== row["Relative"]
                 end
                 A1 = (A1 - A2 * row["Factor"]) * d
@@ -93,20 +93,38 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
             A = vcat(A, transpose(A1))
         elseif row["Type"] == "All Assets"
             A1 = I(N)
-            if row["Weight"] != ""
+            if !isempty(row["Weight"])
                 A1 *= d
                 B1 = d * row["Weight"]
                 B = vcat(B, fill(B1, N))
             else
-                if row["Type Relative"] == "Assets" && row["Relative"] != ""
+                if row["Type Relative"] == "Assets" && !isempty(row["Relative"])
                     idx = findfirst(x -> x == row["Relative"], asset_list)
                     A2 = zeros(N, N)
                     A2[:, idx] .= 1
                 elseif row["Type Relative"] == "Classes" &&
-                       row["Relative Set"] != "" &&
-                       row["Relative"] != ""
+                       !isempty(row["Relative Set"]) &&
+                       !isempty(row["Relative"])
                     A2 = asset_classes[!, row["Relative Set"]] .== row["Relative"]
                     A2 = ones(N, N) .* transpose(A2)
+                else
+                    @warn(
+                        """
+                        Constraints DataFrame not created correctly.
+                        - row["Type"] = $(row["Type"])
+                        First check to see if this holds.
+                        - row["Type Relative"] == "Assets" && !isempty(row["Relative"])
+                        The items evaluate to:
+                        - row["Type Relative"] = $(row["Type Relative"])
+                        - !isempty(row["Relative"]) = $(!isempty(row["Relative"]))
+                        Otherwise check this holds.
+                        - row["Type Relative"] == "Classes" && !isempty(row["Relative Set"]) && !isempty(row["Relative"])
+                        The items evaluate to:
+                        - row["Type Relative"] = $(row["Type Relative"])
+                        - !isempty(row["Relative Set"]) = $(!isempty(row["Relative Set"]))
+                        - !isempty(row["Relative"]) = $(!isempty(row["Relative"]))
+                        """
+                    )
                 end
                 A1 = (A1 - A2 * row["Factor"]) * d
                 B = vcat(B, zeros(N))
@@ -114,17 +132,17 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
             A = vcat(A, A1)
         elseif row["Type"] == "Classes"
             A1 = asset_classes[!, row["Set"]] .== row["Position"]
-            if row["Weight"] != ""
+            if !isempty(row["Weight"])
                 A1 = A1 * d
                 push!(B, row["Weight"] * d)
             else
-                if row["Type Relative"] == "Assets" && row["Relative"] != ""
+                if row["Type Relative"] == "Assets" && !isempty(row["Relative"])
                     idx = findfirst(x -> x == row["Relative"], asset_list)
                     A2 = zeros(N)
                     A2[idx] = 1
                 elseif row["Type Relative"] == "Classes" &&
-                       row["Relative Set"] != "" &&
-                       row["Relative"] != ""
+                       !isempty(row["Relative Set"]) &&
+                       !isempty(row["Relative"])
                     A2 = asset_classes[!, row["Relative Set"]] .== row["Relative"]
                 end
                 A1 = (A1 - A2 * row["Factor"]) * d
@@ -132,7 +150,7 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
             end
             A = vcat(A, transpose(A1))
         elseif row["Type"] == "All Classes"
-            if row["Weight"] != ""
+            if !isempty(row["Weight"])
                 for val in sort!(unique(asset_classes[!, row["Set"]]))
                     A1 = (asset_classes[!, row["Set"]] .== val) * d
                     A = vcat(A, transpose(A1))
@@ -141,13 +159,13 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
             else
                 for val in sort!(unique(asset_classes[!, row["Set"]]))
                     A1 = asset_classes[!, row["Set"]] .== val
-                    if row["Type Relative"] == "Assets" && row["Relative"] != ""
+                    if row["Type Relative"] == "Assets" && !isempty(row["Relative"])
                         idx = findfirst(x -> x == row["Relative"], asset_list)
                         A2 = zeros(N)
                         A2[idx] = 1
                     elseif row["Type Relative"] == "Classes" &&
-                           row["Relative Set"] != "" &&
-                           row["Relative"] != ""
+                           !isempty(row["Relative Set"]) &&
+                           !isempty(row["Relative"])
                         A2 = asset_classes[!, row["Relative Set"]] .== row["Relative"]
                     end
                     A1 = (A1 - A2 * row["Factor"]) * d
@@ -157,7 +175,7 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
             end
         elseif row["Type"] == "Each Asset in Class"
             A1 = asset_classes[!, row["Set"]] .== row["Position"]
-            if row["Weight"] != ""
+            if !isempty(row["Weight"])
                 for (i, j) in pairs(A1)
                     !j && continue
                     A2 = zeros(N)
@@ -170,13 +188,13 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
                     !j && continue
                     A2 = zeros(N)
                     A2[i] = 1
-                    if row["Type Relative"] == "Assets" && row["Relative"] != ""
+                    if row["Type Relative"] == "Assets" && !isempty(row["Relative"])
                         idx = findfirst(x -> x == row["Relative"], asset_list)
                         A3 = zeros(N)
                         A3[idx] = 1
                     elseif row["Type Relative"] == "Classes" &&
-                           row["Relative Set"] != "" &&
-                           row["Relative"] != ""
+                           !isempty(row["Relative Set"]) &&
+                           !isempty(row["Relative"])
                         A3 = asset_classes[!, row["Relative Set"]] .== row["Relative"]
                     end
                     A2 = (A2 - A3 * row["Factor"]) * d
@@ -248,7 +266,7 @@ function factor_constraints(constraints::DataFrame, loadings::DataFrame)
         end
 
         C1 = loadings[!, row["Factor"]]
-        if row["Relative Factor"] != ""
+        if !isempty(row["Relative Factor"])
             C2 = loadings[!, row["Relative Factor"]]
             C1 = C1 - C2
         end
@@ -341,14 +359,14 @@ function asset_views(views::DataFrame, asset_classes::DataFrame)
             P1 = P1 / sum(P1)
         end
 
-        if row["Type Relative"] == "Assets" && row["Relative"] != ""
+        if row["Type Relative"] == "Assets" && !isempty(row["Relative"])
             idx2 = findfirst(x -> x == row["Relative"], asset_list)
             P2 = zeros(N)
             P2[idx2] = 1
             valid = true
         elseif row["Type Relative"] == "Classes" &&
-               row["Relative Set"] != "" &&
-               row["Relative"] != ""
+               !isempty(row["Relative Set"]) &&
+               !isempty(row["Relative"])
             P2 = asset_classes[!, row["Relative Set"]] .== row["Relative"]
             P2 = P2 / sum(P2)
             valid = true
@@ -441,7 +459,7 @@ function factor_views(views::DataFrame, loadings::DataFrame)
         P1 = zeros(N)
         P1[idx] = d
 
-        if row["Relative Factor"] != ""
+        if !isempty(row["Relative Factor"])
             idx = findfirst(x -> x == row["Relative Factor"], factor_list)
             P1[idx] = -d
         end

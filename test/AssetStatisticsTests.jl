@@ -9292,7 +9292,7 @@ end
     @test !isapprox(skurt1, skurt2)
 end
 
-@testset "Codependence and Distance Matrix Estimation" begin
+@testset "Correlation and Distance Matrix Estimation" begin
     portfolio = HCPortfolio(; prices = prices)
 
     cor_settings = CorSettings(;)

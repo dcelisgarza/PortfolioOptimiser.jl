@@ -858,8 +858,24 @@ cor_dist_mtx(
 """
 function cor_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettings(;))
     method = settings.method
-    if method == :Pearson
-        corr = cor(returns)
+    if method ∈ (:Pearson, :Semi_Pearson)
+        estimation = settings.estimation
+        estimator = estimation.estimator
+        args = estimation.cor_genfunc.args
+        kwargs = estimation.cor_genfunc.kwargs
+        if method == :Semi_Pearson
+            target_ret = settings.estimation.target_ret
+            zro = zero(eltype(returns))
+            returns =
+                isa(target_ret, Real) ? min.(returns .- target_ret, zro) :
+                min.(returns .- transpose(target_ret), zro)
+            !haskey(kwargs, :mean) && (kwargs = (kwargs..., mean = zro))
+        end
+        corr = try
+            StatsBase.cor(estimator, returns, args...; kwargs...)
+        catch
+            StatsBase.cov2cor(Matrix(StatsBase.cov(estimator, returns, args...; kwargs...)))
+        end
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Spearman
         corr = corspearman(returns)
@@ -867,8 +883,29 @@ function cor_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettin
     elseif method == :Kendall
         corr = corkendall(returns)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-    elseif method == :Abs_Pearson
-        corr = abs.(cor(returns))
+    elseif method ∈ (:Abs_Pearson, :Abs_Semi_Pearson)
+        estimation = settings.estimation
+        estimator = estimation.estimator
+        args = estimation.cor_genfunc.args
+        kwargs = estimation.cor_genfunc.kwargs
+        if method == :Abs_Semi_Pearson
+            target_ret = settings.estimation.target_ret
+            zro = zero(eltype(returns))
+            returns =
+                isa(target_ret, Real) ? min.(returns .- target_ret, zro) :
+                min.(returns .- transpose(target_ret), zro)
+            !haskey(kwargs, :mean) && (kwargs = (kwargs..., mean = zro))
+        end
+        corr = try
+            abs.(StatsBase.cor(estimator, returns, args...; kwargs...))
+        catch
+            abs.(
+                StatsBase.cov2cor(
+                    Matrix(StatsBase.cov(estimator, returns, args...; kwargs...)),
+                )
+            )
+        end
+        # corr = abs.(cor(returns))
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif method == :Abs_Spearman
         corr = abs.(corspearman(returns))

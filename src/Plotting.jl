@@ -774,8 +774,8 @@ function plot_clusters(
         clusters[i] = findall(clustering_idx .== i)
     end
 
-    codeps1 = (:Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
-    if cor_method ∈ codeps1
+    cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
+    if cor_method ∈ cors
         clim = (-1, 1)
     else
         clim = (0, 1)

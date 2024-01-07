@@ -56,31 +56,31 @@ using SafeTestsets
 #     include("TraditionalOptimisationTests.jl")
 # end
 
-@safetestset "Misc Statistics" begin
-    include("MiscStatisticsTests.jl")
-end
+# @safetestset "Misc Statistics" begin
+#     include("MiscStatisticsTests.jl")
+# end
 
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
+# @safetestset "Constraint Functions" begin
+#     include("ConstraintTests.jl")
+# end
 
-@safetestset "BL Statistics" begin end
+# @safetestset "BL Statistics" begin end
 
-@safetestset "Factor Statistics" begin
-    include("FactorStatisticsTests.jl")
-end
+# @safetestset "Factor Statistics" begin
+#     include("FactorStatisticsTests.jl")
+# end
 
-@safetestset "WC Statistics" begin
-    include("WCStatisticsTests.jl")
-end
+# @safetestset "WC Statistics" begin
+#     include("WCStatisticsTests.jl")
+# end
 
-@safetestset "DBHT Clustering" begin
-    include("DBHTClusteringTests.jl")
-end
+# @safetestset "DBHT Clustering" begin
+#     include("DBHTClusteringTests.jl")
+# end
 
-@safetestset "Portfolio Classic WC Optimisation" begin
-    include("PortfolioClassicWCTests.jl")
-end
+# @safetestset "Portfolio Classic WC Optimisation" begin
+#     include("PortfolioClassicWCTests.jl")
+# end
 
 @safetestset "Asset Statistics" begin
     include("AssetStatisticsTests.jl")

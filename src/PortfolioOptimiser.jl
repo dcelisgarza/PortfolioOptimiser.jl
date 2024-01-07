@@ -22,7 +22,7 @@ using AverageShiftedHistograms,
 
 include("Definitions.jl")
 include("DBHTs.jl")
-include("Constraint_functions.jl")
+include("Constraints.jl")
 include("OWA.jl")
 include("Portfolio.jl")
 include("Statistics.jl")

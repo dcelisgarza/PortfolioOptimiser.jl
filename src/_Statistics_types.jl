@@ -188,12 +188,14 @@ Methods for estimating the codependence (correlation) matrix ``\\mathbf{P}``, an
 """
 const CorMethods = (
     :Pearson,
+    :Semi_Pearson,
     :Spearman,
     :Kendall,
     :Gerber0,
     :Gerber1,
     :Gerber2,
     :Abs_Pearson,
+    :Abs_Semi_Pearson,
     :Abs_Spearman,
     :Abs_Kendall,
     :Distance,
@@ -423,21 +425,25 @@ function KurtSettings(;
 end
 
 mutable struct CorEstSettings{T1 <: Real}
+    estimator::CovarianceEstimator
     alpha::T1
     bins_info::Union{Symbol, <:Integer}
     cor_genfunc::GenericFunc
     dist_genfunc::GenericFunc
+    target_ret::Union{<:AbstractVector{<:Real}, <:Real}
     custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing}
     custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing}
     sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
 end
 function CorEstSettings(;
+    estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true),
     alpha::Real = 0.05,
     bins_info::Union{Symbol, <:Integer} = :KN,
     cor_genfunc::GenericFunc = GenericFunc(; func = StatsBase.cor),
     dist_genfunc::GenericFunc = GenericFunc(;
         func = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
     ),
+    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0,
     custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
     custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
     sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
@@ -468,10 +474,12 @@ function CorEstSettings(;
     # )
 
     return CorEstSettings{typeof(alpha)}(
+        estimator,
         alpha,
         bins_info,
         cor_genfunc,
         dist_genfunc,
+        target_ret,
         custom_cor,
         custom_dist,
         sigma,
