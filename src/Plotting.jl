@@ -764,7 +764,7 @@ function plot_clusters(
         clustering_idx = cutree(clustering; k = k)
     end
 
-    ordered_codep = corr[sort_order, sort_order]
+    ordered_corr = corr[sort_order, sort_order]
     ordered_assets = assets[sort_order]
 
     uidx = minimum(clustering_idx):maximum(clustering_idx)
@@ -785,7 +785,196 @@ function plot_clusters(
     colgrad = cgrad(theme_h; theme_h_kwargs...)
 
     hmap = plot(
-        ordered_codep;
+        ordered_corr;
+        st = :heatmap,
+        #yticks=(1:nrows,rowlabels),
+        yticks = (1:length(assets), ordered_assets),
+        xticks = (1:length(assets), ordered_assets),
+        xrotation = 90,
+        colorbar = false,
+        clim = clim,
+        xlim = (0.5, N + 0.5),
+        ylim = (0.5, N + 0.5),
+        color = colgrad,
+        kwargs_h...,
+    )
+    dend1 = plot(clustering; xticks = false, ylim = (0, 1), kwargs_d1...)
+    dend2 = plot(
+        clustering;
+        yticks = false,
+        xrotation = 90,
+        orientation = :horizontal,
+        xlim = (0, 1),
+        kwargs_d2...,
+    )
+
+    !haskey(kwargs_l, :color) && (kwargs_l = (kwargs_l..., color = :black))
+    !haskey(kwargs_l, :linewidth) && (kwargs_l = (kwargs_l..., linewidth = 3))
+
+    nodes = -clustering.merges
+    if show_clusters
+        for (i, cluster) in enumerate(clusters)
+            a = [findfirst(x -> x == c, sort_order) for c in cluster]
+            a = a[.!isnothing.(a)]
+            xmin = minimum(a)
+            xmax = xmin + length(cluster)
+
+            i1 = [findfirst(x -> x == c, nodes[:, 1]) for c in cluster]
+            i1 = i1[.!isnothing.(i1)]
+            i2 = [findfirst(x -> x == c, nodes[:, 2]) for c in cluster]
+            i2 = i2[.!isnothing.(i2)]
+            i3 = unique([i1; i2])
+            h = min(maximum(heights[i3]) * 1.1, 1)
+
+            plot!(
+                hmap,
+                [
+                    xmin - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmin - 0.5,
+                    xmin - 0.5,
+                    xmin - 0.5,
+                ],
+                [
+                    xmin - 0.5,
+                    xmin - 0.5,
+                    xmin - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmax - 0.5,
+                    xmin - 0.5,
+                ];
+                legend = false,
+                kwargs_l...,
+            )
+
+            plot!(
+                dend1,
+                [
+                    xmin - 0.25,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                ],
+                [0, 0, 0, h, h, h, h, 0],
+                color = nothing,
+                legend = false,
+                fill = (0, 0.5, colours[(i - 1) % k + 1]),
+            )
+
+            plot!(
+                dend2,
+                [0, 0, 0, h, h, h, h, 0],
+                [
+                    xmin - 0.25,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmax - 0.75,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                    xmin - 0.25,
+                ],
+                color = nothing,
+                legend = false,
+                fill = (0, 0.5, colours[(i - 1) % k + 1]),
+            )
+        end
+    end
+
+    !haskey(kwargs, :size) && (kwargs = (kwargs..., size = (600, 600)))
+
+    # https://docs.juliaplots.org/latest/generated/statsplots/#Dendrogram-on-the-right-side
+    l = grid(2, 2, heights = [0.2, 0.8, 0.2, 0.8], widths = [0.8, 0.2, 0.8, 0.2])
+    plt = plot(
+        dend1,
+        plot(ticks = nothing, border = :none, background_color = nothing),
+        hmap,
+        dend2;
+        layout = l,
+        kwargs...,
+    )
+
+    return plt
+end
+
+function plot_clusters(
+    assets::AbstractVector,
+    returns::AbstractMatrix;
+    cor_settings::CorSettings = CorSettings(;),
+    linkage = :single,
+    max_k = ceil(Int, sqrt(size(returns, 2))),
+    branchorder = :optimal,
+    k = 0,
+    dbht_method = :Unique,
+    show_clusters = true,
+    theme_d = :Spectral,
+    theme_h = :Spectral,
+    theme_h_kwargs = (;),
+    kwargs_d1 = (;),
+    kwargs_d2 = (;),
+    kwargs_h = (;),
+    kwargs_l = (;),
+    kwargs = (;),
+)
+    @smart_assert(linkage ∈ LinkageTypes)
+
+    N = length(assets)
+    cor_method = cor_settings.method
+    corr, dist = cor_dist_mtx(returns, cor_settings)
+
+    cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
+
+    if linkage == :DBHT
+        corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
+        missing, missing, missing, missing, missing, missing, clustering =
+            DBHTs(dist, corr; branchorder = branchorder, method = dbht_method)
+    else
+        clustering = hclust(
+            dist;
+            linkage = linkage,
+            branchorder = branchorder == :default ? :r : branchorder,
+        )
+    end
+
+    tk = _two_diff_gap_stat(dist, clustering, max_k)
+
+    k = iszero(k) ? tk : k
+
+    clustering_idx = cutree(clustering; k = k)
+
+    heights = clustering.heights
+    sort_order = clustering.order
+    ordered_corr = corr[sort_order, sort_order]
+    ordered_assets = assets[sort_order]
+
+    uidx = minimum(clustering_idx):maximum(clustering_idx)
+
+    clusters = Vector{Vector{Int}}(undef, length(uidx))
+    for i in eachindex(clusters)
+        clusters[i] = findall(clustering_idx .== i)
+    end
+
+    cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
+    if cor_method ∈ cors
+        clim = (-1, 1)
+    else
+        clim = (0, 1)
+    end
+
+    colours = palette(theme_d, k)
+    colgrad = cgrad(theme_h; theme_h_kwargs...)
+
+    hmap = plot(
+        ordered_corr;
         st = :heatmap,
         #yticks=(1:nrows,rowlabels),
         yticks = (1:length(assets), ordered_assets),
@@ -942,7 +1131,7 @@ function plot_dendrogram(
         clustering_idx = cutree(clustering; k = k)
     end
 
-    ordered_codep = corr[sort_order, sort_order]
+    ordered_corr = corr[sort_order, sort_order]
     ordered_assets = assets[sort_order]
 
     uidx = minimum(clustering_idx):maximum(clustering_idx)
