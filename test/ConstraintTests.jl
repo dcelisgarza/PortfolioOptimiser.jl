@@ -91,7 +91,7 @@ l = 2.0
             0.6,
             0.73,
         ],
-        "Relative Factor" => [
+        "Relative_Factor" => [
             "",
             "VLUE",
             "SIZE",

@@ -205,6 +205,7 @@ function cluster_assets!(
 
     return nothing
 end
+
 export cluster_assets, cluster_assets!
 
 function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0.0)

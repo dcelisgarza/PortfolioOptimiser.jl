@@ -237,7 +237,7 @@ Create the factor constraints matrix `C` and vector `D`:
         - `>=`: lower bound.
         - `<=`: upper bound.
     - `Value`: (<:Real) the upper or lower bound of the factor's value.
-    - `Relative_Position Factor`: (String) factor to which the constraint is relative.
+    - `Relative_Factor`: (String) factor to which the constraint is relative.
 - `loadings`: `Nl×Nf` loadings DataFrame, where `Nl` is the number of data points, and $(_ndef(:f2)).
 # Outputs
 - `C`: `Nc×Nf` matrix of constraints where $(_ndef(:c1)) and $(_ndef(:f2)).
@@ -257,7 +257,7 @@ constraints = DataFrame(
         "Factor" => ["MTUM", "USMV", "VLUE", "const"],
         "Sign" => ["<=", "<=", ">=", ">="],
         "Value" => [0.9, -1.2, 0.3, -0.1],
-        "Relative_Position Factor" => ["USMV", "", "", "SIZE"],
+        "Relative_Factor" => ["USMV", "", "", "SIZE"],
     )
 C, D = factor_constraints(constraints, loadings)
 ```
@@ -278,8 +278,8 @@ function factor_constraints(constraints::DataFrame, loadings::DataFrame)
         end
 
         C1 = loadings[!, row["Factor"]]
-        if !isempty(row["Relative_Position Factor"])
-            C2 = loadings[!, row["Relative_Position Factor"]]
+        if !isempty(row["Relative_Factor"])
+            C2 = loadings[!, row["Relative_Factor"]]
             C1 = C1 - C2
         end
 
@@ -423,7 +423,7 @@ Create the factor views matrix `P` and vector `Q`:
         - `>=`: lower bound.
         - `<=`: upper bound.
     - `Value`: (<:Real) the upper or lower bound of the factor's value.
-    - `Relative_Position Factor`: (String) factor to which the view is relative.
+    - `Relative_Factor`: (String) factor to which the view is relative.
 - `loadings`: `Nl×Nf` loadings DataFrame, where `Nl` is the number of data points, and $(_ndef(:f2)).
 # Outputs
 - `P`: `Nv×Nf` matrix of views where `Nv` is the number of views and $(_ndef(:f2)).
@@ -443,7 +443,7 @@ views = DataFrame(
     "Factor" => ["MTUM", "USMV", "VLUE"],
     "Sign" => ["<=", "<=", ">="],
     "Value" => [0.9, -1.2, 0.3],
-    "Relative_Position Factor" => ["USMV", "", ""],
+    "Relative_Factor" => ["USMV", "", ""],
 )
 P, Q = factor_views(views, loadings)
 ```
@@ -471,8 +471,8 @@ function factor_views(views::DataFrame, loadings::DataFrame)
         P1 = zeros(N)
         P1[idx] = d
 
-        if !isempty(row["Relative_Position Factor"])
-            idx = findfirst(x -> x == row["Relative_Position Factor"], factor_list)
+        if !isempty(row["Relative_Factor"])
+            idx = findfirst(x -> x == row["Relative_Factor"], factor_list)
             P1[idx] = -d
         end
 

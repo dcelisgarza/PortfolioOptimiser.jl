@@ -2067,6 +2067,41 @@ function black_litterman_factor_satistics!(
     return nothing
 end
 
+function cluster_assets(
+    returns::AbstractMatrix;
+    cor_settings::CorSettings = CorSettings(;),
+    linkage = :single,
+    max_k = ceil(Int, sqrt(size(returns, 2))),
+    branchorder = :optimal,
+    k = 0,
+    dbht_method = :Unique,
+)
+    @smart_assert(linkage ∈ LinkageTypes)
+
+    cor_method = cor_settings.method
+    corr, dist = cor_dist_mtx(returns, cor_settings)
+
+    cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
+
+    if linkage == :DBHT
+        corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
+        missing, missing, missing, missing, missing, missing, clustering =
+            DBHTs(dist, corr; branchorder = branchorder, method = dbht_method)
+    else
+        clustering = hclust(
+            dist;
+            linkage = linkage,
+            branchorder = branchorder == :default ? :r : branchorder,
+        )
+    end
+
+    tk = _two_diff_gap_stat(dist, clustering, max_k)
+
+    k = iszero(k) ? tk : k
+
+    return clustering, k
+end
+
 export covgerber0,
     covgerber1,
     covgerber2,
@@ -2097,4 +2132,5 @@ export covgerber0,
     mean_vec,
     cokurt_mtx,
     mu_estimator,
-    cor_dist_mtx
+    cor_dist_mtx,
+    cluster_assets
