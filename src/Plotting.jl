@@ -19,30 +19,46 @@ function plot_returns(timestamps, assets, returns, weights; per_asset = false, k
 
     return plot(timestamps, ret; kwargs...)
 end
-function plot_returns(portfolio,                      type = isa(portfolio, HCPortfolio) ? :HRP : :Trad;                      per_asset = false,                      kwargs...,)
-    return plot_returns(portfolio.timestamps,                        portfolio.assets,                        portfolio.returns,                        portfolio.optimal[type].weights;                        per_asset = per_asset,                        kwargs...,)
+function plot_returns(portfolio, type = isa(portfolio, HCPortfolio) ? :HRP : :Trad;
+                      per_asset = false, kwargs...,)
+    return plot_returns(portfolio.timestamps, portfolio.assets, portfolio.returns,
+                        portfolio.optimal[type].weights; per_asset = per_asset, kwargs...,)
 end
 
 function plot_bar(assets, data; kwargs...)
     !haskey(kwargs, :ylabel) && (kwargs = (kwargs..., ylabel = "Percentage Composition"))
     !haskey(kwargs, :xlabel) && (kwargs = (kwargs..., xlabel = "Assets"))
-    !haskey(kwargs, :xticks) && (kwargs = (kwargs...,                                           xticks = (range(0.5; step = 1, length = length(assets)), assets)))
+    !haskey(kwargs, :xticks) && (kwargs = (kwargs...,
+                                           xticks = (range(0.5; step = 1, length = length(assets)), assets)))
     !haskey(kwargs, :xrotation) && (kwargs = (kwargs..., xrotation = 90))
     !haskey(kwargs, :legend) && (kwargs = (kwargs..., legend = false))
 
     return bar(assets, data * 100; kwargs...)
 end
-function plot_bar(portfolio::AbstractPortfolio,                  type = isa(portfolio, HCPortfolio) ? :HRP : :Trad,                  kwargs...)
+function plot_bar(portfolio::AbstractPortfolio,
+                  type = isa(portfolio, HCPortfolio) ? :HRP : :Trad, kwargs...)
     return plot_bar(portfolio.assets, portfolio.optimal[type].weights, kwargs...)
 end
 
 function plot_risk_contribution(
                                 # RC args
-                                assets::AbstractVector,                                w::AbstractVector,                                returns::AbstractMatrix;                                rm::Symbol = :SD,                                rf::Real = 0.0,                                sigma::AbstractMatrix,                                alpha_i::Real = 0.0001,                                alpha::Real = 0.05,                                a_sim::Int = 100,                                beta_i::Real = alpha_i,                                beta::Real = alpha,                                b_sim::Integer = a_sim,                                di::Real = 1e-6,                                kappa::Real = 0.3,                                owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),                                solvers::Union{<:AbstractDict, Nothing} = nothing,                                # Plot args
-                                percentage::Bool = false,                                erc_line::Bool = true,                                t_factor = 252,                                kwargs_bar = (;),                                kwargs_line = (;),)
-    rc = risk_contribution(w,                           returns;                           rm = rm,                           rf = rf,                           sigma = sigma,                           alpha_i = alpha_i,                           alpha = alpha,                           a_sim = a_sim,                           beta_i = beta_i,                           beta = beta,                           b_sim = b_sim,                           di = di,                           kappa = kappa,                           owa_w = owa_w,                           solvers = solvers,)
+                                assets::AbstractVector, w::AbstractVector,
+                                returns::AbstractMatrix; rm::Symbol = :SD, rf::Real = 0.0,
+                                sigma::AbstractMatrix, alpha_i::Real = 0.0001,
+                                alpha::Real = 0.05, a_sim::Int = 100,
+                                beta_i::Real = alpha_i, beta::Real = alpha,
+                                b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
+                                owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                                solvers::Union{<:AbstractDict,Nothing} = nothing,                                # Plot args
+                                percentage::Bool = false, erc_line::Bool = true,
+                                t_factor = 252, kwargs_bar = (;), kwargs_line = (;),)
+    rc = risk_contribution(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
+                           alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
+                           b_sim = b_sim, di = di, kappa = kappa, owa_w = owa_w,
+                           solvers = solvers,)
 
-    DDs = (:DaR,           :MDD,           :ADD,           :CDaR,           :EDaR,           :RDaR,           :UCI,           :DaR_r,           :MDD_r,           :ADD_r,           :CDaR_r,           :EDaR_r,           :RDaR_r,           :UCI_r)
+    DDs = (:DaR, :MDD, :ADD, :CDaR, :EDaR, :RDaR, :UCI, :DaR_r, :MDD_r, :ADD_r, :CDaR_r,
+           :EDaR_r, :RDaR_r, :UCI_r)
 
     rm ∉ DDs && (rc *= sqrt(t_factor))
     ylabel = "Risk Contribution"
@@ -65,7 +81,8 @@ function plot_risk_contribution(
     !haskey(kwargs_bar, :title) && (kwargs_bar = (kwargs_bar..., title = title))
     !haskey(kwargs_bar, :ylabel) && (kwargs_bar = (kwargs_bar..., ylabel = ylabel))
     !haskey(kwargs_bar, :xlabel) && (kwargs_bar = (kwargs_bar..., xlabel = "Assets"))
-    !haskey(kwargs_bar, :xticks) && (kwargs_bar = (kwargs_bar...,                                                   xticks = (range(0.5; step = 1, length = length(assets)), assets)))
+    !haskey(kwargs_bar, :xticks) && (kwargs_bar = (kwargs_bar...,
+                                                   xticks = (range(0.5; step = 1, length = length(assets)), assets)))
     !haskey(kwargs_bar, :xrotation) && (kwargs_bar = (kwargs_bar..., xrotation = 90))
     !haskey(kwargs_bar, :legend) && (kwargs_bar = (kwargs_bar..., legend = false))
 
@@ -75,7 +92,9 @@ function plot_risk_contribution(
         if percentage
             erc = 1 / length(rc)
         else
-            erc = calc_risk(w,                            returns;                            rm = rm,                            rf = rf,                            sigma = sigma,                            alpha_i = alpha_i,                            alpha = alpha,                            a_sim = a_sim,                            beta_i = beta_i,                            beta = beta,                            b_sim = b_sim,                            kappa = kappa,                            owa_w = owa_w,                            solvers = solvers,)
+            erc = calc_risk(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
+                            alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
+                            b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers,)
 
             erc /= length(rc)
             rm ∉ DDs && (erc *= sqrt(t_factor))
@@ -86,16 +105,33 @@ function plot_risk_contribution(
 
     return plt
 end
-function plot_risk_contribution(portfolio;                                di::Real = 1e-6,                                type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,                                rm::Symbol = :SD,                                rf::Real = 0.0,                                owa_w::AbstractVector{<:Real} = isa(portfolio, Portfolio) ?
+function plot_risk_contribution(portfolio; di::Real = 1e-6,
+                                type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                                rm::Symbol = :SD, rf::Real = 0.0,
+                                owa_w::AbstractVector{<:Real} = isa(portfolio, Portfolio) ?
                                                                 portfolio.owa_w :
-                                                                Vector{Float64}(undef, 0),                                percentage::Bool = false,                                erc_line::Bool = true,                                t_factor = 252,                                kwargs_bar = (;),                                kwargs_line = (;),)
+                                                                Vector{Float64}(undef, 0),
+                                percentage::Bool = false, erc_line::Bool = true,
+                                t_factor = 252, kwargs_bar = (;), kwargs_line = (;),)
     return plot_risk_contribution(
                                   # RC args
-                                  portfolio.assets,                                  portfolio.optimal[type].weights,                                  portfolio.returns;                                  rm = rm,                                  rf = rf,                                  sigma = portfolio.cov,                                  alpha_i = portfolio.alpha_i,                                  alpha = portfolio.alpha,                                  a_sim = portfolio.a_sim,                                  beta_i = portfolio.beta_i,                                  beta = portfolio.beta,                                  b_sim = portfolio.b_sim,                                  di = di,                                  kappa = portfolio.kappa,                                  owa_w = owa_w,                                  solvers = portfolio.solvers,                                  # Plot args
-                                  percentage = percentage,                                  erc_line = erc_line,                                  t_factor = t_factor,                                  kwargs_bar = kwargs_bar,                                  kwargs_line = kwargs_line,)
+                                  portfolio.assets, portfolio.optimal[type].weights,
+                                  portfolio.returns; rm = rm, rf = rf,
+                                  sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
+                                  alpha = portfolio.alpha, a_sim = portfolio.a_sim,
+                                  beta_i = portfolio.beta_i, beta = portfolio.beta,
+                                  b_sim = portfolio.b_sim, di = di, kappa = portfolio.kappa,
+                                  owa_w = owa_w, solvers = portfolio.solvers,                                  # Plot args
+                                  percentage = percentage, erc_line = erc_line,
+                                  t_factor = t_factor, kwargs_bar = kwargs_bar,
+                                  kwargs_line = kwargs_line,)
 end
 
-function plot_frontier(frontier;                       alpha::Real = 0.05,                       beta::Real = alpha,                       kappa::Real = 0.3,                       returns::AbstractMatrix = Matrix{Float64}(undef, 0, 0),                       t_factor = 252,                       kelly::Bool = false,                       mu::AbstractVector = Vector{Float64}(undef, 0),                       rf::Real = 0.0,                       rm::Symbol = :SD,                       theme = :Spectral,                       kwargs_f = (;),                       kwargs_s = (;),)
+function plot_frontier(frontier; alpha::Real = 0.05, beta::Real = alpha, kappa::Real = 0.3,
+                       returns::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                       t_factor = 252, kelly::Bool = false,
+                       mu::AbstractVector = Vector{Float64}(undef, 0), rf::Real = 0.0,
+                       rm::Symbol = :SD, theme = :Spectral, kwargs_f = (;), kwargs_s = (;),)
     @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
 
     isinf(beta) && (beta = alpha)
@@ -165,11 +201,19 @@ function plot_frontier(frontier;                       alpha::Real = 0.05,      
 
     return plt
 end
-function plot_frontier(portfolio::AbstractPortfolio;                       rm::Symbol = :SD,                       rf::Real = 0.0,                       kelly::Bool = false,                       t_factor = 252,                       theme = :Spectral,                       kwargs_f = (;),                       kwargs_s = (;),)
-    return plot_frontier(portfolio.frontier[rm];                         alpha = portfolio.alpha,                         beta = portfolio.beta,                         kappa = portfolio.kappa,                         mu = portfolio.mu,                         returns = portfolio.returns,                         t_factor = t_factor,                         kelly = kelly,                         rf = rf,                         rm = rm,                         theme = theme,                         kwargs_f = kwargs_f,                         kwargs_s = kwargs_s,)
+function plot_frontier(portfolio::AbstractPortfolio; rm::Symbol = :SD, rf::Real = 0.0,
+                       kelly::Bool = false, t_factor = 252, theme = :Spectral,
+                       kwargs_f = (;), kwargs_s = (;),)
+    return plot_frontier(portfolio.frontier[rm]; alpha = portfolio.alpha,
+                         beta = portfolio.beta, kappa = portfolio.kappa, mu = portfolio.mu,
+                         returns = portfolio.returns, t_factor = t_factor, kelly = kelly,
+                         rf = rf, rm = rm, theme = theme, kwargs_f = kwargs_f,
+                         kwargs_s = kwargs_s,)
 end
 
-function plot_frontier_area(frontier;                            alpha::Real = 0.05,                            beta::Real = alpha,                            kappa::Real = 0.3,                            rm = :SD,                            t_factor = 252,                            kwargs_a = (;),                            kwargs_l = (;),                            show_sharpe = true,)
+function plot_frontier_area(frontier; alpha::Real = 0.05, beta::Real = alpha,
+                            kappa::Real = 0.3, rm = :SD, t_factor = 252, kwargs_a = (;),
+                            kwargs_l = (;), show_sharpe = true,)
     risks = copy(frontier[rm][:risk])
     assets = reshape(frontier[rm][:weights][!, "tickers"], 1, :)
     weights = transpose(Matrix(frontier[rm][:weights][!, 2:end]))
@@ -206,7 +250,9 @@ function plot_frontier_area(frontier;                            alpha::Real = 0
     !haskey(kwargs_a, :xlim) && (kwargs_a = (kwargs_a..., xlim = extrema(risks)))
     !haskey(kwargs_a, :ylim) && (kwargs_a = (kwargs_a..., ylim = (0, 1)))
     !haskey(kwargs_a, :ylim) && (kwargs_a = (kwargs_a..., ylim = (0, 1)))
-    !haskey(kwargs_a, :seriescolor) && (kwargs_a = (kwargs_a...,                                                    seriescolor = reshape(collect(palette(:Spectral, length(assets))), 1,                                                                          :)))
+    !haskey(kwargs_a, :seriescolor) && (kwargs_a = (kwargs_a...,
+                                                    seriescolor = reshape(collect(palette(:Spectral, length(assets))), 1,
+                                                                          :)))
 
     plt = areaplot(risks, weights; kwargs_a...)
 
@@ -219,11 +265,18 @@ function plot_frontier_area(frontier;                            alpha::Real = 0
 
     return plt
 end
-function plot_frontier_area(portfolio::AbstractPortfolio;                            rm = :SD,                            t_factor = 252,                            kwargs_a = (;),                            kwargs_l = (;),                            show_sharpe = true,)
-    return plot_frontier_area(portfolio.frontier;                              alpha = portfolio.alpha,                              beta = portfolio.beta,                              kappa = portfolio.kappa,                              rm = rm,                              t_factor = t_factor,                              kwargs_a = kwargs_a,                              kwargs_l = kwargs_l,                              show_sharpe = show_sharpe,)
+function plot_frontier_area(portfolio::AbstractPortfolio; rm = :SD, t_factor = 252,
+                            kwargs_a = (;), kwargs_l = (;), show_sharpe = true,)
+    return plot_frontier_area(portfolio.frontier; alpha = portfolio.alpha,
+                              beta = portfolio.beta, kappa = portfolio.kappa, rm = rm,
+                              t_factor = t_factor, kwargs_a = kwargs_a, kwargs_l = kwargs_l,
+                              show_sharpe = show_sharpe,)
 end
 
-function plot_drawdown(timestamps::AbstractVector,                       w::AbstractVector,                       returns::AbstractMatrix;                       alpha::Real = 0.05,                       kappa::Real = 0.3,                       solvers::Union{<:AbstractDict, Nothing} = nothing,                       theme = :Dark2_5,                       kwargs_ret = (;),                       kwargs_dd = (;),                       kwargs_risks = (;),                       kwargs = (;),)
+function plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
+                       returns::AbstractMatrix; alpha::Real = 0.05, kappa::Real = 0.3,
+                       solvers::Union{<:AbstractDict,Nothing} = nothing, theme = :Dark2_5,
+                       kwargs_ret = (;), kwargs_dd = (;), kwargs_risks = (;), kwargs = (;),)
     ret = returns * w
 
     prices = copy(ret)
@@ -242,11 +295,19 @@ function plot_drawdown(timestamps::AbstractVector,                       w::Abst
 
     dd .*= 100
 
-    risks = [-ADD_abs(ret),             -UCI_abs(ret),             -DaR_abs(ret, alpha),             -CDaR_abs(ret, alpha),             -EDaR_abs(ret, solvers, alpha),             -RDaR_abs(ret, solvers, alpha, kappa),             -MDD_abs(ret)] * 100
+    risks = [-ADD_abs(ret), -UCI_abs(ret), -DaR_abs(ret, alpha), -CDaR_abs(ret, alpha),
+             -EDaR_abs(ret, solvers, alpha), -RDaR_abs(ret, solvers, alpha, kappa),
+             -MDD_abs(ret)] * 100
 
     conf = round((1 - alpha) * 100; digits = 2)
 
-    risk_labels = ("Average Drawdown: $(round(risks[1], digits = 2))%",                   "Ulcer Index: $(round(risks[2], digits = 2))%",                   "$(conf)% Confidence DaR: $(round(risks[3], digits = 2))%",                   "$(conf)% Confidence CDaR: $(round(risks[4], digits = 2))%",                   "$(conf)% Confidence EDaR: $(round(risks[5], digits = 2))%",                   "$(conf)% Confidence RDaR ($(round(kappa, digits=2))): $(round(risks[6], digits = 2))%",                   "Maximum Drawdown: $(round(risks[7], digits = 2))%")
+    risk_labels = ("Average Drawdown: $(round(risks[1], digits = 2))%",
+                   "Ulcer Index: $(round(risks[2], digits = 2))%",
+                   "$(conf)% Confidence DaR: $(round(risks[3], digits = 2))%",
+                   "$(conf)% Confidence CDaR: $(round(risks[4], digits = 2))%",
+                   "$(conf)% Confidence EDaR: $(round(risks[5], digits = 2))%",
+                   "$(conf)% Confidence RDaR ($(round(kappa, digits=2))): $(round(risks[6], digits = 2))%",
+                   "Maximum Drawdown: $(round(risks[7], digits = 2))%")
 
     colours = palette(theme, length(risk_labels) + 1)
 
@@ -283,11 +344,22 @@ function plot_drawdown(timestamps::AbstractVector,                       w::Abst
 
     return full_plt
 end
-function plot_drawdown(portfolio::AbstractPortfolio;                       type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,                       theme = :Dark2_5,                       kwargs_ret = (;),                       kwargs_dd = (;),                       kwargs_risks = (;),                       kwargs = (;),)
-    return plot_drawdown(portfolio.timestamps,                         portfolio.optimal[type].weights,                         portfolio.returns;                         alpha = portfolio.alpha,                         kappa = portfolio.kappa,                         solvers = portfolio.solvers,                         theme = theme,                         kwargs_ret = kwargs_ret,                         kwargs_dd = kwargs_dd,                         kwargs_risks = kwargs_risks,                         kwargs = kwargs,)
+function plot_drawdown(portfolio::AbstractPortfolio;
+                       type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                       theme = :Dark2_5, kwargs_ret = (;), kwargs_dd = (;),
+                       kwargs_risks = (;), kwargs = (;),)
+    return plot_drawdown(portfolio.timestamps, portfolio.optimal[type].weights,
+                         portfolio.returns; alpha = portfolio.alpha,
+                         kappa = portfolio.kappa, solvers = portfolio.solvers,
+                         theme = theme, kwargs_ret = kwargs_ret, kwargs_dd = kwargs_dd,
+                         kwargs_risks = kwargs_risks, kwargs = kwargs,)
 end
 
-function plot_hist(w::AbstractVector,                   returns::AbstractMatrix;                   alpha_i::Real = 0.0001,                   alpha::Real = 0.05,                   a_sim::Int = 100,                   kappa::Real = 0.3,                   solvers::Union{<:AbstractDict, Nothing} = nothing,                   points::Integer = ceil(Int, 4 * sqrt(size(returns, 1))),                   theme = :Paired_10,                   kwargs_h = (;),                   kwargs_risks = (;),)
+function plot_hist(w::AbstractVector, returns::AbstractMatrix; alpha_i::Real = 0.0001,
+                   alpha::Real = 0.05, a_sim::Int = 100, kappa::Real = 0.3,
+                   solvers::Union{<:AbstractDict,Nothing} = nothing,
+                   points::Integer = ceil(Int, 4 * sqrt(size(returns, 1))),
+                   theme = :Paired_10, kwargs_h = (;), kwargs_risks = (;),)
     ret = returns * w * 100
 
     mu = mean(ret)
@@ -297,11 +369,22 @@ function plot_hist(w::AbstractVector,                   returns::AbstractMatrix;
 
     mad = MAD(ret)
     gmd = GMD(ret)
-    risks = (mu,             mu - sigma,             mu - mad,             mu - gmd,             -VaR(ret, alpha),             -CVaR(ret, alpha),             -TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim),             -EVaR(ret, solvers, alpha),             -RVaR(x, solvers, alpha, kappa),             -WR(ret))
+    risks = (mu, mu - sigma, mu - mad, mu - gmd, -VaR(ret, alpha), -CVaR(ret, alpha),
+             -TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim),
+             -EVaR(ret, solvers, alpha), -RVaR(x, solvers, alpha, kappa), -WR(ret))
 
     conf = round((1 - alpha) * 100; digits = 2)
 
-    risk_labels = ("Mean: $(round(risks[1], digits=2))%",                   "Mean - Std. Dev. ($(round(sigma, digits=2))%): $(round(risks[2], digits=2))%",                   "Mean - MAD ($(round(mad,digits=2))%): $(round(risks[3], digits=2))%",                   "Mean - GMD ($(round(gmd,digits=2))%): $(round(risks[4], digits=2))%",                   "$(conf)% Confidence VaR: $(round(risks[5], digits=2))%",                   "$(conf)% Confidence CVaR: $(round(risks[6], digits=2))%",                   "$(conf)% Confidence Tail Gini: $(round(risks[7], digits=2))%",                   "$(conf)% Confidence EVaR: $(round(risks[8], digits=2))%",                   "$(conf)% Confidence RVaR ($(round(kappa, digits=2))): $(round(risks[9], digits=2))%",                   "Worst Realisation: $(round(risks[10], digits=2))%")
+    risk_labels = ("Mean: $(round(risks[1], digits=2))%",
+                   "Mean - Std. Dev. ($(round(sigma, digits=2))%): $(round(risks[2], digits=2))%",
+                   "Mean - MAD ($(round(mad,digits=2))%): $(round(risks[3], digits=2))%",
+                   "Mean - GMD ($(round(gmd,digits=2))%): $(round(risks[4], digits=2))%",
+                   "$(conf)% Confidence VaR: $(round(risks[5], digits=2))%",
+                   "$(conf)% Confidence CVaR: $(round(risks[6], digits=2))%",
+                   "$(conf)% Confidence Tail Gini: $(round(risks[7], digits=2))%",
+                   "$(conf)% Confidence EVaR: $(round(risks[8], digits=2))%",
+                   "$(conf)% Confidence RVaR ($(round(kappa, digits=2))): $(round(risks[9], digits=2))%",
+                   "Worst Realisation: $(round(risks[10], digits=2))%")
 
     D = fit(Normal, ret)
 
@@ -321,24 +404,40 @@ function plot_hist(w::AbstractVector,                   returns::AbstractMatrix;
         (kwargs_h = (kwargs_h..., size = (750, ceil(Integer, 750 / 1.618))))
 
     !haskey(kwargs_h, :linewidth) && (kwargs_h = (kwargs_h..., linewidth = 2))
-    plot!(x,          pdf.(D, x);          label = "Normal: μ = $(round(mean(D), digits=2))%, σ = $(round(std(D), digits=2))%",          color = colours[end],          kwargs_h...,)
+    plot!(x, pdf.(D, x);
+          label = "Normal: μ = $(round(mean(D), digits=2))%, σ = $(round(std(D), digits=2))%",
+          color = colours[end], kwargs_h...,)
 
     return plt
 end
-function plot_hist(portfolio::AbstractPortfolio;                   type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,                   points::Integer = ceil(Int, 4 * sqrt(size(portfolio.returns, 1))),                   theme = :Paired_10,                   kwargs_h = (;),                   kwargs_risks = (;),)
-    return plot_hist(portfolio.optimal[type].weights,                     portfolio.returns;                     alpha_i = portfolio.alpha_i,                     alpha = portfolio.alpha,                     a_sim = portfolio.a_sim,                     kappa = portfolio.kappa,                     solvers = portfolio.solvers,                     theme = theme,                     points = points,                     kwargs_h = kwargs_h,                     kwargs_risks = kwargs_risks,)
+function plot_hist(portfolio::AbstractPortfolio;
+                   type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                   points::Integer = ceil(Int, 4 * sqrt(size(portfolio.returns, 1))),
+                   theme = :Paired_10, kwargs_h = (;), kwargs_risks = (;),)
+    return plot_hist(portfolio.optimal[type].weights, portfolio.returns;
+                     alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
+                     a_sim = portfolio.a_sim, kappa = portfolio.kappa,
+                     solvers = portfolio.solvers, theme = theme, points = points,
+                     kwargs_h = kwargs_h, kwargs_risks = kwargs_risks,)
 end
 
-function plot_range(w::AbstractVector,                    returns::AbstractMatrix;                    alpha_i::Real = 0.0001,                    alpha::Real = 0.05,                    a_sim::Int = 100,                    beta_i::Real = alpha_i,                    beta::Real = alpha,                    b_sim::Integer = a_sim,                    theme = :Set1_5,                    kwargs_h = (;),                    kwargs_risks = (;),)
+function plot_range(w::AbstractVector, returns::AbstractMatrix; alpha_i::Real = 0.0001,
+                    alpha::Real = 0.05, a_sim::Int = 100, beta_i::Real = alpha_i,
+                    beta::Real = alpha, b_sim::Integer = a_sim, theme = :Set1_5,
+                    kwargs_h = (;), kwargs_risks = (;),)
     isinf(beta) && (beta = alpha)
 
     ret = returns * w * 100
 
-    risks = (RG(ret),             RCVaR(ret; alpha = alpha, beta = beta),             RTG(ret;                 alpha_i = alpha_i,                 alpha = alpha,                 a_sim = a_sim,                 beta_i = beta_i,                 beta = beta,                 b_sim = b_sim,))
+    risks = (RG(ret), RCVaR(ret; alpha = alpha, beta = beta),
+             RTG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
+                 beta = beta, b_sim = b_sim,))
 
     lo_conf = 1 - alpha
     hi_conf = 1 - beta
-    risk_labels = ("Range: $(round(risks[1], digits=2))%",                   "Tail Gini Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[2], digits=2))%",                   "CVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[3], digits=2))%")
+    risk_labels = ("Range: $(round(risks[1], digits=2))%",
+                   "Tail Gini Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[2], digits=2))%",
+                   "CVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[3], digits=2))%")
 
     colours = palette(theme, length(risk_labels) + 1)
 
@@ -347,7 +446,8 @@ function plot_range(w::AbstractVector,                    returns::AbstractMatri
 
     plt = histogram(ret; normalize = :pdf, label = "", color = colours[1], kwargs_h...)
 
-    bounds = [minimum(ret) -TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) -CVaR(ret, alpha);              maximum(ret) TG(-ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) CVaR(-ret, alpha)]
+    bounds = [minimum(ret) -TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) -CVaR(ret, alpha);
+              maximum(ret) TG(-ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) CVaR(-ret, alpha)]
 
     D = fit(Normal, ret)
     y = pdf(D, mean(D))
@@ -355,24 +455,38 @@ function plot_range(w::AbstractVector,                    returns::AbstractMatri
 
     !haskey(kwargs_risks, :linewidth) && (kwargs_risks = (kwargs_risks..., linewidth = 2))
     for i in eachindex(risks)
-        plot!([bounds[1, i], bounds[1, i], bounds[2, i], bounds[2, i]],              [0, ys[i], ys[i], 0];              label = risk_labels[i],              color = colours[i + 1],              kwargs_risks...,)
+        plot!([bounds[1, i], bounds[1, i], bounds[2, i], bounds[2, i]],
+              [0, ys[i], ys[i], 0]; label = risk_labels[i], color = colours[i + 1],
+              kwargs_risks...,)
     end
 
     return plt
 end
 
-function plot_range(portfolio::AbstractPortfolio;                    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,                    theme = :Set1_5,                    kwargs_h = (;),                    kwargs_risks = (;),)
-    return plot_range(portfolio.optimal[type].weights,                      portfolio.returns;                      alpha_i = portfolio.alpha_i,                      alpha = portfolio.alpha,                      a_sim = portfolio.a_sim,                      beta_i = portfolio.beta_i,                      beta = portfolio.beta,                      b_sim = portfolio.b_sim,                      theme = theme,                      kwargs_h = kwargs_h,                      kwargs_risks = kwargs_risks,)
+function plot_range(portfolio::AbstractPortfolio;
+                    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                    theme = :Set1_5, kwargs_h = (;), kwargs_risks = (;),)
+    return plot_range(portfolio.optimal[type].weights, portfolio.returns;
+                      alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
+                      a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
+                      beta = portfolio.beta, b_sim = portfolio.b_sim, theme = theme,
+                      kwargs_h = kwargs_h, kwargs_risks = kwargs_risks,)
 end
 
-function plot_clusters(portfolio;                       max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),                       linkage = :single,                       branchorder = :optimal,                       dbht_method = :Unique,                       cluster = true,                       show_clusters = true,                       theme_d = :Spectral,                       theme_h = :Spectral,                       theme_h_kwargs = (;),                       kwargs_d1 = (;),                       kwargs_d2 = (;),                       kwargs_h = (;),                       kwargs_l = (;),                       kwargs = (;),)
+function plot_clusters(portfolio; max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
+                       linkage = :single, branchorder = :optimal, dbht_method = :Unique,
+                       cluster = true, show_clusters = true, theme_d = :Spectral,
+                       theme_h = :Spectral, theme_h_kwargs = (;), kwargs_d1 = (;),
+                       kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;), kwargs = (;),)
     corr = portfolio.cor
     assets = portfolio.assets
     cor_method = portfolio.cor_method
     N = length(assets)
 
     if cluster
-        df, clustering, k = cluster_assets(portfolio;                                           linkage = linkage,                                           max_k = max_k,                                           branchorder = branchorder,                                           k = portfolio.k,                                           dbht_method = dbht_method,)
+        df, clustering, k = cluster_assets(portfolio; linkage = linkage, max_k = max_k,
+                                           branchorder = branchorder, k = portfolio.k,
+                                           dbht_method = dbht_method,)
         clustering_idx = df.Clusters
         sort_order = clustering.order
         heights = clustering.heights
@@ -404,9 +518,14 @@ function plot_clusters(portfolio;                       max_k = ceil(Int, sqrt(s
     colours = palette(theme_d, k)
     colgrad = cgrad(theme_h; theme_h_kwargs...)
 
-    hmap = plot(ordered_corr;                st = :heatmap,                #yticks=(1:nrows,rowlabels),                yticks = (1:length(assets), ordered_assets),                xticks = (1:length(assets), ordered_assets),                xrotation = 90,                colorbar = false,                clim = clim,                xlim = (0.5, N + 0.5),                ylim = (0.5, N + 0.5),                color = colgrad,                kwargs_h...,)
+    #yticks=(1:nrows,rowlabels)
+    hmap = plot(ordered_corr; st = :heatmap, yticks = (1:length(assets), ordered_assets),
+                xticks = (1:length(assets), ordered_assets), xrotation = 90,
+                colorbar = false, clim = clim, xlim = (0.5, N + 0.5), ylim = (0.5, N + 0.5),
+                color = colgrad, kwargs_h...,)
     dend1 = plot(clustering; xticks = false, ylim = (0, 1), kwargs_d1...)
-    dend2 = plot(clustering;                 yticks = false,                 xrotation = 90,                 orientation = :horizontal,                 xlim = (0, 1),                 kwargs_d2...,)
+    dend2 = plot(clustering; yticks = false, xrotation = 90, orientation = :horizontal,
+                 xlim = (0, 1), kwargs_d2...,)
 
     !haskey(kwargs_l, :color) && (kwargs_l = (kwargs_l..., color = :black))
     !haskey(kwargs_l, :linewidth) && (kwargs_l = (kwargs_l..., linewidth = 3))
@@ -426,11 +545,22 @@ function plot_clusters(portfolio;                       max_k = ceil(Int, sqrt(s
             i3 = unique([i1; i2])
             h = min(maximum(heights[i3]) * 1.1, 1)
 
-            plot!(hmap,                  [xmin - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmin - 0.5,                   xmin - 0.5,                   xmin - 0.5],                  [xmin - 0.5,                   xmin - 0.5,                   xmin - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmin - 0.5];                  legend = false,                  kwargs_l...,)
+            plot!(hmap,
+                  [xmin - 0.5, xmax - 0.5, xmax - 0.5, xmax - 0.5, xmax - 0.5, xmin - 0.5,
+                   xmin - 0.5, xmin - 0.5],
+                  [xmin - 0.5, xmin - 0.5, xmin - 0.5, xmax - 0.5, xmax - 0.5, xmax - 0.5,
+                   xmax - 0.5, xmin - 0.5]; legend = false, kwargs_l...,)
 
-            plot!(dend1,                  [xmin - 0.25,                   xmax - 0.75,                   xmax - 0.75,                   xmax - 0.75,                   xmax - 0.75,                   xmin - 0.25,                   xmin - 0.25,                   xmin - 0.25],                  [0, 0, 0, h, h, h, h, 0];                  color = nothing,                  legend = false,                  fill = (0, 0.5, colours[(i - 1) % k + 1]))
+            plot!(dend1,
+                  [xmin - 0.25, xmax - 0.75, xmax - 0.75, xmax - 0.75, xmax - 0.75,
+                   xmin - 0.25, xmin - 0.25, xmin - 0.25], [0, 0, 0, h, h, h, h, 0];
+                  color = nothing, legend = false,
+                  fill = (0, 0.5, colours[(i - 1) % k + 1]))
 
-            plot!(dend2,                  [0, 0, 0, h, h, h, h, 0],                  [xmin - 0.25,                   xmax - 0.75,                   xmax - 0.75,                   xmax - 0.75,                   xmax - 0.75,                   xmin - 0.25,                   xmin - 0.25,                   xmin - 0.25];                  color = nothing,                  legend = false,                  fill = (0, 0.5, colours[(i - 1) % k + 1]))
+            plot!(dend2, [0, 0, 0, h, h, h, h, 0],
+                  [xmin - 0.25, xmax - 0.75, xmax - 0.75, xmax - 0.75, xmax - 0.75,
+                   xmin - 0.25, xmin - 0.25, xmin - 0.25]; color = nothing, legend = false,
+                  fill = (0, 0.5, colours[(i - 1) % k + 1]))
         end
     end
 
@@ -438,12 +568,19 @@ function plot_clusters(portfolio;                       max_k = ceil(Int, sqrt(s
 
     # https://docs.juliaplots.org/latest/generated/statsplots/#Dendrogram-on-the-right-side
     l = grid(2, 2; heights = [0.2, 0.8, 0.2, 0.8], widths = [0.8, 0.2, 0.8, 0.2])
-    plt = plot(dend1,               plot(; ticks = nothing, border = :none, background_color = nothing),               hmap,               dend2;               layout = l,               kwargs...,)
+    plt = plot(dend1, plot(; ticks = nothing, border = :none, background_color = nothing),
+               hmap, dend2; layout = l, kwargs...,)
 
     return plt
 end
 
-function plot_clusters(assets::AbstractVector,                       returns::AbstractMatrix;                       cor_settings::CorSettings = CorSettings(;),                       linkage = :single,                       max_k = ceil(Int, sqrt(size(returns, 2))),                       branchorder = :optimal,                       k = 0,                       dbht_method = :Unique,                       show_clusters = true,                       theme_d = :Spectral,                       theme_h = :Spectral,                       theme_h_kwargs = (;),                       kwargs_d1 = (;),                       kwargs_d2 = (;),                       kwargs_h = (;),                       kwargs_l = (;),                       kwargs = (;),)
+function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
+                       cor_settings::CorSettings = CorSettings(;), linkage = :single,
+                       max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
+                       k = 0, dbht_method = :Unique, show_clusters = true,
+                       theme_d = :Spectral, theme_h = :Spectral, theme_h_kwargs = (;),
+                       kwargs_d1 = (;), kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;),
+                       kwargs = (;),)
     @smart_assert(linkage ∈ LinkageTypes)
 
     N = length(assets)
@@ -454,9 +591,12 @@ function plot_clusters(assets::AbstractVector,                       returns::Ab
 
     if linkage == :DBHT
         corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
-        missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;                                                                                 branchorder = branchorder,                                                                                 method = dbht_method)
+        missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
+                                                                                 branchorder = branchorder,
+                                                                                 method = dbht_method)
     else
-        clustering = hclust(dist;                            linkage = linkage,                            branchorder = branchorder == :default ? :r : branchorder,)
+        clustering = hclust(dist; linkage = linkage,
+                            branchorder = branchorder == :default ? :r : branchorder,)
     end
 
     tk = _two_diff_gap_stat(dist, clustering, max_k)
@@ -487,9 +627,14 @@ function plot_clusters(assets::AbstractVector,                       returns::Ab
     colours = palette(theme_d, k)
     colgrad = cgrad(theme_h; theme_h_kwargs...)
 
-    hmap = plot(ordered_corr;                st = :heatmap,                #yticks=(1:nrows,rowlabels),                yticks = (1:length(assets), ordered_assets),                xticks = (1:length(assets), ordered_assets),                xrotation = 90,                colorbar = false,                clim = clim,                xlim = (0.5, N + 0.5),                ylim = (0.5, N + 0.5),                color = colgrad,                kwargs_h...,)
+    #yticks=(1:nrows,rowlabels)
+    hmap = plot(ordered_corr; st = :heatmap, yticks = (1:length(assets), ordered_assets),
+                xticks = (1:length(assets), ordered_assets), xrotation = 90,
+                colorbar = false, clim = clim, xlim = (0.5, N + 0.5), ylim = (0.5, N + 0.5),
+                color = colgrad, kwargs_h...,)
     dend1 = plot(clustering; xticks = false, ylim = (0, 1), kwargs_d1...)
-    dend2 = plot(clustering;                 yticks = false,                 xrotation = 90,                 orientation = :horizontal,                 xlim = (0, 1),                 kwargs_d2...,)
+    dend2 = plot(clustering; yticks = false, xrotation = 90, orientation = :horizontal,
+                 xlim = (0, 1), kwargs_d2...,)
 
     !haskey(kwargs_l, :color) && (kwargs_l = (kwargs_l..., color = :black))
     !haskey(kwargs_l, :linewidth) && (kwargs_l = (kwargs_l..., linewidth = 3))
@@ -509,11 +654,22 @@ function plot_clusters(assets::AbstractVector,                       returns::Ab
             i3 = unique([i1; i2])
             h = min(maximum(heights[i3]) * 1.1, 1)
 
-            plot!(hmap,                  [xmin - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmin - 0.5,                   xmin - 0.5,                   xmin - 0.5],                  [xmin - 0.5,                   xmin - 0.5,                   xmin - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmax - 0.5,                   xmin - 0.5];                  legend = false,                  kwargs_l...,)
+            plot!(hmap,
+                  [xmin - 0.5, xmax - 0.5, xmax - 0.5, xmax - 0.5, xmax - 0.5, xmin - 0.5,
+                   xmin - 0.5, xmin - 0.5],
+                  [xmin - 0.5, xmin - 0.5, xmin - 0.5, xmax - 0.5, xmax - 0.5, xmax - 0.5,
+                   xmax - 0.5, xmin - 0.5]; legend = false, kwargs_l...,)
 
-            plot!(dend1,                  [xmin - 0.25,                   xmax - 0.75,                   xmax - 0.75,                   xmax - 0.75,                   xmax - 0.75,                   xmin - 0.25,                   xmin - 0.25,                   xmin - 0.25],                  [0, 0, 0, h, h, h, h, 0];                  color = nothing,                  legend = false,                  fill = (0, 0.5, colours[(i - 1) % k + 1]))
+            plot!(dend1,
+                  [xmin - 0.25, xmax - 0.75, xmax - 0.75, xmax - 0.75, xmax - 0.75,
+                   xmin - 0.25, xmin - 0.25, xmin - 0.25], [0, 0, 0, h, h, h, h, 0];
+                  color = nothing, legend = false,
+                  fill = (0, 0.5, colours[(i - 1) % k + 1]))
 
-            plot!(dend2,                  [0, 0, 0, h, h, h, h, 0],                  [xmin - 0.25,                   xmax - 0.75,                   xmax - 0.75,                   xmax - 0.75,                   xmax - 0.75,                   xmin - 0.25,                   xmin - 0.25,                   xmin - 0.25];                  color = nothing,                  legend = false,                  fill = (0, 0.5, colours[(i - 1) % k + 1]))
+            plot!(dend2, [0, 0, 0, h, h, h, h, 0],
+                  [xmin - 0.25, xmax - 0.75, xmax - 0.75, xmax - 0.75, xmax - 0.75,
+                   xmin - 0.25, xmin - 0.25, xmin - 0.25]; color = nothing, legend = false,
+                  fill = (0, 0.5, colours[(i - 1) % k + 1]))
         end
     end
 
@@ -521,19 +677,25 @@ function plot_clusters(assets::AbstractVector,                       returns::Ab
 
     # https://docs.juliaplots.org/latest/generated/statsplots/#Dendrogram-on-the-right-side
     l = grid(2, 2; heights = [0.2, 0.8, 0.2, 0.8], widths = [0.8, 0.2, 0.8, 0.2])
-    plt = plot(dend1,               plot(; ticks = nothing, border = :none, background_color = nothing),               hmap,               dend2;               layout = l,               kwargs...,)
+    plt = plot(dend1, plot(; ticks = nothing, border = :none, background_color = nothing),
+               hmap, dend2; layout = l, kwargs...,)
 
     return plt
 end
 
-function plot_dendrogram(portfolio;                         max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),                         linkage = :single,                         branchorder = :optimal,                         dbht_method = :Unique,                         show_clusters = true,                         cluster = true,                         theme = :Spectral,                         kwargs = (;),)
+function plot_dendrogram(portfolio; max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
+                         linkage = :single, branchorder = :optimal, dbht_method = :Unique,
+                         show_clusters = true, cluster = true, theme = :Spectral,
+                         kwargs = (;),)
     corr = portfolio.cor
     assets = portfolio.assets
     cor_method = portfolio.cor_method
     N = length(assets)
 
     if cluster
-        df, clustering, k = cluster_assets(portfolio;                                           linkage = linkage,                                           max_k = max_k,                                           branchorder = branchorder,                                           k = portfolio.k,                                           dbht_method = dbht_method,)
+        df, clustering, k = cluster_assets(portfolio; linkage = linkage, max_k = max_k,
+                                           branchorder = branchorder, k = portfolio.k,
+                                           dbht_method = dbht_method,)
         clustering_idx = df.Clusters
         sort_order = clustering.order
         heights = clustering.heights
@@ -556,7 +718,8 @@ function plot_dendrogram(portfolio;                         max_k = ceil(Int, sq
     end
 
     colours = palette(theme, k)
-    dend1 = plot(clustering;                 xticks = (sort_order, ordered_assets),                 xrotation = 90,                 ylim = (0, 1))
+    dend1 = plot(clustering; xticks = (sort_order, ordered_assets), xrotation = 90,
+                 ylim = (0, 1))
 
     nodes = -clustering.merges
     if show_clusters
@@ -573,7 +736,11 @@ function plot_dendrogram(portfolio;                         max_k = ceil(Int, sq
             i3 = unique([i1; i2])
             h = min(maximum(heights[i3]) * 1.1, 1)
 
-            plot!(dend1,                  [xmin - 0.25,                   xmax - 0.75,                   xmax - 0.75,                   xmax - 0.75,                   xmax - 0.75,                   xmin - 0.25,                   xmin - 0.25,                   xmin - 0.25],                  [0, 0, 0, h, h, h, h, 0];                  color = nothing,                  legend = false,                  fill = (0, 0.5, colours[(i - 1) % k + 1]))
+            plot!(dend1,
+                  [xmin - 0.25, xmax - 0.75, xmax - 0.75, xmax - 0.75, xmax - 0.75,
+                   xmin - 0.25, xmin - 0.25, xmin - 0.25], [0, 0, 0, h, h, h, h, 0];
+                  color = nothing, legend = false,
+                  fill = (0, 0.5, colours[(i - 1) % k + 1]))
         end
     end
 
@@ -585,4 +752,5 @@ function plot_network()
     # https://juliagraphs.org/GraphPlot.jl/index.html#usage
 end
 
-export plot_returns,       plot_bar,       plot_risk_contribution,       plot_frontier_area,       plot_drawdown,       plot_hist,       plot_range,       plot_frontier,       plot_clusters,       plot_dendrogram,       plot_network
+export plot_returns, plot_bar, plot_risk_contribution, plot_frontier_area, plot_drawdown,
+       plot_hist, plot_range, plot_frontier, plot_clusters, plot_dendrogram, plot_network
