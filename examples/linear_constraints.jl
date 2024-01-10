@@ -2,7 +2,8 @@
 
 # This tutorial explains step by step how the constraint functions can be used to generate linear constraints. We also show how we can generate our own sets using clustering techniques.
 
-using Clustering, CovarianceEstimation, CSV, DataFrames, PortfolioOptimiser, PrettyTables,
+using Clustering, CovarianceEstimation, CSV, DataFrames, PortfolioOptimiser,
+      PrettyTables,
       TimeSeries
 
 ## This is a helper function for displaying tables 
@@ -38,7 +39,7 @@ returns = Matrix(returns[!, 2:end]);
 
 # In order to avoid this overfitting, we can compute robust covariances. In this case, we use the package [`CovarianceEstimation.jl`](https://github.com/mateuszbaran/CovarianceEstimation.jl), as well as some of the functions provided by `PortfolioOptimiser.jl`.
 
-# When we use `:Pearson` and `:Semi_Pearson` to compute the correlation, we're internally making use of `StatsBase.cor`, which takes various range of optional arguments, one of which is a covariance estimator (`StatsBase.CovarianceEstimator`), which makes the computation of the covariance matrix more robust. In this example we use `CovarianceEstimation.AnalyticalNonlinearShrinkage()`, as it's a good estimator for tall matrices (i.e. matrices with many more rows than columns). `:Semi_Pearson` also uses a semi-covariance at a given target return value to compute the correlation matrix. We'll elaborate more on a different tutorial, for this we'll use the default value of the target return, which is 0.
+# When we use `:Pearson` and `:Semi_Pearson` to compute the correlation, we're internally making use of `StatsBase.cor`, which takes various range of optional arguments, one of which is a covariance estimator (`StatsBase.CovarianceEstimator`), which makes the computation of the covariance matrix more robust. In this example we use `CovarianceEstimation.AnalyticalNonlinearShrinkage()`, as it's a good estimator for tall matrices (i.e. matrices with many more rows than columns). `:Semi_Pearson` also uses a semi-covariance at a given target return value to compute the correlation matrix. We'll elaborate more on a different tutorial, for this we'll use the default value of the target return, which is `0`.
 
 # ### Building the asset classes dataframe.
 asset_classes = DataFrame(:Assets => assets)
@@ -95,11 +96,11 @@ constraints = DataFrame(
 
 A, B = asset_constraints(constraints, asset_classes);
 
-# Recall that the linear constraints are defined as ``\mathbf{A} \bm{w} \geq \bm{b}``, we can show that the constraint will be applied to `GOOG`, as its weight coefficient is 1, while all the others are 0.
+# Recall that the linear constraints are defined as ``\mathbf{A} \bm{w} \geq \bm{b}``, we can show that the constraint will be applied to `GOOG`, as its weight coefficient is 1, while all the others are `0`.
 
 hcat(asset_classes[!, :Assets], DataFrame(:A_t => vec(A)))
 
-# Using the definition of the linear constraints, `B` should be 0.03.
+# Using the definition of the linear constraints, `B` should be `0.03`.
 
 B
 
@@ -107,7 +108,8 @@ B
 
 # Now say we also don't want our portfolio to be more than 10 % `GOOG`. Here's how we can do so. Note how the only things that change are `:Sign` and `:Weight`.
 
-constraints = DataFrame(:Enabled => [true], :Type => ["Assets"], :Position => [:GOOG],                        ## Less than or equal to.
+constraints = DataFrame(:Enabled => [true], :Type => ["Assets"],
+                        :Position => [:GOOG],                        ## Less than or equal to.
                         :Sign => ["<="],                        ## Upper bound of the weight of the asset.
                         :Weight => [0.1],                        ## The following categories are not used for this
                         ## example.
@@ -143,7 +145,8 @@ constraints = DataFrame(:Enabled => [true],                        ## We want to
                         ## weight of the other asset.
                         :Factor => [0.5],                        ## The following categories are not used 
                         ## for this example.
-                        :Weight => [""], :Class_Set => [""], :Relative_Class_Set => [""])
+                        :Weight => [""], :Class_Set => [""],
+                        :Relative_Class_Set => [""])
 
 A, B = asset_constraints(constraints, asset_classes);
 
@@ -167,7 +170,8 @@ constraints = DataFrame(:Enabled => [true],                        ## We want to
                         ## weight of the other asset.
                         :Factor => [2],                        ## The following categories are not used 
                         ## for this example.
-                        :Weight => [""], :Class_Set => [""], :Relative_Class_Set => [""])
+                        :Weight => [""], :Class_Set => [""],
+                        :Relative_Class_Set => [""])
 
 A, B = asset_constraints(constraints, asset_classes);
 

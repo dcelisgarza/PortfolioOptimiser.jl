@@ -1,11 +1,13 @@
 function refresh_model!(portfolio::EffMinimax)
-    default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :m, :minimax, :ret, :risk)
+    default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :m, :minimax,
+                    :ret, :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
     return nothing
 end
 
-function portfolio_performance(portfolio::EffMinimax; rf = portfolio.rf, verbose = false)
+function portfolio_performance(portfolio::EffMinimax; rf = portfolio.rf,
+                               verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 

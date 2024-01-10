@@ -104,8 +104,7 @@ using Test, PortfolioOptimiser, ECOS
            0.0073266042429477865,
            0.00806853824791843,
            0.008896955921920562]
-    w2 = owa_l_moment_crm(50;
-                          k = 4,
+    w2 = owa_l_moment_crm(50; k = 4,
                           method = :E,
                           g = 0.5,
                           max_phi = 0.5,
@@ -213,8 +212,7 @@ using Test, PortfolioOptimiser, ECOS
            0.003741465642914897,
            0.003939329718221661,
            0.004148486996733409]
-    w3 = owa_l_moment_crm(100;
-                          k = 4,
+    w3 = owa_l_moment_crm(100; k = 4,
                           method = :SS,
                           g = 0.5,
                           max_phi = 0.5,
@@ -273,8 +271,7 @@ using Test, PortfolioOptimiser, ECOS
            0.005244799026822325,
            0.0054313392775423835,
            0.0056533906083216755]
-    w4 = owa_l_moment_crm(50;
-                          k = 4,
+    w4 = owa_l_moment_crm(50; k = 4,
                           method = :SD,
                           g = 0.5,
                           max_phi = 0.5,
@@ -333,8 +330,7 @@ using Test, PortfolioOptimiser, ECOS
            0.0051045023497387695,
            0.0054109837723409805,
            0.006040808121419238]
-    w5 = owa_l_moment_crm(50;
-                          k = 8,
+    w5 = owa_l_moment_crm(50; k = 8,
                           method = :CRRA,
                           g = 0.5,
                           max_phi = 0.5,
@@ -393,8 +389,7 @@ using Test, PortfolioOptimiser, ECOS
            0.007534449600314362,
            0.008013675536324451,
            0.008659027642314836]
-    w6 = owa_l_moment_crm(50;
-                          k = 8,
+    w6 = owa_l_moment_crm(50; k = 8,
                           method = :E,
                           g = 0.5,
                           max_phi = 0.5,
@@ -453,8 +448,7 @@ using Test, PortfolioOptimiser, ECOS
            0.002140392131782019,
            0.0024777026954568094,
            0.0030725027418563554]
-    w7 = owa_l_moment_crm(50;
-                          k = 8,
+    w7 = owa_l_moment_crm(50; k = 8,
                           method = :SS,
                           g = 0.5,
                           max_phi = 0.5,
@@ -513,8 +507,7 @@ using Test, PortfolioOptimiser, ECOS
            0.004953088539293399,
            0.004984505530411521,
            0.005025359650483268]
-    w8 = owa_l_moment_crm(50;
-                          k = 8,
+    w8 = owa_l_moment_crm(50; k = 8,
                           method = :SD,
                           g = 0.5,
                           max_phi = 0.5,

@@ -85,8 +85,10 @@ Compute the mutual information and variation of information matrices.
         - `:HGR`: Hacine-Gharbi and Ravier's choice.
 """
 function mut_var_info_mtx(x::AbstractMatrix{<:Real},
-                          bins_info::Union{Symbol, <:Integer} = :KN, normed::Bool = true)
-    @assert(bins_info ∈ BinMethods || isa(bins_info, Int) && bins_info > zero(bins_info),
+                          bins_info::Union{Symbol, <:Integer} = :KN,
+                          normed::Bool = true)
+    @assert(bins_info ∈ BinMethods ||
+            isa(bins_info, Int) && bins_info > zero(bins_info),
             "bins_info = $bins_info, has to either be in $BinMethods, or an integer value greater than 0")
 
     bin_width_func = if bins_info == :KN
@@ -125,8 +127,10 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
                 mut_ixy /= min(ex, ey)
             end
 
-            (abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < 0.0) && (mut_ixy = 0.0)
-            (abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < 0.0) && (var_ixy = 0.0)
+            (abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < 0.0) &&
+                (mut_ixy = 0.0)
+            (abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < 0.0) &&
+                (var_ixy = 0.0)
 
             mut_mtx[i, j] = mut_ixy
             var_mtx[i, j] = var_ixy
@@ -411,7 +415,8 @@ function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton())
 end
 
 function posdef_fix!(mtx::AbstractMatrix,
-                     settings::PosdefFixSettings = PosdefFixSettings(;); msg::String = "",)
+                     settings::PosdefFixSettings = PosdefFixSettings(;);
+                     msg::String = "",)
     method = settings.method
     func = settings.genfunc.func
     args = settings.genfunc.args
@@ -419,7 +424,8 @@ function posdef_fix!(mtx::AbstractMatrix,
 
     (method == :None || isposdef(mtx)) && return nothing
 
-    @assert(method ∈ PosdefFixMethods, "method = $method, must be one of $PosdefFixMethods")
+    @assert(method ∈ PosdefFixMethods,
+            "method = $method, must be one of $PosdefFixMethods")
 
     _mtx = if method == :Nearest
         nearest_cov(mtx, args...; kwargs...)
@@ -436,13 +442,16 @@ function posdef_fix!(mtx::AbstractMatrix,
 end
 export posdef_fix!
 
-function errPDF(x, vals; kernel = ASH.Kernels.gaussian, m = 10, n = 1000, q = 1000)
+function errPDF(x, vals; kernel = ASH.Kernels.gaussian, m = 10, n = 1000,
+                q = 1000)
     e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
     rg = range(e_min, e_max; length = n)
-    pdf1 = q ./ (2 * pi * x * rg) .* sqrt.(clamp.((e_max .- rg) .* (rg .- e_min), 0, Inf))
+    pdf1 = q ./ (2 * pi * x * rg) .*
+           sqrt.(clamp.((e_max .- rg) .* (rg .- e_min), 0, Inf))
 
     e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
-    res = ash(vals; rng = range(e_min, e_max; length = n), kernel = kernel, m = m)
+    res = ash(vals; rng = range(e_min, e_max; length = n), kernel = kernel,
+              m = m)
     pdf2 = [ASH.pdf(res, i) for i in pdf1]
     pdf2[.!isfinite.(pdf2)] .= 0.0
     sse = sum((pdf2 - pdf1) .^ 2)
@@ -451,10 +460,9 @@ function errPDF(x, vals; kernel = ASH.Kernels.gaussian, m = 10, n = 1000, q = 10
 end
 
 function find_max_eval(vals, q; kernel = ASH.Kernels.gaussian, m::Integer = 10,
-                       n::Integer = 1000,
-                       args = (), kwargs = (;),)
-    res = Optim.optimize(x -> errPDF(x, vals; kernel = kernel, m = m, n = n, q = q), 0.0,
-                         1.0, args...; kwargs...,)
+                       n::Integer = 1000, args = (), kwargs = (;),)
+    res = Optim.optimize(x -> errPDF(x, vals; kernel = kernel, m = m, n = n,
+                                     q = q), 0.0, 1.0, args...; kwargs...,)
 
     x = Optim.converged(res) ? Optim.minimizer(res) : 1.0
 
@@ -483,7 +491,8 @@ end
 export denoise_cor
 
 function shrink_cor(vals, vecs, num_factors, alpha = zero(eltype(vals)))
-    @assert(zero(alpha) <= alpha <= one(alpha), "alpha = $alpha, must be 0 <= alpha <= 1")
+    @assert(zero(alpha) <= alpha <= one(alpha),
+            "alpha = $alpha, must be 0 <= alpha <= 1")
     # Small
     vals_l = vals[1:num_factors]
     vecs_l = vecs[:, 1:num_factors]
@@ -521,8 +530,8 @@ function denoise_cov(mtx::AbstractMatrix, q::Real,
 
     vals, vecs = eigen(corr)
 
-    max_val, missing = find_max_eval(vals, q; kernel = kernel, m = m, n = n, args = args,
-                                     kwargs = kwargs)
+    max_val, missing = find_max_eval(vals, q; kernel = kernel, m = m, n = n,
+                                     args = args, kwargs = kwargs)
 
     num_factors = findlast(vals .< max_val)
     corr = if method ∈ (:Fixed, :Spectral)
@@ -552,7 +561,8 @@ export denoise_cov
 mu_estimator
 ```
 """
-function mu_estimator(returns::AbstractMatrix, settings::MuSettings = MuSettings(;))
+function mu_estimator(returns::AbstractMatrix,
+                      settings::MuSettings = MuSettings(;))
     method = settings.method
     @assert(method ∈ (:JS, :BS, :BOP, :CAPM),
             "method = $method, must be one of (:JS, :BS, :BOP, :CAPM)")
@@ -580,15 +590,18 @@ function mu_estimator(returns::AbstractMatrix, settings::MuSettings = MuSettings
         end
 
         if method == :JS
-            alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
+            alpha = (N * mean(evals) - 2 * maximum(evals)) /
+                    dot(mu - b, mu - b) / T
             mu = (1 - alpha) * mu + alpha * b
         elseif method == :BS
             alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
             mu = (1 - alpha) * mu + alpha * b
         else
-            alpha = (dot(mu, inv_sigma, mu) - N / (T - N)) * dot(b, inv_sigma, b) -
+            alpha = (dot(mu, inv_sigma, mu) - N / (T - N)) *
+                    dot(b, inv_sigma, b) -
                     dot(mu, inv_sigma, b)^2
-            alpha /= dot(mu, inv_sigma, mu) * dot(b, inv_sigma, b) - dot(mu, inv_sigma, b)^2
+            alpha /= dot(mu, inv_sigma, mu) * dot(b, inv_sigma, b) -
+                     dot(mu, inv_sigma, b)^2
             beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
             mu = alpha * mu + beta * b
         end
@@ -608,7 +621,8 @@ end
 covar_mtx
 ```
 """
-function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(;))
+function covar_mtx(returns::AbstractMatrix,
+                   settings::CovSettings = CovSettings(;))
     method = settings.method
 
     @assert(method ∈ CovMethods, "method = $method, must be one of $CovMethods")
@@ -698,7 +712,8 @@ function cokurt_mtx(returns::AbstractMatrix, mu::AbstractVector,
 
     target_ret = settings.estimation.target_ret
     custom_skurt = settings.estimation.custom_skurt
-    skurt = isnothing(custom_skurt) ? scokurt(returns, transpose(mu), target_ret) :
+    skurt = isnothing(custom_skurt) ?
+            scokurt(returns, transpose(mu), target_ret) :
             custom_skurt
 
     T, N = size(returns)
@@ -745,7 +760,8 @@ cor_dist_mtx(
     returns::AbstractMatrix;    alpha_tail::Real = 0.05,    bins_info::Union{Symbol, Integer} = :KN,    cor_method::Symbol = :Pearson,    cor_args::Tuple = (),    cor_func::Function = cor,    cor_kwargs::NamedTuple = (;),    custom_cor::Union{AbstractMatrix, Nothing} = nothing,    dist_args::Tuple = (),    dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),    dist_kwargs::NamedTuple = (;),    gs_threshold::Real = 0.5,    posdef_args::Tuple = (),    posdef_fix::Symbol = :Nearest,    posdef_func::Function = x -> x,    posdef_kwargs::NamedTuple = (;),    sigma::Union{AbstractMatrix, Nothing} = nothing,    std_args::Tuple = (),    std_func::Function = std,    std_kwargs::NamedTuple = (;),    uplo::Symbol = :L,)
 ```
 """
-function cor_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettings(;))
+function cor_dist_mtx(returns::AbstractMatrix,
+                      settings::CorSettings = CorSettings(;))
     method = settings.method
     if method ∈ (:Pearson, :Semi_Pearson)
         estimation = settings.estimation
@@ -762,7 +778,8 @@ function cor_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettin
         corr = try
             StatsBase.cor(estimator, returns, args...; kwargs...)
         catch
-            StatsBase.cov2cor(Matrix(StatsBase.cov(estimator, returns, args...; kwargs...)))
+            StatsBase.cov2cor(Matrix(StatsBase.cov(estimator, returns, args...;
+                                                   kwargs...)))
         end
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Spearman
@@ -786,8 +803,8 @@ function cor_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettin
         corr = try
             abs.(StatsBase.cor(estimator, returns, args...; kwargs...))
         catch
-            abs.(StatsBase.cov2cor(Matrix(StatsBase.cov(estimator, returns, args...;
-                                                        kwargs...))))
+            abs.(StatsBase.cov2cor(Matrix(StatsBase.cov(estimator, returns,
+                                                        args...; kwargs...))))
         end
         # corr = abs.(cor(returns))
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
@@ -920,7 +937,8 @@ function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
                        n_sim::Integer = 3_000, window::Integer = 3,
                        seed::Union{<:Integer, Nothing} = nothing,
                        rng = Random.default_rng())
-    @assert(kind ∈ BootstrapMethods, "kind = $kind, must be one of $BootstrapMethods")
+    @assert(kind ∈ BootstrapMethods,
+            "kind = $kind, must be one of $BootstrapMethods")
     !isnothing(seed) && Random.seed!(rng, seed)
 
     mus = Vector{Vector{eltype(returns)}}(undef, 0)
@@ -957,7 +975,8 @@ wc_statistics!(
 ```
 Worst case optimisation statistics.
 """
-function wc_statistics!(portfolio::AbstractPortfolio, settings::WCSettings = WCSettings(;))
+function wc_statistics!(portfolio::AbstractPortfolio,
+                        settings::WCSettings = WCSettings(;))
     calc_box = settings.calc_box
     calc_ellipse = settings.calc_ellipse
     box = settings.box
@@ -977,7 +996,8 @@ function wc_statistics!(portfolio::AbstractPortfolio, settings::WCSettings = WCS
     returns = portfolio.returns
     T, N = size(returns)
 
-    if box == :Delta || ellipse == :Stationary || ellipse == :Circular || ellipse == :Moving
+    if box == :Delta || ellipse == :Stationary || ellipse == :Circular ||
+       ellipse == :Moving
         mu = vec(mean(returns; dims = 1))
     end
 
@@ -997,8 +1017,10 @@ function wc_statistics!(portfolio::AbstractPortfolio, settings::WCSettings = WCS
             mu_u = [quantile(mu_s[:, i], 1 - q / 2) for i in 1:N]
 
             cov_s = vec_of_vecs_to_mtx(vec.(covs))
-            cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)], N, N)
-            cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
+            cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)],
+                            N, N)
+            cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2)
+                             for i in 1:(N * N)], N, N)
 
             d_mu = (mu_u - mu_l) / 2
         elseif box == :Normal
@@ -1006,8 +1028,10 @@ function wc_statistics!(portfolio::AbstractPortfolio, settings::WCSettings = WCS
             d_mu = cquantile(Normal(), q / 2) * sqrt.(diag(sigma) / T)
             cov_s = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, sigma / T), n_sim)))
 
-            cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)], N, N)
-            cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
+            cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)],
+                            N, N)
+            cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2)
+                             for i in 1:(N * N)], N, N)
         elseif box == :Delta
             d_mu = dmu * abs.(mu)
             cov_l = sigma - dcov * abs.(sigma)
@@ -1017,10 +1041,13 @@ function wc_statistics!(portfolio::AbstractPortfolio, settings::WCSettings = WCS
 
     if calc_ellipse
         if ellipse == :Stationary || ellipse == :Circular || ellipse == :Moving
-            mus, covs = gen_bootstrap(returns, ellipse, n_sim, window, seed, rng)
+            mus, covs = gen_bootstrap(returns, ellipse, n_sim, window, seed,
+                                      rng)
 
-            cov_mu = Diagonal(cov(vec_of_vecs_to_mtx([mu_s .- mu for mu_s in mus])))
-            cov_sigma = Diagonal(cov(vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma)
+            cov_mu = Diagonal(cov(vec_of_vecs_to_mtx([mu_s .- mu
+                                                      for mu_s in mus])))
+            cov_sigma = Diagonal(cov(vec_of_vecs_to_mtx([vec(cov_s) .-
+                                                         vec(sigma)
                                                          for cov_s in covs])))
         elseif ellipse == :Normal
             cov_mu = Diagonal(sigma) / T
@@ -1049,7 +1076,8 @@ end
 function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
                             criterion::Union{Symbol, Function} = :pval,
                             threshold::Real = 0.05)
-    @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
+    @assert(criterion ∈ RegCriteria,
+            "criterion = $criterion, must be one of $RegCriteria")
     isa(y, DataFrame) && (y = Vector(y))
 
     included = String[]
@@ -1154,7 +1182,8 @@ end
 function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
                              criterion::Union{Symbol, Function} = :pval,
                              threshold::Real = 0.05)
-    @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
+    @assert(criterion ∈ RegCriteria,
+            "criterion = $criterion, must be one of $RegCriteria")
     isa(y, DataFrame) && (y = Vector(y))
 
     N = length(y)
@@ -1313,7 +1342,8 @@ function loadings_matrix(x::DataFrame, y::DataFrame,
                        forward_regression(x, y[!, i], criterion, threshold) :
                        backward_regression(x, y[!, i], criterion, threshold)
 
-            x1 = !isempty(included) ? [ovec Matrix(x[!, included])] : reshape(ovec, :, 1)
+            x1 = !isempty(included) ? [ovec Matrix(x[!, included])] :
+                 reshape(ovec, :, 1)
 
             fit_result = lm(x1, y[!, i])
 
@@ -1329,7 +1359,8 @@ function loadings_matrix(x::DataFrame, y::DataFrame,
         end
     end
 
-    return hcat(DataFrame(; ticker = names(y)), DataFrame(loadings, ["const"; features]))
+    return hcat(DataFrame(; ticker = names(y)),
+                DataFrame(loadings, ["const"; features]))
 end
 
 function risk_factors(x::DataFrame, y::DataFrame;
@@ -1338,7 +1369,8 @@ function risk_factors(x::DataFrame, y::DataFrame;
                       mu_settings::MuSettings = MuSettings(;),)
     B = factor_settings.B
 
-    isnothing(B) && (B = loadings_matrix(x, y, factor_settings.loadings_settings))
+    isnothing(B) &&
+        (B = loadings_matrix(x, y, factor_settings.loadings_settings))
     namesB = names(B)
     x1 = "const" ∈ namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
     B = Matrix(B[!, setdiff(namesB, ("ticker",))])
@@ -1385,8 +1417,9 @@ function _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta)
     return mu, cov_mtx, w, Pi_
 end
 
-function black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
-                         w::AbstractVector; cov_settings::CovSettings = CovSettings(;),
+function black_litterman(returns::AbstractMatrix, P::AbstractMatrix,
+                         Q::AbstractVector, w::AbstractVector;
+                         cov_settings::CovSettings = CovSettings(;),
                          mu_settings::MuSettings = MuSettings(;),
                          bl_settings::BLSettings = BLSettings(;),)
     eq = bl_settings.eq
@@ -1445,7 +1478,8 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
     inv_sigma_f = sigma_f \ I
     inv_omega_f = omega_f \ I
     sigma_hat = (inv_sigma_f + transpose(P_f) * inv_omega_f * P_f) \ I
-    Pi_hat = sigma_hat * (inv_sigma_f * mu_f + transpose(P_f) * inv_omega_f * Q_f)
+    Pi_hat = sigma_hat *
+             (inv_sigma_f * mu_f + transpose(P_f) * inv_omega_f * Q_f)
     inv_sigma_hat = sigma_hat \ I
     iish_b_is_b = (inv_sigma_hat + transpose(B) * inv_sigma * B) \ I
     is_b_iish_b_is_b = inv_sigma * B * iish_b_is_b
@@ -1478,7 +1512,8 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;  
     @assert(any_asset_provided == all_asset_provided,
             "If any of P or Q is provided, then both must be provided.")
 
-    factor_tuple = (!isnothing(B), !isnothing(F), !isnothing(P_f), !isnothing(Q_f))
+    factor_tuple = (!isnothing(B), !isnothing(F), !isnothing(P_f),
+                    !isnothing(Q_f))
     any_factor_provided = any(factor_tuple)
     all_factor_provided = all(factor_tuple)
     @assert(any_factor_provided == all_factor_provided,
@@ -1523,7 +1558,8 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;  
         omega_a = _omega(P_a, tau * sigma_a)
         Pi_a = _Pi(eq, delta, sigma_a * transpose(B), w, mu_f, rf)
     elseif all_asset_provided && all_factor_provided
-        sigma_a = hcat(vcat(sigma, sigma_f * transpose(B)), vcat(B * sigma_f, sigma_f))
+        sigma_a = hcat(vcat(sigma, sigma_f * transpose(B)),
+                       vcat(B * sigma_f, sigma_f))
 
         zeros_1 = zeros(size(P_f, 1), size(P, 2))
         zeros_2 = zeros(size(P, 1), size(P_f, 2))
@@ -1538,11 +1574,12 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;  
 
         omega_a = hcat(vcat(omega, transpose(zeros_3)), vcat(zeros_3, omega_f))
 
-        Pi_a = _Pi(eq, delta, vcat(sigma, sigma_f * transpose(B)), w, vcat(mu, mu_f), rf)
+        Pi_a = _Pi(eq, delta, vcat(sigma, sigma_f * transpose(B)), w,
+                   vcat(mu, mu_f), rf)
     end
 
-    mu_a, cov_mtx_a, w_a, Pi_a_ = _mu_cov_w(tau, omega_a, P_a, Pi_a, Q_a, rf, sigma_a,
-                                            delta)
+    mu_a, cov_mtx_a, w_a, Pi_a_ = _mu_cov_w(tau, omega_a, P_a, Pi_a, Q_a, rf,
+                                            sigma_a, delta)
 
     if !all_asset_provided && all_factor_provided
         mu_a = B * mu_a
@@ -1565,9 +1602,10 @@ black_litterman_statistics!(
     delta::Union{Real, Nothing} = nothing,    eq::Bool = true,    rf::Real = 0.0,)
 ```
 """
-function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
-                                     Q::AbstractVector,
-                                     w::AbstractVector = Vector{Float64}(undef, 0);
+function black_litterman_statistics!(portfolio::AbstractPortfolio,
+                                     P::AbstractMatrix, Q::AbstractVector,
+                                     w::AbstractVector = Vector{Float64}(undef,
+                                                                         0);
                                      cov_settings::CovSettings = CovSettings(;),
                                      mu_settings::MuSettings = MuSettings(;),
                                      bl_settings::BLSettings = BLSettings(;),)
@@ -1585,7 +1623,8 @@ function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMa
         (bl_settings.delta = (dot(portfolio.mu, w) - bl_settings.rf) /
                              dot(w, portfolio.cov, w))
 
-    portfolio.mu_bl, portfolio.cov_bl, missing = black_litterman(returns, P, Q, w;
+    portfolio.mu_bl, portfolio.cov_bl, missing = black_litterman(returns, P, Q,
+                                                                 w;
                                                                  cov_settings = cov_settings,
                                                                  mu_settings = mu_settings,
                                                                  bl_settings = bl_settings,)
@@ -1637,7 +1676,8 @@ black_litterman_factor_satistics!(
 ```
 """
 function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
-                                           w::AbstractVector = Vector{Float64}(undef, 0);                                           # Black Litterman
+                                           w::AbstractVector = Vector{Float64}(undef,
+                                                                               0);                                           # Black Litterman
                                            B::Union{DataFrame, Nothing} = nothing,
                                            P::Union{AbstractMatrix, Nothing} = nothing,
                                            P_f::Union{AbstractMatrix, Nothing} = nothing,
@@ -1665,45 +1705,54 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
 
     if isnothing(B)
         B = loadings_matrix(DataFrame(F, portfolio.f_assets),
-                            DataFrame(returns, portfolio.assets), loadings_settings)
+                            DataFrame(returns, portfolio.assets),
+                            loadings_settings)
     end
     namesB = names(B)
     bl_settings.constant = "const" ∈ namesB
     B = Matrix(B[!, setdiff(namesB, ("ticker",))])
 
-    portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_settings.method == :B
-        bayesian_black_litterman(returns, F, B, P_f, Q_f; cov_settings = cov_settings,
+    portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_settings.method ==
+                                                          :B
+        bayesian_black_litterman(returns, F, B, P_f, Q_f;
+                                 cov_settings = cov_settings,
                                  mu_settings = mu_settings,
                                  bl_settings = bl_settings,)
     else
         augmented_black_litterman(returns, w;                                  # Black Litterman
-                                  F = F, B = B, P = P, P_f = P_f, Q = Q, Q_f = Q_f,                                  # Settings
-                                  cov_settings = cov_settings, mu_settings = mu_settings,
+                                  F = F, B = B, P = P, P_f = P_f, Q = Q,
+                                  Q_f = Q_f,                                  # Settings
+                                  cov_settings = cov_settings,
+                                  mu_settings = mu_settings,
                                   bl_settings = bl_settings,)
     end
 
     return nothing
 end
 
-function cluster_assets(returns::AbstractMatrix; cor_settings::CorSettings = CorSettings(;),
+function cluster_assets(returns::AbstractMatrix;
+                        cor_settings::CorSettings = CorSettings(;),
                         linkage = :single,
-                        max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
-                        k = 0, dbht_method = :Unique,)
+                        max_k = ceil(Int, sqrt(size(returns, 2))),
+                        branchorder = :optimal, k = 0, dbht_method = :Unique,)
     @smart_assert(linkage ∈ LinkageTypes)
 
     cor_method = cor_settings.method
     corr, dist = cor_dist_mtx(returns, cor_settings)
 
-    cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
+    cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2,
+            :custom)
 
     if linkage == :DBHT
         corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
-        missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
+        missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist,
+                                                                                 corr;
                                                                                  branchorder = branchorder,
                                                                                  method = dbht_method)
     else
         clustering = hclust(dist; linkage = linkage,
-                            branchorder = branchorder == :default ? :r : branchorder,)
+                            branchorder = branchorder == :default ? :r :
+                                          branchorder,)
     end
 
     tk = _two_diff_gap_stat(dist, clustering, max_k)
@@ -1713,10 +1762,12 @@ function cluster_assets(returns::AbstractMatrix; cor_settings::CorSettings = Cor
     return clustering, k
 end
 
-export covgerber0, covgerber1, covgerber2, mut_var_info_mtx, cov_returns, block_vec_pq,
-       duplication_matrix, elimination_matrix, summation_matrix, dup_elim_sum_matrices,
-       cokurt, scokurt, asset_statistics!, wc_statistics!, forward_regression,
-       backward_regression, pcr, loadings_matrix, risk_factors, black_litterman,
-       augmented_black_litterman, bayesian_black_litterman, black_litterman_statistics!,
-       factor_statistics!, black_litterman_factor_satistics!, nearest_cov, covar_mtx,
-       mean_vec, cokurt_mtx, mu_estimator, cor_dist_mtx, cluster_assets
+export covgerber0, covgerber1, covgerber2, mut_var_info_mtx, cov_returns,
+       block_vec_pq, duplication_matrix, elimination_matrix, summation_matrix,
+       dup_elim_sum_matrices, cokurt, scokurt, asset_statistics!,
+       wc_statistics!, forward_regression, backward_regression, pcr,
+       loadings_matrix, risk_factors, black_litterman,
+       augmented_black_litterman, bayesian_black_litterman,
+       black_litterman_statistics!, factor_statistics!,
+       black_litterman_factor_satistics!, nearest_cov, covar_mtx, mean_vec,
+       cokurt_mtx, mu_estimator, cor_dist_mtx, cluster_assets

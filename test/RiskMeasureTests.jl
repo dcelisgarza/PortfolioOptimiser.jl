@@ -36,138 +36,146 @@ returns = dropmissing!(DataFrame(Y))
     N = size(portfolio.returns, 2)
     w = fill(1 / N, N)
 
-    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov, rm = :Variance) -
+    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov,
+                        rm = :Variance) -
               0.000101665490230637) < eps()
     @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov, rm = :SD) -
               0.010082930637004155) < eps()
-    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov, rm = :MAD) -
+    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov,
+                        rm = :MAD) -
               0.007418863748729646) < eps()
-    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov, rm = :SSD) -
+    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov,
+                        rm = :SSD) -
               0.007345533015355076) < eps()
-    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov, rm = :FLPM) -
+    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov,
+                        rm = :FLPM) -
               0.0034827678064358134) < eps()
-    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov, rm = :SLPM) -
+    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov,
+                        rm = :SLPM) -
               0.007114744825145661) < eps()
     @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov, rm = :WR) -
               0.043602428699089285) < eps()
-    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov, rm = :VaR) -
+    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov,
+                        rm = :VaR) -
               0.016748899891587572) < eps()
-    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov, rm = :CVaR) -
+    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov,
+                        rm = :CVaR) -
               0.02405795664064266) < eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :EVaR,
-                        solvers = portfolio.solvers,) - 0.030225422932337445) < 9e-8
+                        solvers = portfolio.solvers,) - 0.030225422932337445) <
+          9e-8
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :RVaR,
-                        solvers = portfolio.solvers,) - 0.03586321171352101) < 1e-5
+                        solvers = portfolio.solvers,) - 0.03586321171352101) <
+          1e-5
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :MDD,
-                        solvers = portfolio.solvers,) - 0.1650381304766847) < 2.1 * eps()
+                        solvers = portfolio.solvers,) - 0.1650381304766847) <
+          2.1 * eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :ADD,
-                        solvers = portfolio.solvers,) - 0.02762516797999026) < eps()
+                        solvers = portfolio.solvers,) - 0.02762516797999026) <
+          eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :DaR,
-                        solvers = portfolio.solvers,) - 0.09442013028621254) < 4.6 * eps()
+                        solvers = portfolio.solvers,) - 0.09442013028621254) <
+          4.6 * eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :CDaR,
-                        solvers = portfolio.solvers,) - 0.11801077171629008) < 2 * eps()
+                        solvers = portfolio.solvers,) - 0.11801077171629008) <
+          2 * eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :UCI,
-                        solvers = portfolio.solvers,) - 0.0402491262027023) < eps()
+                        solvers = portfolio.solvers,) - 0.0402491262027023) <
+          eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :EDaR,
-                        solvers = portfolio.solvers,) - 0.13221264782750258) < 4e-8
+                        solvers = portfolio.solvers,) - 0.13221264782750258) <
+          4e-8
 
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :RDaR,
-                        solvers = portfolio.solvers,) - 0.14476333638845212) < 4.6e-6
+                        solvers = portfolio.solvers,) - 0.14476333638845212) <
+          4.6e-6
 
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :MDD_r,
-                        solvers = portfolio.solvers,) - 0.15747952419681518) < eps()
+                        solvers = portfolio.solvers,) - 0.15747952419681518) <
+          eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :ADD_r,
-                        solvers = portfolio.solvers,) - 0.0283271101845512) < eps()
+                        solvers = portfolio.solvers,) - 0.0283271101845512) <
+          eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :DaR_r,
-                        solvers = portfolio.solvers,) - 0.09518744803693206) < eps()
+                        solvers = portfolio.solvers,) - 0.09518744803693206) <
+          eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :CDaR_r,
-                        solvers = portfolio.solvers,) - 0.11577944159793968) < eps()
+                        solvers = portfolio.solvers,) - 0.11577944159793968) <
+          eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :UCI_r,
-                        solvers = portfolio.solvers,) - 0.040563874281498415) < eps()
+                        solvers = portfolio.solvers,) - 0.040563874281498415) <
+          eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :EDaR_r,
-                        solvers = portfolio.solvers,) - 0.12775945574727807) < 7.7e-8
+                        solvers = portfolio.solvers,) - 0.12775945574727807) <
+          7.7e-8
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :RDaR_r,
-                        solvers = portfolio.solvers,) - 0.13863825698673474) < 8.3e-6
+                        solvers = portfolio.solvers,) - 0.13863825698673474) <
+          8.3e-6
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :Kurt,
-                        solvers = portfolio.solvers,) - 0.0002220921162540514) < eps()
+                        solvers = portfolio.solvers,) - 0.0002220921162540514) <
+          eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :SKurt,
-                        solvers = portfolio.solvers,) - 0.00017326399202890477) < eps()
-    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov, rm = :GMD) -
+                        solvers = portfolio.solvers,) - 0.00017326399202890477) <
+          eps()
+    @test abs(calc_risk(w, portfolio.returns; sigma = portfolio.cov,
+                        rm = :GMD) -
               0.010916540360808049) < eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :RG,
-                        solvers = portfolio.solvers,) - 0.08841083118500939) < eps()
+                        solvers = portfolio.solvers,) - 0.08841083118500939) <
+          eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :RCVaR,
-                        solvers = portfolio.solvers,) - 0.046068669089612116) < eps()
+                        solvers = portfolio.solvers,) - 0.046068669089612116) <
+          eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :TG,
-                        solvers = portfolio.solvers,) - 0.027380708685309275) < eps()
+                        solvers = portfolio.solvers,) - 0.027380708685309275) <
+          eps()
     @test abs(calc_risk(w,
-                        portfolio.returns;
-                        sigma = portfolio.cov,
+                        portfolio.returns; sigma = portfolio.cov,
                         rm = :RTG,
-                        solvers = portfolio.solvers,) - 0.051977750343340984) < eps()
+                        solvers = portfolio.solvers,) - 0.051977750343340984) <
+          eps()
 
     portfolio = Portfolio(; returns = returns,
                           solvers = OrderedDict(:ECOS => Dict(:solver => ECOS.Optimizer,
@@ -178,10 +186,12 @@ returns = dropmissing!(DataFrame(Y))
     T = size(returns, 1)
     owa_w = fill(1 / T, T)
 
-    @test isapprox(dot(sort(portfolio.returns * portfolio.optimal[:Trad].weights),
+    @test isapprox(dot(sort(portfolio.returns *
+                            portfolio.optimal[:Trad].weights),
                        owa_gmd(T) / 2),
                    calc_risk(portfolio; rm = :OWA))
-    @test isapprox(dot(sort(portfolio.returns * portfolio.optimal[:Trad].weights), owa_w),
+    @test isapprox(dot(sort(portfolio.returns *
+                            portfolio.optimal[:Trad].weights), owa_w),
                    calc_risk(portfolio; rm = :OWA, owa_w = owa_w))
 
     portfolio = Portfolio(; returns = returns,
@@ -219,8 +229,7 @@ end
           calc_risk(portfolio; type = type)
     @test isapprox(sr, srt)
 
-    rc1 = risk_contribution(portfolio;
-                            rm = HCRiskMeasures[1],
+    rc1 = risk_contribution(portfolio; rm = HCRiskMeasures[1],
                             rf = 0.0,
                             type = type,
                             di = 1e-7,)
@@ -245,8 +254,7 @@ end
             1.244253167821144e-8,
             0.0005171135155959228]
     @test isapprox(rc1, rc1t)
-    rc2 = risk_contribution(portfolio;
-                            rm = HCRiskMeasures[2],
+    rc2 = risk_contribution(portfolio; rm = HCRiskMeasures[2],
                             rf = 0.0,
                             type = type,
                             di = 1e-7,)
@@ -271,8 +279,7 @@ end
             8.47898776659832e-9,
             0.0003570944566843724]
     @test isapprox(rc2, rc2t)
-    rc3 = risk_contribution(portfolio;
-                            rm = HCRiskMeasures[3],
+    rc3 = risk_contribution(portfolio; rm = HCRiskMeasures[3],
                             rf = 0.0,
                             type = type,
                             di = 1e-7,)
@@ -297,8 +304,7 @@ end
             9.109740458446344e-9,
             0.00037976103402036936]
     @test isapprox(rc3, rc3t)
-    rc4 = risk_contribution(portfolio;
-                            rm = HCRiskMeasures[4],
+    rc4 = risk_contribution(portfolio; rm = HCRiskMeasures[4],
                             rf = 0.0,
                             type = type,
                             di = 1e-7,)
@@ -323,8 +329,7 @@ end
             3.578061826292522e-9,
             0.00015870791712950183]
     @test isapprox(rc4, rc4t)
-    rc5 = risk_contribution(portfolio;
-                            rm = HCRiskMeasures[5],
+    rc5 = risk_contribution(portfolio; rm = HCRiskMeasures[5],
                             rf = 0.0,
                             type = type,
                             di = 1e-7,)
@@ -349,8 +354,7 @@ end
             8.553922940553951e-9,
             0.000358452346498508]
     @test isapprox(rc5, rc5t)
-    rc6 = risk_contribution(portfolio;
-                            rm = HCRiskMeasures[6],
+    rc6 = risk_contribution(portfolio; rm = HCRiskMeasures[6],
                             rf = 0.0,
                             type = type,
                             di = 1e-7,)
@@ -375,8 +379,7 @@ end
             6.594455358562102e-8,
             0.0013454702859920006]
     @test isapprox(rc6, rc6t)
-    rc7 = risk_contribution(portfolio;
-                            rm = HCRiskMeasures[7],
+    rc7 = risk_contribution(portfolio; rm = HCRiskMeasures[7],
                             rf = 0.0,
                             type = type,
                             di = 1e-7,)
@@ -401,8 +404,7 @@ end
             3.234802753779881e-8,
             0.001246441373903173]
     @test isapprox(rc7, rc7t)
-    rc8 = risk_contribution(portfolio;
-                            rm = HCRiskMeasures[8],
+    rc8 = risk_contribution(portfolio; rm = HCRiskMeasures[8],
                             rf = 0.0,
                             type = type,
                             di = 1e-7,)
@@ -427,8 +429,7 @@ end
             4.480951725817828e-8,
             0.0014152486753566998]
     @test isapprox(rc8, rc8t, rtol = 5e-3)
-    rc9 = risk_contribution(portfolio;
-                            rm = HCRiskMeasures[9],
+    rc9 = risk_contribution(portfolio; rm = HCRiskMeasures[9],
                             rf = 0.0,
                             type = type,
                             di = 1e-7,)
@@ -453,8 +454,7 @@ end
             -1.5598529963457856e-8,
             -0.0021680083728532395]
     @test isapprox(rc9, rc9t, atol = 0.02)
-    rc10 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[10],
+    rc10 = risk_contribution(portfolio; rm = HCRiskMeasures[10],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -479,8 +479,7 @@ end
              1.9515266247782393e-7,
              0.006149850910171047]
     @test isapprox(rc10, rc10t, rtol = 4e-8)
-    rc11 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[11],
+    rc11 = risk_contribution(portfolio; rm = HCRiskMeasures[11],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -505,8 +504,7 @@ end
              1.3462752938198555e-9,
              0.0010198994709112474]
     @test isapprox(rc11, rc11t, rtol = 3e-8)
-    rc12 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[12],
+    rc12 = risk_contribution(portfolio; rm = HCRiskMeasures[12],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -531,8 +529,7 @@ end
              8.069519262107062e-8,
              0.0012602504594063512]
     @test isapprox(rc12, rc12t, rtol = 4e-8)
-    rc13 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[13],
+    rc13 = risk_contribution(portfolio; rm = HCRiskMeasures[13],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -557,8 +554,7 @@ end
              1.2729798642087043e-8,
              0.0010696958252997824]
     @test isapprox(rc13, rc13t, rtol = 3e-8)
-    rc14 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[14],
+    rc14 = risk_contribution(portfolio; rm = HCRiskMeasures[14],
                              rf = 0.0,
                              type = type,
                              di = 1e-6,)
@@ -583,8 +579,7 @@ end
              9.411756753423743e-8,
              0.0023682296935574163]
     @test isapprox(rc14, rc14t, rtol = 5e-1)
-    rc15 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[15],
+    rc15 = risk_contribution(portfolio; rm = HCRiskMeasures[15],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -609,8 +604,7 @@ end
              1.5104936261894233e-7,
              0.006609830825115192]
     @test isapprox(rc15, rc15t, rtol = 3e-1)
-    rc16 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[16],
+    rc16 = risk_contribution(portfolio; rm = HCRiskMeasures[16],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -635,8 +629,7 @@ end
              2.499520820201564e-10,
              9.870480166259921e-6]
     @test isapprox(rc16, rc16t)
-    rc17 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[17],
+    rc17 = risk_contribution(portfolio; rm = HCRiskMeasures[17],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -661,8 +654,7 @@ end
              2.0360848074165503e-10,
              7.290870867671044e-6]
     @test isapprox(rc17, rc17t)
-    rc18 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[18],
+    rc18 = risk_contribution(portfolio; rm = HCRiskMeasures[18],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -687,8 +679,7 @@ end
              1.2893321779069027e-8,
              0.0005491981950527325]
     @test isapprox(rc18, rc18t)
-    rc19 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[19],
+    rc19 = risk_contribution(portfolio; rm = HCRiskMeasures[19],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -713,8 +704,7 @@ end
              1.3480810199689591e-7,
              0.005248448193225625]
     @test isapprox(rc19, rc19t)
-    rc20 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[20],
+    rc20 = risk_contribution(portfolio; rm = HCRiskMeasures[20],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -739,8 +729,7 @@ end
              6.097408083308898e-8,
              0.0023731524088898585]
     @test isapprox(rc20, rc20t)
-    rc21 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[21],
+    rc21 = risk_contribution(portfolio; rm = HCRiskMeasures[21],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -765,8 +754,7 @@ end
              3.6970648290685165e-8,
              0.0014109089518889101]
     @test isapprox(rc21, rc21t)
-    rc22 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[22],
+    rc22 = risk_contribution(portfolio; rm = HCRiskMeasures[22],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -791,8 +779,7 @@ end
              6.967147882434593e-8,
              0.002784459960306457]
     @test isapprox(rc22, rc22t)
-    rc23 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[23],
+    rc23 = risk_contribution(portfolio; rm = HCRiskMeasures[23],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -817,8 +804,7 @@ end
              6.446660889534513e-9,
              0.00027459909722505184]
     @test isapprox(rc23, rc23t)
-    rc24 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[24],
+    rc24 = risk_contribution(portfolio; rm = HCRiskMeasures[24],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -843,8 +829,7 @@ end
              1.9376051898424832e-10,
              8.05271674029468e-6]
     @test isapprox(rc24, rc24t)
-    rc25 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[25],
+    rc25 = risk_contribution(portfolio; rm = HCRiskMeasures[25],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -869,8 +854,7 @@ end
              1.3752096039080659e-6,
              0.06947838049421001]
     @test isapprox(rc25, rc25t)
-    rc26 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[26],
+    rc26 = risk_contribution(portfolio; rm = HCRiskMeasures[26],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -895,8 +879,7 @@ end
              3.9007228701534015e-8,
              0.0010505738905969332]
     @test isapprox(rc26, rc26t)
-    rc27 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[27],
+    rc27 = risk_contribution(portfolio; rm = HCRiskMeasures[27],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -921,8 +904,7 @@ end
              1.5408259344716658e-7,
              -0.002389345519586607]
     @test isapprox(rc27, rc27t, rtol = 8e-8)
-    rc28 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[28],
+    rc28 = risk_contribution(portfolio; rm = HCRiskMeasures[28],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -947,8 +929,7 @@ end
              1.7404398142142277e-7,
              -0.001855372076895879]
     @test isapprox(rc28, rc28t, rtol = 6e-8)
-    rc29 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[29],
+    rc29 = risk_contribution(portfolio; rm = HCRiskMeasures[29],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -973,8 +954,7 @@ end
              1.7883826845430217e-7,
              0.005732059472059088]
     @test isapprox(rc29, rc29t, rtol = 5e-8)
-    rc30 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[30],
+    rc30 = risk_contribution(portfolio; rm = HCRiskMeasures[30],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -999,8 +979,7 @@ end
              9.474904001065433e-9,
              0.0003810355799579022]
     @test isapprox(rc30, rc30t, rtol = 7e-8)
-    rc31 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[31],
+    rc31 = risk_contribution(portfolio; rm = HCRiskMeasures[31],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -1025,8 +1004,7 @@ end
              8.963341281664909e-8,
              0.0011765556912858963]
     @test isapprox(rc31, rc31t, rtol = 6e-8)
-    rc32 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[32],
+    rc32 = risk_contribution(portfolio; rm = HCRiskMeasures[32],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -1051,8 +1029,7 @@ end
              2.123730265922571e-8,
              0.00047556206480531656]
     @test isapprox(rc32, rc32t, rtol = 6e-8)
-    rc33 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[33],
+    rc33 = risk_contribution(portfolio; rm = HCRiskMeasures[33],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)
@@ -1077,8 +1054,7 @@ end
              1.0226799102131595e-7,
              0.0020634837588942288]
     @test isapprox(rc33, rc33t, rtol = 9e-1)
-    rc34 = risk_contribution(portfolio;
-                             rm = HCRiskMeasures[34],
+    rc34 = risk_contribution(portfolio; rm = HCRiskMeasures[34],
                              rf = 0.0,
                              type = type,
                              di = 1e-7,)

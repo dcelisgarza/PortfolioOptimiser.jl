@@ -1,4 +1,5 @@
-using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, HiGHS, Logging
+using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel,
+      HiGHS, Logging
 
 Logging.disable_logging(Logging.Warn)
 
@@ -14,7 +15,8 @@ l = 2.0
                                                            :params => Dict("verbose" => false))),
                           alloc_solvers = Dict(:HiGHS => Dict(:solver => (HiGHS.Optimizer),
                                                               :params => Dict("log_to_console" => false))),
-                          latest_prices = Vector(dropmissing(DataFrame(A))[end, 2:end]))
+                          latest_prices = Vector(dropmissing(DataFrame(A))[end,
+                                                                           2:end]))
     asset_statistics!(portfolio)
 
     opt_port!(portfolio)
@@ -44,7 +46,8 @@ l = 2.0
                                      "T",
                                      "SBUX",
                                      "SHLD"],
-                          shares = [3.0, 13.0, 20.0, 10.0, 57.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                          shares = [3.0, 13.0, 20.0, 10.0, 57.0, 1.0, 1.0, 1.0,
+                                    1.0, 1.0,
                                     1.0],
                           weights = [0.4284594841283738,
                                      0.2242482906467279,
@@ -62,13 +65,16 @@ l = 2.0
     gr_leftovert = 8.03971999999931
 
     @test isapprox(lp_leftovert, portfolio.alloc_params[:LP_Trad][:leftover])
-    @test isapprox(gr_leftovert, portfolio.alloc_params[:Greedy_Trad][:leftover])
+    @test isapprox(gr_leftovert,
+                   portfolio.alloc_params[:Greedy_Trad][:leftover])
 
-    lp_allocjoin = outerjoin(lp_alloct, lp_alloc; on = :tickers, makeunique = true)
+    lp_allocjoin = outerjoin(lp_alloct, lp_alloc; on = :tickers,
+                             makeunique = true)
     lp_allocjoin.shares[ismissing.(lp_allocjoin.shares)] .= 0
     lp_allocjoin.weights[ismissing.(lp_allocjoin.weights)] .= 0
 
-    gr_allocjoin = outerjoin(gr_alloct, gr_alloc; on = :tickers, makeunique = true)
+    gr_allocjoin = outerjoin(gr_alloct, gr_alloc; on = :tickers,
+                             makeunique = true)
     gr_allocjoin.shares[ismissing.(gr_allocjoin.shares)] .= 0
     gr_allocjoin.weights[ismissing.(gr_allocjoin.weights)] .= 0
 
@@ -83,7 +89,8 @@ l = 2.0
                                                            :params => Dict("verbose" => false))),
                           alloc_solvers = Dict(:HiGHS => Dict(:solver => (HiGHS.Optimizer),
                                                               :params => Dict("log_to_console" => false))),
-                          latest_prices = Vector(dropmissing(DataFrame(A))[end, 2:end]),
+                          latest_prices = Vector(dropmissing(DataFrame(A))[end,
+                                                                           2:end]),
                           short = true)
     asset_statistics!(portfolio)
 
@@ -107,7 +114,8 @@ l = 2.0
                                      "UAA",
                                      "SHLD",
                                      "RRC"],
-                          shares = [2, 79, 5, 18, 19, 11, 2, 18, -21, -33, -101, -56],
+                          shares = [2, 79, 5, 18, 19, 11, 2, 18, -21, -33, -101,
+                                    -56],
                           weights = [0.28541228564902454,
                                      0.07757861860414689,
                                      0.04295534452162168,
@@ -178,13 +186,16 @@ l = 2.0
     gr_leftovert = 3.0197298793932283
 
     @test isapprox(lp_leftovert, portfolio.alloc_params[:LP_Trad][:leftover])
-    @test isapprox(gr_leftovert, portfolio.alloc_params[:Greedy_Trad][:leftover])
+    @test isapprox(gr_leftovert,
+                   portfolio.alloc_params[:Greedy_Trad][:leftover])
 
-    lp_allocjoin = outerjoin(lp_alloct, lp_alloc; on = :tickers, makeunique = true)
+    lp_allocjoin = outerjoin(lp_alloct, lp_alloc; on = :tickers,
+                             makeunique = true)
     lp_allocjoin.shares[ismissing.(lp_allocjoin.shares)] .= 0
     lp_allocjoin.weights[ismissing.(lp_allocjoin.weights)] .= 0
 
-    gr_allocjoin = outerjoin(gr_alloct, gr_alloc; on = :tickers, makeunique = true)
+    gr_allocjoin = outerjoin(gr_alloct, gr_alloc; on = :tickers,
+                             makeunique = true)
     gr_allocjoin.shares[ismissing.(gr_allocjoin.shares)] .= 0
     gr_allocjoin.weights[ismissing.(gr_allocjoin.weights)] .= 0
 
@@ -199,7 +210,8 @@ l = 2.0
                                                              :params => Dict("verbose" => false))),
                             alloc_solvers = Dict(:HiGHS => Dict(:solver => (HiGHS.Optimizer),
                                                                 :params => Dict("log_to_console" => false))),
-                            latest_prices = Vector(dropmissing(DataFrame(A))[end, 2:end]))
+                            latest_prices = Vector(dropmissing(DataFrame(A))[end,
+                                                                             2:end]))
     asset_statistics!(portfolio)
 
     opt_port!(portfolio)
@@ -228,7 +240,8 @@ l = 2.0
                                      "PFE",
                                      "JPM",
                                      "SBUX"],
-                          shares = [5, 4, 2, 51, 17, 10, 11, 15, 27, 24, 45, 6, 23, 7, 4,
+                          shares = [5, 4, 2, 51, 17, 10, 11, 15, 27, 24, 45, 6,
+                                    23, 7, 4,
                                     18, 6, 12],
                           weights = [0.08623931753776092,
                                      0.06654290758616725,
@@ -314,11 +327,13 @@ l = 2.0
     @test isapprox(lp_leftovert, portfolio.alloc_params[:LP_HRP][:leftover])
     @test isapprox(gr_leftovert, portfolio.alloc_params[:Greedy_HRP][:leftover])
 
-    lp_allocjoin = outerjoin(lp_alloct, lp_alloc; on = :tickers, makeunique = true)
+    lp_allocjoin = outerjoin(lp_alloct, lp_alloc; on = :tickers,
+                             makeunique = true)
     lp_allocjoin.shares[ismissing.(lp_allocjoin.shares)] .= 0
     lp_allocjoin.weights[ismissing.(lp_allocjoin.weights)] .= 0
 
-    gr_allocjoin = outerjoin(gr_alloct, gr_alloc; on = :tickers, makeunique = true)
+    gr_allocjoin = outerjoin(gr_alloct, gr_alloc; on = :tickers,
+                             makeunique = true)
     gr_allocjoin.shares[ismissing.(gr_allocjoin.shares)] .= 0
     gr_allocjoin.weights[ismissing.(gr_allocjoin.weights)] .= 0
 
@@ -331,14 +346,12 @@ l = 2.0
     investment = 69420
     opt_port!(portfolio; linkage = :complete, type = :HERC)
     alloc_type = :LP
-    lp_alloc = allocate_port!(portfolio;
-                              port_type = :HERC,
+    lp_alloc = allocate_port!(portfolio; port_type = :HERC,
                               alloc_type = alloc_type,
                               investment = investment,)
 
     alloc_type = :Greedy
-    gr_alloc = allocate_port!(portfolio;
-                              port_type = :HERC,
+    gr_alloc = allocate_port!(portfolio; port_type = :HERC,
                               alloc_type = alloc_type,
                               investment = investment,)
 
@@ -464,13 +477,16 @@ l = 2.0
     gr_leftovert = 0.8677120000015961
 
     @test isapprox(lp_leftovert, portfolio.alloc_params[:LP_HERC][:leftover])
-    @test isapprox(gr_leftovert, portfolio.alloc_params[:Greedy_HERC][:leftover])
+    @test isapprox(gr_leftovert,
+                   portfolio.alloc_params[:Greedy_HERC][:leftover])
 
-    lp_allocjoin = outerjoin(lp_alloct, lp_alloc; on = :tickers, makeunique = true)
+    lp_allocjoin = outerjoin(lp_alloct, lp_alloc; on = :tickers,
+                             makeunique = true)
     lp_allocjoin.shares[ismissing.(lp_allocjoin.shares)] .= 0
     lp_allocjoin.weights[ismissing.(lp_allocjoin.weights)] .= 0
 
-    gr_allocjoin = outerjoin(gr_alloct, gr_alloc; on = :tickers, makeunique = true)
+    gr_allocjoin = outerjoin(gr_alloct, gr_alloc; on = :tickers,
+                             makeunique = true)
     gr_allocjoin.shares[ismissing.(gr_allocjoin.shares)] .= 0
     gr_allocjoin.weights[ismissing.(gr_allocjoin.weights)] .= 0
 

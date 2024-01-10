@@ -76,9 +76,11 @@ function custom_optimiser!(portfolio::AbstractPortfolioOptimiser,
                            optimiser_attributes = (),)
     model = portfolio.model
 
-    termination_status(model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
+    termination_status(model) != OPTIMIZE_NOT_CALLED &&
+        refresh_model!(portfolio)
 
-    !haskey(model, :sum_w) && _make_weight_sum_constraint!(model, portfolio.market_neutral)
+    !haskey(model, :sum_w) &&
+        _make_weight_sum_constraint!(model, portfolio.market_neutral)
 
     w = model[:w]
     n = length(w)
@@ -243,7 +245,8 @@ function custom_nloptimiser!(portfolio::AbstractPortfolioOptimiser,
         throw(ArgumentError("Cannot deregister user defined functions from JuMP, model. Please make a new instance of portfolio."))
     end
 
-    !haskey(model, :sum_w) && _make_weight_sum_constraint!(model, portfolio.market_neutral)
+    !haskey(model, :sum_w) &&
+        _make_weight_sum_constraint!(model, portfolio.market_neutral)
 
     w = model[:w]
     n = length(w)

@@ -45,7 +45,8 @@ Structure for a mean-semivariance portfolio.
 - `extra_obj_terms`: extra objective terms for the model.
 - `model`: model for optimising portfolio.
 """
-struct EffMeanAbsDev{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
+struct EffMeanAbsDev{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13,
+                     T14} <:
        AbstractEffMeanAbsDev
     tickers::T1
     mean_ret::T2
@@ -108,7 +109,8 @@ function EffMeanAbsDev(tickers,
                        market_neutral = false,
                        risk_aversion = 1.0,
                        target_risk = sum((returns .- target) *
-                                         fill(1 / size(returns, 2), size(returns, 2))) /
+                                         fill(1 / size(returns, 2),
+                                              size(returns, 2))) /
                                      size(returns, 1),
                        target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
                        extra_vars = [],
@@ -130,7 +132,8 @@ function EffMeanAbsDev(tickers,
     B = returns .- target
     @constraint(model, abs_diff, B * w + n .>= 0)
 
-    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
+    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers,
+                                                       weight_bounds)
 
     @constraint(model, lower_bounds, w .>= lower_bounds)
     @constraint(model, upper_bounds, w .<= upper_bounds)

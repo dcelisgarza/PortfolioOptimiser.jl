@@ -1,4 +1,5 @@
-using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
+using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections,
+      PortfolioOptimiser,
       Statistics, Test, TimeSeries, SCS
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
@@ -14,48 +15,69 @@ l = 2.0
                                                 :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
-    w0 = opt_port!(portfolio; class = :Classic, type = :Trad, obj = :Min_Risk, l = l,
+    w0 = opt_port!(portfolio; class = :Classic, type = :Trad, obj = :Min_Risk,
+                   l = l,
                    rf = rf, rm = :SD,)
 
     wc_statistics!(portfolio,
-                   WCSettings(; box = :Normal, ellipse = :Normal, seed = 123456789))
-    w1 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
+                   WCSettings(; box = :Normal, ellipse = :Normal,
+                              seed = 123456789))
+    w1 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                   l = l, rf = rf,
                    u_cov = :None, u_mu = :None,)
-    w2 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
+    w2 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                   l = l, rf = rf,
                    u_cov = :Box, u_mu = :None,)
-    w3 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
+    w3 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                   l = l, rf = rf,
                    u_cov = :Ellipse, u_mu = :None,)
-    w4 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
+    w4 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                   l = l, rf = rf,
                    u_cov = :None, u_mu = :Box,)
-    w5 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
+    w5 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                   l = l, rf = rf,
                    u_cov = :Box, u_mu = :Box,)
-    w6 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
+    w6 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                   l = l, rf = rf,
                    u_cov = :Ellipse, u_mu = :Box,)
-    w7 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
+    w7 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                   l = l, rf = rf,
                    u_cov = :None, u_mu = :Ellipse,)
-    w8 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
+    w8 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                   l = l, rf = rf,
                    u_cov = :Box, u_mu = :Ellipse,)
-    w9 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
+    w9 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                   l = l, rf = rf,
                    u_cov = :Ellipse, u_mu = :Ellipse,)
     wc_statistics!(portfolio,
-                   WCSettings(; box = :Delta, ellipse = :Normal, seed = 123456789))
-    w10 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
+                   WCSettings(; box = :Delta, ellipse = :Normal,
+                              seed = 123456789))
+    w10 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                    l = l,
                     rf = rf, u_cov = :None, u_mu = :None,)
-    w11 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
+    w11 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                    l = l,
                     rf = rf, u_cov = :Box, u_mu = :None,)
-    w12 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
+    w12 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                    l = l,
                     rf = rf, u_cov = :Ellipse, u_mu = :None,)
-    w13 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
+    w13 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                    l = l,
                     rf = rf, u_cov = :None, u_mu = :Box,)
-    w14 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
+    w14 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                    l = l,
                     rf = rf, u_cov = :Box, u_mu = :Box,)
-    w15 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
+    w15 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                    l = l,
                     rf = rf, u_cov = :Ellipse, u_mu = :Box,)
-    w16 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
+    w16 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                    l = l,
                     rf = rf, u_cov = :None, u_mu = :Ellipse,)
-    w17 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
+    w17 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                    l = l,
                     rf = rf, u_cov = :Box, u_mu = :Ellipse,)
-    w18 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
+    w18 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk,
+                    l = l,
                     rf = rf, u_cov = :Ellipse, u_mu = :Ellipse,)
 
     w1t = [0.007911813464310113, 0.03068510213747275, 0.010505366137939913,
@@ -236,48 +258,69 @@ end
                                                 :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
-    w0 = opt_port!(portfolio; class = :Classic, type = :Trad, obj = :Utility, l = l,
+    w0 = opt_port!(portfolio; class = :Classic, type = :Trad, obj = :Utility,
+                   l = l,
                    rf = rf, rm = :SD,)
 
     wc_statistics!(portfolio,
-                   WCSettings(; box = :Normal, ellipse = :Normal, seed = 123456789))
-    w1 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+                   WCSettings(; box = :Normal, ellipse = :Normal,
+                              seed = 123456789))
+    w1 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                   l = l, rf = rf,
                    u_cov = :None, u_mu = :None,)
-    w2 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w2 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                   l = l, rf = rf,
                    u_cov = :Box, u_mu = :None,)
-    w3 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w3 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                   l = l, rf = rf,
                    u_cov = :Ellipse, u_mu = :None,)
-    w4 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w4 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                   l = l, rf = rf,
                    u_cov = :None, u_mu = :Box,)
-    w5 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w5 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                   l = l, rf = rf,
                    u_cov = :Box, u_mu = :Box,)
-    w6 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w6 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                   l = l, rf = rf,
                    u_cov = :Ellipse, u_mu = :Box,)
-    w7 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w7 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                   l = l, rf = rf,
                    u_cov = :None, u_mu = :Ellipse,)
-    w8 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w8 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                   l = l, rf = rf,
                    u_cov = :Box, u_mu = :Ellipse,)
-    w9 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w9 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                   l = l, rf = rf,
                    u_cov = :Ellipse, u_mu = :Ellipse,)
     wc_statistics!(portfolio,
-                   WCSettings(; box = :Delta, ellipse = :Normal, seed = 123456789))
-    w10 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+                   WCSettings(; box = :Delta, ellipse = :Normal,
+                              seed = 123456789))
+    w10 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                    l = l, rf = rf,
                     u_cov = :None, u_mu = :None,)
-    w11 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w11 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                    l = l, rf = rf,
                     u_cov = :Box, u_mu = :None,)
-    w12 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w12 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                    l = l, rf = rf,
                     u_cov = :Ellipse, u_mu = :None,)
-    w13 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w13 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                    l = l, rf = rf,
                     u_cov = :None, u_mu = :Box,)
-    w14 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w14 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                    l = l, rf = rf,
                     u_cov = :Box, u_mu = :Box,)
-    w15 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w15 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                    l = l, rf = rf,
                     u_cov = :Ellipse, u_mu = :Box,)
-    w16 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w16 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                    l = l, rf = rf,
                     u_cov = :None, u_mu = :Ellipse,)
-    w17 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w17 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                    l = l, rf = rf,
                     u_cov = :Box, u_mu = :Ellipse,)
-    w18 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
+    w18 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Utility,
+                    l = l, rf = rf,
                     u_cov = :Ellipse, u_mu = :Ellipse,)
 
     w1t = [1.8806825315287365e-9, 3.862038288374664e-9, 5.3002004387495145e-9,
@@ -333,7 +376,8 @@ end
            0.020758448751352517, 0.05117081953119774, 0.05272467836890281,
            0.03425069187399879, 0.07283158866452577, 3.47029421652274e-8,
            1.4611604084024919e-8, 2.969841230044783e-6, 1.6275824321409947e-8,
-           0.04635834382067999, 0.1219952421974018, 0.074795262801851, 0.08947880598030208,
+           0.04635834382067999, 0.1219952421974018, 0.074795262801851,
+           0.08947880598030208,
            0.08435666916654858]
 
     w8t = [0.06127936300672406, 0.07016305546124205, 0.07008300132543835,
@@ -379,7 +423,8 @@ end
     w13t = [3.647902119428961e-10, 2.1977715335790454e-9, 4.064170032796999e-9,
             2.3972232748394194e-9, 0.75478163814755, 1.0679235246725186e-9,
             0.10551594374842024, 3.776810262001307e-10, 4.357820292261647e-9,
-            2.573044832077191e-10, 2.0018803785122081e-10, 1.0995315175089325e-9,
+            2.573044832077191e-10, 2.0018803785122081e-10,
+            1.0995315175089325e-9,
             1.220582723514187e-9, 6.127953723783301e-10, 1.2973729020478185e-9,
             0.13970233618556752, 4.547259952804259e-8, 5.552311979866896e-10,
             1.5145933671581878e-8, 1.229542917036613e-9]
@@ -405,7 +450,8 @@ end
             0.020758448751352517, 0.05117081953119774, 0.05272467836890281,
             0.03425069187399879, 0.07283158866452577, 3.47029421652274e-8,
             1.4611604084024919e-8, 2.969841230044783e-6, 1.6275824321409947e-8,
-            0.04635834382067999, 0.1219952421974018, 0.074795262801851, 0.08947880598030208,
+            0.04635834382067999, 0.1219952421974018, 0.074795262801851,
+            0.08947880598030208,
             0.08435666916654858]
 
     w17t = [0.06092544992127543, 0.0701244542181588, 0.07015927501069102,
@@ -458,36 +504,51 @@ end
                                                 :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
-    w0 = opt_port!(portfolio; class = :Classic, type = :Trad, obj = :Sharpe, l = l, rf = rf,
+    w0 = opt_port!(portfolio; class = :Classic, type = :Trad, obj = :Sharpe,
+                   l = l, rf = rf,
                    rm = :SD,)
 
     wc_statistics!(portfolio,
-                   WCSettings(; box = :Normal, ellipse = :Normal, seed = 123456789))
-    w1 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+                   WCSettings(; box = :Normal, ellipse = :Normal,
+                              seed = 123456789))
+    w1 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                   l = l, rf = rf,
                    u_cov = :None, u_mu = :None,)
-    w2 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+    w2 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                   l = l, rf = rf,
                    u_cov = :Box, u_mu = :None,)
-    w3 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+    w3 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                   l = l, rf = rf,
                    u_cov = :Ellipse, u_mu = :None,)
-    w4 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+    w4 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                   l = l, rf = rf,
                    u_cov = :None, u_mu = :Box,)
-    w5 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+    w5 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                   l = l, rf = rf,
                    u_cov = :Box, u_mu = :Box,)
-    w6 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+    w6 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                   l = l, rf = rf,
                    u_cov = :Ellipse, u_mu = :Box,)
     wc_statistics!(portfolio,
-                   WCSettings(; box = :Delta, ellipse = :Normal, seed = 123456789))
-    w10 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+                   WCSettings(; box = :Delta, ellipse = :Normal,
+                              seed = 123456789))
+    w10 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                    l = l, rf = rf,
                     u_cov = :None, u_mu = :None,)
-    w11 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+    w11 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                    l = l, rf = rf,
                     u_cov = :Box, u_mu = :None,)
-    w12 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+    w12 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                    l = l, rf = rf,
                     u_cov = :Ellipse, u_mu = :None,)
-    w13 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+    w13 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                    l = l, rf = rf,
                     u_cov = :None, u_mu = :Box,)
-    w14 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+    w14 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                    l = l, rf = rf,
                     u_cov = :Box, u_mu = :Box,)
-    w15 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
+    w15 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Sharpe,
+                    l = l, rf = rf,
                     u_cov = :Ellipse, u_mu = :Box,)
 
     w1t = [1.0582219191763675e-9, 3.033341281368263e-9, 4.093973467616387e-9,
@@ -525,8 +586,10 @@ end
     w5t = [1.9409089548743477e-10, 3.1564619696752674e-10, 3.25738141555929e-10,
            1.5005563626271312e-10, 0.7008304542355122, 5.069791714974362e-11,
            8.841751111869289e-11, 1.8416820618235487e-10, 2.578481887264228e-10,
-           1.4192124066866055e-10, 2.5722874917391247e-10, 3.295120542776688e-11,
-           1.8052557212010085e-11, 9.760762013674915e-11, 2.1941995624520676e-11,
+           1.4192124066866055e-10, 2.5722874917391247e-10,
+           3.295120542776688e-11,
+           1.8052557212010085e-11, 9.760762013674915e-11,
+           2.1941995624520676e-11,
            2.8101096518769044e-10, 0.29916954115599875, 2.9589738294333433e-10,
            1.536051217227758e-9, 3.591635066988638e-10]
 
@@ -534,15 +597,18 @@ end
            1.7124152016083e-9, 0.5595813927700654, 5.041149809015869e-10,
            9.301581926261557e-10, 1.7772324676327418e-9, 2.925154318124677e-9,
            1.4345380281140104e-9, 2.4613263738856962e-9, 3.356445049268043e-10,
-           1.8302054465026085e-10, 9.607030827561177e-10, 2.2269986409270587e-10,
+           1.8302054465026085e-10, 9.607030827561177e-10,
+           2.2269986409270587e-10,
            2.973016099880799e-9, 0.440418533386535, 2.9159143281310575e-9,
            3.789912264383553e-8, 4.630106930193754e-9]
 
     w10t = [1.0582219191763675e-9, 3.033341281368263e-9, 4.093973467616387e-9,
             2.4302432491378547e-9, 0.518058049464457, 3.284428917099043e-10,
             0.06365095369119145, 2.483269319093602e-9, 2.345993206888518e-9,
-            1.1710759933582023e-9, 1.9667796025518083e-9, 2.6638354190663204e-10,
-            1.933888387868567e-10, 5.926494610003628e-10, 1.8755971351419546e-10,
+            1.1710759933582023e-9, 1.9667796025518083e-9,
+            2.6638354190663204e-10,
+            1.933888387868567e-10, 5.926494610003628e-10,
+            1.8755971351419546e-10,
             0.143267787756283, 0.19649630246514146, 2.335142195851285e-9,
             0.07852688169059606, 2.4458664972621787e-9]
 
@@ -565,8 +631,10 @@ end
     w13t = [7.86104680168596e-11, 2.581689370363608e-10, 3.751927152447362e-10,
             2.1247028587508447e-10, 0.523634883488626, 1.9486433116903062e-11,
             0.06464274713780861, 1.549689208956321e-10, 2.0554803821712053e-10,
-            7.975947674723269e-11, 1.2077742964126379e-10, 1.6434493809377638e-11,
-            1.1964486515368817e-11, 3.6573008241479916e-11, 1.0468424536562565e-11,
+            7.975947674723269e-11, 1.2077742964126379e-10,
+            1.6434493809377638e-11,
+            1.1964486515368817e-11, 3.6573008241479916e-11,
+            1.0468424536562565e-11,
             0.14384439793458836, 0.19321690478313466, 1.5557988191105592e-10,
             0.07466106472997303, 1.898664279910272e-10]
 
@@ -612,48 +680,69 @@ end
                                                 :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
-    w0 = opt_port!(portfolio; class = :Classic, type = :Trad, obj = :Max_Ret, l = l,
+    w0 = opt_port!(portfolio; class = :Classic, type = :Trad, obj = :Max_Ret,
+                   l = l,
                    rf = rf, rm = :SD,)
 
     wc_statistics!(portfolio,
-                   WCSettings(; box = :Normal, ellipse = :Normal, seed = 123456789))
-    w1 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+                   WCSettings(; box = :Normal, ellipse = :Normal,
+                              seed = 123456789))
+    w1 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                   l = l, rf = rf,
                    u_cov = :None, u_mu = :None,)
-    w2 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w2 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                   l = l, rf = rf,
                    u_cov = :Box, u_mu = :None,)
-    w3 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w3 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                   l = l, rf = rf,
                    u_cov = :Ellipse, u_mu = :None,)
-    w4 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w4 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                   l = l, rf = rf,
                    u_cov = :None, u_mu = :Box,)
-    w5 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w5 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                   l = l, rf = rf,
                    u_cov = :Box, u_mu = :Box,)
-    w6 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w6 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                   l = l, rf = rf,
                    u_cov = :Ellipse, u_mu = :Box,)
-    w7 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w7 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                   l = l, rf = rf,
                    u_cov = :None, u_mu = :Ellipse,)
-    w8 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w8 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                   l = l, rf = rf,
                    u_cov = :Box, u_mu = :Ellipse,)
-    w9 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w9 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                   l = l, rf = rf,
                    u_cov = :Ellipse, u_mu = :Ellipse,)
     wc_statistics!(portfolio,
-                   WCSettings(; box = :Delta, ellipse = :Normal, seed = 123456789))
-    w10 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+                   WCSettings(; box = :Delta, ellipse = :Normal,
+                              seed = 123456789))
+    w10 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                    l = l, rf = rf,
                     u_cov = :None, u_mu = :None,)
-    w11 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w11 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                    l = l, rf = rf,
                     u_cov = :Box, u_mu = :None,)
-    w12 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w12 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                    l = l, rf = rf,
                     u_cov = :Ellipse, u_mu = :None,)
-    w13 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w13 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                    l = l, rf = rf,
                     u_cov = :None, u_mu = :Box,)
-    w14 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w14 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                    l = l, rf = rf,
                     u_cov = :Box, u_mu = :Box,)
-    w15 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w15 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                    l = l, rf = rf,
                     u_cov = :Ellipse, u_mu = :Box,)
-    w16 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w16 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                    l = l, rf = rf,
                     u_cov = :None, u_mu = :Ellipse,)
-    w17 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w17 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                    l = l, rf = rf,
                     u_cov = :Box, u_mu = :Ellipse,)
-    w18 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret, l = l, rf = rf,
+    w18 = opt_port!(portfolio; class = :Classic, type = :WC, obj = :Max_Ret,
+                    l = l, rf = rf,
                     u_cov = :Ellipse, u_mu = :Ellipse,)
 
     w1t = [2.242587206880573e-8, 2.3869345719665024e-8, 3.0249972077364615e-8,

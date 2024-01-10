@@ -81,7 +81,8 @@ function _make_weight_sum_constraint!(model, market_neutral)
             @warn("Market neutrality requires shorting, upper and lower bounds changed to (-1, 1) for all tickers.")
 
             num_tickers = length(w)
-            lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, (-1, 1))
+            lower_bounds, upper_bounds = _create_weight_bounds(num_tickers,
+                                                               (-1, 1))
 
             delete.(model, lower_boundsConst)
             unregister(model, :lower_bounds)
@@ -316,7 +317,8 @@ function add_sector_constraint!(portfolio::AbstractPortfolioOptimiser,
                                 sector_map,
                                 sector_lower,
                                 sector_upper)
-    short = getfield.(getfield.(constraint_object.(portfolio.model[:lower_bounds]), :set),
+    short = getfield.(getfield.(constraint_object.(portfolio.model[:lower_bounds]),
+                                :set),
                       :lower)
     if any(short .< 0)
         @warn("Negative sector constraints (for shorting) may produce unreasonable results.")
@@ -336,7 +338,9 @@ function add_sector_constraint!(portfolio::AbstractPortfolioOptimiser,
             end
             model[sector_lower_key] = @constraint(model,
                                                   sum(w[is_sector[i]]
-                                                      for i in 1:length(is_sector)) >= val)
+                                                      for i in
+                                                          1:length(is_sector)) >=
+                                                  val)
         end
     end
 
@@ -350,7 +354,9 @@ function add_sector_constraint!(portfolio::AbstractPortfolioOptimiser,
             end
             model[sector_upper_key] = @constraint(model,
                                                   sum(w[is_sector[i]]
-                                                      for i in 1:length(is_sector)) <= val)
+                                                      for i in
+                                                          1:length(is_sector)) <=
+                                                  val)
         end
     end
 
@@ -372,7 +378,8 @@ function _val_compare_benchmark(val, op, benchmark, correction, name)
     return val
 end
 
-function _setup_and_optimise(model, optimiser, silent, optimiser_attributes = ())
+function _setup_and_optimise(model, optimiser, silent,
+                             optimiser_attributes = ())
     MOI.set(model, MOI.Silent(), silent)
     set_optimizer(model, optimiser)
 

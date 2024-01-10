@@ -28,7 +28,8 @@ function min_risk!(portfolio::Union{EffMeanVar,
                    optimiser = Ipopt.Optimizer,
                    silent = true,
                    optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
+    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+        refresh_model!(portfolio)
 
     model = portfolio.model
     w = model[:w]
@@ -76,7 +77,8 @@ function max_return(portfolio::Union{EffMeanVar,
                     optimiser = Ipopt.Optimizer,
                     silent = true,
                     optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
+    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+        refresh_model!(portfolio)
 
     model = copy(portfolio.model)
     ret = model[:ret]
@@ -107,7 +109,8 @@ function min_risk(portfolio::Union{EffMeanVar,
                   optimiser = Ipopt.Optimizer,
                   silent = true,
                   optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
+    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+        refresh_model!(portfolio)
 
     model = copy(portfolio.model)
     risk = model[:risk]
@@ -184,7 +187,8 @@ function max_sharpe!(portfolio::Union{EffMeanVar,
         unregister(model, :evar_con)
         @constraint(model,
                     evar_con[i = 1:samples],
-                    [-X[i] * 28 - t * 28, s * 28, u[i] * 28] in MOI.ExponentialCone())
+                    [-X[i] * 28 - t * 28, s * 28, u[i] * 28] in
+                    MOI.ExponentialCone())
     end
 
     # We need a new variable for max_sharpe_optim.
@@ -252,7 +256,8 @@ function max_utility!(portfolio::Union{EffMeanVar,
                       optimiser = Ipopt.Optimizer,
                       silent = true,
                       optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
+    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+        refresh_model!(portfolio)
 
     # risk_aversion = _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
 
@@ -310,16 +315,20 @@ function efficient_return!(portfolio::Union{EffMeanVar,
                            optimiser = Ipopt.Optimizer,
                            silent = true,
                            optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
+    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+        refresh_model!(portfolio)
 
     mean_ret = portfolio.mean_ret
-    max_ret_model = max_return(portfolio; optimiser, silent, optimiser_attributes)
+    max_ret_model = max_return(portfolio; optimiser, silent,
+                               optimiser_attributes)
     w_max_ret = value.(max_ret_model[:w])
     max_ret = port_return(w_max_ret, mean_ret)
 
     correction = max(max_ret / 2, 0)
-    target_ret = _val_compare_benchmark(target_ret, >, max_ret, correction, "target_ret")
-    target_ret = _val_compare_benchmark(target_ret, <, 0, correction, "target_ret")
+    target_ret = _val_compare_benchmark(target_ret, >, max_ret, correction,
+                                        "target_ret")
+    target_ret = _val_compare_benchmark(target_ret, <, 0, correction,
+                                        "target_ret")
 
     model = portfolio.model
     w = model[:w]
@@ -375,7 +384,8 @@ function efficient_risk!(portfolio::Union{EffMeanVar,
                          optimiser = Ipopt.Optimizer,
                          silent = true,
                          optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
+    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+        refresh_model!(portfolio)
 
     model = portfolio.model
     w = model[:w]

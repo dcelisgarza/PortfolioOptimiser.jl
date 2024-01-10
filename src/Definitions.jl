@@ -251,7 +251,8 @@ Linkage types available when optimising a [`HCPortfolio`](@ref).
 - `:DBHT`: is Direct Bubble Hierarchical Tree clustering.
 - The rest are linkage types supported by [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
 """
-const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :DBHT)
+const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward,
+                      :DBHT)
 
 """
 ```julia
@@ -286,19 +287,24 @@ const AllocTypes = (:LP, :Greedy)
 const ASH = AverageShiftedHistograms
 const NCM = NearestCorrelationMatrix
 
-const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviation",
+const RiskMeasureNames = (SD = "Standard Deviation",
+                          MAD = "Mean Absolute Deviation",
                           SSD = "Semi Standard Deviation",
                           FLPM = "First Lower Partial Moment",
-                          SLPM = "Second Lower Partial Moment", WR = "Worst Realisation",
+                          SLPM = "Second Lower Partial Moment",
+                          WR = "Worst Realisation",
                           CVaR = "Conditional Value at Risk",
                           EVaR = "Entropic Value at Risk",
-                          RVaR = "Relativistic Value at Risk", MDD = "Max Drawdown",
-                          ADD = "Average Drawdown", CDaR = "Conditional Drawdown at Risk",
-                          UCI = "Ulcer Index", EDaR = "Entropic Drawdown at Risk",
+                          RVaR = "Relativistic Value at Risk",
+                          MDD = "Max Drawdown", ADD = "Average Drawdown",
+                          CDaR = "Conditional Drawdown at Risk",
+                          UCI = "Ulcer Index",
+                          EDaR = "Entropic Drawdown at Risk",
                           RDaR = "Relativistic Drawdown at Risk",
                           Kurt = "Square Root Kurtosis",
-                          SKurt = "Square Root Semi Kurtosis", GMD = "Gini Mean Difference",
-                          RG = "Range", RCVaR = "Conditional Value at Risk Range",
+                          SKurt = "Square Root Semi Kurtosis",
+                          GMD = "Gini Mean Difference", RG = "Range",
+                          RCVaR = "Conditional Value at Risk Range",
                           TG = "Tail Gini", RTG = "Tail Gini Range",
                           OWA = "Ordered Weight Average")
 
@@ -408,5 +414,6 @@ function _assert_value_message(lo::Real, hi::Real, args...) end
 function _assert_category_message(sym::Symbol, collection) end
 function _assert_generic_message(cmp, message) end
 
-export KellyRet, ObjFuncs, ValidTermination, PortClasses, PortTypes, RPConstraintTypes,
-       HCPortTypes, LinkageTypes, BranchOrderTypes, HCObjFuncs, AllocTypes, BLHist
+export KellyRet, ObjFuncs, ValidTermination, PortClasses, PortTypes,
+       RPConstraintTypes, HCPortTypes, LinkageTypes, BranchOrderTypes,
+       HCObjFuncs, AllocTypes, BLHist

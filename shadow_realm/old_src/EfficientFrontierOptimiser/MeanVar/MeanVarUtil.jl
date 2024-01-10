@@ -25,7 +25,8 @@ Returns a tuple of:
 
 If `verbose == true`, it prints out this information.
 """
-function portfolio_performance(portfolio::EffMeanVar; rf = portfolio.rf, verbose = false)
+function portfolio_performance(portfolio::EffMeanVar; rf = portfolio.rf,
+                               verbose = false)
     mean_ret = portfolio.mean_ret
 
     model = portfolio.model

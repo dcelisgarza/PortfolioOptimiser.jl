@@ -162,7 +162,8 @@ function Allocation(type::Greedy,
     # First loop
     for i in 1:n_tickers
         price = latest_prices[i]
-        n_shares = roundmult(weights[i] * investment / price, rounding, RoundDown)
+        n_shares = roundmult(weights[i] * investment / price, rounding,
+                             RoundDown)
         cost = n_shares * price
         cost > available_funds && break
         available_funds -= cost
@@ -199,7 +200,8 @@ function Allocation(type::Greedy,
                                                                             tickers,
                                                                             latest_prices)
 
-    return Allocation(tickers, shares_bought, allocated_weights), available_funds
+    return Allocation(tickers, shares_bought, allocated_weights),
+           available_funds
 end
 
 function Allocation(type::LP,
@@ -260,7 +262,8 @@ function Allocation(type::LP,
                                                                             tickers,
                                                                             latest_prices)
 
-    return Allocation(tickers, shares_bought, allocated_weights), available_funds
+    return Allocation(tickers, shares_bought, allocated_weights),
+           available_funds
 end
 
 """

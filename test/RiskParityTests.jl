@@ -36,7 +36,8 @@ l = 2.0
     kelly = :None
     portfolio.risk_budget = Float64[]
 
-    w1 = opt_port!(portfolio; type = type, rm = rm, kelly = kelly, rf = rf, l = l)
+    w1 = opt_port!(portfolio; type = type, rm = rm, kelly = kelly, rf = rf,
+                   l = l)
     r1 = calc_risk(portfolio; type = type, rm = rm, rf = rf)
     m1 = dot(portfolio.mu, w1.weights)
     w1t = [0.050632255832484985,
@@ -62,7 +63,8 @@ l = 2.0
     @test isapprox(w1t, w1.weights, rtol = 7e-5)
 
     portfolio.risk_budget = collect(1:20.0)
-    w2 = opt_port!(portfolio; type = type, rm = rm, kelly = kelly, rf = rf, l = l)
+    w2 = opt_port!(portfolio; type = type, rm = rm, kelly = kelly, rf = rf,
+                   l = l)
     r2 = calc_risk(portfolio; type = type, rm = rm, rf = rf)
     m2 = dot(portfolio.mu, w2.weights)
     w2t = [0.005639420548623995,
@@ -104,7 +106,8 @@ end
     rrp_penalty = 20
 
     portfolio.risk_budget = Float64[]
-    w1 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty, rrp_ver = rrp_ver)
+    w1 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty,
+                   rrp_ver = rrp_ver)
     m1 = dot(portfolio.mu, w1.weights)
     w1t = [0.05082999293061849,
            0.0514568396566574,
@@ -129,7 +132,8 @@ end
     @test isapprox(w1t, w1.weights, rtol = 9e-3)
 
     portfolio.risk_budget = collect(1:20.0)
-    w2 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty, rrp_ver = rrp_ver)
+    w2 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty,
+                   rrp_ver = rrp_ver)
     m2 = dot(portfolio.mu, w2.weights)
     w2t = [0.005642983858876163,
            0.011014001842975046,
@@ -155,7 +159,8 @@ end
 
     rrp_ver = :Reg
     portfolio.risk_budget = Float64[]
-    w3 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty, rrp_ver = rrp_ver)
+    w3 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty,
+                   rrp_ver = rrp_ver)
     m3 = dot(portfolio.mu, w3.weights)
     w3t = [0.05063705964078256,
            0.051252914047950814,
@@ -180,7 +185,8 @@ end
     @test isapprox(w3t, w3.weights, rtol = 2e-4)
 
     portfolio.risk_budget = collect(1:20.0)
-    w4 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty, rrp_ver = rrp_ver)
+    w4 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty,
+                   rrp_ver = rrp_ver)
     m4 = dot(portfolio.mu, w4.weights)
     w4t = [0.005646140830247419,
            0.011018347551640148,
@@ -206,7 +212,8 @@ end
 
     rrp_ver = :Reg_Pen
     portfolio.risk_budget = Float64[]
-    w5 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty, rrp_ver = rrp_ver)
+    w5 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty,
+                   rrp_ver = rrp_ver)
     m5 = dot(portfolio.mu, w5.weights)
     w5t = [0.049269594505827144,
            0.04995841515639617,
@@ -231,7 +238,8 @@ end
     @test isapprox(w5t, w5.weights, rtol = 1e-2)
 
     portfolio.risk_budget = collect(1:20.0)
-    w6 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty, rrp_ver = rrp_ver)
+    w6 = opt_port!(portfolio; type = type, rrp_penalty = rrp_penalty,
+                   rrp_ver = rrp_ver)
     m6 = dot(portfolio.mu, w6.weights)
     w6t = [0.041058783415684905,
            0.043527757584266524,

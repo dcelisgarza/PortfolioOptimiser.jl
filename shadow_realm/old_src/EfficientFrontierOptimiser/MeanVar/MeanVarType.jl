@@ -117,7 +117,8 @@ function EffMeanVar(tickers,
     model = Model()
     @variable(model, w[1:num_tickers])
 
-    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
+    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers,
+                                                       weight_bounds)
 
     @constraint(model, lower_bounds, w .>= lower_bounds)
     @constraint(model, upper_bounds, w .<= upper_bounds)

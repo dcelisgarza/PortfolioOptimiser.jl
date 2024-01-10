@@ -162,7 +162,8 @@ function _solve!(portfolio::AbstractCriticalLine)
                                         length(mean_f),
                                         portfolio.w[end][i])
 
-                if (isnothing(portfolio.lambda[end]) || l < portfolio.lambda[end]) &&
+                if (isnothing(portfolio.lambda[end]) ||
+                    l < portfolio.lambda[end]) &&
                    l > _infnone(l_out)
                     l_out, i_out = l, i
                 end

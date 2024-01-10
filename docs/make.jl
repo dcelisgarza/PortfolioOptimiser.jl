@@ -82,7 +82,8 @@ makedocs(;
          repo = "https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/{commit}{path}#{line}",
          sitename = "PortfolioOptimiser.jl",
          format = Documenter.HTML(;
-                                  prettyurls = get(ENV, "CI", "false") == "true",
+                                  prettyurls = get(ENV, "CI", "false") ==
+                                               "true",
                                   canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
                                   assets = String[],),
          pages = ["Home" => "index.md",

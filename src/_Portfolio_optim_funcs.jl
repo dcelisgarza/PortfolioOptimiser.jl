@@ -29,7 +29,8 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     mad_u = portfolio.mad_u
     ssd_u = portfolio.ssd_u
 
-    !(rm == :MAD || rm == :SSD || isfinite(mad_u) || isfinite(ssd_u)) && (return nothing)
+    !(rm == :MAD || rm == :SSD || isfinite(mad_u) || isfinite(ssd_u)) &&
+        (return nothing)
 
     model = portfolio.model
     msv_target = portfolio.msv_target
@@ -51,7 +52,8 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
 
         isfinite(mad_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, mad_risk <= 0.5 * mad_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, mad_risk <= 0.5 * mad_u * model[:k]) :
              @constraint(model, mad_risk <= 0.5 * mad_u))
 
         rm == :MAD && @expression(model, risk, mad_risk)
@@ -95,7 +97,8 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
     end
 
     @variable(model, lpm[1:T] .>= 0)
-    !haskey(model, :hist_ret) && @expression(model, hist_ret, returns * model[:w])
+    !haskey(model, :hist_ret) &&
+        @expression(model, hist_ret, returns * model[:w])
 
     obj == :Sharpe || type == :RP ?
     @constraint(model, lpm .>= lpm_t * model[:k] .- model[:hist_ret]) :
@@ -106,7 +109,8 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
 
         isfinite(flpm_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, flpm_risk <= flpm_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, flpm_risk <= flpm_u * model[:k]) :
              @constraint(model, flpm_risk <= flpm_u))
 
         rm == :FLPM && @expression(model, risk, flpm_risk)
@@ -136,13 +140,15 @@ function _wr_setup(portfolio, rm, returns, obj, type)
     model = portfolio.model
 
     @variable(model, wr)
-    !haskey(model, :hist_ret) && @expression(model, hist_ret, returns * model[:w])
+    !haskey(model, :hist_ret) &&
+        @expression(model, hist_ret, returns * model[:w])
     @constraint(model, -model[:hist_ret] .<= wr)
     @expression(model, wr_risk, wr)
 
     isfinite(wr_u) &&
         type == :Trad &&
-        (obj == :Sharpe ? @constraint(model, -model[:hist_ret] .<= wr_u * model[:k]) :
+        (obj == :Sharpe ?
+         @constraint(model, -model[:hist_ret] .<= wr_u * model[:k]) :
          @constraint(model, -model[:hist_ret] .<= wr_u))
 
     rm == :WR && @expression(model, risk, wr_risk)
@@ -164,7 +170,8 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
 
     model = portfolio.model
 
-    !haskey(model, :hist_ret) && @expression(model, hist_ret, returns * model[:w])
+    !haskey(model, :hist_ret) &&
+        @expression(model, hist_ret, returns * model[:w])
 
     if rm == :CVaR || isfinite(cvar_u)
         invat = portfolio.invat
@@ -175,7 +182,8 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
 
         isfinite(cvar_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, cvar_risk <= cvar_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, cvar_risk <= cvar_u * model[:k]) :
              @constraint(model, cvar_risk <= cvar_u))
 
         rm == :CVaR && @expression(model, risk, cvar_risk)
@@ -194,7 +202,8 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
 
         isfinite(evar_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, evar_risk <= evar_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, evar_risk <= evar_u * model[:k]) :
              @constraint(model, evar_risk <= evar_u))
 
         rm == :EVaR && @expression(model, risk, evar_risk)
@@ -217,13 +226,17 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     @variable(model, theta_rvar[1:T])
     @variable(model, epsilon_rvar[1:T])
     @constraint(model, [i = 1:T],
-                [z_rvar * opk * invk2, psi_rvar[i] * opk * invk, epsilon_rvar[i]] in
+                [z_rvar * opk * invk2, psi_rvar[i] * opk * invk,
+                 epsilon_rvar[i]] in
                 MOI.PowerCone(invopk))
     @constraint(model, [i = 1:T],
-                [omega_rvar[i] * invomk, theta_rvar[i] * invk, -z_rvar * invk2] in
+                [omega_rvar[i] * invomk, theta_rvar[i] * invk,
+                 -z_rvar * invk2] in
                 MOI.PowerCone(omk))
-    @constraint(model, -model[:hist_ret] .- t_rvar .+ epsilon_rvar .+ omega_rvar .<= 0)
-    @expression(model, rvar_risk, t_rvar + ln_k * z_rvar + sum(psi_rvar .+ theta_rvar))
+    @constraint(model,
+                -model[:hist_ret] .- t_rvar .+ epsilon_rvar .+ omega_rvar .<= 0)
+    @expression(model, rvar_risk,
+                t_rvar + ln_k * z_rvar + sum(psi_rvar .+ theta_rvar))
 
     isfinite(rvar_u) &&
         type == :Trad &&
@@ -259,7 +272,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     model = portfolio.model
 
     @variable(model, dd[1:(T + 1)])
-    !haskey(model, :hist_ret) && @expression(model, hist_ret, returns * model[:w])
+    !haskey(model, :hist_ret) &&
+        @expression(model, hist_ret, returns * model[:w])
     @constraint(model, dd[2:end] .>= dd[1:(end - 1)] .- model[:hist_ret])
     @constraint(model, dd[2:end] .>= 0)
     @constraint(model, dd[1] == 0)
@@ -271,7 +285,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
 
         isfinite(mdd_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, dd[2:end] .<= mdd_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, dd[2:end] .<= mdd_u * model[:k]) :
              @constraint(model, dd[2:end] .<= mdd_u))
 
         rm == :MDD && @expression(model, risk, mdd_risk)
@@ -282,7 +297,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
 
         isfinite(add_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, add_risk .<= add_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, add_risk .<= add_u * model[:k]) :
              @constraint(model, add_risk .<= add_u))
 
         rm == :ADD && @expression(model, risk, add_risk)
@@ -297,7 +313,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
 
         isfinite(cdar_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, cdar_risk .<= cdar_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, cdar_risk .<= cdar_u * model[:k]) :
              @constraint(model, cdar_risk .<= cdar_u))
 
         rm == :CDaR && @expression(model, risk, cdar_risk)
@@ -310,7 +327,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
 
         isfinite(uci_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, uci_risk <= uci_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, uci_risk <= uci_u * model[:k]) :
              @constraint(model, uci_risk <= uci_u))
 
         rm == :UCI && @expression(model, risk, uci_risk)
@@ -323,12 +341,14 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
         @variable(model, u_edar[1:T])
         @constraint(model, sum(u_edar) <= z_edar)
         @constraint(model, [i = 1:T],
-                    [dd[i + 1] - t_edar, z_edar, u_edar[i]] in MOI.ExponentialCone())
+                    [dd[i + 1] - t_edar, z_edar, u_edar[i]] in
+                    MOI.ExponentialCone())
         @expression(model, edar_risk, t_edar - z_edar * log(at))
 
         isfinite(edar_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, edar_risk <= edar_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, edar_risk <= edar_u * model[:k]) :
              @constraint(model, edar_risk <= edar_u))
 
         rm == :EDaR && @expression(model, risk, edar_risk)
@@ -351,13 +371,16 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     @variable(model, theta_rdar[1:T])
     @variable(model, epsilon_rdar[1:T])
     @constraint(model, [i = 1:T],
-                [z_rdar * opk * invk2, psi_rdar[i] * opk * invk, epsilon_rdar[i]] in
+                [z_rdar * opk * invk2, psi_rdar[i] * opk * invk,
+                 epsilon_rdar[i]] in
                 MOI.PowerCone(invopk))
     @constraint(model, [i = 1:T],
-                [omega_rdar[i] * invomk, theta_rdar[i] * invk, -z_rdar * invk2] in
+                [omega_rdar[i] * invomk, theta_rdar[i] * invk,
+                 -z_rdar * invk2] in
                 MOI.PowerCone(omk))
     @constraint(model, dd[2:end] .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0)
-    @expression(model, rdar_risk, t_rdar + ln_k * z_rdar + sum(psi_rdar .+ theta_rdar))
+    @expression(model, rdar_risk,
+                t_rdar + ln_k * z_rdar + sum(psi_rdar .+ theta_rdar))
 
     isfinite(rdar_u) &&
         type == :Trad &&
@@ -369,8 +392,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     return nothing
 end
 
-function _risk_setup(portfolio, type, rm, kelly, obj, rf, T, N, mu, returns, sigma,
-                     kurtosis, skurtosis)
+function _risk_setup(portfolio, type, rm, kelly, obj, rf, T, N, mu, returns,
+                     sigma, kurtosis, skurtosis)
     _mv_setup(portfolio, sigma, rm, kelly, obj, type)
     _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
@@ -396,7 +419,8 @@ function block_vec_pq(A, p, q)
     for j in 0:(n - 1)
         Aj = Matrix{eltype(A)}(undef, m, p * q)
         for i in 0:(m - 1)
-            Aij = vec(A[(1 + (i * p)):((i + 1) * p), (1 + (j * q)):((j + 1) * q)])
+            Aij = vec(A[(1 + (i * p)):((i + 1) * p),
+                        (1 + (j * q)):((j + 1) * q)])
             Aj[i + 1, :] .= Aij
         end
         A_vec[(1 + (j * m)):((j + 1) * m), :] .= Aj
@@ -433,10 +457,12 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
 
             A = block_vec_pq(kurtosis, N, N)
             vals_A, vecs_A = eigen(A)
-            vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
+            vals_A = clamp.(real.(vals_A), 0, Inf) .+
+                     clamp.(imag.(vals_A), 0, Inf)im
             Bi = Vector{Matrix{eltype(kurtosis)}}(undef, N2)
             for i in 1:N2
-                B = reshape(real.(complex(sqrt(vals_A[i])) * vecs_A[:, i]), N, N)
+                B = reshape(real.(complex(sqrt(vals_A[i])) * vecs_A[:, i]), N,
+                            N)
                 Bi[i] = B
             end
             @constraint(model, [i = 1:N2], x_kurt[i] == tr(Bi[i] * W))
@@ -445,13 +471,15 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             S_2 = portfolio.S_2
             sqrt_sigma_4 = sqrt(S_2 * kurtosis * transpose(S_2))
             @expression(model, zkurt, L_2 * vec(W))
-            @constraint(model, [t_kurt; sqrt_sigma_4 * zkurt] in SecondOrderCone())
+            @constraint(model,
+                        [t_kurt; sqrt_sigma_4 * zkurt] in SecondOrderCone())
         end
         @expression(model, kurt_risk, t_kurt)
 
         isfinite(kurt_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, kurt_risk <= kurt_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, kurt_risk <= kurt_u * model[:k]) :
              @constraint(model, kurt_risk <= kurt_u))
 
         rm == :Kurt && @expression(model, risk, kurt_risk)
@@ -477,10 +505,12 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
 
             A = block_vec_pq(skurtosis, N, N)
             vals_A, vecs_A = eigen(A)
-            vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
+            vals_A = clamp.(real.(vals_A), 0, Inf) .+
+                     clamp.(imag.(vals_A), 0, Inf)im
             SBi = Vector{Matrix{eltype(skurtosis)}}(undef, N2)
             for i in 1:N2
-                B = reshape(real.(sqrt(complex(vals_A[i])) * vecs_A[:, i]), N, N)
+                B = reshape(real.(sqrt(complex(vals_A[i])) * vecs_A[:, i]), N,
+                            N)
                 SBi[i] = B
             end
             @constraint(model, [i = 1:N2], x_skurt[i] == tr(SBi[i] * SW))
@@ -489,13 +519,15 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             S_2 = portfolio.S_2
             sqrt_sigma_4 = sqrt(S_2 * skurtosis * transpose(S_2))
             @expression(model, zskurt, L_2 * vec(SW))
-            @constraint(model, [t_skurt; sqrt_sigma_4 * zskurt] in SecondOrderCone())
+            @constraint(model,
+                        [t_skurt; sqrt_sigma_4 * zskurt] in SecondOrderCone())
         end
         @expression(model, skurt_risk, t_skurt)
 
         isfinite(skurt_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, skurt_risk <= skurt_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, skurt_risk <= skurt_u * model[:k]) :
              @constraint(model, skurt_risk <= skurt_u))
 
         rm == :SKurt && @expression(model, risk, skurt_risk)
@@ -526,7 +558,8 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
     onesvec = range(1; stop = 1, length = T)
     model = portfolio.model
 
-    !haskey(model, :hist_ret) && @expression(model, hist_ret, returns * model[:w])
+    !haskey(model, :hist_ret) &&
+        @expression(model, hist_ret, returns * model[:w])
     @variable(model, owa[1:T])
     @constraint(model, model[:hist_ret] == owa)
 
@@ -541,7 +574,8 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
 
         isfinite(gmd_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, gmd_risk <= gmd_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, gmd_risk <= gmd_u * model[:k]) :
              @constraint(model, gmd_risk <= gmd_u))
 
         rm == :GMD && @expression(model, risk, gmd_risk)
@@ -578,7 +612,8 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
 
         isfinite(rcvar_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, rcvar_risk <= rcvar_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, rcvar_risk <= rcvar_u * model[:k]) :
              @constraint(model, rcvar_risk <= rcvar_u))
 
         rm == :RCVaR && @expression(model, risk, rcvar_risk)
@@ -616,15 +651,16 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
         @variable(model, rtga[1:T])
         @variable(model, rtgb[1:T])
         @expression(model, rtg_risk, sum(rtga .+ rtgb))
-        rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                        beta = beta, b_sim = b_sim,)
+        rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
+                        beta_i = beta_i, beta = beta, b_sim = b_sim,)
         @constraint(model,
                     owa * transpose(rtg_w) .<=
                     onesvec * transpose(rtga) + rtgb * transpose(onesvec))
 
         isfinite(rtg_u) &&
             type == :Trad &&
-            (obj == :Sharpe ? @constraint(model, rtg_risk <= rtg_u * model[:k]) :
+            (obj == :Sharpe ?
+             @constraint(model, rtg_risk <= rtg_u * model[:k]) :
              @constraint(model, rtg_risk <= rtg_u))
 
         rm == :RTG && @expression(model, risk, rtg_risk)
@@ -657,7 +693,8 @@ function _rp_setup(portfolio, N)
     rb = portfolio.risk_budget
     @variable(model, log_w[1:N])
     @constraint(model, dot(rb, log_w) >= 1)
-    @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] in MOI.ExponentialCone())
+    @constraint(model, [i = 1:N],
+                [log_w[i], 1, model[:w][i]] in MOI.ExponentialCone())
     @constraint(model, model[:w] .>= 0)
     @constraint(model, sum(model[:w]) == model[:k])
 end
@@ -682,7 +719,8 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     # RRP version constraints
     if rrp_ver == :Reg || rrp_ver == :Reg_Pen
         @variable(model, rho)
-        @constraint(model, [2 * psi; 2 * G * model[:w]; -2 * rho] in SecondOrderCone())
+        @constraint(model,
+                    [2 * psi; 2 * G * model[:w]; -2 * rho] in SecondOrderCone())
     end
 
     if rrp_ver == :None
@@ -692,7 +730,8 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     elseif rrp_ver == :Reg_Pen
         theta = Diagonal(sqrt.(diag(sigma)))
         @constraint(model,
-                    [rho; sqrt(rrp_penalty) * theta * model[:w]] in SecondOrderCone())
+                    [rho; sqrt(rrp_penalty) * theta * model[:w]] in
+                    SecondOrderCone())
     end
 
     return nothing
@@ -702,17 +741,20 @@ function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
     model = portfolio.model
 
     # Return uncertainy sets.
-    (kelly == :Approx || (u_cov != :Box && u_cov != :Ellipse)) && _mv_risk(model, sigma)
+    (kelly == :Approx || (u_cov != :Box && u_cov != :Ellipse)) &&
+        _mv_risk(model, sigma)
 
     returns = portfolio.returns
-    obj == :Sharpe ? _setup_sharpe_ret(kelly, model, T, rf, returns, mu, Inf, false) :
+    obj == :Sharpe ?
+    _setup_sharpe_ret(kelly, model, T, rf, returns, mu, Inf, false) :
     _setup_ret(kelly, model, T, returns, mu, Inf)
 
     if haskey(model, :_ret)
         if u_mu == :Box
             d_mu = portfolio.d_mu
             @variable(model, abs_w[1:N])
-            @constraint(model, [i = 1:N], [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
+            @constraint(model, [i = 1:N],
+                        [abs_w[i]; model[:w][i]] in MOI.NormOneCone(2))
             @expression(model, ret, model[:_ret] - dot(d_mu, abs_w))
         elseif u_mu == :Ellipse
             k_mu = portfolio.k_mu
@@ -768,8 +810,9 @@ function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
         @expression(model, risk, model[:dev_risk])
     end
 
-    return obj == :Sharpe && (kelly != :None ? @constraint(model, model[:risk] <= 1) :
-                              @constraint(model, ret - rf * model[:k] >= 1))
+    return obj == :Sharpe &&
+           (kelly != :None ? @constraint(model, model[:risk] <= 1) :
+            @constraint(model, ret - rf * model[:k] >= 1))
 end
 
 function _setup_sharpe_k(model, obj)
@@ -782,7 +825,8 @@ function _setup_risk_budget(portfolio)
     if isempty(portfolio.risk_budget)
         portfolio.risk_budget = ()
     else
-        !isapprox(sum(portfolio.risk_budget), one(eltype(portfolio.risk_budget))) &&
+        !isapprox(sum(portfolio.risk_budget),
+                  one(eltype(portfolio.risk_budget))) &&
             (portfolio.risk_budget .= portfolio.risk_budget)
     end
     @variable(model, k >= 0)
@@ -813,7 +857,8 @@ function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l, trad = true)
         @expression(model, _ret, sum(texact_kelly) / T - rf * model[:k])
         @expression(model, kret, model[:k] .+ returns * model[:w])
         @constraint(model, [i = 1:T],
-                    [texact_kelly[i], model[:k], kret[i]] in MOI.ExponentialCone())
+                    [texact_kelly[i], model[:k], kret[i]] in
+                    MOI.ExponentialCone())
         trad && @constraint(model, model[:risk] <= 1)
     elseif kelly == :Approx && !isempty(mu)
         @variable(model, tapprox_kelly)
@@ -886,7 +931,9 @@ function _setup_weights(portfolio, obj, N)
             @constraint(model, sum(tass_bin) <= max_number_assets)
             @constraint(model, tass_bin_sharpe .<= model[:k])
             @constraint(model, tass_bin_sharpe .<= factor * tass_bin)
-            @constraint(model, tass_bin_sharpe .>= model[:k] .- factor * (1 .- tass_bin))
+            @constraint(model,
+                        tass_bin_sharpe .>=
+                        model[:k] .- factor * (1 .- tass_bin))
             @constraint(model, model[:w] .<= long_u * tass_bin_sharpe)
         end
 
@@ -930,7 +977,8 @@ function _setup_weights(portfolio, obj, N)
             @constraint(model, model[:w] .>= -tw_ushort)
 
             # Maximum number of assets constraints.
-            max_number_assets > 0 && @constraint(model, model[:w] .>= -short_u * tass_bin)
+            max_number_assets > 0 &&
+                @constraint(model, model[:w] .>= -short_u * tass_bin)
         end
     end
 
@@ -994,9 +1042,11 @@ function _setup_tracking_err(portfolio, returns, obj, T)
 
     @variable(model, t_track_err >= 0)
     if obj == :Sharpe
-        @expression(model, track_err, returns * model[:w] .- benchmark * model[:k])
+        @expression(model, track_err,
+                    returns * model[:w] .- benchmark * model[:k])
         @constraint(model, [t_track_err; track_err] in SecondOrderCone())
-        @constraint(model, t_track_err <= tracking_err * model[:k] * sqrt(T - 1))
+        @constraint(model,
+                    t_track_err <= tracking_err * model[:k] * sqrt(T - 1))
     else
         @expression(model, track_err, returns * model[:w] .- benchmark)
         @constraint(model, [t_track_err; track_err] in SecondOrderCone())
@@ -1017,18 +1067,21 @@ function _setup_turnover(portfolio, N, obj)
     @variable(model, t_turnov[1:N] >= 0)
     if obj == :Sharpe
         @expression(model, turnov, model[:w] .- turnover_weights * model[:k])
-        @constraint(model, [i = 1:N], [t_turnov[i]; turnov[i]] in MOI.NormOneCone(2))
+        @constraint(model, [i = 1:N],
+                    [t_turnov[i]; turnov[i]] in MOI.NormOneCone(2))
         @constraint(model, t_turnov .<= turnover * model[:k])
     else
         @expression(model, turnov, model[:w] .- turnover_weights)
-        @constraint(model, [i = 1:N], [t_turnov[i]; turnov[i]] in MOI.NormOneCone(2))
+        @constraint(model, [i = 1:N],
+                    [t_turnov[i]; turnov[i]] in MOI.NormOneCone(2))
         @constraint(model, t_turnov .<= turnover)
     end
 
     return nothing
 end
 
-function _setup_trad_wc_constraints(portfolio, obj, T, N, type, class, kelly, l, returns)
+function _setup_trad_wc_constraints(portfolio, obj, T, N, type, class, kelly, l,
+                                    returns)
     _setup_weights(portfolio, obj, N)
     _setup_min_number_effective_assets(portfolio, obj)
     _setup_tracking_err(portfolio, returns, obj, T)
@@ -1038,11 +1091,13 @@ function _setup_trad_wc_constraints(portfolio, obj, T, N, type, class, kelly, l,
     return nothing
 end
 
-function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l)
+function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly,
+                                           l)
     model = portfolio.model
     if obj == :Sharpe
         (type == :Trad && class == :Classic || type == :WC) && kelly != :None ?
-        @objective(model, Max, model[:ret]) : @objective(model, Min, model[:risk])
+        @objective(model, Max, model[:ret]) :
+        @objective(model, Min, model[:risk])
     elseif obj == :Min_Risk
         @objective(model, Min, model[:risk])
     elseif obj == :Utility
@@ -1053,7 +1108,8 @@ function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l
     return nothing
 end
 
-function _optimize_portfolio(portfolio, type, obj, near_opt = false, coneopt = true)
+function _optimize_portfolio(portfolio, type, obj, near_opt = false,
+                             coneopt = true)
     solvers = portfolio.solvers
     model = portfolio.model
 
@@ -1125,7 +1181,8 @@ function _optimize_portfolio(portfolio, type, obj, near_opt = false, coneopt = t
         push!(solvers_tried,
               key => Dict(:objective_val => objective_value(model),
                           :term_status => term_status,
-                          :params => haskey(val, :params) ? val[:params] : missing,
+                          :params => haskey(val, :params) ? val[:params] :
+                                     missing,
                           :finite_weights => all_finite_weights,
                           :nonzero_weights => all_non_zero_weights,
                           :portfolio => DataFrame(; tickers = portfolio.assets,
@@ -1139,8 +1196,8 @@ function _optimize_portfolio(portfolio, type, obj, near_opt = false, coneopt = t
     return term_status, solvers_tried
 end
 
-function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj,
-                             near_opt = false, coneopt = true)
+function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm,
+                             obj, near_opt = false, coneopt = true)
     model = portfolio.model
 
     strtype = if !near_opt
@@ -1186,15 +1243,18 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
 
     near_opt && (type = Symbol(strtype))
 
-    portfolio.optimal[type] = DataFrame(; tickers = portfolio.assets, weights = weights)
+    portfolio.optimal[type] = DataFrame(; tickers = portfolio.assets,
+                                        weights = weights)
 
-    isempty(solvers_tried) ? portfolio.fail = Dict() : portfolio.fail = solvers_tried
+    isempty(solvers_tried) ? portfolio.fail = Dict() :
+    portfolio.fail = solvers_tried
 
     return portfolio.optimal[type]
 end
 
-function _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
-                                     type, rm, obj, near_opt = false, coneopt = true)
+function _handle_errors_and_finalise(portfolio, term_status, returns, N,
+                                     solvers_tried, type, rm, obj,
+                                     near_opt = false, coneopt = true)
     retval = if term_status ∉ ValidTermination ||
                 any(.!isfinite.(value.(portfolio.model[:w])))
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.opt_port!))"
@@ -1207,36 +1267,38 @@ function _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers
         end
         portfolio.optimal[type] = DataFrame()
     else
-        _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj, near_opt,
-                            coneopt)
+        _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj,
+                            near_opt, coneopt)
     end
 
     return retval
 end
 
-function _p_save_opt_params(portfolio, type, class, hist, rm, obj, kelly, rrp_ver, rf, l,
-                            rrp_penalty, u_mu, u_cov, string_names, w_ini, M, w_min, w_max,
+function _p_save_opt_params(portfolio, type, class, hist, rm, obj, kelly,
+                            rrp_ver, rf, l, rrp_penalty, u_mu, u_cov,
+                            string_names, w_ini, M, w_min, w_max,
                             save_opt_params)
     !save_opt_params && return nothing
 
     opt_params_dict = if type == :Trad
-        Dict(:class => class, :rm => rm, :obj => obj, :kelly => kelly, :rf => rf, :l => l,
-             :string_names => string_names, :hist => hist, :M => M, :w_ini => w_ini,
-             :w_min => w_min, :w_max => w_max)
+        Dict(:class => class, :rm => rm, :obj => obj, :kelly => kelly,
+             :rf => rf, :l => l, :string_names => string_names, :hist => hist,
+             :M => M, :w_ini => w_ini, :w_min => w_min, :w_max => w_max)
     elseif type == :RP
         Dict(:class => class, :rm => rm, :obj => :Min_Risk,
              :kelly => (kelly == :Exact) ? :None : kelly, :rf => rf,
-             :string_names => string_names, :hist => hist, :M => M, :w_ini => w_ini,
-             :w_min => w_min, :w_max => w_max)
+             :string_names => string_names, :hist => hist, :M => M,
+             :w_ini => w_ini, :w_min => w_min, :w_max => w_max)
     elseif type == :RRP
         Dict(:class => class, :rm => :SD, :obj => :Min_Risk, :kelly => kelly,
              :rrp_penalty => rrp_penalty, :rrp_ver => rrp_ver,
-             :string_names => string_names, :hist => hist, :M => M, :w_ini => w_ini,
-             :w_min => w_min, :w_max => w_max)
-    elseif type == :WC
-        Dict(:rm => :SD, :obj => obj, :kelly => kelly, :rf => rf, :l => l, :u_mu => u_mu,
-             :u_cov => u_cov, :string_names => string_names, :hist => hist, :M => M,
+             :string_names => string_names, :hist => hist, :M => M,
              :w_ini => w_ini, :w_min => w_min, :w_max => w_max)
+    elseif type == :WC
+        Dict(:rm => :SD, :obj => obj, :kelly => kelly, :rf => rf, :l => l,
+             :u_mu => u_mu, :u_cov => u_cov, :string_names => string_names,
+             :hist => hist, :M => M, :w_ini => w_ini, :w_min => w_min,
+             :w_max => w_max)
     end
 
     portfolio.opt_params[type] = opt_params_dict
@@ -1249,7 +1311,8 @@ function _setup_model_class(portfolio, class, hist)
                           Matrix{eltype(portfolio.cov)}(undef, 0, 0),
                           Matrix{eltype(portfolio.returns)}(undef, 0, 0))
 
-    class != :Classic && @assert(hist ∈ BLHist, "hist = $hist, must be one of $BLHist")
+    class != :Classic &&
+        @assert(hist ∈ BLHist, "hist = $hist, must be one of $BLHist")
 
     if class == :Classic
         mu = portfolio.mu
@@ -1293,13 +1356,14 @@ function _setup_model_class(portfolio, class, hist)
     return mu, sigma, returns
 end
 
-function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, returns, sigma,
-                                 w_opt, M, type, N, obj,
+function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu,
+                                 returns, sigma, w_opt, M, type, N, obj,
                                  w1 = Vector{eltype(returns)}(undef, 0),
                                  w2 = Vector{eltype(returns)}(undef, 0))
     if isempty(w1) || isempty(w2)
-        fl = frontier_limits!(portfolio; class = class, hist = hist, kelly = kelly, rf = rf,
-                              rm = rm, save_model = true,)
+        fl = frontier_limits!(portfolio; class = class, hist = hist,
+                              kelly = kelly, rf = rf, rm = rm,
+                              save_model = true,)
 
         w1 = fl.w_min
         w2 = fl.w_max
@@ -1318,14 +1382,15 @@ function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, retu
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    risk1, risk2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
-                            beta, a_sim, beta_i, b_sim, owa_w, 0)
+    risk1, risk2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha,
+                            kappa, alpha_i, beta, a_sim, beta_i, b_sim, owa_w,
+                            0)
 
     w3 = w_opt.weights
     ret3 = dot(mu, w3)
-    risk3 = calc_risk(w3, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
-                      alpha = alpha,
-                      a_sim = a_sim, beta_i = beta_i, beta = beta, b_sim = b_sim,
+    risk3 = calc_risk(w3, returns; rm = rm, rf = rf, sigma = sigma,
+                      alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
+                      beta_i = beta_i, beta = beta, b_sim = b_sim,
                       kappa = kappa, owa_w = owa_w, solvers = solvers,)
 
     c1 = (ret2 - ret1) / M
@@ -1342,10 +1407,12 @@ function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, retu
     @variable(model, log_ret)
     @constraint(model, [-log_ret, 1, model[:ret] - e1] in MOI.ExponentialCone())
     @variable(model, log_risk)
-    @constraint(model, [-log_risk, 1, e2 - model[:risk]] in MOI.ExponentialCone())
+    @constraint(model,
+                [-log_risk, 1, e2 - model[:risk]] in MOI.ExponentialCone())
     if !haskey(model, :log_w)
         @variable(model, log_w[1:N])
-        @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] in MOI.ExponentialCone())
+        @constraint(model, [i = 1:N],
+                    [log_w[i], 1, model[:w][i]] in MOI.ExponentialCone())
     else
         log_w = model[:log_w]
     end
@@ -1356,21 +1423,27 @@ function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, retu
     @expression(model, near_opt_risk, log_ret + log_risk + neg_sum_log_ws)
     @objective(model, Min, near_opt_risk)
 
-    term_status, solvers_tried = _optimize_portfolio(portfolio, type, obj, true, true)
-    retval = _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
-                                         type, rm, obj, true, true)
+    term_status, solvers_tried = _optimize_portfolio(portfolio, type, obj, true,
+                                                     true)
+    retval = _handle_errors_and_finalise(portfolio, term_status, returns, N,
+                                         solvers_tried, type, rm, obj, true,
+                                         true)
 
-    if term_status ∉ ValidTermination || any(.!isfinite.(value.(portfolio.model[:w])))
+    if term_status ∉ ValidTermination ||
+       any(.!isfinite.(value.(portfolio.model[:w])))
         model = portfolio.model = copy(model1)
         @expression(model, log_ret, -log(model[:ret] - e1))
         @expression(model, log_risk, -log(e2 - model[:risk]))
-        @expression(model, neg_sum_log_ws, -sum(log.(1 .+ model[:w]) .+ log.(model[:w])))
+        @expression(model, neg_sum_log_ws,
+                    -sum(log.(1 .+ model[:w]) .+ log.(model[:w])))
         @expression(model, near_opt_risk, log_ret + log_risk + neg_sum_log_ws)
         @objective(model, Min, near_opt_risk)
-        term_status2, solvers_tried2 = _optimize_portfolio(portfolio, type, obj, true,
-                                                           false)
-        retval = _handle_errors_and_finalise(portfolio, term_status2, returns, N,
-                                             merge(solvers_tried, solvers_tried2), type, rm,
+        term_status2, solvers_tried2 = _optimize_portfolio(portfolio, type, obj,
+                                                           true, false)
+        retval = _handle_errors_and_finalise(portfolio, term_status2, returns,
+                                             N,
+                                             merge(solvers_tried,
+                                                   solvers_tried2), type, rm,
                                              obj, true, false)
     end
 
@@ -1383,25 +1456,32 @@ opt_port!(
     portfolio::Portfolio;    class::Symbol = :Classic,    hist::Integer = 1,    kelly::Symbol = :None,    l::Real = 2.0,    obj::Symbol = :Sharpe,    rf::Real = 0.0,    rm::Symbol = :SD,    rrp_penalty::Real = 1.0,    rrp_ver::Symbol = :None,    save_opt_params::Bool = true,    string_names::Bool = false,    type::Symbol = :Trad,    u_cov::Symbol = :Box,    u_mu::Symbol = :Box,)
 ```
 """
-function opt_port!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
-                   kelly::Symbol = :None,
-                   l::Real = 2.0, obj::Symbol = :Sharpe, rf::Real = 0.0, rm::Symbol = :SD,
+function opt_port!(portfolio::Portfolio; class::Symbol = :Classic,
+                   hist::Integer = 1, kelly::Symbol = :None, l::Real = 2.0,
+                   obj::Symbol = :Sharpe, rf::Real = 0.0, rm::Symbol = :SD,
                    rrp_penalty::Real = 1.0, rrp_ver::Symbol = :None,
                    save_opt_params::Bool = true, string_names::Bool = false,
-                   type::Symbol = :Trad, u_cov::Symbol = :Box, u_mu::Symbol = :Box,
-                   w_ini::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
+                   type::Symbol = :Trad, u_cov::Symbol = :Box,
+                   u_mu::Symbol = :Box,
+                   w_ini::AbstractVector = Vector{eltype(portfolio.returns)}(undef,
+                                                                             0),
                    near_opt::Bool = false,
-                   M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
-                   w_min::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
-                   w_max::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),)
+                   M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) :
+                             0,
+                   w_min::AbstractVector = Vector{eltype(portfolio.returns)}(undef,
+                                                                             0),
+                   w_max::AbstractVector = Vector{eltype(portfolio.returns)}(undef,
+                                                                             0),)
     @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
     @assert(class ∈ PortClasses, "class = $class, must be one of $PortClasses")
     @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
     @assert(obj ∈ ObjFuncs, "obj = $obj, must be one of $ObjFuncs")
     @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
     @assert(rrp_ver ∈ RRPVersions)
-    @assert(u_mu ∈ UncertaintyTypes, "u_mu = $u_mu, must be one of $UncertaintyTypes")
-    @assert(u_cov ∈ UncertaintyTypes, "u_cov = $u_cov, must be one of $UncertaintyTypes")
+    @assert(u_mu ∈ UncertaintyTypes,
+            "u_mu = $u_mu, must be one of $UncertaintyTypes")
+    @assert(u_cov ∈ UncertaintyTypes,
+            "u_cov = $u_cov, must be one of $UncertaintyTypes")
     @assert(0 < portfolio.alpha < 1,
             "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and less than 1")
     @assert(0 < portfolio.kappa < 1,
@@ -1440,15 +1520,16 @@ function opt_port!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer
 
     if type == :Trad
         _setup_sharpe_k(model, obj)
-        _risk_setup(portfolio, :Trad, rm, kelly, obj, rf, T, N, mu, returns, sigma,
-                    kurtosis, skurtosis)
+        _risk_setup(portfolio, :Trad, rm, kelly, obj, rf, T, N, mu, returns,
+                    sigma, kurtosis, skurtosis)
         _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
-        _setup_trad_wc_constraints(portfolio, obj, T, N, :Trad, class, kelly, l, returns)
+        _setup_trad_wc_constraints(portfolio, obj, T, N, :Trad, class, kelly, l,
+                                   returns)
     elseif type == :RP
         _setup_risk_budget(portfolio)
         _rp_setup(portfolio, N)
-        _risk_setup(portfolio, :RP, rm, kelly, obj, rf, T, N, mu, returns, sigma, kurtosis,
-                    skurtosis)
+        _risk_setup(portfolio, :RP, rm, kelly, obj, rf, T, N, mu, returns,
+                    sigma, kurtosis, skurtosis)
         _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
     elseif type == :RRP
         _setup_risk_budget(portfolio)
@@ -1458,23 +1539,25 @@ function opt_port!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer
     else
         _setup_sharpe_k(model, obj)
         _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
-        _setup_trad_wc_constraints(portfolio, obj, T, N, :WC, class, kelly, l, returns)
+        _setup_trad_wc_constraints(portfolio, obj, T, N, :WC, class, kelly, l,
+                                   returns)
     end
 
     _setup_linear_constraints(portfolio, obj, type)
 
     term_status, solvers_tried = _optimize_portfolio(portfolio, type, obj)
-    retval = _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
-                                         type, rm, obj)
+    retval = _handle_errors_and_finalise(portfolio, term_status, returns, N,
+                                         solvers_tried, type, rm, obj)
 
     if near_opt
-        retval = _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, returns,
-                                         sigma, retval, M, type, N, obj, w_min, w_max)
+        retval = _near_optimal_centering(portfolio, class, hist, kelly, rf, rm,
+                                         mu, returns, sigma, retval, M, type, N,
+                                         obj, w_min, w_max)
     end
 
-    _p_save_opt_params(portfolio, type, class, hist, rm, obj, kelly, rrp_ver, rf, l,
-                       rrp_penalty, u_mu, u_cov, string_names, w_ini, M, w_min, w_max,
-                       save_opt_params)
+    _p_save_opt_params(portfolio, type, class, hist, rm, obj, kelly, rrp_ver,
+                       rf, l, rrp_penalty, u_mu, u_cov, string_names, w_ini, M,
+                       w_min, w_max, save_opt_params)
 
     return retval
 end
@@ -1485,20 +1568,21 @@ frontier_limits!(
     portfolio::Portfolio;    class::Symbol = :Classic,    hist::Integer = 1,    kelly::Symbol = :None,    rf::Real = 0.0,    rm::Symbol = :SD,    save_model::Bool = false,)
 ```
 """
-function frontier_limits!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
-                          kelly::Symbol = :None, rf::Real = 0.0, rm::Symbol = :SD,
+function frontier_limits!(portfolio::Portfolio; class::Symbol = :Classic,
+                          hist::Integer = 1, kelly::Symbol = :None,
+                          rf::Real = 0.0, rm::Symbol = :SD,
                           save_model::Bool = false,)
     optimal1 = deepcopy(portfolio.optimal)
     fail1 = deepcopy(portfolio.fail)
     save_model && (model1 = copy(portfolio.model))
 
-    w_min = opt_port!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Min_Risk,
-                      rf = rf,
-                      rm = rm, save_opt_params = false,)
+    w_min = opt_port!(portfolio; class = class, hist = hist, kelly = kelly,
+                      obj = :Min_Risk, rf = rf, rm = rm,
+                      save_opt_params = false,)
 
-    w_max = opt_port!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Max_Ret,
-                      rf = rf,
-                      rm = rm, save_opt_params = false,)
+    w_max = opt_port!(portfolio; class = class, hist = hist, kelly = kelly,
+                      obj = :Max_Ret, rf = rf, rm = rm,
+                      save_opt_params = false,)
 
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
@@ -1518,16 +1602,16 @@ efficient_frontier!(
 ```
 """
 function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
-                             hist::Integer = 1,
-                             kelly::Symbol = :None, rf::Real = 0.0, rm::Symbol = :SD,
+                             hist::Integer = 1, kelly::Symbol = :None,
+                             rf::Real = 0.0, rm::Symbol = :SD,
                              points::Integer = 20,)
     optimal1 = deepcopy(portfolio.optimal)
     fail1 = deepcopy(portfolio.fail)
 
     mu, sigma, returns = _setup_model_class(portfolio, class, hist)
 
-    fl = frontier_limits!(portfolio; class = class, hist = hist, kelly = kelly, rf = rf,
-                          rm = rm,)
+    fl = frontier_limits!(portfolio; class = class, hist = hist, kelly = kelly,
+                          rf = rf, rm = rm,)
 
     w1 = fl.w_min
     w2 = fl.w_max
@@ -1545,8 +1629,9 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    risk1, risk2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
-                            beta, a_sim, beta_i, b_sim, owa_w, 0)
+    risk1, risk2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha,
+                            kappa, alpha_i, beta, a_sim, beta_i, b_sim, owa_w,
+                            0)
 
     mus = range(ret1; stop = ret2, length = points)
     risks = range(risk1; stop = risk2, length = points)
@@ -1561,29 +1646,29 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     for (j, (r, m)) in enumerate(zip(risks, mus))
         if i == 0
             w = opt_port!(portfolio; class = class, hist = hist, kelly = kelly,
-                          obj = :Min_Risk,
-                          rf = rf, rm = rm, save_opt_params = false,)
+                          obj = :Min_Risk, rf = rf, rm = rm,
+                          save_opt_params = false,)
         else
             !isempty(w) && (w_ini = w.weights)
             j != length(risks) ? setproperty!(portfolio, rmf, r) :
             setproperty!(portfolio, rmf, Inf)
             w = opt_port!(portfolio; class = class, hist = hist, kelly = kelly,
-                          obj = :Max_Ret,
-                          rf = rf, rm = rm, save_opt_params = false, w_ini = w_ini,)
+                          obj = :Max_Ret, rf = rf, rm = rm,
+                          save_opt_params = false, w_ini = w_ini,)
             # Fallback in case :Max_Ret with maximum risk bounds fails.
             if isempty(w)
                 setproperty!(portfolio, rmf, Inf)
                 j != length(risks) ? portfolio.mu_l = m : portfolio.mu_l = Inf
-                w = opt_port!(portfolio; class = class, hist = hist, kelly = kelly,
-                              obj = :Min_Risk,
-                              rf = rf, rm = rm, save_opt_params = false, w_ini = w_ini,)
+                w = opt_port!(portfolio; class = class, hist = hist,
+                              kelly = kelly, obj = :Min_Risk, rf = rf, rm = rm,
+                              save_opt_params = false, w_ini = w_ini,)
                 portfolio.mu_l = Inf
             end
         end
         isempty(w) && continue
         rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
-                       alpha_i = alpha_i, alpha = alpha,
-                       a_sim = a_sim, beta_i = beta_i, beta = beta, b_sim = b_sim,
+                       alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
+                       beta_i = beta_i, beta = beta, b_sim = b_sim,
                        kappa = kappa, owa_w = owa_w, solvers = solvers,)
         append!(frontier, w.weights)
         push!(srisk, rk)
@@ -1591,14 +1676,13 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     end
     setproperty!(portfolio, rmf, Inf)
 
-    w = opt_port!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Sharpe,
-                  rf = rf,
-                  rm = rm, save_opt_params = false,)
+    w = opt_port!(portfolio; class = class, hist = hist, kelly = kelly,
+                  obj = :Sharpe, rf = rf, rm = rm, save_opt_params = false,)
     sharpe = false
     if !isempty(w)
         rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
-                       alpha_i = alpha_i, alpha = alpha,
-                       a_sim = a_sim, beta_i = beta_i, beta = beta, b_sim = b_sim,
+                       alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
+                       beta_i = beta_i, beta = beta, b_sim = b_sim,
                        kappa = kappa, owa_w = owa_w, solvers = solvers,)
         append!(frontier, w.weights)
         push!(srisk, rk)
@@ -1606,13 +1690,16 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
         sharpe = true
     end
 
-    portfolio.frontier[rm] = Dict(:weights => hcat(DataFrame(; tickers = portfolio.assets),
-                                                   DataFrame(reshape(frontier, length(w1),
+    portfolio.frontier[rm] = Dict(:weights => hcat(DataFrame(;
+                                                             tickers = portfolio.assets),
+                                                   DataFrame(reshape(frontier,
+                                                                     length(w1),
                                                                      :),
-                                                             string.(range(1, i)))),
-                                  :class => class, :hist => hist, :kelly => kelly,
-                                  :rf => rf, :points => points, :risk => srisk,
-                                  :sharpe => sharpe)
+                                                             string.(range(1,
+                                                                           i)))),
+                                  :class => class, :hist => hist,
+                                  :kelly => kelly, :rf => rf, :points => points,
+                                  :risk => srisk, :sharpe => sharpe)
 
     portfolio.optimal = optimal1
     portfolio.fail = fail1

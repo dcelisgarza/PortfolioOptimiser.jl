@@ -16,9 +16,11 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     merge!(sector_map, Dict(tickers[2:4:20] .=> sectors[2]))
     merge!(sector_map, Dict(tickers[3:4:20] .=> sectors[3]))
     merge!(sector_map, Dict(tickers[4:4:20] .=> sectors[4]))
-    sector_lower = Dict([(sectors[1], 0.2), (sectors[2], 0.1), (sectors[3], 0.15),
+    sector_lower = Dict([(sectors[1], 0.2), (sectors[2], 0.1),
+                         (sectors[3], 0.15),
                          (sectors[4], 0.05)])
-    sector_upper = Dict([(sectors[1], 0.4), (sectors[2], 0.5), (sectors[3], 0.2),
+    sector_upper = Dict([(sectors[1], 0.4), (sectors[2], 0.5),
+                         (sectors[3], 0.2),
                          (sectors[4], 0.2)])
 
     # Do it twice for the coverage.
@@ -50,9 +52,12 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     mu, sigma, sr = portfolio_performance(ef)
     @test sr ≈ sr1
     @test L2_reg(ef.weights, 0.69) ≈ 0.24823854411002114
-    @test transaction_cost(ef.weights, fill(1 / 20, 20), 0.005) ≈ 0.007930322585937595
-    @test ex_ante_tracking_error(ef.weights, S, fill(1 / 20, 20)) ≈ 7.395319914901144e-5
-    @test ex_post_tracking_error(ef.weights, Matrix(returns), fill(1 / 895, 895)) ≈
+    @test transaction_cost(ef.weights, fill(1 / 20, 20), 0.005) ≈
+          0.007930322585937595
+    @test ex_ante_tracking_error(ef.weights, S, fill(1 / 20, 20)) ≈
+          7.395319914901144e-5
+    @test ex_post_tracking_error(ef.weights, Matrix(returns),
+                                 fill(1 / 895, 895)) ≈
           0.14663925084244206
 
     spy_prices = CSV.read("./assets/spy_prices.csv", DataFrame)
@@ -87,8 +92,10 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
     # 3. BAC and JPM will outperform T and GE by 15%
     views = [-0.20, 0.10, 0.15] / 252
     picking = hcat([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                   [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                   [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0])
+                   [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0],
+                   [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0,
+                    0, 0.5, 0])
 
     bl = BlackLitterman(mcapsdf[!, 1],
                         S;
@@ -212,12 +219,14 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
 
     lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]);
                                     investment = 10000)
-    testshares = [3, 5, 3, 2, 7, 58, 12, 3, 25, 12, -29, -357, -2, -30, -24, -73, -2, -169]
+    testshares = [3, 5, 3, 2, 7, 58, 12, 3, 25, 12, -29, -357, -2, -30, -24,
+                  -73, -2, -169]
     @test lpAlloc.shares == testshares
 
     gAlloc, remaining = Allocation(Greedy(), ef, Vector(df[end, ef.tickers]);
                                    investment = 10000)
-    testshares = [3, 58, 11, 27, 12, 5, 7, 3, 4, 4, -168, -29, -356, -30, -24, -2, -73, -2,
+    testshares = [3, 58, 11, 27, 12, 5, 7, 3, 4, 4, -168, -29, -356, -30, -24,
+                  -2, -73, -2,
                   -1]
     @test gAlloc.shares == testshares
 
@@ -253,13 +262,15 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
 
     lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]);
                                     investment = 10000)
-    testshares = [3, 5, 3, 3, 6, 61, 12, 2, 25, 12, -34, -426, -5, -49, -28, -86, -2, -4,
+    testshares = [3, 5, 3, 3, 6, 61, 12, 2, 25, 12, -34, -426, -5, -49, -28,
+                  -86, -2, -4,
                   -168]
     @test lpAlloc.shares == testshares
 
     gAlloc, remaining = Allocation(Greedy(), ef, Vector(df[end, ef.tickers]);
                                    investment = 10000)
-    testshares = [3, 61, 12, 12, 5, 26, 3, 5, 4, 5, -168, -34, -426, -49, -4, -28, -86, -5,
+    testshares = [3, 61, 12, 12, 5, 26, 3, 5, 4, 5, -168, -34, -426, -49, -4,
+                  -28, -86, -5,
                   -2]
     @test gAlloc.shares == testshares
 
@@ -335,12 +346,14 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
 
     lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]);
                                     investment = 10000)
-    testshares = [2, 1, 2, 37, 15, 4, 72, 17, 1, 3, 1, 51, 19, -10, -3, -12, -29, -6]
+    testshares = [2, 1, 2, 37, 15, 4, 72, 17, 1, 3, 1, 51, 19, -10, -3, -12,
+                  -29, -6]
     @test rmsd(lpAlloc.shares, testshares) < 0.5
 
     gAlloc, remaining = Allocation(Greedy(), ef, Vector(df[end, ef.tickers]);
                                    investment = 10000)
-    testshares = [72, 51, 17, 15, 19, 37, 2, 2, 3, 4, 1, 1, 1, -6, -12, -3, -10, -28]
+    testshares = [72, 51, 17, 15, 19, 37, 2, 2, 3, 4, 1, 1, 1, -6, -12, -3, -10,
+                  -28]
     @test gAlloc.shares == testshares
 
     ef = EffMeanVar(tickers, bl.post_ret, S)
@@ -555,7 +568,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
 
     gAlloc, remaining = Allocation(Greedy(), ef, Vector(df[end, ef.tickers]);
                                    investment = 10000)
-    testshares = [3, 79, 17, 5, 9, 3, 11, 14, 5, -168, -769, -54, -219, -13, -14, -23, -39,
+    testshares = [3, 79, 17, 5, 9, 3, 11, 14, 5, -168, -769, -54, -219, -13,
+                  -14, -23, -39,
                   -126, -4]
     @test gAlloc.shares == testshares
 
@@ -590,13 +604,15 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
 
     lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]);
                                     investment = 10000)
-    testshares = [3, 6, 3, 9, 2, 71, 8, 4, 12, 17, -27, -352, -5, -97, -9, -38, -3, -3,
+    testshares = [3, 6, 3, 9, 2, 71, 8, 4, 12, 17, -27, -352, -5, -97, -9, -38,
+                  -3, -3,
                   -168]
     @test lpAlloc.shares == testshares
 
     gAlloc, remaining = Allocation(Greedy(), ef, Vector(df[end, ef.tickers]);
                                    investment = 10000)
-    testshares = [3, 70, 17, 6, 8, 3, 11, 3, 9, 3, -168, -352, -26, -98, -3, -4, -6, -10,
+    testshares = [3, 70, 17, 6, 8, 3, 11, 3, 9, 3, -168, -352, -26, -98, -3, -4,
+                  -6, -10,
                   -39]
     @test gAlloc.shares == testshares
 
@@ -631,12 +647,14 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
 
     lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]);
                                     investment = 10000)
-    testshares = [3, 6, 3, 2, 6, 58, 2, 2, 6, 1, 1, 1, 14, 16, -6, -76, -21, -4, -75]
+    testshares = [3, 6, 3, 2, 6, 58, 2, 2, 6, 1, 1, 1, 14, 16, -6, -76, -21, -4,
+                  -75]
     @test rmsd(lpAlloc.shares, testshares) < 0.5
 
     gAlloc, remaining = Allocation(Greedy(), ef, Vector(df[end, ef.tickers]);
                                    investment = 10000)
-    testshares = [2, 15, 57, 6, 1, 5, 13, 3, 6, 1, 1, 1, 2, -74, -6, -75, -21, -4]
+    testshares = [2, 15, 57, 6, 1, 5, 13, 3, 6, 1, 1, 1, 2, -74, -6, -75, -21,
+                  -4]
     @test gAlloc.shares == testshares
 
     efficient_risk!(ef, 0.2 / sqrt(252))
@@ -670,12 +688,14 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
 
     lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]);
                                     investment = 10000)
-    testshares = [3, 6, 3, 2, 6, 58, 2, 2, 6, 1, 1, 1, 14, 16, -13, -161, -45, -12, -159]
+    testshares = [3, 6, 3, 2, 6, 58, 2, 2, 6, 1, 1, 1, 14, 16, -13, -161, -45,
+                  -12, -159]
     @test lpAlloc.shares == testshares
 
     gAlloc, remaining = Allocation(Greedy(), ef, Vector(df[end, ef.tickers]);
                                    investment = 10000)
-    testshares = [2, 15, 57, 6, 1, 5, 13, 3, 6, 1, 1, 1, 2, -158, -13, -160, -45, -7]
+    testshares = [2, 15, 57, 6, 1, 5, 13, 3, 6, 1, 1, 1, 2, -158, -13, -160,
+                  -45, -7]
     @test gAlloc.shares == testshares
 
     # L1 Regularisation
@@ -690,7 +710,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
                     mu,
                     S;
                     extra_vars = [:(0 <= l1)],
-                    extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                    extra_constraints = [:([model[:l1];
+                                            (model[:w] - $prev_weights)] in
                                            MOI.NormOneCone($(n + 1)))],
                     extra_obj_terms = [quote
                                            $k * model[:l1]
@@ -792,7 +813,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
                     mu,
                     S;
                     extra_vars = [:(l1 >= 0)],
-                    extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                    extra_constraints = [:([model[:l1];
+                                            (model[:w] - $prev_weights)] in
                                            MOI.NormOneCone($(n + 1)))],
                     extra_obj_terms = [quote
                                            $k * model[:l1]
@@ -826,7 +848,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
                     mu,
                     S;
                     extra_vars = [:(0 <= l1)],
-                    extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                    extra_constraints = [:([model[:l1];
+                                            (model[:w] - $prev_weights)] in
                                            MOI.NormOneCone($(n + 1))),
                                          :(model[:w][6] == 0.2)],
                     extra_obj_terms = [quote
@@ -860,7 +883,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, StatsBase, JuMP
                     mu,
                     S;
                     extra_vars = [:(0 <= l1)],
-                    extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                    extra_constraints = [:([model[:l1];
+                                            (model[:w] - $prev_weights)] in
                                            MOI.NormOneCone($(n + 1))),
                                          :(model[:w][6] == 0.2),
                                          :(model[:w][1] >= 0.01),
@@ -907,9 +931,11 @@ end
     merge!(sector_map, Dict(tickers[2:4:20] .=> sectors[2]))
     merge!(sector_map, Dict(tickers[3:4:20] .=> sectors[3]))
     merge!(sector_map, Dict(tickers[4:4:20] .=> sectors[4]))
-    sector_lower = Dict([(sectors[1], 0.2), (sectors[2], 0.1), (sectors[3], 0.15),
+    sector_lower = Dict([(sectors[1], 0.2), (sectors[2], 0.1),
+                         (sectors[3], 0.15),
                          (sectors[4], 0.05)])
-    sector_upper = Dict([(sectors[1], 0.4), (sectors[2], 0.5), (sectors[3], 0.2),
+    sector_upper = Dict([(sectors[1], 0.4), (sectors[2], 0.5),
+                         (sectors[3], 0.2),
                          (sectors[4], 0.2)])
 
     # Do it for the warning.
@@ -947,8 +973,10 @@ end
     # 3. BAC and JPM will outperform T and GE by 15%
     views = [-0.20, 0.10, 0.15] / 252
     picking = hcat([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                   [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                   [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0])
+                   [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0],
+                   [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0,
+                    0, 0.5, 0])
 
     bl = BlackLitterman(mcapsdf[!, 1],
                         S;
@@ -994,11 +1022,13 @@ end
     @test isapprox(sigma, varmax, rtol = 5e-5)
     @test isapprox(sr, smax, rtol = 5e-4)
 
-    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns); weight_bounds = (-1, 1))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns);
+                        weight_bounds = (-1, 1))
     max_sharpe!(ef)
     mumax, varmax, smax = portfolio_performance(ef)
 
-    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns); weight_bounds = (-1, 1))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns);
+                        weight_bounds = (-1, 1))
     efficient_risk!(ef, varmax)
     mu, sigma, sr = portfolio_performance(ef)
     @test isapprox(mu, mumax, rtol = 5e-3)
@@ -1011,11 +1041,13 @@ end
     @test isapprox(sigma, varmax, rtol = 1e-5)
     @test isapprox(sr, smax, rtol = 1e-5)
 
-    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns); weight_bounds = (-1, 1))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns);
+                        weight_bounds = (-1, 1))
     max_sharpe!(ef, 1.03^(1 / 252) - 1)
     mumax, varmax, smax = portfolio_performance(ef)
 
-    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns); weight_bounds = (-1, 1))
+    ef = EffMeanSemivar(tickers, bl.post_ret, Matrix(returns);
+                        weight_bounds = (-1, 1))
     efficient_risk!(ef, varmax)
     mu, sigma, sr = portfolio_performance(ef)
     @test isapprox(mu, mumax, rtol = 5e-3)
@@ -1460,13 +1492,15 @@ end
     ef.weights .= testweights
     lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]);
                                     investment = 10000)
-    testshares = [2, 6, 3, 1, 7, 3, 35, 7, 2, 3, 22, 21, -6, -128, -2, -26, -3, -5, -1,
+    testshares = [2, 6, 3, 1, 7, 3, 35, 7, 2, 3, 22, 21, -6, -128, -2, -26, -3,
+                  -5, -1,
                   -100]
     @test lpAlloc.shares == testshares
 
     gAlloc, remaining = Allocation(Greedy(), ef, Vector(df[end, ef.tickers]);
                                    investment = 10000)
-    testshares = [2, 21, 35, 6, 1, 21, 3, 3, 3, 8, 2, 8, -100, -128, -6, -25, -1, -2, -5,
+    testshares = [2, 21, 35, 6, 1, 21, 3, 3, 3, 8, 2, 8, -100, -128, -6, -25,
+                  -1, -2, -5,
                   -3]
     @test gAlloc.shares == testshares
 
@@ -1502,13 +1536,15 @@ end
     ef.weights .= testweights
     lpAlloc, remaining = Allocation(LP(), ef, Vector(df[end, ef.tickers]);
                                     investment = 10000)
-    testshares = [2, 6, 3, 1, 7, 3, 35, 7, 2, 3, 22, 21, -10, -204, -3, -40, -8, -11, -1,
+    testshares = [2, 6, 3, 1, 7, 3, 35, 7, 2, 3, 22, 21, -10, -204, -3, -40, -8,
+                  -11, -1,
                   -160]
     @test lpAlloc.shares == testshares
 
     gAlloc, remaining = Allocation(Greedy(), ef, Vector(df[end, ef.tickers]);
                                    investment = 10000)
-    testshares = [2, 21, 35, 6, 1, 21, 3, 3, 3, 8, 2, 8, -159, -204, -11, -39, -1, -3, -7,
+    testshares = [2, 21, 35, 6, 1, 21, 3, 3, 3, 8, 2, 8, -159, -204, -11, -39,
+                  -1, -3, -7,
                   -4]
     @test gAlloc.shares == testshares
 
@@ -1524,7 +1560,8 @@ end
                         Matrix(returns);
                         target = 0,
                         extra_vars = [:(0 <= l1)],
-                        extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                        extra_constraints = [:([model[:l1];
+                                                (model[:w] - $prev_weights)] in
                                                MOI.NormOneCone($(n + 1)))
                                              # :(model[:w][6] == 0.2),
                                              # :(model[:w][1] >= 0.01),
@@ -1631,7 +1668,8 @@ end
                         Matrix(returns);
                         target = 0,
                         extra_vars = [:(0 <= l1)],
-                        extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                        extra_constraints = [:([model[:l1];
+                                                (model[:w] - $prev_weights)] in
                                                MOI.NormOneCone($(n + 1)))
                                              # :(model[:w][6] == 0.2),
                                              # :(model[:w][1] >= 0.01),
@@ -1649,7 +1687,8 @@ end
                         Matrix(returns);
                         target = 0,
                         extra_vars = [:(0 <= l1)],
-                        extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                        extra_constraints = [:([model[:l1];
+                                                (model[:w] - $prev_weights)] in
                                                MOI.NormOneCone($(n + 1)))
                                              # :(model[:w][6] == 0.2),
                                              # :(model[:w][1] >= 0.01),
@@ -1676,7 +1715,8 @@ end
                         Matrix(returns);
                         target = 0,
                         extra_vars = [:(0 <= l1)],
-                        extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                        extra_constraints = [:([model[:l1];
+                                                (model[:w] - $prev_weights)] in
                                                MOI.NormOneCone($(n + 1))),
                                              :(model[:w][6] == 0.2),
                                              :(model[:w][1] >= 0.01),
@@ -1732,8 +1772,10 @@ end
     # 3. BAC and JPM will outperform T and GE by 15%
     views = [-0.20, 0.10, 0.15] / 252
     picking = hcat([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                   [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                   [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0])
+                   [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0],
+                   [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0,
+                    0, 0.5, 0])
 
     bl = BlackLitterman(mcapsdf[!, 1],
                         S;
@@ -1767,7 +1809,8 @@ end
                    9.002169913041960e-02]
     @test isapprox(cv.weights, testweights, rtol = 1e-3)
     mu, sigma = portfolio_performance(cv; verbose = true)
-    mutest, sigmatest = (1 + 0.014253439792781208)^(1 / 252) - 1, 0.017049502122532846
+    mutest, sigmatest = (1 + 0.014253439792781208)^(1 / 252) - 1,
+                        0.017049502122532846
     @test isapprox(mu, mutest, rtol = 1e-3)
     @test isapprox(sigma, sigmatest, rtol = 1e-3)
 
@@ -1926,13 +1969,15 @@ end
     cv.weights .= testweights
     lpAlloc, remaining = Allocation(LP(), cv, Vector(df[end, cv.tickers]);
                                     investment = 10000)
-    testshares = [1, 8, 4, 1, 8, 38, 10, 75, 4, 3, 26, 16, -4, -54, -1, -4, -18, -2, -1,
+    testshares = [1, 8, 4, 1, 8, 38, 10, 75, 4, 3, 26, 16, -4, -54, -1, -4, -18,
+                  -2, -1,
                   -91]
     @test rmsd(lpAlloc.shares, testshares) < 0.5
 
     gAlloc, remaining = Allocation(Greedy(), cv, Vector(df[end, cv.tickers]);
                                    investment = 10000)
-    testshares = [16, 1, 8, 38, 1, 26, 8, 4, 4, 75, 3, 10, -91, -54, -18, -4, -1, -4, -2,
+    testshares = [16, 1, 8, 38, 1, 26, 8, 4, 4, 75, 3, 10, -91, -54, -18, -4,
+                  -1, -4, -2,
                   -1]
     @test gAlloc.shares == testshares
 
@@ -2011,7 +2056,8 @@ end
                   -26]
     @test rmsd(Int.(gAlloc.shares), testshares) < 3.2
 
-    cv = EffCVaR(tickers, bl.post_ret, Matrix(returns); beta = 0.2, market_neutral = false)
+    cv = EffCVaR(tickers, bl.post_ret, Matrix(returns); beta = 0.2,
+                 market_neutral = false)
     min_risk!(cv)
     testweights = [1.2591e-12,
                    0.0239999111487575,
@@ -2093,10 +2139,12 @@ end
     @test isapprox(mu, mutest, rtol = 1e-6)
     @test isapprox(cvar, cvartest, rtol = 1e-3)
 
-    cv = EffCVaR(tickers, bl.post_ret, Matrix(returns); beta = 1, market_neutral = false)
+    cv = EffCVaR(tickers, bl.post_ret, Matrix(returns); beta = 1,
+                 market_neutral = false)
     @test (0, 0) == portfolio_performance(cv)
     @test cv.beta == 0.95
-    cv = EffCVaR(tickers, bl.post_ret, Matrix(returns); beta = -0.1, market_neutral = false)
+    cv = EffCVaR(tickers, bl.post_ret, Matrix(returns); beta = -0.1,
+                 market_neutral = false)
     @test cv.beta == 0.95
 
     mean_ret = ret_model(MRet(), Matrix(returns))
@@ -2109,7 +2157,8 @@ end
                  mean_ret,
                  Matrix(returns);
                  extra_vars = [:(0 <= l1)],
-                 extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                 extra_constraints = [:([model[:l1];
+                                         (model[:w] - $prev_weights)] in
                                         MOI.NormOneCone($(n + 1)))
                                       # :(model[:w][6] == 0.2),
                                       # :(model[:w][1] >= 0.01),
@@ -2223,7 +2272,8 @@ end
                  mean_ret,
                  Matrix(returns);
                  extra_vars = [:(0 <= l1)],
-                 extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                 extra_constraints = [:([model[:l1];
+                                         (model[:w] - $prev_weights)] in
                                         MOI.NormOneCone($(n + 1)))
                                       # :(model[:w][6] == 0.2),
                                       # :(model[:w][1] >= 0.01),
@@ -2343,8 +2393,10 @@ end
     # 3. BAC and JPM will outperform T and GE by 15%
     views = [-0.20, 0.10, 0.15] / 252
     picking = hcat([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                   [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                   [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0])
+                   [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0],
+                   [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0,
+                    0, 0.5, 0])
 
     bl = BlackLitterman(mcapsdf[!, 1],
                         S;
@@ -2389,7 +2441,8 @@ end
     testshares = [9, 110, 13, 16, 28]
     @test lpAlloc.shares == testshares
 
-    gAlloc, remaining = Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]);
+    gAlloc, remaining = Allocation(Greedy(), cdar,
+                                   Vector(df[end, cdar.tickers]);
                                    investment = 10000)
     testshares = [109, 16, 27, 14, 9, 1, 1]
     @test gAlloc.shares == testshares
@@ -2426,7 +2479,8 @@ end
     testshares = [2, 24, 49, 19, 54]
     @test lpAlloc.shares == testshares
 
-    gAlloc, remaining = Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]);
+    gAlloc, remaining = Allocation(Greedy(), cdar,
+                                   Vector(df[end, cdar.tickers]);
                                    investment = 10000)
     testshares = [54, 1, 49, 38, 20, 1]
     @test gAlloc.shares == testshares
@@ -2463,7 +2517,8 @@ end
     testshares = [3, 1, 1, 5, 1, 1, 3, 1, 1, 9, 10, 6, 1, 45]
     @test lpAlloc.shares == testshares
 
-    gAlloc, remaining = Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]);
+    gAlloc, remaining = Allocation(Greedy(), cdar,
+                                   Vector(df[end, cdar.tickers]);
                                    investment = 10000)
     testshares = [45, 3, 8, 6, 5, 10, 3, 1, 1, 1, 1]
     @test gAlloc.shares == testshares
@@ -2502,7 +2557,8 @@ end
     testshares = [5, 2, 1, 35, 13, 11, 4, 36, 19]
     @test lpAlloc.shares == testshares
 
-    gAlloc, remaining = Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]);
+    gAlloc, remaining = Allocation(Greedy(), cdar,
+                                   Vector(df[end, cdar.tickers]);
                                    investment = 10000)
     testshares = [36, 1, 19, 10, 5, 4, 14, 38, 2]
     @test gAlloc.shares == testshares
@@ -2536,13 +2592,16 @@ end
 
     lpAlloc, remaining = Allocation(LP(), cdar, Vector(df[end, cdar.tickers]);
                                     investment = 10000)
-    testshares = [3, 1, 16, 3, 23, 8, 5, 40, -2, -3, -168, -121, -23, -52, -14, -18, -47,
+    testshares = [3, 1, 16, 3, 23, 8, 5, 40, -2, -3, -168, -121, -23, -52, -14,
+                  -18, -47,
                   -2, -90]
     @test lpAlloc.shares == testshares
 
-    gAlloc, remaining = Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]);
+    gAlloc, remaining = Allocation(Greedy(), cdar,
+                                   Vector(df[end, cdar.tickers]);
                                    investment = 10000)
-    testshares = [39, 23, 1, 5, 8, 3, 3, 12, -90, -121, -168, -52, -23, -46, -3, -2, -14,
+    testshares = [39, 23, 1, 5, 8, 3, 3, 12, -90, -121, -168, -52, -23, -46, -3,
+                  -2, -14,
                   -2, -20]
     @test gAlloc.shares == testshares
 
@@ -2575,13 +2634,16 @@ end
 
     lpAlloc, remaining = Allocation(LP(), cdar, Vector(df[end, cdar.tickers]);
                                     investment = 10000)
-    testshares = [4, 1, 10, 4, 23, 8, 5, 38, -2, -6, -272, -171, -31, -71, -13, -57, -80,
+    testshares = [4, 1, 10, 4, 23, 8, 5, 38, -2, -6, -272, -171, -31, -71, -13,
+                  -57, -80,
                   -9, -147]
     @test lpAlloc.shares == testshares
 
-    gAlloc, remaining = Allocation(Greedy(), cdar, Vector(df[end, cdar.tickers]);
+    gAlloc, remaining = Allocation(Greedy(), cdar,
+                                   Vector(df[end, cdar.tickers]);
                                    investment = 10000)
-    testshares = [37, 1, 22, 5, 4, 8, 4, 10, -147, -171, -271, -70, -32, -80, -6, -9, -2,
+    testshares = [37, 1, 22, 5, 4, 8, 4, 10, -147, -171, -271, -70, -32, -80,
+                  -6, -9, -2,
                   -13, -58]
     @test gAlloc.shares == testshares
 
@@ -2684,7 +2746,8 @@ end
                  mean_ret,
                  Matrix(returns);
                  extra_vars = [:(0 <= l1)],
-                 extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                 extra_constraints = [:([model[:l1];
+                                         (model[:w] - $prev_weights)] in
                                         MOI.NormOneCone($(n + 1)))
                                       # :(model[:w][6] == 0.2),
                                       # :(model[:w][1] >= 0.01),
@@ -2793,7 +2856,8 @@ end
                  mean_ret,
                  Matrix(returns);
                  extra_vars = [:(0 <= l1)],
-                 extra_constraints = [:([model[:l1]; (model[:w] - $prev_weights)] in
+                 extra_constraints = [:([model[:l1];
+                                         (model[:w] - $prev_weights)] in
                                         MOI.NormOneCone($(n + 1)))
                                       # :(model[:w][6] == 0.2),
                                       # :(model[:w][1] >= 0.01),

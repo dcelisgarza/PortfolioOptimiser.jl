@@ -1,4 +1,5 @@
-using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, LinearAlgebra
+using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel,
+      LinearAlgebra
 
 @testset "Plotting" begin
     A = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
@@ -26,19 +27,16 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
     plt10 = plot_returns(portfolio; per_asset = true)
     plt11 = plot_bar(portfolio)
 
-    hcportfolio = HCPortfolio(;
-                              returns = returns,
+    hcportfolio = HCPortfolio(; returns = returns,
                               solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                :params => Dict("verbose" => false,
                                                                                "max_step_fraction" => 0.75))),)
     asset_statistics!(hcportfolio; calc_kurt = false)
-    plt12 = plot_clusters(hcportfolio;
-                          max_k = 10,
+    plt12 = plot_clusters(hcportfolio; max_k = 10,
                           linkage = :DBHT,
                           branchorder = :r,
                           dbht_method = :Unique,)
-    plt13 = plot_dendrogram(hcportfolio;
-                            max_k = 10,
+    plt13 = plot_dendrogram(hcportfolio; max_k = 10,
                             linkage = :DBHT,
                             branchorder = :optimal,
                             dbht_method = :Unique,)

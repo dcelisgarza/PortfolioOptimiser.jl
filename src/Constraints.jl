@@ -65,8 +65,10 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
                 push!(B, row["Weight"] * d)
             else
                 A1[idx] = 1
-                if row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
-                    idx2 = findfirst(x -> x == row["Relative_Position"], asset_list)
+                if row["Relative_Type"] == "Assets" &&
+                   row["Relative_Position"] != ""
+                    idx2 = findfirst(x -> x == row["Relative_Position"],
+                                     asset_list)
                     A2 = zeros(N)
                     A2[idx2] = 1
                 elseif row["Relative_Type"] == "Classes" &&
@@ -86,8 +88,10 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
                 B1 = d * row["Weight"]
                 B = vcat(B, fill(B1, N))
             else
-                if row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
-                    idx = findfirst(x -> x == row["Relative_Position"], asset_list)
+                if row["Relative_Type"] == "Assets" &&
+                   row["Relative_Position"] != ""
+                    idx = findfirst(x -> x == row["Relative_Position"],
+                                    asset_list)
                     A2 = zeros(N, N)
                     A2[:, idx] .= 1
                 elseif row["Relative_Type"] == "Classes" &&
@@ -125,8 +129,10 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
                 A1 = A1 * d
                 push!(B, row["Weight"] * d)
             else
-                if row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
-                    idx = findfirst(x -> x == row["Relative_Position"], asset_list)
+                if row["Relative_Type"] == "Assets" &&
+                   row["Relative_Position"] != ""
+                    idx = findfirst(x -> x == row["Relative_Position"],
+                                    asset_list)
                     A2 = zeros(N)
                     A2[idx] = 1
                 elseif row["Relative_Type"] == "Classes" &&
@@ -149,8 +155,10 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
             else
                 for val in sort!(unique(asset_classes[!, row["Class_Set"]]))
                     A1 = asset_classes[!, row["Class_Set"]] .== val
-                    if row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
-                        idx = findfirst(x -> x == row["Relative_Position"], asset_list)
+                    if row["Relative_Type"] == "Assets" &&
+                       row["Relative_Position"] != ""
+                        idx = findfirst(x -> x == row["Relative_Position"],
+                                        asset_list)
                         A2 = zeros(N)
                         A2[idx] = 1
                     elseif row["Relative_Type"] == "Classes" &&
@@ -179,8 +187,10 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
                     !j && continue
                     A2 = zeros(N)
                     A2[i] = 1
-                    if row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
-                        idx = findfirst(x -> x == row["Relative_Position"], asset_list)
+                    if row["Relative_Type"] == "Assets" &&
+                       row["Relative_Position"] != ""
+                        idx = findfirst(x -> x == row["Relative_Position"],
+                                        asset_list)
                         A3 = zeros(N)
                         A3[idx] = 1
                     elseif row["Relative_Type"] == "Classes" &&
@@ -336,7 +346,8 @@ function asset_views(views::DataFrame, asset_classes::DataFrame)
         elseif row["Relative_Type"] == "Classes" &&
                row["Relative_Class_Set"] != "" &&
                row["Relative_Position"] != ""
-            P2 = asset_classes[!, row["Relative_Class_Set"]] .== row["Relative_Position"]
+            P2 = asset_classes[!, row["Relative_Class_Set"]] .==
+                 row["Relative_Position"]
             P2 = P2 / sum(P2)
             valid = true
         elseif row["Relative_Type"] == "" &&
@@ -481,7 +492,8 @@ function hrp_constraints(constraints::DataFrame, asset_classes::DataFrame)
         end
 
         if row["Type"] == "Assets"
-            idx = findfirst(x -> x == row["Position"], asset_classes[!, "Assets"])
+            idx = findfirst(x -> x == row["Position"],
+                            asset_classes[!, "Assets"])
             op(w[idx, i], row["Weight"]) && (w[idx, i] = row["Weight"])
         elseif row["Type"] == "All Assets"
             !isempty(w[op.(w[:, i], row["Weight"]), i]) &&
@@ -540,7 +552,8 @@ rw_c = rp_constraints(asset_classes, :Classes, "Class 2")
 """
 function rp_constraints(asset_classes::DataFrame, type::Symbol = :Assets,
                         class_col::Union{String, Symbol, Int, Nothing} = nothing)
-    @assert(type ∈ RPConstraintTypes, "type = $type, must be one of $RPConstraintTypes")
+    @assert(type ∈ RPConstraintTypes,
+            "type = $type, must be one of $RPConstraintTypes")
     N = nrow(asset_classes)
 
     rw = if type == :Assets
@@ -566,5 +579,5 @@ function rp_constraints(asset_classes::DataFrame, type::Symbol = :Assets,
     return rw
 end
 
-export asset_constraints, factor_constraints, asset_views, factor_views, hrp_constraints,
-       rp_constraints
+export asset_constraints, factor_constraints, asset_views, factor_views,
+       hrp_constraints, rp_constraints

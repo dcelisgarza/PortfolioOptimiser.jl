@@ -62,7 +62,8 @@ function EffEDaR(tickers,
                 edar_con[i = 1:samples],
                 [u[i + 1] - t, s, z[i]] in MOI.ExponentialCone())
 
-    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
+    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers,
+                                                       weight_bounds)
 
     @constraint(model, lower_bounds, w .>= lower_bounds)
     @constraint(model, upper_bounds, w .<= upper_bounds)

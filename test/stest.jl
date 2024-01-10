@@ -13,16 +13,17 @@ using COSMO,
       TimeSeries,
       SCS
 
-prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
-prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
+prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv");
+                          timestamp = :date)
+prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv");
+                           timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 portfolio = HCPortfolio(; prices = prices_assets)
 asset_statistics!(portfolio;
-                  cor_settings = CorSettings(;
-                                             method = :Gerber2,
+                  cor_settings = CorSettings(; method = :Gerber2,
                                              estimation = CorEstSettings(;
                                                                          estimator = AnalyticalNonlinearShrinkage()),))
 cluster_assets!(portfolio; linkage = :DBHT)
@@ -39,17 +40,23 @@ test = wak()
 
 # cluster_assets!(portfolio, linkage = :ward)
 asset_classes = DataFrame("Assets" => portfolio.assets,
-                          "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                          "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3,
+                                      3, 4, 2, 2,
                                       3, 1],
-                          "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1, 4,
+                          "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3,
+                                       3, 3, 1, 4,
                                        2, 1],
-                          "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                          "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2,
+                                      3, 4, 1, 2,
                                       2, 1],
-                          "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1, 2,
+                          "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2,
+                                       2, 3, 1, 2,
                                        2, 1],
-                          "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2, 3,
+                          "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4,
+                                       4, 3, 2, 3,
                                        4, 1],
-                          "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1, 4,
+                          "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3,
+                                       3, 2, 1, 4,
                                        2, 2])
 constraints = DataFrame(:Enabled => [true,
                                      true,
@@ -4602,7 +4609,8 @@ Ct = reshape([-0.0,
               -0.0,
               0.0],
              (14, 20))
-Dt = reshape([-0.55, -0.9, 0.2, 0.2, 0.5, -0.7, 0.1, 0.3, -0.5, -0.2, -0.7, 0.1, -0.2, 0.6],
+Dt = reshape([-0.55, -0.9, 0.2, 0.2, 0.5, -0.7, 0.1, 0.3, -0.5, -0.2, -0.7, 0.1,
+              -0.2, 0.6],
              (14,))
 
 @test loadingst == loadings
@@ -4642,7 +4650,9 @@ println("w18t = ", w18.weights, "\n")
 println("w19t = ", w19.weights, "\n")
 #######################################
 
-for rtol in [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 2.5e-1, 5e-1, 1e0]
+for rtol in
+    [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 2.5e-1, 5e-1,
+     1e0]
     a1, a2 = [0.010490720965613475,
               0.027638562976896618,
               0.005157935454787538,
@@ -4697,8 +4707,7 @@ portfolio = Portfolio(; prices = prices,
                                                            :params => Dict("verbose" => false))))
 asset_statistics!(portfolio)
 
-w1 = opt_port!(portfolio;
-               rf = rf,
+w1 = opt_port!(portfolio; rf = rf,
                l = l,
                class = :Classic,
                type = :Trad,
@@ -4709,8 +4718,7 @@ risk1 = calc_risk(portfolio; type = :Trad, rm = :Kurt, rf = rf)
 
 rmf = :kurt_u
 setproperty!(portfolio, rmf, risk1 + 1e-4 * risk1)
-w18 = opt_port!(portfolio;
-                rf = rf,
+w18 = opt_port!(portfolio; rf = rf,
                 l = l,
                 class = :Classic,
                 type = :Trad,

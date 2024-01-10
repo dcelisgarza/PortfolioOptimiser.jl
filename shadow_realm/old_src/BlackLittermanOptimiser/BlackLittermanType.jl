@@ -1,6 +1,7 @@
 abstract type AbstractBlackLitterman <: AbstractPortfolioOptimiser end
 
-struct BlackLitterman{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
+struct BlackLitterman{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13,
+                      T14} <:
        AbstractBlackLitterman
     rf::T1
     risk_aversion::T2
@@ -57,7 +58,8 @@ function BlackLitterman(tickers::AbstractArray,
         pi = zeros(num_tickers)
     elseif pi == :market
         @assert !isnothing(market_caps) "please provide a vector of market caps via the market_caps keyword"
-        pi = market_implied_prior_returns(market_caps, cov_mtx, risk_aversion, rf)
+        pi = market_implied_prior_returns(market_caps, cov_mtx, risk_aversion,
+                                          rf)
     elseif pi == :Equal
         pi = ones(num_tickers) / num_tickers
     else

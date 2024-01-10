@@ -16,7 +16,8 @@ function refresh_model!(portfolio::EffUlcer)
     return nothing
 end
 
-function portfolio_performance(portfolio::EffUlcer; rf = portfolio.rf, verbose = false)
+function portfolio_performance(portfolio::EffUlcer; rf = portfolio.rf,
+                               verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 

@@ -27,7 +27,8 @@ Uses a Levenberg-Marquardt factor, `c = scale` * `min(eigenvalues)`, which is us
     fixed_matrix = vecs * Diagonal(vals) * vecs'
 
     _isposdef = isposdef(fixed_matrix)
-    !_isposdef && @warn("Covariance matrix could not be fixed. Try a different risk model.")
+    !_isposdef &&
+        @warn("Covariance matrix could not be fixed. Try a different risk model.")
     return fixed_matrix
 end
 
@@ -43,7 +44,8 @@ end
     fixed_matrix = matrix - scale * min_val * I(size(matrix, 1))
 
     _isposdef = isposdef(fixed_matrix)
-    !_isposdef && @warn("Covariance matrix could not be fixed. Try a different risk model.")
+    !_isposdef &&
+        @warn("Covariance matrix could not be fixed. Try a different risk model.")
 
     return fixed_matrix
 end
@@ -60,7 +62,8 @@ end
     fixed_matrix = vecs * Diagonal(vals) * vecs'
 
     _isposdef = isposdef(fixed_matrix)
-    !_isposdef && @warn("Covariance matrix could not be fixed. Try a different risk model.")
+    !_isposdef &&
+        @warn("Covariance matrix could not be fixed. Try a different risk model.")
     return fixed_matrix
 end
 

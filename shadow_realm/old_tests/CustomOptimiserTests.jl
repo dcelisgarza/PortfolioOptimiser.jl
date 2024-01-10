@@ -24,7 +24,8 @@ using PortfolioOptimiser, CSV, DataFrames, StatsBase
 
     ef = EffMeanVar(tickers, mu, S)
     obj_params = [ef.mean_ret, ef.cov_mtx, 1000]
-    custom_optimiser!(ef, kelly_objective, obj_params; initial_guess = fill(1 / 20, 20))
+    custom_optimiser!(ef, kelly_objective, obj_params;
+                      initial_guess = fill(1 / 20, 20))
     testweights = [0.005767442440593688,
                    0.03154081133764419,
                    0.011642424046938063,
@@ -90,7 +91,8 @@ end
 
     @test isapprox(ef.weights, testweights, rtol = 1e-6)
 
-    @test_throws ArgumentError custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
+    @test_throws ArgumentError custom_nloptimiser!(ef, logarithmic_barrier,
+                                                   obj_params)
 
     ef = EffMeanVar(tickers, mean_ret, S; weight_bounds = fill((0.03, 0.2), 20))
     obj_params = (ef.cov_mtx, 0.001)
@@ -216,7 +218,8 @@ end
     push!(obj_params, 21)
     push!(obj_params, 22)
     push!(extra_vars, (cd.model[:alpha], 0.1))
-    push!(extra_vars, (cd.model[:z], fill(1 / length(cd.model[:z]), length(cd.model[:z]))))
+    push!(extra_vars,
+          (cd.model[:z], fill(1 / length(cd.model[:z]), length(cd.model[:z]))))
     custom_nloptimiser!(cd, cdar_ratio, obj_params, extra_vars)
     mu, cdar1 = portfolio_performance(cd)
     @test isapprox(mu / cdar1, 0.01111523004929159, rtol = 1e-4)

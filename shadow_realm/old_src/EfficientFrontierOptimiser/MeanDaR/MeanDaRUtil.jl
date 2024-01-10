@@ -15,7 +15,8 @@ function refresh_model!(portfolio::EffMeanDaR)
     return nothing
 end
 
-function portfolio_performance(portfolio::EffMeanDaR; rf = portfolio.rf, verbose = false)
+function portfolio_performance(portfolio::EffMeanDaR; rf = portfolio.rf,
+                               verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 

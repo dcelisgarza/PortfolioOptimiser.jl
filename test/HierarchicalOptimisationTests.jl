@@ -59,8 +59,7 @@ l = 2.0
     linkage = :DBHT
     branchorder = :default
 
-    w1 = opt_port!(portfolio;
-                   type = type,
+    w1 = opt_port!(portfolio; type = type,
                    rm = rm,
                    obj = obj,
                    kelly = kelly,
@@ -93,8 +92,7 @@ l = 2.0
     @test isapprox(w1t, w1.weights)
 
     dbht_method = :Equal
-    w2 = opt_port!(portfolio;
-                   type = type,
+    w2 = opt_port!(portfolio; type = type,
                    rm = rm,
                    obj = obj,
                    kelly = kelly,
@@ -146,8 +144,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w1 = opt_port!(portfolio;
-                   type = type,
+    w1 = opt_port!(portfolio; type = type,
                    rm = rm,
                    obj = obj,
                    kelly = kelly,
@@ -180,8 +177,7 @@ end
     @test isapprox(w1t, w1.weights)
 
     dbht_method = :Equal
-    w2 = opt_port!(portfolio;
-                   type = type,
+    w2 = opt_port!(portfolio; type = type,
                    rm = rm,
                    obj = obj,
                    kelly = kelly,
@@ -233,8 +229,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w1 = opt_port!(portfolio;
-                   type = type,
+    w1 = opt_port!(portfolio; type = type,
                    rm = rm,
                    rm_i = :Equal,
                    obj = obj,
@@ -268,8 +263,7 @@ end
     @test isapprox(w1t, w1.weights)
 
     dbht_method = :Equal
-    w2 = opt_port!(portfolio;
-                   type = type,
+    w2 = opt_port!(portfolio; type = type,
                    rm = rm,
                    rm_i = :Equal,
                    obj = obj,
@@ -306,8 +300,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w1 = opt_port!(portfolio;
-                   type = type,
+    w1 = opt_port!(portfolio; type = type,
                    rm = rm,
                    kelly = kelly,
                    linkage = linkage,
@@ -339,8 +332,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w2 = opt_port!(portfolio;
-                   type = type,
+    w2 = opt_port!(portfolio; type = type,
                    rm_i = :Equal,
                    rm = rm,
                    kelly = kelly,
@@ -390,8 +382,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w1 = opt_port!(portfolio;
-                   type = type,
+    w1 = opt_port!(portfolio; type = type,
                    rm = rm,
                    obj = obj,
                    kelly = kelly,
@@ -427,8 +418,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w2 = opt_port!(portfolio;
-                   type = type,
+    w2 = opt_port!(portfolio; type = type,
                    rm = rm,
                    obj = obj,
                    kelly = kelly,
@@ -547,8 +537,7 @@ end
 
     portfolio.w_min = w_min
     portfolio.w_max = w_max
-    w1 = opt_port!(portfolio;
-                   type = type,
+    w1 = opt_port!(portfolio; type = type,
                    rm = rm,
                    obj = obj,
                    kelly = kelly,
@@ -604,8 +593,7 @@ end
     end
 
     type = :HERC
-    w2 = opt_port!(portfolio;
-                   type = type,
+    w2 = opt_port!(portfolio; type = type,
                    rm = rm,
                    obj = obj,
                    kelly = kelly,
@@ -636,8 +624,7 @@ end
     @test isapprox(w2.weights, w2t)
 
     type = :HERC
-    w3 = opt_port!(portfolio;
-                   type = type,
+    w3 = opt_port!(portfolio; type = type,
                    rm_i = :Equal,
                    rm = rm,
                    obj = obj,

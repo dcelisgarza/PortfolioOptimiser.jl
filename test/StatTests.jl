@@ -1233,8 +1233,7 @@ returns = dropmissing!(DataFrame(Y))
     @test isapprox(codepg0t, portfolio.cor)
     @test isapprox(distg0t, portfolio.dist)
 
-    asset_statistics!(portfolio;
-                      cor_method = :Gerber0,
+    asset_statistics!(portfolio; cor_method = :Gerber0,
                       cov_method = :Gerber0,
                       posdef_fix = :Nearest)
     covg1t = reshape([0.00020997582228184753,
@@ -2672,8 +2671,8 @@ returns = dropmissing!(DataFrame(Y))
     mu2 = copy(portfolio.mu)
     @test isapprox(mu1, mu2)
     asset_statistics!(portfolio;
-                      mu_weights = eweights(size(portfolio.returns, 1), 1 - eps();
-                                            scale = true))
+                      mu_weights = eweights(size(portfolio.returns, 1),
+                                            1 - eps(); scale = true))
     mu3 = copy(portfolio.mu)
     @test isapprox(mu3, portfolio.returns[end, 1:end])
 
@@ -2686,14 +2685,14 @@ returns = dropmissing!(DataFrame(Y))
     cov3 = copy(portfolio.cov)
 
     semiret = min.(portfolio.returns .- 0, 0)
-    cov4 = cov(StatsBase.SimpleCovariance(; corrected = true), semiret; mean = 0)
+    cov4 = cov(StatsBase.SimpleCovariance(; corrected = true), semiret;
+               mean = 0)
     @test isapprox(cov3, cov4)
 
     cov5 = transpose(semiret) * semiret / (size(semiret, 1) - 1)
     @test isapprox(cov3, cov5)
 
-    asset_statistics!(portfolio;
-                      cov_method = :Semi,
+    asset_statistics!(portfolio; cov_method = :Semi,
                       cov_est = StatsBase.SimpleCovariance(; corrected = false))
     cov6 = copy(portfolio.cov)
     cov7 = transpose(semiret) * semiret / (size(semiret, 1))
@@ -2701,9 +2700,11 @@ returns = dropmissing!(DataFrame(Y))
 
     portfolio = Portfolio(; returns = returns)
 
-    asset_statistics!(portfolio; cov_method = :Gerber1, std_kwargs = (; corrected = false))
+    asset_statistics!(portfolio; cov_method = :Gerber1,
+                      std_kwargs = (; corrected = false))
     covg1 = copy(portfolio.cov)
-    asset_statistics!(portfolio; cov_method = :Gerber2, std_kwargs = (; corrected = false))
+    asset_statistics!(portfolio; cov_method = :Gerber2,
+                      std_kwargs = (; corrected = false))
     covg2 = copy(portfolio.cov)
 
     covgt1 = reshape([0.00020974121242454938,
@@ -3976,16 +3977,26 @@ returns = dropmissing!(DataFrame(Y))
                       7,
                       7)
 
-    cov1 = denoise_cov(cov_mtx, 100, :Fixed; alpha = 0.0, detone = false, mkt_comp = 1)
-    cov2 = denoise_cov(cov_mtx, 100, :Spectral; alpha = 0.0, detone = false, mkt_comp = 1)
-    cov3 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 0.0, detone = false, mkt_comp = 1)
-    cov4 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 0.5, detone = false, mkt_comp = 1)
-    cov5 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 1.0, detone = false, mkt_comp = 1)
-    cov6 = denoise_cov(cov_mtx, 100, :Fixed; alpha = 0.0, detone = true, mkt_comp = 2)
-    cov7 = denoise_cov(cov_mtx, 100, :Spectral; alpha = 0.0, detone = true, mkt_comp = 2)
-    cov8 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 0.0, detone = true, mkt_comp = 2)
-    cov9 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 0.5, detone = true, mkt_comp = 2)
-    cov10 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 1.0, detone = true, mkt_comp = 2)
+    cov1 = denoise_cov(cov_mtx, 100, :Fixed; alpha = 0.0, detone = false,
+                       mkt_comp = 1)
+    cov2 = denoise_cov(cov_mtx, 100, :Spectral; alpha = 0.0, detone = false,
+                       mkt_comp = 1)
+    cov3 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 0.0, detone = false,
+                       mkt_comp = 1)
+    cov4 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 0.5, detone = false,
+                       mkt_comp = 1)
+    cov5 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 1.0, detone = false,
+                       mkt_comp = 1)
+    cov6 = denoise_cov(cov_mtx, 100, :Fixed; alpha = 0.0, detone = true,
+                       mkt_comp = 2)
+    cov7 = denoise_cov(cov_mtx, 100, :Spectral; alpha = 0.0, detone = true,
+                       mkt_comp = 2)
+    cov8 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 0.0, detone = true,
+                       mkt_comp = 2)
+    cov9 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 0.5, detone = true,
+                       mkt_comp = 2)
+    cov10 = denoise_cov(cov_mtx, 100, :Shrink; alpha = 1.0, detone = true,
+                        mkt_comp = 2)
 
     cov1t = reshape([3.213915398393439,
                      1.590896553184143,
@@ -4517,15 +4528,15 @@ returns = dropmissing!(DataFrame(Y))
     dmtxt = denoise_cov(mtx, size(returns, 1) / size(returns, 2))
     @test isapprox(dmtx, dmtxt)
 
-    asset_statistics!(portfolio; denoise = true, method = :Spectral, calc_kurt = false)
+    asset_statistics!(portfolio; denoise = true, method = :Spectral,
+                      calc_kurt = false)
     dmtx = copy(portfolio.cov)
     asset_statistics!(portfolio)
     mtx = copy(portfolio.cov)
     dmtxt = denoise_cov(mtx, size(returns, 1) / size(returns, 2), :Spectral)
     @test isapprox(dmtx, dmtxt)
 
-    asset_statistics!(portfolio;
-                      denoise = true,
+    asset_statistics!(portfolio; denoise = true,
                       method = :Shrink,
                       calc_kurt = false,
                       alpha = 0.3,
@@ -4536,8 +4547,7 @@ returns = dropmissing!(DataFrame(Y))
     mtx = copy(portfolio.cov)
     dmtxt = denoise_cov(mtx,
                         size(returns, 1) / size(returns, 2),
-                        :Shrink;
-                        alpha = 0.3,
+                        :Shrink; alpha = 0.3,
                         detone = true,
                         mkt_comp = 4)
     @test isapprox(dmtx, dmtxt)
@@ -4557,8 +4567,7 @@ returns = dropmissing!(DataFrame(Y))
     mtx = copy(portfolio.cov)
     vc = copy(portfolio.mu)
 
-    asset_statistics!(portfolio;
-                      calc_kurt = false,
+    asset_statistics!(portfolio; calc_kurt = false,
                       cov_method = :Custom_Func,
                       cov_method = :Custom_Func,
                       mean_kwargs = (; dims = 1))
@@ -4584,7 +4593,8 @@ returns = dropmissing!(DataFrame(Y))
     @test !isposdef(portfolio.kurt)
     @test !isposdef(portfolio.skurt)
 
-    asset_statistics!(portfolio; jlogo = true, denoise = true, posdef_fix = :Nearest)
+    asset_statistics!(portfolio; jlogo = true, denoise = true,
+                      posdef_fix = :Nearest)
     @test isposdef(portfolio.kurt)
     @test isposdef(portfolio.skurt)
 
@@ -4603,20 +4613,17 @@ returns = dropmissing!(DataFrame(Y))
     @test isapprox(portfolio.cor, corr)
     @test isapprox(portfolio.dist, func(corr))
 
-    asset_statistics!(portfolio;
-                      cor_method = :Custom_Val,
+    asset_statistics!(portfolio; cor_method = :Custom_Val,
                       custom_cor = corkendall(portfolio.returns))
     @test isapprox(portfolio.cor, corkendall(portfolio.returns))
 
     portfolio = HCPortfolio(; returns = returns)
-    asset_statistics!(portfolio;
-                      cov_method = :Custom_Val,
+    asset_statistics!(portfolio; cov_method = :Custom_Val,
                       custom_cov = covgerber1(portfolio.returns))
     @test isapprox(portfolio.cov, covgerber1(portfolio.returns))
 
     portfolio = HCPortfolio(; returns = returns)
-    asset_statistics!(portfolio;
-                      cov_method = :Custom_Val,
+    asset_statistics!(portfolio; cov_method = :Custom_Val,
                       custom_mu = vec(mean(portfolio.returns; dims = 1)))
     @test isapprox(portfolio.mu, vec(mean(portfolio.returns; dims = 1)))
 
@@ -4643,17 +4650,17 @@ returns = dropmissing!(DataFrame(Y))
             0.00045281490145370775,
             0.0003559206722359082]
     @test isapprox(mu1t, portfolio.mu)
-    asset_statistics!(portfolio;
-                      cov_method = :CAPM,
+    asset_statistics!(portfolio; cov_method = :CAPM,
                       rf = 1.02^(1 / 252) - 1,
                       mkt_ret = vec(mean(portfolio.returns; dims = 2)))
     @test isapprox(mu1t, portfolio.mu)
 
-    span = ceil(Int, 4 * size(portfolio.returns, 1) / log(size(portfolio.returns, 1) + 2))
+    span = ceil(Int,
+                4 * size(portfolio.returns, 1) /
+                log(size(portfolio.returns, 1) + 2))
     N = size(portfolio.returns, 1)
     wghts = eweights(N, 2 / (span + 1); scale = true)
-    asset_statistics!(portfolio;
-                      cov_method = :CAPM,
+    asset_statistics!(portfolio; cov_method = :CAPM,
                       rf = 1.02^(1 / 252) - 1,
                       cov_weights = wghts,
                       mu_weights = wghts,
@@ -4679,8 +4686,7 @@ returns = dropmissing!(DataFrame(Y))
             0.0003579816177607234,
             0.00026075454245967395]
     @test isapprox(mu2t, portfolio.mu)
-    asset_statistics!(portfolio;
-                      cov_method = :CAPM,
+    asset_statistics!(portfolio; cov_method = :CAPM,
                       rf = 1.02^(1 / 252) - 1,
                       cov_weights = wghts,
                       mu_weights = wghts,
@@ -5406,7 +5412,8 @@ end
     @test isapprox(Matrix(lmtx4[!, 2:end]), lmtx4t)
 
     mu1, sigma1, returns1 = risk_factors(X, Y; reg_method = :BReg, error = true)
-    mu2, sigma2, returns2 = risk_factors(X, Y; reg_method = :BReg, error = false)
+    mu2, sigma2, returns2 = risk_factors(X, Y; reg_method = :BReg,
+                                         error = false)
 
     mu1t = [-0.3740749325681081,
             0.029590377431456233,
@@ -7192,7 +7199,8 @@ end
 
     kr_returns_2 = copy(kr_returns)
     kr_returns_2[!, 2:end] .= Matrix(kr_returns_2[!, 2:end]) .^ 2
-    X = DataFrames.rename!(hcat(kr_returns, kr_returns_2[!, 2:end]; makeunique = true),
+    X = DataFrames.rename!(hcat(kr_returns, kr_returns_2[!, 2:end];
+                                makeunique = true),
                            ["timestamp"; names(loadings)[2:end]])
     Y = assets_returns[!, ["timestamp"; bonds]]
 
@@ -7207,10 +7215,12 @@ end
     port = Portfolio(; returns = Y, f_returns = X)
 
     muab1, cov_mtxab1, wab1 = augmented_black_litterman(port.returns,
-                                                        fill(1 / length(port.assets),
+                                                        fill(1 /
+                                                             length(port.assets),
                                                              length(port.assets));
                                                         F = port.f_returns,
-                                                        B = Matrix(loadings[!, 2:end]),
+                                                        B = Matrix(loadings[!,
+                                                                            2:end]),
                                                         P_f = P_f,
                                                         Q_f = Q_f / 252,
                                                         constant = false,)
@@ -7307,7 +7317,8 @@ end
     views = Dict("Enabled" => [true, true, true, true, true],
                  "Type" => ["Assets", "Classes", "Classes", "Assets", "Classes"],
                  "Set" => ["", "Class 2", "Class 1", "", "Class 1"],
-                 "Position" => [bonds[3], "Financial", "Equity", bonds[5], "Fixed Income"],
+                 "Position" => [bonds[3], "Financial", "Equity", bonds[5],
+                                "Fixed Income"],
                  "Sign" => ["<=", ">=", ">=", ">=", "<="],
                  "Return" => [0.3, 0.1, 0.05, 0.03, 0.017],
                  "Type Relative" => ["Assets", "Classes", "Assets", "", ""],
@@ -7318,10 +7329,12 @@ end
     P, Q = asset_views(views, asset_classes)
 
     muab2, cov_mtxab2, wab2 = augmented_black_litterman(port.returns,
-                                                        fill(1 / length(port.assets),
+                                                        fill(1 /
+                                                             length(port.assets),
                                                              length(port.assets));
                                                         F = port.f_returns,
-                                                        B = Matrix(loadings[!, 2:end]),
+                                                        B = Matrix(loadings[!,
+                                                                            2:end]),
                                                         P = P,
                                                         Q = Q / 252,
                                                         P_f = P_f,
@@ -7401,8 +7414,7 @@ end
                                                    port.f_returns,
                                                    Matrix(loadings[!, 2:end]),
                                                    P_f,
-                                                   Q_f / 252;
-                                                   constant = false,
+                                                   Q_f / 252; constant = false,
                                                    diagonal = true)
 
     mubt1 = [1.5211845368269412e-5,
@@ -7479,8 +7491,7 @@ end
                                                    port.f_returns,
                                                    Matrix(loadings[!, 2:end]),
                                                    P_f,
-                                                   Q_f / 252;
-                                                   constant = false,
+                                                   Q_f / 252; constant = false,
                                                    diagonal = false)
 
     mubt2 = [1.5211845370658701e-5,
@@ -7563,8 +7574,7 @@ end
     black_litterman_statistics!(port, P, Q / 252, ; delta = 1)
     mu1, cov1, w1 = augmented_black_litterman(port.returns,
                                               fill(1 / length(port.assets),
-                                                   length(port.assets));
-                                              P = P,
+                                                   length(port.assets)); P = P,
                                               Q = Q / 252,)
     @test isapprox(mu1, port.mu_bl)
     @test isapprox(cov1, port.cov_bl)
@@ -7574,15 +7584,15 @@ end
     delta = (dot(port.mu, bw) - rf) / dot(bw, port.cov, bw)
     black_litterman_statistics!(port, P, Q / 252; rf = rf)
     mu2, cov2, w2 = augmented_black_litterman(port.returns,
-                                              bw;
-                                              P = P,
+                                              bw; P = P,
                                               Q = Q / 252,
                                               rf = rf,
                                               delta = delta,)
     @test isapprox(mu2, port.mu_bl)
     @test isapprox(cov2, port.cov_bl)
 
-    mu3, cov3, w3 = black_litterman(port.returns, bw, P, Q / 252; rf = rf, delta = delta)
+    mu3, cov3, w3 = black_litterman(port.returns, bw, P, Q / 252; rf = rf,
+                                    delta = delta)
     @test isapprox(mu3, port.mu_bl)
     @test isapprox(cov3, port.cov_bl)
 
@@ -7777,8 +7787,8 @@ end
 
     port = Portfolio(; returns = Y, f_returns = X)
     black_litterman_factor_satistics!(port,
-                                      fill(1 / length(port.assets), length(port.assets));
-                                      # Black Litterman
+                                      fill(1 / length(port.assets),
+                                           length(port.assets));                                      # Black Litterman
                                       P = P,
                                       P_f = P_f,
                                       Q = Q / 252,
@@ -7795,9 +7805,7 @@ end
                    fill(1 / length(port.assets), length(port.assets)))
 
     port = Portfolio(; returns = Y, f_returns = X)
-    black_litterman_factor_satistics!(port;
-                                      # w;
-                                      # Black Litterman
+    black_litterman_factor_satistics!(port;                                      # w;                                      # Black Litterman
                                       B = loadings,
                                       P = P,
                                       P_f = P_f,
@@ -7815,8 +7823,7 @@ end
                                                 port.f_returns,
                                                 Matrix(loadings[!, 2:end]),
                                                 P_f,
-                                                Q_f / 252;
-                                                constant = false)
+                                                Q_f / 252; constant = false)
     @test isapprox(port.mu_bl_fm, mub1)
     @test isapprox(port.cov_bl_fm, covb1)
 
@@ -7829,9 +7836,7 @@ end
     B = loadings_matrix(DataFrame(port.f_returns, port.f_assets),
                         DataFrame(port.returns, port.assets))
     P_f1, Q_f1 = factor_views(f_views, B)
-    black_litterman_factor_satistics!(port;
-                                      # w;
-                                      # Black Litterman
+    black_litterman_factor_satistics!(port;                                      # w;                                      # Black Litterman
                                       B = B,
                                       P = P,
                                       P_f = P_f1,
@@ -7849,16 +7854,13 @@ end
                                                 port.f_returns,
                                                 Matrix(B[!, 2:end]),
                                                 P_f1,
-                                                Q_f1 / 252;
-                                                constant = true,
+                                                Q_f1 / 252; constant = true,
                                                 rf = 0.0002)
     @test isapprox(port.mu_bl_fm, mub2)
     @test isapprox(port.cov_bl_fm, covb2)
 
     try
-        black_litterman_factor_satistics!(port;
-                                          # w;
-                                          # Black Litterman
+        black_litterman_factor_satistics!(port;                                          # w;                                          # Black Litterman
                                           B = B,
                                           P = P,
                                           P_f = P_f1,
@@ -7875,17 +7877,14 @@ end
                                                     port.f_returns,
                                                     Matrix(B[!, 2:end]),
                                                     P_f1,
-                                                    Q_f1 / 252;
-                                                    constant = true,
+                                                    Q_f1 / 252; constant = true,
                                                     diagonal = false)
         @test isapprox(port.mu_bl_fm, mub3)
         @test isapprox(port.cov_bl_fm, covb3)
     catch
     end
 
-    black_litterman_factor_satistics!(port;
-                                      # w;
-                                      # Black Litterman
+    black_litterman_factor_satistics!(port;                                      # w;                                      # Black Litterman
                                       B = loadings,
                                       P = P,
                                       P_f = P_f,
@@ -7912,9 +7911,7 @@ end
     @test isapprox(port.mu_bl_fm, mub4)
     @test isapprox(port.cov_bl_fm, covb4)
 
-    black_litterman_factor_satistics!(port;
-                                      # w;
-                                      # Black Litterman
+    black_litterman_factor_satistics!(port;                                      # w;                                      # Black Litterman
                                       B = B,
                                       P = P,
                                       P_f = P_f1,
@@ -7941,9 +7938,7 @@ end
     @test isapprox(port.mu_bl_fm, mub5)
     @test isapprox(port.cov_bl_fm, covb5)
 
-    black_litterman_factor_satistics!(port;
-                                      # w;
-                                      # Black Litterman
+    black_litterman_factor_satistics!(port;                                      # w;                                      # Black Litterman
                                       B = loadings,
                                       P = P,
                                       P_f = P_f,
@@ -7972,9 +7967,7 @@ end
     @test isapprox(port.mu_bl_fm, mub6)
     @test isapprox(port.cov_bl_fm, covb6)
 
-    black_litterman_factor_satistics!(port;
-                                      # w;
-                                      # Black Litterman
+    black_litterman_factor_satistics!(port;                                      # w;                                      # Black Litterman
                                       B = loadings,
                                       P = P,
                                       P_f = P_f,

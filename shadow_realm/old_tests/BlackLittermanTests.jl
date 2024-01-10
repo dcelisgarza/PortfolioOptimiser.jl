@@ -65,8 +65,10 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, Clarabel, TimeSeries
     # 3. BAC and JPM will outperform T and GE by 15%
     views = [-0.20, 0.10, 0.15] / 252
     picking = hcat([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                   [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                   [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0])
+                   [1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0],
+                   [0, 0, 0, 0, 0, -0.5, 0, 0, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0,
+                    0, 0.5, 0])
 
     bl = BlackLitterman(mcapsdf[!, 1],
                         S;
@@ -527,7 +529,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, Clarabel, TimeSeries
     @test sigma ≈ sigmatest
     @test sr ≈ srtest
 
-    bl = BlackLitterman(mcapsdf[!, 1], S; rf = 0, tau = 0.01, Q = views, P = picking)
+    bl = BlackLitterman(mcapsdf[!, 1], S; rf = 0, tau = 0.01, Q = views,
+                        P = picking)
     testpost_ret = [-8.266082118908346e-5
                     -0.00012307560785296723
                     -0.0002863612325949266
@@ -2812,7 +2815,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, Clarabel, TimeSeries
                      0.337877114958953]
     @test bl.weights ≈ testblweights
     mu, sigma, sr = portfolio_performance(bl)
-    mutest, sigmatest, srtest = 13.395044420416847, 0.009359958547042654, 1431.092431462434
+    mutest, sigmatest, srtest = 13.395044420416847, 0.009359958547042654,
+                                1431.092431462434
     @test mu ≈ mutest
     @test sigma ≈ sigmatest
     @test sr ≈ srtest
@@ -2824,7 +2828,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, Clarabel, TimeSeries
                         pi = prior, # either a vector, `nothing`, `:Equal`, or `:market`
                         Q = views,
                         P = picking,
-                        absolute_views = Dict("GE" => 0.5, "SBUX" => -0.3, "BBY" => 1.3,
+                        absolute_views = Dict("GE" => 0.5, "SBUX" => -0.3,
+                                              "BBY" => 1.3,
                                               "BAC" => -2.3),)
     testpost_ret = [-0.24902795177862921,
                     -0.226485871857524,
@@ -3272,7 +3277,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, Clarabel, TimeSeries
                      0.5818895305226485]
     @test bl.weights ≈ testblweights
     mu, sigma, sr = portfolio_performance(bl)
-    mutest, sigmatest, srtest = -4.719241132023135, 0.06363478842256727, -74.16257418232372
+    mutest, sigmatest, srtest = -4.719241132023135, 0.06363478842256727,
+                                -74.16257418232372
     @test mu ≈ mutest
     @test sigma ≈ sigmatest
     @test sr ≈ srtest
@@ -3756,7 +3762,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, Clarabel, TimeSeries
                                                  Q = views,
                                                  P = picking,
                                                  omega = :idzorek,
-                                                 view_confidence = [-eps(), 1, 0.5],)
+                                                 view_confidence = [-eps(), 1,
+                                                                    0.5],)
 
     @test_throws ArgumentError bl = BlackLitterman(mcapsdf[!, 1],
                                                    S;
@@ -3766,7 +3773,8 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, Clarabel, TimeSeries
                                                    Q = views,
                                                    P = picking,
                                                    omega = :wocao,
-                                                   view_confidence = [-eps(), 1, 0.5],)
+                                                   view_confidence = [-eps(), 1,
+                                                                      0.5],)
 
     @test_throws ArgumentError bl = BlackLitterman(mcapsdf[!, 1],
                                                    S;
@@ -3776,5 +3784,6 @@ using PortfolioOptimiser, DataFrames, CSV, Statistics, Clarabel, TimeSeries
                                                    Q = views,
                                                    P = picking,
                                                    omega = :idzorek,
-                                                   view_confidence = [-eps(), 1, 0.5],)
+                                                   view_confidence = [-eps(), 1,
+                                                                      0.5],)
 end

@@ -79,9 +79,11 @@ function cov(type::AbstractRiskModel,
     if typeof(type) <: Cov
         return cov(Cov(), returns; fix_method = fix_method, scale = scale)
     elseif typeof(type) <: SCov
-        return cov(SCov(), returns; target = target, fix_method = fix_method, scale = scale)
+        return cov(SCov(), returns; target = target, fix_method = fix_method,
+                   scale = scale)
     elseif typeof(type) <: ECov
-        return cov(ECov(), returns; fix_method = fix_method, span = span, scale = scale)
+        return cov(ECov(), returns; fix_method = fix_method, span = span,
+                   scale = scale)
     elseif typeof(type) <: ESCov
         return cov(ESCov(),
                    returns;
@@ -105,7 +107,8 @@ function cov(type::AbstractRiskModel,
     end
 end
 
-function cov(::Cov, returns; fix_method::AbstractFixPosDef = SFix(), scale = nothing)
+function cov(::Cov, returns; fix_method::AbstractFixPosDef = SFix(),
+             scale = nothing)
     return make_pos_def(fix_method, cov(returns), scale)
 end
 
@@ -116,7 +119,8 @@ function cov(::SCov,
              scale = nothing,)
     semi_returns = min.(returns .- target, 0)
 
-    return make_pos_def(fix_method, cov(SimpleCovariance(), semi_returns; mean = 0), scale)
+    return make_pos_def(fix_method,
+                        cov(SimpleCovariance(), semi_returns; mean = 0), scale)
 end
 
 function cov(::ECov,
@@ -126,7 +130,8 @@ function cov(::ECov,
              scale = nothing,)
     N = size(returns, 1)
 
-    return make_pos_def(fix_method, cov(returns, eweights(N, 2 / (span + 1))), scale)
+    return make_pos_def(fix_method, cov(returns, eweights(N, 2 / (span + 1))),
+                        scale)
 end
 
 function cov(::ESCov,
@@ -140,7 +145,8 @@ function cov(::ESCov,
     semi_returns = min.(returns .- target, 0)
 
     return make_pos_def(fix_method,
-                        cov(SimpleCovariance(), semi_returns, eweights(N, 2 / (span + 1));
+                        cov(SimpleCovariance(), semi_returns,
+                            eweights(N, 2 / (span + 1));
                             mean = 0),
                         scale)
 end
@@ -158,6 +164,7 @@ function cov(::CustomSCov,
              kwargs = (),)
     semi_returns = min.(returns .- target, 0)
 
-    return isnothing(estimator) ? cov(semi_returns, args...; mean = 0, kwargs...) :
+    return isnothing(estimator) ?
+           cov(semi_returns, args...; mean = 0, kwargs...) :
            cov(estimator, semi_returns, args...; mean = 0, kwargs...)
 end

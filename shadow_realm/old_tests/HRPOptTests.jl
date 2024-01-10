@@ -77,7 +77,9 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
 
     hrp = HRPOpt(tickers;
                  returns = Matrix(returns),
-                 D = Symmetric(sqrt.(clamp.((1 .- cov_to_cor(cov(Matrix(returns)))) / 2, 0,
+                 D = Symmetric(sqrt.(clamp.((1 .-
+                                             cov_to_cor(cov(Matrix(returns)))) /
+                                            2, 0,
                                             1))))
     optimise!(hrp, min_risk!)
     idx = sortperm(tickers)
@@ -110,7 +112,8 @@ using PortfolioOptimiser, CSV, DataFrames, Statistics, LinearAlgebra
     @test sr ≈ srtest
 
     @test_throws ArgumentError HRPOpt(tickers)
-    @test_throws ArgumentError HRPOpt(tickers, returns = Matrix(returns), D = :custom)
+    @test_throws ArgumentError HRPOpt(tickers, returns = Matrix(returns),
+                                      D = :custom)
 
     hrp = HRPOpt(tickers; returns = Matrix(returns), mean_ret = mean_ret)
     optimise!(hrp, max_utility!)

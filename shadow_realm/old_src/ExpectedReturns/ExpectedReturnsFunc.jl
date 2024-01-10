@@ -83,7 +83,8 @@ Exponentially weighted Capital Asset Pricing Model (ECAPM) returns. `ECAPMRet()`
 """
 function ret_model(::MRet, returns; compound = true, frequency = 1)
     if compound
-        return vec(prod(returns .+ 1; dims = 1) .^ (frequency / size(returns, 1)) .- 1)
+        return vec(prod(returns .+ 1; dims = 1) .^
+                   (frequency / size(returns, 1)) .- 1)
     else
         return vec(mean(returns; dims = 1)) * frequency
     end
@@ -93,13 +94,15 @@ function ret_model(::EMRet,
                    returns;
                    compound = true,
                    frequency = 1,
-                   span = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),)
+                   span = ceil(Int,
+                               4 * size(returns, 1) / log(size(returns, 1) + 2)),)
     N = size(returns, 1)
     if compound
         return vec((1 .+ mean(returns, eweights(N, 2 / (span + 1)); dims = 1)) .^
                    frequency .- 1)
     else
-        return vec(mean(returns, eweights(N, 2 / (span + 1)); dims = 1)) * frequency
+        return vec(mean(returns, eweights(N, 2 / (span + 1)); dims = 1)) *
+               frequency
     end
 end
 
@@ -112,7 +115,8 @@ function ret_model(::CAPMRet,
                    cov_method::AbstractRiskModel = Cov(),
                    target = 1.02^(1 / 252) - 1,
                    fix_method::AbstractFixPosDef = SFix(),
-                   span = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
+                   span = ceil(Int,
+                               4 * size(returns, 1) / log(size(returns, 1) + 2)),
                    scale = nothing,
                    custom_cov_estimator = nothing,
                    custom_cov_args = (),
@@ -142,11 +146,15 @@ function ret_model(::ECAPMRet,
                    rf = 1.02^(1 / 252) - 1,
                    compound = true,
                    frequency = 1,
-                   rspan = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
+                   rspan = ceil(Int,
+                                4 * size(returns, 1) /
+                                log(size(returns, 1) + 2)),
                    cov_method::AbstractRiskModel = ECov(),
                    target = 1.02^(1 / 252) - 1,
                    fix_method::AbstractFixPosDef = SFix(),
-                   cspan = ceil(Int, 4 * size(returns, 1) / log(size(returns, 1) + 2)),
+                   cspan = ceil(Int,
+                                4 * size(returns, 1) /
+                                log(size(returns, 1) + 2)),
                    scale = nothing,
                    custom_cov_estimator = nothing,
                    custom_cov_args = (),

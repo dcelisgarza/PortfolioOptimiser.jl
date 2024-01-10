@@ -1,6 +1,7 @@
 abstract type AbstractEffUlcer <: AbstractEfficient end
 
-struct EffUlcer{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <: AbstractEffUlcer
+struct EffUlcer{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
+       AbstractEffUlcer
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -46,7 +47,8 @@ function EffUlcer(tickers,
     @constraint(model, u2e_geq_0, u[2:end] .>= 0)
     @constraint(model, soc_u, [norm_u; u[2:end]] in SecondOrderCone())
 
-    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
+    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers,
+                                                       weight_bounds)
 
     @constraint(model, lower_bounds, w .>= lower_bounds)
     @constraint(model, upper_bounds, w .<= upper_bounds)
