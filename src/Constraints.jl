@@ -539,7 +539,7 @@ rw_c = rp_constraints(asset_classes, :Classes, "Class 2")
 ```
 """
 function rp_constraints(asset_classes::DataFrame, type::Symbol = :Assets,
-                        class_col::Union{String,Symbol,Int,Nothing} = nothing)
+                        class_col::Union{String, Symbol, Int, Nothing} = nothing)
     @assert(type ∈ RPConstraintTypes, "type = $type, must be one of $RPConstraintTypes")
     N = nrow(asset_classes)
 

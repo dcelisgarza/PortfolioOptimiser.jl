@@ -85,7 +85,7 @@ Compute the mutual information and variation of information matrices.
         - `:HGR`: Hacine-Gharbi and Ravier's choice.
 """
 function mut_var_info_mtx(x::AbstractMatrix{<:Real},
-                          bins_info::Union{Symbol,<:Integer} = :KN, normed::Bool = true)
+                          bins_info::Union{Symbol, <:Integer} = :KN, normed::Bool = true)
     @assert(bins_info ∈ BinMethods || isa(bins_info, Int) && bins_info > zero(bins_info),
             "bins_info = $bins_info, has to either be in $BinMethods, or an integer value greater than 0")
 
@@ -304,7 +304,7 @@ end
 
 function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
                      rng = Random.default_rng(),
-                     seed::Union{Nothing,<:Integer} = nothing,)
+                     seed::Union{Nothing, <:Integer} = nothing,)
     !isnothing(seed) && Random.seed!(rng, seed)
 
     n = size(x, 1)
@@ -334,7 +334,7 @@ function cokurt(x::AbstractMatrix, mu::AbstractArray)
 end
 
 function scokurt(x::AbstractMatrix, mu::AbstractArray,
-                 target_ret::Union{Real,<:AbstractVector{<:Real}} = 0.0)
+                 target_ret::Union{Real, <:AbstractVector{<:Real}} = 0.0)
     T, N = size(x)
     y = x .- mu
     y .= min.(y, target_ret)
@@ -918,7 +918,8 @@ end
 
 function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
                        n_sim::Integer = 3_000, window::Integer = 3,
-                       seed::Union{<:Integer,Nothing} = nothing, rng = Random.default_rng())
+                       seed::Union{<:Integer, Nothing} = nothing,
+                       rng = Random.default_rng())
     @assert(kind ∈ BootstrapMethods, "kind = $kind, must be one of $BootstrapMethods")
     !isnothing(seed) && Random.seed!(rng, seed)
 
@@ -1045,8 +1046,8 @@ function wc_statistics!(portfolio::AbstractPortfolio, settings::WCSettings = WCS
     return nothing
 end
 
-function forward_regression(x::DataFrame, y::Union{Vector,DataFrame},
-                            criterion::Union{Symbol,Function} = :pval,
+function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
+                            criterion::Union{Symbol, Function} = :pval,
                             threshold::Real = 0.05)
     @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
     isa(y, DataFrame) && (y = Vector(y))
@@ -1150,8 +1151,8 @@ function forward_regression(x::DataFrame, y::Union{Vector,DataFrame},
     return included
 end
 
-function backward_regression(x::DataFrame, y::Union{Vector,DataFrame},
-                             criterion::Union{Symbol,Function} = :pval,
+function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
+                             criterion::Union{Symbol, Function} = :pval,
                              threshold::Real = 0.05)
     @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
     isa(y, DataFrame) && (y = Vector(y))
@@ -1247,7 +1248,7 @@ function backward_regression(x::DataFrame, y::Union{Vector,DataFrame},
     return included
 end
 
-function pcr(x::DataFrame, y::Union{Vector,DataFrame},
+function pcr(x::DataFrame, y::Union{Vector, DataFrame},
              settings::PCRSettings = PCRSettings(;))
     mean_genfunc = settings.mean_genfunc
     std_genfunc = settings.std_genfunc
@@ -1462,12 +1463,12 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
 end
 
 function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;                                   # Black Litterman
-                                   F::Union{AbstractMatrix,Nothing} = nothing,
-                                   B::Union{AbstractMatrix,Nothing} = nothing,
-                                   P::Union{AbstractMatrix,Nothing} = nothing,
-                                   P_f::Union{AbstractMatrix,Nothing} = nothing,
-                                   Q::Union{AbstractVector,Nothing} = nothing,
-                                   Q_f::Union{AbstractVector,Nothing} = nothing,                                   # Settings
+                                   F::Union{AbstractMatrix, Nothing} = nothing,
+                                   B::Union{AbstractMatrix, Nothing} = nothing,
+                                   P::Union{AbstractMatrix, Nothing} = nothing,
+                                   P_f::Union{AbstractMatrix, Nothing} = nothing,
+                                   Q::Union{AbstractVector, Nothing} = nothing,
+                                   Q_f::Union{AbstractVector, Nothing} = nothing,                                   # Settings
                                    cov_settings::CovSettings = CovSettings(;),
                                    mu_settings::MuSettings = MuSettings(;),
                                    bl_settings::BLSettings = BLSettings(;),)
@@ -1637,11 +1638,11 @@ black_litterman_factor_satistics!(
 """
 function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
                                            w::AbstractVector = Vector{Float64}(undef, 0);                                           # Black Litterman
-                                           B::Union{DataFrame,Nothing} = nothing,
-                                           P::Union{AbstractMatrix,Nothing} = nothing,
-                                           P_f::Union{AbstractMatrix,Nothing} = nothing,
-                                           Q::Union{AbstractVector,Nothing} = nothing,
-                                           Q_f::Union{AbstractVector,Nothing} = nothing,                                           # Settings
+                                           B::Union{DataFrame, Nothing} = nothing,
+                                           P::Union{AbstractMatrix, Nothing} = nothing,
+                                           P_f::Union{AbstractMatrix, Nothing} = nothing,
+                                           Q::Union{AbstractVector, Nothing} = nothing,
+                                           Q_f::Union{AbstractVector, Nothing} = nothing,                                           # Settings
                                            loadings_settings::LoadingsSettings = LoadingsSettings(;),
                                            cov_settings::CovSettings = CovSettings(;),
                                            mu_settings::MuSettings = MuSettings(;),
