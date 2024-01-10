@@ -67,15 +67,13 @@ custom_optimiser!(ef, kelly_objective, obj_params)
     custom_optimiser!(ef, max_ret_l2_reg, obj_params)
     ```
 """
-function custom_optimiser!(
-    portfolio::AbstractPortfolioOptimiser,
-    obj,
-    obj_params = ();
-    initial_guess = nothing,
-    optimiser = Ipopt.Optimizer,
-    silent = true,
-    optimiser_attributes = (),
-)
+function custom_optimiser!(portfolio::AbstractPortfolioOptimiser,
+                           obj,
+                           obj_params = ();
+                           initial_guess = nothing,
+                           optimiser = Ipopt.Optimizer,
+                           silent = true,
+                           optimiser_attributes = (),)
     model = portfolio.model
 
     termination_status(model) != OPTIMIZE_NOT_CALLED && refresh_model!(portfolio)
@@ -231,24 +229,18 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     custom_nloptimiser!(ef, sharpe_l2_reg, obj_params)
     ```
 """
-function custom_nloptimiser!(
-    portfolio::AbstractPortfolioOptimiser,
-    obj,
-    obj_params = (),
-    extra_vars = ();
-    initial_guess = nothing,
-    optimiser = Ipopt.Optimizer,
-    silent = true,
-    optimiser_attributes = (),
-)
+function custom_nloptimiser!(portfolio::AbstractPortfolioOptimiser,
+                             obj,
+                             obj_params = (),
+                             extra_vars = ();
+                             initial_guess = nothing,
+                             optimiser = Ipopt.Optimizer,
+                             silent = true,
+                             optimiser_attributes = (),)
     model = portfolio.model
 
     if termination_status(model) != OPTIMIZE_NOT_CALLED
-        throw(
-            ArgumentError(
-                "Cannot deregister user defined functions from JuMP, model. Please make a new instance of portfolio.",
-            ),
-        )
+        throw(ArgumentError("Cannot deregister user defined functions from JuMP, model. Please make a new instance of portfolio."))
     end
 
     !haskey(model, :sum_w) && _make_weight_sum_constraint!(model, portfolio.market_neutral)
@@ -273,7 +265,7 @@ function custom_nloptimiser!(
     end
     m = length(w) - n
 
-    register(model, :obj, n + m, obj, autodiff = true)
+    register(model, :obj, n + m, obj; autodiff = true)
     @NLobjective(model, Min, obj(w...))
 
     _setup_and_optimise(model, optimiser, silent, optimiser_attributes)

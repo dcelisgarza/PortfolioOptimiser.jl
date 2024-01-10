@@ -13,7 +13,7 @@ function portfolio_performance(portfolio::HRPOpt; rf = portfolio.rf, verbose = f
         end
     else
         cov_mtx = cov(portfolio.returns)
-        mean_ret = vec(mean(portfolio.returns, dims = 1))
+        mean_ret = vec(mean(portfolio.returns; dims = 1))
 
         μ = dot(w, mean_ret)
         σ = sqrt(port_variance(w, cov_mtx))

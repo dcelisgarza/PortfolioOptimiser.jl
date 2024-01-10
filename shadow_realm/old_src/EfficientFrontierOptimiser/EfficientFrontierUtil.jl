@@ -19,8 +19,8 @@ function _refresh_add_var_and_constraints(default_keys, portfolio)
 
     # We need to add the extra constraints back.
     if !isempty(extra_constraints)
-        constraint_keys =
-            [Symbol("extra_constraint$(i)") for i in 1:length(extra_constraints)]
+        constraint_keys = [Symbol("extra_constraint$(i)")
+                           for i in 1:length(extra_constraints)]
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
@@ -52,9 +52,7 @@ function _transform_constraints_sharpe(model, k, fname = "max_sharpe!")
         elseif intfType <: JuMP.MOI.LessThan{<:Number}
             intfKey = :upper
         else
-            @warn(
-                "$fname optimisation uses a variable transformation which means constraint types other than linear and quadratic may not behave as expected. Use custom_nloptimiser! if constraints of type $intfType are needed.",
-            )
+            @warn("$fname optimisation uses a variable transformation which means constraint types other than linear and quadratic may not behave as expected. Use custom_nloptimiser! if constraints of type $intfType are needed.",)
             continue
         end
 

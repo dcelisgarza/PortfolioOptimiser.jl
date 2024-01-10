@@ -10,16 +10,12 @@ using PortfolioOptimiser, CSV, DataFrames, StatsBase
     S = cov(Cov(), Matrix(returns))
 
     lower_bounds, upper_bounds, strict_bounds = 0.02, 0.03, 0.1
-    ef = EffMeanVar(
-        tickers,
-        mu,
-        S;
-        extra_constraints = [
-            :(model[:w][1] >= $lower_bounds),
-            :(model[:w][end] <= $upper_bounds),
-            :(model[:w][6] == $strict_bounds),
-        ],
-    )
+    ef = EffMeanVar(tickers,
+                    mu,
+                    S;
+                    extra_constraints = [:(model[:w][1] >= $lower_bounds),
+                                         :(model[:w][end] <= $upper_bounds),
+                                         :(model[:w][6] == $strict_bounds)],)
     obj_params = [ef.mean_ret, ef.cov_mtx, 100]
     custom_optimiser!(ef, kelly_objective, obj_params)
     @test ef.weights[1] >= lower_bounds
@@ -28,29 +24,27 @@ using PortfolioOptimiser, CSV, DataFrames, StatsBase
 
     ef = EffMeanVar(tickers, mu, S)
     obj_params = [ef.mean_ret, ef.cov_mtx, 1000]
-    custom_optimiser!(ef, kelly_objective, obj_params, initial_guess = fill(1 / 20, 20))
-    testweights = [
-        0.005767442440593688,
-        0.03154081133764419,
-        0.011642424046938063,
-        0.027730804163849977,
-        0.016914645304759907,
-        0.026146623485008156,
-        5.212701881376053e-8,
-        0.13902777785485385,
-        9.810751772787176e-8,
-        3.0636345199128637e-6,
-        0.2890167913451911,
-        4.9338483149047114e-8,
-        3.4404354300215894e-8,
-        0.12226858861714271,
-        1.7542852298587199e-7,
-        0.016190054982200913,
-        0.0015896888326559673,
-        0.19489319656761958,
-        1.3053117484579068e-7,
-        0.11726754744995008,
-    ]
+    custom_optimiser!(ef, kelly_objective, obj_params; initial_guess = fill(1 / 20, 20))
+    testweights = [0.005767442440593688,
+                   0.03154081133764419,
+                   0.011642424046938063,
+                   0.027730804163849977,
+                   0.016914645304759907,
+                   0.026146623485008156,
+                   5.212701881376053e-8,
+                   0.13902777785485385,
+                   9.810751772787176e-8,
+                   3.0636345199128637e-6,
+                   0.2890167913451911,
+                   4.9338483149047114e-8,
+                   3.4404354300215894e-8,
+                   0.12226858861714271,
+                   1.7542852298587199e-7,
+                   0.016190054982200913,
+                   0.0015896888326559673,
+                   0.19489319656761958,
+                   1.3053117484579068e-7,
+                   0.11726754744995008]
     @test isapprox(ef.weights, testweights, rtol = 1e-3)
 end
 
@@ -66,33 +60,31 @@ end
         cov_mtx = obj_params[1]
         k = obj_params[2]
         w = [i for i in w]
-        PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
+        return PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
     end
-    ef = EffMeanVar(tickers, mean_ret, S, weight_bounds = (0.03, 0.2))
+    ef = EffMeanVar(tickers, mean_ret, S; weight_bounds = (0.03, 0.2))
     obj_params = (ef.cov_mtx, 0.001)
     custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
-    testweights = [
-        0.05008193131266116,
-        0.05007764309829396,
-        0.05003537085424143,
-        0.04997664927670955,
-        0.050023356842195575,
-        0.050115147567380926,
-        0.04954234092771163,
-        0.050244611437678256,
-        0.0499262489067497,
-        0.05002670222881007,
-        0.050264943535528274,
-        0.04980141845871927,
-        0.0495106023658318,
-        0.0501537977985005,
-        0.04980152841800859,
-        0.049974588773067145,
-        0.05007518766607851,
-        0.05021385111224298,
-        0.05001301193715369,
-        0.05014106748243707,
-    ]
+    testweights = [0.05008193131266116,
+                   0.05007764309829396,
+                   0.05003537085424143,
+                   0.04997664927670955,
+                   0.050023356842195575,
+                   0.050115147567380926,
+                   0.04954234092771163,
+                   0.050244611437678256,
+                   0.0499262489067497,
+                   0.05002670222881007,
+                   0.050264943535528274,
+                   0.04980141845871927,
+                   0.0495106023658318,
+                   0.0501537977985005,
+                   0.04980152841800859,
+                   0.049974588773067145,
+                   0.05007518766607851,
+                   0.05021385111224298,
+                   0.05001301193715369,
+                   0.05014106748243707]
     @test all(ef.weights .<= 0.2)
     @test all(ef.weights .>= 0.03)
 
@@ -100,92 +92,78 @@ end
 
     @test_throws ArgumentError custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 
-    ef = EffMeanVar(tickers, mean_ret, S, weight_bounds = fill((0.03, 0.2), 20))
+    ef = EffMeanVar(tickers, mean_ret, S; weight_bounds = fill((0.03, 0.2), 20))
     obj_params = (ef.cov_mtx, 0.001)
-    custom_nloptimiser!(
-        ef,
-        logarithmic_barrier,
-        obj_params;
-        initial_guess = fill(1 / 20, 20),
-    )
+    custom_nloptimiser!(ef,
+                        logarithmic_barrier,
+                        obj_params;
+                        initial_guess = fill(1 / 20, 20),)
     @test isapprox(ef.weights, testweights, rtol = 1e-6)
 
-    @test_throws ArgumentError EffMeanVar(
-        tickers,
-        mean_ret,
-        S,
-        weight_bounds = fill((0.03, 0.2), 19),
-    )
+    @test_throws ArgumentError EffMeanVar(tickers,
+                                          mean_ret,
+                                          S,
+                                          weight_bounds = fill((0.03, 0.2), 19))
 
-    ef = EffMeanVar(tickers, mean_ret, S, weight_bounds = fill([0.03, 0.2], 20))
+    ef = EffMeanVar(tickers, mean_ret, S; weight_bounds = fill([0.03, 0.2], 20))
     obj_params = (ef.cov_mtx, 0.001)
-    custom_nloptimiser!(
-        ef,
-        logarithmic_barrier,
-        obj_params;
-        initial_guess = fill(1 / 20, 20),
-    )
+    custom_nloptimiser!(ef,
+                        logarithmic_barrier,
+                        obj_params;
+                        initial_guess = fill(1 / 20, 20),)
     @test isapprox(ef.weights, testweights, rtol = 1e-6)
 
-    weight_bounds = [
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        [0.03, 0.2]
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-    ]
+    weight_bounds = [(0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     [0.03, 0.2]
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)]
 
-    @test_throws ArgumentError EffMeanVar(
-        tickers,
-        mean_ret,
-        S,
-        weight_bounds = weight_bounds,
-    )
+    @test_throws ArgumentError EffMeanVar(tickers,
+                                          mean_ret,
+                                          S,
+                                          weight_bounds = weight_bounds)
 
-    weight_bounds = [
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2, 0.5)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-        (0.03, 0.2)
-    ]
+    weight_bounds = [(0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2, 0.5)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)
+                     (0.03, 0.2)]
 
-    @test_throws ArgumentError EffMeanVar(
-        tickers,
-        mean_ret,
-        S,
-        weight_bounds = weight_bounds,
-    )
+    @test_throws ArgumentError EffMeanVar(tickers,
+                                          mean_ret,
+                                          S,
+                                          weight_bounds = weight_bounds)
 
     function sharpe_ratio_nl(w::T...) where {T}
         mean_ret = obj_params[1]

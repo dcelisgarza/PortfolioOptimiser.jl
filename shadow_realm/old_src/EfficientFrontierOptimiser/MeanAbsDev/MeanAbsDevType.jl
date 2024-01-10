@@ -98,22 +98,22 @@ Create an [`EffMeanAbsDev`](@ref) structure to be optimised via JuMP.
 - `extra_constraints`: extra constraints for the model. See [`_add_constraint_to_model!`](@ref) for details on how to use this.
 - `extra_obj_terms`: extra objective terms for the model. See [`_add_to_objective!`](@ref) for details on how to use this.
 """
-function EffMeanAbsDev(
-    tickers,
-    mean_ret,
-    returns;
-    weight_bounds = (0.0, 1.0),
-    target = !isnothing(mean_ret) ? reshape(mean_ret, 1, :) : mean(returns, dims = 1),
-    rf = 1.02^(1 / 252) - 1,
-    market_neutral = false,
-    risk_aversion = 1.0,
-    target_risk = sum((returns .- target) * fill(1 / size(returns, 2), size(returns, 2))) /
-                  size(returns, 1),
-    target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
-    extra_vars = [],
-    extra_constraints = [],
-    extra_obj_terms = [],
-)
+function EffMeanAbsDev(tickers,
+                       mean_ret,
+                       returns;
+                       weight_bounds = (0.0, 1.0),
+                       target = !isnothing(mean_ret) ? reshape(mean_ret, 1, :) :
+                                mean(returns; dims = 1),
+                       rf = 1.02^(1 / 252) - 1,
+                       market_neutral = false,
+                       risk_aversion = 1.0,
+                       target_risk = sum((returns .- target) *
+                                         fill(1 / size(returns, 2), size(returns, 2))) /
+                                     size(returns, 1),
+                       target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
+                       extra_vars = [],
+                       extra_constraints = [],
+                       extra_obj_terms = [],)
     num_tickers = length(tickers)
     @assert num_tickers == size(returns, 2)
     !isnothing(mean_ret) && @assert(num_tickers == length(mean_ret))
@@ -144,8 +144,8 @@ function EffMeanAbsDev(
 
     # We need to add the extra constraints.
     if !isempty(extra_constraints)
-        constraint_keys =
-            [Symbol("extra_constraint$(i)") for i in 1:length(extra_constraints)]
+        constraint_keys = [Symbol("extra_constraint$(i)")
+                           for i in 1:length(extra_constraints)]
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
@@ -153,20 +153,18 @@ function EffMeanAbsDev(
     !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
     @expression(model, risk, sum(n) / samples)
 
-    return EffMeanAbsDev(
-        tickers,
-        mean_ret,
-        weights,
-        returns,
-        target,
-        rf,
-        market_neutral,
-        risk_aversion,
-        target_risk,
-        target_ret,
-        extra_vars,
-        extra_constraints,
-        extra_obj_terms,
-        model,
-    )
+    return EffMeanAbsDev(tickers,
+                         mean_ret,
+                         weights,
+                         returns,
+                         target,
+                         rf,
+                         market_neutral,
+                         risk_aversion,
+                         target_risk,
+                         target_ret,
+                         extra_vars,
+                         extra_constraints,
+                         extra_obj_terms,
+                         model)
 end

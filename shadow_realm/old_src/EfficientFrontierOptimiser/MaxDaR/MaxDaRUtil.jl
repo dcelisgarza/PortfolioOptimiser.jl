@@ -1,18 +1,16 @@
 function refresh_model!(portfolio::EffMaxDaR)
-    default_keys = (
-        :w,
-        :lower_bounds,
-        :upper_bounds,
-        :sum_w,
-        :alpha,
-        :u,
-        :uf_geq_uimvw,
-        :u1_eq_0,
-        :u2e_geq_0,
-        :u2e_leq_alpha,
-        :ret,
-        :risk,
-    )
+    default_keys = (:w,
+                    :lower_bounds,
+                    :upper_bounds,
+                    :sum_w,
+                    :alpha,
+                    :u,
+                    :uf_geq_uimvw,
+                    :u1_eq_0,
+                    :u2e_geq_0,
+                    :u2e_leq_alpha,
+                    :ret,
+                    :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
     return nothing

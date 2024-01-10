@@ -46,10 +46,7 @@ end
 """
 ```julia
 owa_wcvar(
-    T::Integer,
-    alphas::AbstractVector{<:Real},
-    weights::AbstractVector{<:Real},
-)
+    T::Integer,    alphas::AbstractVector{<:Real},    weights::AbstractVector{<:Real},)
 ```
 Compute the OWA weights for the Weighted Conditional Value at Risk (WCVaR) of a returns series [^OWA].
 # Inputs
@@ -59,11 +56,8 @@ $_tdef
 # Outputs
 $_owaw
 """
-function owa_wcvar(
-    T::Integer,
-    alphas::AbstractVector{<:Real},
-    weights::AbstractVector{<:Real},
-)
+function owa_wcvar(T::Integer, alphas::AbstractVector{<:Real},
+                   weights::AbstractVector{<:Real})
     w = zeros(promote_type(eltype(alphas), eltype(weights)), T)
     for (i, j) in zip(alphas, weights)
         w .+= owa_cvar(T, i) * j
@@ -75,11 +69,7 @@ end
 """
 ```julia
 owa_tg(
-    T::Integer;
-    alpha_i::Real = 0.0001,
-    alpha::Real = 0.05,
-    a_sim::Integer = 100,
-)
+    T::Integer;    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Integer = 100,)
 ```
 Compute the OWA weights for the Tail Gini of a returns series [^OWA].
 # Inputs
@@ -90,13 +80,11 @@ $(_sigdef("Tail Gini losses", :a))
 $_owaw
 """
 function owa_tg(T::Integer; alpha_i::Real = 1e-4, alpha::Real = 0.05, a_sim::Integer = 100)
-    @assert(
-        0 < alpha_i < alpha < 1,
-        "alpha_i = $alpha_i, alpha = $alpha, please ensure 0 < alpha_i < alpha < 1, holds"
-    )
+    @assert(0 < alpha_i < alpha < 1,
+            "alpha_i = $alpha_i, alpha = $alpha, please ensure 0 < alpha_i < alpha < 1, holds")
     @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
 
-    alphas = range(start = alpha_i, stop = alpha, length = a_sim)
+    alphas = range(; start = alpha_i, stop = alpha, length = a_sim)
     n = length(alphas)
     w = Vector{typeof(alpha)}(undef, n)
 
@@ -165,12 +153,7 @@ end
 """
 ```julia
 owa_rwcvar(
-    T::Integer,
-    alphas::AbstractVector{<:Real},
-    weights_a::AbstractVector{<:Real},
-    betas::AbstractVector{<:Real} = alphas,
-    weights_b::AbstractVector{<:Real} = weights_b,
-)
+    T::Integer,    alphas::AbstractVector{<:Real},    weights_a::AbstractVector{<:Real},    betas::AbstractVector{<:Real} = alphas,    weights_b::AbstractVector{<:Real} = weights_b,)
 ```
 Compute the OWA weights for the Weighted Conditional Value at Risk (WCVaR) of a returns series [^OWA].
 # Inputs
@@ -182,13 +165,10 @@ $_tdef
 # Outputs
 $_owaw
 """
-function owa_rwcvar(
-    T::Integer,
-    alphas::AbstractVector{<:Real},
-    weights_a::AbstractVector{<:Real},
-    betas::AbstractVector{<:Real} = alphas,
-    weights_b::AbstractVector{<:Real} = weights_b,
-)
+function owa_rwcvar(T::Integer, alphas::AbstractVector{<:Real},
+                    weights_a::AbstractVector{<:Real},
+                    betas::AbstractVector{<:Real} = alphas,
+                    weights_b::AbstractVector{<:Real} = weights_b)
     w = owa_wcvar(T, alphas, weights_a) .- reverse(owa_wcvar(T, betas, weights_b))
 
     return w
@@ -197,14 +177,7 @@ end
 """
 ```julia
 owa_rtg(
-    T::Integer;
-    alpha_i::Real = 0.0001,
-    alpha::Real = 0.05,
-    a_sim::Integer = 100,
-    beta_i::Real = alpha_i,
-    beta::Real = alpha,
-    b_sim::Integer = a_sim,
-)
+    T::Integer;    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Integer = 100,    beta_i::Real = alpha_i,    beta::Real = alpha,    b_sim::Integer = a_sim,)
 ```
 Compute the OWA weights for the Tail Gini Range of a returns series [^OWA].
 # Inputs
@@ -216,17 +189,10 @@ $(_sigdef("Tail Gini gains", :b))
 # Outputs
 $_owaw
 """
-function owa_rtg(
-    T::Integer;
-    alpha_i::Real = 0.0001,
-    alpha::Real = 0.05,
-    a_sim::Integer = 100,
-    beta_i::Real = alpha_i,
-    beta::Real = alpha,
-    b_sim::Integer = a_sim,
-)
-    w =
-        owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) .-
+function owa_rtg(T::Integer; alpha_i::Real = 0.0001, alpha::Real = 0.05,
+                 a_sim::Integer = 100, beta_i::Real = alpha_i, beta::Real = alpha,
+                 b_sim::Integer = a_sim,)
+    w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) .-
         reverse(owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim))
 
     return w
@@ -272,14 +238,10 @@ function _optimize_owa(model, solvers)
 
         term_status in ValidTermination && break
 
-        push!(
-            solvers_tried,
-            key => Dict(
-                :objective_val => objective_value(model),
-                :term_status => term_status,
-                :params => haskey(val, :params) ? val[:params] : missing,
-            ),
-        )
+        push!(solvers_tried,
+              key => Dict(:objective_val => objective_value(model),
+                          :term_status => term_status,
+                          :params => haskey(val, :params) ? val[:params] : missing))
     end
 
     return term_status, solvers_tried
@@ -337,11 +299,10 @@ function owa_l_moment(T::Integer, k::Integer = 2)
     for i in 1:T
         a = 0.0
         for j in 0:(k - 1)
-            a +=
-                (-1)^j *
-                binomial(k - 1, j) *
-                binomial(i - 1, k - 1 - j) *
-                binomial(T - i, j)
+            a += (-1)^j *
+                 binomial(k - 1, j) *
+                 binomial(i - 1, k - 1 - j) *
+                 binomial(T - i, j)
         end
         a *= 1 / (k * binomial(T, k))
         w[i] = a
@@ -365,13 +326,7 @@ const OWAMethods = (:CRRA, :E, :SS, :SD)
 """
 ```julia
 owa_l_moment_crm(
-    T::Integer;
-    k::Integer = 2,
-    method::Symbol = :SD,
-    g::Real = 0.5,
-    max_phi::Real = 0.5,
-    solvers = Dict(),
-)
+    T::Integer;    k::Integer = 2,    method::Symbol = :SD,    g::Real = 0.5,    max_phi::Real = 0.5,    solvers = Dict(),)
 ```
 Compute the OWA weights for the convex risk measure considering higher order L-moments [^OWAL].
 # Inputs
@@ -388,21 +343,13 @@ $(_solver_desc("the OWA L-Moment `JuMP` model."))
 # Outputs
 $_owaw
 """
-function owa_l_moment_crm(
-    T::Integer;
-    k::Integer = 2,
-    method::Symbol = :SD,
-    g::Real = 0.5,
-    max_phi::Real = 0.5,
-    solvers = Dict(),
-)
+function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::Real = 0.5,
+                          max_phi::Real = 0.5, solvers = Dict(),)
     @assert(k >= 2, "k = $k, must be an integer bigger than or equal to 2")
     @assert(method ∈ OWAMethods, "method = $method, must be one of $OWAMethods")
     @assert(0 < g < 1, "risk aversion, g = $g, must be greater than 0 and less than 1")
-    @assert(
-        0 < max_phi < 1,
-        "the constraint on the maximum weight of the L-moments, max_phi = $max_phi, must be greater than 0 and less than 1"
-    )
+    @assert(0 < max_phi < 1,
+            "the constraint on the maximum weight of the L-moments, max_phi = $max_phi, must be greater than 0 and less than 1")
 
     rg = 2:k
     weights = Matrix{typeof(inv(T * k))}(undef, T, length(rg))
@@ -449,9 +396,7 @@ function owa_l_moment_crm(
         # Error handling.
         if term_status ∉ ValidTermination
             funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
-            @warn(
-                "$funcname: model could not be optimised satisfactorily.\nMethod: $method\nSolvers: $solvers_tried.\nReverting to crra method."
-            )
+            @warn("$funcname: model could not be optimised satisfactorily.\nMethod: $method\nSolvers: $solvers_tried.\nReverting to crra method.")
             w = _crra_method(weights, k, g)
         else
             phis = value.(phi)
@@ -463,14 +408,5 @@ function owa_l_moment_crm(
     return w
 end
 
-export owa_gmd,
-    owa_cvar,
-    owa_wcvar,
-    owa_tg,
-    owa_wr,
-    owa_rg,
-    owa_rcvar,
-    owa_rwcvar,
-    owa_rtg,
-    owa_l_moment,
-    owa_l_moment_crm
+export owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_rwcvar, owa_rtg,
+       owa_l_moment, owa_l_moment_crm

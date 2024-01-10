@@ -38,7 +38,7 @@ function efficient_frontier!(portfolio::AbstractCriticalLine, points = 100)
     lw = length(portfolio.w)
     mu, sigma, weights = Float64[], Float64[], Vector{Float64}[]
     # remove the 1, to avoid duplications
-    A = range(0, 1, length = div(points, lw))
+    A = range(0, 1; length = div(points, lw))
     a = A[1:(end - 1)]
     b = 1:(lw - 1)
     for i in b
@@ -69,15 +69,13 @@ end
     return mu / sigma
 end
 
-function _golden_section(
-    portfolio::AbstractCriticalLine,
-    obj::Function,
-    a,
-    b;
-    args = nothing,
-    minimum = false,
-    tol = 1e-9,
-)
+function _golden_section(portfolio::AbstractCriticalLine,
+                         obj::Function,
+                         a,
+                         b;
+                         args = nothing,
+                         minimum = false,
+                         tol = 1e-9,)
     # Golden section method. Maximum if minimum == false is passed
     minimum ? sign = 1 : sign = -1
     max_iter = ceil(Int, -2.078087 * log(tol / abs(b - a)))
@@ -137,14 +135,12 @@ function _solve!(portfolio::AbstractCriticalLine)
             icov_f = inv(cov_f)
             j = 1
             for i in f
-                l, bi = _compute_lambda(
-                    icov_f,
-                    cov_fb,
-                    mean_f,
-                    w_b,
-                    j,
-                    (lower_bounds[i], upper_bounds[i]),
-                )
+                l, bi = _compute_lambda(icov_f,
+                                        cov_fb,
+                                        mean_f,
+                                        w_b,
+                                        j,
+                                        (lower_bounds[i], upper_bounds[i]))
                 if _infnone(l) > _infnone(l_in)
                     l_in, i_in, bi_in = l, i, bi
                 end
@@ -159,14 +155,12 @@ function _solve!(portfolio::AbstractCriticalLine)
             for i in b
                 cov_f, cov_fb, mean_f, w_b = _get_matrices(portfolio, [f; i])
                 icov_f = inv(cov_f)
-                l, bi = _compute_lambda(
-                    icov_f,
-                    cov_fb,
-                    mean_f,
-                    w_b,
-                    length(mean_f),
-                    portfolio.w[end][i],
-                )
+                l, bi = _compute_lambda(icov_f,
+                                        cov_fb,
+                                        mean_f,
+                                        w_b,
+                                        length(mean_f),
+                                        portfolio.w[end][i])
 
                 if (isnothing(portfolio.lambda[end]) || l < portfolio.lambda[end]) &&
                    l > _infnone(l_out)
@@ -208,7 +202,7 @@ function _solve!(portfolio::AbstractCriticalLine)
     end
 
     _purge_num_err(portfolio, 1e-9)
-    _purge_excess(portfolio)
+    return _purge_excess(portfolio)
 end
 
 @inline function _init(portfolio::AbstractCriticalLine)

@@ -98,21 +98,19 @@ Create an [`EffMeanSemivar`](@ref) structure to be optimised via JuMP.
 - `extra_constraints`: extra constraints for the model. See [`_add_constraint_to_model!`](@ref) for details on how to use this.
 - `extra_obj_terms`: extra objective terms for the model. See [`_add_to_objective!`](@ref) for details on how to use this.
 """
-function EffMeanSemivar(
-    tickers,
-    mean_ret,
-    returns;
-    weight_bounds = (0.0, 1.0),
-    target = 1.02^(1 / 252) - 1,
-    rf = 1.02^(1 / 252) - 1,
-    market_neutral = false,
-    risk_aversion = 1.0,
-    target_risk = std(returns),
-    target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
-    extra_vars = [],
-    extra_constraints = [],
-    extra_obj_terms = [],
-)
+function EffMeanSemivar(tickers,
+                        mean_ret,
+                        returns;
+                        weight_bounds = (0.0, 1.0),
+                        target = 1.02^(1 / 252) - 1,
+                        rf = 1.02^(1 / 252) - 1,
+                        market_neutral = false,
+                        risk_aversion = 1.0,
+                        target_risk = std(returns),
+                        target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
+                        extra_vars = [],
+                        extra_constraints = [],
+                        extra_obj_terms = [],)
     num_tickers = length(tickers)
     @assert num_tickers == size(returns, 2)
     !isnothing(mean_ret) && @assert(num_tickers == length(mean_ret))
@@ -143,8 +141,8 @@ function EffMeanSemivar(
 
     # We need to add the extra constraints.
     if !isempty(extra_constraints)
-        constraint_keys =
-            [Symbol("extra_constraint$(i)") for i in 1:length(extra_constraints)]
+        constraint_keys = [Symbol("extra_constraint$(i)")
+                           for i in 1:length(extra_constraints)]
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
@@ -157,20 +155,18 @@ function EffMeanSemivar(
     # @constraint(model, g_cone, [g; n] in SecondOrderCone())
     # @expression(model, risk, g^2)
 
-    return EffMeanSemivar(
-        tickers,
-        mean_ret,
-        weights,
-        returns,
-        target,
-        rf,
-        market_neutral,
-        risk_aversion,
-        target_risk,
-        target_ret,
-        extra_vars,
-        extra_constraints,
-        extra_obj_terms,
-        model,
-    )
+    return EffMeanSemivar(tickers,
+                          mean_ret,
+                          weights,
+                          returns,
+                          target,
+                          rf,
+                          market_neutral,
+                          risk_aversion,
+                          target_risk,
+                          target_ret,
+                          extra_vars,
+                          extra_constraints,
+                          extra_obj_terms,
+                          model)
 end

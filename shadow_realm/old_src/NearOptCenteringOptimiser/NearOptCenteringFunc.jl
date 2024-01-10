@@ -1,18 +1,15 @@
-function optimise!(
-    portfolio::NearOptCentering,
-    optimisation::Function = max_sharpe!;
-    target = nothing,
-    initial_guess = nothing,
-    n = Int(
-        ceil(length(portfolio.opt_port.tickers) / log(length(portfolio.opt_port.tickers))),
-    ),
-    optimiser = Ipopt.Optimizer,
-    silent = true,
-    optimiser_attributes = (),
-    nloptimiser = Ipopt.Optimizer,
-    nlsilent = true,
-    nloptimiser_attributes = (),
-)
+function optimise!(portfolio::NearOptCentering,
+                   optimisation::Function = max_sharpe!;
+                   target = nothing,
+                   initial_guess = nothing,
+                   n = Int(ceil(length(portfolio.opt_port.tickers) /
+                                log(length(portfolio.opt_port.tickers)))),
+                   optimiser = Ipopt.Optimizer,
+                   silent = true,
+                   optimiser_attributes = (),
+                   nloptimiser = Ipopt.Optimizer,
+                   nlsilent = true,
+                   nloptimiser_attributes = (),)
     model = portfolio.model
 
     if termination_status(model) != OPTIMIZE_NOT_CALLED
@@ -65,13 +62,11 @@ function optimise!(
     return nothing
 end
 
-function calc_c1_c2(
-    portfolio::AbstractEfficient,
-    n = length(portfolio.tickers) / log(length(portfolio.tickers)),
-    optimiser = Ipopt.Optimizer,
-    silent = true,
-    optimiser_attributes = (),
-)
+function calc_c1_c2(portfolio::AbstractEfficient,
+                    n = length(portfolio.tickers) / log(length(portfolio.tickers)),
+                    optimiser = Ipopt.Optimizer,
+                    silent = true,
+                    optimiser_attributes = ())
     max_port = max_return(portfolio; optimiser, silent, optimiser_attributes)
     w_max = value.(max_port[:w])
 

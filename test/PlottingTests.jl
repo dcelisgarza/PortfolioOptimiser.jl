@@ -1,19 +1,14 @@
 using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, LinearAlgebra
 
 @testset "Plotting" begin
-    A = TimeArray(CSV.File("./assets/stock_prices.csv"), timestamp = :date)
+    A = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     Y = percentchange(A)
     returns = dropmissing!(DataFrame(Y))
 
-    portfolio = Portfolio(
-        returns = returns,
-        solvers = Dict(
-            :Clarabel => Dict(
-                :solver => (Clarabel.Optimizer),
-                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
-            ),
-        ),
-    )
+    portfolio = Portfolio(; returns = returns,
+                          solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     rm = :SD
     obj = :Min_Risk
@@ -32,29 +27,21 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
     plt11 = plot_bar(portfolio)
 
     hcportfolio = HCPortfolio(;
-        returns = returns,
-        solvers = Dict(
-            :Clarabel => Dict(
-                :solver => Clarabel.Optimizer,
-                :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
-            ),
-        ),
-    )
+                              returns = returns,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))),)
     asset_statistics!(hcportfolio; calc_kurt = false)
-    plt12 = plot_clusters(
-        hcportfolio;
-        max_k = 10,
-        linkage = :DBHT,
-        branchorder = :r,
-        dbht_method = :Unique,
-    )
-    plt13 = plot_dendrogram(
-        hcportfolio;
-        max_k = 10,
-        linkage = :DBHT,
-        branchorder = :optimal,
-        dbht_method = :Unique,
-    )
+    plt12 = plot_clusters(hcportfolio;
+                          max_k = 10,
+                          linkage = :DBHT,
+                          branchorder = :r,
+                          dbht_method = :Unique,)
+    plt13 = plot_dendrogram(hcportfolio;
+                            max_k = 10,
+                            linkage = :DBHT,
+                            branchorder = :optimal,
+                            dbht_method = :Unique,)
     opt_port!(hcportfolio; type = :HERC)
     plt14 = plot_clusters(hcportfolio; cluster = false)
 end

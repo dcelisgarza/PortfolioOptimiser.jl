@@ -13,9 +13,7 @@ fmt = (v, i, j) -> begin
     else
         return isa(v, Number) ? "$(round(v*100, digits=3)) %" : v
     end
-end;
-
-# ## Creating a [`Portfolio`](@ref) instance
+end;# ## Creating a [`Portfolio`](@ref) instance
 
 # We can create an instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref) by calling its keyword constructor. This is a minimum viable example. There are many other keyword arguments that fine-tune the portfolio. Alternatively, you can directly modify the instance's fields. Many are guarded by assertions to ensure correctness, some are immutable for the same reason.
 
@@ -27,52 +25,42 @@ pretty_table(returns[1:5, :]; formatters = fmt)
 
 # The advantage of using pricing information over returns is that all `missing` data is dropped, which ensures the statistics are well-behaved. It also allows the function to automatically find the latest pricing information, which is needed for discretely allocating portfolios according to available funds and stock prices.
 
-portfolio = Portfolio(;
-    ## Prices TimeArray, the returns are internally computed.
-    prices = prices,
-    ## We need to provide solvers and solver-specific options.
-    solvers = Dict(
-        ## We will use the Clarabel.jl optimiser. In this case we use a dictionary
-        ## for the value, but we can also use named tuples, all we need are key-value
-        ## pairs.
-        :Clarabel => Dict(
-            ## :solver key must contain the optimiser recipe.
-            ## Can also call JuMP.optimizer_with_attributes()
-            ## https://jump.dev/JuMP.jl/stable/api/JuMP/#JuMP.optimizer_with_attributes 
-            ## to add the attributes directly to the solver.
-            ## An equivalent configuration using this approach would be:
-            ## :solver => JuMP.optimizer_with_attributes(
-            ##               Clarabel.Optimizer, 
-            ##               "verbose" => false, "max_step_fraction" => 0.75
-            ##            )
-            :solver => Clarabel.Optimizer,
-            ## :params key is optional, but if it is present, it defines solver-specific
-            ## attributes/configurations. This often needs to be a dictionary as the 
-            ## solver attributes are usually strings.
-            :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
-        ),
-    ),
-);
+portfolio = Portfolio(;                      ## Prices TimeArray, the returns are internally computed.
+                      prices = prices,                      ## We need to provide solvers and solver-specific options.
+                      solvers = Dict(
+                                     ## We will use the Clarabel.jl optimiser. In this case we use a dictionary
+                                     ## for the value, but we can also use named tuples, all we need are key-value
+                                     ## pairs.
+                                     :Clarabel => Dict(
+                                                       ## :solver key must contain the optimiser recipe.
+                                                       ## Can also call JuMP.optimizer_with_attributes()
+                                                       ## https://jump.dev/JuMP.jl/stable/api/JuMP/#JuMP.optimizer_with_attributes 
+                                                       ## to add the attributes directly to the solver.
+                                                       ## An equivalent configuration using this approach would be:
+                                                       ## :solver => JuMP.optimizer_with_attributes(
+                                                       ##               Clarabel.Optimizer, 
+                                                       ##               "verbose" => false, "max_step_fraction" => 0.75
+                                                       ##            )
+                                                       :solver => Clarabel.Optimizer,                                                       ## :params key is optional, but if it is present, it defines solver-specific
+                                                       ## attributes/configurations. This often needs to be a dictionary as the 
+                                                       ## solver attributes are usually strings.
+                                                       :params => Dict("verbose" => false,
+                                                                       "max_step_fraction" => 0.75))),);# We can show how the `prices` `TimeArray` is used to compute the returns series, which is decomposed into a vector of timestamps, and the returns `Matrix`. We can check this is the case by reconstructing the `returns` `DataFrame` form above.
 
-# We can show how the `prices` `TimeArray` is used to compute the returns series, which is decomposed into a vector of timestamps, and the returns `Matrix`. We can check this is the case by reconstructing the `returns` `DataFrame` form above.
-
-returns == hcat(
-    DataFrame(timestamp = portfolio.timestamps),
-    DataFrame(
-        [portfolio.returns[:, i] for i in axes(portfolio.returns, 2)],
-        portfolio.assets,
-    ),
-)
+returns == hcat(DataFrame(; timestamp = portfolio.timestamps),
+                DataFrame([portfolio.returns[:, i] for i in axes(portfolio.returns, 2)],
+                          portfolio.assets))
 
 # Another nice thing about [`Portfolio()`](@ref) and [`HCPortfolio()`](@ref) is that the asset tickers and timestamps can be obtained from either a `TimeArray` with price information, or `DataFrame` with returns information. Since we used pricing data, we can obtain the latest prices too.
 
-pretty_table(DataFrame(assets = portfolio.assets, latest_prices = portfolio.latest_prices))
+pretty_table(DataFrame(; assets = portfolio.assets,
+                       latest_prices = portfolio.latest_prices))
 
 # ## Optimal Risk-adjusted Return Ratio
 
 # For some risk measures/constraints, we need to compute some statistical quantities. Since we're going to showcase a mean-variance optimisation, we need to estimate the asset mean returns and covariance. We can do this by calling [`asset_statistics!`](@ref). This function also has myriad keyword options, but we'll stick to the basics.
 
-asset_statistics!(portfolio, calc_kurt = false)
+asset_statistics!(portfolio; calc_kurt = false)
 
 # We can then call [`opt_port!`](@ref) with default arguments, which optimises for the risk adjusted return ratio of the mean variance portfolio.
 
@@ -119,11 +107,9 @@ fig6 = plot_frontier_area(portfolio)
 
 # For this we need to create an instance of [`HCPortfolio`](@ref).
 
-hcportfolio = HCPortfolio(; prices = prices);
+hcportfolio = HCPortfolio(; prices = prices);# Compute the codependence matrix with [`asset_statistics!`](@ref).
 
-# Compute the codependence matrix with [`asset_statistics!`](@ref).
-
-asset_statistics!(hcportfolio, calc_kurt = false)
+asset_statistics!(hcportfolio; calc_kurt = false)
 
 # And plot the clusters defined by it, we use Ward's linkage function because it gives the best cluster separation.
 

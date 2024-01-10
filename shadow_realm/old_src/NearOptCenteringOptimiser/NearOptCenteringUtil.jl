@@ -1,8 +1,6 @@
-function portfolio_performance(
-    portfolio::NearOptCentering;
-    rf = portfolio.opt_port.rf,
-    verbose = false,
-)
+function portfolio_performance(portfolio::NearOptCentering;
+                               rf = portfolio.opt_port.rf,
+                               verbose = false,)
     model = portfolio.model
     mean_ret = portfolio.opt_port.mean_ret
 

@@ -25,24 +25,13 @@ const ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 """
 ```julia
 ValidTermination = (
-    MOI.OPTIMAL,
-    MOI.ALMOST_OPTIMAL,
-    MOI.LOCALLY_SOLVED,
-    MOI.ALMOST_LOCALLY_SOLVED,
-    MOI.SOLUTION_LIMIT,
-    MOI.OBJECTIVE_LIMIT,
-)
+    MOI.OPTIMAL,    MOI.ALMOST_OPTIMAL,    MOI.LOCALLY_SOLVED,    MOI.ALMOST_LOCALLY_SOLVED,    MOI.SOLUTION_LIMIT,    MOI.OBJECTIVE_LIMIT,)
 ```
 Valid `JuMP` termination codes after optimising an instance of [`Portfolio`](@ref). If the termination code is different to these, then the failures are logged in the `.fail` field of [`HCPortfolio`](@ref) and [`Portfolio`](@ref).
 """
-const ValidTermination = (
-    MOI.OPTIMAL,
-    MOI.ALMOST_OPTIMAL,
-    MOI.LOCALLY_SOLVED,
-    MOI.ALMOST_LOCALLY_SOLVED,
-    MOI.SOLUTION_LIMIT,
-    MOI.OBJECTIVE_LIMIT,
-)
+const ValidTermination = (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED,
+                          MOI.ALMOST_LOCALLY_SOLVED, MOI.SOLUTION_LIMIT,
+                          MOI.OBJECTIVE_LIMIT)
 
 """
 ```julia
@@ -63,8 +52,7 @@ PortTypes = (:Trad, :RP, :RRP, :WC)
 Available optimisation types for [`Portfolio`](@ref).
 # `:Trad` -- Traditional Optimisations
 Available objective functions for `:Trad` optimisations. We can chose any of the objective functions in [`ObjFuncs`](@ref) and risk measures in [`RiskMeasures`](@ref).
-- `:Min_Risk`: minimum risk portfolio,
-```math
+- `:Min_Risk`: minimum risk portfolio,```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\min} &\\qquad \\phi_{j}(\\bm{w}) \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
@@ -72,8 +60,7 @@ Available objective functions for `:Trad` optimisations. We can chose any of the
 &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
 ```
-- `:Utility`: maximum utility portfolio,
-```math
+- `:Utility`: maximum utility portfolio,```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) - \\lambda \\phi_{j}(\\bm{w}) \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
@@ -81,8 +68,7 @@ Available objective functions for `:Trad` optimisations. We can chose any of the
 &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
 ```
-- `:Sharpe`: maximum risk-adjusted return ratio portfolio,
-```math
+- `:Sharpe`: maximum risk-adjusted return ratio portfolio,```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\dfrac{R(\\bm{w}) - r}{\\phi_{j}(\\bm{w})} \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
@@ -90,8 +76,7 @@ Available objective functions for `:Trad` optimisations. We can chose any of the
 &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
 \\end{align*}\\,.
 ```
-- `:Max_Ret`: maximum return portfolio,
-```math
+- `:Max_Ret`: maximum return portfolio,```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
@@ -162,29 +147,25 @@ Where:
 
 # `:WC` -- Worst Case Mean Variance Optimisations
 Computes the worst case mean variance portfolio according to user-selected uncertainty sets (see [`UncertaintyTypes`](@ref)) for the portfolio return and covariance. We can chose any of the objective functions in [`ObjFuncs`](@ref).
-- `:Min_Risk`: worst case minimum risk mean-variance portfolio,
-```math
+- `:Min_Risk`: worst case minimum risk mean-variance portfolio,```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
 \\end{align*}
 ```
-- `:Utility`: worst case maximum utility mean-variance portfolio,
-```math
+- `:Utility`: worst case maximum utility mean-variance portfolio,```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w})\\, -\\, \\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\lambda \\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
 \\end{align*}
 ```
-- `:Sharpe`: worst case maximum risk-adjusted return ratio mean-variance portfolio,
-```math
+- `:Sharpe`: worst case maximum risk-adjusted return ratio mean-variance portfolio,```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\dfrac{\\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w}) - r}{\\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\left(\\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\right)^{1/2}} \\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
 \\end{align*}
 ```
-- `:Max_Ret`: worst case maximum return mean-variance portfolio,
-```math
+- `:Max_Ret`: worst case maximum return mean-variance portfolio,```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w})\\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
@@ -305,31 +286,21 @@ const AllocTypes = (:LP, :Greedy)
 const ASH = AverageShiftedHistograms
 const NCM = NearestCorrelationMatrix
 
-const RiskMeasureNames = (
-    SD = "Standard Deviation",
-    MAD = "Mean Absolute Deviation",
-    SSD = "Semi Standard Deviation",
-    FLPM = "First Lower Partial Moment",
-    SLPM = "Second Lower Partial Moment",
-    WR = "Worst Realisation",
-    CVaR = "Conditional Value at Risk",
-    EVaR = "Entropic Value at Risk",
-    RVaR = "Relativistic Value at Risk",
-    MDD = "Max Drawdown",
-    ADD = "Average Drawdown",
-    CDaR = "Conditional Drawdown at Risk",
-    UCI = "Ulcer Index",
-    EDaR = "Entropic Drawdown at Risk",
-    RDaR = "Relativistic Drawdown at Risk",
-    Kurt = "Square Root Kurtosis",
-    SKurt = "Square Root Semi Kurtosis",
-    GMD = "Gini Mean Difference",
-    RG = "Range",
-    RCVaR = "Conditional Value at Risk Range",
-    TG = "Tail Gini",
-    RTG = "Tail Gini Range",
-    OWA = "Ordered Weight Average",
-)
+const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviation",
+                          SSD = "Semi Standard Deviation",
+                          FLPM = "First Lower Partial Moment",
+                          SLPM = "Second Lower Partial Moment", WR = "Worst Realisation",
+                          CVaR = "Conditional Value at Risk",
+                          EVaR = "Entropic Value at Risk",
+                          RVaR = "Relativistic Value at Risk", MDD = "Max Drawdown",
+                          ADD = "Average Drawdown", CDaR = "Conditional Drawdown at Risk",
+                          UCI = "Ulcer Index", EDaR = "Entropic Drawdown at Risk",
+                          RDaR = "Relativistic Drawdown at Risk",
+                          Kurt = "Square Root Kurtosis",
+                          SKurt = "Square Root Semi Kurtosis", GMD = "Gini Mean Difference",
+                          RG = "Range", RCVaR = "Conditional Value at Risk Range",
+                          TG = "Tail Gini", RTG = "Tail Gini Range",
+                          OWA = "Ordered Weight Average")
 
 function _sigdom(sym::Symbol)
     return if sym == :a
@@ -390,7 +361,7 @@ function _mudef(msg::String, sym::Symbol = :a2)
         n = "Nf"
     end
 
-    "`$n×1` vector, where $(_ndef(sym))). Set the value of the $(msg) mean returns at instance construction. When choosing `:Custom_Val` in `mu_method`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new."
+    return "`$n×1` vector, where $(_ndef(sym))). Set the value of the $(msg) mean returns at instance construction. When choosing `:Custom_Val` in `mu_method`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new."
 end
 
 function _covdef(msg::String, sym::Symbol = :a2)
@@ -403,26 +374,23 @@ function _covdef(msg::String, sym::Symbol = :a2)
         sym = :a2
     end
 
-    "`$n×$n` matrix, where $(_ndef(sym)). Set the value of the $(msg) covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cov` used by [`covar_mtx`](@ref)."
+    return "`$n×$n` matrix, where $(_ndef(sym)). Set the value of the $(msg) covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cov` used by [`covar_mtx`](@ref)."
 end
 
 function _dircomp(msg::String)
-    "Can be directly computed by $msg."
+    return "Can be directly computed by $msg."
 end
 
 const _tdef = "- `T`: number of returns observations."
 const _owaw = "- `w`: `T×1` ordered weight vector."
 const _edst = "Empty concrete subtype of `AbstractDictionary`"
-function _solver_desc(
-    msg::String = "the `JuMP` model.",
-    pref::String = "",
-    req::String = "",
-)
-    """
-    - `$(pref*"solvers")`: Provides the solvers and corresponding parameters for solving $msg `Dict` or `NamedTuple` with key value pairs where the values are other `Dict`s or `NamedTuple`s, e.g. `Dict(solver_key => Dict(...))`, the keys of the sub-dictionary/tuple must be:
-        - `:solver`: which contains the JuMP optimiser.$(_solver_reqs(req))
-        - `:params`: (optional) for the solver-specific parameters.
-    """
+function _solver_desc(msg::String = "the `JuMP` model.", pref::String = "",
+                      req::String = "")
+    return """
+           - `$(pref*"solvers")`: Provides the solvers and corresponding parameters for solving $msg `Dict` or `NamedTuple` with key value pairs where the values are other `Dict`s or `NamedTuple`s, e.g. `Dict(solver_key => Dict(...))`, the keys of the sub-dictionary/tuple must be:
+               - `:solver`: which contains the JuMP optimiser.$(_solver_reqs(req))
+               - `:params`: (optional) for the solver-specific parameters.
+           """
 end
 function _solver_reqs(msg::String)
     return isempty(msg) ? "" :
@@ -440,15 +408,5 @@ function _assert_value_message(lo::Real, hi::Real, args...) end
 function _assert_category_message(sym::Symbol, collection) end
 function _assert_generic_message(cmp, message) end
 
-export KellyRet,
-    ObjFuncs,
-    ValidTermination,
-    PortClasses,
-    PortTypes,
-    RPConstraintTypes,
-    HCPortTypes,
-    LinkageTypes,
-    BranchOrderTypes,
-    HCObjFuncs,
-    AllocTypes,
-    BLHist
+export KellyRet, ObjFuncs, ValidTermination, PortClasses, PortTypes, RPConstraintTypes,
+       HCPortTypes, LinkageTypes, BranchOrderTypes, HCObjFuncs, AllocTypes, BLHist

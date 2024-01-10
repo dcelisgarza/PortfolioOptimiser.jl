@@ -10,7 +10,7 @@ function max_sharpe!(portfolio::HRPOpt, w, cluster1_idx, cluster2_idx, rf = port
     sr1 = sharpe_ratio(weights1, mean_ret1, cov_slice1, rf)
     sr2 = sharpe_ratio(weights2, mean_ret2, cov_slice2, rf)
 
-    _hrp_minimise(w, cluster1_idx, cluster2_idx, -sr1, -sr2)
+    return _hrp_minimise(w, cluster1_idx, cluster2_idx, -sr1, -sr2)
 end
 
 function min_risk!(portfolio::HRPOpt, w, cluster1_idx, cluster2_idx)
@@ -40,16 +40,14 @@ function max_return!(portfolio::HRPOpt, w, cluster1_idx, cluster2_idx)
     ret1 = port_return(weights1, mean_ret1)
     ret2 = port_return(weights2, mean_ret2)
 
-    _hrp_minimise(w, cluster1_idx, cluster2_idx, -ret1, -ret2)
+    return _hrp_minimise(w, cluster1_idx, cluster2_idx, -ret1, -ret2)
 end
 
-function max_utility!(
-    portfolio::HRPOpt,
-    w,
-    cluster1_idx,
-    cluster2_idx,
-    risk_aversion = portfolio.risk_aversion,
-)
+function max_utility!(portfolio::HRPOpt,
+                      w,
+                      cluster1_idx,
+                      cluster2_idx,
+                      risk_aversion = portfolio.risk_aversion)
     mean_ret1, mean_ret2 = _get_mean_ret(portfolio, cluster1_idx, cluster2_idx)
 
     cov_slice1 = portfolio.cov_mtx[cluster1_idx, cluster1_idx]
@@ -61,7 +59,7 @@ function max_utility!(
     qu1 = quadratic_utility(weights1, mean_ret1, cov_slice1, risk_aversion)
     qu2 = quadratic_utility(weights2, mean_ret2, cov_slice2, risk_aversion)
 
-    _hrp_minimise(w, cluster1_idx, cluster2_idx, -qu1, -qu2)
+    return _hrp_minimise(w, cluster1_idx, cluster2_idx, -qu1, -qu2)
 end
 
 function optimise!(portfolio::HRPOpt, obj, obj_params...)
@@ -71,11 +69,12 @@ function optimise!(portfolio::HRPOpt, obj, obj_params...)
     cluster_tickers = [ordered_ticker_idx] # All items in one cluster.
 
     while length(cluster_tickers) > 0
-        cluster_tickers = [
-            i[j:k] for i in cluster_tickers for
-            (j, k) in ((1, div(length(i), 2)), (div(length(i), 2) + 1, length(i))) if
-            length(i) > 1
-        ] # Bisecting
+        cluster_tickers = [i[j:k] for i in cluster_tickers
+                           for
+                           (j, k) in
+                           ((1, div(length(i), 2)), (div(length(i), 2) + 1, length(i)))
+                           if
+                           length(i) > 1] # Bisecting
         # For each pair optimise locally.
         for i in 1:2:length(cluster_tickers)
             first_cluster = cluster_tickers[i]

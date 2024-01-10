@@ -12,12 +12,10 @@ function _parse_views(tickers, views::Dict)
     return Q, P
 end
 
-function market_implied_prior_returns(
-    market_caps,
-    cov_mtx,
-    risk_aversion = 1,
-    rf = 1.02^(1 / 252) - 1,
-)
+function market_implied_prior_returns(market_caps,
+                                      cov_mtx,
+                                      risk_aversion = 1,
+                                      rf = 1.02^(1 / 252) - 1)
     mkt_weights = market_caps / sum(market_caps)
 
     return risk_aversion * cov_mtx * mkt_weights .+ rf
@@ -38,11 +36,7 @@ function idzorek(view_confidence, cov_mtx, Q, P, tau)
         conf = view_confidence[i]
 
         if !(0 <= conf <= 1)
-            throw(
-                DomainError(
-                    "view confidences must be between 0 and 1, errored at view $i with value $conf",
-                ),
-            )
+            throw(DomainError("view confidences must be between 0 and 1, errored at view $i with value $conf"))
         end
 
         if conf < eps()

@@ -1,18 +1,16 @@
 function refresh_model!(portfolio::EffUlcer)
-    default_keys = (
-        :w,
-        :lower_bounds,
-        :upper_bounds,
-        :sum_w,
-        :u,
-        :norm_u,
-        :soc_u,
-        :uf_geq_uimvw,
-        :u1_eq_0,
-        :u2e_geq_0,
-        :ret,
-        :risk,
-    )
+    default_keys = (:w,
+                    :lower_bounds,
+                    :upper_bounds,
+                    :sum_w,
+                    :u,
+                    :norm_u,
+                    :soc_u,
+                    :uf_geq_uimvw,
+                    :u1_eq_0,
+                    :u2e_geq_0,
+                    :ret,
+                    :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
     return nothing

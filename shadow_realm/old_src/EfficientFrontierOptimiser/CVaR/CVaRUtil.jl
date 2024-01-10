@@ -1,6 +1,6 @@
 function refresh_model!(portfolio::EffCVaR)
-    default_keys =
-        (:w, :lower_bounds, :upper_bounds, :sum_w, :alpha, :u, :vw_a_u_geq_0, :ret, :risk)
+    default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :alpha, :u, :vw_a_u_geq_0,
+                    :ret, :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
     return nothing

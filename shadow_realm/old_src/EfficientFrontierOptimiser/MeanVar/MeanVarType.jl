@@ -94,21 +94,20 @@ Create an [`EffMeanVar`](@ref) structure to be optimised via JuMP.
 - `extra_constraints`: extra constraints for the model. See [`_add_constraint_to_model!`](@ref) for details on how to use this.
 - `extra_obj_terms`: extra objective terms for the model. See [`_add_to_objective!`](@ref) for details on how to use this.
 """
-function EffMeanVar(
-    tickers,
-    mean_ret,
-    cov_mtx;
-    weight_bounds = (0, 1),
-    rf = 1.02^(1 / 252) - 1,
-    market_neutral = false,
-    risk_aversion = 1.0,
-    target_risk = rank(cov_mtx) < size(cov_mtx, 1) ? 1 / sum(diag(cov_mtx)) :
-                  sqrt(1 / sum(inv(cov_mtx))),
-    target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
-    extra_vars = [],
-    extra_constraints = [],
-    extra_obj_terms = [],
-)
+function EffMeanVar(tickers,
+                    mean_ret,
+                    cov_mtx;
+                    weight_bounds = (0, 1),
+                    rf = 1.02^(1 / 252) - 1,
+                    market_neutral = false,
+                    risk_aversion = 1.0,
+                    target_risk = rank(cov_mtx) < size(cov_mtx, 1) ?
+                                  1 / sum(diag(cov_mtx)) :
+                                  sqrt(1 / sum(inv(cov_mtx))),
+                    target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
+                    extra_vars = [],
+                    extra_constraints = [],
+                    extra_obj_terms = [],)
     num_tickers = length(tickers)
     @assert num_tickers == size(cov_mtx, 1) == size(cov_mtx, 2)
     !isnothing(mean_ret) && @assert(num_tickers == length(mean_ret))
@@ -132,8 +131,8 @@ function EffMeanVar(
 
     # We need to add the extra constraints.
     if !isempty(extra_constraints)
-        constraint_keys =
-            [Symbol("extra_constraint$(i)") for i in 1:length(extra_constraints)]
+        constraint_keys = [Symbol("extra_constraint$(i)")
+                           for i in 1:length(extra_constraints)]
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
@@ -147,19 +146,17 @@ function EffMeanVar(
     # @constraint(model, g_cone, [g; G * w] in SecondOrderCone())
     # @expression(model, risk, g^2)
 
-    return EffMeanVar(
-        tickers,
-        mean_ret,
-        weights,
-        cov_mtx,
-        rf,
-        market_neutral,
-        risk_aversion,
-        target_risk,
-        target_ret,
-        extra_vars,
-        extra_constraints,
-        extra_obj_terms,
-        model,
-    )
+    return EffMeanVar(tickers,
+                      mean_ret,
+                      weights,
+                      cov_mtx,
+                      rf,
+                      market_neutral,
+                      risk_aversion,
+                      target_risk,
+                      target_ret,
+                      extra_vars,
+                      extra_constraints,
+                      extra_obj_terms,
+                      model)
 end
