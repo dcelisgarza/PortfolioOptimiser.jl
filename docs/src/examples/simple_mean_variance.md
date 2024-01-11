@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/simple_mean_variance.jl"
 ```
@@ -157,7 +158,6 @@ There's also a function to plot the dendrogram, but it's not as interesting.
 fig8 = plot_dendrogram(hcportfolio; linkage = :ward)
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

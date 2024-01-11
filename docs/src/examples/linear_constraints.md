@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/linear_constraints.jl"
 ```
@@ -37,6 +38,7 @@ nothing #hide
 ````
 
 !!! warning
+    
     It is important that the asset order remains consistent accross all steps. If one wishes to sort the assets in a particular way, one should sort them immediately after importing them. This ensures everything is computed using the correct asset order.
 
 ## Defining asset sets with hierachical clustering
@@ -327,7 +329,6 @@ And as expected, the coefficient of `:T` is `-1`, and the coefficients of all as
 hcat(asset_sets[!, [:Asset, :SD]], DataFrame(:A_t => vec(A)))
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-
