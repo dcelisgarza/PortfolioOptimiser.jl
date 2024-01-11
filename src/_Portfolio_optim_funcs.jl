@@ -1314,7 +1314,7 @@ function _optimize_portfolio(portfolio, type, obj, near_opt = false, coneopt = t
         all_finite_weights = all(isfinite.(value.(model[:w])))
         all_non_zero_weights = all(abs.(0.0 .- value.(model[:w])) .> eps())
 
-        if term_status ∈ ValidTermination && all_finite_weights && all_non_zero_weights
+        if term_status in ValidTermination && all_finite_weights && all_non_zero_weights
             break
         end
 
@@ -1371,7 +1371,7 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
         tmp * String(type)
     end
 
-    if type ∈ (:Trad, :RP) && rm ∈ (:EVaR, :EDaR, :RVaR, :RDaR)
+    if type in (:Trad, :RP) && rm in (:EVaR, :EDaR, :RVaR, :RDaR)
         z_key = "z_" * lowercase(string(rm))
         z_key2 = Symbol(strtype * "_" * z_key)
         portfolio.z[z_key2] = value(portfolio.model[Symbol(z_key)])
@@ -1474,7 +1474,7 @@ function _setup_model_class(portfolio, class, hist)
                           Matrix{eltype(portfolio.returns)}(undef, 0, 0))
 
     if class != :Classic
-        @assert(hist ∈ BLHist, "hist = $hist, must be one of $BLHist")
+        @smart_assert(hist in BLHist)
     end
 
     if class == :Classic
@@ -1622,34 +1622,28 @@ function opt_port!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer
                    M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
                    w_min::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
                    w_max::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),)
-    @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
-    @assert(class ∈ PortClasses, "class = $class, must be one of $PortClasses")
-    @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
-    @assert(obj ∈ ObjFuncs, "obj = $obj, must be one of $ObjFuncs")
-    @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
-    @assert(rrp_ver ∈ RRPVersions)
-    @assert(u_mu ∈ UncertaintyTypes, "u_mu = $u_mu, must be one of $UncertaintyTypes")
-    @assert(u_cov ∈ UncertaintyTypes, "u_cov = $u_cov, must be one of $UncertaintyTypes")
-    @assert(0 < portfolio.alpha < 1,
-            "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and less than 1")
-    @assert(0 < portfolio.kappa < 1,
-            "portfolio.kappa = $(portfolio.kappa), must be greater than 0 and less than 1")
-    @assert(portfolio.kind_tracking_err ∈ TrackingErrKinds,
-            "portfolio.kind_tracking_err = $(portfolio.kind_tracking_err), must be one of $TrackingErrKinds")
+    @smart_assert(type in PortTypes)
+    @smart_assert(class in PortClasses)
+    @smart_assert(rm in RiskMeasures)
+    @smart_assert(obj in ObjFuncs)
+    @smart_assert(kelly in KellyRet)
+    @smart_assert(rrp_ver in RRPVersions)
+    @smart_assert(u_mu in UncertaintyTypes)
+    @smart_assert(u_cov in UncertaintyTypes)
+    @smart_assert(0 < portfolio.alpha < 1)
+    @smart_assert(0 < portfolio.kappa < 1)
+    @smart_assert(portfolio.kind_tracking_err in TrackingErrKinds)
     if !isempty(w_ini)
-        @assert(length(w_ini) == size(portfolio.returns, 2),
-                "length(w_ini) = $(length(w_ini)) must be equal to the number of assets size(portfolio.returns, 2) = $(size(portfolio.returns, 2))")
+        @smart_assert(length(w_ini) == size(portfolio.returns, 2))
     end
     if near_opt
-        @assert(M > 0, "M = $M, must be greater than 0")
+        @smart_assert(M > 0)
     end
     if !isempty(w_min)
-        @assert(length(w_min) == size(portfolio.returns, 2),
-                "length(w_min) = $(length(w_min)) must be equal to the number of assets size(portfolio.returns, 2) = $(size(portfolio.returns, 2))")
+        @smart_assert(length(w_min) == size(portfolio.returns, 2))
     end
     if !isempty(w_max)
-        @assert(length(w_max) == size(portfolio.returns, 2),
-                "length(w_max) = $(length(w_max)) must be equal to the number of assets size(portfolio.returns, 2) = $(size(portfolio.returns, 2))")
+        @smart_assert(length(w_max) == size(portfolio.returns, 2))
     end
 
     portfolio.model = JuMP.Model()

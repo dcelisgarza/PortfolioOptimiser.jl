@@ -72,7 +72,7 @@ end
 
 """
 ```julia
-mut_var_info_mtx(x::AbstractMatrix{<:Real}; bins_info::Union{Symbol, <:Integer} = :KN,
+mut_var_info_mtx(x::AbstractMatrix{<:Real}; bins_info::Union{Symbol,<:Integer} = :KN,
                  normed::Bool = true)
 ```
 
@@ -94,9 +94,9 @@ Compute the mutual information and variation of information matrices.
           * `:HGR`: Hacine-Gharbi and Ravier's choice.
 """
 function mut_var_info_mtx(x::AbstractMatrix{<:Real},
-                          bins_info::Union{Symbol, <:Integer} = :KN, normed::Bool = true)
-    @assert(bins_info ∈ BinMethods || isa(bins_info, Int) && bins_info > zero(bins_info),
-            "bins_info = $bins_info, has to either be in $BinMethods, or an integer value greater than 0")
+                          bins_info::Union{Symbol,<:Integer} = :KN, normed::Bool = true)
+    @smart_assert(bins_info in BinMethods ||
+                  isa(bins_info, Int) && bins_info > zero(bins_info))
 
     bin_width_func = if bins_info == :KN
         pyimport("astropy.stats").knuth_bin_width
@@ -151,8 +151,7 @@ end
 
 function cordistance(v1::AbstractVector, v2::AbstractVector)
     N = length(v1)
-    @assert(N == length(v2) && N > 1,
-            "lengths of v1 = $(length(v1)) and v2 = $(length(v2)) must be equal and greater than 1")
+    @smart_assert(N == length(v2) && N > 1)
 
     N2 = N^2
 
@@ -185,8 +184,7 @@ function cordistance(x::AbstractMatrix)
 end
 
 function ltdi_mtx(x, alpha = 0.05)
-    @assert(0 <= alpha <= 1,
-            "alpha = $alpha, must be greater than or equal to 0 and less than or equal to 1")
+    @smart_assert(0 <= alpha <= 1)
     T, N = size(x)
     k = ceil(Int, T * alpha)
     mtx = Matrix{eltype(x)}(undef, N, N)
@@ -314,7 +312,7 @@ function covgerber2(x, settings::GerberSettings = GerberSettings(;))
 end
 
 function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
-                     rng = Random.default_rng(), seed::Union{Nothing, <:Integer} = nothing,)
+                     rng = Random.default_rng(), seed::Union{Nothing,<:Integer} = nothing,)
     if !isnothing(seed)
         Random.seed!(rng, seed)
     end
@@ -346,7 +344,7 @@ function cokurt(x::AbstractMatrix, mu::AbstractArray)
 end
 
 function scokurt(x::AbstractMatrix, mu::AbstractArray,
-                 target_ret::Union{Real, <:AbstractVector{<:Real}} = 0.0)
+                 target_ret::Union{Real,<:AbstractVector{<:Real}} = 0.0)
     T, N = size(x)
     y = x .- mu
     y .= min.(y, target_ret)
@@ -433,7 +431,7 @@ function posdef_fix!(mtx::AbstractMatrix,
         return nothing
     end
 
-    @assert(method ∈ PosdefFixMethods, "method = $method, must be one of $PosdefFixMethods")
+    @smart_assert(method in PosdefFixMethods)
 
     _mtx = if method == :Nearest
         nearest_cov(mtx, args...; kwargs...)
@@ -480,8 +478,7 @@ end
 export find_max_eval
 
 function denoise_cor(vals, vecs, num_factors, method = :Fixed)
-    @assert(method ∈ (:Fixed, :Spectral),
-            "method = $method, must be one of $((:Fixed, :Spectral))")
+    @smart_assert(method in (:Fixed, :Spectral))
 
     _vals = copy(vals)
 
@@ -498,7 +495,7 @@ end
 export denoise_cor
 
 function shrink_cor(vals, vecs, num_factors, alpha = zero(eltype(vals)))
-    @assert(zero(alpha) <= alpha <= one(alpha), "alpha = $alpha, must be 0 <= alpha <= 1")
+    @smart_assert(zero(alpha) <= alpha <= one(alpha))
     # Small
     vals_l = vals[1:num_factors]
     vecs_l = vecs[:, 1:num_factors]
@@ -542,15 +539,14 @@ function denoise_cov(mtx::AbstractMatrix, q::Real,
                                      kwargs = kwargs)
 
     num_factors = findlast(vals .< max_val)
-    corr = if method ∈ (:Fixed, :Spectral)
+    corr = if method in (:Fixed, :Spectral)
         denoise_cor(vals, vecs, num_factors, method)
     else
         shrink_cor(vals, vecs, num_factors, alpha)
     end
 
     if detone
-        @assert(one(size(mtx, 1)) <= mkt_comp <= size(mtx, 1),
-                "mkt_comp = $mkt_comp, must be greater than or equal to 1 and less than or equal to size(mtx, 1) = $(size(mtx, 1))")
+        @smart_assert(one(size(mtx, 1)) <= mkt_comp <= size(mtx, 1))
         mkt_comp -= 1
         _vals = Diagonal(vals)[(end - mkt_comp):end, (end - mkt_comp):end]
         _vecs = vecs[:, (end - mkt_comp):end]
@@ -571,8 +567,7 @@ mu_estimator
 """
 function mu_estimator(returns::AbstractMatrix, settings::MuSettings = MuSettings(;))
     method = settings.method
-    @assert(method ∈ (:JS, :BS, :BOP, :CAPM),
-            "method = $method, must be one of (:JS, :BS, :BOP, :CAPM)")
+    @smart_assert(method in (:JS, :BS, :BOP, :CAPM))
 
     target = settings.target
     func = settings.genfunc.func
@@ -628,9 +623,9 @@ covar_mtx
 function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(;))
     method = settings.method
 
-    @assert(method ∈ CovMethods, "method = $method, must be one of $CovMethods")
+    @smart_assert(method in CovMethods)
 
-    mtx = if method ∈ (:Full, :Semi)
+    mtx = if method in (:Full, :Semi)
         estimation = settings.estimation
         estimator = estimation.estimator
         func = estimation.genfunc.func
@@ -688,21 +683,21 @@ end
 
 """
 ```julia
-mean_vec(returns::AbstractMatrix; custom_mu::Union{AbstractVector, Nothing} = nothing,
+mean_vec(returns::AbstractMatrix; custom_mu::Union{AbstractVector,Nothing} = nothing,
          mean_args::Tuple = (), mean_func::Function = mean, mean_kwargs::NamedTuple = (;),
          mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-         mu_weights::Union{AbstractWeights, Nothing} = nothing, rf::Real = 0.0,
-         sigma::Union{AbstractMatrix, Nothing} = nothing,)
+         mu_weights::Union{AbstractWeights,Nothing} = nothing, rf::Real = 0.0,
+         sigma::Union{AbstractMatrix,Nothing} = nothing,)
 ```
 """
 function mean_vec(returns::AbstractMatrix, settings::MuSettings = MuSettings(;))
     method = settings.method
-    mu = if method ∈ (:Default, :Custom_Func)
+    mu = if method in (:Default, :Custom_Func)
         func = settings.genfunc.func
         args = settings.genfunc.args
         kwargs = settings.genfunc.kwargs
         vec(func(returns, args...; kwargs...))
-    elseif method ∈ (:JS, :BS, :BOP, :CAPM)
+    elseif method in (:JS, :BS, :BOP, :CAPM)
         mu_estimator(returns, settings)
     elseif method == :Custom_Val
         settings.custom
@@ -775,7 +770,7 @@ cor_dist_mtx(
 """
 function cor_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettings(;))
     method = settings.method
-    if method ∈ (:Pearson, :Semi_Pearson)
+    if method in (:Pearson, :Semi_Pearson)
         estimation = settings.estimation
         estimator = estimation.estimator
         args = estimation.cor_genfunc.args
@@ -804,7 +799,7 @@ function cor_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettin
     elseif method == :Kendall
         corr = corkendall(returns)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-    elseif method ∈ (:Abs_Pearson, :Abs_Semi_Pearson)
+    elseif method in (:Abs_Pearson, :Abs_Semi_Pearson)
         estimation = settings.estimation
         estimator = estimation.estimator
         args = estimation.cor_genfunc.args
@@ -972,9 +967,8 @@ end
 
 function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
                        n_sim::Integer = 3_000, window::Integer = 3,
-                       seed::Union{<:Integer, Nothing} = nothing,
-                       rng = Random.default_rng())
-    @assert(kind ∈ BootstrapMethods, "kind = $kind, must be one of $BootstrapMethods")
+                       seed::Union{<:Integer,Nothing} = nothing, rng = Random.default_rng())
+    @smart_assert(kind in BootstrapMethods)
     if !isnothing(seed)
         Random.seed!(rng, seed)
     end
@@ -1030,8 +1024,7 @@ function wc_statistics!(portfolio::AbstractPortfolio, settings::WCSettings = WCS
     window = settings.window
     posdef = settings.posdef
 
-    @assert(calc_box || calc_ellipse,
-            "at least one of calc_box = $calc_box, or calc_ellipse = $calc_ellipse must be true")
+    @smart_assert(calc_box || calc_ellipse)
 
     returns = portfolio.returns
     T, N = size(returns)
@@ -1111,10 +1104,10 @@ function wc_statistics!(portfolio::AbstractPortfolio, settings::WCSettings = WCS
     return nothing
 end
 
-function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
-                            criterion::Union{Symbol, Function} = :pval,
+function forward_regression(x::DataFrame, y::Union{Vector,DataFrame},
+                            criterion::Union{Symbol,Function} = :pval,
                             threshold::Real = 0.05)
-    @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
+    @smart_assert(criterion in RegCriteria)
     if isa(y, DataFrame)
         (y = Vector(y))
     end
@@ -1178,7 +1171,7 @@ function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
             push!(included, new_feature)
         end
     else
-        threshold = criterion ∈ (GLM.aic, GLM.aicc, GLM.bic) ? Inf : -Inf
+        threshold = criterion in (GLM.aic, GLM.aicc, GLM.bic) ? Inf : -Inf
 
         excluded = namesx
         for _ in 1:N
@@ -1199,7 +1192,7 @@ function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
                 break
             end
 
-            if criterion ∈ (GLM.aic, GLM.aicc, GLM.bic)
+            if criterion in (GLM.aic, GLM.aicc, GLM.bic)
                 val, key = findmin(value)
                 idx = findfirst(x -> x == key, excluded)
                 if val < threshold
@@ -1224,10 +1217,10 @@ function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
     return included
 end
 
-function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
-                             criterion::Union{Symbol, Function} = :pval,
+function backward_regression(x::DataFrame, y::Union{Vector,DataFrame},
+                             criterion::Union{Symbol,Function} = :pval,
                              threshold::Real = 0.05)
-    @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
+    @smart_assert(criterion in RegCriteria)
     if isa(y, DataFrame)
         (y = Vector(y))
     end
@@ -1307,7 +1300,7 @@ function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
                 break
             end
 
-            if criterion ∈ (GLM.aic, GLM.aicc, GLM.bic)
+            if criterion in (GLM.aic, GLM.aicc, GLM.bic)
                 val, idx = findmin(value)
                 if val < threshold
                     i = findfirst(x -> x == idx, included)
@@ -1332,7 +1325,7 @@ function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
     return included
 end
 
-function pcr(x::DataFrame, y::Union{Vector, DataFrame},
+function pcr(x::DataFrame, y::Union{Vector,DataFrame},
              settings::PCRSettings = PCRSettings(;))
     mean_genfunc = settings.mean_genfunc
     std_genfunc = settings.std_genfunc
@@ -1387,7 +1380,7 @@ function loadings_matrix(x::DataFrame, y::DataFrame,
     loadings = zeros(rows, cols)
 
     method = settings.method
-    flag = method ∈ (:FReg, :BReg)
+    flag = method in (:FReg, :BReg)
     criterion = settings.criterion
     threshold = settings.threshold
     pcr_settings = settings.pcr_settings
@@ -1430,7 +1423,7 @@ function risk_factors(x::DataFrame, y::DataFrame;
         (B = loadings_matrix(x, y, factor_settings.loadings_settings))
     end
     namesB = names(B)
-    x1 = "const" ∈ namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
+    x1 = "const" in namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
     B = Matrix(B[!, setdiff(namesB, ("ticker",))])
 
     cov_f, mu_f = covar_mtx_mean_vec(x1; cov_settings = cov_settings,
@@ -1555,26 +1548,26 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
 end
 
 function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;                                   # Black Litterman
-                                   F::Union{AbstractMatrix, Nothing}   = nothing,
-                                   B::Union{AbstractMatrix, Nothing}   = nothing,
-                                   P::Union{AbstractMatrix, Nothing}   = nothing,
-                                   P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                   Q::Union{AbstractVector, Nothing}   = nothing,
-                                   Q_f::Union{AbstractVector, Nothing} = nothing,                                   # Settings
-                                   cov_settings::CovSettings           = CovSettings(;),
-                                   mu_settings::MuSettings             = MuSettings(;),
-                                   bl_settings::BLSettings             = BLSettings(;),)
+                                   F::Union{AbstractMatrix,Nothing}   = nothing,
+                                   B::Union{AbstractMatrix,Nothing}   = nothing,
+                                   P::Union{AbstractMatrix,Nothing}   = nothing,
+                                   P_f::Union{AbstractMatrix,Nothing} = nothing,
+                                   Q::Union{AbstractVector,Nothing}   = nothing,
+                                   Q_f::Union{AbstractVector,Nothing} = nothing,                                   # Settings
+                                   cov_settings::CovSettings          = CovSettings(;),
+                                   mu_settings::MuSettings            = MuSettings(;),
+                                   bl_settings::BLSettings            = BLSettings(;),)
     asset_tuple = (!isnothing(P), !isnothing(Q))
     any_asset_provided = any(asset_tuple)
     all_asset_provided = all(asset_tuple)
-    @assert(any_asset_provided == all_asset_provided,
-            "If any of P or Q is provided, then both must be provided.")
+    @smart_assert(any_asset_provided == all_asset_provided,
+                  "If any of P or Q is provided, then both must be provided.")
 
     factor_tuple = (!isnothing(B), !isnothing(F), !isnothing(P_f), !isnothing(Q_f))
     any_factor_provided = any(factor_tuple)
     all_factor_provided = all(factor_tuple)
-    @assert(any_factor_provided == all_factor_provided,
-            "If any of B, F, P_f or Q_f is provided (any(.!isnothing.(B, F, P_f, Q_f)) = $any_factor_provided), then all must be provided (all(.!isnothing.(B, F, P_f, Q_f)) = $all_factor_provided)).")
+    @smart_assert(any_factor_provided == all_factor_provided,
+                  "If any of B, F, P_f or Q_f is provided (any(.!isnothing.(B, F, P_f, Q_f)) = $any_factor_provided), then all must be provided (all(.!isnothing.(B, F, P_f, Q_f)) = $all_factor_provided)).")
 
     if !all_asset_provided && !all_factor_provided
         throw(AssertionError("Please provide either:\n- P and Q,\n- B, F, P_f and Q_f, or\n- P, Q, B, F, P_f and Q_f."))
@@ -1654,35 +1647,35 @@ end
 ```julia
 black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
                             Q::AbstractVector;
-                            w::AbstractVector                               = Vector{Float64}(undef, 0),    # cov_mtx
-                            cov_args::Tuple                                 = (),
-                            cov_est::CovarianceEstimator                    = StatsBase.SimpleCovariance(; corrected = true),
-                            cov_func::Function                              = cov,
-                            cov_kwargs::NamedTuple                          = (;),
-                            cov_method::Symbol                              = :Full,
-                            cov_weights::Union{AbstractWeights, Nothing}    = nothing,
-                            custom_cov::Union{AbstractMatrix, Nothing}      = nothing,
-                            gs_threshold::Real                              = portfolio.gs_threshold,
-                            jlogo::Bool                                     = false,
-                            posdef_args::Tuple                              = (),
-                            posdef_fix::Symbol                              = :Nearest,
-                            posdef_func::Function                           = x -> x,
-                            posdef_kwargs::NamedTuple                       = (;),
-                            std_args::Tuple                                 = (),
-                            std_func::Function                              = std,
-                            std_kwargs::NamedTuple                          = (;),
-                            target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,    # mean_vec
-                            custom_mu::Union{AbstractVector, Nothing}       = nothing,
-                            mean_args::Tuple                                = (),
-                            mean_func::Function                             = mean,
-                            mean_kwargs::NamedTuple                         = (;),
-                            mkt_ret::Union{AbstractVector, Nothing}         = nothing,
-                            mu_target::Symbol                               = :GM,
-                            mu_method::Symbol                               = :Default,
-                            mu_weights::Union{AbstractWeights, Nothing}     = nothing,    # Black Litterman
-                            delta::Union{Real, Nothing}                     = nothing,
-                            eq::Bool                                        = true,
-                            rf::Real                                        = 0.0,)
+                            w::AbstractVector                              = Vector{Float64}(undef, 0),    # cov_mtx
+                            cov_args::Tuple                                = (),
+                            cov_est::CovarianceEstimator                   = StatsBase.SimpleCovariance(; corrected = true),
+                            cov_func::Function                             = cov,
+                            cov_kwargs::NamedTuple                         = (;),
+                            cov_method::Symbol                             = :Full,
+                            cov_weights::Union{AbstractWeights,Nothing}    = nothing,
+                            custom_cov::Union{AbstractMatrix,Nothing}      = nothing,
+                            gs_threshold::Real                             = portfolio.gs_threshold,
+                            jlogo::Bool                                    = false,
+                            posdef_args::Tuple                             = (),
+                            posdef_fix::Symbol                             = :Nearest,
+                            posdef_func::Function                          = x -> x,
+                            posdef_kwargs::NamedTuple                      = (;),
+                            std_args::Tuple                                = (),
+                            std_func::Function                             = std,
+                            std_kwargs::NamedTuple                         = (;),
+                            target_ret::Union{Real,AbstractVector{<:Real}} = 0.0,    # mean_vec
+                            custom_mu::Union{AbstractVector,Nothing}       = nothing,
+                            mean_args::Tuple                               = (),
+                            mean_func::Function                            = mean,
+                            mean_kwargs::NamedTuple                        = (;),
+                            mkt_ret::Union{AbstractVector,Nothing}         = nothing,
+                            mu_target::Symbol                              = :GM,
+                            mu_method::Symbol                              = :Default,
+                            mu_weights::Union{AbstractWeights,Nothing}     = nothing,    # Black Litterman
+                            delta::Union{Real,Nothing}                     = nothing,
+                            eq::Bool                                       = true,
+                            rf::Real                                       = 0.0,)
 ```
 """
 function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
@@ -1723,8 +1716,8 @@ factor_statistics!(portfolio::AbstractPortfolio;    # cov_mtx
                                                                              corrected = true),
                    cov_func::Function = cov, cov_kwargs::NamedTuple = (;),
                    cov_method::Symbol = :Full,
-                   cov_weights::Union{AbstractWeights, Nothing} = nothing,
-                   custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+                   cov_weights::Union{AbstractWeights,Nothing} = nothing,
+                   custom_cov::Union{AbstractMatrix,Nothing} = nothing,
                    denoise::Bool = false, detone::Bool = false,
                    gs_threshold::Real = portfolio.gs_threshold, jlogo::Bool = false,
                    kernel = ASH.Kernels.gaussian, m::Integer = 10, method::Symbol = :Fixed,
@@ -1733,15 +1726,15 @@ factor_statistics!(portfolio::AbstractPortfolio;    # cov_mtx
                    posdef_func::Function = x -> x, posdef_kwargs::NamedTuple = (;),
                    std_args::Tuple = (), std_func::Function = std,
                    std_kwargs::NamedTuple = (;),
-                   target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,    # mean_vec
-                   custom_mu::Union{AbstractVector, Nothing} = nothing,
+                   target_ret::Union{Real,AbstractVector{<:Real}} = 0.0,    # mean_vec
+                   custom_mu::Union{AbstractVector,Nothing} = nothing,
                    mean_args::Tuple = (), mean_func::Function = mean,
                    mean_kwargs::NamedTuple = (;),
-                   mkt_ret::Union{AbstractVector, Nothing} = nothing,
+                   mkt_ret::Union{AbstractVector,Nothing} = nothing,
                    mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-                   mu_weights::Union{AbstractWeights, Nothing} = nothing, rf = 0.0,    # Loadings matrix
-                   B::Union{DataFrame, Nothing} = nothing,
-                   criterion::Union{Symbol, Function} = :pval, error::Bool = true,
+                   mu_weights::Union{AbstractWeights,Nothing} = nothing, rf = 0.0,    # Loadings matrix
+                   B::Union{DataFrame,Nothing} = nothing,
+                   criterion::Union{Symbol,Function} = :pval, error::Bool = true,
                    pca_kwargs::NamedTuple = (;), pca_std_kwargs::NamedTuple = (;),
                    pca_std_type = ZScoreTransform, reg_method::Symbol = :FReg,
                    threshold::Real = 0.05, var_func::Function = var, var_args::Tuple = (),
@@ -1781,31 +1774,31 @@ black_litterman_factor_satistics!(portfolio::AbstractPortfolio;
                                                                                             corrected = true),
                                   cov_func::Function = cov, cov_kwargs::NamedTuple = (;),
                                   cov_method::Symbol = :Full,
-                                  cov_weights::Union{AbstractWeights, Nothing} = nothing,
-                                  custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+                                  cov_weights::Union{AbstractWeights,Nothing} = nothing,
+                                  custom_cov::Union{AbstractMatrix,Nothing} = nothing,
                                   gs_threshold::Real = portfolio.gs_threshold,
                                   jlogo::Bool = false, posdef_args::Tuple = (),                                           # Black Litterman
                                   posdef_fix::Symbol = :Nearest,
                                   posdef_func::Function = x -> x,
                                   posdef_kwargs::NamedTuple = (;), std_args::Tuple = (),
                                   std_func::Function = std, std_kwargs::NamedTuple = (;),
-                                  target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,    # mean_vec                                           # Settings
-                                  custom_mu::Union{AbstractVector, Nothing} = nothing,
+                                  target_ret::Union{Real,AbstractVector{<:Real}} = 0.0,    # mean_vec                                           # Settings
+                                  custom_mu::Union{AbstractVector,Nothing} = nothing,
                                   mean_args::Tuple = (), mean_func::Function = mean,
                                   mean_kwargs::NamedTuple = (;),
-                                  mkt_ret::Union{AbstractVector, Nothing} = nothing,
+                                  mkt_ret::Union{AbstractVector,Nothing} = nothing,
                                   mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-                                  mu_weights::Union{AbstractWeights, Nothing} = nothing,    # Black Litterman
-                                  B::Union{DataFrame, Nothing} = nothing,
-                                  P::Union{AbstractMatrix, Nothing} = nothing,
-                                  P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                  Q::Union{AbstractVector, Nothing} = nothing,
-                                  Q_f::Union{AbstractVector, Nothing} = nothing,
+                                  mu_weights::Union{AbstractWeights,Nothing} = nothing,    # Black Litterman
+                                  B::Union{DataFrame,Nothing} = nothing,
+                                  P::Union{AbstractMatrix,Nothing} = nothing,
+                                  P_f::Union{AbstractMatrix,Nothing} = nothing,
+                                  Q::Union{AbstractVector,Nothing} = nothing,
+                                  Q_f::Union{AbstractVector,Nothing} = nothing,
                                   bl_method::Symbol = :B, delta::Real = 1.0,
                                   diagonal::Bool = true, eq::Bool = true, rf::Real = 0.0,
                                   var_args::Tuple = (), var_func::Function = var,
                                   var_kwargs::NamedTuple = (;),    # Loadings matrix
-                                  criterion::Union{Symbol, Function} = :pval,
+                                  criterion::Union{Symbol,Function} = :pval,
                                   pca_kwargs::NamedTuple = (;),
                                   pca_std_kwargs::NamedTuple = (;),
                                   pca_std_type = ZScoreTransform,
@@ -1814,11 +1807,11 @@ black_litterman_factor_satistics!(portfolio::AbstractPortfolio;
 """
 function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
                                            w::AbstractVector                   = Vector{Float64}(undef, 0);                                           # Black Litterman
-                                           B::Union{DataFrame, Nothing}        = nothing,
-                                           P::Union{AbstractMatrix, Nothing}   = nothing,
-                                           P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                           Q::Union{AbstractVector, Nothing}   = nothing,
-                                           Q_f::Union{AbstractVector, Nothing} = nothing,                                           # Settings
+                                           B::Union{DataFrame,Nothing}         = nothing,
+                                           P::Union{AbstractMatrix,Nothing}    = nothing,
+                                           P_f::Union{AbstractMatrix,Nothing}  = nothing,
+                                           Q::Union{AbstractVector,Nothing}    = nothing,
+                                           Q_f::Union{AbstractVector,Nothing}  = nothing,                                           # Settings
                                            loadings_settings::LoadingsSettings = LoadingsSettings(;),
                                            cov_settings::CovSettings           = CovSettings(;),
                                            mu_settings::MuSettings             = MuSettings(;),
@@ -1846,7 +1839,7 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
                             DataFrame(returns, portfolio.assets), loadings_settings)
     end
     namesB = names(B)
-    bl_settings.constant = "const" ∈ namesB
+    bl_settings.constant = "const" in namesB
     B = Matrix(B[!, setdiff(namesB, ("ticker",))])
 
     portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_settings.method == :B
@@ -1865,7 +1858,7 @@ end
 function cluster_assets(returns::AbstractMatrix; cor_settings::CorSettings = CorSettings(;),
                         linkage = :single, max_k = ceil(Int, sqrt(size(returns, 2))),
                         branchorder = :optimal, k = 0, dbht_method = :Unique,)
-    @smart_assert(linkage ∈ LinkageTypes)
+    @smart_assert(linkage in LinkageTypes)
 
     cor_method = cor_settings.method
     corr, dist = cor_dist_mtx(returns, cor_settings)
@@ -1873,7 +1866,7 @@ function cluster_assets(returns::AbstractMatrix; cor_settings::CorSettings = Cor
     cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
 
     if linkage == :DBHT
-        corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
+        corr = cor_method in cors ? 1 .- dist .^ 2 : corr
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,
                                                                                  method = dbht_method)

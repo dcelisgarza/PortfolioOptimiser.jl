@@ -33,7 +33,7 @@ $(_sigdef("CVaR", :a))
 $_owaw
 """
 function owa_cvar(T::Integer, alpha::Real = 0.05)
-    @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and less than 1")
+    @smart_assert(0 < alpha < 1)
 
     k = floor(Int, T * alpha)
     w = zeros(typeof(alpha), T)
@@ -80,9 +80,8 @@ $(_sigdef("Tail Gini losses", :a))
 $_owaw
 """
 function owa_tg(T::Integer; alpha_i::Real = 1e-4, alpha::Real = 0.05, a_sim::Integer = 100)
-    @assert(0 < alpha_i < alpha < 1,
-            "alpha_i = $alpha_i, alpha = $alpha, please ensure 0 < alpha_i < alpha < 1, holds")
-    @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
+    @smart_assert(0 < alpha_i < alpha < 1)
+    @smart_assert(a_sim > zero(a_sim))
 
     alphas = range(; start = alpha_i, stop = alpha, length = a_sim)
     n = length(alphas)
@@ -356,11 +355,10 @@ $_owaw
 """
 function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::Real = 0.5,
                           max_phi::Real = 0.5, solvers = Dict(),)
-    @assert(k >= 2, "k = $k, must be an integer bigger than or equal to 2")
-    @assert(method ∈ OWAMethods, "method = $method, must be one of $OWAMethods")
-    @assert(0 < g < 1, "risk aversion, g = $g, must be greater than 0 and less than 1")
-    @assert(0 < max_phi < 1,
-            "the constraint on the maximum weight of the L-moments, max_phi = $max_phi, must be greater than 0 and less than 1")
+    @smart_assert(k >= 2)
+    @smart_assert(method in OWAMethods)
+    @smart_assert(0 < g < 1)
+    @smart_assert(0 < max_phi < 1)
 
     rg = 2:k
     weights = Matrix{typeof(inv(T * k))}(undef, T, length(rg))

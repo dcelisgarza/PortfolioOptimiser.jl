@@ -67,7 +67,7 @@ function plot_risk_contribution(
                                 beta_i::Real = alpha_i, beta::Real = alpha,
                                 b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
                                 owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                                solvers::Union{<:AbstractDict, Nothing} = nothing,                                # Plot args
+                                solvers::Union{<:AbstractDict,Nothing} = nothing,                                # Plot args
                                 percentage::Bool = false, erc_line::Bool = true,
                                 t_factor = 252, kwargs_bar = (;), kwargs_line = (;),)
     rc = risk_contribution(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
@@ -88,13 +88,13 @@ function plot_risk_contribution(
     end
 
     title = "Risk Contribution - $(RiskMeasureNames[rm]) ($(rm))"
-    if rm ∈ (:CVaR, :TG, :EVaR, :RVaR, :RCVaR, :RTG, :CDaR, :EDaR, :RDaR)
+    if rm in (:CVaR, :TG, :EVaR, :RVaR, :RCVaR, :RTG, :CDaR, :EDaR, :RDaR)
         title *= " α = $(round(alpha*100, digits=2))%"
     end
-    if rm ∈ (:RCVaR, :RTG)
+    if rm in (:RCVaR, :RTG)
         title *= ", β = $(round(beta*100, digits=2))%"
     end
-    if rm ∈ (:RVaR, :RDaR)
+    if rm in (:RVaR, :RDaR)
         title *= ", κ = $(round(kappa, digits=2))"
     end
 
@@ -168,7 +168,7 @@ function plot_frontier(frontier; alpha::Real = 0.05, beta::Real = alpha, kappa::
                        t_factor = 252, kelly::Bool = false,
                        mu::AbstractVector = Vector{Float64}(undef, 0), rf::Real = 0.0,
                        rm::Symbol = :SD, theme = :Spectral, kwargs_f = (;), kwargs_s = (;),)
-    @assert(rm ∈ RiskMeasures, "rm = $rm, must be one of $RiskMeasures")
+    @smart_assert(rm in RiskMeasures)
 
     if isinf(beta)
         (beta = alpha)
@@ -191,13 +191,13 @@ function plot_frontier(frontier; alpha::Real = 0.05, beta::Real = alpha, kappa::
     ratios = (rets .- rf) ./ risks
 
     msg = "$(RiskMeasureNames[rm]) ($(rm))"
-    if rm ∈ (:CVaR, :TG, :EVaR, :RVaR, :RCVaR, :RTG, :CDaR, :EDaR, :RDaR)
+    if rm in (:CVaR, :TG, :EVaR, :RVaR, :RCVaR, :RTG, :CDaR, :EDaR, :RDaR)
         msg *= " α = $(round(alpha*100, digits=2))%"
     end
-    if rm ∈ (:RCVaR, :RTG)
+    if rm in (:RCVaR, :RTG)
         msg *= ", β = $(round(beta*100, digits=2))%"
     end
-    if rm ∈ (:RVaR, :RDaR)
+    if rm in (:RVaR, :RDaR)
         msg *= ", κ = $(round(kappa, digits=2))"
     end
 
@@ -289,13 +289,13 @@ function plot_frontier_area(frontier; alpha::Real = 0.05, beta::Real = alpha,
     end
 
     msg = "$(RiskMeasureNames[rm]) ($(rm))"
-    if rm ∈ (:CVaR, :TG, :EVaR, :RVaR, :RCVaR, :RTG, :CDaR, :EDaR, :RDaR)
+    if rm in (:CVaR, :TG, :EVaR, :RVaR, :RCVaR, :RTG, :CDaR, :EDaR, :RDaR)
         msg *= " α = $(round(alpha*100, digits=2))%"
     end
-    if rm ∈ (:RCVaR, :RTG)
+    if rm in (:RCVaR, :RTG)
         msg *= ", β = $(round(beta*100, digits=2))%"
     end
-    if rm ∈ (:RVaR, :RDaR)
+    if rm in (:RVaR, :RDaR)
         msg *= ", κ = $(round(kappa, digits=2))"
     end
 
@@ -354,7 +354,7 @@ end
 
 function plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
                        returns::AbstractMatrix; alpha::Real = 0.05, kappa::Real = 0.3,
-                       solvers::Union{<:AbstractDict, Nothing} = nothing, theme = :Dark2_5,
+                       solvers::Union{<:AbstractDict,Nothing} = nothing, theme = :Dark2_5,
                        kwargs_ret = (;), kwargs_dd = (;), kwargs_risks = (;), kwargs = (;),)
     ret = returns * w
 
@@ -456,7 +456,7 @@ end
 
 function plot_hist(w::AbstractVector, returns::AbstractMatrix; alpha_i::Real = 0.0001,
                    alpha::Real = 0.05, a_sim::Int = 100, kappa::Real = 0.3,
-                   solvers::Union{<:AbstractDict, Nothing} = nothing,
+                   solvers::Union{<:AbstractDict,Nothing} = nothing,
                    points::Integer = ceil(Int, 4 * sqrt(size(returns, 1))),
                    theme = :Paired_10, kwargs_h = (;), kwargs_risks = (;),)
     ret = returns * w * 100
@@ -625,7 +625,7 @@ function plot_clusters(portfolio; max_k = ceil(Int, sqrt(size(portfolio.dist, 1)
     end
 
     cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
-    if cor_method ∈ cors
+    if cor_method in cors
         clim = (-1, 1)
     else
         clim = (0, 1)
@@ -703,7 +703,7 @@ function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
                        theme_d = :Spectral, theme_h = :Spectral, theme_h_kwargs = (;),
                        kwargs_d1 = (;), kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;),
                        kwargs = (;),)
-    @smart_assert(linkage ∈ LinkageTypes)
+    @smart_assert(linkage in LinkageTypes)
 
     N = length(assets)
     cor_method = cor_settings.method
@@ -712,7 +712,7 @@ function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
     cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
 
     if linkage == :DBHT
-        corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
+        corr = cor_method in cors ? 1 .- dist .^ 2 : corr
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,
                                                                                  method = dbht_method)
@@ -740,7 +740,7 @@ function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
     end
 
     cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
-    if cor_method ∈ cors
+    if cor_method in cors
         clim = (-1, 1)
     else
         clim = (0, 1)

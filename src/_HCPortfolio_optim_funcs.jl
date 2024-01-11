@@ -27,7 +27,7 @@ function _opt_w(portfolio, assets, returns, imu, icov; obj = :Min_Risk, kelly = 
                 rm = :SD, rf = 0.0, l = 2.0, near_opt::Bool = false,
                 M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
                 asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
-                                     calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false,),)
+                                     calc_kurt = rm in (:Kurt, :SKurt) ? true : false,),)
     port = Portfolio(; assets = assets, ret = returns, owa_w = portfolio.owa_w,
                      solvers = portfolio.solvers,
                      max_num_assets_kurt = portfolio.max_num_assets_kurt,)
@@ -36,7 +36,7 @@ function _opt_w(portfolio, assets, returns, imu, icov; obj = :Min_Risk, kelly = 
         (port.mu = imu)
     end
     port.cov = icov
-    if rm ∈ (:Kurt, :SKurt)
+    if rm in (:Kurt, :SKurt)
         asset_statistics!(port; asset_stat_kwargs...)
     end
 
@@ -116,7 +116,7 @@ function _hierarchical_clustering(portfolio::HCPortfolio, linkage = :single,
     cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
 
     if linkage == :DBHT
-        corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
+        corr = cor_method in cors ? 1 .- dist .^ 2 : corr
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,
                                                                                  method = dbht_method)
@@ -228,23 +228,23 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0, upper_bound = nothi
     return weights
 end
 
-struct ClusterNode{tid, tl, tr, td, tcnt}
+struct ClusterNode{tid,tl,tr,td,tcnt}
     id::tid
     left::tl
     right::tr
     dist::td
     count::tcnt
 
-    function ClusterNode(id, left::Union{ClusterNode, Nothing} = nothing,
-                         right::Union{ClusterNode, Nothing} = nothing, dist::Real = 0.0,
+    function ClusterNode(id, left::Union{ClusterNode,Nothing} = nothing,
+                         right::Union{ClusterNode,Nothing} = nothing, dist::Real = 0.0,
                          count::Int = 1)
         icount = isnothing(left) ? count : (left.count + right.count)
 
-        return new{typeof(id), typeof(left), typeof(right), typeof(dist), typeof(count)}(id,
-                                                                                         left,
-                                                                                         right,
-                                                                                         dist,
-                                                                                         icount)
+        return new{typeof(id),typeof(left),typeof(right),typeof(dist),typeof(count)}(id,
+                                                                                     left,
+                                                                                     right,
+                                                                                     dist,
+                                                                                     icount)
     end
 end
 export ClusterNode
@@ -410,7 +410,7 @@ function _intra_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf 
                         l = 2.0, near_opt::Bool = false,
                         M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
                         asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
-                                             calc_kurt = if rm ∈ (:Kurt, :SKurt)
+                                             calc_kurt = if rm in (:Kurt, :SKurt)
                                                  true
                                              else
                                                  false
@@ -423,7 +423,7 @@ function _intra_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf 
     clustering_idx = cutree(clustering; k = k)
 
     intra_weights = zeros(eltype(covariance), size(portfolio.returns, 2), k)
-    cfails = Dict{Int, Dict}()
+    cfails = Dict{Int,Dict}()
 
     for i in 1:k
         idx = clustering_idx .== i
@@ -447,7 +447,7 @@ function _inter_weights(portfolio, intra_weights; obj = :Min_Risk, kelly = :None
                         rf = 0.0, l = 2.0, near_opt::Bool = false,
                         M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
                         asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
-                                             calc_kurt = if rm ∈ (:Kurt, :SKurt)
+                                             calc_kurt = if rm in (:Kurt, :SKurt)
                                                  true
                                              else
                                                  false
@@ -471,7 +471,7 @@ end
 function _nco_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf = 0.0,
                       l = 2.0,
                       asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
-                                           calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false,
+                                           calc_kurt = rm in (:Kurt, :SKurt) ? true : false,
                                            kurt_settings = KurtSettings(;),),
                       near_opt::Bool = false,
                       M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
@@ -535,8 +535,7 @@ function _setup_hr_weights(w_max, w_min, N)
         fill(max(0.0, w_min), N)
     end
 
-    @assert(all(upper_bound .>= lower_bound),
-            "all upper bounds must be bigger than their corresponding lower bounds")
+    @smart_assert(all(upper_bound .>= lower_bound))
 
     return upper_bound, lower_bound
 end
@@ -603,26 +602,21 @@ function opt_port!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                    max_k::Int = ceil(Int, sqrt(size(portfolio.returns, 2))),
                    branchorder = :optimal, dbht_method = :Unique, max_iter = 100,
                    asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
-                                        calc_kurt = rm ∈ (:Kurt, :SKurt) ? true : false,),
+                                        calc_kurt = rm in (:Kurt, :SKurt) ? true : false,),
                    asset_stat_kwargs_o = asset_stat_kwargs, save_opt_params = true,)
-    @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
-    @assert(rm ∈ HCRiskMeasures, "rm = $rm, must be one of $HCRiskMeasures")
-    @assert(obj ∈ HCObjFuncs, "obj = $obj, must be one of $HCObjFuncs")
-    @assert(obj_o ∈ HCObjFuncs, "obj_o = $obj_o, must be one of $HCObjFuncs")
-    @assert(kelly ∈ KellyRet, "kelly = $kelly, must be one of $KellyRet")
-    @assert(kelly_o ∈ KellyRet, "kelly_o = $kelly_o, must be one of $KellyRet")
-    @assert(linkage ∈ LinkageTypes, "linkage = $linkage, must be one of $LinkageTypes")
-    @assert(portfolio.cor_method ∈ CorMethods,
-            "portfolio.cor_method = $(portfolio.cor_method), must be one of $CorMethods")
-    @assert(0 < portfolio.alpha < 1,
-            "portfolio.alpha = $(portfolio.alpha), must be greater than 0 and less than 1")
-    @assert(0 < portfolio.kappa < 1,
-            "portfolio.kappa = $(portfolio.kappa) must be greater than 0 and less than 1")
-    @assert(max_num_assets_kurt_o >= 0,
-            "max_num_assets_kurt_o = $max_num_assets_kurt_o must be greater than or equal to zero")
+    @smart_assert(type in HCPortTypes)
+    @smart_assert(rm in HCRiskMeasures)
+    @smart_assert(obj in HCObjFuncs)
+    @smart_assert(obj_o in HCObjFuncs)
+    @smart_assert(kelly in KellyRet)
+    @smart_assert(kelly_o in KellyRet)
+    @smart_assert(linkage in LinkageTypes)
+    @smart_assert(portfolio.cor_method in CorMethods)
+    @smart_assert(0 < portfolio.alpha < 1)
+    @smart_assert(0 < portfolio.kappa < 1)
+    @smart_assert(max_num_assets_kurt_o >= 0)
     if !isempty(owa_w_o)
-        @assert(length(owa_w_o) == size(portfolio.returns, 1),
-                "length(owa_w) = $(length(owa_w_o)), and size(returns, 1) = $(size(portfolio.returns, 1)) must be equal")
+        @smart_assert(length(owa_w_o) == size(portfolio.returns, 1))
     end
 
     _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, linkage, k, max_k,

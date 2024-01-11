@@ -406,10 +406,10 @@ P, Q = factor_views(views, loadings)
 """
 function factor_views(views::DataFrame, loadings::DataFrame)
     factor_list = names(loadings)
-    if "const" ∈ factor_list
+    if "const" in factor_list
         (factor_list = setdiff(factor_list, ("const",)))
     end
-    if "ticker" ∈ factor_list
+    if "ticker" in factor_list
         (factor_list = setdiff(factor_list, ("ticker",)))
     end
 
@@ -562,8 +562,8 @@ rw_c = rp_constraints(asset_classes, :Classes, "Class 2")
 ```
 """
 function rp_constraints(asset_classes::DataFrame, type::Symbol = :Assets,
-                        class_col::Union{String, Symbol, Int, Nothing} = nothing)
-    @assert(type ∈ RPConstraintTypes, "type = $type, must be one of $RPConstraintTypes")
+                        class_col::Union{String,Symbol,Int,Nothing} = nothing)
+    @smart_assert(type in RPConstraintTypes)
     N = nrow(asset_classes)
 
     rw = if type == :Assets

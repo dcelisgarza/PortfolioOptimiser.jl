@@ -363,7 +363,7 @@ function _sigdom(sym::Symbol)
         "alpha"
     elseif sym == :b
         "beta"
-    end * " ∈ (0, 1)"
+    end * " in (0, 1)"
 end
 
 function _sigdef(msg::String, sym::Symbol)

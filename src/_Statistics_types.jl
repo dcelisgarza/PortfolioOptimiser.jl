@@ -224,9 +224,9 @@ end
 
 @kwdef mutable struct CovEstSettings
     estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
+    target_ret::Union{<:AbstractVector{<:Real},<:Real} = 0.0
     genfunc::GenericFunc = GenericFunc(; func = StatsBase.cov)
-    custom::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
+    custom::Union{<:AbstractMatrix{<:Real},Nothing} = nothing
 end
 
 mutable struct PosdefFixSettings
@@ -235,13 +235,13 @@ mutable struct PosdefFixSettings
 end
 function PosdefFixSettings(; method::Symbol = :Nearest,
                            genfunc::GenericFunc = GenericFunc(;),)
-    @assert(method ∈ PosdefFixMethods, "method = $method, must be one of $PosdefFixMethods")
+    @smart_assert(method in PosdefFixMethods)
 
     return PosdefFixSettings(method, genfunc)
 end
 function Base.setproperty!(obj::PosdefFixSettings, sym::Symbol, val)
     if sym == :method
-        @assert(val ∈ PosdefFixMethods, "$sym = $val, must be one of $PosdefFixMethods")
+        @smart_assert(val in PosdefFixMethods)
     end
     return setfield!(obj, sym, val)
 end
@@ -255,19 +255,18 @@ function GerberSettings(; threshold::Real = 0.5,
                         genfunc::GenericFunc = GenericFunc(; func = StatsBase.std,
                                                            kwargs = (; dims = 1)),
                         posdef::PosdefFixSettings = PosdefFixSettings(;),)
-    @assert(0 < threshold < 1,
-            "threshold = $threshold, must be greater than 0 and less than 1")
+    @smart_assert(0 < threshold < 1)
 
     return GerberSettings{typeof(threshold)}(threshold, genfunc, posdef)
 end
 function Base.setproperty!(obj::GerberSettings, sym::Symbol, val)
     if sym == :threshold
-        @assert(0 < val < 1, "$sym = $val, must be greater than 0 and less than 1")
+        @smart_assert(0 < val < 1)
     end
     return setfield!(obj, sym, val)
 end
 
-mutable struct DenoiseSettings{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 <: Integer}
+mutable struct DenoiseSettings{T1 <: Real,T2 <: Integer,T3,T4 <: Integer,T5 <: Integer}
     method::Symbol
     alpha::T1
     detone::Bool
@@ -281,18 +280,18 @@ function DenoiseSettings(; method::Symbol = :None, alpha::Real = 0.0, detone::Bo
                          mkt_comp::Integer = 1, kernel = ASH.Kernels.gaussian,
                          m::Integer = 10, n::Integer = 1000,
                          genfunc::GenericFunc = GenericFunc(; func = x -> nothing),)
-    @assert(method ∈ DenoiseMethods, "method = $method, must be one of $DenoiseMethods")
-    @assert(0 <= alpha <= 1, "alpha = $alpha, must be 0 <= alpha <= 1")
+    @smart_assert(method in DenoiseMethods)
+    @smart_assert(0 <= alpha <= 1)
 
-    return DenoiseSettings{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m),
+    return DenoiseSettings{typeof(alpha),typeof(mkt_comp),typeof(kernel),typeof(m),
                            typeof(n)}(method, alpha, detone, mkt_comp, kernel, m, n,
                                       genfunc)
 end
 function Base.setproperty!(obj::DenoiseSettings, sym::Symbol, val)
     if sym == :method
-        @assert(val ∈ DenoiseMethods, "$sym = $val, must be one of $DenoiseMethods")
+        @smart_assert(val in DenoiseMethods)
     elseif sym == :alpha
-        @assert(0 <= val <= 1, "$sym = $val, must be 0 <= alpha <= 1")
+        @smart_assert(0 <= val <= 1)
     end
     return setfield!(obj, sym, val)
 end
@@ -323,13 +322,13 @@ function CovSettings(; method::Symbol = :Full,
                      gerber::GerberSettings = GerberSettings(;),
                      denoise::DenoiseSettings = DenoiseSettings(;),
                      posdef::PosdefFixSettings = PosdefFixSettings(;), jlogo::Bool = false,)
-    @assert(method ∈ CovMethods, "method = $method, must be one of $CovMethods")
+    @smart_assert(method in CovMethods)
 
     return CovSettings(method, estimation, gerber, denoise, posdef, jlogo)
 end
 function Base.setproperty!(obj::CovSettings, sym::Symbol, val)
     if sym == :method
-        @assert(val ∈ CovMethods, "$sym = $val, must be one of $CovMethods")
+        @smart_assert(val in CovMethods)
     end
     return setfield!(obj, sym, val)
 end
@@ -346,34 +345,34 @@ mutable struct MuSettings{T1 <: Real}
     target::Symbol
     rf::T1
     genfunc::GenericFunc
-    custom::Union{<:AbstractVector{<:Real}, Nothing}
-    mkt_ret::Union{<:AbstractVector{<:Real}, Nothing}
-    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
+    custom::Union{<:AbstractVector{<:Real},Nothing}
+    mkt_ret::Union{<:AbstractVector{<:Real},Nothing}
+    sigma::Union{<:AbstractMatrix{<:Real},Nothing}
 end
 function MuSettings(; method::Symbol = :Default, target::Symbol = :GM, rf::Real = 0.0,
                     genfunc::GenericFunc = GenericFunc(; func = StatsBase.mean,
                                                        kwargs = (; dims = 1)),
-                    custom::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
-                    mkt_ret::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
-                    sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,)
-    @assert(method ∈ MuMethods, "method = $method, must be one of $MuMethods")
-    @assert(target ∈ MuTargets, "target = $target, must be one of $MuTargets")
+                    custom::Union{<:AbstractVector{<:Real},Nothing} = nothing,
+                    mkt_ret::Union{<:AbstractVector{<:Real},Nothing} = nothing,
+                    sigma::Union{<:AbstractMatrix{<:Real},Nothing} = nothing,)
+    @smart_assert(method in MuMethods)
+    @smart_assert(target in MuTargets)
 
     return MuSettings{typeof(rf)}(method, target, rf, genfunc, custom, mkt_ret, sigma)
 end
 function Base.setproperty!(obj::MuSettings, sym::Symbol, val)
     if sym == :method
-        @assert(val ∈ MuMethods, "$sym = $val, must be one of $MuMethods")
+        @smart_assert(val in MuMethods)
     elseif sym == :target
-        @assert(val ∈ MuTargets, "$sym = $val, must be one of $MuTargets")
+        @smart_assert(val in MuTargets)
     end
     return setfield!(obj, sym, val)
 end
 
 @kwdef mutable struct KurtEstSettings
-    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
-    custom_kurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
-    custom_skurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
+    target_ret::Union{<:AbstractVector{<:Real},<:Real} = 0.0
+    custom_kurt::Union{<:AbstractMatrix{<:Real},Nothing} = nothing
+    custom_skurt::Union{<:AbstractMatrix{<:Real},Nothing} = nothing
 end
 mutable struct KurtSettings
     # Estimation
@@ -395,18 +394,18 @@ end
 mutable struct CorEstSettings{T1 <: Real}
     estimator::CovarianceEstimator
     alpha::T1
-    bins_info::Union{Symbol, <:Integer}
+    bins_info::Union{Symbol,<:Integer}
     cor_genfunc::GenericFunc
     dist_genfunc::GenericFunc
-    target_ret::Union{<:AbstractVector{<:Real}, <:Real}
-    custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing}
-    custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing}
-    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
+    target_ret::Union{<:AbstractVector{<:Real},<:Real}
+    custom_cor::Union{<:AbstractMatrix{<:Real},Nothing}
+    custom_dist::Union{<:AbstractMatrix{<:Real},Nothing}
+    sigma::Union{<:AbstractMatrix{<:Real},Nothing}
 end
 function CorEstSettings(;
                         estimator::CovarianceEstimator = StatsBase.SimpleCovariance(;
                                                                                     corrected = true),
-                        alpha::Real = 0.05, bins_info::Union{Symbol, <:Integer} = :KN,
+                        alpha::Real = 0.05, bins_info::Union{Symbol,<:Integer} = :KN,
                         cor_genfunc::GenericFunc = GenericFunc(; func = StatsBase.cor),
                         dist_genfunc::GenericFunc = GenericFunc(;
                                                                 func = x -> sqrt.(clamp!((1 .-
@@ -414,24 +413,23 @@ function CorEstSettings(;
                                                                                          2,
                                                                                          0,
                                                                                          1)),),
-                        target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0,
-                        custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-                        custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-                        sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,)
-    @assert(0 <= alpha <= 1,
-            "alpha = $alpha, must be greater than or equal to 0 and less than or equal to 1")
-    @assert(bins_info ∈ BinMethods || isa(bins_info, Int) && bins_info > zero(bins_info),
-            "bins_info = $bins_info, has to either be in $BinMethods, or an integer value greater than 0")
-    # @assert(
+                        target_ret::Union{<:AbstractVector{<:Real},<:Real} = 0.0,
+                        custom_cor::Union{<:AbstractMatrix{<:Real},Nothing} = nothing,
+                        custom_dist::Union{<:AbstractMatrix{<:Real},Nothing} = nothing,
+                        sigma::Union{<:AbstractMatrix{<:Real},Nothing} = nothing,)
+    @smart_assert(0 <= alpha <= 1)
+    @smart_assert(bins_info in BinMethods ||
+                  isa(bins_info, Int) && bins_info > zero(bins_info))
+    # @smart_assert(
     #     size(custom_cor) == size(custom_dist) == size(sigma),    #     "size(custom_cor) == $(size(custom_cor)), size(custom_dist) == $(size(custom_dist)) and size(sigma) == $(size(sigma)), must all be equal"
     # )
-    # @assert(
+    # @smart_assert(
     #     size(custom_cor, 1) == size(custom_cor, 2),    #     "custom_cor must be a square matrix, size(custom_cor) = $(size(custom_cor))"
     # )
-    # @assert(
+    # @smart_assert(
     #     size(custom_dist, 1) == size(custom_dist, 2),    #     "custom_dist must be a square matrix, size(custom_dist) = $(size(custom_dist))"
     # )
-    # @assert(
+    # @smart_assert(
     #     size(sigma, 1) == size(sigma, 2),    #     "sigma must be a square matrix, size(sigma) = $(size(sigma))"
     # )
 
@@ -441,16 +439,14 @@ function CorEstSettings(;
 end
 function Base.setproperty!(obj::CorEstSettings, sym::Symbol, val)
     if sym == :alpha
-        @assert(0 <= val <= 1,
-                "$sym = $val, must be greater than or equal to 0 and less than or equal to 1")
+        @smart_assert(0 <= val <= 1)
     elseif sym == :bins_info
-        @assert(val ∈ BinMethods || isa(val, Int) && val > zero(val),
-                "$sym = $val, has to either be in $BinMethods, or an integer value greater than 0")
-        # elseif sym ∈ (:custom_cor, :custom_dist, :sigma)
-        # @assert(
+        @smart_assert(val in BinMethods || isa(val, Int) && val > zero(val))
+        # elseif sym in (:custom_cor, :custom_dist, :sigma)
+        # @smart_assert(
         #     size(obj.custom_cor) == size(obj.custom_dist) == size(obj.sigma),        #     "size(custom_cor) == $(size(obj.custom_cor)), size(custom_dist) == $(size(obj.custom_dist)) and size(sigma) == $(size(obj.sigma)), must all be equal"
         # )
-        # @assert(
+        # @smart_assert(
         #     size(val, 1) == size(val, 2),        #     "$sym must be a square matrix, size($sym) = $(size(val))"
         # )
     end
@@ -479,19 +475,18 @@ function CorSettings(; method::Symbol = :Pearson,
                      denoise::DenoiseSettings = DenoiseSettings(;),
                      posdef::PosdefFixSettings = PosdefFixSettings(;), jlogo::Bool = false,
                      uplo::Symbol = :L,)
-    @assert(method ∈ CorMethods, "method = $method, must be one of $CorMethods")
+    @smart_assert(method in CorMethods)
 
     return CorSettings(method, estimation, gerber, denoise, posdef, jlogo, uplo)
 end
 function Base.setproperty!(obj::CorSettings, sym::Symbol, val)
     if sym == :method
-        @assert(val ∈ CorMethods, "$sym = $val, must be one of $CorMethods")
+        @smart_assert(val in CorMethods)
     end
     return setfield!(obj, sym, val)
 end
 
-mutable struct WCSettings{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer,
-                          T6 <: Integer}
+mutable struct WCSettings{T1 <: Real,T2 <: Real,T3 <: Real,T4,T5 <: Integer,T6 <: Integer}
     calc_box::Bool
     calc_ellipse::Bool
     box::Symbol
@@ -500,7 +495,7 @@ mutable struct WCSettings{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer,
     dmu::T2
     q::T3
     rng::T4
-    seed::Union{<:Integer, Nothing}
+    seed::Union{<:Integer,Nothing}
     n_sim::T5
     window::T6
     posdef::PosdefFixSettings
@@ -508,22 +503,22 @@ end
 function WCSettings(; calc_box::Bool = true, calc_ellipse::Bool = true,
                     box::Symbol = :Stationary, ellipse::Symbol = :Stationary,
                     dcov::Real = 0.1, dmu::Real = 0.1, q::Real = 0.05,
-                    rng = Random.default_rng(), seed::Union{<:Integer, Nothing} = nothing,
+                    rng = Random.default_rng(), seed::Union{<:Integer,Nothing} = nothing,
                     n_sim::Integer = 3_000, window::Integer = 3,
                     posdef::PosdefFixSettings = PosdefFixSettings(;),)
-    @assert(box ∈ BoxMethods, "box = $box, must be one of $BoxMethods")
-    @assert(ellipse ∈ EllipseMethods, "ellipse = $ellipse, must be one of $EllipseMethods")
+    @smart_assert(box in BoxMethods)
+    @smart_assert(ellipse in EllipseMethods)
     @smart_assert(0 < q < 1)
 
-    return WCSettings{typeof(dcov), typeof(dmu), typeof(q), typeof(rng), typeof(n_sim),
+    return WCSettings{typeof(dcov),typeof(dmu),typeof(q),typeof(rng),typeof(n_sim),
                       typeof(window)}(calc_box, calc_ellipse, box, ellipse, dcov, dmu, q,
                                       rng, seed, n_sim, window, posdef)
 end
 function Base.setproperty!(obj::WCSettings, sym::Symbol, val)
     if sym == :box
-        @smart_assert(val ∈ BoxMethods, "$sym = $val, must be one of $BoxMethods")
+        @smart_assert(val in BoxMethods)
     elseif sym == :ellipse
-        @smart_assert(val ∈ EllipseMethods, "$sym = $val, must be one of $EllipseMethods")
+        @smart_assert(val in EllipseMethods)
     elseif sym == :q
         @smart_assert(0 < val < 1)
     end
@@ -552,34 +547,33 @@ end
 
 mutable struct LoadingsSettings{T1 <: Real}
     method::Symbol
-    criterion::Union{Symbol, Function}
+    criterion::Union{Symbol,Function}
     threshold::T1
     pcr_settings::PCRSettings
 end
 function LoadingsSettings(; method::Symbol = :FReg,
-                          criterion::Union{Symbol, Function} = :pval,
-                          threshold::Real = 0.05,
+                          criterion::Union{Symbol,Function} = :pval, threshold::Real = 0.05,
                           pcr_settings::PCRSettings = PCRSettings(;),)
-    @assert(method ∈ FSMethods, "method = $method, must be one of $FSMethods")
-    @assert(criterion ∈ RegCriteria, "criterion = $criterion, must be one of $RegCriteria")
+    @smart_assert(method in FSMethods)
+    @smart_assert(criterion in RegCriteria)
     return LoadingsSettings{typeof(threshold)}(method, criterion, threshold, pcr_settings)
 end
 function Base.setproperty!(obj::LoadingsSettings, sym::Symbol, val)
     if sym == :method
-        @smart_assert(val ∈ FSMethods, "$sym = $val, must be one of $FSMethods")
+        @smart_assert(val in FSMethods)
     elseif sym == :criterion
-        @smart_assert(val ∈ RegCriteria, "$sym = $val, must be one of $RegCriteria")
+        @smart_assert(val in RegCriteria)
     end
     return setfield!(obj, sym, val)
 end
 
 mutable struct FactorSettings
-    B::Union{DataFrame, Nothing}
+    B::Union{DataFrame,Nothing}
     loadings_settings::LoadingsSettings
     error::Bool
     var_genfunc::GenericFunc
 end
-function FactorSettings(; B::Union{DataFrame, Nothing} = nothing,
+function FactorSettings(; B::Union{DataFrame,Nothing} = nothing,
                         loadings_settings::LoadingsSettings = LoadingsSettings(;),
                         error::Bool = true,
                         var_genfunc::GenericFunc = GenericFunc(; func = StatsBase.var,
@@ -592,7 +586,7 @@ mutable struct BLSettings{T1 <: Real}
     constant::Bool
     diagonal::Bool
     eq::Bool
-    delta::Union{Nothing, <:Real}
+    delta::Union{Nothing,<:Real}
     rf::T1
     var_genfunc::GenericFunc
 end
@@ -600,13 +594,13 @@ function BLSettings(; method::Symbol = :B, constant::Bool = true, eq::Bool = tru
                     diagonal::Bool = true, delta::Real = 1.0, rf::Real = 0.0,
                     var_genfunc::GenericFunc = GenericFunc(; func = StatsBase.var,
                                                            kwargs = (; dims = 1)),)
-    @assert(method ∈ BLFMMethods, "method = $method, must be one of $BLFMMethods")
+    @smart_assert(method in BLFMMethods)
 
     return BLSettings{typeof(rf)}(method, constant, eq, diagonal, delta, rf, var_genfunc)
 end
 function Base.setproperty!(obj::BLSettings, sym::Symbol, val)
     if sym == :method
-        @smart_assert(val ∈ BLFMMethods, "$sym = $val, must be one of $BLFMMethods")
+        @smart_assert(val in BLFMMethods)
     end
     return setfield!(obj, sym, val)
 end

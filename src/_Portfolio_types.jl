@@ -252,18 +252,17 @@ $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer pro
 """
 mutable struct Portfolio{
                          # Portfolio characteristics
-                         ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tretf, l,                         # Risk parameters
-                         msvt, lpmt, ai, a, as, bi, b, bs, k, mnak,                         # Benchmark constraints
-                         to, tobw, kte, te, rbi, bw, blbw,                         # Risk and return constraints
-                         ami, bvi, rbv, ler, ud, umad, usd, ucvar, uwr, uflpm, uslpm, umd,
-                         uad, ucdar, uuci, uevar, uedar, urvar, urdar, uk, usk, ugmd, ur,
-                         urcvar, utg, urtg, uowa,                         # Cusom OWA weights
+                         ast,dat,r,s,us,ul,mnea,mna,mnaf,tfa,tfdat,tretf,l,                         # Risk parameters
+                         msvt,lpmt,ai,a,as,bi,b,bs,k,mnak,                         # Benchmark constraints
+                         to,tobw,kte,te,rbi,bw,blbw,                         # Risk and return constraints
+                         ami,bvi,rbv,ler,ud,umad,usd,ucvar,uwr,uflpm,uslpm,umd,uad,ucdar,
+                         uuci,uevar,uedar,urvar,urdar,uk,usk,ugmd,ur,urcvar,utg,urtg,uowa,                         # Cusom OWA weights
                          wowa,
                          # Optimisation model inputs
-                         tmu, tcov, tkurt, tskurt, tl2, ts2, tmuf, tcovf, tmufm, tcovfm,
-                         tmubl, tcovbl, tmublf, tcovblf, trfm, tcovl, tcovu, tcovmu, tcovs,
-                         tdmu, tkmu, tks, topt, tz, tlim, tfront, tsolv, tf, toptpar, tmod,                         # Allocation
-                         tlp, taopt, tasolv, taoptpar, taf, tamod} <: AbstractPortfolio
+                         tmu,tcov,tkurt,tskurt,tl2,ts2,tmuf,tcovf,tmufm,tcovfm,tmubl,tcovbl,
+                         tmublf,tcovblf,trfm,tcovl,tcovu,tcovmu,tcovs,tdmu,tkmu,tks,topt,tz,
+                         tlim,tfront,tsolv,tf,toptpar,tmod,                         # Allocation
+                         tlp,taopt,tasolv,taoptpar,taf,tamod} <: AbstractPortfolio
     # Portfolio characteristics
     assets::ast
     timestamps::dat
@@ -508,102 +507,102 @@ $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer pro
     [Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016). Parsimonious modeling with information filtering networks. Physical Review E, 94(6), 062306.](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.94.062306)
 """
 function Portfolio(;                   # Portfolio characteristics
-                   prices::TimeArray                                 = TimeArray(TimeType[], []),
-                   returns::DataFrame                                = DataFrame(),
-                   ret::AbstractMatrix{<:Real}                       = Matrix{Float64}(undef, 0, 0),
-                   timestamps::AbstractVector                        = Vector{Date}(undef, 0),
-                   assets::AbstractVector                            = Vector{String}(undef, 0),
-                   short::Bool                                       = false,
-                   short_u::Real                                     = 0.2,
-                   long_u::Real                                      = 1.0,
-                   min_number_effective_assets::Integer              = 0,
-                   max_number_assets::Integer                        = 0,
-                   max_number_assets_factor::Real                    = 100_000.0,
-                   f_prices::TimeArray                               = TimeArray(TimeType[], []),
-                   f_returns::DataFrame                              = DataFrame(),
-                   f_ret::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   f_timestamps::AbstractVector                      = Vector{Date}(undef, 0),
-                   f_assets::AbstractVector                          = Vector{String}(undef, 0),
-                   loadings::AbstractMatrix{<:Real}                  = Matrix{Float64}(undef, 0, 0),                   # Risk parameters
-                   msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
-                   lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
-                   alpha_i::Real                                     = 0.0001,
-                   alpha::Real                                       = 0.05,
-                   a_sim::Integer                                    = 100,
-                   beta_i::Real                                      = alpha_i,
-                   beta::Real                                        = alpha,
-                   b_sim::Integer                                    = a_sim,
-                   kappa::Real                                       = 0.3,
-                   max_num_assets_kurt::Integer                      = 0,                   # Benchmark constraints
-                   turnover::Real                                    = Inf,
-                   turnover_weights::AbstractVector{<:Real}          = Vector{Float64}(undef, 0),
-                   kind_tracking_err::Symbol                         = :Weights,
-                   tracking_err::Real                                = Inf,
-                   tracking_err_returns::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
-                   tracking_err_weights::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
-                   bl_bench_weights::AbstractVector{<:Real}          = Vector{Float64}(undef, 0),                   # Risk and return constraints
-                   a_mtx_ineq::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
-                   b_vec_ineq::AbstractVector{<:Real}                = Vector{Float64}(undef, 0),
-                   risk_budget::AbstractVector{<:Real}               = Vector{Float64}(undef, 0),                   # Bounds constraints
-                   mu_l::Real                                        = Inf,
-                   sd_u::Real                                        = Inf,
-                   mad_u::Real                                       = Inf,
-                   ssd_u::Real                                       = Inf,
-                   cvar_u::Real                                      = Inf,
-                   wr_u::Real                                        = Inf,
-                   flpm_u::Real                                      = Inf,
-                   slpm_u::Real                                      = Inf,
-                   mdd_u::Real                                       = Inf,
-                   add_u::Real                                       = Inf,
-                   cdar_u::Real                                      = Inf,
-                   uci_u::Real                                       = Inf,
-                   evar_u::Real                                      = Inf,
-                   edar_u::Real                                      = Inf,
-                   rvar_u::Real                                      = Inf,
-                   rdar_u::Real                                      = Inf,
-                   kurt_u::Real                                      = Inf,
-                   skurt_u::Real                                     = Inf,
-                   gmd_u::Real                                       = Inf,
-                   rg_u::Real                                        = Inf,
-                   rcvar_u::Real                                     = Inf,
-                   tg_u::Real                                        = Inf,
-                   rtg_u::Real                                       = Inf,
-                   owa_u::Real                                       = Inf,                   # Custom OWA weights
-                   owa_w::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),                   # Model statistics
-                   mu::AbstractVector                                = Vector{Float64}(undef, 0),
-                   cov::AbstractMatrix{<:Real}                       = Matrix{Float64}(undef, 0, 0),
-                   kurt::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
-                   skurt::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   mu_f::AbstractVector{<:Real}                      = Vector{Float64}(undef, 0),
-                   cov_f::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   mu_fm::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
-                   cov_fm::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
-                   mu_bl::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
-                   cov_bl::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
-                   mu_bl_fm::AbstractVector{<:Real}                  = Vector{Float64}(undef, 0),
-                   cov_bl_fm::AbstractMatrix{<:Real}                 = Matrix{Float64}(undef, 0, 0),
-                   returns_fm::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),                   # Inputs of Worst Case Optimization Models
-                   cov_l::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   cov_u::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   cov_mu::AbstractMatrix{<:Real}                    = Diagonal{Float64}(undef, 0),
-                   cov_sigma::AbstractMatrix{<:Real}                 = Diagonal{Float64}(undef, 0),
-                   d_mu::AbstractVector{<:Real}                      = Vector{Float64}(undef, 0),
-                   k_mu::Real                                        = Inf,
-                   k_sigma::Real                                     = Inf,                   # Optimal portfolios
-                   optimal::AbstractDict                             = Dict(),
-                   z::AbstractDict                                   = Dict(),
-                   limits::AbstractDict                              = Dict(),
-                   frontier::AbstractDict                            = Dict(),                   # Solutions
-                   solvers::Union{<:AbstractDict, NamedTuple}        = Dict(),
-                   opt_params::Union{<:AbstractDict, NamedTuple}     = Dict(),
-                   fail::AbstractDict                                = Dict(),
-                   model::JuMP.Model                                 = JuMP.Model(),                   # Allocation
-                   latest_prices::AbstractVector{<:Real}             = Vector{Float64}(undef, 0),
-                   alloc_optimal::AbstractDict                       = Dict(),
-                   alloc_solvers::Union{<:AbstractDict, NamedTuple}  = Dict(),
-                   alloc_params::Union{<:AbstractDict, NamedTuple}   = Dict(),
-                   alloc_fail::AbstractDict                          = Dict(),
-                   alloc_model::JuMP.Model                           = JuMP.Model(),)
+                   prices::TimeArray                                = TimeArray(TimeType[], []),
+                   returns::DataFrame                               = DataFrame(),
+                   ret::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
+                   timestamps::AbstractVector                       = Vector{Date}(undef, 0),
+                   assets::AbstractVector                           = Vector{String}(undef, 0),
+                   short::Bool                                      = false,
+                   short_u::Real                                    = 0.2,
+                   long_u::Real                                     = 1.0,
+                   min_number_effective_assets::Integer             = 0,
+                   max_number_assets::Integer                       = 0,
+                   max_number_assets_factor::Real                   = 100_000.0,
+                   f_prices::TimeArray                              = TimeArray(TimeType[], []),
+                   f_returns::DataFrame                             = DataFrame(),
+                   f_ret::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
+                   f_timestamps::AbstractVector                     = Vector{Date}(undef, 0),
+                   f_assets::AbstractVector                         = Vector{String}(undef, 0),
+                   loadings::AbstractMatrix{<:Real}                 = Matrix{Float64}(undef, 0, 0),                   # Risk parameters
+                   msv_target::Union{<:Real,AbstractVector{<:Real}} = Inf,
+                   lpm_target::Union{<:Real,AbstractVector{<:Real}} = Inf,
+                   alpha_i::Real                                    = 0.0001,
+                   alpha::Real                                      = 0.05,
+                   a_sim::Integer                                   = 100,
+                   beta_i::Real                                     = alpha_i,
+                   beta::Real                                       = alpha,
+                   b_sim::Integer                                   = a_sim,
+                   kappa::Real                                      = 0.3,
+                   max_num_assets_kurt::Integer                     = 0,                   # Benchmark constraints
+                   turnover::Real                                   = Inf,
+                   turnover_weights::AbstractVector{<:Real}         = Vector{Float64}(undef, 0),
+                   kind_tracking_err::Symbol                        = :Weights,
+                   tracking_err::Real                               = Inf,
+                   tracking_err_returns::AbstractVector{<:Real}     = Vector{Float64}(undef, 0),
+                   tracking_err_weights::AbstractVector{<:Real}     = Vector{Float64}(undef, 0),
+                   bl_bench_weights::AbstractVector{<:Real}         = Vector{Float64}(undef, 0),                   # Risk and return constraints
+                   a_mtx_ineq::AbstractMatrix{<:Real}               = Matrix{Float64}(undef, 0, 0),
+                   b_vec_ineq::AbstractVector{<:Real}               = Vector{Float64}(undef, 0),
+                   risk_budget::AbstractVector{<:Real}              = Vector{Float64}(undef, 0),                   # Bounds constraints
+                   mu_l::Real                                       = Inf,
+                   sd_u::Real                                       = Inf,
+                   mad_u::Real                                      = Inf,
+                   ssd_u::Real                                      = Inf,
+                   cvar_u::Real                                     = Inf,
+                   wr_u::Real                                       = Inf,
+                   flpm_u::Real                                     = Inf,
+                   slpm_u::Real                                     = Inf,
+                   mdd_u::Real                                      = Inf,
+                   add_u::Real                                      = Inf,
+                   cdar_u::Real                                     = Inf,
+                   uci_u::Real                                      = Inf,
+                   evar_u::Real                                     = Inf,
+                   edar_u::Real                                     = Inf,
+                   rvar_u::Real                                     = Inf,
+                   rdar_u::Real                                     = Inf,
+                   kurt_u::Real                                     = Inf,
+                   skurt_u::Real                                    = Inf,
+                   gmd_u::Real                                      = Inf,
+                   rg_u::Real                                       = Inf,
+                   rcvar_u::Real                                    = Inf,
+                   tg_u::Real                                       = Inf,
+                   rtg_u::Real                                      = Inf,
+                   owa_u::Real                                      = Inf,                   # Custom OWA weights
+                   owa_w::AbstractVector{<:Real}                    = Vector{Float64}(undef, 0),                   # Model statistics
+                   mu::AbstractVector                               = Vector{Float64}(undef, 0),
+                   cov::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
+                   kurt::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
+                   skurt::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
+                   mu_f::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
+                   cov_f::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
+                   mu_fm::AbstractVector{<:Real}                    = Vector{Float64}(undef, 0),
+                   cov_fm::AbstractMatrix{<:Real}                   = Matrix{Float64}(undef, 0, 0),
+                   mu_bl::AbstractVector{<:Real}                    = Vector{Float64}(undef, 0),
+                   cov_bl::AbstractMatrix{<:Real}                   = Matrix{Float64}(undef, 0, 0),
+                   mu_bl_fm::AbstractVector{<:Real}                 = Vector{Float64}(undef, 0),
+                   cov_bl_fm::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
+                   returns_fm::AbstractMatrix{<:Real}               = Matrix{Float64}(undef, 0, 0),                   # Inputs of Worst Case Optimization Models
+                   cov_l::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
+                   cov_u::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
+                   cov_mu::AbstractMatrix{<:Real}                   = Diagonal{Float64}(undef, 0),
+                   cov_sigma::AbstractMatrix{<:Real}                = Diagonal{Float64}(undef, 0),
+                   d_mu::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
+                   k_mu::Real                                       = Inf,
+                   k_sigma::Real                                    = Inf,                   # Optimal portfolios
+                   optimal::AbstractDict                            = Dict(),
+                   z::AbstractDict                                  = Dict(),
+                   limits::AbstractDict                             = Dict(),
+                   frontier::AbstractDict                           = Dict(),                   # Solutions
+                   solvers::Union{<:AbstractDict,NamedTuple}        = Dict(),
+                   opt_params::Union{<:AbstractDict,NamedTuple}     = Dict(),
+                   fail::AbstractDict                               = Dict(),
+                   model::JuMP.Model                                = JuMP.Model(),                   # Allocation
+                   latest_prices::AbstractVector{<:Real}            = Vector{Float64}(undef, 0),
+                   alloc_optimal::AbstractDict                      = Dict(),
+                   alloc_solvers::Union{<:AbstractDict,NamedTuple}  = Dict(),
+                   alloc_params::Union{<:AbstractDict,NamedTuple}   = Dict(),
+                   alloc_fail::AbstractDict                         = Dict(),
+                   alloc_model::JuMP.Model                          = JuMP.Model(),)
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
         latest_prices = Vector(dropmissing!(DataFrame(prices))[end, colnames(prices)])
@@ -614,8 +613,7 @@ function Portfolio(;                   # Portfolio characteristics
         timestamps = returns[!, "timestamp"]
         returns = Matrix(returns[!, assets])
     else
-        @assert(length(assets) == size(ret, 2),
-                "each column of returns must correspond to an asset")
+        @smart_assert(length(assets) == size(ret, 2))
         returns = ret
     end
 
@@ -628,205 +626,170 @@ function Portfolio(;                   # Portfolio characteristics
         f_timestamps = f_returns[!, "timestamp"]
         f_returns = Matrix(f_returns[!, f_assets])
     else
-        @assert(length(f_assets) == size(f_ret, 2),
-                "each column of factor returns must correspond to a factor asset")
+        @smart_assert(length(f_assets) == size(f_ret, 2))
         f_returns = f_ret
     end
 
-    @assert(min_number_effective_assets >= 0,
-            "min_number_effective_assets = $min_number_effective_assets, must be greater than or equal to 0")
-    @assert(max_number_assets >= 0,
-            "max_number_assets = $max_number_assets, must be greater than or equal to 0")
-    @assert(max_number_assets_factor >= 0,
-            "max_number_assets_factor = $max_number_assets_factor, must be greater than or equal to 0")
-    @assert(0 < alpha_i < alpha < 1,
-            "0 < alpha_i < alpha < 1: 0 < $alpha_i < $alpha < 1, must hold")
-    @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
-    @assert(0 < beta_i < beta < 1,
-            "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold")
-    @assert(b_sim > zero(b_sim), "b_sim = $b_sim, must be greater than or equal to zero")
-    @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
-    @assert(max_num_assets_kurt >= 0,
-            "max_num_assets_kurt = $max_num_assets_kurt must be greater than or equal to zero")
+    @smart_assert(min_number_effective_assets >= 0)
+    @smart_assert(max_number_assets >= 0)
+    @smart_assert(max_number_assets_factor >= 0)
+    @smart_assert(0 < alpha_i < alpha < 1)
+    @smart_assert(a_sim > zero(a_sim))
+    @smart_assert(0 < beta_i < beta < 1)
+    @smart_assert(b_sim > zero(b_sim))
+    @smart_assert(0 < kappa < 1)
+    @smart_assert(max_num_assets_kurt >= 0)
     if !isempty(turnover_weights)
-        @assert(length(turnover_weights) == size(returns, 2),
-                "length(turnover_weights) = $(turnover_weights) and size(returns, 2) = $(size(returns, 2)), must be equal")
+        @smart_assert(length(turnover_weights) == size(returns, 2))
     end
-    @assert(kind_tracking_err ∈ TrackingErrKinds,
-            "kind_tracking_err = $(kind_tracking_err), must be one of $TrackingErrKinds")
+    @smart_assert(kind_tracking_err in TrackingErrKinds)
     if !isempty(tracking_err_returns)
-        @assert(length(tracking_err_returns) == size(returns, 1),
-                "length(tracking_err_returns) = $tracking_err_returns and size(returns, 1) = $(size(returns, 1)), must be equal")
+        @smart_assert(length(tracking_err_returns) == size(returns, 1))
     end
     if !isempty(tracking_err_weights)
-        @assert(length(tracking_err_weights) == size(returns, 2),
-                "length(tracking_err_weights) = $tracking_err_weights and size(returns, 2) = $(size(returns, 2)), must be equal")
+        @smart_assert(length(tracking_err_weights) == size(returns, 2))
     end
     if !isempty(bl_bench_weights)
-        @assert(length(bl_bench_weights) == size(returns, 2),
-                "length(bl_bench_weights) = $bl_bench_weights and size(returns, 2) = $(size(returns, 2)), must be equal")
+        @smart_assert(length(bl_bench_weights) == size(returns, 2))
     end
     if !isempty(a_mtx_ineq)
-        @assert(size(a_mtx_ineq, 2) == size(returns, 2),
-                "size(a_mtx_ineq, 2) = a_mtx_ineq must have the same number of columns size(a_mtx_ineq, 2) = $(size(a_mtx_ineq, 2)), as there are assets, size(returns, 2) = $(size(returns, 2))")
+        @smart_assert(size(a_mtx_ineq, 2) == size(returns, 2))
     end
     if !isempty(risk_budget)
-        @assert(length(risk_budget) == size(returns, 2),
-                "length(risk_budget) = $(length(risk_budget)), and size(returns, 2) = $(size(returns, 2)) must be equal")
+        @smart_assert(length(risk_budget) == size(returns, 2))
     end
     if !isempty(owa_w)
-        @assert(length(owa_w) == size(returns, 1),
-                "length(owa_w) = $(length(owa_w)), and size(returns, 1) = $(size(returns, 1)) must be equal")
+        @smart_assert(length(owa_w) == size(returns, 1))
     end
     if !isempty(mu)
-        @assert(length(mu) == size(returns, 2),
-                "length(mu) = $(length(mu)), and size(returns, 2) = $(size(returns, 2)) must be equal")
+        @smart_assert(length(mu) == size(returns, 2))
     end
     if !isempty(cov)
-        @assert(size(cov, 1) == size(cov, 2) == size(returns, 2),
-                "cov must be a square matrix, size(cov) = $(size(cov)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))")
+        @smart_assert(size(cov, 1) == size(cov, 2) == size(returns, 2))
     end
     if !isempty(kurt)
-        @assert(size(kurt, 1) == size(kurt, 2) == size(returns, 2)^2,
-                "kurt must be a square matrix, size(kurt) = $(size(kurt)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2")
+        @smart_assert(size(kurt, 1) == size(kurt, 2) == size(returns, 2)^2)
     end
     if !isempty(skurt)
-        @assert(size(skurt, 1) == size(skurt, 2) == size(returns, 2)^2,
-                "skurt must be a square matrix, size(skurt) = $(size(skurt)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2")
+        @smart_assert(size(skurt, 1) == size(skurt, 2) == size(returns, 2)^2)
     end
     if !isempty(mu_f)
-        @assert(length(mu_f) == size(f_returns, 2),
-                "length(mu_f) = $(length(mu_f)), and size(f_returns, 2) = $(size(f_returns, 2)) must be equal")
+        @smart_assert(length(mu_f) == size(f_returns, 2))
     end
     if !isempty(cov_f)
-        @assert(size(cov_f, 1) == size(cov_f, 2) == size(f_returns, 2),
-                "cov_f must be a square matrix, size(cov_f) = $(size(cov_f)), with side length equal to the number of assets, size(f_returns, 2) = $(size(f_returns, 2))")
+        @smart_assert(size(cov_f, 1) == size(cov_f, 2) == size(f_returns, 2))
     end
     if !isempty(mu_fm)
-        @assert(length(mu_fm) == size(returns, 2),
-                "length(mu_fm) = $(length(mu_fm)), and size(returns, 2) = $(size(returns, 2)) must be equal")
+        @smart_assert(length(mu_fm) == size(returns, 2))
     end
     if !isempty(cov_fm)
-        @assert(size(cov_fm, 1) == size(cov_fm, 2) == size(returns, 2),
-                "cov_fm must be a square matrix, size(cov_fm) = $(size(cov_fm)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))")
+        @smart_assert(size(cov_fm, 1) == size(cov_fm, 2) == size(returns, 2))
     end
     if !isempty(mu_bl)
-        @assert(length(mu_bl) == size(returns, 2),
-                "length(mu_bl) = $(length(mu_bl)), and size(returns, 2) = $(size(returns, 2)) must be equal")
+        @smart_assert(length(mu_bl) == size(returns, 2))
     end
     if !isempty(cov_bl)
-        @assert(size(cov_bl, 1) == size(cov_bl, 2) == size(returns, 2),
-                "cov_bl must be a square matrix, size(cov_bl) = $(size(cov_bl)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))")
+        @smart_assert(size(cov_bl, 1) == size(cov_bl, 2) == size(returns, 2))
     end
     if !isempty(mu_bl_fm)
-        @assert(length(mu_bl_fm) == size(returns, 2),
-                "length(mu_bl_fm) = $(length(mu_bl_fm)), and size(returns, 2) = $(size(returns, 2)) must be equal")
+        @smart_assert(length(mu_bl_fm) == size(returns, 2))
     end
     if !isempty(cov_bl_fm)
-        @assert(size(cov_bl_fm, 1) == size(cov_bl_fm, 2) == size(returns, 2),
-                "cov_bl_fm must be a square matrix, size(cov_bl_fm) = $(size(cov_bl_fm)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))")
+        @smart_assert(size(cov_bl_fm, 1) == size(cov_bl_fm, 2) == size(returns, 2))
     end
     if !isempty(cov_l)
-        @assert(size(cov_l, 1) == size(cov_l, 2) == size(returns, 2),
-                "cov_l must be a square matrix, size(cov_l) = $(size(cov_l)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))")
+        @smart_assert(size(cov_l, 1) == size(cov_l, 2) == size(returns, 2))
     end
     if !isempty(cov_u)
-        @assert(size(cov_u, 1) == size(cov_u, 2) == size(returns, 2),
-                "cov_u must be a square matrix, size(cov_u) = $(size(cov_u)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))")
+        @smart_assert(size(cov_u, 1) == size(cov_u, 2) == size(returns, 2))
     end
     if !isempty(cov_mu)
-        @assert(size(cov_mu, 1) == size(cov_mu, 2) == size(returns, 2),
-                "cov_mu must be a square matrix, size(cov_mu) = $(size(cov_mu)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))")
+        @smart_assert(size(cov_mu, 1) == size(cov_mu, 2) == size(returns, 2))
     end
     if !isempty(cov_sigma)
-        @assert(size(cov_sigma, 1) == size(cov_sigma, 2) == size(returns, 2)^2,
-                "cov_sigma must be a square matrix, size(cov_sigma) = $(size(cov_sigma)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2")
+        @smart_assert(size(cov_sigma, 1) == size(cov_sigma, 2) == size(returns, 2)^2)
     end
     if !isempty(d_mu)
-        @assert(length(d_mu) == size(returns, 2),
-                "length(d_mu) = $(length(d_mu)), and size(returns, 2) = $(size(returns, 2)) must be equal")
+        @smart_assert(length(d_mu) == size(returns, 2))
     end
     if !isempty(latest_prices)
-        @assert(length(latest_prices) == size(returns, 2),
-                "length(latest_prices) = $(length(latest_prices)), and size(returns, 2) = $(size(returns, 2)) must be equal")
+        @smart_assert(length(latest_prices) == size(returns, 2))
     end
 
-    L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
-    S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
+    L_2 = SparseMatrixCSC{Float64,Int}(undef, 0, 0)
+    S_2 = SparseMatrixCSC{Float64,Int}(undef, 0, 0)
 
-    return Portfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(short),
-                     typeof(short_u), typeof(long_u), typeof(min_number_effective_assets),
-                     typeof(max_number_assets), typeof(max_number_assets_factor),
-                     typeof(f_assets), typeof(f_timestamps), typeof(f_returns),
+    return Portfolio{typeof(assets),typeof(timestamps),typeof(returns),typeof(short),
+                     typeof(short_u),typeof(long_u),typeof(min_number_effective_assets),
+                     typeof(max_number_assets),typeof(max_number_assets_factor),
+                     typeof(f_assets),typeof(f_timestamps),typeof(f_returns),
                      typeof(loadings),                     # Risk parameters
-                     Union{<:Real, AbstractVector{<:Real}},
-                     Union{<:Real, AbstractVector{<:Real}}, typeof(alpha_i), typeof(alpha),
-                     typeof(a_sim), typeof(beta_i), typeof(beta), typeof(b_sim),
-                     typeof(kappa), typeof(max_num_assets_kurt),                     # Benchmark constraints
-                     typeof(turnover), typeof(turnover_weights), typeof(kind_tracking_err),
-                     typeof(tracking_err), typeof(tracking_err_returns),
-                     typeof(tracking_err_weights), typeof(bl_bench_weights),                     # Risk and return constraints
-                     typeof(a_mtx_ineq), typeof(b_vec_ineq), typeof(risk_budget),
-                     typeof(mu_l), typeof(sd_u), typeof(mad_u), typeof(ssd_u),
-                     typeof(cvar_u), typeof(wr_u), typeof(flpm_u), typeof(slpm_u),
-                     typeof(mdd_u), typeof(add_u), typeof(cdar_u), typeof(uci_u),
-                     typeof(evar_u), typeof(edar_u), typeof(rvar_u), typeof(rdar_u),
-                     typeof(kurt_u), typeof(skurt_u), typeof(gmd_u), typeof(rg_u),
-                     typeof(rcvar_u), typeof(tg_u), typeof(rtg_u), typeof(owa_u),                     # Custom OWA weights
+                     Union{<:Real,AbstractVector{<:Real}},
+                     Union{<:Real,AbstractVector{<:Real}},typeof(alpha_i),typeof(alpha),
+                     typeof(a_sim),typeof(beta_i),typeof(beta),typeof(b_sim),typeof(kappa),
+                     typeof(max_num_assets_kurt),                     # Benchmark constraints
+                     typeof(turnover),typeof(turnover_weights),typeof(kind_tracking_err),
+                     typeof(tracking_err),typeof(tracking_err_returns),
+                     typeof(tracking_err_weights),typeof(bl_bench_weights),                     # Risk and return constraints
+                     typeof(a_mtx_ineq),typeof(b_vec_ineq),typeof(risk_budget),typeof(mu_l),
+                     typeof(sd_u),typeof(mad_u),typeof(ssd_u),typeof(cvar_u),typeof(wr_u),
+                     typeof(flpm_u),typeof(slpm_u),typeof(mdd_u),typeof(add_u),
+                     typeof(cdar_u),typeof(uci_u),typeof(evar_u),typeof(edar_u),
+                     typeof(rvar_u),typeof(rdar_u),typeof(kurt_u),typeof(skurt_u),
+                     typeof(gmd_u),typeof(rg_u),typeof(rcvar_u),typeof(tg_u),typeof(rtg_u),
+                     typeof(owa_u),                     # Custom OWA weights
                      typeof(owa_w),                     # Model statistics
-                     typeof(mu), typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2),
-                     typeof(S_2), typeof(mu_f), typeof(cov_f), typeof(mu_fm),
-                     typeof(cov_fm), typeof(mu_bl), typeof(cov_bl), typeof(mu_bl_fm),
-                     typeof(cov_bl_fm), typeof(returns_fm),                     # Inputs of Worst Case Optimization Models
-                     typeof(cov_l), typeof(cov_u), typeof(cov_mu), typeof(cov_sigma),
-                     typeof(d_mu), typeof(k_mu), typeof(k_sigma),                     # Optimal portfolios
-                     typeof(optimal), typeof(z), typeof(limits), typeof(frontier),                     # Solutions
-                     Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                     typeof(fail), typeof(model),                     # Allocation
-                     typeof(latest_prices), typeof(alloc_optimal),
-                     Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                     typeof(alloc_fail), typeof(alloc_model)}(
-                                                              # Portfolio characteristics
-                                                              assets, timestamps, returns,
-                                                              short, short_u, long_u,
-                                                              min_number_effective_assets,
-                                                              max_number_assets,
-                                                              max_number_assets_factor,
-                                                              f_assets, f_timestamps,
-                                                              f_returns, loadings,                                          # Risk parameters
-                                                              msv_target, lpm_target,
-                                                              alpha_i, alpha, a_sim, beta_i,
-                                                              beta, b_sim, kappa,
-                                                              max_num_assets_kurt,                                          # Benchmark constraints
-                                                              turnover, turnover_weights,
-                                                              kind_tracking_err,
-                                                              tracking_err,
-                                                              tracking_err_returns,
-                                                              tracking_err_weights,
-                                                              bl_bench_weights,                                          # Risk and return constraints
-                                                              a_mtx_ineq, b_vec_ineq,
-                                                              risk_budget, mu_l, sd_u,
-                                                              mad_u, ssd_u, cvar_u, wr_u,
-                                                              flpm_u, slpm_u, mdd_u, add_u,
-                                                              cdar_u, uci_u, evar_u, edar_u,
-                                                              rvar_u, rdar_u, kurt_u,
-                                                              skurt_u, gmd_u, rg_u, rcvar_u,
-                                                              tg_u, rtg_u, owa_u,                                          # Custom OWA weights
-                                                              owa_w,                                          # Model statistics
-                                                              mu, cov, kurt, skurt, L_2,
-                                                              S_2, mu_f, cov_f, mu_fm,
-                                                              cov_fm, mu_bl, cov_bl,
-                                                              mu_bl_fm, cov_bl_fm,
-                                                              returns_fm,                                          # Inputs of Worst Case Optimization Models
-                                                              cov_l, cov_u, cov_mu,
-                                                              cov_sigma, d_mu, k_mu,
-                                                              k_sigma,                                          # Optimal portfolios
-                                                              optimal, z, limits, frontier,                                          # Solutions
-                                                              solvers, opt_params, fail,
-                                                              model,                                          # Allocation
-                                                              latest_prices, alloc_optimal,
-                                                              alloc_solvers, alloc_params,
-                                                              alloc_fail, alloc_model)
+                     typeof(mu),typeof(cov),typeof(kurt),typeof(skurt),typeof(L_2),
+                     typeof(S_2),typeof(mu_f),typeof(cov_f),typeof(mu_fm),typeof(cov_fm),
+                     typeof(mu_bl),typeof(cov_bl),typeof(mu_bl_fm),typeof(cov_bl_fm),
+                     typeof(returns_fm),                     # Inputs of Worst Case Optimization Models
+                     typeof(cov_l),typeof(cov_u),typeof(cov_mu),typeof(cov_sigma),
+                     typeof(d_mu),typeof(k_mu),typeof(k_sigma),                     # Optimal portfolios
+                     typeof(optimal),typeof(z),typeof(limits),typeof(frontier),                     # Solutions
+                     Union{<:AbstractDict,NamedTuple},Union{<:AbstractDict,NamedTuple},
+                     typeof(fail),typeof(model),                     # Allocation
+                     typeof(latest_prices),typeof(alloc_optimal),
+                     Union{<:AbstractDict,NamedTuple},Union{<:AbstractDict,NamedTuple},
+                     typeof(alloc_fail),typeof(alloc_model)}(
+                                                             # Portfolio characteristics
+                                                             assets, timestamps, returns,
+                                                             short, short_u, long_u,
+                                                             min_number_effective_assets,
+                                                             max_number_assets,
+                                                             max_number_assets_factor,
+                                                             f_assets, f_timestamps,
+                                                             f_returns, loadings,                                          # Risk parameters
+                                                             msv_target, lpm_target,
+                                                             alpha_i, alpha, a_sim, beta_i,
+                                                             beta, b_sim, kappa,
+                                                             max_num_assets_kurt,                                          # Benchmark constraints
+                                                             turnover, turnover_weights,
+                                                             kind_tracking_err,
+                                                             tracking_err,
+                                                             tracking_err_returns,
+                                                             tracking_err_weights,
+                                                             bl_bench_weights,                                          # Risk and return constraints
+                                                             a_mtx_ineq, b_vec_ineq,
+                                                             risk_budget, mu_l, sd_u, mad_u,
+                                                             ssd_u, cvar_u, wr_u, flpm_u,
+                                                             slpm_u, mdd_u, add_u, cdar_u,
+                                                             uci_u, evar_u, edar_u, rvar_u,
+                                                             rdar_u, kurt_u, skurt_u, gmd_u,
+                                                             rg_u, rcvar_u, tg_u, rtg_u,
+                                                             owa_u,                                          # Custom OWA weights
+                                                             owa_w,                                          # Model statistics
+                                                             mu, cov, kurt, skurt, L_2, S_2,
+                                                             mu_f, cov_f, mu_fm, cov_fm,
+                                                             mu_bl, cov_bl, mu_bl_fm,
+                                                             cov_bl_fm, returns_fm,                                          # Inputs of Worst Case Optimization Models
+                                                             cov_l, cov_u, cov_mu,
+                                                             cov_sigma, d_mu, k_mu, k_sigma,                                          # Optimal portfolios
+                                                             optimal, z, limits, frontier,                                          # Solutions
+                                                             solvers, opt_params, fail,
+                                                             model,                                          # Allocation
+                                                             latest_prices, alloc_optimal,
+                                                             alloc_solvers, alloc_params,
+                                                             alloc_fail, alloc_model)
 end
 
 function Base.getproperty(obj::Portfolio, sym::Symbol)
@@ -857,109 +820,91 @@ end
 
 function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
     if sym == :alpha_i
-        @assert(0 < val < obj.alpha < 1,
-                "0 < alpha_i < alpha < 1: 0 < $val < $(obj.alpha) < 1 must hold")
+        @smart_assert(0 < val < obj.alpha < 1)
     elseif sym == :alpha
-        @assert(0 < obj.alpha_i < val < 1,
-                "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold")
+        @smart_assert(0 < obj.alpha_i < val < 1)
     elseif sym == :a_sim
-        @assert(val > zero(val), "a_sim = $val, must be greater than zero")
+        @smart_assert(val > zero(val))
     elseif sym == :beta
-        @assert(0 < obj.beta_i < val < 1,
-                "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold")
+        @smart_assert(0 < obj.beta_i < val < 1)
     elseif sym == :beta_i
-        @assert(0 < val < obj.beta < 1,
-                "0 < beta_i < beta < 1: : 0 < $val < $(obj.beta) < 1 must hold")
+        @smart_assert(0 < val < obj.beta < 1)
     elseif sym == :b_sim
-        @assert(val > zero(val), "b_sim = $val, must be greater than zero")
+        @smart_assert(val > zero(val))
     elseif sym == :kappa
-        @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
+        @smart_assert(0 < val < 1)
     elseif sym == :max_num_assets_kurt
-        @assert(val >= 0,
-                "max_num_assets_kurt = $val must be greater than or equal to zero")
+        @smart_assert(val >= 0)
     elseif sym == :turnover_weights
         if !isempty(val)
-            @assert(length(val) == size(obj.returns, 2),
-                    "length(turnover_weights) = $val and size(returns, 2) = $(size(obj.returns, 2)), must be equal")
+            @smart_assert(length(val) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :kind_tracking_err
-        @assert(val ∈ TrackingErrKinds,
-                "kind_tracking_err = $(val), must be one of $TrackingErrKinds")
+        @smart_assert(val in TrackingErrKinds)
     elseif sym == :tracking_err_returns
         if !isempty(val)
-            @assert(length(val) == size(obj.returns, 1),
-                    "length(tracking_err_returns) = $val and size(returns, 1) = $(size(obj.returns, 1)), must be equal")
+            @smart_assert(length(val) == size(obj.returns, 1))
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :tracking_err_weights
         if !isempty(val)
-            @assert(length(val) == size(obj.returns, 2),
-                    "length(tracking_err_weights) = $val and size(returns, 2) = $(size(obj.returns, 2)), must be equal")
+            @smart_assert(length(val) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :a_mtx_ineq
         if !isempty(val)
-            @assert(size(val, 2) == size(obj.returns, 2),
-                    "size(a_mtx_ineq, 2) = a_mtx_ineq must have the same number of columns size(a_mtx_ineq, 2) = $(size(val, 2)), as there are assets, size(returns, 2) = $(size(obj.returns, 2))")
+            @smart_assert(size(val, 2) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :owa_w
         if !isempty(val)
-            @assert(length(val) == size(obj.returns, 1),
-                    "length(owa_w) = $val and size(returns, 1) = $(size(obj.returns, 1)), must be equal")
+            @smart_assert(length(val) == size(obj.returns, 1))
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :mu_f
         if !isempty(val)
-            @assert(length(val) == size(obj.f_returns, 2),
-                    "length(mu_f) = $(length(val)), and size(f_returns, 2) = $(size(obj.f_returns, 2)) must be equal")
+            @smart_assert(length(val) == size(obj.f_returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :cov_f
         if !isempty(val)
-            @assert(size(val, 1) == size(val, 2) == size(obj.f_returns, 2),
-                    "cov_f must be a square matrix, size(cov_f) = $(size(val)), with side length equal to the number of assets, size(f_returns, 2) = $(size(obj.f_returns, 2))")
+            @smart_assert(size(val, 1) == size(val, 2) == size(obj.f_returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (:L_2, :S_2)
+    elseif sym in (:L_2, :S_2)
         if !isempty(val)
             N = size(obj.returns, 2)
-            @assert(size(val) == (Int(N * (N + 1) / 2), N^2),
-                    "size($sym) == $(size(val)), must be equal to (N * (N + 1) / 2, N^2) = $((Int(N * (N + 1) / 2), N^2)), where N = size(obj.returns, 2) = $N")
+            @smart_assert(size(val) == (Int(N * (N + 1) / 2), N^2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (:risk_budget, :bl_bench_weights)
+    elseif sym in (:risk_budget, :bl_bench_weights)
         if isempty(val)
             N = size(obj.returns, 2)
             val = fill(1 / N, N)
         else
-            @assert(length(val) == size(obj.returns, 2),
-                    "length($sym) == size(obj.returns, 2) must hold: $(length(val)) == $(size(obj.returns, 2))")
+            @smart_assert(length(val) == size(obj.returns, 2))
             isa(val, AbstractRange) ? (val = collect(val / sum(val))) : (val ./= sum(val))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈
+    elseif sym in
            (:min_number_effective_assets, :max_number_assets, :max_number_assets_factor)
-        @assert(val >= 0, "$sym = $val, must be greater than or equal to 0")
-    elseif sym ∈ (:kurt, :skurt, :cov_sigma)
+        @smart_assert(val >= 0)
+    elseif sym in (:kurt, :skurt, :cov_sigma)
         if !isempty(val)
-            @assert(size(val, 1) == size(val, 2) == size(obj.returns, 2)^2,
-                    "$sym must be a square matrix, size($sym) = $(size(val)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(obj.returns, 2))^2")
+            @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2)^2)
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns)
+    elseif sym in (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns)
         throw(ArgumentError("$sym is related to other fields and therefore cannot be manually changed without compromising correctness, please create a new instance of Portfolio instead"))
-    elseif sym ∈ (:mu, :mu_fm, :mu_bl, :mu_bl_fm, :d_mu, :latest_prices)
+    elseif sym in (:mu, :mu_fm, :mu_bl, :mu_bl_fm, :d_mu, :latest_prices)
         if !isempty(val)
-            @assert(length(val) == size(obj.returns, 2),
-                    "length($sym) = $(length(val)), and size(returns, 2) = $(size(obj.returns, 2)) must be equal")
+            @smart_assert(length(val) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (:cov, :cov_fm, :cov_bl, :cov_bl_fm, :cov_l, :cov_u, :cov_mu)
+    elseif sym in (:cov, :cov_fm, :cov_bl, :cov_bl_fm, :cov_l, :cov_u, :cov_mu)
         if !isempty(val)
-            @assert(size(val, 1) == size(val, 2) == size(obj.returns, 2),
-                    "$sym must be a square matrix, size($sym) = $(size(val)), with side length equal to the number of assets, size(returns, 2) = $(size(obj.returns, 2))")
+            @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
 
@@ -1075,14 +1020,13 @@ $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer pro
 - `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate_port!`](@ref)"))
 - `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
 """
-mutable struct HCPortfolio{ast, dat, r,                           # Risk parmeters
-                           ai, a, as, bi, b, bs, k, ata, mnak,                           # Custom OWA weights
+mutable struct HCPortfolio{ast,dat,r,                           # Risk parmeters
+                           ai,a,as,bi,b,bs,k,ata,mnak,                           # Custom OWA weights
                            wowa,                           # Optimisation parameters
-                           tmu, tcov, tkurt, tskurt, tl2, ts2, tbin, wmi, wma, ttco, tco,
-                           tdist, tcl, tk,                           # Optimal portfolios
+                           tmu,tcov,tkurt,tskurt,tl2,ts2,tbin,wmi,wma,ttco,tco,tdist,tcl,tk,                           # Optimal portfolios
                            topt,                           # Solutions
-                           tsolv, toptpar, tf,                           # Allocation
-                           tlp, taopt, tasolv, taoptpar, taf, tamod} <: AbstractPortfolio
+                           tsolv,toptpar,tf,                           # Allocation
+                           tlp,taopt,tasolv,taoptpar,taf,tamod} <: AbstractPortfolio
     # Portfolio characteristics
     assets::ast
     timestamps::dat
@@ -1208,9 +1152,9 @@ function HCPortfolio(;                     # Portfolio characteristics
                      cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-                     bins_info::Union{Symbol, <:Integer} = :KN,
-                     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
-                     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
+                     bins_info::Union{Symbol,<:Integer} = :KN,
+                     w_min::Union{<:Real,AbstractVector{<:Real}} = 0.0,
+                     w_max::Union{<:Real,AbstractVector{<:Real}} = 1.0,
                      cor_method::Symbol = :Pearson,
                      cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -1220,13 +1164,13 @@ function HCPortfolio(;                     # Portfolio characteristics
                                                                    :nothing),
                      k::Integer = 0,                     # Optimal portfolios
                      optimal::AbstractDict = Dict(),                     # Solutions
-                     solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
-                     opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),
+                     solvers::Union{<:AbstractDict,NamedTuple} = Dict(),
+                     opt_params::Union{<:AbstractDict,NamedTuple} = Dict(),
                      fail::AbstractDict = Dict(),                     # Allocation
                      latest_prices::AbstractVector = Vector{Float64}(undef, 0),
                      alloc_optimal::AbstractDict = Dict(),
-                     alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
-                     alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),
+                     alloc_solvers::Union{<:AbstractDict,NamedTuple} = Dict(),
+                     alloc_params::Union{<:AbstractDict,NamedTuple} = Dict(),
                      alloc_fail::AbstractDict = Dict(),
                      alloc_model::JuMP.Model = JuMP.Model(),)
     if !isempty(prices)
@@ -1239,179 +1183,142 @@ function HCPortfolio(;                     # Portfolio characteristics
         timestamps = returns[!, "timestamp"]
         returns = Matrix(returns[!, assets])
     else
-        @assert(length(assets) == size(ret, 2),
-                "each column of returns must correspond to an asset")
+        @smart_assert(length(assets) == size(ret, 2))
         returns = ret
     end
 
-    @assert(0 < alpha_i < alpha < 1,
-            "0 < alpha_i < alpha < 1: 0 < $alpha_i < $alpha < 1, must hold")
-    @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
-    @assert(0 < beta_i < beta < 1,
-            "0 < beta_i < beta < 1: 0 < $beta_i < $beta < 1, must hold")
-    @assert(b_sim > zero(b_sim), "b_sim = $b_sim, must be greater than or equal to zero")
-    @assert(0 < kappa < 1, "kappa = $(kappa), must be greater than 0 and less than 1")
-    @assert(0 < alpha_tail < 1,
-            "alpha_tail = $alpha_tail, must be greater than 0 and less than 1")
-    @assert(max_num_assets_kurt >= 0,
-            "max_num_assets_kurt = $max_num_assets_kurt must be greater than or equal to zero")
+    @smart_assert(0 < alpha_i < alpha < 1)
+    @smart_assert(a_sim > zero(a_sim))
+    @smart_assert(0 < beta_i < beta < 1)
+    @smart_assert(b_sim > zero(b_sim))
+    @smart_assert(0 < kappa < 1)
+    @smart_assert(0 < alpha_tail < 1)
+    @smart_assert(max_num_assets_kurt >= 0)
     if !isempty(owa_w)
-        @assert(length(owa_w) == size(returns, 1),
-                "length(owa_w) = $(length(owa_w)), and size(returns, 1) = $(size(returns, 1)) must be equal")
+        @smart_assert(length(owa_w) == size(returns, 1))
     end
     if !isempty(mu)
-        @assert(length(mu) == size(returns, 2),
-                "length(mu) = $(length(mu)), and size(returns, 2) = $(size(returns, 2)) must be equal")
+        @smart_assert(length(mu) == size(returns, 2))
     end
     if !isempty(cov)
-        @assert(size(cov, 1) == size(cov, 2) == size(returns, 2),
-                "cov must be a square matrix, size(cov) = $(size(cov)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))")
+        @smart_assert(size(cov, 1) == size(cov, 2) == size(returns, 2))
     end
     if !isempty(kurt)
-        @assert(size(kurt, 1) == size(kurt, 2) == size(returns, 2)^2,
-                "kurt must be a square matrix, size(kurt) = $(size(kurt)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2")
+        @smart_assert(size(kurt, 1) == size(kurt, 2) == size(returns, 2)^2)
     end
     if !isempty(skurt)
-        @assert(size(skurt, 1) == size(skurt, 2) == size(returns, 2)^2,
-                "skurt must be a square matrix, size(skurt) = $(size(skurt)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(returns, 2))^2")
+        @smart_assert(size(skurt, 1) == size(skurt, 2) == size(returns, 2)^2)
     end
-    @assert(bins_info ∈ BinMethods || isa(bins_info, Int) && bins_info > zero(bins_info),
-            "bins_info = $bins_info, has to either be in $BinMethods, or an integer value greater than 0")
+    @smart_assert(bins_info in BinMethods ||
+                  (isa(bins_info, Int) && bins_info > zero(bins_info)))
     if isa(w_min, Real)
-        @assert(zero(w_min) <= w_min <= one(w_min) && all(w_min .<= w_max),
-                "0 .<= w_min .<= w_max .<= 1: 0 .<= $w_min .<= $w_max .<= 1, must be true")
+        @smart_assert(zero(w_min) <= w_min <= one(w_min) && all(w_min .<= w_max))
     elseif isa(w_min, AbstractVector)
         if !isempty(w_min)
-            @assert(length(w_min) == size(returns, 2) &&
-                    all(x -> zero(eltype(w_min)) <= x <= one(eltype(w_min)), w_min) &&
-                    begin
-                        try
-                            all(w_min .<= w_max)
-                        catch DimensionMismatch
-                            false
-                        end
-                    end,
-                    "length(w_min) = $(length(w_min)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)); all entries must be greater than or equal to zero, and less than or equal to one all(x -> 0 <= x <= 1, w_min) = $(all(x -> zero(eltype(w_min)) <= x <= one(eltype(w_min)), w_min)); and all(w_min .<= w_max) = $(begin
-    try
-        all(w_min .<= w_max)
-    catch DimensionMismatch
-        false
-    end
-end)")
+            @smart_assert(length(w_min) == size(returns, 2) &&
+                          all(x -> zero(eltype(w_min)) <= x <= one(eltype(w_min)), w_min) &&
+                          begin
+                              try
+                                  all(w_min .<= w_max)
+                              catch DimensionMismatch
+                                  false
+                              end
+                          end)
         end
     end
     if isa(w_max, Real)
-        @assert(zero(w_max) <= w_max <= one(w_max) && all(w_min .<= w_max),
-                "0 .<= w_min .<= w_max .<= 1: 0 .<= $w_min .<= $w_max .<= 1, must be true")
+        @smart_assert(zero(w_max) <= w_max <= one(w_max) && all(w_min .<= w_max))
     elseif isa(w_max, AbstractVector)
         if !isempty(w_max)
-            @assert(length(w_max) == size(returns, 2) &&
-                    all(x -> zero(eltype(w_max)) <= x <= one(eltype(w_max)), w_max) &&
-                    begin
-                        try
-                            all(w_min .<= w_max)
-                        catch DimensionMismatch
-                            false
-                        end
-                    end,
-                    "length(w_max) = $(length(w_max)) must be equal to the number of assets size(returns, 2) = $(size(returns, 2)); all entries must be greater than or equal to zero, and less than or equal to one all(x -> 0 <= x <= 1, w_max) = $(all(x -> zero(eltype(w_max)) <= x <= one(eltype(w_max)), w_max)); and all(w_min .<= w_max) = $(begin
-    try
-        all(w_min .<= w_max)
-    catch DimensionMismatch
-        false
-    end
-end)")
+            @smart_assert(length(w_max) == size(returns, 2) &&
+                          all(x -> zero(eltype(w_max)) <= x <= one(eltype(w_max)), w_max) &&
+                          begin
+                              try
+                                  all(w_min .<= w_max)
+                              catch DimensionMismatch
+                                  false
+                              end
+                          end)
         end
     end
-    @assert(cor_method ∈ CorMethods, "cor_method = $cor_method, must be one of $CorMethods")
+    @smart_assert(cor_method in CorMethods)
     if !isempty(cor)
-        @assert(size(cor, 1) == size(cor, 2) == size(returns, 2),
-                "cor must be a square matrix, size(cor) = $(size(cor)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))")
+        @smart_assert(size(cor, 1) == size(cor, 2) == size(returns, 2))
     end
     if !isempty(dist)
-        @assert(size(dist, 1) == size(dist, 2) == size(returns, 2),
-                "dist must be a square matrix, size(dist) = $(size(dist)), with side length equal to the number of assets, size(returns, 2) = $(size(returns, 2))")
+        @smart_assert(size(dist, 1) == size(dist, 2) == size(returns, 2))
     end
-    @assert(k >= zero(k), "a_sim = $k, must be greater than or equal to zero")
+    @smart_assert(k >= zero(k))
     if !isempty(latest_prices)
-        @assert(length(latest_prices) == size(returns, 2),
-                "length(latest_prices) = $(length(latest_prices)), and size(returns, 2) = $(size(returns, 2)) must be equal")
+        @smart_assert(length(latest_prices) == size(returns, 2))
     end
 
-    L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
-    S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
+    L_2 = SparseMatrixCSC{Float64,Int}(undef, 0, 0)
+    S_2 = SparseMatrixCSC{Float64,Int}(undef, 0, 0)
 
-    return HCPortfolio{typeof(assets), typeof(timestamps), typeof(returns),                       # Risk parmeters
-                       typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i),
-                       typeof(beta), typeof(b_sim), typeof(kappa), typeof(alpha_tail),
+    return HCPortfolio{typeof(assets),typeof(timestamps),typeof(returns),                       # Risk parmeters
+                       typeof(alpha_i),typeof(alpha),typeof(a_sim),typeof(beta_i),
+                       typeof(beta),typeof(b_sim),typeof(kappa),typeof(alpha_tail),
                        typeof(max_num_assets_kurt),                       # Custom OWA weights
                        typeof(owa_w),                       # Optimisation parameters
-                       typeof(mu), typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2),
-                       typeof(S_2), Union{Symbol, <:Integer},
-                       Union{<:Real, AbstractVector{<:Real}},
-                       Union{<:Real, AbstractVector{<:Real}}, typeof(cor_method),
-                       typeof(cor), typeof(dist), typeof(clusters), typeof(k),                       # Optimal portfolios
+                       typeof(mu),typeof(cov),typeof(kurt),typeof(skurt),typeof(L_2),
+                       typeof(S_2),Union{Symbol,<:Integer},
+                       Union{<:Real,AbstractVector{<:Real}},
+                       Union{<:Real,AbstractVector{<:Real}},typeof(cor_method),typeof(cor),
+                       typeof(dist),typeof(clusters),typeof(k),                       # Optimal portfolios
                        typeof(optimal),                       # Solutions
-                       Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
+                       Union{<:AbstractDict,NamedTuple},Union{<:AbstractDict,NamedTuple},
                        typeof(fail),                       # Allocation
-                       typeof(latest_prices), typeof(alloc_optimal),
-                       Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                       typeof(alloc_fail), typeof(alloc_model)}(assets, timestamps, returns,                                            # Risk parmeters
-                                                                alpha_i, alpha, a_sim,
-                                                                beta_i, beta, b_sim, kappa,
-                                                                alpha_tail,
-                                                                max_num_assets_kurt,                                            # Custom OWA weights
-                                                                owa_w,                                            # Optimisation parameters
-                                                                mu, cov, kurt, skurt, L_2,
-                                                                S_2, bins_info, w_min,
-                                                                w_max, cor_method, cor,
-                                                                dist, clusters, k,                                            # Optimal portfolios
-                                                                optimal,                                            # Solutions
-                                                                solvers, opt_params, fail,                                            # Allocation
-                                                                latest_prices,
-                                                                alloc_optimal,
-                                                                alloc_solvers, alloc_params,
-                                                                alloc_fail, alloc_model)
+                       typeof(latest_prices),typeof(alloc_optimal),
+                       Union{<:AbstractDict,NamedTuple},Union{<:AbstractDict,NamedTuple},
+                       typeof(alloc_fail),typeof(alloc_model)}(assets, timestamps, returns,                                            # Risk parmeters
+                                                               alpha_i, alpha, a_sim,
+                                                               beta_i, beta, b_sim, kappa,
+                                                               alpha_tail,
+                                                               max_num_assets_kurt,                                            # Custom OWA weights
+                                                               owa_w,                                            # Optimisation parameters
+                                                               mu, cov, kurt, skurt, L_2,
+                                                               S_2, bins_info, w_min, w_max,
+                                                               cor_method, cor, dist,
+                                                               clusters, k,                                            # Optimal portfolios
+                                                               optimal,                                            # Solutions
+                                                               solvers, opt_params, fail,                                            # Allocation
+                                                               latest_prices, alloc_optimal,
+                                                               alloc_solvers, alloc_params,
+                                                               alloc_fail, alloc_model)
 end
 
 function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
     if sym == :alpha_i
-        @assert(0 < val < obj.alpha < 1,
-                "0 < alpha_i < alpha < 1: 0 < $val < $(obj.alpha) < 1 must hold")
+        @smart_assert(0 < val < obj.alpha < 1)
     elseif sym == :alpha
-        @assert(0 < obj.alpha_i < val < 1,
-                "0 < alpha_i < alpha < 1: 0 < $(obj.alpha_i) < $val < 1, must hold")
+        @smart_assert(0 < obj.alpha_i < val < 1)
     elseif sym == :a_sim
-        @assert(val > zero(val), "a_sim = $val, must be greater than zero")
+        @smart_assert(val > zero(val))
     elseif sym == :beta
-        @assert(0 < obj.beta_i < val < 1,
-                "0 < beta_i < beta < 1: 0 < $(obj.beta_i) < $val < 1, must hold")
+        @smart_assert(0 < obj.beta_i < val < 1)
     elseif sym == :beta_i
-        @assert(0 < val < obj.beta < 1,
-                "0 < beta_i < beta < 1: : 0 < $val < $(obj.beta) < 1 must hold")
+        @smart_assert(0 < val < obj.beta < 1)
     elseif sym == :b_sim
-        @assert(val > zero(val), "b_sim = $val, must be greater than zero")
+        @smart_assert(val > zero(val))
     elseif sym == :kappa
-        @assert(0 < val < 1, "kappa = $(val), must be greater than 0 and smaller than 1")
+        @smart_assert(0 < val < 1)
     elseif sym == :alpha_tail
-        @assert(0 < val < 1, "alpha_tail = $val, must be greater than 0 and less than 1")
+        @smart_assert(0 < val < 1)
     elseif sym == :max_num_assets_kurt
-        @assert(val >= 0,
-                "max_num_assets_kurt = $val must be greater than or equal to zero")
+        @smart_assert(val >= 0)
     elseif sym == :owa_w
         if !isempty(val)
-            @assert(length(val) == size(obj.returns, 1),
-                    "length(owa_w) = $val and size(returns, 1) = $(size(obj.returns, 1)), must be equal")
+            @smart_assert(length(val) == size(obj.returns, 1))
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :bins_info
-        @assert(val ∈ BinMethods || isa(val, Int) && val > zero(val),
-                "bins_info = $val, has to either be in $BinMethods, or an integer value greater than 0")
+        @smart_assert(val in BinMethods || isa(val, Int) && val > zero(val))
     elseif sym == :cor_method
-        @assert(val ∈ CorMethods, "cor_method = $val, must be one of $CorMethods")
+        @smart_assert(val in CorMethods)
     elseif sym == :k
-        @assert(val >= zero(val), "k = $val, must be greater than or equal to zero")
-    elseif sym ∈ (:w_min, :w_max)
+        @smart_assert(val >= zero(val))
+    elseif sym in (:w_min, :w_max)
         if sym == :w_min
             smin = sym
             smax = :w_max
@@ -1425,26 +1332,18 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         end
 
         if isa(val, Real)
-            @assert(zero(val) <= val <= one(val) && all(vmin .<= vmax),
-                    "0 .<= w_min .<= w_max .<= 1: 0 .<= $vmin .<= $vmax .<= 1, must be true")
+            @smart_assert(zero(val) <= val <= one(val) && all(vmin .<= vmax))
         elseif isa(val, AbstractVector)
             if !isempty(val)
-                @assert(length(val) == size(obj.returns, 2) &&
-                        all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val) &&
-                        begin
-                            try
-                                all(vmin .<= vmax)
-                            catch DimensionMismatch
-                                false
-                            end
-                        end,
-                        "length(w_min) = $(length(val)) must be equal to the number of assets size(returns, 2) = $(size(obj.returns, 2)); all entries must be greater than or equal to zero all(x -> 0 <= x <= 1, val) = $(all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val)); and all(w_min .<= w_max) = $(begin
-    try
-        all(vmin .<= vmax)
-    catch DimensionMismatch
-        false
-    end
-end)")
+                @smart_assert(length(val) == size(obj.returns, 2) &&
+                              all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val) &&
+                              begin
+                                  try
+                                      all(vmin .<= vmax)
+                                  catch DimensionMismatch
+                                      false
+                                  end
+                              end)
 
                 if isa(getfield(obj, sym), AbstractVector) &&
                    !isa(getfield(obj, sym), AbstractRange)
@@ -1456,29 +1355,25 @@ end)")
                 end
             end
         end
-    elseif sym ∈ (:mu, :latest_prices)
+    elseif sym in (:mu, :latest_prices)
         if !isempty(val)
-            @assert(length(val) == size(obj.returns, 2),
-                    "length($sym) = $(length(val)), and size(returns, 2) = $(size(obj.returns, 2)) must be equal")
+            @smart_assert(length(val) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (:kurt, :skurt)
+    elseif sym in (:kurt, :skurt)
         if !isempty(val)
-            @assert(size(val, 1) == size(val, 2) == size(obj.returns, 2)^2,
-                    "$sym must be a square matrix, size($sym) = $(size(val)), with side length equal to the number of assets squared, size(returns, 2)^2 = $(size(obj.returns, 2))^2")
+            @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2)^2)
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (:L_2, :S_2)
+    elseif sym in (:L_2, :S_2)
         if !isempty(val)
             N = size(obj.returns, 2)
-            @assert(size(val) == (Int(N * (N + 1) / 2), N^2),
-                    "size($sym) == $(size(val)), must be equal to (N * (N + 1) / 2, N^2) = $((Int(N * (N + 1) / 2), N^2)), where N = size(obj.returns, 2) = $N")
+            @smart_assert(size(val) == (Int(N * (N + 1) / 2), N^2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (:cov, :cor, :dist)
+    elseif sym in (:cov, :cor, :dist)
         if !isempty(val)
-            @assert(size(val, 1) == size(val, 2) == size(obj.returns, 2),
-                    "$sym must be a square matrix, size($sym) = $(size(val)), with side length equal to the number of assets, size(returns, 2) = $(size(obj.returns, 2))")
+            @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
     else

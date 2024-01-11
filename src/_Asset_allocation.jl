@@ -23,8 +23,7 @@ function _setup_alloc_optim(weights, short_ratio, investment, reinvest)
         (short_ratio = -sum(weights[short_idx]))
     end
 
-    @assert(short_ratio >= 0,
-            "short ratio = $short_ratio, must be bigger than or equal to zero")
+    @smart_assert(short_ratio >= 0)
 
     short_investment = investment * short_ratio
     long_investment = investment
@@ -352,13 +351,12 @@ function allocate_port!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad
                         short_ratio = nothing, string_names = false,
                         save_opt_params = true,)
     if isa(portfolio, Portfolio)
-        @assert(port_type ∈ PortTypes, "port_type = $port_type, must be one of $PortTypes")
+        @smart_assert(port_type in PortTypes)
     else
-        @assert(port_type ∈ HCPortTypes,
-                "port_type = $port_type, must be one of $HCPortTypes")
+        @smart_assert(port_type in HCPortTypes)
     end
 
-    @assert(alloc_type ∈ AllocTypes, "alloc_type = $alloc_type, must be one of $AllocTypes")
+    @smart_assert(alloc_type in AllocTypes)
 
     retval, leftover = if alloc_type == :LP
         _lp_allocation!(portfolio, port_type, latest_prices, investment, reinvest,

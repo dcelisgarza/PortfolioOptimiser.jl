@@ -23,8 +23,8 @@ Constructs a Triangulated Maximally Filtered Graph (TMFG) starting from a tetrah
 function PMFG_T2s(W::AbstractMatrix{<:Real}, nargout::Integer = 3)
     N = size(W, 1)
 
-    @assert(N >= 9, "W Matrix too small")
-    @assert(all(W .>= 0), "W Matrix has negative elements")
+    @smart_assert(N >= 9)
+    @smart_assert(all(W .>= 0))
 
     A = spzeros(N, N)  # Initialize adjacency matrix
     in_v = zeros(Int, N)    # Initialize list of inserted vertices
@@ -550,7 +550,7 @@ Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy 
 [^NHPG]: [Song, W. M., Di Matteo, T., & Aste, T. (2011). Nested hierarchies in planar graphs. Discrete Applied Mathematics, 159(17), 2135-2146.](https://www.sciencedirect.com/science/article/pii/S0166218X11002794)
 """
 function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Unique)
-    @assert(method ∈ DBHTRootMethods, "method = $method, must be one of $DBHTRootMethods")
+    @smart_assert(method in DBHTRootMethods)
     N = size(Apm, 1)
     A = Apm .!= 0
     K3, E, clique = clique3(A)
@@ -811,7 +811,7 @@ end
 ```julia
 DendroConstruct(Zi::AbstractMatrix{<:Real}, LabelVec1::AbstractVector{<:Real},
                 LabelVec2::AbstractVector{<:Real},
-                LinkageDist::Union{<:Real, AbstractVector{<:Real}})
+                LinkageDist::Union{<:Real,AbstractVector{<:Real}})
 ```
 
 Construct the linkage matrix by continuially adding rows to the matrix.
@@ -828,7 +828,7 @@ Construct the linkage matrix by continuially adding rows to the matrix.
 """
 function DendroConstruct(Zi::AbstractMatrix{<:Real}, LabelVec1::AbstractVector{<:Real},
                          LabelVec2::AbstractVector{<:Real},
-                         LinkageDist::Union{<:Real, AbstractVector{<:Real}})
+                         LinkageDist::Union{<:Real,AbstractVector{<:Real}})
     indx = LabelVec1 .!= LabelVec2
     Z = vcat(Zi, hcat(transpose(sort!(unique(LabelVec1[indx]))), LinkageDist))
     return Z
@@ -1081,10 +1081,9 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
 """
 function DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real};
                branchorder::Symbol = :optimal, method::Symbol = :Unique,)
-    @assert(branchorder ∈ BranchOrderTypes,
-            "branchorder = $branchorder, must be one of $BranchOrderTypes")
-    @assert(issymmetric(D), "D must be symmetric")
-    @assert(issymmetric(S), "S must be symmetric")
+    @smart_assert(branchorder in BranchOrderTypes)
+    @smart_assert(issymmetric(D))
+    @smart_assert(issymmetric(S))
 
     Rpm = PMFG_T2s(S)[1]
     Apm = copy(Rpm)

@@ -231,7 +231,7 @@ Compute the Value at Risk, used in [`CVaR`](@ref).
 \\mathrm{VaR}(\\bm{x},\\, \\alpha) = -\\underset{t \\in (0,\\, T)}{\\inf} \\left\\{ x_{t} \\in \\mathbb{R} : F_{\\bm{x}}(x_{t}) > \\alpha \\right\\}\\,,```
 # Inputs
 - `x`: vector of portfolio returns.
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 ```
 """
 function VaR(x::AbstractVector, alpha::Real = 0.05)
@@ -252,7 +252,7 @@ Compute the Conditional Value at Risk.
 where ``\\mathrm{VaR}(\\bm{x},\\, \\alpha)`` is the value at risk as defined in [`VaR`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 ```
 """
 function CVaR(x::AbstractVector, alpha::Real = 0.05)
@@ -313,7 +313,7 @@ Compute the Entropic Risk Measure.
 where ``M_{\\bm{x}}\\left(z^{-1}\\right)`` is the moment generating function of ``\\bm{x}``.
 # Inputs
 - `x`: vector.
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 - `z`: free parameter.
 ```julia
 ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
@@ -329,17 +329,17 @@ where ``\\mathcal{K}_{\\exp}`` is the exponential cone.
 # Inputs
 - `x`: vector.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 
 """
 function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
-    @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and smaller than 1")
+    @smart_assert(0 < alpha < 1)
     val = mean(exp.(-x / z))
     val = z * log(val / alpha)
     return val
 end
 function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
-    @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and smaller than 1")
+    @smart_assert(0 < alpha < 1)
 
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
@@ -376,7 +376,7 @@ where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure 
 # Inputs
 - `x`: vector of portfolio returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 """
 function EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     return ERM(x, solvers, alpha)
@@ -401,13 +401,13 @@ where ``\\ln_{\\kappa}(x) = \\dfrac{x^{\\kappa} - x^{-\\kappa}}{2 \\kappa}`` and
 # Inputs
 - `x`: vector.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
 function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
              kappa::Real = 0.3)
-    @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and smaller than 1")
-    @assert(0 < kappa < 1, "kappa = $kappa, must be greater than 0 and smaller than 1")
+    @smart_assert(0 < alpha < 1)
+    @smart_assert(0 < kappa < 1)
 
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
@@ -461,7 +461,7 @@ where ``\\mathrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa)`` is the Relativistic Ris
 # Inputs
 - `x`: vector of portfolio returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
 function RVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
@@ -486,7 +486,7 @@ Compute the Drawdown at Risk of uncompounded cumulative returns.
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha`: significance level, alpha ∈ (0, 1).
+  - `alpha`: significance level, alpha in (0, 1).
 """
 function DaR_abs(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
@@ -583,7 +583,7 @@ Compute the Conditional Drawdown at Risk of uncompounded cumulative returns.
 where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref), and ``\\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 ```
 """
 function CDaR_abs(x::AbstractVector, alpha::Real = 0.05)
@@ -656,7 +656,7 @@ where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure 
 # Inputs
 - `x`: vector of portfolio returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 """
 function EDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     pushfirst!(x, 1)
@@ -685,7 +685,7 @@ where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is th
 # Inputs
 - `x`: vector of portfolio returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
 function RDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
@@ -721,7 +721,7 @@ Compute the Drawdown at Risk of compounded cumulative returns.
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha`: significance level, alpha ∈ (0, 1).
+  - `alpha`: significance level, alpha in (0, 1).
 """
 function DaR_rel(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
@@ -818,7 +818,7 @@ Compute the Conditional Drawdown at Risk of compounded cumulative returns.
 where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref), and ``\\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`DaR_rel`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 ```
 """
 function CDaR_rel(x::AbstractVector, alpha::Real = 0.05)
@@ -891,7 +891,7 @@ where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure 
 # Inputs
 - `x`: vector of portfolio returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
 function EDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
@@ -921,7 +921,7 @@ where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is th
 # Inputs
 - `x`: vector of portfolio returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
-- `alpha`: significance level, alpha ∈ (0, 1).
+- `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
 function RDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
@@ -1028,8 +1028,8 @@ Compute the CVaR Range.
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha`: significance level of CVaR losses, `alpha ∈ (0, 1)`.
-  - `beta`: significance level of CVaR gains, `beta ∈ (0, 1)`.
+  - `alpha`: significance level of CVaR losses, `alpha in (0, 1)`.
+  - `beta`: significance level of CVaR gains, `beta in (0, 1)`.
 """
 function RCVaR(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
     T = length(x)
@@ -1048,7 +1048,7 @@ Compute the Tail Gini.
 
   - `x`: vector of portfolio returns.
   - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
-  - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
+  - `alpha`: end value of the significance level of CVaR losses, `alpha in (0, 1)`.
   - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
 """
 function TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100)
@@ -1069,10 +1069,10 @@ Compute the Tail Gini Range.
 
   - `x`: vector of portfolio returns.
   - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
-  - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
+  - `alpha`: end value of the significance level of CVaR losses, `alpha in (0, 1)`.
   - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
   - `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
-  - `beta`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`.
+  - `beta`: end value of the significance level of CVaR gains, `beta in (0, 1)`.
   - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 """
 function RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
@@ -1129,12 +1129,12 @@ Compute the value of a risk measure given a vector of asset weights and returns.
 - `rf`: risk-free rate at the frequency of `returns`, used as the minimum return target, `r`, in [`FLPM`](@ref) and [`SLPM`](@ref).
 - `sigma`: covariance matrix of asset returns.
 - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
-- `alpha`: `alpha ∈ (0, 1)`
+- `alpha`: `alpha in (0, 1)`
     - if `rm` *is not* an OWA range measure: significance level; 
     - if `rm` *is* an OWA range measure: end value of the significance level of CVaR losses.
 - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
 - `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
-- `beta`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`.
+- `beta`: end value of the significance level of CVaR gains, `beta in (0, 1)`.
 - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone` and `MOI.PowerCone` respectively"))
 ```julia
@@ -1154,8 +1154,8 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
                    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                    kappa::Real = 0.3,
                    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                   solvers::Union{<:AbstractDict, Nothing} = nothing,)
-    @assert(rm ∈ HCRiskMeasures, "rm = $rm, must be one of $HCRiskMeasures")
+                   solvers::Union{<:AbstractDict,Nothing} = nothing,)
+    @smart_assert(rm in HCRiskMeasures)
 
     x = (rm != :Variance || rm != :SD) && returns * w
 
@@ -1239,9 +1239,9 @@ function calc_risk(portfolio::AbstractPortfolio;
                    rm::Symbol = :SD, rf::Real = 0.0,
                    owa_w::AbstractVector{<:Real} = portfolio.owa_w,)
     if isa(portfolio, Portfolio)
-        @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
+        @smart_assert(type in PortTypes)
     else
-        @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+        @smart_assert(type in HCPortTypes)
     end
 
     return calc_risk(portfolio.optimal[type].weights, portfolio.returns; rm = rm, rf = rf,
@@ -1254,7 +1254,7 @@ end
 
 function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i, beta,
                   a_sim, beta_i, b_sim, owa_w, di)
-    @assert(rm ∈ HCRiskMeasures, "rm = $rm, must be one of $HCRiskMeasures")
+    @smart_assert(rm in HCRiskMeasures)
 
     a1 = returns * w1
     a2 = returns * w2
@@ -1376,7 +1376,7 @@ function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbo
                            beta_i::Real = alpha_i, beta::Real = alpha,
                            b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
                            owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                           solvers::Union{<:AbstractDict, Nothing} = nothing,)
+                           solvers::Union{<:AbstractDict,Nothing} = nothing,)
     ew = eltype(w)
     rc = zeros(ew, length(w))
     w1 = zeros(ew, length(w))
@@ -1410,9 +1410,9 @@ function risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
                                Vector{Float64}(undef, 0)
                            end,)
     if isa(portfolio, Portfolio)
-        @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
+        @smart_assert(type in PortTypes)
     else
-        @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+        @smart_assert(type in HCPortTypes)
     end
 
     return risk_contribution(portfolio.optimal[type].weights, portfolio.returns; rm = rm,
@@ -1429,7 +1429,7 @@ function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMa
                       alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100,
                       beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                       kappa::Real = 0.3, owa_w = Vector{Float64}(undef, 0),
-                      solvers::Union{<:AbstractDict, Nothing} = nothing,)
+                      solvers::Union{<:AbstractDict,Nothing} = nothing,)
     ret = dot(mu, w)
 
     risk = calc_risk(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
@@ -1448,9 +1448,9 @@ function sharpe_ratio(portfolio::AbstractPortfolio;
                           Vector{Float64}(undef, 0)
                       end,)
     if isa(portfolio, Portfolio)
-        @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
+        @smart_assert(type in PortTypes)
     else
-        @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+        @smart_assert(type in HCPortTypes)
     end
 
     return sharpe_ratio(portfolio.optimal[type].weights, portfolio.mu, portfolio.returns;
