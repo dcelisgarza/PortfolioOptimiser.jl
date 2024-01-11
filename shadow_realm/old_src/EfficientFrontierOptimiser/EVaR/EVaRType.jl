@@ -18,22 +18,16 @@ struct EffEVaR{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
     model::T14
 end
 
-function EffEVaR(tickers,
-                 mean_ret,
-                 returns;
-                 weight_bounds = (0.0, 1.0),
-                 beta = 0.95,
-                 rf = 1.02^(1 / 252) - 1,
-                 market_neutral = false,
-                 risk_aversion = 1.0,
+function EffEVaR(tickers, mean_ret, returns; weight_bounds = (0.0, 1.0), beta = 0.95,
+                 rf = 1.02^(1 / 252) - 1, market_neutral = false, risk_aversion = 1.0,
                  target_risk = mean(maximum(returns; dims = 2)),
-                 target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
-                 extra_vars = [],
-                 extra_constraints = [],
-                 extra_obj_terms = [],)
+                 target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0, extra_vars = [],
+                 extra_constraints = [], extra_obj_terms = [],)
     num_tickers = length(tickers)
     @assert num_tickers == size(returns, 2)
-    !isnothing(mean_ret) && @assert(num_tickers == length(mean_ret))
+    if !isnothing(mean_ret)
+        @assert(num_tickers == length(mean_ret))
+    end
 
     weights = zeros(num_tickers)
 
@@ -56,12 +50,10 @@ function EffEVaR(tickers,
 
     # EVaR constraints.
     @constraint(model, sum_u_leq_s, sum(u) <= s)
-    @constraint(model,
-                evar_con[i = 1:samples],
+    @constraint(model, evar_con[i = 1:samples],
                 [-X[i] - t, s, u[i]] in MOI.ExponentialCone())
 
-    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers,
-                                                       weight_bounds)
+    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
 
     @constraint(model, lower_bounds, w .>= lower_bounds)
     @constraint(model, upper_bounds, w .<= upper_bounds)
@@ -80,21 +72,12 @@ function EffEVaR(tickers,
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
-    !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
+    if !isnothing(mean_ret)
+        @expression(model, ret, port_return(w, mean_ret))
+    end
     @expression(model, risk, t + s * log(1 / ((1 - beta) * samples)))
 
-    return EffEVaR(tickers,
-                   mean_ret,
-                   weights,
-                   returns,
-                   beta,
-                   rf,
-                   market_neutral,
-                   risk_aversion,
-                   target_risk,
-                   target_ret,
-                   extra_vars,
-                   extra_constraints,
-                   extra_obj_terms,
-                   model)
+    return EffEVaR(tickers, mean_ret, weights, returns, beta, rf, market_neutral,
+                   risk_aversion, target_risk, target_ret, extra_vars, extra_constraints,
+                   extra_obj_terms, model)
 end

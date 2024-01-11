@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/linear_constraints.jl"
 ```
@@ -8,8 +9,8 @@ EditURL = "../../../examples/linear_constraints.jl"
 This tutorial explains step by step how the constraint functions can be used to generate linear constraints. We also show how we can generate our own sets using clustering techniques.
 
 ````@example linear_constraints
-using Clustering,
-    CovarianceEstimation, CSV, DataFrames, PortfolioOptimiser, PrettyTables, TimeSeries
+using Clustering, CovarianceEstimation, CSV, DataFrames, PortfolioOptimiser, PrettyTables,
+      TimeSeries
 
 # This is a helper function for displaying tables
 # with numbers as percentages with 3 decimal points.
@@ -37,6 +38,7 @@ nothing #hide
 ````
 
 !!! warning
+    
     It is important that the asset order remains consistent accross all steps. If one wishes to sort the assets in a particular way, one should sort them immediately after importing them. This ensures everything is computed using the correct asset order.
 
 ## Defining asset classes with hierachical clustering
@@ -54,18 +56,17 @@ When we use `:Pearson` and `:Semi_Pearson` to compute the correlation, we're int
 ````@example linear_constraints
 asset_classes = DataFrame(:Assets => assets)
 cor_settings = CorSettings(;
-    estimation = CorEstSettings(;
-        estimator = CovarianceEstimation.AnalyticalNonlinearShrinkage(),
-        # `target_ret` is used as the return threshold for classifying returns as
-        # sufficiently bad as to be considered unappealing, and thus taken into
-        # account when computing the semi covariance. The default is 0, but we
-        # can make it any number. A good choice is to use the daily risk-free
-        # rate, because if an asset returns on average less than a bond, then
-        # you'd be better off buying bonds because they're both less risky and
-        # more profitable than the asset.
-        # target_ret = 1.0329^(1 / 252) - 1,
-    ),
-)
+                           estimation = CorEstSettings(;
+                                                       estimator = CovarianceEstimation.AnalyticalNonlinearShrinkage(),
+                                                       # `target_ret` is used as the return threshold for classifying returns as
+                                                       # sufficiently bad as to be considered unappealing, and thus taken into
+                                                       # account when computing the semi covariance. The default is 0, but we
+                                                       # can make it any number. A good choice is to use the daily risk-free
+                                                       # rate, because if an asset returns on average less than a bond, then
+                                                       # you'd be better off buying bonds because they're both less risky and
+                                                       # more profitable than the asset.
+                                                       # target_ret = 1.0329^(1 / 252) - 1,
+                                                       ),)
 for method in (:Pearson, :Semi_Pearson, :Gerber2)
     for linkage in (:ward, :DBHT)
         # We define our asset sets based on the covariance and linkage methods.
@@ -75,12 +76,12 @@ for method in (:Pearson, :Semi_Pearson, :Gerber2)
         cor_settings.method = method
 
         # Clusterise assets.
-        clustering, k =
-            cluster_assets(returns; linkage = linkage, cor_settings = cor_settings)
+        clustering, k = cluster_assets(returns; linkage = linkage,
+                                       cor_settings = cor_settings)
 
         # Cut the tree at k clusters and return the label each asset belongs to
         # in each set.
-        asset_classes[!, colname] = cutree(clustering, k = k)
+        asset_classes[!, colname] = cutree(clustering; k = k)
     end
 end
 
@@ -97,24 +98,21 @@ Say we want to ensure we have at least 3% of our portfolio allocated to `GOOG`, 
 
 ````@example linear_constraints
 constraints = DataFrame(
-    # Enable the constraint.
-    :Enabled => [true],
-    # We are constraining a single asset.
-    :Type => ["Assets"],
-    # The asset we're constraining.
-    :Position => [:GOOG],
-    # Greater than.
-    :Sign => [">="],
-    # Lower bound of the weight of the asset.
-    :Weight => [0.03],
-    # The following categories are not used for this
-    # example.
-    :Class_Set => [""],
-    :Relative_Type => [""],
-    :Relative_Class_Set => [""],
-    :Relative_Position => [""],
-    :Factor => [""],
-)
+                        # Enable the constraint.
+                        :Enabled => [true],
+                        # We are constraining a single asset.
+                        :Type => ["Assets"],
+                        # The asset we're constraining.
+                        :Position => [:GOOG],
+                        # Greater than.
+                        :Sign => [">="],
+                        # Lower bound of the weight of the asset.
+                        :Weight => [0.03],
+                        # The following categories are not used for this
+                        # example.
+                        :Class_Set => [""], :Relative_Type => [""],
+                        :Relative_Class_Set => [""], :Relative_Position => [""],
+                        :Factor => [""])
 
 A, B = asset_constraints(constraints, asset_classes);
 nothing #hide
@@ -137,22 +135,16 @@ Substituting these values into the linear constraint definition and removing all
 Now say we also don't want our portfolio to be more than 10 % `GOOG`. Here's how we can do so. Note how the only things that change are `:Sign` and `:Weight`.
 
 ````@example linear_constraints
-constraints = DataFrame(
-    :Enabled => [true],
-    :Type => ["Assets"],
-    :Position => [:GOOG],
-    # Less than or equal to.
-    :Sign => ["<="],
-    # Upper bound of the weight of the asset.
-    :Weight => [0.1],
-    # The following categories are not used for this
-    # example.
-    :Class_Set => [""],
-    :Relative_Type => [""],
-    :Relative_Class_Set => [""],
-    :Relative_Position => [""],
-    :Factor => [""],
-)
+constraints = DataFrame(:Enabled => [true], :Type => ["Assets"], :Position => [:GOOG],
+                        # Less than or equal to.
+                        :Sign => ["<="],
+                        # Upper bound of the weight of the asset.
+                        :Weight => [0.1],
+                        # The following categories are not used for this
+                        # example.
+                        :Class_Set => [""], :Relative_Type => [""],
+                        :Relative_Class_Set => [""], :Relative_Position => [""],
+                        :Factor => [""])
 
 A, B = asset_constraints(constraints, asset_classes);
 nothing #hide
@@ -179,28 +171,24 @@ By substituting these values into the definition of the linear constraints above
 We can also constrain an asset with respect to another one. For example, say we wish to ensure `:AAPL` contributes at least a factor of what `:T` contributes. Mathematically, the constraint can be written as ``w_{\mathrm{aapl}} \geq f w_{\mathrm{t}}``, where ``f`` is the factor. Here we use `0.5` as the factor.
 
 ````@example linear_constraints
-constraints = DataFrame(
-    :Enabled => [true],
-    # We want to constrain an asset.
-    :Type => ["Assets"],
-    # The asset we want to constrain.
-    :Position => [:AAPL],
-    # The the weight of the asset should
-    # be greater than or equal to something else.
-    :Sign => [">="],
-    # Should be greater than another asset.
-    :Relative_Type => ["Assets"],
-    # The name of the other asset.
-    :Relative_Position => [:T],
-    # The factor by which to multiply the
-    # weight of the other asset.
-    :Factor => [0.5],
-    # The following categories are not used
-    # for this example.
-    :Weight => [""],
-    :Class_Set => [""],
-    :Relative_Class_Set => [""],
-)
+constraints = DataFrame(:Enabled => [true],
+                        # We want to constrain an asset.
+                        :Type => ["Assets"],
+                        # The asset we want to constrain.
+                        :Position => [:AAPL],
+                        # The the weight of the asset should
+                        # be greater than or equal to something else.
+                        :Sign => [">="],
+                        # Should be greater than another asset.
+                        :Relative_Type => ["Assets"],
+                        # The name of the other asset.
+                        :Relative_Position => [:T],
+                        # The factor by which to multiply the
+                        # weight of the other asset.
+                        :Factor => [0.5],
+                        # The following categories are not used
+                        # for this example.
+                        :Weight => [""], :Class_Set => [""], :Relative_Class_Set => [""])
 
 A, B = asset_constraints(constraints, asset_classes);
 nothing #hide
@@ -221,28 +209,24 @@ B
 This pattern of `A` and `B` is the case for all relative constraints. The `anchor` asset/class will have its coeficient set to 1, the relative asset/class will be set to `-f`, and `B` will be 0. If the sign is `<=`, the values will be multiplied by -1. To illustrate this, we will constrain `:AMZN` to contribute at most twice of what `:GM` does.
 
 ````@example linear_constraints
-constraints = DataFrame(
-    :Enabled => [true],
-    # We want to constrain an asset.
-    :Type => ["Assets"],
-    # The asset we want to constrain.
-    :Position => [:AMZN],
-    # The the weight of the asset should
-    # be less than or equal to something else.
-    :Sign => ["<="],
-    # Should be greater than another asset.
-    :Relative_Type => ["Assets"],
-    # The name of the other asset.
-    :Relative_Position => [:GM],
-    # The factor by which to multiply the
-    # weight of the other asset.
-    :Factor => [2],
-    # The following categories are not used
-    # for this example.
-    :Weight => [""],
-    :Class_Set => [""],
-    :Relative_Class_Set => [""],
-)
+constraints = DataFrame(:Enabled => [true],
+                        # We want to constrain an asset.
+                        :Type => ["Assets"],
+                        # The asset we want to constrain.
+                        :Position => [:AMZN],
+                        # The the weight of the asset should
+                        # be less than or equal to something else.
+                        :Sign => ["<="],
+                        # Should be greater than another asset.
+                        :Relative_Type => ["Assets"],
+                        # The name of the other asset.
+                        :Relative_Position => [:GM],
+                        # The factor by which to multiply the
+                        # weight of the other asset.
+                        :Factor => [2],
+                        # The following categories are not used
+                        # for this example.
+                        :Weight => [""], :Class_Set => [""], :Relative_Class_Set => [""])
 
 A, B = asset_constraints(constraints, asset_classes);
 nothing #hide
@@ -255,331 +239,53 @@ hcat(asset_classes[!, :Assets], DataFrame(:A_t => vec(A)))
 
 ##########################################
 
-constraints = DataFrame(
-    :Enabled => [
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-    ],
-    :Type => [
-        "Assets",
-        "Assets",
-        "Assets",
-        "Assets",
-        "All Assets",
-        "All Assets",
-        "All Assets",
-        "All Assets",
-        "Assets",
-        "Assets",
-        "All Assets",
-        "All Assets",
-        "Classes",
-        "Classes",
-        "Classes",
-        "Classes",
-        "All Classes",
-        "All Classes",
-        "All Classes",
-        "All Classes",
-        "Classes",
-        "Classes",
-        "All Classes",
-        "All Classes",
-        "Each Asset in Class",
-        "Each Asset in Class",
-        "Each Asset in Class",
-        "Each Asset in Class",
-        "Each Asset in Class",
-        "Each Asset in Class",
-    ],
-    :Class_Set => [
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "PDBHT",
-        "PDBHT",
-        "SPDBHT",
-        "SPDBHT",
-        "G2DBHT",
-        "G2ward",
-        "PDBHT",
-        "SPDBHT",
-        "Pward",
-        "SPward",
-        "G2DBHT",
-        "G2ward",
-        "PDBHT",
-        "SPDBHT",
-        "SPward",
-        "G2DBHT",
-        "Pward",
-        "SPDBHT",
-    ],
-    :Position => [
-        "GOOG",
-        "GOOG",
-        "AMZN",
-        "AMZN",
-        "",
-        "",
-        "",
-        "",
-        "T",
-        "T",
-        "",
-        "",
-        3,
-        3,
-        4,
-        4,
-        "",
-        "",
-        "",
-        "",
-        1,
-        1,
-        "",
-        "",
-        2,
-        3,
-        4,
-        2,
-        3,
-        1,
-    ],
-    :Sign => [
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-        ">=",
-        "<=",
-    ],
-    :Weight => [
-        0.03,
-        0.1,
-        "",
-        "",
-        0.01,
-        0.35,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        0.04,
-        0.2,
-        "",
-        "",
-        0.03,
-        0.37,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        0.022,
-        0.41,
-        "",
-        "",
-        "",
-        "",
-    ],
-    :Relative_Type => [
-        "",
-        "",
-        "Assets",
-        "Assets",
-        "",
-        "",
-        "Assets",
-        "Assets",
-        "Classes",
-        "Classes",
-        "Classes",
-        "Classes",
-        "",
-        "",
-        "Assets",
-        "Assets",
-        "",
-        "",
-        "Assets",
-        "Assets",
-        "Classes",
-        "Classes",
-        "Classes",
-        "Classes",
-        "",
-        "",
-        "Assets",
-        "Assets",
-        "Classes",
-        "Classes",
-    ],
-    :Relative_Class_Set => [
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "PDBHT",
-        "SPDBHT",
-        "Pward",
-        "SPward",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "PDBHT",
-        "SPDBHT",
-        "Pward",
-        "SPward",
-        "",
-        "",
-        "",
-        "",
-        "G2DBHT",
-        "G2ward",
-    ],
-    :Relative_Position => [
-        "",
-        "",
-        "T",
-        "T",
-        "",
-        "",
-        "GM",
-        "PFE",
-        3,
-        1,
-        2,
-        2,
-        "",
-        "",
-        "T",
-        "T",
-        "",
-        "",
-        "GM",
-        "PFE",
-        4,
-        2,
-        1,
-        3,
-        "",
-        "",
-        "GM",
-        "AMZN",
-        4,
-        2,
-    ],
-    :Factor => [
-        "",
-        "",
-        0.5,
-        2,
-        "",
-        "",
-        0.3,
-        2,
-        0.03,
-        0.4,
-        0.013,
-        0.5,
-        "",
-        "",
-        0.27,
-        0.61,
-        "",
-        "",
-        0.23,
-        3,
-        0.07,
-        0.11,
-        0.17,
-        0.7,
-        "",
-        "",
-        0.1,
-        0.5,
-        0.19,
-        0.57,
-    ],
-)
+constraints = DataFrame(:Enabled => [true, true, true, true, true, true, true, true, true,
+                                     true, true, true, true, true, true, true, true, true,
+                                     true, true, true, true, true, true, true, true, true,
+                                     true, true, true],
+                        :Type => ["Assets", "Assets", "Assets", "Assets", "All Assets",
+                                  "All Assets", "All Assets", "All Assets", "Assets",
+                                  "Assets", "All Assets", "All Assets", "Classes",
+                                  "Classes", "Classes", "Classes", "All Classes",
+                                  "All Classes", "All Classes", "All Classes", "Classes",
+                                  "Classes", "All Classes", "All Classes",
+                                  "Each Asset in Class", "Each Asset in Class",
+                                  "Each Asset in Class", "Each Asset in Class",
+                                  "Each Asset in Class", "Each Asset in Class"],
+                        :Class_Set => ["", "", "", "", "", "", "", "", "", "", "", "",
+                                       "PDBHT", "PDBHT", "SPDBHT", "SPDBHT", "G2DBHT",
+                                       "G2ward", "PDBHT", "SPDBHT", "Pward", "SPward",
+                                       "G2DBHT", "G2ward", "PDBHT", "SPDBHT", "SPward",
+                                       "G2DBHT", "Pward", "SPDBHT"],
+                        :Position => ["GOOG", "GOOG", "AMZN", "AMZN", "", "", "", "", "T",
+                                      "T", "", "", 3, 3, 4, 4, "", "", "", "", 1, 1, "", "",
+                                      2, 3, 4, 2, 3, 1],
+                        :Sign => [">=", "<=", ">=", "<=", ">=", "<=", ">=", "<=", ">=",
+                                  "<=", ">=", "<=", ">=", "<=", ">=", "<=", ">=", "<=",
+                                  ">=", "<=", ">=", "<=", ">=", "<=", ">=", "<=", ">=",
+                                  "<=", ">=", "<="],
+                        :Weight => [0.03, 0.1, "", "", 0.01, 0.35, "", "", "", "", "", "",
+                                    0.04, 0.2, "", "", 0.03, 0.37, "", "", "", "", "", "",
+                                    0.022, 0.41, "", "", "", ""],
+                        :Relative_Type => ["", "", "Assets", "Assets", "", "", "Assets",
+                                           "Assets", "Classes", "Classes", "Classes",
+                                           "Classes", "", "", "Assets", "Assets", "", "",
+                                           "Assets", "Assets", "Classes", "Classes",
+                                           "Classes", "Classes", "", "", "Assets", "Assets",
+                                           "Classes", "Classes"],
+                        :Relative_Class_Set => ["", "", "", "", "", "", "", "", "PDBHT",
+                                                "SPDBHT", "Pward", "SPward", "", "", "", "",
+                                                "", "", "", "", "PDBHT", "SPDBHT", "Pward",
+                                                "SPward", "", "", "", "", "G2DBHT",
+                                                "G2ward"],
+                        :Relative_Position => ["", "", "T", "T", "", "", "GM", "PFE", 3, 1,
+                                               2, 2, "", "", "T", "T", "", "", "GM", "PFE",
+                                               4, 2, 1, 3, "", "", "GM", "AMZN", 4, 2],
+                        :Factor => ["", "", 0.5, 2, "", "", 0.3, 2, 0.03, 0.4, 0.013, 0.5,
+                                    "", "", 0.27, 0.61, "", "", 0.23, 3, 0.07, 0.11, 0.17,
+                                    0.7, "", "", 0.1, 0.5, 0.19, 0.57])
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

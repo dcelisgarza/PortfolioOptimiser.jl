@@ -1,18 +1,5 @@
-using Test,
-      PortfolioOptimiser,
-      DataFrames,
-      TimeSeries,
-      CSV,
-      Dates,
-      ECOS,
-      SCS,
-      Clarabel,
-      COSMO,
-      OrderedCollections,
-      LinearAlgebra,
-      StatsBase,
-      HiGHS,
-      Logging
+using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, ECOS, SCS, Clarabel,
+      COSMO, OrderedCollections, LinearAlgebra, StatsBase, HiGHS, Logging
 
 @testset "Miscelaneous" begin
     d = PortfolioOptimiser.duplication_matrix(11)

@@ -1,23 +1,12 @@
 function refresh_model!(portfolio::EffEVaR)
-    default_keys = (:w,
-                    :lower_bounds,
-                    :upper_bounds,
-                    :sum_w,
-                    :t,
-                    :s,
-                    :u,
-                    :X,
-                    :sum_u_leq_s,
-                    :evar_con,
-                    :ret,
-                    :risk)
+    default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :t, :s, :u, :X, :sum_u_leq_s,
+                    :evar_con, :ret, :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
     return nothing
 end
 
-function portfolio_performance(portfolio::EffEVaR; rf = portfolio.rf,
-                               verbose = false)
+function portfolio_performance(portfolio::EffEVaR; rf = portfolio.rf, verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 
@@ -30,7 +19,9 @@ function portfolio_performance(portfolio::EffEVaR; rf = portfolio.rf,
         !isnothing(mean_ret) ? μ = port_return(w, mean_ret) : μ = NaN
 
         evar_val = value(model[:risk])
-        haskey(model, :k) && (evar_val /= value(model[:k]))
+        if haskey(model, :k)
+            (evar_val /= value(model[:k]))
+        end
 
         if verbose
             println(term_status)

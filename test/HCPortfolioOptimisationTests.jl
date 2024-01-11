@@ -1,5 +1,4 @@
-using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections,
-      PortfolioOptimiser,
+using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
       Statistics, Test, TimeSeries
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
@@ -16,10 +15,8 @@ l = 2.0
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :Variance, rf = rf, l = l,
-                   linkage = :ward)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :Variance, rf = rf, l = l,
-                   cluster = false)
+    w1 = opt_port!(portfolio; type = :HRP, rm = :Variance, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :Variance, rf = rf, l = l, cluster = false)
 
     w1t = [0.03360421525593201, 0.053460257098811775, 0.027429766590708997,
            0.04363053745921338, 0.05279180956461212, 0.07434468966041922,
@@ -50,27 +47,18 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :Equal, rf = rf, l = l,
-                   linkage = :ward)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :Equal, rf = rf, l = l,
-                   cluster = false)
+    w1 = opt_port!(portfolio; type = :HRP, rm = :Equal, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :Equal, rf = rf, l = l, cluster = false)
 
-    w1t = [0.05, 0.05000000000000001, 0.05, 0.04999999999999999,
-           0.04999999999999999,
-           0.05000000000000001, 0.05000000000000001, 0.05, 0.05,
-           0.05000000000000001,
-           0.04999999999999999, 0.04999999999999999, 0.05, 0.04999999999999999,
-           0.05,
-           0.04999999999999999, 0.04999999999999999, 0.05, 0.05,
-           0.04999999999999999]
+    w1t = [0.05, 0.05000000000000001, 0.05, 0.04999999999999999, 0.04999999999999999,
+           0.05000000000000001, 0.05000000000000001, 0.05, 0.05, 0.05000000000000001,
+           0.04999999999999999, 0.04999999999999999, 0.05, 0.04999999999999999, 0.05,
+           0.04999999999999999, 0.04999999999999999, 0.05, 0.05, 0.04999999999999999]
 
     w2t = [0.07142857142857142, 0.07142857142857142, 0.07142857142857142,
-           0.07142857142857142, 0.07142857142857142, 0.03125, 0.0625, 0.03125,
-           0.03125,
-           0.03125, 0.03125, 0.041666666666666664, 0.041666666666666664,
-           0.03125, 0.0625,
-           0.041666666666666664, 0.07142857142857142, 0.03125, 0.03125,
-           0.07142857142857142]
+           0.07142857142857142, 0.07142857142857142, 0.03125, 0.0625, 0.03125, 0.03125,
+           0.03125, 0.03125, 0.041666666666666664, 0.041666666666666664, 0.03125, 0.0625,
+           0.041666666666666664, 0.07142857142857142, 0.03125, 0.03125, 0.07142857142857142]
 
     @test isapprox(w1.weights, w1t)
     @test isapprox(w2.weights, w2t)
@@ -85,10 +73,8 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :VaR, rf = rf, l = l,
-                   linkage = :ward)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :VaR, rf = rf, l = l,
-                   cluster = false)
+    w1 = opt_port!(portfolio; type = :HRP, rm = :VaR, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :VaR, rf = rf, l = l, cluster = false)
 
     w1t = [0.03403717939776512, 0.05917176810341441, 0.029281627698577888,
            0.04641795773733506, 0.06002080678226616, 0.07336909341225178,
@@ -119,10 +105,8 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :DaR, rf = rf, l = l,
-                   linkage = :ward)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :DaR, rf = rf, l = l,
-                   cluster = false)
+    w1 = opt_port!(portfolio; type = :HRP, rm = :DaR, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :DaR, rf = rf, l = l, cluster = false)
 
     w1t = [0.057660532702867646, 0.04125282312548106, 0.05922785740065619,
            0.03223509018499126, 0.10384639449297382, 0.02480551517770064,
@@ -132,8 +116,7 @@ end
            0.0694006227527249, 0.09119842783020647, 0.09248808273195344,
            0.044542968010494795, 0.06622570262706394]
 
-    w2t = [0.1701404475464932, 0.07638344260207078, 0.1747651936775527,
-           0.04109306170754365,
+    w2t = [0.1701404475464932, 0.07638344260207078, 0.1747651936775527, 0.04109306170754365,
            0.13238263868709735, 0.0028613693978136656, 0.0016917034088304406,
            0.005506828348909748, 0.007271557723278589, 0.00881539538992607,
            0.013886556103133895, 0.0011199824930143113, 0.0005555866493336682,
@@ -154,10 +137,8 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :DaR_r, rf = rf, l = l,
-                   linkage = :ward)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :DaR_r, rf = rf, l = l,
-                   cluster = false)
+    w1 = opt_port!(portfolio; type = :HRP, rm = :DaR_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :DaR_r, rf = rf, l = l, cluster = false)
 
     w1t = [0.05820921825149978, 0.04281381004716568, 0.061012991673039425,
            0.037261284520695284, 0.10225280827507012, 0.03171774621579708,
@@ -188,10 +169,8 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :MDD_r, rf = rf, l = l,
-                   linkage = :ward)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :MDD_r, rf = rf, l = l,
-                   cluster = false)
+    w1 = opt_port!(portfolio; type = :HRP, rm = :MDD_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :MDD_r, rf = rf, l = l, cluster = false)
 
     w1t = [0.054750291482807016, 0.05626561538767235, 0.044927537922610235,
            0.037029800949262545, 0.06286000734501392, 0.038964408950160866,
@@ -222,10 +201,8 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :ADD_r, rf = rf, l = l,
-                   linkage = :ward)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :ADD_r, rf = rf, l = l,
-                   cluster = false)
+    w1 = opt_port!(portfolio; type = :HRP, rm = :ADD_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :ADD_r, rf = rf, l = l, cluster = false)
 
     w1t = [0.05216718533133331, 0.04708278318245931, 0.07158823871210457,
            0.029511984859220904, 0.12867669205129983, 0.03859596234440916,
@@ -256,10 +233,8 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :CDaR_r, rf = rf, l = l,
-                   linkage = :ward)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :CDaR_r, rf = rf, l = l,
-                   cluster = false)
+    w1 = opt_port!(portfolio; type = :HRP, rm = :CDaR_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :CDaR_r, rf = rf, l = l, cluster = false)
 
     w1t = [0.055226953695215866, 0.047934679854074826, 0.05395157314076186,
            0.036982877818185954, 0.08463665680704126, 0.033820937721103415,
@@ -290,10 +265,8 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :UCI_r, rf = rf, l = l,
-                   linkage = :ward)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :UCI_r, rf = rf, l = l,
-                   cluster = false)
+    w1 = opt_port!(portfolio; type = :HRP, rm = :UCI_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :UCI_r, rf = rf, l = l, cluster = false)
 
     w1t = [0.05276898612268049, 0.04614128625526376, 0.06552577565455027,
            0.0320518739448942, 0.1111735166748811, 0.039154188455666976,
@@ -324,10 +297,8 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :EDaR_r, rf = rf, l = l,
-                   linkage = :ward)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :EDaR_r, rf = rf, l = l,
-                   cluster = false)
+    w1 = opt_port!(portfolio; type = :HRP, rm = :EDaR_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :EDaR_r, rf = rf, l = l, cluster = false)
 
     w1t = [0.055560530905066345, 0.052522781694077786, 0.049959310773007755,
            0.036469678098098916, 0.07360442657586366, 0.03548425014502784,
@@ -358,18 +329,15 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :RDaR_r, rf = rf, l = l,
-                   linkage = :ward)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :RDaR_r, rf = rf, l = l,
-                   cluster = false)
+    w1 = opt_port!(portfolio; type = :HRP, rm = :RDaR_r, rf = rf, l = l, linkage = :ward)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :RDaR_r, rf = rf, l = l, cluster = false)
 
     w1t = [0.055263517441901736, 0.054708858603147746, 0.04729258532814955,
            0.03659066794751168, 0.0676324029986855, 0.03707186730732357,
            0.033016951008785926, 0.045900281002362715, 0.020741988813931238,
            0.0538929592253236, 0.09778300255005679, 0.025642106596742546,
            0.009710156615873208, 0.07161140464324384, 0.01126211156930582,
-           0.05878170411220516, 0.072570206971881, 0.0896251644842965,
-           0.03569138424980898,
+           0.05878170411220516, 0.072570206971881, 0.0896251644842965, 0.03569138424980898,
            0.07521067852946291]
 
     w2t = [0.17052233941267297, 0.09426844763519557, 0.1459270538743326,
@@ -393,36 +361,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :SD, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :SD, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :SD, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :SD, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.03692879524929352, 0.06173471900996101, 0.05788485449055379,
@@ -430,8 +387,7 @@ end
            0.024148698656475776, 0.047867702815293824, 0.03125471206249845,
            0.0647453556976089, 0.10088112288028349, 0.038950479132407664,
            0.025466032983548218, 0.046088041928035575, 0.017522279227008376,
-           0.04994166864441962, 0.076922254387969, 0.05541444481863126,
-           0.03819947378487138,
+           0.04994166864441962, 0.076922254387969, 0.05541444481863126, 0.03819947378487138,
            0.07900404790602693]
 
     w2t = [0.04414470568410749, 0.09179295067888649, 0.03988345772432875,
@@ -462,8 +418,7 @@ end
            0.023020837616192273, 0.46917330788347095, 1.7899184506262896e-11,
            0.02979193004065076, 3.955332220592653e-9, 2.70373025377355e-10,
            0.028622875545023355, 5.506596966175203e-10, 1.983395086106402e-11,
-           5.3886532079228104e-11, 4.173716737941434e-11,
-           1.0187054289168763e-11,
+           5.3886532079228104e-11, 4.173716737941434e-11, 1.0187054289168763e-11,
            0.11114834385497208, 0.2136479220104585, 0.003039004633947739,
            0.05715512195801641, 1.8906478971120764e-8]
 
@@ -487,8 +442,7 @@ end
            0.001006773256477595, 0.0004740668440810784, 2.2963059738495353e-11,
            0.0038990115363986898, 0.005600215942390388, 2.6195210692923182e-15,
            0.007672333725607141, 8.46507637112972e-11, 2.1600134971057037e-12,
-           0.00021806724598806248, 4.037937290388133e-11,
-           1.8460184827926966e-16,
+           0.00021806724598806248, 4.037937290388133e-11, 1.8460184827926966e-16,
            0.0026638920217650144, 0.607237765298803, 0.008138677049817413,
            1.4535072040554169e-11, 0.004482497405205028]
 
@@ -496,18 +450,15 @@ end
            0.0073526262822031395, 0.1498492822878779, 9.706876493066787e-11,
            0.04101284857383581, 1.2632937221849326e-9, 1.46625538357711e-9,
            0.028989349803876133, 2.9862732924539796e-9, 1.0756116364437701e-10,
-           5.4576470687067085e-11, 2.2634412689621362e-10,
-           5.524524191508721e-11,
+           5.4576470687067085e-11, 2.2634412689621362e-10, 5.524524191508721e-11,
            0.11257143661421957, 0.29411689211049913, 0.0009706278162348274,
            0.30995697574853875, 6.038541103700144e-9]
 
     w10t = [0.05770020263571035, 0.20756802321347473, 0.05556285586139335,
             0.05266536039835973, 0.05072275542167395, 2.7203689990215912e-11,
             0.08206200044425406, 0.09219638459088021, 2.040818742677057e-11,
-            3.4872431520210023e-10, 4.0643117730422845e-11,
-            1.6817973342883288e-11,
-            1.2607348458273443e-10, 2.899340905350932e-11,
-            1.4169384175563139e-11,
+            3.4872431520210023e-10, 4.0643117730422845e-11, 1.6817973342883288e-11,
+            1.2607348458273443e-10, 2.899340905350932e-11, 1.4169384175563139e-11,
             2.393217529127325e-10, 0.2331792983572393, 0.09432048940231248,
             2.3228408275081374e-11, 0.07402262878911796]
 
@@ -515,8 +466,7 @@ end
             0.010345379140584112, 0.21084270840269012, 8.420568170415045e-11,
             0.029558677508714423, 1.7774944652846946e-9, 1.2719543121278865e-9,
             0.04511783699736455, 2.5905467997413312e-9, 9.330767848994134e-11,
-            8.494058421487245e-11, 1.9635009798094963e-10,
-            4.792440966662475e-11,
+            8.494058421487245e-11, 1.9635009798094963e-10, 4.792440966662475e-11,
             0.17520157444305318, 0.21197518987514943, 0.0013657042229457167,
             0.26888297652189935, 8.49641948006916e-9]
 
@@ -542,36 +492,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :MAD, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :MAD, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :MAD, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :MAD, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :MAD, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.03818384697661099, 0.0622147651480733, 0.06006655971419491,
@@ -610,18 +549,15 @@ end
            7.971722052122192e-10, 0.629985210145492, 4.779327059997394e-12,
            0.015291239641568366, 4.315435479886952e-10, 7.459813055761341e-10,
            4.992584030823763e-9, 1.8138302458210645e-10, 4.678066920424288e-12,
-           2.1160570813031135e-12, 1.1097613495239535e-11,
-           1.736443123719628e-12,
+           2.1160570813031135e-12, 1.1097613495239535e-11, 1.736443123719628e-12,
            0.13366593686096678, 0.1394634297151964, 4.735499936913378e-10,
            0.06117923256582268, 9.444926177611966e-10]
 
     w6t = [3.689723642051115e-12, 1.4935139894877351e-6, 5.666817264569885e-12,
            4.895832761068173e-12, 1.60334545546758e-5, 8.160604552219426e-14,
            0.9999792769483065, 2.4340014867901207e-12, 1.0248348772382915e-11,
-           1.4418755263940224e-12, 2.0464538722089622e-13,
-           8.907750738147742e-14,
-           2.359177448026788e-13, 1.3055741215780125e-13,
-           5.5719386564832484e-14,
+           1.4418755263940224e-12, 2.0464538722089622e-13, 8.907750738147742e-14,
+           2.359177448026788e-13, 1.3055741215780125e-13, 5.5719386564832484e-14,
            5.712072407706186e-7, 2.2162236060520632e-6, 2.593489715070043e-12,
            4.0861712206000154e-7, 3.4127776858404117e-12]
 
@@ -637,8 +573,7 @@ end
            1.99645240284566e-10, 1.1904496611403e-10, 2.674224421253834e-11,
            4.699535254956333e-9, 2.3348303081973652e-9, 2.5973050196579657e-12,
            0.011699351445957346, 8.962613320327011e-11, 9.264767620663642e-19,
-           0.00010464970872970368, 4.723081048987155e-11,
-           1.0182098626021327e-19,
+           0.00010464970872970368, 4.723081048987155e-11, 1.0182098626021327e-19,
            0.0043011720108025, 0.6631635394169465, 2.726100854071717e-9,
            1.8474531910798827e-11, 1.3166351220495404e-9]
 
@@ -653,10 +588,8 @@ end
     w10t = [0.06148357053771031, 0.19870996215540077, 0.058726984435026594,
             0.04927023707380326, 0.05293146012748414, 4.948298010148765e-11,
             0.07969236076459679, 0.0914920563141677, 3.6063695676713464e-11,
-            4.2071270893259106e-10, 7.191813408372553e-11,
-            3.0090078345044824e-11,
-            1.5152973228331597e-10, 5.112904761952157e-11,
-            2.3018145699889617e-11,
+            4.2071270893259106e-10, 7.191813408372553e-11, 3.0090078345044824e-11,
+            1.5152973228331597e-10, 5.112904761952157e-11, 2.3018145699889617e-11,
             3.2702244301960286e-10, 0.23339589624134885, 0.09780579012454467,
             4.1644920327865464e-11, 0.07649168102330511]
 
@@ -690,36 +623,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :SSD, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :SSD, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :SSD, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :SSD, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :SSD, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.03685118468964678, 0.060679678711961914, 0.05670047906355952,
@@ -765,18 +687,15 @@ end
     w6t = [8.191863340708682e-12, 9.211591204018666e-7, 1.2626012115872571e-11,
            1.0915767009084885e-11, 4.450729454855096e-5, 1.6702195024225544e-13,
            0.9999505430491591, 5.463121371861769e-12, 2.0302991811258166e-11,
-           2.2409245620376714e-12, 4.295640077655596e-13,
-           1.8430659547832975e-13,
-           3.8089532971577737e-13, 2.6765280659944193e-13,
-           1.1695095842702918e-13,
+           2.2409245620376714e-12, 4.295640077655596e-13, 1.8430659547832975e-13,
+           3.8089532971577737e-13, 2.6765280659944193e-13, 1.1695095842702918e-13,
            1.5578279433378499e-6, 1.3373821711886017e-6, 5.799461049486718e-12,
            1.133212413754835e-6, 7.557214320949884e-12]
 
     w7t = [0.03754844098300919, 0.08680041787053981, 0.03389183000114803,
            0.03277213059086383, 0.03320752877178498, 0.04331700156529129,
            0.037633843557708824, 0.05764895433246242, 0.03208049588246182,
-           0.0939356459430743, 0.06696242782914329, 0.02713647380528876,
-           0.0380939037248661,
+           0.0939356459430743, 0.06696242782914329, 0.02713647380528876, 0.0380939037248661,
            0.04717402044229326, 0.024240034460649925, 0.0688395222010592,
            0.09548573951989676, 0.06001050286483363, 0.03771243943429284,
            0.04550864621933167]
@@ -785,8 +704,7 @@ end
            0.0011834457190567865, 0.0010795244959281231, 1.0338148716144361e-10,
            3.2613390169171995e-10, 0.0073180995998649205, 2.761456947372526e-18,
            0.008377856387202816, 4.251202674093581e-10, 1.6721875787556288e-11,
-           0.00022534139873579267, 2.1284867856909692e-10,
-           8.799804916982116e-19,
+           0.00022534139873579267, 2.1284867856909692e-10, 8.799804916982116e-19,
            0.0032449507181074636, 0.6068947550902725, 0.013853575375871495,
            6.104293047950748e-11, 0.00603326552399483]
 
@@ -801,10 +719,8 @@ end
     w10t = [0.056331156322712087, 0.2167050029967595, 0.05084541258907015,
             0.04916561015616197, 0.04981880593074, 1.122131530348982e-10,
             0.09395625483181962, 0.08648647382756333, 8.310486561421124e-11,
-            8.007799352526373e-10, 1.7346688113336067e-10,
-            7.029732386602455e-11,
-            3.2474183204962084e-10, 1.2220480143768866e-10,
-            6.279406695323108e-11,
+            8.007799352526373e-10, 1.7346688113336067e-10, 7.029732386602455e-11,
+            3.2474183204962084e-10, 1.2220480143768866e-10, 6.279406695323108e-11,
             5.868412100385516e-10, 0.2383886849446839, 0.09002933089587331,
             9.769447525542677e-11, 0.06827326507047765]
 
@@ -812,8 +728,7 @@ end
             9.18338883428181e-10, 0.2391318398413062, 1.4017035850748457e-10,
             0.033244962714122916, 1.524127704486835e-9, 3.80307318624984e-9,
             0.02520605599426584, 3.3383640175106555e-9, 1.4953405639627022e-10,
-            1.4899373066963704e-11, 3.6106684693239817e-10,
-            5.4792849003161377e-11,
+            1.4899373066963704e-11, 3.6106684693239817e-10, 5.4792849003161377e-11,
             0.20035216262610134, 0.21162000300228642, 3.926451115643559e-9,
             0.268830118360281, 1.7295745664108087e-9]
 
@@ -839,36 +754,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :FLPM, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :FLPM, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :FLPM, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :FLPM, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :FLPM, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.039336538617540336, 0.06395492117890568, 0.06276820986537449,
@@ -907,8 +811,7 @@ end
            3.104686353899987e-10, 0.6486662295311443, 3.703125446798951e-12,
            0.011460020154686461, 3.097072031514349e-10, 6.061483180822724e-10,
            8.570931643984398e-9, 1.3634389556193452e-10, 3.5596075760455198e-12,
-           1.1022985423016359e-12, 8.568403313509519e-12,
-           1.4261626112412809e-12,
+           1.1022985423016359e-12, 8.568403313509519e-12, 1.4261626112412809e-12,
            0.14389040710007642, 0.10522349017643833, 4.485586769631565e-10,
            0.07422313080589146, 6.331172358883636e-10]
 
@@ -916,8 +819,7 @@ end
            4.898751691669253e-12, 1.6034686690774843e-5, 8.163689752651537e-14,
            0.9999792744266554, 2.435707871829555e-12, 1.0251554687850123e-11,
            1.4425657184130816e-12, 2.047171327871953e-13, 8.911126343306908e-14,
-           2.3602983249249915e-13, 1.3060622028590832e-13,
-           5.5739684918097694e-14,
+           2.3602983249249915e-13, 1.3060622028590832e-13, 5.5739684918097694e-14,
            5.712972619605853e-7, 2.2169015877985037e-6, 2.595287068381251e-12,
            4.0868799144378423e-7, 3.4150163366229753e-12]
 
@@ -948,20 +850,16 @@ end
     w10t = [0.06275212134067402, 0.1870580895373658, 0.05942699038362235,
             0.05132893034047949, 0.05952980158450735, 6.810591865410883e-11,
             0.07801377073255264, 0.09064101419424697, 5.878416891445915e-11,
-            6.775772337865752e-10, 1.1067692214991304e-10,
-            4.3091934555360735e-11,
-            2.3200452361267676e-10, 7.635528659411158e-11,
-            3.259747278710373e-11,
+            6.775772337865752e-10, 1.1067692214991304e-10, 4.3091934555360735e-11,
+            2.3200452361267676e-10, 7.635528659411158e-11, 3.259747278710373e-11,
             5.582350245078483e-10, 0.23103763918632259, 0.10098294979147977,
             6.91800545762558e-11, 0.07922869098214032]
 
     w11t = [5.4417750961488666e-11, 0.03495746924219107, 3.526497061243021e-10,
             1.1537208880313919e-10, 0.24104843229351033, 1.3805472436732245e-11,
             0.024225695412469238, 1.1508913581584369e-10, 2.2597570668555164e-9,
-            1.1950360975537242e-8, 5.082981711365124e-10,
-            1.3270429258387397e-11,
-            1.536923409319053e-12, 3.1943518379512006e-11,
-            5.3168192389509745e-12,
+            1.1950360975537242e-8, 5.082981711365124e-10, 1.3270429258387397e-11,
+            1.536923409319053e-12, 3.1943518379512006e-11, 5.3168192389509745e-12,
             0.20062490020787876, 0.2224352303786228, 1.6668721285486414e-10,
             0.27670825664155213, 2.3527032890119543e-10]
 
@@ -987,36 +885,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :SLPM, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :SLPM, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :SLPM, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :SLPM, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :SLPM, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.03752644591926642, 0.06162667128035028, 0.058061904976983145,
@@ -1055,14 +942,12 @@ end
            3.5138102776051106e-9, 0.6595446478510552, 3.721161506600326e-12,
            0.018947248448056998, 6.193676840939075e-9, 9.863373166039355e-11,
            0.020280462944050892, 8.808223846556176e-11, 3.980627406743843e-12,
-           1.2031210097356011e-11, 9.623845868703762e-12,
-           1.4614894077549446e-12,
+           1.2031210097356011e-11, 9.623845868703762e-12, 1.4614894077549446e-12,
            0.1537294789615208, 0.11837110344473635, 1.785387190928891e-8,
            0.017362216488291213, 6.6376228861735174e-9]
 
     w6t = [9.668867214584299e-12, 9.908537180505388e-7, 1.4881046884436504e-11,
-           1.2873353807852623e-11, 4.9526035930584876e-5,
-           1.8531103534454164e-13,
+           1.2873353807852623e-11, 4.9526035930584876e-5, 1.8531103534454164e-13,
            0.9999450175294197, 6.428513393464366e-12, 2.243177161035309e-11,
            2.5383173660330557e-12, 4.749674447162343e-13, 2.043562121910656e-13,
            4.336161107966961e-13, 2.961893473592315e-13, 1.3010009399015433e-13,
@@ -1089,19 +974,15 @@ end
            1.0419052513182867e-9, 0.19556634473254608, 6.60093638017008e-11,
            0.041681845206051754, 1.8365318317473785e-9, 1.749655279606101e-9,
            0.019636004897306825, 1.5624832496596917e-9, 7.061200708023903e-11,
-           1.1648890907665915e-11, 1.7071657384179026e-10,
-           2.5925234859522595e-11,
-           0.1488443735272, 0.26040329941200535, 5.293980445447003e-9,
-           0.3079868644633374,
+           1.1648890907665915e-11, 1.7071657384179026e-10, 2.5925234859522595e-11,
+           0.1488443735272, 0.26040329941200535, 5.293980445447003e-9, 0.3079868644633374,
            1.9681694784296034e-9]
 
     w10t = [0.05701688575155151, 0.21202597480198598, 0.05185875080345578,
             0.0502538003757883, 0.053166965303175884, 1.1532776273018472e-10,
             0.09269421606515274, 0.0867799785626763, 9.252080920870121e-11,
-            8.739569791141452e-10, 1.8928334829964128e-10,
-            7.419870573320007e-11,
-            3.405979970867478e-10, 1.2994563006045377e-10,
-            6.475242110814968e-11,
+            8.739569791141452e-10, 1.8928334829964128e-10, 7.419870573320007e-11,
+            3.405979970867478e-10, 1.2994563006045377e-10, 6.475242110814968e-11,
             6.536600682852006e-10, 0.2362930855591633, 0.09064913828525019,
             1.0983543800097608e-10, 0.0692612018477207]
 
@@ -1109,8 +990,7 @@ end
             1.3097790375913926e-9, 0.24584644185732304, 5.664549944160638e-11,
             0.033644712598011425, 2.308704070786192e-9, 1.5014551187263128e-9,
             0.026238277441305392, 1.340834677819405e-9, 6.059522736274767e-11,
-            1.5565632271804896e-11, 1.4649929996718008e-10,
-            2.2247569014151942e-11,
+            1.5565632271804896e-11, 1.4649929996718008e-10, 2.2247569014151942e-11,
             0.1988907615682869, 0.21019209022490218, 6.655062544403099e-9,
             0.26429689295885267, 2.474185749627994e-9]
 
@@ -1136,36 +1016,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :WR, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :WR, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :WR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :WR, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :WR, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.05025200880802368, 0.055880855583038826, 0.05675550980104009,
@@ -1212,8 +1081,7 @@ end
            1.6878731230339432e-15, 3.379308881834173e-7, 7.62028131572693e-18,
            0.9999996207892794, 8.5148792511807e-16, 9.389673485389003e-16,
            1.347214982169776e-16, 1.8894805185257976e-17, 8.234049431384787e-18,
-           2.1508087527975112e-17, 1.2135571330916248e-17,
-           5.113883209566018e-18,
+           2.1508087527975112e-17, 1.2135571330916248e-17, 5.113883209566018e-18,
            1.243994336023181e-8, 1.1781995430835928e-8, 9.070990979915125e-16,
            8.996977236452035e-9, 1.188714376745067e-15]
 
@@ -1222,16 +1090,14 @@ end
            0.05530371582955835, 0.04066685426478249, 0.028663966083379743,
            0.12309845575070685, 0.04196864748602689, 0.028333590665686977,
            0.055443717439252665, 0.027631889468862886, 0.034339816262967754,
-           0.06662335132291418, 0.122636399555027, 0.0376531187240201,
-           0.030294710346014515,
+           0.06662335132291418, 0.122636399555027, 0.0376531187240201, 0.030294710346014515,
            0.03345672409159625]
 
     w8t = [3.947607148375036e-9, 0.3339799994613066, 2.528813690800829e-18,
            1.4565057741032627e-8, 7.131193485356854e-19, 3.9809145527709326e-11,
            0.0827704873065229, 8.07112619375709e-9, 1.0013534680357351e-20,
            5.994480031319286e-10, 1.3449370347876055e-10, 1.36928130953336e-20,
-           1.2027367753542976e-10, 1.2306992720795978e-20,
-           4.8514738001389486e-11,
+           1.2027367753542976e-10, 1.2306992720795978e-20, 4.8514738001389486e-11,
            1.9944596260891262e-10, 0.583249482088677, 1.989163045461955e-17,
            3.5175235548021734e-20, 3.417717330425231e-9]
 
@@ -1246,8 +1112,7 @@ end
     w10t = [0.033040054054251755, 0.2695310254752297, 0.026743949325149372,
             0.03534237610906566, 0.0196152213440997, 1.0186831723921634e-11,
             0.1642915283572523, 0.03169553011048464, 8.12523520758483e-12,
-            1.5281334014373858e-10, 1.1896648606694647e-11,
-            8.03158529299348e-12,
+            1.5281334014373858e-10, 1.1896648606694647e-11, 8.03158529299348e-12,
             6.882734312310166e-11, 7.83267746380283e-12, 9.734140883024684e-12,
             8.270564228557204e-11, 0.36431768124263025, 0.029346640644992004,
             8.587494361073358e-12, 0.026075992968103697]
@@ -1256,8 +1121,7 @@ end
             0.04491074796401507, 0.12962749061302703, 2.335974247853824e-10,
             0.08365661551297342, 0.0030039915967536813, 6.170053873744455e-9,
             0.13793914848676125, 0.09955330230645995, 3.3995092835329294e-10,
-            7.305356066766326e-11, 6.595584626725848e-10,
-            1.0525835100695455e-10,
+            7.305356066766326e-11, 6.595584626725848e-10, 1.0525835100695455e-10,
             0.05786498368772074, 0.18372288156871844, 9.096452597860392e-8,
             0.13518741043024146, 3.268978460385678e-10]
 
@@ -1283,36 +1147,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :CVaR, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :CVaR, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :CVaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :CVaR, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :CVaR, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.03557588495882196, 0.06070721124578364, 0.055279033097091264,
@@ -1391,8 +1244,7 @@ end
             0.037007801463163764, 0.038940783780798086, 4.7285347503757744e-11,
             0.10727115893493781, 0.07053379489575425, 3.566573297655153e-11,
             9.466718970403915e-11, 7.947657955800595e-11, 3.08737538203091e-11,
-            4.3761582226828635e-11, 6.091713629937579e-11,
-            2.9563260776663795e-11,
+            4.3761582226828635e-11, 6.091713629937579e-11, 2.9563260776663795e-11,
             7.063048227869707e-11, 0.2776218363233664, 0.07735701754189693,
             4.308713606719827e-11, 0.05270142226151334]
 
@@ -1400,8 +1252,7 @@ end
             1.5366397950738516e-10, 0.23610671298777855, 5.110705614152516e-11,
             0.0385707962993803, 6.463845162217649e-10, 1.0056576255251194e-9,
             0.03952709769827594, 4.2626566428707556e-10, 5.060631602058066e-11,
-            1.1487701262352957e-12, 6.844320520034111e-11,
-            6.324014273418223e-11,
+            1.1487701262352957e-12, 6.844320520034111e-11, 6.324014273418223e-11,
             0.19743730243558164, 0.18992942246620229, 1.467721500904845e-9,
             0.26733580721570266, 6.558286484659366e-10]
 
@@ -1427,36 +1278,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :EVaR, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :EVaR, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :EVaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :EVaR, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :EVaR, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.04298218516072598, 0.05890619211025965, 0.05740162248050834,
@@ -1568,36 +1408,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :RVaR, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :RVaR, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :RVaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :RVaR, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :RVaR, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.04746219155713416, 0.05772050463921145, 0.057894026669737926,
@@ -1605,8 +1434,7 @@ end
            0.023596154677076455, 0.03264037647100751, 0.028784212934207305,
            0.06836029592147425, 0.1045005853383848, 0.024571303062053067,
            0.03686881456008056, 0.048996937361698835, 0.022796538793944325,
-           0.05134222047597318, 0.11116746382432913, 0.063995883940164,
-           0.03166573181771051,
+           0.05134222047597318, 0.11116746382432913, 0.063995883940164, 0.03166573181771051,
            0.05246001548786903]
 
     w2t = [0.0492482710009231, 0.10352969093467623, 0.040651501409479825,
@@ -1637,16 +1465,14 @@ end
            0.11666845556321201, 0.36218624618954764, 3.8778639539632524e-16,
            0.08156059891552286, 0.0060997569292080625, 5.6806578866897644e-15,
            0.04914658254370528, 2.8079362701246837e-8, 5.238068052430162e-16,
-           1.1969500748624967e-10, 9.363090912176255e-16,
-           2.4189370394779124e-16,
+           1.1969500748624967e-10, 9.363090912176255e-16, 2.4189370394779124e-16,
            0.024623570321525658, 0.2391732369197839, 0.000790462028750693,
            1.1474779123355136e-7, 3.093003030205915e-9]
 
     w6t = [5.183795749446638e-13, 1.8706439097568603e-7, 7.453471871145833e-13,
            6.60391710325185e-13, 5.229479351567087e-6, 6.986200339473092e-15,
            0.9999940074467866, 3.579542557846161e-13, 6.949056706371392e-13,
-           5.2979282948673776e-14, 1.7260707610386202e-14,
-           7.732393863836068e-15,
+           5.2979282948673776e-14, 1.7260707610386202e-14, 7.732393863836068e-15,
            8.873085436137193e-15, 1.1186341918505233e-14, 4.753611539498759e-15,
            1.774398835216932e-7, 2.756571590512903e-7, 3.7943024415222295e-13,
            1.2290847744641383e-7, 4.846677532884728e-13]
@@ -1678,10 +1504,8 @@ end
     w10t = [0.025502371126829584, 0.31211694346637586, 0.022740014970228657,
             0.02993768640178923, 0.02011955255677591, 3.58556074704653e-10,
             0.14900309513354623, 0.030062281487533676, 2.7174839072915597e-10,
-            1.6419169625133636e-9, 4.450272242038758e-10,
-            2.4470464500385627e-10,
-            7.553742169014572e-10, 2.8568101602499503e-10,
-            2.866701069338299e-10,
+            1.6419169625133636e-9, 4.450272242038758e-10, 2.4470464500385627e-10,
+            7.553742169014572e-10, 2.8568101602499503e-10, 2.866701069338299e-10,
             8.958109974020843e-10, 0.35800389626498813, 0.027058774935215614,
             2.850506659255742e-10, 0.025455378186176846]
 
@@ -1689,8 +1513,7 @@ end
             0.05231116626752652, 0.16239509516749712, 6.015904060525998e-10,
             0.06046386383734284, 0.002734975768513681, 8.812659044438419e-9,
             0.1631198652035607, 0.04356077317224364, 8.126049608759619e-10,
-            3.9727347205338815e-10, 1.4525382351298693e-9,
-            3.752605385518846e-10,
+            3.9727347205338815e-10, 1.4525382351298693e-9, 3.752605385518846e-10,
             0.08172681117971467, 0.17730789404370137, 0.00035442305646825025,
             0.17801338866279698, 1.3868238419544439e-9]
 
@@ -1716,36 +1539,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :MDD, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :MDD, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :MDD, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :MDD, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :MDD, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.06921730086136976, 0.04450738292959614, 0.08140658224086754,
@@ -1784,8 +1596,7 @@ end
            2.30450167051231e-10, 0.32265003550898885, 6.708256697384932e-21,
            7.789378073888229e-10, 0.05614503578659163, 1.7583672907404588e-18,
            8.813796040075635e-9, 3.8184665856591184e-10, 3.1294797081461483e-19,
-           1.0632091342832445e-10, 6.046055420140702e-19,
-           3.6160677173813724e-19,
+           1.0632091342832445e-10, 6.046055420140702e-19, 3.6160677173813724e-19,
            0.09473785544771883, 3.0854174337530415e-9, 3.3790792639567355e-10,
            7.008607649974044e-10, 7.175148096836271e-10]
 
@@ -1809,8 +1620,7 @@ end
            0.0398283287090433, 0.01841808085083987, 1.3385077370027142e-12,
            0.027044617816199875, 0.0539191837901826, 4.111854062911421e-11,
            4.911380010318118e-10, 0.1346286415377346, 0.016205973017995354,
-           2.1932075155807414e-20, 1.0608381933232215e-11,
-           7.865682553743593e-12,
+           2.1932075155807414e-20, 1.0608381933232215e-11, 7.865682553743593e-12,
            9.55403871582464e-11, 0.10712527259660852, 0.048427476346293054,
            0.09001975890730979, 0.1405617806829547]
 
@@ -1826,8 +1636,7 @@ end
             0.10645504132451156, 0.12966105295287814, 1.1790225394636564e-11,
             5.173795735167115e-8, 0.13735172513617322, 2.037468593410109e-11,
             5.801983826866035e-11, 3.2712402233169917e-11, 9.17403517811617e-12,
-            1.9789499107924922e-11, 1.6625290856709145e-11,
-            5.614255164014158e-12,
+            1.9789499107924922e-11, 1.6625290856709145e-11, 5.614255164014158e-12,
             4.864396717534949e-11, 1.327835349076225e-7, 0.16463979321905658,
             2.343827458031749e-11, 0.1262029027513344]
 
@@ -1835,8 +1644,7 @@ end
             8.335642040930649e-11, 0.11670615104820459, 2.0259848486504805e-12,
             0.027148689305733126, 0.02030829166586057, 5.310508601722855e-10,
             1.299691460731517e-8, 0.1153228893378406, 9.451454765192339e-11,
-            1.567819162726874e-10, 1.8259910477309654e-10,
-            1.0921016797053559e-10,
+            1.567819162726874e-10, 1.8259910477309654e-10, 1.0921016797053559e-10,
             0.13970141942649306, 0.10753751903281374, 1.222251019935822e-10,
             0.21166949253028083, 2.595331862467074e-10]
 
@@ -1862,36 +1670,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :ADD, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :ADD, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :ADD, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :ADD, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :ADD, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.05548273429645013, 0.03986073873648723, 0.09599318831154405,
@@ -1928,16 +1725,14 @@ end
            3.304913016667393e-9, 0.2267610282669818, 1.5907580566772538e-10,
            0.00982658337545211, 0.06079707628169535, 5.005769435982415e-10,
            6.943504632506545e-9, 0.032915088420824565, 2.1050181953817916e-10,
-           7.302599386682247e-11, 3.4545967712409064e-10,
-           1.3242173809826203e-11,
+           7.302599386682247e-11, 3.4545967712409064e-10, 1.3242173809826203e-11,
            0.13238294813391252, 0.12249573926535208, 0.00139872734844176,
            0.1111632340167779, 0.05185126765595369]
 
     w6t = [3.140925812338669e-12, 1.9014616189996336e-7, 1.3229034007720623e-10,
            5.333671168236288e-12, 0.0003252022529196653, 1.8712483536623898e-15,
            0.9996414274026609, 1.9627891734042294e-11, 4.747729019514711e-13,
-           1.6138330482272631e-13, 4.863722029546999e-14,
-           1.8893001368822384e-15,
+           1.6138330482272631e-13, 4.863722029546999e-14, 1.8893001368822384e-15,
            3.654983967925628e-14, 2.715429511329365e-15, 1.1577772603803039e-15,
            3.9025606806697874e-7, 3.2693620087778935e-5, 2.3594456864417395e-12,
            9.61538988744323e-8, 4.721496400049383e-12]
@@ -1954,8 +1749,7 @@ end
            0.020821188002294055, 0.08848052879883514, 1.606307472872854e-10,
            0.027427967086966102, 0.10659376781912788, 4.217192857759427e-17,
            1.2348075922242872e-8, 5.821696857954702e-9, 1.1297568095958326e-9,
-           1.0398315491149029e-17, 1.9584272053011286e-9,
-           4.0040134250870274e-18,
+           1.0398315491149029e-17, 1.9584272053011286e-9, 4.0040134250870274e-18,
            5.630061933174542e-9, 0.30761581413409356, 0.06867088846076362,
            1.0128998795056528e-8, 0.1701615219549293]
 
@@ -2005,36 +1799,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :CDaR, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :CDaR, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :CDaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :CDaR, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :CDaR, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.06282520890507177, 0.03706824571002148, 0.08139181669684024,
@@ -2050,8 +1833,7 @@ end
            0.031440878203812674, 0.02765262927324115, 0.038622757716471855,
            0.05449451662150961, 0.07421075864027389, 0.010805582781120135,
            0.006125600333633228, 0.05505443171528247, 0.010042975330900426,
-           0.04475631681027434, 0.13734914660868333, 0.066053552264685,
-           0.0758183579584723,
+           0.04475631681027434, 0.13734914660868333, 0.066053552264685, 0.0758183579584723,
            0.06463015511860094]
 
     w3t = [1.8244116660407682e-10, 3.5021448909430726e-19, 0.013424622665528558,
@@ -2074,8 +1856,7 @@ end
            7.482894698992554e-11, 0.3375646803292957, 3.4389601398763396e-20,
            1.4489493723716944e-10, 0.21161159366592713, 5.299670445490732e-19,
            6.387832190124329e-9, 1.49983853164512e-10, 1.0293053431351615e-19,
-           1.2329730946776807e-10, 1.6542158258566509e-19,
-           1.3816885264090829e-19,
+           1.2329730946776807e-10, 1.6542158258566509e-19, 1.3816885264090829e-19,
            0.2457086313190956, 3.4684740873690043e-9, 3.6469703930570965e-11,
            3.482961441814694e-10, 0.06521482842764527]
 
@@ -2098,10 +1879,8 @@ end
     w8t = [4.202952793522189e-10, 6.409333583198476e-10, 0.030926712640744383,
            1.4937378083154294e-12, 0.18668724154622254, 1.661000714345463e-20,
            0.007062929676298079, 0.2740788630140619, 9.201992251297623e-20,
-           1.1153537311952114e-10, 1.7563593764549218e-10,
-           2.558904727434039e-11,
-           5.2874910748494665e-21, 2.6589800026306686e-11,
-           1.320484213755697e-20,
+           1.1153537311952114e-10, 1.7563593764549218e-10, 2.558904727434039e-11,
+           5.2874910748494665e-21, 2.6589800026306686e-11, 1.320484213755697e-20,
            2.846615601843261e-11, 0.16907195637681427, 0.06420390214792512,
            1.5542669484872716e-10, 0.26796839301196834]
 
@@ -2109,18 +1888,15 @@ end
            3.838483274836946e-11, 0.17315977729769882, 3.2485428861552183e-11,
            2.5511958583981114e-12, 0.10854991226291229, 5.00622456336032e-10,
            3.7016136058827227e-9, 0.1416791586462658, 9.723120984599493e-11,
-           7.144818221746991e-11, 1.5626209187307524e-10,
-           1.3051836167865303e-10,
+           7.144818221746991e-11, 1.5626209187307524e-10, 1.3051836167865303e-10,
            0.14238295335618134, 6.107015811168749e-11, 1.8707780104749966e-11,
            0.32901078100215786, 0.03345310047254568]
 
     w10t = [0.10327898804564337, 0.08718180155230068, 0.09855840561473608,
             0.05053794212603172, 0.0973105105602408, 1.313111619019184e-11,
             0.033196095802833836, 0.12001706852417422, 2.575424850432982e-11,
-            6.644558223016583e-11, 4.0148958484028675e-11,
-            9.193040055416301e-12,
-            1.7336605209302945e-11, 2.2565735170420845e-11,
-            6.088544080057372e-12,
+            6.644558223016583e-11, 4.0148958484028675e-11, 9.193040055416301e-12,
+            1.7336605209302945e-11, 2.2565735170420845e-11, 6.088544080057372e-12,
             5.196236491315115e-11, 0.11512785137436911, 0.10302470649536136,
             3.471625431429138e-11, 0.1917666296169666]
 
@@ -2154,36 +1930,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :UCI, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :UCI, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :UCI, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :UCI, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :UCI, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.056222127504695026, 0.03676156065449049, 0.09101083070457834,
@@ -2222,16 +1987,14 @@ end
            7.312229582921186e-10, 0.27348254232698305, 3.538922012817086e-11,
            0.002497326685049683, 0.1407656573030659, 1.2972507567856335e-10,
            8.495314219801515e-9, 0.011579421910015182, 6.922994089524877e-11,
-           1.5466118772204457e-10, 8.553516188550853e-11,
-           1.0262638232474694e-11,
+           1.5466118772204457e-10, 8.553516188550853e-11, 1.0262638232474694e-11,
            0.18524284235574914, 0.027898538908789215, 2.91899600459833e-9,
            0.03620945531662556, 0.10317667012885948]
 
     w6t = [2.3925305156408298e-11, 1.4939123402049488e-7, 1.0579346950050932e-9,
            4.5089479240762006e-11, 0.00093832674828407, 9.985462597769679e-15,
            0.9990231151322279, 1.789069180392933e-10, 2.395932350919267e-12,
-           2.5014906124740315e-13, 4.4585432301336575e-13,
-           1.033786806942688e-14,
+           2.5014906124740315e-13, 4.4585432301336575e-13, 1.033786806942688e-14,
            7.58520572099388e-14, 1.4177171883670346e-14, 7.137618435256312e-15,
            1.1064306627812483e-6, 3.6977511200118953e-5, 1.8095612352652093e-11,
            3.234267223098279e-7, 3.2507566063008884e-11]
@@ -2248,8 +2011,7 @@ end
            8.172034544457912e-10, 0.12532473181430098, 2.4385810079417996e-11,
            0.017854952028117925, 0.13773911785842563, 1.0077033833774365e-17,
            3.763662029985556e-9, 1.6091503670795757e-9, 3.038911014782725e-10,
-           2.4637010025064793e-18, 5.976330141352493e-10,
-           1.4767055029861839e-18,
+           2.4637010025064793e-18, 5.976330141352493e-10, 1.4767055029861839e-18,
            1.5279505500206763e-9, 0.19868064351180353, 0.0977687398160586,
            2.0826038422345858e-9, 0.21749596711830593]
 
@@ -2273,8 +2035,7 @@ end
             3.694070716583764e-10, 0.13816084952619803, 1.9317125269699956e-10,
             0.014750669173958762, 0.07111350739840767, 7.081013733640694e-10,
             7.467678977175493e-9, 0.06320601097632407, 3.778900568715544e-10,
-            1.3595260519556029e-10, 4.668917345796945e-10,
-            5.601837723926479e-11,
+            1.3595260519556029e-10, 4.668917345796945e-10, 5.601837723926479e-11,
             0.16283495156752212, 0.16478505609376418, 1.474649768600943e-9,
             0.1976484878066206, 0.052123898933350905]
 
@@ -2300,36 +2061,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :EDaR, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :EDaR, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :EDaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :EDaR, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :EDaR, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.06368314296956538, 0.03964178355827289, 0.0825388621979828,
@@ -2373,8 +2123,7 @@ end
            1.623077108008129e-8, 2.596721004103314e-8]
 
     w6t = [2.687386065442193e-13, 4.629335416063863e-8, 1.0185302318916494e-11,
-           3.1601422509233045e-13, 0.00013905634840280314,
-           5.636160062803317e-17,
+           3.1601422509233045e-13, 0.00013905634840280314, 5.636160062803317e-17,
            0.9998555317215875, 1.335640596574238e-12, 1.671960995432352e-14,
            5.759650711408947e-15, 3.201327471582578e-15, 5.899273082910467e-17,
            9.145745824197911e-16, 8.89193340647791e-17, 3.4708508475356903e-17,
@@ -2443,36 +2192,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :RDaR, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :RDaR, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :RDaR, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :RDaR, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :RDaR, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.06626056846619277, 0.042384457717238096, 0.0822955972759821,
@@ -2518,10 +2256,8 @@ end
     w6t = [9.519166184106788e-14, 2.991790719552823e-8, 3.490664767520161e-12,
            1.3149507904281425e-13, 8.211165508564982e-5, 1.33887303266225e-17,
            0.9999139583452611, 5.743737025252306e-13, 2.700704328733815e-15,
-           1.1770810699044885e-15, 5.071577770697264e-16,
-           1.4187638507711412e-17,
-           1.9727317632698293e-16, 2.0726040214821235e-17,
-           8.406587530494813e-18,
+           1.1770810699044885e-15, 5.071577770697264e-16, 1.4187638507711412e-17,
+           1.9727317632698293e-16, 2.0726040214821235e-17, 8.406587530494813e-18,
            1.1619987298086269e-7, 3.7609168691930028e-6, 6.981740855476291e-14,
            2.2960516004561866e-8, 1.2164607205149092e-13]
 
@@ -2587,36 +2323,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :Kurt, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :Kurt, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :Kurt, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :Kurt, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.029481521953684118, 0.05982735944410474, 0.03557911826015237,
@@ -2662,10 +2387,8 @@ end
     w6t = [6.972318638587766e-16, 3.92635391741591e-8, 9.280964635459275e-16,
            8.095095103579677e-16, 5.39527195815529e-7, 9.694772716357132e-18,
            0.999999339027952, 5.016931390474153e-16, 1.1796726773523868e-15,
-           3.331806015399208e-16, 2.1935941339442925e-17,
-           1.0348449832006542e-17,
-           6.394575863495473e-17, 1.4450013720888013e-17,
-           6.7079209632899935e-18,
+           3.331806015399208e-16, 2.1935941339442925e-17, 1.0348449832006542e-17,
+           6.394575863495473e-17, 1.4450013720888013e-17, 6.7079209632899935e-18,
            1.7328522505633064e-8, 5.164758208434685e-8, 5.27185295273408e-16,
            1.3205202803929528e-8, 6.492749385879723e-16]
 
@@ -2732,27 +2455,20 @@ end
                             max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
 
-    w3 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Min_Risk, rf = rf,
-                   l = l,
+    w3 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Min_Risk, rf = rf, l = l,
                    cluster = true,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :Kurt, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
 
-    w3t = [0.012499999999999992, 0.012500000000000018, 0.01250000000000002,
-           0.0125,
+    w3t = [0.012499999999999992, 0.012500000000000018, 0.01250000000000002, 0.0125,
            0.012499999999999992, 0.012499999999999997, 0.19999999999999973,
            0.19999999999999968, 0.012500000000000042, 0.012499999999999994,
            0.01250000000000001, 0.012500000000000008, 0.20000000000000023,
@@ -2763,10 +2479,8 @@ end
     w4t = [5.619170132098094e-12, 6.1017310138033675e-12, 8.474883669749234e-12,
            7.346368843483831e-12, 3.5399633557644326e-5, 2.55498632564254e-12,
            0.9999627054047409, 5.192434636915423e-7, 6.585159569292676e-12,
-           4.314508833438491e-12, 3.7833033265181755e-12,
-           2.6837677956775737e-12,
-           2.6660817163294745e-7, 3.1770592048855724e-12,
-           2.0905227619089684e-12,
+           4.314508833438491e-12, 3.7833033265181755e-12, 2.6837677956775737e-12,
+           2.6660817163294745e-7, 3.1770592048855724e-12, 2.0905227619089684e-12,
            1.10903198004166e-6, 9.06194575187662e-12, 4.121388826218026e-12,
            6.933707871717963e-12, 5.237677677894698e-12]
 
@@ -2788,8 +2502,7 @@ end
 
     w8t = [0.0099700979114328, 0.00997009791143282, 0.009970097911432822,
            0.009970097911432807, 0.0099700979114328, 0.009970097911432803,
-           0.381730439282753, 0.1467996377871018, 0.00997009791143284,
-           0.009970097911432801,
+           0.381730439282753, 0.1467996377871018, 0.00997009791143284, 0.009970097911432801,
            0.009970097911432814, 0.009970097911432812, 0.0692459347360331,
            0.009970097911432808, 0.009970097911432815, 0.242702421611187,
            0.009970097911432831, 0.009970097911432814, 0.009970097911432824,
@@ -2820,36 +2533,25 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :HRP, rm = :SKurt, rf = rf, l = l,
-                   linkage = :DBHT)
-    w2 = opt_port!(portfolio; type = :HERC, rm = :SKurt, rf = rf, l = l,
-                   cluster = false)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Min_Risk,
-                   rf = rf, l = l,
+    w1 = opt_port!(portfolio; type = :HRP, rm = :SKurt, rf = rf, l = l, linkage = :DBHT)
+    w2 = opt_port!(portfolio; type = :HERC, rm = :SKurt, rf = rf, l = l, cluster = false)
+    w3 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Sharpe, rf = rf,
-                   l = l,
+    w5 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Sharpe, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w9 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Sharpe,
-                   obj_o = :Min_Risk,
+    w9 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Sharpe, obj_o = :Min_Risk,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Sharpe,
-                    obj_o = :Equal,
+    w11 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
 
     w1t = [0.041695764288341326, 0.04968730030116381, 0.04519046227953908,
@@ -2896,8 +2598,7 @@ end
            1.9961508329786136e-16, 1.3317659402239818e-7, 4.307908857931094e-18,
            0.9999998313315561, 1.0959511420170268e-16, 5.211656422181268e-16,
            7.556254979832401e-17, 1.0016905333038929e-17, 4.689084408241327e-18,
-           1.4837987775382495e-17, 6.583520296388086e-18,
-           2.9847569825373597e-18,
+           1.4837987775382495e-17, 6.583520296388086e-18, 2.9847569825373597e-18,
            4.613088974502009e-9, 1.5646273457261347e-8, 1.162443108442906e-16,
            3.4618289439063874e-9, 1.4580098921215038e-16]
 
@@ -2964,23 +2665,17 @@ end
                             max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
 
-    w3 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Min_Risk,
-                   rf = rf, l = l,
+    w3 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Min_Risk, rf = rf, l = l,
                    cluster = true,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Utility, rf = rf,
-                   l = l,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Utility, rf = rf, l = l,
                    cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Max_Ret, rf = rf,
-                   l = l,
+    w6 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Max_Ret, rf = rf, l = l,
                    cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Equal, rf = rf,
-                   l = l,
+    w7 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Equal, rf = rf, l = l,
                    cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Min_Risk,
-                   obj_o = :Sharpe,
+    w8 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Min_Risk, obj_o = :Sharpe,
                    rf = rf, l = l, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Equal,
-                    obj_o = :Sharpe,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :SKurt, obj = :Equal, obj_o = :Sharpe,
                     rf = rf, l = l, cluster = false,)
 
     w3t = [0.012500000000000023, 0.01249999999999999, 0.012499999999999999,
@@ -2995,8 +2690,7 @@ end
            7.34636884389013e-12, 3.539963355777691e-5, 2.554986325783181e-12,
            0.9999627054047406, 5.192434636931848e-7, 6.585159569656627e-12,
            4.314508833676386e-12, 3.783303326726656e-12, 2.683767795825308e-12,
-           2.6660817163378913e-7, 3.1770592050605477e-12,
-           2.0905227620240216e-12,
+           2.6660817163378913e-7, 3.1770592050605477e-12, 2.0905227620240216e-12,
            1.1090319800451766e-6, 9.061945752378575e-12, 4.1213888264452095e-12,
            6.9337078721013284e-12, 5.237677678183777e-12]
 
@@ -3010,8 +2704,7 @@ end
 
     w7t = [0.012499999999997407, 0.01249999999999834, 0.012499999999997582,
            0.012499999999998049, 0.012499999999998346, 0.012499999999994406,
-           0.200000000000006, 0.200000000000011, 0.012500000000000079,
-           0.012499999999998198,
+           0.200000000000006, 0.200000000000011, 0.012500000000000079, 0.012499999999998198,
            0.012499999999998221, 0.012499999999998127, 0.20000000000000867,
            0.012499999999994462, 0.012499999999998304, 0.20000000000000984,
            0.012499999999998141, 0.012499999999998127, 0.01249999999999821,
@@ -3050,60 +2743,38 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :CDaR,
-                   obj = :Sharpe,
-                   obj_o = :Utility, l = l, l_o = 10 * l, kelly = :Exact,
-                   kelly_o = :None,
-                   rf = rf, linkage = :DBHT, dbht_method = :Equal,
-                   branchorder = :default,)
-    w2 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :CDaR,
-                   obj = :Sharpe,
-                   obj_o = :Utility, l = l, l_o = 10 * l, kelly = :None,
-                   kelly_o = :Exact,
+    w1 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :CDaR, obj = :Sharpe,
+                   obj_o = :Utility, l = l, l_o = 10 * l, kelly = :Exact, kelly_o = :None,
+                   rf = rf, linkage = :DBHT, dbht_method = :Equal, branchorder = :default,)
+    w2 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :CDaR, obj = :Sharpe,
+                   obj_o = :Utility, l = l, l_o = 10 * l, kelly = :None, kelly_o = :Exact,
                    rf = rf, cluster = false,)
-    w3 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :CDaR,
-                   obj = :Utility,
-                   obj_o = :Sharpe, l = 10 * l, l_o = l, kelly = :Exact,
-                   kelly_o = :None,
+    w3 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :CDaR, obj = :Utility,
+                   obj_o = :Sharpe, l = 10 * l, l_o = l, kelly = :Exact, kelly_o = :None,
                    rf = rf, cluster = false,)
-    w4 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :CDaR,
-                   obj_o = :Sharpe,
-                   obj = :Utility, l = 10 * l, l_o = l, kelly = :None,
-                   kelly_o = :Exact,
+    w4 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :CDaR, obj_o = :Sharpe,
+                   obj = :Utility, l = 10 * l, l_o = l, kelly = :None, kelly_o = :Exact,
                    rf = rf, cluster = false,)
-    w5 = opt_port!(portfolio; type = :NCO, rm_o = :SD, rm = :CDaR,
-                   obj = :Sharpe,
-                   obj_o = :Utility, l = l, l_o = 2 * l, kelly = :Exact,
-                   kelly_o = :None,
+    w5 = opt_port!(portfolio; type = :NCO, rm_o = :SD, rm = :CDaR, obj = :Sharpe,
+                   obj_o = :Utility, l = l, l_o = 2 * l, kelly = :Exact, kelly_o = :None,
                    rf = rf, cluster = false,)
-    w6 = opt_port!(portfolio; type = :NCO, rm_o = :SD, rm = :CDaR,
-                   obj = :Sharpe,
-                   obj_o = :Utility, l = l, l_o = 2 * l, kelly = :None,
-                   kelly_o = :Exact,
+    w6 = opt_port!(portfolio; type = :NCO, rm_o = :SD, rm = :CDaR, obj = :Sharpe,
+                   obj_o = :Utility, l = l, l_o = 2 * l, kelly = :None, kelly_o = :Exact,
                    rf = rf, cluster = false,)
-    w7 = opt_port!(portfolio; type = :NCO, rm_o = :SD, rm = :CDaR,
-                   obj = :Utility,
-                   obj_o = :Sharpe, l = 2 * l, l_o = l, kelly = :Exact,
-                   kelly_o = :None,
+    w7 = opt_port!(portfolio; type = :NCO, rm_o = :SD, rm = :CDaR, obj = :Utility,
+                   obj_o = :Sharpe, l = 2 * l, l_o = l, kelly = :Exact, kelly_o = :None,
                    rf = rf, cluster = false,)
-    w8 = opt_port!(portfolio; type = :NCO, rm_o = :SD, rm = :CDaR,
-                   obj_o = :Sharpe,
-                   obj = :Utility, l = 2 * l, l_o = l, kelly = :None,
-                   kelly_o = :Exact,
+    w8 = opt_port!(portfolio; type = :NCO, rm_o = :SD, rm = :CDaR, obj_o = :Sharpe,
+                   obj = :Utility, l = 2 * l, l_o = l, kelly = :None, kelly_o = :Exact,
                    rf = rf, cluster = false,)
     w9 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :SD, obj = :Utility,
                    obj_o = :Utility, l = l, l_o = l, rf = rf, cluster = false,)
-    w10 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Utility, l = l,
-                    rf = rf,
+    w10 = opt_port!(portfolio; type = :NCO, rm = :SD, obj = :Utility, l = l, rf = rf,
                     cluster = false,)
-    w11 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :SD,
-                    obj = :Utility,
-                    obj_o = :Utility, l = l, l_o = 2 * l, rf = rf,
-                    cluster = false,)
-    w12 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :SD,
-                    obj = :Utility,
-                    obj_o = :Utility, l = 2 * l, l_o = l, rf = rf,
-                    cluster = false,)
+    w11 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :SD, obj = :Utility,
+                    obj_o = :Utility, l = l, l_o = 2 * l, rf = rf, cluster = false,)
+    w12 = opt_port!(portfolio; type = :NCO, rm = :SD, rm_o = :SD, obj = :Utility,
+                    obj_o = :Utility, l = 2 * l, l_o = l, rf = rf, cluster = false,)
 
     w1t = [2.8131574799795167e-8, 0.046597985426772355, 0.03972198414094958,
            0.029878811092688997, 0.4774371571420406, 9.535238278444238e-18,
@@ -3149,8 +2820,7 @@ end
            6.287241129596709e-11, 0.2836269421713567, 1.1447853385810537e-11,
            0.04336726588249018, 0.17779925666668092, 1.520298793697522e-11,
            3.067163253366174e-9, 0.01880247529655407, 2.051136606147866e-11,
-           5.920208383418648e-11, 3.1381323897259203e-12,
-           1.0732387466930439e-11,
+           5.920208383418648e-11, 3.1381323897259203e-12, 1.0732387466930439e-11,
            0.11797875438586919, 0.03510955030598252, 3.064239599247214e-11,
            0.09031712412335999, 0.05479448369159684]
 
@@ -3166,8 +2836,7 @@ end
            2.1614643942598515e-11, 0.1352265536720966, 4.866891504736823e-13,
            0.02330275995164595, 0.19852851186502116, 1.9921418557820194e-12,
            4.811272557134059e-8, 0.06264271643708913, 0.005969121442178898,
-           1.7883090780045682e-17, 0.00043182156236871365,
-           3.354298196327386e-12,
+           1.7883090780045682e-17, 0.00043182156236871365, 3.354298196327386e-12,
            1.227937931622569e-8, 0.0591677887393016, 0.046505971057480916,
            0.09918420773395997, 0.19410239688794398]
 
@@ -3191,8 +2860,7 @@ end
             3.167620963321505e-8, 0.5064215241184382, 1.242553081046635e-10,
             0.014086898147369825, 7.144610585078984e-9, 0.007704485804868947,
             0.051345769365670986, 2.159274876457709e-9, 5.299658893191588e-10,
-            2.221736357561518e-10, 3.856755037238032e-10,
-            3.3699869426455155e-10,
+            2.221736357561518e-10, 3.856755037238032e-10, 3.3699869426455155e-10,
             0.07250598012169168, 0.21004364581151302, 8.406368161008853e-9,
             0.087422247244157, 1.080168593051055e-8]
 
@@ -3200,8 +2868,7 @@ end
             0.046673447331945055, 0.6105935340349888, 7.77146973370936e-18,
             2.981216163976168e-9, 0.07416512628461075, 3.788497442774938e-9,
             6.982587965979878e-9, 3.923739798834188e-9, 1.3783426364356891e-15,
-            1.800056519538815e-17, 1.7845051188805129e-16,
-            5.072244672310316e-17,
+            1.800056519538815e-17, 1.7845051188805129e-16, 5.072244672310316e-17,
             5.124599215699733e-9, 2.7155942830457237e-8, 0.13808127575944903,
             3.991122343310652e-8, 0.07036590809173547]
 
@@ -3264,8 +2931,7 @@ end
                    cluster = false)
     w3 = opt_port!(portfolio; type = :HERC, rm_o = :CDaR, rm = :CDaR, rf = rf,
                    cluster = false,)
-    w4 = opt_port!(portfolio; type = :HERC, rm = :CDaR, rf = rf,
-                   cluster = false)
+    w4 = opt_port!(portfolio; type = :HERC, rm = :CDaR, rf = rf, cluster = false)
 
     w1t = [0.061732435359141954, 0.06684195886985198, 0.059816424307372225,
            0.0155128049231182, 0.042202981611751615, 0.016416986601765236,
@@ -3275,8 +2941,7 @@ end
            0.0761884088103524, 0.13229798465965606, 0.05453033048961984,
            0.07588804246885605, 0.05335524884551812]
 
-    w2t = [0.05347326153963788, 0.0952976228086315, 0.0483115366372442,
-           0.03871246352967465,
+    w2t = [0.05347326153963788, 0.0952976228086315, 0.0483115366372442, 0.03871246352967465,
            0.04258324980133269, 0.0457752266650704, 0.034139587074985094,
            0.06059201730408066, 0.03685969476575315, 0.051463074362213465,
            0.05968244129623235, 0.02304355480894812, 0.01820715071770149,
@@ -3289,8 +2954,7 @@ end
            0.031440878203812674, 0.02765262927324115, 0.038622757716471855,
            0.05449451662150961, 0.07421075864027389, 0.010805582781120135,
            0.006125600333633228, 0.05505443171528247, 0.010042975330900426,
-           0.04475631681027434, 0.13734914660868333, 0.066053552264685,
-           0.0758183579584723,
+           0.04475631681027434, 0.13734914660868333, 0.066053552264685, 0.0758183579584723,
            0.06463015511860094]
 
     w4t = [0.0747775890739847, 0.06939399743726035, 0.07245669105243545,
@@ -3298,8 +2962,7 @@ end
            0.031440878203812674, 0.02765262927324115, 0.038622757716471855,
            0.05449451662150961, 0.07421075864027389, 0.010805582781120135,
            0.006125600333633228, 0.05505443171528247, 0.010042975330900426,
-           0.04475631681027434, 0.13734914660868333, 0.066053552264685,
-           0.0758183579584723,
+           0.04475631681027434, 0.13734914660868333, 0.066053552264685, 0.0758183579584723,
            0.06463015511860094]
 
     @test isapprox(w1.weights, w1t)

@@ -63,8 +63,8 @@ efficient_risk!(
 )
 portfolio_performance(portfolio::EffMeanVar; rf = portfolio.rf, verbose = false)
 ```
-<!-- refresh_model!(portfolio::AbstractEffMeanVar) -->
 
+<!-- refresh_model!(portfolio::AbstractEffMeanVar) -->
 ## Mean-semivariance
 
 ```@docs
@@ -88,8 +88,8 @@ EffMeanSemivar(
 )
 portfolio_performance(portfolio::EffMeanSemivar; rf = portfolio.rf, verbose = false)
 ```
-<!-- refresh_model!(portfolio::AbstractEffMeanSemivar) -->
 
+<!-- refresh_model!(portfolio::AbstractEffMeanSemivar) -->
 ## Critical Value at Risk (CVaR)
 
 ```@docs

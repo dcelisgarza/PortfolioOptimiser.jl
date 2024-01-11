@@ -1,15 +1,5 @@
-using Test,
-      OrderedCollections,
-      JuMP,
-      PortfolioOptimiser,
-      CSV,
-      DataFrames,
-      Dates,
-      TimeSeries,
-      ECOS,
-      Clarabel,
-      COSMO,
-      HiGHS
+using Test, OrderedCollections, JuMP, PortfolioOptimiser, CSV, DataFrames, Dates,
+      TimeSeries, ECOS, Clarabel, COSMO, HiGHS
 
 A = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 Y = percentchange(A)
@@ -66,8 +56,7 @@ returns = dropmissing!(DataFrame(Y))
                                                       :params => Dict("verbose" => false,
                                                                       "max_iter" => 2)))
     @test calc_risk(portfolio; rm = :RVaR) < 0
-    @test isapprox(calc_risk(portfolio; rm = :Equal),
-                   1 / size(portfolio.returns, 2))
+    @test isapprox(calc_risk(portfolio; rm = :Equal), 1 / size(portfolio.returns, 2))
 
     opt_port!(portfolio; type = :RP)
     @test !isempty(portfolio.fail[:Clarabel_RP])
@@ -101,15 +90,11 @@ returns = dropmissing!(DataFrame(Y))
     portfolio.alloc_solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                             :params => Dict("verbose" => false)))
     alloc = allocate_port!(portfolio; alloc_type = :LP,
-                           latest_prices = Vector(DataFrame(A)[end, 2:end]),
-                           investment = 0)
+                           latest_prices = Vector(DataFrame(A)[end, 2:end]), investment = 0)
     @test isempty(alloc)
     @test !isempty(portfolio.alloc_fail)
 
-    w1 = owa_l_moment_crm(50; k = 8,
-                          method = :E,
-                          g = 0.5,
-                          max_phi = 0.5,
+    w1 = owa_l_moment_crm(50; k = 8, method = :E, g = 0.5, max_phi = 0.5,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :params => Dict("verbose" => false,
                                                                            "max_iter" => 1))),)
@@ -118,10 +103,7 @@ returns = dropmissing!(DataFrame(Y))
 
     @test isapprox(w2, w1)
 
-    w3 = owa_l_moment_crm(50; k = 8,
-                          method = :E,
-                          g = 0.5,
-                          max_phi = 0.5,
+    w3 = owa_l_moment_crm(50; k = 8, method = :E, g = 0.5, max_phi = 0.5,
                           solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
                                                         :params => Dict("log_to_console" => false))),)
 

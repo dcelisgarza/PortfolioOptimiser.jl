@@ -11,14 +11,9 @@ struct HRPOpt{T1, T2, T3, T4, T5, T6, T7, T8, T9} <: AbstractHRPOpt
     linkage::T8
     clusters::T9
 end
-function HRPOpt(tickers::AbstractVector{<:AbstractString};
-                linkage::Symbol = :single,
-                returns = nothing,
-                cov_mtx = nothing,
-                mean_ret = nothing,
-                rf = 1.02^(1 / 252) - 1,
-                risk_aversion = 1,
-                D = :default,)
+function HRPOpt(tickers::AbstractVector{<:AbstractString}; linkage::Symbol = :single,
+                returns = nothing, cov_mtx = nothing, mean_ret = nothing,
+                rf = 1.02^(1 / 252) - 1, risk_aversion = 1, D = :default,)
     if isnothing(returns) && isnothing(cov_mtx)
         throw(ArgumentError("Either returns or cov_mtx must be defined."))
     elseif isnothing(returns)
@@ -29,8 +24,7 @@ function HRPOpt(tickers::AbstractVector{<:AbstractString};
         cov_mtx = cov(returns)
         cor_mtx = cor(returns)
     else
-        @assert size(cov_mtx, 1) == size(cov_mtx, 2) == size(returns, 2) ==
-                length(tickers)
+        @assert size(cov_mtx, 1) == size(cov_mtx, 2) == size(returns, 2) == length(tickers)
         cor_mtx = cov_to_cor(cov_mtx)
     end
 
@@ -45,16 +39,8 @@ function HRPOpt(tickers::AbstractVector{<:AbstractString};
 
     weights = zeros(length(tickers))
 
-    risk_aversion = _val_compare_benchmark(risk_aversion, <=, 0, 1,
-                                           "risk_aversion")
+    risk_aversion = _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
 
-    return HRPOpt(tickers,
-                  mean_ret,
-                  weights,
-                  returns,
-                  cov_mtx,
-                  rf,
-                  risk_aversion,
-                  linkage,
+    return HRPOpt(tickers, mean_ret, weights, returns, cov_mtx, rf, risk_aversion, linkage,
                   clusters)
 end

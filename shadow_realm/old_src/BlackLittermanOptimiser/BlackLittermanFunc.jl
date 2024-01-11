@@ -12,9 +12,7 @@ function _parse_views(tickers, views::Dict)
     return Q, P
 end
 
-function market_implied_prior_returns(market_caps,
-                                      cov_mtx,
-                                      risk_aversion = 1,
+function market_implied_prior_returns(market_caps, cov_mtx, risk_aversion = 1,
                                       rf = 1.02^(1 / 252) - 1)
     mkt_weights = market_caps / sum(market_caps)
 

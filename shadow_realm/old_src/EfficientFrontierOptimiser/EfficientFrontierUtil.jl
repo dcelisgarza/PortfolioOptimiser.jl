@@ -77,15 +77,16 @@ function _transform_constraints_sharpe(model, k, fname = "max_sharpe!")
                 expr - c*k <= 0
             because the variable times the constant is a variable.
             =#
-            add_to_expression!(constraint.func,
-                               -getfield(constraint.set, intfKey), k)
+            add_to_expression!(constraint.func, -getfield(constraint.set, intfKey), k)
             expr = @expression(model, constraint.func)
             # Push them to the array.
             push!(exprArr, expr)
         end
 
         # If the inner loop broke out, then we don't want to change anything and we continue to the next iteration.
-        skip && continue
+        if skip
+            continue
+        end
 
         # Delete old constraint.
         delete(model, value)
@@ -94,14 +95,11 @@ function _transform_constraints_sharpe(model, k, fname = "max_sharpe!")
         # When we're at the end of the constraints, delete the constraint key and add the new transformed constraints.
 
         if intfType <: JuMP.MOI.EqualTo{<:Number}
-            model[constKey] = @constraint(model, exprArr .== 0,
-                                          base_name = constName)
+            model[constKey] = @constraint(model, exprArr .== 0, base_name = constName)
         elseif intfType <: JuMP.MOI.GreaterThan{<:Number}
-            model[constKey] = @constraint(model, exprArr .>= 0,
-                                          base_name = constName)
+            model[constKey] = @constraint(model, exprArr .>= 0, base_name = constName)
         elseif intfType <: JuMP.MOI.LessThan{<:Number}
-            model[constKey] = @constraint(model, exprArr .<= 0,
-                                          base_name = constName)
+            model[constKey] = @constraint(model, exprArr .<= 0, base_name = constName)
         end
     end
 end

@@ -16,74 +16,55 @@ Allocation(
 Returns a tuple of an [`Allocation`](@ref) structure and remaining money after allocating assets.
 
 !!! note
+
     Short positions have negative weights and shares.
 
-- `type`: Allocation algorithm to use, can be `Greedy()` or `LP()` (see [`AbstractAllocation`](@ref)).
-- `portfolio`: Portfolio [`AbstractPortfolioOptimiser`](@ref).
-- `latest_prices`: Vector of latest prices, entries should be in the same order as `portfolio.tickers`.
-- `investment`: value to be invested in the portfolio.
-- `rounding`: `Greedy()` supports fractional shares, rounds shares down to the nearest multiple of `rounding`. This has no effect on an `LP()` allocation.
-- `reinvest`: if `true`, reinvests the money earned from short positions of the portfolio into buying more long positions.
-- `short_ratio`: long to short portfolio ratio, 0.2 corresponds to 120/20 long to short shares. If `nothing` defaults to portfolio weights.
-- `optimiser`: only used for the `LP()` allocation. Needs to support mixed-interger linear programming.
-- `silent`: if `true` the optimiser is silent.
+  - `type`: Allocation algorithm to use, can be `Greedy()` or `LP()` (see [`AbstractAllocation`](@ref)).
+  - `portfolio`: Portfolio [`AbstractPortfolioOptimiser`](@ref).
+  - `latest_prices`: Vector of latest prices, entries should be in the same order as `portfolio.tickers`.
+  - `investment`: value to be invested in the portfolio.
+  - `rounding`: `Greedy()` supports fractional shares, rounds shares down to the nearest multiple of `rounding`. This has no effect on an `LP()` allocation.
+  - `reinvest`: if `true`, reinvests the money earned from short positions of the portfolio into buying more long positions.
+  - `short_ratio`: long to short portfolio ratio, 0.2 corresponds to 120/20 long to short shares. If `nothing` defaults to portfolio weights.
+  - `optimiser`: only used for the `LP()` allocation. Needs to support mixed-interger linear programming.
+  - `silent`: if `true` the optimiser is silent.
 
 Dispatches one of the following depending on `type`:
 
 ## Greedy allocation
 
 ```julia
-Allocation(
-    type::Greedy,
-    tickers::AbstractArray,
-    weights::AbstractArray,
-    latest_prices::AbstractVector,
-    investment::Real = 1e4,
-    rounding::Real = 1,
-    reinvest::Bool = false,
-    short_ratio::Union{Real, Nothing} = nothing,
-    optimiser = nothing,
-    silent = nothing,
-)
+Allocation(type::Greedy, tickers::AbstractArray, weights::AbstractArray,
+           latest_prices::AbstractVector; investment::Real = 1e4, rounding::Real = 1,
+           reinvest::Bool = false, short_ratio::Union{Real, Nothing} = nothing,
+           optimiser = nothing, silent = nothing)
 ```
 
 Greedy algorithm that allocates assets according to their optimised weights. It priorites assets according to the ones with the greatest differnce between their weight in the portfolio and ideal weight. It allocates assets by progressively adding `rounding` to each share until the cost exceeds the available funds.
 
 !!! note
+
     `optimiser` and `silent` are not used but are in the function signature for dispatch purposes.
 
 ## LP allocation
 
 ```julia
-Allocation(
-    type::LP,
-    tickers::AbstractArray,
-    weights::AbstractArray,
-    latest_prices::AbstractVector,
-    investment::Real = 1e4,
-    rounding = nothing,
-    reinvest::Bool = false,
-    short_ratio::Union{Real, Nothing} = nothing,
-    optimiser = HiGHS.Optimizer,
-    silent = true,
-)
+Allocation(type::LP, tickers::AbstractArray, weights::AbstractArray,
+           latest_prices::AbstractVector; investment::Real = 1e4, rounding = nothing,
+           reinvest::Bool = false, short_ratio::Union{Real, Nothing} = nothing,
+           optimiser = HiGHS.Optimizer, silent = true)
 ```
 
 Linear mixed-integer optimisation of assets.
 
 !!! note
+
     `rounding` has no effect, as it can only allocate integer numbers of shares.
 
 ## Example
 
 ```julia
-ef = EffMeanVar(
-    tickers,
-    mean_ret,
-    cov_mtx;
-    market_neutral = true,
-    weight_bounds = (-1, 1),
-)
+ef = EffMeanVar(tickers, mean_ret, cov_mtx; market_neutral = true, weight_bounds = (-1, 1),)
 max_utility!(ef)
 
 # Mixed integer, programming, no rounding available.
@@ -93,16 +74,10 @@ allocLP, leftoverLP = Allocation(LP(), ef, latest_prices; investment = 3590)
 allocGreedy, leftoverGreedy = Allocation(Greedy(), ef, latest_prices; rounding = 0.25)
 ```
 """
-function Allocation(type::AbstractAllocation,
-                    portfolio::AbstractPortfolioOptimiser,
-                    latest_prices::AbstractVector;
-                    investment = 1e4,
-                    rounding = 1,
-                    reinvest = false,
-                    short_ratio = nothing,
-                    optimiser = HiGHS.Optimizer,
-                    silent = true,
-                    optimiser_attributes = (),)
+function Allocation(type::AbstractAllocation, portfolio::AbstractPortfolioOptimiser,
+                    latest_prices::AbstractVector; investment = 1e4, rounding = 1,
+                    reinvest = false, short_ratio = nothing, optimiser = HiGHS.Optimizer,
+                    silent = true, optimiser_attributes = (),)
     @assert isnothing(short_ratio) || short_ratio > 0
 
     tickers = if typeof(portfolio) <: NearOptCentering
@@ -111,30 +86,15 @@ function Allocation(type::AbstractAllocation,
         portfolio.tickers
     end
 
-    return Allocation(type,
-                      tickers,
-                      portfolio.weights,
-                      latest_prices,
-                      investment,
-                      rounding,
-                      reinvest,
-                      short_ratio,
-                      optimiser,
-                      silent,
-                      optimiser_attributes)
+    return Allocation(type, tickers, portfolio.weights, latest_prices, investment, rounding,
+                      reinvest, short_ratio, optimiser, silent, optimiser_attributes)
 end
 
-function Allocation(type::Greedy,
-                    tickers::AbstractArray,
-                    weights::AbstractArray,
-                    latest_prices::AbstractVector,
-                    investment::Real = 1e4,
-                    rounding::Real = 1,
-                    reinvest::Bool = false,
-                    short_ratio::Union{Real, Nothing} = nothing,
-                    optimiser = nothing,
-                    silent = nothing,
-                    optimiser_attributes = nothing)
+function Allocation(type::Greedy, tickers::AbstractArray, weights::AbstractArray,
+                    latest_prices::AbstractVector, investment::Real = 1e4,
+                    rounding::Real = 1, reinvest::Bool = false,
+                    short_ratio::Union{Real, Nothing} = nothing, optimiser = nothing,
+                    silent = nothing, optimiser_attributes = nothing)
     idx = sortperm(weights; rev = true)
 
     weights = weights[idx]
@@ -142,16 +102,8 @@ function Allocation(type::Greedy,
     latest_prices = latest_prices[idx]
 
     if weights[end] < 0
-        return _short_allocation(type,
-                                 tickers,
-                                 weights,
-                                 latest_prices,
-                                 investment,
-                                 rounding,
-                                 reinvest,
-                                 short_ratio,
-                                 optimiser,
-                                 silent)
+        return _short_allocation(type, tickers, weights, latest_prices, investment,
+                                 rounding, reinvest, short_ratio, optimiser, silent)
     end
 
     # If there is no shorting, continue with greedy allocation.
@@ -162,10 +114,11 @@ function Allocation(type::Greedy,
     # First loop
     for i in 1:n_tickers
         price = latest_prices[i]
-        n_shares = roundmult(weights[i] * investment / price, rounding,
-                             RoundDown)
+        n_shares = roundmult(weights[i] * investment / price, rounding, RoundDown)
         cost = n_shares * price
-        cost > available_funds && break
+        if cost > available_funds
+            break
+        end
         available_funds -= cost
         shares_bought[i] = n_shares
     end
@@ -186,10 +139,14 @@ function Allocation(type::Greedy,
         while price > available_funds
             deficit[idx] = 0
             idx = argmax(deficit)
-            deficit[idx] <= 0 && break
+            if deficit[idx] <= 0
+                break
+            end
             price = latest_prices[idx]
         end
-        deficit[idx] <= 0 && break
+        if deficit[idx] <= 0
+            break
+        end
         # Buy one share*rounding at a time.
         shares_bought[idx] += rounding
         available_funds -= price
@@ -200,32 +157,17 @@ function Allocation(type::Greedy,
                                                                             tickers,
                                                                             latest_prices)
 
-    return Allocation(tickers, shares_bought, allocated_weights),
-           available_funds
+    return Allocation(tickers, shares_bought, allocated_weights), available_funds
 end
 
-function Allocation(type::LP,
-                    tickers::AbstractArray,
-                    weights::AbstractArray,
-                    latest_prices::AbstractVector,
-                    investment::Real = 1e4,
-                    rounding = nothing,
-                    reinvest::Bool = false,
+function Allocation(type::LP, tickers::AbstractArray, weights::AbstractArray,
+                    latest_prices::AbstractVector, investment::Real = 1e4,
+                    rounding = nothing, reinvest::Bool = false,
                     short_ratio::Union{Real, Nothing} = nothing,
-                    optimiser = HiGHS.Optimizer,
-                    silent = true,
-                    optimiser_attributes = ())
+                    optimiser = HiGHS.Optimizer, silent = true, optimiser_attributes = ())
     if any(x -> x < 0, weights)
-        return _short_allocation(type,
-                                 tickers,
-                                 weights,
-                                 latest_prices,
-                                 investment,
-                                 rounding,
-                                 reinvest,
-                                 short_ratio,
-                                 optimiser,
-                                 silent)
+        return _short_allocation(type, tickers, weights, latest_prices, investment,
+                                 rounding, reinvest, short_ratio, optimiser, silent)
     end
 
     num_tickers = length(tickers)
@@ -262,8 +204,7 @@ function Allocation(type::LP,
                                                                             tickers,
                                                                             latest_prices)
 
-    return Allocation(tickers, shares_bought, allocated_weights),
-           available_funds
+    return Allocation(tickers, shares_bought, allocated_weights), available_funds
 end
 
 """
@@ -284,16 +225,8 @@ _short_allocation(
 
 Helper function for allocating short-long portfolios. Ensures the shares and weights of the shorts are negative.
 """
-function _short_allocation(type,
-                           tickers,
-                           weights,
-                           latest_prices,
-                           investment,
-                           rounding,
-                           reinvest,
-                           short_ratio,
-                           optimiser,
-                           silent)
+function _short_allocation(type, tickers, weights, latest_prices, investment, rounding,
+                           reinvest, short_ratio, optimiser, silent)
     lidx = weights .>= 0
     sidx = .!lidx
 
@@ -306,33 +239,19 @@ function _short_allocation(type,
     short_val = investment * short_ratio
     long_val = investment
 
-    reinvest && (long_val += short_val)
+    if reinvest
+        (long_val += short_val)
+    end
 
     # Allocate only long positions.
-    longAlloc, long_leftover = _sub_allocation(type,
-                                               tickers,
-                                               weights,
-                                               latest_prices,
-                                               long_val,
-                                               rounding,
-                                               lidx,
-                                               false,
-                                               nothing,
-                                               optimiser,
-                                               silent)
+    longAlloc, long_leftover = _sub_allocation(type, tickers, weights, latest_prices,
+                                               long_val, rounding, lidx, false, nothing,
+                                               optimiser, silent)
 
     # Only take the indices of short stocks and multiply the weights by -1 to make the short weights positive, ensuring we don't infinitely recurse.
-    shortAlloc, short_leftover = _sub_allocation(type,
-                                                 tickers,
-                                                 -weights,
-                                                 latest_prices,
-                                                 short_val,
-                                                 rounding,
-                                                 sidx,
-                                                 false,
-                                                 nothing,
-                                                 optimiser,
-                                                 silent)
+    shortAlloc, short_leftover = _sub_allocation(type, tickers, -weights, latest_prices,
+                                                 short_val, rounding, sidx, false, nothing,
+                                                 optimiser, silent)
 
     # Combine long and short positions. Short shares and weights are negative.
     tickers = [longAlloc.tickers; shortAlloc.tickers]
@@ -361,31 +280,14 @@ _sub_allocation(
 
 Helper function for creating sub allocations. It calls `Allocation` again but only for the `idx` provided.
 """
-function _sub_allocation(type,
-                         tickers,
-                         weights,
-                         latest_prices,
-                         investment,
-                         rounding,
-                         idx,
-                         reinvest,
-                         short_ratio,
-                         optimiser,
-                         silent)
+function _sub_allocation(type, tickers, weights, latest_prices, investment, rounding, idx,
+                         reinvest, short_ratio, optimiser, silent)
     tickers = tickers[idx]
     weights = weights[idx]
     weights /= sum(weights)
     latest_prices = latest_prices[idx]
-    subAlloc, sub_leftover = Allocation(type,
-                                        tickers,
-                                        weights,
-                                        latest_prices,
-                                        investment,
-                                        rounding,
-                                        reinvest,
-                                        short_ratio,
-                                        optimiser,
-                                        silent)
+    subAlloc, sub_leftover = Allocation(type, tickers, weights, latest_prices, investment,
+                                        rounding, reinvest, short_ratio, optimiser, silent)
 
     return subAlloc, sub_leftover
 end

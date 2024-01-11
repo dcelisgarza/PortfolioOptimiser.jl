@@ -1,7 +1,6 @@
 abstract type AbstractEffUlcer <: AbstractEfficient end
 
-struct EffUlcer{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
-       AbstractEffUlcer
+struct EffUlcer{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <: AbstractEffUlcer
     tickers::T1
     mean_ret::T2
     weights::T3
@@ -16,21 +15,16 @@ struct EffUlcer{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13} <:
     extra_obj_terms::T12
     model::T13
 end
-function EffUlcer(tickers,
-                  mean_ret,
-                  returns;
-                  weight_bounds = (0.0, 1.0),
-                  rf = 1.02^(1 / 252) - 1,
-                  market_neutral = false,
-                  risk_aversion = 1.0,
+function EffUlcer(tickers, mean_ret, returns; weight_bounds = (0.0, 1.0),
+                  rf = 1.02^(1 / 252) - 1, market_neutral = false, risk_aversion = 1.0,
                   target_risk = mean(maximum(returns; dims = 2)),
-                  target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
-                  extra_vars = [],
-                  extra_constraints = [],
-                  extra_obj_terms = [],)
+                  target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0, extra_vars = [],
+                  extra_constraints = [], extra_obj_terms = [],)
     num_tickers = length(tickers)
     @assert num_tickers == size(returns, 2)
-    !isnothing(mean_ret) && @assert(num_tickers == length(mean_ret))
+    if !isnothing(mean_ret)
+        @assert(num_tickers == length(mean_ret))
+    end
 
     weights = zeros(num_tickers)
 
@@ -47,8 +41,7 @@ function EffUlcer(tickers,
     @constraint(model, u2e_geq_0, u[2:end] .>= 0)
     @constraint(model, soc_u, [norm_u; u[2:end]] in SecondOrderCone())
 
-    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers,
-                                                       weight_bounds)
+    lower_bounds, upper_bounds = _create_weight_bounds(num_tickers, weight_bounds)
 
     @constraint(model, lower_bounds, w .>= lower_bounds)
     @constraint(model, upper_bounds, w .<= upper_bounds)
@@ -67,20 +60,12 @@ function EffUlcer(tickers,
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
-    !isnothing(mean_ret) && @expression(model, ret, port_return(w, mean_ret))
+    if !isnothing(mean_ret)
+        @expression(model, ret, port_return(w, mean_ret))
+    end
     @expression(model, risk, norm_u / sqrt(samples))
 
-    return EffUlcer(tickers,
-                    mean_ret,
-                    weights,
-                    returns,
-                    rf,
-                    market_neutral,
-                    risk_aversion,
-                    target_risk,
-                    target_ret,
-                    extra_vars,
-                    extra_constraints,
-                    extra_obj_terms,
+    return EffUlcer(tickers, mean_ret, weights, returns, rf, market_neutral, risk_aversion,
+                    target_risk, target_ret, extra_vars, extra_constraints, extra_obj_terms,
                     model)
 end

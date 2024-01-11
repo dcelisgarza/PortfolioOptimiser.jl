@@ -13,12 +13,12 @@ custom_optimiser!(
 
 Minimises user-provided objectives that are supported by `JuMP.@objective`.
 
-- `portfolio`: any concrete subtype of `AbstractPortfolioOptimiser`.
-- `obj`: objective function supported by `JuMP.@objective`.
-- `obj_params`: vector or tuple of arguments of `obj`.
-- `initial_guess`: initial guess for optimiser, if `nothing` defaults to uniform weights.
-- `optimiser`: optimiser for solving optimisation problem.
-- `silent`: if `false`, the optimiser prints to console.
+  - `portfolio`: any concrete subtype of `AbstractPortfolioOptimiser`.
+  - `obj`: objective function supported by `JuMP.@objective`.
+  - `obj_params`: vector or tuple of arguments of `obj`.
+  - `initial_guess`: initial guess for optimiser, if `nothing` defaults to uniform weights.
+  - `optimiser`: optimiser for solving optimisation problem.
+  - `silent`: if `false`, the optimiser prints to console.
 
 ## Example
 
@@ -45,9 +45,11 @@ custom_optimiser!(ef, kelly_objective, obj_params)
 ```
 
 !!! note
+
     `obj_params` can be any variable that can be splatted. It is also optional, so objectives with no parameters are valid too.
 
 !!! warning
+
     This minimises `obj`, so if you want to maximise a function, make it negative---for example, the portfolio return. Furthermore, this does not add extra objective terms, so they must be added to the definition of `obj`. We illustrate how we can use this to maximise the return subject to L2 regularisation (don't do this, 'tis a silly idea).
 
     ```julia
@@ -67,20 +69,18 @@ custom_optimiser!(ef, kelly_objective, obj_params)
     custom_optimiser!(ef, max_ret_l2_reg, obj_params)
     ```
 """
-function custom_optimiser!(portfolio::AbstractPortfolioOptimiser,
-                           obj,
-                           obj_params = ();
-                           initial_guess = nothing,
-                           optimiser = Ipopt.Optimizer,
-                           silent = true,
-                           optimiser_attributes = (),)
+function custom_optimiser!(portfolio::AbstractPortfolioOptimiser, obj, obj_params = ();
+                           initial_guess = nothing, optimiser = Ipopt.Optimizer,
+                           silent = true, optimiser_attributes = (),)
     model = portfolio.model
 
-    termination_status(model) != OPTIMIZE_NOT_CALLED &&
+    if termination_status(model) != OPTIMIZE_NOT_CALLED
         refresh_model!(portfolio)
+    end
 
-    !haskey(model, :sum_w) &&
+    if !haskey(model, :sum_w)
         _make_weight_sum_constraint!(model, portfolio.market_neutral)
+    end
 
     w = model[:w]
     n = length(w)
@@ -115,15 +115,16 @@ custom_nloptimiser!(
 
 Minimises user-provided nonlinear objectives that are supported by `JuMP.@NLobjective`.
 
-- `portfolio`: any concrete subtype of `AbstractPortfolioOptimiser`.
-- `obj`: objective function supported by `JuMP.@NLobjective`.
-- `obj_params`: vector or tuple of arguments of `obj`.
-- `extra_vars`: collection of tuples of extra variables for the nonlinear optimiser and their starting values, each element takes the form of `(variable, value)`. If `!isnothing(value)`, it sets/overrides the start value of `variable`, else it takes the default. This is important because the optimiser can fail if the start value causes a discontinuity in the `obj` function, or one of its derivatives. Furthermore, `variable` must be a variable registered to the model.
-- `initial_guess`: initial guess for optimiser, if `nothing` defaults to unifrom weights.
-- `optimiser`: optimiser for solving optimisation problem.
-- `silent`: if `false`, the optimiser prints to console.
+  - `portfolio`: any concrete subtype of `AbstractPortfolioOptimiser`.
+  - `obj`: objective function supported by `JuMP.@NLobjective`.
+  - `obj_params`: vector or tuple of arguments of `obj`.
+  - `extra_vars`: collection of tuples of extra variables for the nonlinear optimiser and their starting values, each element takes the form of `(variable, value)`. If `!isnothing(value)`, it sets/overrides the start value of `variable`, else it takes the default. This is important because the optimiser can fail if the start value causes a discontinuity in the `obj` function, or one of its derivatives. Furthermore, `variable` must be a variable registered to the model.
+  - `initial_guess`: initial guess for optimiser, if `nothing` defaults to unifrom weights.
+  - `optimiser`: optimiser for solving optimisation problem.
+  - `silent`: if `false`, the optimiser prints to console.
 
 !!! warning
+
     As of JuMP 1.0, `JuMP.@NLobjective` only supports scalar arguments, as such, it's important to define the nonlinear objective to take in scalar arguments only. The example shows how this can be done.
 
 ## Example
@@ -145,7 +146,7 @@ function logarithmic_barrier(w::T...) where {T}
     cov_mtx = obj_params[1]
     k = obj_params[2]
     w = [i for i in w]
-    logarithmic_barrier2(w, cov_mtx, k)
+    return logarithmic_barrier2(w, cov_mtx, k)
 end
 
 ef = EffMeanVar(tickers, mean_ret, cov_mtx)
@@ -163,7 +164,7 @@ function logarithmic_barrier(w::T...) where {T}
     cov_mtx = obj_params[1]
     k = obj_params[2]
     w = [i for i in w]
-    PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
+    return PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
 end
 
 ef = EffMeanVar(tickers, mean_ret, cov_mtx)
@@ -175,7 +176,7 @@ function logarithmic_barrier(w::T...) where {T}
     cov_mtx = obj_params[1]
     k = obj_params[2]
     w = [i for i in w]
-    logarithmic_barrier(w, cov_mtx, k)
+    return logarithmic_barrier(w, cov_mtx, k)
 end
 
 ef = EffMeanVar(tickers, mean_ret, cov_mtx)
@@ -184,6 +185,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 ```
 
 !!! warning
+
     Note how in both cases, the parameters in the scalar-only function are not declared in the function signature. As such, they must be defined in terms of `obj_params`, or as literals, as the variable must be known to `custom_nloptimiser!`. If a variable name other than `obj_params` is used, the model will error becuase the variable will be unkown to the `custom_nloptimiser!`. For example, the following custom nonlinear objective function will not work because `obj_param` and `obj_parameter` do not exist inside `custom_nloptimiser!`.
 
     ```julia
@@ -194,7 +196,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
         cov_mtx = obj_param[1]  # Unkown variable, change to obj_params[1]
         k = obj_parameter[2]    # Unkown variable, change to obj_params[2]
         w = [i for i in w]
-        PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
+        return PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
     end
 
     ef = EffMeanVar(tickers, mean_ret, cov_mtx)
@@ -203,9 +205,11 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     ```
 
 !!! note
+
     `obj_params` can be any variable that can be splatted. It is also optional, so nonlinear objectives with no parameters are valid too.
 
 !!! warning
+
     This minimises `obj`, so if you want to maximise a function, make it negative---for example, the sharpe ratio. Furthermore, this does not add extra objective terms, so they must be added to the definition of `obj`. We illustrate how we can use this to maximise the return subject to L2 regularisation (don't do this, 'tis a silly idea).
 
     ```julia
@@ -231,13 +235,9 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     custom_nloptimiser!(ef, sharpe_l2_reg, obj_params)
     ```
 """
-function custom_nloptimiser!(portfolio::AbstractPortfolioOptimiser,
-                             obj,
-                             obj_params = (),
-                             extra_vars = ();
-                             initial_guess = nothing,
-                             optimiser = Ipopt.Optimizer,
-                             silent = true,
+function custom_nloptimiser!(portfolio::AbstractPortfolioOptimiser, obj, obj_params = (),
+                             extra_vars = (); initial_guess = nothing,
+                             optimiser = Ipopt.Optimizer, silent = true,
                              optimiser_attributes = (),)
     model = portfolio.model
 
@@ -245,8 +245,9 @@ function custom_nloptimiser!(portfolio::AbstractPortfolioOptimiser,
         throw(ArgumentError("Cannot deregister user defined functions from JuMP, model. Please make a new instance of portfolio."))
     end
 
-    !haskey(model, :sum_w) &&
+    if !haskey(model, :sum_w)
         _make_weight_sum_constraint!(model, portfolio.market_neutral)
+    end
 
     w = model[:w]
     n = length(w)

@@ -10,26 +10,17 @@ min_risk!(
 
 Minimise the volatility ([`port_variance`](@ref)) of a [`EffMeanVar`](@ref) portfolio.
 
-- `portfolio`: [`EffMeanVar`](@ref) structure.
-- `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
-- `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
+  - `portfolio`: [`EffMeanVar`](@ref) structure.
+  - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
+  - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
-function min_risk!(portfolio::Union{EffMeanVar,
-                                    EffMeanSemivar,
-                                    EffMeanAbsDev,
-                                    EffCVaR,
-                                    EffCDaR,
-                                    EffMinimax,
-                                    EffMaxDaR,
-                                    EffMeanDaR,
-                                    EffUlcer,
-                                    EffEVaR,
-                                    EffEDaR};
-                   optimiser = Ipopt.Optimizer,
-                   silent = true,
-                   optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+function min_risk!(portfolio::Union{EffMeanVar, EffMeanSemivar, EffMeanAbsDev, EffCVaR,
+                                    EffCDaR, EffMinimax, EffMaxDaR, EffMeanDaR, EffUlcer,
+                                    EffEVaR, EffEDaR}; optimiser = Ipopt.Optimizer,
+                   silent = true, optimiser_attributes = (),)
+    if termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED
         refresh_model!(portfolio)
+    end
 
     model = portfolio.model
     w = model[:w]
@@ -56,29 +47,21 @@ max_return(portfolio::Union{EffMeanVar, EffMeanSemivar, EffCVaR, EffCDaR}; optim
 
 Maximise the return ([`port_return`](@ref)) of a [`EffMeanVar`](@ref) portfolio. Internally minimises the negative of the portfolio return.
 
-- `portfolio`: [`EffMeanVar`](@ref) structure.
-- `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
-- `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
+  - `portfolio`: [`EffMeanVar`](@ref) structure.
+  - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
+  - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 
 !!! warning
+
     This should not be used for optimising portfolios. It's used by [`efficient_return!`](@ref) to validate the target return. This yields portfolios with large volatilities.
 """
-function max_return(portfolio::Union{EffMeanVar,
-                                     EffMeanSemivar,
-                                     EffMeanAbsDev,
-                                     EffCVaR,
-                                     EffCDaR,
-                                     EffMinimax,
-                                     EffMaxDaR,
-                                     EffMeanDaR,
-                                     EffUlcer,
-                                     EffEVaR,
-                                     EffEDaR};
-                    optimiser = Ipopt.Optimizer,
-                    silent = true,
-                    optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+function max_return(portfolio::Union{EffMeanVar, EffMeanSemivar, EffMeanAbsDev, EffCVaR,
+                                     EffCDaR, EffMinimax, EffMaxDaR, EffMeanDaR, EffUlcer,
+                                     EffEVaR, EffEDaR}; optimiser = Ipopt.Optimizer,
+                    silent = true, optimiser_attributes = (),)
+    if termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED
         refresh_model!(portfolio)
+    end
 
     model = copy(portfolio.model)
     ret = model[:ret]
@@ -95,22 +78,13 @@ function max_return(portfolio::Union{EffMeanVar,
     return model
 end
 
-function min_risk(portfolio::Union{EffMeanVar,
-                                   EffMeanSemivar,
-                                   EffMeanAbsDev,
-                                   EffCVaR,
-                                   EffCDaR,
-                                   EffMinimax,
-                                   EffMaxDaR,
-                                   EffMeanDaR,
-                                   EffUlcer,
-                                   EffEVaR,
-                                   EffEDaR};
-                  optimiser = Ipopt.Optimizer,
-                  silent = true,
-                  optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+function min_risk(portfolio::Union{EffMeanVar, EffMeanSemivar, EffMeanAbsDev, EffCVaR,
+                                   EffCDaR, EffMinimax, EffMaxDaR, EffMeanDaR, EffUlcer,
+                                   EffEVaR, EffEDaR}; optimiser = Ipopt.Optimizer,
+                  silent = true, optimiser_attributes = (),)
+    if termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED
         refresh_model!(portfolio)
+    end
 
     model = copy(portfolio.model)
     risk = model[:risk]
@@ -140,36 +114,28 @@ max_sharpe!(
 
 Maximise the sharpe ratio ([`sharpe_ratio`](@ref)) of a [`EffMeanVar`](@ref) portfolio.
 
-Uses a variable transformation to turn the nonlinear objective that is the sharpe ratio, into a convex quadratic minimisation problem. See [Cornuejols and Tutuncu (2006)](http://web.math.ku.dk/~rolf/CT_FinOpt.pdf) page 158 for more details.
+Uses a variable transformation to turn the nonlinear objective that is the sharpe ratio, into a convex quadratic minimisation problem. See [Cornuejols and Tutuncu (2006)](http://web.math.ku.dk/%7Erolf/CT_FinOpt.pdf) page 158 for more details.
 
-- `portfolio`: [`EffMeanVar`](@ref) structure.
-- `rf`: risk free rate.
-- `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
-- `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
+  - `portfolio`: [`EffMeanVar`](@ref) structure.
+  - `rf`: risk free rate.
+  - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
+  - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 
 !!! warning
+
     The variable transformation also modifies every constraint in `portfolio`, including all extra constraints. Therefore, one should not call other optimsiations on the same instance after optimising the sharpe ratio, create a fresh intance instead.
 
 !!! warning
+
     The variable transformation means any extra terms in the objective function may not work as intended. If you need to add extra objective terms, use [`custom_nloptimiser!`](@ref) (see the example) and add the extra objective terms in the objective function.
 """
-function max_sharpe!(portfolio::Union{EffMeanVar,
-                                      EffMeanSemivar,
-                                      EffMeanAbsDev,
-                                      EffCVaR,
-                                      EffCDaR,
-                                      EffMinimax,
-                                      EffMaxDaR,
-                                      EffMeanDaR,
-                                      EffUlcer,
-                                      EffEVaR,
-                                      EffEDaR},
-                     rf = portfolio.rf;
-                     optimiser = Ipopt.Optimizer,
-                     silent = true,
-                     optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+function max_sharpe!(portfolio::Union{EffMeanVar, EffMeanSemivar, EffMeanAbsDev, EffCVaR,
+                                      EffCDaR, EffMinimax, EffMaxDaR, EffMeanDaR, EffUlcer,
+                                      EffEVaR, EffEDaR}, rf = portfolio.rf;
+                     optimiser = Ipopt.Optimizer, silent = true, optimiser_attributes = (),)
+    if termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED
         throw(ArgumentError("Max sharpe uses a variable transformation that changes the constraints and objective function. Please create a new instance instead."))
+    end
 
     rf = _val_compare_benchmark(rf, <, 0, 0.02, "rf")
 
@@ -185,10 +151,8 @@ function max_sharpe!(portfolio::Union{EffMeanVar,
 
         delete.(model, model[:evar_con])
         unregister(model, :evar_con)
-        @constraint(model,
-                    evar_con[i = 1:samples],
-                    [-X[i] * 28 - t * 28, s * 28, u[i] * 28] in
-                    MOI.ExponentialCone())
+        @constraint(model, evar_con[i = 1:samples],
+                    [-X[i] * 28 - t * 28, s * 28, u[i] * 28] in MOI.ExponentialCone())
     end
 
     # We need a new variable for max_sharpe_optim.
@@ -236,28 +200,19 @@ max_utility!(
 
 Maximise the [`quadratic_utility`](@ref) of a [`EffMeanVar`](@ref) portfolio. Internally minimises the negative of the quadratic utility.
 
-- `portfolio`: [`EffMeanVar`](@ref) structure.
-- `risk_aversion`: the risk aversion parameter, the larger it is the lower the risk.
-- `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
-- `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
+  - `portfolio`: [`EffMeanVar`](@ref) structure.
+  - `risk_aversion`: the risk aversion parameter, the larger it is the lower the risk.
+  - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
+  - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
-function max_utility!(portfolio::Union{EffMeanVar,
-                                       EffMeanSemivar,
-                                       EffMeanAbsDev,
-                                       EffCVaR,
-                                       EffCDaR,
-                                       EffMinimax,
-                                       EffMaxDaR,
-                                       EffMeanDaR,
-                                       EffUlcer,
-                                       EffEVaR,
-                                       EffEDaR},
-                      risk_aversion = portfolio.risk_aversion;
-                      optimiser = Ipopt.Optimizer,
-                      silent = true,
-                      optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+function max_utility!(portfolio::Union{EffMeanVar, EffMeanSemivar, EffMeanAbsDev, EffCVaR,
+                                       EffCDaR, EffMinimax, EffMaxDaR, EffMeanDaR, EffUlcer,
+                                       EffEVaR, EffEDaR},
+                      risk_aversion = portfolio.risk_aversion; optimiser = Ipopt.Optimizer,
+                      silent = true, optimiser_attributes = (),)
+    if termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED
         refresh_model!(portfolio)
+    end
 
     # risk_aversion = _val_compare_benchmark(risk_aversion, <=, 0, 1, "risk_aversion")
 
@@ -295,40 +250,28 @@ efficient_return!(
 
 Minimise the [`port_variance`](@ref) of a [`EffMeanVar`](@ref) portfolio subject to the constraint for the return to be greater than or equal to `target_ret`. The portfolio is guaranteed to have a return at least equal to `target_ret`.
 
-- `portfolio`: [`EffMeanVar`](@ref) structure.
-- `target_ret`: the target return of the portfolio.
-- `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
-- `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
+  - `portfolio`: [`EffMeanVar`](@ref) structure.
+  - `target_ret`: the target return of the portfolio.
+  - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
+  - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
-function efficient_return!(portfolio::Union{EffMeanVar,
-                                            EffMeanSemivar,
-                                            EffMeanAbsDev,
-                                            EffCVaR,
-                                            EffCDaR,
-                                            EffMinimax,
-                                            EffMaxDaR,
-                                            EffMeanDaR,
-                                            EffUlcer,
-                                            EffEVaR,
-                                            EffEDaR},
-                           target_ret = portfolio.target_ret;
-                           optimiser = Ipopt.Optimizer,
-                           silent = true,
-                           optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+function efficient_return!(portfolio::Union{EffMeanVar, EffMeanSemivar, EffMeanAbsDev,
+                                            EffCVaR, EffCDaR, EffMinimax, EffMaxDaR,
+                                            EffMeanDaR, EffUlcer, EffEVaR, EffEDaR},
+                           target_ret = portfolio.target_ret; optimiser = Ipopt.Optimizer,
+                           silent = true, optimiser_attributes = (),)
+    if termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED
         refresh_model!(portfolio)
+    end
 
     mean_ret = portfolio.mean_ret
-    max_ret_model = max_return(portfolio; optimiser, silent,
-                               optimiser_attributes)
+    max_ret_model = max_return(portfolio; optimiser, silent, optimiser_attributes)
     w_max_ret = value.(max_ret_model[:w])
     max_ret = port_return(w_max_ret, mean_ret)
 
     correction = max(max_ret / 2, 0)
-    target_ret = _val_compare_benchmark(target_ret, >, max_ret, correction,
-                                        "target_ret")
-    target_ret = _val_compare_benchmark(target_ret, <, 0, correction,
-                                        "target_ret")
+    target_ret = _val_compare_benchmark(target_ret, >, max_ret, correction, "target_ret")
+    target_ret = _val_compare_benchmark(target_ret, <, 0, correction, "target_ret")
 
     model = portfolio.model
     w = model[:w]
@@ -364,28 +307,19 @@ efficient_risk!(
 
 Maximise the [`port_return`](@ref) of a [`EffMeanVar`](@ref) portfolio subject to the constraint for the volatility to be less than or equal to `target_risk`. The portfolio is guaranteed to have a volatility of at most `target_risk`.
 
-- `portfolio`: [`EffMeanVar`](@ref) structure.
-- `target_ret`: the target return of the portfolio.
-- `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
-- `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
+  - `portfolio`: [`EffMeanVar`](@ref) structure.
+  - `target_ret`: the target return of the portfolio.
+  - `optimiser`: `JuMP`-supported optimiser, must support quadratic objectives.
+  - `silent`: if `true` the optimiser will not print to console, if `false` the optimiser will print to console.
 """
-function efficient_risk!(portfolio::Union{EffMeanVar,
-                                          EffMeanSemivar,
-                                          EffMeanAbsDev,
-                                          EffCVaR,
-                                          EffCDaR,
-                                          EffMinimax,
-                                          EffMaxDaR,
-                                          EffMeanDaR,
-                                          EffUlcer,
-                                          EffEVaR,
-                                          EffEDaR},
-                         target_risk = portfolio.target_risk;
-                         optimiser = Ipopt.Optimizer,
-                         silent = true,
-                         optimiser_attributes = (),)
-    termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED &&
+function efficient_risk!(portfolio::Union{EffMeanVar, EffMeanSemivar, EffMeanAbsDev,
+                                          EffCVaR, EffCDaR, EffMinimax, EffMaxDaR,
+                                          EffMeanDaR, EffUlcer, EffEVaR, EffEDaR},
+                         target_risk = portfolio.target_risk; optimiser = Ipopt.Optimizer,
+                         silent = true, optimiser_attributes = (),)
+    if termination_status(portfolio.model) != OPTIMIZE_NOT_CALLED
         refresh_model!(portfolio)
+    end
 
     model = portfolio.model
     w = model[:w]

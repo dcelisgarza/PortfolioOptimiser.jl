@@ -2,8 +2,7 @@
 
 # This tutorial explains step by step how the constraint functions can be used to generate linear constraints. We also show how we can generate our own sets using clustering techniques.
 
-using Clustering, CovarianceEstimation, CSV, DataFrames, PortfolioOptimiser,
-      PrettyTables,
+using Clustering, CovarianceEstimation, CSV, DataFrames, PortfolioOptimiser, PrettyTables,
       TimeSeries
 
 ## This is a helper function for displaying tables 
@@ -108,8 +107,7 @@ B
 
 # Now say we also don't want our portfolio to be more than 10 % `GOOG`. Here's how we can do so. Note how the only things that change are `:Sign` and `:Weight`.
 
-constraints = DataFrame(:Enabled => [true], :Type => ["Assets"],
-                        :Position => [:GOOG],                        ## Less than or equal to.
+constraints = DataFrame(:Enabled => [true], :Type => ["Assets"], :Position => [:GOOG],                        ## Less than or equal to.
                         :Sign => ["<="],                        ## Upper bound of the weight of the asset.
                         :Weight => [0.1],                        ## The following categories are not used for this
                         ## example.
@@ -145,8 +143,7 @@ constraints = DataFrame(:Enabled => [true],                        ## We want to
                         ## weight of the other asset.
                         :Factor => [0.5],                        ## The following categories are not used 
                         ## for this example.
-                        :Weight => [""], :Class_Set => [""],
-                        :Relative_Class_Set => [""])
+                        :Weight => [""], :Class_Set => [""], :Relative_Class_Set => [""])
 
 A, B = asset_constraints(constraints, asset_classes);
 
@@ -170,8 +167,7 @@ constraints = DataFrame(:Enabled => [true],                        ## We want to
                         ## weight of the other asset.
                         :Factor => [2],                        ## The following categories are not used 
                         ## for this example.
-                        :Weight => [""], :Class_Set => [""],
-                        :Relative_Class_Set => [""])
+                        :Weight => [""], :Class_Set => [""], :Relative_Class_Set => [""])
 
 A, B = asset_constraints(constraints, asset_classes);
 

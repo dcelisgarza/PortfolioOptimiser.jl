@@ -1,5 +1,4 @@
-using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections,
-      PortfolioOptimiser,
+using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
       Statistics, Test, TimeSeries, Logging
 
 Logging.disable_logging(Logging.Warn)
@@ -18,78 +17,59 @@ l = 2.0
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SD,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SD,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SD,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SD,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SD,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SD,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SD,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SD,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SD,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SD,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SD,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SD,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SD,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SD,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SD,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:SD)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SD,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SD,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SD,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SD,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -172,14 +152,11 @@ l = 2.0
             4.039243448317557e-8, 3.1600448893350835e-8, 1.7426103715815354e-8,
             2.6166436902355393e-8, 2.121537093958793e-8]
 
-    w11t = [1.3172620135686553e-10, 1.9064388092607144e-10,
-            3.2584225087336927e-10,
+    w11t = [1.3172620135686553e-10, 1.9064388092607144e-10, 3.2584225087336927e-10,
             2.59317046047275e-10, 0.8503241090172801, 1.3130387717999635e-10,
             0.1496758875427982, 1.4044287784039595e-11, 2.309729885121847e-10,
-            4.123955829597335e-11, 3.434408199187934e-12,
-            1.1134275889489673e-10,
-            2.0702691150761263e-10, 6.564442934076178e-11,
-            1.225576898169225e-10,
+            4.123955829597335e-11, 3.434408199187934e-12, 1.1134275889489673e-10,
+            2.0702691150761263e-10, 6.564442934076178e-11, 1.225576898169225e-10,
             7.582849306597439e-10, 4.0835176373099187e-10, 3.60117150622103e-11,
             2.749916443740321e-10, 1.271854038475352e-10]
 
@@ -228,78 +205,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MAD,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :MAD, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MAD,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MAD,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MAD,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MAD,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MAD,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MAD,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :MAD, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MAD,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :MAD, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MAD,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :MAD, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MAD,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MAD,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MAD,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MAD,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MAD,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MAD,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:MAD)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MAD,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MAD,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MAD,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MAD,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -384,12 +342,9 @@ end
     w11t = [5.590140426506262e-10, 8.047430053051441e-10, 1.355052546821628e-9,
             1.0888618435428773e-9, 0.8503233835946482, 5.281966476534393e-10,
             0.1496766019623376, 8.414986256120907e-11, 9.784820820672162e-10,
-            1.9988763752742648e-10, 3.6196486354996156e-11,
-            4.4873471202598566e-10,
-            8.448387109276434e-10, 2.5476375354819673e-10,
-            5.571346334333825e-10,
-            3.1351155738599574e-9, 1.6938060660241428e-9,
-            1.7181114897362135e-10,
+            1.9988763752742648e-10, 3.6196486354996156e-11, 4.4873471202598566e-10,
+            8.448387109276434e-10, 2.5476375354819673e-10, 5.571346334333825e-10,
+            3.1351155738599574e-9, 1.6938060660241428e-9, 1.7181114897362135e-10,
             1.1543622525787854e-9, 5.478633204877463e-10]
 
     w12t = [2.5742355639191003e-9, 2.7707095338095783e-9, 3.4398915027060286e-9,
@@ -437,78 +392,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SSD,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :SSD, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SSD,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SSD,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SSD,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SSD,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SSD,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SSD,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :SSD, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SSD,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :SSD, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SSD,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :SSD, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SSD,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SSD,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SSD,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SSD,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SSD,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SSD,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:SSD)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SSD,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SSD,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SSD,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SSD,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -592,12 +528,10 @@ end
             2.2817632264582585e-7, 1.6931479760380464e-7, 8.84478903741339e-8,
             1.366687610663341e-7, 1.0820715964815496e-7]
 
-    w11t = [4.4372756954496346e-10, 6.219272838830198e-10,
-            1.0871321089702985e-9,
+    w11t = [4.4372756954496346e-10, 6.219272838830198e-10, 1.0871321089702985e-9,
             8.941565667803825e-10, 0.8503215309121464, 4.0728045462917795e-10,
             0.1496784575050638, 2.0016153643590607e-11, 7.817855997414043e-10,
-            1.2437789214942929e-10, 7.213926439417411e-11,
-            3.915637626349398e-10,
+            1.2437789214942929e-10, 7.213926439417411e-11, 3.915637626349398e-10,
             6.984324771309397e-10, 2.631203634530896e-10, 5.869885908282255e-10,
             2.5199832741308024e-9, 1.338999260842608e-9, 5.713691782390282e-11,
             8.926917142521769e-10, 3.8133044804180164e-10]
@@ -647,78 +581,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :FLPM,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :FLPM, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :FLPM,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :FLPM,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :FLPM,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :FLPM,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :FLPM,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :FLPM,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :FLPM, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :FLPM,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :FLPM, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :FLPM,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :FLPM, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :FLPM,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :FLPM,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :FLPM,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :FLPM,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :FLPM,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :FLPM,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:FLPM)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :FLPM,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :FLPM,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :FLPM,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :FLPM,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -778,13 +693,11 @@ end
            0.15181155191354562, 0.04227264588275489, 9.085900119356214e-9,
            0.07671578769781048, 1.0646706888927673e-8]
 
-    w8t = [1.6704606434760852e-10, 4.5039920116288666e-10,
-           5.370330127992086e-10,
+    w8t = [1.6704606434760852e-10, 4.5039920116288666e-10, 5.370330127992086e-10,
            2.394136694374759e-10, 0.5637246963905376, 5.4482958004525573e-11,
            0.026029771670945778, 5.074146570381013e-10, 4.4071340641401345e-10,
            2.0515563403397109e-10, 3.0129094144403086e-9, 3.740126956304181e-11,
-           2.843171837240471e-11, 1.0095673103350372e-10,
-           3.1024271719048774e-11,
+           2.843171837240471e-11, 1.0095673103350372e-10, 3.1024271719048774e-11,
            0.14917729111548997, 0.12978983681715497, 1.0276842198752544e-9,
            0.13127839651981474, 6.459909068665672e-10]
 
@@ -807,8 +720,7 @@ end
     w11t = [5.592940960122782e-10, 8.051361938960762e-10, 1.3555250476576508e-9,
             1.089331283958596e-9, 0.850323382369204, 5.281736431720078e-10,
             0.1496766031811145, 8.438798557233486e-11, 9.7904156480956e-10,
-            2.0020970096415077e-10, 3.637688376357992e-11,
-            4.489199537756185e-10,
+            2.0020970096415077e-10, 3.637688376357992e-11, 4.489199537756185e-10,
             8.448954864437396e-10, 2.547478199098988e-10, 5.579366440452939e-10,
             3.13608043731199e-9, 1.6943988689226196e-9, 1.7203692251059194e-10,
             1.1549548202484472e-9, 5.482342721063637e-10]
@@ -858,78 +770,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SLPM,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :SLPM, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SLPM,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SLPM,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SLPM,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SLPM,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SLPM,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SLPM,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :SLPM, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SLPM,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :SLPM, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SLPM,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :SLPM, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SLPM,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SLPM,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SLPM,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SLPM,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SLPM,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SLPM,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:SLPM)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SLPM,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SLPM,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SLPM,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SLPM,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -978,8 +871,7 @@ end
            6.645856160276705e-10, 0.11941671835592924, 1.2108000451048841e-9,
            1.151738325947309e-9, 0.29378584117199474, 3.99434237465482e-10,
            2.5241853301892423e-10, 0.07641754433124115, 1.037862649699899e-9,
-           0.03435050273536409, 0.0281140222671502, 0.223100373640918,
-           2.419967838954842e-9,
+           0.03435050273536409, 0.0281140222671502, 0.223100373640918, 2.419967838954842e-9,
            0.10371399014317588]
 
     w7t = [3.2656053026749458e-9, 7.068556226444792e-9, 5.813255866456905e-9,
@@ -1017,10 +909,8 @@ end
     w11t = [6.199048946409833e-10, 8.559871336140005e-10, 1.4950753903857514e-9,
             1.2247215833941066e-9, 0.850320606721586, 5.41440004603452e-10,
             0.1496793776832693, 2.332993267009514e-11, 1.0609488232051006e-9,
-            1.7246013104296854e-10, 8.792761934730706e-11,
-            5.269981886531533e-10,
-            8.476967747260268e-10, 3.4295627231377317e-10,
-            7.927566939928397e-10,
+            1.7246013104296854e-10, 8.792761934730706e-11, 5.269981886531533e-10,
+            8.476967747260268e-10, 3.4295627231377317e-10, 7.927566939928397e-10,
             3.3474476679829137e-9, 1.8338786520566145e-9, 8.566614126931458e-11,
             1.2143967068809675e-9, 5.215516606938051e-10]
 
@@ -1069,78 +959,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :WR,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :WR, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :WR,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :WR,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :WR,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :WR,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :WR,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :WR,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :WR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :WR,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :WR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :WR,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :WR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :WR,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :WR,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :WR,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :WR,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :WR,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :WR,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:WR)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :WR,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :WR,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :WR,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :WR,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :WR,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -1148,15 +1019,12 @@ end
            1.149655345278045e-10, 3.5524668523177065e-11, 4.610749744263935e-11,
            0.02918541165092378, 7.025091033726773e-11, 1.452337436127022e-11,
            2.235138683404488e-11, 0.5455165565497712, 1.0448155077916786e-11,
-           2.7150611313308743e-11, 1.2643628210669704e-11,
-           5.702825772004901e-10,
-           3.0034901185213575e-11, 1.229864177463597e-10,
-           1.9411492003804697e-11,
+           2.7150611313308743e-11, 1.2643628210669704e-11, 5.702825772004901e-10,
+           3.0034901185213575e-11, 1.229864177463597e-10, 1.9411492003804697e-11,
            1.631580481195887e-11, 0.2041009909725315]
 
     w2t = [4.8183148132402435e-11, 0.2211970420118015, 4.543989969150727e-11,
-           3.6490937181511005e-10, 1.2061528170317823e-10,
-           1.583724126560376e-10,
+           3.6490937181511005e-10, 1.2061528170317823e-10, 1.583724126560376e-10,
            0.02918541134375931, 2.647463154513871e-10, 4.044537069039929e-11,
            7.004318834052582e-11, 0.5455165551108696, 2.5394328031947243e-11,
            7.612250719463419e-11, 4.2145011656152064e-11, 1.78315731459658e-9,
@@ -1175,10 +1043,8 @@ end
            3.398879426663391e-10, 8.750768903808466e-11, 8.224731529585248e-11,
            0.02918541164641545, 1.3715955735214613e-10, 2.242350456488422e-11,
            4.2254445798876156e-11, 0.5455165561727514, 8.376570115102258e-12,
-           4.7307262659151097e-11, 1.5452395801064293e-11,
-           5.081408824494903e-10,
-           5.648552693030804e-11, 3.7563121626528117e-10,
-           1.8070940226359078e-11,
+           4.7307262659151097e-11, 1.5452395801064293e-11, 5.081408824494903e-10,
+           5.648552693030804e-11, 3.7563121626528117e-10, 1.8070940226359078e-11,
            2.6502439903891977e-11, 0.20410099001677537]
 
     w5t = [4.0777670249502093e-11, 0.2211970394568426, 3.999966498578144e-11,
@@ -1193,8 +1059,7 @@ end
            5.641726005165918e-10, 6.962065005475656e-10, 2.5329822169433217e-10,
            0.02918541154016518, 2.9047486494574945e-10, 1.6870547027377955e-10,
            2.0932007348136436e-10, 0.5455165547034347, 9.865662457626997e-11,
-           1.6019179444587639e-10, 1.3612545083356438e-10,
-           8.360816783741759e-10,
+           1.6019179444587639e-10, 1.3612545083356438e-10, 8.360816783741759e-10,
            2.83702408019619e-10, 4.981451224337243e-10, 1.7658411784243953e-10,
            1.783847965358073e-10, 0.20410098606748553]
 
@@ -1230,16 +1095,12 @@ end
             4.6005991814570895e-9, 3.3948203360257317e-9, 1.791198481437484e-9,
             2.7418766922088886e-9, 2.1772831997661477e-9]
 
-    w11t = [9.083404201338528e-12, 1.2969176812179506e-11,
-            2.1582413496144878e-11,
+    w11t = [9.083404201338528e-12, 1.2969176812179506e-11, 2.1582413496144878e-11,
             1.7467087197925577e-11, 0.8503244546368753, 8.103672899340972e-12,
             0.14967554513252176, 1.6661614314600896e-12, 1.5768824434944537e-11,
-            3.5405782731913797e-12, 8.710829422952142e-13,
-            6.861152189314967e-12,
-            1.2958811894123454e-11, 3.760688702416905e-12,
-            9.223005031547282e-12,
-            4.939614173717909e-11, 2.6876005397793104e-11,
-            3.0272626414501494e-12,
+            3.5405782731913797e-12, 8.710829422952142e-13, 6.861152189314967e-12,
+            1.2958811894123454e-11, 3.760688702416905e-12, 9.223005031547282e-12,
+            4.939614173717909e-11, 2.6876005397793104e-11, 3.0272626414501494e-12,
             1.848249518446453e-11, 8.964811324601124e-12]
 
     w12t = [2.6100943009435e-9, 2.809814476396465e-9, 3.4889916445724065e-9,
@@ -1287,78 +1148,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CVaR,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :CVaR, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CVaR,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CVaR,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CVaR,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CVaR,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CVaR,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CVaR,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :CVaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CVaR,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :CVaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CVaR,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :CVaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CVaR,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CVaR,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CVaR,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CVaR,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CVaR,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CVaR,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:CVaR)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CVaR,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CVaR,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CVaR,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CVaR,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CVaR,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -1446,10 +1288,8 @@ end
             6.809405076476044e-11, 0.8503243449205248, 3.303173578227459e-11,
             0.14967565417625428, 5.262530509452157e-12, 6.119123223034577e-11,
             1.250039664061075e-11, 2.263678250159422e-12, 2.806243270267671e-11,
-            5.283354244939076e-11, 1.5932081537413547e-11,
-            3.4841410726571836e-11,
-            1.9605987332184607e-10, 1.0592537183769043e-10,
-            1.0744589483472177e-11,
+            5.283354244939076e-11, 1.5932081537413547e-11, 3.4841410726571836e-11,
+            1.9605987332184607e-10, 1.0592537183769043e-10, 1.0744589483472177e-11,
             7.219024092675466e-11, 3.4261723153174966e-11]
 
     w12t = [2.5735820108753144e-9, 2.7700094042055317e-9, 3.439012204627773e-9,
@@ -1497,78 +1337,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EVaR,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :EVaR, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EVaR,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EVaR,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EVaR,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EVaR,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EVaR,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EVaR,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :EVaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EVaR,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :EVaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EVaR,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :EVaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EVaR,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EVaR,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EVaR,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EVaR,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EVaR,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EVaR,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:EVaR)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EVaR,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EVaR,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EVaR,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EVaR,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EVaR,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -1651,16 +1472,12 @@ end
             5.964529411215915e-9, 4.777212426602421e-9, 2.6491436225104996e-9,
             4.006566441929497e-9, 3.2504242770109577e-9]
 
-    w11t = [3.714811036268255e-11, 4.7738975632490153e-11,
-            7.269096260019431e-11,
+    w11t = [3.714811036268255e-11, 4.7738975632490153e-11, 7.269096260019431e-11,
             6.026891169308541e-11, 0.8503244596483465, 1.3212536057062485e-11,
             0.14967553959925534, 1.4434861848996695e-11, 5.6011650759493475e-11,
-            2.0563685677384248e-11, 1.1468884081351451e-11,
-            1.2239337067734528e-11,
-            2.582237766818944e-11, 1.5505683335796168e-12,
-            2.4392585368992762e-11,
-            1.4993618728562185e-10, 8.733238904362575e-11,
-            1.822927803678296e-11,
+            2.0563685677384248e-11, 1.1468884081351451e-11, 1.2239337067734528e-11,
+            2.582237766818944e-11, 1.5505683335796168e-12, 2.4392585368992762e-11,
+            1.4993618728562185e-10, 8.733238904362575e-11, 1.822927803678296e-11,
             6.353214849610202e-11, 3.5824961937731867e-11]
 
     w12t = [2.6591686415143532e-9, 2.8618811807331272e-9, 3.5533392772841433e-9,
@@ -1708,78 +1525,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RVaR,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :RVaR, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RVaR,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RVaR,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RVaR,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RVaR,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RVaR,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RVaR,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :RVaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RVaR,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :RVaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RVaR,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :RVaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RVaR,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RVaR,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RVaR,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RVaR,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RVaR,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RVaR,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:RVaR)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RVaR,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RVaR,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RVaR,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1 + 1e-6 * risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RVaR,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RVaR,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -1827,8 +1625,7 @@ end
            1.4589107281956207e-9, 5.463309730466734e-10, 1.8720102058164852e-10,
            0.03930179796772753, 0.05687387606454392, 9.078063490377604e-11,
            9.719793743390038e-11, 0.49017728815700234, 5.026158910520679e-11,
-           1.0576317745751681e-10, 8.670334843394393e-11,
-           2.3104682351230082e-10,
+           1.0576317745751681e-10, 8.670334843394393e-11, 2.3104682351230082e-10,
            3.7630700393057046e-10, 1.085408467200128e-9, 2.243756066901045e-10,
            1.2948713630714168e-10, 0.2008333544997635]
 
@@ -1864,8 +1661,7 @@ end
             1.2573878917430402e-7, 1.0186397122133706e-7, 5.65035134756138e-8,
             8.576565224145277e-8, 6.96244217802799e-8]
 
-    w11t = [1.710642967692236e-10, 2.2139640415498829e-10,
-            3.3824726531052144e-10,
+    w11t = [1.710642967692236e-10, 2.2139640415498829e-10, 3.3824726531052144e-10,
             2.796452055666223e-10, 0.8503243950858105, 6.977197041461292e-11,
             0.1496756013843621, 6.729061148694712e-11, 2.60676155944983e-10,
             9.49689967499947e-11, 5.398374022397536e-11, 6.296727146583125e-11,
@@ -1918,78 +1714,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MDD,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :MDD, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MDD,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MDD,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MDD,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MDD,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MDD,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MDD,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :MDD, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MDD,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :MDD, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :MDD,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :MDD, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MDD,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MDD,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MDD,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MDD,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MDD,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MDD,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:MDD)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MDD,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MDD,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MDD,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :MDD,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MDD,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -2011,8 +1788,7 @@ end
 
     w3t = [0.0377381105946706, 3.515881253854551e-11, 2.357341494392936e-10,
            2.559678033913933e-11, 0.06767028183074263, 7.783217404030185e-11,
-           2.3923170656167073e-10, 2.9515493486199157e-9,
-           4.1184253345251125e-11,
+           2.3923170656167073e-10, 2.9515493486199157e-9, 4.1184253345251125e-11,
            1.1344540362687383e-10, 0.4911343223544339, 6.716667348006059e-11,
            0.028699868315736374, 2.264050607030489e-11, 1.7950773709630438e-11,
            0.1454387874690095, 0.09520044732491449, 0.10299332822716616,
@@ -2036,8 +1812,7 @@ end
 
     w6t = [0.0377381064423748, 2.2562315685094713e-11, 8.56029528762664e-11,
            1.7106146706284752e-11, 0.06767028509664332, 4.682338748599671e-11,
-           1.9323906468788836e-10, 1.1186716254178256e-9,
-           2.6159896885607444e-11,
+           1.9323906468788836e-10, 1.1186716254178256e-9, 2.6159896885607444e-11,
            6.838778331226203e-11, 0.4911343214805795, 4.007981875449744e-11,
            0.028699868994417097, 1.4182955093346131e-11, 1.0755467400201429e-11,
            0.14543878849203562, 0.09520044661792577, 0.10299333685233825,
@@ -2075,12 +1850,10 @@ end
             1.0159376396877056e-7, 2.3101742441311244e-8, 1.2756696592544408e-8,
             1.9324369590668562e-8, 1.576488793769761e-8]
 
-    w11t = [3.539836162718825e-11, 3.221953648664385e-11,
-            2.5781639181400178e-11,
+    w11t = [3.539836162718825e-11, 3.221953648664385e-11, 2.5781639181400178e-11,
             2.8113465819272007e-11, 0.8503240434403975, 4.695833920374047e-11,
             0.14967595592182592, 4.167646866074926e-11, 2.8344090818571735e-11,
-            3.996463700031924e-11, 4.194297435645168e-11,
-            4.5386353973682577e-11,
+            3.996463700031924e-11, 4.194297435645168e-11, 4.5386353973682577e-11,
             4.783095072688438e-11, 4.467501087164152e-11, 4.527566219651595e-11,
             1.61421821798192e-11, 1.7708013368013927e-11, 3.937990564631631e-11,
             2.5979109008401075e-11, 3.4999581658780914e-11]
@@ -2130,78 +1903,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :ADD,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :ADD, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :ADD,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :ADD,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :ADD,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :ADD,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :ADD,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :ADD,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :ADD, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :ADD,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :ADD, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :ADD,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :ADD, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :ADD,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :ADD,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :ADD,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :ADD,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :ADD,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :ADD,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:ADD)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :ADD,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :ADD,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :ADD,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :ADD,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :ADD,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -2265,8 +2019,7 @@ end
            1.7404404863906068e-10, 0.20617017158098644, 5.742894425207952e-11,
            0.0015585418951312156, 0.07372211287680558, 1.4832607638254242e-10,
            1.5236406915212554e-10, 0.13344052584803504, 5.1400009573103774e-11,
-           3.1974521586877296e-11, 2.055032225779995e-10,
-           4.0839438548595924e-11,
+           3.1974521586877296e-11, 2.055032225779995e-10, 4.0839438548595924e-11,
            0.1326892973707173, 0.1439100113182151, 3.051941525665131e-10,
            0.07191796640979169, 1.404071116827574e-9]
 
@@ -2291,8 +2044,7 @@ end
             0.1496755522542633, 8.858512936320987e-10, 7.319822174654019e-10,
             8.9338230540246e-10, 8.9517845689364e-10, 9.627624396940222e-10,
             9.984456075862567e-10, 9.456730938777202e-10, 9.576920709058473e-10,
-            1.6831563157438143e-10, 5.196207575489219e-10,
-            8.706454084281897e-10,
+            1.6831563157438143e-10, 5.196207575489219e-10, 8.706454084281897e-10,
             6.591313671322272e-10, 8.008867882414274e-10]
 
     w12t = [2.6164587113268375e-9, 2.857869118898357e-9, 3.432590485956772e-9,
@@ -2340,78 +2092,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CDaR,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :CDaR, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CDaR,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CDaR,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CDaR,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CDaR,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CDaR,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CDaR,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :CDaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CDaR,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :CDaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :CDaR,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :CDaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CDaR,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CDaR,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CDaR,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CDaR,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CDaR,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CDaR,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:CDaR)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CDaR,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CDaR,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CDaR,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :CDaR,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :CDaR,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -2435,29 +2168,23 @@ end
            4.059424831719802e-11, 0.0034099026082622403, 3.064216146422458e-11,
            3.843083028853642e-11, 0.07904283116151786, 7.123137462241196e-11,
            3.2614570567834254e-11, 0.38759317074994043, 1.4765405420424953e-10,
-           1.6274602374633934e-10, 2.9104033416483276e-10,
-           0.0005545068989028069,
+           1.6274602374633934e-10, 2.9104033416483276e-10, 0.0005545068989028069,
            0.09598829049874072, 0.2679088593452675, 4.890855081865546e-10,
            0.0006560269641851877, 0.16484640926492586]
 
-    w4t = [2.7516810481229006e-12, 6.022413914687849e-10,
-           1.6653163257824942e-11,
+    w4t = [2.7516810481229006e-12, 6.022413914687849e-10, 1.6653163257824942e-11,
            7.075598423308588e-12, 0.0035594778263146193, 1.5451916395354444e-11,
            2.8349564592097567e-11, 0.07997306459976396, 1.2555683175689363e-11,
            1.3971338123767737e-11, 0.3871598951354419, 5.965579149043487e-11,
-           6.414929569013956e-11, 1.5666844101987548e-10,
-           0.00022182233592094708,
+           6.414929569013956e-11, 1.5666844101987548e-10, 0.00022182233592094708,
            0.09652576670482815, 0.26593973648571356, 3.5011626347884844e-10,
            0.0019205892824167372, 0.16469964629996]
 
-    w5t = [9.244049822534778e-12, 3.9446389235177096e-10,
-           2.0268786502242605e-11,
-           2.6673723439778847e-12, 0.0035594781414829274,
-           2.5964904344141702e-12,
+    w5t = [9.244049822534778e-12, 3.9446389235177096e-10, 2.0268786502242605e-11,
+           2.6673723439778847e-12, 0.0035594781414829274, 2.5964904344141702e-12,
            1.1452236094077253e-11, 0.07997306594745791, 1.584366794271913e-11,
            1.7218035060140847e-12, 0.38715989255559247, 4.8085840158486825e-11,
-           5.2186541505803215e-11, 1.1545626620589032e-10,
-           0.00022182516991004964,
+           5.2186541505803215e-11, 1.1545626620589032e-10, 0.00022182516991004964,
            0.09652576729385567, 0.26593974272504417, 2.2039312053697949e-10,
            0.0019205872662845678, 0.1646996400059921]
 
@@ -2465,8 +2192,7 @@ end
            1.505605397362157e-11, 0.0035594777823382325, 1.1122696652413812e-11,
            1.5052771912294595e-11, 0.07997306748495751, 2.641070785571999e-11,
            1.185069951393151e-11, 0.38715989283923846, 5.2063196969647463e-11,
-           5.3337593285609885e-11, 1.0430615212282018e-10,
-           0.00022182352521205273,
+           5.3337593285609885e-11, 1.0430615212282018e-10, 0.00022182352521205273,
            0.09652576935320581, 0.26593973676015886, 1.6201917406730117e-10,
            0.0019205918913253596, 0.16469963948644215]
 
@@ -2502,15 +2228,12 @@ end
             6.230792922550653e-8, 1.730928459805808e-8, 9.4551245335049e-9,
             1.4321320214800878e-8, 1.1568827163714552e-8]
 
-    w11t = [4.195065318119874e-11, 3.982139469473178e-11,
-            3.2345691969181575e-11,
+    w11t = [4.195065318119874e-11, 3.982139469473178e-11, 3.2345691969181575e-11,
             3.7027795569977416e-11, 0.8503244615708407, 5.246440737144838e-11,
             0.14967553767946676, 4.710327236473579e-11, 3.8074242631169895e-11,
-            4.720265984081426e-11, 4.7562820599568226e-11,
-            5.1208671141323496e-11,
+            4.720265984081426e-11, 4.7562820599568226e-11, 5.1208671141323496e-11,
             5.333725870904038e-11, 5.027017479107912e-11, 5.07703283043863e-11,
-            1.2349598943969907e-11, 2.6170906354444942e-11,
-            4.599637513326967e-11,
+            1.2349598943969907e-11, 2.6170906354444942e-11, 4.599637513326967e-11,
             3.394320819768132e-11, 4.2092912261392836e-11]
 
     w12t = [2.6506474045310002e-9, 2.8975793306712963e-9, 3.508966985045771e-9,
@@ -2558,78 +2281,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :UCI,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :UCI, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :UCI,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :UCI,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :UCI,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :UCI,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :UCI,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :UCI,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :UCI, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :UCI,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :UCI, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :UCI,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :UCI, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :UCI,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :UCI,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :UCI,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :UCI,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :UCI,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :UCI,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:UCI)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :UCI,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :UCI,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :UCI,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1 + 1e-6 * risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :UCI,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :UCI,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -2661,8 +2365,7 @@ end
            1.5162778377743103e-11, 0.019578463866494714, 3.336507489284487e-11,
            3.1061276876896947e-11, 0.06625965123714526, 1.7434645574938298e-10,
            9.118673981267884e-11, 0.28380866879643013, 4.025821520660614e-10,
-           2.3103428439635038e-10, 0.0015418711740064976,
-           1.1832699483551404e-11,
+           2.3103428439635038e-10, 0.0015418711740064976, 1.1832699483551404e-11,
            0.10123975650957402, 0.17626248033257308, 0.02047764286534096,
            0.06087184051397425, 0.1498192521339652]
 
@@ -2767,78 +2470,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EDaR,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :EDaR, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EDaR,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EDaR,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EDaR,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EDaR,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EDaR,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EDaR,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :EDaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EDaR,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :EDaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :EDaR,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :EDaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EDaR,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EDaR,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EDaR,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EDaR,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EDaR,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EDaR,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:EDaR)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EDaR,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EDaR,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EDaR,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1 + 1e-4 * risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :EDaR,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :EDaR,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -2972,78 +2656,59 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RDaR,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :RDaR, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RDaR,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RDaR,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RDaR,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RDaR,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RDaR,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RDaR,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :RDaR, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RDaR,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :RDaR, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :RDaR,
+    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                    obj = :Sharpe, kelly = :Exact,)
     risk9 = calc_risk(portfolio; type = :Trad, rm = :RDaR, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RDaR,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RDaR,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                     obj = :Max_Ret, kelly = :Approx,)
-    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RDaR,
+    w12 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                     obj = :Max_Ret, kelly = :Exact,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RDaR,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RDaR,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RDaR,
+    w15 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:RDaR)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RDaR,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RDaR,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk9)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RDaR,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1 + 1e-6 * risk1)
-    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :RDaR,
+    w19 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :RDaR,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -3129,10 +2794,8 @@ end
     w11t = [3.8937837964339e-11, 3.725947416965801e-11, 3.1122280007927656e-11,
             3.37338993027047e-11, 0.8503244492606654, 4.707487325539199e-11,
             0.14967555003705155, 4.4141449409532015e-11, 3.567005049127002e-11,
-            4.3301567001333876e-11, 4.4789729324825794e-11,
-            4.8033229316058155e-11,
-            5.0231861342749336e-11, 4.69121482177809e-11,
-            5.0018915242051374e-11,
+            4.3301567001333876e-11, 4.4789729324825794e-11, 4.8033229316058155e-11,
+            5.0231861342749336e-11, 4.69121482177809e-11, 5.0018915242051374e-11,
             8.98917808811706e-12, 2.5997500023601423e-11, 4.337255438905853e-11,
             3.313292394128641e-11, 3.9563780671640486e-11]
 
@@ -3181,62 +2844,47 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :Kurt, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :Kurt, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :Kurt, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :Kurt,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :Kurt,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                     obj = :Max_Ret, kelly = :Approx,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :Kurt,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :Kurt,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:Kurt)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :Kurt,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :Kurt,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1 + 1e-4 * risk1)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :Kurt,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -3312,16 +2960,12 @@ end
             1.0749797322355857e-8, 8.518908606428268e-9, 4.691501578932186e-9,
             7.121769430410102e-9, 5.752211731651663e-9]
 
-    w11t = [3.9552608801740886e-12, 4.8672134436272275e-12,
-            7.734656571748961e-12,
+    w11t = [3.9552608801740886e-12, 4.8672134436272275e-12, 7.734656571748961e-12,
             6.2873427259478885e-12, 0.8503244185065324, 1.906360441192778e-12,
             0.1496755814166997, 1.1739019543425169e-12, 5.819096040051221e-12,
-            1.978961970464378e-12, 9.318422595757767e-13,
-            1.3923980492762338e-12,
-            2.6678643220151515e-12, 3.859229922423006e-13,
-            2.6823329631599702e-12,
-            1.4268424723247032e-11, 8.910199630862178e-12,
-            1.6067979271112289e-12,
+            1.978961970464378e-12, 9.318422595757767e-13, 1.3923980492762338e-12,
+            2.6678643220151515e-12, 3.859229922423006e-13, 2.6823329631599702e-12,
+            1.4268424723247032e-11, 8.910199630862178e-12, 1.6067979271112289e-12,
             6.4873158253536244e-12, 3.712172540008625e-12]
 
     @test isapprox(w1.weights, w1t, rtol = 1.0e-9)
@@ -3355,48 +2999,35 @@ end
                           max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :Kurt,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :Kurt, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :Kurt,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :Kurt,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                     obj = :Max_Ret, kelly = :Approx,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :Kurt,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
 
     w1t = [0.04999999999999993, 0.04999999999999998, 0.049999999999999954, 0.05,
-           0.049999999999999954, 0.049999999999999954, 0.05,
-           0.05000000000000004,
-           0.04999999999999994, 0.04999999999999989, 0.049999999999999975, 0.05,
-           0.05,
-           0.050000000000000024, 0.05, 0.049999999999999996,
-           0.05000000000000007,
+           0.049999999999999954, 0.049999999999999954, 0.05, 0.05000000000000004,
+           0.04999999999999994, 0.04999999999999989, 0.049999999999999975, 0.05, 0.05,
+           0.050000000000000024, 0.05, 0.049999999999999996, 0.05000000000000007,
            0.050000000000000024, 0.05000000000000004, 0.0500000000000001]
 
     w2t = [0.050550822381648326, 0.050516749875059684, 0.050212095953875595,
@@ -3455,14 +3086,11 @@ end
             9.369197953254476e-8, 7.159030719602509e-8, 3.7984321330928584e-8,
             5.8372372236223746e-8, 4.6589398196616294e-8]
 
-    w11t = [2.0892577590987595e-10, 2.8224655733817473e-10,
-            4.3716535212738634e-10,
+    w11t = [2.0892577590987595e-10, 2.8224655733817473e-10, 4.3716535212738634e-10,
             3.620335895968698e-10, 0.8503240818508451, 1.1465751342281214e-10,
             0.14967591348312706, 6.943784486780114e-11, 3.3528657278960795e-10,
-            1.0468401539952833e-10, 5.1106237943397496e-11,
-            1.1041022173105622e-10,
-            2.2365203651259298e-10, 4.1668313868106865e-11,
-            1.5966527730595473e-10,
+            1.0468401539952833e-10, 5.1106237943397496e-11, 1.1041022173105622e-10,
+            2.2365203651259298e-10, 4.1668313868106865e-11, 1.5966527730595473e-10,
             9.37933178593656e-10, 5.378042884228039e-10, 9.381842915891543e-11,
             3.873292052023727e-10, 2.0820346192921256e-10]
 
@@ -3489,62 +3117,47 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Min_Risk, kelly = :None,)
     risk1 = calc_risk(portfolio; type = :Trad, rm = :SKurt, rf = rf)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :SKurt, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Sharpe, kelly = :Approx,)
     risk8 = calc_risk(portfolio; type = :Trad, rm = :SKurt, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SKurt,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SKurt,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                     obj = :Max_Ret, kelly = :Approx,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SKurt,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SKurt,
+    w14 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
     rmf = Symbol(lowercase(string(:SKurt)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SKurt,
+    w16 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk8)
-    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SKurt,
+    w17 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                     obj = :Max_Ret, kelly = :None,)
     setproperty!(portfolio, rmf, risk1 + 4e-2 * risk1)
-    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SKurt,
+    w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                     obj = :Sharpe, kelly = :None,)
     setproperty!(portfolio, rmf, Inf)
 
@@ -3589,8 +3202,7 @@ end
            1.1190680968452987e-8, 3.151726922761528e-9]
 
     w6t = [9.719846101660443e-7, 9.414453254795493e-7, 7.366782784843086e-7,
-           6.601768027385454e-7, 0.5736118379766, 5.475979094163312e-7,
-           0.08041348221469191,
+           6.601768027385454e-7, 0.5736118379766, 5.475979094163312e-7, 0.08041348221469191,
            5.298936836477535e-7, 3.068416994102572e-7, 8.930574609009536e-7,
            1.535061858646997e-6, 3.6335161865262885e-7, 6.566911171879743e-7,
            6.14894099791105e-7, 1.0113926635114196e-6, 0.18384332753031996,
@@ -3617,18 +3229,15 @@ end
             1.2282465330364543e-9, 1.005177430408014e-7, 4.791684152377937e-10,
             0.9999998830179009, 7.341499980325647e-10, 1.1371524504118676e-9,
             8.074220981577865e-10, 7.11789134528336e-10, 5.053597547452678e-10,
-            3.720070059848833e-10, 6.014948684937246e-10,
-            3.8399651339014223e-10,
+            3.720070059848833e-10, 6.014948684937246e-10, 3.8399651339014223e-10,
             1.787507624730215e-9, 1.404677100071108e-9, 7.700998592963003e-10,
             1.1737535372835695e-9, 9.461859039839322e-10]
 
     w11t = [3.874221086619612e-12, 5.104908090067462e-12, 8.520494500197468e-12,
             7.290959009200468e-12, 0.8503243999802813, 2.3379452125355536e-12,
             0.14967559993564175, 1.0705730358034575e-12, 6.66117020876977e-12,
-            2.305310714767095e-12, 6.777032301231088e-13,
-            1.6337900308145626e-12,
-            2.9324367282130846e-12, 7.923883883764425e-13,
-            3.029696894312117e-12,
+            2.305310714767095e-12, 6.777032301231088e-13, 1.6337900308145626e-12,
+            2.9324367282130846e-12, 7.923883883764425e-13, 3.029696894312117e-12,
             1.585046203658579e-11, 9.70832317790743e-12, 1.3214127598773591e-12,
             7.1618937601443205e-12, 3.803361046983932e-12]
 
@@ -3665,38 +3274,28 @@ end
                           max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Min_Risk, kelly = :Approx,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Min_Risk, kelly = :Exact,)
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Utility, kelly = :None,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Utility, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Utility, kelly = :Exact,)
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                   rm = :SKurt,
+    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                    obj = :Sharpe, kelly = :None,)
     risk7 = calc_risk(portfolio; type = :Trad, rm = :SKurt, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SKurt,
+    w10 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                     obj = :Max_Ret, kelly = :None,)
-    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SKurt,
+    w11 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                     obj = :Max_Ret, kelly = :Approx,)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad,
-                    rm = :SKurt,
+    w13 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SKurt,
                     obj = :Min_Risk, kelly = :None,)
     setproperty!(portfolio, :mu_l, Inf)
 
@@ -3764,14 +3363,11 @@ end
             9.369197953484187e-8, 7.159030719777827e-8, 3.798432133185744e-8,
             5.8372372237652683e-8, 4.658939819775605e-8]
 
-    w11t = [2.0892595265719762e-10, 2.8224684582228726e-10,
-            4.3716556752027353e-10,
+    w11t = [2.0892595265719762e-10, 2.8224684582228726e-10, 4.3716556752027353e-10,
             3.620339877328261e-10, 0.8503240818509776, 1.1465733240333764e-10,
             0.14967591348298956, 6.943787974005699e-11, 3.352872152786726e-10,
-            1.0468439704528512e-10, 5.1106157942354375e-11,
-            1.1040978962377426e-10,
-            2.236524004822454e-10, 4.166826381534726e-11,
-            1.5966598739251268e-10,
+            1.0468439704528512e-10, 5.1106157942354375e-11, 1.1040978962377426e-10,
+            2.236524004822454e-10, 4.166826381534726e-11, 1.5966598739251268e-10,
             9.379345544671524e-10, 5.37804520760313e-10, 9.381857021791964e-11,
             3.873296543278637e-10, 2.0820362817265497e-10]
 

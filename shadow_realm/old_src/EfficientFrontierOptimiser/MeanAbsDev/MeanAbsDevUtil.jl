@@ -6,8 +6,7 @@ refresh_model!(portfolio::EffMeanAbsDev)
 Refreshes an [`AbstractEffMeanSemivar`](@ref) model.
 """
 function refresh_model!(portfolio::EffMeanAbsDev)
-    default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :n, :abs_diff,
-                    :ret, :risk)
+    default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :n, :abs_diff, :ret, :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
     return nothing
@@ -26,8 +25,7 @@ Returns a tuple of:
 
 If `verbose == true`, it prints out this information.
 """
-function portfolio_performance(portfolio::EffMeanAbsDev; rf = portfolio.rf,
-                               verbose = false)
+function portfolio_performance(portfolio::EffMeanAbsDev; rf = portfolio.rf, verbose = false)
     mean_ret = portfolio.mean_ret
 
     model = portfolio.model

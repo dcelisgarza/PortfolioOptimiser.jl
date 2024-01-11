@@ -1,7 +1,6 @@
 abstract type AbstractBlackLitterman <: AbstractPortfolioOptimiser end
 
-struct BlackLitterman{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13,
-                      T14} <:
+struct BlackLitterman{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14} <:
        AbstractBlackLitterman
     rf::T1
     risk_aversion::T2
@@ -19,12 +18,9 @@ struct BlackLitterman{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13,
     post_cov::T14
 end
 
-function BlackLitterman(tickers::AbstractArray,
-                        cov_mtx::AbstractArray;
-                        rf::Real = 1.02^(1 / 252) - 1,
-                        risk_aversion::Real = 1,
-                        tau::Real = 0.05,
-                        omega::Union{AbstractArray, Symbol} = :default, # either a square matrix, :idzorek, :default
+function BlackLitterman(tickers::AbstractArray, cov_mtx::AbstractArray;
+                        rf::Real = 1.02^(1 / 252) - 1, risk_aversion::Real = 1,
+                        tau::Real = 0.05, omega::Union{AbstractArray, Symbol} = :default, # either a square matrix, :idzorek, :default
                         pi::Union{Nothing, AbstractArray, Symbol} = nothing, # either a vector, `nothing`, `:Equal`, or `:market`
                         absolute_views::Union{Nothing, Dict} = nothing,
                         Q::Union{Nothing, AbstractArray} = nothing,
@@ -58,8 +54,7 @@ function BlackLitterman(tickers::AbstractArray,
         pi = zeros(num_tickers)
     elseif pi == :market
         @assert !isnothing(market_caps) "please provide a vector of market caps via the market_caps keyword"
-        pi = market_implied_prior_returns(market_caps, cov_mtx, risk_aversion,
-                                          rf)
+        pi = market_implied_prior_returns(market_caps, cov_mtx, risk_aversion, rf)
     elseif pi == :Equal
         pi = ones(num_tickers) / num_tickers
     else
@@ -105,18 +100,6 @@ function BlackLitterman(tickers::AbstractArray,
     weights = (risk_aversion * cov_mtx) \ post_ret
     weights /= sum(weights)
 
-    return BlackLitterman(rf,
-                          risk_aversion,
-                          tau,
-                          tickers,
-                          weights,
-                          cov_mtx,
-                          Q,
-                          P,
-                          pi,
-                          omega,
-                          tau_sigma_p,
-                          A,
-                          post_ret,
-                          post_cov)
+    return BlackLitterman(rf, risk_aversion, tau, tickers, weights, cov_mtx, Q, P, pi,
+                          omega, tau_sigma_p, A, post_ret, post_cov)
 end

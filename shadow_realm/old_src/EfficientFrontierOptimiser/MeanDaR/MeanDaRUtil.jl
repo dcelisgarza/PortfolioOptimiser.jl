@@ -1,22 +1,12 @@
 function refresh_model!(portfolio::EffMeanDaR)
-    default_keys = (:w,
-                    :lower_bounds,
-                    :upper_bounds,
-                    :sum_w,
-                    :alpha,
-                    :u,
-                    :uf_geq_uimvw,
-                    :u1_eq_0,
-                    :u2e_geq_0,
-                    :ret,
-                    :risk)
+    default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :alpha, :u, :uf_geq_uimvw,
+                    :u1_eq_0, :u2e_geq_0, :ret, :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
     return nothing
 end
 
-function portfolio_performance(portfolio::EffMeanDaR; rf = portfolio.rf,
-                               verbose = false)
+function portfolio_performance(portfolio::EffMeanDaR; rf = portfolio.rf, verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 
@@ -31,7 +21,9 @@ function portfolio_performance(portfolio::EffMeanDaR; rf = portfolio.rf,
         u = model[:u]
 
         mean_dar = sum(u[2:end]) / samples
-        haskey(model, :k) && (mean_dar /= value(model[:k]))
+        if haskey(model, :k)
+            (mean_dar /= value(model[:k]))
+        end
 
         if verbose
             println(term_status)

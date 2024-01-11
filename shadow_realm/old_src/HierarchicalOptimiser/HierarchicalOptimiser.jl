@@ -6,6 +6,5 @@ include("HRPOptType.jl")
 include("HRPOptFunc.jl")
 include("HRPOptUtil.jl")
 
-export HRPOpt,
-       optimise!, min_risk!, max_utility!, max_return!, max_sharpe!,
+export HRPOpt, optimise!, min_risk!, max_utility!, max_return!, max_sharpe!,
        portfolio_performance

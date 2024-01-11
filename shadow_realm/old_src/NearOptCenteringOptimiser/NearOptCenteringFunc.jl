@@ -1,14 +1,9 @@
-function optimise!(portfolio::NearOptCentering,
-                   optimisation::Function = max_sharpe!;
-                   target = nothing,
-                   initial_guess = nothing,
+function optimise!(portfolio::NearOptCentering, optimisation::Function = max_sharpe!;
+                   target = nothing, initial_guess = nothing,
                    n = Int(ceil(length(portfolio.opt_port.tickers) /
                                 log(length(portfolio.opt_port.tickers)))),
-                   optimiser = Ipopt.Optimizer,
-                   silent = true,
-                   optimiser_attributes = (),
-                   nloptimiser = Ipopt.Optimizer,
-                   nlsilent = true,
+                   optimiser = Ipopt.Optimizer, silent = true, optimiser_attributes = (),
+                   nloptimiser = Ipopt.Optimizer, nlsilent = true,
                    nloptimiser_attributes = (),)
     model = portfolio.model
 
@@ -18,8 +13,7 @@ function optimise!(portfolio::NearOptCentering,
 
     opt_port = portfolio.opt_port
 
-    c1, c2, w_min, w_max = calc_c1_c2(opt_port, n, optimiser, silent,
-                                      optimiser_attributes)
+    c1, c2, w_min, w_max = calc_c1_c2(opt_port, n, optimiser, silent, optimiser_attributes)
 
     if isnothing(target)
         optimisation(opt_port; optimiser, silent, optimiser_attributes)
@@ -53,8 +47,7 @@ function optimise!(portfolio::NearOptCentering,
 
     @NLexpression(model, lret, -log(ret - e1))
     @NLexpression(model, lrisk, -log(e2 - risk))
-    @NLexpression(model, slw,
-                  -sum(log(1 - w[i]) + log(w[i]) for i in 1:num_tickers))
+    @NLexpression(model, slw, -sum(log(1 - w[i]) + log(w[i]) for i in 1:num_tickers))
 
     @NLobjective(model, Min, lret + lrisk + slw)
 
@@ -65,11 +58,8 @@ function optimise!(portfolio::NearOptCentering,
 end
 
 function calc_c1_c2(portfolio::AbstractEfficient,
-                    n = length(portfolio.tickers) /
-                        log(length(portfolio.tickers)),
-                    optimiser = Ipopt.Optimizer,
-                    silent = true,
-                    optimiser_attributes = ())
+                    n = length(portfolio.tickers) / log(length(portfolio.tickers)),
+                    optimiser = Ipopt.Optimizer, silent = true, optimiser_attributes = ())
     max_port = max_return(portfolio; optimiser, silent, optimiser_attributes)
     w_max = value.(max_port[:w])
 

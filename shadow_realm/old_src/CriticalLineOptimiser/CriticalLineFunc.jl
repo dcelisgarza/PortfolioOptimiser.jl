@@ -1,6 +1,8 @@
 function min_risk!(portfolio::AbstractCriticalLine)
     w = portfolio.w
-    isempty(w) && _solve!(portfolio)
+    if isempty(w)
+        _solve!(portfolio)
+    end
     var = Float64[]
     cov_mtx = portfolio.cov_mtx
     for wi in w
@@ -13,7 +15,9 @@ end
 
 function max_sharpe!(portfolio::AbstractCriticalLine)
     w = portfolio.w
-    isempty(w) && _solve!(portfolio)
+    if isempty(w)
+        _solve!(portfolio)
+    end
     # 1) Compute local max SR portfolio between two neighboring turning points
     w_sr = Vector{Vector{Float64}}()
     sr = Float64[]
@@ -30,7 +34,9 @@ function max_sharpe!(portfolio::AbstractCriticalLine)
 end
 
 function efficient_frontier!(portfolio::AbstractCriticalLine, points = 100)
-    isempty(portfolio.w) && _solve!(portfolio)
+    if isempty(portfolio.w)
+        _solve!(portfolio)
+    end
 
     mean_ret = portfolio.mean_ret
     cov_mtx = portfolio.cov_mtx
@@ -69,13 +75,8 @@ end
     return mu / sigma
 end
 
-function _golden_section(portfolio::AbstractCriticalLine,
-                         obj::Function,
-                         a,
-                         b;
-                         args = nothing,
-                         minimum = false,
-                         tol = 1e-9,)
+function _golden_section(portfolio::AbstractCriticalLine, obj::Function, a, b;
+                         args = nothing, minimum = false, tol = 1e-9,)
     # Golden section method. Maximum if minimum == false is passed
     minimum ? sign = 1 : sign = -1
     max_iter = ceil(Int, -2.078087 * log(tol / abs(b - a)))
@@ -135,11 +136,7 @@ function _solve!(portfolio::AbstractCriticalLine)
             icov_f = inv(cov_f)
             j = 1
             for i in f
-                l, bi = _compute_lambda(icov_f,
-                                        cov_fb,
-                                        mean_f,
-                                        w_b,
-                                        j,
+                l, bi = _compute_lambda(icov_f, cov_fb, mean_f, w_b, j,
                                         (lower_bounds[i], upper_bounds[i]))
                 if _infnone(l) > _infnone(l_in)
                     l_in, i_in, bi_in = l, i, bi
@@ -155,15 +152,10 @@ function _solve!(portfolio::AbstractCriticalLine)
             for i in b
                 cov_f, cov_fb, mean_f, w_b = _get_matrices(portfolio, [f; i])
                 icov_f = inv(cov_f)
-                l, bi = _compute_lambda(icov_f,
-                                        cov_fb,
-                                        mean_f,
-                                        w_b,
-                                        length(mean_f),
+                l, bi = _compute_lambda(icov_f, cov_fb, mean_f, w_b, length(mean_f),
                                         portfolio.w[end][i])
 
-                if (isnothing(portfolio.lambda[end]) ||
-                    l < portfolio.lambda[end]) &&
+                if (isnothing(portfolio.lambda[end]) || l < portfolio.lambda[end]) &&
                    l > _infnone(l_out)
                     l_out, i_out = l, i
                 end
@@ -199,7 +191,9 @@ function _solve!(portfolio::AbstractCriticalLine)
         push!(portfolio.gamma, g)
         push!(portfolio.free, f)
 
-        portfolio.lambda[end] == 0 && break
+        if portfolio.lambda[end] == 0
+            break
+        end
     end
 
     _purge_num_err(portfolio, 1e-9)
@@ -308,7 +302,9 @@ end
     i = 1
     while true
         flag = false
-        i == length(portfolio.w) + 1 && break
+        if i == length(portfolio.w) + 1
+            break
+        end
 
         if abs(sum(portfolio.w[i]) - 1) > tol
             flag = true
@@ -340,14 +336,20 @@ end
     i, repeat = 1, false
 
     while true
-        !repeat && (i += 1)
-        i == length(weights) && break
+        if !repeat
+            (i += 1)
+        end
+        if i == length(weights)
+            break
+        end
 
         w = weights[i]
         mu = port_return(w, mean_ret)
         j, repeat = i + 1, false
         while true
-            j == length(weights) + 1 && break
+            if j == length(weights) + 1
+                break
+            end
             w = weights[j]
             mu2 = port_return(w, mean_ret)
             if mu < mu2

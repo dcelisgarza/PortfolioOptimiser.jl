@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/simple_mean_variance.jl"
 ```
@@ -38,50 +39,45 @@ The advantage of using pricing information over returns is that all `missing` da
 
 ````@example simple_mean_variance
 portfolio = Portfolio(;
-    # Prices TimeArray, the returns are internally computed.
-    prices = prices,
-    # We need to provide solvers and solver-specific options.
-    solvers = Dict(
-        # We will use the Clarabel.jl optimiser. In this case we use a dictionary
-        # for the value, but we can also use named tuples, all we need are key-value
-        # pairs.
-        :Clarabel => Dict(
-            # :solver key must contain the optimiser recipe.
-            # Can also call JuMP.optimizer_with_attributes()
-            # https://jump.dev/JuMP.jl/stable/api/JuMP/#JuMP.optimizer_with_attributes
-            # to add the attributes directly to the solver.
-            # An equivalent configuration using this approach would be:
-            # :solver => JuMP.optimizer_with_attributes(
-            #               Clarabel.Optimizer,
-            #               "verbose" => false, "max_step_fraction" => 0.75
-            #            )
-            :solver => Clarabel.Optimizer,
-            # :params key is optional, but if it is present, it defines solver-specific
-            # attributes/configurations. This often needs to be a dictionary as the
-            # solver attributes are usually strings.
-            :params => Dict("verbose" => false, "max_step_fraction" => 0.75),
-        ),
-    ),
-);
+                      # Prices TimeArray, the returns are internally computed.
+                      prices = prices,
+                      # We need to provide solvers and solver-specific options.
+                      solvers = Dict(
+                                     # We will use the Clarabel.jl optimiser. In this case we use a dictionary
+                                     # for the value, but we can also use named tuples, all we need are key-value
+                                     # pairs.
+                                     :Clarabel => Dict(
+                                                       # :solver key must contain the optimiser recipe.
+                                                       # Can also call JuMP.optimizer_with_attributes()
+                                                       # https://jump.dev/JuMP.jl/stable/api/JuMP/#JuMP.optimizer_with_attributes
+                                                       # to add the attributes directly to the solver.
+                                                       # An equivalent configuration using this approach would be:
+                                                       # :solver => JuMP.optimizer_with_attributes(
+                                                       #               Clarabel.Optimizer,
+                                                       #               "verbose" => false, "max_step_fraction" => 0.75
+                                                       #            )
+                                                       :solver => Clarabel.Optimizer,
+                                                       # :params key is optional, but if it is present, it defines solver-specific
+                                                       # attributes/configurations. This often needs to be a dictionary as the
+                                                       # solver attributes are usually strings.
+                                                       :params => Dict("verbose" => false,
+                                                                       "max_step_fraction" => 0.75))),);
 nothing #hide
 ````
 
 We can show how the `prices` `TimeArray` is used to compute the returns series, which is decomposed into a vector of timestamps, and the returns `Matrix`. We can check this is the case by reconstructing the `returns` `DataFrame` form above.
 
 ````@example simple_mean_variance
-returns == hcat(
-    DataFrame(timestamp = portfolio.timestamps),
-    DataFrame(
-        [portfolio.returns[:, i] for i in axes(portfolio.returns, 2)],
-        portfolio.assets,
-    ),
-)
+returns == hcat(DataFrame(; timestamp = portfolio.timestamps),
+                DataFrame([portfolio.returns[:, i] for i in axes(portfolio.returns, 2)],
+                          portfolio.assets))
 ````
 
 Another nice thing about [`Portfolio()`](@ref) and [`HCPortfolio()`](@ref) is that the asset tickers and timestamps can be obtained from either a `TimeArray` with price information, or `DataFrame` with returns information. Since we used pricing data, we can obtain the latest prices too.
 
 ````@example simple_mean_variance
-pretty_table(DataFrame(assets = portfolio.assets, latest_prices = portfolio.latest_prices))
+pretty_table(DataFrame(; assets = portfolio.assets,
+                       latest_prices = portfolio.latest_prices))
 ````
 
 ## Optimal Risk-adjusted Return Ratio
@@ -89,7 +85,7 @@ pretty_table(DataFrame(assets = portfolio.assets, latest_prices = portfolio.late
 For some risk measures/constraints, we need to compute some statistical quantities. Since we're going to showcase a mean-variance optimisation, we need to estimate the asset mean returns and covariance. We can do this by calling [`asset_statistics!`](@ref). This function also has myriad keyword options, but we'll stick to the basics.
 
 ````@example simple_mean_variance
-asset_statistics!(portfolio, calc_kurt = false)
+asset_statistics!(portfolio; calc_kurt = false)
 ````
 
 We can then call [`opt_port!`](@ref) with default arguments, which optimises for the risk adjusted return ratio of the mean variance portfolio.
@@ -162,7 +158,7 @@ nothing #hide
 Compute the codependence matrix with [`asset_statistics!`](@ref).
 
 ````@example simple_mean_variance
-asset_statistics!(hcportfolio, calc_kurt = false)
+asset_statistics!(hcportfolio; calc_kurt = false)
 ````
 
 And plot the clusters defined by it, we use Ward's linkage function because it gives the best cluster separation.
@@ -177,7 +173,6 @@ There's also a function to plot the dendrogram, but it's not as interesting.
 fig8 = plot_dendrogram(hcportfolio; linkage = :ward)
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

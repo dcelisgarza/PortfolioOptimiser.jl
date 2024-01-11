@@ -1,5 +1,4 @@
-function portfolio_performance(portfolio::HRPOpt; rf = portfolio.rf,
-                               verbose = false)
+function portfolio_performance(portfolio::HRPOpt; rf = portfolio.rf, verbose = false)
     w = portfolio.weights
 
     if isnothing(portfolio.returns)

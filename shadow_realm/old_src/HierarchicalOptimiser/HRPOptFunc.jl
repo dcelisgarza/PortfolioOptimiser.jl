@@ -1,5 +1,4 @@
-function max_sharpe!(portfolio::HRPOpt, w, cluster1_idx, cluster2_idx,
-                     rf = portfolio.rf)
+function max_sharpe!(portfolio::HRPOpt, w, cluster1_idx, cluster2_idx, rf = portfolio.rf)
     mean_ret1, mean_ret2 = _get_mean_ret(portfolio, cluster1_idx, cluster2_idx)
 
     cov_slice1 = portfolio.cov_mtx[cluster1_idx, cluster1_idx]
@@ -44,10 +43,7 @@ function max_return!(portfolio::HRPOpt, w, cluster1_idx, cluster2_idx)
     return _hrp_minimise(w, cluster1_idx, cluster2_idx, -ret1, -ret2)
 end
 
-function max_utility!(portfolio::HRPOpt,
-                      w,
-                      cluster1_idx,
-                      cluster2_idx,
+function max_utility!(portfolio::HRPOpt, w, cluster1_idx, cluster2_idx,
                       risk_aversion = portfolio.risk_aversion)
     mean_ret1, mean_ret2 = _get_mean_ret(portfolio, cluster1_idx, cluster2_idx)
 
@@ -71,12 +67,9 @@ function optimise!(portfolio::HRPOpt, obj, obj_params...)
 
     while length(cluster_tickers) > 0
         cluster_tickers = [i[j:k] for i in cluster_tickers
-                           for
-                           (j, k) in
-                           ((1, div(length(i), 2)),
-                            (div(length(i), 2) + 1, length(i)))
-                           if
-                           length(i) > 1] # Bisecting
+                           for (j, k) in
+                               ((1, div(length(i), 2)), (div(length(i), 2) + 1, length(i)))
+                           if length(i) > 1] # Bisecting
         # For each pair optimise locally.
         for i in 1:2:length(cluster_tickers)
             first_cluster = cluster_tickers[i]

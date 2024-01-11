@@ -58,6 +58,7 @@ s = \\dfrac{\\mu - r}{\\sigma},
 where ``\\mu`` the portfolio's return (see [`port_return`](@ref)), and ``\\sigma`` the portfolio's standard deviation (see [`port_variance`](@ref)). Generally speaking, the greater the Sharpe ratio the better the portfolio.
 
 !!! note
+
     The Sharpe ratio penalises large swings in both directions, so assets that tend to have large increases in value are disproportionally penalised by this measure. The Sortino ratio has the same formula but uses an adjusted covariance matrix that accounts only for the negative fluctuations in value. The semicovariance is implemented by [`cov`](@ref) when given `SCov()` or `ESCov()` as its first argument. The Mean-Semivariance optimisations [`EffMeanSemivar`](@ref) make the adjustment too.
 """
 function sharpe_ratio(w, mean_ret, cov_mtx, rf::Real = 1.02^(1 / 252) - 1)
@@ -126,7 +127,7 @@ end
 quadratic_utility(w, mean_ret, cov_mtx, risk_aversion = 1)
 ```
 
-Calculates the quadratic utility given the weights `w`, mean returns `mean_ret`, covariance matrix `cov_mtx` and risk aversion `risk_aversion`. Increasing `risk_aversion` decreases risk. 
+Calculates the quadratic utility given the weights `w`, mean returns `mean_ret`, covariance matrix `cov_mtx` and risk aversion `risk_aversion`. Increasing `risk_aversion` decreases risk.
 
 The quadratic utility ``Q``, is defined as:
 
@@ -166,28 +167,25 @@ C = k \\lvert \\bm{w} - \\bm{w}_{\\mathrm{prev}} \\rvert\\,,
 where ``k`` is the fixed percentage commision, ``\\bm{w}`` the asset weights, and ``\\bm{w}_{\\mathrm{prev}}`` the previous weights of the assets.
 
 !!! warning
-    JuMP doesn't yet support norm in the objective (v1.0), so we need to turn them into a variable subject to a [MOI.NormOneCone](https://docs.juliahub.com/MathOptInterface/tyub8/1.3.0/reference/standard_form/#MathOptInterface.NormOneCone) constraint. We can follow the example in the [JuMP tutorial](https://jump.dev/JuMP.jl/stable/tutorials/conic/logistic_regression/#\\ell_1-regularized-logistic-regression) to do this.
+
+    JuMP doesn't yet support norm in the objective (v1.0), so we need to turn them into a variable subject to a [MOI.NormOneCone](https://docs.juliahub.com/MathOptInterface/tyub8/1.3.0/reference/standard_form/#MathOptInterface.NormOneCone) constraint. We can follow the example in the [JuMP tutorial](https://jump.dev/JuMP.jl/stable/tutorials/conic/logistic_regression/#%5Cell_1-regularized-logistic-regression) to do this.
 
     ```julia
     n = length(tickers)
     prev_weights = fill(1 / n, n)
     k = 0.001
-    ef = EffMeanVar(
-        tickers,
-        mu,
-        S;
-        # Add the variable that will contain the value of the l1 regularisation.
-        extra_vars = [:(0 <= l1)],
-        # We constrain it to be within a MOI.NormOneCone.
-        extra_constraints = [
-            :([model[:l1]; (model[:w] - \$prev_weights)] in MOI.NormOneCone(\$(n + 1))),
-        ],
-        # We add the variable to the objective and multiply it by the adjustment parameter.
-        extra_obj_terms = [quote
-            \$k * model[:l1]
-        end],
-    )
+    ef = EffMeanVar(tickers, mu, S;
+                    # Add the variable that will contain the value of the l1 regularisation.
+                    extra_vars = [:(0 <= l1)],
+                    # We constrain it to be within a MOI.NormOneCone.
+                    extra_constraints = [:([model[:l1]; (model[:w] - \$prev_weights)] in
+                                           MOI.NormOneCone(\$(n + 1)))],
+                    # We add the variable to the objective and multiply it by the adjustment parameter.
+                    extra_obj_terms = [quote
+                                           \$k * model[:l1]
+                                       end],)
     ```
+
     Similarly L2-norms must be turned into constraints of type `MOI.NormTwoCone`. More information on how to do this can be found in [JuMP Vector Cones](https://jump.dev/JuMP.jl/stable/moi/manual/standard_form/#Vector-cones).
 """
 function transaction_cost(w, w_prev, k = 0.001)

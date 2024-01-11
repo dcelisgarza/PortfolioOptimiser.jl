@@ -1,26 +1,12 @@
 function refresh_model!(portfolio::EffEDaR)
-    default_keys = (:w,
-                    :lower_bounds,
-                    :upper_bounds,
-                    :sum_w,
-                    :t,
-                    :s,
-                    :u,
-                    :z,
-                    :u1_eq_0,
-                    :u2e_geq_0,
-                    :uf_geq_uimvw,
-                    :sum_z_leq_s,
-                    :edar_con,
-                    :ret,
-                    :risk)
+    default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :t, :s, :u, :z, :u1_eq_0,
+                    :u2e_geq_0, :uf_geq_uimvw, :sum_z_leq_s, :edar_con, :ret, :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
     return nothing
 end
 
-function portfolio_performance(portfolio::EffEDaR; rf = portfolio.rf,
-                               verbose = false)
+function portfolio_performance(portfolio::EffEDaR; rf = portfolio.rf, verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 
@@ -33,7 +19,9 @@ function portfolio_performance(portfolio::EffEDaR; rf = portfolio.rf,
         !isnothing(mean_ret) ? μ = port_return(w, mean_ret) : μ = NaN
 
         edar_val = value(model[:risk])
-        haskey(model, :k) && (edar_val /= value(model[:k]))
+        if haskey(model, :k)
+            (edar_val /= value(model[:k]))
+        end
 
         if verbose
             println(term_status)

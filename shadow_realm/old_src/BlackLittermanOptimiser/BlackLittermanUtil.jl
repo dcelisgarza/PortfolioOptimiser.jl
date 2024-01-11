@@ -1,5 +1,4 @@
-function portfolio_performance(portfolio::AbstractBlackLitterman,
-                               rf = 1.02^(1 / 252) - 1;
+function portfolio_performance(portfolio::AbstractBlackLitterman, rf = 1.02^(1 / 252) - 1;
                                verbose = false,)
     mean_ret = portfolio.post_ret
     cov_mtx = portfolio.post_cov

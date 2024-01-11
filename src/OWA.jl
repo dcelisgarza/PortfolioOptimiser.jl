@@ -33,8 +33,7 @@ $(_sigdef("CVaR", :a))
 $_owaw
 """
 function owa_cvar(T::Integer, alpha::Real = 0.05)
-    @assert(0 < alpha < 1,
-            "alpha = $alpha, must be greater than 0 and less than 1")
+    @assert(0 < alpha < 1, "alpha = $alpha, must be greater than 0 and less than 1")
 
     k = floor(Int, T * alpha)
     w = zeros(typeof(alpha), T)
@@ -80,8 +79,7 @@ $(_sigdef("Tail Gini losses", :a))
 # Outputs
 $_owaw
 """
-function owa_tg(T::Integer; alpha_i::Real = 1e-4, alpha::Real = 0.05,
-                a_sim::Integer = 100)
+function owa_tg(T::Integer; alpha_i::Real = 1e-4, alpha::Real = 0.05, a_sim::Integer = 100)
     @assert(0 < alpha_i < alpha < 1,
             "alpha_i = $alpha_i, alpha = $alpha, please ensure 0 < alpha_i < alpha < 1, holds")
     @assert(a_sim > zero(a_sim), "a_sim = $a_sim, must be greater than zero")
@@ -171,8 +169,7 @@ function owa_rwcvar(T::Integer, alphas::AbstractVector{<:Real},
                     weights_a::AbstractVector{<:Real},
                     betas::AbstractVector{<:Real} = alphas,
                     weights_b::AbstractVector{<:Real} = weights_b)
-    w = owa_wcvar(T, alphas, weights_a) .-
-        reverse(owa_wcvar(T, betas, weights_b))
+    w = owa_wcvar(T, alphas, weights_a) .- reverse(owa_wcvar(T, betas, weights_b))
 
     return w
 end
@@ -193,8 +190,8 @@ $(_sigdef("Tail Gini gains", :b))
 $_owaw
 """
 function owa_rtg(T::Integer; alpha_i::Real = 0.0001, alpha::Real = 0.05,
-                 a_sim::Integer = 100, beta_i::Real = alpha_i,
-                 beta::Real = alpha, b_sim::Integer = a_sim,)
+                 a_sim::Integer = 100, beta_i::Real = alpha_i, beta::Real = alpha,
+                 b_sim::Integer = a_sim,)
     w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) .-
         reverse(owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim))
 
@@ -222,7 +219,9 @@ function _optimize_owa(model, solvers)
     solvers_tried = Dict()
 
     for (key, val) in solvers
-        haskey(val, :solver) && set_optimizer(model, val[:solver])
+        if haskey(val, :solver)
+            set_optimizer(model, val[:solver])
+        end
 
         if haskey(val, :params)
             for (attribute, value) in val[:params]
@@ -239,13 +238,14 @@ function _optimize_owa(model, solvers)
 
         term_status = termination_status(model)
 
-        term_status in ValidTermination && break
+        if term_status in ValidTermination
+            break
+        end
 
         push!(solvers_tried,
               key => Dict(:objective_val => objective_value(model),
                           :term_status => term_status,
-                          :params => haskey(val, :params) ? val[:params] :
-                                     missing))
+                          :params => haskey(val, :params) ? val[:params] : missing))
     end
 
     return term_status, solvers_tried
@@ -255,13 +255,18 @@ end
 ```julia
 _crra_method(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
 ```
+
 Internal function for computing the Normalized Constant Relative Risk Aversion coefficients.
+
 # Inputs
-- `weights`: `T×(k-1)` matrix where T is the number of observations and `k` the order of the L-moments to combine, the `i`'th column contains the weights for the `(i+1)`'th L-moment.
-- `k`: the maximum order of the L-moments.
-- `g`: the risk aversion coefficient.
+
+  - `weights`: `T×(k-1)` matrix where T is the number of observations and `k` the order of the L-moments to combine, the `i`'th column contains the weights for the `(i+1)`'th L-moment.
+  - `k`: the maximum order of the L-moments.
+  - `g`: the risk aversion coefficient.
+
 # Outputs
-- `w`: `T×1` ordered weight vector of the combined L-moments.
+
+  - `w`: `T×1` ordered weight vector of the combined L-moments.
 """
 function _crra_method(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
     phis = Vector{eltype(weights)}(undef, k - 1)
@@ -319,11 +324,13 @@ end
 ```julia
 OWAMethods = (:CRRA, :E, :SS, :SD)
 ```
+
 Methods for computing the weights used to combine L-moments higher than 2, used in [`owa_l_moment_crm`](@ref).
-- `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
-- `:E`: Maximum Entropy. Uses `MOI.RelativeEntropyCone` and `MOI.NormOneCone`, in order for the optimisation to succeed `JuMP` needs to be able to transform these into supported forms for a solver.
-- `:SS`: Minimum Sum of Squares.
-- `:SD`: Minimum Square Distance.
+
+  - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
+  - `:E`: Maximum Entropy. Uses `MOI.RelativeEntropyCone` and `MOI.NormOneCone`, in order for the optimisation to succeed `JuMP` needs to be able to transform these into supported forms for a solver.
+  - `:SS`: Minimum Sum of Squares.
+  - `:SD`: Minimum Square Distance.
 """
 const OWAMethods = (:CRRA, :E, :SS, :SD)
 
@@ -347,12 +354,11 @@ $(_solver_desc("the OWA L-Moment `JuMP` model."))
 # Outputs
 $_owaw
 """
-function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD,
-                          g::Real = 0.5, max_phi::Real = 0.5, solvers = Dict(),)
+function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::Real = 0.5,
+                          max_phi::Real = 0.5, solvers = Dict(),)
     @assert(k >= 2, "k = $k, must be an integer bigger than or equal to 2")
     @assert(method ∈ OWAMethods, "method = $method, must be one of $OWAMethods")
-    @assert(0 < g < 1,
-            "risk aversion, g = $g, must be greater than 0 and less than 1")
+    @assert(0 < g < 1, "risk aversion, g = $g, must be greater than 0 and less than 1")
     @assert(0 < max_phi < 1,
             "the constraint on the maximum weight of the L-moments, max_phi = $max_phi, must be greater than 0 and less than 1")
 
@@ -381,10 +387,8 @@ function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD,
             @variable(model, t)
             @variable(model, x[1:T])
             @constraint(model, sum(x) == 1)
-            @constraint(model,
-                        [t; ones(T); x] in MOI.RelativeEntropyCone(2 * T + 1))
-            @constraint(model, [i = 1:T],
-                        [x[i]; theta[i]] in MOI.NormOneCone(2))
+            @constraint(model, [t; ones(T); x] in MOI.RelativeEntropyCone(2 * T + 1))
+            @constraint(model, [i = 1:T], [x[i]; theta[i]] in MOI.NormOneCone(2))
             @objective(model, Max, -t)
         elseif method == :SS
             # Minimum sum of squares.
@@ -415,5 +419,5 @@ function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD,
     return w
 end
 
-export owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar,
-       owa_rwcvar, owa_rtg, owa_l_moment, owa_l_moment_crm
+export owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_rwcvar, owa_rtg,
+       owa_l_moment, owa_l_moment_crm

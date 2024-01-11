@@ -1,20 +1,24 @@
 """
 ```julia
-PMFG_T2s(W::AbstractMatrix{<:Real}, nargout::Integer = 3)
+PMFG_T2s(W::AbstractMatrix{<:Real}; nargout::Integer = 3)
 ```
-Constructs a Triangulated Maximally Filtered Graph (TMFG) starting from a tetrahedron and recursively inserting vertices inside existing triangles (T2 move) in order to approximate a Maximal Planar Graph with the largest total weight, aka Planar Maximally Filtered Graph (PMFG). All weights are non-negative [^PMFG].
-# Arguments
-- `W`: `N×N` matrix of non-negative weights.
-- `nargout`: number of output arguments, the same arguments are always returne, this only controls whether some arguments are empty or not.
-# Outputs
-- `A`: adjacency matrix of the PMFG with weights.
-- `tri`: list of triangles (triangular faces).
-- `clique3`: list of 3-cliques taht are not triangular faces, all 3-cliques are given by `[tri; clique3]`.
-- `cliques`: list of all 4-cliques, if `nargout <= 3`, this will be returned as an empty array.
-- `cliqueTree`: 4-cliques tree structure (adjacency matrix), if `nargout <= 4`, it is returned as an empty array.
 
-[^PMFG]:
-    [Guido Previde Massara, T. Di Matteo, Tomaso Aste, Network Filtering for Big Data: Triangulated Maximally Filtered Graph, Journal of Complex Networks, Volume 5, Issue 2, June 2017, Pages 161–178, https://doi.org/10.1093/comnet/cnw015](https://academic.oup.com/comnet/article-abstract/5/2/161/2555365).
+Constructs a Triangulated Maximally Filtered Graph (TMFG) starting from a tetrahedron and recursively inserting vertices inside existing triangles (T2 move) in order to approximate a Maximal Planar Graph with the largest total weight, aka Planar Maximally Filtered Graph (PMFG). All weights are non-negative [^PMFG].
+
+# Arguments
+
+  - `W`: `N×N` matrix of non-negative weights.
+  - `nargout`: number of output arguments, the same arguments are always returne, this only controls whether some arguments are empty or not.
+
+# Outputs
+
+  - `A`: adjacency matrix of the PMFG with weights.
+  - `tri`: list of triangles (triangular faces).
+  - `clique3`: list of 3-cliques taht are not triangular faces, all 3-cliques are given by `[tri; clique3]`.
+  - `cliques`: list of all 4-cliques, if `nargout <= 3`, this will be returned as an empty array.
+  - `cliqueTree`: 4-cliques tree structure (adjacency matrix), if `nargout <= 4`, it is returned as an empty array.
+
+[^PMFG]: [Guido Previde Massara, T. Di Matteo, Tomaso Aste, Network Filtering for Big Data: Triangulated Maximally Filtered Graph, Journal of Complex Networks, Volume 5, Issue 2, June 2017, Pages 161–178, https://doi.org/10.1093/comnet/cnw015](https://academic.oup.com/comnet/article-abstract/5/2/161/2555365).
 """
 function PMFG_T2s(W::AbstractMatrix{<:Real}, nargout::Integer = 3)
     N = size(W, 1)
@@ -96,8 +100,7 @@ function PMFG_T2s(W::AbstractMatrix{<:Real}, nargout::Integer = 3)
 
     A = sparse(W .* ((A + A') .== 1))
 
-    cliques = nargout > 3 ?
-              vcat(transpose(in_v[1:4]), hcat(clique3, in_v[5:end])) :
+    cliques = nargout > 3 ? vcat(transpose(in_v[1:4]), hcat(clique3, in_v[5:end])) :
               Matrix{Int}(undef, 0, 0)
 
     cliqueTree = if nargout > 4
@@ -123,29 +126,42 @@ end
 ```julia
 distance_wei(L::AbstractMatrix{<:Real})
 ```
+
 The distance matrix contains lengths of shortest paths between all node pairs. An entry `[u, v]` represents the length of the shortest path from node `u` to node `v`. The average shortest path length is the characteristic path length of the network. The function uses Dijkstra's algorithm.
+
 # Inputs
-- `L`: Directed/undirected connection-length matrix. 
-    - Lengths between disconnected nodes are set to `Inf`.
-    - Lengths on the main diagonal are set to 0.
+
+  - `L`: Directed/undirected connection-length matrix.
+
+      + Lengths between disconnected nodes are set to `Inf`.
+      + Lengths on the main diagonal are set to 0.
+
 !!! note
+
     The input matrix must be a connection-length matrix typically obtained via a mapping from weight to length. For instance, in a weighted correlation network, higher correlations are more naturally interpreted as shorter distances, and the input matrix should therefore be some inverse of the connectivity matrix, i.e. a distance matrix.
 
     The number of edges in the shortest weighted path may in general exceed the number of edges in the shortest binary paths (i.e. the shortest weighted paths computed on the binarised connectivity matrix), because the shortest weighted paths have the minimal weighted distance, not necessarily the minimal number of edges.
+
 # Outputs
-- `D`: distance (shortest weighted path) matrix.
-- `B`: number of edged in the shortest weigthed path matrix.
+
+  - `D`: distance (shortest weighted path) matrix.
+  - `B`: number of edged in the shortest weigthed path matrix.
 
 !!! note
-    Based on a Matlab implementation by:
-    - Mika Rubinov, UNSW/U Cambridge, 2007-2012.
-    - Rick Betzel and Andrea Avena, IU, 2012
 
-    Modification history:
-    - 2007: original (MR)
-    - 2009-08-04: min() function vectorized (MR)
-    - 2012: added number of edges in shortest path as additional output (RB/AA)
-    - 2013: variable names changed for consistency with other functions (MR)
+    Based on a Matlab implementation by:
+
+      - Mika Rubinov, UNSW/U Cambridge, 2007-2012.
+      - Rick Betzel and Andrea Avena, IU, 2012
+
+# Distance matrix
+
+    Modification history:     # Number of edges matrix
+
+      - 2007: original (MR)
+      - 2009-08-04: min() function vectorized (MR)   # Distance permanence (true is temporary)
+      - 2012: added number of edges in shortest path as additional output (RB/AA)
+      - 2013: variable names changed for consistency with other functions (MR)
 """
 function distance_wei(L::AbstractMatrix{<:Real})
     N = size(L, 1)
@@ -164,8 +180,7 @@ function distance_wei(L::AbstractMatrix{<:Real})
             for v in V
                 T = findnz(L1[v, :])[1] # neighbours of shortest nodes
                 d, wi = findmin(vcat(vcat(transpose(D[u, T]),
-                                          transpose(D[u, v] .+ L1[v, T])));
-                                dims = 1)
+                                          transpose(D[u, v] .+ L1[v, T]))); dims = 1)
                 wi = vec(getindex.(wi, 2))
                 D[u, T] .= vec(d)   # Smallest of old/new path lengths
                 ind = T[wi .== 3]   # Indices of lengthened paths
@@ -177,7 +192,9 @@ function distance_wei(L::AbstractMatrix{<:Real})
 
             # isempty: all nodes reached
             # isinf: some nodes cannot be reached
-            (isempty(minD) || isinf(minD)) && break
+            if (isempty(minD) || isinf(minD))
+                break
+            end
 
             V = findall(D[u, :] .== minD)
         end
@@ -190,13 +207,18 @@ end
 ```julia
 clique3(A::AbstractMatrix{<:Real})
 ```
+
 Computes the list of 3-cliques.
+
 # Inputs
-- `A`: `N×N` adjacency matrix of a Maximal Planar Graph (MPG).
+
+  - `A`: `N×N` adjacency matrix of a Maximal Planar Graph (MPG).
+
 # Outputs
-- `K3`: vector of vectors with the corresponding indices of candidate cliques.
-- `E`: matrix with non-zero indices and entries of candidate cliques.
-- `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
+
+  - `K3`: vector of vectors with the corresponding indices of candidate cliques.
+  - `E`: matrix with non-zero indices and entries of candidate cliques.
+  - `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
 """
 function clique3(A::AbstractMatrix{<:Real})
     A = A - Diagonal(A)
@@ -232,10 +254,11 @@ function clique3(A::AbstractMatrix{<:Real})
             check = a .* b .* c
             check = sum(check)
 
-            check == 0 && (clique = vcat(clique, candidate))
+            if check == 0
+                (clique = vcat(clique, candidate))
+            end
 
-            candidate, check, a, b, c = nothing, nothing, nothing, nothing,
-                                        nothing
+            candidate, check, a, b, c = nothing, nothing, nothing, nothing, nothing
         end
     end
 
@@ -250,15 +273,22 @@ end
 ```julia
 breadth(CIJ::AbstractMatrix{<:Real}, source::Integer)
 ```
+
 Breadth-first search.
+
 # Inputs
-- `CIJ`: binary (directed/undirected) connection matrix.
-- `source`: source vertex.
+
+  - `CIJ`: binary (directed/undirected) connection matrix.
+  - `source`: source vertex.
+
 # Outputs
-- `distance`: distance between `source` and i'th vertex (0 for source vertex).
-- `branch`: vertex that precedes i in the breadth-first search tree (-1 for source vertex).
+
+  - `distance`: distance between `source` and i'th vertex (0 for source vertex).
+  - `branch`: vertex that precedes i in the breadth-first search tree (-1 for source vertex).
+
 !!! note
-    Breadth-first search tree does not contain all paths (or all shortest paths), but allows the determination of at least one path with minimum distace. The entire graph is explored, starting from source vertex `source`.
+
+    Breadth-first search tree does not contain all paths (or all shortest paths), but allows the determination of at least one path with minimum distace. The entire graph is explored, starting from source vertex `source`.    # Colours
 
     Original written by:
     Olaf Sporns, Indiana University, 2002/2007/2008
@@ -286,7 +316,9 @@ function breadth(CIJ::AbstractMatrix{<:Real}, source::Integer)
         ns = findnz(CIJ[u, :])[1]
         for v in ns
             # This allows the `source` distance to itself to be recorded
-            all(distance[v] .== 0) && (distance[v] = distance[u] + 1)
+            if all(distance[v] .== 0)
+                (distance[v] = distance[u] + 1)
+            end
             if all(color[v] .== white)
                 color[v] = gray
                 distance[v] = distance[u] + 1
@@ -305,20 +337,26 @@ end
 ```julia
 FindDisjoint(Adj::AbstractMatrix{<:Real}, Cliq::AbstractVector{<:Real})
 ```
+
 Finds disjointed cliques in adjacency matrix.
+
 # Inputs
-- `Adj`: `N×N` adjacency matrix.
-- `Cliq`: `3×1` vector of 3-cliques.
+
+  - `Adj`: `N×N` adjacency matrix.
+  - `Cliq`: `3×1` vector of 3-cliques.
+
 # Outputs
-- `T`: `N×1` vector containing the adjacency number of each node.
-- `IndxNot`: `N×1` vector of nodes with no adjacencies.
+
+  - `T`: `N×1` vector containing the adjacency number of each node.
+  - `IndxNot`: `N×1` vector of nodes with no adjacencies.
 """
 function FindDisjoint(Adj::AbstractMatrix{<:Real}, Cliq::AbstractVector{<:Real})
     N = size(Adj, 1)
     Temp = copy(Adj)
     T = zeros(Int, N)
     IndxTotal = 1:N
-    IndxNot = findall(IndxTotal .!= Cliq[1] .&& IndxTotal .!= Cliq[2] .&&
+    IndxNot = findall(IndxTotal .!= Cliq[1] .&&
+                      IndxTotal .!= Cliq[2] .&&
                       IndxTotal .!= Cliq[3])
     Temp[Cliq, :] .= 0
     Temp[:, Cliq] .= 0
@@ -338,11 +376,16 @@ end
 ```julia
 BuildHierarchy(M::AbstractMatrix{<:Real})
 ```
+
 Builds the predicted hierarchy.
+
 # Inputs
-- `M`: `N×Nc` matrix of nodes and 3-cliques.
+
+  - `M`: `N×Nc` matrix of nodes and 3-cliques.
+
 # Outputs
-- `Pred`: `Nc×1` vector of predicted hierarchies.
+
+  - `Pred`: `Nc×1` vector of predicted hierarchies.
 """
 function BuildHierarchy(M::AbstractMatrix{<:Real})
     N = size(M, 2)
@@ -366,16 +409,21 @@ end
 
 """
 ```julia
-AdjCliq(
-    A::AbstractMatrix{<:Real},    CliqList::AbstractMatrix{<:Real},    CliqRoot::AbstractVector{<:Real},)
+AdjCliq(A::AbstractMatrix{<:Real}, CliqList::AbstractMatrix{<:Real},
+        CliqRoot::AbstractVector{<:Real})
 ```
+
 Find adjacent clique to the root candidates.
+
 # Inputs
-- `A`: `N×N` adjacency matrix.
-- `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
-- `CliqRoot`: `Nc×1` vector of root cliques.
+
+  - `A`: `N×N` adjacency matrix.
+  - `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
+  - `CliqRoot`: `Nc×1` vector of root cliques.
+
 # Outputs
-- `Adj`: `Nc×Nc` adjacency matrix of the cliques with the root cliques.
+
+  - `Adj`: `Nc×Nc` adjacency matrix of the cliques with the root cliques.
 """
 function AdjCliq(A::AbstractMatrix{<:Real}, CliqList::AbstractMatrix{<:Real},
                  CliqRoot::AbstractVector{<:Real})
@@ -385,8 +433,7 @@ function AdjCliq(A::AbstractMatrix{<:Real}, CliqList::AbstractMatrix{<:Real},
     Indicator = zeros(Int, N)
     for n in eachindex(CliqRoot)
         Indicator[CliqList[CliqRoot[n], :]] .= 1
-        Indi = hcat(Indicator[CliqList[CliqRoot, 1]],
-                    Indicator[CliqList[CliqRoot, 2]],
+        Indi = hcat(Indicator[CliqList[CliqRoot, 1]], Indicator[CliqList[CliqRoot, 2]],
                     Indicator[CliqList[CliqRoot, 3]])
 
         adjacent = CliqRoot[vec(sum(Indi; dims = 2)) .== 2]
@@ -399,16 +446,20 @@ end
 ```julia
 BubbleHierarchy(Pred::AbstractVector{<:Real}, Sb::AbstractVector{<:Real})
 ```
+
 Build the bubble hierarchy.
+
 # Inputs
-- `Pred`: `Nc×1` vector of predicted hierarchies.
-- `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates 3-clique `n` is separating.
+
+  - `Pred`: `Nc×1` vector of predicted hierarchies.
+  - `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates 3-clique `n` is separating.
+
 # Outputs
-- `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
-- `H2`: `Nb×Nb` adjacency matrix for the bubble hierarchical tree where `Nb` is the number of bubbles.
+
+  - `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
+  - `H2`: `Nb×Nb` adjacency matrix for the bubble hierarchical tree where `Nb` is the number of bubbles.
 """
-function BubbleHierarchy(Pred::AbstractVector{<:Real},
-                         Sb::AbstractVector{<:Real})
+function BubbleHierarchy(Pred::AbstractVector{<:Real}, Sb::AbstractVector{<:Real})
     Nc = size(Pred, 1)
     Root = findall(Pred .== 0)
     CliqCount = zeros(Int, Nc)
@@ -431,7 +482,9 @@ function BubbleHierarchy(Pred::AbstractVector{<:Real},
             CliqCount[DirectChild] .= 1
 
             for m in eachindex(DirectChild)
-                Sb[DirectChild[m]] != 0 && (NxtRoot = [NxtRoot; DirectChild[m]])
+                if Sb[DirectChild[m]] != 0
+                    (NxtRoot = [NxtRoot; DirectChild[m]])
+                end
             end
 
             DirectChild, TempVec = nothing, nothing
@@ -457,35 +510,42 @@ end
 ```julia
 DBHTRootMethods = (:Unique, :Equal)
 ```
+
 Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in [`DBHTs`](@ref), in case there is more than one candidate.
-- `:Unique`: create a unique root.
-- `:Equal`: the root is created from the candidate's adjacency tree. 
+
+  - `:Unique`: create a unique root.
+  - `:Equal`: the root is created from the candidate's adjacency tree.
 """
 const DBHTRootMethods = (:Unique, :Equal)
 
 """
 ```julia
-CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Unique)
+CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}; method::Symbol = :Unique)
 ```
+
 Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy of the cliques with the definition of "inside" a clique being a subgraph of smaller size when the entire graph is made disjoint by removing the clique [^NHPG].
+
 # Inputs
-- `Apm`: `N×N` adjacency matrix of an MPG.
-- `method`: method for finding the root of the graph [`DBHTRootMethods`](@ref). Uses Voronoi tesselation between tiling triangles.
-    - `:Unique`: create a unique root.
-    - `:Equal`: the root is created from the candidate's adjacency tree. 
+
+  - `Apm`: `N×N` adjacency matrix of an MPG.
+
+  - `method`: method for finding the root of the graph [`DBHTRootMethods`](@ref). Uses Voronoi tesselation between tiling triangles.
+
+      + `:Unique`: create a unique root.
+      + `:Equal`: the root is created from the candidate's adjacency tree.
+
 # Outputs
-- `H1`: `Nc×Nc` adjacency matrix for 3-clique hierarchical tree where `Nc` is the number of 3-cliques.
-- `H2`: `Nb×Nb` adjacency matrix for the bubble hierarchical tree where `Nb` is the number of bubbles.
-- `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
-- `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
-- `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates 3-clique `n` is separating.
-[^NHPG]:
-    [Song, W. M., Di Matteo, T., & Aste, T. (2011). Nested hierarchies in planar graphs. Discrete Applied Mathematics, 159(17), 2135-2146.](https://www.sciencedirect.com/science/article/pii/S0166218X11002794)
+
+  - `H1`: `Nc×Nc` adjacency matrix for 3-clique hierarchical tree where `Nc` is the number of 3-cliques.
+  - `H2`: `Nb×Nb` adjacency matrix for the bubble hierarchical tree where `Nb` is the number of bubbles.
+  - `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
+  - `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
+  - `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates 3-clique `n` is separating.
+
+[^NHPG]: [Song, W. M., Di Matteo, T., & Aste, T. (2011). Nested hierarchies in planar graphs. Discrete Applied Mathematics, 159(17), 2135-2146.](https://www.sciencedirect.com/science/article/pii/S0166218X11002794)
 """
-function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real},
-                             method::Symbol = :Unique)
-    @assert(method ∈ DBHTRootMethods,
-            "method = $method, must be one of $DBHTRootMethods")
+function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Unique)
+    @assert(method ∈ DBHTRootMethods, "method = $method, must be one of $DBHTRootMethods")
     N = size(Apm, 1)
     A = Apm .!= 0
     K3, E, clique = clique3(A)
@@ -502,8 +562,7 @@ function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real},
         indx1 = findall(T .== 1)
         indx2 = findall(T .== 2)
 
-        indx_s = length(indx1) > length(indx2) ? vcat(indx2, indx0) :
-                 vcat(indx1, indx0)
+        indx_s = length(indx1) > length(indx2) ? vcat(indx2, indx0) : vcat(indx1, indx0)
 
         Sb[n] = isempty(indx_s) ? 0 : length(indx_s) - 3
 
@@ -521,15 +580,21 @@ function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real},
 
         H = spzeros(Int, Nc + 1, Nc + 1)
         for n in eachindex(Pred)
-            Pred[n] != 0 && (H[n, Pred[n]] = 1)
+            if Pred[n] != 0
+                (H[n, Pred[n]] = 1)
+            end
         end
         H = H + transpose(H)
     else
-        length(Root) > 1 && (Adj = AdjCliq(A, CliqList, Root))
+        if length(Root) > 1
+            (Adj = AdjCliq(A, CliqList, Root))
+        end
 
         H = spzeros(Int, Nc, Nc)
         for n in eachindex(Pred)
-            Pred[n] != 0 && (H[n, Pred[n]] = 1)
+            if Pred[n] != 0
+                (H[n, Pred[n]] = 1)
+            end
         end
 
         if !isempty(Pred)
@@ -554,18 +619,24 @@ end
 
 """
 ```julia
-DirectHb(
-    Rpm::AbstractMatrix{<:Real},    Hb::AbstractMatrix{<:Real},    Mb::AbstractMatrix{<:Real},    Mv::AbstractMatrix{<:Real},    CliqList::AbstractMatrix{<:Real},)
+DirectHb(Rpm::AbstractMatrix{<:Real}, Hb::AbstractMatrix{<:Real},
+         Mb::AbstractMatrix{<:Real}, Mv::AbstractMatrix{<:Real},
+         CliqList::AbstractMatrix{<:Real})
 ```
+
 Computes the directions on each separating 3-clique of a Maximal Planar Graph (MPH), hence computes the Directed Bubble Hierarchy Tree (DBHT).
+
 # Inputs
-- `Rpm`: `N×N` sparse weighted adjacency matrix of the Planar Maximally Filtered Graph (MPFG).
-- `Hb`: Undirected bubble tree of the PMFG.
-- `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
-- `Mv`: `N×Nb` bubble membership matrix for vertices.
-- `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
+
+  - `Rpm`: `N×N` sparse weighted adjacency matrix of the Planar Maximally Filtered Graph (MPFG).
+  - `Hb`: Undirected bubble tree of the PMFG.
+  - `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
+  - `Mv`: `N×Nb` bubble membership matrix for vertices.
+  - `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
+
 # Outputs
-- `Hc`: `Nb×Nb` unweighted directed adjacency matrix of the DBHT. `Hc[i, j]=1` indicates a directed edge from bubble `i` to bubble `j`.
+
+  - `Hc`: `Nb×Nb` unweighted directed adjacency matrix of the DBHT. `Hc[i, j]=1` indicates a directed edge from bubble `i` to bubble `j`.
 """
 function DirectHb(Rpm::AbstractMatrix{<:Real}, Hb::AbstractMatrix{<:Real},
                   Mb::AbstractMatrix{<:Real}, Mv::AbstractMatrix{<:Real},
@@ -620,23 +691,26 @@ end
 ```julia
 BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
 ```
+
 Obtains non-discrete and discrete clusterings from the bubble topology of the Planar Maximally Filtered Graph (PMFG).
+
 # Inputs
-- `Rpm`: `N×N` sparse weighted adjacency matrix of the PMFG.
-- `Dpm`: `N×N` shortest path lengths matrix of the PMFG.
-- `Hb`: undirected bubble tree of the PMFG.
-- `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
-- `Mv`: `N×Nb` bubble membership matrix for vertices.
-- `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
+
+  - `Rpm`: `N×N` sparse weighted adjacency matrix of the PMFG.
+  - `Dpm`: `N×N` shortest path lengths matrix of the PMFG.
+  - `Hb`: undirected bubble tree of the PMFG.
+  - `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
+  - `Mv`: `N×Nb` bubble membership matrix for vertices.
+  - `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
+
 # Outputs
-- `Adjv`: `N×Nk` cluster membership matrix for vertices for non-discrete clustering via the bubble topology. `Adjv[n, k] = 1` indicates cluster membership of vertex `n` to the `k`'th non-discrete cluster.
-- `Tc`: `N×1` cluster membership vector. `Tc[n] = k` indicates cluster membership of vertex `n` to the `k`'th discrete cluster.
+
+  - `Adjv`: `N×Nk` cluster membership matrix for vertices for non-discrete clustering via the bubble topology. `Adjv[n, k] = 1` indicates cluster membership of vertex `n` to the `k`'th non-discrete cluster.
+  - `Tc`: `N×1` cluster membership vector. `Tc[n] = k` indicates cluster membership of vertex `n` to the `k`'th discrete cluster.
 """
-function BubbleCluster8s(Rpm::AbstractMatrix{<:Real},
-                         Dpm::AbstractMatrix{<:Real},
+function BubbleCluster8s(Rpm::AbstractMatrix{<:Real}, Dpm::AbstractMatrix{<:Real},
                          Hb::AbstractMatrix{<:Real}, Mb::AbstractMatrix{<:Real},
-                         Mv::AbstractMatrix{<:Real},
-                         CliqList::AbstractMatrix{<:Real})
+                         Mv::AbstractMatrix{<:Real}, CliqList::AbstractMatrix{<:Real})
     Hc, Sep = DirectHb(Rpm, Hb, Mb, Mv, CliqList)   # Assign directions on the bubble tree
 
     N = size(Rpm, 1)    # Number of vertices in the PMFG
@@ -680,8 +754,7 @@ function BubbleCluster8s(Rpm::AbstractMatrix{<:Real},
         Udjv = Dpm * Mdjv * diagm(1 ./ vec(sum(Mdjv .!= 0; dims = 1)))
         Udjv[Adjv .== 0] .= Inf
 
-        imn = vec(getindex.(argmin(Udjv[vec(sum(Mdjv; dims = 2)) .== 0, :];
-                                   dims = 2), 2))  # Look for the closest converging bubble
+        imn = vec(getindex.(argmin(Udjv[vec(sum(Mdjv; dims = 2)) .== 0, :]; dims = 2), 2))  # Look for the closest converging bubble
         Tc[Tc .== 0] .= imn # Assign discrete cluster membership according to the distances to the converging bubbles
     else
         Tc = ones(Int, N)   # If there is one converging bubble, all vertices belong to a single cluster
@@ -692,16 +765,21 @@ end
 
 """
 ```julia
-BubbleMember(
-    Rpm::AbstractMatrix{<:Real},    Mv::AbstractMatrix{<:Real},    Mc::AbstractMatrix{<:Real},)
+BubbleMember(Rpm::AbstractMatrix{<:Real}, Mv::AbstractMatrix{<:Real},
+             Mc::AbstractMatrix{<:Real})
 ```
+
 Assigns each vertex in the to a specific bubble.
+
 # Inputs
-- `Rpm`: `N×N` sparse weighted adjacency matrix of the PMFG.
-- `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
-- `Mc`: Matrix of the bubbles which coincide with the cluster.
+
+  - `Rpm`: `N×N` sparse weighted adjacency matrix of the PMFG.
+  - `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
+  - `Mc`: Matrix of the bubbles which coincide with the cluster.
+
 # Outputs
-- `Mvv`: Matrix of the vertices belonging to the bubble.
+
+  - `Mvv`: Matrix of the vertices belonging to the bubble.
 """
 function BubbleMember(Rpm::AbstractMatrix{<:Real}, Mv::AbstractMatrix{<:Real},
                       Mc::AbstractMatrix{<:Real})
@@ -726,19 +804,24 @@ end
 
 """
 ```julia
-DendroConstruct(
-    Zi::AbstractMatrix{<:Real},    LabelVec1::AbstractVector{<:Real},    LabelVec2::AbstractVector{<:Real},    LinkageDist::Union{<:Real, AbstractVector{<:Real}},)
+DendroConstruct(Zi::AbstractMatrix{<:Real}, LabelVec1::AbstractVector{<:Real},
+                LabelVec2::AbstractVector{<:Real},
+                LinkageDist::Union{<:Real, AbstractVector{<:Real}})
 ```
+
 Construct the linkage matrix by continuially adding rows to the matrix.
+
 # Inputs
-- `Zi`: Linkage matrix at iteration `i` in the same format as the output from Matlab.
-- `LabelVec1`: label vector for the vertices in the bubble for the previous valid iteration.
-- `LabelVec2`: label vector for the vertices in the bubble for the trial iteration.
+
+  - `Zi`: Linkage matrix at iteration `i` in the same format as the output from Matlab.
+  - `LabelVec1`: label vector for the vertices in the bubble for the previous valid iteration.
+  - `LabelVec2`: label vector for the vertices in the bubble for the trial iteration.
+
 # Outputs
-- `Z`: Linkage matrix at iteration `i + 1` in the same format as the output from Matlab.
+
+  - `Z`: Linkage matrix at iteration `i + 1` in the same format as the output from Matlab.
 """
-function DendroConstruct(Zi::AbstractMatrix{<:Real},
-                         LabelVec1::AbstractVector{<:Real},
+function DendroConstruct(Zi::AbstractMatrix{<:Real}, LabelVec1::AbstractVector{<:Real},
                          LabelVec2::AbstractVector{<:Real},
                          LinkageDist::Union{<:Real, AbstractVector{<:Real}})
     indx = LabelVec1 .!= LabelVec2
@@ -750,16 +833,20 @@ end
 ```julia
 LinkageFunction(d::AbstractMatrix{<:Real}, labelvec::AbstractVector{<:Real})
 ```
+
 Looks for the pair of clusters with the best linkage.
+
 # Inputs
-- `d`: `Nv×Nv` distance matrix for a list of vertices assigned to a bubble.
-- `labelvec`: label vector for the vertices in the bubble.
+
+  - `d`: `Nv×Nv` distance matrix for a list of vertices assigned to a bubble.
+  - `labelvec`: label vector for the vertices in the bubble.
+
 # Outputs
-- `PairLink`: pair of links with the best linkage.
-- `dvu`: value of the best linkage.
+
+  - `PairLink`: pair of links with the best linkage.
+  - `dvu`: value of the best linkage.
 """
-function LinkageFunction(d::AbstractMatrix{<:Real},
-                         labelvec::AbstractVector{<:Real})
+function LinkageFunction(d::AbstractMatrix{<:Real}, labelvec::AbstractVector{<:Real})
     lvec = sort!(unique(labelvec))
     Links = Matrix{Int}(undef, 0, 3)
     for r in 1:(length(lvec) - 1)
@@ -783,20 +870,27 @@ end
 
 """
 ```julia
-_build_link_and_dendro(
-    rg::AbstractRange,    dpm::AbstractMatrix{<:Real},    LabelVec::AbstractVector{<:Real},    LabelVec1::AbstractVector{<:Real},    LabelVec2::AbstractVector{<:Real},    V::AbstractVector{<:Real},    nc::Number,    Z::AbstractMatrix{<:Real},)
+_build_link_and_dendro(rg::AbstractRange, dpm::AbstractMatrix{<:Real},
+                       LabelVec::AbstractVector{<:Real}, LabelVec1::AbstractVector{<:Real},
+                       LabelVec2::AbstractVector{<:Real}, V::AbstractVector{<:Real},
+                       nc::Number, Z::AbstractMatrix{<:Real})
 ```
+
 Computes iterates over the vertices to construct the linkage matrix iteration by iteration.
+
 # Inputs
-- `rg`: range of indices of the vertices in a bubble.
-- `dpm`: `Nv×Nv` distance matrix for a list of vertices assigned to a bubble.
-- `LabelVec`: vector labels of all vertices.
-- `LabelVec1`: label vector for the vertices in the bubble for the previous valid iteration.
-- `LabelVec2`: label vector for the vertices in the bubble for the trial iteration.
+
+  - `rg`: range of indices of the vertices in a bubble.
+  - `dpm`: `Nv×Nv` distance matrix for a list of vertices assigned to a bubble.
+  - `LabelVec`: vector labels of all vertices.
+  - `LabelVec1`: label vector for the vertices in the bubble for the previous valid iteration.
+  - `LabelVec2`: label vector for the vertices in the bubble for the trial iteration.
+
 # Outputs
-- `Z`: updated linkage matrix in the same format as the output from Matlab.
-- `nc`: updated inverse of the linkage distance.
-- `LabelVec1`: updated `LabelVec1` for the next iteration.
+
+  - `Z`: updated linkage matrix in the same format as the output from Matlab.
+  - `nc`: updated inverse of the linkage distance.
+  - `LabelVec1`: updated `LabelVec1` for the next iteration.
 """
 function _build_link_and_dendro(rg::AbstractRange, dpm::AbstractMatrix{<:Real},
                                 LabelVec::AbstractVector{<:Real},
@@ -818,22 +912,25 @@ end
 
 """
 ```julia
-HierarchyConstruct4s(
-    Rpm::AbstractMatrix{<:Real},    Dpm::AbstractMatrix{<:Real},    Tc::AbstractVector{<:Real},    Mv::AbstractMatrix{<:Real},)
+HierarchyConstruct4s(Rpm::AbstractMatrix{<:Real}, Dpm::AbstractMatrix{<:Real},
+                     Tc::AbstractVector{<:Real}, Mv::AbstractMatrix{<:Real})
 ```
-Constructs the intra- and inter-cluster hierarchy by utilizing Bubble Hierarchy structure of a Maximal Planar graph, in this a Planar Maximally Filtered Graph (PMFG). 
+
+Constructs the intra- and inter-cluster hierarchy by utilizing Bubble Hierarchy structure of a Maximal Planar graph, in this a Planar Maximally Filtered Graph (PMFG).
+
 # Inputs
-- `Rpm`: `N×N` sparse weighted adjacency matrix of the PMFG.
-- `Dpm`: `N×N` shortest path lengths matrix of the PMFG.
-- `Tc`: `N×1` cluster membership vector. `Tc[n] = k` indicates cluster membership of vertex `n` to the `k`'th discrete cluster.
-- `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
+
+  - `Rpm`: `N×N` sparse weighted adjacency matrix of the PMFG.
+  - `Dpm`: `N×N` shortest path lengths matrix of the PMFG.
+  - `Tc`: `N×1` cluster membership vector. `Tc[n] = k` indicates cluster membership of vertex `n` to the `k`'th discrete cluster.
+  - `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
+
 # Outputs
-- `Z`: `(N-1)×3` linkage matrix in the same format as the output from Matlab.
+
+  - `Z`: `(N-1)×3` linkage matrix in the same format as the output from Matlab.
 """
-function HierarchyConstruct4s(Rpm::AbstractMatrix{<:Real},
-                              Dpm::AbstractMatrix{<:Real},
-                              Tc::AbstractVector{<:Real},
-                              Mv::AbstractMatrix{<:Real})
+function HierarchyConstruct4s(Rpm::AbstractMatrix{<:Real}, Dpm::AbstractMatrix{<:Real},
+                              Tc::AbstractVector{<:Real}, Mv::AbstractMatrix{<:Real})
     N = size(Dpm, 1)
     kvec = sort!(unique(Tc))
     LabelVec1 = collect(1:N)
@@ -854,10 +951,8 @@ function HierarchyConstruct4s(Rpm::AbstractMatrix{<:Real},
                 dpm = Dpm[V, V] # Retrieve the distance matrix for the vertices in V
                 LabelVec = LabelVec1[V] # Initiate the label vector which labels for the clusters
                 LabelVec2 = copy(LabelVec1)
-                Z, nc, LabelVec1 = _build_link_and_dendro(1:(length(V) - 1),
-                                                          dpm, LabelVec,
-                                                          LabelVec1, LabelVec2,
-                                                          V, nc, Z)
+                Z, nc, LabelVec1 = _build_link_and_dendro(1:(length(V) - 1), dpm, LabelVec,
+                                                          LabelVec1, LabelVec2, V, nc, Z)
             end
         end
 
@@ -867,9 +962,8 @@ function HierarchyConstruct4s(Rpm::AbstractMatrix{<:Real},
         # Perform linkage merging between the bubbles
         LabelVec = LabelVec1[V] # Initiate the label vector which labels for the clusters.
         LabelVec2 = copy(LabelVec1)
-        Z, nc, LabelVec1 = _build_link_and_dendro(1:(length(Bub) - 1), dpm,
-                                                  LabelVec, LabelVec1,
-                                                  LabelVec2, V, nc, Z)
+        Z, nc, LabelVec1 = _build_link_and_dendro(1:(length(Bub) - 1), dpm, LabelVec,
+                                                  LabelVec1, LabelVec2, V, nc, Z)
     end
 
     # Inter-cluster hierarchy construction
@@ -896,11 +990,16 @@ end
 ```julia
 turn_into_Hclust_merges(Z::AbstractMatrix{<:Real})
 ```
+
 Turns a Matlab-style linkage matrix to a useable format for [`Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust).
+
 # Inputs
-- `Z`: Matlab-style linkage matrix.
+
+  - `Z`: Matlab-style linkage matrix.
+
 # Outputs
-- `Z`: Hclust-style linkage matrix.
+
+  - `Z`: Hclust-style linkage matrix.
 """
 function turn_into_Hclust_merges(Z::AbstractMatrix{<:Real})
     N = size(Z, 1) + 1
@@ -943,28 +1042,34 @@ end
 
 """
 ```julia
-DBHTs(
-    D::AbstractMatrix{<:Real},    S::AbstractMatrix{<:Real};    branchorder::Symbol = :optimal,    method::Symbol = :Unique,)
+DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real}; branchorder::Symbol = :optimal,
+      method::Symbol = :Unique,)
 ```
-Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering algorithm [^DBHTs]. This version uses a graph-theoretic filtering technique called Triangulated Maximally Filtered Graph (TMFG).
-# Arguments
-- `D`: `N×N` dissimilarity matrix, e.g. a distance matrix.
-- `S`: `N×N` non-negative similarity matrix, e.g. a correlation matrix + 1, `S = 2 .- D .^2 / 2`; or another choice could be `S = exp.(-D).`
-- `branchorder`: is a parameter for ordering the final dendrogram's branches. The choices are defined by [`BranchOrderTypes`](@ref).
-- `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethods`](@ref).
-    - `:Unique`: create a unique root.
-    - `:Equal`: the root is created from the candidate's adjacency tree. 
-# Outputs
-- `T8`: `N×1` cluster membership vector.
-- `Rpm`: `N×N` adjacency matrix of the Planar Maximally Filtered Graph (PMFG).
-- `Adjv`: Bubble cluster membership matrix from [`BubbleCluster8s`](@ref).
-- `Dpm`: `N×N` shortest path length matrix of the PMFG.
-- `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
-- `Z`: `(N-1)×3` linkage matrix in the same format as the output from Matlab.
-- `Z_hclust`: Z matrix in [Clustering.Hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) format.
 
-[^DBHTs]:
-    [Song, Won-Min, T. Di Matteo, and Tomaso Aste. "Hierarchical information clustering by means of topologically embedded graphs." PloS one 7.3 (2012): e31929](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031929).
+Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering algorithm [^DBHTs]. This version uses a graph-theoretic filtering technique called Triangulated Maximally Filtered Graph (TMFG).
+
+# Arguments
+
+  - `D`: `N×N` dissimilarity matrix, e.g. a distance matrix.
+
+  - `S`: `N×N` non-negative similarity matrix, e.g. a correlation matrix + 1, `S = 2 .- D .^2 / 2`; or another choice could be `S = exp.(-D).`
+  - `branchorder`: is a parameter for ordering the final dendrogram's branches. The choices are defined by [`BranchOrderTypes`](@ref).
+  - `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethods`](@ref).
+
+      + `:Unique`: create a unique root.
+      + `:Equal`: the root is created from the candidate's adjacency tree.
+
+# Outputs
+
+  - `T8`: `N×1` cluster membership vector.
+  - `Rpm`: `N×N` adjacency matrix of the Planar Maximally Filtered Graph (PMFG).
+  - `Adjv`: Bubble cluster membership matrix from [`BubbleCluster8s`](@ref).
+  - `Dpm`: `N×N` shortest path length matrix of the PMFG.
+  - `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
+  - `Z`: `(N-1)×3` linkage matrix in the same format as the output from Matlab.
+  - `Z_hclust`: Z matrix in [Clustering.Hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) format.
+
+[^DBHTs]: [Song, Won-Min, T. Di Matteo, and Tomaso Aste. "Hierarchical information clustering by means of topologically embedded graphs." PloS one 7.3 (2012): e31929](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031929).
 """
 function DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real};
                branchorder::Symbol = :optimal, method::Symbol = :Unique,)
@@ -1036,16 +1141,20 @@ end
 ```julia
 J_LoGo(sigma, separators, cliques)
 ```
-Compute the sparse inverse covariance from a clique tree and separators [^J_LoGo].
-# Inputs
-- `sigma`: `N×N` covariance matrix.
-- `separators`: list of 3-cliques taht are not triangular faces.
-- `cliques`: list of all 4-cliques.
-# Outputs
-- `jlogo`: J_LoGo covariance matrix.
 
-[^J_LoGo]:
-    [Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016). Parsimonious modeling with information filtering networks. Physical Review E, 94(6), 062306.](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.94.062306)
+Compute the sparse inverse covariance from a clique tree and separators [^J_LoGo].
+
+# Inputs
+
+  - `sigma`: `N×N` covariance matrix.
+  - `separators`: list of 3-cliques taht are not triangular faces.
+  - `cliques`: list of all 4-cliques.
+
+# Outputs
+
+  - `jlogo`: J_LoGo covariance matrix.
+
+[^J_LoGo]: [Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016). Parsimonious modeling with information filtering networks. Physical Review E, 94(6), 062306.](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.94.062306)
 """
 function J_LoGo(sigma, separators, cliques)
     jlogo = zeros(eltype(sigma), size(sigma))

@@ -1,23 +1,12 @@
 function refresh_model!(portfolio::EffUlcer)
-    default_keys = (:w,
-                    :lower_bounds,
-                    :upper_bounds,
-                    :sum_w,
-                    :u,
-                    :norm_u,
-                    :soc_u,
-                    :uf_geq_uimvw,
-                    :u1_eq_0,
-                    :u2e_geq_0,
-                    :ret,
-                    :risk)
+    default_keys = (:w, :lower_bounds, :upper_bounds, :sum_w, :u, :norm_u, :soc_u,
+                    :uf_geq_uimvw, :u1_eq_0, :u2e_geq_0, :ret, :risk)
     _refresh_add_var_and_constraints(default_keys, portfolio)
 
     return nothing
 end
 
-function portfolio_performance(portfolio::EffUlcer; rf = portfolio.rf,
-                               verbose = false)
+function portfolio_performance(portfolio::EffUlcer; rf = portfolio.rf, verbose = false)
     model = portfolio.model
     mean_ret = portfolio.mean_ret
 
@@ -32,7 +21,9 @@ function portfolio_performance(portfolio::EffUlcer; rf = portfolio.rf,
         norm_u = value(model[:norm_u])
         samples = size(portfolio.returns, 1)
 
-        haskey(model, :k) && (norm_u /= value(model[:k]))
+        if haskey(model, :k)
+            (norm_u /= value(model[:k]))
+        end
         ulcer_index = norm_u / sqrt(samples)
 
         if verbose

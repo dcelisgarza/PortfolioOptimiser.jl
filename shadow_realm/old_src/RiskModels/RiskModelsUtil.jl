@@ -18,7 +18,9 @@ make_pos_def(::DFix, matrix, scale = 1.1)
 Uses a Levenberg-Marquardt factor, `c = scale` * `min(eigenvalues)`, which is used to subtract a scaled identity matrix from `matrix`.
 """
 @inline function make_pos_def(::SFix, matrix, scale = nothing)
-    isposdef(matrix) && return matrix
+    if isposdef(matrix)
+        return matrix
+    end
 
     @warn("Covariance matrix is not positive definite. Fixing eigenvalues.")
 
@@ -27,15 +29,20 @@ Uses a Levenberg-Marquardt factor, `c = scale` * `min(eigenvalues)`, which is us
     fixed_matrix = vecs * Diagonal(vals) * vecs'
 
     _isposdef = isposdef(fixed_matrix)
-    !_isposdef &&
+    if !_isposdef
         @warn("Covariance matrix could not be fixed. Try a different risk model.")
+    end
     return fixed_matrix
 end
 
 @inline function make_pos_def(::DFix, matrix, scale = nothing)
-    isposdef(matrix) && return matrix
+    if isposdef(matrix)
+        return matrix
+    end
 
-    isnothing(scale) && (scale = 1.1)
+    if isnothing(scale)
+        (scale = 1.1)
+    end
     @warn("Covariance matrix is not positive definite. Fixing eigenvalues.")
 
     vals = eigvals(matrix)
@@ -44,14 +51,17 @@ end
     fixed_matrix = matrix - scale * min_val * I(size(matrix, 1))
 
     _isposdef = isposdef(fixed_matrix)
-    !_isposdef &&
+    if !_isposdef
         @warn("Covariance matrix could not be fixed. Try a different risk model.")
+    end
 
     return fixed_matrix
 end
 
 @inline function make_pos_def(::FFix, matrix, scale = nothing)
-    isposdef(matrix) && return matrix
+    if isposdef(matrix)
+        return matrix
+    end
 
     @warn("Covariance matrix is not positive definite. Fixing eigenvalues.")
 
@@ -62,8 +72,9 @@ end
     fixed_matrix = vecs * Diagonal(vals) * vecs'
 
     _isposdef = isposdef(fixed_matrix)
-    !_isposdef &&
+    if !_isposdef
         @warn("Covariance matrix could not be fixed. Try a different risk model.")
+    end
     return fixed_matrix
 end
 
@@ -72,6 +83,7 @@ import StatsBase.cov2cor
 ```
 cov2or(cov_mtx)
 ```
+
 Wraps `StatsBase.cov2cor` to provide the standard deviations vector from the diagonal of `cov_mtx`.
 """
 cov_to_cor(cov_mtx) = cov2cor(cov_mtx, sqrt.(diag(cov_mtx)))
