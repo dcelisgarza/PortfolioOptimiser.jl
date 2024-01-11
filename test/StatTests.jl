@@ -2244,31 +2244,30 @@ end
 end
 
 @testset "Black litterman" begin
-    asset_classes = Dict("Assets" => names(returns)[2:end],
-                         "Industry" => ["Consumer Discretionary", "Consumer Discretionary",
-                                        "Consumer Staples", "Consumer Staples", "Energy",
-                                        "Financials", "Financials", "Financials",
-                                        "Health Care", "Health Care", "Industrials",
-                                        "Industrials", "Health care", "Industrials",
-                                        "Information Technology", "Information Technology",
-                                        "Materials", "Telecommunications Services",
-                                        "Utilities", "Financials"])
+    asset_sets = Dict("Assets" => names(returns)[2:end],
+                      "Industry" => ["Consumer Discretionary", "Consumer Discretionary",
+                                     "Consumer Staples", "Consumer Staples", "Energy",
+                                     "Financials", "Financials", "Financials",
+                                     "Health Care", "Health Care", "Industrials",
+                                     "Industrials", "Health care", "Industrials",
+                                     "Information Technology", "Information Technology",
+                                     "Materials", "Telecommunications Services",
+                                     "Utilities", "Financials"])
 
-    asset_classes = DataFrame(asset_classes)
-    asset_classes = sort!(asset_classes, :Assets)
+    asset_sets = DataFrame(asset_sets)
+    asset_sets = sort!(asset_sets, :Assets)
 
-    views = Dict("Enabled" => [true, true, true],
-                 "Type" => ["Classes", "Classes", "Classes"],
+    views = Dict("Enabled" => [true, true, true], "Type" => ["Subset", "Subset", "Subset"],
                  "Set" => ["Industry", "Industry", "Industry"],
                  "Position" => ["Energy", "Consumer Staples", "Materials"],
                  "Sign" => [">=", ">=", ">="], "Return" => [0.08, 0.1, 0.09], # Annual terms 
-                 "Type Relative" => ["Classes", "Classes", "Classes"],
+                 "Type Relative" => ["Subset", "Subset", "Subset"],
                  "Relative Set" => ["Industry", "Industry", "Industry"],
                  "Relative" => ["Financials", "Utilities", "Industrials"])
 
     views = DataFrame(views)
 
-    P, Q = asset_views(views, asset_classes)
+    P, Q = asset_views(views, asset_sets)
 
     X = Matrix(returns[!, 2:end])
     w = fill(1 / 20, 20)
@@ -2691,27 +2690,27 @@ end
     @test isapprox(cov_mtxab1, cov_mtxabt1)
     @test isapprox(wab1, wabt1)
 
-    asset_classes = Dict("Assets" => bonds,
-                         "Class 1" => ["Equity", "Equity", "Fixed Income", "Equity",
-                                       "Equity", "Fixed Income", "Fixed Income"],
-                         "Class 2" => ["Technology", "Technology", "Essentials",
-                                       "Financial", "Financial", "Treasury", "Treasury"])
+    asset_sets = Dict("Assets" => bonds,
+                      "Class 1" => ["Equity", "Equity", "Fixed Income", "Equity", "Equity",
+                                    "Fixed Income", "Fixed Income"],
+                      "Class 2" => ["Technology", "Technology", "Essentials", "Financial",
+                                    "Financial", "Treasury", "Treasury"])
 
-    asset_classes = DataFrame(asset_classes)
-    sort!(asset_classes, "Assets")
+    asset_sets = DataFrame(asset_sets)
+    sort!(asset_sets, "Assets")
 
     views = Dict("Enabled" => [true, true, true, true, true],
-                 "Type" => ["Assets", "Classes", "Classes", "Assets", "Classes"],
+                 "Type" => ["Assets", "Subset", "Subset", "Assets", "Subset"],
                  "Set" => ["", "Class 2", "Class 1", "", "Class 1"],
                  "Position" => [bonds[3], "Financial", "Equity", bonds[5], "Fixed Income"],
                  "Sign" => ["<=", ">=", ">=", ">=", "<="],
                  "Return" => [0.3, 0.1, 0.05, 0.03, 0.017],
-                 "Type Relative" => ["Assets", "Classes", "Assets", "", ""],
+                 "Type Relative" => ["Assets", "Subset", "Assets", "", ""],
                  "Relative Set" => ["", "Class 1", "", "", ""],
                  "Relative" => [bonds[2], "Fixed Income", bonds[3], "", ""])
 
     views = DataFrame(views)
-    P, Q = asset_views(views, asset_classes)
+    P, Q = asset_views(views, asset_sets)
 
     muab2, cov_mtxab2, wab2 = augmented_black_litterman(port.returns,
                                                         fill(1 / length(port.assets),

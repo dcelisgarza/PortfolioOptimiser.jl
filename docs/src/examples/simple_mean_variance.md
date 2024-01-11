@@ -1,5 +1,4 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
-
 ```@meta
 EditURL = "../../../examples/simple_mean_variance.jl"
 ```
@@ -19,11 +18,9 @@ fmt = (v, i, j) -> begin
     else
         return isa(v, Number) ? "$(round(v*100, digits=3)) %" : v
     end
-end;
+end;# ## Creating a [`Portfolio`](@ref) instance
 nothing #hide
 ````
-
-## Creating a [`Portfolio`](@ref) instance
 
 We can create an instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref) by calling its keyword constructor. This is a minimum viable example. There are many other keyword arguments that fine-tune the portfolio. Alternatively, you can directly modify the instance's fields. Many are guarded by assertions to ensure correctness, some are immutable for the same reason.
 
@@ -38,10 +35,8 @@ pretty_table(returns[1:5, :]; formatters = fmt)
 The advantage of using pricing information over returns is that all `missing` data is dropped, which ensures the statistics are well-behaved. It also allows the function to automatically find the latest pricing information, which is needed for discretely allocating portfolios according to available funds and stock prices.
 
 ````@example simple_mean_variance
-portfolio = Portfolio(;
-                      # Prices TimeArray, the returns are internally computed.
-                      prices = prices,
-                      # We need to provide solvers and solver-specific options.
+portfolio = Portfolio(;                      ## Prices TimeArray, the returns are internally computed.
+                      prices = prices,                      ## We need to provide solvers and solver-specific options.
                       solvers = Dict(
                                      # We will use the Clarabel.jl optimiser. In this case we use a dictionary
                                      # for the value, but we can also use named tuples, all we need are key-value
@@ -56,18 +51,12 @@ portfolio = Portfolio(;
                                                        #               Clarabel.Optimizer,
                                                        #               "verbose" => false, "max_step_fraction" => 0.75
                                                        #            )
-                                                       :solver => Clarabel.Optimizer,
-                                                       # :params key is optional, but if it is present, it defines solver-specific
+                                                       :solver => Clarabel.Optimizer,                                                       ## :params key is optional, but if it is present, it defines solver-specific
                                                        # attributes/configurations. This often needs to be a dictionary as the
                                                        # solver attributes are usually strings.
                                                        :params => Dict("verbose" => false,
-                                                                       "max_step_fraction" => 0.75))),);
-nothing #hide
-````
+                                                                       "max_step_fraction" => 0.75))),);# We can show how the `prices` `TimeArray` is used to compute the returns series, which is decomposed into a vector of timestamps, and the returns `Matrix`. We can check this is the case by reconstructing the `returns` `DataFrame` form above.
 
-We can show how the `prices` `TimeArray` is used to compute the returns series, which is decomposed into a vector of timestamps, and the returns `Matrix`. We can check this is the case by reconstructing the `returns` `DataFrame` form above.
-
-````@example simple_mean_variance
 returns == hcat(DataFrame(; timestamp = portfolio.timestamps),
                 DataFrame([portfolio.returns[:, i] for i in axes(portfolio.returns, 2)],
                           portfolio.assets))
@@ -151,13 +140,8 @@ Since we also provide various hierarchical optimisation methods we can use some 
 For this we need to create an instance of [`HCPortfolio`](@ref).
 
 ````@example simple_mean_variance
-hcportfolio = HCPortfolio(; prices = prices);
-nothing #hide
-````
+hcportfolio = HCPortfolio(; prices = prices);# Compute the codependence matrix with [`asset_statistics!`](@ref).
 
-Compute the codependence matrix with [`asset_statistics!`](@ref).
-
-````@example simple_mean_variance
 asset_statistics!(hcportfolio; calc_kurt = false)
 ````
 
@@ -173,6 +157,7 @@ There's also a function to plot the dendrogram, but it's not as interesting.
 fig8 = plot_dendrogram(hcportfolio; linkage = :ward)
 ````
 
-* * *
+---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+

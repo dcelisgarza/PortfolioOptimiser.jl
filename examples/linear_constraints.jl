@@ -30,9 +30,9 @@ returns = Matrix(returns[!, 2:end]);
     It is important that the asset order remains consistent accross all steps. If one wishes to sort the assets in a particular way, one should sort them immediately after importing them. This ensures everything is computed using the correct asset order.
 =#
 
-# ## Defining asset classes with hierachical clustering
+# ## Defining asset sets with hierachical clustering
 
-# We can use predefined sets of assets, such as the economic sectors that are traditionally used to classify companies. Instead, we'll define our own classes using various clustering methods. These use a distance matrix to compute the clusters, for this we can use a correlation matrix. We provide various types of correlation matrices from which we'll pick a few examples. For a more thorough explanation of these methods see [`cor_dist_mtx`](@ref).
+# We can use predefined sets of assets, such as the economic sectors that are traditionally used to classify companies. Instead, we'll define our own sets using various clustering methods. These use a distance matrix to compute the clusters, for this we can use a correlation matrix. We provide various types of correlation matrices from which we'll pick a few examples. For a more thorough explanation of these methods see [`cor_dist_mtx`](@ref).
 
 # Note that returns data can be noisy which means some covariance/correlation measures can be thrown off from the true value by outliers and statistically insignificant noise. This can be problem for algorithms that depend on covariance/correlation matrices, such as mean-variance optimisation and clustering.
 
@@ -40,8 +40,8 @@ returns = Matrix(returns[!, 2:end]);
 
 # When we use `:Pearson` and `:Semi_Pearson` to compute the correlation, we're internally making use of `StatsBase.cor`, which takes various range of optional arguments, one of which is a covariance estimator (`StatsBase.CovarianceEstimator`), which makes the computation of the covariance matrix more robust. In this example we use `CovarianceEstimation.AnalyticalNonlinearShrinkage()`, as it's a good estimator for tall matrices (i.e. matrices with many more rows than columns). `:Semi_Pearson` also uses a semi-covariance at a given target return value to compute the correlation matrix. We'll elaborate more on a different tutorial, for this we'll use the default value of the target return, which is `0`.
 
-# ### Building the asset classes dataframe.
-asset_classes = DataFrame(:Assets => assets)
+# ### Building the asset sets dataframe.
+asset_sets = DataFrame(:Asset => assets)
 cor_settings = CorSettings(;
                            estimation = CorEstSettings(;
                                                        estimator = CovarianceEstimation.AnalyticalNonlinearShrinkage(),
@@ -71,11 +71,11 @@ for method in (:Pearson, :Semi_Pearson, :Gerber2)
 
         ## Cut the tree at k clusters and return the label each asset belongs to
         ## in each set.
-        asset_classes[!, colname] = cutree(clustering; k = k)
+        asset_sets[!, colname] = cutree(clustering; k = k)
     end
 end
 
-asset_classes
+asset_sets
 
 # ## Asset constraints
 
@@ -89,7 +89,7 @@ constraints = DataFrame(
                         ## Enable the constraint.
                         :Enabled => [true],
                         ## We are constraining a single asset.
-                        :Type => ["Assets"],
+                        :Type => ["Asset"],
                         ## The asset we're constraining.
                         :Position => [:GOOG],
                         ## Greater than.
@@ -98,15 +98,14 @@ constraints = DataFrame(
                         :Weight => [0.03],
                         ## The following categories are not used for this
                         ## example.
-                        :Class_Set => [""], :Relative_Type => [""],
-                        :Relative_Class_Set => [""], :Relative_Position => [""],
-                        :Factor => [""])
+                        :Set => [""], :Relative_Type => [""], :Relative_Set => [""],
+                        :Relative_Position => [""], :Factor => [""])
 
-A, B = asset_constraints(constraints, asset_classes);
+A, B = asset_constraints(constraints, asset_sets);
 
 # Recall that the linear constraints are defined as ``\mathbf{A} \bm{w} \geq \bm{b}``, we can show that the constraint will be applied to `GOOG`, as its weight coefficient is 1, while all the others are `0`.
 
-hcat(asset_classes[!, :Assets], DataFrame(:A_t => vec(A)))
+hcat(asset_sets[!, :Asset], DataFrame(:A_t => vec(A)))
 
 # Using the definition of the linear constraints, `B` should be `0.03`.
 
@@ -116,24 +115,23 @@ B
 
 # Now say we also don't want our portfolio to be more than 10 % `GOOG`. Here's how we can do so. Note how the only things that change are `:Sign` and `:Weight`.
 
-constraints = DataFrame(:Enabled => [true], :Type => ["Assets"], :Position => [:GOOG],
+constraints = DataFrame(:Enabled => [true], :Type => ["Asset"], :Position => [:GOOG],
                         ## Less than or equal to.
                         :Sign => ["<="],
                         ## Upper bound of the weight of the asset.
                         :Weight => [0.1],
                         ## The following categories are not used for this
                         ## example.
-                        :Class_Set => [""], :Relative_Type => [""],
-                        :Relative_Class_Set => [""], :Relative_Position => [""],
-                        :Factor => [""])
+                        :Set => [""], :Relative_Type => [""], :Relative_Set => [""],
+                        :Relative_Position => [""], :Factor => [""])
 
-A, B = asset_constraints(constraints, asset_classes);
+A, B = asset_constraints(constraints, asset_sets);
 
 # In practice, we would create all constraints at once, but this is a showcase so we'll be making them one by one. One can also do that, and simply vertically concatenate `A` and `B` with new constraints, which is literally what the function does.
 
 # The sign in the `A` matrix will be inverted.
 
-hcat(asset_classes[!, :Assets], DataFrame(:A_t => vec(A)))
+hcat(asset_sets[!, :Asset], DataFrame(:A_t => vec(A)))
 
 # And so will the sign of the `B` vector.
 
@@ -147,14 +145,14 @@ B
 
 constraints = DataFrame(:Enabled => [true],
                         ## We want to constrain an asset.
-                        :Type => ["Assets"],
+                        :Type => ["Asset"],
                         ## The asset we want to constrain.
                         :Position => [:AAPL],
                         ## The the weight of the asset should 
                         ## be greater than or equal to something else.
                         :Sign => [">="],
                         ## Should be greater than another asset.
-                        :Relative_Type => ["Assets"],
+                        :Relative_Type => ["Asset"],
                         ## The name of the other asset.
                         :Relative_Position => [:T],
                         ## The factor by which to multiply the
@@ -162,30 +160,30 @@ constraints = DataFrame(:Enabled => [true],
                         :Factor => [0.5],
                         ## The following categories are not used 
                         ## in this example.
-                        :Weight => [""], :Class_Set => [""], :Relative_Class_Set => [""])
+                        :Weight => [""], :Set => [""], :Relative_Set => [""])
 
-A, B = asset_constraints(constraints, asset_classes);
+A, B = asset_constraints(constraints, asset_sets);
 
 # Recalling the definition of the linear constraints, as well as the constraint we want to create, we can conclude that `A` will contain all zero coefficients except for those of `:AAPL` and `:T`. These two will be `1` and `-f = -0.5`, respectively.
 
-hcat(asset_classes[!, :Assets], DataFrame(:A_t => vec(A)))
+hcat(asset_sets[!, :Asset], DataFrame(:A_t => vec(A)))
 
 # Naturally `B` should be 0.
 
 B
 
-# This pattern of `A` and `B` is the case for all relative constraints. The `anchor` asset/class will have its coeficient set to 1, the relative asset/class will be set to `-f`, and `B` will be 0. If the sign is `<=`, the values will be multiplied by -1. To illustrate this, we will constrain `:AMZN` to contribute at most twice of what `:GM` does.
+# This pattern of `A` and `B` is the case for all relative constraints. The `anchor` asset/subset will have its coeficient set to 1, the relative asset/set will be set to `-f`, and `B` will be 0. If the sign is `<=`, the values will be multiplied by -1. To illustrate this, we will constrain `:AMZN` to contribute at most twice of what `:GM` does.
 
 constraints = DataFrame(:Enabled => [true],
                         ## We want to constrain an asset.
-                        :Type => ["Assets"],
+                        :Type => ["Asset"],
                         ## The asset we want to constrain.
                         :Position => [:AMZN],
                         ## The the weight of the asset should 
                         ## be less than or equal to something else.
                         :Sign => ["<="],
                         ## Should be greater than another asset.
-                        :Relative_Type => ["Assets"],
+                        :Relative_Type => ["Asset"],
                         ## The name of the other asset.
                         :Relative_Position => [:GM],
                         ## The factor by which to multiply the
@@ -193,9 +191,9 @@ constraints = DataFrame(:Enabled => [true],
                         :Factor => [2],
                         ## The following categories are not used
                         ## in this example.
-                        :Weight => [""], :Class_Set => [""], :Relative_Class_Set => [""])
+                        :Weight => [""], :Set => [""], :Relative_Set => [""])
 
-A, B = asset_constraints(constraints, asset_classes);
+A, B = asset_constraints(constraints, asset_sets);
 
 # Again B is equal to zero.
 
@@ -203,8 +201,74 @@ B
 
 # See how the coefficient of `:AMZN` is `-1` while the one for `:GM` is `2`. When substituting into the linear constraint definition, noting that `B` is equal to `0`, we get ``-w_{\mathrm{amzn}} + 2 w_{\mathrm{gm}} \geq 0 \to 2 w_{\mathrm{gm}} \geq w_{\mathrm{amzn}}.``
 
-hcat(asset_classes[!, :Assets], DataFrame(:A_t => vec(A)))
+hcat(asset_sets[!, :Asset], DataFrame(:A_t => vec(A)))
 
-# ### Constraining the weight contribution of a single asset relative to a class of assets
+# ### Constraining the weight contribution of a single asset relative to a set of assets
 
-# We can also constrain a single asset relative to a whole asset class. This is essentially the same as the previous case, but instead of having a single relative asset, but the sum of a class of assets.
+# We can also constrain a single asset relative to a whole asset set. This is essentially the same as the previous case. But instead of constraining the weight of the `anchor` asset to some factor of the weight of another one, we constrain it to some factor multiplied by the sum of the weights of a subset of assets. Mathematically, this is ``w_{x} - f \sum \bm{w}_{\mathcal{\Omega}} \geq 0``, when the constraint is a lower bound, and ``-\left(w_{x} - f \sum\left(\bm{w}_{\mathcal{\Omega}}\right)\right) \geq 0`` when it is an upper bound. Where ``x`` is an asset, ``\mathcal{\Omega}`` is a subset of assets, and ``f`` is the relative factor.
+
+# We will constrain the weight of asset `:T` to have a lower bound greater than or equal to `0.03` times the sum of the weights of subset `3` of set `:PD`.
+
+constraints = DataFrame(:Enabled => [true],
+                        ## Constraining a single asset
+                        :Type => ["Asset"],
+                        ## Asset we want to constrain
+                        :Position => [:T],
+                        ## Constraining the weight of the asset to be
+                        ## greater than or equal to something else
+                        :Sign => [">="],
+                        ## Constraining relative to a subset of assets
+                        :Relative_Type => ["Subset"],
+                        ## The set we want the subset to be taken from
+                        :Relative_Set => [:PD],
+                        ## The subset we want to use as a relative constrain
+                        :Relative_Position => [3],
+                        ## The factor to multiply the weights of the asset
+                        ## subset
+                        :Factor => [0.03],
+                        ## The following categories are not used
+                        ## in this example.
+                        :Set => [""], :Weight => [""])
+
+A, B = asset_constraints(constraints, asset_sets);
+
+# As expected, `B` is equal to `0`.
+
+B
+
+# And if we place `A` next to the asset set dataframe and the set `:PD`, we see that the only assets with non-zero coefficients in `A`, are the `anchor` and the `subset` from `:Pw` with label `3`. Of note is the fact that `:T` has a coefficient of `0.97`, this is because it belongs to subset `3` of set `:Pw`, so its coefficient will be `1 - f`, and as per above `f := 0.03`. Substituting and rearranging into the definition of the linear constraints we get ``0.97 w_{x} \geq \sum \bm{w}_{\mathcal{\Omega} \setminus x}``, where `x := :T` and `Ω := 2 ∈ {:PD}`.
+
+hcat(asset_sets[!, [:Asset, :PD]], DataFrame(:A_t => vec(A)))
+
+# Now we will show how the sign is inverted when we're defining an upper bound. We will constrain the weight of asset `:T` to have an upper bound less than or equal to `0.4` times the sum of the weights of subset `1` of set `:SD`.
+
+constraints = DataFrame(:Enabled => [true],
+                        ## Constraining a single asset
+                        :Type => ["Asset"],
+                        ## Asset we want to constrain
+                        :Position => [:T],
+                        ## Constraining the weight of the asset to be
+                        ## less than or equal to something else
+                        :Sign => ["<="],
+                        ## Constraining relative to a subset of assets
+                        :Relative_Type => ["Subset"],
+                        ## The set we want the subset to be taken from
+                        :Relative_Set => [:SD],
+                        ## The subset we want to use as a relative constrain
+                        :Relative_Position => [1],
+                        ## The factor to multiply the weights of the asset
+                        ## subset
+                        :Factor => [0.4],
+                        ## The following categories are not used
+                        ## in this example.
+                        :Set => [""], :Weight => [""])
+
+A, B = asset_constraints(constraints, asset_sets);
+
+# Again `B` is equal to `0`.
+
+B
+
+# And as expected, the coefficient of `:T` is `-1`, and the coefficients of all assets belonging to subset `1` in set `:SD` are `0.4`. Substituting into the definition of the linear constraints and rearranging, we get ``\sum \bm{w}_{\mathcal{\Omega}} \geq w_{x}``, where `x := :T` and `Ω := 1 ∈ {:SD}`.
+
+hcat(asset_sets[!, [:Asset, :SD]], DataFrame(:A_t => vec(A)))

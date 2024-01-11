@@ -1,25 +1,24 @@
 using Test, PortfolioOptimiser, DataFrames, OrderedCollections, Clarabel, CSV, TimeSeries
 
 @testset "Asset constraints" begin
-    asset_classes = Dict("Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV",
-                                      "FCN", "TKO", "ZOO", "ZVO", "ZX", "ZZA", "ZZB", "ZZC"],
-                         "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
-                                       "Fixed Income", "Fixed Income", "Equity", "Equity",
-                                       "Equity", "Fixed Income", "Fixed Income", "Equity",
-                                       "Fixed Income", "Equity"],
-                         "Class 2" => ["Technology", "Technology", "Technology",
-                                       "Financial", "Financial", "Treasury", "Treasury",
-                                       "Financial", "Entertainment", "Treasury",
-                                       "Financial", "Financial", "Entertainment",
-                                       "Technology", "Treasury"])
+    asset_sets = Dict("Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV", "FCN",
+                                   "TKO", "ZOO", "ZVO", "ZX", "ZZA", "ZZB", "ZZC"],
+                      "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
+                                    "Fixed Income", "Fixed Income", "Equity", "Equity",
+                                    "Equity", "Fixed Income", "Fixed Income", "Equity",
+                                    "Fixed Income", "Equity"],
+                      "Class 2" => ["Technology", "Technology", "Technology", "Financial",
+                                    "Financial", "Treasury", "Treasury", "Financial",
+                                    "Entertainment", "Treasury", "Financial", "Financial",
+                                    "Entertainment", "Technology", "Treasury"])
 
     constraints = Dict("Enabled" => [true, true, true, true, true, true, true, true, true,
                                      true, true, true, true, true, true],
-                       "Type" => ["Classes", "All Classes", "Assets", "Assets", "Classes",
-                                  "All Assets", "Each Asset in Class", "Assets",
-                                  "All Assets", "All Assets", "Classes", "All Classes",
-                                  "All Classes", "Each Asset in Class",
-                                  "Each Asset in Class"],
+                       "Type" => ["Subset", "All Subsets", "Assets", "Assets", "Subset",
+                                  "All Assets", "Each Asset in Subset", "Assets",
+                                  "All Assets", "All Assets", "Subset", "All Subsets",
+                                  "All Subsets", "Each Asset in Subset",
+                                  "Each Asset in Subset"],
                        "Set" => ["Class 1", "Class 1", "", "", "Class 2", "", "Class 1",
                                  "Class 1", "Class 2", "", "Class 1", "Class 2", "Class 2",
                                  "Class 2", "Class 1"],
@@ -30,9 +29,9 @@ using Test, PortfolioOptimiser, DataFrames, OrderedCollections, Clarabel, CSV, T
                                   "<=", ">=", "<=", ">=", "<=", ">="],
                        "Weight" => [0.6, 0.5, 0.1, "", "", 0.02, "", "", "", "", "", "", "",
                                     0.27, ""],
-                       "Type Relative" => ["", "", "", "Assets", "Classes", "", "Assets",
-                                           "Classes", "Assets", "Classes", "Assets",
-                                           "Assets", "Classes", "", "Classes"],
+                       "Type Relative" => ["", "", "", "Assets", "Subset", "", "Assets",
+                                           "Subset", "Assets", "Subset", "Assets", "Assets",
+                                           "Subset", "", "Subset"],
                        "Relative Set" => ["", "", "", "", "Class 1", "", "", "Class 1", "",
                                           "Class 2", "", "Class 2", "Class 2", "",
                                           "Class 2"],
@@ -43,10 +42,10 @@ using Test, PortfolioOptimiser, DataFrames, OrderedCollections, Clarabel, CSV, T
                                     -0.17, 0.23, "", -0.31])
 
     constraints = DataFrame(constraints)
-    asset_classes = DataFrame(asset_classes)
-    sort!(asset_classes, "Assets")
+    asset_sets = DataFrame(asset_sets)
+    sort!(asset_sets, "Assets")
 
-    A, B = asset_constraints(constraints, asset_classes)
+    A, B = asset_constraints(constraints, asset_sets)
 
     At = transpose(hcat([[-1.0, -1.0, -1.0, -1.0, -1.0, 0.0, -1.0, 0.0, -1.0, -1.0, 0.0,
                           0.0, -1.0, 0.0, -1.0],
@@ -272,27 +271,27 @@ end
 end
 
 @testset "Views constraints" begin
-    asset_classes = Dict("Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
-                         "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
-                                       "Fixed Income", "Fixed Income"],
-                         "Class 2" => ["Technology", "Technology", "Technology",
-                                       "Financial", "Financial", "Treasury", "Treasury"])
+    asset_sets = Dict("Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
+                      "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
+                                    "Fixed Income", "Fixed Income"],
+                      "Class 2" => ["Technology", "Technology", "Technology", "Financial",
+                                    "Financial", "Treasury", "Treasury"])
 
-    asset_classes = DataFrame(asset_classes)
-    sort!(asset_classes, "Assets")
+    asset_sets = DataFrame(asset_sets)
+    sort!(asset_sets, "Assets")
 
     views = Dict("Enabled" => [true, true, true, true, true],
-                 "Type" => ["Assets", "Classes", "Classes", "Assets", "Classes"],
+                 "Type" => ["Assets", "Subset", "Subset", "Assets", "Subset"],
                  "Set" => ["", "Class 2", "Class 1", "", "Class 1"],
                  "Position" => ["WFC", "Financial", "Equity", "FB", "Fixed Income"],
                  "Sign" => ["<=", ">=", ">=", ">=", "<="],
                  "Return" => [0.3, 0.1, 0.05, 0.03, 0.017],
-                 "Type Relative" => ["Assets", "Classes", "Assets", "", ""],
+                 "Type Relative" => ["Assets", "Subset", "Assets", "", ""],
                  "Relative Set" => ["", "Class 1", "", "", ""],
                  "Relative" => ["FB", "Fixed Income", "TLT", "", ""])
 
     views = DataFrame(views)
-    P, Q = asset_views(views, asset_classes)
+    P, Q = asset_views(views, asset_sets)
 
     Pt = transpose(hcat([[-0.0, -1.0, -0.0, -0.0, -0.0, -0.0, 1.0],
                          [0.5, 0.0, 0.0, 0.0, -0.5, -0.5, 0.5],
@@ -341,25 +340,25 @@ end
 end
 
 @testset "HRP constraints" begin
-    asset_classes = Dict("Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
-                         "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
-                                       "Fixed Income", "Fixed Income"],
-                         "Class 2" => ["Technology", "Technology", "Technology",
-                                       "Financial", "Financial", "Treasury", "Treasury"])
+    asset_sets = Dict("Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
+                      "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
+                                    "Fixed Income", "Fixed Income"],
+                      "Class 2" => ["Technology", "Technology", "Technology", "Financial",
+                                    "Financial", "Treasury", "Treasury"])
 
-    asset_classes = DataFrame(asset_classes)
-    sort!(asset_classes, "Assets")
+    asset_sets = DataFrame(asset_sets)
+    sort!(asset_sets, "Assets")
 
     constraints = Dict("Enabled" => [true, true, true, true, true, true],
                        "Type" => ["Assets", "Assets", "All Assets", "All Assets",
-                                  "Each Asset in Class", "Each Asset in Class"],
+                                  "Each Asset in Subset", "Each Asset in Subset"],
                        "Set" => ["", "", "", "", "Class 1", "Class 2"],
                        "Position" => ["BAC", "FB", "", "", "Fixed Income", "Financial"],
                        "Sign" => [">=", "<=", "<=", ">=", "<=", "<="],
                        "Weight" => [0.02, 0.085, 0.09, 0.01, 0.07, 0.06])
     constraints = DataFrame(constraints)
 
-    w_min, w_max = hrp_constraints(constraints, asset_classes)
+    w_min, w_max = hrp_constraints(constraints, asset_sets)
 
     w_mint = [0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
     w_maxt = [0.06, 0.085, 0.09, 0.09, 0.07, 0.07, 0.06]
@@ -368,21 +367,21 @@ end
 end
 
 @testset "RP constraints" begin
-    asset_classes = Dict("Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
-                         "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
-                                       "Fixed Income", "Fixed Income"],
-                         "Class 2" => ["Technology", "Technology", "Technology",
-                                       "Financial", "Financial", "Treasury", "Treasury"])
-    asset_classes = DataFrame(asset_classes)
-    asset_classes = sort!(asset_classes, "Assets")
+    asset_sets = Dict("Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
+                      "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
+                                    "Fixed Income", "Fixed Income"],
+                      "Class 2" => ["Technology", "Technology", "Technology", "Financial",
+                                    "Financial", "Treasury", "Treasury"])
+    asset_sets = DataFrame(asset_sets)
+    asset_sets = sort!(asset_sets, "Assets")
 
-    w1 = rp_constraints(asset_classes, :Classes, "Class 1")
-    w2 = rp_constraints(asset_classes, :Classes, 2)
-    w3 = rp_constraints(asset_classes, :Classes, Symbol("Class 1"))
-    w4 = rp_constraints(asset_classes, :Classes, "Class 2")
-    w5 = rp_constraints(asset_classes, :Classes, 3)
-    w6 = rp_constraints(asset_classes, :Classes, Symbol("Class 2"))
-    w7 = rp_constraints(asset_classes, :Assets)
+    w1 = rp_constraints(asset_sets, :Subset, "Class 1")
+    w2 = rp_constraints(asset_sets, :Subset, 2)
+    w3 = rp_constraints(asset_sets, :Subset, Symbol("Class 1"))
+    w4 = rp_constraints(asset_sets, :Subset, "Class 2")
+    w5 = rp_constraints(asset_sets, :Subset, 3)
+    w6 = rp_constraints(asset_sets, :Subset, Symbol("Class 2"))
+    w7 = rp_constraints(asset_sets, :Assets)
 
     wt1 = vcat([[0.1], [0.1], [0.1], [0.1], [0.25], [0.25], [0.1]]...)
     wt2 = vcat([[0.16666666666666666], [0.1111111111111111], [0.1111111111111111],
@@ -395,7 +394,7 @@ end
     @test isapprox(wt2, w5)
     @test isapprox(wt2, w6)
     @test all(isapprox.(w7, 1 / 7))
-    @test_throws ArgumentError rp_constraints(asset_classes, :Classes, "Wak")
+    @test_throws ArgumentError rp_constraints(asset_sets, :Subset, "Wak")
 end
 
 @testset "A and B inequalities" begin
@@ -409,20 +408,19 @@ end
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    asset_classes = Dict("Assets" => names(returns[!, 2:end]),
-                         "Industry" => ["Consumer Discretionary", "Consumer Discretionary",
-                                        "Consumer Staples", "Consumer Staples", "Energy",
-                                        "Financials", "Financials", "Health Care",
-                                        "Health Care", "Industrials", "Industrials",
-                                        "Health Care", "Industrials",
-                                        "Information Technology", "Materials",
-                                        "Telecommunications Services", "Utilities",
-                                        "Utilities", "Telecommunications Services",
-                                        "Financials"])
-    asset_classes = DataFrame(asset_classes)
-    sort!(asset_classes, "Assets")
+    asset_sets = Dict("Assets" => names(returns[!, 2:end]),
+                      "Industry" => ["Consumer Discretionary", "Consumer Discretionary",
+                                     "Consumer Staples", "Consumer Staples", "Energy",
+                                     "Financials", "Financials", "Health Care",
+                                     "Health Care", "Industrials", "Industrials",
+                                     "Health Care", "Industrials", "Information Technology",
+                                     "Materials", "Telecommunications Services",
+                                     "Utilities", "Utilities",
+                                     "Telecommunications Services", "Financials"])
+    asset_sets = DataFrame(asset_sets)
+    sort!(asset_sets, "Assets")
     constraints = Dict("Enabled" => [true, true, true, true, true],
-                       "Type" => ["All Assets", "Classes", "Classes", "Classes", "Classes"],
+                       "Type" => ["All Assets", "Subset", "Subset", "Subset", "Subset"],
                        "Set" => ["", "Industry", "Industry", "Industry", "Industry"],
                        "Position" => ["", "Financials", "Utilities", "Industrials",
                                       "Consumer Discretionary"],
@@ -452,7 +450,7 @@ end
            1.2981261894646573e-9, 0.11655671485758536]
     @test isapprox(w2.weights, w2t, rtol = 9e-5)
 
-    A, B = asset_constraints(constraints, asset_classes)
+    A, B = asset_constraints(constraints, asset_sets)
     portfolio.a_mtx_ineq = A
     portfolio.b_vec_ineq = B
     w3 = opt_port!(portfolio)

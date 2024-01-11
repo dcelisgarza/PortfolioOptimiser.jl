@@ -1,6 +1,6 @@
 """
 ```julia
-asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
+asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
 ```
 Create the linear constraint matrix `A` and vector `B`:
 - ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``.
@@ -8,12 +8,12 @@ Create the linear constraint matrix `A` and vector `B`:
 - `constraints`: `Nc×10` Dataframe, where $(_ndef(:c1)). The required columns are:
     - `Enabled`: (Bool) indicates if the constraint is enabled.
     - `Type`: (String) specifies the object(s) to which a constraint applies:
-        - `Assets`: specific asset.
-        - `Classes`: whole class.
+        - `Asset`: specific asset.
+        - `Subset`: whole class.
         - `All Assets`: all assets.
-        - `All Classes`: all asset classes.
-        - `Each Asset in Class`: specific assets in a class.
-    - `Class_Set`: (String) if `Type` is `Classes`, `All Classes` or `Each Asset in Class`, specifies the asset class set.
+        - `All Subsets`: all asset classes.
+        - `Each Asset in Subset`: specific assets in a class.
+    - `Set`: (String) if `Type` is `Subset`, `All Subsets` or `Each Asset in Subset`, specifies the asset class set.
     - `Position`: (String) name of the asset or asset class to which the constraint applies.
     - `Sign`: (String) specifies whether the constraint is a lower or upper bound:
         - `>=`: lower bound.
@@ -21,29 +21,29 @@ Create the linear constraint matrix `A` and vector `B`:
     - `Weight`: (<:Real) value of the constraint.
     - `Relative_Type`: (String) specifies to what the constraint is relative:
         - Empty string: nothing.
-        - `Assets`: other asset.
-        - `Classes`: other class.
-    - `Relative_Class_Set`: (String) if `Relative_Type` is `Classes`, specifies the name of the set of asset classes.
+        - `Asset`: other asset.
+        - `Subset`: other class.
+    - `Relative_Set`: (String) if `Relative_Type` is `Subset`, specifies the name of the set of asset classes.
     - `Relative_Position`: (String) name of the asset or asset class of the relative constraint.
     - `Factor`: (<:Real) the factor of the relative constraint.
-- `asset_classes`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
-    - `Assets`: list of assets, this is the only mandatory column.
+- `asset_sets`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
+    - `Asset`: list of assets, this is the only mandatory column.
     - Subsequent columns specify the asset class sets.
 # Outputs
 - `A`: `Nc×Na` matrix of constraints where $(_ndef(:c1)) and $(_ndef(:a2)).
 - `B`: `Nc×1` vector of constraints where $(_ndef(:c1)).
 # Examples
 ```julia
-asset_classes = DataFrame(
-    "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV", "FCN", "TKO", "ZOO", "ZVO", "ZX", "ZZA", "ZZB", "ZZC"],    "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Fixed Income", "Equity"],    "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury", "Financial", "Entertainment", "Treasury", "Financial", "Financial", "Entertainment", "Technology", "Treasury"],)
+asset_sets = DataFrame(
+    "Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV", "FCN", "TKO", "ZOO", "ZVO", "ZX", "ZZA", "ZZB", "ZZC"],    "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Fixed Income", "Equity"],    "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury", "Financial", "Entertainment", "Treasury", "Financial", "Financial", "Entertainment", "Technology", "Treasury"],)
 constraints = DataFrame(
-    "Enabled" => [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],    "Type" => ["Classes", "All Classes", "Assets", "Assets", "Classes", "All Assets", "Each Asset in Class", "Assets", "All Assets", "All Assets", "Classes", "All Classes", "All Classes", "Each Asset in Class", "Each Asset in Class"],    "Class_Set" => ["Class 1", "Class 1", "", "", "Class 2", "", "Class 1", "Class 1", "Class 2", "", "Class 1", "Class 2", "Class 2", "Class 2", "Class 1"],    "Position" => ["Equity", "Fixed Income", "BAC", "WFC", "Financial", "", "Equity", "FCN", "TKO", "ZOO", "Fixed Income", "Treasury", "Entertainment", "Treasury", "Equity"],    "Sign" => ["<=", "<=", "<=", "<=", ">=", ">=", ">=", "<=", ">=", "<=", ">=", "<=", ">=", "<=", ">="],    "Weight" => [0.6, 0.5, 0.1, "", "", 0.02, "", "", "", "", "", "", "", 0.27, ""],    "Relative_Type" => ["", "", "", "Assets", "Classes", "", "Assets", "Classes", "Assets", "Classes", "Assets", "Assets", "Classes", "", "Classes"],    "Relative_Class_Set" => ["", "", "", "", "Class 1", "", "", "Class 1", "", "Class 2", "", "Class 2", "Class 2", "", "Class 2"],    "Relative_Position" => ["", "", "", "FB", "Fixed Income", "", "TLT", "Equity", "NTFX", "Financial", "WFC", "ZOO", "Entertainment", "", "Entertainment"],    "Factor" => ["", "", "", 1.2, 0.5, "", 0.4, 0.7, 0.21, 0.11, 0.13, -0.17, 0.23, "", -0.31],)
-A, B = asset_constraints(constraints, asset_classes)
+    "Enabled" => [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],    "Type" => ["Subset", "All Subsets", "Asset", "Asset", "Subset", "All Assets", "Each Asset in Subset", "Asset", "All Assets", "All Assets", "Subset", "All Subsets", "All Subsets", "Each Asset in Subset", "Each Asset in Subset"],    "Set" => ["Class 1", "Class 1", "", "", "Class 2", "", "Class 1", "Class 1", "Class 2", "", "Class 1", "Class 2", "Class 2", "Class 2", "Class 1"],    "Position" => ["Equity", "Fixed Income", "BAC", "WFC", "Financial", "", "Equity", "FCN", "TKO", "ZOO", "Fixed Income", "Treasury", "Entertainment", "Treasury", "Equity"],    "Sign" => ["<=", "<=", "<=", "<=", ">=", ">=", ">=", "<=", ">=", "<=", ">=", "<=", ">=", "<=", ">="],    "Weight" => [0.6, 0.5, 0.1, "", "", 0.02, "", "", "", "", "", "", "", 0.27, ""],    "Relative_Type" => ["", "", "", "Asset", "Subset", "", "Asset", "Subset", "Asset", "Subset", "Asset", "Asset", "Subset", "", "Subset"],    "Relative_Set" => ["", "", "", "", "Class 1", "", "", "Class 1", "", "Class 2", "", "Class 2", "Class 2", "", "Class 2"],    "Relative_Position" => ["", "", "", "FB", "Fixed Income", "", "TLT", "Equity", "NTFX", "Financial", "WFC", "ZOO", "Entertainment", "", "Entertainment"],    "Factor" => ["", "", "", 1.2, 0.5, "", 0.4, 0.7, 0.21, 0.11, 0.13, -0.17, 0.23, "", -0.31],)
+A, B = asset_constraints(constraints, asset_sets)
 ```
 """
-function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
-    N = nrow(asset_classes)
-    asset_list = asset_classes[!, "Assets"]
+function asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
+    N = nrow(asset_sets)
+    asset_list = asset_sets[!, "Asset"]
 
     A = Matrix(undef, 0, N)
     B = Vector(undef, 0)
@@ -59,7 +59,7 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
             d = -1
         end
 
-        if row["Type"] == "Assets"
+        if row["Type"] == "Asset"
             idx = findfirst(x -> x == row["Position"], asset_list)
             A1 = zeros(N)
             if row["Weight"] != ""
@@ -67,15 +67,14 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
                 push!(B, row["Weight"] * d)
             else
                 A1[idx] = 1
-                if row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
+                if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                     idx2 = findfirst(x -> x == row["Relative_Position"], asset_list)
                     A2 = zeros(N)
                     A2[idx2] = 1
-                elseif row["Relative_Type"] == "Classes" &&
-                       row["Relative_Class_Set"] != "" &&
+                elseif row["Relative_Type"] == "Subset" &&
+                       row["Relative_Set"] != "" &&
                        row["Relative_Position"] != ""
-                    A2 = asset_classes[!, row["Relative_Class_Set"]] .==
-                         row["Relative_Position"]
+                    A2 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
                 end
                 A1 = (A1 - A2 * row["Factor"]) * d
                 push!(B, 0)
@@ -88,15 +87,14 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
                 B1 = d * row["Weight"]
                 B = vcat(B, fill(B1, N))
             else
-                if row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
+                if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                     idx = findfirst(x -> x == row["Relative_Position"], asset_list)
                     A2 = zeros(N, N)
                     A2[:, idx] .= 1
-                elseif row["Relative_Type"] == "Classes" &&
-                       row["Relative_Class_Set"] != "" &&
+                elseif row["Relative_Type"] == "Subset" &&
+                       row["Relative_Set"] != "" &&
                        row["Relative_Position"] != ""
-                    A2 = asset_classes[!, row["Relative_Class_Set"]] .==
-                         row["Relative_Position"]
+                    A2 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
                     A2 = ones(N, N) .* transpose(A2)
                     # else
                     #     @warn(
@@ -104,15 +102,15 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
                     #         Constraints DataFrame not created correctly.
                     #         - row["Type"] = $(row["Type"])
                     #         First check to see if this holds.
-                    #         - row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
+                    #         - row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                     #         The items evaluate to:
                     #         - row["Relative_Type"] = $(row["Relative_Type"])
                     #         - row["Relative_Position"] != "" = $(row["Relative_Position"] != "")
                     #         Otherwise check this holds.
-                    #         - row["Relative_Type"] == "Classes" && row["Relative_Class_Set"] != "" && row["Relative_Position"] != ""
+                    #         - row["Relative_Type"] == "Subset" && row["Relative_Set"] != "" && row["Relative_Position"] != ""
                     #         The items evaluate to:
                     #         - row["Relative_Type"] = $(row["Relative_Type"])
-                    #         - row["Relative_Class_Set"] != "" = $(row["Relative_Class_Set"] != "")
+                    #         - row["Relative_Set"] != "" = $(row["Relative_Set"] != "")
                     #         - row["Relative_Position"] != "" = $(row["Relative_Position"] != "")
                     #         """
                     #     )
@@ -121,53 +119,51 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
                 B = vcat(B, zeros(N))
             end
             A = vcat(A, A1)
-        elseif row["Type"] == "Classes"
-            A1 = asset_classes[!, row["Class_Set"]] .== row["Position"]
+        elseif row["Type"] == "Subset"
+            A1 = asset_sets[!, row["Set"]] .== row["Position"]
             if row["Weight"] != ""
                 A1 = A1 * d
                 push!(B, row["Weight"] * d)
             else
-                if row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
+                if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                     idx = findfirst(x -> x == row["Relative_Position"], asset_list)
                     A2 = zeros(N)
                     A2[idx] = 1
-                elseif row["Relative_Type"] == "Classes" &&
-                       row["Relative_Class_Set"] != "" &&
+                elseif row["Relative_Type"] == "Subset" &&
+                       row["Relative_Set"] != "" &&
                        row["Relative_Position"] != ""
-                    A2 = asset_classes[!, row["Relative_Class_Set"]] .==
-                         row["Relative_Position"]
+                    A2 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
                 end
                 A1 = (A1 - A2 * row["Factor"]) * d
                 push!(B, 0)
             end
             A = vcat(A, transpose(A1))
-        elseif row["Type"] == "All Classes"
+        elseif row["Type"] == "All Subsets"
             if row["Weight"] != ""
-                for val in sort!(unique(asset_classes[!, row["Class_Set"]]))
-                    A1 = (asset_classes[!, row["Class_Set"]] .== val) * d
+                for val in sort!(unique(asset_sets[!, row["Set"]]))
+                    A1 = (asset_sets[!, row["Set"]] .== val) * d
                     A = vcat(A, transpose(A1))
                     push!(B, row["Weight"] * d)
                 end
             else
-                for val in sort!(unique(asset_classes[!, row["Class_Set"]]))
-                    A1 = asset_classes[!, row["Class_Set"]] .== val
-                    if row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
+                for val in sort!(unique(asset_sets[!, row["Set"]]))
+                    A1 = asset_sets[!, row["Set"]] .== val
+                    if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                         idx = findfirst(x -> x == row["Relative_Position"], asset_list)
                         A2 = zeros(N)
                         A2[idx] = 1
-                    elseif row["Relative_Type"] == "Classes" &&
-                           row["Relative_Class_Set"] != "" &&
+                    elseif row["Relative_Type"] == "Subset" &&
+                           row["Relative_Set"] != "" &&
                            row["Relative_Position"] != ""
-                        A2 = asset_classes[!, row["Relative_Class_Set"]] .==
-                             row["Relative_Position"]
+                        A2 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
                     end
                     A1 = (A1 - A2 * row["Factor"]) * d
                     A = vcat(A, transpose(A1))
                     push!(B, 0)
                 end
             end
-        elseif row["Type"] == "Each Asset in Class"
-            A1 = asset_classes[!, row["Class_Set"]] .== row["Position"]
+        elseif row["Type"] == "Each Asset in Subset"
+            A1 = asset_sets[!, row["Set"]] .== row["Position"]
             if row["Weight"] != ""
                 for (i, j) in pairs(A1)
                     if !j
@@ -185,15 +181,14 @@ function asset_constraints(constraints::DataFrame, asset_classes::DataFrame)
                     end
                     A2 = zeros(N)
                     A2[i] = 1
-                    if row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
+                    if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                         idx = findfirst(x -> x == row["Relative_Position"], asset_list)
                         A3 = zeros(N)
                         A3[idx] = 1
-                    elseif row["Relative_Type"] == "Classes" &&
-                           row["Relative_Class_Set"] != "" &&
+                    elseif row["Relative_Type"] == "Subset" &&
+                           row["Relative_Set"] != "" &&
                            row["Relative_Position"] != ""
-                        A3 = asset_classes[!, row["Relative_Class_Set"]] .==
-                             row["Relative_Position"]
+                        A3 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
                     end
                     A2 = (A2 - A3 * row["Factor"]) * d
                     A = vcat(A, transpose(A2))
@@ -272,7 +267,7 @@ end
 
 """
 ```julia
-asset_views(views::DataFrame, asset_classes::DataFrame)
+asset_views(views::DataFrame, asset_sets::DataFrame)
 ```
 Create the asset views matrix `P` and vector `Q`:
 - ``\\mathbf{P} \\bm{w} \\geq \\bm{Q}``.
@@ -280,9 +275,9 @@ Create the asset views matrix `P` and vector `Q`:
 - `views`: `Nv×9` DataFrame, where `Nv` is the number of views. The required columns are:
     - `Enabled`: (Bool) indicates if the view is enabled.
     - `Type`: (String) specifies the object(s) to which a view applies:
-        - `Assets`: specific asset.
-        - `Classes`: whole class.
-    - `Class_Set`: (String) if `Type` is `Classes`, specifies the asset class set.
+        - `Asset`: specific asset.
+        - `Subset`: whole class.
+    - `Set`: (String) if `Type` is `Subset`, specifies the asset class set.
     - `Position`: (String) name of the asset or asset class to which the view applies.
     - `Sign`: (String) specifies whether the view is a lower or upper bound:
         - `>=`: lower bound.
@@ -290,28 +285,28 @@ Create the asset views matrix `P` and vector `Q`:
     - `Return`: (<:Real) the view's return.
     - `Relative_Type`: (String) specifies to what the view is relative:
         - Empty string: nothing.
-        - `Assets`: other asset.
-        - `Classes`: other class.
-    - `Relative_Class_Set`: (String) if `Relative_Type` is `Classes`, specifies the name of the set of asset classes.
+        - `Asset`: other asset.
+        - `Subset`: other class.
+    - `Relative_Set`: (String) if `Relative_Type` is `Subset`, specifies the name of the set of asset classes.
     - `Relative_Position`: (String) name of the asset or asset class of the relative view.
-- `asset_classes`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
-    - `Assets`: list of assets, this is the only mandatory column.
+- `asset_sets`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
+    - `Asset`: list of assets, this is the only mandatory column.
     - Subsequent columns specify the asset class sets.
 # Outputs
 - `P`: `Nv×Na` matrix of views where `Nv` is the number of views and $(_ndef(:a2)).
 - `Q`: `Nv×1` vector of views where `Nv` is the number of views.
 # Examples
 ```julia
-asset_classes = DataFrame(
-        "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],    )
+asset_sets = DataFrame(
+        "Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],    )
 views = DataFrame(
-        "Enabled" => [true, true, true, true, true],        "Type" => ["Assets", "Classes", "Classes", "Assets", "Classes"],        "Class_Set" => ["", "Class 2", "Class 1", "", "Class 1"],        "Position" => ["WFC", "Financial", "Equity", "FB", "Fixed Income"],        "Sign" => ["<=", ">=", ">=", ">=", "<="],        "Return" => [0.3, 0.1, 0.05, 0.03, 0.017],        "Relative_Type" => ["Assets", "Classes", "Assets", "", ""],        "Relative_Class_Set" => ["", "Class 1", "", "", ""],        "Relative_Position" => ["FB", "Fixed Income", "TLT", "", ""],    )
-P, Q = asset_views(views, asset_classes)
+        "Enabled" => [true, true, true, true, true],        "Type" => ["Asset", "Subset", "Subset", "Asset", "Subset"],        "Set" => ["", "Class 2", "Class 1", "", "Class 1"],        "Position" => ["WFC", "Financial", "Equity", "FB", "Fixed Income"],        "Sign" => ["<=", ">=", ">=", ">=", "<="],        "Return" => [0.3, 0.1, 0.05, 0.03, 0.017],        "Relative_Type" => ["Asset", "Subset", "Asset", "", ""],        "Relative_Set" => ["", "Class 1", "", "", ""],        "Relative_Position" => ["FB", "Fixed Income", "TLT", "", ""],    )
+P, Q = asset_views(views, asset_sets)
 ```
 """
-function asset_views(views::DataFrame, asset_classes::DataFrame)
-    N = nrow(asset_classes)
-    asset_list = asset_classes[!, "Assets"]
+function asset_views(views::DataFrame, asset_sets::DataFrame)
+    N = nrow(asset_sets)
+    asset_list = asset_sets[!, "Asset"]
 
     P = Matrix(undef, 0, N)
     Q = Vector(undef, 0)
@@ -329,28 +324,28 @@ function asset_views(views::DataFrame, asset_classes::DataFrame)
             d = -1
         end
 
-        if row["Type"] == "Assets"
+        if row["Type"] == "Asset"
             idx = findfirst(x -> x == row["Position"], asset_list)
             P1 = zeros(N)
             P1[idx] = 1
-        elseif row["Type"] == "Classes"
-            P1 = asset_classes[!, row["Class_Set"]] .== row["Position"]
+        elseif row["Type"] == "Subset"
+            P1 = asset_sets[!, row["Set"]] .== row["Position"]
             P1 = P1 / sum(P1)
         end
 
-        if row["Relative_Type"] == "Assets" && row["Relative_Position"] != ""
+        if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
             idx2 = findfirst(x -> x == row["Relative_Position"], asset_list)
             P2 = zeros(N)
             P2[idx2] = 1
             valid = true
-        elseif row["Relative_Type"] == "Classes" &&
-               row["Relative_Class_Set"] != "" &&
+        elseif row["Relative_Type"] == "Subset" &&
+               row["Relative_Set"] != "" &&
                row["Relative_Position"] != ""
-            P2 = asset_classes[!, row["Relative_Class_Set"]] .== row["Relative_Position"]
+            P2 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
             P2 = P2 / sum(P2)
             valid = true
         elseif row["Relative_Type"] == "" &&
-               row["Relative_Class_Set"] == "" &&
+               row["Relative_Set"] == "" &&
                row["Relative_Position"] == ""
             P2 = zeros(N)
             valid = true
@@ -450,38 +445,38 @@ end
 
 """
 ```julia
-hrp_constraints(constraints::DataFrame, asset_classes::DataFrame)
+hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
 ```
 Create the upper and lower bounds constraints for hierarchical risk parity portfolios.
 # Inputs
 - `constraints`: `Nc×4` Dataframe, where $(_ndef(:c1)). The required columns are:
     - `Enabled`: (Bool) indicates if the constraint is enabled.
     - `Type`: (String) specifies the object(s) to which a constraint applies:
-        - `Assets`: specific asset.
+        - `Asset`: specific asset.
         - `All Assets`: all assets.
-        - `Each Asset in Class`: specific assets in a class.
+        - `Each Asset in Subset`: specific assets in a class.
     - `Position`: (String) name of the asset or asset class to which the constraint applies.
     - `Sign`: (String) specifies whether the constraint is a lower or upper bound:
         - `>=`: lower bound.
         - `<=`: upper bound.
     - `Weight`: (<:Real) value of the constraint.
-- `asset_classes`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
-    - `Assets`: list of assets, this is the only mandatory column.
+- `asset_sets`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
+    - `Asset`: list of assets, this is the only mandatory column.
     - Subsequent columns specify the asset class sets.
 # Outputs
 - `w_min`: `Na×1` vector of the lower bounds for asset weights.
 - `w_max`: `Na×1` vector of the upper bounds for asset weights.
 # Examples
 ```julia
-asset_classes = DataFrame(
-        "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],    )
+asset_sets = DataFrame(
+        "Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],    )
 constraints = DataFrame(
-    "Enabled" => [true, true, true, true, true, true],    "Type" => ["Assets", "Assets", "All Assets", "All Assets", "Each Asset in Class", "Each Asset in Class"],    "Class_Set" => ["", "", "", "", "Class 1", "Class 2"],    "Position" => ["BAC", "FB", "", "", "Fixed Income", "Financial"],    "Sign" => [">=", "<=", "<=", ">=", "<=", "<="],    "Weight" => [0.02, 0.085, 0.09, 0.01, 0.07, 0.06],)
-w_min, w_max = hrp_constraints(constraints, asset_classes)
+    "Enabled" => [true, true, true, true, true, true],    "Type" => ["Asset", "Asset", "All Assets", "All Assets", "Each Asset in Subset", "Each Asset in Subset"],    "Set" => ["", "", "", "", "Class 1", "Class 2"],    "Position" => ["BAC", "FB", "", "", "Fixed Income", "Financial"],    "Sign" => [">=", "<=", "<=", ">=", "<=", "<="],    "Weight" => [0.02, 0.085, 0.09, 0.01, 0.07, 0.06],)
+w_min, w_max = hrp_constraints(constraints, asset_sets)
 ```
 """
-function hrp_constraints(constraints::DataFrame, asset_classes::DataFrame)
-    N = nrow(asset_classes)
+function hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
+    N = nrow(asset_sets)
     w = Matrix(undef, N, 2)
     w .= 0
     w[:, 2] .= 1
@@ -498,8 +493,8 @@ function hrp_constraints(constraints::DataFrame, asset_classes::DataFrame)
             op = >=
         end
 
-        if row["Type"] == "Assets"
-            idx = findfirst(x -> x == row["Position"], asset_classes[!, "Assets"])
+        if row["Type"] == "Asset"
+            idx = findfirst(x -> x == row["Position"], asset_sets[!, "Asset"])
             if op(w[idx, i], row["Weight"])
                 (w[idx, i] = row["Weight"])
             end
@@ -507,11 +502,9 @@ function hrp_constraints(constraints::DataFrame, asset_classes::DataFrame)
             if !isempty(w[op.(w[:, i], row["Weight"]), i])
                 (w[op.(w[:, i], row["Weight"]), i] .= row["Weight"])
             end
-        elseif row["Type"] == "Each Asset in Class"
-            assets = asset_classes[asset_classes[!, row["Class_Set"]] .== row["Position"],
-                                   "Assets"]
-            idx = [findfirst(x -> x == asset, asset_classes[!, "Assets"])
-                   for asset in assets]
+        elseif row["Type"] == "Each Asset in Subset"
+            assets = asset_sets[asset_sets[!, row["Set"]] .== row["Position"], "Asset"]
+            idx = [findfirst(x -> x == asset, asset_sets[!, "Asset"]) for asset in assets]
 
             for ind in idx
                 if !isnothing(ind) && op(w[ind, i], row["Weight"])
@@ -528,49 +521,49 @@ end
 
 """
 ```julia
-RPConstraintTypes = (:Assets, :Classes)
+RPConstraintTypes = (:Asset, :Subset)
 ```
 
 Types of risk parity constraints for building the set of linear constraints via [`rp_constraints`](@ref).
 
-  - `:Assets`: equal risk contribution per asset.
-  - `:Classes`: equal risk contribution per class.
+  - `:Asset`: equal risk contribution per asset.
+  - `:Subset`: equal risk contribution per class.
 """
-const RPConstraintTypes = (:Assets, :Classes)
+const RPConstraintTypes = (:Asset, :Subset)
 
 """
 ```julia
 rp_constraints(
-    asset_classes::DataFrame,    type::Symbol = :Assets,    class_col::Union{String, Symbol, Nothing} = nothing,)
+    asset_sets::DataFrame,    type::Symbol = :Asset,    class_col::Union{String, Symbol, Nothing} = nothing,)
 ```
 Constructs risk contribution constraint vector for the risk parity optimisation (`:RP` and `:RRP` types of [`PortTypes`](@ref)).
 # Inputs
-- `asset_classes`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
-    - `Assets`: list of assets, this is the only mandatory column.
-    - Subsequent columns specify the asset class sets. They are only used if `type == :Classes`.
+- `asset_sets`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
+    - `Asset`: list of assets, this is the only mandatory column.
+    - Subsequent columns specify the asset class sets. They are only used if `type == :Subset`.
 - `type`: what the risk parity is applied relative to, must be one of [`RPConstraintTypes`](@ref).
-- `class_col`: index of set of classes from `asset_classes` to use in when `type == :Classes`.
+- `class_col`: index of set of classes from `asset_sets` to use in when `type == :Subset`.
 # Outputs
 - `rw`: risk contribution constraint vector.
 # Examples
 ```julia
-asset_classes = DataFrame(
-        "Assets" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],    )
+asset_sets = DataFrame(
+        "Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],    )
 
-rw_a = rp_constraints(asset_classes, :Assets)
-rw_c = rp_constraints(asset_classes, :Classes, "Class 2")
+rw_a = rp_constraints(asset_sets, :Asset)
+rw_c = rp_constraints(asset_sets, :Subset, "Class 2")
 ```
 """
-function rp_constraints(asset_classes::DataFrame, type::Symbol = :Assets,
-                        class_col::Union{String, Symbol, Int, Nothing} = nothing)
+function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
+                        class_col::Union{String,Symbol,Int,Nothing} = nothing)
     @smart_assert(type in RPConstraintTypes)
-    N = nrow(asset_classes)
+    N = nrow(asset_sets)
 
-    rw = if type == :Assets
+    rw = if type == :Asset
         fill(1 / N, N)
     else
-        classes = names(asset_classes)
-        A = DataFrame(; a = asset_classes[!, class_col])
+        classes = names(asset_sets)
+        A = DataFrame(; a = asset_sets[!, class_col])
         if isa(class_col, String) || isa(class_col, Symbol)
             DataFrames.rename!(A, [class_col])
         elseif isa(class_col, Int)

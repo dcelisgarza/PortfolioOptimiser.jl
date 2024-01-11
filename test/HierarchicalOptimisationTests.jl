@@ -270,7 +270,7 @@ end
     linkage = :DBHT
     branchorder = :default
 
-    asset_classes = DataFrame(; Assets = portfolio.assets)
+    asset_sets = DataFrame(; Assets = portfolio.assets)
     constraints = DataFrame(; Enabled = fill(true, 20), Type = fill("Assets", 20),
                             Position = ["GOOG", "AAPL", "FB", "BABA", "AMZN", "GE", "AMD",
                                         "WMT", "BAC", "GM", "T", "UAA", "SHLD", "XOM",
@@ -281,7 +281,7 @@ end
                             Weight = [0.025, 0.05, 0.06, 0.045, 0.06, 0.03, 0.02, 0.04,
                                       0.03, 0.02, 0.06, 0.03, 0.01, 0.05, 0.07, 0.01, 0.07,
                                       0.1, 0.001, 0.02])
-    w_min, w_max = hrp_constraints(constraints, asset_classes)
+    w_min, w_max = hrp_constraints(constraints, asset_sets)
 
     portfolio.w_min = w_min
     portfolio.w_max = w_max
