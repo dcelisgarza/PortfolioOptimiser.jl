@@ -1154,7 +1154,7 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
                    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                    kappa::Real = 0.3,
                    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                   solvers::Union{<:AbstractDict,Nothing} = nothing,)
+                   solvers::Union{<:AbstractDict, Nothing} = nothing,)
     @smart_assert(rm in HCRiskMeasures)
 
     x = (rm != :Variance || rm != :SD) && returns * w
@@ -1376,7 +1376,7 @@ function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbo
                            beta_i::Real = alpha_i, beta::Real = alpha,
                            b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
                            owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                           solvers::Union{<:AbstractDict,Nothing} = nothing,)
+                           solvers::Union{<:AbstractDict, Nothing} = nothing,)
     ew = eltype(w)
     rc = zeros(ew, length(w))
     w1 = zeros(ew, length(w))
@@ -1429,7 +1429,7 @@ function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMa
                       alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100,
                       beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                       kappa::Real = 0.3, owa_w = Vector{Float64}(undef, 0),
-                      solvers::Union{<:AbstractDict,Nothing} = nothing,)
+                      solvers::Union{<:AbstractDict, Nothing} = nothing,)
     ret = dot(mu, w)
 
     risk = calc_risk(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,

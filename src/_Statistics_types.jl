@@ -224,9 +224,9 @@ end
 
 @kwdef mutable struct CovEstSettings
     estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    target_ret::Union{<:AbstractVector{<:Real},<:Real} = 0.0
+    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
     genfunc::GenericFunc = GenericFunc(; func = StatsBase.cov)
-    custom::Union{<:AbstractMatrix{<:Real},Nothing} = nothing
+    custom::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
 end
 
 mutable struct PosdefFixSettings
@@ -266,7 +266,7 @@ function Base.setproperty!(obj::GerberSettings, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct DenoiseSettings{T1 <: Real,T2 <: Integer,T3,T4 <: Integer,T5 <: Integer}
+mutable struct DenoiseSettings{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 <: Integer}
     method::Symbol
     alpha::T1
     detone::Bool
@@ -283,7 +283,7 @@ function DenoiseSettings(; method::Symbol = :None, alpha::Real = 0.0, detone::Bo
     @smart_assert(method in DenoiseMethods)
     @smart_assert(0 <= alpha <= 1)
 
-    return DenoiseSettings{typeof(alpha),typeof(mkt_comp),typeof(kernel),typeof(m),
+    return DenoiseSettings{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m),
                            typeof(n)}(method, alpha, detone, mkt_comp, kernel, m, n,
                                       genfunc)
 end
@@ -345,16 +345,16 @@ mutable struct MuSettings{T1 <: Real}
     target::Symbol
     rf::T1
     genfunc::GenericFunc
-    custom::Union{<:AbstractVector{<:Real},Nothing}
-    mkt_ret::Union{<:AbstractVector{<:Real},Nothing}
-    sigma::Union{<:AbstractMatrix{<:Real},Nothing}
+    custom::Union{<:AbstractVector{<:Real}, Nothing}
+    mkt_ret::Union{<:AbstractVector{<:Real}, Nothing}
+    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
 end
 function MuSettings(; method::Symbol = :Default, target::Symbol = :GM, rf::Real = 0.0,
                     genfunc::GenericFunc = GenericFunc(; func = StatsBase.mean,
                                                        kwargs = (; dims = 1)),
-                    custom::Union{<:AbstractVector{<:Real},Nothing} = nothing,
-                    mkt_ret::Union{<:AbstractVector{<:Real},Nothing} = nothing,
-                    sigma::Union{<:AbstractMatrix{<:Real},Nothing} = nothing,)
+                    custom::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
+                    mkt_ret::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
+                    sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,)
     @smart_assert(method in MuMethods)
     @smart_assert(target in MuTargets)
 
@@ -370,9 +370,9 @@ function Base.setproperty!(obj::MuSettings, sym::Symbol, val)
 end
 
 @kwdef mutable struct KurtEstSettings
-    target_ret::Union{<:AbstractVector{<:Real},<:Real} = 0.0
-    custom_kurt::Union{<:AbstractMatrix{<:Real},Nothing} = nothing
-    custom_skurt::Union{<:AbstractMatrix{<:Real},Nothing} = nothing
+    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
+    custom_kurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
+    custom_skurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
 end
 mutable struct KurtSettings
     # Estimation
@@ -394,18 +394,18 @@ end
 mutable struct CorEstSettings{T1 <: Real}
     estimator::CovarianceEstimator
     alpha::T1
-    bins_info::Union{Symbol,<:Integer}
+    bins_info::Union{Symbol, <:Integer}
     cor_genfunc::GenericFunc
     dist_genfunc::GenericFunc
-    target_ret::Union{<:AbstractVector{<:Real},<:Real}
-    custom_cor::Union{<:AbstractMatrix{<:Real},Nothing}
-    custom_dist::Union{<:AbstractMatrix{<:Real},Nothing}
-    sigma::Union{<:AbstractMatrix{<:Real},Nothing}
+    target_ret::Union{<:AbstractVector{<:Real}, <:Real}
+    custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing}
+    custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing}
+    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
 end
 function CorEstSettings(;
                         estimator::CovarianceEstimator = StatsBase.SimpleCovariance(;
                                                                                     corrected = true),
-                        alpha::Real = 0.05, bins_info::Union{Symbol,<:Integer} = :KN,
+                        alpha::Real = 0.05, bins_info::Union{Symbol, <:Integer} = :KN,
                         cor_genfunc::GenericFunc = GenericFunc(; func = StatsBase.cor),
                         dist_genfunc::GenericFunc = GenericFunc(;
                                                                 func = x -> sqrt.(clamp!((1 .-
@@ -413,10 +413,10 @@ function CorEstSettings(;
                                                                                          2,
                                                                                          0,
                                                                                          1)),),
-                        target_ret::Union{<:AbstractVector{<:Real},<:Real} = 0.0,
-                        custom_cor::Union{<:AbstractMatrix{<:Real},Nothing} = nothing,
-                        custom_dist::Union{<:AbstractMatrix{<:Real},Nothing} = nothing,
-                        sigma::Union{<:AbstractMatrix{<:Real},Nothing} = nothing,)
+                        target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0,
+                        custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
+                        custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
+                        sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,)
     @smart_assert(0 <= alpha <= 1)
     @smart_assert(bins_info in BinMethods ||
                   isa(bins_info, Int) && bins_info > zero(bins_info))
@@ -486,7 +486,8 @@ function Base.setproperty!(obj::CorSettings, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct WCSettings{T1 <: Real,T2 <: Real,T3 <: Real,T4,T5 <: Integer,T6 <: Integer}
+mutable struct WCSettings{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer,
+                          T6 <: Integer}
     calc_box::Bool
     calc_ellipse::Bool
     box::Symbol
@@ -495,7 +496,7 @@ mutable struct WCSettings{T1 <: Real,T2 <: Real,T3 <: Real,T4,T5 <: Integer,T6 <
     dmu::T2
     q::T3
     rng::T4
-    seed::Union{<:Integer,Nothing}
+    seed::Union{<:Integer, Nothing}
     n_sim::T5
     window::T6
     posdef::PosdefFixSettings
@@ -503,14 +504,14 @@ end
 function WCSettings(; calc_box::Bool = true, calc_ellipse::Bool = true,
                     box::Symbol = :Stationary, ellipse::Symbol = :Stationary,
                     dcov::Real = 0.1, dmu::Real = 0.1, q::Real = 0.05,
-                    rng = Random.default_rng(), seed::Union{<:Integer,Nothing} = nothing,
+                    rng = Random.default_rng(), seed::Union{<:Integer, Nothing} = nothing,
                     n_sim::Integer = 3_000, window::Integer = 3,
                     posdef::PosdefFixSettings = PosdefFixSettings(;),)
     @smart_assert(box in BoxMethods)
     @smart_assert(ellipse in EllipseMethods)
     @smart_assert(0 < q < 1)
 
-    return WCSettings{typeof(dcov),typeof(dmu),typeof(q),typeof(rng),typeof(n_sim),
+    return WCSettings{typeof(dcov), typeof(dmu), typeof(q), typeof(rng), typeof(n_sim),
                       typeof(window)}(calc_box, calc_ellipse, box, ellipse, dcov, dmu, q,
                                       rng, seed, n_sim, window, posdef)
 end
@@ -547,12 +548,13 @@ end
 
 mutable struct LoadingsSettings{T1 <: Real}
     method::Symbol
-    criterion::Union{Symbol,Function}
+    criterion::Union{Symbol, Function}
     threshold::T1
     pcr_settings::PCRSettings
 end
 function LoadingsSettings(; method::Symbol = :FReg,
-                          criterion::Union{Symbol,Function} = :pval, threshold::Real = 0.05,
+                          criterion::Union{Symbol, Function} = :pval,
+                          threshold::Real = 0.05,
                           pcr_settings::PCRSettings = PCRSettings(;),)
     @smart_assert(method in FSMethods)
     @smart_assert(criterion in RegCriteria)
@@ -568,12 +570,12 @@ function Base.setproperty!(obj::LoadingsSettings, sym::Symbol, val)
 end
 
 mutable struct FactorSettings
-    B::Union{DataFrame,Nothing}
+    B::Union{DataFrame, Nothing}
     loadings_settings::LoadingsSettings
     error::Bool
     var_genfunc::GenericFunc
 end
-function FactorSettings(; B::Union{DataFrame,Nothing} = nothing,
+function FactorSettings(; B::Union{DataFrame, Nothing} = nothing,
                         loadings_settings::LoadingsSettings = LoadingsSettings(;),
                         error::Bool = true,
                         var_genfunc::GenericFunc = GenericFunc(; func = StatsBase.var,
@@ -586,7 +588,7 @@ mutable struct BLSettings{T1 <: Real}
     constant::Bool
     diagonal::Bool
     eq::Bool
-    delta::Union{Nothing,<:Real}
+    delta::Union{Nothing, <:Real}
     rf::T1
     var_genfunc::GenericFunc
 end
