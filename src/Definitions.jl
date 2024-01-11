@@ -449,8 +449,11 @@ function _solver_desc(msg::String = "the `JuMP` model.", pref::String = "",
            """
 end
 function _solver_reqs(msg::String)
-    return isempty(msg) ? "" :
-           " Solver must support $msg, or `JuMP` must be able to transform it/them into a supported form."
+    return if isempty(msg)
+        ""
+    else
+        " Solver must support $msg, or `JuMP` must be able to transform it/them into a supported form."
+    end
 end
 function _filled_by(msg::String)
     return "This parameter is filled after calling $msg."

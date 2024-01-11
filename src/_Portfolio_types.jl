@@ -1418,8 +1418,11 @@ end)")
 
                 if isa(getfield(obj, sym), AbstractVector) &&
                    !isa(getfield(obj, sym), AbstractRange)
-                    val = isa(val, AbstractRange) ? collect(val) :
-                          convert(typeof(getfield(obj, sym)), val)
+                    val = if isa(val, AbstractRange)
+                        collect(val)
+                    else
+                        convert(typeof(getfield(obj, sym)), val)
+                    end
                 end
             end
         end

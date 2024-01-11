@@ -441,10 +441,12 @@ function posdef_fix!(mtx::AbstractMatrix,
         func(mtx, args...; kwargs...)
     end
 
-    !isposdef(_mtx) ?
-    @warn(msg *
-          "matrix could not be made postive definite, please try a different method or a tighter tolerance") :
-    mtx .= _mtx
+    if !isposdef(_mtx)
+        @warn(msg *
+              "matrix could not be made postive definite, please try a different method or a tighter tolerance")
+    else
+        mtx .= _mtx
+    end
 
     return nothing
 end
@@ -637,8 +639,11 @@ function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(
         if method == :Semi
             target_ret = settings.estimation.target_ret
             zro = zero(eltype(returns))
-            returns = isa(target_ret, Real) ? min.(returns .- target_ret, zro) :
-                      min.(returns .- transpose(target_ret), zro)
+            returns = if isa(target_ret, Real)
+                min.(returns .- target_ret, zro)
+            else
+                min.(returns .- transpose(target_ret), zro)
+            end
             if !haskey(kwargs, :mean)
                 (kwargs = (kwargs..., mean = zro))
             end
@@ -718,8 +723,11 @@ function cokurt_mtx(returns::AbstractMatrix, mu::AbstractVector,
 
     target_ret = settings.estimation.target_ret
     custom_skurt = settings.estimation.custom_skurt
-    skurt = isnothing(custom_skurt) ? scokurt(returns, transpose(mu), target_ret) :
-            custom_skurt
+    skurt = if isnothing(custom_skurt)
+        scokurt(returns, transpose(mu), target_ret)
+    else
+        custom_skurt
+    end
 
     T, N = size(returns)
 
@@ -775,8 +783,11 @@ function cor_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettin
         if method == :Semi_Pearson
             target_ret = settings.estimation.target_ret
             zro = zero(eltype(returns))
-            returns = isa(target_ret, Real) ? min.(returns .- target_ret, zro) :
-                      min.(returns .- transpose(target_ret), zro)
+            returns = if isa(target_ret, Real)
+                min.(returns .- target_ret, zro)
+            else
+                min.(returns .- transpose(target_ret), zro)
+            end
             if !haskey(kwargs, :mean)
                 (kwargs = (kwargs..., mean = zro))
             end
@@ -801,8 +812,11 @@ function cor_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettin
         if method == :Abs_Semi_Pearson
             target_ret = settings.estimation.target_ret
             zro = zero(eltype(returns))
-            returns = isa(target_ret, Real) ? min.(returns .- target_ret, zro) :
-                      min.(returns .- transpose(target_ret), zro)
+            returns = if isa(target_ret, Real)
+                min.(returns .- target_ret, zro)
+            else
+                min.(returns .- transpose(target_ret), zro)
+            end
             if !haskey(kwargs, :mean)
                 (kwargs = (kwargs..., mean = zro))
             end
@@ -898,13 +912,16 @@ asset_statistics!(portfolio::AbstractPortfolio; target_ret::AbstractFloat = 0.0,
                   mean_func::Function = mean, cov_func::Function = cov,
                   cor_func::Function = cor, std_func = std,
                   dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-                  cor_method::Symbol = isa(portfolio, HCPortfolio) ? portfolio.cor_method :                           # flags
-                                       :Pearson, custom_mu = nothing, custom_cov = nothing,
-                  custom_kurt = nothing, custom_skurt = nothing, mean_args::Tuple = (),                           # cov_mtx
+                  cor_method::Symbol = if isa(portfolio, HCPortfolio)
+                      portfolio.cor_method                           # flags
+                  else                           # flags
+                      :Pearson
+                  end, custom_mu = nothing, custom_cov = nothing, custom_kurt = nothing,
+                  custom_skurt = nothing, mean_args::Tuple = (),                           # cov_mtx
                   cov_args::Tuple = (), cor_args::Tuple = (), dist_args::Tuple = (),
                   std_args::Tuple = (), calc_kurt = true, mean_kwargs = (; dims = 1),
                   cov_kwargs::NamedTuple = (;), cor_kwargs::NamedTuple = (;),
-                  dist_kwargs::NamedTuple = (;), std_kwargs::NamedTuple = (;), uplo = :L,)
+                  dist_kwargs::NamedTuple = (;), std_kwargs::NamedTuple = (;), uplo = :L,)                           # flags
 ```
 """
 function asset_statistics!(portfolio::AbstractPortfolio;                           # flags
@@ -1277,8 +1294,11 @@ function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
             for (i, factor) in pairs(included)
                 factors = copy(included)
                 popat!(factors, i)
-                !isempty(factors) ? (x1 = [ovec Matrix(x[!, factors])]) :
-                x1 = reshape(ovec, :, 1)
+                if !isempty(factors)
+                    (x1 = [ovec Matrix(x[!, factors])])
+                else
+                    x1 = reshape(ovec, :, 1)
+                end
                 fit_result = lm(x1, y)
                 value[factor] = criterion(fit_result)
             end
@@ -1373,9 +1393,11 @@ function loadings_matrix(x::DataFrame, y::DataFrame,
     pcr_settings = settings.pcr_settings
     for i in 1:rows
         if flag
-            included = method == :FReg ?
-                       forward_regression(x, y[!, i], criterion, threshold) :
-                       backward_regression(x, y[!, i], criterion, threshold)
+            included = if method == :FReg
+                forward_regression(x, y[!, i], criterion, threshold)
+            else
+                backward_regression(x, y[!, i], criterion, threshold)
+            end
 
             x1 = !isempty(included) ? [ovec Matrix(x[!, included])] : reshape(ovec, :, 1)
 

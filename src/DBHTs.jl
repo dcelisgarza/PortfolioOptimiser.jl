@@ -100,8 +100,11 @@ function PMFG_T2s(W::AbstractMatrix{<:Real}, nargout::Integer = 3)
 
     A = sparse(W .* ((A + A') .== 1))
 
-    cliques = nargout > 3 ? vcat(transpose(in_v[1:4]), hcat(clique3, in_v[5:end])) :
-              Matrix{Int}(undef, 0, 0)
+    cliques = if nargout > 3
+        vcat(transpose(in_v[1:4]), hcat(clique3, in_v[5:end]))
+    else
+        Matrix{Int}(undef, 0, 0)
+    end
 
     cliqueTree = if nargout > 4
         M = size(cliques, 1)
@@ -859,8 +862,11 @@ function LinkageFunction(d::AbstractMatrix{<:Real}, labelvec::AbstractVector{<:R
             dd = d[x1, x1]
             de = dd[dd .!= 0]
 
-            Link1 = isempty(de) ? hcat(lvec[r], lvec[c], 0) :
-                    hcat(lvec[r], lvec[c], vec(maximum(de; dims = 1)))
+            Link1 = if isempty(de)
+                hcat(lvec[r], lvec[c], 0)
+            else
+                hcat(lvec[r], lvec[c], vec(maximum(de; dims = 1)))
+            end
 
             Links = vcat(Links, Link1)
         end

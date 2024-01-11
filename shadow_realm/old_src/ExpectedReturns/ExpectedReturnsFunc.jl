@@ -174,12 +174,14 @@ function returns_from_prices(prices, log_ret = false; capm = false,
                              cov_method::AbstractRiskModel = ECov(),
                              target = 1.02^(1 / 252) - 1,
                              fix_method::AbstractFixPosDef = SFix(),
-                             span = size(prices, 1) != 0 ?
-                                    ceil(Int,
-                                         4 * (size(prices, 1) - 1) /
-                                         log(size(prices, 1) - 1 + 2)) : 1, scale = nothing,
-                             custom_cov_estimator = nothing, custom_cov_args = (),
-                             custom_cov_kwargs = (),)
+                             span = if size(prices, 1) != 0
+                                 ceil(Int,
+                                      4 * (size(prices, 1) - 1) /
+                                      log(size(prices, 1) - 1 + 2))
+                             else
+                                 1
+                             end, scale = nothing, custom_cov_estimator = nothing,
+                             custom_cov_args = (), custom_cov_kwargs = (),)
     returns = if log_ret
         log.(prices[2:end, :] ./ prices[1:(end - 1), :])
     else

@@ -410,8 +410,11 @@ function _intra_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf 
                         l = 2.0, near_opt::Bool = false,
                         M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
                         asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
-                                             calc_kurt = rm ∈ (:Kurt, :SKurt) ? true :
-                                                         false,),)
+                                             calc_kurt = if rm ∈ (:Kurt, :SKurt)
+                                                 true
+                                             else
+                                                 false
+                                             end,),)
     returns = portfolio.returns
     mu = portfolio.mu
     covariance = portfolio.cov
@@ -444,8 +447,11 @@ function _inter_weights(portfolio, intra_weights; obj = :Min_Risk, kelly = :None
                         rf = 0.0, l = 2.0, near_opt::Bool = false,
                         M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
                         asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
-                                             calc_kurt = rm ∈ (:Kurt, :SKurt) ? true :
-                                                         false,),)
+                                             calc_kurt = if rm ∈ (:Kurt, :SKurt)
+                                                 true
+                                             else
+                                                 false
+                                             end,),)
     mu = portfolio.mu
     returns = portfolio.returns
     covariance = portfolio.cov

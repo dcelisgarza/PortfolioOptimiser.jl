@@ -123,14 +123,20 @@ function cov(::ESCov, returns; target = 1.02^(1 / 252) - 1, # Daily risk free ra
 end
 
 function cov(::CustomCov, returns; estimator = nothing, args = (), kwargs = ())
-    return isnothing(estimator) ? cov(returns, args...; kwargs...) :
-           cov(estimator, returns, args...; kwargs...)
+    return if isnothing(estimator)
+        cov(returns, args...; kwargs...)
+    else
+        cov(estimator, returns, args...; kwargs...)
+    end
 end
 
 function cov(::CustomSCov, returns; target = 1.02^(1 / 252) - 1, estimator = nothing,
              args = (), kwargs = (),)
     semi_returns = min.(returns .- target, 0)
 
-    return isnothing(estimator) ? cov(semi_returns, args...; mean = 0, kwargs...) :
-           cov(estimator, semi_returns, args...; mean = 0, kwargs...)
+    return if isnothing(estimator)
+        cov(semi_returns, args...; mean = 0, kwargs...)
+    else
+        cov(estimator, semi_returns, args...; mean = 0, kwargs...)
+    end
 end

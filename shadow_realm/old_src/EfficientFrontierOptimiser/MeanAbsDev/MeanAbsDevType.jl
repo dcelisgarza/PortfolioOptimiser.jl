@@ -99,9 +99,12 @@ Create an [`EffMeanAbsDev`](@ref) structure to be optimised via JuMP.
   - `extra_obj_terms`: extra objective terms for the model. See [`_add_to_objective!`](@ref) for details on how to use this.
 """
 function EffMeanAbsDev(tickers, mean_ret, returns; weight_bounds = (0.0, 1.0),
-                       target = !isnothing(mean_ret) ? reshape(mean_ret, 1, :) :
-                                mean(returns; dims = 1), rf = 1.02^(1 / 252) - 1,
-                       market_neutral = false, risk_aversion = 1.0,
+                       target = if !isnothing(mean_ret)
+                           reshape(mean_ret, 1, :)
+                       else
+                           mean(returns; dims = 1)
+                       end, rf = 1.02^(1 / 252) - 1, market_neutral = false,
+                       risk_aversion = 1.0,
                        target_risk = sum((returns .- target) *
                                          fill(1 / size(returns, 2), size(returns, 2))) /
                                      size(returns, 1),

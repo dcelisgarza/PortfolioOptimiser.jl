@@ -142,10 +142,12 @@ end
 function plot_risk_contribution(portfolio; di::Real = 1e-6,
                                 type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                                 rm::Symbol = :SD, rf::Real = 0.0,
-                                owa_w::AbstractVector{<:Real} = isa(portfolio, Portfolio) ?
-                                                                portfolio.owa_w :
-                                                                Vector{Float64}(undef, 0),
-                                percentage::Bool = false, erc_line::Bool = true,
+                                owa_w::AbstractVector{<:Real} = if isa(portfolio,
+                                                                       Portfolio)
+                                    portfolio.owa_w
+                                else
+                                    Vector{Float64}(undef, 0)
+                                end, percentage::Bool = false, erc_line::Bool = true,
                                 t_factor = 252, kwargs_bar = (;), kwargs_line = (;),)
     return plot_risk_contribution(
                                   # RC args

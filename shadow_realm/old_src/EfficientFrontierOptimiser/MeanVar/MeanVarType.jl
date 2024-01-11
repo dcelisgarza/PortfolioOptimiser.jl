@@ -96,10 +96,12 @@ Create an [`EffMeanVar`](@ref) structure to be optimised via JuMP.
 """
 function EffMeanVar(tickers, mean_ret, cov_mtx; weight_bounds = (0, 1),
                     rf = 1.02^(1 / 252) - 1, market_neutral = false, risk_aversion = 1.0,
-                    target_risk = rank(cov_mtx) < size(cov_mtx, 1) ?
-                                  1 / sum(diag(cov_mtx)) : sqrt(1 / sum(inv(cov_mtx))),
-                    target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0, extra_vars = [],
-                    extra_constraints = [], extra_obj_terms = [],)
+                    target_risk = if rank(cov_mtx) < size(cov_mtx, 1)
+                        1 / sum(diag(cov_mtx))
+                    else
+                        sqrt(1 / sum(inv(cov_mtx)))
+                    end, target_ret = !isnothing(mean_ret) ? mean(mean_ret) : 0,
+                    extra_vars = [], extra_constraints = [], extra_obj_terms = [],)
     num_tickers = length(tickers)
     @assert num_tickers == size(cov_mtx, 1) == size(cov_mtx, 2)
     if !isnothing(mean_ret)

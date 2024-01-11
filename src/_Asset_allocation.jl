@@ -95,13 +95,15 @@ function _combine_allocations(portfolio, key, long_tickers, short_tickers, long_
     cost = [long_cost; -short_cost]
     weights = [long_allocated_weights; -short_allocated_weights]
 
-    portfolio.alloc_optimal[key] = !isempty(tickers) &&
-                                   !isempty(shares) &&
-                                   !isempty(cost) &&
-                                   !isempty(weights) ?
-                                   DataFrame(; tickers = tickers, shares = shares,
-                                             price = latest_prices, cost = cost,
-                                             weights = weights) : DataFrame()
+    portfolio.alloc_optimal[key] = if !isempty(tickers) &&
+                                      !isempty(shares) &&
+                                      !isempty(cost) &&
+                                      !isempty(weights)
+        DataFrame(; tickers = tickers, shares = shares, price = latest_prices, cost = cost,
+                  weights = weights)
+    else
+        DataFrame()
+    end
 
     return portfolio.alloc_optimal[key]
 end
@@ -349,17 +351,22 @@ function allocate_port!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad
                         investment = 1e4, rounding = 1, reinvest = false,
                         short_ratio = nothing, string_names = false,
                         save_opt_params = true,)
-    isa(portfolio, Portfolio) ?
-    @assert(port_type ∈ PortTypes, "port_type = $port_type, must be one of $PortTypes") :
-    @assert(port_type ∈ HCPortTypes, "port_type = $port_type, must be one of $HCPortTypes")
+    if isa(portfolio, Portfolio)
+        @assert(port_type ∈ PortTypes, "port_type = $port_type, must be one of $PortTypes")
+    else
+        @assert(port_type ∈ HCPortTypes,
+                "port_type = $port_type, must be one of $HCPortTypes")
+    end
 
     @assert(alloc_type ∈ AllocTypes, "alloc_type = $alloc_type, must be one of $AllocTypes")
 
-    retval, leftover = alloc_type == :LP ?
-                       _lp_allocation!(portfolio, port_type, latest_prices, investment,
-                                       reinvest, short_ratio, string_names) :
-                       _greedy_allocation!(portfolio, port_type, latest_prices, investment,
-                                           rounding, reinvest, short_ratio)
+    retval, leftover = if alloc_type == :LP
+        _lp_allocation!(portfolio, port_type, latest_prices, investment, reinvest,
+                        short_ratio, string_names)
+    else
+        _greedy_allocation!(portfolio, port_type, latest_prices, investment, rounding,
+                            reinvest, short_ratio)
+    end
 
     _save_alloc_opt_params(portfolio, port_type, alloc_type, investment, rounding, reinvest,
                            short_ratio, leftover, save_opt_params)

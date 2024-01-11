@@ -1238,9 +1238,11 @@ function calc_risk(portfolio::AbstractPortfolio;
                    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                    rm::Symbol = :SD, rf::Real = 0.0,
                    owa_w::AbstractVector{<:Real} = portfolio.owa_w,)
-    isa(portfolio, Portfolio) ?
-    @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes") :
-    @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+    if isa(portfolio, Portfolio)
+        @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
+    else
+        @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+    end
 
     return calc_risk(portfolio.optimal[type].weights, portfolio.returns; rm = rm, rf = rf,
                      sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
@@ -1402,11 +1404,16 @@ end
 function risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
                            type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                            rm::Symbol = :SD, rf::Real = 0.0,
-                           owa_w = isa(portfolio, Portfolio) ? portfolio.owa_w :
-                                   Vector{Float64}(undef, 0),)
-    isa(portfolio, Portfolio) ?
-    @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes") :
-    @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+                           owa_w = if isa(portfolio, Portfolio)
+                               portfolio.owa_w
+                           else
+                               Vector{Float64}(undef, 0)
+                           end,)
+    if isa(portfolio, Portfolio)
+        @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
+    else
+        @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+    end
 
     return risk_contribution(portfolio.optimal[type].weights, portfolio.returns; rm = rm,
                              rf = rf, sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
@@ -1435,11 +1442,16 @@ end
 function sharpe_ratio(portfolio::AbstractPortfolio;
                       type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                       rm::Symbol = :SD, rf::Real = 0.0,
-                      owa_w = isa(portfolio, Portfolio) ? portfolio.owa_w :
-                              Vector{Float64}(undef, 0),)
-    isa(portfolio, Portfolio) ?
-    @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes") :
-    @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+                      owa_w = if isa(portfolio, Portfolio)
+                          portfolio.owa_w
+                      else
+                          Vector{Float64}(undef, 0)
+                      end,)
+    if isa(portfolio, Portfolio)
+        @assert(type ∈ PortTypes, "type = $type, must be one of $PortTypes")
+    else
+        @assert(type ∈ HCPortTypes, "type = $type, must be one of $HCPortTypes")
+    end
 
     return sharpe_ratio(portfolio.optimal[type].weights, portfolio.mu, portfolio.returns;
                         rm = rm, rf = rf, sigma = portfolio.cov,
