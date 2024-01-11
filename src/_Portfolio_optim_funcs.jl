@@ -10,7 +10,7 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj, type)
     sd_u = portfolio.sd_u
 
     if !(rm == :SD || kelly == :Approx || isfinite(sd_u))
-        (return nothing)
+        return nothing
     end
 
     model = portfolio.model
@@ -18,8 +18,8 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj, type)
     _mv_risk(model, sigma)
 
     if isfinite(sd_u) && type == :Trad
-        (obj == :Sharpe ? @constraint(model, model[:dev] <= sd_u * model[:k]) :
-         @constraint(model, model[:dev] <= sd_u))
+        obj == :Sharpe ? @constraint(model, model[:dev] <= sd_u * model[:k]) :
+        @constraint(model, model[:dev] <= sd_u)
     end
 
     if rm == :SD && type != :RRP
@@ -34,7 +34,7 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     ssd_u = portfolio.ssd_u
 
     if !(rm == :MAD || rm == :SSD || isfinite(mad_u) || isfinite(ssd_u))
-        (return nothing)
+        return nothing
     end
 
     model = portfolio.model
@@ -56,8 +56,8 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
         @expression(model, mad_risk, sum(mad) / T)
 
         if isfinite(mad_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, mad_risk <= 0.5 * mad_u * model[:k]) :
-             @constraint(model, mad_risk <= 0.5 * mad_u))
+            obj == :Sharpe ? @constraint(model, mad_risk <= 0.5 * mad_u * model[:k]) :
+            @constraint(model, mad_risk <= 0.5 * mad_u)
         end
 
         if rm == :MAD
@@ -66,7 +66,7 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     end
 
     if !(rm == :SSD || isfinite(ssd_u))
-        (return nothing)
+        return nothing
     end
 
     @variable(model, sdev)
@@ -75,8 +75,8 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     @expression(model, sdev_risk, sdev / sqrt(T - 1))
 
     if isfinite(ssd_u) && type == :Trad
-        (obj == :Sharpe ? @constraint(model, sdev_risk <= ssd_u * model[:k]) :
-         @constraint(model, sdev_risk <= ssd_u))
+        obj == :Sharpe ? @constraint(model, sdev_risk <= ssd_u * model[:k]) :
+        @constraint(model, sdev_risk <= ssd_u)
     end
 
     if rm == :SSD
@@ -91,7 +91,7 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
     slpm_u = portfolio.slpm_u
 
     if !(rm == :FLPM || rm == :SLPM || isfinite(flpm_u) || isfinite(slpm_u))
-        (return nothing)
+        return nothing
     end
 
     model = portfolio.model
@@ -112,17 +112,16 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
         @expression(model, hist_ret, returns * model[:w])
     end
 
-    if !(obj == :Sharpe)
-        type == :RP
-    end ? @constraint(model, lpm .>= lpm_t * model[:k] .- model[:hist_ret]) :
+    (obj == :Sharpe || type == :RP) ?
+    @constraint(model, lpm .>= lpm_t * model[:k] .- model[:hist_ret]) :
     @constraint(model, lpm .>= lpm_t .- model[:hist_ret])
 
     if rm == :FLPM || isfinite(flpm_u)
         @expression(model, flpm_risk, sum(lpm) / T)
 
         if isfinite(flpm_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, flpm_risk <= flpm_u * model[:k]) :
-             @constraint(model, flpm_risk <= flpm_u))
+            obj == :Sharpe ? @constraint(model, flpm_risk <= flpm_u * model[:k]) :
+            @constraint(model, flpm_risk <= flpm_u)
         end
 
         if rm == :FLPM
@@ -131,7 +130,7 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
     end
 
     if !(rm == :SLPM || isfinite(slpm_u))
-        (return nothing)
+        return nothing
     end
 
     @variable(model, slpm)
@@ -139,8 +138,8 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
     @expression(model, slpm_risk, slpm / sqrt(T - 1))
 
     if isfinite(slpm_u) && type == :Trad
-        (obj == :Sharpe ? @constraint(model, slpm_risk <= slpm_u * model[:k]) :
-         @constraint(model, slpm_risk <= slpm_u))
+        obj == :Sharpe ? @constraint(model, slpm_risk <= slpm_u * model[:k]) :
+        @constraint(model, slpm_risk <= slpm_u)
     end
 
     if rm == :SLPM
@@ -154,7 +153,7 @@ function _wr_setup(portfolio, rm, returns, obj, type)
     wr_u = portfolio.wr_u
 
     if !(rm == :WR || isfinite(wr_u))
-        (return nothing)
+        return nothing
     end
 
     model = portfolio.model
@@ -167,8 +166,8 @@ function _wr_setup(portfolio, rm, returns, obj, type)
     @expression(model, wr_risk, wr)
 
     if isfinite(wr_u) && type == :Trad
-        (obj == :Sharpe ? @constraint(model, -model[:hist_ret] .<= wr_u * model[:k]) :
-         @constraint(model, -model[:hist_ret] .<= wr_u))
+        obj == :Sharpe ? @constraint(model, -model[:hist_ret] .<= wr_u * model[:k]) :
+        @constraint(model, -model[:hist_ret] .<= wr_u)
     end
 
     if rm == :WR
@@ -189,7 +188,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
          isfinite(evar_u) ||
          isfinite(cvar_u) ||
          isfinite(rvar_u))
-        (return nothing)
+        return nothing
     end
 
     model = portfolio.model
@@ -206,8 +205,8 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
         @expression(model, cvar_risk, var + sum(z_var) * invat)
 
         if isfinite(cvar_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, cvar_risk <= cvar_u * model[:k]) :
-             @constraint(model, cvar_risk <= cvar_u))
+            obj == :Sharpe ? @constraint(model, cvar_risk <= cvar_u * model[:k]) :
+            @constraint(model, cvar_risk <= cvar_u)
         end
 
         if rm == :CVaR
@@ -227,8 +226,8 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
         @expression(model, evar_risk, t_evar - z_evar * log(at))
 
         if isfinite(evar_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, evar_risk <= evar_u * model[:k]) :
-             @constraint(model, evar_risk <= evar_u))
+            obj == :Sharpe ? @constraint(model, evar_risk <= evar_u * model[:k]) :
+            @constraint(model, evar_risk <= evar_u)
         end
 
         if rm == :EVaR
@@ -237,7 +236,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     end
 
     if !(rm == :RVaR || isfinite(rvar_u))
-        (return nothing)
+        return nothing
     end
 
     ln_k = portfolio.ln_k
@@ -264,8 +263,8 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     @expression(model, rvar_risk, t_rvar + ln_k * z_rvar + sum(psi_rvar .+ theta_rvar))
 
     if isfinite(rvar_u) && type == :Trad
-        (obj == :Sharpe ? @constraint(model, rvar_risk <= rvar_u * model[:k]) :
-         @constraint(model, rvar_risk <= rvar_u))
+        obj == :Sharpe ? @constraint(model, rvar_risk <= rvar_u * model[:k]) :
+        @constraint(model, rvar_risk <= rvar_u)
     end
 
     if rm == :RVaR
@@ -295,7 +294,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
          isfinite(uci_u) ||
          isfinite(edar_u) ||
          isfinite(rdar_u))
-        (return nothing)
+        return nothing
     end
 
     model = portfolio.model
@@ -314,8 +313,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
         @expression(model, mdd_risk, mdd)
 
         if isfinite(mdd_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, dd[2:end] .<= mdd_u * model[:k]) :
-             @constraint(model, dd[2:end] .<= mdd_u))
+            obj == :Sharpe ? @constraint(model, dd[2:end] .<= mdd_u * model[:k]) :
+            @constraint(model, dd[2:end] .<= mdd_u)
         end
 
         if rm == :MDD
@@ -327,8 +326,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
         @expression(model, add_risk, sum(dd[2:end]) / T)
 
         if isfinite(add_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, add_risk .<= add_u * model[:k]) :
-             @constraint(model, add_risk .<= add_u))
+            obj == :Sharpe ? @constraint(model, add_risk .<= add_u * model[:k]) :
+            @constraint(model, add_risk .<= add_u)
         end
 
         if rm == :ADD
@@ -344,8 +343,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
         @expression(model, cdar_risk, dar + sum(z_dar) * invat)
 
         if isfinite(cdar_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, cdar_risk .<= cdar_u * model[:k]) :
-             @constraint(model, cdar_risk .<= cdar_u))
+            obj == :Sharpe ? @constraint(model, cdar_risk .<= cdar_u * model[:k]) :
+            @constraint(model, cdar_risk .<= cdar_u)
         end
 
         if rm == :CDaR
@@ -359,8 +358,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
         @expression(model, uci_risk, uci / sqrt(T))
 
         if isfinite(uci_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, uci_risk <= uci_u * model[:k]) :
-             @constraint(model, uci_risk <= uci_u))
+            obj == :Sharpe ? @constraint(model, uci_risk <= uci_u * model[:k]) :
+            @constraint(model, uci_risk <= uci_u)
         end
 
         if rm == :UCI
@@ -379,8 +378,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
         @expression(model, edar_risk, t_edar - z_edar * log(at))
 
         if isfinite(edar_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, edar_risk <= edar_u * model[:k]) :
-             @constraint(model, edar_risk <= edar_u))
+            obj == :Sharpe ? @constraint(model, edar_risk <= edar_u * model[:k]) :
+            @constraint(model, edar_risk <= edar_u)
         end
 
         if rm == :EDaR
@@ -389,7 +388,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     end
 
     if !(rm == :RDaR || isfinite(rdar_u))
-        (return nothing)
+        return nothing
     end
 
     ln_k = portfolio.ln_k
@@ -416,8 +415,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     @expression(model, rdar_risk, t_rdar + ln_k * z_rdar + sum(psi_rdar .+ theta_rdar))
 
     if isfinite(rdar_u) && type == :Trad
-        (obj == :Sharpe ? @constraint(model, rdar_risk <= rdar_u * model[:k]) :
-         @constraint(model, rdar_risk <= rdar_u))
+        obj == :Sharpe ? @constraint(model, rdar_risk <= rdar_u * model[:k]) :
+        @constraint(model, rdar_risk <= rdar_u)
     end
 
     if rm == :RDaR
@@ -469,7 +468,7 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
     skurt_u = portfolio.skurt_u
 
     if !(rm == :Kurt || rm == :SKurt || isfinite(kurt_u) || isfinite(skurt_u))
-        (return nothing)
+        return nothing
     end
 
     model = portfolio.model
@@ -510,8 +509,8 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         @expression(model, kurt_risk, t_kurt)
 
         if isfinite(kurt_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, kurt_risk <= kurt_u * model[:k]) :
-             @constraint(model, kurt_risk <= kurt_u))
+            obj == :Sharpe ? @constraint(model, kurt_risk <= kurt_u * model[:k]) :
+            @constraint(model, kurt_risk <= kurt_u)
         end
 
         if rm == :Kurt
@@ -556,8 +555,8 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         @expression(model, skurt_risk, t_skurt)
 
         if isfinite(skurt_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, skurt_risk <= skurt_u * model[:k]) :
-             @constraint(model, skurt_risk <= skurt_u))
+            obj == :Sharpe ? @constraint(model, skurt_risk <= skurt_u * model[:k]) :
+            @constraint(model, skurt_risk <= skurt_u)
         end
 
         if rm == :SKurt
@@ -586,7 +585,7 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
          isfinite(rcvar_u) ||
          isfinite(rtg_u) ||
          isfinite(owa_u))
-        (return nothing)
+        return nothing
     end
 
     onesvec = range(1; stop = 1, length = T)
@@ -608,8 +607,8 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
                     onesvec * transpose(gmda) + gmdb * transpose(onesvec))
 
         if isfinite(gmd_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, gmd_risk <= gmd_u * model[:k]) :
-             @constraint(model, gmd_risk <= gmd_u))
+            obj == :Sharpe ? @constraint(model, gmd_risk <= gmd_u * model[:k]) :
+            @constraint(model, gmd_risk <= gmd_u)
         end
 
         if rm == :GMD
@@ -627,8 +626,8 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
                     onesvec * transpose(rga) + rgb * transpose(onesvec))
 
         if isfinite(rg_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, rg_risk <= rg_u * model[:k]) :
-             @constraint(model, rg_risk <= rg_u))
+            obj == :Sharpe ? @constraint(model, rg_risk <= rg_u * model[:k]) :
+            @constraint(model, rg_risk <= rg_u)
         end
 
         if rm == :RG
@@ -649,8 +648,8 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
                     onesvec * transpose(rcvara) + rcvarb * transpose(onesvec))
 
         if isfinite(rcvar_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, rcvar_risk <= rcvar_u * model[:k]) :
-             @constraint(model, rcvar_risk <= rcvar_u))
+            obj == :Sharpe ? @constraint(model, rcvar_risk <= rcvar_u * model[:k]) :
+            @constraint(model, rcvar_risk <= rcvar_u)
         end
 
         if rm == :RCVaR
@@ -672,8 +671,8 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
                     onesvec * transpose(tga) + tgb * transpose(onesvec))
 
         if isfinite(tg_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, tg_risk <= tg_u * model[:k]) :
-             @constraint(model, tg_risk <= tg_u))
+            obj == :Sharpe ? @constraint(model, tg_risk <= tg_u * model[:k]) :
+            @constraint(model, tg_risk <= tg_u)
         end
 
         if rm == :TG
@@ -699,8 +698,8 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
                     onesvec * transpose(rtga) + rtgb * transpose(onesvec))
 
         if isfinite(rtg_u) && type == :Trad
-            (obj == :Sharpe ? @constraint(model, rtg_risk <= rtg_u * model[:k]) :
-             @constraint(model, rtg_risk <= rtg_u))
+            obj == :Sharpe ? @constraint(model, rtg_risk <= rtg_u * model[:k]) :
+            @constraint(model, rtg_risk <= rtg_u)
         end
 
         if rm == :RTG
@@ -709,7 +708,7 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
     end
 
     if !(rm == :OWA || isfinite(owa_u))
-        (return nothing)
+        return nothing
     end
 
     @variable(model, owa_a[1:T])
@@ -723,8 +722,8 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
                 onesvec * transpose(owa_a) + owa_b * transpose(onesvec))
 
     if isfinite(owa_u) && type == :Trad
-        (obj == :Sharpe ? @constraint(model, owa_risk <= owa_u * model[:k]) :
-         @constraint(model, owa_risk <= owa_u))
+        obj == :Sharpe ? @constraint(model, owa_risk <= owa_u * model[:k]) :
+        @constraint(model, owa_risk <= owa_u)
     end
 
     if rm == :OWA
@@ -1046,15 +1045,14 @@ function _setup_linear_constraints(portfolio, obj, type)
     B = portfolio.b_vec_ineq
 
     if (isempty(A) || isempty(B))
-        (return nothing)
+        return nothing
     end
 
     model = portfolio.model
 
     # Linear weight constraints.
-    if !(obj == :Sharpe)
-        type == :RP
-    end ? @constraint(model, A * model[:w] .- B * model[:k] .>= 0) :
+    (obj == :Sharpe || type == :RP) ?
+    @constraint(model, A * model[:w] .- B * model[:k] .>= 0) :
     @constraint(model, A * model[:w] .- B .>= 0)
 
     return nothing
@@ -1064,7 +1062,7 @@ function _setup_min_number_effective_assets(portfolio, obj)
     mnea = portfolio.min_number_effective_assets
 
     if (mnea < 1)
-        (return nothing)
+        return nothing
     end
 
     model = portfolio.model
@@ -1082,7 +1080,7 @@ function _setup_tracking_err(portfolio, returns, obj, T)
     tracking_err = portfolio.tracking_err
 
     if isinf(tracking_err)
-        (return nothing)
+        return nothing
     end
 
     kind_tracking_err = portfolio.kind_tracking_err
@@ -1100,7 +1098,7 @@ function _setup_tracking_err(portfolio, returns, obj, T)
     end
 
     if !(tracking_err_flag)
-        (return nothing)
+        return nothing
     end
 
     model = portfolio.model
@@ -1124,7 +1122,7 @@ function _setup_turnover(portfolio, N, obj)
     turnover_weights = portfolio.turnover_weights
 
     if (isinf(turnover) || isempty(turnover_weights))
-        (return nothing)
+        return nothing
     end
 
     model = portfolio.model

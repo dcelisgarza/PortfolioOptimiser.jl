@@ -44,13 +44,17 @@ returns = Matrix(returns[!, 2:end]);
 asset_classes = DataFrame(:Assets => assets)
 cor_settings = CorSettings(;
                            estimation = CorEstSettings(;
-                                                       estimator = CovarianceEstimation.AnalyticalNonlinearShrinkage(),                                                       ## `target_ret` is used as the return threshold for classifying returns as
-                                                       ## sufficiently bad as to be considered unappealing, and thus taken into
-                                                       ## account when computing the semi covariance. The default is 0, but we
-                                                       ## can make it any number. A good choice is to use the daily risk-free 
-                                                       ## rate, because if an asset returns on average less than a bond, then 
-                                                       ## you'd be better off buying bonds because they're both less risky and
-                                                       ## more profitable than the asset.
+                                                       estimator = CovarianceEstimation.AnalyticalNonlinearShrinkage(),
+                                                       ## `target_ret` is used as the return threshold for 
+                                                       ## classifying returns as sufficiently bad as to be
+                                                       ## considered unappealing, and thus taken into 
+                                                       ## account when computing the semi covariance. The 
+                                                       ## default is 0, but we can make it any number. A 
+                                                       ## good choice is to use the daily risk-free rate,
+                                                       ## because if an asset returns on average less than
+                                                       ## a bond, then you'd be better off buying bonds
+                                                       ## because they're both less risky and more profitable
+                                                       ## than the asset.
                                                        ## target_ret = 1.0329^(1 / 252) - 1,
                                                        ),)
 for method in (:Pearson, :Semi_Pearson, :Gerber2)
@@ -83,11 +87,16 @@ asset_classes
 
 constraints = DataFrame(
                         ## Enable the constraint.
-                        :Enabled => [true],                        ## We are constraining a single asset.
-                        :Type => ["Assets"],                        ## The asset we're constraining.
-                        :Position => [:GOOG],                        ## Greater than.
-                        :Sign => [">="],                        ## Lower bound of the weight of the asset.
-                        :Weight => [0.03],                        ## The following categories are not used for this
+                        :Enabled => [true],
+                        ## We are constraining a single asset.
+                        :Type => ["Assets"],
+                        ## The asset we're constraining.
+                        :Position => [:GOOG],
+                        ## Greater than.
+                        :Sign => [">="],
+                        ## Lower bound of the weight of the asset.
+                        :Weight => [0.03],
+                        ## The following categories are not used for this
                         ## example.
                         :Class_Set => [""], :Relative_Type => [""],
                         :Relative_Class_Set => [""], :Relative_Position => [""],
@@ -107,9 +116,12 @@ B
 
 # Now say we also don't want our portfolio to be more than 10 % `GOOG`. Here's how we can do so. Note how the only things that change are `:Sign` and `:Weight`.
 
-constraints = DataFrame(:Enabled => [true], :Type => ["Assets"], :Position => [:GOOG],                        ## Less than or equal to.
-                        :Sign => ["<="],                        ## Upper bound of the weight of the asset.
-                        :Weight => [0.1],                        ## The following categories are not used for this
+constraints = DataFrame(:Enabled => [true], :Type => ["Assets"], :Position => [:GOOG],
+                        ## Less than or equal to.
+                        :Sign => ["<="],
+                        ## Upper bound of the weight of the asset.
+                        :Weight => [0.1],
+                        ## The following categories are not used for this
                         ## example.
                         :Class_Set => [""], :Relative_Type => [""],
                         :Relative_Class_Set => [""], :Relative_Position => [""],
@@ -129,20 +141,27 @@ B
 
 # By substituting these values into the definition of the linear constraints above, removing all zero values, and rearranging, ``-w_{\mathrm{goog}} \geq -0.1 \to 0.1 \geq w_{\mathrm{goog}}``. This sign inversion works the same for every constraint type, if the constraint denotes an upper bound (the corresponding value in `:Sign` is `<=`), both sides of the constraint are multiplied by `-1`.
 
-# ### Constraining the weight contribution of a single asset with respect to another one
+# ### Constraining the weight contribution of a single asset relative to another one
 
 # We can also constrain an asset with respect to another one. For example, say we wish to ensure `:AAPL` contributes at least a factor of what `:T` contributes. Mathematically, the constraint can be written as ``w_{\mathrm{aapl}} \geq f w_{\mathrm{t}}``, where ``f`` is the factor. Here we use `0.5` as the factor.
 
-constraints = DataFrame(:Enabled => [true],                        ## We want to constrain an asset.
-                        :Type => ["Assets"],                        ## The asset we want to constrain.
-                        :Position => [:AAPL],                        ## The the weight of the asset should 
+constraints = DataFrame(:Enabled => [true],
+                        ## We want to constrain an asset.
+                        :Type => ["Assets"],
+                        ## The asset we want to constrain.
+                        :Position => [:AAPL],
+                        ## The the weight of the asset should 
                         ## be greater than or equal to something else.
-                        :Sign => [">="],                        ## Should be greater than another asset.
-                        :Relative_Type => ["Assets"],                        ## The name of the other asset.
-                        :Relative_Position => [:T],                        ## The factor by which to multiply the
+                        :Sign => [">="],
+                        ## Should be greater than another asset.
+                        :Relative_Type => ["Assets"],
+                        ## The name of the other asset.
+                        :Relative_Position => [:T],
+                        ## The factor by which to multiply the
                         ## weight of the other asset.
-                        :Factor => [0.5],                        ## The following categories are not used 
-                        ## for this example.
+                        :Factor => [0.5],
+                        ## The following categories are not used 
+                        ## in this example.
                         :Weight => [""], :Class_Set => [""], :Relative_Class_Set => [""])
 
 A, B = asset_constraints(constraints, asset_classes);
@@ -157,16 +176,23 @@ B
 
 # This pattern of `A` and `B` is the case for all relative constraints. The `anchor` asset/class will have its coeficient set to 1, the relative asset/class will be set to `-f`, and `B` will be 0. If the sign is `<=`, the values will be multiplied by -1. To illustrate this, we will constrain `:AMZN` to contribute at most twice of what `:GM` does.
 
-constraints = DataFrame(:Enabled => [true],                        ## We want to constrain an asset.
-                        :Type => ["Assets"],                        ## The asset we want to constrain.
-                        :Position => [:AMZN],                        ## The the weight of the asset should 
+constraints = DataFrame(:Enabled => [true],
+                        ## We want to constrain an asset.
+                        :Type => ["Assets"],
+                        ## The asset we want to constrain.
+                        :Position => [:AMZN],
+                        ## The the weight of the asset should 
                         ## be less than or equal to something else.
-                        :Sign => ["<="],                        ## Should be greater than another asset.
-                        :Relative_Type => ["Assets"],                        ## The name of the other asset.
-                        :Relative_Position => [:GM],                        ## The factor by which to multiply the
+                        :Sign => ["<="],
+                        ## Should be greater than another asset.
+                        :Relative_Type => ["Assets"],
+                        ## The name of the other asset.
+                        :Relative_Position => [:GM],
+                        ## The factor by which to multiply the
                         ## weight of the other asset.
-                        :Factor => [2],                        ## The following categories are not used 
-                        ## for this example.
+                        :Factor => [2],
+                        ## The following categories are not used
+                        ## in this example.
                         :Weight => [""], :Class_Set => [""], :Relative_Class_Set => [""])
 
 A, B = asset_constraints(constraints, asset_classes);
@@ -178,3 +204,7 @@ B
 # See how the coefficient of `:AMZN` is `-1` while the one for `:GM` is `2`. When substituting into the linear constraint definition, noting that `B` is equal to `0`, we get ``-w_{\mathrm{amzn}} + 2 w_{\mathrm{gm}} \geq 0 \to 2 w_{\mathrm{gm}} \geq w_{\mathrm{amzn}}.``
 
 hcat(asset_classes[!, :Assets], DataFrame(:A_t => vec(A)))
+
+# ### Constraining the weight contribution of a single asset relative to a class of assets
+
+# We can also constrain a single asset relative to a whole asset class. This is essentially the same as the previous case, but instead of having a single relative asset, but the sum of a class of assets.
