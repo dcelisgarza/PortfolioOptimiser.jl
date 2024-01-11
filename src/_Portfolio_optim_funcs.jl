@@ -444,7 +444,7 @@ function block_vec_pq(A, p, q)
     mp, nq = size(A)
 
     if !(mod(mp, p) == 0 && mod(nq, p) == 0)
-        (throw(DimensionMismatch("size(A) = $(size(A)), must be integer multiples of (p, q) = ($p, $q)")))
+        throw(DimensionMismatch("size(A) = $(size(A)), must be integer multiples of (p, q) = ($p, $q)"))
     end
 
     m = Int(mp / p)
@@ -783,7 +783,7 @@ function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
     model = portfolio.model
 
     # Return uncertainy sets.
-    if (kelly == :Approx || (u_cov != :Box && u_cov != :Ellipse))
+    if kelly == :Approx || (u_cov != :Box && u_cov != :Ellipse)
         _mv_risk(model, sigma)
     end
 
@@ -851,8 +851,12 @@ function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
         @expression(model, risk, model[:dev_risk])
     end
 
-    return obj == :Sharpe && (kelly != :None ? @constraint(model, model[:risk] <= 1) :
-                              @constraint(model, ret - rf * model[:k] >= 1))
+    if obj == :Sharpe
+        (kelly != :None ? @constraint(model, model[:risk] <= 1) :
+         @constraint(model, ret - rf * model[:k] >= 1))
+    end
+
+    return nothing
 end
 
 function _setup_sharpe_k(model, obj)
@@ -868,7 +872,7 @@ function _setup_risk_budget(portfolio)
         portfolio.risk_budget = ()
     else
         if !isapprox(sum(portfolio.risk_budget), one(eltype(portfolio.risk_budget)))
-            (portfolio.risk_budget .= portfolio.risk_budget)
+            portfolio.risk_budget .= portfolio.risk_budget
         end
     end
     @variable(model, k >= 0)
@@ -1044,7 +1048,7 @@ function _setup_linear_constraints(portfolio, obj, type)
     A = portfolio.a_mtx_ineq
     B = portfolio.b_vec_ineq
 
-    if (isempty(A) || isempty(B))
+    if isempty(A) || isempty(B)
         return nothing
     end
 
@@ -1061,7 +1065,7 @@ end
 function _setup_min_number_effective_assets(portfolio, obj)
     mnea = portfolio.min_number_effective_assets
 
-    if (mnea < 1)
+    if mnea < 1
         return nothing
     end
 
@@ -1097,7 +1101,7 @@ function _setup_tracking_err(portfolio, returns, obj, T)
         tracking_err_flag = true
     end
 
-    if !(tracking_err_flag)
+    if !tracking_err_flag
         return nothing
     end
 
@@ -1121,7 +1125,7 @@ function _setup_turnover(portfolio, N, obj)
     turnover = portfolio.turnover
     turnover_weights = portfolio.turnover_weights
 
-    if (isinf(turnover) || isempty(turnover_weights))
+    if isinf(turnover) || isempty(turnover_weights)
         return nothing
     end
 
@@ -1154,9 +1158,8 @@ end
 function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l)
     model = portfolio.model
     if obj == :Sharpe
-        if (type == :Trad && class == :Classic || type == :WC)
-            kelly != :None
-        end ? @objective(model, Max, model[:ret]) : @objective(model, Min, model[:risk])
+        ((type == :Trad && class == :Classic || type == :WC) && kelly != :None) ?
+        @objective(model, Max, model[:ret]) : @objective(model, Min, model[:risk])
     elseif obj == :Min_Risk
         @objective(model, Min, model[:risk])
     elseif obj == :Utility
@@ -1266,7 +1269,7 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
         tmp * String(type)
     end
 
-    if (type == :Trad || type == :RP) && rm ∈ (:EVaR, :EDaR, :RVaR, :RDaR)
+    if type ∈ (:Trad, :RP) && rm ∈ (:EVaR, :EDaR, :RVaR, :RDaR)
         z_key = "z_" * lowercase(string(rm))
         z_key2 = Symbol(strtype * "_" * z_key)
         portfolio.z[z_key2] = value(portfolio.model[Symbol(z_key)])

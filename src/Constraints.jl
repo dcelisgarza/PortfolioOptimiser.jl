@@ -319,10 +319,8 @@ function asset_views(views::DataFrame, asset_classes::DataFrame)
     for row in eachrow(views)
         valid = false
 
-        if !(!row["Enabled"])
-            if row["Return"] == ""
-                continue
-            end
+        if !row["Enabled"] || row["Return"] == ""
+            continue
         end
 
         if row["Sign"] == ">="

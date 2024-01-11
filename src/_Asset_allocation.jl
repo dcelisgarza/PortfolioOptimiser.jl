@@ -134,10 +134,10 @@ end
 function _lp_sub_allocation!(portfolio, key, label, tickers, weights, latest_prices,
                              investment, string_names)
     if isempty(tickers)
-        (return String[], Vector{eltype(latest_prices)}(undef, 0),
-                Vector{eltype(latest_prices)}(undef, 0),
-                Vector{eltype(latest_prices)}(undef, 0),
-                Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices)))
+        return String[], Vector{eltype(latest_prices)}(undef, 0),
+               Vector{eltype(latest_prices)}(undef, 0),
+               Vector{eltype(latest_prices)}(undef, 0),
+               Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices))
     end
 
     portfolio.alloc_model = JuMP.Model()
@@ -223,10 +223,10 @@ end
 
 function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, rounding)
     if isempty(tickers)
-        (return String[], Vector{eltype(latest_prices)}(undef, 0),
-                Vector{eltype(latest_prices)}(undef, 0),
-                Vector{eltype(latest_prices)}(undef, 0),
-                Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices)))
+        return String[], Vector{eltype(latest_prices)}(undef, 0),
+               Vector{eltype(latest_prices)}(undef, 0),
+               Vector{eltype(latest_prices)}(undef, 0),
+               Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices))
     end
 
     idx = sortperm(weights; rev = true)

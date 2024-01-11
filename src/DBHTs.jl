@@ -192,7 +192,7 @@ function distance_wei(L::AbstractMatrix{<:Real})
 
             # isempty: all nodes reached
             # isinf: some nodes cannot be reached
-            if (isempty(minD) || isinf(minD))
+            if isempty(minD) || isinf(minD)
                 break
             end
 
@@ -439,7 +439,9 @@ function AdjCliq(A::AbstractMatrix{<:Real}, CliqList::AbstractMatrix{<:Real},
         adjacent = CliqRoot[vec(sum(Indi; dims = 2)) .== 2]
         Adj[adjacent, n] .= 1
     end
-    return Adj = Adj + transpose(Adj)
+    Adj = Adj + transpose(Adj)
+
+    return Adj
 end
 
 """

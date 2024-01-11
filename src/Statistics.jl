@@ -27,10 +27,8 @@ function mutualinfo(A::AbstractMatrix{<:Real})
     p_i = vec(sum(A; dims = 2))
     p_j = vec(sum(A; dims = 1))
 
-    if !(length(p_i) == 1)
-        if length(p_j) == 1
-            (return 0.0)
-        end
+    if length(p_i) == 1 || length(p_j) == 1
+        return zero(eltype(p_j))
     end
 
     mask = findall(A .!= 0)
@@ -136,11 +134,11 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
                 mut_ixy /= min(ex, ey)
             end
 
-            if (abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < 0.0)
-                (mut_ixy = 0.0)
+            if abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < 0.0
+                mut_ixy = 0.0
             end
-            if (abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < 0.0)
-                (var_ixy = 0.0)
+            if abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < 0.0
+                var_ixy = 0.0
             end
 
             mut_mtx[i, j] = mut_ixy
@@ -225,15 +223,14 @@ function covgerber0(x, settings::GerberSettings = GerberSettings(;))
             neg = 0
             pos = 0
             for k in 1:T
-                if ((x[k, i] >= threshold * std_vec[i]) &&
-                    (x[k, j] >= threshold * std_vec[j])) ||
-                   ((x[k, i] <= -threshold * std_vec[i]) &&
-                    (x[k, j] <= -threshold * std_vec[j]))
+                if (x[k, i] >= threshold * std_vec[i] && x[k, j] >= threshold * std_vec[j]) ||
+                   (x[k, i] <= -threshold * std_vec[i] &&
+                    x[k, j] <= -threshold * std_vec[j])
                     pos += 1
-                elseif ((x[k, i] >= threshold * std_vec[i]) &&
-                        (x[k, j] <= -threshold * std_vec[j])) ||
-                       ((x[k, i] <= -threshold * std_vec[i]) &&
-                        (x[k, j] >= threshold * std_vec[j]))
+                elseif (x[k, i] >= threshold * std_vec[i] &&
+                        x[k, j] <= -threshold * std_vec[j]) ||
+                       (x[k, i] <= -threshold * std_vec[i] &&
+                        x[k, j] >= threshold * std_vec[j])
                     neg += 1
                 end
             end
@@ -263,18 +260,17 @@ function covgerber1(x, settings::GerberSettings = GerberSettings(;))
             pos = 0
             nn = 0
             for k in 1:T
-                if ((x[k, i] >= threshold * std_vec[i]) &&
-                    (x[k, j] >= threshold * std_vec[j])) ||
-                   ((x[k, i] <= -threshold * std_vec[i]) &&
-                    (x[k, j] <= -threshold * std_vec[j]))
+                if (x[k, i] >= threshold * std_vec[i] && x[k, j] >= threshold * std_vec[j]) ||
+                   (x[k, i] <= -threshold * std_vec[i] &&
+                    x[k, j] <= -threshold * std_vec[j])
                     pos += 1
-                elseif ((x[k, i] >= threshold * std_vec[i]) &&
-                        (x[k, j] <= -threshold * std_vec[j])) ||
-                       ((x[k, i] <= -threshold * std_vec[i]) &&
-                        (x[k, j] >= threshold * std_vec[j]))
+                elseif (x[k, i] >= threshold * std_vec[i] &&
+                        x[k, j] <= -threshold * std_vec[j]) ||
+                       (x[k, i] <= -threshold * std_vec[i] &&
+                        x[k, j] >= threshold * std_vec[j])
                     neg += 1
-                elseif (abs(x[k, i]) < threshold * std_vec[i] &&
-                        abs(x[k, j]) < threshold * std_vec[j])
+                elseif abs(x[k, i]) < threshold * std_vec[i] &&
+                       abs(x[k, j]) < threshold * std_vec[j]
                     nn += 1
                 end
             end
@@ -433,7 +429,7 @@ function posdef_fix!(mtx::AbstractMatrix,
     args = settings.genfunc.args
     kwargs = settings.genfunc.kwargs
 
-    if (method == :None || isposdef(mtx))
+    if method == :None || isposdef(mtx)
         return nothing
     end
 
@@ -523,7 +519,7 @@ function denoise_cov(mtx::AbstractMatrix, q::Real,
     method = settings.method
 
     if method == :None
-        (return mtx)
+        return mtx
     end
 
     alpha = settings.alpha
@@ -1537,15 +1533,15 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
 end
 
 function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;                                   # Black Litterman
-                                   F::Union{AbstractMatrix, Nothing} = nothing,
-                                   B::Union{AbstractMatrix, Nothing} = nothing,
-                                   P::Union{AbstractMatrix, Nothing} = nothing,
+                                   F::Union{AbstractMatrix, Nothing}   = nothing,
+                                   B::Union{AbstractMatrix, Nothing}   = nothing,
+                                   P::Union{AbstractMatrix, Nothing}   = nothing,
                                    P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                   Q::Union{AbstractVector, Nothing} = nothing,
+                                   Q::Union{AbstractVector, Nothing}   = nothing,
                                    Q_f::Union{AbstractVector, Nothing} = nothing,                                   # Settings
-                                   cov_settings::CovSettings = CovSettings(;),
-                                   mu_settings::MuSettings = MuSettings(;),
-                                   bl_settings::BLSettings = BLSettings(;),)
+                                   cov_settings::CovSettings           = CovSettings(;),
+                                   mu_settings::MuSettings             = MuSettings(;),
+                                   bl_settings::BLSettings             = BLSettings(;),)
     asset_tuple = (!isnothing(P), !isnothing(Q))
     any_asset_provided = any(asset_tuple)
     all_asset_provided = all(asset_tuple)
@@ -1636,28 +1632,35 @@ end
 ```julia
 black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
                             Q::AbstractVector;
-                            w::AbstractVector = Vector{Float64}(undef, 0),    # cov_mtx
-                            cov_args::Tuple = (),
-                            cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(;
-                                                                                      corrected = true),
-                            cov_func::Function = cov, cov_kwargs::NamedTuple = (;),
-                            cov_method::Symbol = :Full,
-                            cov_weights::Union{AbstractWeights, Nothing} = nothing,
-                            custom_cov::Union{AbstractMatrix, Nothing} = nothing,
-                            gs_threshold::Real = portfolio.gs_threshold,
-                            jlogo::Bool = false, posdef_args::Tuple = (),
-                            posdef_fix::Symbol = :Nearest, posdef_func::Function = x -> x,
-                            posdef_kwargs::NamedTuple = (;), std_args::Tuple = (),
-                            std_func::Function = std, std_kwargs::NamedTuple = (;),
+                            w::AbstractVector                               = Vector{Float64}(undef, 0),    # cov_mtx
+                            cov_args::Tuple                                 = (),
+                            cov_est::CovarianceEstimator                    = StatsBase.SimpleCovariance(; corrected = true),
+                            cov_func::Function                              = cov,
+                            cov_kwargs::NamedTuple                          = (;),
+                            cov_method::Symbol                              = :Full,
+                            cov_weights::Union{AbstractWeights, Nothing}    = nothing,
+                            custom_cov::Union{AbstractMatrix, Nothing}      = nothing,
+                            gs_threshold::Real                              = portfolio.gs_threshold,
+                            jlogo::Bool                                     = false,
+                            posdef_args::Tuple                              = (),
+                            posdef_fix::Symbol                              = :Nearest,
+                            posdef_func::Function                           = x -> x,
+                            posdef_kwargs::NamedTuple                       = (;),
+                            std_args::Tuple                                 = (),
+                            std_func::Function                              = std,
+                            std_kwargs::NamedTuple                          = (;),
                             target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,    # mean_vec
-                            custom_mu::Union{AbstractVector, Nothing} = nothing,
-                            mean_args::Tuple = (), mean_func::Function = mean,
-                            mean_kwargs::NamedTuple = (;),
-                            mkt_ret::Union{AbstractVector, Nothing} = nothing,
-                            mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-                            mu_weights::Union{AbstractWeights, Nothing} = nothing,    # Black Litterman
-                            delta::Union{Real, Nothing} = nothing, eq::Bool = true,
-                            rf::Real = 0.0,)
+                            custom_mu::Union{AbstractVector, Nothing}       = nothing,
+                            mean_args::Tuple                                = (),
+                            mean_func::Function                             = mean,
+                            mean_kwargs::NamedTuple                         = (;),
+                            mkt_ret::Union{AbstractVector, Nothing}         = nothing,
+                            mu_target::Symbol                               = :GM,
+                            mu_method::Symbol                               = :Default,
+                            mu_weights::Union{AbstractWeights, Nothing}     = nothing,    # Black Litterman
+                            delta::Union{Real, Nothing}                     = nothing,
+                            eq::Bool                                        = true,
+                            rf::Real                                        = 0.0,)
 ```
 """
 function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
@@ -1788,16 +1791,16 @@ black_litterman_factor_satistics!(portfolio::AbstractPortfolio;
 ```
 """
 function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
-                                           w::AbstractVector = Vector{Float64}(undef, 0);                                           # Black Litterman
-                                           B::Union{DataFrame, Nothing} = nothing,
-                                           P::Union{AbstractMatrix, Nothing} = nothing,
+                                           w::AbstractVector                   = Vector{Float64}(undef, 0);                                           # Black Litterman
+                                           B::Union{DataFrame, Nothing}        = nothing,
+                                           P::Union{AbstractMatrix, Nothing}   = nothing,
                                            P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                           Q::Union{AbstractVector, Nothing} = nothing,
+                                           Q::Union{AbstractVector, Nothing}   = nothing,
                                            Q_f::Union{AbstractVector, Nothing} = nothing,                                           # Settings
                                            loadings_settings::LoadingsSettings = LoadingsSettings(;),
-                                           cov_settings::CovSettings = CovSettings(;),
-                                           mu_settings::MuSettings = MuSettings(;),
-                                           bl_settings::BLSettings = BLSettings(;),)
+                                           cov_settings::CovSettings           = CovSettings(;),
+                                           mu_settings::MuSettings             = MuSettings(;),
+                                           bl_settings::BLSettings             = BLSettings(;),)
     returns = portfolio.returns
     F = portfolio.f_returns
 
