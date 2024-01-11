@@ -589,21 +589,27 @@ function _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, l
     return nothing
 end
 
-function opt_port!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD,
-                   obj::Symbol = :Min_Risk,
-                   owa_w_o::AbstractVector{<:Real} = portfolio.owa_w,
-                   max_num_assets_kurt_o::Integer = portfolio.max_num_assets_kurt,
-                   kelly::Symbol = :None, rm_o::Symbol = rm, obj_o::Symbol = obj,
-                   kelly_o::Symbol = kelly, rf::Real = 0.0, l::Real = 2.0, l_o::Real = l,
-                   near_opt::Bool = false, near_opt_o::Bool = near_opt,
-                   M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
-                   M_o::Integer = M, cluster::Bool = true, linkage::Symbol = :single,
-                   k = cluster ? 0 : portfolio.k,
+function opt_port!(portfolio::HCPortfolio; type::Symbol = :HRP, cluster::Bool = true,
+                   linkage::Symbol = :single, k::Integer = cluster ? 0 : portfolio.k,
                    max_k::Int = ceil(Int, sqrt(size(portfolio.returns, 2))),
-                   branchorder = :optimal, dbht_method = :Unique, max_iter = 100,
-                   asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
-                                        calc_kurt = rm in (:Kurt, :SKurt) ? true : false,),
-                   asset_stat_kwargs_o = asset_stat_kwargs, save_opt_params = true,)
+                   branchorder::Symbol = :optimal, dbht_method::Symbol = :Unique,
+                   max_iter::Integer = 100,
+                   owa_w_o::AbstractVector{<:Real} = portfolio.owa_w, rm::Symbol = :SD,
+                   rm_o::Symbol = rm, kelly::Symbol = :None, kelly_o::Symbol = kelly,
+                   obj::Symbol = :Sharpe, obj_o::Symbol = obj, rf::Real = 0.0,
+                   l::Real = 2.0, l_o::Real = l, near_opt::Bool = false,
+                   near_opt_o::Bool = near_opt,
+                   M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+                   M_o::Integer = M,
+                   max_num_assets_kurt_o::Integer = portfolio.max_num_assets_kurt,
+                   asset_stat_kwargs::NamedTuple = (; calc_mu = false, calc_cov = false,
+                                                    calc_kurt = if rm in (:Kurt, :SKurt)
+                                                        true
+                                                    else
+                                                        false
+                                                    end,),
+                   asset_stat_kwargs_o::NamedTuple = asset_stat_kwargs,
+                   save_opt_params = true,)
     @smart_assert(type in HCPortTypes)
     @smart_assert(rm in HCRiskMeasures)
     @smart_assert(obj in HCObjFuncs)

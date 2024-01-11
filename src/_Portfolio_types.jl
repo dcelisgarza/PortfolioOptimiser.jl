@@ -252,17 +252,22 @@ $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer pro
 """
 mutable struct Portfolio{
                          # Portfolio characteristics
-                         ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tretf, l,                         # Risk parameters
-                         msvt, lpmt, ai, a, as, bi, b, bs, k, mnak,                         # Benchmark constraints
-                         to, tobw, kte, te, rbi, bw, blbw,                         # Risk and return constraints
+                         ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tretf, l,
+                         # Risk parameters
+                         msvt, lpmt, ai, a, as, bi, b, bs, k, mnak,
+                         # Benchmark constraints
+                         to, tobw, kte, te, rbi, bw, blbw,
+                         # Risk and return constraints
                          ami, bvi, rbv, ler, ud, umad, usd, ucvar, uwr, uflpm, uslpm, umd,
                          uad, ucdar, uuci, uevar, uedar, urvar, urdar, uk, usk, ugmd, ur,
-                         urcvar, utg, urtg, uowa,                         # Cusom OWA weights
+                         urcvar, utg, urtg, uowa,
+                         # Cusom OWA weights
                          wowa,
                          # Optimisation model inputs
                          tmu, tcov, tkurt, tskurt, tl2, ts2, tmuf, tcovf, tmufm, tcovfm,
                          tmubl, tcovbl, tmublf, tcovblf, trfm, tcovl, tcovu, tcovmu, tcovs,
-                         tdmu, tkmu, tks, topt, tz, tlim, tfront, tsolv, tf, toptpar, tmod,                         # Allocation
+                         tdmu, tkmu, tks, topt, tz, tlim, tfront, tsolv, tf, toptpar, tmod,
+                         # Allocation
                          tlp, taopt, tasolv, taoptpar, taf, tamod} <: AbstractPortfolio
     # Portfolio characteristics
     assets::ast
@@ -507,24 +512,26 @@ $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer pro
 [^jLoGo]:
     [Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016). Parsimonious modeling with information filtering networks. Physical Review E, 94(6), 062306.](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.94.062306)
 """
-function Portfolio(;                   # Portfolio characteristics
-                   prices::TimeArray                                 = TimeArray(TimeType[], []),
-                   returns::DataFrame                                = DataFrame(),
-                   ret::AbstractMatrix{<:Real}                       = Matrix{Float64}(undef, 0, 0),
-                   timestamps::AbstractVector                        = Vector{Date}(undef, 0),
-                   assets::AbstractVector                            = Vector{String}(undef, 0),
-                   short::Bool                                       = false,
-                   short_u::Real                                     = 0.2,
-                   long_u::Real                                      = 1.0,
-                   min_number_effective_assets::Integer              = 0,
-                   max_number_assets::Integer                        = 0,
-                   max_number_assets_factor::Real                    = 100_000.0,
-                   f_prices::TimeArray                               = TimeArray(TimeType[], []),
-                   f_returns::DataFrame                              = DataFrame(),
-                   f_ret::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   f_timestamps::AbstractVector                      = Vector{Date}(undef, 0),
-                   f_assets::AbstractVector                          = Vector{String}(undef, 0),
-                   loadings::AbstractMatrix{<:Real}                  = Matrix{Float64}(undef, 0, 0),                   # Risk parameters
+function Portfolio(;
+                   # Portfolio characteristics
+                   prices::TimeArray                    = TimeArray(TimeType[], []),
+                   returns::DataFrame                   = DataFrame(),
+                   ret::AbstractMatrix{<:Real}          = Matrix{Float64}(undef, 0, 0),
+                   timestamps::AbstractVector           = Vector{Date}(undef, 0),
+                   assets::AbstractVector               = Vector{String}(undef, 0),
+                   short::Bool                          = false,
+                   short_u::Real                        = 0.2,
+                   long_u::Real                         = 1.0,
+                   min_number_effective_assets::Integer = 0,
+                   max_number_assets::Integer           = 0,
+                   max_number_assets_factor::Real       = 100_000.0,
+                   f_prices::TimeArray                  = TimeArray(TimeType[], []),
+                   f_returns::DataFrame                 = DataFrame(),
+                   f_ret::AbstractMatrix{<:Real}        = Matrix{Float64}(undef, 0, 0),
+                   f_timestamps::AbstractVector         = Vector{Date}(undef, 0),
+                   f_assets::AbstractVector             = Vector{String}(undef, 0),
+                   loadings::AbstractMatrix{<:Real}     = Matrix{Float64}(undef, 0, 0),
+                   # Risk parameters
                    msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
                    lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
                    alpha_i::Real                                     = 0.0001,
@@ -534,76 +541,67 @@ function Portfolio(;                   # Portfolio characteristics
                    beta::Real                                        = alpha,
                    b_sim::Integer                                    = a_sim,
                    kappa::Real                                       = 0.3,
-                   max_num_assets_kurt::Integer                      = 0,                   # Benchmark constraints
-                   turnover::Real                                    = Inf,
-                   turnover_weights::AbstractVector{<:Real}          = Vector{Float64}(undef, 0),
-                   kind_tracking_err::Symbol                         = :Weights,
-                   tracking_err::Real                                = Inf,
-                   tracking_err_returns::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
-                   tracking_err_weights::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
-                   bl_bench_weights::AbstractVector{<:Real}          = Vector{Float64}(undef, 0),                   # Risk and return constraints
-                   a_mtx_ineq::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
-                   b_vec_ineq::AbstractVector{<:Real}                = Vector{Float64}(undef, 0),
-                   risk_budget::AbstractVector{<:Real}               = Vector{Float64}(undef, 0),                   # Bounds constraints
-                   mu_l::Real                                        = Inf,
-                   sd_u::Real                                        = Inf,
-                   mad_u::Real                                       = Inf,
-                   ssd_u::Real                                       = Inf,
-                   cvar_u::Real                                      = Inf,
-                   wr_u::Real                                        = Inf,
-                   flpm_u::Real                                      = Inf,
-                   slpm_u::Real                                      = Inf,
-                   mdd_u::Real                                       = Inf,
-                   add_u::Real                                       = Inf,
-                   cdar_u::Real                                      = Inf,
-                   uci_u::Real                                       = Inf,
-                   evar_u::Real                                      = Inf,
-                   edar_u::Real                                      = Inf,
-                   rvar_u::Real                                      = Inf,
-                   rdar_u::Real                                      = Inf,
-                   kurt_u::Real                                      = Inf,
-                   skurt_u::Real                                     = Inf,
-                   gmd_u::Real                                       = Inf,
-                   rg_u::Real                                        = Inf,
-                   rcvar_u::Real                                     = Inf,
-                   tg_u::Real                                        = Inf,
-                   rtg_u::Real                                       = Inf,
-                   owa_u::Real                                       = Inf,                   # Custom OWA weights
-                   owa_w::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),                   # Model statistics
-                   mu::AbstractVector                                = Vector{Float64}(undef, 0),
-                   cov::AbstractMatrix{<:Real}                       = Matrix{Float64}(undef, 0, 0),
-                   kurt::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
-                   skurt::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   mu_f::AbstractVector{<:Real}                      = Vector{Float64}(undef, 0),
-                   cov_f::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   mu_fm::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
-                   cov_fm::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
-                   mu_bl::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
-                   cov_bl::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
-                   mu_bl_fm::AbstractVector{<:Real}                  = Vector{Float64}(undef, 0),
-                   cov_bl_fm::AbstractMatrix{<:Real}                 = Matrix{Float64}(undef, 0, 0),
-                   returns_fm::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),                   # Inputs of Worst Case Optimization Models
-                   cov_l::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   cov_u::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   cov_mu::AbstractMatrix{<:Real}                    = Diagonal{Float64}(undef, 0),
-                   cov_sigma::AbstractMatrix{<:Real}                 = Diagonal{Float64}(undef, 0),
-                   d_mu::AbstractVector{<:Real}                      = Vector{Float64}(undef, 0),
-                   k_mu::Real                                        = Inf,
-                   k_sigma::Real                                     = Inf,                   # Optimal portfolios
-                   optimal::AbstractDict                             = Dict(),
-                   z::AbstractDict                                   = Dict(),
-                   limits::AbstractDict                              = Dict(),
-                   frontier::AbstractDict                            = Dict(),                   # Solutions
-                   solvers::Union{<:AbstractDict, NamedTuple}        = Dict(),
-                   opt_params::Union{<:AbstractDict, NamedTuple}     = Dict(),
-                   fail::AbstractDict                                = Dict(),
-                   model::JuMP.Model                                 = JuMP.Model(),                   # Allocation
-                   latest_prices::AbstractVector{<:Real}             = Vector{Float64}(undef, 0),
-                   alloc_optimal::AbstractDict                       = Dict(),
-                   alloc_solvers::Union{<:AbstractDict, NamedTuple}  = Dict(),
-                   alloc_params::Union{<:AbstractDict, NamedTuple}   = Dict(),
-                   alloc_fail::AbstractDict                          = Dict(),
-                   alloc_model::JuMP.Model                           = JuMP.Model(),)
+                   max_num_assets_kurt::Integer                      = 0,
+                   # Benchmark constraints
+                   turnover::Real                               = Inf,
+                   turnover_weights::AbstractVector{<:Real}     = Vector{Float64}(undef, 0),
+                   kind_tracking_err::Symbol                    = :Weights,
+                   tracking_err::Real                           = Inf,
+                   tracking_err_returns::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                   tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                   bl_bench_weights::AbstractVector{<:Real}     = Vector{Float64}(undef, 0),
+                   # Risk and return constraints
+                   a_mtx_ineq::AbstractMatrix{<:Real}  = Matrix{Float64}(undef, 0, 0),
+                   b_vec_ineq::AbstractVector{<:Real}  = Vector{Float64}(undef, 0),
+                   risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                   # Bounds constraints
+                   mu_l::Real    = Inf, sd_u::Real    = Inf, mad_u::Real   = Inf,
+                   ssd_u::Real   = Inf, cvar_u::Real  = Inf, wr_u::Real    = Inf,
+                   flpm_u::Real  = Inf, slpm_u::Real  = Inf, mdd_u::Real   = Inf,
+                   add_u::Real   = Inf, cdar_u::Real  = Inf, uci_u::Real   = Inf,
+                   evar_u::Real  = Inf, edar_u::Real  = Inf, rvar_u::Real  = Inf,
+                   rdar_u::Real  = Inf, kurt_u::Real  = Inf, skurt_u::Real = Inf,
+                   gmd_u::Real   = Inf, rg_u::Real    = Inf, rcvar_u::Real = Inf,
+                   tg_u::Real    = Inf, rtg_u::Real   = Inf, owa_u::Real   = Inf,
+                   # Custom OWA weights
+                   owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                   # Model statistics
+                   mu::AbstractVector                 = Vector{Float64}(undef, 0),
+                   cov::AbstractMatrix{<:Real}        = Matrix{Float64}(undef, 0, 0),
+                   kurt::AbstractMatrix{<:Real}       = Matrix{Float64}(undef, 0, 0),
+                   skurt::AbstractMatrix{<:Real}      = Matrix{Float64}(undef, 0, 0),
+                   mu_f::AbstractVector{<:Real}       = Vector{Float64}(undef, 0),
+                   cov_f::AbstractMatrix{<:Real}      = Matrix{Float64}(undef, 0, 0),
+                   mu_fm::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
+                   cov_fm::AbstractMatrix{<:Real}     = Matrix{Float64}(undef, 0, 0),
+                   mu_bl::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
+                   cov_bl::AbstractMatrix{<:Real}     = Matrix{Float64}(undef, 0, 0),
+                   mu_bl_fm::AbstractVector{<:Real}   = Vector{Float64}(undef, 0),
+                   cov_bl_fm::AbstractMatrix{<:Real}  = Matrix{Float64}(undef, 0, 0),
+                   returns_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                   # Inputs of Worst Case Optimization Models
+                   cov_l::AbstractMatrix{<:Real}     = Matrix{Float64}(undef, 0, 0),
+                   cov_u::AbstractMatrix{<:Real}     = Matrix{Float64}(undef, 0, 0),
+                   cov_mu::AbstractMatrix{<:Real}    = Diagonal{Float64}(undef, 0),
+                   cov_sigma::AbstractMatrix{<:Real} = Diagonal{Float64}(undef, 0),
+                   d_mu::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
+                   k_mu::Real                        = Inf,
+                   k_sigma::Real                     = Inf,
+                   # Optimal portfolios
+                   optimal::AbstractDict  = Dict(), z::AbstractDict        = Dict(),
+                   limits::AbstractDict   = Dict(), frontier::AbstractDict = Dict(),
+                   # Solutions
+                   solvers::Union{<:AbstractDict, NamedTuple}    = Dict(),
+                   opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),
+                   fail::AbstractDict                            = Dict(),
+                   model::JuMP.Model                             = JuMP.Model(),
+                   # Allocation
+                   latest_prices::AbstractVector{<:Real}            = Vector{Float64}(undef, 0),
+                   alloc_optimal::AbstractDict                      = Dict(),
+                   alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
+                   alloc_params::Union{<:AbstractDict, NamedTuple}  = Dict(),
+                   alloc_fail::AbstractDict                         = Dict(),
+                   alloc_model::JuMP.Model                          = JuMP.Model(),)
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
         latest_prices = Vector(dropmissing!(DataFrame(prices))[end, colnames(prices)])
@@ -720,79 +718,81 @@ function Portfolio(;                   # Portfolio characteristics
     L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
 
-    return Portfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(short),
+    return Portfolio{
+                     # Portfolio characteristics    
+                     typeof(assets), typeof(timestamps), typeof(returns), typeof(short),
                      typeof(short_u), typeof(long_u), typeof(min_number_effective_assets),
                      typeof(max_number_assets), typeof(max_number_assets_factor),
                      typeof(f_assets), typeof(f_timestamps), typeof(f_returns),
-                     typeof(loadings),                     # Risk parameters
+                     typeof(loadings),
+                     # Risk parameters
                      Union{<:Real, AbstractVector{<:Real}},
                      Union{<:Real, AbstractVector{<:Real}}, typeof(alpha_i), typeof(alpha),
                      typeof(a_sim), typeof(beta_i), typeof(beta), typeof(b_sim),
-                     typeof(kappa), typeof(max_num_assets_kurt),                     # Benchmark constraints
+                     typeof(kappa), typeof(max_num_assets_kurt),
+                     # Benchmark constraints
                      typeof(turnover), typeof(turnover_weights), typeof(kind_tracking_err),
                      typeof(tracking_err), typeof(tracking_err_returns),
-                     typeof(tracking_err_weights), typeof(bl_bench_weights),                     # Risk and return constraints
+                     typeof(tracking_err_weights), typeof(bl_bench_weights),
+                     # Risk and return constraints
                      typeof(a_mtx_ineq), typeof(b_vec_ineq), typeof(risk_budget),
                      typeof(mu_l), typeof(sd_u), typeof(mad_u), typeof(ssd_u),
                      typeof(cvar_u), typeof(wr_u), typeof(flpm_u), typeof(slpm_u),
                      typeof(mdd_u), typeof(add_u), typeof(cdar_u), typeof(uci_u),
                      typeof(evar_u), typeof(edar_u), typeof(rvar_u), typeof(rdar_u),
                      typeof(kurt_u), typeof(skurt_u), typeof(gmd_u), typeof(rg_u),
-                     typeof(rcvar_u), typeof(tg_u), typeof(rtg_u), typeof(owa_u),                     # Custom OWA weights
-                     typeof(owa_w),                     # Model statistics
+                     typeof(rcvar_u), typeof(tg_u), typeof(rtg_u), typeof(owa_u),
+                     # Custom OWA weights
+                     typeof(owa_w),
+                     # Model statistics
                      typeof(mu), typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2),
                      typeof(S_2), typeof(mu_f), typeof(cov_f), typeof(mu_fm),
                      typeof(cov_fm), typeof(mu_bl), typeof(cov_bl), typeof(mu_bl_fm),
-                     typeof(cov_bl_fm), typeof(returns_fm),                     # Inputs of Worst Case Optimization Models
+                     typeof(cov_bl_fm), typeof(returns_fm),
+                     # Inputs of Worst Case Optimization Models
                      typeof(cov_l), typeof(cov_u), typeof(cov_mu), typeof(cov_sigma),
-                     typeof(d_mu), typeof(k_mu), typeof(k_sigma),                     # Optimal portfolios
-                     typeof(optimal), typeof(z), typeof(limits), typeof(frontier),                     # Solutions
+                     typeof(d_mu), typeof(k_mu), typeof(k_sigma),
+                     # Optimal portfolios
+                     typeof(optimal), typeof(z), typeof(limits), typeof(frontier),
+                     # Solutions
                      Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                     typeof(fail), typeof(model),                     # Allocation
+                     typeof(fail), typeof(model),
+                     # Allocation
                      typeof(latest_prices), typeof(alloc_optimal),
                      Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                     typeof(alloc_fail), typeof(alloc_model)}(
-                                                              # Portfolio characteristics
-                                                              assets, timestamps, returns,
-                                                              short, short_u, long_u,
-                                                              min_number_effective_assets,
-                                                              max_number_assets,
-                                                              max_number_assets_factor,
-                                                              f_assets, f_timestamps,
-                                                              f_returns, loadings,                                          # Risk parameters
-                                                              msv_target, lpm_target,
-                                                              alpha_i, alpha, a_sim, beta_i,
-                                                              beta, b_sim, kappa,
-                                                              max_num_assets_kurt,                                          # Benchmark constraints
-                                                              turnover, turnover_weights,
-                                                              kind_tracking_err,
-                                                              tracking_err,
-                                                              tracking_err_returns,
-                                                              tracking_err_weights,
-                                                              bl_bench_weights,                                          # Risk and return constraints
-                                                              a_mtx_ineq, b_vec_ineq,
-                                                              risk_budget, mu_l, sd_u,
-                                                              mad_u, ssd_u, cvar_u, wr_u,
-                                                              flpm_u, slpm_u, mdd_u, add_u,
-                                                              cdar_u, uci_u, evar_u, edar_u,
-                                                              rvar_u, rdar_u, kurt_u,
-                                                              skurt_u, gmd_u, rg_u, rcvar_u,
-                                                              tg_u, rtg_u, owa_u,                                          # Custom OWA weights
-                                                              owa_w,                                          # Model statistics
-                                                              mu, cov, kurt, skurt, L_2,
-                                                              S_2, mu_f, cov_f, mu_fm,
-                                                              cov_fm, mu_bl, cov_bl,
-                                                              mu_bl_fm, cov_bl_fm,
-                                                              returns_fm,                                          # Inputs of Worst Case Optimization Models
-                                                              cov_l, cov_u, cov_mu,
-                                                              cov_sigma, d_mu, k_mu,
-                                                              k_sigma,                                          # Optimal portfolios
-                                                              optimal, z, limits, frontier,                                          # Solutions
-                                                              solvers, opt_params, fail,
-                                                              model,                                          # Allocation
-                                                              latest_prices, alloc_optimal,
-                                                              alloc_solvers, alloc_params,
-                                                              alloc_fail, alloc_model)
+                     typeof(alloc_fail), typeof(alloc_model)
+                     #
+                     }(
+                       # Portfolio characteristics
+                       assets, timestamps, returns, short, short_u, long_u,
+                       min_number_effective_assets, max_number_assets,
+                       max_number_assets_factor, f_assets, f_timestamps, f_returns,
+                       loadings,
+                       # Risk parameters
+                       msv_target, lpm_target, alpha_i, alpha, a_sim, beta_i, beta, b_sim,
+                       kappa, max_num_assets_kurt,
+                       # Benchmark constraints
+                       turnover, turnover_weights, kind_tracking_err, tracking_err,
+                       tracking_err_returns, tracking_err_weights, bl_bench_weights,
+                       # Risk and return constraints
+                       a_mtx_ineq, b_vec_ineq, risk_budget, mu_l, sd_u, mad_u, ssd_u,
+                       cvar_u, wr_u, flpm_u, slpm_u, mdd_u, add_u, cdar_u, uci_u, evar_u,
+                       edar_u, rvar_u, rdar_u, kurt_u, skurt_u, gmd_u, rg_u, rcvar_u, tg_u,
+                       rtg_u, owa_u,
+                       # Custom OWA weights
+                       owa_w,
+                       # Model statistics
+                       mu, cov, kurt, skurt, L_2, S_2, mu_f, cov_f, mu_fm, cov_fm, mu_bl,
+                       cov_bl, mu_bl_fm, cov_bl_fm, returns_fm,
+                       # Inputs of Worst Case Optimization Models
+                       cov_l, cov_u, cov_mu, cov_sigma, d_mu, k_mu, k_sigma,
+                       # Optimal portfolios
+                       optimal, z, limits, frontier,
+                       # Solutions
+                       solvers, opt_params, fail, model,
+                       # Allocation
+                       latest_prices, alloc_optimal, alloc_solvers, alloc_params,
+                       alloc_fail, alloc_model)
 end
 
 function Base.getproperty(obj::Portfolio, sym::Symbol)
@@ -1023,13 +1023,21 @@ $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer pro
 - `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate_port!`](@ref)"))
 - `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
 """
-mutable struct HCPortfolio{ast, dat, r,                           # Risk parmeters
-                           ai, a, as, bi, b, bs, k, ata, mnak,                           # Custom OWA weights
-                           wowa,                           # Optimisation parameters
+mutable struct HCPortfolio{
+                           # Portfolio characteristics
+                           ast, dat, r,
+                           # Risk parmeters
+                           ai, a, as, bi, b, bs, k, ata, mnak,
+                           # Custom OWA weights
+                           wowa,
+                           # Optimisation parameters
                            tmu, tcov, tkurt, tskurt, tl2, ts2, tbin, wmi, wma, ttco, tco,
-                           tdist, tcl, tk,                           # Optimal portfolios
-                           topt,                           # Solutions
-                           tsolv, toptpar, tf,                           # Allocation
+                           tdist, tcl, tk,
+                           # Optimal portfolios
+                           topt,
+                           # Solutions
+                           tsolv, toptpar, tf,
+                           # Allocation
                            tlp, taopt, tasolv, taoptpar, taf, tamod} <: AbstractPortfolio
     # Portfolio characteristics
     assets::ast
@@ -1141,17 +1149,21 @@ $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer pro
 [^TDGS]: 
     [Yue, S., Wang, X. & Wei, M. Application of two-order difference to gap statistic. Trans. Tianjin Univ. 14, 217–221 (2008). https://doi.org/10.1007/s12209-008-0039-1](https://doi.org/10.1007/s12209-008-0039-1)
 """
-function HCPortfolio(;                     # Portfolio characteristics
+function HCPortfolio(;
+                     # Portfolio characteristics
                      prices::TimeArray = TimeArray(TimeType[], []),
                      returns::DataFrame = DataFrame(),
                      ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
-                     assets::AbstractVector = Vector{String}(undef, 0),                     # Risk parmeters
+                     assets::AbstractVector = Vector{String}(undef, 0),
+                     # Risk parmeters
                      alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
                      beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                      kappa::Real = 0.3, alpha_tail::Real = 0.05,
-                     max_num_assets_kurt::Integer = 0,                     # Custom OWA weights
-                     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),                     # Optimisation parameters
+                     max_num_assets_kurt::Integer = 0,
+                     # Custom OWA weights
+                     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                     # Optimisation parameters
                      mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                      cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -1166,11 +1178,14 @@ function HCPortfolio(;                     # Portfolio characteristics
                                                                                  2),
                                                                    Float64[], Int64[],
                                                                    :nothing),
-                     k::Integer = 0,                     # Optimal portfolios
-                     optimal::AbstractDict = Dict(),                     # Solutions
+                     k::Integer = 0,
+                     # Optimal portfolios
+                     optimal::AbstractDict = Dict(),
+                     # Solutions
                      solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
                      opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),
-                     fail::AbstractDict = Dict(),                     # Allocation
+                     fail::AbstractDict = Dict(),
+                     # Allocation
                      latest_prices::AbstractVector = Vector{Float64}(undef, 0),
                      alloc_optimal::AbstractDict = Dict(),
                      alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
@@ -1260,37 +1275,49 @@ function HCPortfolio(;                     # Portfolio characteristics
     L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
 
-    return HCPortfolio{typeof(assets), typeof(timestamps), typeof(returns),                       # Risk parmeters
+    return HCPortfolio{
+                       # Portfolio characteristics
+                       typeof(assets), typeof(timestamps), typeof(returns),
+                       # Risk parmeters
                        typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i),
                        typeof(beta), typeof(b_sim), typeof(kappa), typeof(alpha_tail),
-                       typeof(max_num_assets_kurt),                       # Custom OWA weights
-                       typeof(owa_w),                       # Optimisation parameters
+                       typeof(max_num_assets_kurt),
+                       # Custom OWA weights
+                       typeof(owa_w),
+                       # Optimisation parameters
                        typeof(mu), typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2),
                        typeof(S_2), Union{Symbol, <:Integer},
                        Union{<:Real, AbstractVector{<:Real}},
                        Union{<:Real, AbstractVector{<:Real}}, typeof(cor_method),
-                       typeof(cor), typeof(dist), typeof(clusters), typeof(k),                       # Optimal portfolios
-                       typeof(optimal),                       # Solutions
+                       typeof(cor), typeof(dist), typeof(clusters), typeof(k),
+                       # Optimal portfolios
+                       typeof(optimal),
+                       # Solutions
                        Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                       typeof(fail),                       # Allocation
+                       typeof(fail),
+                       # Allocation
                        typeof(latest_prices), typeof(alloc_optimal),
                        Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                       typeof(alloc_fail), typeof(alloc_model)}(assets, timestamps, returns,                                            # Risk parmeters
-                                                                alpha_i, alpha, a_sim,
-                                                                beta_i, beta, b_sim, kappa,
-                                                                alpha_tail,
-                                                                max_num_assets_kurt,                                            # Custom OWA weights
-                                                                owa_w,                                            # Optimisation parameters
-                                                                mu, cov, kurt, skurt, L_2,
-                                                                S_2, bins_info, w_min,
-                                                                w_max, cor_method, cor,
-                                                                dist, clusters, k,                                            # Optimal portfolios
-                                                                optimal,                                            # Solutions
-                                                                solvers, opt_params, fail,                                            # Allocation
-                                                                latest_prices,
-                                                                alloc_optimal,
-                                                                alloc_solvers, alloc_params,
-                                                                alloc_fail, alloc_model)
+                       typeof(alloc_fail), typeof(alloc_model)
+                       #
+                       }(
+                         # Portfolio characteristics
+                         assets, timestamps, returns,
+                         # Risk parmeters
+                         alpha_i, alpha, a_sim, beta_i, beta, b_sim, kappa, alpha_tail,
+                         max_num_assets_kurt,
+                         # Custom OWA weights
+                         owa_w,
+                         # Optimisation parameters
+                         mu, cov, kurt, skurt, L_2, S_2, bins_info, w_min, w_max,
+                         cor_method, cor, dist, clusters, k,
+                         # Optimal portfolios
+                         optimal,
+                         # Solutions
+                         solvers, opt_params, fail,
+                         # Allocation
+                         latest_prices, alloc_optimal, alloc_solvers, alloc_params,
+                         alloc_fail, alloc_model)
 end
 
 function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)

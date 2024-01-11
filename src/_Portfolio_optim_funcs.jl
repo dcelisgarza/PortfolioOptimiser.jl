@@ -1612,16 +1612,15 @@ opt_port!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
 ```
 """
 function opt_port!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
-                   kelly::Symbol = :None, l::Real = 2.0, obj::Symbol = :Sharpe,
-                   rf::Real = 0.0, rm::Symbol = :SD, rrp_penalty::Real = 1.0,
-                   rrp_ver::Symbol = :None, save_opt_params::Bool = true,
-                   string_names::Bool = false, type::Symbol = :Trad, u_cov::Symbol = :Box,
-                   u_mu::Symbol = :Box,
-                   w_ini::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
-                   near_opt::Bool = false,
+                   kelly::Symbol = :None, type::Symbol = :Trad, rm::Symbol = :SD,
+                   obj::Symbol = :Sharpe, rf::Real = 0.0, l::Real = 2.0,
+                   rrp_ver::Symbol = :None, rrp_penalty::Real = 1.0, u_cov::Symbol = :Box,
+                   u_mu::Symbol = :Box, near_opt::Bool = false,
                    M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+                   w_ini::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
                    w_min::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
-                   w_max::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),)
+                   w_max::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
+                   save_opt_params::Bool = true, string_names::Bool = false)
     @smart_assert(type in PortTypes)
     @smart_assert(class in PortClasses)
     @smart_assert(rm in RiskMeasures)
