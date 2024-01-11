@@ -121,7 +121,7 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
         @expression(model, hist_ret, returns * model[:w])
     end
 
-    if (obj == :Sharpe || type == :RP)
+    if obj == :Sharpe || type == :RP
         @constraint(model, lpm .>= lpm_t * model[:k] .- model[:hist_ret])
     else
         @constraint(model, lpm .>= lpm_t .- model[:hist_ret])
@@ -1149,7 +1149,7 @@ function _setup_linear_constraints(portfolio, obj, type)
     model = portfolio.model
 
     # Linear weight constraints.
-    if (obj == :Sharpe || type == :RP)
+    if obj == :Sharpe || type == :RP
         @constraint(model, A * model[:w] .- B * model[:k] .>= 0)
     else
         @constraint(model, A * model[:w] .- B .>= 0)
@@ -1257,7 +1257,7 @@ end
 function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l)
     model = portfolio.model
     if obj == :Sharpe
-        if ((type == :Trad && class == :Classic || type == :WC) && kelly != :None)
+        if (type == :Trad && class == :Classic || type == :WC) && kelly != :None
             @objective(model, Max, model[:ret])
         else
             @objective(model, Min, model[:risk])
