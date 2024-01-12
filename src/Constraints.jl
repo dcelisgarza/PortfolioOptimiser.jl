@@ -96,24 +96,6 @@ function asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
                        row["Relative_Position"] != ""
                     A2 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
                     A2 = ones(N, N) .* transpose(A2)
-                    # else
-                    #     @warn(
-                    #         """
-                    #         Constraints DataFrame not created correctly.
-                    #         - row["Type"] = $(row["Type"])
-                    #         First check to see if this holds.
-                    #         - row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
-                    #         The items evaluate to:
-                    #         - row["Relative_Type"] = $(row["Relative_Type"])
-                    #         - row["Relative_Position"] != "" = $(row["Relative_Position"] != "")
-                    #         Otherwise check this holds.
-                    #         - row["Relative_Type"] == "Subset" && row["Relative_Set"] != "" && row["Relative_Position"] != ""
-                    #         The items evaluate to:
-                    #         - row["Relative_Type"] = $(row["Relative_Type"])
-                    #         - row["Relative_Set"] != "" = $(row["Relative_Set"] != "")
-                    #         - row["Relative_Position"] != "" = $(row["Relative_Position"] != "")
-                    #         """
-                    #     )
                 end
                 A1 = (A1 - A2 * row["Factor"]) * d
                 B = vcat(B, zeros(N))
