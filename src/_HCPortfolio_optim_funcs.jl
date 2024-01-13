@@ -106,16 +106,9 @@ function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 
     return k
 end
 
-function _hierarchical_clustering(portfolio::HCPortfolio, linkage = :single,
-                                  max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
-                                  branchorder = :optimal, dbht_method = :Unique)
-    cor_method = portfolio.cor_method
-    corr = portfolio.cor
-    dist = portfolio.dist
-
-    cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
-
+function _hcluster_choice(dist, corr, cor_method, linkage, branchorder, dbht_method, max_k)
     if linkage == :DBHT
+        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
         corr = cor_method in cors ? 1 .- dist .^ 2 : corr
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,
@@ -129,7 +122,29 @@ function _hierarchical_clustering(portfolio::HCPortfolio, linkage = :single,
 
     return clustering, k
 end
+function _hierarchical_clustering(portfolio::HCPortfolio, linkage = :single,
+                                  max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
+                                  branchorder = :optimal, dbht_method = :Unique)
+    cor_method = portfolio.cor_method
+    corr = portfolio.cor
+    dist = portfolio.dist
 
+    clustering, k = _hcluster_choice(dist, corr, cor_method, linkage, branchorder,
+                                     dbht_method, max_k)
+
+    return clustering, k
+end
+function _hierarchical_clustering(returns::AbstractMatrix,
+                                  settings::CorSettings = CorSettings(;), linkage = :single,
+                                  max_k = ceil(Int, sqrt(size(returns, 2))),
+                                  branchorder = :optimal, dbht_method = :Unique)
+    cor_method = settings.method
+    corr, dist = cor_dist_mtx(returns, settings)
+    clustering, k = _hcluster_choice(dist, corr, cor_method, linkage, branchorder,
+                                     dbht_method, max_k)
+
+    return clustering, k
+end
 function cluster_assets(portfolio::HCPortfolio; linkage = :single,
                         max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
                         branchorder = :optimal, k = portfolio.k, dbht_method = :Unique,)
@@ -141,6 +156,19 @@ function cluster_assets(portfolio::HCPortfolio; linkage = :single,
     clustering_idx = cutree(clustering; k = k)
 
     return DataFrame(; Assets = portfolio.assets, Clusters = clustering_idx), clustering, k
+end
+function cluster_assets(assets::AbstractVector, returns::AbstractMatrix,
+                        settings::CorSettings = CorSettings(;); linkage = :single,
+                        max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
+                        k = 0, dbht_method = :Unique,)
+    clustering, tk = _hierarchical_clustering(returns, settings, linkage, max_k,
+                                              branchorder, dbht_method)
+
+    k = iszero(k) ? tk : k
+
+    clustering_idx = cutree(clustering; k = k)
+
+    return DataFrame(; Assets = assets, Clusters = clustering_idx), clustering, k
 end
 function cluster_assets!(portfolio::HCPortfolio; linkage = :single,
                          max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
@@ -228,23 +256,23 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0, upper_bound = nothi
     return weights
 end
 
-struct ClusterNode{tid, tl, tr, td, tcnt}
+struct ClusterNode{tid,tl,tr,td,tcnt}
     id::tid
     left::tl
     right::tr
     dist::td
     count::tcnt
 
-    function ClusterNode(id, left::Union{ClusterNode, Nothing} = nothing,
-                         right::Union{ClusterNode, Nothing} = nothing, dist::Real = 0.0,
+    function ClusterNode(id, left::Union{ClusterNode,Nothing} = nothing,
+                         right::Union{ClusterNode,Nothing} = nothing, dist::Real = 0.0,
                          count::Int = 1)
         icount = isnothing(left) ? count : (left.count + right.count)
 
-        return new{typeof(id), typeof(left), typeof(right), typeof(dist), typeof(count)}(id,
-                                                                                         left,
-                                                                                         right,
-                                                                                         dist,
-                                                                                         icount)
+        return new{typeof(id),typeof(left),typeof(right),typeof(dist),typeof(count)}(id,
+                                                                                     left,
+                                                                                     right,
+                                                                                     dist,
+                                                                                     icount)
     end
 end
 export ClusterNode
@@ -423,7 +451,7 @@ function _intra_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf 
     clustering_idx = cutree(clustering; k = k)
 
     intra_weights = zeros(eltype(covariance), size(portfolio.returns, 2), k)
-    cfails = Dict{Int, Dict}()
+    cfails = Dict{Int,Dict}()
 
     for i in 1:k
         idx = clustering_idx .== i
@@ -617,7 +645,7 @@ function opt_port!(portfolio::HCPortfolio; type::Symbol = :HRP, cluster::Bool = 
     @smart_assert(kelly in KellyRet)
     @smart_assert(kelly_o in KellyRet)
     @smart_assert(linkage in LinkageTypes)
-    @smart_assert(portfolio.cor_method in CorMethods)
+    # @smart_assert(portfolio.cor_method in CorMethods)
     @smart_assert(0 < portfolio.alpha < 1)
     @smart_assert(0 < portfolio.kappa < 1)
     @smart_assert(max_num_assets_kurt_o >= 0)

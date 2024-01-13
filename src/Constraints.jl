@@ -537,7 +537,7 @@ rw_c = rp_constraints(asset_sets, :Subset, "Class 2")
 ```
 """
 function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
-                        class_col::Union{String, Symbol, Int, Nothing} = nothing)
+                        class_col::Union{String,Symbol,Int,Nothing} = nothing)
     @smart_assert(type in RPConstraintTypes)
     N = nrow(asset_sets)
 
@@ -564,5 +564,100 @@ function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
     return rw
 end
 
+const GraphMethods = (:MST, :TMFG)
+function connection_matrix(returns::AbstractMatrix, settings::CorSettings = CorSettings(;);
+                           method::Symbol = :MST, steps::Integer = 1)
+    @smart_assert(method in GraphMethods)
+
+    corr, dist = cor_dist_mtx(returns, settings)
+    A = if method == :TMFG
+        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
+        corr = settings.method in cors ? 1 .- dist .^ 2 : corr
+        Rpm = PMFG_T2s(corr)[1]
+        adjacency_matrix(SimpleGraph(Rpm))
+    else
+        G = SimpleWeightedGraph(dist)
+        adjacency_matrix(SimpleGraph(G[kruskal_mst(G)]))
+    end
+
+    A_p = similar(Matrix(A))
+    fill!(A_p, zero(eltype(A_p)))
+    for i in 0:steps
+        A_p .+= A^i
+    end
+
+    A_p .= clamp!(A_p, 0, 1) - I
+
+    return A_p
+end
+
+function centrality_vector(returns::AbstractMatrix, settings::CorSettings = CorSettings(;);
+                           centrality::GenericFunc = GenericFunc(;
+                                                                 func = Graphs.degree_centrality),
+                           method::Symbol = :MST, steps::Integer = 1)
+    @smart_assert(method in GraphMethods)
+
+    Adj = connection_matrix(returns, settings; method = method, steps = steps)
+
+    G = SimpleGraph(Adj)
+    func = centrality.func
+    args = centrality.args
+    kwargs = centrality.kwargs
+    V_c = func(G, args...; kwargs...)
+
+    return V_c
+end
+
+function cluster_matrix(assets::AbstractVector, returns::AbstractMatrix,
+                        settings::CorSettings = CorSettings(;); linkage = :single,
+                        max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
+                        k = 0, dbht_method = :Unique)
+    clusters, missing, missing = cluster_assets(assets, returns, settings;
+                                                linkage = linkage, max_k = max_k,
+                                                branchorder = branchorder, k = k,
+                                                dbht_method = dbht_method)
+
+    N = size(returns, 2)
+    A_c = Vector{Int}(undef, 0)
+    for i in unique(clusters[!, :Clusters])
+        idx = clusters[!, :Clusters] .== i
+        tmp = zeros(Int, N)
+        tmp[idx] .= 1
+        append!(A_c, tmp)
+    end
+
+    A_c = reshape(A_c, N, :)
+    A_c = A_c * transpose(A_c) - I
+
+    return A_c
+end
+
+function _con_rel(A::AbstractMatrix, w::AbstractVector)
+    ovec = range(; start = 1, stop = 1, length = size(A, 1))
+    aw = abs.(w * transpose(w))
+    C_a = transpose(ovec) * (A * aw) * ovec
+    C_a /= transpose(ovec) * aw * ovec
+    return C_a
+end
+
+function connected_assets(returns::AbstractMatrix, w::AbstractVector,
+                          settings::CorSettings = CorSettings(;); method::Symbol = :MST,
+                          steps::Integer = 1)
+    A_c = connection_matrix(returns, settings; method = method, steps = steps)
+    C_a = _con_rel(A_c, w)
+    return C_a
+end
+
+function related_assets(assets::AbstractVector, returns::AbstractMatrix, w::AbstractVector,
+                        settings::CorSettings = CorSettings(;); linkage = :single,
+                        max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
+                        k = 0, dbht_method = :Unique)
+    A_c = cluster_matrix(assets, returns, settings; linkage = linkage, max_k = max_k,
+                         branchorder = branchorder, k = k, dbht_method = dbht_method)
+    R_a = _con_rel(A_c, w)
+    return R_a
+end
+
 export asset_constraints, factor_constraints, asset_views, factor_views, hrp_constraints,
-       rp_constraints
+       rp_constraints, connection_matrix, centrality_vector, cluster_matrix,
+       connected_assets
