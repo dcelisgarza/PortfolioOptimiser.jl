@@ -1,12 +1,47 @@
-function _mv_risk(model, sigma)
-    G = sqrt(sigma)
-    @variable(model, dev)
-    @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
-    @expression(model, dev_risk, dev * dev)
+function _sdp_setup(portfolio, obj, rm, type, N)
+    if type == :RP || type == :RRP || portfolio.network_method != :SDP
+        return nothing
+    end
+
+    model = portfolio.model
+    network_penalty = portfolio.network_penalty
+    sd_u = portfolio.sd_u
+    network_sdp = portfolio.network_sdp
+
+    @variable(model, Wn[1:N, 1:N], Symmetric)
+    @expression(model, M1n, vcat(Wn, transpose(model[:w])))
+
+    if obj == :Sharpe
+        @expression(model, M2n, vcat(model[:w], model[:k]))
+    else
+        @expression(model, M2n, vcat(model[:w], 1))
+    end
+
+    @expression(model, M3n, hcat(M1n, M2n))
+    @constraint(model, M3n in PSDCone())
+
+    if type == :Trad && rm != :SD && isinf(sd_u)
+        @expression(model, penalty_factor, network_penalty * tr(model[:Wn]))
+    end
+
+    @constraint(model, network_sdp .* model[:Wn] .== 0)
+
     return nothing
 end
 
-function _mv_setup(portfolio, sigma, rm, kelly, obj, type)
+function _mv_risk(model, sigma, network_method)
+    if network_method != :SDP
+        G = sqrt(sigma)
+        @variable(model, dev)
+        @constraint(model, [dev; G * model[:w]] in SecondOrderCone())
+        @expression(model, dev_risk, dev * dev)
+    else
+        @expression(model, dev_risk, tr(sigma * model[:Wn]))
+    end
+    return nothing
+end
+
+function _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method)
     sd_u = portfolio.sd_u
 
     if !(rm == :SD || kelly == :Approx || isfinite(sd_u))
@@ -15,7 +50,7 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj, type)
 
     model = portfolio.model
 
-    _mv_risk(model, sigma)
+    _mv_risk(model, sigma, network_method)
 
     if isfinite(sd_u) && type == :Trad
         if obj == :Sharpe
@@ -474,8 +509,9 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
 end
 
 function _risk_setup(portfolio, type, rm, kelly, obj, rf, T, N, mu, returns, sigma,
-                     kurtosis, skurtosis)
-    _mv_setup(portfolio, sigma, rm, kelly, obj, type)
+                     kurtosis, skurtosis, network_method)
+    _sdp_setup(portfolio, obj, rm, type, N)
+    _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method)
     _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
     _wr_setup(portfolio, rm, returns, obj, type)
@@ -858,12 +894,12 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     return nothing
 end
 
-function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
+function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov, network_method)
     model = portfolio.model
 
     # Return uncertainy sets.
     if kelly == :Approx || (u_cov != :Box && u_cov != :Ellipse)
-        _mv_risk(model, sigma)
+        _mv_risk(model, sigma, network_method)
     end
 
     returns = portfolio.returns
@@ -1057,11 +1093,14 @@ end
 
 function _setup_weights(portfolio, obj, N)
     max_number_assets = portfolio.max_number_assets
-    factor = portfolio.max_number_assets_factor
+    factor_mna = portfolio.max_number_assets_factor
+    factor_nip = portfolio.network_ip_factor
     short = portfolio.short
     short_u = portfolio.short_u
     long_u = portfolio.long_u
     sum_short_long = portfolio.sum_short_long
+    network_method = portfolio.network_method
+    network_ip = portfolio.network_ip
 
     model = portfolio.model
 
@@ -1074,18 +1113,42 @@ function _setup_weights(portfolio, obj, N)
             @variable(model, tass_bin[1:N], binary = true)
         end
     end
+    if network_method == :IP
+        if obj == :Sharpe
+            @variable(model, tass_bin2[1:N], binary = true)
+            @variable(model, tass_bin_sharpe2[1:N] >= 0)
+        else
+            @variable(model, tass_bin2[1:N], binary = true)
+        end
+    end
 
     # Weight constraints.
     if obj == :Sharpe
         @constraint(model, sum(model[:w]) == sum_short_long * model[:k])
 
+        if haskey(model, :tass_bin)
+            @constraint(model, tass_bin_sharpe .<= model[:k])
+            @constraint(model, tass_bin_sharpe .<= factor_mna * tass_bin)
+            @constraint(model,
+                        tass_bin_sharpe .>= model[:k] .- factor_mna * (1 .- tass_bin))
+            @constraint(model, model[:w] .<= long_u * tass_bin_sharpe)
+        end
+
+        if haskey(model, :tass_bin2)
+            @constraint(model, tass_bin_sharpe2 .<= model[:k])
+            @constraint(model, tass_bin_sharpe2 .<= factor_nip * tass_bin2)
+            @constraint(model,
+                        tass_bin_sharpe2 .>= model[:k] .- factor_nip * (1 .- tass_bin2))
+            @constraint(model, model[:w] .<= long_u * tass_bin_sharpe2)
+        end
+
         # Maximum number of assets constraints.
         if max_number_assets > 0
             @constraint(model, sum(tass_bin) <= max_number_assets)
-            @constraint(model, tass_bin_sharpe .<= model[:k])
-            @constraint(model, tass_bin_sharpe .<= factor * tass_bin)
-            @constraint(model, tass_bin_sharpe .>= model[:k] .- factor * (1 .- tass_bin))
-            @constraint(model, model[:w] .<= long_u * tass_bin_sharpe)
+        end
+
+        if network_method == :IP
+            @constraint(model, unique(network_ip + I; dims = 1) * tass_bin2 .<= 1)
         end
 
         if short == false
@@ -1105,14 +1168,29 @@ function _setup_weights(portfolio, obj, N)
             if max_number_assets > 0
                 @constraint(model, model[:w] .>= -short_u * tass_bin_sharpe)
             end
+
+            if network_method == :IP
+                @constraint(model, model[:w] .>= -short_u * tass_bin_sharpe2)
+            end
         end
     else
         @constraint(model, sum(model[:w]) == sum_short_long)
 
+        if haskey(model, :tass_bin)
+            @constraint(model, model[:w] .<= long_u * tass_bin)
+        end
+
+        if haskey(model, :tass_bin2)
+            @constraint(model, model[:w] .<= long_u * tass_bin2)
+        end
+
         # Maximum number of assets constraints.
         if max_number_assets > 0
             @constraint(model, sum(tass_bin) <= max_number_assets)
-            @constraint(model, model[:w] .<= long_u * tass_bin)
+        end
+
+        if network_method == :IP
+            @constraint(model, unique(network_ip + I; dims = 1) * tass_bin2 .<= 1)
         end
 
         if short == false
@@ -1131,6 +1209,10 @@ function _setup_weights(portfolio, obj, N)
             # Maximum number of assets constraints.
             if max_number_assets > 0
                 @constraint(model, model[:w] .>= -short_u * tass_bin)
+            end
+
+            if network_method == :IP
+                @constraint(model, model[:w] .>= -short_u * tass_bin2)
             end
         end
     end
@@ -1153,6 +1235,25 @@ function _setup_linear_constraints(portfolio, obj, type)
         @constraint(model, A * model[:w] .- B * model[:k] .>= 0)
     else
         @constraint(model, A * model[:w] .- B .>= 0)
+    end
+
+    return nothing
+end
+
+function _setup_centrality_constraints(portfolio, obj)
+    A = portfolio.a_vec_cent
+    B = portfolio.b_cent
+
+    if isempty(A) || isinf(B)
+        return nothing
+    end
+
+    model = portfolio.model
+
+    if obj == :Sharpe
+        @constraint(model, transpose(A) * model[:w] - B * model[:k] == 0)
+    else
+        @constraint(model, transpose(A) * model[:w] - B == 0)
     end
 
     return nothing
@@ -1245,6 +1346,7 @@ function _setup_turnover(portfolio, N, obj)
 end
 
 function _setup_trad_wc_constraints(portfolio, obj, T, N, type, class, kelly, l, returns)
+    _setup_centrality_constraints(portfolio, obj)
     _setup_weights(portfolio, obj, N)
     _setup_min_number_effective_assets(portfolio, obj)
     _setup_tracking_err(portfolio, returns, obj, T)
@@ -1256,18 +1358,25 @@ end
 
 function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l)
     model = portfolio.model
+
+    pf = zero(eltype(portfolio.returns))
+
+    if haskey(model, :penalty_factor) && type == :Trad
+        pf = model[:penalty_factor]
+    end
+
     if obj == :Sharpe
         if (type == :Trad && class == :Classic || type == :WC) && kelly != :None
-            @objective(model, Max, model[:ret])
+            @objective(model, Max, model[:ret] - pf)
         else
-            @objective(model, Min, model[:risk])
+            @objective(model, Min, model[:risk] + pf)
         end
     elseif obj == :Min_Risk
-        @objective(model, Min, model[:risk])
+        @objective(model, Min, model[:risk] + pf)
     elseif obj == :Utility
-        @objective(model, Max, model[:ret] - l * model[:risk])
+        @objective(model, Max, model[:ret] - l * model[:risk] - pf)
     elseif obj == :Max_Ret
-        @objective(model, Max, model[:ret])
+        @objective(model, Max, model[:ret] - pf)
     end
     return nothing
 end
@@ -1312,7 +1421,8 @@ function _optimize_portfolio(portfolio, type, obj, near_opt = false, coneopt = t
         term_status = termination_status(model)
 
         all_finite_weights = all(isfinite.(value.(model[:w])))
-        all_non_zero_weights = all(abs.(0.0 .- value.(model[:w])) .> eps())
+        all_non_zero_weights = !all(isapprox.(abs.(value.(model[:w])),
+                                              zero(eltype(portfolio.returns))))
 
         if term_status in ValidTermination && all_finite_weights && all_non_zero_weights
             break
@@ -1651,6 +1761,7 @@ function opt_port!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer
     T, N = size(returns)
     kurtosis = portfolio.kurt
     skurtosis = portfolio.skurt
+    network_method = portfolio.network_method
 
     # Model variables.
     model = portfolio.model
@@ -1664,23 +1775,23 @@ function opt_port!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer
     if type == :Trad
         _setup_sharpe_k(model, obj)
         _risk_setup(portfolio, :Trad, rm, kelly, obj, rf, T, N, mu, returns, sigma,
-                    kurtosis, skurtosis)
+                    kurtosis, skurtosis, network_method)
         _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
         _setup_trad_wc_constraints(portfolio, obj, T, N, :Trad, class, kelly, l, returns)
     elseif type == :RP
         _setup_risk_budget(portfolio)
         _rp_setup(portfolio, N)
         _risk_setup(portfolio, :RP, rm, kelly, obj, rf, T, N, mu, returns, sigma, kurtosis,
-                    skurtosis)
+                    skurtosis, network_method)
         _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
     elseif type == :RRP
         _setup_risk_budget(portfolio)
-        _mv_setup(portfolio, sigma, rm, kelly, obj, :RRP)
+        _mv_setup(portfolio, sigma, rm, kelly, obj, :RRP, network_method)
         _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
         _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
     else
         _setup_sharpe_k(model, obj)
-        _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov)
+        _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov, network_method)
         _setup_trad_wc_constraints(portfolio, obj, T, N, :WC, class, kelly, l, returns)
     end
 

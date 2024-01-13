@@ -1,5 +1,6 @@
 using COSMO, CovarianceEstimation, CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra,
-      OrderedCollections, PortfolioOptimiser, Statistics, StatsBase, Test, TimeSeries, SCS
+      OrderedCollections, PortfolioOptimiser, Statistics, StatsBase, Test, TimeSeries, SCS,
+      Cbc, GLPK
 
 prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
@@ -7,7 +8,37 @@ prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestam
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-portfolio = HCPortfolio(; prices = prices_assets)
+portfolio = Portfolio(; prices = prices_assets,
+                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                              :params => Dict("verbose" => false,
+                                                                              "max_step_fraction" => 0.75)),
+                                            :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                           :params => Dict("verbose" => false)),
+                                            :HiGHS => Dict(:solver => HiGHS.Optimizer),
+                                            :Cbc => Dict(:solver => Cbc.Optimizer),
+                                            :GLPK => Dict(:solver => GLPK.Optimizer)
+                                            #
+                                            ))
+asset_statistics!(portfolio)
+
+adj = Symmetric(rand(0:1, 20, 20))
+
+portfolio.network_sdp = adj
+portfolio.network_ip = adj
+portfolio.network_penalty = 0
+
+portfolio.network_method = :SDP
+w1 = opt_port!(portfolio; obj = :Min_Risk, rm = :MAD, l = 10000)
+
+portfolio.network_method = :IP
+portfolio.network_ip_factor = 1e20
+w3 = opt_port!(portfolio; obj = :Min_Risk, rm = :MAD, l = 10000)
+
+display(hcat(w1, w3; makeunique = true))
+
+portfolio.network_method = :None
+w2 = opt_port!(portfolio; rm = :CVaR)
+
 asset_statistics!(portfolio;
                   cor_settings = CorSettings(; method = :Gerber2,
                                              estimation = CorEstSettings(;

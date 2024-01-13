@@ -355,6 +355,28 @@ function scokurt(x::AbstractMatrix, mu::AbstractArray,
     return scokurt
 end
 
+function coskew(x::AbstractMatrix, mu::AbstractArray)
+    T, N = size(x)
+    y = x .- mu
+    ex = eltype(y)
+    o = transpose(range(; start = one(ex), stop = one(ex), length = N))
+    z = kron(o, y) .* kron(y, o)
+    coskew = transpose(x) * z / T
+    return coskew
+end
+
+function scoskew(x::AbstractMatrix, mu::AbstractArray,
+                 target_ret::Union{Real, <:AbstractVector{<:Real}} = 0.0)
+    T, N = size(x)
+    y = x .- mu
+    y .= min.(y, target_ret)
+    ex = eltype(y)
+    o = transpose(range(; start = one(ex), stop = one(ex), length = N))
+    z = kron(o, y) .* kron(y, o)
+    scoskew = transpose(x) * z / T
+    return scoskew
+end
+
 function duplication_matrix(n::Int)
     cols = Int(n * (n + 1) / 2)
     rows = n * n
