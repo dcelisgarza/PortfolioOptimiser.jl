@@ -1,6 +1,6 @@
 using COSMO, CovarianceEstimation, CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra,
       OrderedCollections, PortfolioOptimiser, Statistics, StatsBase, Test, TimeSeries, SCS,
-      Cbc, GLPK
+      Cbc, GLPK, Graphs, SimpleWeightedGraphs
 
 prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
@@ -8,20 +8,39 @@ prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestam
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-portfolio = Portfolio(; prices = prices_assets,
-                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                              :params => Dict("verbose" => false,
-                                                                              "max_step_fraction" => 0.75)),
-                                            :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                           :params => Dict("verbose" => false)),
-                                            :HiGHS => Dict(:solver => HiGHS.Optimizer),
-                                            :Cbc => Dict(:solver => Cbc.Optimizer),
-                                            :GLPK => Dict(:solver => GLPK.Optimizer)
-                                            #
-                                            ))
-asset_statistics!(portfolio)
+portfolio = HCPortfolio(; prices = prices_assets,
+                        solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                :params => Dict("verbose" => false,
+                                                                                "max_step_fraction" => 0.75)),
+                                              :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                             :params => Dict("verbose" => false)),
+                                              :HiGHS => Dict(:solver => HiGHS.Optimizer),
+                                              :Cbc => Dict(:solver => Cbc.Optimizer),
+                                              :GLPK => Dict(:solver => GLPK.Optimizer)
+                                              #
+                                              ))
+asset_statistics!(portfolio; cor_settings = CorSettings(; method = :Pearson))
 
-adj = Symmetric(rand(0:1, 20, 20))
+missing, rpm, missing, missing, missing, clustering, missing = DBHTs(portfolio.dist,
+                                                                     1 .-
+                                                                     portfolio.dist .^ 2)
+A = adjacency_matrix(SimpleGraph(rpm))
+
+g = SimpleWeightedGraph(portfolio.dist)
+A = adjacency_matrix(SimpleGraph(g[kruskal_mst(g)]))
+
+N = 1
+
+A_p = zeros(eltype(portfolio.returns), size(A))
+for i in 1:N
+    A_p .+= A^i
+end
+A_p = clamp!(A_p, 0, 1) - I
+
+test = reshape([0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0],
+               5, 5)
+
+test^3
 
 portfolio.network_sdp = adj
 portfolio.network_ip = adj
