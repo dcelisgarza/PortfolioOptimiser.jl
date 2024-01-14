@@ -160,7 +160,7 @@ Structure for convex portfolio optimisation.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
     - Else the target is the value of `msv_target`. If `msv_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 - `lpm_target`: target value for the First and Second Lower Partial Moment risk measures. It can have two meanings depending on its type and value.
-    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`opt_port!`](@ref) function.
+    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`optimise!`](@ref) function.
     - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 $(_isigdef("Tail Gini losses", :a))
 $(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :a))
@@ -235,22 +235,22 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `k_mu`: set the percentile of a sample of size `Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
 - `k_sigma`: set the percentile of a sample of size `Na×Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
 # Optimal portfolios
-- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`opt_port!`](@ref)"))
-- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`opt_port!`](@ref)"))
+- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))
+- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`optimise!`](@ref)"))
 - `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures. $(_filled_by("[`frontier_limits!`](@ref)"))
 - `frontier`: $_edst containing points in the efficient frontier for given risk measures. $(_filled_by("[`efficient_frontier!`](@ref)"))
 # Solutions
 $(_solver_desc("risk measure `JuMP` model."))
-- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`opt_port!`](@ref)"))
-- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`opt_port!`](@ref)"))
-- `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`opt_port!`](@ref)"))
+- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
+- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
+- `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`optimise!`](@ref)"))
 # Allocation
 - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
-- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate_port!`](@ref)"))
+- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
 $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
-- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
-- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate_port!`](@ref)"))
-- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
+- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
 """
 mutable struct Portfolio{
                          # Portfolio characteristics
@@ -430,7 +430,7 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
     - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
     - Else the target is the value of `msv_target`. If `msv_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 - `lpm_target`: target value for the First and Second Lower Partial Moment risk measures. It can have two meanings depending on its type and value.
-    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`opt_port!`](@ref) function.
+    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`optimise!`](@ref) function.
     - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 $(_isigdef("Tail Gini losses", :a))
 $(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :a))
@@ -503,22 +503,22 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `k_mu`: set the percentile of a sample of size `Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
 - `k_sigma`: set the percentile of a sample of size `Na×Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
 ## Optimal portfolios
-- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`opt_port!`](@ref)"))
-- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`opt_port!`](@ref)"))
+- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))
+- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`optimise!`](@ref)"))
 - `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures. $(_filled_by("[`frontier_limits!`](@ref)"))
 - `frontier`: $_edst containing points in the efficient frontier for given risk measures. $(_filled_by("[`efficient_frontier!`](@ref)"))
 ## Solutions
 $(_solver_desc("risk measure `JuMP` model."))
-- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`opt_port!`](@ref)"))
-- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`opt_port!`](@ref)"))
-- `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`opt_port!`](@ref)"))
+- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
+- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
+- `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`optimise!`](@ref)"))
 ## Allocation
 - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
-- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate_port!`](@ref)"))
+- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
 $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
-- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
-- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate_port!`](@ref)"))
-- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
+- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
 
 # Outputs
 - [`Portfolio`](@ref) instance.
@@ -1064,23 +1064,23 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `cor_method`: method for estimating the codependence matrix.
 - `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cor` used by [`cor_dist_mtx`](@ref).
 - `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `dist` used by [`cor_dist_mtx`](@ref).
-- `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
+- `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`optimise!`](@ref)"))
 - `k`: number of clusters to cut the dendrogram into.
-    - If `k == 0`, automatically compute `k` using the two difference gap statistic [^TDGS]. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
+    - If `k == 0`, automatically compute `k` using the two difference gap statistic [^TDGS]. $(_dircomp("[`asset_statistics!`](@ref) and [`optimise!`](@ref)"))
     - If `k != 0`, use the value directly.
 # Optimal portfolios
-- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`opt_port!`](@ref)"))- `optimal`:
+- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))- `optimal`:
 # Solutions
 $(_solver_desc("risk measure `JuMP` model for `:NCO` optimisations."))
-- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`opt_port!`](@ref)"))
-- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`opt_port!`](@ref)"))
+- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
+- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
 # Allocation
 - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
-- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate_port!`](@ref)"))
+- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
 $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
-- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
-- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate_port!`](@ref)"))
-- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
+- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
 """
 mutable struct HCPortfolio{
                            # Portfolio characteristics
@@ -1185,23 +1185,23 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `cor_method`: method for estimating the codependence matrix.
 - `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cor` used by [`cor_dist_mtx`](@ref).
 - `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `dist` used by [`cor_dist_mtx`](@ref).
-- `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
+- `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`optimise!`](@ref)"))
 - `k`: number of clusters to cut the dendrogram into.
-    - If `k == 0`, automatically compute `k` using the two difference gap statistic [^TDGS]. $(_dircomp("[`asset_statistics!`](@ref) and [`opt_port!`](@ref)"))
+    - If `k == 0`, automatically compute `k` using the two difference gap statistic [^TDGS]. $(_dircomp("[`asset_statistics!`](@ref) and [`optimise!`](@ref)"))
     - If `k != 0`, use the value directly.
 ## Optimal portfolios
-- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`opt_port!`](@ref)"))- `optimal`:
+- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))- `optimal`:
 ## Solutions
 $(_solver_desc("risk measure `JuMP` model for `:NCO` optimisations."))
-- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`opt_port!`](@ref)"))
-- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`opt_port!`](@ref)"))
+- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
+- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
 ## Allocation
 - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
-- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate_port!`](@ref)"))
+- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
 $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
-- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
-- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate_port!`](@ref)"))
-- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate_port!`](@ref)"))
+- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
 # Outputs
 - [`HCPortfolio`](@ref) instance.
 

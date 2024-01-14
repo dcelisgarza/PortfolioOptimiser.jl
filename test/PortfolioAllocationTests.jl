@@ -17,12 +17,12 @@ l = 2.0
                           latest_prices = Vector(dropmissing(DataFrame(A))[end, 2:end]))
     asset_statistics!(portfolio)
 
-    opt_port!(portfolio)
+    optimise!(portfolio)
     alloc_type = :LP
-    lp_alloc = allocate_port!(portfolio; alloc_type = alloc_type)
+    lp_alloc = allocate!(portfolio; alloc_type = alloc_type)
 
     alloc_type = :Greedy
-    gr_alloc = allocate_port!(portfolio; alloc_type = alloc_type)
+    gr_alloc = allocate!(portfolio; alloc_type = alloc_type)
 
     lp_alloct = DataFrame(; tickers = ["AMZN", "AMD", "BBY", "MA", "JPM"],
                           shares = [3, 57, 20, 13, 10],
@@ -71,12 +71,12 @@ l = 2.0
                           short = true)
     asset_statistics!(portfolio)
 
-    opt_port!(portfolio)
+    optimise!(portfolio)
     alloc_type = :LP
-    lp_alloc = allocate_port!(portfolio; alloc_type = alloc_type)
+    lp_alloc = allocate!(portfolio; alloc_type = alloc_type)
 
     alloc_type = :Greedy
-    gr_alloc = allocate_port!(portfolio; alloc_type = alloc_type)
+    gr_alloc = allocate!(portfolio; alloc_type = alloc_type)
 
     lp_alloct = DataFrame(;
                           tickers = ["AMZN", "AMD", "WMT", "T", "BBY", "MA", "PFE", "JPM",
@@ -133,12 +133,12 @@ l = 2.0
                             latest_prices = Vector(dropmissing(DataFrame(A))[end, 2:end]))
     asset_statistics!(portfolio)
 
-    opt_port!(portfolio)
+    optimise!(portfolio)
     alloc_type = :LP
-    lp_alloc = allocate_port!(portfolio; alloc_type = alloc_type)
+    lp_alloc = allocate!(portfolio; alloc_type = alloc_type)
 
     alloc_type = :Greedy
-    gr_alloc = allocate_port!(portfolio; alloc_type = alloc_type)
+    gr_alloc = allocate!(portfolio; alloc_type = alloc_type)
 
     lp_alloct = DataFrame(;
                           tickers = ["AAPL", "FB", "BABA", "GE", "AMD", "WMT", "BAC", "GM",
@@ -194,14 +194,14 @@ l = 2.0
     @test isapprox(gr_allocjoin.weights, gr_allocjoin.weights_1)
 
     investment = 69420
-    opt_port!(portfolio; linkage = :complete, type = :HERC)
+    optimise!(portfolio; linkage = :complete, type = :HERC)
     alloc_type = :LP
-    lp_alloc = allocate_port!(portfolio; port_type = :HERC, alloc_type = alloc_type,
-                              investment = investment,)
+    lp_alloc = allocate!(portfolio; port_type = :HERC, alloc_type = alloc_type,
+                         investment = investment,)
 
     alloc_type = :Greedy
-    gr_alloc = allocate_port!(portfolio; port_type = :HERC, alloc_type = alloc_type,
-                              investment = investment,)
+    gr_alloc = allocate!(portfolio; port_type = :HERC, alloc_type = alloc_type,
+                         investment = investment,)
 
     lp_alloct = DataFrame(;
                           tickers = ["GOOG", "AAPL", "FB", "BABA", "GE", "AMD", "WMT",

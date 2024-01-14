@@ -697,7 +697,7 @@ function plot_clusters(portfolio; max_k = ceil(Int, sqrt(size(portfolio.dist, 1)
 end
 
 function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
-                       cor_settings::CorSettings = CorSettings(;), linkage = :single,
+                       cor_settings::CorOpt = CorOpt(;), linkage = :single,
                        max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
                        k = 0, dbht_method = :Unique, show_clusters = true,
                        theme_d = :Spectral, theme_h = :Spectral, theme_h_kwargs = (;),

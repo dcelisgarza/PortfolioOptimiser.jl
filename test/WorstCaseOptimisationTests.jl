@@ -2829,7 +2829,7 @@ l = 2.0
     u_cov = :Box
 
     obj = :Min_Risk
-    w1 = opt_port!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
+    w1 = optimise!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
                    u_cov = u_cov,)
     w1t = [0.016981000260804888, 0.03372410106444456, 0.008364191339338977,
            0.023689431062860165, 0.010472529367396432, 0.053869173504128835,
@@ -2841,7 +2841,7 @@ l = 2.0
     @test isapprox(w1t, w1.weights, rtol = 2e-1)
 
     obj = :Utility
-    w2 = opt_port!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
+    w2 = optimise!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
                    u_cov = u_cov,)
     w2t = [6.249850609532466e-7, 8.170065128529779e-7, 6.041707678329694e-7,
            6.528321315552857e-7, 0.7307217030200288, 1.0160916942137903e-6,
@@ -2853,7 +2853,7 @@ l = 2.0
     @test isapprox(w2t, w2.weights, rtol = 5e-4)
 
     obj = :Sharpe
-    w3 = opt_port!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
+    w3 = optimise!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
                    u_cov = u_cov,)
     w3t = [9.425298153481569e-8, 0.007073841314015601, 0.003647301988893631,
            0.002143029057834607, 0.25509409554063905, 1.4508131967668247e-7,
@@ -2865,7 +2865,7 @@ l = 2.0
     @test isapprox(w3t, w3.weights, rtol = 3e-4)
 
     obj = :Max_Ret
-    w4 = opt_port!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
+    w4 = optimise!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
                    u_cov = u_cov,)
     w4t = [3.2785360317546865e-7, 3.277651549990667e-7, 3.2749061682433446e-7,
            3.2759712848169483e-7, 3.263669391193336e-7, 3.2960532904280036e-7,
@@ -2880,7 +2880,7 @@ l = 2.0
     u_cov = :Ellipse
 
     obj = :Min_Risk
-    w1 = opt_port!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
+    w1 = optimise!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
                    u_cov = u_cov,)
     w1t = [0.04575657544088472, 0.053735706466928296, 0.03357663579665715,
            0.027599152643458975, 0.026999318730300346, 0.07628481338065358,
@@ -2892,7 +2892,7 @@ l = 2.0
     @test isapprox(w1t, w1.weights, rtol = 4.5e-1)
 
     obj = :Utility
-    w2 = opt_port!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
+    w2 = optimise!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
                    u_cov = u_cov,)
     w2t = [0.05836097263050467, 0.07219655210521853, 0.07746975978348467,
            0.043980624527980385, 0.11908058650794305, 5.731370837217665e-10,
@@ -2904,7 +2904,7 @@ l = 2.0
     @test isapprox(w2t, w2.weights, rtol = 5.8e-1)
 
     obj = :Max_Ret
-    w4 = opt_port!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
+    w4 = optimise!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
                    u_cov = u_cov,)
     w4t = [0.07147451639011364, 0.07806646170063102, 0.08362929983536965,
            0.054247299148853734, 0.10740535060623026, 1.2566279166284865e-8,
@@ -2919,25 +2919,25 @@ l = 2.0
     u_cov = :None
 
     obj = :Min_Risk
-    w1 = opt_port!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
+    w1 = optimise!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
                    u_cov = u_cov,)
-    w1t = opt_port!(portfolio; obj = obj, rf = rf, l = l)
+    w1t = optimise!(portfolio; obj = obj, rf = rf, l = l)
     @test isapprox(w1t.weights, w1.weights)
 
     obj = :Utility
-    w2 = opt_port!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
+    w2 = optimise!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
                    u_cov = u_cov,)
-    w2t = opt_port!(portfolio; obj = obj, rf = rf, l = l)
+    w2t = optimise!(portfolio; obj = obj, rf = rf, l = l)
     @test isapprox(w2t.weights, w2.weights)
 
     obj = :Sharpe
-    w3 = opt_port!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
+    w3 = optimise!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
                    u_cov = u_cov,)
-    w3t = opt_port!(portfolio; obj = obj, rf = rf, l = l)
+    w3t = optimise!(portfolio; obj = obj, rf = rf, l = l)
     @test isapprox(w3t.weights, w3.weights, rtol = 5e-5)
 
     obj = :Max_Ret
-    w4 = opt_port!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
+    w4 = optimise!(portfolio; type = :WC, obj = obj, rf = rf, l = l, u_mu = u_mu,
                    u_cov = u_cov,)
     w4t = [6.591506961818588e-10, 6.494879151766554e-10, 6.022468227279762e-10,
            6.235615370874996e-10, 1.3894389819842054e-7, 6.083226580400363e-10,
@@ -2955,6 +2955,6 @@ l = 2.0
     wc_statistics!(portfolio; box = :Delta, ellipse = :Normal, seed = 0)
 
     obj = :Sharpe
-    w1 = opt_port!(portfolio; type = :WC, obj = obj, kelly = :Exact)
+    w1 = optimise!(portfolio; type = :WC, obj = obj, kelly = :Exact)
     @test isempty(w1)
 end

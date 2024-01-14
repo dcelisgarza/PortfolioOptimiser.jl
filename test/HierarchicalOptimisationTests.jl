@@ -14,10 +14,10 @@ l = 2.0
     asset_statistics!(portfolio; calc_kurt = false)
     portfolio.w_max = Float64[]
     portfolio.w_min = Float64[]
-    w1 = opt_port!(portfolio; linkage = :DBHT)
+    w1 = optimise!(portfolio; linkage = :DBHT)
     portfolio.w_max = 1
     portfolio.w_min = 0
-    w2 = opt_port!(portfolio; linkage = :DBHT)
+    w2 = optimise!(portfolio; linkage = :DBHT)
     @test isapprox(w1.weights, w2.weights)
 
     portfolio = HCPortfolio(; ret = Matrix(returns[!, 2:end]),
@@ -46,7 +46,7 @@ l = 2.0
     linkage = :DBHT
     branchorder = :default
 
-    w1 = opt_port!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
+    w1 = optimise!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
                    l = l, linkage = linkage, branchorder = branchorder,)
 
     w1t = [0.05508878886665077, 0.07921980553056827, 0.030128391561595795,
@@ -60,7 +60,7 @@ l = 2.0
     @test isapprox(w1t, w1.weights)
 
     dbht_method = :Equal
-    w2 = opt_port!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
+    w2 = optimise!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
                    l = l, linkage = linkage, branchorder = branchorder,
                    dbht_method = dbht_method,)
     w2t = [0.04806115269446613, 0.07984550882154572, 0.04427600432815406,
@@ -93,7 +93,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w1 = opt_port!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
+    w1 = optimise!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
                    l = l, linkage = linkage, branchorder = branchorder,)
 
     w1t = [0.049141829952957225, 0.08890554096278969, 0.04011249526834231,
@@ -107,7 +107,7 @@ end
     @test isapprox(w1t, w1.weights)
 
     dbht_method = :Equal
-    w2 = opt_port!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
+    w2 = optimise!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
                    l = l, linkage = linkage, branchorder = branchorder,
                    dbht_method = dbht_method,)
     w2t = [0.060515970737320735, 0.1554699725614562, 0.04939674798809242,
@@ -140,7 +140,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w1 = opt_port!(portfolio; type = type, rm = rm, rm_i = :Equal, obj = obj, kelly = kelly,
+    w1 = optimise!(portfolio; type = type, rm = rm, rm_i = :Equal, obj = obj, kelly = kelly,
                    rf = rf, l = l, linkage = linkage, branchorder = branchorder,)
 
     w1t = [0.05131211159664687, 0.0720286288313129, 0.05131211159664687,
@@ -154,7 +154,7 @@ end
     @test isapprox(w1t, w1.weights)
 
     dbht_method = :Equal
-    w2 = opt_port!(portfolio; type = type, rm = rm, rm_i = :Equal, obj = obj, kelly = kelly,
+    w2 = optimise!(portfolio; type = type, rm = rm, rm_i = :Equal, obj = obj, kelly = kelly,
                    rf = rf, l = l, linkage = linkage, branchorder = branchorder,
                    dbht_method = dbht_method,)
     w2t = [0.06318857573731755, 0.08771127293438398, 0.06318857573731755,
@@ -171,7 +171,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w1 = opt_port!(portfolio; type = type, rm = rm, kelly = kelly, linkage = linkage,
+    w1 = optimise!(portfolio; type = type, rm = rm, kelly = kelly, linkage = linkage,
                    branchorder = branchorder,)
     w1t = [0.03571428571428571, 0.08333333333333333, 0.03571428571428571,
            0.03571428571428571, 0.03571428571428571, 0.03571428571428571,
@@ -187,7 +187,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w2 = opt_port!(portfolio; type = type, rm_i = :Equal, rm = rm, kelly = kelly,
+    w2 = optimise!(portfolio; type = type, rm_i = :Equal, rm = rm, kelly = kelly,
                    linkage = linkage, branchorder = branchorder,)
     w2t = [0.03571428571428571, 0.08333333333333333, 0.03571428571428571,
            0.03571428571428571, 0.03571428571428571, 0.03571428571428571,
@@ -220,7 +220,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w1 = opt_port!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
+    w1 = optimise!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
                    l = l, linkage = linkage, branchorder = branchorder,)
     w1t = [0.025117587653493957, 0.0024048985731171847, 0.022135371734711015,
            0.02429059700839297, 0.011430669574765646, 0.06565629672888273,
@@ -237,7 +237,7 @@ end
     kelly = :None
     linkage = :DBHT
     branchorder = :default
-    w2 = opt_port!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
+    w2 = optimise!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
                    l = l, linkage = linkage, branchorder = branchorder,)
     w2t = [0.03686989551346506, 0.0885648202981644, 0.03550338070885995,
            0.03365193555569722, 0.032410817940959694, 0.04373193503852158,
@@ -285,7 +285,7 @@ end
 
     portfolio.w_min = w_min
     portfolio.w_max = w_max
-    w1 = opt_port!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
+    w1 = optimise!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
                    l = l, linkage = linkage, branchorder = branchorder,)
     w1t = [0.025, 0.05, 0.20557894736842108, 0.045, 0.06, 0.03, 0.07342105263157891, 0.04,
            0.03, 0.02, 0.06, 0.03, 0.01, 0.05, 0.07, 0.01, 0.07, 0.1, 0.001, 0.02]
@@ -300,14 +300,14 @@ end
     end
 
     type = :HERC
-    w2 = opt_port!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
+    w2 = optimise!(portfolio; type = type, rm = rm, obj = obj, kelly = kelly, rf = rf,
                    l = l, linkage = linkage, branchorder = branchorder,)
     w2t = [0.025, 0.05, 0.06, 0.045, 0.06, 0.03, 0.02, 0.04, 0.03, 0.02, 0.06, 0.03, 0.01,
            0.05, 0.07, 0.07285539025375766, 0.07, 0.1, 0.001, 0.15614460974624225]
     @test isapprox(w2.weights, w2t)
 
     type = :HERC
-    w3 = opt_port!(portfolio; type = type, rm_i = :Equal, rm = rm, obj = obj, kelly = kelly,
+    w3 = optimise!(portfolio; type = type, rm_i = :Equal, rm = rm, obj = obj, kelly = kelly,
                    rf = rf, l = l, linkage = linkage, branchorder = branchorder,)
     w3t = [0.025, 0.048189367669678886, 0.07439403001797913, 0.07439403001797913,
            0.07439403001797913, 0.03, 0.048189367669678886, 0.04, 0.03, 0.02,
@@ -322,11 +322,11 @@ end
                                                                              "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
     portfolio.owa_w = Float64[]
-    w = opt_port!(portfolio; type = :NCO, owa_w_i = owa_gmd(size(returns, 1)))
+    w = optimise!(portfolio; type = :NCO, owa_w_i = owa_gmd(size(returns, 1)))
     @test isempty(portfolio.owa_w)
-    w = opt_port!(portfolio; type = :HERC, owa_w_i = owa_gmd(size(returns, 1)))
+    w = optimise!(portfolio; type = :HERC, owa_w_i = owa_gmd(size(returns, 1)))
     @test isempty(portfolio.owa_w)
     portfolio.max_num_assets_kurt = 5
-    w = opt_port!(portfolio; type = :NCO, max_num_assets_kurt_i = 69)
+    w = optimise!(portfolio; type = :NCO, max_num_assets_kurt_i = 69)
     @test portfolio.max_num_assets_kurt == 5
 end

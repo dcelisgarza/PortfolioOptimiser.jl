@@ -11,7 +11,7 @@ import PortfolioOptimiser.distance_wei, PortfolioOptimiser.clique3,
        PortfolioOptimiser.DendroConstruct, PortfolioOptimiser.BubbleMember,
        PortfolioOptimiser.turn_into_Hclust_merges,
 # OWA
-       PortfolioOptimiser._optimize_owa, PortfolioOptimiser._crra_method,
+       PortfolioOptimiser._optimise_owa, PortfolioOptimiser._crra_method,
        PortfolioOptimiser.OWAMethods,
 # Portfolio
        PortfolioOptimiser.AbstractPortfolio, PortfolioOptimiser.TrackingErrKinds,

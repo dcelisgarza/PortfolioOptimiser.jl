@@ -28,13 +28,13 @@ l = 2.0
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SD, obj = :Min_Risk,
                    kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SD, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SD, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -81,13 +81,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MAD, obj = :Min_Risk,
                    kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MAD, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MAD, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -134,13 +134,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SSD, obj = :Min_Risk,
                    kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SSD, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SSD, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -187,13 +187,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :FLPM,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :FLPM, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :FLPM, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -240,13 +240,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SLPM,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SLPM, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SLPM, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -293,13 +293,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :WR, obj = :Min_Risk,
                    kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :WR, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :WR, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -346,13 +346,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CVaR,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CVaR, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CVaR, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -399,13 +399,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EVaR,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EVaR, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EVaR, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -452,13 +452,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RVaR,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RVaR, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RVaR, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -505,13 +505,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MDD, obj = :Min_Risk,
                    kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MDD, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MDD, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -558,13 +558,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :ADD, obj = :Min_Risk,
                    kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :ADD, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :ADD, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -611,13 +611,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -664,13 +664,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :UCI, obj = :Min_Risk,
                    kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :UCI, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :UCI, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -717,13 +717,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EDaR,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EDaR, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EDaR, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -770,13 +770,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RDaR,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RDaR, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RDaR, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -823,13 +823,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -877,13 +877,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt, obj = :Max_Ret,
                    kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -930,13 +930,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
                    obj = :Max_Ret, kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -984,13 +984,13 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
                    obj = :Max_Ret, kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -1026,13 +1026,13 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
                    obj = :Min_Risk, kelly = :None,)
-    w2 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
                    obj = :Max_Ret, kelly = :None,)
-    w3 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt, obj = :Sharpe,
                    kelly = :None,)
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
@@ -1049,13 +1049,13 @@ end
     tmp = rets1[end]
     rets1[(idx + 1):end] = rets1[idx:(end - 1)]
     rets1[idx] = tmp
-    w4 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w4 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
                    obj = :Min_Risk, kelly = :Approx,)
-    w5 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w5 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
                    obj = :Max_Ret, kelly = :Approx,)
-    w6 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w6 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt, obj = :Sharpe,
                    kelly = :Approx,)
     fw2 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :Approx,
@@ -1073,13 +1073,13 @@ end
     tmp = rets2[end]
     rets2[(idx + 1):end] = rets2[idx:(end - 1)]
     rets2[idx] = tmp
-    w7 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w7 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR,
                    obj = :Min_Risk, kelly = :Exact,)
-    w8 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w8 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR, obj = :Max_Ret,
                    kelly = :Exact,)
-    w9 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+    w9 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR, obj = :Sharpe,
                    kelly = :Exact,)
     fw3 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :Exact,

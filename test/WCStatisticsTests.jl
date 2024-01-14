@@ -10,7 +10,7 @@ l = 2.0
 
 @testset "WC Statistics" begin
     portfolio = Portfolio(; prices = prices)
-    wc_settings = WCSettings(; seed = 123456789)
+    wc_settings = WCOpt(; seed = 123456789)
 
     cov_lt1 = reshape([0.0001543205503361124, 7.34134097681148e-5, 0.00010634555161593393,
                        9.115279921137884e-5, 0.00012317169517618682, 4.034407880095843e-5,

@@ -565,7 +565,7 @@ function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
 end
 
 const GraphMethods = (:MST, :TMFG)
-function connection_matrix(returns::AbstractMatrix, settings::CorSettings = CorSettings(;);
+function connection_matrix(returns::AbstractMatrix, settings::CorOpt = CorOpt(;);
                            method::Symbol = :MST, steps::Integer = 1)
     @smart_assert(method in GraphMethods)
 
@@ -591,7 +591,7 @@ function connection_matrix(returns::AbstractMatrix, settings::CorSettings = CorS
     return A_p
 end
 
-function centrality_vector(returns::AbstractMatrix, settings::CorSettings = CorSettings(;);
+function centrality_vector(returns::AbstractMatrix, settings::CorOpt = CorOpt(;);
                            centrality::GenericFunc = GenericFunc(;
                                                                  func = Graphs.degree_centrality),
                            method::Symbol = :MST, steps::Integer = 1)
@@ -609,7 +609,7 @@ function centrality_vector(returns::AbstractMatrix, settings::CorSettings = CorS
 end
 
 function cluster_matrix(assets::AbstractVector, returns::AbstractMatrix,
-                        settings::CorSettings = CorSettings(;); linkage = :single,
+                        settings::CorOpt = CorOpt(;); linkage = :single,
                         max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
                         k = 0, dbht_method = :Unique)
     clusters, missing, missing = cluster_assets(assets, returns, settings;
@@ -641,7 +641,7 @@ function _con_rel(A::AbstractMatrix, w::AbstractVector)
 end
 
 function connected_assets(returns::AbstractMatrix, w::AbstractVector,
-                          settings::CorSettings = CorSettings(;); method::Symbol = :MST,
+                          settings::CorOpt = CorOpt(;); method::Symbol = :MST,
                           steps::Integer = 1)
     A_c = connection_matrix(returns, settings; method = method, steps = steps)
     C_a = _con_rel(A_c, w)
@@ -649,7 +649,7 @@ function connected_assets(returns::AbstractMatrix, w::AbstractVector,
 end
 
 function related_assets(assets::AbstractVector, returns::AbstractMatrix, w::AbstractVector,
-                        settings::CorSettings = CorSettings(;); linkage = :single,
+                        settings::CorOpt = CorOpt(;); linkage = :single,
                         max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
                         k = 0, dbht_method = :Unique)
     A_c = cluster_matrix(assets, returns, settings; linkage = linkage, max_k = max_k,

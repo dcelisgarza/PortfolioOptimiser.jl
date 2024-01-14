@@ -339,17 +339,16 @@ end
 
 """
 ```julia
-allocate_port!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :HRP,
-               alloc_type = :LP, latest_prices = portfolio.latest_prices, investment = 1e4,
-               rounding = 1, reinvest = false, short_ratio = nothing, string_names = false,
-               save_opt_params = true,)
+allocate!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :HRP, alloc_type = :LP,
+          latest_prices = portfolio.latest_prices, investment = 1e4, rounding = 1,
+          reinvest = false, short_ratio = nothing, string_names = false,
+          save_opt_params = true,)
 ```
 """
-function allocate_port!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :HRP,
-                        alloc_type = :LP, latest_prices = portfolio.latest_prices,
-                        investment = 1e4, rounding = 1, reinvest = false,
-                        short_ratio = nothing, string_names = false,
-                        save_opt_params = true,)
+function allocate!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                   alloc_type = :LP, latest_prices = portfolio.latest_prices,
+                   investment = 1e4, rounding = 1, reinvest = false, short_ratio = nothing,
+                   string_names = false, save_opt_params = true,)
     if isa(portfolio, Portfolio)
         @smart_assert(port_type in PortTypes)
     else

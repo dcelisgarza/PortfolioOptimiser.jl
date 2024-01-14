@@ -96,7 +96,7 @@ returns = dropmissing!(DataFrame(Y))
                                                               :params => Dict("verbose" => false,
                                                                               "maxit" => 200))))
     asset_statistics!(portfolio; calc_kurt = false)
-    opt_port!(portfolio)
+    optimise!(portfolio)
     T = size(returns, 1)
     owa_w = fill(1 / T, T)
 
@@ -110,13 +110,13 @@ returns = dropmissing!(DataFrame(Y))
                                                                   :params => Dict("verbose" => false,
                                                                                   "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
-    opt_port!(portfolio; rm = :EVaR)
+    optimise!(portfolio; rm = :EVaR)
     evar_r1 = calc_risk(portfolio; rm = :EVaR)
     evar_r2 = ERM(portfolio.returns * portfolio.optimal[:Trad].weights,
                   portfolio.z[:Trad_z_evar], portfolio.alpha)
     @test isapprox(evar_r1, evar_r2, rtol = 2e-6)
 
-    opt_port!(portfolio; rm = :EVaR, obj = :Min_Risk)
+    optimise!(portfolio; rm = :EVaR, obj = :Min_Risk)
     evar_r1 = calc_risk(portfolio; rm = :EVaR)
     evar_r2 = ERM(portfolio.returns * portfolio.optimal[:Trad].weights,
                   portfolio.z[:Trad_z_evar], portfolio.alpha)
@@ -131,7 +131,7 @@ end
     asset_statistics!(portfolio)
     type = :NCO
 
-    w = opt_port!(portfolio; type = type, linkage = :complete)
+    w = optimise!(portfolio; type = type, linkage = :complete)
 
     sr = sharpe_ratio(portfolio; rf = 0.0001, type = type)
     srt = (dot(portfolio.mu, portfolio.optimal[type].weights) - 0.0001) /

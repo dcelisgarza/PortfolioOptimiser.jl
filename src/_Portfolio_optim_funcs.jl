@@ -1381,7 +1381,7 @@ function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l
     return nothing
 end
 
-function _optimize_portfolio(portfolio, type, obj, near_opt = false, coneopt = true)
+function _optimise_portfolio(portfolio, type, obj, near_opt = false, coneopt = true)
     solvers = portfolio.solvers
     model = portfolio.model
 
@@ -1529,7 +1529,7 @@ function _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers
                                      type, rm, obj, near_opt = false, coneopt = true)
     retval = if term_status ∉ ValidTermination ||
                 any(.!isfinite.(value.(portfolio.model[:w])))
-        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.opt_port!))"
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.optimise!))"
         @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         portfolio.fail = solvers_tried
         if near_opt
@@ -1691,7 +1691,7 @@ function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, retu
     @expression(model, near_opt_risk, log_ret + log_risk + neg_sum_log_ws)
     @objective(model, Min, near_opt_risk)
 
-    term_status, solvers_tried = _optimize_portfolio(portfolio, type, obj, true, true)
+    term_status, solvers_tried = _optimise_portfolio(portfolio, type, obj, true, true)
     retval = _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
                                          type, rm, obj, true, true)
 
@@ -1702,7 +1702,7 @@ function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, retu
         @expression(model, neg_sum_log_ws, -sum(log.(1 .+ model[:w]) .+ log.(model[:w])))
         @expression(model, near_opt_risk, log_ret + log_risk + neg_sum_log_ws)
         @objective(model, Min, near_opt_risk)
-        term_status2, solvers_tried2 = _optimize_portfolio(portfolio, type, obj, true,
+        term_status2, solvers_tried2 = _optimise_portfolio(portfolio, type, obj, true,
                                                            false)
         retval = _handle_errors_and_finalise(portfolio, term_status2, returns, N,
                                              merge(solvers_tried, solvers_tried2), type, rm,
@@ -1714,14 +1714,14 @@ end
 
 """
 ```julia
-opt_port!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
+optimise!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
           kelly::Symbol = :None, l::Real = 2.0, obj::Symbol = :Sharpe, rf::Real = 0.0,
           rm::Symbol = :SD, rrp_penalty::Real = 1.0, rrp_ver::Symbol = :None,
           save_opt_params::Bool = true, string_names::Bool = false, type::Symbol = :Trad,
           u_cov::Symbol = :Box, u_mu::Symbol = :Box,)
 ```
 """
-function opt_port!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
+function optimise!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
                    kelly::Symbol = :None, type::Symbol = :Trad, rm::Symbol = :SD,
                    obj::Symbol = :Sharpe, rf::Real = 0.0, l::Real = 2.0,
                    rrp_ver::Symbol = :None, rrp_penalty::Real = 1.0, u_cov::Symbol = :Box,
@@ -1797,7 +1797,7 @@ function opt_port!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer
 
     _setup_linear_constraints(portfolio, obj, type)
 
-    term_status, solvers_tried = _optimize_portfolio(portfolio, type, obj)
+    term_status, solvers_tried = _optimise_portfolio(portfolio, type, obj)
     retval = _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
                                          type, rm, obj)
 
@@ -1829,10 +1829,10 @@ function frontier_limits!(portfolio::Portfolio; class::Symbol = :Classic, hist::
         (model1 = copy(portfolio.model))
     end
 
-    w_min = opt_port!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Min_Risk,
+    w_min = optimise!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Min_Risk,
                       rf = rf, rm = rm, save_opt_params = false,)
 
-    w_max = opt_port!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Max_Ret,
+    w_max = optimise!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Max_Ret,
                       rf = rf, rm = rm, save_opt_params = false,)
 
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
@@ -1897,7 +1897,7 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     i = 0
     for (j, (r, m)) in enumerate(zip(risks, mus))
         if i == 0
-            w = opt_port!(portfolio; class = class, hist = hist, kelly = kelly,
+            w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
                           obj = :Min_Risk, rf = rf, rm = rm, save_opt_params = false,)
         else
             if !isempty(w)
@@ -1908,14 +1908,14 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
             else
                 setproperty!(portfolio, rmf, Inf)
             end
-            w = opt_port!(portfolio; class = class, hist = hist, kelly = kelly,
+            w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
                           obj = :Max_Ret, rf = rf, rm = rm, save_opt_params = false,
                           w_ini = w_ini,)
             # Fallback in case :Max_Ret with maximum risk bounds fails.
             if isempty(w)
                 setproperty!(portfolio, rmf, Inf)
                 j != length(risks) ? portfolio.mu_l = m : portfolio.mu_l = Inf
-                w = opt_port!(portfolio; class = class, hist = hist, kelly = kelly,
+                w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
                               obj = :Min_Risk, rf = rf, rm = rm, save_opt_params = false,
                               w_ini = w_ini,)
                 portfolio.mu_l = Inf
@@ -1934,7 +1934,7 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     end
     setproperty!(portfolio, rmf, Inf)
 
-    w = opt_port!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Sharpe,
+    w = optimise!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Sharpe,
                   rf = rf, rm = rm, save_opt_params = false,)
     sharpe = false
     if !isempty(w)

@@ -199,7 +199,7 @@ end
 
 """
 ```julia
-_optimize_owa(model, solvers)
+_optimise_owa(model, solvers)
 ```
 Internal function to optimise an OWA JuMP model.
 # Inputs
@@ -213,7 +213,7 @@ $(_solver_desc("the OWA L-Moment `JuMP` model."))
     - If the optimiser fails to optimise the model satisfactorily:
         - `Dict(:objective_val => JuMP.objective_value(model), :term_status => term_status, :params => haskey(val, :params) ? val[:params] : missing)`, where `val` is the value of the dictionary corresponding to `key`.
 """
-function _optimize_owa(model, solvers)
+function _optimise_owa(model, solvers)
     term_status = termination_status(model)
     solvers_tried = Dict()
 
@@ -401,7 +401,7 @@ function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::R
             @objective(model, Min, t)
         end
 
-        term_status, solvers_tried = _optimize_owa(model, solvers)
+        term_status, solvers_tried = _optimise_owa(model, solvers)
         # Error handling.
         if term_status ∉ ValidTermination
             funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"

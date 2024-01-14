@@ -2932,7 +2932,7 @@ end
 @testset "Correlation and Distance Matrix Estimation" begin
     portfolio = HCPortfolio(; prices = prices)
 
-    cor_settings = CorSettings(;)
+    cor_settings = CorOpt(;)
     asset_statistics!(portfolio; calc_kurt = false, cor_settings = cor_settings)
     codep1 = portfolio.cor
     dist1 = portfolio.dist
@@ -8025,7 +8025,7 @@ end
 @testset "Mean Estimation" begin
     portfolio = Portfolio(; prices = prices)
 
-    mu_settings = MuSettings(;)
+    mu_settings = MuOpt(;)
     asset_statistics!(portfolio;)
     mu1 = portfolio.mu
     cov1 = portfolio.cov
@@ -8093,7 +8093,7 @@ end
     cov13 = portfolio.cov
 
     mu_weights = eweights(size(portfolio.returns, 1), 0.03; scale = true)
-    mu_settings = MuSettings(;)
+    mu_settings = MuOpt(;)
     mu_settings.method = :Default
     mu_settings.genfunc.args = (mu_weights,)
     asset_statistics!(portfolio; mu_settings = mu_settings)
@@ -11758,9 +11758,8 @@ end
 
 @testset "Custom Func and Val for Mean" begin
     portfolio = Portfolio(; prices = prices)
-    mu_settings = MuSettings(; method = :Custom_Func,
-                             genfunc = GenericFunc(;
-                                                   func = x -> 3 * vec(mean(x; dims = 1))))
+    mu_settings = MuOpt(; method = :Custom_Func,
+                        genfunc = GenericFunction(; func = x -> 3 * vec(mean(x; dims = 1))))
     asset_statistics!(portfolio; calc_kurt = false, mu_settings = mu_settings)
     mu1 = portfolio.mu
 
@@ -11779,7 +11778,7 @@ end
     mu1 = portfolio.mu
     cov1 = portfolio.cov
 
-    cov_settings = CovSettings(; method = :Full)
+    cov_settings = CovOpt(; method = :Full)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu2 = portfolio.mu
     cov2 = portfolio.cov
@@ -11810,9 +11809,9 @@ end
     mu7 = portfolio.mu
     cov7 = portfolio.cov
 
-    cov_settings = CovSettings(; method = :Semi,
-                               estimation = CovEstSettings(;
-                                                           estimator = AnalyticalNonlinearShrinkage()),)
+    cov_settings = CovOpt(; method = :Semi,
+                          estimation = CovEstOpt(;
+                                                 estimator = AnalyticalNonlinearShrinkage()),)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu8 = portfolio.mu
     cov8 = portfolio.cov
@@ -11827,12 +11826,12 @@ end
     mu10 = portfolio.mu
     cov10 = portfolio.cov
 
-    cov_settings = CovSettings(; method = :Semi,
-                               estimation = CovEstSettings(;
-                                                           estimator = AnalyticalNonlinearShrinkage(),
-                                                           genfunc = GenericFunc(;
-                                                                                 args = (fweights(1:size(portfolio.returns,
-                                                                                                         1)),)),),)
+    cov_settings = CovOpt(; method = :Semi,
+                          estimation = CovEstOpt(;
+                                                 estimator = AnalyticalNonlinearShrinkage(),
+                                                 genfunc = GenericFunction(;
+                                                                           args = (fweights(1:size(portfolio.returns,
+                                                                                                   1)),)),),)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu11 = portfolio.mu
     cov11 = portfolio.cov
@@ -13806,7 +13805,7 @@ end
 @testset "Gerber Covariances" begin
     portfolio = Portfolio(; prices = prices)
 
-    cov_settings = CovSettings(; method = :Gerber0)
+    cov_settings = CovOpt(; method = :Gerber0)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu1 = portfolio.mu
     cov1 = portfolio.cov
@@ -13834,8 +13833,7 @@ end
     mu5 = portfolio.mu
     cov5 = portfolio.cov
 
-    cov_settings = CovSettings(; method = :Gerber0,
-                               gerber = GerberSettings(; threshold = 0.25))
+    cov_settings = CovOpt(; method = :Gerber0, gerber = GerberOpt(; threshold = 0.25))
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu6 = portfolio.mu
     cov6 = portfolio.cov
@@ -13847,7 +13845,7 @@ end
     mu7 = portfolio.mu
     cov7 = portfolio.cov
 
-    cov_settings = CovSettings(; method = :Gerber1)
+    cov_settings = CovOpt(; method = :Gerber1)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu8 = portfolio.mu
     cov8 = portfolio.cov
@@ -13862,7 +13860,7 @@ end
     mu10 = portfolio.mu
     cov10 = portfolio.cov
 
-    cov_settings = CovSettings(; method = :Gerber2)
+    cov_settings = CovOpt(; method = :Gerber2)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu11 = portfolio.mu
     cov11 = portfolio.cov
@@ -15636,9 +15634,9 @@ end
 @testset "Custom Func and Val for Covariance" begin
     portfolio = Portfolio(; prices = prices)
 
-    genfunc = GenericFunc(; func = x -> 3 * cov(x))
-    estimation = CovEstSettings(; genfunc = genfunc)
-    cov_settings = CovSettings(; method = :Custom_Func, estimation = estimation)
+    genfunc = GenericFunction(; func = x -> 3 * cov(x))
+    estimation = CovEstOpt(; genfunc = genfunc)
+    cov_settings = CovOpt(; method = :Custom_Func, estimation = estimation)
 
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov1 = portfolio.cov
@@ -15654,7 +15652,7 @@ end
 
 @testset "Denoise Covariance" begin
     portfolio = Portfolio(; prices = prices)
-    cov_settings = CovSettings(;)
+    cov_settings = CovOpt(;)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov1 = portfolio.cov
 
@@ -17544,7 +17542,7 @@ end
 @testset "JLogo Covariance" begin
     portfolio = Portfolio(; prices = prices)
 
-    cov_settings = CovSettings(;)
+    cov_settings = CovOpt(;)
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     cov1 = portfolio.cov
 

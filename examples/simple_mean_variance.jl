@@ -62,9 +62,9 @@ pretty_table(DataFrame(; assets = portfolio.assets,
 
 asset_statistics!(portfolio; calc_kurt = false)
 
-# We can then call [`opt_port!`](@ref) with default arguments, which optimises for the risk adjusted return ratio of the mean variance portfolio.
+# We can then call [`optimise!`](@ref) with default arguments, which optimises for the risk adjusted return ratio of the mean variance portfolio.
 
-w = opt_port!(portfolio)
+w = optimise!(portfolio)
 pretty_table(w; formatters = fmt)
 
 # ### Informative Plots

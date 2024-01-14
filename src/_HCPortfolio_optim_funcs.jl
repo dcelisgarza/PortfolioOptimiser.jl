@@ -45,10 +45,10 @@ function _opt_w(portfolio, assets, returns, imu, icov; obj = :Min_Risk, kelly = 
     end
 
     weights = if obj != :Equal
-        opt_port!(port; type = :Trad, class = :Classic, rm = rm, obj = obj, kelly = kelly,
+        optimise!(port; type = :Trad, class = :Classic, rm = rm, obj = obj, kelly = kelly,
                   rf = rf, l = l, near_opt = near_opt, M = M,)
     else
-        opt_port!(port; type = :RP, class = :Classic, rm = rm, kelly = kelly, rf = rf,
+        optimise!(port; type = :RP, class = :Classic, rm = rm, kelly = kelly, rf = rf,
                   near_opt = near_opt, M = M,)
     end
 
@@ -134,8 +134,8 @@ function _hierarchical_clustering(portfolio::HCPortfolio, linkage = :single,
 
     return clustering, k
 end
-function _hierarchical_clustering(returns::AbstractMatrix,
-                                  settings::CorSettings = CorSettings(;), linkage = :single,
+function _hierarchical_clustering(returns::AbstractMatrix, settings::CorOpt = CorOpt(;),
+                                  linkage = :single,
                                   max_k = ceil(Int, sqrt(size(returns, 2))),
                                   branchorder = :optimal, dbht_method = :Unique)
     cor_method = settings.method
@@ -158,7 +158,7 @@ function cluster_assets(portfolio::HCPortfolio; linkage = :single,
     return DataFrame(; Assets = portfolio.assets, Clusters = clustering_idx), clustering, k
 end
 function cluster_assets(assets::AbstractVector, returns::AbstractMatrix,
-                        settings::CorSettings = CorSettings(;); linkage = :single,
+                        settings::CorOpt = CorOpt(;); linkage = :single,
                         max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
                         k = 0, dbht_method = :Unique,)
     clustering, tk = _hierarchical_clustering(returns, settings, linkage, max_k,
@@ -617,7 +617,7 @@ function _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, l
     return nothing
 end
 
-function opt_port!(portfolio::HCPortfolio; type::Symbol = :HRP, cluster::Bool = true,
+function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, cluster::Bool = true,
                    linkage::Symbol = :single, k::Integer = cluster ? 0 : portfolio.k,
                    max_k::Int = ceil(Int, sqrt(size(portfolio.returns, 2))),
                    branchorder::Symbol = :optimal, dbht_method::Symbol = :Unique,

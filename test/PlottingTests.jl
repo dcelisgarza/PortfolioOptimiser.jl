@@ -12,7 +12,7 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
     asset_statistics!(portfolio)
     rm = :SD
     obj = :Min_Risk
-    w = opt_port!(portfolio; rm = rm, obj = obj, save_opt_params = true)
+    w = optimise!(portfolio; rm = rm, obj = obj, save_opt_params = true)
     plt1 = plot_risk_contribution(portfolio; rm = rm, percentage = true)
     plt2 = plot_risk_contribution(portfolio; rm = rm, percentage = false)
     frontier = efficient_frontier!(portfolio; rm = rm)
@@ -35,6 +35,6 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
                           dbht_method = :Unique,)
     plt13 = plot_dendrogram(hcportfolio; max_k = 10, linkage = :DBHT,
                             branchorder = :optimal, dbht_method = :Unique,)
-    opt_port!(hcportfolio; type = :HERC)
+    optimise!(hcportfolio; type = :HERC)
     plt14 = plot_clusters(hcportfolio; cluster = false)
 end

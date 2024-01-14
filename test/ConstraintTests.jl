@@ -11,7 +11,7 @@ l = 2.0
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
     loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
                                DataFrame(portfolio.returns, portfolio.assets),
-                               LoadingsSettings(; method = :BReg))
+                               LoadingsOpt(; method = :BReg))
 
     constraints = DataFrame("Enabled" => [true, true, true, true, true, true, true, true,
                                           true, true, true, true, true, true, false],

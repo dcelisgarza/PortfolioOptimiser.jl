@@ -3084,19 +3084,19 @@ end
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
 
-    w1 = opt_port!(portfolio; hist = 5)
-    w2 = opt_port!(portfolio; class = :FM, hist = 1)
+    w1 = optimise!(portfolio; hist = 5)
+    w2 = optimise!(portfolio; class = :FM, hist = 1)
     @test isempty(w2)
     portfolio.mu_fm = portfolio.mu
-    w3 = opt_port!(portfolio; class = :FM, hist = 2)
+    w3 = optimise!(portfolio; class = :FM, hist = 2)
     @test isapprox(w1.weights, w3.weights)
-    @test_throws AssertionError opt_port!(portfolio, class = :FM, hist = 3)
+    @test_throws AssertionError optimise!(portfolio, class = :FM, hist = 3)
 
     portfolio.returns_fm = portfolio.returns
     portfolio.cov_fm = portfolio.cov
-    w4 = opt_port!(portfolio; class = :FM, hist = 1)
+    w4 = optimise!(portfolio; class = :FM, hist = 1)
     @test isapprox(w1.weights, w4.weights)
-    w5 = opt_port!(portfolio; class = :FM, hist = 2)
+    w5 = optimise!(portfolio; class = :FM, hist = 2)
     @test isapprox(w1.weights, w5.weights)
 
     portfolio = Portfolio(; returns = returns,
@@ -3105,17 +3105,17 @@ end
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
 
-    w1 = opt_port!(portfolio; hist = 5)
-    @test_throws DimensionMismatch opt_port!(portfolio, class = :BL, hist = 1)
+    w1 = optimise!(portfolio; hist = 5)
+    @test_throws DimensionMismatch optimise!(portfolio, class = :BL, hist = 1)
     portfolio.mu_bl = portfolio.mu
-    w3 = opt_port!(portfolio; class = :BL, hist = 2)
+    w3 = optimise!(portfolio; class = :BL, hist = 2)
     @test isapprox(w1.weights, w3.weights)
-    @test_throws AssertionError opt_port!(portfolio, class = :BL, hist = 3)
+    @test_throws AssertionError optimise!(portfolio, class = :BL, hist = 3)
 
     portfolio.cov_bl = portfolio.cov
-    w4 = opt_port!(portfolio; class = :BL, hist = 1)
+    w4 = optimise!(portfolio; class = :BL, hist = 1)
     @test isapprox(w1.weights, w4.weights)
-    w5 = opt_port!(portfolio; class = :BL, hist = 2)
+    w5 = optimise!(portfolio; class = :BL, hist = 2)
     @test isapprox(w1.weights, w5.weights)
 
     portfolio = Portfolio(; returns = returns,
@@ -3124,22 +3124,22 @@ end
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
 
-    w1 = opt_port!(portfolio; hist = 5)
-    w2 = opt_port!(portfolio; class = :BLFM, hist = 1)
+    w1 = optimise!(portfolio; hist = 5)
+    w2 = optimise!(portfolio; class = :BLFM, hist = 1)
     @test isempty(w2)
     portfolio.mu_bl_fm = portfolio.mu
-    w3 = opt_port!(portfolio; class = :BLFM, hist = 2)
+    w3 = optimise!(portfolio; class = :BLFM, hist = 2)
     @test isapprox(w1.weights, w3.weights)
-    @test_throws DimensionMismatch opt_port!(portfolio, class = :BLFM, hist = 3)
+    @test_throws DimensionMismatch optimise!(portfolio, class = :BLFM, hist = 3)
 
     portfolio.cov_bl_fm = portfolio.cov
     portfolio.returns_fm = portfolio.returns
-    w4 = opt_port!(portfolio; class = :BLFM, hist = 1)
+    w4 = optimise!(portfolio; class = :BLFM, hist = 1)
     @test isapprox(w1.weights, w4.weights)
-    w5 = opt_port!(portfolio; class = :BLFM, hist = 2)
+    w5 = optimise!(portfolio; class = :BLFM, hist = 2)
     @test isapprox(w1.weights, w5.weights)
-    @test_throws DimensionMismatch opt_port!(portfolio, class = :BLFM, hist = 3)
+    @test_throws DimensionMismatch optimise!(portfolio, class = :BLFM, hist = 3)
     portfolio.cov_fm = portfolio.cov
-    w6 = opt_port!(portfolio; class = :BLFM, hist = 3)
+    w6 = optimise!(portfolio; class = :BLFM, hist = 3)
     @test isapprox(w1.weights, w6.weights)
 end

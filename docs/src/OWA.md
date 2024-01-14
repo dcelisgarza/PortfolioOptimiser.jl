@@ -20,6 +20,6 @@ owa_l_moment_crm
 
 ```@docs
 OWAMethods
-_optimize_owa
+_optimise_owa
 _crra_method
 ```

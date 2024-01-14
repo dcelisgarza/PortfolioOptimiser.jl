@@ -42,21 +42,20 @@ returns = Matrix(returns[!, 2:end]);
 
 # ### Building the asset sets dataframe.
 asset_sets = DataFrame(:Asset => assets)
-cor_settings = CorSettings(;
-                           estimation = CorEstSettings(;
-                                                       estimator = AnalyticalNonlinearShrinkage(),
-                                                       ## `target_ret` is used as the return threshold for 
-                                                       ## classifying returns as sufficiently bad as to be
-                                                       ## considered unappealing, and thus taken into 
-                                                       ## account when computing the semi covariance. The 
-                                                       ## default is 0, but we can make it any number. A 
-                                                       ## good choice is to use the daily risk-free rate,
-                                                       ## because if an asset returns on average less than
-                                                       ## a bond, then you'd be better off buying bonds
-                                                       ## because they're both less risky and more profitable
-                                                       ## than the asset.
-                                                       ## target_ret = 1.0329^(1 / 252) - 1,
-                                                       ),)
+cor_settings = CorOpt(;
+                      estimation = CorEstOpt(; estimator = AnalyticalNonlinearShrinkage(),
+                                             ## `target_ret` is used as the return threshold for 
+                                             ## classifying returns as sufficiently bad as to be
+                                             ## considered unappealing, and thus taken into 
+                                             ## account when computing the semi covariance. The 
+                                             ## default is 0, but we can make it any number. A 
+                                             ## good choice is to use the daily risk-free rate,
+                                             ## because if an asset returns on average less than
+                                             ## a bond, then you'd be better off buying bonds
+                                             ## because they're both less risky and more profitable
+                                             ## than the asset.
+                                             ## target_ret = 1.0329^(1 / 252) - 1,
+                                             ),)
 for method in (:Pearson, :Semi_Pearson, :Gerber2)
     for linkage in (:ward, :DBHT)
         ## We define our asset sets based on the covariance and linkage methods.

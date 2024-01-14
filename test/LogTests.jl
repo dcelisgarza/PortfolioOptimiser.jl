@@ -10,7 +10,7 @@ returns = dropmissing!(DataFrame(Y))
                           solvers = OrderedDict(:ECOS => Dict(:solver => ECOS.Optimizer,
                                                               :params => Dict("verbose" => false))))
     asset_statistics!(portfolio; calc_kurt = false)
-    opt_port!(portfolio)
+    optimise!(portfolio)
 
     portfolio.solvers = OrderedDict(:ECOS => Dict(:solver => ECOS.Optimizer,
                                                   :params => Dict("verbose" => false,
@@ -32,25 +32,25 @@ returns = dropmissing!(DataFrame(Y))
     portfolio.solvers = OrderedDict(:ECOS => Dict(:solver => ECOS.Optimizer,
                                                   :params => Dict("verbose" => false,
                                                                   "maxit" => 2)))
-    w1 = opt_port!(portfolio; rm = :EVaR)
+    w1 = optimise!(portfolio; rm = :EVaR)
     @test isempty(w1)
 
     portfolio.solvers = OrderedDict(:ECOS => Dict(:solver => ECOS.Optimizer,
                                                   :params => Dict("verbose" => false)))
-    opt_port!(portfolio)
+    optimise!(portfolio)
 
     portfolio.solvers = OrderedDict(:ECOS => Dict(:solver => ECOS.Optimizer,
                                                   :params => Dict("verbose" => false,
                                                                   "max_iter" => 2)))
 
-    w1 = opt_port!(portfolio; rm = :RVaR)
+    w1 = optimise!(portfolio; rm = :RVaR)
     @test isempty(w1)
 
     portfolio = Portfolio(; returns = returns,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false))))
     asset_statistics!(portfolio; calc_kurt = false)
-    opt_port!(portfolio)
+    optimise!(portfolio)
 
     portfolio.solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                       :params => Dict("verbose" => false,
@@ -58,9 +58,9 @@ returns = dropmissing!(DataFrame(Y))
     @test calc_risk(portfolio; rm = :RVaR) < 0
     @test isapprox(calc_risk(portfolio; rm = :Equal), 1 / size(portfolio.returns, 2))
 
-    opt_port!(portfolio; type = :RP)
+    optimise!(portfolio; type = :RP)
     @test !isempty(portfolio.fail[:Clarabel_RP])
-    opt_port!(portfolio; type = :RRP)
+    optimise!(portfolio; type = :RRP)
     @test !isempty(portfolio.fail[:Clarabel_RRP])
 
     portfolio = Portfolio(; returns = returns,
@@ -71,9 +71,9 @@ returns = dropmissing!(DataFrame(Y))
                                                                         :params => Dict("verbose" => false))))
 
     asset_statistics!(portfolio; calc_kurt = false)
-    opt_port!(portfolio)
-    alloc = allocate_port!(portfolio; alloc_type = :LP,
-                           latest_prices = Vector(DataFrame(A)[end, 2:end]))
+    optimise!(portfolio)
+    alloc = allocate!(portfolio; alloc_type = :LP,
+                      latest_prices = Vector(DataFrame(A)[end, 2:end]))
     @test isempty(alloc)
     @test !isempty(portfolio.alloc_fail)
 
@@ -85,12 +85,12 @@ returns = dropmissing!(DataFrame(Y))
                                                                         :params => Dict("verbose" => false))))
 
     asset_statistics!(portfolio; calc_kurt = false)
-    opt_port!(portfolio)
+    optimise!(portfolio)
 
     portfolio.alloc_solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                             :params => Dict("verbose" => false)))
-    alloc = allocate_port!(portfolio; alloc_type = :LP,
-                           latest_prices = Vector(DataFrame(A)[end, 2:end]), investment = 0)
+    alloc = allocate!(portfolio; alloc_type = :LP,
+                      latest_prices = Vector(DataFrame(A)[end, 2:end]), investment = 0)
     @test isempty(alloc)
     @test !isempty(portfolio.alloc_fail)
 

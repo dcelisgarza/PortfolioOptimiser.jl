@@ -12,11 +12,11 @@ l = 2.0
 @testset "Factor Statistics" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
-    loadings_settings = LoadingsSettings(;)
-    factor_settings = FactorSettings(; loadings_settings = loadings_settings)
-    posdef = PosdefFixSettings(; method = :Nearest)
-    cov_f_settings = CovSettings(; posdef = posdef)
-    cov_fm_settings = CovSettings(; posdef = posdef)
+    loadings_settings = LoadingsOpt(;)
+    factor_settings = FactorOpt(; loadings_settings = loadings_settings)
+    posdef = PosdefFixOpt(; method = :Nearest)
+    cov_f_settings = CovOpt(; posdef = posdef)
+    cov_fm_settings = CovOpt(; posdef = posdef)
     factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
                        cov_fm_settings = cov_fm_settings,
                        factor_settings = factor_settings,)
@@ -53,11 +53,11 @@ l = 2.0
     cov_fm4 = portfolio.cov_fm
     mu_fm4 = portfolio.mu_fm
 
-    loadings_settings = LoadingsSettings(;)
+    loadings_settings = LoadingsOpt(;)
     loadings_settings.threshold = 0.5
-    factor_settings = FactorSettings(; loadings_settings = loadings_settings)
-    cov_f_settings = CovSettings(;)
-    cov_fm_settings = CovSettings(;)
+    factor_settings = FactorOpt(; loadings_settings = loadings_settings)
+    cov_f_settings = CovOpt(;)
+    cov_fm_settings = CovOpt(;)
     factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
                        cov_fm_settings = cov_fm_settings,
                        factor_settings = factor_settings,)
@@ -84,10 +84,10 @@ l = 2.0
     cov_fm7 = portfolio.cov_fm
     mu_fm7 = portfolio.mu_fm
 
-    loadings_settings = LoadingsSettings(; method = :BReg)
-    factor_settings = FactorSettings(; loadings_settings = loadings_settings)
-    cov_f_settings = CovSettings(;)
-    cov_fm_settings = CovSettings(;)
+    loadings_settings = LoadingsOpt(; method = :BReg)
+    factor_settings = FactorOpt(; loadings_settings = loadings_settings)
+    cov_f_settings = CovOpt(;)
+    cov_fm_settings = CovOpt(;)
     factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
                        cov_fm_settings = cov_fm_settings,
                        factor_settings = factor_settings,)
@@ -97,9 +97,9 @@ l = 2.0
     mu_fm8 = portfolio.mu_fm
 
     loadings_settings.threshold = 0.5
-    factor_settings = FactorSettings(; loadings_settings = loadings_settings)
-    cov_f_settings = CovSettings(;)
-    cov_fm_settings = CovSettings(;)
+    factor_settings = FactorOpt(; loadings_settings = loadings_settings)
+    cov_f_settings = CovOpt(;)
+    cov_fm_settings = CovOpt(;)
     factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
                        cov_fm_settings = cov_fm_settings,
                        factor_settings = factor_settings,)
@@ -127,9 +127,9 @@ l = 2.0
     mu_fm11 = portfolio.mu_fm
 
     loadings_settings.method = :PCR
-    factor_settings = FactorSettings(; loadings_settings = loadings_settings)
-    cov_f_settings = CovSettings(;)
-    cov_fm_settings = CovSettings(;)
+    factor_settings = FactorOpt(; loadings_settings = loadings_settings)
+    cov_f_settings = CovOpt(;)
+    cov_fm_settings = CovOpt(;)
     factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
                        cov_fm_settings = cov_fm_settings,
                        factor_settings = factor_settings,)

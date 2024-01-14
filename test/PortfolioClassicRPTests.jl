@@ -15,12 +15,12 @@ l = 2.0
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SD)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :SD)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :SD)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SD)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :SD)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :SD)
     lrc2, hrc2 = extrema(rc2)
 
@@ -55,12 +55,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :MAD)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :MAD)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :MAD)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :MAD)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :MAD)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :MAD)
     lrc2, hrc2 = extrema(rc2)
 
@@ -95,12 +95,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SSD)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :SSD)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :SSD)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SSD)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :SSD)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :SSD)
     lrc2, hrc2 = extrema(rc2)
 
@@ -135,12 +135,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :FLPM)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :FLPM)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :FLPM)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :FLPM)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :FLPM)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :FLPM)
     lrc2, hrc2 = extrema(rc2)
 
@@ -174,12 +174,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SLPM)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :SLPM)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :SLPM)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SLPM)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :SLPM)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :SLPM)
     lrc2, hrc2 = extrema(rc2)
 
@@ -214,12 +214,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :WR)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :WR)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :WR)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :WR)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :WR)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :WR)
     lrc2, hrc2 = extrema(rc2)
 
@@ -254,12 +254,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :CVaR)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :CVaR)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :CVaR)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :CVaR)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :CVaR)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :CVaR)
     lrc2, hrc2 = extrema(rc2)
 
@@ -294,12 +294,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :EVaR)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :EVaR)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :EVaR)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :EVaR)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :EVaR)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :EVaR)
     lrc2, hrc2 = extrema(rc2)
 
@@ -334,12 +334,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :RVaR)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :RVaR)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :RVaR)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :RVaR)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :RVaR)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :RVaR)
     lrc2, hrc2 = extrema(rc2)
 
@@ -374,12 +374,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :MDD)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :MDD)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :MDD)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = reverse(1:size(portfolio.returns, 2))
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :MDD)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :MDD)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :MDD)
     lrc2, hrc2 = extrema(rc2)
 
@@ -414,12 +414,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :ADD)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :ADD)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :ADD)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :ADD)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :ADD)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :ADD)
     lrc2, hrc2 = extrema(rc2)
 
@@ -454,12 +454,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :CDaR)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :CDaR)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :CDaR)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :CDaR)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :CDaR)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :CDaR)
     lrc2, hrc2 = extrema(rc2)
 
@@ -494,12 +494,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :UCI)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :UCI)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :UCI)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :UCI)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :UCI)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :UCI)
     lrc2, hrc2 = extrema(rc2)
 
@@ -534,12 +534,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :EDaR)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :EDaR)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :EDaR)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :EDaR)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :EDaR)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :EDaR)
     lrc2, hrc2 = extrema(rc2)
 
@@ -574,12 +574,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :RDaR)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :RDaR)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :RDaR)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :RDaR)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :RDaR)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :RDaR)
     lrc2, hrc2 = extrema(rc2)
 
@@ -614,12 +614,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :Kurt)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :Kurt)
     lrc2, hrc2 = extrema(rc2)
 
@@ -655,12 +655,12 @@ end
                           max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :Kurt)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :Kurt)
     lrc2, hrc2 = extrema(rc2)
 
@@ -695,12 +695,12 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :SKurt)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :SKurt)
     lrc2, hrc2 = extrema(rc2)
 
@@ -736,12 +736,12 @@ end
                           max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
 
-    w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
+    w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
     rc1 = risk_contribution(portfolio; type = :RP, rm = :SKurt)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
+    w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :SKurt)
     rc2 = risk_contribution(portfolio; type = :RP, rm = :SKurt)
     lrc2, hrc2 = extrema(rc2)
 
@@ -777,73 +777,73 @@ end
     asset_statistics!(portfolio)
 
     portfolio.risk_budget = []
-    w1 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
+    w1 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
                    rrp_ver = :None,)
     rc1 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
+    w2 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
                    rrp_ver = :None,)
     rc2 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc2, hrc2 = extrema(rc2)
 
     portfolio.risk_budget = []
-    w3 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
+    w3 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
                    rrp_ver = :None,)
     rc3 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc3, hrc3 = extrema(rc3)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w4 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
+    w4 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
                    rrp_ver = :None,)
     rc4 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc4, hrc4 = extrema(rc4)
 
     portfolio.risk_budget = []
-    w5 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
+    w5 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
                    rrp_ver = :Reg)
     rc5 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc5, hrc5 = extrema(rc5)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w6 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
+    w6 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
                    rrp_ver = :Reg)
     rc6 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc6, hrc6 = extrema(rc6)
 
     portfolio.risk_budget = []
-    w7 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
+    w7 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
                    rrp_ver = :Reg)
     rc7 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc7, hrc7 = extrema(rc7)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w8 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
+    w8 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
                    rrp_ver = :Reg)
     rc8 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc8, hrc8 = extrema(rc8)
 
     portfolio.risk_budget = []
-    w9 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
+    w9 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
                    rrp_ver = :Reg_Pen,)
     rc9 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc9, hrc9 = extrema(rc9)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w10 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
+    w10 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 1,
                     rrp_ver = :Reg_Pen,)
     rc10 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc10, hrc10 = extrema(rc10)
 
     portfolio.risk_budget = []
-    w11 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
+    w11 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
                     rrp_ver = :Reg_Pen,)
     rc11 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc11, hrc11 = extrema(rc11)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w12 = opt_port!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
+    w12 = optimise!(portfolio; class = :Classic, type = :RRP, rrp_penalty = 5,
                     rrp_ver = :Reg_Pen,)
     rc12 = risk_contribution(portfolio; type = :RRP, rm = :SD)
     lrc12, hrc12 = extrema(rc12)

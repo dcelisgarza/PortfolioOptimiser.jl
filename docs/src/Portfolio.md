@@ -4,11 +4,11 @@
 
 ```@docs
 Portfolio()
-opt_port!
+optimise!
 HCPortfolio()
 frontier_limits!
 efficient_frontier!
-allocate_port!
+allocate!
 ```
 
 ## Private API

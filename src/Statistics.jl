@@ -204,7 +204,7 @@ function ltdi_mtx(x, alpha = 0.05)
     return Symmetric(mtx, :L)
 end
 
-function covgerber0(x, settings::GerberSettings = GerberSettings(;))
+function covgerber0(x, settings::GerberOpt = GerberOpt(;))
     threshold = settings.threshold
     func = settings.genfunc.func
     args = settings.genfunc.args
@@ -241,7 +241,7 @@ function covgerber0(x, settings::GerberSettings = GerberSettings(;))
     return mtx .* (std_vec * transpose(std_vec))
 end
 
-function covgerber1(x, settings::GerberSettings = GerberSettings(;))
+function covgerber1(x, settings::GerberOpt = GerberOpt(;))
     threshold = settings.threshold
     func = settings.genfunc.func
     args = settings.genfunc.args
@@ -585,7 +585,7 @@ export denoise_cov
 mu_estimator
 ```
 """
-function mu_estimator(returns::AbstractMatrix, settings::MuSettings = MuSettings(;))
+function mu_estimator(returns::AbstractMatrix, settings::MuOpt = MuOpt(;))
     method = settings.method
     @smart_assert(method in (:JS, :BS, :BOP, :CAPM))
 
@@ -640,7 +640,7 @@ end
 covar_mtx
 ```
 """
-function covar_mtx(returns::AbstractMatrix, settings::CovSettings = CovSettings(;))
+function covar_mtx(returns::AbstractMatrix, settings::CovOpt = CovOpt(;))
     method = settings.method
 
     @smart_assert(method in CovMethods)
@@ -710,7 +710,7 @@ mean_vec(returns::AbstractMatrix; custom_mu::Union{AbstractVector, Nothing} = no
          sigma::Union{AbstractMatrix, Nothing} = nothing,)
 ```
 """
-function mean_vec(returns::AbstractMatrix, settings::MuSettings = MuSettings(;))
+function mean_vec(returns::AbstractMatrix, settings::MuOpt = MuOpt(;))
     method = settings.method
     mu = if method in (:Default, :Custom_Func)
         func = settings.genfunc.func
@@ -788,7 +788,7 @@ cor_dist_mtx(
     returns::AbstractMatrix;    alpha_tail::Real = 0.05,    bins_info::Union{Symbol, Integer} = :KN,    cor_method::Symbol = :Pearson,    cor_args::Tuple = (),    cor_func::Function = cor,    cor_kwargs::NamedTuple = (;),    custom_cor::Union{AbstractMatrix, Nothing} = nothing,    dist_args::Tuple = (),    dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),    dist_kwargs::NamedTuple = (;),    gs_threshold::Real = 0.5,    posdef_args::Tuple = (),    posdef_fix::Symbol = :Nearest,    posdef_func::Function = x -> x,    posdef_kwargs::NamedTuple = (;),    sigma::Union{AbstractMatrix, Nothing} = nothing,    std_args::Tuple = (),    std_func::Function = std,    std_kwargs::NamedTuple = (;),    uplo::Symbol = :L,)
 ```
 """
-function cor_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettings(;))
+function cor_dist_mtx(returns::AbstractMatrix, settings::CorOpt = CorOpt(;))
     method = settings.method
     if method in (:Pearson, :Semi_Pearson)
         estimation = settings.estimation
@@ -896,8 +896,8 @@ function cor_dist_mtx(returns::AbstractMatrix, settings::CorSettings = CorSettin
     return corr, dist
 end
 
-function covar_mtx_mean_vec(returns; cov_settings::CovSettings = CovSettings(;),
-                            mu_settings::MuSettings = MuSettings(;),)
+function covar_mtx_mean_vec(returns; cov_settings::CovOpt = CovOpt(;),
+                            mu_settings::MuOpt = MuOpt(;),)
     mu_method = mu_settings.method
     if mu_method == :CAPM
         mkt_ret = mu_settings.mkt_ret
@@ -941,10 +941,9 @@ asset_statistics!(portfolio::AbstractPortfolio; target_ret::AbstractFloat = 0.0,
 function asset_statistics!(portfolio::AbstractPortfolio;                           # flags
                            calc_codep::Bool = true, calc_cov::Bool = true,
                            calc_mu::Bool = true, calc_kurt::Bool = true,                           # cov_mtx
-                           cov_settings::CovSettings = CovSettings(;),
-                           mu_settings::MuSettings = MuSettings(;),
+                           cov_settings::CovOpt = CovOpt(;), mu_settings::MuOpt = MuOpt(;),
                            kurt_settings::KurtSettings = KurtSettings(;),
-                           cor_settings::CorSettings = CorSettings(;),)
+                           cor_settings::CorOpt = CorOpt(;),)
     returns = portfolio.returns
 
     if calc_cov || calc_mu
@@ -1388,8 +1387,7 @@ function pcr(x::DataFrame, y::Union{Vector, DataFrame},
     return beta
 end
 
-function loadings_matrix(x::DataFrame, y::DataFrame,
-                         settings::LoadingsSettings = LoadingsSettings(;))
+function loadings_matrix(x::DataFrame, y::DataFrame, settings::LoadingsOpt = LoadingsOpt(;))
     features = names(x)
     rows = ncol(y)
     cols = ncol(x) + 1
@@ -1433,10 +1431,8 @@ function loadings_matrix(x::DataFrame, y::DataFrame,
     return hcat(DataFrame(; ticker = names(y)), DataFrame(loadings, ["const"; features]))
 end
 
-function risk_factors(x::DataFrame, y::DataFrame;
-                      factor_settings::FactorSettings = FactorSettings(;),
-                      cov_settings::CovSettings = CovSettings(;),
-                      mu_settings::MuSettings = MuSettings(;),)
+function risk_factors(x::DataFrame, y::DataFrame; factor_settings::FactorOpt = FactorOpt(;),
+                      cov_settings::CovOpt = CovOpt(;), mu_settings::MuOpt = MuOpt(;),)
     B = factor_settings.B
 
     if isnothing(B)
@@ -1489,9 +1485,8 @@ function _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta)
 end
 
 function black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
-                         w::AbstractVector; cov_settings::CovSettings = CovSettings(;),
-                         mu_settings::MuSettings = MuSettings(;),
-                         bl_settings::BLSettings = BLSettings(;),)
+                         w::AbstractVector; cov_settings::CovOpt = CovOpt(;),
+                         mu_settings::MuOpt = MuOpt(;), bl_settings::BLOpt = BLOpt(;),)
     eq = bl_settings.eq
     delta = bl_settings.delta
     rf = bl_settings.rf
@@ -1510,10 +1505,9 @@ end
 
 function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
                                   B::AbstractMatrix, P_f::AbstractMatrix,
-                                  Q_f::AbstractVector;
-                                  cov_settings::CovSettings = CovSettings(;),
-                                  mu_settings::MuSettings = MuSettings(;),
-                                  bl_settings::BLSettings = BLSettings(;),)
+                                  Q_f::AbstractVector; cov_settings::CovOpt = CovOpt(;),
+                                  mu_settings::MuOpt = MuOpt(;),
+                                  bl_settings::BLOpt = BLOpt(;),)
     sigma_f, mu_f = covar_mtx_mean_vec(F; cov_settings = cov_settings,
                                        mu_settings = mu_settings)
 
@@ -1574,9 +1568,9 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;  
                                    P_f::Union{AbstractMatrix, Nothing} = nothing,
                                    Q::Union{AbstractVector, Nothing}   = nothing,
                                    Q_f::Union{AbstractVector, Nothing} = nothing,                                   # Settings
-                                   cov_settings::CovSettings           = CovSettings(;),
-                                   mu_settings::MuSettings             = MuSettings(;),
-                                   bl_settings::BLSettings             = BLSettings(;),)
+                                   cov_settings::CovOpt                = CovOpt(;),
+                                   mu_settings::MuOpt                  = MuOpt(;),
+                                   bl_settings::BLOpt                  = BLOpt(;),)
     asset_tuple = (!isnothing(P), !isnothing(Q))
     any_asset_provided = any(asset_tuple)
     all_asset_provided = all(asset_tuple)
@@ -1701,9 +1695,9 @@ black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
 function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
                                      Q::AbstractVector,
                                      w::AbstractVector = Vector{Float64}(undef, 0);
-                                     cov_settings::CovSettings = CovSettings(;),
-                                     mu_settings::MuSettings = MuSettings(;),
-                                     bl_settings::BLSettings = BLSettings(;),)
+                                     cov_settings::CovOpt = CovOpt(;),
+                                     mu_settings::MuOpt = MuOpt(;),
+                                     bl_settings::BLOpt = BLOpt(;),)
     returns = portfolio.returns
     if isempty(w)
         if isempty(portfolio.bl_bench_weights)
@@ -1762,10 +1756,10 @@ factor_statistics!(portfolio::AbstractPortfolio;    # cov_mtx
 ```
 """
 function factor_statistics!(portfolio::AbstractPortfolio;
-                            cov_f_settings::CovSettings = CovSettings(;),
-                            mu_f_settings::MuSettings = MuSettings(;),
-                            cov_fm_settings::CovSettings = CovSettings(;),
-                            mu_fm_settings::MuSettings = MuSettings(;),
+                            cov_f_settings::CovOpt = CovOpt(;),
+                            mu_f_settings::MuOpt = MuOpt(;),
+                            cov_fm_settings::CovOpt = CovOpt(;),
+                            mu_fm_settings::MuOpt = MuOpt(;),
                             factor_settings::FactorSettings = FactorSettings(;),)
     returns = portfolio.returns
     f_returns = portfolio.f_returns
@@ -1832,7 +1826,7 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
                                            P_f::Union{AbstractMatrix, Nothing} = nothing,
                                            Q::Union{AbstractVector, Nothing}   = nothing,
                                            Q_f::Union{AbstractVector, Nothing} = nothing,                                           # Settings
-                                           loadings_settings::LoadingsSettings = LoadingsSettings(;),
+                                           loadings_settings::LoadingsOpt      = LoadingsOpt(;),
                                            cov_settings::CovSettings           = CovSettings(;),
                                            mu_settings::MuSettings             = MuSettings(;),
                                            bl_settings::BLSettings             = BLSettings(;),)
@@ -1875,7 +1869,7 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
     return nothing
 end
 
-function cluster_assets(returns::AbstractMatrix; cor_settings::CorSettings = CorSettings(;),
+function cluster_assets(returns::AbstractMatrix; cor_settings::CorOpt = CorOpt(;),
                         linkage = :single, max_k = ceil(Int, sqrt(size(returns, 2))),
                         branchorder = :optimal, k = 0, dbht_method = :Unique,)
     @smart_assert(linkage in LinkageTypes)

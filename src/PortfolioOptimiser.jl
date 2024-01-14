@@ -5,7 +5,7 @@ using AverageShiftedHistograms, Clustering, DataFrames, Dates, Distances, Distri
       Statistics, StatsBase, TimeSeries
 
 include("Definitions.jl")
-include("_Statistics_types.jl")
+include("Types.jl")
 include("DBHTs.jl")
 include("OWA.jl")
 include("Portfolio.jl")

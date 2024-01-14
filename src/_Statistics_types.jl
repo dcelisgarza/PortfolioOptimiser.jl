@@ -216,57 +216,57 @@ Methods for calculating optimal bin widths for the mutual and variational inform
 """
 const BinMethods = (:KN, :FD, :SC, :HGR)
 
-@kwdef mutable struct GenericFunc
+@kwdef mutable struct GenericFunction
     func::Function = x -> x
     args::Tuple = ()
     kwargs::NamedTuple = (;)
 end
 
-@kwdef mutable struct CovEstSettings
+@kwdef mutable struct CovEstOpt
     estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
     target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
-    genfunc::GenericFunc = GenericFunc(; func = StatsBase.cov)
+    genfunc::GenericFunction = GenericFunction(; func = StatsBase.cov)
     custom::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
 end
 
-mutable struct PosdefFixSettings
+mutable struct PosdefFixOpt
     method::Symbol
-    genfunc::GenericFunc
+    genfunc::GenericFunction
 end
-function PosdefFixSettings(; method::Symbol = :Nearest,
-                           genfunc::GenericFunc = GenericFunc(;),)
+function PosdefFixOpt(; method::Symbol = :Nearest,
+                      genfunc::GenericFunction = GenericFunction(;),)
     @smart_assert(method in PosdefFixMethods)
 
-    return PosdefFixSettings(method, genfunc)
+    return PosdefFixOpt(method, genfunc)
 end
-function Base.setproperty!(obj::PosdefFixSettings, sym::Symbol, val)
+function Base.setproperty!(obj::PosdefFixOpt, sym::Symbol, val)
     if sym == :method
         @smart_assert(val in PosdefFixMethods)
     end
     return setfield!(obj, sym, val)
 end
 
-mutable struct GerberSettings{T1 <: Real}
+mutable struct GerberOpt{T1 <: Real}
     threshold::T1
-    genfunc::GenericFunc
-    posdef::PosdefFixSettings
+    genfunc::GenericFunction
+    posdef::PosdefFixOpt
 end
-function GerberSettings(; threshold::Real = 0.5,
-                        genfunc::GenericFunc = GenericFunc(; func = StatsBase.std,
-                                                           kwargs = (; dims = 1)),
-                        posdef::PosdefFixSettings = PosdefFixSettings(;),)
+function GerberOpt(; threshold::Real = 0.5,
+                   genfunc::GenericFunction = GenericFunction(; func = StatsBase.std,
+                                                              kwargs = (; dims = 1)),
+                   posdef::PosdefFixOpt = PosdefFixOpt(;),)
     @smart_assert(0 < threshold < 1)
 
-    return GerberSettings{typeof(threshold)}(threshold, genfunc, posdef)
+    return GerberOpt{typeof(threshold)}(threshold, genfunc, posdef)
 end
-function Base.setproperty!(obj::GerberSettings, sym::Symbol, val)
+function Base.setproperty!(obj::GerberOpt, sym::Symbol, val)
     if sym == :threshold
         @smart_assert(0 < val < 1)
     end
     return setfield!(obj, sym, val)
 end
 
-mutable struct DenoiseSettings{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 <: Integer}
+mutable struct DenoiseOpt{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 <: Integer}
     method::Symbol
     alpha::T1
     detone::Bool
@@ -274,20 +274,19 @@ mutable struct DenoiseSettings{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 
     kernel::T3
     m::T4
     n::T5
-    genfunc::GenericFunc
+    genfunc::GenericFunction
 end
-function DenoiseSettings(; method::Symbol = :None, alpha::Real = 0.0, detone::Bool = false,
-                         mkt_comp::Integer = 1, kernel = ASH.Kernels.gaussian,
-                         m::Integer = 10, n::Integer = 1000,
-                         genfunc::GenericFunc = GenericFunc(; func = x -> nothing),)
+function DenoiseOpt(; method::Symbol = :None, alpha::Real = 0.0, detone::Bool = false,
+                    mkt_comp::Integer = 1, kernel = ASH.Kernels.gaussian, m::Integer = 10,
+                    n::Integer = 1000,
+                    genfunc::GenericFunction = GenericFunction(; func = x -> nothing),)
     @smart_assert(method in DenoiseMethods)
     @smart_assert(0 <= alpha <= 1)
 
-    return DenoiseSettings{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m),
-                           typeof(n)}(method, alpha, detone, mkt_comp, kernel, m, n,
-                                      genfunc)
+    return DenoiseOpt{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m),
+                      typeof(n)}(method, alpha, detone, mkt_comp, kernel, m, n, genfunc)
 end
-function Base.setproperty!(obj::DenoiseSettings, sym::Symbol, val)
+function Base.setproperty!(obj::DenoiseOpt, sym::Symbol, val)
     if sym == :method
         @smart_assert(val in DenoiseMethods)
     elseif sym == :alpha
@@ -298,35 +297,33 @@ end
 
 """
 ```
-CovSettings
+CovOpt
 ```
 
   - `cov_method`: method for estimating the covariance matrices `cov`, `cov_fm`, `cov_bl`, `cov_bl_fm` in [`covar_mtx`](@ref), see [`CovMethods`](@ref) for available choices.
 """
-mutable struct CovSettings
+mutable struct CovOpt
     # Cov method
     method::Symbol
     # Estimation
-    estimation::CovEstSettings
+    estimation::CovEstOpt
     # Gerber
-    gerber::GerberSettings
+    gerber::GerberOpt
     # Denoise
-    denoise::DenoiseSettings
+    denoise::DenoiseOpt
     # Posdef fix
-    posdef::PosdefFixSettings
+    posdef::PosdefFixOpt
     # J-LoGo
     jlogo::Bool
 end
-function CovSettings(; method::Symbol = :Full,
-                     estimation::CovEstSettings = CovEstSettings(;),
-                     gerber::GerberSettings = GerberSettings(;),
-                     denoise::DenoiseSettings = DenoiseSettings(;),
-                     posdef::PosdefFixSettings = PosdefFixSettings(;), jlogo::Bool = false,)
+function CovOpt(; method::Symbol = :Full, estimation::CovEstOpt = CovEstOpt(;),
+                gerber::GerberOpt = GerberOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
+                posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,)
     @smart_assert(method in CovMethods)
 
-    return CovSettings(method, estimation, gerber, denoise, posdef, jlogo)
+    return CovOpt(method, estimation, gerber, denoise, posdef, jlogo)
 end
-function Base.setproperty!(obj::CovSettings, sym::Symbol, val)
+function Base.setproperty!(obj::CovOpt, sym::Symbol, val)
     if sym == :method
         @smart_assert(val in CovMethods)
     end
@@ -335,32 +332,32 @@ end
 
 """
 ```
-MuSettings
+MuOpt
 ```
 
   - `mu_method`: method for estimating the mean returns vectors `mu`, `mu_fm`, `mu_bl`, `mu_bl_fm` in [`mean_vec`](@ref), see [`MuMethods`](@ref) for available choices.
 """
-mutable struct MuSettings{T1 <: Real}
+mutable struct MuOpt{T1 <: Real}
     method::Symbol
     target::Symbol
     rf::T1
-    genfunc::GenericFunc
+    genfunc::GenericFunction
     custom::Union{<:AbstractVector{<:Real}, Nothing}
     mkt_ret::Union{<:AbstractVector{<:Real}, Nothing}
     sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
 end
-function MuSettings(; method::Symbol = :Default, target::Symbol = :GM, rf::Real = 0.0,
-                    genfunc::GenericFunc = GenericFunc(; func = StatsBase.mean,
-                                                       kwargs = (; dims = 1)),
-                    custom::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
-                    mkt_ret::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
-                    sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,)
+function MuOpt(; method::Symbol = :Default, target::Symbol = :GM, rf::Real = 0.0,
+               genfunc::GenericFunction = GenericFunction(; func = StatsBase.mean,
+                                                          kwargs = (; dims = 1)),
+               custom::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
+               mkt_ret::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
+               sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,)
     @smart_assert(method in MuMethods)
     @smart_assert(target in MuTargets)
 
-    return MuSettings{typeof(rf)}(method, target, rf, genfunc, custom, mkt_ret, sigma)
+    return MuOpt{typeof(rf)}(method, target, rf, genfunc, custom, mkt_ret, sigma)
 end
-function Base.setproperty!(obj::MuSettings, sym::Symbol, val)
+function Base.setproperty!(obj::MuOpt, sym::Symbol, val)
     if sym == :method
         @smart_assert(val in MuMethods)
     elseif sym == :target
@@ -369,54 +366,53 @@ function Base.setproperty!(obj::MuSettings, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-@kwdef mutable struct KurtEstSettings
+@kwdef mutable struct KurtEstOpt
     target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
     custom_kurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
     custom_skurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
 end
 mutable struct KurtSettings
     # Estimation
-    estimation::KurtEstSettings
+    estimation::KurtEstOpt
     # Denoise
-    denoise::DenoiseSettings
+    denoise::DenoiseOpt
     # Posdef fix
-    posdef::PosdefFixSettings
+    posdef::PosdefFixOpt
     # J-LoGo
     jlogo::Bool
 end
-function KurtSettings(; estimation::KurtEstSettings = KurtEstSettings(;),
-                      denoise::DenoiseSettings = DenoiseSettings(;),
-                      posdef::PosdefFixSettings = PosdefFixSettings(;),
-                      jlogo::Bool = false,)
+function KurtSettings(; estimation::KurtEstOpt = KurtEstOpt(;),
+                      denoise::DenoiseOpt = DenoiseOpt(;),
+                      posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,)
     return KurtSettings(estimation, denoise, posdef, jlogo)
 end
 
-mutable struct CorEstSettings{T1 <: Real}
+mutable struct CorEstOpt{T1 <: Real}
     estimator::CovarianceEstimator
     alpha::T1
     bins_info::Union{Symbol, <:Integer}
-    cor_genfunc::GenericFunc
-    dist_genfunc::GenericFunc
+    cor_genfunc::GenericFunction
+    dist_genfunc::GenericFunction
     target_ret::Union{<:AbstractVector{<:Real}, <:Real}
     custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing}
     custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing}
     sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
 end
-function CorEstSettings(;
-                        estimator::CovarianceEstimator = StatsBase.SimpleCovariance(;
-                                                                                    corrected = true),
-                        alpha::Real = 0.05, bins_info::Union{Symbol, <:Integer} = :KN,
-                        cor_genfunc::GenericFunc = GenericFunc(; func = StatsBase.cor),
-                        dist_genfunc::GenericFunc = GenericFunc(;
-                                                                func = x -> sqrt.(clamp!((1 .-
-                                                                                          x) /
-                                                                                         2,
-                                                                                         0,
-                                                                                         1)),),
-                        target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0,
-                        custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-                        custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-                        sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,)
+function CorEstOpt(;
+                   estimator::CovarianceEstimator = StatsBase.SimpleCovariance(;
+                                                                               corrected = true),
+                   alpha::Real = 0.05, bins_info::Union{Symbol, <:Integer} = :KN,
+                   cor_genfunc::GenericFunction = GenericFunction(; func = StatsBase.cor),
+                   dist_genfunc::GenericFunction = GenericFunction(;
+                                                                   func = x -> sqrt.(clamp!((1 .-
+                                                                                             x) /
+                                                                                            2,
+                                                                                            0,
+                                                                                            1)),),
+                   target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0,
+                   custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
+                   custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
+                   sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,)
     @smart_assert(0 <= alpha <= 1)
     @smart_assert(bins_info in BinMethods ||
                   isa(bins_info, Int) && bins_info > zero(bins_info))
@@ -433,11 +429,10 @@ function CorEstSettings(;
     #     size(sigma, 1) == size(sigma, 2),    #     "sigma must be a square matrix, size(sigma) = $(size(sigma))"
     # )
 
-    return CorEstSettings{typeof(alpha)}(estimator, alpha, bins_info, cor_genfunc,
-                                         dist_genfunc, target_ret, custom_cor, custom_dist,
-                                         sigma)
+    return CorEstOpt{typeof(alpha)}(estimator, alpha, bins_info, cor_genfunc, dist_genfunc,
+                                    target_ret, custom_cor, custom_dist, sigma)
 end
-function Base.setproperty!(obj::CorEstSettings, sym::Symbol, val)
+function Base.setproperty!(obj::CorEstOpt, sym::Symbol, val)
     if sym == :alpha
         @smart_assert(0 <= val <= 1)
     elseif sym == :bins_info
@@ -453,41 +448,38 @@ function Base.setproperty!(obj::CorEstSettings, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct CorSettings
+mutable struct CorOpt
     # Cov method
     method::Symbol
     # Estimation
-    estimation::CorEstSettings
+    estimation::CorEstOpt
     # Gerber
-    gerber::GerberSettings
+    gerber::GerberOpt
     # Denoise
-    denoise::DenoiseSettings
+    denoise::DenoiseOpt
     # Posdef fix
-    posdef::PosdefFixSettings
+    posdef::PosdefFixOpt
     # J-LoGo
     jlogo::Bool
     # uplo
     uplo::Symbol
 end
-function CorSettings(; method::Symbol = :Pearson,
-                     estimation::CorEstSettings = CorEstSettings(;),
-                     gerber::GerberSettings = GerberSettings(;),
-                     denoise::DenoiseSettings = DenoiseSettings(;),
-                     posdef::PosdefFixSettings = PosdefFixSettings(;), jlogo::Bool = false,
-                     uplo::Symbol = :L,)
+function CorOpt(; method::Symbol = :Pearson, estimation::CorEstOpt = CorEstOpt(;),
+                gerber::GerberOpt = GerberOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
+                posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,
+                uplo::Symbol = :L,)
     @smart_assert(method in CorMethods)
 
-    return CorSettings(method, estimation, gerber, denoise, posdef, jlogo, uplo)
+    return CorOpt(method, estimation, gerber, denoise, posdef, jlogo, uplo)
 end
-function Base.setproperty!(obj::CorSettings, sym::Symbol, val)
+function Base.setproperty!(obj::CorOpt, sym::Symbol, val)
     if sym == :method
         @smart_assert(val in CorMethods)
     end
     return setfield!(obj, sym, val)
 end
 
-mutable struct WCSettings{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer,
-                          T6 <: Integer}
+mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <: Integer}
     calc_box::Bool
     calc_ellipse::Bool
     box::Symbol
@@ -499,23 +491,22 @@ mutable struct WCSettings{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer,
     seed::Union{<:Integer, Nothing}
     n_sim::T5
     window::T6
-    posdef::PosdefFixSettings
+    posdef::PosdefFixOpt
 end
-function WCSettings(; calc_box::Bool = true, calc_ellipse::Bool = true,
-                    box::Symbol = :Stationary, ellipse::Symbol = :Stationary,
-                    dcov::Real = 0.1, dmu::Real = 0.1, q::Real = 0.05,
-                    rng = Random.default_rng(), seed::Union{<:Integer, Nothing} = nothing,
-                    n_sim::Integer = 3_000, window::Integer = 3,
-                    posdef::PosdefFixSettings = PosdefFixSettings(;),)
+function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true,
+               box::Symbol = :Stationary, ellipse::Symbol = :Stationary, dcov::Real = 0.1,
+               dmu::Real = 0.1, q::Real = 0.05, rng = Random.default_rng(),
+               seed::Union{<:Integer, Nothing} = nothing, n_sim::Integer = 3_000,
+               window::Integer = 3, posdef::PosdefFixOpt = PosdefFixOpt(;),)
     @smart_assert(box in BoxMethods)
     @smart_assert(ellipse in EllipseMethods)
     @smart_assert(0 < q < 1)
 
-    return WCSettings{typeof(dcov), typeof(dmu), typeof(q), typeof(rng), typeof(n_sim),
-                      typeof(window)}(calc_box, calc_ellipse, box, ellipse, dcov, dmu, q,
-                                      rng, seed, n_sim, window, posdef)
+    return WCOpt{typeof(dcov), typeof(dmu), typeof(q), typeof(rng), typeof(n_sim),
+                 typeof(window)}(calc_box, calc_ellipse, box, ellipse, dcov, dmu, q, rng,
+                                 seed, n_sim, window, posdef)
 end
-function Base.setproperty!(obj::WCSettings, sym::Symbol, val)
+function Base.setproperty!(obj::WCOpt, sym::Symbol, val)
     if sym == :box
         @smart_assert(val in BoxMethods)
     elseif sym == :ellipse
@@ -526,41 +517,40 @@ function Base.setproperty!(obj::WCSettings, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct PCRSettings
-    mean_genfunc::GenericFunc
-    std_genfunc::GenericFunc
-    pca_s_genfunc::GenericFunc
-    pca_genfunc::GenericFunc
+mutable struct PCROpt
+    mean_genfunc::GenericFunction
+    std_genfunc::GenericFunction
+    pca_s_genfunc::GenericFunction
+    pca_genfunc::GenericFunction
 end
-function PCRSettings(;
-                     mean_genfunc::GenericFunc = GenericFunc(; func = StatsBase.mean,
-                                                             kwargs = (; dims = 2)),
-                     std_genfunc::GenericFunc = GenericFunc(; func = StatsBase.std,
-                                                            kwargs = (; dims = 2)),
-                     pca_s_genfunc::GenericFunc = GenericFunc(;
-                                                              func = StatsBase.standardize,
-                                                              args = (StatsBase.ZScoreTransform,),
-                                                              kwargs = (; dims = 2),),
-                     pca_genfunc::GenericFunc = GenericFunc(; func = MultivariateStats.fit,
-                                                            args = (MultivariateStats.PCA,),),)
-    return PCRSettings(mean_genfunc, std_genfunc, pca_s_genfunc, pca_genfunc)
+function PCROpt(;
+                mean_genfunc::GenericFunction = GenericFunction(; func = StatsBase.mean,
+                                                                kwargs = (; dims = 2)),
+                std_genfunc::GenericFunction = GenericFunction(; func = StatsBase.std,
+                                                               kwargs = (; dims = 2)),
+                pca_s_genfunc::GenericFunction = GenericFunction(;
+                                                                 func = StatsBase.standardize,
+                                                                 args = (StatsBase.ZScoreTransform,),
+                                                                 kwargs = (; dims = 2),),
+                pca_genfunc::GenericFunction = GenericFunction(;
+                                                               func = MultivariateStats.fit,
+                                                               args = (MultivariateStats.PCA,),),)
+    return PCROpt(mean_genfunc, std_genfunc, pca_s_genfunc, pca_genfunc)
 end
 
-mutable struct LoadingsSettings{T1 <: Real}
+mutable struct LoadingsOpt{T1 <: Real}
     method::Symbol
     criterion::Union{Symbol, Function}
     threshold::T1
-    pcr_settings::PCRSettings
+    pcr_settings::PCROpt
 end
-function LoadingsSettings(; method::Symbol = :FReg,
-                          criterion::Union{Symbol, Function} = :pval,
-                          threshold::Real = 0.05,
-                          pcr_settings::PCRSettings = PCRSettings(;),)
+function LoadingsOpt(; method::Symbol = :FReg, criterion::Union{Symbol, Function} = :pval,
+                     threshold::Real = 0.05, pcr_settings::PCROpt = PCROpt(;),)
     @smart_assert(method in FSMethods)
     @smart_assert(criterion in RegCriteria)
-    return LoadingsSettings{typeof(threshold)}(method, criterion, threshold, pcr_settings)
+    return LoadingsOpt{typeof(threshold)}(method, criterion, threshold, pcr_settings)
 end
-function Base.setproperty!(obj::LoadingsSettings, sym::Symbol, val)
+function Base.setproperty!(obj::LoadingsOpt, sym::Symbol, val)
     if sym == :method
         @smart_assert(val in FSMethods)
     elseif sym == :criterion
@@ -569,44 +559,42 @@ function Base.setproperty!(obj::LoadingsSettings, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct FactorSettings
+mutable struct FactorOpt
     B::Union{DataFrame, Nothing}
-    loadings_settings::LoadingsSettings
+    loadings_settings::LoadingsOpt
     error::Bool
-    var_genfunc::GenericFunc
+    var_genfunc::GenericFunction
 end
-function FactorSettings(; B::Union{DataFrame, Nothing} = nothing,
-                        loadings_settings::LoadingsSettings = LoadingsSettings(;),
-                        error::Bool = true,
-                        var_genfunc::GenericFunc = GenericFunc(; func = StatsBase.var,
-                                                               kwargs = (; dims = 1)),)
-    return FactorSettings(B, loadings_settings, error, var_genfunc)
+function FactorOpt(; B::Union{DataFrame, Nothing} = nothing,
+                   loadings_settings::LoadingsOpt = LoadingsOpt(;), error::Bool = true,
+                   var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
+                                                                  kwargs = (; dims = 1)),)
+    return FactorOpt(B, loadings_settings, error, var_genfunc)
 end
 
-mutable struct BLSettings{T1 <: Real}
+mutable struct BLOpt{T1 <: Real}
     method::Symbol
     constant::Bool
     diagonal::Bool
     eq::Bool
     delta::Union{Nothing, <:Real}
     rf::T1
-    var_genfunc::GenericFunc
+    var_genfunc::GenericFunction
 end
-function BLSettings(; method::Symbol = :B, constant::Bool = true, eq::Bool = true,
-                    diagonal::Bool = true, delta::Real = 1.0, rf::Real = 0.0,
-                    var_genfunc::GenericFunc = GenericFunc(; func = StatsBase.var,
-                                                           kwargs = (; dims = 1)),)
+function BLOpt(; method::Symbol = :B, constant::Bool = true, eq::Bool = true,
+               diagonal::Bool = true, delta::Real = 1.0, rf::Real = 0.0,
+               var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
+                                                              kwargs = (; dims = 1)),)
     @smart_assert(method in BLFMMethods)
 
-    return BLSettings{typeof(rf)}(method, constant, eq, diagonal, delta, rf, var_genfunc)
+    return BLOpt{typeof(rf)}(method, constant, eq, diagonal, delta, rf, var_genfunc)
 end
-function Base.setproperty!(obj::BLSettings, sym::Symbol, val)
+function Base.setproperty!(obj::BLOpt, sym::Symbol, val)
     if sym == :method
         @smart_assert(val in BLFMMethods)
     end
     return setfield!(obj, sym, val)
 end
 
-export CovSettings, CovEstSettings, GerberSettings, DenoiseSettings, PosdefFixSettings,
-       GenericFunc, MuSettings, CorSettings, CorEstSettings, WCSettings, KurtSettings,
-       PCRSettings, LoadingsSettings, FactorSettings
+export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
+       CorOpt, CorEstOpt, WCOpt, KurtSettings, PCROpt, LoadingsOpt, FactorOpt
