@@ -12708,6 +12708,7 @@ end
     asset_statistics!(portfolio; calc_kurt = false, cor_opt = cor_opt)
     cor20 = portfolio.cor
     dist20 = portfolio.dist
+    covar20 = portfolio.cov
 
     cor_opt.method = :Custom_Func
     cor_opt.estimation.cor_genfunc.func = x -> -2 * cor(x)
@@ -12732,7 +12733,7 @@ end
     cov_opt = CovOpt(;)
     cov_opt.method = :Semi
     asset_statistics!(portfolio; calc_kurt = false, calc_cor = false, cov_opt = cov_opt)
-    covar24 = portfolio.cov
+    covar23_2 = portfolio.cov
 
     cor_opt.method = :Abs_Semi_Pearson
     asset_statistics!(portfolio; calc_kurt = false, cor_opt = cor_opt)
@@ -12742,7 +12743,7 @@ end
 
     cov_opt.method = :Semi
     asset_statistics!(portfolio; calc_kurt = false, calc_cor = false, cov_opt = cov_opt)
-    covar25 = portfolio.cov
+    covar24_2 = portfolio.cov
 
     cort1 = reshape([1.0, 0.46518423333289405, 0.6057125142402467, 0.4076280119894202,
                      0.6007283292568196, 0.3198674217714189, 0.1398068506013631,
@@ -17699,14 +17700,14 @@ end
     @test !isapprox(dist17, dist19)
     @test !isapprox(cor18, cor19)
     @test !isapprox(dist18, dist19)
-    @test isapprox(cor20, cov2cor(portfolio.cov))
-    @test isapprox(dist20, 2 * cov2cor(portfolio.cov))
+    @test isapprox(cor20, cov2cor(covar20))
+    @test isapprox(dist20, 2 * cov2cor(covar20))
     @test isapprox(cor21, -2 * cor(portfolio.returns))
     @test isapprox(dist21, -6 * cor(portfolio.returns))
     @test isapprox(cor22, 3 * cor(portfolio.returns))
     @test isapprox(dist22, -7 * cor(portfolio.returns))
     @test !isapprox(cor23, cov2cor(covar23))
-    @test isapprox(cor23, cov2cor(covar24))
+    @test isapprox(cor23, cov2cor(covar23_2))
     @test !isapprox(cor24, cov2cor(abs.(covar24)))
-    @test isapprox(cor24, cov2cor(abs.(covar25)))
+    @test isapprox(cor24, cov2cor(abs.(covar24_2)))
 end
