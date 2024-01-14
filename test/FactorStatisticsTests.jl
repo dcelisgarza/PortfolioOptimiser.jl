@@ -66,7 +66,7 @@ l = 2.0
     cov_fm5 = portfolio.cov_fm
     mu_fm5 = portfolio.mu_fm
 
-    loadings_settings.criterion = aic
+    loadings_settings.criterion = :aic
     factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
                        cov_fm_settings = cov_fm_settings,
                        factor_settings = factor_settings,)
@@ -75,7 +75,7 @@ l = 2.0
     cov_fm6 = portfolio.cov_fm
     mu_fm6 = portfolio.mu_fm
 
-    loadings_settings.criterion = adjr2
+    loadings_settings.criterion = :adjr2
     factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
                        cov_fm_settings = cov_fm_settings,
                        factor_settings = factor_settings,)
@@ -108,7 +108,7 @@ l = 2.0
     cov_fm9 = portfolio.cov_fm
     mu_fm9 = portfolio.mu_fm
 
-    loadings_settings.criterion = aic
+    loadings_settings.criterion = :aic
     factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
                        cov_fm_settings = cov_fm_settings,
                        factor_settings = factor_settings,)
@@ -117,7 +117,7 @@ l = 2.0
     cov_fm10 = portfolio.cov_fm
     mu_fm10 = portfolio.mu_fm
 
-    loadings_settings.criterion = adjr2
+    loadings_settings.criterion = :adjr2
     factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
                        cov_fm_settings = cov_fm_settings,
                        factor_settings = factor_settings,)
