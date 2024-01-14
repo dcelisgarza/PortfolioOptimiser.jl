@@ -18,6 +18,10 @@ l = 2.0
 #                   :Cbc => Dict(:solver => Cbc.Optimizer),
 #                   :GLPK => Dict(:solver => GLPK.Optimizer)
 #
+portfolio = Portfolio(; prices = prices_assets)
+
+########################################
+
 portfolio = Portfolio(; prices = prices_assets,
                       solvers = OrderedDict(:PajaritoClara => Dict(:solver => Pajarito.Optimizer,
                                                                    :params => Dict("conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
@@ -26,7 +30,6 @@ portfolio = Portfolio(; prices = prices_assets,
                                                                                    "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
                                                                                                                             "log_to_console" => true)))),
                       max_number_assets = 3)
-
 portfolio = HCPortfolio(; prices = prices_assets,
                         solvers = OrderedDict(:PajaritoClara => Dict(:solver => Pajarito.Optimizer,
                                                                      :params => Dict("conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,

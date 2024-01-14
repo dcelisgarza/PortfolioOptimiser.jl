@@ -294,8 +294,6 @@ function asset_views(views::DataFrame, asset_sets::DataFrame)
     Q = Vector(undef, 0)
 
     for row ∈ eachrow(views)
-        valid = false
-
         if !row["Enabled"] || row["Return"] == ""
             continue
         end
@@ -319,29 +317,26 @@ function asset_views(views::DataFrame, asset_sets::DataFrame)
             idx2 = findfirst(x -> x == row["Relative_Position"], asset_list)
             P2 = zeros(N)
             P2[idx2] = 1
-            valid = true
+            P1 .= (P1 .- P2) * d
         elseif row["Relative_Type"] == "Subset" &&
                row["Relative_Set"] != "" &&
                row["Relative_Position"] != ""
             P2 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
             P2 = P2 / sum(P2)
-            valid = true
+            P1 .= (P1 .- P2) * d
         elseif row["Relative_Type"] == "" &&
                row["Relative_Set"] == "" &&
                row["Relative_Position"] == ""
-            P2 = zeros(N)
-            valid = true
+            P1 .*= d
         end
 
-        if valid
-            P1 = (P1 - P2) * d
-            P = vcat(P, transpose(P1))
-            push!(Q, row["Return"] * d)
-        end
+        # P1 = (P1 - P2) * d
+        P = vcat(P, transpose(P1))
+        push!(Q, row["Return"] * d)
     end
 
-    for i ∈ eachindex(view(Q, :, 1))
-        if Q[i, 1] < 0
+    for i ∈ eachindex(Q)
+        if Q[i] < 0
             P[i, :] .= -P[i, :]
             Q[i] = -Q[i]
         end
