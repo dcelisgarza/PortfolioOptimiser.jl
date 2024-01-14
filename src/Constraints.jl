@@ -537,7 +537,7 @@ rw_c = rp_constraints(asset_sets, :Subset, "Class 2")
 ```
 """
 function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
-                        class_col::Union{String, Symbol, Int, Nothing} = nothing)
+                        class_col::Union{String,Symbol,Int,Nothing} = nothing)
     @smart_assert(type in RPConstraintTypes)
     N = nrow(asset_sets)
 
@@ -592,8 +592,8 @@ function connection_matrix(returns::AbstractMatrix, settings::CorOpt = CorOpt(;)
 end
 
 function centrality_vector(returns::AbstractMatrix, settings::CorOpt = CorOpt(;);
-                           centrality::GenericFunc = GenericFunc(;
-                                                                 func = Graphs.degree_centrality),
+                           centrality::GenericFunction = GenericFunction(;
+                                                                         func = Graphs.degree_centrality),
                            method::Symbol = :MST, steps::Integer = 1)
     @smart_assert(method in GraphMethods)
 
