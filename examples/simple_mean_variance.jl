@@ -48,7 +48,7 @@ portfolio = Portfolio(;                      ## Prices TimeArray, the returns ar
                                                                        "max_step_fraction" => 0.75))),);# We can show how the `prices` `TimeArray` is used to compute the returns series, which is decomposed into a vector of timestamps, and the returns `Matrix`. We can check this is the case by reconstructing the `returns` `DataFrame` form above.
 
 returns == hcat(DataFrame(; timestamp = portfolio.timestamps),
-                DataFrame([portfolio.returns[:, i] for i in axes(portfolio.returns, 2)],
+                DataFrame([portfolio.returns[:, i] for i ∈ axes(portfolio.returns, 2)],
                           portfolio.assets))
 
 # Another nice thing about [`Portfolio()`](@ref) and [`HCPortfolio()`](@ref) is that the asset tickers and timestamps can be obtained from either a `TimeArray` with price information, or `DataFrame` with returns information. Since we used pricing data, we can obtain the latest prices too.

@@ -534,9 +534,9 @@ function block_vec_pq(A, p, q)
     n = Int(nq / q)
 
     A_vec = Matrix{eltype(A)}(undef, m * n, p * q)
-    for j in 0:(n - 1)
+    for j ∈ 0:(n - 1)
         Aj = Matrix{eltype(A)}(undef, m, p * q)
-        for i in 0:(m - 1)
+        for i ∈ 0:(m - 1)
             Aij = vec(A[(1 + (i * p)):((i + 1) * p), (1 + (j * q)):((j + 1) * q)])
             Aj[i + 1, :] .= Aij
         end
@@ -580,7 +580,7 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             vals_A, vecs_A = eigen(A)
             vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
             Bi = Vector{Matrix{eltype(kurtosis)}}(undef, N2)
-            for i in 1:N2
+            for i ∈ 1:N2
                 B = reshape(real.(complex(sqrt(vals_A[i])) * vecs_A[:, i]), N, N)
                 Bi[i] = B
             end
@@ -632,7 +632,7 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             vals_A, vecs_A = eigen(A)
             vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
             SBi = Vector{Matrix{eltype(skurtosis)}}(undef, N2)
-            for i in 1:N2
+            for i ∈ 1:N2
                 B = reshape(real.(sqrt(complex(vals_A[i])) * vecs_A[:, i]), N, N)
                 SBi[i] = B
             end
@@ -1398,7 +1398,7 @@ function _optimise_portfolio(portfolio, type, obj, near_opt = false, coneopt = t
         tmp * String(type)
     end
 
-    for (key, val) in solvers
+    for (key, val) ∈ solvers
         key = Symbol(String(key) * strtype)
 
         if haskey(val, :solver)
@@ -1406,7 +1406,7 @@ function _optimise_portfolio(portfolio, type, obj, near_opt = false, coneopt = t
         end
 
         if haskey(val, :params)
-            for (attribute, value) in val[:params]
+            for (attribute, value) ∈ val[:params]
                 set_attribute(model, attribute, value)
             end
         end
@@ -1895,7 +1895,7 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     w_ini = Vector{typeof(risk1)}(undef, 0)
 
     i = 0
-    for (j, (r, m)) in enumerate(zip(risks, mus))
+    for (j, (r, m)) ∈ enumerate(zip(risks, mus))
         if i == 0
             w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
                           obj = :Min_Risk, rf = rf, rm = rm, save_opt_params = false,)

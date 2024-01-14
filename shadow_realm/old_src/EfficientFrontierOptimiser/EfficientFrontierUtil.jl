@@ -20,7 +20,7 @@ function _refresh_add_var_and_constraints(default_keys, portfolio)
     # We need to add the extra constraints back.
     if !isempty(extra_constraints)
         constraint_keys = [Symbol("extra_constraint$(i)")
-                           for i in 1:length(extra_constraints)]
+                           for i ∈ 1:length(extra_constraints)]
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 
@@ -29,7 +29,7 @@ end
 
 function _transform_constraints_sharpe(model, k, fname = "max_sharpe!")
     # Go through all registered variables and only look at constraint and constraint arrays.
-    for (key, value) in model.obj_dict
+    for (key, value) ∈ model.obj_dict
         if eltype(value) <: ConstraintRef
             constraints = constraint_object.(value)
             constKey = key
@@ -59,7 +59,7 @@ function _transform_constraints_sharpe(model, k, fname = "max_sharpe!")
         exprArr = []
         skip = false
 
-        for constraint in constraints
+        for constraint ∈ constraints
             # If the constant is zero, then we continue as there's nothing to multiply k by.
 
             if getfield(constraint.set, intfKey) == 0

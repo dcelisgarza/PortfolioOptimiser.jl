@@ -43,12 +43,12 @@ code_files = filter(x -> endswith(x, ".jl"), files)
 data_files = filter(x -> endswith(x, ".csv"), files)
 examples_nav = fix_suffix.("./examples/" .* code_files)
 
-for file in data_files
+for file ∈ data_files
     cp(joinpath(@__DIR__, "../examples/" * file),
        joinpath(@__DIR__, "src/examples/" * file); force = true,)
 end
 
-for file in code_files
+for file ∈ code_files
     Literate.markdown(example_path * file, build_path; preprocess = fix_math_md,
                       postprocess = postprocess, documenter = true, credit = true,)
 end

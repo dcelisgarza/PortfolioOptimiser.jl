@@ -66,12 +66,12 @@ function optimise!(portfolio::HRPOpt, obj, obj_params...)
     cluster_tickers = [ordered_ticker_idx] # All items in one cluster.
 
     while length(cluster_tickers) > 0
-        cluster_tickers = [i[j:k] for i in cluster_tickers
-                           for (j, k) in
+        cluster_tickers = [i[j:k] for i ∈ cluster_tickers
+                           for (j, k) ∈
                                ((1, div(length(i), 2)), (div(length(i), 2) + 1, length(i)))
                            if length(i) > 1] # Bisecting
         # For each pair optimise locally.
-        for i in 1:2:length(cluster_tickers)
+        for i ∈ 1:2:length(cluster_tickers)
             first_cluster = cluster_tickers[i]
             second_cluster = cluster_tickers[i + 1]
 

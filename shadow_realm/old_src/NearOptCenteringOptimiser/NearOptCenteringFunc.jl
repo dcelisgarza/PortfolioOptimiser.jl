@@ -47,7 +47,7 @@ function optimise!(portfolio::NearOptCentering, optimisation::Function = max_sha
 
     @NLexpression(model, lret, -log(ret - e1))
     @NLexpression(model, lrisk, -log(e2 - risk))
-    @NLexpression(model, slw, -sum(log(1 - w[i]) + log(w[i]) for i in 1:num_tickers))
+    @NLexpression(model, slw, -sum(log(1 - w[i]) + log(w[i]) for i ∈ 1:num_tickers))
 
     @NLobjective(model, Min, lret + lrisk + slw)
 

@@ -9,7 +9,7 @@ Helper function for cleaning up `JuMP.Model()` objects.
   - `model`: `JuMP.Model()` object to be cleaned up.
 """
 function _refresh_model!(default_keys, model)
-    for key in keys(model.obj_dict)
+    for key ∈ keys(model.obj_dict)
         if key ∈ default_keys
             continue
         end
@@ -334,8 +334,8 @@ function add_sector_constraint!(portfolio::AbstractPortfolioOptimiser, sector_ma
     model = portfolio.model
     w = model[:w]
 
-    for (key, val) in sector_lower
-        is_sector = findall(sector_map[ticker] == key for ticker in tickers)
+    for (key, val) ∈ sector_lower
+        is_sector = findall(sector_map[ticker] == key for ticker ∈ tickers)
         if !isempty(is_sector)
             sector_lower_key = Symbol(String(key) * "_lower")
             if haskey(model, sector_lower_key)
@@ -344,12 +344,12 @@ function add_sector_constraint!(portfolio::AbstractPortfolioOptimiser, sector_ma
             end
             model[sector_lower_key] = @constraint(model,
                                                   sum(w[is_sector[i]]
-                                                      for i in 1:length(is_sector)) >= val)
+                                                      for i ∈ 1:length(is_sector)) >= val)
         end
     end
 
-    for (key, val) in sector_upper
-        is_sector = findall(sector_map[ticker] == key for ticker in tickers)
+    for (key, val) ∈ sector_upper
+        is_sector = findall(sector_map[ticker] == key for ticker ∈ tickers)
         if !isempty(is_sector)
             sector_upper_key = Symbol(String(key) * "_upper")
             if haskey(model, sector_upper_key)
@@ -358,7 +358,7 @@ function add_sector_constraint!(portfolio::AbstractPortfolioOptimiser, sector_ma
             end
             model[sector_upper_key] = @constraint(model,
                                                   sum(w[is_sector[i]]
-                                                      for i in 1:length(is_sector)) <= val)
+                                                      for i ∈ 1:length(is_sector)) <= val)
         end
     end
 

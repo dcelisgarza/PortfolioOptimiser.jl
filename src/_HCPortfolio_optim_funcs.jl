@@ -7,7 +7,7 @@ function _naive_risk(portfolio, returns, covariance; rm = :SD, rf = 0.0)
     else
         inv_risk = Vector{tcov}(undef, N)
         w = Vector{tcov}(undef, N)
-        for i in eachindex(w)
+        for i ∈ eachindex(w)
             w .= zero(tcov)
             w[i] = one(tcov)
             risk = calc_risk(w, returns; rm = rm, rf = rf, sigma = covariance,
@@ -59,16 +59,16 @@ end
 
 function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 1))))
     N = size(dist, 1)
-    cluster_lvls = [cutree(clustering; k = i) for i in 1:N]
+    cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]
 
     c1 = min(N, max_k)
     W_list = Vector{eltype(dist)}(undef, c1)
 
-    for i in 1:c1
+    for i ∈ 1:c1
         lvl = cluster_lvls[i]
         c2 = maximum(unique(lvl))
         mean_dist = 0.0
-        for j in 1:c2
+        for j ∈ 1:c2
             cluster = findall(lvl .== j)
             cluster_dist = dist[cluster, cluster]
             if isempty(cluster_dist)
@@ -78,8 +78,8 @@ function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 
             val = 0.0
             counter = 0
             M = size(cluster_dist, 1)
-            for col in 1:M
-                for row in (col + 1):M
+            for col ∈ 1:M
+                for row ∈ (col + 1):M
                     val += cluster_dist[row, col]
                     counter += 1
                 end
@@ -227,11 +227,11 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0, upper_bound = nothi
     covariance = portfolio.cov
 
     while length(items) > 0
-        items = [i[j:k] for i in items
-                 for (j, k) in ((1, div(length(i), 2)), (1 + div(length(i), 2), length(i)))
+        items = [i[j:k] for i ∈ items
+                 for (j, k) ∈ ((1, div(length(i), 2)), (1 + div(length(i), 2), length(i)))
                  if length(i) > 1]
 
-        for i in 1:2:length(items)
+        for i ∈ 1:2:length(items)
             lc = items[i]
             rc = items[i + 1]
 
@@ -320,14 +320,14 @@ end
 function to_tree(a::Hclust)
     n = length(a.order)
     d = Vector{ClusterNode}(undef, 2 * n - 1)
-    for i in 1:n
+    for i ∈ 1:n
         d[i] = ClusterNode(i)
     end
     merges = a.merges
     heights = a.heights
     nd = nothing
 
-    for (i, height) in pairs(heights)
+    for (i, height) ∈ pairs(heights)
         fi = merges[i, 1]
         fj = merges[i, 2]
 
@@ -352,7 +352,7 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm,
 
     k = portfolio.k
     root, nodes = to_tree(clustering)
-    dists = [i.dist for i in nodes]
+    dists = [i.dist for i ∈ nodes]
     idx = sortperm(dists; rev = true)
     nodes = nodes[idx]
 
@@ -363,12 +363,12 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm,
     uidx = minimum(clustering_idx):maximum(clustering_idx)
 
     clusters = Vector{Vector{Int}}(undef, length(uidx))
-    for i in eachindex(clusters)
+    for i ∈ eachindex(clusters)
         clusters[i] = findall(clustering_idx .== i)
     end
 
     # Calculate the weight of each cluster relative to the other clusters.
-    for i in nodes[1:(k - 1)]
+    for i ∈ nodes[1:(k - 1)]
         if is_leaf(i)
             continue
         end
@@ -386,7 +386,7 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm,
         if rm == :Equal
             alpha_1 = 0.5
         else
-            for j in eachindex(clusters)
+            for j ∈ eachindex(clusters)
                 if issubset(clusters[j], ln)
                     _lrisk = _cluster_risk(portfolio, returns, covariance, clusters[j];
                                            rm = rm, rf = rf,)
@@ -418,7 +418,7 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm,
         portfolio.owa_w = owa_w_o
     end
 
-    for i in 1:k
+    for i ∈ 1:k
         cidx = clustering_idx .== i
         cret = returns[:, cidx]
         ccov = covariance[cidx, cidx]
@@ -453,7 +453,7 @@ function _intra_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf 
     intra_weights = zeros(eltype(covariance), size(portfolio.returns, 2), k)
     cfails = Dict{Int, Dict}()
 
-    for i in 1:k
+    for i ∈ 1:k
         idx = clustering_idx .== i
         cmu = !isnothing(mu) ? mu[idx] : nothing
         ccov = covariance[idx, idx]
@@ -573,7 +573,7 @@ function _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter = 100)
         return weights
     end
 
-    for _ in 1:max_iter
+    for _ ∈ 1:max_iter
         if !(any(upper_bound .< weights) || any(lower_bound .> weights))
             break
         end

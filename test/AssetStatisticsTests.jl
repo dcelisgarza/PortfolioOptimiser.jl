@@ -11793,7 +11793,7 @@ end
     mu4 = portfolio.mu
     cov4 = portfolio.cov
 
-    cov_settings.estimation.target_ret = [i * rf for i in 1:20]
+    cov_settings.estimation.target_ret = [i * rf for i ∈ 1:20]
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu5 = portfolio.mu
     cov5 = portfolio.cov
@@ -11821,7 +11821,7 @@ end
     mu9 = portfolio.mu
     cov9 = portfolio.cov
 
-    cov_settings.estimation.target_ret = [i * rf for i in 1:20]
+    cov_settings.estimation.target_ret = [i * rf for i ∈ 1:20]
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu10 = portfolio.mu
     cov10 = portfolio.cov
@@ -11841,7 +11841,7 @@ end
     mu12 = portfolio.mu
     cov12 = portfolio.cov
 
-    cov_settings.estimation.target_ret = [i * rf for i in 1:20]
+    cov_settings.estimation.target_ret = [i * rf for i ∈ 1:20]
     asset_statistics!(portfolio; calc_kurt = false, cov_settings = cov_settings)
     mu13 = portfolio.mu
     cov13 = portfolio.cov

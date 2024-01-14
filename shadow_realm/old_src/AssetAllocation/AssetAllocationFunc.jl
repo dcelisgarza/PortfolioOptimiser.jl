@@ -112,7 +112,7 @@ function Allocation(type::Greedy, tickers::AbstractArray, weights::AbstractArray
     shares_bought = zeros(n_tickers)
 
     # First loop
-    for i in 1:n_tickers
+    for i ∈ 1:n_tickers
         price = latest_prices[i]
         n_shares = roundmult(weights[i] * investment / price, rounding, RoundDown)
         cost = n_shares * price

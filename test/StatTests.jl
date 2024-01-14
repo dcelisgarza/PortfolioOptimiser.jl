@@ -1837,8 +1837,8 @@ end
                  -0.3800870605174774, 0.015326735903415682, -0.318059746187989,
                  -0.5530971642449837], 23, 11)
 
-    X = DataFrame(X, ["x$i" for i in 1:5])
-    Y = DataFrame(Y, ["y$i" for i in 1:11])
+    X = DataFrame(X, ["x$i" for i ∈ 1:5])
+    Y = DataFrame(Y, ["y$i" for i ∈ 1:11])
 
     incl1 = forward_regression(X, Y[!, 1], :pval, 0.05)
     incl2 = forward_regression(X, Y[!, 1], :pval, 0.35)

@@ -41,7 +41,7 @@ function _optimise_allocation(portfolio, tickers, latest_prices)
     term_status = termination_status(model)
     solvers_tried = Dict()
 
-    for (key, val) in solvers
+    for (key, val) ∈ solvers
         key = Symbol(String(key))
 
         if haskey(val, :solver)
@@ -49,7 +49,7 @@ function _optimise_allocation(portfolio, tickers, latest_prices)
         end
 
         if haskey(val, :params)
-            for (attribute, value) in val[:params]
+            for (attribute, value) ∈ val[:params]
                 set_attribute(model, attribute, value)
             end
         end
@@ -241,7 +241,7 @@ function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, ro
     weights ./= sum(weights)
 
     # First loop
-    for i in 1:N
+    for i ∈ 1:N
         price = latest_prices[i]
         n_shares = roundmult(weights[i] * investment / price, rounding, RoundDown)
         cost = n_shares * price
@@ -316,7 +316,7 @@ function _greedy_allocation!(portfolio, port_type, latest_prices, investment, ro
                                    long_cost, short_cost, long_allocated_weights,
                                    short_allocated_weights)
 
-    idx = [findfirst(x -> x == t, portfolio.alloc_optimal[key].tickers) for t in tickers]
+    idx = [findfirst(x -> x == t, portfolio.alloc_optimal[key].tickers) for t ∈ tickers]
     portfolio.alloc_optimal[key] = portfolio.alloc_optimal[key][idx, :]
 
     return portfolio.alloc_optimal[key], long_leftover + short_leftover

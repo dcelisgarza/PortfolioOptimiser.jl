@@ -13,7 +13,7 @@ $_owaw
 """
 function owa_gmd(T::Integer)
     w = Vector{typeof(inv(T))}(undef, T)
-    for i in 1:T
+    for i ∈ 1:T
         w[i] = 2 * i - 1 - T
     end
     w = 2 / (T * (T - 1)) * w
@@ -59,7 +59,7 @@ $_owaw
 function owa_wcvar(T::Integer, alphas::AbstractVector{<:Real},
                    weights::AbstractVector{<:Real})
     w = zeros(promote_type(eltype(alphas), eltype(weights)), T)
-    for (i, j) in zip(alphas, weights)
+    for (i, j) ∈ zip(alphas, weights)
         w .+= owa_cvar(T, i) * j
     end
 
@@ -88,7 +88,7 @@ function owa_tg(T::Integer; alpha_i::Real = 1e-4, alpha::Real = 0.05, a_sim::Int
     w = Vector{typeof(alpha)}(undef, n)
 
     w[1] = alphas[2] * alphas[1] / alphas[n]^2
-    for i in 2:(n - 1)
+    for i ∈ 2:(n - 1)
         w[i] = (alphas[i + 1] - alphas[i - 1]) * alphas[i] / alphas[n]^2
     end
     w[n] = (alphas[n] - alphas[n - 1]) / alphas[n]
@@ -217,13 +217,13 @@ function _optimise_owa(model, solvers)
     term_status = termination_status(model)
     solvers_tried = Dict()
 
-    for (key, val) in solvers
+    for (key, val) ∈ solvers
         if haskey(val, :solver)
             set_optimizer(model, val[:solver])
         end
 
         if haskey(val, :params)
-            for (attribute, value) in val[:params]
+            for (attribute, value) ∈ val[:params]
                 set_attribute(model, attribute, value)
             end
         end
@@ -270,7 +270,7 @@ Internal function for computing the Normalized Constant Relative Risk Aversion c
 function _crra_method(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
     phis = Vector{eltype(weights)}(undef, k - 1)
     e = 1
-    for i in 1:(k - 1)
+    for i ∈ 1:(k - 1)
         e *= g + i - 1
         phis[i] = e / factorial(i + 1)
     end
@@ -280,7 +280,7 @@ function _crra_method(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
 
     w = similar(a)
     w[1] = a[1]
-    for i in 2:length(a)
+    for i ∈ 2:length(a)
         w[i] = maximum(a[1:i])
     end
 
@@ -304,9 +304,9 @@ $_owaw
 function owa_l_moment(T::Integer, k::Integer = 2)
     w = Vector{typeof(inv(T * k))}(undef, T)
     T, k = promote(T, k)
-    for i in 1:T
+    for i ∈ 1:T
         a = 0.0
-        for j in 0:(k - 1)
+        for j ∈ 0:(k - 1)
             a += (-1)^j *
                  binomial(k - 1, j) *
                  binomial(i - 1, k - 1 - j) *
@@ -362,7 +362,7 @@ function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::R
 
     rg = 2:k
     weights = Matrix{typeof(inv(T * k))}(undef, T, length(rg))
-    for i in rg
+    for i ∈ rg
         wi = (-1)^i * owa_l_moment(T, i)
         weights[:, i - 1] .= wi
     end

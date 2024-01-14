@@ -43,9 +43,9 @@ l = 2.0
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :SD, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -96,9 +96,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :MAD, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -149,9 +149,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :SSD, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -202,9 +202,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :FLPM, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -255,9 +255,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :SLPM, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -308,9 +308,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :WR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -361,9 +361,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :CVaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -414,9 +414,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :EVaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -467,9 +467,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :RVaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -520,9 +520,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :MDD, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -573,9 +573,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :ADD, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -626,9 +626,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :CDaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -679,9 +679,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :UCI, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -732,9 +732,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :EDaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -785,9 +785,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :RDaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -838,9 +838,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :Kurt, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -892,9 +892,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :Kurt, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -945,9 +945,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :SKurt, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -999,9 +999,9 @@ end
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :SKurt, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                        solvers = solvers,) for i in 2:size(Matrix(fw1[:weights]), 2)]
+                        solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -1039,9 +1039,9 @@ end
                               rm = :SKurt, points = 25,)
     risks1 = [calc_risk(fw1[:weights][!, i], portfolio.returns; rm = :SKurt, rf = rf,
                         solvers = portfolio.solvers,)
-              for i in 2:size(Matrix(fw1[:weights]), 2)]
+              for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
-             for i in 2:size(Matrix(fw1[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -1062,10 +1062,10 @@ end
                               rf = rf, rm = :SKurt, points = 25,)
     risks2 = [calc_risk(fw2[:weights][!, i], portfolio.returns; rm = :SKurt, rf = rf,
                         solvers = portfolio.solvers,)
-              for i in 2:size(Matrix(fw2[:weights]), 2)]
+              for i ∈ 2:size(Matrix(fw2[:weights]), 2)]
     rets2 = [1 / size(portfolio.returns, 1) *
              sum(log.(1 .+ portfolio.returns * fw2[:weights][!, i]))
-             for i in 2:size(Matrix(fw2[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw2[:weights]), 2)]
     idx = findlast(x -> x < risks2[end], risks2) + 1
     tmp = risks2[end]
     risks2[(idx + 1):end] = risks2[idx:(end - 1)]
@@ -1086,10 +1086,10 @@ end
                               rf = rf, rm = :CDaR, points = 25,)
     risks3 = [calc_risk(fw3[:weights][!, i], portfolio.returns; rm = :CDaR, rf = rf,
                         solvers = portfolio.solvers,)
-              for i in 2:size(Matrix(fw3[:weights]), 2)]
+              for i ∈ 2:size(Matrix(fw3[:weights]), 2)]
     rets3 = [1 / size(portfolio.returns, 1) *
              sum(log.(1 .+ portfolio.returns * fw3[:weights][!, i]))
-             for i in 2:size(Matrix(fw3[:weights]), 2)]
+             for i ∈ 2:size(Matrix(fw3[:weights]), 2)]
     idx = findlast(x -> x < risks3[end], risks3) + 1
     tmp = risks3[end]
     risks3[(idx + 1):end] = risks3[idx:(end - 1)]

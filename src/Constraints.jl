@@ -48,7 +48,7 @@ function asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
     A = Matrix(undef, 0, N)
     B = Vector(undef, 0)
 
-    for row in eachrow(constraints)
+    for row ∈ eachrow(constraints)
         if !row["Enabled"]
             continue
         end
@@ -122,13 +122,13 @@ function asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
             A = vcat(A, transpose(A1))
         elseif row["Type"] == "All Subsets"
             if row["Weight"] != ""
-                for val in sort!(unique(asset_sets[!, row["Set"]]))
+                for val ∈ sort!(unique(asset_sets[!, row["Set"]]))
                     A1 = (asset_sets[!, row["Set"]] .== val) * d
                     A = vcat(A, transpose(A1))
                     push!(B, row["Weight"] * d)
                 end
             else
-                for val in sort!(unique(asset_sets[!, row["Set"]]))
+                for val ∈ sort!(unique(asset_sets[!, row["Set"]]))
                     A1 = asset_sets[!, row["Set"]] .== val
                     if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                         idx = findfirst(x -> x == row["Relative_Position"], asset_list)
@@ -147,7 +147,7 @@ function asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
         elseif row["Type"] == "Each Asset in Subset"
             A1 = asset_sets[!, row["Set"]] .== row["Position"]
             if row["Weight"] != ""
-                for (i, j) in pairs(A1)
+                for (i, j) ∈ pairs(A1)
                     if !j
                         continue
                     end
@@ -157,7 +157,7 @@ function asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
                     push!(B, row["Weight"] * d)
                 end
             else
-                for (i, j) in pairs(A1)
+                for (i, j) ∈ pairs(A1)
                     if !j
                         continue
                     end
@@ -220,7 +220,7 @@ function factor_constraints(constraints::DataFrame, loadings::DataFrame)
     C = Matrix(undef, 0, N)
     D = Vector(undef, 0)
 
-    for row in eachrow(constraints)
+    for row ∈ eachrow(constraints)
         if !row["Enabled"]
             continue
         end
@@ -293,7 +293,7 @@ function asset_views(views::DataFrame, asset_sets::DataFrame)
     P = Matrix(undef, 0, N)
     Q = Vector(undef, 0)
 
-    for row in eachrow(views)
+    for row ∈ eachrow(views)
         valid = false
 
         if !row["Enabled"] || row["Return"] == ""
@@ -340,7 +340,7 @@ function asset_views(views::DataFrame, asset_sets::DataFrame)
         end
     end
 
-    for i in eachindex(view(Q, :, 1))
+    for i ∈ eachindex(view(Q, :, 1))
         if Q[i, 1] < 0
             P[i, :] .= -P[i, :]
             Q[i] = -Q[i]
@@ -395,7 +395,7 @@ function factor_views(views::DataFrame, loadings::DataFrame)
     P = Matrix(undef, 0, N)
     Q = Vector(undef, 0)
 
-    for row in eachrow(views)
+    for row ∈ eachrow(views)
         if !row["Enabled"]
             continue
         end
@@ -462,7 +462,7 @@ function hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
     w = Matrix(undef, N, 2)
     w .= 0
     w[:, 2] .= 1
-    for row in eachrow(constraints)
+    for row ∈ eachrow(constraints)
         if !row["Enabled"]
             continue
         end
@@ -486,9 +486,9 @@ function hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
             end
         elseif row["Type"] == "Each Asset in Subset"
             assets = asset_sets[asset_sets[!, row["Set"]] .== row["Position"], "Asset"]
-            idx = [findfirst(x -> x == asset, asset_sets[!, "Asset"]) for asset in assets]
+            idx = [findfirst(x -> x == asset, asset_sets[!, "Asset"]) for asset ∈ assets]
 
-            for ind in idx
+            for ind ∈ idx
                 if !isnothing(ind) && op(w[ind, i], row["Weight"])
                     w[ind, i] = row["Weight"]
                 end
@@ -582,7 +582,7 @@ function connection_matrix(returns::AbstractMatrix, settings::CorOpt = CorOpt(;)
 
     A_p = similar(Matrix(A))
     fill!(A_p, zero(eltype(A_p)))
-    for i in 0:steps
+    for i ∈ 0:steps
         A_p .+= A^i
     end
 
@@ -619,7 +619,7 @@ function cluster_matrix(assets::AbstractVector, returns::AbstractMatrix,
 
     N = size(returns, 2)
     A_c = Vector{Int}(undef, 0)
-    for i in unique(clusters[!, :Clusters])
+    for i ∈ unique(clusters[!, :Clusters])
         idx = clusters[!, :Clusters] .== i
         tmp = zeros(Int, N)
         tmp[idx] .= 1

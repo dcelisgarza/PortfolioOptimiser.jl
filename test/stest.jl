@@ -19,17 +19,23 @@ portfolio = HCPortfolio(; prices = prices_assets,
                                               :GLPK => Dict(:solver => GLPK.Optimizer)
                                               #
                                               ))
+asset_statistics!(portfolio)
+
+w = optimise!(portfolio)
+
+plot_clusters(portfolio; cluster = false)
 
 N = 12
 @time Ap = connection_matrix(portfolio.returns; method = :TMFG, steps = N)#, branchorder=:optimal)
 
 test2 = centrality_vector(portfolio.returns; method = :TMFG,
-                          centrality = GenericFunc(; func = pagerank, args = (0.85, 3, 10)))
+                          centrality = GenericFunction(; func = pagerank,
+                                                       args = (0.85, 3, 10)))
 
 Ac = cluster_matrix(portfolio.assets, portfolio.returns; linkage = :complete)
 issymmetric(Ac)
 
-asset_statistics!(portfolio; cor_settings = CorSettings(; method = :Pearson))
+asset_statistics!(portfolio; cor_settings = CorOpt(; method = :Pearson))
 
 missing, rpm, missing, missing, missing, clustering, missing = DBHTs(portfolio.dist,
                                                                      1 .-
@@ -42,7 +48,7 @@ A = adjacency_matrix(SimpleGraph(g[kruskal_mst(g)]))
 N = 1
 
 A_p = zeros(eltype(portfolio.returns), size(A))
-for i in 1:N
+for i ∈ 1:N
     A_p .+= A^i
 end
 A_p = clamp!(A_p, 0, 1) - I
@@ -57,21 +63,21 @@ portfolio.network_ip = adj
 portfolio.network_penalty = 0
 
 portfolio.network_method = :SDP
-w1 = opt_port!(portfolio; obj = :Min_Risk, rm = :MAD, l = 10000)
+w1 = optimise!(portfolio; obj = :Min_Risk, rm = :MAD, l = 10000)
 
 portfolio.network_method = :IP
 portfolio.network_ip_factor = 1e20
-w3 = opt_port!(portfolio; obj = :Min_Risk, rm = :MAD, l = 10000)
+w3 = optimise!(portfolio; obj = :Min_Risk, rm = :MAD, l = 10000)
 
 display(hcat(w1, w3; makeunique = true))
 
 portfolio.network_method = :None
-w2 = opt_port!(portfolio; rm = :CVaR)
+w2 = optimise!(portfolio; rm = :CVaR)
 
 asset_statistics!(portfolio;
-                  cor_settings = CorSettings(; method = :Gerber2,
-                                             estimation = CorEstSettings(;
-                                                                         estimator = AnalyticalNonlinearShrinkage()),))
+                  cor_settings = CorOpt(; method = :Gerber2,
+                                        estimation = CorEstOpt(;
+                                                               estimator = AnalyticalNonlinearShrinkage()),))
 cluster_assets!(portfolio; linkage = :DBHT)
 
 plot_clusters(portfolio; cluster = false)
@@ -558,7 +564,7 @@ println("w18t = ", w18.weights, "\n")
 println("w19t = ", w19.weights, "\n")
 #######################################
 
-for rtol in [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 2.5e-1, 5e-1, 1e0]
+for rtol ∈ [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 2.5e-1, 5e-1, 1e0]
     a1, a2 = [0.010490720965613475, 0.027638562976896618, 0.005157935454787538,
               0.014733203690891882, 0.001093266647285114, 0.02532695683718382,
               4.1693837439425117e-7, 0.1342437272400356, 1.6506785927756833e-6,
@@ -587,23 +593,23 @@ portfolio = Portfolio(; prices = prices,
                                                            :params => Dict("verbose" => false))))
 asset_statistics!(portfolio)
 
-w1 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
+w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                obj = :Min_Risk, kelly = :None,)
 risk1 = calc_risk(portfolio; type = :Trad, rm = :Kurt, rf = rf)
 
 rmf = :kurt_u
 setproperty!(portfolio, rmf, risk1 + 1e-4 * risk1)
-w18 = opt_port!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
+w18 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :Kurt,
                 obj = :Sharpe, kelly = :None,)
 
 @test isapprox(w18.weights, w1.weights, rtol = 1e-3)
 
-w1 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
+w1 = optimise!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
 rc1 = risk_contribution(portfolio; type = :RP, rm = :Kurt)
 lrc1, hrc1 = extrema(rc1)
 
 portfolio.risk_budget = 1:size(portfolio.returns, 2)
-w2 = opt_port!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
+w2 = optimise!(portfolio; class = :Classic, type = :RP, rm = :Kurt)
 rc2 = risk_contribution(portfolio; type = :RP, rm = :Kurt)
 lrc2, hrc2 = extrema(rc2)
 

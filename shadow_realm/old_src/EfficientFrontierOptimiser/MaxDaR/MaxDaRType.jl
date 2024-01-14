@@ -57,7 +57,7 @@ function EffMaxDaR(tickers, mean_ret, returns; weight_bounds = (0.0, 1.0),
     # We need to add the extra constraints.
     if !isempty(extra_constraints)
         constraint_keys = [Symbol("extra_constraint$(i)")
-                           for i in 1:length(extra_constraints)]
+                           for i ∈ 1:length(extra_constraints)]
         _add_constraint_to_model!.(model, constraint_keys, extra_constraints)
     end
 

@@ -93,7 +93,7 @@ Compute the mutual information and variation of information matrices.
 """
 function mut_var_info_mtx(x::AbstractMatrix{<:Real},
                           bins_info::Union{Symbol, <:Integer} = :KN, normed::Bool = true)
-    @smart_assert(bins_info in BinMethods ||
+    @smart_assert(bins_info ∈ BinMethods ||
                   isa(bins_info, Int) && bins_info > zero(bins_info))
 
     bin_width_func = if bins_info == :KN
@@ -109,9 +109,9 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
     mut_mtx = Matrix{eltype(x)}(undef, N, N)
     var_mtx = Matrix{eltype(x)}(undef, N, N)
 
-    for j in 1:N
+    for j ∈ 1:N
         xj = x[:, j]
-        for i in j:N
+        for i ∈ j:N
             xi = x[:, i]
             bins = if bins_info == :HGR
                 corr = cor(xj, xi)
@@ -171,9 +171,9 @@ function cordistance(x::AbstractMatrix)
     N = size(x, 2)
 
     mtx = Matrix{eltype(x)}(undef, N, N)
-    for j in 1:N
+    for j ∈ 1:N
         xj = x[:, j]
-        for i in j:N
+        for i ∈ j:N
             mtx[i, j] = cordistance(x[:, i], xj)
         end
     end
@@ -188,11 +188,11 @@ function ltdi_mtx(x, alpha = 0.05)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     if k > 0
-        for j in 1:N
+        for j ∈ 1:N
             xj = x[:, j]
             v = sort(xj)[k]
             maskj = xj .<= v
-            for i in j:N
+            for i ∈ j:N
                 xi = x[:, i]
                 u = sort(xi)[k]
                 ltd = sum(xi .<= u .&& maskj) / k
@@ -214,11 +214,11 @@ function covgerber0(x, settings::GerberOpt = GerberOpt(;))
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
-    for j in 1:N
-        for i in 1:j
+    for j ∈ 1:N
+        for i ∈ 1:j
             neg = 0
             pos = 0
-            for k in 1:T
+            for k ∈ 1:T
                 if (x[k, i] >= threshold * std_vec[i] && x[k, j] >= threshold * std_vec[j]) ||
                    (x[k, i] <= -threshold * std_vec[i] &&
                     x[k, j] <= -threshold * std_vec[j])
@@ -250,12 +250,12 @@ function covgerber1(x, settings::GerberOpt = GerberOpt(;))
 
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
-    for j in 1:N
-        for i in 1:j
+    for j ∈ 1:N
+        for i ∈ 1:j
             neg = 0
             pos = 0
             nn = 0
-            for k in 1:T
+            for k ∈ 1:T
                 if (x[k, i] >= threshold * std_vec[i] && x[k, j] >= threshold * std_vec[j]) ||
                    (x[k, i] <= -threshold * std_vec[i] &&
                     x[k, j] <= -threshold * std_vec[j])
@@ -290,7 +290,7 @@ function covgerber2(x, settings::GerberOpt = GerberOpt(;))
     U = Matrix{Bool}(undef, T, N)
     D = Matrix{Bool}(undef, T, N)
 
-    for i in 1:N
+    for i ∈ 1:N
         U[:, i] .= x[:, i] .>= std_vec[i] * threshold
         D[:, i] .= x[:, i] .<= -std_vec[i] * threshold
     end
@@ -318,7 +318,7 @@ function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
     n = size(x, 1)
     a = randn(rng, n + len, n)
 
-    for _ in 1:iters
+    for _ ∈ 1:iters
         _cov = cov(a)
         _C = cholesky(_cov)
         a .= a * (_C.U \ I)
@@ -379,8 +379,8 @@ function duplication_matrix(n::Int)
     cols = Int(n * (n + 1) / 2)
     rows = n * n
     mtx = spzeros(rows, cols)
-    for j in 1:n
-        for i in j:n
+    for j ∈ 1:n
+        for i ∈ j:n
             u = spzeros(1, cols)
             col = Int((j - 1) * n + i - (j * (j - 1)) / 2)
             u[col] = 1
@@ -397,10 +397,10 @@ function elimination_matrix(n::Int)
     rows = Int(n * (n + 1) / 2)
     cols = n * n
     mtx = spzeros(rows, cols)
-    for j in 1:n
+    for j ∈ 1:n
         ej = spzeros(1, n)
         ej[j] = 1
-        for i in j:n
+        for i ∈ j:n
             u = spzeros(rows)
             row = Int((j - 1) * n + i - (j * (j - 1)) / 2)
             u[row] = 1
@@ -451,7 +451,7 @@ function posdef_fix!(mtx::AbstractMatrix, settings::PosdefFixOpt = PosdefFixOpt(
         return nothing
     end
 
-    @smart_assert(method in PosdefFixMethods)
+    @smart_assert(method ∈ PosdefFixMethods)
 
     _mtx = if method == :Nearest
         nearest_cov(mtx, args...; kwargs...)
@@ -477,7 +477,7 @@ function errPDF(x, vals; kernel = ASH.Kernels.gaussian, m = 10, n = 1000, q = 10
 
     e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
     res = ash(vals; rng = range(e_min, e_max; length = n), kernel = kernel, m = m)
-    pdf2 = [ASH.pdf(res, i) for i in pdf1]
+    pdf2 = [ASH.pdf(res, i) for i ∈ pdf1]
     pdf2[.!isfinite.(pdf2)] .= 0.0
     sse = sum((pdf2 - pdf1) .^ 2)
 
@@ -498,7 +498,7 @@ end
 export find_max_eval
 
 function denoise_cor(vals, vecs, num_factors, method = :Fixed)
-    @smart_assert(method in (:Fixed, :Spectral))
+    @smart_assert(method ∈ (:Fixed, :Spectral))
 
     _vals = copy(vals)
 
@@ -558,7 +558,7 @@ function denoise_cov(mtx::AbstractMatrix, q::Real, settings::DenoiseOpt = Denois
                                      kwargs = kwargs)
 
     num_factors = findlast(vals .< max_val)
-    corr = if method in (:Fixed, :Spectral)
+    corr = if method ∈ (:Fixed, :Spectral)
         denoise_cor(vals, vecs, num_factors, method)
     else
         shrink_cor(vals, vecs, num_factors, alpha)
@@ -586,7 +586,7 @@ mu_estimator
 """
 function mu_estimator(returns::AbstractMatrix, settings::MuOpt = MuOpt(;))
     method = settings.method
-    @smart_assert(method in (:JS, :BS, :BOP, :CAPM))
+    @smart_assert(method ∈ (:JS, :BS, :BOP, :CAPM))
 
     target = settings.target
     func = settings.genfunc.func
@@ -642,9 +642,9 @@ covar_mtx
 function covar_mtx(returns::AbstractMatrix, settings::CovOpt = CovOpt(;))
     method = settings.method
 
-    @smart_assert(method in CovMethods)
+    @smart_assert(method ∈ CovMethods)
 
-    mtx = if method in (:Full, :Semi)
+    mtx = if method ∈ (:Full, :Semi)
         estimation = settings.estimation
         estimator = estimation.estimator
         func = estimation.genfunc.func
@@ -659,7 +659,7 @@ function covar_mtx(returns::AbstractMatrix, settings::CovOpt = CovOpt(;))
                 min.(returns .- transpose(target_ret), zro)
             end
             if !haskey(kwargs, :mean)
-                (kwargs = (kwargs..., mean = zro))
+                kwargs = (kwargs..., mean = zro)
             end
         end
         StatsBase.cov(estimator, returns, args...; kwargs...)
@@ -711,12 +711,12 @@ mean_vec(returns::AbstractMatrix; custom_mu::Union{AbstractVector, Nothing} = no
 """
 function mean_vec(returns::AbstractMatrix, settings::MuOpt = MuOpt(;))
     method = settings.method
-    mu = if method in (:Default, :Custom_Func)
+    mu = if method ∈ (:Default, :Custom_Func)
         func = settings.genfunc.func
         args = settings.genfunc.args
         kwargs = settings.genfunc.kwargs
         vec(func(returns, args...; kwargs...))
-    elseif method in (:JS, :BS, :BOP, :CAPM)
+    elseif method ∈ (:JS, :BS, :BOP, :CAPM)
         mu_estimator(returns, settings)
     elseif method == :Custom_Val
         settings.custom
@@ -789,7 +789,7 @@ cor_dist_mtx(
 """
 function cor_dist_mtx(returns::AbstractMatrix, settings::CorOpt = CorOpt(;))
     method = settings.method
-    if method in (:Pearson, :Semi_Pearson)
+    if method ∈ (:Pearson, :Semi_Pearson)
         estimation = settings.estimation
         estimator = estimation.estimator
         args = estimation.cor_genfunc.args
@@ -803,7 +803,7 @@ function cor_dist_mtx(returns::AbstractMatrix, settings::CorOpt = CorOpt(;))
                 min.(returns .- transpose(target_ret), zro)
             end
             if !haskey(kwargs, :mean)
-                (kwargs = (kwargs..., mean = zro))
+                kwargs = (kwargs..., mean = zro)
             end
         end
         corr = try
@@ -818,7 +818,7 @@ function cor_dist_mtx(returns::AbstractMatrix, settings::CorOpt = CorOpt(;))
     elseif method == :Kendall
         corr = corkendall(returns)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-    elseif method in (:Abs_Pearson, :Abs_Semi_Pearson)
+    elseif method ∈ (:Abs_Pearson, :Abs_Semi_Pearson)
         estimation = settings.estimation
         estimator = estimation.estimator
         args = estimation.cor_genfunc.args
@@ -832,7 +832,7 @@ function cor_dist_mtx(returns::AbstractMatrix, settings::CorOpt = CorOpt(;))
                 min.(returns .- transpose(target_ret), zro)
             end
             if !haskey(kwargs, :mean)
-                (kwargs = (kwargs..., mean = zro))
+                kwargs = (kwargs..., mean = zro)
             end
         end
         corr = try
@@ -950,10 +950,10 @@ function asset_statistics!(portfolio::AbstractPortfolio;                        
                                        mu_settings = mu_settings,)
     end
     if calc_cov
-        (portfolio.cov = sigma)
+        portfolio.cov = sigma
     end
     if calc_mu
-        (portfolio.mu = mu)
+        portfolio.mu = mu
     end
 
     if calc_kurt
@@ -986,7 +986,7 @@ function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
                        n_sim::Integer = 3_000, window::Integer = 3,
                        seed::Union{<:Integer, Nothing} = nothing,
                        rng = Random.default_rng())
-    @smart_assert(kind in BootstrapMethods)
+    @smart_assert(kind ∈ BootstrapMethods)
     if !isnothing(seed)
         Random.seed!(rng, seed)
     end
@@ -1005,7 +1005,7 @@ function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
     end
 
     gen = bootstrap_func(window, returns; seed = seed)
-    for data in gen.bootstrap(n_sim)
+    for data ∈ gen.bootstrap(n_sim)
         A = data[1][1]
         push!(mus, vec(mean(A; dims = 1)))
         push!(covs, cov(A))
@@ -1063,12 +1063,12 @@ function wc_statistics!(portfolio::AbstractPortfolio, settings::WCOpt = WCOpt(;)
             mus, covs = gen_bootstrap(returns, box, n_sim, window, seed, rng)
 
             mu_s = vec_of_vecs_to_mtx(mus)
-            mu_l = [quantile(mu_s[:, i], q / 2) for i in 1:N]
-            mu_u = [quantile(mu_s[:, i], 1 - q / 2) for i in 1:N]
+            mu_l = [quantile(mu_s[:, i], q / 2) for i ∈ 1:N]
+            mu_u = [quantile(mu_s[:, i], 1 - q / 2) for i ∈ 1:N]
 
             cov_s = vec_of_vecs_to_mtx(vec.(covs))
-            cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)], N, N)
-            cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
+            cov_l = reshape([quantile(cov_s[:, i], q / 2) for i ∈ 1:(N * N)], N, N)
+            cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i ∈ 1:(N * N)], N, N)
 
             d_mu = (mu_u - mu_l) / 2
         elseif box == :Normal
@@ -1078,8 +1078,8 @@ function wc_statistics!(portfolio::AbstractPortfolio, settings::WCOpt = WCOpt(;)
             d_mu = cquantile(Normal(), q / 2) * sqrt.(diag(sigma) / T)
             cov_s = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, sigma / T), n_sim)))
 
-            cov_l = reshape([quantile(cov_s[:, i], q / 2) for i in 1:(N * N)], N, N)
-            cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i in 1:(N * N)], N, N)
+            cov_l = reshape([quantile(cov_s[:, i], q / 2) for i ∈ 1:(N * N)], N, N)
+            cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i ∈ 1:(N * N)], N, N)
         elseif box == :Delta
             d_mu = dmu * abs.(mu)
             cov_l = sigma - dcov * abs.(sigma)
@@ -1091,9 +1091,9 @@ function wc_statistics!(portfolio::AbstractPortfolio, settings::WCOpt = WCOpt(;)
         if ellipse == :Stationary || ellipse == :Circular || ellipse == :Moving
             mus, covs = gen_bootstrap(returns, ellipse, n_sim, window, seed, rng)
 
-            cov_mu = Diagonal(cov(vec_of_vecs_to_mtx([mu_s .- mu for mu_s in mus])))
+            cov_mu = Diagonal(cov(vec_of_vecs_to_mtx([mu_s .- mu for mu_s ∈ mus])))
             cov_sigma = Diagonal(cov(vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma)
-                                                         for cov_s in covs])))
+                                                         for cov_s ∈ covs])))
         elseif ellipse == :Normal
             cov_mu = Diagonal(sigma) / T
             K = commutation_matrix(sigma)
@@ -1125,9 +1125,9 @@ end
 function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
                             criterion::Union{Symbol, Function} = :pval,
                             threshold::Real = 0.05)
-    @smart_assert(criterion in RegCriteria)
+    @smart_assert(criterion ∈ RegCriteria)
     if isa(y, DataFrame)
-        (y = Vector(y))
+        y = Vector(y)
     end
 
     included = String[]
@@ -1143,7 +1143,7 @@ function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
             best_pval = Inf
             new_feature = ""
 
-            for i in excluded
+            for i ∈ excluded
                 factors = [included; i]
                 x1 = [ovec Matrix(x[!, factors])]
                 fit_result = lm(x1, y)
@@ -1160,7 +1160,7 @@ function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
 
             isempty(new_feature) ? break : push!(included, new_feature)
             if !isempty(pvals)
-                (val = maximum(pvals))
+                val = maximum(pvals)
             end
         end
 
@@ -1169,7 +1169,7 @@ function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
             best_pval = Inf
             new_feature = ""
 
-            for i in excluded
+            for i ∈ excluded
                 factors = [included; i]
                 x1 = [ovec Matrix(x[!, factors])]
                 fit_result = lm(x1, y)
@@ -1189,14 +1189,14 @@ function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
             push!(included, new_feature)
         end
     else
-        threshold = criterion in (GLM.aic, GLM.aicc, GLM.bic) ? Inf : -Inf
+        threshold = criterion ∈ (GLM.aic, GLM.aicc, GLM.bic) ? Inf : -Inf
 
         excluded = namesx
-        for _ in 1:N
+        for _ ∈ 1:N
             ni = length(excluded)
             value = Dict()
 
-            for i in excluded
+            for i ∈ excluded
                 factors = copy(included)
                 push!(factors, i)
 
@@ -1210,7 +1210,7 @@ function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
                 break
             end
 
-            if criterion in (GLM.aic, GLM.aicc, GLM.bic)
+            if criterion ∈ (GLM.aic, GLM.aicc, GLM.bic)
                 val, key = findmin(value)
                 idx = findfirst(x -> x == key, excluded)
                 if val < threshold
@@ -1238,9 +1238,9 @@ end
 function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
                              criterion::Union{Symbol, Function} = :pval,
                              threshold::Real = 0.05)
-    @smart_assert(criterion in RegCriteria)
+    @smart_assert(criterion ∈ RegCriteria)
     if isa(y, DataFrame)
-        (y = Vector(y))
+        y = Vector(y)
     end
 
     N = length(y)
@@ -1277,7 +1277,7 @@ function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
             new_feature = ""
             pvals = Float64[]
 
-            for i in excluded
+            for i ∈ excluded
                 factors = [included; i]
                 x1 = [ovec Matrix(x[!, factors])]
                 fit_result = lm(x1, y)
@@ -1299,14 +1299,14 @@ function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
     else
         threshold = criterion(fit_result)
 
-        for _ in 1:N
+        for _ ∈ 1:N
             ni = length(included)
             value = Dict()
-            for (i, factor) in pairs(included)
+            for (i, factor) ∈ pairs(included)
                 factors = copy(included)
                 popat!(factors, i)
                 if !isempty(factors)
-                    (x1 = [ovec Matrix(x[!, factors])])
+                    x1 = [ovec Matrix(x[!, factors])]
                 else
                     x1 = reshape(ovec, :, 1)
                 end
@@ -1318,7 +1318,7 @@ function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
                 break
             end
 
-            if criterion in (GLM.aic, GLM.aicc, GLM.bic)
+            if criterion ∈ (GLM.aic, GLM.aicc, GLM.bic)
                 val, idx = findmin(value)
                 if val < threshold
                     i = findfirst(x -> x == idx, included)
@@ -1396,11 +1396,11 @@ function loadings_matrix(x::DataFrame, y::DataFrame, settings::LoadingsOpt = Loa
     loadings = zeros(rows, cols)
 
     method = settings.method
-    flag = method in (:FReg, :BReg)
+    flag = method ∈ (:FReg, :BReg)
     criterion = settings.criterion
     threshold = settings.threshold
     pcr_settings = settings.pcr_settings
-    for i in 1:rows
+    for i ∈ 1:rows
         if flag
             included = if method == :FReg
                 forward_regression(x, y[!, i], criterion, threshold)
@@ -1418,7 +1418,7 @@ function loadings_matrix(x::DataFrame, y::DataFrame, settings::LoadingsOpt = Loa
             if isempty(included)
                 continue
             end
-            idx = [findfirst(x -> x == i, features) + 1 for i in included]
+            idx = [findfirst(x -> x == i, features) + 1 for i ∈ included]
             loadings[i, idx] .= params[2:end]
         else
             beta = pcr(x, y[!, i], pcr_settings)
@@ -1434,10 +1434,10 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_settings::FactorOpt = F
     B = factor_settings.B
 
     if isnothing(B)
-        (B = loadings_matrix(x, y, factor_settings.loadings_settings))
+        B = loadings_matrix(x, y, factor_settings.loadings_settings)
     end
     namesB = names(B)
-    x1 = "const" in namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
+    x1 = "const" ∈ namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
     B = Matrix(B[!, setdiff(namesB, ("ticker",))])
 
     cov_f, mu_f = covar_mtx_mean_vec(x1; cov_settings = cov_settings,
@@ -1551,7 +1551,7 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
     mu = Pi_bbl .+ rf
 
     if constant
-        (mu .+= alpha)
+        mu .+= alpha
     end
 
     w = ((delta * sigma_bbl) \ I) * mu
@@ -1649,7 +1649,7 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;  
 
     N = size(returns, 2)
     if all_factor_provided && constant
-        (mu_a = mu_a[1:N] .+ alpha)
+        mu_a = mu_a[1:N] .+ alpha
     end
 
     return mu_a[1:N], cov_mtx_a[1:N, 1:N], w_a[1:N]
@@ -1699,8 +1699,8 @@ function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMa
     returns = portfolio.returns
     if isempty(w)
         if isempty(portfolio.bl_bench_weights)
-            (portfolio.bl_bench_weights = fill(1 / size(portfolio.returns, 2),
-                                               size(portfolio.returns, 2)))
+            portfolio.bl_bench_weights = fill(1 / size(portfolio.returns, 2),
+                                              size(portfolio.returns, 2))
         end
         w = portfolio.bl_bench_weights
     else
@@ -1708,8 +1708,8 @@ function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMa
     end
 
     if isnothing(bl_settings.delta)
-        (bl_settings.delta = (dot(portfolio.mu, w) - bl_settings.rf) /
-                             dot(w, portfolio.cov, w))
+        bl_settings.delta = (dot(portfolio.mu, w) - bl_settings.rf) /
+                            dot(w, portfolio.cov, w)
     end
 
     portfolio.mu_bl, portfolio.cov_bl, missing = black_litterman(returns, P, Q, w;
@@ -1833,8 +1833,8 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
 
     if isempty(w)
         if isempty(portfolio.bl_bench_weights)
-            (portfolio.bl_bench_weights = fill(1 / size(portfolio.returns, 2),
-                                               size(portfolio.returns, 2)))
+            portfolio.bl_bench_weights = fill(1 / size(portfolio.returns, 2),
+                                              size(portfolio.returns, 2))
         end
         w = portfolio.bl_bench_weights
     else
@@ -1842,8 +1842,8 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
     end
 
     if isnothing(bl_settings.delta)
-        (bl_settings.delta = (dot(portfolio.mu, w) - bl_settings.rf) /
-                             dot(w, portfolio.cov, w))
+        bl_settings.delta = (dot(portfolio.mu, w) - bl_settings.rf) /
+                            dot(w, portfolio.cov, w)
     end
 
     if isnothing(B)
@@ -1851,7 +1851,7 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
                             DataFrame(returns, portfolio.assets), loadings_settings)
     end
     namesB = names(B)
-    bl_settings.constant = "const" in namesB
+    bl_settings.constant = "const" ∈ namesB
     B = Matrix(B[!, setdiff(namesB, ("ticker",))])
 
     portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_settings.method == :B
@@ -1870,7 +1870,7 @@ end
 function cluster_assets(returns::AbstractMatrix; cor_settings::CorOpt = CorOpt(;),
                         linkage = :single, max_k = ceil(Int, sqrt(size(returns, 2))),
                         branchorder = :optimal, k = 0, dbht_method = :Unique,)
-    @smart_assert(linkage in LinkageTypes)
+    @smart_assert(linkage ∈ LinkageTypes)
 
     cor_method = cor_settings.method
     corr, dist = cor_dist_mtx(returns, cor_settings)
@@ -1878,7 +1878,7 @@ function cluster_assets(returns::AbstractMatrix; cor_settings::CorOpt = CorOpt(;
     cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
 
     if linkage == :DBHT
-        corr = cor_method in cors ? 1 .- dist .^ 2 : corr
+        corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,
                                                                                  method = dbht_method)

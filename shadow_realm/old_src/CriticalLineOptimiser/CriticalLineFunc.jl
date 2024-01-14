@@ -5,7 +5,7 @@ function min_risk!(portfolio::AbstractCriticalLine)
     end
     var = Float64[]
     cov_mtx = portfolio.cov_mtx
-    for wi in w
+    for wi ∈ w
         a = dot(wi, cov_mtx, wi)
         push!(var, a)
     end
@@ -21,7 +21,7 @@ function max_sharpe!(portfolio::AbstractCriticalLine)
     # 1) Compute local max SR portfolio between two neighboring turning points
     w_sr = Vector{Vector{Float64}}()
     sr = Float64[]
-    for i in 1:(length(w) - 1)
+    for i ∈ 1:(length(w) - 1)
         w0 = copy(w[i])
         w1 = copy(w[i + 1])
         args = (w0, w1)
@@ -47,14 +47,14 @@ function efficient_frontier!(portfolio::AbstractCriticalLine, points = 100)
     A = range(0, 1; length = div(points, lw))
     a = A[1:(end - 1)]
     b = 1:(lw - 1)
-    for i in b
+    for i ∈ b
         w0 = portfolio.w[i]
         w1 = portfolio.w[i + 1]
         if i == b[end]
             # include the 1 in the last iteration
             a = A
         end
-        for j in a
+        for j ∈ a
             w = w1 * j + (1 - j) * w0
             push!(weights, copy(w))
             push!(mu, port_return(w, mean_ret))
@@ -89,7 +89,7 @@ function _golden_section(portfolio::AbstractCriticalLine, obj::Function, a, b;
     f1 = sign * obj(portfolio, x1, args...)
     f2 = sign * obj(portfolio, x2, args...)
     # Loop
-    for _ in 1:max_iter
+    for _ ∈ 1:max_iter
         if f1 > f2
             a = x1
             x1 = x2
@@ -135,7 +135,7 @@ function _solve!(portfolio::AbstractCriticalLine)
             cov_f, cov_fb, mean_f, w_b = _get_matrices(portfolio, f)
             icov_f = inv(cov_f)
             j = 1
-            for i in f
+            for i ∈ f
                 l, bi = _compute_lambda(icov_f, cov_fb, mean_f, w_b, j,
                                         (lower_bounds[i], upper_bounds[i]))
                 if _infnone(l) > _infnone(l_in)
@@ -149,7 +149,7 @@ function _solve!(portfolio::AbstractCriticalLine)
         l_out = nothing
         if length(f) < length(mean_ret)
             b = setdiff(1:num_tickers, f)
-            for i in b
+            for i ∈ b
                 cov_f, cov_fb, mean_f, w_b = _get_matrices(portfolio, [f; i])
                 icov_f = inv(cov_f)
                 l, bi = _compute_lambda(icov_f, cov_fb, mean_f, w_b, length(mean_f),
@@ -184,7 +184,7 @@ function _solve!(portfolio::AbstractCriticalLine)
 
         # 5) compute solution vector
         w_f, g = _compute_w(portfolio, icov_f, cov_fb, mean_f, w_b)
-        for i in 1:length(f)
+        for i ∈ 1:length(f)
             w[f[i]] = w_f[i]
         end
         push!(portfolio.w, copy(w))
@@ -309,7 +309,7 @@ end
         if abs(sum(portfolio.w[i]) - 1) > tol
             flag = true
         else
-            for j in 1:length(portfolio.w[i])
+            for j ∈ 1:length(portfolio.w[i])
                 if (portfolio.w[i][j] - lower_bounds[j] < -tol) ||
                    (portfolio.w[i][j] - upper_bounds[j] > tol)
                     flag = true

@@ -260,7 +260,7 @@ function CVaR(x::AbstractVector, alpha::Real = 0.05)
     idx = ceil(Int, alpha * length(x))
     var = -x[idx]
     sum_var = 0.0
-    for i in 1:(idx - 1)
+    for i ∈ 1:(idx - 1)
         sum_var += x[i] + var
     end
     return var - sum_var / (alpha * length(x))
@@ -270,13 +270,13 @@ function _optimize_rm(model, solvers::AbstractDict)
     term_status = termination_status(model)
     solvers_tried = Dict()
 
-    for (key, val) in solvers
+    for (key, val) ∈ solvers
         if haskey(val, :solver)
             set_optimizer(model, val[:solver])
         end
 
         if haskey(val, :params)
-            for (attribute, value) in val[:params]
+            for (attribute, value) ∈ val[:params]
                 set_attribute(model, attribute, value)
             end
         end
@@ -494,7 +494,7 @@ function DaR_abs(x::AbstractArray, alpha::Real = 0.05)
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in pairs(cs)
+    for (idx, i) ∈ pairs(cs)
         if i > peak
             (peak = i)
         end
@@ -525,7 +525,7 @@ function MDD_abs(x::AbstractVector)
     cs = cumsum(x)
     val = 0.0
     peak = -Inf
-    for i in cs
+    for i ∈ cs
         if i > peak
             (peak = i)
         end
@@ -558,7 +558,7 @@ function ADD_abs(x::AbstractVector)
     cs = cumsum(x)
     val = 0.0
     peak = -Inf
-    for i in cs
+    for i ∈ cs
         if i > peak
             (peak = i)
         end
@@ -592,7 +592,7 @@ function CDaR_abs(x::AbstractVector, alpha::Real = 0.05)
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in pairs(cs)
+    for (idx, i) ∈ pairs(cs)
         if i > peak
             (peak = i)
         end
@@ -603,7 +603,7 @@ function CDaR_abs(x::AbstractVector, alpha::Real = 0.05)
     idx = ceil(Int, alpha * T)
     var = -dd[idx]
     sum_var = 0.0
-    for i in 1:(idx - 1)
+    for i ∈ 1:(idx - 1)
         sum_var += dd[i] + var
     end
     return var - sum_var / (alpha * T)
@@ -629,7 +629,7 @@ function UCI_abs(x::AbstractVector)
     cs = cumsum(x)
     val = 0.0
     peak = -Inf
-    for i in cs
+    for i ∈ cs
         if i > peak
             (peak = i)
         end
@@ -663,7 +663,7 @@ function EDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in pairs(cs)
+    for (idx, i) ∈ pairs(cs)
         if i > peak
             (peak = i)
         end
@@ -694,7 +694,7 @@ function RDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
     cs = cumsum(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in pairs(cs)
+    for (idx, i) ∈ pairs(cs)
         if i > peak
             (peak = i)
         end
@@ -729,7 +729,7 @@ function DaR_rel(x::AbstractArray, alpha::Real = 0.05)
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in pairs(cs)
+    for (idx, i) ∈ pairs(cs)
         if i > peak
             (peak = i)
         end
@@ -760,7 +760,7 @@ function MDD_rel(x::AbstractVector)
     cs = cumprod(x)
     val = 0.0
     peak = -Inf
-    for i in cs
+    for i ∈ cs
         if i > peak
             (peak = i)
         end
@@ -793,7 +793,7 @@ function ADD_rel(x::AbstractVector)
     cs = cumprod(x)
     val = 0.0
     peak = -Inf
-    for i in cs
+    for i ∈ cs
         if i > peak
             (peak = i)
         end
@@ -827,7 +827,7 @@ function CDaR_rel(x::AbstractVector, alpha::Real = 0.05)
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in pairs(cs)
+    for (idx, i) ∈ pairs(cs)
         if i > peak
             (peak = i)
         end
@@ -838,7 +838,7 @@ function CDaR_rel(x::AbstractVector, alpha::Real = 0.05)
     idx = ceil(Int, alpha * T)
     var = -dd[idx]
     sum_var = 0.0
-    for i in 1:(idx - 1)
+    for i ∈ 1:(idx - 1)
         sum_var += dd[i] + var
     end
     return var - sum_var / (alpha * T)
@@ -864,7 +864,7 @@ function UCI_rel(x::AbstractVector)
     cs = cumprod(x)
     val = 0.0
     peak = -Inf
-    for i in cs
+    for i ∈ cs
         if i > peak
             (peak = i)
         end
@@ -899,7 +899,7 @@ function EDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in pairs(cs)
+    for (idx, i) ∈ pairs(cs)
         if i > peak
             (peak = i)
         end
@@ -930,7 +930,7 @@ function RDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
     cs = cumprod(x)
     peak = -Inf
     dd = similar(cs)
-    for (idx, i) in pairs(cs)
+    for (idx, i) ∈ pairs(cs)
         if i > peak
             (peak = i)
         end
@@ -1382,7 +1382,7 @@ function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbo
     w1 = zeros(ew, length(w))
     w2 = zeros(ew, length(w))
 
-    for i in eachindex(w)
+    for i ∈ eachindex(w)
         w1 .= zero(ew)
         w1 .= w
         w1[i] += di

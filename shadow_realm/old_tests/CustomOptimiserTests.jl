@@ -44,7 +44,7 @@ end
     function logarithmic_barrier(w::T...) where {T}
         cov_mtx = obj_params[1]
         k = obj_params[2]
-        w = [i for i in w]
+        w = [i for i ∈ w]
         return PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
     end
     ef = EffMeanVar(tickers, mean_ret, S; weight_bounds = (0.03, 0.2))
@@ -132,7 +132,7 @@ end
         cov_mtx = obj_params[2]
         rf = obj_params[3]
 
-        w = [i for i in w]
+        w = [i for i ∈ w]
         sr = PortfolioOptimiser.sharpe_ratio(w, mean_ret, cov_mtx, rf)
 
         return -sr
@@ -159,9 +159,9 @@ end
         o = obj_params[5]
         p = obj_params[6]
 
-        weights = [i for i in w[1:n]]
+        weights = [i for i ∈ w[1:n]]
         alpha = w[o]
-        z = [i for i in w[p:end]]
+        z = [i for i ∈ w[p:end]]
 
         mu = PortfolioOptimiser.port_return(weights, mean_ret)
         CDaR = PortfolioOptimiser.cdar(alpha, z, samples, beta)

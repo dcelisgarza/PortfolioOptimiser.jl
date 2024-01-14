@@ -4,7 +4,7 @@ function _parse_views(tickers, views::Dict)
     Q = zeros(K)
     P = zeros(length(tickers), K)
 
-    for (i, ticker) in enumerate(keys(views))
+    for (i, ticker) ∈ enumerate(keys(views))
         Q[i] = views[ticker]
         P[findfirst(x -> x == ticker, tickers), i] = 1
     end
@@ -30,7 +30,7 @@ function idzorek(view_confidence, cov_mtx, Q, P, tau)
     lq = length(Q)
     view_omegas = Vector{eltype(cov_mtx)}(undef, lq)
 
-    for i in 1:lq
+    for i ∈ 1:lq
         conf = view_confidence[i]
 
         if !(0 <= conf <= 1)

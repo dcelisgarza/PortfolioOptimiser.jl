@@ -145,7 +145,7 @@ end
 function logarithmic_barrier(w::T...) where {T}
     cov_mtx = obj_params[1]
     k = obj_params[2]
-    w = [i for i in w]
+    w = [i for i ∈ w]
     return logarithmic_barrier2(w, cov_mtx, k)
 end
 
@@ -163,7 +163,7 @@ import PortfolioOptimiser: logarithmic_barrier
 function logarithmic_barrier(w::T...) where {T}
     cov_mtx = obj_params[1]
     k = obj_params[2]
-    w = [i for i in w]
+    w = [i for i ∈ w]
     return PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
 end
 
@@ -175,7 +175,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
 function logarithmic_barrier(w::T...) where {T}
     cov_mtx = obj_params[1]
     k = obj_params[2]
-    w = [i for i in w]
+    w = [i for i ∈ w]
     return logarithmic_barrier(w, cov_mtx, k)
 end
 
@@ -195,7 +195,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
     function logarithmic_barrier(w::T...) where {T}
         cov_mtx = obj_param[1]  # Unkown variable, change to obj_params[1]
         k = obj_parameter[2]    # Unkown variable, change to obj_params[2]
-        w = [i for i in w]
+        w = [i for i ∈ w]
         return PortfolioOptimiser.logarithmic_barrier(w, cov_mtx, k)
     end
 
@@ -219,7 +219,7 @@ custom_nloptimiser!(ef, logarithmic_barrier, obj_params)
         rf = obj_params[3]
         γ = obj_params[4]
 
-        w = [i for i in w]
+        w = [i for i ∈ w]
         sr = PortfolioOptimiser.sharpe_ratio(w, mean_ret, cov_mtx, rf)
         l2 = PortfolioOptimiser.L2_reg(w, γ)
 
@@ -260,7 +260,7 @@ function custom_nloptimiser!(portfolio::AbstractPortfolioOptimiser, obj, obj_par
 
     # Extra, non-weight variables for the model.
     if !isempty(extra_vars)
-        for (val, start_val) in extra_vars
+        for (val, start_val) ∈ extra_vars
             if !isnothing(start_val)
                 set_start_value.(val, start_val)
             end

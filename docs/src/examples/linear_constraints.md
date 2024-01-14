@@ -69,8 +69,8 @@ cor_settings = CorOpt(;
                                              # than the asset.
                                              # target_ret = 1.0329^(1 / 252) - 1,
                                              ),)
-for method in (:Pearson, :Semi_Pearson, :Gerber2)
-    for linkage in (:ward, :DBHT)
+for method ∈ (:Pearson, :Semi_Pearson, :Gerber2)
+    for linkage ∈ (:ward, :DBHT)
         # We define our asset sets based on the covariance and linkage methods.
         colname = Symbol(string(method)[1] * string(linkage)[1])
 
