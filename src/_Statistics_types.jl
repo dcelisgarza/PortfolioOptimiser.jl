@@ -152,7 +152,7 @@ const DenoiseMethods = (:None, :Fixed, :Spectral, :Shrink)
 
 """
 ```julia
-RegCriteria = (:pval, GLM.aic, GLM.aicc, GLM.bic, GLM.r2, GLM.adjr2)
+RegCriteria = (:pval, :aic, :aicc, :bic, :r2, :adjr2)
 ```
 
 Criteria for feature selection in regression functions.
@@ -160,7 +160,7 @@ Criteria for feature selection in regression functions.
   - `:pval`: p-value feature selection.
   - The rest are methods applied to a fitted General Linear Model from [GLM.jl](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
 """
-const RegCriteria = (:pval, GLM.aic, GLM.aicc, GLM.bic, GLM.r2, GLM.adjr2)
+const RegCriteria = (:pval, :aic, :aicc, :bic, :r2, :adjr2)
 
 """
 ```julia
@@ -540,11 +540,11 @@ end
 
 mutable struct LoadingsOpt{T1 <: Real}
     method::Symbol
-    criterion::Union{Symbol, Function}
+    criterion::Symbol
     threshold::T1
     pcr_settings::PCROpt
 end
-function LoadingsOpt(; method::Symbol = :FReg, criterion::Union{Symbol, Function} = :pval,
+function LoadingsOpt(; method::Symbol = :FReg, criterion::Symbol = :pval,
                      threshold::Real = 0.05, pcr_settings::PCROpt = PCROpt(;),)
     @smart_assert(method in FSMethods)
     @smart_assert(criterion in RegCriteria)
