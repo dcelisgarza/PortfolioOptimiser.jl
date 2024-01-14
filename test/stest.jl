@@ -1,6 +1,6 @@
 using COSMO, CovarianceEstimation, CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra,
       OrderedCollections, PortfolioOptimiser, Statistics, StatsBase, Test, TimeSeries, SCS,
-      Cbc, GLPK, Graphs, SimpleWeightedGraphs
+      Cbc, GLPK, Graphs, SimpleWeightedGraphs, PyCall
 
 prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
@@ -19,6 +19,16 @@ portfolio = HCPortfolio(; prices = prices_assets,
                                               :GLPK => Dict(:solver => GLPK.Optimizer)
                                               #
                                               ))
+
+N = 12
+@time Ap = connection_matrix(portfolio.returns; method = :TMFG, steps = N)#, branchorder=:optimal)
+
+test2 = centrality_vector(portfolio.returns; method = :TMFG,
+                          centrality = GenericFunc(; func = pagerank, args = (0.85, 3, 10)))
+
+Ac = cluster_matrix(portfolio.assets, portfolio.returns; linkage = :complete)
+issymmetric(Ac)
+
 asset_statistics!(portfolio; cor_settings = CorSettings(; method = :Pearson))
 
 missing, rpm, missing, missing, missing, clustering, missing = DBHTs(portfolio.dist,
