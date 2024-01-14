@@ -565,14 +565,14 @@ function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
 end
 
 const GraphMethods = (:MST, :TMFG)
-function connection_matrix(returns::AbstractMatrix, settings::CorOpt = CorOpt(;);
+function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
                            method::Symbol = :MST, steps::Integer = 1)
     @smart_assert(method in GraphMethods)
 
-    corr, dist = cor_dist_mtx(returns, settings)
+    corr, dist = cor_dist_mtx(returns, opt)
     A = if method == :TMFG
         cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
-        corr = settings.method in cors ? 1 .- dist .^ 2 : corr
+        corr = opt.method in cors ? 1 .- dist .^ 2 : corr
         Rpm = PMFG_T2s(corr)[1]
         adjacency_matrix(SimpleGraph(Rpm))
     else
@@ -591,13 +591,13 @@ function connection_matrix(returns::AbstractMatrix, settings::CorOpt = CorOpt(;)
     return A_p
 end
 
-function centrality_vector(returns::AbstractMatrix, settings::CorOpt = CorOpt(;);
+function centrality_vector(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
                            centrality::GenericFunction = GenericFunction(;
                                                                          func = Graphs.degree_centrality),
                            method::Symbol = :MST, steps::Integer = 1)
     @smart_assert(method in GraphMethods)
 
-    Adj = connection_matrix(returns, settings; method = method, steps = steps)
+    Adj = connection_matrix(returns, opt; method = method, steps = steps)
 
     G = SimpleGraph(Adj)
     func = centrality.func
@@ -609,13 +609,12 @@ function centrality_vector(returns::AbstractMatrix, settings::CorOpt = CorOpt(;)
 end
 
 function cluster_matrix(assets::AbstractVector, returns::AbstractMatrix,
-                        settings::CorOpt = CorOpt(;); linkage = :single,
+                        opt::CorOpt = CorOpt(;); linkage = :single,
                         max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
                         k = 0, dbht_method = :Unique)
-    clusters, missing, missing = cluster_assets(assets, returns, settings;
-                                                linkage = linkage, max_k = max_k,
-                                                branchorder = branchorder, k = k,
-                                                dbht_method = dbht_method)
+    clusters, missing, missing = cluster_assets(assets, returns, opt; linkage = linkage,
+                                                max_k = max_k, branchorder = branchorder,
+                                                k = k, dbht_method = dbht_method)
 
     N = size(returns, 2)
     A_c = Vector{Int}(undef, 0)
@@ -641,18 +640,18 @@ function _con_rel(A::AbstractMatrix, w::AbstractVector)
 end
 
 function connected_assets(returns::AbstractMatrix, w::AbstractVector,
-                          settings::CorOpt = CorOpt(;); method::Symbol = :MST,
+                          opt::CorOpt = CorOpt(;); method::Symbol = :MST,
                           steps::Integer = 1)
-    A_c = connection_matrix(returns, settings; method = method, steps = steps)
+    A_c = connection_matrix(returns, opt; method = method, steps = steps)
     C_a = _con_rel(A_c, w)
     return C_a
 end
 
 function related_assets(assets::AbstractVector, returns::AbstractMatrix, w::AbstractVector,
-                        settings::CorOpt = CorOpt(;); linkage = :single,
+                        opt::CorOpt = CorOpt(;); linkage = :single,
                         max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
                         k = 0, dbht_method = :Unique)
-    A_c = cluster_matrix(assets, returns, settings; linkage = linkage, max_k = max_k,
+    A_c = cluster_matrix(assets, returns, opt; linkage = linkage, max_k = max_k,
                          branchorder = branchorder, k = k, dbht_method = dbht_method)
     R_a = _con_rel(A_c, w)
     return R_a

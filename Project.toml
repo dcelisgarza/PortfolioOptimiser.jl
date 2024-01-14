@@ -39,10 +39,25 @@ ECOS = "e2685f51-7e38-5353-a97d-a921fd2c8199"
 HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+Pajarito = "2f354839-79df-5901-9f0a-cdb2aac6fe30"
 SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [targets]
-test = ["COSMO", "CSV", "Clarabel", "CovarianceEstimation", "ECOS", "HiGHS", "Logging", "OrderedCollections", "SCS", "SafeTestsets", "Test", "TimeSeries"]
+test = [
+    "COSMO",
+    "CSV",
+    "Clarabel",
+    "CovarianceEstimation",
+    "ECOS",
+    "HiGHS",
+    "Logging",
+    "OrderedCollections",
+    "Pajarito",
+    "SCS",
+    "SafeTestsets",
+    "Test",
+    "TimeSeries",
+]

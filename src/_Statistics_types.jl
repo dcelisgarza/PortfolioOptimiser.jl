@@ -371,7 +371,7 @@ end
     custom_kurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
     custom_skurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
 end
-mutable struct KurtSettings
+mutable struct KurtOpt
     # Estimation
     estimation::KurtEstOpt
     # Denoise
@@ -381,10 +381,10 @@ mutable struct KurtSettings
     # J-LoGo
     jlogo::Bool
 end
-function KurtSettings(; estimation::KurtEstOpt = KurtEstOpt(;),
-                      denoise::DenoiseOpt = DenoiseOpt(;),
-                      posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,)
-    return KurtSettings(estimation, denoise, posdef, jlogo)
+function KurtOpt(; estimation::KurtEstOpt = KurtEstOpt(;),
+                 denoise::DenoiseOpt = DenoiseOpt(;),
+                 posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,)
+    return KurtOpt(estimation, denoise, posdef, jlogo)
 end
 
 mutable struct CorEstOpt{T1 <: Real}
@@ -565,10 +565,10 @@ mutable struct FactorOpt
     error::Bool
     var_genfunc::GenericFunction
 end
-function FactorOpt(; B::Union{DataFrame, Nothing} = nothing,
-                   loadings_settings::LoadingsOpt = LoadingsOpt(;), error::Bool = true,
-                   var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
-                                                                  kwargs = (; dims = 1)),)
+function FactorOpt(; B::Union{DataFrame, Nothing}   = nothing,
+                   loadings_settings::LoadingsOpt = LoadingsOpt(;),
+                   error::Bool                    = true,
+                   var_genfunc::GenericFunction   = GenericFunction(; func = StatsBase.var, kwargs = (; dims = 1)),)
     return FactorOpt(B, loadings_settings, error, var_genfunc)
 end
 
@@ -597,4 +597,4 @@ function Base.setproperty!(obj::BLOpt, sym::Symbol, val)
 end
 
 export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
-       CorOpt, CorEstOpt, WCOpt, KurtSettings, PCROpt, LoadingsOpt, FactorOpt
+       CorOpt, CorEstOpt, WCOpt, KurtOpt, PCROpt, LoadingsOpt, FactorOpt

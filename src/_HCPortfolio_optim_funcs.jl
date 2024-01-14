@@ -134,12 +134,12 @@ function _hierarchical_clustering(portfolio::HCPortfolio, linkage = :single,
 
     return clustering, k
 end
-function _hierarchical_clustering(returns::AbstractMatrix, settings::CorOpt = CorOpt(;),
+function _hierarchical_clustering(returns::AbstractMatrix, opt::CorOpt = CorOpt(;),
                                   linkage = :single,
                                   max_k = ceil(Int, sqrt(size(returns, 2))),
                                   branchorder = :optimal, dbht_method = :Unique)
-    cor_method = settings.method
-    corr, dist = cor_dist_mtx(returns, settings)
+    cor_method = opt.method
+    corr, dist = cor_dist_mtx(returns, opt)
     clustering, k = _hcluster_choice(dist, corr, cor_method, linkage, branchorder,
                                      dbht_method, max_k)
 
@@ -158,11 +158,11 @@ function cluster_assets(portfolio::HCPortfolio; linkage = :single,
     return DataFrame(; Assets = portfolio.assets, Clusters = clustering_idx), clustering, k
 end
 function cluster_assets(assets::AbstractVector, returns::AbstractMatrix,
-                        settings::CorOpt = CorOpt(;); linkage = :single,
+                        opt::CorOpt = CorOpt(;); linkage = :single,
                         max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
                         k = 0, dbht_method = :Unique,)
-    clustering, tk = _hierarchical_clustering(returns, settings, linkage, max_k,
-                                              branchorder, dbht_method)
+    clustering, tk = _hierarchical_clustering(returns, opt, linkage, max_k, branchorder,
+                                              dbht_method)
 
     k = iszero(k) ? tk : k
 
@@ -500,8 +500,7 @@ function _nco_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf = 
                       l = 2.0,
                       asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
                                            calc_kurt = rm in (:Kurt, :SKurt) ? true : false,
-                                           kurt_settings = KurtSettings(;),),
-                      near_opt::Bool = false,
+                                           kurt_opt = KurtOpt(;),), near_opt::Bool = false,
                       M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
                       obj_o = obj, kelly_o = kelly, rm_o = rm, l_o = l,
                       asset_stat_kwargs_o = asset_stat_kwargs, owa_w_o = portfolio.owa_w,

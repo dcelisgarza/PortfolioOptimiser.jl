@@ -1,6 +1,6 @@
 using COSMO, CovarianceEstimation, CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra,
       OrderedCollections, PortfolioOptimiser, Statistics, StatsBase, Test, TimeSeries, SCS,
-      Cbc, GLPK, Graphs, SimpleWeightedGraphs, PyCall
+      Cbc, GLPK, Graphs, SimpleWeightedGraphs, PyCall, Pajarito, JuMP
 
 prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
@@ -8,20 +8,55 @@ prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestam
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+#
+# :Clarabel => Dict(:solver => Clarabel.Optimizer,
+#                                     :params => Dict("verbose" => false,
+#                                                     "max_step_fraction" => 0.75)),
+#                   :COSMO => Dict(:solver => COSMO.Optimizer,
+#                                  :params => Dict("verbose" => false)),
+#                   :HiGHS => Dict(:solver => HiGHS.Optimizer),
+#                   :Cbc => Dict(:solver => Cbc.Optimizer),
+#                   :GLPK => Dict(:solver => GLPK.Optimizer)
+#
+portfolio = Portfolio(; prices = prices_assets,
+                      solvers = OrderedDict(:PajaritoClara => Dict(:solver => Pajarito.Optimizer,
+                                                                   :params => Dict("conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                               "verbose" => true,
+                                                                                                                               "max_step_fraction" => 0.75),
+                                                                                   "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                            "log_to_console" => true)))),
+                      max_number_assets = 3)
+
 portfolio = HCPortfolio(; prices = prices_assets,
-                        solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                :params => Dict("verbose" => false,
-                                                                                "max_step_fraction" => 0.75)),
-                                              :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                             :params => Dict("verbose" => false)),
-                                              :HiGHS => Dict(:solver => HiGHS.Optimizer),
-                                              :Cbc => Dict(:solver => Cbc.Optimizer),
-                                              :GLPK => Dict(:solver => GLPK.Optimizer)
-                                              #
-                                              ))
+                        solvers = OrderedDict(:PajaritoClara => Dict(:solver => Pajarito.Optimizer,
+                                                                     :params => Dict("conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => true,
+                                                                                                                                 "max_step_fraction" => 0.75),
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              "log_to_console" => true)))))
+
 asset_statistics!(portfolio)
 
-w = optimise!(portfolio)
+cor_opt = CorOpt(;)
+
+cor_opt.method = :Abs_Semi_Pearson
+asset_statistics!(portfolio; calc_kurt = false, cor_opt = cor_opt)
+cor24 = portfolio.cor
+dist24 = portfolio.dist
+covar24 = portfolio.cov
+
+cov_opt.method = :Semi
+asset_statistics!(portfolio; calc_kurt = false, calc_cor = false, cov_opt = cov_opt)
+covar25 = portfolio.cov
+
+@test !isapprox(cor24, cov2cor(abs.(covar24)))
+@test isapprox(cor24, cov2cor(abs.(covar25)))
+
+cov_
+
+w = optimise!(portfolio; rm = :SSD, obj = :Min_Risk)
+portfolio.max_number_assets = 10
+w2 = optimise!(portfolio; rm = :SSD, obj = :Min_Risk)
 
 plot_clusters(portfolio; cluster = false)
 
@@ -35,7 +70,7 @@ test2 = centrality_vector(portfolio.returns; method = :TMFG,
 Ac = cluster_matrix(portfolio.assets, portfolio.returns; linkage = :complete)
 issymmetric(Ac)
 
-asset_statistics!(portfolio; cor_settings = CorOpt(; method = :Pearson))
+asset_statistics!(portfolio; cor_opt = CorOpt(; method = :Pearson))
 
 missing, rpm, missing, missing, missing, clustering, missing = DBHTs(portfolio.dist,
                                                                      1 .-
@@ -75,9 +110,9 @@ portfolio.network_method = :None
 w2 = optimise!(portfolio; rm = :CVaR)
 
 asset_statistics!(portfolio;
-                  cor_settings = CorOpt(; method = :Gerber2,
-                                        estimation = CorEstOpt(;
-                                                               estimator = AnalyticalNonlinearShrinkage()),))
+                  cor_opt = CorOpt(; method = :Gerber2,
+                                   estimation = CorEstOpt(;
+                                                          estimator = AnalyticalNonlinearShrinkage()),))
 cluster_assets!(portfolio; linkage = :DBHT)
 
 plot_clusters(portfolio; cluster = false)

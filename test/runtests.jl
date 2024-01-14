@@ -5,7 +5,7 @@ using SafeTestsets
 # end
 
 # @safetestset "Risk measures" begin
-#     include("RiskMeasureTests.jl")
+#     include("_RiskMeasureTests.jl")
 # end
 
 # @safetestset "Constraint functions" begin

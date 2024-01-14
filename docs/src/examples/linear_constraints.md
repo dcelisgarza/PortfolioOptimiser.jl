@@ -55,31 +55,29 @@ When we use `:Pearson` and `:Semi_Pearson` to compute the correlation, we're int
 
 ````@example linear_constraints
 asset_sets = DataFrame(:Asset => assets)
-cor_settings = CorOpt(;
-                      estimation = CorEstOpt(; estimator = AnalyticalNonlinearShrinkage(),
-                                             # `target_ret` is used as the return threshold for
-                                             # classifying returns as sufficiently bad as to be
-                                             # considered unappealing, and thus taken into
-                                             # account when computing the semi covariance. The
-                                             # default is 0, but we can make it any number. A
-                                             # good choice is to use the daily risk-free rate,
-                                             # because if an asset returns on average less than
-                                             # a bond, then you'd be better off buying bonds
-                                             # because they're both less risky and more profitable
-                                             # than the asset.
-                                             # target_ret = 1.0329^(1 / 252) - 1,
-                                             ),)
+cor_opt = CorOpt(; estimation = CorEstOpt(; estimator = AnalyticalNonlinearShrinkage(),
+                                          # `target_ret` is used as the return threshold for
+                                          # classifying returns as sufficiently bad as to be
+                                          # considered unappealing, and thus taken into
+                                          # account when computing the semi covariance. The
+                                          # default is 0, but we can make it any number. A
+                                          # good choice is to use the daily risk-free rate,
+                                          # because if an asset returns on average less than
+                                          # a bond, then you'd be better off buying bonds
+                                          # because they're both less risky and more profitable
+                                          # than the asset.
+                                          # target_ret = 1.0329^(1 / 252) - 1,
+                                          ),)
 for method ∈ (:Pearson, :Semi_Pearson, :Gerber2)
     for linkage ∈ (:ward, :DBHT)
         # We define our asset sets based on the covariance and linkage methods.
         colname = Symbol(string(method)[1] * string(linkage)[1])
 
         # Set the method for computing the covariance matrix.
-        cor_settings.method = method
+        cor_opt.method = method
 
         # Clusterise assets.
-        clustering, k = cluster_assets(returns; linkage = linkage,
-                                       cor_settings = cor_settings)
+        clustering, k = cluster_assets(returns; linkage = linkage, cor_opt = cor_opt)
 
         # Cut the tree at k clusters and return the label each asset belongs to
         # in each set.
