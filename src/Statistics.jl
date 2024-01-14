@@ -279,7 +279,7 @@ function covgerber1(x, settings::GerberOpt = GerberOpt(;))
     return mtx .* (std_vec * transpose(std_vec))
 end
 
-function covgerber2(x, settings::GerberSettings = GerberSettings(;))
+function covgerber2(x, settings::GerberOpt = GerberOpt(;))
     threshold = settings.threshold
     func = settings.genfunc.func
     args = settings.genfunc.args
@@ -440,8 +440,8 @@ function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton())
     return any(.!isfinite.(_mtx)) ? mtx : _mtx
 end
 
-function posdef_fix!(mtx::AbstractMatrix,
-                     settings::PosdefFixSettings = PosdefFixSettings(;); msg::String = "",)
+function posdef_fix!(mtx::AbstractMatrix, settings::PosdefFixOpt = PosdefFixOpt(;);
+                     msg::String = "",)
     method = settings.method
     func = settings.genfunc.func
     args = settings.genfunc.args
@@ -533,8 +533,7 @@ function shrink_cor(vals, vecs, num_factors, alpha = zero(eltype(vals)))
 end
 export shrink_cor
 
-function denoise_cov(mtx::AbstractMatrix, q::Real,
-                     settings::DenoiseSettings = DenoiseSettings(;))
+function denoise_cov(mtx::AbstractMatrix, q::Real, settings::DenoiseOpt = DenoiseOpt(;))
     method = settings.method
 
     if method == :None
@@ -1029,7 +1028,7 @@ wc_statistics!(portfolio; box = :Stationary, ellipse = :Stationary, calc_box = t
 
 Worst case optimisation statistics.
 """
-function wc_statistics!(portfolio::AbstractPortfolio, settings::WCSettings = WCSettings(;))
+function wc_statistics!(portfolio::AbstractPortfolio, settings::WCOpt = WCOpt(;))
     calc_box = settings.calc_box
     calc_ellipse = settings.calc_ellipse
     box = settings.box
@@ -1344,8 +1343,7 @@ function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
     return included
 end
 
-function pcr(x::DataFrame, y::Union{Vector, DataFrame},
-             settings::PCRSettings = PCRSettings(;))
+function pcr(x::DataFrame, y::Union{Vector, DataFrame}, settings::PCROpt = PCROpt(;))
     mean_genfunc = settings.mean_genfunc
     std_genfunc = settings.std_genfunc
     pca_s_genfunc = settings.pca_s_genfunc
@@ -1760,7 +1758,7 @@ function factor_statistics!(portfolio::AbstractPortfolio;
                             mu_f_settings::MuOpt = MuOpt(;),
                             cov_fm_settings::CovOpt = CovOpt(;),
                             mu_fm_settings::MuOpt = MuOpt(;),
-                            factor_settings::FactorSettings = FactorSettings(;),)
+                            factor_settings::FactorOpt = FactorOpt(;),)
     returns = portfolio.returns
     f_returns = portfolio.f_returns
 
@@ -1827,9 +1825,9 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
                                            Q::Union{AbstractVector, Nothing}   = nothing,
                                            Q_f::Union{AbstractVector, Nothing} = nothing,                                           # Settings
                                            loadings_settings::LoadingsOpt      = LoadingsOpt(;),
-                                           cov_settings::CovSettings           = CovSettings(;),
-                                           mu_settings::MuSettings             = MuSettings(;),
-                                           bl_settings::BLSettings             = BLSettings(;),)
+                                           cov_settings::CovOpt                = CovOpt(;),
+                                           mu_settings::MuOpt                  = MuOpt(;),
+                                           bl_settings::BLOpt                  = BLOpt(;),)
     returns = portfolio.returns
     F = portfolio.f_returns
 
