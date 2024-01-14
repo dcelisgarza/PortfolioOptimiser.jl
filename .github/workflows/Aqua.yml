@@ -1,4 +1,4 @@
-name: aqua-lint
+name: Aqua
 on:
   push:
     branches:

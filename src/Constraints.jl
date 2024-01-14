@@ -330,7 +330,6 @@ function asset_views(views::DataFrame, asset_sets::DataFrame)
             P1 .*= d
         end
 
-        # P1 = (P1 - P2) * d
         P = vcat(P, transpose(P1))
         push!(Q, row["Return"] * d)
     end
