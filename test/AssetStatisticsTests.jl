@@ -129,18 +129,18 @@ l = 2.0
     mu22 = portfolio.mu
     cov22 = portfolio.cov
 
-    mu_settings.target = :SE
-    asset_statistics!(portfolio; mu_settings = mu_settings)
+    mu_opt.target = :SE
+    asset_statistics!(portfolio; mu_opt = mu_opt)
     mu23 = portfolio.mu
     cov23 = portfolio.cov
 
-    mu_settings.method = :CAPM
-    asset_statistics!(portfolio; mu_settings = mu_settings)
+    mu_opt.method = :CAPM
+    asset_statistics!(portfolio; mu_opt = mu_opt)
     mu24 = portfolio.mu
     cov24 = portfolio.cov
 
-    mu_settings.mkt_ret = vec(mean(portfolio.returns; dims = 2))
-    asset_statistics!(portfolio; mu_settings = mu_settings)
+    mu_opt.mkt_ret = vec(mean(portfolio.returns; dims = 2))
+    asset_statistics!(portfolio; mu_opt = mu_opt)
     mu25 = portfolio.mu
     cov25 = portfolio.cov
 
@@ -3744,14 +3744,14 @@ end
 
 @testset "Custom Func and Val for Mean" begin
     portfolio = Portfolio(; prices = prices)
-    mu_settings = MuOpt(; method = :Custom_Func,
-                        genfunc = GenericFunction(; func = x -> 3 * vec(mean(x; dims = 1))))
-    asset_statistics!(portfolio; calc_kurt = false, mu_settings = mu_settings)
+    mu_opt = MuOpt(; method = :Custom_Func,
+                   genfunc = GenericFunction(; func = x -> 3 * vec(mean(x; dims = 1))))
+    asset_statistics!(portfolio; calc_kurt = false, mu_opt = mu_opt)
     mu1 = portfolio.mu
 
-    mu_settings.method = :Custom_Val
-    mu_settings.custom = 2 * vec(mean(portfolio.returns; dims = 1))
-    asset_statistics!(portfolio; calc_kurt = false, mu_settings = mu_settings)
+    mu_opt.method = :Custom_Val
+    mu_opt.custom = 2 * vec(mean(portfolio.returns; dims = 1))
+    asset_statistics!(portfolio; calc_kurt = false, mu_opt = mu_opt)
     mu2 = portfolio.mu
 
     @test isapprox(mu1, 3 * vec(mean(portfolio.returns; dims = 1)))
