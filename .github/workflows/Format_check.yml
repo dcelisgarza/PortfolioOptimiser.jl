@@ -2,9 +2,9 @@ name: format-check
 on:
   push:
     branches:
-      - 'main'
-      - 'release-'
-      - 'dev'
+      - main
+      - release-*
+      - dev
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
