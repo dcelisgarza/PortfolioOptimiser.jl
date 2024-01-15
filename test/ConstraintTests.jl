@@ -503,7 +503,7 @@ end
                                  "Asset"],
                       "Set" => ["", "", "", "", "", "", "", "", "", "", "", "", "PDBHT",
                                 "PDBHT", "PDBHT", "PDBHT", "PDBHT", "PDBHT", "Pward",
-                                "Pward", "Pward", "Pward", "SPward", "SPward"],
+                                "Pward", "Pward", "Pward", "SPward", "SPward", ""],
                       "Position" => ["GE", "SBUX", "BABA", "SHLD", "FB", "WMT", "UAA",
                                      "XOM", "UAA", "AMD", "BBY", "FB", 1, 3, 4, 2, 1, 3, 1,
                                      3, 2, 1, 3, 2, "GOOG"],
