@@ -472,11 +472,11 @@ function hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
         if row["Type"] == "Asset"
             idx = findfirst(x -> x == row["Position"], asset_sets[!, "Asset"])
             if op(w[idx, i], row["Weight"])
-                (w[idx, i] = row["Weight"])
+                w[idx, i] = row["Weight"]
             end
         elseif row["Type"] == "All Assets"
             if !isempty(w[op.(w[:, i], row["Weight"]), i])
-                (w[op.(w[:, i], row["Weight"]), i] .= row["Weight"])
+                w[op.(w[:, i], row["Weight"]), i] .= row["Weight"]
             end
         elseif row["Type"] == "Each Asset in Subset"
             assets = asset_sets[asset_sets[!, row["Set"]] .== row["Position"], "Asset"]
@@ -531,7 +531,7 @@ rw_c = rp_constraints(asset_sets, :Subset, "Class 2")
 ```
 """
 function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
-                        class_col::Union{String,Symbol,Int,Nothing} = nothing)
+                        class_col::Union{String, Symbol, Int, Nothing} = nothing)
     @smart_assert(type in RPConstraintTypes)
     N = nrow(asset_sets)
 

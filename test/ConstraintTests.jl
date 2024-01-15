@@ -590,8 +590,6 @@ end
 end
 
 @testset "Factor views" begin
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
-
     loadings = hcat(DataFrame(:ticker => ["GOOG", "AAPL", "FB", "BABA", "AMZN", "GE", "AMD",
                                           "WMT", "BAC", "GM", "T", "UAA", "SHLD", "XOM",
                                           "RRC", "BBY", "MA", "PFE", "JPM", "SBUX"]),
@@ -657,12 +655,13 @@ end
                                        -0.10326507296810988, -0.06053276587733248], 20, :),
                               [:const, :MTUM, :QUAL, :VLUE, :SIZE, :USMV]))
 
-    views = DataFrame("Enabled" => [true, true, true, true, true, true, true, true],
+    views = DataFrame("Enabled" => [true, true, true, true, true, true, true, true, false],
                       "Factor" => ["MTUM", "USMV", "VLUE", "QUAL", "USMV", "MTUM", "QUAL",
-                                   "VLUE"],
-                      "Sign" => ["<=", "<=", ">=", ">=", "<=", "<=", ">=", ">="],
-                      "Value" => [0.9, -1.2, 0.3, -0.5, 0.7, -0.13, 0.17, -0.29],
-                      "Relative_Factor" => ["", "", "", "", "MTUM", "USMV", "VLUE", "QUAL"])
+                                   "VLUE", "USMV"],
+                      "Sign" => ["<=", "<=", ">=", ">=", "<=", "<=", ">=", ">=", "<="],
+                      "Value" => [0.9, -1.2, 0.3, -0.5, 0.7, -0.13, 0.17, -0.29, 0.72],
+                      "Relative_Factor" => ["", "", "", "", "MTUM", "USMV", "VLUE", "QUAL",
+                                            ""])
 
     P, Q = factor_views(views, loadings)
 
@@ -673,4 +672,40 @@ end
 
     @test isapprox(P, Pt)
     @test isapprox(Q, Qt)
+end
+
+@testset "HRP constraints" begin
+    portfolio = Portfolio(; prices = prices_assets)
+    asset_sets = DataFrame("Asset" => portfolio.assets,
+                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                                       3, 1],
+                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
+                                        4, 2, 1],
+                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                                       2, 1],
+                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
+                                        2, 2, 1],
+                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
+                                        3, 4, 1],
+                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
+                                        4, 2, 2])
+
+    constraints = DataFrame("Enabled" => [true, true, true, true, true, true, false],
+                            "Type" => ["Asset", "Asset", "All Assets", "All Assets",
+                                       "Each Asset in Subset", "Each Asset in Subset",
+                                       "Asset"],
+                            "Set" => ["", "", "", "", "PDBHT", "Pward", ""],
+                            "Position" => ["WMT", "T", "", "", 3, 2, "AAPL"],
+                            "Sign" => [">=", "<=", ">=", "<=", ">=", "<=", ">="],
+                            "Weight" => [0.05, 0.71, 0.02, 0.93, 0.07, 0.57, 0.2])
+
+    w_min, w_max = hrp_constraints(constraints, asset_sets)
+
+    w_mint = [0.02, 0.02, 0.02, 0.02, 0.02, 0.07, 0.02, 0.05, 0.07, 0.07, 0.07, 0.02, 0.02,
+              0.07, 0.07, 0.02, 0.02, 0.02, 0.07, 0.02]
+    w_maxt = [0.93, 0.93, 0.93, 0.93, 0.93, 0.57, 0.93, 0.57, 0.57, 0.57, 0.57, 0.93, 0.93,
+              0.57, 0.93, 0.93, 0.93, 0.57, 0.57, 0.93]
+
+    @test isapprox(w_min, w_mint)
+    @test isapprox(w_max, w_maxt)
 end
