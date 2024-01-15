@@ -560,7 +560,9 @@ end
 
 const GraphMethods = (:MST, :TMFG)
 function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
-                           method::Symbol = :MST, steps::Integer = 1)
+                           method::Symbol = :MST, steps::Integer = 1,
+                           tree::GenericFunction = GenericFunction(;
+                                                                   func = Graphs.kruskal_mst))
     @smart_assert(method in GraphMethods)
 
     corr, dist = cor_dist_mtx(returns, opt)
@@ -570,8 +572,11 @@ function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
         Rpm = PMFG_T2s(corr)[1]
         adjacency_matrix(SimpleGraph(Rpm))
     else
+        func = tree.func
+        args = tree.args
+        kwargs = tree.kwargs
         G = SimpleWeightedGraph(dist)
-        adjacency_matrix(SimpleGraph(G[kruskal_mst(G)]))
+        adjacency_matrix(SimpleGraph(G[func(G, args...; kwargs...)]))
     end
 
     A_p = similar(Matrix(A))
@@ -599,7 +604,7 @@ function centrality_vector(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
     Adj = connection_matrix(returns, opt; method = method, steps = steps)
     G = SimpleGraph(Adj)
 
-    func = !isnothing(centrality.func) ? centrality.func : Graphs.degree_centrality
+    func = centrality.func
     args = centrality.args
     kwargs = centrality.kwargs
     V_c = func(G, args...; kwargs...)
@@ -638,10 +643,19 @@ function cluster_matrix(assets::AbstractVector, returns::AbstractMatrix,
     return A_c
 end
 
+function cluster_matrix(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
+                        linkage = :single,
+                        max_k = ceil(Int, sqrt(size(portfolio.returns, 2))),
+                        branchorder = :optimal, k = 0, dbht_method = :Unique)
+    return cluster_matrix(portfolio.assets, portfolio.returns, opt; linkage = linkage,
+                          max_k = max_k, branchorder = branchorder, k = k,
+                          dbht_method = dbht_method)
+end
+
 function _con_rel(A::AbstractMatrix, w::AbstractVector)
     ovec = range(; start = 1, stop = 1, length = size(A, 1))
     aw = abs.(w * transpose(w))
-    C_a = transpose(ovec) * (A * aw) * ovec
+    C_a = transpose(ovec) * (A .* aw) * ovec
     C_a /= transpose(ovec) * aw * ovec
     return C_a
 end
@@ -654,6 +668,13 @@ function connected_assets(returns::AbstractMatrix, w::AbstractVector,
     return C_a
 end
 
+function connected_assets(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
+                          type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                          method::Symbol = :MST, steps::Integer = 1)
+    return connected_assets(portfolio.returns, portfolio.optimal[type].weights, opt;
+                            method = method, steps = steps)
+end
+
 function related_assets(assets::AbstractVector, returns::AbstractMatrix, w::AbstractVector,
                         opt::CorOpt = CorOpt(;); linkage = :single,
                         max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
@@ -664,6 +685,17 @@ function related_assets(assets::AbstractVector, returns::AbstractMatrix, w::Abst
     return R_a
 end
 
+function related_assets(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
+                        type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                        linkage = :single,
+                        max_k = ceil(Int, sqrt(size(portfolio.returns, 2))),
+                        branchorder = :optimal, k = 0, dbht_method = :Unique)
+    return related_assets(portfolio.assets, portfolio.returns,
+                          portfolio.optimal[type].weights, opt; linkage = linkage,
+                          max_k = max_k, branchorder = branchorder, k = k,
+                          dbht_method = dbht_method)
+end
+
 export asset_constraints, factor_constraints, asset_views, factor_views, hrp_constraints,
        rp_constraints, connection_matrix, centrality_vector, cluster_matrix,
-       connected_assets
+       connected_assets, related_assets
