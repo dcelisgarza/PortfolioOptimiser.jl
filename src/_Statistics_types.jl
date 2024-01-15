@@ -217,7 +217,7 @@ Methods for calculating optimal bin widths for the mutual and variational inform
 const BinMethods = (:KN, :FD, :SC, :HGR)
 
 @kwdef mutable struct GenericFunction
-    func::Function = x -> x
+    func::Union{Nothing, Function} = nothing
     args::Tuple = ()
     kwargs::NamedTuple = (;)
 end
@@ -234,7 +234,7 @@ mutable struct PosdefFixOpt
     genfunc::GenericFunction
 end
 function PosdefFixOpt(; method::Symbol = :Nearest,
-                      genfunc::GenericFunction = GenericFunction(;),)
+                      genfunc::GenericFunction = GenericFunction(; func = x -> x),)
     @smart_assert(method in PosdefFixMethods)
 
     return PosdefFixOpt(method, genfunc)
@@ -278,8 +278,7 @@ mutable struct DenoiseOpt{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 <: In
 end
 function DenoiseOpt(; method::Symbol = :None, alpha::Real = 0.0, detone::Bool = false,
                     mkt_comp::Integer = 1, kernel = ASH.Kernels.gaussian, m::Integer = 10,
-                    n::Integer = 1000,
-                    genfunc::GenericFunction = GenericFunction(; func = x -> nothing),)
+                    n::Integer = 1000, genfunc::GenericFunction = GenericFunction(;),)
     @smart_assert(method in DenoiseMethods)
     @smart_assert(0 <= alpha <= 1)
 

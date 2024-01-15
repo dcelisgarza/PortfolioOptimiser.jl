@@ -443,15 +443,16 @@ end
 function posdef_fix!(mtx::AbstractMatrix, opt::PosdefFixOpt = PosdefFixOpt(;);
                      msg::String = "",)
     method = opt.method
-    func = opt.genfunc.func
-    args = opt.genfunc.args
-    kwargs = opt.genfunc.kwargs
 
     if method == :None || isposdef(mtx)
         return nothing
     end
 
     @smart_assert(method ∈ PosdefFixMethods)
+
+    func = opt.genfunc.func
+    args = opt.genfunc.args
+    kwargs = opt.genfunc.kwargs
 
     _mtx = if method == :Nearest
         nearest_cov(mtx, args...; kwargs...)
@@ -686,7 +687,6 @@ function covar_mtx(returns::AbstractMatrix, opt::CovOpt = CovOpt(;))
     mtx = if method ∈ (:Full, :Semi)
         estimation = opt.estimation
         estimator = estimation.estimator
-        func = estimation.genfunc.func
         args = estimation.genfunc.args
         kwargs = estimation.genfunc.kwargs
         if method == :Semi

@@ -585,6 +585,11 @@ function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
     return A_p
 end
 
+function connection_matrix(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
+                           method::Symbol = :MST, steps::Integer = 1)
+    return connection_matrix(portfolio.returns, opt; method = method, steps = steps)
+end
+
 function centrality_vector(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
                            centrality::GenericFunction = GenericFunction(;
                                                                          func = Graphs.degree_centrality),
@@ -592,14 +597,22 @@ function centrality_vector(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
     @smart_assert(method in GraphMethods)
 
     Adj = connection_matrix(returns, opt; method = method, steps = steps)
-
     G = SimpleGraph(Adj)
-    func = centrality.func
+
+    func = !isnothing(centrality.func) ? centrality.func : Graphs.degree_centrality
     args = centrality.args
     kwargs = centrality.kwargs
     V_c = func(G, args...; kwargs...)
 
     return V_c
+end
+
+function centrality_vector(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
+                           centrality::GenericFunction = GenericFunction(;
+                                                                         func = Graphs.degree_centrality),
+                           method::Symbol = :MST, steps::Integer = 1)
+    return centrality_vector(portfolio.returns, opt; centrality = centrality,
+                             method = method, steps = steps)
 end
 
 function cluster_matrix(assets::AbstractVector, returns::AbstractMatrix,
