@@ -542,13 +542,13 @@ mutable struct LoadingsOpt{T1 <: Real}
     method::Symbol
     criterion::Symbol
     threshold::T1
-    pcr_settings::PCROpt
+    pcr_opt::PCROpt
 end
 function LoadingsOpt(; method::Symbol = :FReg, criterion::Symbol = :pval,
-                     threshold::Real = 0.05, pcr_settings::PCROpt = PCROpt(;),)
+                     threshold::Real = 0.05, pcr_opt::PCROpt = PCROpt(;),)
     @smart_assert(method in FSMethods)
     @smart_assert(criterion in RegCriteria)
-    return LoadingsOpt{typeof(threshold)}(method, criterion, threshold, pcr_settings)
+    return LoadingsOpt{typeof(threshold)}(method, criterion, threshold, pcr_opt)
 end
 function Base.setproperty!(obj::LoadingsOpt, sym::Symbol, val)
     if sym == :method
@@ -561,15 +561,15 @@ end
 
 mutable struct FactorOpt
     B::Union{DataFrame, Nothing}
-    loadings_settings::LoadingsOpt
+    loadings_opt::LoadingsOpt
     error::Bool
     var_genfunc::GenericFunction
 end
-function FactorOpt(; B::Union{DataFrame, Nothing}   = nothing,
-                   loadings_settings::LoadingsOpt = LoadingsOpt(;),
-                   error::Bool                    = true,
-                   var_genfunc::GenericFunction   = GenericFunction(; func = StatsBase.var, kwargs = (; dims = 1)),)
-    return FactorOpt(B, loadings_settings, error, var_genfunc)
+function FactorOpt(; B::Union{DataFrame, Nothing} = nothing,
+                   loadings_opt::LoadingsOpt = LoadingsOpt(;), error::Bool = true,
+                   var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
+                                                                  kwargs = (; dims = 1)),)
+    return FactorOpt(B, loadings_opt, error, var_genfunc)
 end
 
 mutable struct BLOpt{T1 <: Real}

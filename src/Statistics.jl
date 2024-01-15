@@ -1424,7 +1424,7 @@ function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = Loadings
     flag = method ∈ (:FReg, :BReg)
     criterion = opt.criterion
     threshold = opt.threshold
-    pcr_settings = opt.pcr_settings
+    pcr_opt = opt.pcr_opt
     for i ∈ 1:rows
         if flag
             included = if method == :FReg
@@ -1446,7 +1446,7 @@ function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = Loadings
             idx = [findfirst(x -> x == i, features) + 1 for i ∈ included]
             loadings[i, idx] .= params[2:end]
         else
-            beta = pcr(x, y[!, i], pcr_settings)
+            beta = pcr(x, y[!, i], pcr_opt)
             loadings[i, :] .= beta
         end
     end
@@ -1454,36 +1454,36 @@ function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = Loadings
     return hcat(DataFrame(; ticker = names(y)), DataFrame(loadings, ["const"; features]))
 end
 
-function risk_factors(x::DataFrame, y::DataFrame; factor_settings::FactorOpt = FactorOpt(;),
+function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = FactorOpt(;),
                       cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),)
-    B = factor_settings.B
+    B = factor_opt.B
 
     if isnothing(B)
-        B = loadings_matrix(x, y, factor_settings.loadings_settings)
+        B = loadings_matrix(x, y, factor_opt.loadings_opt)
     end
     namesB = names(B)
     x1 = "const" ∈ namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
-    B = Matrix(B[!, setdiff(namesB, ("ticker",))])
+    B_mtx = Matrix(B[!, setdiff(namesB, ("ticker",))])
 
     cov_f, mu_f = covar_mtx_mean_vec(x1; cov_opt = cov_opt, mu_opt = mu_opt)
 
-    returns = x1 * transpose(B)
-    mu = B * mu_f
+    returns = x1 * transpose(B_mtx)
+    mu = B_mtx * mu_f
 
-    sigma = if factor_settings.error
-        var_func = factor_settings.var_genfunc.func
-        var_args = factor_settings.var_genfunc.args
-        var_kwargs = factor_settings.var_genfunc.kwargs
+    sigma = if factor_opt.error
+        var_func = factor_opt.var_genfunc.func
+        var_args = factor_opt.var_genfunc.args
+        var_kwargs = factor_opt.var_genfunc.kwargs
         e = Matrix(y) - returns
         S_e = diagm(vec(var_func(e, var_args...; var_kwargs...)))
-        B * cov_f * transpose(B) + S_e
+        B_mtx * cov_f * transpose(B_mtx) + S_e
     else
-        B * cov_f * transpose(B)
+        B_mtx * cov_f * transpose(B_mtx)
     end
 
     posdef_fix!(sigma, cov_opt.posdef; msg = "Factor Covariance ")
 
-    return mu, sigma, returns
+    return mu, sigma, returns, B
 end
 
 function _omega(P, tau_sigma)
@@ -1508,10 +1508,10 @@ end
 
 function black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
                          w::AbstractVector; cov_opt::CovOpt = CovOpt(;),
-                         mu_opt::MuOpt = MuOpt(;), bl_settings::BLOpt = BLOpt(;),)
-    eq = bl_settings.eq
-    delta = bl_settings.delta
-    rf = bl_settings.rf
+                         mu_opt::MuOpt = MuOpt(;), bl_opt::BLOpt = BLOpt(;),)
+    eq = bl_opt.eq
+    delta = bl_opt.delta
+    rf = bl_opt.rf
 
     sigma, mu = covar_mtx_mean_vec(returns; cov_opt = cov_opt, mu_opt = mu_opt)
 
@@ -1527,16 +1527,16 @@ end
 function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
                                   B::AbstractMatrix, P_f::AbstractMatrix,
                                   Q_f::AbstractVector; cov_opt::CovOpt = CovOpt(;),
-                                  mu_opt::MuOpt = MuOpt(;), bl_settings::BLOpt = BLOpt(;),)
+                                  mu_opt::MuOpt = MuOpt(;), bl_opt::BLOpt = BLOpt(;),)
     sigma_f, mu_f = covar_mtx_mean_vec(F; cov_opt = cov_opt, mu_opt = mu_opt)
 
-    constant = bl_settings.constant
-    diagonal = bl_settings.diagonal
-    delta = bl_settings.delta
-    rf = bl_settings.rf
-    var_args = bl_settings.var_genfunc.args
-    var_func = bl_settings.var_genfunc.func
-    var_kwargs = bl_settings.var_genfunc.kwargs
+    constant = bl_opt.constant
+    diagonal = bl_opt.diagonal
+    delta = bl_opt.delta
+    rf = bl_opt.rf
+    var_args = bl_opt.var_genfunc.args
+    var_func = bl_opt.var_genfunc.func
+    var_kwargs = bl_opt.var_genfunc.kwargs
 
     mu_f .-= rf
 
@@ -1589,7 +1589,7 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;  
                                    Q_f::Union{AbstractVector, Nothing} = nothing,                                   # Settings
                                    cov_opt::CovOpt                     = CovOpt(;),
                                    mu_opt::MuOpt                       = MuOpt(;),
-                                   bl_settings::BLOpt                  = BLOpt(;),)
+                                   bl_opt::BLOpt                       = BLOpt(;),)
     asset_tuple = (!isnothing(P), !isnothing(Q))
     any_asset_provided = any(asset_tuple)
     all_asset_provided = all(asset_tuple)
@@ -1621,10 +1621,10 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;  
 
     tau = 1 / size(returns, 1)
 
-    constant = bl_settings.constant
-    eq = bl_settings.eq
-    delta = bl_settings.delta
-    rf = bl_settings.rf
+    constant = bl_opt.constant
+    eq = bl_opt.eq
+    delta = bl_opt.delta
+    rf = bl_opt.rf
 
     if all_asset_provided && !all_factor_provided
         sigma_a = sigma
@@ -1713,7 +1713,7 @@ function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMa
                                      Q::AbstractVector,
                                      w::AbstractVector = Vector{Float64}(undef, 0);
                                      cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
-                                     bl_settings::BLOpt = BLOpt(;),)
+                                     bl_opt::BLOpt = BLOpt(;),)
     returns = portfolio.returns
     if isempty(w)
         if isempty(portfolio.bl_bench_weights)
@@ -1725,15 +1725,14 @@ function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMa
         portfolio.bl_bench_weights = w
     end
 
-    if isnothing(bl_settings.delta)
-        bl_settings.delta = (dot(portfolio.mu, w) - bl_settings.rf) /
-                            dot(w, portfolio.cov, w)
+    if isnothing(bl_opt.delta)
+        bl_opt.delta = (dot(portfolio.mu, w) - bl_opt.rf) / dot(w, portfolio.cov, w)
     end
 
     portfolio.mu_bl, portfolio.cov_bl, missing = black_litterman(returns, P, Q, w;
                                                                  cov_opt = cov_opt,
                                                                  mu_opt = mu_opt,
-                                                                 bl_settings = bl_settings,)
+                                                                 bl_opt = bl_opt,)
 
     return nothing
 end
@@ -1771,26 +1770,23 @@ factor_statistics!(portfolio::AbstractPortfolio;    # cov_mtx
                    var_kwargs::NamedTuple = (;),)
 ```
 """
-function factor_statistics!(portfolio::AbstractPortfolio;
-                            cov_f_settings::CovOpt = CovOpt(;),
-                            mu_f_settings::MuOpt = MuOpt(;),
-                            cov_fm_settings::CovOpt = CovOpt(;),
-                            mu_fm_settings::MuOpt = MuOpt(;),
-                            factor_settings::FactorOpt = FactorOpt(;),)
+function factor_statistics!(portfolio::AbstractPortfolio; cov_f_opt::CovOpt = CovOpt(;),
+                            mu_f_opt::MuOpt = MuOpt(;), cov_fm_opt::CovOpt = CovOpt(;),
+                            mu_fm_opt::MuOpt = MuOpt(;),
+                            factor_opt::FactorOpt = FactorOpt(;),)
     returns = portfolio.returns
     f_returns = portfolio.f_returns
 
-    portfolio.cov_f, portfolio.mu_f = covar_mtx_mean_vec(f_returns;
-                                                         cov_opt = cov_f_settings,
-                                                         mu_opt = mu_f_settings,)
+    portfolio.cov_f, portfolio.mu_f = covar_mtx_mean_vec(f_returns; cov_opt = cov_f_opt,
+                                                         mu_opt = mu_f_opt,)
 
-    portfolio.mu_fm, portfolio.cov_fm, portfolio.returns_fm = risk_factors(DataFrame(f_returns,
-                                                                                     portfolio.f_assets),
-                                                                           DataFrame(returns,
-                                                                                     portfolio.assets);
-                                                                           factor_settings = factor_settings,
-                                                                           cov_opt = cov_fm_settings,
-                                                                           mu_opt = mu_fm_settings,)
+    portfolio.mu_fm, portfolio.cov_fm, portfolio.returns_fm, portfolio.loadings = risk_factors(DataFrame(f_returns,
+                                                                                                         portfolio.f_assets),
+                                                                                               DataFrame(returns,
+                                                                                                         portfolio.assets);
+                                                                                               factor_opt = factor_opt,
+                                                                                               cov_opt = cov_fm_opt,
+                                                                                               mu_opt = mu_fm_opt,)
 
     return nothing
 end
@@ -1841,10 +1837,10 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
                                            P_f::Union{AbstractMatrix, Nothing} = nothing,
                                            Q::Union{AbstractVector, Nothing}   = nothing,
                                            Q_f::Union{AbstractVector, Nothing} = nothing,                                           # Settings
-                                           loadings_settings::LoadingsOpt      = LoadingsOpt(;),
+                                           loadings_opt::LoadingsOpt           = LoadingsOpt(;),
                                            cov_opt::CovOpt                     = CovOpt(;),
                                            mu_opt::MuOpt                       = MuOpt(;),
-                                           bl_settings::BLOpt                  = BLOpt(;),)
+                                           bl_opt::BLOpt                       = BLOpt(;),)
     returns = portfolio.returns
     F = portfolio.f_returns
 
@@ -1858,27 +1854,25 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
         portfolio.bl_bench_weights = w
     end
 
-    if isnothing(bl_settings.delta)
-        bl_settings.delta = (dot(portfolio.mu, w) - bl_settings.rf) /
-                            dot(w, portfolio.cov, w)
+    if isnothing(bl_opt.delta)
+        bl_opt.delta = (dot(portfolio.mu, w) - bl_opt.rf) / dot(w, portfolio.cov, w)
     end
 
     if isnothing(B)
         B = loadings_matrix(DataFrame(F, portfolio.f_assets),
-                            DataFrame(returns, portfolio.assets), loadings_settings)
+                            DataFrame(returns, portfolio.assets), loadings_opt)
     end
     namesB = names(B)
-    bl_settings.constant = "const" ∈ namesB
+    bl_opt.constant = "const" ∈ namesB
     B = Matrix(B[!, setdiff(namesB, ("ticker",))])
 
-    portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_settings.method == :B
+    portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_opt.method == :B
         bayesian_black_litterman(returns, F, B, P_f, Q_f; cov_opt = cov_opt,
-                                 mu_opt = mu_opt, bl_settings = bl_settings,)
+                                 mu_opt = mu_opt, bl_opt = bl_opt,)
     else
         augmented_black_litterman(returns, w;                                  # Black Litterman
                                   F = F, B = B, P = P, P_f = P_f, Q = Q, Q_f = Q_f,                                  # Settings
-                                  cov_opt = cov_opt, mu_opt = mu_opt,
-                                  bl_settings = bl_settings,)
+                                  cov_opt = cov_opt, mu_opt = mu_opt, bl_opt = bl_opt,)
     end
 
     return nothing

@@ -10,7 +10,7 @@ l = 2.0
 
 @testset "WC Statistics" begin
     portfolio = Portfolio(; prices = prices)
-    wc_settings = WCOpt(; seed = 123456789)
+    wc_opt = WCOpt(; seed = 123456789)
 
     cov_lt1 = reshape([0.0001543205503361124, 7.34134097681148e-5, 0.00010634555161593393,
                        9.115279921137884e-5, 0.00012317169517618682, 4.034407880095843e-5,
@@ -4729,7 +4729,7 @@ l = 2.0
     k_sigmat11 = 20.896147612767702
 
     try
-        wc_statistics!(portfolio, wc_settings)
+        wc_statistics!(portfolio, wc_opt)
         cov_l1 = portfolio.cov_l
         cov_u1 = portfolio.cov_u
         cov_mu1 = portfolio.cov_mu
@@ -4738,9 +4738,9 @@ l = 2.0
         k_mu1 = portfolio.k_mu
         k_sigma1 = portfolio.k_sigma
 
-        wc_settings.dmu = 0.5
-        wc_settings.dcov = 0.5
-        wc_statistics!(portfolio, wc_settings)
+        wc_opt.dmu = 0.5
+        wc_opt.dcov = 0.5
+        wc_statistics!(portfolio, wc_opt)
         cov_l2 = portfolio.cov_l
         cov_u2 = portfolio.cov_u
         cov_mu2 = portfolio.cov_mu
@@ -4749,10 +4749,10 @@ l = 2.0
         k_mu2 = portfolio.k_mu
         k_sigma2 = portfolio.k_sigma
 
-        wc_settings.dmu = 0.1
-        wc_settings.dcov = 0.1
-        wc_settings.ellipse = :Circular
-        wc_statistics!(portfolio, wc_settings)
+        wc_opt.dmu = 0.1
+        wc_opt.dcov = 0.1
+        wc_opt.ellipse = :Circular
+        wc_statistics!(portfolio, wc_opt)
         cov_l3 = portfolio.cov_l
         cov_u3 = portfolio.cov_u
         cov_mu3 = portfolio.cov_mu
@@ -4761,8 +4761,8 @@ l = 2.0
         k_mu3 = portfolio.k_mu
         k_sigma3 = portfolio.k_sigma
 
-        wc_settings.ellipse = :Moving
-        wc_statistics!(portfolio, wc_settings)
+        wc_opt.ellipse = :Moving
+        wc_statistics!(portfolio, wc_opt)
         cov_l4 = portfolio.cov_l
         cov_u4 = portfolio.cov_u
         cov_mu4 = portfolio.cov_mu
@@ -4771,8 +4771,8 @@ l = 2.0
         k_mu4 = portfolio.k_mu
         k_sigma4 = portfolio.k_sigma
 
-        wc_settings.ellipse = :Normal
-        wc_statistics!(portfolio, wc_settings)
+        wc_opt.ellipse = :Normal
+        wc_statistics!(portfolio, wc_opt)
         cov_l5 = portfolio.cov_l
         cov_u5 = portfolio.cov_u
         cov_mu5 = portfolio.cov_mu
@@ -4781,8 +4781,8 @@ l = 2.0
         k_mu5 = portfolio.k_mu
         k_sigma5 = portfolio.k_sigma
 
-        wc_settings.box = :Circular
-        wc_statistics!(portfolio, wc_settings)
+        wc_opt.box = :Circular
+        wc_statistics!(portfolio, wc_opt)
         cov_l6 = portfolio.cov_l
         cov_u6 = portfolio.cov_u
         cov_mu6 = portfolio.cov_mu
@@ -4791,8 +4791,8 @@ l = 2.0
         k_mu6 = portfolio.k_mu
         k_sigma6 = portfolio.k_sigma
 
-        wc_settings.box = :Moving
-        wc_statistics!(portfolio, wc_settings)
+        wc_opt.box = :Moving
+        wc_statistics!(portfolio, wc_opt)
         cov_l7 = portfolio.cov_l
         cov_u7 = portfolio.cov_u
         cov_mu7 = portfolio.cov_mu
@@ -4882,11 +4882,11 @@ l = 2.0
     catch err
     end
 
-    wc_settings.ellipse = :Normal
-    wc_settings.box = :Delta
-    wc_settings.dmu = 0.1
-    wc_settings.dcov = 0.1
-    wc_statistics!(portfolio, wc_settings)
+    wc_opt.ellipse = :Normal
+    wc_opt.box = :Delta
+    wc_opt.dmu = 0.1
+    wc_opt.dcov = 0.1
+    wc_statistics!(portfolio, wc_opt)
     cov_l8 = portfolio.cov_l
     cov_u8 = portfolio.cov_u
     cov_mu8 = portfolio.cov_mu
@@ -4895,9 +4895,9 @@ l = 2.0
     k_mu8 = portfolio.k_mu
     k_sigma8 = portfolio.k_sigma
 
-    wc_settings.dmu = 0.2
-    wc_settings.dcov = 0.3
-    wc_statistics!(portfolio, wc_settings)
+    wc_opt.dmu = 0.2
+    wc_opt.dcov = 0.3
+    wc_statistics!(portfolio, wc_opt)
     cov_l9 = portfolio.cov_l
     cov_u9 = portfolio.cov_u
     cov_mu9 = portfolio.cov_mu
@@ -4906,8 +4906,8 @@ l = 2.0
     k_mu9 = portfolio.k_mu
     k_sigma9 = portfolio.k_sigma
 
-    wc_settings.box = :Normal
-    wc_statistics!(portfolio, wc_settings)
+    wc_opt.box = :Normal
+    wc_statistics!(portfolio, wc_opt)
     cov_l10 = portfolio.cov_l
     cov_u10 = portfolio.cov_u
     cov_mu10 = portfolio.cov_mu
@@ -4916,8 +4916,8 @@ l = 2.0
     k_mu10 = portfolio.k_mu
     k_sigma10 = portfolio.k_sigma
 
-    wc_settings.q = 0.1
-    wc_statistics!(portfolio, wc_settings)
+    wc_opt.q = 0.1
+    wc_statistics!(portfolio, wc_opt)
     cov_l11 = portfolio.cov_l
     cov_u11 = portfolio.cov_u
     cov_mu11 = portfolio.cov_mu

@@ -154,7 +154,7 @@ Structure for convex portfolio optimisation.
 - `f_assets`: `Nf×1` vector of factors, where $(_ndef(:f2)).
 - `f_timestamps`: `T×1` vector of factor timestamps, where $(_tstr(:t1)).
 - `f_returns`: `T×Nf` matrix of factor returns, where $(_ndef(:f2)).
-- `loadings`: loadings matrix for black litterman models.
+- `loadings`: loadings dataframe for factor models.
 # Risk parameters
 - `msv_target`: target value for for Absolute Deviation and Semivariance risk measures. It can have two meanings depending on its type and value.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
@@ -424,7 +424,6 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `f_ret`: `T×Nf` matrix of factor returns, where $(_ndef(:f2)). Its value is saved in the `f_returns` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function, where $(_tstr(:t1)) and $(_ndef(:f2)).
 - `f_timestamps`: `T×1` vector of factor timestamps, where $(_tstr(:t1)). Its value is saved in the `f_timestamps` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
 - `f_assets`: `Nf×1` vector of factors, where $(_ndef(:f2)). Its value is saved in the `f_assets` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
-- `loadings`: loadings matrix for black litterman models.
 ## Risk parameters
 - `msv_target`: target value for for Absolute Deviation and Semivariance risk measures. It can have two meanings depending on its type and value.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
@@ -544,7 +543,7 @@ function Portfolio(;
                    f_ret::AbstractMatrix{<:Real}        = Matrix{Float64}(undef, 0, 0),
                    f_timestamps::AbstractVector         = Vector{Date}(undef, 0),
                    f_assets::AbstractVector             = Vector{String}(undef, 0),
-                   loadings::AbstractMatrix{<:Real}     = Matrix{Float64}(undef, 0, 0),
+                   loadings::DataFrame                  = DataFrame(),
                    # Risk parameters
                    msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
                    lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,

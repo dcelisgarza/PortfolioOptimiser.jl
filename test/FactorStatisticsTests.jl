@@ -12,137 +12,124 @@ l = 2.0
 @testset "Factor Statistics" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
-    loadings_settings = LoadingsOpt(;)
-    factor_settings = FactorOpt(; loadings_settings = loadings_settings)
+    loadings_opt = LoadingsOpt(;)
+    factor_opt = FactorOpt(; loadings_opt = loadings_opt)
     posdef = PosdefFixOpt(; method = :Nearest)
-    cov_f_settings = CovOpt(; posdef = posdef)
-    cov_fm_settings = CovOpt(; posdef = posdef)
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    cov_f_opt = CovOpt(; posdef = posdef)
+    cov_fm_opt = CovOpt(; posdef = posdef)
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f1 = portfolio.cov_f
     mu_f1 = portfolio.mu_f
     cov_fm1 = portfolio.cov_fm
     mu_fm1 = portfolio.mu_fm
 
-    factor_settings.error = false
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    factor_opt.error = false
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f2 = portfolio.cov_f
     mu_f2 = portfolio.mu_f
     cov_fm2 = portfolio.cov_fm
     mu_fm2 = portfolio.mu_fm
 
-    factor_settings.error = true
+    factor_opt.error = true
     posdef.method = :None
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f3 = portfolio.cov_f
     mu_f3 = portfolio.mu_f
     cov_fm3 = portfolio.cov_fm
     mu_fm3 = portfolio.mu_fm
 
-    factor_settings.error = false
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    factor_opt.error = false
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f4 = portfolio.cov_f
     mu_f4 = portfolio.mu_f
     cov_fm4 = portfolio.cov_fm
     mu_fm4 = portfolio.mu_fm
 
-    loadings_settings = LoadingsOpt(;)
-    loadings_settings.threshold = 0.5
-    factor_settings = FactorOpt(; loadings_settings = loadings_settings)
-    cov_f_settings = CovOpt(;)
-    cov_fm_settings = CovOpt(;)
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    loadings_opt = LoadingsOpt(;)
+    loadings_opt.threshold = 0.5
+    factor_opt = FactorOpt(; loadings_opt = loadings_opt)
+    cov_f_opt = CovOpt(;)
+    cov_fm_opt = CovOpt(;)
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f5 = portfolio.cov_f
     mu_f5 = portfolio.mu_f
     cov_fm5 = portfolio.cov_fm
     mu_fm5 = portfolio.mu_fm
 
-    loadings_settings.criterion = :aic
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    loadings_opt.criterion = :aic
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f6 = portfolio.cov_f
     mu_f6 = portfolio.mu_f
     cov_fm6 = portfolio.cov_fm
     mu_fm6 = portfolio.mu_fm
 
-    loadings_settings.criterion = :adjr2
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    loadings_opt.criterion = :adjr2
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f7 = portfolio.cov_f
     mu_f7 = portfolio.mu_f
     cov_fm7 = portfolio.cov_fm
     mu_fm7 = portfolio.mu_fm
 
-    loadings_settings = LoadingsOpt(; method = :BReg)
-    factor_settings = FactorOpt(; loadings_settings = loadings_settings)
-    cov_f_settings = CovOpt(;)
-    cov_fm_settings = CovOpt(;)
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    loadings_opt = LoadingsOpt(; method = :BReg)
+    factor_opt = FactorOpt(; loadings_opt = loadings_opt)
+    cov_f_opt = CovOpt(;)
+    cov_fm_opt = CovOpt(;)
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f8 = portfolio.cov_f
     mu_f8 = portfolio.mu_f
     cov_fm8 = portfolio.cov_fm
     mu_fm8 = portfolio.mu_fm
 
-    loadings_settings.threshold = 0.5
-    factor_settings = FactorOpt(; loadings_settings = loadings_settings)
-    cov_f_settings = CovOpt(;)
-    cov_fm_settings = CovOpt(;)
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    loadings_opt.threshold = 0.5
+    factor_opt = FactorOpt(; loadings_opt = loadings_opt)
+    cov_f_opt = CovOpt(;)
+    cov_fm_opt = CovOpt(;)
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f9 = portfolio.cov_f
     mu_f9 = portfolio.mu_f
     cov_fm9 = portfolio.cov_fm
     mu_fm9 = portfolio.mu_fm
 
-    loadings_settings.criterion = :aic
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    loadings_opt.criterion = :aic
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f10 = portfolio.cov_f
     mu_f10 = portfolio.mu_f
     cov_fm10 = portfolio.cov_fm
     mu_fm10 = portfolio.mu_fm
 
-    loadings_settings.criterion = :adjr2
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    loadings_opt.criterion = :adjr2
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f11 = portfolio.cov_f
     mu_f11 = portfolio.mu_f
     cov_fm11 = portfolio.cov_fm
     mu_fm11 = portfolio.mu_fm
 
-    loadings_settings.method = :PCR
-    factor_settings = FactorOpt(; loadings_settings = loadings_settings)
-    cov_f_settings = CovOpt(;)
-    cov_fm_settings = CovOpt(;)
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    loadings_opt.method = :PCR
+    factor_opt = FactorOpt(; loadings_opt = loadings_opt)
+    cov_f_opt = CovOpt(;)
+    cov_fm_opt = CovOpt(;)
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f12 = portfolio.cov_f
     mu_f12 = portfolio.mu_f
     cov_fm12 = portfolio.cov_fm
     mu_fm12 = portfolio.mu_fm
 
-    loadings_settings.method = :PCR
-    loadings_settings.threshold = 1e-5
-    factor_statistics!(portfolio; cov_f_settings = cov_f_settings,
-                       cov_fm_settings = cov_fm_settings,
-                       factor_settings = factor_settings,)
+    loadings_opt.method = :PCR
+    loadings_opt.threshold = 1e-5
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                       factor_opt = factor_opt,)
     cov_f13 = portfolio.cov_f
     mu_f13 = portfolio.mu_f
     cov_fm13 = portfolio.cov_fm

@@ -8,6 +8,11 @@ prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestam
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+factor_statistics!(portfolio)
+
+portfolio.loadings
+
 #
 # :Clarabel => Dict(:solver => Clarabel.Optimizer,
 #                                     :params => Dict("verbose" => false,
