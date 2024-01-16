@@ -15,24 +15,30 @@ function roundmult(val, prec, args...; kwargs...)
     return round(div(val, prec) * prec, args...; kwargs...)
 end
 
-function _setup_alloc_optim(weights, short_ratio, investment, reinvest)
+function _setup_alloc_optim(weights, investment, reinvest)
     long_idx = weights .>= 0
     short_idx = .!long_idx
 
-    if isnothing(short_ratio)
-        (short_ratio = -sum(weights[short_idx]))
+    long_ratio = if !isempty(long_idx)
+        sum(weights[long_idx])
+    else
+        zero(eltype(weights))
     end
 
-    @smart_assert(short_ratio >= 0)
+    short_ratio = if !isempty(short_idx)
+        -sum(weights[short_idx])
+    else
+        zero(eltype(weights))
+    end
 
     short_investment = investment * short_ratio
-    long_investment = investment
+    long_investment = investment * long_ratio
 
     if reinvest
-        (long_investment += short_investment)
+        long_investment += short_investment
     end
 
-    return long_idx, short_idx, long_investment, short_investment
+    return long_idx, short_idx, long_investment, short_investment, long_ratio, short_ratio
 end
 
 function _optimise_allocation(portfolio, tickers, latest_prices)
@@ -133,7 +139,7 @@ function _handle_alloc_errors_and_finalise(portfolio, term_status, solvers_tried
 end
 
 function _lp_sub_allocation!(portfolio, key, label, tickers, weights, latest_prices,
-                             investment, string_names)
+                             investment, string_names, ratio)
     if isempty(tickers)
         return String[], Vector{eltype(latest_prices)}(undef, 0),
                Vector{eltype(latest_prices)}(undef, 0),
@@ -174,20 +180,20 @@ function _lp_sub_allocation!(portfolio, key, label, tickers, weights, latest_pri
                                                                                          label,
                                                                                          latest_prices)
 
+    allocated_weights *= ratio
     return tickers, shares, latest_prices, cost, allocated_weights, available_funds
 end
 
 function _lp_allocation!(portfolio, port_type, latest_prices, investment, reinvest,
-                         short_ratio, string_names)
+                         string_names)
     key = Symbol("LP_" * string(port_type))
 
     weights = portfolio.optimal[port_type].weights
     tickers = portfolio.assets
 
-    long_idx, short_idx, long_investment, short_investment = _setup_alloc_optim(weights,
-                                                                                short_ratio,
-                                                                                investment,
-                                                                                reinvest)
+    long_idx, short_idx, long_investment, short_investment, long_ratio, short_ratio = _setup_alloc_optim(weights,
+                                                                                                         investment,
+                                                                                                         reinvest)
 
     long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = _lp_sub_allocation!(portfolio,
                                                                                                                           key,
@@ -196,7 +202,8 @@ function _lp_allocation!(portfolio, port_type, latest_prices, investment, reinve
                                                                                                                           weights[long_idx],
                                                                                                                           latest_prices[long_idx],
                                                                                                                           long_investment,
-                                                                                                                          string_names)
+                                                                                                                          string_names,
+                                                                                                                          long_ratio)
 
     short_tickers, short_shares, short_latest_prices, short_cost, short_allocated_weights, short_leftover = _lp_sub_allocation!(portfolio,
                                                                                                                                 key,
@@ -205,7 +212,8 @@ function _lp_allocation!(portfolio, port_type, latest_prices, investment, reinve
                                                                                                                                 -weights[short_idx],
                                                                                                                                 latest_prices[short_idx],
                                                                                                                                 short_investment,
-                                                                                                                                string_names)
+                                                                                                                                string_names,
+                                                                                                                                short_ratio)
 
     retval = _combine_allocations(portfolio, key, long_tickers, short_tickers, long_shares,
                                   short_shares, long_latest_prices, short_latest_prices,
@@ -213,16 +221,17 @@ function _lp_allocation!(portfolio, port_type, latest_prices, investment, reinve
                                   short_allocated_weights)
 
     if !isa(long_leftover, Number)
-        (long_leftover = long_investment)
+        long_leftover = long_investment
     end
     if !isa(short_leftover, Number)
-        (short_leftover = short_investment)
+        short_leftover = short_investment
     end
 
     return retval, long_leftover + short_leftover
 end
 
-function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, rounding)
+function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, rounding,
+                                 ratio)
     if isempty(tickers)
         return String[], Vector{eltype(latest_prices)}(undef, 0),
                Vector{eltype(latest_prices)}(undef, 0),
@@ -283,33 +292,35 @@ function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, ro
 
     cost = latest_prices .* shares
     allocated_weights = cost / sum(cost)
+    allocated_weights *= ratio
 
     return tickers, shares, latest_prices, cost, allocated_weights, available_funds
 end
 
 function _greedy_allocation!(portfolio, port_type, latest_prices, investment, rounding,
-                             reinvest, short_ratio)
+                             reinvest)
     key = Symbol("Greedy_" * string(port_type))
 
     weights = portfolio.optimal[port_type].weights
     tickers = portfolio.assets
 
-    long_idx, short_idx, long_investment, short_investment = _setup_alloc_optim(weights,
-                                                                                short_ratio,
-                                                                                investment,
-                                                                                reinvest)
+    long_idx, short_idx, long_investment, short_investment, long_ratio, short_ratio = _setup_alloc_optim(weights,
+                                                                                                         investment,
+                                                                                                         reinvest)
 
     long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = _greedy_sub_allocation!(tickers[long_idx],
                                                                                                                               weights[long_idx],
                                                                                                                               latest_prices[long_idx],
                                                                                                                               long_investment,
-                                                                                                                              rounding)
+                                                                                                                              rounding,
+                                                                                                                              long_ratio)
 
     short_tickers, short_shares, short_latest_prices, short_cost, short_allocated_weights, short_leftover = _greedy_sub_allocation!(tickers[short_idx],
                                                                                                                                     -weights[short_idx],
                                                                                                                                     latest_prices[short_idx],
                                                                                                                                     short_investment,
-                                                                                                                                    rounding)
+                                                                                                                                    rounding,
+                                                                                                                                    short_ratio)
 
     missing = _combine_allocations(portfolio, key, long_tickers, short_tickers, long_shares,
                                    short_shares, long_latest_prices, short_latest_prices,
@@ -323,7 +334,7 @@ function _greedy_allocation!(portfolio, port_type, latest_prices, investment, ro
 end
 
 function _save_alloc_opt_params(portfolio, port_type, alloc_type, investment, rounding,
-                                reinvest, short_ratio, leftover, save_opt_params)
+                                reinvest, leftover, save_opt_params)
     if !save_opt_params
         return nothing
     end
@@ -331,8 +342,7 @@ function _save_alloc_opt_params(portfolio, port_type, alloc_type, investment, ro
     key = Symbol(string(alloc_type) * "_" * string(port_type))
 
     portfolio.alloc_params[key] = Dict(:investment => investment, :rounding => rounding,
-                                       :reinvest => reinvest, :short_ratio => short_ratio,
-                                       :leftover => leftover)
+                                       :reinvest => reinvest, :leftover => leftover)
 
     return nothing
 end
@@ -341,26 +351,25 @@ end
 ```julia
 allocate!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :HRP, alloc_type = :LP,
           latest_prices = portfolio.latest_prices, investment = 1e4, rounding = 1,
-          reinvest = false, short_ratio = nothing, string_names = false,
-          save_opt_params = true,)
+          reinvest = false, string_names = false, save_opt_params = true,)
 ```
 """
 function allocate!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :HRP,
                    alloc_type = :LP, latest_prices = portfolio.latest_prices,
-                   investment = 1e6, rounding = 1, reinvest = false, short_ratio = nothing,
-                   string_names = false, save_opt_params = true)
+                   investment = 1e6, rounding = 1, reinvest = false, string_names = false,
+                   save_opt_params = true)
     @smart_assert(alloc_type ∈ AllocTypes)
 
     retval, leftover = if alloc_type == :LP
         _lp_allocation!(portfolio, port_type, latest_prices, investment, reinvest,
-                        short_ratio, string_names)
+                        string_names)
     else
         _greedy_allocation!(portfolio, port_type, latest_prices, investment, rounding,
-                            reinvest, short_ratio)
+                            reinvest)
     end
 
     _save_alloc_opt_params(portfolio, port_type, alloc_type, investment, rounding, reinvest,
-                           short_ratio, leftover, save_opt_params)
+                           leftover, save_opt_params)
 
     return retval
 end
