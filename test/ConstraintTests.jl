@@ -956,11 +956,11 @@ end
 
 @testset "Connected and related assets" begin
     portfolio = Portfolio(; prices = prices_assets,
-                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75)),
+                                         :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                        :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     w = optimise!(portfolio; obj = :Min_Risk)
 
