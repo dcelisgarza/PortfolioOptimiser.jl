@@ -35,6 +35,12 @@ end
 end
 
 @testset "OWA L-Moment" begin
+    solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                            :params => Dict("verbose" => true,
+                                                            "max_step_fraction" => 0.75)),
+                          :COSMO => Dict(:solver => COSMO.Optimizer,
+                                         :params => Dict("verbose" => true)))
+
     w1 = owa_l_moment_crm(200; k = 2, method = :CRRA, g = 0.25)
     w2 = owa_l_moment_crm(200; k = 4, method = :CRRA, g = 0.25)
     w3 = owa_l_moment_crm(200; k = 2, method = :CRRA, g = 0.5)
