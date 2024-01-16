@@ -55,6 +55,10 @@ using SafeTestsets
 # @safetestset "Traditional optimisations" begin
 #     include("TraditionalOptimisationTests.jl")
 # end
+@safetestset "OWA Weights" begin
+    include("OWAWeightsTests.jl")
+end
+
 @safetestset "Constraint Functions" begin
     include("ConstraintTests.jl")
 end

@@ -729,6 +729,7 @@ end
     w1 = rp_constraints(asset_sets, :Asset)
     w2 = rp_constraints(asset_sets, :Subset, :G2ward)
     w3 = rp_constraints(asset_sets, :Subset, :G2DBHT)
+    w4 = rp_constraints(asset_sets, :Subset, 6)
 
     w1t = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
            0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
@@ -747,6 +748,7 @@ end
     @test isapprox(w1, w1t)
     @test isapprox(w2, w2t)
     @test isapprox(w3, w3t)
+    @test isapprox(w3, w4)
 end
 
 @testset "Connection matrix" begin
