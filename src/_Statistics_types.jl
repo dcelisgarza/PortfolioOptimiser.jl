@@ -241,7 +241,7 @@ function PosdefFixOpt(; method::Symbol = :Nearest,
 end
 function Base.setproperty!(obj::PosdefFixOpt, sym::Symbol, val)
     if sym == :method
-        @smart_assert(val in PosdefFixMethods)
+        @smart_assert(val ∈ PosdefFixMethods)
     end
     return setfield!(obj, sym, val)
 end
@@ -287,7 +287,7 @@ function DenoiseOpt(; method::Symbol = :None, alpha::Real = 0.0, detone::Bool = 
 end
 function Base.setproperty!(obj::DenoiseOpt, sym::Symbol, val)
     if sym == :method
-        @smart_assert(val in DenoiseMethods)
+        @smart_assert(val ∈ DenoiseMethods)
     elseif sym == :alpha
         @smart_assert(0 <= val <= 1)
     end
@@ -324,7 +324,7 @@ function CovOpt(; method::Symbol = :Full, estimation::CovEstOpt = CovEstOpt(;),
 end
 function Base.setproperty!(obj::CovOpt, sym::Symbol, val)
     if sym == :method
-        @smart_assert(val in CovMethods)
+        @smart_assert(val ∈ CovMethods)
     end
     return setfield!(obj, sym, val)
 end
@@ -358,9 +358,9 @@ function MuOpt(; method::Symbol = :Default, target::Symbol = :GM, rf::Real = 0.0
 end
 function Base.setproperty!(obj::MuOpt, sym::Symbol, val)
     if sym == :method
-        @smart_assert(val in MuMethods)
+        @smart_assert(val ∈ MuMethods)
     elseif sym == :target
-        @smart_assert(val in MuTargets)
+        @smart_assert(val ∈ MuTargets)
     end
     return setfield!(obj, sym, val)
 end
@@ -435,7 +435,7 @@ function Base.setproperty!(obj::CorEstOpt, sym::Symbol, val)
     if sym == :alpha
         @smart_assert(0 <= val <= 1)
     elseif sym == :bins_info
-        @smart_assert(val in BinMethods || isa(val, Int) && val > zero(val))
+        @smart_assert(val ∈ BinMethods || isa(val, Int) && val > zero(val))
         # elseif sym in (:custom_cor, :custom_dist, :sigma)
         # @smart_assert(
         #     size(obj.custom_cor) == size(obj.custom_dist) == size(obj.sigma),        #     "size(custom_cor) == $(size(obj.custom_cor)), size(custom_dist) == $(size(obj.custom_dist)) and size(sigma) == $(size(obj.sigma)), must all be equal"
@@ -473,7 +473,7 @@ function CorOpt(; method::Symbol = :Pearson, estimation::CorEstOpt = CorEstOpt(;
 end
 function Base.setproperty!(obj::CorOpt, sym::Symbol, val)
     if sym == :method
-        @smart_assert(val in CorMethods)
+        @smart_assert(val ∈ CorMethods)
     end
     return setfield!(obj, sym, val)
 end
@@ -507,9 +507,9 @@ function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true,
 end
 function Base.setproperty!(obj::WCOpt, sym::Symbol, val)
     if sym == :box
-        @smart_assert(val in BoxMethods)
+        @smart_assert(val ∈ BoxMethods)
     elseif sym == :ellipse
-        @smart_assert(val in EllipseMethods)
+        @smart_assert(val ∈ EllipseMethods)
     elseif sym == :q
         @smart_assert(0 < val < 1)
     end
@@ -551,9 +551,9 @@ function LoadingsOpt(; method::Symbol = :FReg, criterion::Symbol = :pval,
 end
 function Base.setproperty!(obj::LoadingsOpt, sym::Symbol, val)
     if sym == :method
-        @smart_assert(val in FSMethods)
+        @smart_assert(val ∈ FSMethods)
     elseif sym == :criterion
-        @smart_assert(val in RegCriteria)
+        @smart_assert(val ∈ RegCriteria)
     end
     return setfield!(obj, sym, val)
 end
@@ -590,7 +590,7 @@ function BLOpt(; method::Symbol = :B, constant::Bool = true, eq::Bool = true,
 end
 function Base.setproperty!(obj::BLOpt, sym::Symbol, val)
     if sym == :method
-        @smart_assert(val in BLFMMethods)
+        @smart_assert(val ∈ BLFMMethods)
     end
     return setfield!(obj, sym, val)
 end

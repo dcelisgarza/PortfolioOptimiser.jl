@@ -1739,19 +1739,13 @@ function optimise!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer
     @smart_assert(rrp_ver in RRPVersions)
     @smart_assert(u_mu in UncertaintyTypes)
     @smart_assert(u_cov in UncertaintyTypes)
-    @smart_assert(0 < portfolio.alpha < 1)
-    @smart_assert(0 < portfolio.kappa < 1)
-    @smart_assert(portfolio.kind_tracking_err in TrackingErrKinds)
+    @smart_assert(portfolio.kind_tracking_err ∈ TrackingErrKinds)
     if !isempty(w_ini)
         @smart_assert(length(w_ini) == size(portfolio.returns, 2))
     end
     if near_opt
         @smart_assert(M > 0)
-    end
-    if !isempty(w_min)
         @smart_assert(length(w_min) == size(portfolio.returns, 2))
-    end
-    if !isempty(w_max)
         @smart_assert(length(w_max) == size(portfolio.returns, 2))
     end
 

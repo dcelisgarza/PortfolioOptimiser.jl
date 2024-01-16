@@ -662,7 +662,7 @@ function Portfolio(;
     if !isempty(turnover_weights)
         @smart_assert(length(turnover_weights) == size(returns, 2))
     end
-    @smart_assert(kind_tracking_err in TrackingErrKinds)
+    @smart_assert(kind_tracking_err ∈ TrackingErrKinds)
     if !isempty(tracking_err_returns)
         @smart_assert(length(tracking_err_returns) == size(returns, 1))
     end
@@ -884,7 +884,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :kind_tracking_err
-        @smart_assert(val in TrackingErrKinds)
+        @smart_assert(val ∈ TrackingErrKinds)
     elseif sym == :tracking_err_returns
         if !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 1))
@@ -901,7 +901,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :network_method
-        @smart_assert(val in NetworkMethods)
+        @smart_assert(val ∈ NetworkMethods)
     elseif sym == :network_sdp
         if !isempty(val)
             @smart_assert(size(val) == (size(obj.returns, 2), size(obj.returns, 2)))
@@ -1400,9 +1400,9 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :bins_info
-        @smart_assert(val in BinMethods || isa(val, Int) && val > zero(val))
+        @smart_assert(val ∈ BinMethods || isa(val, Int) && val > zero(val))
     elseif sym == :cor_method
-        @smart_assert(val in CorMethods)
+        @smart_assert(val ∈ CorMethods)
     elseif sym == :k
         @smart_assert(val >= zero(val))
     elseif sym in (:w_min, :w_max)
