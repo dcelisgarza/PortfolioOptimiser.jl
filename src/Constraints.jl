@@ -531,7 +531,7 @@ rw_c = rp_constraints(asset_sets, :Subset, "Class 2")
 ```
 """
 function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
-                        class_col::Union{String, Symbol, Int, Nothing} = nothing)
+                        class_col::Union{String,Symbol,Int,Nothing} = nothing)
     @smart_assert(type in RPConstraintTypes)
     N = nrow(asset_sets)
 
@@ -556,65 +556,6 @@ function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
     end
 
     return rw
-end
-
-function _hierarchical_clustering(returns::AbstractMatrix, opt::CorOpt = CorOpt(;),
-                                  linkage = :single,
-                                  max_k = ceil(Int, sqrt(size(returns, 2))),
-                                  branchorder = :optimal, dbht_method = :Unique)
-    cor_method = opt.method
-    corr, dist = cor_dist_mtx(returns, opt)
-    clustering, k = _hcluster_choice(dist, corr, cor_method, linkage, branchorder,
-                                     dbht_method, max_k)
-
-    return clustering, k
-end
-
-function cluster_assets(portfolio::HCPortfolio; linkage = :single,
-                        max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
-                        branchorder = :optimal, k = portfolio.k, dbht_method = :Unique,)
-    clustering, tk = _hierarchical_clustering(portfolio, linkage, max_k, branchorder,
-                                              dbht_method)
-
-    k = iszero(k) ? tk : k
-
-    clustering_idx = cutree(clustering; k = k)
-
-    return clustering_idx, clustering, k
-end
-
-function cluster_assets(returns::AbstractMatrix, opt::CorOpt = CorOpt(;); linkage = :single,
-                        max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
-                        k = 0, dbht_method = :Unique)
-    clustering, tk = _hierarchical_clustering(returns, opt, linkage, max_k, branchorder,
-                                              dbht_method)
-
-    k = iszero(k) ? tk : k
-
-    clustering_idx = cutree(clustering; k = k)
-
-    return clustering_idx, clustering, k
-end
-
-function cluster_assets(portfolio::Portfolio, opt::CorOpt = CorOpt(;); linkage = :single,
-                        max_k = ceil(Int, sqrt(size(portfolio.returns, 2))),
-                        branchorder = :optimal, k = 0, dbht_method = :Unique)
-    return cluster_assets(portfolio.returns, opt; linkage = linkage, max_k = max_k,
-                          branchorder = branchorder, k = k, dbht_method = dbht_method)
-end
-
-function cluster_assets!(portfolio::HCPortfolio; linkage = :single,
-                         max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
-                         branchorder = :optimal, k = portfolio.k, dbht_method = :Unique,)
-    clustering, tk = _hierarchical_clustering(portfolio, linkage, max_k, branchorder,
-                                              dbht_method)
-
-    k = iszero(k) ? tk : k
-
-    portfolio.clusters = clustering
-    portfolio.k = k
-
-    return nothing
 end
 
 const GraphMethods = (:MST, :TMFG)

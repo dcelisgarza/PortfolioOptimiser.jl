@@ -70,7 +70,7 @@ end
 
 """
 ```julia
-mut_var_info_mtx(x::AbstractMatrix{<:Real}; bins_info::Union{Symbol, <:Integer} = :KN,
+mut_var_info_mtx(x::AbstractMatrix{<:Real}; bins_info::Union{Symbol,<:Integer} = :KN,
                  normed::Bool = true)
 ```
 
@@ -92,7 +92,7 @@ Compute the mutual information and variation of information matrices.
           * `:HGR`: Hacine-Gharbi and Ravier's choice.
 """
 function mut_var_info_mtx(x::AbstractMatrix{<:Real},
-                          bins_info::Union{Symbol, <:Integer} = :KN, normed::Bool = true)
+                          bins_info::Union{Symbol,<:Integer} = :KN, normed::Bool = true)
     @smart_assert(bins_info ∈ BinMethods ||
                   isa(bins_info, Int) && bins_info > zero(bins_info))
 
@@ -310,7 +310,7 @@ function covgerber2(x, opt::GerberOpt = GerberOpt(;))
 end
 
 function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
-                     rng = Random.default_rng(), seed::Union{Nothing, <:Integer} = nothing,)
+                     rng = Random.default_rng(), seed::Union{Nothing,<:Integer} = nothing,)
     if !isnothing(seed)
         Random.seed!(rng, seed)
     end
@@ -342,7 +342,7 @@ function cokurt(x::AbstractMatrix, mu::AbstractArray)
 end
 
 function scokurt(x::AbstractMatrix, mu::AbstractArray,
-                 target_ret::Union{Real, <:AbstractVector{<:Real}} = 0.0)
+                 target_ret::Union{Real,<:AbstractVector{<:Real}} = 0.0)
     T, N = size(x)
     y = x .- mu
     y .= min.(y, target_ret)
@@ -364,7 +364,7 @@ function coskew(x::AbstractMatrix, mu::AbstractArray)
 end
 
 function scoskew(x::AbstractMatrix, mu::AbstractArray,
-                 target_ret::Union{Real, <:AbstractVector{<:Real}} = 0.0)
+                 target_ret::Union{Real,<:AbstractVector{<:Real}} = 0.0)
     T, N = size(x)
     y = x .- mu
     y .= min.(y, target_ret)
@@ -725,11 +725,11 @@ end
 
 """
 ```julia
-mean_vec(returns::AbstractMatrix; custom_mu::Union{AbstractVector, Nothing} = nothing,
+mean_vec(returns::AbstractMatrix; custom_mu::Union{AbstractVector,Nothing} = nothing,
          mean_args::Tuple = (), mean_func::Function = mean, mean_kwargs::NamedTuple = (;),
          mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-         mu_weights::Union{AbstractWeights, Nothing} = nothing, rf::Real = 0.0,
-         sigma::Union{AbstractMatrix, Nothing} = nothing,)
+         mu_weights::Union{AbstractWeights,Nothing} = nothing, rf::Real = 0.0,
+         sigma::Union{AbstractMatrix,Nothing} = nothing,)
 ```
 """
 function mean_vec(returns::AbstractMatrix, opt::MuOpt = MuOpt(;))
@@ -987,8 +987,7 @@ end
 
 function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
                        n_sim::Integer = 3_000, window::Integer = 3,
-                       seed::Union{<:Integer, Nothing} = nothing,
-                       rng = Random.default_rng())
+                       seed::Union{<:Integer,Nothing} = nothing, rng = Random.default_rng())
     @smart_assert(kind ∈ BootstrapMethods)
     if !isnothing(seed)
         Random.seed!(rng, seed)
@@ -1125,7 +1124,7 @@ function wc_statistics!(portfolio::AbstractPortfolio, opt::WCOpt = WCOpt(;))
     return nothing
 end
 
-function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
+function forward_regression(x::DataFrame, y::Union{Vector,DataFrame},
                             criterion::Symbol = :pval, threshold::Real = 0.05)
     @smart_assert(criterion ∈ RegCriteria)
     if isa(y, DataFrame)
@@ -1249,7 +1248,7 @@ function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
     return included
 end
 
-function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
+function backward_regression(x::DataFrame, y::Union{Vector,DataFrame},
                              criterion::Symbol = :pval, threshold::Real = 0.05)
     @smart_assert(criterion ∈ RegCriteria)
     if isa(y, DataFrame)
@@ -1368,7 +1367,7 @@ function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
     return included
 end
 
-function pcr(x::DataFrame, y::Union{Vector, DataFrame}, opt::PCROpt = PCROpt(;))
+function pcr(x::DataFrame, y::Union{Vector,DataFrame}, opt::PCROpt = PCROpt(;))
     mean_genfunc = opt.mean_genfunc
     std_genfunc = opt.std_genfunc
     pca_s_genfunc = opt.pca_s_genfunc
@@ -1581,15 +1580,15 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
 end
 
 function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;                                   # Black Litterman
-                                   F::Union{AbstractMatrix, Nothing}   = nothing,
-                                   B::Union{AbstractMatrix, Nothing}   = nothing,
-                                   P::Union{AbstractMatrix, Nothing}   = nothing,
-                                   P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                   Q::Union{AbstractVector, Nothing}   = nothing,
-                                   Q_f::Union{AbstractVector, Nothing} = nothing,                                   # Settings
-                                   cov_opt::CovOpt                     = CovOpt(;),
-                                   mu_opt::MuOpt                       = MuOpt(;),
-                                   bl_opt::BLOpt                       = BLOpt(;),)
+                                   F::Union{AbstractMatrix,Nothing}   = nothing,
+                                   B::Union{AbstractMatrix,Nothing}   = nothing,
+                                   P::Union{AbstractMatrix,Nothing}   = nothing,
+                                   P_f::Union{AbstractMatrix,Nothing} = nothing,
+                                   Q::Union{AbstractVector,Nothing}   = nothing,
+                                   Q_f::Union{AbstractVector,Nothing} = nothing,                                   # Settings
+                                   cov_opt::CovOpt                    = CovOpt(;),
+                                   mu_opt::MuOpt                      = MuOpt(;),
+                                   bl_opt::BLOpt                      = BLOpt(;),)
     asset_tuple = (!isnothing(P), !isnothing(Q))
     any_asset_provided = any(asset_tuple)
     all_asset_provided = all(asset_tuple)
@@ -1678,35 +1677,35 @@ end
 ```julia
 black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
                             Q::AbstractVector;
-                            w::AbstractVector                               = Vector{Float64}(undef, 0),    # cov_mtx
-                            cov_args::Tuple                                 = (),
-                            cov_est::CovarianceEstimator                    = StatsBase.SimpleCovariance(; corrected = true),
-                            cov_func::Function                              = cov,
-                            cov_kwargs::NamedTuple                          = (;),
-                            cov_method::Symbol                              = :Full,
-                            cov_weights::Union{AbstractWeights, Nothing}    = nothing,
-                            custom_cov::Union{AbstractMatrix, Nothing}      = nothing,
-                            gs_threshold::Real                              = portfolio.gs_threshold,
-                            jlogo::Bool                                     = false,
-                            posdef_args::Tuple                              = (),
-                            posdef_fix::Symbol                              = :Nearest,
-                            posdef_func::Function                           = x -> x,
-                            posdef_kwargs::NamedTuple                       = (;),
-                            std_args::Tuple                                 = (),
-                            std_func::Function                              = std,
-                            std_kwargs::NamedTuple                          = (;),
-                            target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,    # mean_vec
-                            custom_mu::Union{AbstractVector, Nothing}       = nothing,
-                            mean_args::Tuple                                = (),
-                            mean_func::Function                             = mean,
-                            mean_kwargs::NamedTuple                         = (;),
-                            mkt_ret::Union{AbstractVector, Nothing}         = nothing,
-                            mu_target::Symbol                               = :GM,
-                            mu_method::Symbol                               = :Default,
-                            mu_weights::Union{AbstractWeights, Nothing}     = nothing,    # Black Litterman
-                            delta::Union{Real, Nothing}                     = nothing,
-                            eq::Bool                                        = true,
-                            rf::Real                                        = 0.0,)
+                            w::AbstractVector                              = Vector{Float64}(undef, 0),    # cov_mtx
+                            cov_args::Tuple                                = (),
+                            cov_est::CovarianceEstimator                   = StatsBase.SimpleCovariance(; corrected = true),
+                            cov_func::Function                             = cov,
+                            cov_kwargs::NamedTuple                         = (;),
+                            cov_method::Symbol                             = :Full,
+                            cov_weights::Union{AbstractWeights,Nothing}    = nothing,
+                            custom_cov::Union{AbstractMatrix,Nothing}      = nothing,
+                            gs_threshold::Real                             = portfolio.gs_threshold,
+                            jlogo::Bool                                    = false,
+                            posdef_args::Tuple                             = (),
+                            posdef_fix::Symbol                             = :Nearest,
+                            posdef_func::Function                          = x -> x,
+                            posdef_kwargs::NamedTuple                      = (;),
+                            std_args::Tuple                                = (),
+                            std_func::Function                             = std,
+                            std_kwargs::NamedTuple                         = (;),
+                            target_ret::Union{Real,AbstractVector{<:Real}} = 0.0,    # mean_vec
+                            custom_mu::Union{AbstractVector,Nothing}       = nothing,
+                            mean_args::Tuple                               = (),
+                            mean_func::Function                            = mean,
+                            mean_kwargs::NamedTuple                        = (;),
+                            mkt_ret::Union{AbstractVector,Nothing}         = nothing,
+                            mu_target::Symbol                              = :GM,
+                            mu_method::Symbol                              = :Default,
+                            mu_weights::Union{AbstractWeights,Nothing}     = nothing,    # Black Litterman
+                            delta::Union{Real,Nothing}                     = nothing,
+                            eq::Bool                                       = true,
+                            rf::Real                                       = 0.0,)
 ```
 """
 function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
@@ -1745,8 +1744,8 @@ factor_statistics!(portfolio::AbstractPortfolio;    # cov_mtx
                                                                              corrected = true),
                    cov_func::Function = cov, cov_kwargs::NamedTuple = (;),
                    cov_method::Symbol = :Full,
-                   cov_weights::Union{AbstractWeights, Nothing} = nothing,
-                   custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+                   cov_weights::Union{AbstractWeights,Nothing} = nothing,
+                   custom_cov::Union{AbstractMatrix,Nothing} = nothing,
                    denoise::Bool = false, detone::Bool = false,
                    gs_threshold::Real = portfolio.gs_threshold, jlogo::Bool = false,
                    kernel = ASH.Kernels.gaussian, m::Integer = 10, method::Symbol = :Fixed,
@@ -1755,14 +1754,14 @@ factor_statistics!(portfolio::AbstractPortfolio;    # cov_mtx
                    posdef_func::Function = x -> x, posdef_kwargs::NamedTuple = (;),
                    std_args::Tuple = (), std_func::Function = std,
                    std_kwargs::NamedTuple = (;),
-                   target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,    # mean_vec
-                   custom_mu::Union{AbstractVector, Nothing} = nothing,
+                   target_ret::Union{Real,AbstractVector{<:Real}} = 0.0,    # mean_vec
+                   custom_mu::Union{AbstractVector,Nothing} = nothing,
                    mean_args::Tuple = (), mean_func::Function = mean,
                    mean_kwargs::NamedTuple = (;),
-                   mkt_ret::Union{AbstractVector, Nothing} = nothing,
+                   mkt_ret::Union{AbstractVector,Nothing} = nothing,
                    mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-                   mu_weights::Union{AbstractWeights, Nothing} = nothing, rf = 0.0,    # Loadings matrix
-                   B::Union{DataFrame, Nothing} = nothing, criterion::Symbol = :pval,
+                   mu_weights::Union{AbstractWeights,Nothing} = nothing, rf = 0.0,    # Loadings matrix
+                   B::Union{DataFrame,Nothing} = nothing, criterion::Symbol = :pval,
                    error::Bool = true, pca_kwargs::NamedTuple = (;),
                    pca_std_kwargs::NamedTuple = (;), pca_std_type = ZScoreTransform,
                    reg_method::Symbol = :FReg, threshold::Real = 0.05,
@@ -1800,26 +1799,26 @@ black_litterman_factor_satistics!(portfolio::AbstractPortfolio;
                                                                                             corrected = true),
                                   cov_func::Function = cov, cov_kwargs::NamedTuple = (;),
                                   cov_method::Symbol = :Full,
-                                  cov_weights::Union{AbstractWeights, Nothing} = nothing,
-                                  custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+                                  cov_weights::Union{AbstractWeights,Nothing} = nothing,
+                                  custom_cov::Union{AbstractMatrix,Nothing} = nothing,
                                   gs_threshold::Real = portfolio.gs_threshold,
                                   jlogo::Bool = false, posdef_args::Tuple = (),                                           # Black Litterman
                                   posdef_fix::Symbol = :Nearest,
                                   posdef_func::Function = x -> x,
                                   posdef_kwargs::NamedTuple = (;), std_args::Tuple = (),
                                   std_func::Function = std, std_kwargs::NamedTuple = (;),
-                                  target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,    # mean_vec                                           # Settings
-                                  custom_mu::Union{AbstractVector, Nothing} = nothing,
+                                  target_ret::Union{Real,AbstractVector{<:Real}} = 0.0,    # mean_vec                                           # Settings
+                                  custom_mu::Union{AbstractVector,Nothing} = nothing,
                                   mean_args::Tuple = (), mean_func::Function = mean,
                                   mean_kwargs::NamedTuple = (;),
-                                  mkt_ret::Union{AbstractVector, Nothing} = nothing,
+                                  mkt_ret::Union{AbstractVector,Nothing} = nothing,
                                   mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-                                  mu_weights::Union{AbstractWeights, Nothing} = nothing,    # Black Litterman
-                                  B::Union{DataFrame, Nothing} = nothing,
-                                  P::Union{AbstractMatrix, Nothing} = nothing,
-                                  P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                  Q::Union{AbstractVector, Nothing} = nothing,
-                                  Q_f::Union{AbstractVector, Nothing} = nothing,
+                                  mu_weights::Union{AbstractWeights,Nothing} = nothing,    # Black Litterman
+                                  B::Union{DataFrame,Nothing} = nothing,
+                                  P::Union{AbstractMatrix,Nothing} = nothing,
+                                  P_f::Union{AbstractMatrix,Nothing} = nothing,
+                                  Q::Union{AbstractVector,Nothing} = nothing,
+                                  Q_f::Union{AbstractVector,Nothing} = nothing,
                                   bl_method::Symbol = :B, delta::Real = 1.0,
                                   diagonal::Bool = true, eq::Bool = true, rf::Real = 0.0,
                                   var_args::Tuple = (), var_func::Function = var,
@@ -1831,16 +1830,16 @@ black_litterman_factor_satistics!(portfolio::AbstractPortfolio;
 ```
 """
 function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
-                                           w::AbstractVector                   = Vector{Float64}(undef, 0);                                           # Black Litterman
-                                           B::Union{DataFrame, Nothing}        = nothing,
-                                           P::Union{AbstractMatrix, Nothing}   = nothing,
-                                           P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                           Q::Union{AbstractVector, Nothing}   = nothing,
-                                           Q_f::Union{AbstractVector, Nothing} = nothing,                                           # Settings
-                                           loadings_opt::LoadingsOpt           = LoadingsOpt(;),
-                                           cov_opt::CovOpt                     = CovOpt(;),
-                                           mu_opt::MuOpt                       = MuOpt(;),
-                                           bl_opt::BLOpt                       = BLOpt(;),)
+                                           w::AbstractVector                  = Vector{Float64}(undef, 0);                                           # Black Litterman
+                                           B::Union{DataFrame,Nothing}        = nothing,
+                                           P::Union{AbstractMatrix,Nothing}   = nothing,
+                                           P_f::Union{AbstractMatrix,Nothing} = nothing,
+                                           Q::Union{AbstractVector,Nothing}   = nothing,
+                                           Q_f::Union{AbstractVector,Nothing} = nothing,                                           # Settings
+                                           loadings_opt::LoadingsOpt          = LoadingsOpt(;),
+                                           cov_opt::CovOpt                    = CovOpt(;),
+                                           mu_opt::MuOpt                      = MuOpt(;),
+                                           bl_opt::BLOpt                      = BLOpt(;),)
     returns = portfolio.returns
     F = portfolio.f_returns
 
@@ -1878,33 +1877,69 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
     return nothing
 end
 
-function cluster_assets(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
-                        linkage = :single, max_k = ceil(Int, sqrt(size(returns, 2))),
-                        branchorder = :optimal, k = 0, dbht_method = :Unique,)
+function cluster_assets(portfolio::HCPortfolio; linkage = :single,
+                        max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
+                        branchorder = :optimal, k = portfolio.k, dbht_method = :Unique,)
     @smart_assert(linkage ∈ LinkageTypes)
 
-    cor_method = cor_opt.method
-    corr, dist = cor_dist_mtx(returns, cor_opt)
-
-    cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
-
-    if linkage == :DBHT
-        corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
-        missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
-                                                                                 branchorder = branchorder,
-                                                                                 method = dbht_method)
-    else
-        clustering = hclust(dist; linkage = linkage,
-                            branchorder = branchorder == :default ? :r : branchorder,)
-    end
-
-    tk = _two_diff_gap_stat(dist, clustering, max_k)
+    clustering, tk = _hierarchical_clustering(portfolio, linkage, max_k, branchorder,
+                                              dbht_method)
 
     k = iszero(k) ? tk : k
 
     clustering_idx = cutree(clustering; k = k)
 
     return clustering_idx, clustering, k
+end
+
+function cluster_assets!(portfolio::HCPortfolio; linkage = :single,
+                         max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
+                         branchorder = :optimal, k = portfolio.k, dbht_method = :Unique,)
+    @smart_assert(linkage ∈ LinkageTypes)
+
+    clustering, tk = _hierarchical_clustering(portfolio, linkage, max_k, branchorder,
+                                              dbht_method)
+
+    k = iszero(k) ? tk : k
+
+    portfolio.clusters = clustering
+    portfolio.k = k
+
+    return nothing
+end
+
+function _hierarchical_clustering(returns::AbstractMatrix, opt::CorOpt = CorOpt(;),
+                                  linkage = :single,
+                                  max_k = ceil(Int, sqrt(size(returns, 2))),
+                                  branchorder = :optimal, dbht_method = :Unique)
+    cor_method = opt.method
+    corr, dist = cor_dist_mtx(returns, opt)
+    clustering, k = _hcluster_choice(dist, corr, cor_method, linkage, branchorder,
+                                     dbht_method, max_k)
+
+    return clustering, k
+end
+
+function cluster_assets(returns::AbstractMatrix, opt::CorOpt = CorOpt(;); linkage = :single,
+                        max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
+                        k = 0, dbht_method = :Unique)
+    @smart_assert(linkage ∈ LinkageTypes)
+
+    clustering, tk = _hierarchical_clustering(returns, opt, linkage, max_k, branchorder,
+                                              dbht_method)
+
+    k = iszero(k) ? tk : k
+
+    clustering_idx = cutree(clustering; k = k)
+
+    return clustering_idx, clustering, k
+end
+
+function cluster_assets(portfolio::Portfolio, opt::CorOpt = CorOpt(;); linkage = :single,
+                        max_k = ceil(Int, sqrt(size(portfolio.returns, 2))),
+                        branchorder = :optimal, k = 0, dbht_method = :Unique)
+    return cluster_assets(portfolio.returns, opt; linkage = linkage, max_k = max_k,
+                          branchorder = branchorder, k = k, dbht_method = dbht_method)
 end
 
 export covgerber0, covgerber1, covgerber2, mut_var_info_mtx, cov_returns, block_vec_pq,
