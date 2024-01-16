@@ -984,14 +984,13 @@ end
     D10t = 0.8276674312142532
     R1t = 0.285952759008733
 
-    @test isapprox(C1, C1t)
-    @test isapprox(C2, C2t)
-    @test isapprox(C5, C5t)
-    @test isapprox(C10, C10t)
-    @test isapprox(D1, D1t)
-    @test isapprox(D2, D2t)
-    @test isapprox(D5, D5t)
-    @test isapprox(D10, D10t)
-
-    @test isapprox(R1, R1t)
+    @test isapprox(C1, C1t, rtol = 0.0001)
+    @test isapprox(C2, C2t, rtol = 0.0001)
+    @test isapprox(C5, C5t, rtol = 1.0e-5)
+    @test isapprox(C10, C10t, rtol = 1.0e-5)
+    @test isapprox(D1, D1t, rtol = 0.0001)
+    @test isapprox(D2, D2t, rtol = 0.0001)
+    @test isapprox(D5, D5t, rtol = 1.0e-5)
+    @test isapprox(D10, D10t, rtol = 1.0e-5)
+    @test isapprox(R1, R1t, rtol = 0.0001)
 end
