@@ -63,7 +63,7 @@ function _optimise_allocation(portfolio, tickers, latest_prices)
 
         term_status = termination_status(model)
 
-        if term_status in ValidTermination
+        if term_status ∈ ValidTermination
             break
         end
 
@@ -160,7 +160,7 @@ function _lp_sub_allocation!(portfolio, key, label, tickers, weights, latest_pri
     # weights * investment - allocation * latest_prices
     eta = weights * investment - x .* latest_prices
 
-    @constraint(model, [u; eta] in MOI.NormOneCone(N + 1))
+    @constraint(model, [u; eta] ∈ MOI.NormOneCone(N + 1))
     @constraint(model, r >= 0)
 
     @objective(model, Min, u + r)
@@ -347,15 +347,9 @@ allocate!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :HRP, alloc
 """
 function allocate!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :HRP,
                    alloc_type = :LP, latest_prices = portfolio.latest_prices,
-                   investment = 1e4, rounding = 1, reinvest = false, short_ratio = nothing,
-                   string_names = false, save_opt_params = true,)
-    if isa(portfolio, Portfolio)
-        @smart_assert(port_type in PortTypes)
-    else
-        @smart_assert(port_type in HCPortTypes)
-    end
-
-    @smart_assert(alloc_type in AllocTypes)
+                   investment = 1e6, rounding = 1, reinvest = false, short_ratio = nothing,
+                   string_names = false, save_opt_params = true)
+    @smart_assert(alloc_type ∈ AllocTypes)
 
     retval, leftover = if alloc_type == :LP
         _lp_allocation!(portfolio, port_type, latest_prices, investment, reinvest,
