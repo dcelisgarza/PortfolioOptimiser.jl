@@ -598,10 +598,11 @@ function plot_clusters(portfolio; max_k = ceil(Int, sqrt(size(portfolio.dist, 1)
     N = length(assets)
 
     if cluster
-        df, clustering, k = cluster_assets(portfolio; linkage = linkage, max_k = max_k,
-                                           branchorder = branchorder, k = portfolio.k,
-                                           dbht_method = dbht_method,)
-        clustering_idx = df.Clusters
+        clustering_idx, clustering, k = cluster_assets(portfolio; linkage = linkage,
+                                                       max_k = max_k,
+                                                       branchorder = branchorder,
+                                                       k = portfolio.k,
+                                                       dbht_method = dbht_method)
         sort_order = clustering.order
         heights = clustering.heights
     else
@@ -819,10 +820,11 @@ function plot_dendrogram(portfolio; max_k = ceil(Int, sqrt(size(portfolio.dist, 
     N = length(assets)
 
     if cluster
-        df, clustering, k = cluster_assets(portfolio; linkage = linkage, max_k = max_k,
-                                           branchorder = branchorder, k = portfolio.k,
-                                           dbht_method = dbht_method,)
-        clustering_idx = df.Clusters
+        clustering_idx, clustering, k = cluster_assets(portfolio; linkage = linkage,
+                                                       max_k = max_k,
+                                                       branchorder = branchorder,
+                                                       k = portfolio.k,
+                                                       dbht_method = dbht_method)
         sort_order = clustering.order
         heights = clustering.heights
     else

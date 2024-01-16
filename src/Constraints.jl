@@ -558,6 +558,65 @@ function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
     return rw
 end
 
+function _hierarchical_clustering(returns::AbstractMatrix, opt::CorOpt = CorOpt(;),
+                                  linkage = :single,
+                                  max_k = ceil(Int, sqrt(size(returns, 2))),
+                                  branchorder = :optimal, dbht_method = :Unique)
+    cor_method = opt.method
+    corr, dist = cor_dist_mtx(returns, opt)
+    clustering, k = _hcluster_choice(dist, corr, cor_method, linkage, branchorder,
+                                     dbht_method, max_k)
+
+    return clustering, k
+end
+
+function cluster_assets(portfolio::HCPortfolio; linkage = :single,
+                        max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
+                        branchorder = :optimal, k = portfolio.k, dbht_method = :Unique,)
+    clustering, tk = _hierarchical_clustering(portfolio, linkage, max_k, branchorder,
+                                              dbht_method)
+
+    k = iszero(k) ? tk : k
+
+    clustering_idx = cutree(clustering; k = k)
+
+    return clustering_idx, clustering, k
+end
+
+function cluster_assets(returns::AbstractMatrix, opt::CorOpt = CorOpt(;); linkage = :single,
+                        max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
+                        k = 0, dbht_method = :Unique)
+    clustering, tk = _hierarchical_clustering(returns, opt, linkage, max_k, branchorder,
+                                              dbht_method)
+
+    k = iszero(k) ? tk : k
+
+    clustering_idx = cutree(clustering; k = k)
+
+    return clustering_idx, clustering, k
+end
+
+function cluster_assets(portfolio::Portfolio, opt::CorOpt = CorOpt(;); linkage = :single,
+                        max_k = ceil(Int, sqrt(size(portfolio.returns, 2))),
+                        branchorder = :optimal, k = 0, dbht_method = :Unique)
+    return cluster_assets(portfolio.returns, opt; linkage = linkage, max_k = max_k,
+                          branchorder = branchorder, k = k, dbht_method = dbht_method)
+end
+
+function cluster_assets!(portfolio::HCPortfolio; linkage = :single,
+                         max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
+                         branchorder = :optimal, k = portfolio.k, dbht_method = :Unique,)
+    clustering, tk = _hierarchical_clustering(portfolio, linkage, max_k, branchorder,
+                                              dbht_method)
+
+    k = iszero(k) ? tk : k
+
+    portfolio.clusters = clustering
+    portfolio.k = k
+
+    return nothing
+end
+
 const GraphMethods = (:MST, :TMFG)
 function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
                            method::Symbol = :MST, steps::Integer = 1,
@@ -620,18 +679,17 @@ function centrality_vector(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;)
                              method = method, steps = steps)
 end
 
-function cluster_matrix(assets::AbstractVector, returns::AbstractMatrix,
-                        opt::CorOpt = CorOpt(;); linkage = :single,
+function cluster_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;); linkage = :single,
                         max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
                         k = 0, dbht_method = :Unique)
-    clusters, missing, missing = cluster_assets(assets, returns, opt; linkage = linkage,
+    clusters, missing, missing = cluster_assets(returns, opt; linkage = linkage,
                                                 max_k = max_k, branchorder = branchorder,
                                                 k = k, dbht_method = dbht_method)
 
     N = size(returns, 2)
     A_c = Vector{Int}(undef, 0)
-    for i ∈ unique(clusters[!, :Clusters])
-        idx = clusters[!, :Clusters] .== i
+    for i ∈ unique(clusters)
+        idx = clusters .== i
         tmp = zeros(Int, N)
         tmp[idx] .= 1
         append!(A_c, tmp)
@@ -647,9 +705,8 @@ function cluster_matrix(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
                         linkage = :single,
                         max_k = ceil(Int, sqrt(size(portfolio.returns, 2))),
                         branchorder = :optimal, k = 0, dbht_method = :Unique)
-    return cluster_matrix(portfolio.assets, portfolio.returns, opt; linkage = linkage,
-                          max_k = max_k, branchorder = branchorder, k = k,
-                          dbht_method = dbht_method)
+    return cluster_matrix(portfolio.returns, opt; linkage = linkage, max_k = max_k,
+                          branchorder = branchorder, k = k, dbht_method = dbht_method)
 end
 
 function _con_rel(A::AbstractMatrix, w::AbstractVector)
@@ -675,11 +732,10 @@ function connected_assets(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
                             method = method, steps = steps)
 end
 
-function related_assets(assets::AbstractVector, returns::AbstractMatrix, w::AbstractVector,
-                        opt::CorOpt = CorOpt(;); linkage = :single,
-                        max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
-                        k = 0, dbht_method = :Unique)
-    A_c = cluster_matrix(assets, returns, opt; linkage = linkage, max_k = max_k,
+function related_assets(returns::AbstractMatrix, w::AbstractVector, opt::CorOpt = CorOpt(;);
+                        linkage = :single, max_k = ceil(Int, sqrt(size(returns, 2))),
+                        branchorder = :optimal, k = 0, dbht_method = :Unique)
+    A_c = cluster_matrix(returns, opt; linkage = linkage, max_k = max_k,
                          branchorder = branchorder, k = k, dbht_method = dbht_method)
     R_a = _con_rel(A_c, w)
     return R_a
@@ -690,12 +746,11 @@ function related_assets(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
                         linkage = :single,
                         max_k = ceil(Int, sqrt(size(portfolio.returns, 2))),
                         branchorder = :optimal, k = 0, dbht_method = :Unique)
-    return related_assets(portfolio.assets, portfolio.returns,
-                          portfolio.optimal[type].weights, opt; linkage = linkage,
-                          max_k = max_k, branchorder = branchorder, k = k,
-                          dbht_method = dbht_method)
+    return related_assets(portfolio.returns, portfolio.optimal[type].weights, opt;
+                          linkage = linkage, max_k = max_k, branchorder = branchorder,
+                          k = k, dbht_method = dbht_method)
 end
 
 export asset_constraints, factor_constraints, asset_views, factor_views, hrp_constraints,
        rp_constraints, connection_matrix, centrality_vector, cluster_matrix,
-       connected_assets, related_assets
+       connected_assets, related_assets, cluster_assets, cluster_assets!

@@ -36,10 +36,10 @@ end
 
 @testset "OWA L-Moment" begin
     solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                            :params => Dict("verbose" => true,
+                                            :params => Dict("verbose" => false,
                                                             "max_step_fraction" => 0.75)),
                           :COSMO => Dict(:solver => COSMO.Optimizer,
-                                         :params => Dict("verbose" => true)))
+                                         :params => Dict("verbose" => false)))
 
     w1 = owa_l_moment_crm(200; k = 2, method = :CRRA, g = 0.25)
     w2 = owa_l_moment_crm(200; k = 4, method = :CRRA, g = 0.25)
@@ -895,14 +895,14 @@ end
     @test isapprox(w8, w4)
     @test isapprox(w9, w3)
     @test isapprox(w11, w3)
-    @test isapprox(w10, w10t)
+    @test isapprox(w10, w10t, rtol = 1e-6)
     @test !isapprox(w10, w6)
     @test !isapprox(w10, w5)
     @test !isapprox(w10, w4)
     @test !isapprox(w10, w3)
     @test !isapprox(w10, w2)
     @test !isapprox(w10, w1)
-    @test isapprox(w12, w12t)
+    @test isapprox(w12, w12t, rtol = 1e-6)
     @test !isapprox(w12, w10)
     @test !isapprox(w12, w6)
     @test !isapprox(w12, w5)

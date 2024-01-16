@@ -11,7 +11,7 @@ include("OWA.jl")
 include("Portfolio.jl")
 include("Statistics.jl")
 include("Risk_measures.jl")
-include("Plotting.jl")
 include("Constraints.jl")
+include("Plotting.jl")
 
 end

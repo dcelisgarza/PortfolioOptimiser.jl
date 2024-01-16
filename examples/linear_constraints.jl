@@ -64,11 +64,11 @@ for method ∈ (:Pearson, :Semi_Pearson, :Gerber2)
         cor_opt.method = method
 
         ## Clusterise assets.
-        clustering, k = cluster_assets(returns; linkage = linkage, cor_opt = cor_opt)
+        clustering_idx, clustering, k = cluster_assets(returns, cor_opt; linkage = linkage)
 
         ## Cut the tree at k clusters and return the label each asset belongs to
         ## in each set.
-        asset_sets[!, colname] = cutree(clustering; k = k)
+        asset_sets[!, colname] = clustering_idx
     end
 end
 

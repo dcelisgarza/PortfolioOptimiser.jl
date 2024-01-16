@@ -134,57 +134,6 @@ function _hierarchical_clustering(portfolio::HCPortfolio, linkage = :single,
 
     return clustering, k
 end
-function _hierarchical_clustering(returns::AbstractMatrix, opt::CorOpt = CorOpt(;),
-                                  linkage = :single,
-                                  max_k = ceil(Int, sqrt(size(returns, 2))),
-                                  branchorder = :optimal, dbht_method = :Unique)
-    cor_method = opt.method
-    corr, dist = cor_dist_mtx(returns, opt)
-    clustering, k = _hcluster_choice(dist, corr, cor_method, linkage, branchorder,
-                                     dbht_method, max_k)
-
-    return clustering, k
-end
-function cluster_assets(portfolio::HCPortfolio; linkage = :single,
-                        max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
-                        branchorder = :optimal, k = portfolio.k, dbht_method = :Unique,)
-    clustering, tk = _hierarchical_clustering(portfolio, linkage, max_k, branchorder,
-                                              dbht_method)
-
-    k = iszero(k) ? tk : k
-
-    clustering_idx = cutree(clustering; k = k)
-
-    return DataFrame(; Assets = portfolio.assets, Clusters = clustering_idx), clustering, k
-end
-function cluster_assets(assets::AbstractVector, returns::AbstractMatrix,
-                        opt::CorOpt = CorOpt(;); linkage = :single,
-                        max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
-                        k = 0, dbht_method = :Unique,)
-    clustering, tk = _hierarchical_clustering(returns, opt, linkage, max_k, branchorder,
-                                              dbht_method)
-
-    k = iszero(k) ? tk : k
-
-    clustering_idx = cutree(clustering; k = k)
-
-    return DataFrame(; Assets = assets, Clusters = clustering_idx), clustering, k
-end
-function cluster_assets!(portfolio::HCPortfolio; linkage = :single,
-                         max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
-                         branchorder = :optimal, k = portfolio.k, dbht_method = :Unique,)
-    clustering, tk = _hierarchical_clustering(portfolio, linkage, max_k, branchorder,
-                                              dbht_method)
-
-    k = iszero(k) ? tk : k
-
-    portfolio.clusters = clustering
-    portfolio.k = k
-
-    return nothing
-end
-
-export cluster_assets, cluster_assets!
 
 function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0.0)
     cret = returns[:, cluster]

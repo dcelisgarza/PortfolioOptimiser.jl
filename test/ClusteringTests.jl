@@ -10,7 +10,7 @@ returns = dropmissing!(DataFrame(Y))
     port = HCPortfolio(; returns = returns)
     asset_statistics!(port)
     clusters, missing, missing = cluster_assets(port; linkage = :DBHT)
-    sort!(clusters, "Assets")
+    clusters = clusters[sortperm(portfolio.assets)]
 
     at = ["AAPL", "AMD", "AMZN", "BABA", "BAC", "BBY", "FB", "GE", "GM", "GOOG", "JPM",
           "MA", "PFE", "RRC", "SBUX", "SHLD", "T", "UAA", "WMT", "XOM"]

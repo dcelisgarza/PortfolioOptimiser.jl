@@ -1902,7 +1902,9 @@ function cluster_assets(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
 
     k = iszero(k) ? tk : k
 
-    return clustering, k
+    clustering_idx = cutree(clustering; k = k)
+
+    return clustering_idx, clustering, k
 end
 
 export covgerber0, covgerber1, covgerber2, mut_var_info_mtx, cov_returns, block_vec_pq,
