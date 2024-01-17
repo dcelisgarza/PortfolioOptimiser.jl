@@ -37,4 +37,6 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
                             branchorder = :optimal, dbht_method = :Unique,)
     optimise!(hcportfolio; type = :HERC)
     plt14 = plot_clusters(hcportfolio; cluster = false)
+    plt15 = plot_clusters(hcportfolio.assets, hcportfolio.returns)
+    plt16 = plot_clusters(hcportfolio.assets, hcportfolio.returns; linkage = :DBHT)
 end
