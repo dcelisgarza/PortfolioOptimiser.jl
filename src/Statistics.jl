@@ -1580,13 +1580,13 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
     return mu, sigma_bbl, w
 end
 
-function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;                                   # Black Litterman
+function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
                                    F::Union{AbstractMatrix, Nothing}   = nothing,
                                    B::Union{AbstractMatrix, Nothing}   = nothing,
                                    P::Union{AbstractMatrix, Nothing}   = nothing,
                                    P_f::Union{AbstractMatrix, Nothing} = nothing,
                                    Q::Union{AbstractVector, Nothing}   = nothing,
-                                   Q_f::Union{AbstractVector, Nothing} = nothing,                                   # Settings
+                                   Q_f::Union{AbstractVector, Nothing} = nothing,
                                    cov_opt::CovOpt                     = CovOpt(;),
                                    mu_opt::MuOpt                       = MuOpt(;),
                                    bl_opt::BLOpt                       = BLOpt(;))
@@ -1614,17 +1614,17 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;  
         sigma_f, mu_f = covar_mtx_mean_vec(F; cov_opt = cov_opt, mu_opt = mu_opt)
     end
 
+    constant = bl_opt.constant
+    eq = bl_opt.eq
+    delta = bl_opt.delta
+    rf = bl_opt.rf
+
     if all_factor_provided && constant
         alpha = B[:, 1]
         B = B[:, 2:end]
     end
 
     tau = 1 / size(returns, 1)
-
-    constant = bl_opt.constant
-    eq = bl_opt.eq
-    delta = bl_opt.delta
-    rf = bl_opt.rf
 
     if all_asset_provided && !all_factor_provided
         sigma_a = sigma
@@ -1870,9 +1870,9 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
         bayesian_black_litterman(returns, F, B, P_f, Q_f; cov_opt = cov_opt,
                                  mu_opt = mu_opt, bl_opt = bl_opt)
     else
-        augmented_black_litterman(returns, w;                                  # Black Litterman
-                                  F = F, B = B, P = P, P_f = P_f, Q = Q, Q_f = Q_f,                                  # Settings
-                                  cov_opt = cov_opt, mu_opt = mu_opt, bl_opt = bl_opt)
+        augmented_black_litterman(returns, w; F = F, B = B, P = P, P_f = P_f, Q = Q,
+                                  Q_f = Q_f, cov_opt = cov_opt, mu_opt = mu_opt,
+                                  bl_opt = bl_opt)
     end
 
     return nothing

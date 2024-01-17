@@ -67,7 +67,7 @@ function plot_risk_contribution(
                                 beta_i::Real = alpha_i, beta::Real = alpha,
                                 b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
                                 owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                                solvers::Union{<:AbstractDict,Nothing} = nothing,                                # Plot args
+                                solvers::Union{<:AbstractDict, Nothing} = nothing,                                # Plot args
                                 percentage::Bool = false, erc_line::Bool = true,
                                 t_factor = 252, kwargs_bar = (;), kwargs_line = (;))
     rc = risk_contribution(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
@@ -352,7 +352,7 @@ end
 
 function plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
                        returns::AbstractMatrix; alpha::Real = 0.05, kappa::Real = 0.3,
-                       solvers::Union{<:AbstractDict,Nothing} = nothing, theme = :Dark2_5,
+                       solvers::Union{<:AbstractDict, Nothing} = nothing, theme = :Dark2_5,
                        kwargs_ret = (;), kwargs_dd = (;), kwargs_risks = (;), kwargs = (;))
     ret = returns * w
 
@@ -454,7 +454,7 @@ end
 
 function plot_hist(w::AbstractVector, returns::AbstractMatrix; alpha_i::Real = 0.0001,
                    alpha::Real = 0.05, a_sim::Int = 100, kappa::Real = 0.3,
-                   solvers::Union{<:AbstractDict,Nothing} = nothing,
+                   solvers::Union{<:AbstractDict, Nothing} = nothing,
                    points::Integer = ceil(Int, 4 * sqrt(size(returns, 1))),
                    theme = :Paired_10, kwargs_h = (;), kwargs_risks = (;))
     ret = returns * w * 100
