@@ -403,7 +403,7 @@ Portfolio(;    # Portfolio characteristics
     cov_l::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    cov_u::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    cov_mu::AbstractMatrix{<:Real} = Diagonal{Float64}(undef, 0),    cov_sigma::AbstractMatrix{<:Real} = Diagonal{Float64}(undef, 0),    d_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    k_mu::Real = Inf,    k_sigma::Real = Inf,    # Optimal portfolios
     optimal::AbstractDict = Dict(),    z::AbstractDict = Dict(),    limits::AbstractDict = Dict(),    frontier::AbstractDict = Dict(),    # Solutions
     solvers::Union{<:AbstractDict, NamedTuple} = Dict(),    opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),    fail::AbstractDict = Dict(),    model::JuMP.Model = JuMP.Model(),    # Allocation
-    latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    alloc_optimal::AbstractDict = Dict(),    alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),    alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),    alloc_fail::AbstractDict = Dict(),    alloc_model::JuMP.Model = JuMP.Model(),)
+    latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    alloc_optimal::AbstractDict = Dict(),    alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),    alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),    alloc_fail::AbstractDict = Dict(),    alloc_model::JuMP.Model = JuMP.Model())
 ```
 Creates an instance of [`Portfolio`](@ref) containing all internal data necessary for convex portfolio optimisations as well as failed and successful results.
 # Inputs
@@ -622,7 +622,7 @@ function Portfolio(;
                    alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
                    alloc_params::Union{<:AbstractDict, NamedTuple}  = Dict(),
                    alloc_fail::AbstractDict                         = Dict(),
-                   alloc_model::JuMP.Model                          = JuMP.Model(),)
+                   alloc_model::JuMP.Model                          = JuMP.Model())
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
         latest_prices = Vector(dropmissing!(DataFrame(prices))[end, colnames(prices)])
@@ -1153,7 +1153,7 @@ HCPortfolio(;    # Portfolio characteristics
         Matrix{Int64}(undef, 0, 2),        Float64[],        Int64[],        :nothing,    ),    k::Integer = 0,    # Optimal portfolios
     optimal::AbstractDict = Dict(),    # Solutions
     solvers::Union{<:AbstractDict, NamedTuple} = Dict(),    opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),    fail::AbstractDict = Dict(),    # Allocation
-    latest_prices::AbstractVector = Vector{Float64}(undef, 0),    alloc_optimal::AbstractDict = Dict(),    alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),    alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),    alloc_fail::AbstractDict = Dict(),    alloc_model::JuMP.Model = JuMP.Model(),)
+    latest_prices::AbstractVector = Vector{Float64}(undef, 0),    alloc_optimal::AbstractDict = Dict(),    alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),    alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),    alloc_fail::AbstractDict = Dict(),    alloc_model::JuMP.Model = JuMP.Model())
 ```
 # Inputs
 ## Portfolio characteristics
@@ -1246,7 +1246,7 @@ function HCPortfolio(;
                      alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
                      alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),
                      alloc_fail::AbstractDict = Dict(),
-                     alloc_model::JuMP.Model = JuMP.Model(),)
+                     alloc_model::JuMP.Model = JuMP.Model())
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices)))
         latest_prices = Vector(dropmissing!(DataFrame(prices))[end, colnames(prices)])

@@ -596,4 +596,4 @@ function Base.setproperty!(obj::BLOpt, sym::Symbol, val)
 end
 
 export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
-       CorOpt, CorEstOpt, WCOpt, KurtOpt, PCROpt, LoadingsOpt, FactorOpt
+       CorOpt, CorEstOpt, WCOpt, KurtOpt, PCROpt, LoadingsOpt, FactorOpt, BLOpt
