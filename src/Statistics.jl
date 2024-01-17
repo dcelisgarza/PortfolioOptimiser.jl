@@ -1831,12 +1831,12 @@ black_litterman_factor_satistics!(portfolio::AbstractPortfolio;
 ```
 """
 function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
-                                           w::AbstractVector                   = Vector{Float64}(undef, 0);                                           # Black Litterman
+                                           w::AbstractVector                   = Vector{Float64}(undef, 0);
                                            B::Union{DataFrame, Nothing}        = nothing,
                                            P::Union{AbstractMatrix, Nothing}   = nothing,
                                            P_f::Union{AbstractMatrix, Nothing} = nothing,
                                            Q::Union{AbstractVector, Nothing}   = nothing,
-                                           Q_f::Union{AbstractVector, Nothing} = nothing,                                           # Settings
+                                           Q_f::Union{AbstractVector, Nothing} = nothing,
                                            loadings_opt::LoadingsOpt           = LoadingsOpt(;),
                                            cov_opt::CovOpt                     = CovOpt(;),
                                            mu_opt::MuOpt                       = MuOpt(;),
