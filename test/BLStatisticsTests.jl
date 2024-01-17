@@ -1535,6 +1535,8 @@ end
     bl_opt = BLOpt(;)
     B = Matrix(loadings[!, 2:end])
     F = portfolio.f_returns
+    mu8 = cov8 = wb8 = []
+    mu9 = cov9 = wb9 = []
     try
         mu8, cov8, wb8 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
                                                    P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
@@ -1543,27 +1545,25 @@ end
                                                    F = F, P_f = P_f, Q_f = Q_f,
                                                    bl_opt = bl_opt)
     catch
-        mu8 = cov8 = wb8 = []
-        mu9 = cov9 = wb9 = []
     end
 
     bl_opt = BLOpt(;)
     bl_opt.eq = false
     bl_opt.rf = rf
+    mu10 = cov10 = wb10 = []
     try
         mu10, cov10, wb10 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
                                                       P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
     catch
-        mu10 = cov10 = wb10 = []
     end
 
     bl_opt = BLOpt(;)
     bl_opt.delta = 0.5
+    mu11 = cov11 = wb11 = []
     try
         mu11, cov11, wb11 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
                                                       P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
     catch
-        mu11 = cov11 = wb11 = []
     end
 
     bl_opt = BLOpt(;)
