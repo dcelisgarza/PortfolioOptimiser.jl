@@ -36,10 +36,6 @@ using SafeTestsets
 #     include("OWAWeightsTests.jl")
 # end
 
-# @safetestset "Plotting" begin
-#     include("PlottingTests.jl")
-# end
-
 # @safetestset "Hierarchical optimisations" begin
 #     include("HierarchicalOptimisationTests.jl")
 # end
@@ -55,6 +51,10 @@ using SafeTestsets
 # @safetestset "Traditional optimisations" begin
 #     include("TraditionalOptimisationTests.jl")
 # end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
 
 @safetestset "Asset Allocation" begin
     include("AssetAllocationTests.jl")
