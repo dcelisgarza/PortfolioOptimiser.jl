@@ -1375,7 +1375,7 @@ l = 2.0
     @test isapprox(cov_mtx10, cov_mtx7)
 end
 
-@testes "Augmented Black Litterman" begin
+@testset "Augmented Black Litterman" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
