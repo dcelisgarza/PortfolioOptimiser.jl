@@ -27,7 +27,7 @@ const _rmstr = """
 """
 ```julia
 RiskMeasures = (
-    :SD,    :MAD,    :SSD,    :FLPM,    :SLPM,    :WR,    :CVaR,    :EVaR,    :RVaR,    :MDD,    :ADD,    :CDaR,    :UCI,    :EDaR,    :RDaR,    :Kurt,    :SKurt,    :GMD,    :RG,    :RCVaR,    :TG,    :RTG,    :OWA,)
+    :SD,    :MAD,    :SSD,    :FLPM,    :SLPM,    :WR,    :CVaR,    :EVaR,    :RVaR,    :MDD,    :ADD,    :CDaR,    :UCI,    :EDaR,    :RDaR,    :Kurt,    :SKurt,    :GMD,    :RG,    :RCVaR,    :TG,    :RTG,    :OWA)
 ```
 Available risk measures for `:Trad` and `:RP` type (see [`PortTypes`](@ref)) of [`Portfolio`](@ref).
 $_rmstr
@@ -59,7 +59,7 @@ const RiskMeasures = (:SD,    # _mv
 """
 ```julia
 HCRiskMeasures = (
-    :SD,    :MAD,    :SSD,    :FLPM,    :SLPM,    :WR,    :CVaR,    :EVaR,    :RVaR,    :MDD,    :ADD,    :CDaR,    :UCI,    :EDaR,    :RDaR,    :Kurt,    :SKurt,    :GMD,    :RG,    :RCVaR,    :TG,    :RTG,    :OWA,    :Variance,    :Equal,    :VaR,    :DaR,    :DaR_r,    :MDD_r,    :ADD_r,    :CDaR_r,    :EDaR_r,    :RDaR_r,)
+    :SD,    :MAD,    :SSD,    :FLPM,    :SLPM,    :WR,    :CVaR,    :EVaR,    :RVaR,    :MDD,    :ADD,    :CDaR,    :UCI,    :EDaR,    :RDaR,    :Kurt,    :SKurt,    :GMD,    :RG,    :RCVaR,    :TG,    :RTG,    :OWA,    :Variance,    :Equal,    :VaR,    :DaR,    :DaR_r,    :MDD_r,    :ADD_r,    :CDaR_r,    :EDaR_r,    :RDaR_r)
 ```
 Available risk measures for optimisations of [`HCPortfolio`](@ref). When performing an `:NCO` optimisation, or using an entropic or relativistic risk measure, the solver must meet the stated requirements.
 $_rmstr
@@ -385,7 +385,7 @@ end
 """
 ```julia
 RRM(
-    x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    κ::Real = 0.3,)
+    x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    κ::Real = 0.3)
 ```
 Compute the Relativistic Risk Measure.
 ```math
@@ -452,7 +452,7 @@ end
 """
 ```julia
 RVaR(
-    x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    κ::Real = 0.3,)
+    x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    κ::Real = 0.3)
 ```
 Compute the Relativistic Value at Risk.
 ```math
@@ -676,7 +676,7 @@ end
 """
 ```julia
 RDaR_abs(
-    x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    kappa::Real = 0.3,)
+    x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    kappa::Real = 0.3)
 ```
 Compute the Relativistic Drawdown at Risk of uncompounded cumulative returns.
 ```math
@@ -912,7 +912,7 @@ end
 """
 ```julia
 RDaR_rel(
-    x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    kappa::Real = 0.3,)
+    x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    kappa::Real = 0.3)
 ```
 Compute the Relativistic Drawdown at Risk of compounded cumulative returns.
 ```math
@@ -1060,7 +1060,7 @@ end
 """
 ```julia
 RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Real = 100,
-    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,)
+    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim)
 ```
 
 Compute the Tail Gini Range.
@@ -1077,10 +1077,10 @@ Compute the Tail Gini Range.
 """
 function RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
              a_sim::Real = 100, beta_i::Real = alpha_i, beta::Real = alpha,
-             b_sim::Integer = a_sim,)
+             b_sim::Integer = a_sim)
     T = length(x)
     w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                beta = beta, b_sim = b_sim,)
+                beta = beta, b_sim = b_sim)
     return dot(w, sort!(x))
 end
 
@@ -1119,7 +1119,7 @@ end
 """
 ```julia
 calc_risk(
-    w::AbstractVector,    returns::AbstractMatrix;    rm::Symbol = :SD,    rf::Real = 0.0,    sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Int = 100,    beta_i::Real = alpha_i,    beta::Real = alpha,    b_sim::Integer = a_sim,    kappa::Real = 0.3,    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    solvers::Union{<:AbstractDict, Nothing} = nothing,)
+    w::AbstractVector,    returns::AbstractMatrix;    rm::Symbol = :SD,    rf::Real = 0.0,    sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Int = 100,    beta_i::Real = alpha_i,    beta::Real = alpha,    b_sim::Integer = a_sim,    kappa::Real = 0.3,    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    solvers::Union{<:AbstractDict, Nothing} = nothing)
 ```
 Compute the value of a risk measure given a vector of asset weights and returns.
 # Inputs
@@ -1139,7 +1139,7 @@ Compute the value of a risk measure given a vector of asset weights and returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone` and `MOI.PowerCone` respectively"))
 ```julia
 calc_risk(
-    portfolio::AbstractPortfolio;    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,    rm::Symbol = :SD,    rf::Real = 0.0,)
+    portfolio::AbstractPortfolio;    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,    rm::Symbol = :SD,    rf::Real = 0.0)
 ```
 Compute the value of a risk measure given a portfolio.
 # Inputs
@@ -1154,7 +1154,7 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
                    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                    kappa::Real = 0.3,
                    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                   solvers::Union{<:AbstractDict, Nothing} = nothing,)
+                   solvers::Union{<:AbstractDict, Nothing} = nothing)
     @smart_assert(rm in HCRiskMeasures)
 
     x = (rm != :Variance || rm != :SD) && returns * w
@@ -1223,7 +1223,7 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
         TG(x; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
     elseif rm == :RTG
         RTG(x; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-            beta = beta, b_sim = b_sim,)
+            beta = beta, b_sim = b_sim)
     elseif rm == :OWA
         T = size(returns, 1)
         w = isempty(owa_w) ? owa_gmd(T) : owa_w
@@ -1237,7 +1237,7 @@ end
 function calc_risk(portfolio::AbstractPortfolio;
                    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                    rm::Symbol = :SD, rf::Real = 0.0,
-                   owa_w::AbstractVector{<:Real} = portfolio.owa_w,)
+                   owa_w::AbstractVector{<:Real} = portfolio.owa_w)
     if isa(portfolio, Portfolio)
         @smart_assert(type in PortTypes)
     else
@@ -1249,7 +1249,7 @@ function calc_risk(portfolio::AbstractPortfolio;
                      alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                      beta_i = portfolio.beta_i, beta = portfolio.beta,
                      b_sim = portfolio.b_sim, kappa = portfolio.kappa, owa_w = owa_w,
-                     solvers = portfolio.solvers,)
+                     solvers = portfolio.solvers)
 end
 
 function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i, beta,
@@ -1354,9 +1354,9 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
         r2 = TG(a2; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
     elseif rm == :RTG
         r1 = RTG(a1; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                 beta = beta, b_sim = b_sim,)
+                 beta = beta, b_sim = b_sim)
         r2 = RTG(a2; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                 beta = beta, b_sim = b_sim,)
+                 beta = beta, b_sim = b_sim)
     elseif rm == :OWA
         T = size(returns, 1)
         w = isempty(owa_w) ? owa_gmd(T) : owa_w
@@ -1376,7 +1376,7 @@ function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbo
                            beta_i::Real = alpha_i, beta::Real = alpha,
                            b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
                            owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                           solvers::Union{<:AbstractDict, Nothing} = nothing,)
+                           solvers::Union{<:AbstractDict, Nothing} = nothing)
     ew = eltype(w)
     rc = zeros(ew, length(w))
     w1 = zeros(ew, length(w))
@@ -1408,7 +1408,7 @@ function risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
                                portfolio.owa_w
                            else
                                Vector{Float64}(undef, 0)
-                           end,)
+                           end)
     if isa(portfolio, Portfolio)
         @smart_assert(type in PortTypes)
     else
@@ -1420,7 +1420,7 @@ function risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
                              alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                              beta_i = portfolio.beta_i, beta = portfolio.beta,
                              b_sim = portfolio.b_sim, di = di, kappa = portfolio.kappa,
-                             owa_w = owa_w, solvers = portfolio.solvers,)
+                             owa_w = owa_w, solvers = portfolio.solvers)
 end
 
 function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMatrix;
@@ -1429,12 +1429,12 @@ function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMa
                       alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100,
                       beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                       kappa::Real = 0.3, owa_w = Vector{Float64}(undef, 0),
-                      solvers::Union{<:AbstractDict, Nothing} = nothing,)
+                      solvers::Union{<:AbstractDict, Nothing} = nothing)
     ret = dot(mu, w)
 
     risk = calc_risk(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
                      alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
-                     b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers,)
+                     b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers)
 
     return (ret - rf) / risk
 end
@@ -1446,7 +1446,7 @@ function sharpe_ratio(portfolio::AbstractPortfolio;
                           portfolio.owa_w
                       else
                           Vector{Float64}(undef, 0)
-                      end,)
+                      end)
     if isa(portfolio, Portfolio)
         @smart_assert(type in PortTypes)
     else
@@ -1458,8 +1458,7 @@ function sharpe_ratio(portfolio::AbstractPortfolio;
                         alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
                         a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
                         beta = portfolio.beta, b_sim = portfolio.b_sim,
-                        kappa = portfolio.kappa, owa_w = owa_w,
-                        solvers = portfolio.solvers,)
+                        kappa = portfolio.kappa, owa_w = owa_w, solvers = portfolio.solvers)
 end
 
 export Variance, SD, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR, RRM, RVaR, DaR_abs,

@@ -35,9 +35,9 @@ Create the linear constraint matrix `A` and vector `B`:
 # Examples
 ```julia
 asset_sets = DataFrame(
-    "Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV", "FCN", "TKO", "ZOO", "ZVO", "ZX", "ZZA", "ZZB", "ZZC"],    "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Fixed Income", "Equity"],    "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury", "Financial", "Entertainment", "Treasury", "Financial", "Financial", "Entertainment", "Technology", "Treasury"],)
+    "Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV", "FCN", "TKO", "ZOO", "ZVO", "ZX", "ZZA", "ZZB", "ZZC"],    "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Fixed Income", "Equity"],    "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury", "Financial", "Entertainment", "Treasury", "Financial", "Financial", "Entertainment", "Technology", "Treasury"])
 constraints = DataFrame(
-    "Enabled" => [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],    "Type" => ["Subset", "All Subsets", "Asset", "Asset", "Subset", "All Assets", "Each Asset in Subset", "Asset", "All Assets", "All Assets", "Subset", "All Subsets", "All Subsets", "Each Asset in Subset", "Each Asset in Subset"],    "Set" => ["Class 1", "Class 1", "", "", "Class 2", "", "Class 1", "Class 1", "Class 2", "", "Class 1", "Class 2", "Class 2", "Class 2", "Class 1"],    "Position" => ["Equity", "Fixed Income", "BAC", "WFC", "Financial", "", "Equity", "FCN", "TKO", "ZOO", "Fixed Income", "Treasury", "Entertainment", "Treasury", "Equity"],    "Sign" => ["<=", "<=", "<=", "<=", ">=", ">=", ">=", "<=", ">=", "<=", ">=", "<=", ">=", "<=", ">="],    "Weight" => [0.6, 0.5, 0.1, "", "", 0.02, "", "", "", "", "", "", "", 0.27, ""],    "Relative_Type" => ["", "", "", "Asset", "Subset", "", "Asset", "Subset", "Asset", "Subset", "Asset", "Asset", "Subset", "", "Subset"],    "Relative_Set" => ["", "", "", "", "Class 1", "", "", "Class 1", "", "Class 2", "", "Class 2", "Class 2", "", "Class 2"],    "Relative_Position" => ["", "", "", "FB", "Fixed Income", "", "TLT", "Equity", "NTFX", "Financial", "WFC", "ZOO", "Entertainment", "", "Entertainment"],    "Factor" => ["", "", "", 1.2, 0.5, "", 0.4, 0.7, 0.21, 0.11, 0.13, -0.17, 0.23, "", -0.31],)
+    "Enabled" => [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],    "Type" => ["Subset", "All Subsets", "Asset", "Asset", "Subset", "All Assets", "Each Asset in Subset", "Asset", "All Assets", "All Assets", "Subset", "All Subsets", "All Subsets", "Each Asset in Subset", "Each Asset in Subset"],    "Set" => ["Class 1", "Class 1", "", "", "Class 2", "", "Class 1", "Class 1", "Class 2", "", "Class 1", "Class 2", "Class 2", "Class 2", "Class 1"],    "Position" => ["Equity", "Fixed Income", "BAC", "WFC", "Financial", "", "Equity", "FCN", "TKO", "ZOO", "Fixed Income", "Treasury", "Entertainment", "Treasury", "Equity"],    "Sign" => ["<=", "<=", "<=", "<=", ">=", ">=", ">=", "<=", ">=", "<=", ">=", "<=", ">=", "<=", ">="],    "Weight" => [0.6, 0.5, 0.1, "", "", 0.02, "", "", "", "", "", "", "", 0.27, ""],    "Relative_Type" => ["", "", "", "Asset", "Subset", "", "Asset", "Subset", "Asset", "Subset", "Asset", "Asset", "Subset", "", "Subset"],    "Relative_Set" => ["", "", "", "", "Class 1", "", "", "Class 1", "", "Class 2", "", "Class 2", "Class 2", "", "Class 2"],    "Relative_Position" => ["", "", "", "FB", "Fixed Income", "", "TLT", "Equity", "NTFX", "Financial", "WFC", "ZOO", "Entertainment", "", "Entertainment"],    "Factor" => ["", "", "", 1.2, 0.5, "", 0.4, 0.7, 0.21, 0.11, 0.13, -0.17, 0.23, "", -0.31])
 A, B = asset_constraints(constraints, asset_sets)
 ```
 """
@@ -371,7 +371,7 @@ Create the factor views matrix `P` and vector `Q`:
 loadings = DataFrame(
         "const" => [0.0004, 0.0002, 0.0000, 0.0006, 0.0001, 0.0003, -0.0003],        "MTUM" => [0.1916, 1.0061, 0.8695, 1.9996, 0.0000, 0.0000, 0.0000],        "QUAL" => [0.0000, 2.0129, 1.4301, 0.0000, 0.0000, 0.0000, 0.0000],        "SIZE" => [0.0000, 0.0000, 0.0000, 0.4717, 0.0000, -0.1857, 0.0000],        "USMV" => [-0.7838, -1.6439, -1.0176, -1.4407, 0.0055, 0.5781, 0.0000],        "VLUE" => [1.4772, -0.7590, -0.4090, 0.0000, -0.0054, -0.4844, 0.9435],    )
 views = DataFrame(
-    "Enabled" => [true, true, true],    "Factor" => ["MTUM", "USMV", "VLUE"],    "Sign" => ["<=", "<=", ">="],    "Value" => [0.9, -1.2, 0.3],    "Relative_Factor" => ["USMV", "", ""],)
+    "Enabled" => [true, true, true],    "Factor" => ["MTUM", "USMV", "VLUE"],    "Sign" => ["<=", "<=", ">="],    "Value" => [0.9, -1.2, 0.3],    "Relative_Factor" => ["USMV", "", ""])
 P, Q = factor_views(views, loadings)
 ```
 """
@@ -447,7 +447,7 @@ Create the upper and lower bounds constraints for hierarchical risk parity portf
 asset_sets = DataFrame(
         "Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],    )
 constraints = DataFrame(
-    "Enabled" => [true, true, true, true, true, true],    "Type" => ["Asset", "Asset", "All Assets", "All Assets", "Each Asset in Subset", "Each Asset in Subset"],    "Set" => ["", "", "", "", "Class 1", "Class 2"],    "Position" => ["BAC", "FB", "", "", "Fixed Income", "Financial"],    "Sign" => [">=", "<=", "<=", ">=", "<=", "<="],    "Weight" => [0.02, 0.085, 0.09, 0.01, 0.07, 0.06],)
+    "Enabled" => [true, true, true, true, true, true],    "Type" => ["Asset", "Asset", "All Assets", "All Assets", "Each Asset in Subset", "Each Asset in Subset"],    "Set" => ["", "", "", "", "Class 1", "Class 2"],    "Position" => ["BAC", "FB", "", "", "Fixed Income", "Financial"],    "Sign" => [">=", "<=", "<=", ">=", "<=", "<="],    "Weight" => [0.02, 0.085, 0.09, 0.01, 0.07, 0.06])
 w_min, w_max = hrp_constraints(constraints, asset_sets)
 ```
 """
@@ -510,7 +510,7 @@ const RPConstraintTypes = (:Asset, :Subset)
 """
 ```julia
 rp_constraints(
-    asset_sets::DataFrame,    type::Symbol = :Asset,    class_col::Union{String, Symbol, Nothing} = nothing,)
+    asset_sets::DataFrame,    type::Symbol = :Asset,    class_col::Union{String, Symbol, Nothing} = nothing)
 ```
 Constructs risk contribution constraint vector for the risk parity optimisation (`:RP` and `:RRP` types of [`PortTypes`](@ref)).
 # Inputs

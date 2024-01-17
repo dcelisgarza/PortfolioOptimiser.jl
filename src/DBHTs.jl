@@ -1051,7 +1051,7 @@ end
 """
 ```julia
 DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real}; branchorder::Symbol = :optimal,
-      method::Symbol = :Unique,)
+      method::Symbol = :Unique)
 ```
 
 Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering algorithm [^DBHTs]. This version uses a graph-theoretic filtering technique called Triangulated Maximally Filtered Graph (TMFG).
@@ -1080,7 +1080,7 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
 [^DBHTs]: [Song, Won-Min, T. Di Matteo, and Tomaso Aste. "Hierarchical information clustering by means of topologically embedded graphs." PloS one 7.3 (2012): e31929](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031929).
 """
 function DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real};
-               branchorder::Symbol = :optimal, method::Symbol = :Unique,)
+               branchorder::Symbol = :optimal, method::Symbol = :Unique)
     @smart_assert(branchorder in BranchOrderTypes)
     @smart_assert(issymmetric(D))
     @smart_assert(issymmetric(S))

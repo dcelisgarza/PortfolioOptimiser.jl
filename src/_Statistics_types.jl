@@ -234,7 +234,7 @@ mutable struct PosdefFixOpt
     genfunc::GenericFunction
 end
 function PosdefFixOpt(; method::Symbol = :Nearest,
-                      genfunc::GenericFunction = GenericFunction(; func = x -> x),)
+                      genfunc::GenericFunction = GenericFunction(; func = x -> x))
     @smart_assert(method in PosdefFixMethods)
 
     return PosdefFixOpt(method, genfunc)
@@ -254,7 +254,7 @@ end
 function GerberOpt(; threshold::Real = 0.5,
                    genfunc::GenericFunction = GenericFunction(; func = StatsBase.std,
                                                               kwargs = (; dims = 1)),
-                   posdef::PosdefFixOpt = PosdefFixOpt(;),)
+                   posdef::PosdefFixOpt = PosdefFixOpt(;))
     @smart_assert(0 < threshold < 1)
 
     return GerberOpt{typeof(threshold)}(threshold, genfunc, posdef)
@@ -278,7 +278,7 @@ mutable struct DenoiseOpt{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 <: In
 end
 function DenoiseOpt(; method::Symbol = :None, alpha::Real = 0.0, detone::Bool = false,
                     mkt_comp::Integer = 1, kernel = ASH.Kernels.gaussian, m::Integer = 10,
-                    n::Integer = 1000, genfunc::GenericFunction = GenericFunction(;),)
+                    n::Integer = 1000, genfunc::GenericFunction = GenericFunction(;))
     @smart_assert(method in DenoiseMethods)
     @smart_assert(0 <= alpha <= 1)
 
@@ -317,7 +317,7 @@ mutable struct CovOpt
 end
 function CovOpt(; method::Symbol = :Full, estimation::CovEstOpt = CovEstOpt(;),
                 gerber::GerberOpt = GerberOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
-                posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,)
+                posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false)
     @smart_assert(method in CovMethods)
 
     return CovOpt(method, estimation, gerber, denoise, posdef, jlogo)
@@ -350,7 +350,7 @@ function MuOpt(; method::Symbol = :Default, target::Symbol = :GM, rf::Real = 0.0
                                                           kwargs = (; dims = 1)),
                custom::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
                mkt_ret::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
-               sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,)
+               sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing)
     @smart_assert(method in MuMethods)
     @smart_assert(target in MuTargets)
 
@@ -382,7 +382,7 @@ mutable struct KurtOpt
 end
 function KurtOpt(; estimation::KurtEstOpt = KurtEstOpt(;),
                  denoise::DenoiseOpt = DenoiseOpt(;),
-                 posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,)
+                 posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false)
     return KurtOpt(estimation, denoise, posdef, jlogo)
 end
 
@@ -407,11 +407,11 @@ function CorEstOpt(;
                                                                                              x) /
                                                                                             2,
                                                                                             0,
-                                                                                            1)),),
+                                                                                            1))),
                    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0,
                    custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
                    custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-                   sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,)
+                   sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing)
     @smart_assert(0 <= alpha <= 1)
     @smart_assert(bins_info in BinMethods ||
                   isa(bins_info, Int) && bins_info > zero(bins_info))
@@ -466,7 +466,7 @@ end
 function CorOpt(; method::Symbol = :Pearson, estimation::CorEstOpt = CorEstOpt(;),
                 gerber::GerberOpt = GerberOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
                 posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,
-                uplo::Symbol = :L,)
+                uplo::Symbol = :L)
     @smart_assert(method in CorMethods)
 
     return CorOpt(method, estimation, gerber, denoise, posdef, jlogo, uplo)
@@ -496,7 +496,7 @@ function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true,
                box::Symbol = :Stationary, ellipse::Symbol = :Stationary, dcov::Real = 0.1,
                dmu::Real = 0.1, q::Real = 0.05, rng = Random.default_rng(),
                seed::Union{<:Integer, Nothing} = nothing, n_sim::Integer = 3_000,
-               window::Integer = 3, posdef::PosdefFixOpt = PosdefFixOpt(;),)
+               window::Integer = 3, posdef::PosdefFixOpt = PosdefFixOpt(;))
     @smart_assert(box in BoxMethods)
     @smart_assert(ellipse in EllipseMethods)
     @smart_assert(0 < q < 1)
@@ -530,10 +530,10 @@ function PCROpt(;
                 pca_s_genfunc::GenericFunction = GenericFunction(;
                                                                  func = StatsBase.standardize,
                                                                  args = (StatsBase.ZScoreTransform,),
-                                                                 kwargs = (; dims = 2),),
+                                                                 kwargs = (; dims = 2)),
                 pca_genfunc::GenericFunction = GenericFunction(;
                                                                func = MultivariateStats.fit,
-                                                               args = (MultivariateStats.PCA,),),)
+                                                               args = (MultivariateStats.PCA,)))
     return PCROpt(mean_genfunc, std_genfunc, pca_s_genfunc, pca_genfunc)
 end
 
@@ -544,7 +544,7 @@ mutable struct LoadingsOpt{T1 <: Real}
     pcr_opt::PCROpt
 end
 function LoadingsOpt(; method::Symbol = :FReg, criterion::Symbol = :pval,
-                     threshold::Real = 0.05, pcr_opt::PCROpt = PCROpt(;),)
+                     threshold::Real = 0.05, pcr_opt::PCROpt = PCROpt(;))
     @smart_assert(method in FSMethods)
     @smart_assert(criterion in RegCriteria)
     return LoadingsOpt{typeof(threshold)}(method, criterion, threshold, pcr_opt)
@@ -567,7 +567,7 @@ end
 function FactorOpt(; B::Union{DataFrame, Nothing} = nothing,
                    loadings_opt::LoadingsOpt = LoadingsOpt(;), error::Bool = true,
                    var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
-                                                                  kwargs = (; dims = 1)),)
+                                                                  kwargs = (; dims = 1)))
     return FactorOpt(B, loadings_opt, error, var_genfunc)
 end
 
@@ -583,7 +583,7 @@ end
 function BLOpt(; method::Symbol = :B, constant::Bool = true, eq::Bool = true,
                diagonal::Bool = true, delta::Real = 1.0, rf::Real = 0.0,
                var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
-                                                              kwargs = (; dims = 1)),)
+                                                              kwargs = (; dims = 1)))
     @smart_assert(method in BLFMMethods)
 
     return BLOpt{typeof(rf)}(method, constant, eq, diagonal, delta, rf, var_genfunc)

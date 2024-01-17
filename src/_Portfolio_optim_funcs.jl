@@ -799,7 +799,7 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
         @variable(model, rtgb[1:T])
         @expression(model, rtg_risk, sum(rtga .+ rtgb))
         rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                        beta = beta, b_sim = b_sim,)
+                        beta = beta, b_sim = b_sim)
         @constraint(model,
                     owa * transpose(rtg_w) .<=
                     onesvec * transpose(rtga) + rtgb * transpose(onesvec))
@@ -1635,7 +1635,7 @@ function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, retu
                                  w2 = Vector{eltype(returns)}(undef, 0))
     if isempty(w1) || isempty(w2)
         fl = frontier_limits!(portfolio; class = class, hist = hist, kelly = kelly, rf = rf,
-                              rm = rm, save_model = true,)
+                              rm = rm, save_model = true)
 
         w1 = fl.w_min
         w2 = fl.w_max
@@ -1661,7 +1661,7 @@ function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, retu
     ret3 = dot(mu, w3)
     risk3 = calc_risk(w3, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
                       alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
-                      b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers,)
+                      b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers)
 
     c1 = (ret2 - ret1) / M
     c2 = (risk2 - risk1) / M
@@ -1718,7 +1718,7 @@ optimise!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
           kelly::Symbol = :None, l::Real = 2.0, obj::Symbol = :Sharpe, rf::Real = 0.0,
           rm::Symbol = :SD, rrp_penalty::Real = 1.0, rrp_ver::Symbol = :None,
           save_opt_params::Bool = true, string_names::Bool = false, type::Symbol = :Trad,
-          u_cov::Symbol = :Box, u_mu::Symbol = :Box,)
+          u_cov::Symbol = :Box, u_mu::Symbol = :Box)
 ```
 """
 function optimise!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
@@ -1811,12 +1811,12 @@ end
 ```julia
 frontier_limits!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
                  kelly::Symbol = :None, rf::Real = 0.0, rm::Symbol = :SD,
-                 save_model::Bool = false,)
+                 save_model::Bool = false)
 ```
 """
 function frontier_limits!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
                           kelly::Symbol = :None, rf::Real = 0.0, rm::Symbol = :SD,
-                          save_model::Bool = false,)
+                          save_model::Bool = false)
     optimal1 = deepcopy(portfolio.optimal)
     fail1 = deepcopy(portfolio.fail)
     if save_model
@@ -1824,10 +1824,10 @@ function frontier_limits!(portfolio::Portfolio; class::Symbol = :Classic, hist::
     end
 
     w_min = optimise!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Min_Risk,
-                      rf = rf, rm = rm, save_opt_params = false,)
+                      rf = rf, rm = rm, save_opt_params = false)
 
     w_max = optimise!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Max_Ret,
-                      rf = rf, rm = rm, save_opt_params = false,)
+                      rf = rf, rm = rm, save_opt_params = false)
 
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
@@ -1846,19 +1846,19 @@ end
 ```julia
 efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
                     kelly::Symbol = :None, rf::Real = 0.0, rm::Symbol = :SD,
-                    points::Integer = 20,)
+                    points::Integer = 20)
 ```
 """
 function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
                              hist::Integer = 1, kelly::Symbol = :None, rf::Real = 0.0,
-                             rm::Symbol = :SD, points::Integer = 20,)
+                             rm::Symbol = :SD, points::Integer = 20)
     optimal1 = deepcopy(portfolio.optimal)
     fail1 = deepcopy(portfolio.fail)
 
     mu, sigma, returns = _setup_model_class(portfolio, class, hist)
 
     fl = frontier_limits!(portfolio; class = class, hist = hist, kelly = kelly, rf = rf,
-                          rm = rm,)
+                          rm = rm)
 
     w1 = fl.w_min
     w2 = fl.w_max
@@ -1892,7 +1892,7 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     for (j, (r, m)) ∈ enumerate(zip(risks, mus))
         if i == 0
             w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
-                          obj = :Min_Risk, rf = rf, rm = rm, save_opt_params = false,)
+                          obj = :Min_Risk, rf = rf, rm = rm, save_opt_params = false)
         else
             if !isempty(w)
                 (w_ini = w.weights)
@@ -1904,14 +1904,14 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
             end
             w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
                           obj = :Max_Ret, rf = rf, rm = rm, save_opt_params = false,
-                          w_ini = w_ini,)
+                          w_ini = w_ini)
             # Fallback in case :Max_Ret with maximum risk bounds fails.
             if isempty(w)
                 setproperty!(portfolio, rmf, Inf)
                 j != length(risks) ? portfolio.mu_l = m : portfolio.mu_l = Inf
                 w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
                               obj = :Min_Risk, rf = rf, rm = rm, save_opt_params = false,
-                              w_ini = w_ini,)
+                              w_ini = w_ini)
                 portfolio.mu_l = Inf
             end
         end
@@ -1921,7 +1921,7 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
         rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
                        alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                        beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                       solvers = solvers,)
+                       solvers = solvers)
         append!(frontier, w.weights)
         push!(srisk, rk)
         i += 1
@@ -1929,13 +1929,13 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     setproperty!(portfolio, rmf, Inf)
 
     w = optimise!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Sharpe,
-                  rf = rf, rm = rm, save_opt_params = false,)
+                  rf = rf, rm = rm, save_opt_params = false)
     sharpe = false
     if !isempty(w)
         rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
                        alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                        beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                       solvers = solvers,)
+                       solvers = solvers)
         append!(frontier, w.weights)
         push!(srisk, rk)
         i += 1
