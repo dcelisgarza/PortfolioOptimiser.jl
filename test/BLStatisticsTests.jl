@@ -1532,9 +1532,9 @@ end
     mu7, cov7, wb7 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q,
                                                bl_opt = bl_opt)
 
-    #     bl_opt = BLOpt(;)
-    #     B = Matrix(loadings[!, 2:end])
-    #     F = portfolio.f_returns
+    bl_opt = BLOpt(;)
+    B = Matrix(loadings[!, 2:end])
+    F = portfolio.f_returns
     #     mu8 = cov8 = wb8 = []
     #     mu9 = cov9 = wb9 = []
     #     try
