@@ -1543,6 +1543,8 @@ end
                                                    F = F, P_f = P_f, Q_f = Q_f,
                                                    bl_opt = bl_opt)
     catch
+        mu8 = cov8 = wb8 = []
+        mu9 = cov9 = wb9 = []
     end
 
     bl_opt = BLOpt(;)
@@ -1552,6 +1554,7 @@ end
         mu10, cov10, wb10 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
                                                       P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
     catch
+        mu10 = cov10 = wb10 = []
     end
 
     bl_opt = BLOpt(;)
@@ -1560,6 +1563,7 @@ end
         mu11, cov11, wb11 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
                                                       P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
     catch
+        mu11 = cov11 = wb11 = []
     end
 
     bl_opt = BLOpt(;)
@@ -2773,7 +2777,7 @@ end
     @test isapprox(mu6, mu7)
     @test isapprox(cov6, cov7)
     @test isapprox(wb6, wb7)
-    if isdefined(mu8)
+    if !isempty(mu8)
         @test isapprox(mu8, mu8t)
         @test isapprox(cov8, cov8t)
         @test isapprox(wb8, wb8t)
@@ -2781,12 +2785,12 @@ end
         @test isapprox(cov8, cov9)
         @test isapprox(wb8, wb9)
     end
-    if isdefined(mu10)
+    if !isempty(mu10)
         @test isapprox(mu10, mu10t)
         @test isapprox(cov10, cov10t)
         @test isapprox(wb10, wb10t)
     end
-    if isdefined(mu11)
+    if !isempty(mu11)
         @test isapprox(mu11, mu11t)
         @test isapprox(cov11, cov11t)
         @test isapprox(wb11, wb11t)
@@ -3412,4 +3416,197 @@ end
     @test isapprox(mu1, mu3 + B[:, 1])
     @test isapprox(cov1, cov3)
     @test !isapprox(wb1, wb3)
+end
+
+@testset "Bayesian Black Litterman Factor Statistics" begin
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+
+    asset_sets = DataFrame("Asset" => portfolio.assets,
+                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                                       3, 1],
+                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
+                                        4, 2, 1],
+                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                                       2, 1],
+                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
+                                        2, 2, 1],
+                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
+                                        3, 4, 1],
+                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
+                                        4, 2, 2])
+    views_assets = DataFrame("Enabled" => [true, true, true, true, true, true, true, true,
+                                           true, true, true, true, true, true, true, true,
+                                           true, true, true, true, true, true, true, true,
+                                           false],
+                             "Type" => ["Asset", "Asset", "Asset", "Asset", "Asset",
+                                        "Asset", "Asset", "Asset", "Asset", "Asset",
+                                        "Asset", "Asset", "Subset", "Subset", "Subset",
+                                        "Subset", "Subset", "Subset", "Subset", "Subset",
+                                        "Subset", "Subset", "Subset", "Subset", "Asset"],
+                             "Set" => ["", "", "", "", "", "", "", "", "", "", "", "",
+                                       "PDBHT", "PDBHT", "PDBHT", "PDBHT", "PDBHT", "PDBHT",
+                                       "Pward", "Pward", "Pward", "Pward", "SPward",
+                                       "SPward", ""],
+                             "Position" => ["GE", "SBUX", "BABA", "SHLD", "FB", "WMT",
+                                            "UAA", "XOM", "UAA", "AMD", "BBY", "FB", 1, 3,
+                                            4, 2, 1, 3, 1, 3, 2, 1, 3, 2, "GOOG"],
+                             "Sign" => [">=", ">=", "<=", "<=", ">=", ">=", "<=", "<=",
+                                        ">=", ">=", "<=", "<=", ">=", ">=", "<=", "<=",
+                                        ">=", ">=", "<=", "<=", ">=", ">=", "<=", "<=",
+                                        ">="],
+                             "Return" => [0.3, -0.2, 2.3, -0.7, 0.17, -0.11, 0.13, -0.23,
+                                          0.5, -0.37, 0.23, 5.1, 0.27, -0.31, 0.41, -0.19,
+                                          0.03, -0.29, 0.71, -0.41, 0.61, -0.019, 1.7, -2.3,
+                                          0.69],
+                             "Relative_Type" => ["", "", "", "", "Asset", "Asset", "Asset",
+                                                 "Asset", "Subset", "Subset", "Subset",
+                                                 "Subset", "", "", "", "", "Asset", "Asset",
+                                                 "Asset", "Asset", "Subset", "Subset",
+                                                 "Subset", "Subset", ""],
+                             "Relative_Position" => ["", "", "", "", "GOOG", "AMD", "MA",
+                                                     "BAC", 3, 2, 4, 2, "", "", "", "",
+                                                     "AAPL", "GE", "PFE", "RRC", 3, 3, 2, 3,
+                                                     ""],
+                             "Relative_Set" => ["", "", "", "", "", "", "", "", "PDBHT",
+                                                "PDBHT", "Pward", "Pward", "", "", "", "",
+                                                "", "", "", "", "PDBHT", "Pward", "SPward",
+                                                "Pward", ""])
+
+    P, Q = asset_views(views_assets, asset_sets)
+
+    loadings = hcat(DataFrame(:ticker => ["GOOG", "AAPL", "FB", "BABA", "AMZN", "GE", "AMD",
+                                          "WMT", "BAC", "GM", "T", "UAA", "SHLD", "XOM",
+                                          "RRC", "BBY", "MA", "PFE", "JPM", "SBUX"]),
+                    DataFrame(reshape([0.0006662517554895613, 0.0007849399521007353,
+                                       0.0009459643095974261, 0.0008592165739551059,
+                                       0.0017810088172303237, -0.0005785685052765102,
+                                       0.0017612947636060521, 0.0003152090009733905,
+                                       0.0008537176877854478, 0.0004723791639856617,
+                                       0.00023196965409296734, -0.0005054162297035769,
+                                       -0.0014286220563319559, -2.5004548117932975e-5,
+                                       -0.0011796361837921718, 0.0011274045369944028,
+                                       0.0010443935920757378, 0.00034316200087855785,
+                                       0.0008756515571520004, 0.0006211971816987232,
+                                       -0.06480893184671563, 0.1265663349283534,
+                                       0.06531891020282664, -0.14583770722844627,
+                                       0.17384069980818687, -0.10197670562589713,
+                                       0.40552722097762517, 0.15455342961953242,
+                                       0.13332079577168393, -0.12914789861819334,
+                                       0.011581940571448384, 0.13255382044317096,
+                                       -0.13950988276499568, 0.05523327575227021,
+                                       0.6196572987779644, 0.315267811840457,
+                                       0.19010334905522483, 0.21814502022320065,
+                                       0.1112154776675108, 0.24492867002761698,
+                                       0.03621442191787694, -0.018576988118456626,
+                                       -0.033527310265712554, 0.1584057759842692,
+                                       -0.017135982753150397, 0.08319092183606666,
+                                       0.04095160488367243, -0.02410240121837933,
+                                       -0.015985518611239317, 0.042107810262914956,
+                                       0.01393611737205343, 0.12788949977560324,
+                                       0.3458988137936367, 0.018928053608771953,
+                                       -0.12582156590453064, -0.09421231675663434,
+                                       -0.036305171782130156, -0.029356961596530413,
+                                       -0.017287323397846128, -0.05338133590717126,
+                                       -0.11792470271706594, -0.0926516044804406,
+                                       -0.19273865391548434, -0.07072481964191567,
+                                       -0.02369068378021912, 0.06541829500950368,
+                                       0.10382212284974576, -0.03610528820893009,
+                                       0.10038297096845941, 0.2944861267239947,
+                                       -0.13781284666197124, 0.14227242984111085,
+                                       0.6633454725811262, -0.04694291556860392,
+                                       -0.22794077702668827, -0.15181516844962,
+                                       -0.03792410511305884, -0.12294081844215514,
+                                       -0.0018878868853723656, -0.1704758047222016,
+                                       0.007948848158307176, -0.08393429696037784,
+                                       0.07199537737330614, -0.3003098369766753,
+                                       -0.06347006586041148, -0.1424226191965026,
+                                       -0.2637077728661142, -0.06769462315395022,
+                                       -0.09084369945363698, -0.027867525155884906,
+                                       -0.015004515818551027, -0.32886678334558983,
+                                       -0.6425048316279028, -0.14876099197615006,
+                                       -0.27397526290127255, 0.05766292663184291,
+                                       -0.12371744897166051, -0.027224863873640707,
+                                       -0.06472451430464957, -0.012397422303371637,
+                                       0.24297761348677277, -0.02001368763315179,
+                                       0.11071406987599967, 0.45782457720286435,
+                                       -0.10902518568940052, 0.1455663926686262,
+                                       -0.2576158884320345, -0.10364528131083903,
+                                       -0.22512091315073404, -0.16102302797620519,
+                                       0.17173019738912326, 0.02121767790834828,
+                                       0.041927044324022895, 0.04015829407065362,
+                                       -0.395095048650537, -0.19591599492039793,
+                                       -0.15760355158485626, -0.04545745159216734,
+                                       -0.10326507296810988, -0.06053276587733248], 20, :),
+                              [:const, :MTUM, :QUAL, :VLUE, :SIZE, :USMV]))
+
+    views_factors = DataFrame("Enabled" => [true, true, true, true, true, true, true, true,
+                                            false],
+                              "Factor" => ["MTUM", "USMV", "VLUE", "QUAL", "USMV", "MTUM",
+                                           "QUAL", "VLUE", "USMV"],
+                              "Sign" => ["<=", "<=", ">=", ">=", "<=", "<=", ">=", ">=",
+                                         "<="],
+                              "Value" => [0.9, -1.2, 0.3, -0.5, 0.7, -0.13, 0.17, -0.29,
+                                          0.72],
+                              "Relative_Factor" => ["", "", "", "", "MTUM", "USMV", "VLUE",
+                                                    "QUAL", ""])
+
+    P_f, Q_f = factor_views(views_factors, loadings)
+
+    Q /= 252
+    Q_f /= 252
+
+    B = Matrix(loadings[!, 2:end])
+    bl_opt = BLOpt(;)
+
+    black_litterman_factor_satistics!(portfolio, Vector{Float64}(undef, 0); B = loadings,
+                                      P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
+    mu1 = copy(portfolio.mu_bl_fm)
+    cov1 = copy(portfolio.cov_bl_fm)
+
+    mu2, cov2, missing = bayesian_black_litterman(portfolio.returns, portfolio.f_returns,
+                                                  Matrix(loadings[!, 2:end]), P_f, Q_f;
+                                                  bl_opt = bl_opt)
+
+    asset_statistics!(portfolio)
+    bl_opt.delta = nothing
+    black_litterman_factor_satistics!(portfolio, Vector{Float64}(undef, 0); B = loadings,
+                                      P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
+    mu3 = copy(portfolio.mu_bl_fm)
+    cov3 = copy(portfolio.cov_bl_fm)
+
+    mu4, cov4, missing = bayesian_black_litterman(portfolio.returns, portfolio.f_returns,
+                                                  Matrix(loadings[!, 2:end]), P_f, Q_f;
+                                                  bl_opt = bl_opt)
+
+    black_litterman_factor_satistics!(portfolio, Vector{Float64}(undef, 0); B = nothing,
+                                      P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
+    mu5 = copy(portfolio.mu_bl_fm)
+    cov5 = copy(portfolio.cov_bl_fm)
+
+    mu6, cov6, missing = bayesian_black_litterman(portfolio.returns, portfolio.f_returns,
+                                                  Matrix(loadings_matrix(DataFrame(portfolio.f_returns,
+                                                                                   portfolio.f_assets),
+                                                                         DataFrame(portfolio.returns,
+                                                                                   portfolio.assets))[!,
+                                                                                                      2:end]),
+                                                  P_f, Q_f; bl_opt = bl_opt)
+
+    black_litterman_factor_satistics!(portfolio, (1:20) / (sum(1:20)); B = loadings, P = P,
+                                      P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
+    mu7 = copy(portfolio.mu_bl_fm)
+    cov7 = copy(portfolio.cov_bl_fm)
+
+    black_litterman_factor_satistics!(portfolio; B = loadings, P = P, P_f = P_f, Q = Q,
+                                      Q_f = Q_f, bl_opt = bl_opt)
+    mu8 = copy(portfolio.mu_bl_fm)
+    cov8 = copy(portfolio.cov_bl_fm)
+
+    @test isapprox(mu1, mu2)
+    @test isapprox(cov1, cov2)
+    @test isapprox(mu3, mu4)
+    @test isapprox(cov3, cov4)
+    @test isapprox(mu6, mu5)
+    @test isapprox(cov6, cov5)
+    @test isapprox(mu7, mu8)
+    @test isapprox(cov7, cov8)
 end
