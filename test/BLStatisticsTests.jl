@@ -3750,7 +3750,7 @@ end
 
     B = Matrix(loadings[!, 2:end])
     bl_opt = BLOpt(; method = :A)
-    w = Vector{Float64}(undef, 0)
+    w = fill(1 / 20, 20)
 
     black_litterman_factor_satistics!(portfolio, w; B = loadings, P = P, P_f = P_f, Q = Q,
                                       Q_f = Q_f, bl_opt = bl_opt)
