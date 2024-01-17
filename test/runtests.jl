@@ -52,6 +52,10 @@ using SafeTestsets
 #     include("TraditionalOptimisationTests.jl")
 # end
 
+@safetestset "BL Statistics" begin
+    include("BLStatisticsTests.jl")
+end
+
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
 end
@@ -75,8 +79,6 @@ end
 @safetestset "Misc Statistics" begin
     include("MiscStatisticsTests.jl")
 end
-
-@safetestset "BL Statistics" begin end
 
 @safetestset "Factor Statistics" begin
     include("FactorStatisticsTests.jl")

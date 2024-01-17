@@ -268,9 +268,9 @@ end
 function plot_frontier_area(frontier; alpha::Real = 0.05, beta::Real = alpha,
                             kappa::Real = 0.3, rm = :SD, t_factor = 252, kwargs_a = (;),
                             kwargs_l = (;), show_sharpe = true,)
-    risks = copy(frontier[rm][:risk])
-    assets = reshape(frontier[rm][:weights][!, "tickers"], 1, :)
-    weights = transpose(Matrix(frontier[rm][:weights][!, 2:end]))
+    risks = copy(frontier[:risk])
+    assets = reshape(frontier[:weights][!, "tickers"], 1, :)
+    weights = transpose(Matrix(frontier[:weights][!, 2:end]))
     if isinf(beta)
         beta = alpha
     end
@@ -280,7 +280,7 @@ function plot_frontier_area(frontier; alpha::Real = 0.05, beta::Real = alpha,
     end
 
     sharpe = nothing
-    if frontier[rm][:sharpe]
+    if frontier[:sharpe]
         sharpe = risks[end]
         risks = risks[1:(end - 1)]
         weights = weights[1:(end - 1), :]
@@ -344,7 +344,7 @@ function plot_frontier_area(frontier; alpha::Real = 0.05, beta::Real = alpha,
 end
 function plot_frontier_area(portfolio::AbstractPortfolio; rm = :SD, t_factor = 252,
                             kwargs_a = (;), kwargs_l = (;), show_sharpe = true,)
-    return plot_frontier_area(portfolio.frontier; alpha = portfolio.alpha,
+    return plot_frontier_area(portfolio.frontier[rm]; alpha = portfolio.alpha,
                               beta = portfolio.beta, kappa = portfolio.kappa, rm = rm,
                               t_factor = t_factor, kwargs_a = kwargs_a, kwargs_l = kwargs_l,
                               show_sharpe = show_sharpe,)
