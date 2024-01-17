@@ -2773,7 +2773,7 @@ end
     @test isapprox(mu6, mu7)
     @test isapprox(cov6, cov7)
     @test isapprox(wb6, wb7)
-    if exists(mu8)
+    if isdefined(mu8)
         @test isapprox(mu8, mu8t)
         @test isapprox(cov8, cov8t)
         @test isapprox(wb8, wb8t)
@@ -2781,12 +2781,12 @@ end
         @test isapprox(cov8, cov9)
         @test isapprox(wb8, wb9)
     end
-    if exists(mu10)
+    if isdefined(mu10)
         @test isapprox(mu10, mu10t)
         @test isapprox(cov10, cov10t)
         @test isapprox(wb10, wb10t)
     end
-    if exists(mu11)
+    if isdefined(mu11)
         @test isapprox(mu11, mu11t)
         @test isapprox(cov11, cov11t)
         @test isapprox(wb11, wb11t)
