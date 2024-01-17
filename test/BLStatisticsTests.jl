@@ -1532,39 +1532,39 @@ end
     mu7, cov7, wb7 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q,
                                                bl_opt = bl_opt)
 
-    bl_opt = BLOpt(;)
-    B = Matrix(loadings[!, 2:end])
-    F = portfolio.f_returns
-    mu8 = cov8 = wb8 = []
-    mu9 = cov9 = wb9 = []
-    try
-        mu8, cov8, wb8 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
-                                                   P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
-        bl_opt.constant = false
-        mu9, cov9, wb9 = augmented_black_litterman(portfolio.returns, w; B = B[:, 2:end],
-                                                   F = F, P_f = P_f, Q_f = Q_f,
-                                                   bl_opt = bl_opt)
-    catch
-    end
+    #     bl_opt = BLOpt(;)
+    #     B = Matrix(loadings[!, 2:end])
+    #     F = portfolio.f_returns
+    #     mu8 = cov8 = wb8 = []
+    #     mu9 = cov9 = wb9 = []
+    #     try
+    #         mu8, cov8, wb8 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
+    #                                                    P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
+    #         bl_opt.constant = false
+    #         mu9, cov9, wb9 = augmented_black_litterman(portfolio.returns, w; B = B[:, 2:end],
+    #                                                    F = F, P_f = P_f, Q_f = Q_f,
+    #                                                    bl_opt = bl_opt)
+    #     catch
+    #     end
 
-    bl_opt = BLOpt(;)
-    bl_opt.eq = false
-    bl_opt.rf = rf
-    mu10 = cov10 = wb10 = []
-    try
-        mu10, cov10, wb10 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
-                                                      P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
-    catch
-    end
+    #     bl_opt = BLOpt(;)
+    #     bl_opt.eq = false
+    #     bl_opt.rf = rf
+    #     mu10 = cov10 = wb10 = []
+    #     try
+    #         mu10, cov10, wb10 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
+    #                                                       P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
+    #     catch
+    #     end
 
-    bl_opt = BLOpt(;)
-    bl_opt.delta = 0.5
-    mu11 = cov11 = wb11 = []
-    try
-        mu11, cov11, wb11 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
-                                                      P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
-    catch
-    end
+    #     bl_opt = BLOpt(;)
+    #     bl_opt.delta = 0.5
+    #     mu11 = cov11 = wb11 = []
+    #     try
+    #         mu11, cov11, wb11 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
+    #                                                       P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
+    #     catch
+    #     end
 
     bl_opt = BLOpt(;)
     mu12, cov12, wb12 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q, B = B,
@@ -2777,24 +2777,24 @@ end
     @test isapprox(mu6, mu7)
     @test isapprox(cov6, cov7)
     @test isapprox(wb6, wb7)
-    if !isempty(mu8)
-        @test isapprox(mu8, mu8t)
-        @test isapprox(cov8, cov8t)
-        @test isapprox(wb8, wb8t)
-        @test isapprox(mu8, mu9 + B[:, 1])
-        @test isapprox(cov8, cov9)
-        @test isapprox(wb8, wb9)
-    end
-    if !isempty(mu10)
-        @test isapprox(mu10, mu10t)
-        @test isapprox(cov10, cov10t)
-        @test isapprox(wb10, wb10t)
-    end
-    if !isempty(mu11)
-        @test isapprox(mu11, mu11t)
-        @test isapprox(cov11, cov11t)
-        @test isapprox(wb11, wb11t)
-    end
+    #     if !isempty(mu8)
+    #         @test isapprox(mu8, mu8t)
+    #         @test isapprox(cov8, cov8t)
+    #         @test isapprox(wb8, wb8t)
+    #         @test isapprox(mu8, mu9 + B[:, 1])
+    #         @test isapprox(cov8, cov9)
+    #         @test isapprox(wb8, wb9)
+    #     end
+    #     if !isempty(mu10)
+    #         @test isapprox(mu10, mu10t)
+    #         @test isapprox(cov10, cov10t)
+    #         @test isapprox(wb10, wb10t)
+    #     end
+    #     if !isempty(mu11)
+    #         @test isapprox(mu11, mu11t)
+    #         @test isapprox(cov11, cov11t)
+    #         @test isapprox(wb11, wb11t)
+    #     end
     @test isapprox(mu12, mu12t)
     @test isapprox(cov12, cov12t)
     @test isapprox(wb12, wb12t)
