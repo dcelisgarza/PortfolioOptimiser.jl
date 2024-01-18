@@ -579,14 +579,20 @@ mutable struct BLOpt{T1 <: Real}
     delta::Union{Nothing, <:Real}
     rf::T1
     var_genfunc::GenericFunction
+    denoise::DenoiseOpt
+    posdef::PosdefFixOpt
+    jlogo::Bool
 end
 function BLOpt(; method::Symbol = :B, constant::Bool = true, eq::Bool = true,
                diagonal::Bool = true, delta::Real = 1.0, rf::Real = 0.0,
                var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
-                                                              kwargs = (; dims = 1)))
+                                                              kwargs = (; dims = 1)),
+               denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
+               jlogo::Bool = false)
     @smart_assert(method in BLFMMethods)
 
-    return BLOpt{typeof(rf)}(method, constant, eq, diagonal, delta, rf, var_genfunc)
+    return BLOpt{typeof(rf)}(method, constant, eq, diagonal, delta, rf, var_genfunc,
+                             denoise, posdef, jlogo)
 end
 function Base.setproperty!(obj::BLOpt, sym::Symbol, val)
     if sym == :method

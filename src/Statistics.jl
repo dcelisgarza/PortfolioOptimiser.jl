@@ -636,7 +636,7 @@ function mu_estimator(returns::AbstractMatrix, opt::MuOpt = MuOpt(;))
 end
 
 const DenoiseLoGoNames = (:cov, :cor, :kurt, :skurt)
-function _denoise_logo_mtx(returns, mtx, opt, mtx_name::Symbol = :cov)
+function _denoise_logo_mtx(T, N, mtx, opt, mtx_name::Symbol = :cov)
     @smart_assert(mtx_name ∈ DenoiseLoGoNames)
 
     if mtx_name == :cov
@@ -653,7 +653,6 @@ function _denoise_logo_mtx(returns, mtx, opt, mtx_name::Symbol = :cov)
         msg2 = ""
     end
 
-    T, N = size(returns)
     mtx = denoise_cov(mtx, T / N, opt.denoise)
 
     posdef_fix!(mtx, opt.posdef; msg = msg)
@@ -717,8 +716,8 @@ function covar_mtx(returns::AbstractMatrix, opt::CovOpt = CovOpt(;))
     elseif method == :Custom_Val
         opt.estimation.custom
     end
-
-    mtx = _denoise_logo_mtx(returns, mtx, opt, :cov)
+    T, N = size(returns)
+    mtx = _denoise_logo_mtx(T, N, mtx, opt, :cov)
 
     return mtx
 end
@@ -755,9 +754,10 @@ cokurt_mtx
 """
 function cokurt_mtx(returns::AbstractMatrix, mu::AbstractVector, opt::KurtOpt = KurtOpt(;))
     custom_kurt = opt.estimation.custom_kurt
+    T, N = size(returns)
     if isnothing(custom_kurt)
         kurt = cokurt(returns, transpose(mu))
-        kurt = _denoise_logo_mtx(returns, kurt, opt, :kurt)
+        kurt = _denoise_logo_mtx(T, N, kurt, opt, :kurt)
     else
         kurt = custom_kurt
     end
@@ -766,12 +766,12 @@ function cokurt_mtx(returns::AbstractMatrix, mu::AbstractVector, opt::KurtOpt = 
     custom_skurt = opt.estimation.custom_skurt
     if isnothing(custom_skurt)
         skurt = scokurt(returns, transpose(mu), target_ret)
-        skurt = _denoise_logo_mtx(returns, skurt, opt, :skurt)
+        skurt = _denoise_logo_mtx(T, N, skurt, opt, :skurt)
     else
         skurt = custom_skurt
     end
 
-    missing, L_2, S_2 = dup_elim_sum_matrices(size(returns, 2))
+    missing, L_2, S_2 = dup_elim_sum_matrices(N)
 
     return kurt, skurt, L_2, S_2
 end
@@ -784,6 +784,7 @@ cor_dist_mtx(
 """
 function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     method = opt.method
+    T, N = size(returns)
     if method ∈ (:Pearson, :Semi_Pearson)
         estimation = opt.estimation
         estimator = estimation.estimator
@@ -806,15 +807,15 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
         catch
             StatsBase.cov2cor(Matrix(StatsBase.cov(estimator, returns, args...; kwargs...)))
         end
-        corr = _denoise_logo_mtx(returns, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Spearman
         corr = corspearman(returns)
-        corr = _denoise_logo_mtx(returns, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Kendall
         corr = corkendall(returns)
-        corr = _denoise_logo_mtx(returns, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method ∈ (:Abs_Pearson, :Abs_Semi_Pearson)
         estimation = opt.estimation
@@ -839,37 +840,37 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
             abs.(StatsBase.cov2cor(Matrix(StatsBase.cov(estimator, returns, args...;
                                                         kwargs...))))
         end
-        corr = _denoise_logo_mtx(returns, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif method == :Abs_Spearman
         corr = abs.(corspearman(returns))
-        corr = _denoise_logo_mtx(returns, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif method == :Abs_Kendall
         corr = abs.(corkendall(returns))
-        corr = _denoise_logo_mtx(returns, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif method == :Gerber0
         corr = cov2cor(covgerber0(returns, opt.gerber))
-        corr = _denoise_logo_mtx(returns, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Gerber1
         corr = cov2cor(covgerber1(returns, opt.gerber))
-        corr = _denoise_logo_mtx(returns, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Gerber2
         corr = cov2cor(covgerber2(returns, opt.gerber))
-        corr = _denoise_logo_mtx(returns, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Distance
         corr = cordistance(returns)
-        corr = _denoise_logo_mtx(returns, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif method == :Mutual_Info
         corr, dist = mut_var_info_mtx(returns, opt.estimation.bins_info)
     elseif method == :Tail
         corr = ltdi_mtx(returns, opt.estimation.alpha)
-        corr = _denoise_logo_mtx(returns, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = -log.(corr)
     elseif method == :Cov_to_Cor
         estimation = opt.estimation
@@ -1492,7 +1493,7 @@ end
 function _Pi(eq, delta, sigma, w, mu, rf)
     return eq ? delta * sigma * w : mu .- rf
 end
-function _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta)
+function _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, opt)
     inv_tau_sigma = (tau * sigma) \ I
     inv_omega = omega \ I
     Pi_ = ((inv_tau_sigma + transpose(P) * inv_omega * P) \ I) *
@@ -1501,6 +1502,9 @@ function _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta)
 
     mu = Pi_ .+ rf
     cov_mtx = sigma + M
+
+    cov_mtx = _denoise_logo_mtx(T, N, cov_mtx, opt, :cov)
+
     w = ((delta * cov_mtx) \ I) * Pi_
 
     return mu, cov_mtx, w, Pi_
@@ -1519,7 +1523,9 @@ function black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::Abstract
     omega = _omega(P, tau * sigma)
     Pi = _Pi(eq, delta, sigma, w, mu, rf)
 
-    mu, cov_mtx, w, missing = _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta)
+    T, N = size(returns)
+    mu, cov_mtx, w, missing = _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N,
+                                        bl_opt)
 
     return mu, cov_mtx, w
 end
@@ -1589,6 +1595,8 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
                                    Q_f::Union{AbstractVector, Nothing} = nothing,
                                    cov_opt::CovOpt                     = CovOpt(;),
                                    mu_opt::MuOpt                       = MuOpt(;),
+                                   f_cov_opt::CovOpt                   = CovOpt(;),
+                                   f_mu_opt::MuOpt                     = MuOpt(;),
                                    bl_opt::BLOpt                       = BLOpt(;))
     asset_tuple = (!isnothing(P), !isnothing(Q))
     any_asset_provided = any(asset_tuple)
@@ -1616,7 +1624,7 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
     end
 
     if all_factor_provided
-        sigma_f, mu_f = covar_mtx_mean_vec(F; cov_opt = cov_opt, mu_opt = mu_opt)
+        sigma_f, mu_f = covar_mtx_mean_vec(F; cov_opt = f_cov_opt, mu_opt = f_mu_opt)
     end
 
     constant = bl_opt.constant
@@ -1662,16 +1670,17 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
         Pi_a = _Pi(eq, delta, vcat(sigma, sigma_f * transpose(B)), w, vcat(mu, mu_f), rf)
     end
 
+    T, N = size(returns)
     mu_a, cov_mtx_a, w_a, Pi_a_ = _mu_cov_w(tau, omega_a, P_a, Pi_a, Q_a, rf, sigma_a,
-                                            delta)
+                                            delta, T, N, bl_opt)
 
     if !all_asset_provided && all_factor_provided
         mu_a = B * mu_a
         cov_mtx_a = B * cov_mtx_a * transpose(B)
+        cov_mtx_a = _denoise_logo_mtx(T, N, cov_mtx_a, bl_opt, :cov)
         w_a = ((delta * cov_mtx_a) \ I) * B * Pi_a_
     end
 
-    N = size(returns, 2)
     if all_factor_provided && constant
         mu_a = mu_a[1:N] .+ alpha
     end
@@ -1845,6 +1854,8 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
                                            loadings_opt::LoadingsOpt           = LoadingsOpt(;),
                                            cov_opt::CovOpt                     = CovOpt(;),
                                            mu_opt::MuOpt                       = MuOpt(;),
+                                           f_cov_opt::CovOpt                   = CovOpt(;),
+                                           f_mu_opt::MuOpt                     = MuOpt(;),
                                            bl_opt::BLOpt                       = BLOpt(;))
     returns = portfolio.returns
     F = portfolio.f_returns
@@ -1864,8 +1875,14 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
     end
 
     if isnothing(B)
-        B = loadings_matrix(DataFrame(F, portfolio.f_assets),
-                            DataFrame(returns, portfolio.assets), loadings_opt)
+        if isempty(portfolio.loadings)
+            portfolio.loadings = loadings_matrix(DataFrame(F, portfolio.f_assets),
+                                                 DataFrame(returns, portfolio.assets),
+                                                 loadings_opt)
+        end
+        B = portfolio.loadings
+    else
+        portfolio.loadings = B
     end
     namesB = names(B)
     bl_opt.constant = "const" ∈ namesB
@@ -1877,6 +1894,7 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
     else
         augmented_black_litterman(returns, w; F = F, B = B, P = P, P_f = P_f, Q = Q,
                                   Q_f = Q_f, cov_opt = cov_opt, mu_opt = mu_opt,
+                                  f_cov_opt = f_cov_opt, f_mu_opt = f_mu_opt,
                                   bl_opt = bl_opt)
     end
 

@@ -18,7 +18,7 @@ l = 2.0
     cov_f_opt = CovOpt(; posdef = posdef)
     cov_fm_opt = CovOpt(; posdef = posdef)
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
-                       factor_opt = factor_opt,)
+                       factor_opt = factor_opt)
     cov_f1 = portfolio.cov_f
     mu_f1 = portfolio.mu_f
     cov_fm1 = portfolio.cov_fm
