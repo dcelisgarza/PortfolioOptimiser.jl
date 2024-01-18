@@ -69,6 +69,8 @@ end
     w23 = owa_l_moment_crm(200; k = 2, method = :SD, max_phi = 0.75, solvers = solvers)
     w24 = owa_l_moment_crm(200; k = 4, method = :SD, max_phi = 0.75, solvers = solvers)
 
+    w25 = owa_l_moment_crm(200; k = 4, method = :SD, max_phi = 0.75, solvers = solvers)
+
     w1t = [-0.005, -0.004949748743718593, -0.004899497487437186, -0.004849246231155779,
            -0.004798994974874372, -0.004748743718592965, -0.004698492462311558,
            -0.004648241206030151, -0.0045979899497487434, -0.0045477386934673365,
@@ -958,4 +960,5 @@ end
     @test !isapprox(w24, w3)
     @test !isapprox(w24, w2)
     @test !isapprox(w24, w1)
+    @test isapprox(w25, w4)
 end

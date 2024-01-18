@@ -88,13 +88,14 @@ function plot_risk_contribution(
     end
 
     title = "Risk Contribution - $(RiskMeasureNames[rm]) ($(rm))"
-    if rm ∈ (:CVaR, :TG, :EVaR, :RVaR, :RCVaR, :RTG, :CDaR, :EDaR, :RDaR)
+    if rm ∈ (:CVaR, :TG, :EVaR, :RVaR, :RCVaR, :RTG, :CDaR, :EDaR, :RDaR, :CDaR_r, :EDaR_r,
+             :RDaR_r)
         title *= " α = $(round(alpha*100, digits=2))%"
     end
     if rm ∈ (:RCVaR, :RTG)
         title *= ", β = $(round(beta*100, digits=2))%"
     end
-    if rm ∈ (:RVaR, :RDaR)
+    if rm ∈ (:RVaR, :RDaR, :RDaR_r)
         title *= ", κ = $(round(kappa, digits=2))"
     end
 

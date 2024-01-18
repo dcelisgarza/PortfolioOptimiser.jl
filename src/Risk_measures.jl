@@ -1238,12 +1238,6 @@ function calc_risk(portfolio::AbstractPortfolio;
                    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                    rm::Symbol = :SD, rf::Real = 0.0,
                    owa_w::AbstractVector{<:Real} = portfolio.owa_w)
-    if isa(portfolio, Portfolio)
-        @smart_assert(type in PortTypes)
-    else
-        @smart_assert(type in HCPortTypes)
-    end
-
     return calc_risk(portfolio.optimal[type].weights, portfolio.returns; rm = rm, rf = rf,
                      sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
                      alpha = portfolio.alpha, a_sim = portfolio.a_sim,
@@ -1404,17 +1398,7 @@ end
 function risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
                            type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                            rm::Symbol = :SD, rf::Real = 0.0,
-                           owa_w = if isa(portfolio, Portfolio)
-                               portfolio.owa_w
-                           else
-                               Vector{Float64}(undef, 0)
-                           end)
-    if isa(portfolio, Portfolio)
-        @smart_assert(type in PortTypes)
-    else
-        @smart_assert(type in HCPortTypes)
-    end
-
+                           owa_w::AbstractVector{<:Real} = portfolio.owa_w)
     return risk_contribution(portfolio.optimal[type].weights, portfolio.returns; rm = rm,
                              rf = rf, sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
                              alpha = portfolio.alpha, a_sim = portfolio.a_sim,
@@ -1424,13 +1408,17 @@ function risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
 end
 
 function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMatrix;
-                      rm::Symbol = :SD, rf::Real = 0.0,
+                      rm::Symbol = :SD, rf::Real = 0.0, kelly = false,
                       sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                       alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100,
                       beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                       kappa::Real = 0.3, owa_w = Vector{Float64}(undef, 0),
                       solvers::Union{<:AbstractDict, Nothing} = nothing)
-    ret = dot(mu, w)
+    ret = if kelly
+        1 / size(returns, 1) * sum(log.(1 .+ returns * w))
+    else
+        dot(mu, w)
+    end
 
     risk = calc_risk(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
                      alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
@@ -1442,17 +1430,7 @@ end
 function sharpe_ratio(portfolio::AbstractPortfolio;
                       type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                       rm::Symbol = :SD, rf::Real = 0.0,
-                      owa_w = if isa(portfolio, Portfolio)
-                          portfolio.owa_w
-                      else
-                          Vector{Float64}(undef, 0)
-                      end)
-    if isa(portfolio, Portfolio)
-        @smart_assert(type in PortTypes)
-    else
-        @smart_assert(type in HCPortTypes)
-    end
-
+                      owa_w::AbstractVector{<:Real} = portfolio.owa_w)
     return sharpe_ratio(portfolio.optimal[type].weights, portfolio.mu, portfolio.returns;
                         rm = rm, rf = rf, sigma = portfolio.cov,
                         alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,

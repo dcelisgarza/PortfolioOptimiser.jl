@@ -1042,6 +1042,12 @@ end
               for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
              for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
+    sharpes1 = (rets1 .- rf) ./ risks1
+    sharpes1t = [sharpe_ratio(fw1[:weights][!, i], portfolio.mu, portfolio.returns;
+                              rm = :SKurt, rf = rf, kelly = false)
+                 for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
+    @test isapprox(sharpes1, sharpes1t)
+
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
     risks1[(idx + 1):end] = risks1[idx:(end - 1)]
@@ -1090,6 +1096,12 @@ end
     rets3 = [1 / size(portfolio.returns, 1) *
              sum(log.(1 .+ portfolio.returns * fw3[:weights][!, i]))
              for i ∈ 2:size(Matrix(fw3[:weights]), 2)]
+    sharpes3 = (rets3 .- rf) ./ risks3
+    sharpes3t = [sharpe_ratio(fw3[:weights][!, i], portfolio.mu, portfolio.returns;
+                              rm = :CDaR, rf = rf, kelly = true)
+                 for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
+    @test isapprox(sharpes3, sharpes3t)
+
     idx = findlast(x -> x < risks3[end], risks3) + 1
     tmp = risks3[end]
     risks3[(idx + 1):end] = risks3[idx:(end - 1)]
@@ -1112,4 +1124,17 @@ end
     @test isapprox(fw3[:weights][!, 2], w7.weights)
     @test isapprox(fw3[:weights][!, end - 1], w8.weights)
     @test isapprox(fw3[:weights][!, end], w9.weights)
+end
+
+@testset "Efficient frontier, sharpe ratio" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75)),
+                                                :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                               :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+
+    fw = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
+                             rm = :SKurt, points = 25)
 end

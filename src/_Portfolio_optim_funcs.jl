@@ -1895,7 +1895,7 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
                           obj = :Min_Risk, rf = rf, rm = rm, save_opt_params = false)
         else
             if !isempty(w)
-                (w_ini = w.weights)
+                w_ini = w.weights
             end
             if j != length(risks)
                 setproperty!(portfolio, rmf, r)

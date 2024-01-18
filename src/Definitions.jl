@@ -348,15 +348,27 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
                           SLPM = "Second Lower Partial Moment", WR = "Worst Realisation",
                           CVaR = "Conditional Value at Risk",
                           EVaR = "Entropic Value at Risk",
-                          RVaR = "Relativistic Value at Risk", MDD = "Max Drawdown",
-                          ADD = "Average Drawdown", CDaR = "Conditional Drawdown at Risk",
-                          UCI = "Ulcer Index", EDaR = "Entropic Drawdown at Risk",
-                          RDaR = "Relativistic Drawdown at Risk",
+                          RVaR = "Relativistic Value at Risk",
+                          MDD = "Uncompounded Max Drawdown",
+                          ADD = "Uncompounded Average Drawdown",
+                          CDaR = "Conditional Uncompounded Drawdown at Risk",
+                          UCI = "Uncompounded Ulcer Index",
+                          EDaR = "Entropic Uncompounded Drawdown at Risk",
+                          RDaR = "Relativistic Uncompounded Drawdown at Risk",
                           Kurt = "Square Root Kurtosis",
                           SKurt = "Square Root Semi Kurtosis", GMD = "Gini Mean Difference",
                           RG = "Range", RCVaR = "Conditional Value at Risk Range",
                           TG = "Tail Gini", RTG = "Tail Gini Range",
-                          OWA = "Ordered Weight Average")
+                          OWA = "Ordered Weight Average", Variance = "Variance",
+                          Equal = "Equal Risk", VaR = "Value at Risk",
+                          DaR = "Uncompounded Drawdown at Risk",
+                          DaR_r = "Compounded Drawdown at Risk",
+                          MDD_r = "Compounded Max Drawdown",
+                          ADD_r = "Compounded Average Drawdown",
+                          CDaR_r = "Conditional Uncompounded Drawdown at Risk",
+                          UCI_r = "Compounded Ulcer Index",
+                          EDaR_r = "Entropic Compounded Drawdown at Risk",
+                          RDaR_r = "Relativistic Compounded Drawdown at Risk")
 
 function _sigdom(sym::Symbol)
     return if sym == :a
