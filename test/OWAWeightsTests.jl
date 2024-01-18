@@ -69,6 +69,8 @@ end
     w23 = owa_l_moment_crm(200; k = 2, method = :SD, max_phi = 0.75, solvers = solvers)
     w24 = owa_l_moment_crm(200; k = 4, method = :SD, max_phi = 0.75, solvers = solvers)
 
+    solvers = OrderedDict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
+                                         :params => Dict("log_to_console" => false)))
     w25 = owa_l_moment_crm(200; k = 4, method = :SD, max_phi = 0.75, solvers = solvers)
 
     w1t = [-0.005, -0.004949748743718593, -0.004899497487437186, -0.004849246231155779,
