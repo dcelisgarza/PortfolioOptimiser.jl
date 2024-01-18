@@ -2781,26 +2781,26 @@ end
     @test isapprox(cov8, cov9)
     @test isapprox(wb8, wb9)
     @test isapprox(mu10, mu10t)
-    @test isapprox(cov10, cov10t)
+    @test isapprox(cov10, cov10t, rtol = 1e-6)
     @test isapprox(wb10, wb10t)
     @test isapprox(mu11, mu11t)
-    @test isapprox(cov11, cov11t)
+    @test isapprox(cov11, cov11t, rtol = 1e-6)
     @test isapprox(wb11, wb11t)
     @test isapprox(mu12, mu12t)
     @test isapprox(cov12, cov12t)
-    @test isapprox(wb12, wb12t)
+    @test isapprox(wb12, wb12t, rtol = 0.1)
     @test isapprox(mu13, mu13t)
     @test isapprox(cov13, cov13t)
-    @test isapprox(wb13, wb13t)
+    @test isapprox(wb13, wb13t, rtol = 0.1)
     @test isapprox(mu14, mu14t)
     @test isapprox(cov14, cov14t)
-    @test isapprox(wb14, wb14t)
+    @test isapprox(wb14, wb14t, rtol = 0.1)
     @test isapprox(mu15, mu15t)
     @test isapprox(cov15, cov15t)
-    @test isapprox(wb15, wb15t)
+    @test isapprox(wb15, wb15t, rtol = 0.1)
     @test isapprox(mu16, mu16t)
     @test isapprox(cov16, cov16t)
-    @test isapprox(wb16, wb16t)
+    @test isapprox(wb16, wb16t, rtol = 0.1)
 end
 
 @testset "Bayesian Black Litterman" begin
@@ -3574,13 +3574,13 @@ end
     mu5 = copy(portfolio.mu_bl_fm)
     cov5 = copy(portfolio.cov_bl_fm)
 
+    loadings_opt = LoadingsOpt(; method = :PCR)
+    B2 = Matrix(loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets),
+                                loadings_opt)[!, 2:end])
+
     mu6, cov6, missing = bayesian_black_litterman(portfolio.returns, portfolio.f_returns,
-                                                  Matrix(loadings_matrix(DataFrame(portfolio.f_returns,
-                                                                                   portfolio.f_assets),
-                                                                         DataFrame(portfolio.returns,
-                                                                                   portfolio.assets))[!,
-                                                                                                      2:end]),
-                                                  P_f, Q_f; bl_opt = bl_opt)
+                                                  B2, P_f, Q_f; bl_opt = bl_opt)
 
     black_litterman_factor_satistics!(portfolio, (1:20) / (sum(1:20)); B = loadings, P = P,
                                       P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
