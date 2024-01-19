@@ -52,23 +52,19 @@ l = 2.0
     w5 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
     w6 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
 
-    display([w1.weights w_min w1.weights .>= w_min])
-    display([w2.weights w_min w2.weights .>= w_min])
-    display([w5.weights 0.03 w5.weights .>= 0.03])
+    @test all(abs.(w1.weights .- w_min) .>= eps() / norm(w1.weights))
+    @test all(abs.(w1.weights .- w_max) .<= eps() / norm(w1.weights))
+    @test all(abs.(w2.weights .- w_min) .>= eps() / norm(w2.weights))
+    @test all(abs.(w2.weights .- w_max) .<= eps() / norm(w2.weights))
+    @test all(abs.(w3.weights .- w_min) .>= eps() / norm(w3.weights))
+    @test !all(abs.(w3.weights .- w_max) .<= eps() / norm(w3.weights))
 
-    @test all(w1.weights .>= w_min)
-    @test all(w1.weights .<= w_max)
-    @test all(w2.weights .>= w_min)
-    @test all(w2.weights .<= w_max)
-    @test all(w3.weights .>= w_min)
-    @test !all(w3.weights .<= w_max)
-
-    @test all(w4.weights .>= 0.03)
-    @test all(w4.weights .<= 0.07)
-    @test all(w5.weights .>= 0.03)
-    @test all(w5.weights .<= 0.07)
-    @test all(w6.weights .>= 0.03)
-    @test !all(w6.weights .<= 0.07)
+    @test all(w4.abs.(weights .- 0.03) .>= eps() / norm(w4.weights))
+    @test all(w4.abs.(weights .- 0.07) .<= eps() / norm(w4.weights))
+    @test all(w5.abs.(weights .- 0.03) .>= eps() / norm(w5.weights))
+    @test all(w5.abs.(weights .- 0.07) .<= eps() / norm(w5.weights))
+    @test all(w6.abs.(weights .- 0.03) .>= eps() / norm(w6.weights))
+    @test !all(w6.abs.(weights .- 0.07) .<= eps() / norm(w6.weights))
 end
 
 @testset "$(:HRP), $(:HERC), $(:Variance)" begin
