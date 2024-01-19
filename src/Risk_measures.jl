@@ -1154,7 +1154,7 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
                    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                    kappa::Real = 0.3,
                    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                   solvers::Union{<:AbstractDict, Nothing} = nothing)
+                   solvers::Union{<:AbstractDict,Nothing} = nothing)
     @smart_assert(rm in HCRiskMeasures)
 
     x = (rm != :Variance || rm != :SD) && returns * w
@@ -1370,7 +1370,7 @@ function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbo
                            beta_i::Real = alpha_i, beta::Real = alpha,
                            b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
                            owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                           solvers::Union{<:AbstractDict, Nothing} = nothing)
+                           solvers::Union{<:AbstractDict,Nothing} = nothing)
     ew = eltype(w)
     rc = zeros(ew, length(w))
     w1 = zeros(ew, length(w))
@@ -1408,12 +1408,19 @@ function risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
 end
 
 function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMatrix;
-                      rm::Symbol = :SD, rf::Real = 0.0, kelly = false,
-                      sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                      alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100,
-                      beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
-                      kappa::Real = 0.3, owa_w = Vector{Float64}(undef, 0),
-                      solvers::Union{<:AbstractDict, Nothing} = nothing)
+                      rm::Symbol                             = :SD,
+                      rf::Real                               = 0.0,
+                      kelly                                  = false,
+                      sigma::AbstractMatrix                  = Matrix{Float64}(undef, 0, 0),
+                      alpha_i::Real                          = 0.0001,
+                      alpha::Real                            = 0.05,
+                      a_sim::Int                             = 100,
+                      beta_i::Real                           = alpha_i,
+                      beta::Real                             = alpha,
+                      b_sim::Integer                         = a_sim,
+                      kappa::Real                            = 0.3,
+                      owa_w                                  = Vector{Float64}(undef, 0),
+                      solvers::Union{<:AbstractDict,Nothing} = nothing)
     ret = if kelly
         1 / size(returns, 1) * sum(log.(1 .+ returns * w))
     else
@@ -1430,9 +1437,9 @@ end
 function sharpe_ratio(portfolio::AbstractPortfolio;
                       type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                       rm::Symbol = :SD, rf::Real = 0.0,
-                      owa_w::AbstractVector{<:Real} = portfolio.owa_w)
+                      owa_w::AbstractVector{<:Real} = portfolio.owa_w, kelly = false)
     return sharpe_ratio(portfolio.optimal[type].weights, portfolio.mu, portfolio.returns;
-                        rm = rm, rf = rf, sigma = portfolio.cov,
+                        rm = rm, rf = rf, kelly = kelly, sigma = portfolio.cov,
                         alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
                         a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
                         beta = portfolio.beta, b_sim = portfolio.b_sim,

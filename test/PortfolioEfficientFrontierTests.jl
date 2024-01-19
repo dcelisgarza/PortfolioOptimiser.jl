@@ -1029,12 +1029,16 @@ end
     w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
                    obj = :Min_Risk, kelly = :None,)
+    sr1 = sharpe_ratio(portfolio; rf = rf, rm = :SKurt)
     w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
                    obj = :Max_Ret, kelly = :None,)
+    sr2 = sharpe_ratio(portfolio; rf = rf, rm = :SKurt)
     w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt, obj = :Sharpe,
                    kelly = :None,)
+    sr3 = sharpe_ratio(portfolio; rf = rf, rm = :SKurt)
+
     fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
                               rm = :SKurt, points = 25,)
     risks1 = [calc_risk(fw1[:weights][!, i], portfolio.returns; rm = :SKurt, rf = rf,
@@ -1046,7 +1050,6 @@ end
     sharpes1t = [sharpe_ratio(fw1[:weights][!, i], portfolio.mu, portfolio.returns;
                               rm = :SKurt, rf = rf, kelly = false)
                  for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
-    @test isapprox(sharpes1, sharpes1t)
 
     idx = findlast(x -> x < risks1[end], risks1) + 1
     tmp = risks1[end]
@@ -1082,12 +1085,15 @@ end
     w7 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR,
                    obj = :Min_Risk, kelly = :Exact,)
+    sr7 = sharpe_ratio(portfolio; rf = rf, rm = :CDaR, kelly = true)
     w8 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR, obj = :Max_Ret,
                    kelly = :Exact,)
+    sr8 = sharpe_ratio(portfolio; rf = rf, rm = :CDaR, kelly = true)
     w9 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                    rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR, obj = :Sharpe,
                    kelly = :Exact,)
+    sr9 = sharpe_ratio(portfolio; rf = rf, rm = :CDaR, kelly = true)
     fw3 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :Exact,
                               rf = rf, rm = :CDaR, points = 25,)
     risks3 = [calc_risk(fw3[:weights][!, i], portfolio.returns; rm = :CDaR, rf = rf,
@@ -1100,7 +1106,6 @@ end
     sharpes3t = [sharpe_ratio(fw3[:weights][!, i], portfolio.mu, portfolio.returns;
                               rm = :CDaR, rf = rf, kelly = true)
                  for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
-    @test isapprox(sharpes3, sharpes3t)
 
     idx = findlast(x -> x < risks3[end], risks3) + 1
     tmp = risks3[end]
@@ -1109,6 +1114,10 @@ end
     tmp = rets3[end]
     rets3[(idx + 1):end] = rets3[idx:(end - 1)]
     rets3[idx] = tmp
+    @test isapprox(sharpes1, sharpes1t)
+    @test isapprox(sharpes1[1], sr1)
+    @test isapprox(sharpes1[end - 1], sr2)
+    @test isapprox(sharpes1[end], sr3)
     @test reduce(<=, risks1)
     @test reduce(<=, rets1)
     @test isapprox(fw1[:weights][!, 2], w1.weights)
@@ -1119,6 +1128,10 @@ end
     @test isapprox(fw2[:weights][!, 2], w4.weights)
     @test isapprox(fw2[:weights][!, end - 1], w5.weights)
     @test isapprox(fw2[:weights][!, end], w6.weights)
+    @test isapprox(sharpes3, sharpes3t)
+    @test isapprox(sharpes3[1], sr7)
+    @test isapprox(sharpes3[end - 1], sr8)
+    @test isapprox(sharpes3[end], sr9)
     @test reduce(<=, risks3)
     @test reduce(<=, rets3)
     @test isapprox(fw3[:weights][!, 2], w7.weights)
