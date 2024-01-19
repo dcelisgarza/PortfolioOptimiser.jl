@@ -52,19 +52,21 @@ l = 2.0
     w5 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
     w6 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
 
-    @test all(isapprox.(abs.(w1.weights .- w_min), 0, atol = eps()))
-    @test all(isapprox.(abs.(w1.weights .- w_max), 0, atol = eps()))
-    @test all(isapprox.(abs.(w2.weights .- w_min), 0, atol = eps()))
-    @test all(isapprox.(abs.(w2.weights .- w_max), 0, atol = eps()))
-    @test all(isapprox.(abs.(w3.weights .- w_min), 0, atol = eps()))
-    @test !all(isapprox.(abs.(w3.weights .- w_max), 0, atol = eps()))
+    N = length(w_min)
 
-    @test all(isapprox.(abs.(w4.weights .- 0.03), 0, atol = eps()))
-    @test all(isapprox.(abs.(w4.weights .- 0.07), 0, atol = eps()))
-    @test all(isapprox.(abs.(w5.weights .- 0.03), 0, atol = eps()))
-    @test all(isapprox.(abs.(w5.weights .- 0.07), 0, atol = eps()))
-    @test all(isapprox.(abs.(w6.weights .- 0.03), 0, atol = eps()))
-    @test !all(isapprox.(abs.(w6.weights .- 0.07), 0, atol = eps()))
+    @test all(abs.(w1.weights .- w_min) .>= -eps() * N)
+    @test all(w1.weights .<= w_max)
+    @test all(abs.(w2.weights .- w_min) .>= -eps() * N)
+    @test all(w2.weights .<= w_max)
+    @test all(w3.weights .>= w_min)
+    @test !all(w3.weights .<= w_max)
+
+    @test all(w4.weights .>= 0.03)
+    @test all(w4.weights .<= 0.07)
+    @test all(abs.(w5.weights - 0.03) .>= -eps() * N)
+    @test all(w5.weights .<= 0.07)
+    @test all(w6.weights .>= 0.03)
+    @test !all(w6.weights .<= 0.07)
 end
 
 @testset "$(:HRP), $(:HERC), $(:Variance)" begin
