@@ -1,5 +1,5 @@
-using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
-      Statistics, Test, TimeSeries
+using COSMO, CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, OrderedCollections,
+      PortfolioOptimiser, Statistics, Test, TimeSeries
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
