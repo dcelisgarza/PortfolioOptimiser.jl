@@ -52,23 +52,21 @@ l = 2.0
     w5 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
     w6 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
 
-    println(w1.weights .- w_min)
-    println(w2.weights .- w_min)
-    println(w5.weights .- 0.03)
+    N = length(w_min)
 
-    @test all(abs.(w1.weights .- w_min) .+ norm(w1.weights) * eps() .>= 0)
-    @test all(abs.(w1.weights .- w_max) .- norm(w1.weights) * eps() .<= 0)
-    @test all(abs.(w2.weights .- w_min) .+ norm(w2.weights) * eps() .>= 0)
-    @test all(abs.(w2.weights .- w_max) .- norm(w2.weights) * eps() .<= 0)
-    @test all(abs.(w3.weights .- w_min) .+ norm(w3.weights) * eps() .>= 0)
-    @test !all(abs.(w3.weights .- w_max) .- norm(w3.weights) * eps() .<= 0)
+    @test all(abs.(w1.weights .- w_min) .+ N * norm(w1.weights) * eps() .>= 0)
+    @test all(abs.(w1.weights .- w_max) .- N * norm(w1.weights) * eps() .<= 0)
+    @test all(abs.(w2.weights .- w_min) .+ N * norm(w2.weights) * eps() .>= 0)
+    @test all(abs.(w2.weights .- w_max) .- N * norm(w2.weights) * eps() .<= 0)
+    @test all(abs.(w3.weights .- w_min) .+ N * norm(w3.weights) * eps() .>= 0)
+    @test !all(abs.(w3.weights .- w_max) .- N * norm(w3.weights) * eps() .<= 0)
 
-    @test all(abs.(w4.weights .- 0.03) .+ norm(w4.weights) * eps() .>= 0)
-    @test all(abs.(w4.weights .- 0.07) .- norm(w4.weights) * eps() .<= 0)
-    @test all(abs.(w5.weights .- 0.03) .+ norm(w5.weights) * eps() .>= 0)
-    @test all(abs.(w5.weights .- 0.07) .- norm(w5.weights) * eps() .<= 0)
-    @test all(abs.(w6.weights .- 0.03) .+ norm(w6.weights) * eps() .>= 0)
-    @test !all(abs.(w6.weights .- 0.07) .- norm(w6.weights) * eps() .<= 0)
+    @test all(abs.(w4.weights .- 0.03) .+ N * norm(w4.weights) * eps() .>= 0)
+    @test all(abs.(w4.weights .- 0.07) .- N * norm(w4.weights) * eps() .<= 0)
+    @test all(abs.(w5.weights .- 0.03) .+ N * norm(w5.weights) * eps() .>= 0)
+    @test all(abs.(w5.weights .- 0.07) .- N * norm(w5.weights) * eps() .<= 0)
+    @test all(abs.(w6.weights .- 0.03) .+ N * norm(w6.weights) * eps() .>= 0)
+    @test !all(abs.(w6.weights .- 0.07) .- N * norm(w6.weights) * eps() .<= 0)
 end
 
 @testset "$(:HRP), $(:HERC), $(:Variance)" begin
