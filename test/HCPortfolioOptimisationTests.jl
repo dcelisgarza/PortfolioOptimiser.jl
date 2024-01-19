@@ -63,7 +63,7 @@ l = 2.0
 
     @test all(w4.weights .>= 0.03)
     @test all(w4.weights .<= 0.07)
-    @test all(abs.(w5.weights - 0.03) .>= -eps() * N)
+    @test all(abs.(w5.weights .- 0.03) .>= -eps() * N)
     @test all(w5.weights .<= 0.07)
     @test all(w6.weights .>= 0.03)
     @test !all(w6.weights .<= 0.07)
