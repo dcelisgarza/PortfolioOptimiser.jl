@@ -126,9 +126,6 @@ l = 2.0
            1.4791276765504043e-8, 1.680293193933981e-8, 1.1387164479269213e-17,
            2.3098462931653324e-16, 4.22220643620723e-17]
 
-    w7t = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-           0.0, 0.0, 0.0, 0.0]
-
     w8t = [0.10674711120788978, 0.2478587140361753, 0.04025051740769016,
            0.010027673585497318, 0.061272541192852345, 1.0634666203827151e-13,
            4.3276399906074224e-11, 3.06285073774096e-11, 5.473553984356847e-14,
@@ -160,10 +157,10 @@ l = 2.0
     @test isapprox(w4.weights, w4t, rtol = 1.0e-5)
     @test isapprox(w5.weights, w5t, rtol = 1.0e-7)
     @test isapprox(w6.weights, w6t)
-    @test isapprox(w7.weights, w7t)
+    @test isempty(w7)
     @test isapprox(w8.weights, w8t, rtol = 1.0e-6)
-    @test isapprox(w9.weights, w9t, rtol = 1.0e-6)
-    @test isapprox(w10.weights, w10t)
+    @test isempty(w9)
+    @test isempty(w10)
     @test isapprox(w11.weights, w11t, rtol = 1.0)
     @test isapprox(w1.weights, w12.weights)
     @test isapprox(w2.weights, w13.weights)
@@ -171,10 +168,10 @@ l = 2.0
     @test isapprox(w4.weights, w15.weights)
     @test isapprox(w5.weights, w16.weights)
     @test isapprox(w6.weights, w17.weights)
-    @test isapprox(w7.weights, w18.weights)
+    @test isempty(w18)
     @test isapprox(w8.weights, w19.weights)
     @test isapprox(w9.weights, w20.weights)
-    @test isapprox(w10.weights, w21.weights)
+    @test isempty(w21)
     @test isapprox(w11.weights, w22.weights)
     @test isapprox(w1.weights, w23.weights)
     @test isapprox(w2.weights, w24.weights)
@@ -182,10 +179,10 @@ l = 2.0
     @test isapprox(w4.weights, w26.weights)
     @test isapprox(w5.weights, w27.weights)
     @test isapprox(w6.weights, w28.weights)
-    @test isapprox(w7.weights, w29.weights)
+    @test isempty(w29)
     @test isapprox(w8.weights, w30.weights)
     @test isapprox(w9.weights, w31.weights)
-    @test isapprox(w10.weights, w32.weights)
+    @test isempty(w32)
     @test isapprox(w11.weights, w33.weights)
 end
 
@@ -312,9 +309,9 @@ end
     @test isapprox(w6.weights, w6t)
     @test isapprox(w7.weights, w7t, rtol = 0.001)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t, rtol = 1.0e-6)
+    @test isempty(w9)
     @test isapprox(w10.weights, w10t, rtol = 0.001)
-    @test isapprox(w11.weights, w11t, rtol = 0.5)
+    @test isemtpy(w11)
 end
 
 @testset "$(:HRP), $(:HERC), $(:NCO), $(:RCVaR)" begin
@@ -440,7 +437,7 @@ end
     @test isapprox(w6.weights, w6t)
     @test isapprox(w7.weights, w7t, rtol = 1)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t, rtol = 1.0e-7)
+    @test isempty(w9)
     @test isapprox(w10.weights, w10t, rtol = 0.01)
     @test isapprox(w11.weights, w11t, rtol = 1.0)
 end
@@ -560,9 +557,9 @@ end
     @test isapprox(w6.weights, w6t)
     @test isapprox(w7.weights, w7t, rtol = 1.0)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t, rtol = 1.0e-6)
+    @test isempty(w9)
     @test isapprox(w10.weights, w10t, rtol = 0.001)
-    @test isapprox(w11.weights, w11t, rtol = 0.1)
+    @test isempty(w11)
 end
 
 @testset "$(:HRP), $(:HERC), $(:NCO), $(:RTG)" begin
@@ -676,9 +673,9 @@ end
     @test isapprox(w4.weights, w4t, rtol = 1.0e-6)
     @test isapprox(w5.weights, w5t)
     @test isapprox(w6.weights, w6t)
-    @test isapprox(w7.weights, w7t)
+    @test isempty(w7)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t, rtol = 1.0e-6)
+    @test isempty(w9)
     @test isapprox(w10.weights, w10t)
-    @test isapprox(w11.weights, w11t, rtol = 1.0)
+    @test isempty(w11)
 end

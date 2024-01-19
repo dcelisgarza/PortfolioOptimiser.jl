@@ -45,7 +45,7 @@ function _opt_w(portfolio, assets, returns, imu, icov; obj = :Min_Risk, kelly = 
     end
 
     if near_opt && iszero(M)
-        (M = ceil(sqrt(size(portfolio.returns, 2))))
+        M = ceil(sqrt(size(portfolio.returns, 2)))
     end
 
     weights = if obj != :Equal
@@ -211,23 +211,23 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0, upper_bound = nothi
     return weights
 end
 
-struct ClusterNode{tid, tl, tr, td, tcnt}
+struct ClusterNode{tid,tl,tr,td,tcnt}
     id::tid
     left::tl
     right::tr
     dist::td
     count::tcnt
 
-    function ClusterNode(id, left::Union{ClusterNode, Nothing} = nothing,
-                         right::Union{ClusterNode, Nothing} = nothing, dist::Real = 0.0,
+    function ClusterNode(id, left::Union{ClusterNode,Nothing} = nothing,
+                         right::Union{ClusterNode,Nothing} = nothing, dist::Real = 0.0,
                          count::Int = 1)
         icount = isnothing(left) ? count : (left.count + right.count)
 
-        return new{typeof(id), typeof(left), typeof(right), typeof(dist), typeof(count)}(id,
-                                                                                         left,
-                                                                                         right,
-                                                                                         dist,
-                                                                                         icount)
+        return new{typeof(id),typeof(left),typeof(right),typeof(dist),typeof(count)}(id,
+                                                                                     left,
+                                                                                     right,
+                                                                                     dist,
+                                                                                     icount)
     end
 end
 export ClusterNode
@@ -406,7 +406,7 @@ function _intra_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf 
     clustering_idx = cutree(clustering; k = k)
 
     intra_weights = zeros(eltype(covariance), size(portfolio.returns, 2), k)
-    cfails = Dict{Int, Dict}()
+    cfails = Dict{Int,Dict}()
 
     for i ∈ 1:k
         idx = clustering_idx .== i
@@ -495,10 +495,14 @@ function _nco_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf = 
                                           near_opt = near_opt_o, M = M_o,
                                           asset_stat_kwargs = asset_stat_kwargs_o)
     if !isempty(intra_fails)
-        (portfolio.fail[:intra] = intra_fails)
+        portfolio.fail[:intra] = intra_fails
+    else
+        portfolio.fail[:intra] = Dict()
     end
     if !isempty(inter_fails)
-        (portfolio.fail[:inter] = inter_fails)
+        portfolio.fail[:inter] = inter_fails
+    else
+        portfolio.fail[:inter] = Dict()
     end
 
     return weights
@@ -642,10 +646,14 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, cluster::Bool = 
                                M_o = M_o)
     end
 
-    weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
-    weights ./= sum(weights)
-
-    portfolio.optimal[type] = DataFrame(; tickers = portfolio.assets, weights = weights)
+    if type == :NCO &&
+       (!isempty(portfolio.fail[:intra]) || !isempty(portfolio.fail[:inter]))
+        portfolio.optimal[type] = DataFrame()
+    else
+        weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
+        weights ./= sum(weights)
+        portfolio.optimal[type] = DataFrame(; tickers = portfolio.assets, weights = weights)
+    end
 
     return portfolio.optimal[type]
 end
