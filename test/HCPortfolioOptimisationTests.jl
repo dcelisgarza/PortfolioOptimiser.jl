@@ -6,6 +6,67 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Weight bounds" begin
+    portfolio = HCPortfolio(; prices = prices,
+                            solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                    :params => Dict("verbose" => false,
+                                                                                    "max_step_fraction" => 0.75)),
+                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                                 :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio; calc_kurt = false)
+
+    asset_sets = DataFrame("Asset" => portfolio.assets,
+                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                                       3, 1],
+                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
+                                        4, 2, 1],
+                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                                       2, 1],
+                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
+                                        2, 2, 1],
+                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
+                                        3, 4, 1],
+                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
+                                        4, 2, 2])
+
+    constraints = DataFrame("Enabled" => [true, true, true, true, true, true, false],
+                            "Type" => ["Asset", "Asset", "All Assets", "All Assets",
+                                       "Each Asset in Subset", "Each Asset in Subset",
+                                       "Asset"],
+                            "Set" => ["", "", "", "", "PDBHT", "Pward", ""],
+                            "Position" => ["WMT", "T", "", "", 3, 2, "AAPL"],
+                            "Sign" => [">=", "<=", ">=", "<=", ">=", "<=", ">="],
+                            "Weight" => [0.05, 0.04, 0.02, 0.07, 0.04, 0.08, 0.2])
+
+    w_min, w_max = hrp_constraints(constraints, asset_sets)
+
+    portfolio.w_min = w_min
+    portfolio.w_max = w_max
+    w1 = optimise!(portfolio; type = :HRP, rm = :CDaR, linkage = :ward)
+    w2 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
+    w3 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
+
+    portfolio.w_min = 0.03
+    portfolio.w_max = 0.07
+    w4 = optimise!(portfolio; type = :HRP, rm = :CDaR, cluster = false)
+    w5 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
+    w6 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
+
+    @test all(w1.weights .>= w_min)
+    @test all(w1.weights .<= w_max)
+    @test all(w2.weights .>= w_min)
+    @test all(w2.weights .<= w_max)
+    @test all(w3.weights .>= w_min)
+    @test !all(w3.weights .<= w_max)
+
+    @test all(w4.weights .>= 0.03)
+    @test all(w4.weights .<= 0.07)
+    @test all(w5.weights .>= 0.03)
+    @test all(w5.weights .<= 0.07)
+    @test all(w6.weights .>= 0.03)
+    @test !all(w6.weights .<= 0.07)
+end
+
 @testset "$(:HRP), $(:HERC), $(:Variance)" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
