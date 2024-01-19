@@ -52,27 +52,19 @@ l = 2.0
     w5 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
     w6 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
 
-    N = length(w_min)
+    @test all(isapprox.(abs.(w1.weights .- w_min), 0, atol = eps()))
+    @test all(isapprox.(abs.(w1.weights .- w_max), 0, atol = eps()))
+    @test all(isapprox.(abs.(w2.weights .- w_min), 0, atol = eps()))
+    @test all(isapprox.(abs.(w2.weights .- w_max), 0, atol = eps()))
+    @test all(isapprox.(abs.(w3.weights .- w_min), 0, atol = eps()))
+    @test !all(isapprox.(abs.(w3.weights .- w_max), 0, atol = eps()))
 
-    @test all(abs.(w1.weights .- w_min) .+ N / norm(abs.(w1.weights .- w_min)) * eps() .>=
-              0)
-    @test all(abs.(w1.weights .- w_max) .- N / norm(abs.(w1.weights .- w_max)) * eps() .<=
-              0)
-    @test all(abs.(w2.weights .- w_min) .+ N / norm(abs.(w2.weights .- w_min)) * eps() .>=
-              0)
-    @test all(abs.(w2.weights .- w_max) .- N / norm(abs.(w2.weights .- w_max)) * eps() .<=
-              0)
-    @test all(abs.(w3.weights .- w_min) .+ N / norm(abs.(w3.weights .- w_min)) * eps() .>=
-              0)
-    @test !all(abs.(w3.weights .- w_max) .- N / norm(abs.(w3.weights .- w_max)) * eps() .<=
-               0)
-
-    @test all(abs.(w4.weights .- 0.03) .+ N / norm(abs.(w4.weights .- 0.03)) * eps() .>= 0)
-    @test all(abs.(w4.weights .- 0.07) .- N / norm(abs.(w4.weights .- 0.07)) * eps() .<= 0)
-    @test all(abs.(w5.weights .- 0.03) .+ N / norm(abs.(w5.weights .- 0.03)) * eps() .>= 0)
-    @test all(abs.(w5.weights .- 0.07) .- N / norm(abs.(w5.weights .- 0.07)) * eps() .<= 0)
-    @test all(abs.(w6.weights .- 0.03) .+ N / norm(abs.(w6.weights .- 0.03)) * eps() .>= 0)
-    @test !all(abs.(w6.weights .- 0.07) .- N / norm(abs.(w6.weights .- 0.07)) * eps() .<= 0)
+    @test all(isapprox.(abs.(w4.weights .- 0.03), 0, atol = eps()))
+    @test all(isapprox.(abs.(w4.weights .- 0.07), 0, atol = eps()))
+    @test all(isapprox.(abs.(w5.weights .- 0.03), 0, atol = eps()))
+    @test all(isapprox.(abs.(w5.weights .- 0.07), 0, atol = eps()))
+    @test all(isapprox.(abs.(w6.weights .- 0.03), 0, atol = eps()))
+    @test !all(isapprox.(abs.(w6.weights .- 0.07), 0, atol = eps()))
 end
 
 @testset "$(:HRP), $(:HERC), $(:Variance)" begin
