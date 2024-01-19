@@ -56,19 +56,19 @@ l = 2.0
     println(w2.weights .- w_min)
     println(w5.weights .- 0.03)
 
-    @test all(w1.weights .>= w_min)
-    @test all(w1.weights .<= w_max)
-    @test all(w2.weights .>= w_min)
-    @test all(w2.weights .<= w_max)
-    @test all(w3.weights .>= w_min)
-    @test !all(w3.weights .<= w_max)
+    @test all(abs.(w1.weights - w_min) + norm(w1.weights) * eps() .>= 0)
+    @test all(abs.(w1.weights - w_max) - norm(w1.weights) * eps() .<= 0)
+    @test all(abs.(w2.weights - w_min) + norm(w2.weights) * eps() .>= 0)
+    @test all(abs.(w2.weights - w_max) - norm(w2.weights) * eps() .<= 0)
+    @test all(abs.(w3.weights - w_min) + norm(w3.weights) * eps() .>= 0)
+    @test !all(abs.(w3.weights - w_max) - norm(w3.weights) * eps() .<= 0)
 
-    @test all(w4.weights .>= 0.03)
-    @test all(w4.weights .<= 0.07)
-    @test all(w5.weights .>= 0.03)
-    @test all(w5.weights .<= 0.07)
-    @test all(w6.weights .>= 0.03)
-    @test !all(w6.weights .<= 0.07)
+    @test all(abs.(w4.weights - 0.03) + norm(w4.weights) * eps() .>= 0)
+    @test all(abs.(w4.weights - 0.07) - norm(w4.weights) * eps() .<= 0)
+    @test all(abs.(w5.weights - 0.03) + norm(w5.weights) * eps() .>= 0)
+    @test all(abs.(w5.weights - 0.07) - norm(w5.weights) * eps() .<= 0)
+    @test all(abs.(w6.weights - 0.03) + norm(w6.weights) * eps() .>= 0)
+    @test !all(abs.(w6.weights - 0.07) - norm(w6.weights) * eps() .<= 0)
 end
 
 @testset "$(:HRP), $(:HERC), $(:Variance)" begin
