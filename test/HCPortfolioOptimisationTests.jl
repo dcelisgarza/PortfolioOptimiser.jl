@@ -52,6 +52,10 @@ l = 2.0
     w5 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
     w6 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
 
+    display([w1.weights w_min w1.weights .>= w_min])
+    display([w2.weights w_min w2.weights .>= w_min])
+    display([w5.weights 0.03 w5.weights .>= 0.03])
+
     @test all(w1.weights .>= w_min)
     @test all(w1.weights .<= w_max)
     @test all(w2.weights .>= w_min)
