@@ -322,6 +322,7 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm,
         clusters[i] = findall(clustering_idx .== i)
     end
 
+    # Treat each cluster as its own portfolio and optimise each one individually.
     # Calculate the weight of each cluster relative to the other clusters.
     for i ∈ nodes[1:(k - 1)]
         if is_leaf(i)
@@ -365,7 +366,7 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm,
         weights[rn] *= 1 - alpha_1
     end
 
-    # Treat each cluster as its own independent portfolio, and calculate the weights, cweights, as if this were the case.
+    # Treat each cluster as an asset in a portfolio and optimise.
     og_owa_w = nothing
     if (length(owa_w_o) == length(portfolio.owa_w) && !isapprox(owa_w_o, portfolio.owa_w)) ||
        length(owa_w_o) != length(portfolio.owa_w)
@@ -378,7 +379,6 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm,
         cret = returns[:, cidx]
         ccov = covariance[cidx, cidx]
         cweights = _naive_risk(portfolio, cret, ccov; rm = rm_o, rf = rf)
-        # Then multiply the weights of each sub-portfolio, cweights, by the weights of the cluster it belongs to.
         weights[cidx] .*= cweights
     end
 
@@ -465,9 +465,16 @@ function _nco_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf = 
                       asset_stat_kwargs_o = asset_stat_kwargs, owa_w_o = portfolio.owa_w,
                       max_num_assets_kurt_o = portfolio.max_num_assets_kurt,
                       near_opt_o::Bool = near_opt, M_o::Integer = M)
+
+    # Treat each cluster as an independent portfolio and optimise each one individually.
+    intra_weights, intra_fails = _intra_weights(portfolio; obj = obj, kelly = kelly,
+                                                rm = rm, rf = rf, l = l,
+                                                near_opt = near_opt, M = M,
+                                                asset_stat_kwargs = asset_stat_kwargs)
+
+    # Treat each cluster as an asset in a portfolio and optimise the portfolio.
     og_owa_w = nothing
     og_max_num_assets_kurt = nothing
-
     if (length(owa_w_o) == length(portfolio.owa_w) && !isapprox(owa_w_o, portfolio.owa_w)) ||
        length(owa_w_o) != length(portfolio.owa_w)
         og_owa_w = portfolio.owa_w
@@ -478,10 +485,10 @@ function _nco_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf = 
         portfolio.max_num_assets_kurt = max_num_assets_kurt_o
     end
 
-    intra_weights, intra_fails = _intra_weights(portfolio; obj = obj, kelly = kelly,
-                                                rm = rm, rf = rf, l = l,
-                                                near_opt = near_opt, M = M,
-                                                asset_stat_kwargs = asset_stat_kwargs)
+    weights, inter_fails = _inter_weights(portfolio, intra_weights; obj = obj_o,
+                                          kelly = kelly_o, rm = rm_o, rf = rf, l = l_o,
+                                          near_opt = near_opt_o, M = M_o,
+                                          asset_stat_kwargs = asset_stat_kwargs_o)
 
     if !isnothing(og_owa_w)
         portfolio.owa_w = og_owa_w
@@ -490,10 +497,6 @@ function _nco_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf = 
         portfolio.max_num_assets_kurt = og_max_num_assets_kurt
     end
 
-    weights, inter_fails = _inter_weights(portfolio, intra_weights; obj = obj_o,
-                                          kelly = kelly_o, rm = rm_o, rf = rf, l = l_o,
-                                          near_opt = near_opt_o, M = M_o,
-                                          asset_stat_kwargs = asset_stat_kwargs_o)
     if !isempty(intra_fails)
         portfolio.fail[:intra] = intra_fails
     else
@@ -607,7 +610,6 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, cluster::Bool = 
     @smart_assert(kelly in KellyRet)
     @smart_assert(kelly_o in KellyRet)
     @smart_assert(linkage in LinkageTypes)
-    # @smart_assert(portfolio.cor_method in CorMethods)
     @smart_assert(0 < portfolio.alpha < 1)
     @smart_assert(0 < portfolio.kappa < 1)
     @smart_assert(max_num_assets_kurt_o >= 0)
