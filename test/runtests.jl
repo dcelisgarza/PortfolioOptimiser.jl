@@ -52,14 +52,6 @@ using SafeTestsets
 #     include("TraditionalOptimisationTests.jl")
 # end
 
-@safetestset "HCPortfolio OWA Optimisation" begin
-    include("HCPortfolioOWAOptimisationTests.jl")
-end
-
-@safetestset "Efficient Frontier" begin
-    include("PortfolioEfficientFrontierTests.jl")
-end
-
 @safetestset "HCPortfolio Optimisation" begin
     include("HCPortfolioOptimisationTests.jl")
 end
@@ -122,4 +114,12 @@ end
 
 @safetestset "Portfolio Classic Traditional OWA Optimisation" begin
     include("PortfolioClassicTradOWATests.jl")
+end
+
+@safetestset "HCPortfolio OWA Optimisation" begin
+    include("HCPortfolioOWAOptimisationTests.jl")
+end
+
+@safetestset "Efficient Frontier" begin
+    include("PortfolioEfficientFrontierTests.jl")
 end
