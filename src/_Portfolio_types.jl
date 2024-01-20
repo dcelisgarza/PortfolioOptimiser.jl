@@ -672,7 +672,7 @@ function Portfolio(;
     if !isempty(bl_bench_weights)
         @smart_assert(length(bl_bench_weights) == size(returns, 2))
     end
-    @smart_assert(network_method in NetworkMethods)
+    @smart_assert(network_method ∈ NetworkMethods)
     if !isempty(network_sdp)
         @smart_assert(size(network_sdp) == (size(returns, 2), size(returns, 2)))
     end
@@ -933,13 +933,13 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.f_returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym in (:L_2, :S_2)
+    elseif sym ∈ (:L_2, :S_2)
         if !isempty(val)
             N = size(obj.returns, 2)
             @smart_assert(size(val) == (Int(N * (N + 1) / 2), N^2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym in (:risk_budget, :bl_bench_weights)
+    elseif sym ∈ (:risk_budget, :bl_bench_weights)
         if isempty(val)
             N = size(obj.returns, 2)
             val = fill(1 / N, N)
@@ -948,22 +948,22 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             isa(val, AbstractRange) ? (val = collect(val / sum(val))) : (val ./= sum(val))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym in
+    elseif sym ∈
            (:min_number_effective_assets, :max_number_assets, :max_number_assets_factor)
         @smart_assert(val >= 0)
-    elseif sym in (:kurt, :skurt, :cov_sigma)
+    elseif sym ∈ (:kurt, :skurt, :cov_sigma)
         if !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2)^2)
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym in (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns)
+    elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns)
         throw(ArgumentError("$sym is related to other fields and therefore cannot be manually changed without compromising correctness, please create a new instance of Portfolio instead"))
-    elseif sym in (:mu, :mu_fm, :mu_bl, :mu_bl_fm, :d_mu, :latest_prices)
+    elseif sym ∈ (:mu, :mu_fm, :mu_bl, :mu_bl_fm, :d_mu, :latest_prices)
         if !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym in (:cov, :cov_fm, :cov_bl, :cov_bl_fm, :cov_l, :cov_u, :cov_mu)
+    elseif sym ∈ (:cov, :cov_fm, :cov_bl, :cov_bl_fm, :cov_l, :cov_u, :cov_mu)
         if !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2))
         end
@@ -1283,7 +1283,7 @@ function HCPortfolio(;
     if !isempty(skurt)
         @smart_assert(size(skurt, 1) == size(skurt, 2) == size(returns, 2)^2)
     end
-    @smart_assert(bins_info in BinMethods ||
+    @smart_assert(bins_info ∈ BinMethods ||
                   (isa(bins_info, Int) && bins_info > zero(bins_info)))
     if isa(w_min, Real)
         @smart_assert(zero(w_min) <= w_min <= one(w_min) && all(w_min .<= w_max))
@@ -1315,7 +1315,7 @@ function HCPortfolio(;
                           end)
         end
     end
-    @smart_assert(cor_method in CorMethods)
+    @smart_assert(cor_method ∈ CorMethods)
     if !isempty(cor)
         @smart_assert(size(cor, 1) == size(cor, 2) == size(returns, 2))
     end
@@ -1405,7 +1405,7 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         @smart_assert(val ∈ CorMethods)
     elseif sym == :k
         @smart_assert(val >= zero(val))
-    elseif sym in (:w_min, :w_max)
+    elseif sym ∈ (:w_min, :w_max)
         if sym == :w_min
             smin = sym
             smax = :w_max
@@ -1444,23 +1444,23 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
                 val = convert(typeof(getfield(obj, sym)), val)
             end
         end
-    elseif sym in (:mu, :latest_prices)
+    elseif sym ∈ (:mu, :latest_prices)
         if !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym in (:kurt, :skurt)
+    elseif sym ∈ (:kurt, :skurt)
         if !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2)^2)
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym in (:L_2, :S_2)
+    elseif sym ∈ (:L_2, :S_2)
         if !isempty(val)
             N = size(obj.returns, 2)
             @smart_assert(size(val) == (Int(N * (N + 1) / 2), N^2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym in (:cov, :cor, :dist)
+    elseif sym ∈ (:cov, :cor, :dist)
         if !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2))
         end

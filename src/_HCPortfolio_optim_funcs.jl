@@ -110,7 +110,7 @@ function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 
     gaps = fill(-Inf, length(W_list))
 
     if length(W_list) > 2
-        (gaps[3:end] .= W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)])
+        gaps[3:end] .= W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)]
     end
 
     gaps = gaps[1:limit_k]
@@ -123,7 +123,7 @@ end
 function _hcluster_choice(dist, corr, cor_method, linkage, branchorder, dbht_method, max_k)
     if linkage == :DBHT
         cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
-        corr = cor_method in cors ? 1 .- dist .^ 2 : corr
+        corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,
                                                                                  method = dbht_method)
@@ -645,13 +645,13 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, cluster::Bool = 
                         solvers = portfolio.solvers,
                         max_num_assets_kurt = portfolio.max_num_assets_kurt)
                    end, portfolio_kwargs_o::NamedTuple = portfolio_kwargs)
-    @smart_assert(type in HCPortTypes)
-    @smart_assert(rm in HCRiskMeasures)
-    @smart_assert(obj in HCObjFuncs)
-    @smart_assert(obj_o in HCObjFuncs)
-    @smart_assert(kelly in KellyRet)
-    @smart_assert(kelly_o in KellyRet)
-    @smart_assert(linkage in LinkageTypes)
+    @smart_assert(type ∈ HCPortTypes)
+    @smart_assert(rm ∈ HCRiskMeasures)
+    @smart_assert(obj ∈ HCObjFuncs)
+    @smart_assert(obj_o ∈ HCObjFuncs)
+    @smart_assert(kelly ∈ KellyRet)
+    @smart_assert(kelly_o ∈ KellyRet)
+    @smart_assert(linkage ∈ LinkageTypes)
     @smart_assert(0 < portfolio.alpha < 1)
     @smart_assert(0 < portfolio.kappa < 1)
 
@@ -668,24 +668,23 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, cluster::Bool = 
 
     upper_bound, lower_bound = _setup_hr_weights(portfolio.w_max, portfolio.w_min, N)
 
-    if type == :HRP
-        weights = _recursive_bisection(portfolio; rm = rm, rf = rf,
-                                       upper_bound = upper_bound, lower_bound = lower_bound,
-                                       portfolio_kwargs = portfolio_kwargs)
+    weights = if type == :HRP
+        _recursive_bisection(portfolio; rm = rm, rf = rf, upper_bound = upper_bound,
+                             lower_bound = lower_bound, portfolio_kwargs = portfolio_kwargs)
     elseif type == :HERC
-        weights = _hierarchical_recursive_bisection(portfolio; rm = rm, rm_o = rm_o,
-                                                    portfolio_kwargs = portfolio_kwargs,
-                                                    portfolio_kwargs_o = portfolio_kwargs_o,
-                                                    rf = rf, upper_bound = upper_bound,
-                                                    lower_bound = lower_bound)
+        _hierarchical_recursive_bisection(portfolio; rm = rm, rm_o = rm_o,
+                                          portfolio_kwargs = portfolio_kwargs,
+                                          portfolio_kwargs_o = portfolio_kwargs_o, rf = rf,
+                                          upper_bound = upper_bound,
+                                          lower_bound = lower_bound)
     else
-        weights = _nco_weights(portfolio; obj = obj, kelly = kelly, rm = rm, l = l,
-                               asset_stat_kwargs = asset_stat_kwargs, obj_o = obj_o,
-                               kelly_o = kelly_o, rm_o = rm_o, l_o = l_o,
-                               asset_stat_kwargs_o = asset_stat_kwargs_o, rf = rf,
-                               near_opt = near_opt, near_opt_o = near_opt_o, M = M,
-                               M_o = M_o, portfolio_kwargs = portfolio_kwargs,
-                               portfolio_kwargs_o = portfolio_kwargs_o)
+        _nco_weights(portfolio; obj = obj, kelly = kelly, rm = rm, l = l,
+                     asset_stat_kwargs = asset_stat_kwargs, obj_o = obj_o,
+                     kelly_o = kelly_o, rm_o = rm_o, l_o = l_o,
+                     asset_stat_kwargs_o = asset_stat_kwargs_o, rf = rf,
+                     near_opt = near_opt, near_opt_o = near_opt_o, M = M, M_o = M_o,
+                     portfolio_kwargs = portfolio_kwargs,
+                     portfolio_kwargs_o = portfolio_kwargs_o)
     end
 
     if type == :NCO &&

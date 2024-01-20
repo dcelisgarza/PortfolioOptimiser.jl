@@ -105,9 +105,9 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
     end
 
     T, N = size(x)
-
-    mut_mtx = Matrix{eltype(x)}(undef, N, N)
-    var_mtx = Matrix{eltype(x)}(undef, N, N)
+    xtype = eltype(x)
+    mut_mtx = Matrix{xtype}(undef, N, N)
+    var_mtx = Matrix{xtype}(undef, N, N)
 
     for j ∈ 1:N
         xj = x[:, j]
@@ -132,11 +132,11 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
                 mut_ixy /= min(ex, ey)
             end
 
-            if abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < 0.0
-                mut_ixy = 0.0
+            if abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < zero(xtype)
+                mut_ixy = zero(xtype)
             end
-            if abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < 0.0
-                var_ixy = 0.0
+            if abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < zero(xtype)
+                var_ixy = zero(xtype)
             end
 
             mut_mtx[i, j] = mut_ixy

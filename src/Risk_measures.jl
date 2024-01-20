@@ -290,7 +290,7 @@ function _optimize_rm(model, solvers::AbstractDict)
 
         term_status = termination_status(model)
 
-        if term_status in ValidTermination
+        if term_status ∈ ValidTermination
             break
         end
 
@@ -350,7 +350,7 @@ function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     @variable(model, z >= 0)
     @variable(model, u[1:T])
     @constraint(model, sum(u) <= z)
-    @constraint(model, [i = 1:T], [-x[i] - t, z, u[i]] in MOI.ExponentialCone())
+    @constraint(model, [i = 1:T], [-x[i] - t, z, u[i]] ∈ MOI.ExponentialCone())
     @expression(model, risk, t - z * log(at))
     @objective(model, Min, risk)
 
@@ -430,9 +430,9 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
     @variable(model, theta[1:T])
     @variable(model, epsilon[1:T])
     @constraint(model, [i = 1:T],
-                [z * opk * invk2, psi[i] * opk * invk, epsilon[i]] in MOI.PowerCone(invopk))
+                [z * opk * invk2, psi[i] * opk * invk, epsilon[i]] ∈ MOI.PowerCone(invopk))
     @constraint(model, [i = 1:T],
-                [omega[i] * invomk, theta[i] * invk, -z * invk2] in MOI.PowerCone(omk))
+                [omega[i] * invomk, theta[i] * invk, -z * invk2] ∈ MOI.PowerCone(omk))
     @constraint(model, -x .- t .+ epsilon .+ omega .<= 0)
     @expression(model, risk, t + ln_k * z + sum(psi .+ theta))
     @objective(model, Min, risk)
@@ -496,7 +496,7 @@ function DaR_abs(x::AbstractArray, alpha::Real = 0.05)
     dd = similar(cs)
     for (idx, i) ∈ pairs(cs)
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd[idx] = i - peak
     end
@@ -527,11 +527,11 @@ function MDD_abs(x::AbstractVector)
     peak = -Inf
     for i ∈ cs
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd = peak - i
         if dd > val
-            (val = dd)
+            val = dd
         end
     end
 
@@ -560,11 +560,11 @@ function ADD_abs(x::AbstractVector)
     peak = -Inf
     for i ∈ cs
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd = peak - i
         if dd > 0
-            (val += dd)
+            val += dd
         end
     end
 
@@ -594,7 +594,7 @@ function CDaR_abs(x::AbstractVector, alpha::Real = 0.05)
     dd = similar(cs)
     for (idx, i) ∈ pairs(cs)
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd[idx] = i - peak
     end
@@ -631,11 +631,11 @@ function UCI_abs(x::AbstractVector)
     peak = -Inf
     for i ∈ cs
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd = peak - i
         if dd > 0
-            (val += dd^2)
+            val += dd^2
         end
     end
 
@@ -665,7 +665,7 @@ function EDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     dd = similar(cs)
     for (idx, i) ∈ pairs(cs)
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd[idx] = -(peak - i)
     end
@@ -696,7 +696,7 @@ function RDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
     dd = similar(cs)
     for (idx, i) ∈ pairs(cs)
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd[idx] = i - peak
     end
@@ -731,7 +731,7 @@ function DaR_rel(x::AbstractArray, alpha::Real = 0.05)
     dd = similar(cs)
     for (idx, i) ∈ pairs(cs)
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd[idx] = i / peak - 1
     end
@@ -762,11 +762,11 @@ function MDD_rel(x::AbstractVector)
     peak = -Inf
     for i ∈ cs
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd = 1 - i / peak
         if dd > val
-            (val = dd)
+            val = dd
         end
     end
 
@@ -795,11 +795,11 @@ function ADD_rel(x::AbstractVector)
     peak = -Inf
     for i ∈ cs
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd = 1 - i / peak
         if dd > 0
-            (val += dd)
+            val += dd
         end
     end
 
@@ -829,7 +829,7 @@ function CDaR_rel(x::AbstractVector, alpha::Real = 0.05)
     dd = similar(cs)
     for (idx, i) ∈ pairs(cs)
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd[idx] = i / peak - 1
     end
@@ -866,11 +866,11 @@ function UCI_rel(x::AbstractVector)
     peak = -Inf
     for i ∈ cs
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd = 1 - i / peak
         if dd > 0
-            (val += dd^2)
+            val += dd^2
         end
     end
 
@@ -901,7 +901,7 @@ function EDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     dd = similar(cs)
     for (idx, i) ∈ pairs(cs)
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd[idx] = i / peak - 1
     end
@@ -932,7 +932,7 @@ function RDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
     dd = similar(cs)
     for (idx, i) ∈ pairs(cs)
         if i > peak
-            (peak = i)
+            peak = i
         end
         dd[idx] = i / peak - 1
     end
@@ -1155,7 +1155,7 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
                    kappa::Real = 0.3,
                    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    solvers::Union{<:AbstractDict, Nothing} = nothing)
-    @smart_assert(rm in HCRiskMeasures)
+    @smart_assert(rm ∈ HCRiskMeasures)
 
     x = (rm != :Variance || rm != :SD) && returns * w
 
@@ -1248,7 +1248,7 @@ end
 
 function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i, beta,
                   a_sim, beta_i, b_sim, owa_w, di)
-    @smart_assert(rm in HCRiskMeasures)
+    @smart_assert(rm ∈ HCRiskMeasures)
 
     a1 = returns * w1
     a2 = returns * w2

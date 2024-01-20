@@ -235,7 +235,7 @@ mutable struct PosdefFixOpt
 end
 function PosdefFixOpt(; method::Symbol = :Nearest,
                       genfunc::GenericFunction = GenericFunction(; func = x -> x))
-    @smart_assert(method in PosdefFixMethods)
+    @smart_assert(method ∈ PosdefFixMethods)
 
     return PosdefFixOpt(method, genfunc)
 end
@@ -279,7 +279,7 @@ end
 function DenoiseOpt(; method::Symbol = :None, alpha::Real = 0.0, detone::Bool = false,
                     mkt_comp::Integer = 1, kernel = ASH.Kernels.gaussian, m::Integer = 10,
                     n::Integer = 1000, genfunc::GenericFunction = GenericFunction(;))
-    @smart_assert(method in DenoiseMethods)
+    @smart_assert(method ∈ DenoiseMethods)
     @smart_assert(0 <= alpha <= 1)
 
     return DenoiseOpt{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m),
@@ -318,7 +318,7 @@ end
 function CovOpt(; method::Symbol = :Full, estimation::CovEstOpt = CovEstOpt(;),
                 gerber::GerberOpt = GerberOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
                 posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false)
-    @smart_assert(method in CovMethods)
+    @smart_assert(method ∈ CovMethods)
 
     return CovOpt(method, estimation, gerber, denoise, posdef, jlogo)
 end
@@ -351,8 +351,8 @@ function MuOpt(; method::Symbol = :Default, target::Symbol = :GM, rf::Real = 0.0
                custom::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
                mkt_ret::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
                sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing)
-    @smart_assert(method in MuMethods)
-    @smart_assert(target in MuTargets)
+    @smart_assert(method ∈ MuMethods)
+    @smart_assert(target ∈ MuTargets)
 
     return MuOpt{typeof(rf)}(method, target, rf, genfunc, custom, mkt_ret, sigma)
 end
@@ -413,7 +413,7 @@ function CorEstOpt(;
                    custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
                    sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing)
     @smart_assert(0 <= alpha <= 1)
-    @smart_assert(bins_info in BinMethods ||
+    @smart_assert(bins_info ∈ BinMethods ||
                   isa(bins_info, Int) && bins_info > zero(bins_info))
     # @smart_assert(
     #     size(custom_cor) == size(custom_dist) == size(sigma),    #     "size(custom_cor) == $(size(custom_cor)), size(custom_dist) == $(size(custom_dist)) and size(sigma) == $(size(sigma)), must all be equal"
@@ -467,7 +467,7 @@ function CorOpt(; method::Symbol = :Pearson, estimation::CorEstOpt = CorEstOpt(;
                 gerber::GerberOpt = GerberOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
                 posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,
                 uplo::Symbol = :L)
-    @smart_assert(method in CorMethods)
+    @smart_assert(method ∈ CorMethods)
 
     return CorOpt(method, estimation, gerber, denoise, posdef, jlogo, uplo)
 end
@@ -497,8 +497,8 @@ function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true,
                dmu::Real = 0.1, q::Real = 0.05, rng = Random.default_rng(),
                seed::Union{<:Integer, Nothing} = nothing, n_sim::Integer = 3_000,
                window::Integer = 3, posdef::PosdefFixOpt = PosdefFixOpt(;))
-    @smart_assert(box in BoxMethods)
-    @smart_assert(ellipse in EllipseMethods)
+    @smart_assert(box ∈ BoxMethods)
+    @smart_assert(ellipse ∈ EllipseMethods)
     @smart_assert(0 < q < 1)
 
     return WCOpt{typeof(dcov), typeof(dmu), typeof(q), typeof(rng), typeof(n_sim),
@@ -545,8 +545,8 @@ mutable struct LoadingsOpt{T1 <: Real}
 end
 function LoadingsOpt(; method::Symbol = :FReg, criterion::Symbol = :pval,
                      threshold::Real = 0.05, pcr_opt::PCROpt = PCROpt(;))
-    @smart_assert(method in FSMethods)
-    @smart_assert(criterion in RegCriteria)
+    @smart_assert(method ∈ FSMethods)
+    @smart_assert(criterion ∈ RegCriteria)
     return LoadingsOpt{typeof(threshold)}(method, criterion, threshold, pcr_opt)
 end
 function Base.setproperty!(obj::LoadingsOpt, sym::Symbol, val)
@@ -589,7 +589,7 @@ function BLOpt(; method::Symbol = :B, constant::Bool = true, eq::Bool = true,
                                                               kwargs = (; dims = 1)),
                denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
                jlogo::Bool = false)
-    @smart_assert(method in BLFMMethods)
+    @smart_assert(method ∈ BLFMMethods)
 
     return BLOpt{typeof(rf)}(method, constant, eq, diagonal, delta, rf, var_genfunc,
                              denoise, posdef, jlogo)

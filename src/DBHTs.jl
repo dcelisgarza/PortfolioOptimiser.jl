@@ -258,7 +258,7 @@ function clique3(A::AbstractMatrix{<:Real})
             check = sum(check)
 
             if check == 0
-                (clique = vcat(clique, candidate))
+                clique = vcat(clique, candidate)
             end
 
             candidate, check, a, b, c = nothing, nothing, nothing, nothing, nothing
@@ -320,7 +320,7 @@ function breadth(CIJ::AbstractMatrix{<:Real}, source::Integer)
         for v ∈ ns
             # This allows the `source` distance to itself to be recorded
             if all(distance[v] .== 0)
-                (distance[v] = distance[u] + 1)
+                distance[v] = distance[u] + 1
             end
             if all(color[v] .== white)
                 color[v] = gray
@@ -488,7 +488,7 @@ function BubbleHierarchy(Pred::AbstractVector{<:Real}, Sb::AbstractVector{<:Real
 
             for m ∈ eachindex(DirectChild)
                 if Sb[DirectChild[m]] != 0
-                    (NxtRoot = [NxtRoot; DirectChild[m]])
+                    NxtRoot = [NxtRoot; DirectChild[m]]
                 end
             end
 
@@ -550,7 +550,7 @@ Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy 
 [^NHPG]: [Song, W. M., Di Matteo, T., & Aste, T. (2011). Nested hierarchies in planar graphs. Discrete Applied Mathematics, 159(17), 2135-2146.](https://www.sciencedirect.com/science/article/pii/S0166218X11002794)
 """
 function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Unique)
-    @smart_assert(method in DBHTRootMethods)
+    @smart_assert(method ∈ DBHTRootMethods)
     N = size(Apm, 1)
     A = Apm .!= 0
     K3, E, clique = clique3(A)
@@ -586,19 +586,19 @@ function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Uniq
         H = spzeros(Int, Nc + 1, Nc + 1)
         for n ∈ eachindex(Pred)
             if Pred[n] != 0
-                (H[n, Pred[n]] = 1)
+                H[n, Pred[n]] = 1
             end
         end
         H = H + transpose(H)
     else
         if length(Root) > 1
-            (Adj = AdjCliq(A, CliqList, Root))
+            Adj = AdjCliq(A, CliqList, Root)
         end
 
         H = spzeros(Int, Nc, Nc)
         for n ∈ eachindex(Pred)
             if Pred[n] != 0
-                (H[n, Pred[n]] = 1)
+                H[n, Pred[n]] = 1
             end
         end
 
@@ -1081,7 +1081,7 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
 """
 function DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real};
                branchorder::Symbol = :optimal, method::Symbol = :Unique)
-    @smart_assert(branchorder in BranchOrderTypes)
+    @smart_assert(branchorder ∈ BranchOrderTypes)
     @smart_assert(issymmetric(D))
     @smart_assert(issymmetric(S))
 

@@ -237,7 +237,7 @@ function _optimise_owa(model, solvers)
 
         term_status = termination_status(model)
 
-        if term_status in ValidTermination
+        if term_status ∈ ValidTermination
             break
         end
 
@@ -356,7 +356,7 @@ $_owaw
 function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::Real = 0.5,
                           max_phi::Real = 0.5, solvers = Dict())
     @smart_assert(k >= 2)
-    @smart_assert(method in OWAMethods)
+    @smart_assert(method ∈ OWAMethods)
     @smart_assert(0 < g < 1)
     @smart_assert(0 < max_phi < 1)
 
@@ -384,19 +384,19 @@ function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::R
             @variable(model, t)
             @variable(model, x[1:T])
             @constraint(model, sum(x) == 1)
-            @constraint(model, [t; ones(T); x] in MOI.RelativeEntropyCone(2 * T + 1))
-            @constraint(model, [i = 1:T], [x[i]; theta[i]] in MOI.NormOneCone(2))
+            @constraint(model, [t; ones(T); x] ∈ MOI.RelativeEntropyCone(2 * T + 1))
+            @constraint(model, [i = 1:T], [x[i]; theta[i]] ∈ MOI.NormOneCone(2))
             @objective(model, Max, -t)
         elseif method == :SS
             # Minimum sum of squares.
             @variable(model, t)
-            @constraint(model, [t; theta] in SecondOrderCone())
+            @constraint(model, [t; theta] ∈ SecondOrderCone())
             @objective(model, Min, t)
         elseif method == :SD
             # Minimum square distance.
             @variable(model, t)
             @expression(model, theta_diff, theta[2:end] .- theta[1:(end - 1)])
-            @constraint(model, [t; theta_diff] in SecondOrderCone())
+            @constraint(model, [t; theta_diff] ∈ SecondOrderCone())
             @objective(model, Min, t)
         end
 

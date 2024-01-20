@@ -377,10 +377,10 @@ P, Q = factor_views(views, loadings)
 """
 function factor_views(views::DataFrame, loadings::DataFrame)
     factor_list = names(loadings)
-    if "const" in factor_list
+    if "const" ∈ factor_list
         factor_list = setdiff(factor_list, ("const",))
     end
-    if "ticker" in factor_list
+    if "ticker" ∈ factor_list
         factor_list = setdiff(factor_list, ("ticker",))
     end
 
@@ -532,7 +532,7 @@ rw_c = rp_constraints(asset_sets, :Subset, "Class 2")
 """
 function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
                         class_col::Union{String, Symbol, Int, Nothing} = nothing)
-    @smart_assert(type in RPConstraintTypes)
+    @smart_assert(type ∈ RPConstraintTypes)
     N = nrow(asset_sets)
 
     rw = if type == :Asset
@@ -563,12 +563,12 @@ function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
                            method::Symbol = :MST, steps::Integer = 1,
                            tree::GenericFunction = GenericFunction(;
                                                                    func = Graphs.kruskal_mst))
-    @smart_assert(method in GraphMethods)
+    @smart_assert(method ∈ GraphMethods)
 
     corr, dist = cor_dist_mtx(returns, opt)
     A = if method == :TMFG
         cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
-        corr = opt.method in cors ? 1 .- dist .^ 2 : corr
+        corr = opt.method ∈ cors ? 1 .- dist .^ 2 : corr
         Rpm = PMFG_T2s(corr)[1]
         adjacency_matrix(SimpleGraph(Rpm))
     else
@@ -599,7 +599,7 @@ function centrality_vector(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
                            centrality::GenericFunction = GenericFunction(;
                                                                          func = Graphs.degree_centrality),
                            method::Symbol = :MST, steps::Integer = 1)
-    @smart_assert(method in GraphMethods)
+    @smart_assert(method ∈ GraphMethods)
 
     Adj = connection_matrix(returns, opt; method = method, steps = steps)
     G = SimpleGraph(Adj)
