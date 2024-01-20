@@ -558,7 +558,7 @@ end
     @test isempty(w7)
     @test isapprox(w8.weights, w8t)
     @test isempty(w9)
-    @test isapprox(w10)
+    @test isempty(w10)
     @test isempty(w11)
 end
 
