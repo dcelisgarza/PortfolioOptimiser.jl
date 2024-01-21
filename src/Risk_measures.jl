@@ -411,19 +411,20 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
     @smart_assert(0 < alpha < 1)
     @smart_assert(0 < kappa < 1)
 
-    model = JuMP.Model()
-    set_string_names_on_creation(model, false)
-
     T = length(x)
+
     at = alpha * T
     invat = 1 / at
     ln_k = (invat^kappa - invat^(-kappa)) / (2 * kappa)
+    invk2 = 1 / (2 * kappa)
     opk = 1 + kappa
     omk = 1 - kappa
-    invk2 = 1 / (2 * kappa)
     invk = 1 / kappa
     invopk = 1 / opk
     invomk = 1 / omk
+
+    model = JuMP.Model()
+    set_string_names_on_creation(model, false)
 
     @variable(model, t)
     @variable(model, z >= 0)
@@ -441,6 +442,24 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
 
     solvers_tried = _optimize_rm(model, solvers)
     term_status = termination_status(model)
+
+    if term_status ∉ ValidTermination
+        model = JuMP.Model()
+        set_string_names_on_creation(model, false)
+
+        @variable(model, z[1:T])
+        @variable(model, nu[1:T])
+        @variable(model, tau[1:T])
+        @constraint(model, sum(z) == 1)
+        @constraint(model, sum(nu .- tau) * invk2 <= ln_k)
+        @constraint(model, [i = 1:T], [nu[i], 1, z[i]] ∈ MOI.PowerCone(invopk))
+        @constraint(model, [i = 1:T], [z[i], 1, tau[i]] ∈ MOI.PowerCone(omk))
+        @expression(model, risk, -transpose(z) * x)
+        @objective(model, Max, risk)
+
+        solvers_tried = _optimize_rm(model, solvers)
+        term_status = termination_status(model)
+    end
 
     if term_status ∉ ValidTermination
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.RRM))"

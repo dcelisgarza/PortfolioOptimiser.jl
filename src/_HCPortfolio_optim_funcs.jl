@@ -169,8 +169,8 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
     return crisk
 end
 
-function _hr_weight_bounds(upper_bound, lower_bound, weights, sort_order, lc, rc, alpha_1)
-    if !(any(upper_bound .< weights[sort_order]) || any(lower_bound .> weights[sort_order]))
+function _hr_weight_bounds(upper_bound, lower_bound, weights, lc, rc, alpha_1)
+    if !(any(upper_bound .< weights) || any(lower_bound .> weights))
         return alpha_1
     end
     lmaxw = weights[lc[1]]
@@ -197,8 +197,6 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0,
     N = size(portfolio.returns, 2)
     weights = ones(N)
     sort_order = portfolio.clusters.order
-    upper_bound = upper_bound[sort_order]
-    lower_bound = lower_bound[sort_order]
 
     items = [sort_order]
     returns = portfolio.returns
@@ -225,8 +223,7 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0,
             alpha_1 = 1 - lrisk / (lrisk + rrisk)
 
             # Weight constraints.
-            alpha_1 = _hr_weight_bounds(upper_bound, lower_bound, weights, sort_order, lc,
-                                        rc, alpha_1)
+            alpha_1 = _hr_weight_bounds(upper_bound, lower_bound, weights, lc, rc, alpha_1)
 
             weights[lc] *= alpha_1
             weights[rc] *= 1 - alpha_1
@@ -334,9 +331,6 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
     returns = portfolio.returns
     covariance = portfolio.cov
     clustering = portfolio.clusters
-    sort_order = clustering.order
-    upper_bound = upper_bound[sort_order]
-    lower_bound = lower_bound[sort_order]
 
     k = portfolio.k
     root, nodes = to_tree(clustering)
@@ -393,8 +387,7 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
 
             alpha_1 = 1 - lrisk / (lrisk + rrisk)
 
-            alpha_1 = _hr_weight_bounds(upper_bound, lower_bound, weights, sort_order, lc,
-                                        rc, alpha_1)
+            alpha_1 = _hr_weight_bounds(upper_bound, lower_bound, weights, lc, rc, alpha_1)
         end
 
         weights[ln] *= alpha_1

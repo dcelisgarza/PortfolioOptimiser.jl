@@ -6,6 +6,36 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "ERM and RRM logs" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75)),
+                                                :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                               :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio; calc_kurt = false)
+    optimise!(portfolio)
+
+    solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                            :params => Dict("verbose" => false,
+                                                            "max_iter" => 2,
+                                                            "max_step_fraction" => 0.75)))
+    portfolio.solvers = solvers
+    test_logger = TestLogger()
+    with_logger(test_logger) do
+        calc_risk(portfolio; rm = :EDaR)
+        calc_risk(portfolio; rm = :RDaR)
+        return nothing
+    end
+
+    @test test_logger.logs[1].level == Warn
+    @test test_logger.logs[2].level == Warn
+    @test contains(test_logger.logs[1].message,
+                   "PortfolioOptimiser.ERM: model could not be optimised satisfactorily.")
+    @test contains(test_logger.logs[2].message,
+                   "PortfolioOptimiser.RRM: model could not be optimised satisfactorily.")
+end
+
 @testset "EVaR ERM" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -79,34 +109,4 @@ end
     @test isapprox(r1, r1t, rtol = 1e-6)
     @test isapprox(r2, r2t, rtol = 5e-2)
     @test isapprox(r3, r3t, rtol = 5e-2)
-end
-
-@testset "ERM and RRM logs" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
-    asset_statistics!(portfolio; calc_kurt = false)
-    optimise!(portfolio)
-
-    solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                            :params => Dict("verbose" => false,
-                                                            "max_iter" => 2,
-                                                            "max_step_fraction" => 0.75)))
-    portfolio.solvers = solvers
-    test_logger = TestLogger()
-    with_logger(test_logger) do
-        calc_risk(portfolio; rm = :EDaR)
-        calc_risk(portfolio; rm = :RDaR)
-        return nothing
-    end
-
-    @test test_logger.logs[1].level == Warn
-    @test test_logger.logs[2].level == Warn
-    @test contains(test_logger.logs[1].message,
-                   "PortfolioOptimiser.ERM: model could not be optimised satisfactorily.")
-    @test contains(test_logger.logs[2].message,
-                   "PortfolioOptimiser.RRM: model could not be optimised satisfactorily.")
 end
