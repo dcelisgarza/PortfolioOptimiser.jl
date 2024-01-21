@@ -458,10 +458,7 @@ function _intra_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf 
     end
 
     if !isempty(cfails)
-        portfolio.fail[:NCO] = Dict()
-        portfolio.fail[:NCO][:intra] = cfails
-    else
-        portfolio.fail = Dict()
+        portfolio.fail[:intra] = cfails
     end
 
     return intra_weights
@@ -499,12 +496,7 @@ function _inter_weights(portfolio, intra_weights; obj = :Min_Risk, kelly = :None
     weights = intra_weights * inter_weights
 
     if !isempty(inter_fail)
-        if !haskey(portfolio.fail, :NCO)
-            portfolio.fail[:NCO] = Dict()
-        end
-        portfolio.fail[:NCO][:inter] = inter_fail
-    else
-        portfolio.fail = Dict()
+        portfolio.fail[:inter] = inter_fail
     end
 
     return weights
@@ -597,6 +589,9 @@ end
 
 function _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, linkage, k,
                               max_k, branchorder, dbht_method, max_iter, save_opt_params)
+    if !isempty(portfolio.fail)
+        portfolio.fail = Dict()
+    end
     if !save_opt_params
         return nothing
     end
@@ -620,19 +615,11 @@ function _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, l
 end
 
 function _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_bound, max_iter)
-    nco_flag = type == :NCO && haskey(portfolio.fail, :NCO)
-
-    portfolio.optimal[type] = if nco_flag || any(.!isfinite.(weights))
-        tmp = Dict(:portfolio => DataFrame(; tickers = portfolio.assets, weights = weights))
-        if nco_flag
-            portfolio.fail[:NCO][:all] = tmp
-        else
-            portfolio.fail[type] = tmp
-        end
+    portfolio.optimal[type] = if !isempty(portfolio.fail) || any(.!isfinite.(weights))
+        portfolio.fail[:portfolio] = DataFrame(; tickers = portfolio.assets,
+                                               weights = weights)
         DataFrame()
     else
-        portfolio.fail = Dict()
-
         weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
         weights ./= sum(weights)
         portfolio.optimal[type] = DataFrame(; tickers = portfolio.assets, weights = weights)
