@@ -280,7 +280,6 @@ function _optimize_rm(model, solvers::AbstractDict)
                 set_attribute(model, attribute, value)
             end
         end
-
         try
             JuMP.optimize!(model)
         catch jump_error
@@ -356,11 +355,14 @@ function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
 
     solvers_tried = _optimize_rm(model, solvers)
     term_status = termination_status(model)
-    obj_val = objective_value(model)
-    if term_status ∉ ValidTermination || !isfinite(obj_val)
+
+    if term_status ∉ ValidTermination
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.ERM))"
         @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
+        return NaN
     end
+
+    obj_val = objective_value(model)
 
     return obj_val
 end
@@ -438,14 +440,15 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
     @objective(model, Min, risk)
 
     solvers_tried = _optimize_rm(model, solvers)
-
     term_status = termination_status(model)
-    obj_val = objective_value(model)
 
-    if term_status ∉ ValidTermination || !isfinite(obj_val)
+    if term_status ∉ ValidTermination
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.RRM))"
         @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
+        return NaN
     end
+
+    obj_val = objective_value(model)
 
     return obj_val
 end
@@ -1154,7 +1157,7 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
                    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                    kappa::Real = 0.3,
                    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                   solvers::Union{<:AbstractDict, Nothing} = nothing)
+                   solvers::Union{<:AbstractDict,Nothing} = nothing)
     @smart_assert(rm ∈ HCRiskMeasures)
 
     x = (rm != :Variance || rm != :SD) && returns * w
@@ -1370,7 +1373,7 @@ function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbo
                            beta_i::Real = alpha_i, beta::Real = alpha,
                            b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
                            owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                           solvers::Union{<:AbstractDict, Nothing} = nothing)
+                           solvers::Union{<:AbstractDict,Nothing} = nothing)
     ew = eltype(w)
     rc = zeros(ew, length(w))
     w1 = zeros(ew, length(w))
@@ -1408,19 +1411,19 @@ function risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
 end
 
 function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMatrix;
-                      rm::Symbol                              = :SD,
-                      rf::Real                                = 0.0,
-                      kelly                                   = false,
-                      sigma::AbstractMatrix                   = Matrix{Float64}(undef, 0, 0),
-                      alpha_i::Real                           = 0.0001,
-                      alpha::Real                             = 0.05,
-                      a_sim::Int                              = 100,
-                      beta_i::Real                            = alpha_i,
-                      beta::Real                              = alpha,
-                      b_sim::Integer                          = a_sim,
-                      kappa::Real                             = 0.3,
-                      owa_w                                   = Vector{Float64}(undef, 0),
-                      solvers::Union{<:AbstractDict, Nothing} = nothing)
+                      rm::Symbol                             = :SD,
+                      rf::Real                               = 0.0,
+                      kelly                                  = false,
+                      sigma::AbstractMatrix                  = Matrix{Float64}(undef, 0, 0),
+                      alpha_i::Real                          = 0.0001,
+                      alpha::Real                            = 0.05,
+                      a_sim::Int                             = 100,
+                      beta_i::Real                           = alpha_i,
+                      beta::Real                             = alpha,
+                      b_sim::Integer                         = a_sim,
+                      kappa::Real                            = 0.3,
+                      owa_w                                  = Vector{Float64}(undef, 0),
+                      solvers::Union{<:AbstractDict,Nothing} = nothing)
     ret = if kelly
         1 / size(returns, 1) * sum(log.(1 .+ returns * w))
     else

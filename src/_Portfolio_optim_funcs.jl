@@ -1519,8 +1519,11 @@ end
 
 function _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
                                      type, rm, obj, near_opt = false, coneopt = true)
+    model = portfolio.model
+
     retval = if term_status ∉ ValidTermination ||
-                any(.!isfinite.(value.(portfolio.model[:w])))
+                any(.!isfinite.(value.(model[:w]))) ||
+                all(isapprox.(abs.(value.(model[:w])), zero(eltype(portfolio.returns))))
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.optimise!))"
         @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         portfolio.fail = solvers_tried
@@ -1686,7 +1689,9 @@ function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, retu
     retval = _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
                                          type, rm, obj, true, true)
 
-    if term_status ∉ ValidTermination || any(.!isfinite.(value.(portfolio.model[:w])))
+    if term_status ∉ ValidTermination ||
+       any(.!isfinite.(value.(portfolio.model[:w]))) ||
+       all(isapprox.(abs.(value.(model[:w])), zero(eltype(portfolio.returns))))
         model = portfolio.model = copy(model1)
         @expression(model, log_ret, -log(model[:ret] - e1))
         @expression(model, log_risk, -log(e2 - model[:risk]))
