@@ -90,10 +90,10 @@ function _optimise_allocation(portfolio, tickers, latest_prices)
     return term_status, solvers_tried
 end
 
-function _combine_allocations(portfolio, key, long_tickers, short_tickers, long_shares,
-                              short_shares, long_latest_prices, short_latest_prices,
-                              long_cost, short_cost, long_allocated_weights,
-                              short_allocated_weights)
+function _combine_allocations!(portfolio, key, long_tickers, short_tickers, long_shares,
+                               short_shares, long_latest_prices, short_latest_prices,
+                               long_cost, short_cost, long_allocated_weights,
+                               short_allocated_weights)
     tickers = [long_tickers; short_tickers]
     shares = [long_shares; -short_shares]
     latest_prices = [long_latest_prices; -short_latest_prices]
@@ -110,7 +110,7 @@ function _combine_allocations(portfolio, key, long_tickers, short_tickers, long_
         DataFrame()
     end
 
-    return portfolio.alloc_optimal[key]
+    return nothing
 end
 
 function _handle_alloc_errors_and_finalise(portfolio, term_status, solvers_tried, key,
@@ -215,19 +215,16 @@ function _lp_allocation!(portfolio, port_type, latest_prices, investment, reinve
                                                                                                                                 string_names,
                                                                                                                                 short_ratio)
 
-    retval = _combine_allocations(portfolio, key, long_tickers, short_tickers, long_shares,
-                                  short_shares, long_latest_prices, short_latest_prices,
-                                  long_cost, short_cost, long_allocated_weights,
-                                  short_allocated_weights)
+    _combine_allocations!(portfolio, key, long_tickers, short_tickers, long_shares,
+                          short_shares, long_latest_prices, short_latest_prices, long_cost,
+                          short_cost, long_allocated_weights, short_allocated_weights)
 
-    if !isa(long_leftover, Number)
-        long_leftover = long_investment
-    end
-    if !isa(short_leftover, Number)
-        short_leftover = short_investment
+    if !isempty(short_tickers)
+        idx = [findfirst(x -> x == t, portfolio.alloc_optimal[key].tickers) for t ∈ tickers]
+        portfolio.alloc_optimal[key] = portfolio.alloc_optimal[key][idx, :]
     end
 
-    return retval, long_leftover + short_leftover
+    return portfolio.alloc_optimal[key], long_leftover + short_leftover
 end
 
 function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, rounding,
@@ -322,10 +319,9 @@ function _greedy_allocation!(portfolio, port_type, latest_prices, investment, ro
                                                                                                                                     rounding,
                                                                                                                                     short_ratio)
 
-    missing = _combine_allocations(portfolio, key, long_tickers, short_tickers, long_shares,
-                                   short_shares, long_latest_prices, short_latest_prices,
-                                   long_cost, short_cost, long_allocated_weights,
-                                   short_allocated_weights)
+    _combine_allocations!(portfolio, key, long_tickers, short_tickers, long_shares,
+                          short_shares, long_latest_prices, short_latest_prices, long_cost,
+                          short_cost, long_allocated_weights, short_allocated_weights)
 
     idx = [findfirst(x -> x == t, portfolio.alloc_optimal[key].tickers) for t ∈ tickers]
     portfolio.alloc_optimal[key] = portfolio.alloc_optimal[key][idx, :]

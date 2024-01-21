@@ -51,8 +51,8 @@ using SafeTestsets
 # @safetestset "Traditional optimisations" begin
 #     include("TraditionalOptimisationTests.jl")
 # end
-@safetestset "Entropic and Relativistic RM tests" begin
-    include("EntrRelRMs.jl")
+@safetestset "Asset Allocation" begin
+    include("AssetAllocationTests.jl")
 end
 
 @safetestset "HCPortfolio Optimisation" begin
@@ -63,16 +63,16 @@ end
     include("HCPortfolioOWAOptimisationTests.jl")
 end
 
+@safetestset "Entropic and Relativistic RM tests" begin
+    include("EntrRelRMs.jl")
+end
+
 @safetestset "BL Statistics" begin
     include("BLStatisticsTests.jl")
 end
 
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
-end
-
-@safetestset "Asset Allocation" begin
-    include("AssetAllocationTests.jl")
 end
 
 @safetestset "OWA Weights" begin
