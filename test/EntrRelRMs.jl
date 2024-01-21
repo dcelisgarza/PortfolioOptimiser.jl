@@ -103,8 +103,6 @@ end
         return nothing
     end
 
-    println(test_logger)
-
     @test test_logger.logs[1].level == Warn
     @test test_logger.logs[2].level == Warn
     @test contains(test_logger.logs[1].message,
