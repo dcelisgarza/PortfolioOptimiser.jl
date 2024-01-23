@@ -20,6 +20,12 @@ l = 2.0
                           alloc_solvers = alloc_solvers)
     asset_statistics!(portfolio; calc_kurt = false)
     w0 = optimise!(portfolio; obj = :Min_Risk)
+
+    allocate!(portfolio; alloc_type = :LP, save_opt_params = false)
+    alloc_params1 = copy(portfolio.alloc_params)
+    allocate!(portfolio; alloc_type = :Greedy, save_opt_params = false)
+    alloc_params2 = copy(portfolio.alloc_params)
+
     w1 = allocate!(portfolio; alloc_type = :LP)
     w2 = allocate!(portfolio; alloc_type = :Greedy)
     w3 = allocate!(portfolio; alloc_type = :LP, investment = 1e4)
@@ -42,6 +48,8 @@ l = 2.0
     w18 = allocate!(portfolio; alloc_type = :LP, reinvest = true)
     w19 = allocate!(portfolio; alloc_type = :Greedy, reinvest = true)
 
+    @test isempty(alloc_params1)
+    @test isempty(alloc_params2)
     @test isapprox(w0.weights, w1.weights, rtol = 0.01)
     @test isapprox(w0.weights, w2.weights, rtol = 0.01)
     @test isapprox(w0.weights, w3.weights, rtol = 0.1)

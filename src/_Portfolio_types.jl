@@ -1440,8 +1440,6 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
                         convert(typeof(getfield(obj, sym)), val)
                     end
                 end
-            else
-                val = convert(typeof(getfield(obj, sym)), val)
             end
         end
     elseif sym ∈ (:mu, :latest_prices)

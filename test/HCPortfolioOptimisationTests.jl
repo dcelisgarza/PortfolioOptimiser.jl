@@ -68,6 +68,18 @@ end
     w5 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
     w6 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
 
+    portfolio.w_min = 0
+    portfolio.w_max = 1
+    w7 = optimise!(portfolio; type = :HRP, rm = :CDaR, linkage = :ward)
+    w8 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
+    w9 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
+
+    portfolio.w_min = Float64[]
+    portfolio.w_max = Float64[]
+    w10 = optimise!(portfolio; type = :HRP, rm = :CDaR, linkage = :ward)
+    w11 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
+    w12 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
+
     N = length(w_min)
 
     @test all(abs.(w1.weights .- w_min) .>= -eps() * N)
@@ -83,6 +95,10 @@ end
     @test all(w5.weights .<= 0.07)
     @test all(w6.weights .>= 0.03)
     @test !all(w6.weights .<= 0.07)
+
+    @test isapprox(w7.weights, w10.weights)
+    @test isapprox(w8.weights, w11.weights)
+    @test isapprox(w9.weights, w12.weights)
 end
 
 @testset "$(:HRP), $(:HERC), $(:Variance)" begin
