@@ -1356,10 +1356,10 @@ end
 function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l)
     model = portfolio.model
 
-    pf = zero(eltype(portfolio.returns))
-
-    if haskey(model, :penalty_factor) && type == :Trad
-        pf = model[:penalty_factor]
+    pf = if type == :Trad && haskey(model, :penalty_factor)
+        model[:penalty_factor]
+    else
+        zero(eltype(portfolio.returns))
     end
 
     if obj == :Sharpe
