@@ -34,7 +34,7 @@ function _mv_risk(model, sigma, network_method)
         G = sqrt(sigma)
         @variable(model, dev)
         @constraint(model, [dev; G * model[:w]] ∈ SecondOrderCone())
-        @expression(model, dev_risk, dev * dev)
+        @expression(model, dev_risk, dev^2)
     else
         @expression(model, dev_risk, tr(sigma * model[:Wn]))
     end
@@ -54,9 +54,9 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method)
 
     if isfinite(sd_u) && type == :Trad
         if obj == :Sharpe
-            @constraint(model, model[:dev] <= sd_u * model[:k])
+            @constraint(model, model[:dev_risk] <= sd_u^2 * model[:k])
         else
-            @constraint(model, model[:dev] <= sd_u)
+            @constraint(model, model[:dev_risk] <= sd_u^2)
         end
     end
 
