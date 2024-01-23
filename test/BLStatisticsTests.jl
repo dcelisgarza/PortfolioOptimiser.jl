@@ -3549,6 +3549,12 @@ end
     B = Matrix(loadings[!, 2:end])
     bl_opt = BLOpt(;)
 
+    black_litterman_factor_satistics!(portfolio; P = P, P_f = P_f, Q = Q, Q_f = Q_f,
+                                      bl_opt = bl_opt,
+                                      loadings_opt = LoadingsOpt(; method = :PCR))
+    mu0 = copy(portfolio.mu_bl_fm)
+    cov0 = copy(portfolio.cov_bl_fm)
+
     black_litterman_factor_satistics!(portfolio, Vector{Float64}(undef, 0); B = loadings,
                                       P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
     mu1 = copy(portfolio.mu_bl_fm)
@@ -3592,6 +3598,8 @@ end
     mu8 = copy(portfolio.mu_bl_fm)
     cov8 = copy(portfolio.cov_bl_fm)
 
+    @test isapprox(mu0, mu1)
+    @test isapprox(cov0, cov1)
     @test isapprox(mu1, mu2)
     @test isapprox(cov1, cov2)
     @test isapprox(mu3, mu4)

@@ -1135,12 +1135,9 @@ function wc_statistics!(portfolio::AbstractPortfolio, opt::WCOpt = WCOpt(;))
     return nothing
 end
 
-function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
-                            criterion::Symbol = :pval, threshold::Real = 0.05)
+function forward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
+                            threshold::Real = 0.05)
     @smart_assert(criterion ∈ RegCriteria)
-    if isa(y, DataFrame)
-        y = Vector(y)
-    end
 
     included = String[]
     N = length(y)
@@ -1259,12 +1256,9 @@ function forward_regression(x::DataFrame, y::Union{Vector, DataFrame},
     return included
 end
 
-function backward_regression(x::DataFrame, y::Union{Vector, DataFrame},
-                             criterion::Symbol = :pval, threshold::Real = 0.05)
+function backward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
+                             threshold::Real = 0.05)
     @smart_assert(criterion ∈ RegCriteria)
-    if isa(y, DataFrame)
-        y = Vector(y)
-    end
 
     N = length(y)
     ovec = ones(N)
@@ -1910,6 +1904,18 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
     return nothing
 end
 
+function _hierarchical_clustering(returns::AbstractMatrix, opt::CorOpt = CorOpt(;),
+                                  linkage = :single,
+                                  max_k = ceil(Int, sqrt(size(returns, 2))),
+                                  branchorder = :optimal, dbht_method = :Unique)
+    cor_method = opt.method
+    corr, dist = cor_dist_mtx(returns, opt)
+    clustering, k = _hcluster_choice(dist, corr, cor_method, linkage, branchorder,
+                                     dbht_method, max_k)
+
+    return clustering, k
+end
+
 function cluster_assets(portfolio::HCPortfolio; linkage = :single,
                         max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
                         branchorder = :optimal, k = portfolio.k, dbht_method = :Unique)
@@ -1939,18 +1945,6 @@ function cluster_assets!(portfolio::HCPortfolio; linkage = :single,
     portfolio.k = k
 
     return nothing
-end
-
-function _hierarchical_clustering(returns::AbstractMatrix, opt::CorOpt = CorOpt(;),
-                                  linkage = :single,
-                                  max_k = ceil(Int, sqrt(size(returns, 2))),
-                                  branchorder = :optimal, dbht_method = :Unique)
-    cor_method = opt.method
-    corr, dist = cor_dist_mtx(returns, opt)
-    clustering, k = _hcluster_choice(dist, corr, cor_method, linkage, branchorder,
-                                     dbht_method, max_k)
-
-    return clustering, k
 end
 
 function cluster_assets(returns::AbstractMatrix, opt::CorOpt = CorOpt(;); linkage = :single,

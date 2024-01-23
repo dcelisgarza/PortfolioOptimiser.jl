@@ -6,6 +6,22 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Cluster assets" begin
+    hcportfolio = HCPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
+    asset_statistics!(hcportfolio; calc_kurt = false)
+    asset_statistics!(portfolio; calc_kurt = false)
+
+    cluster_assets!(hcportfolio)
+    clustering_idx, clustering, k = cluster_assets(portfolio)
+
+    for names ∈ propertynames(clustering)
+        @test getproperty(hcportfolio.clusters, names) == getproperty(clustering, names)
+    end
+    @test k == hcportfolio.k
+    @test clustering_idx == cutree(hcportfolio.clusters; k = k)
+end
+
 @testset "Weight bounds" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
