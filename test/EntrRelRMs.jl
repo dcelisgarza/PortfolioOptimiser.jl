@@ -18,21 +18,27 @@ l = 2.0
 
     solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                             :params => Dict("verbose" => false,
-                                                            "max_iter" => 2,
-                                                            "max_step_fraction" => 0.75)))
+                                                            "max_iter" => 1)))
+    solvers_mip = OrderedDict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
+                                             :params => Dict("log_to_console" => false)))
     portfolio.solvers = solvers
     test_logger = TestLogger()
     with_logger(test_logger) do
         calc_risk(portfolio; rm = :EDaR)
+        calc_risk(portfolio; rm = :RDaR)
+        portfolio.solvers = solvers_mip
         calc_risk(portfolio; rm = :RDaR)
         return nothing
     end
 
     @test test_logger.logs[1].level == Warn
     @test test_logger.logs[2].level == Warn
+    @test test_logger.logs[3].level == Warn
     @test contains(test_logger.logs[1].message,
                    "PortfolioOptimiser.ERM: model could not be optimised satisfactorily.")
     @test contains(test_logger.logs[2].message,
+                   "PortfolioOptimiser.RRM: model could not be optimised satisfactorily.")
+    @test contains(test_logger.logs[3].message,
                    "PortfolioOptimiser.RRM: model could not be optimised satisfactorily.")
 end
 
