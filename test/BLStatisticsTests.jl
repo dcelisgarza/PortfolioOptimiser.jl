@@ -3747,8 +3747,13 @@ end
     Q /= 252
     Q_f /= 252
 
+    bl_opt = BLOpt(;)
+    bl_opt.method = :A
+    bl_opt.method = :B
+
     B = Matrix(loadings[!, 2:end])
     bl_opt = BLOpt(; method = :A)
+
     w = fill(1 / 20, 20)
 
     black_litterman_factor_satistics!(portfolio, w; B = loadings, P = P, P_f = P_f, Q = Q,

@@ -56,6 +56,14 @@ end
 
     w_min, w_max = hrp_constraints(constraints, asset_sets)
 
+    optimise!(portfolio; type = :HRP, rm = :CDaR, linkage = :ward, save_opt_params = false)
+    opt_params1 = copy(portfolio.opt_params)
+    optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false, save_opt_params = false)
+    opt_params2 = copy(portfolio.opt_params)
+    optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false,
+              save_opt_params = false)
+    opt_params3 = copy(portfolio.opt_params)
+
     portfolio.w_min = w_min
     portfolio.w_max = w_max
     w1 = optimise!(portfolio; type = :HRP, rm = :CDaR, linkage = :ward)
@@ -81,6 +89,10 @@ end
     w12 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
 
     N = length(w_min)
+
+    @test isempty(opt_params1)
+    @test isempty(opt_params2)
+    @test isempty(opt_params3)
 
     @test all(abs.(w1.weights .- w_min) .>= -eps() * N)
     @test all(w1.weights .<= w_max)
