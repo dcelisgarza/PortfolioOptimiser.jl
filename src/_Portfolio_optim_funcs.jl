@@ -1248,9 +1248,9 @@ function _setup_centrality_constraints(portfolio, obj)
     model = portfolio.model
 
     if obj == :Sharpe
-        @constraint(model, transpose(A) * model[:w] - B * model[:k] == 0)
+        @constraint(model, dot(A, model[:w]) - B * model[:k] == 0)
     else
-        @constraint(model, transpose(A) * model[:w] - B == 0)
+        @constraint(model, dot(A, model[:w]) - B == 0)
     end
 
     return nothing
