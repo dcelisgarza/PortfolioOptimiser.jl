@@ -1,5 +1,5 @@
 using COSMO, CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, OrderedCollections,
-      PortfolioOptimiser, Statistics, Test, TimeSeries
+      PortfolioOptimiser, Statistics, Test, TimeSeries, Clustering
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
@@ -15,9 +15,9 @@ l = 2.0
     cluster_assets!(hcportfolio)
     clustering_idx, clustering, k = cluster_assets(portfolio)
 
-    for names ∈ propertynames(clustering)
-        @test getproperty(hcportfolio.clusters, names) == getproperty(clustering, names)
-    end
+    @test isapprox(hcportfolio.clusters.heights, clustering.heights)
+    @test isapprox(hcportfolio.clusters.merges, clustering.merges)
+    @test hcportfolio.clusters.linkage == clustering.linkage
     @test k == hcportfolio.k
     @test clustering_idx == cutree(hcportfolio.clusters; k = k)
 end
