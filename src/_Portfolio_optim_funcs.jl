@@ -54,9 +54,17 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method)
 
     if isfinite(sd_u) && type == :Trad
         if obj == :Sharpe
-            @constraint(model, model[:dev_risk] <= sd_u^2 * model[:k])
+            if haskey(model, :dev)
+                @constraint(model, model[:dev] <= sd_u * model[:k])
+            else
+                @constraint(model, model[:dev_risk] <= sd_u^2 * model[:k])
+            end
         else
-            @constraint(model, model[:dev_risk] <= sd_u^2)
+            if haskey(model, :dev)
+                @constraint(model, model[:dev] <= sd_u)
+            else
+                @constraint(model, model[:dev_risk] <= sd_u^2)
+            end
         end
     end
 
