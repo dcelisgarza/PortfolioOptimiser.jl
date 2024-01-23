@@ -51,12 +51,13 @@ using SafeTestsets
 # @safetestset "Traditional optimisations" begin
 #     include("TraditionalOptimisationTests.jl")
 # end
-@safetestset "Asset Statistics" begin
-    include("AssetStatisticsTests.jl")
-end
 
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
+end
+
+@safetestset "Asset Statistics" begin
+    include("AssetStatisticsTests.jl")
 end
 
 @safetestset "HCPortfolio Optimisation" begin
