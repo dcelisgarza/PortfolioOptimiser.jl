@@ -1981,4 +1981,4 @@ export covgerber0, covgerber1, covgerber2, mut_var_info_mtx, cov_returns, block_
        backward_regression, pcr, loadings_matrix, risk_factors, black_litterman,
        augmented_black_litterman, bayesian_black_litterman, black_litterman_statistics!,
        factor_statistics!, black_litterman_factor_satistics!, nearest_cov, covar_mtx,
-       mean_vec, cokurt_mtx, mu_estimator, cor_dist_mtx, cluster_assets
+       mean_vec, cokurt_mtx, mu_estimator, cor_dist_mtx, cluster_assets, coskew, scoskew
