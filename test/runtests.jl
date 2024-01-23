@@ -51,6 +51,9 @@ using SafeTestsets
 # @safetestset "Traditional optimisations" begin
 #     include("TraditionalOptimisationTests.jl")
 # end
+@safetestset "Entropic and Relativistic RM tests" begin
+    include("EntrRelRMs.jl")
+end
 
 @safetestset "Portfolio Classic Traditional Optimisation" begin
     include("PortfolioClassicTradTests.jl")
@@ -58,10 +61,6 @@ end
 
 @safetestset "Portfolio Traditional Optimisation Constraints" begin
     include("PortfolioTradConstraintTests.jl")
-end
-
-@safetestset "Entropic and Relativistic RM tests" begin
-    include("EntrRelRMs.jl")
 end
 
 @safetestset "Asset Statistics" begin
