@@ -1,5 +1,5 @@
-using COSMO, CSV, Clarabel, Graphs, HiGHS, JuMP, LinearAlgebra, OrderedCollections,
-      Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries, GLPK
+using COSMO, CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra,
+      OrderedCollections, Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries, GLPK
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
@@ -13,6 +13,63 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
                                                                    "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
                                                                                                                "verbose" => false,
                                                                                                                "max_step_fraction" => 0.75))))
+@testset "Linear Constraints" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75)),
+                                                :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                               :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+
+    asset_sets = DataFrame("Asset" => portfolio.assets,
+                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                                       3, 1],
+                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
+                                        4, 2, 1],
+                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                                       2, 1],
+                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
+                                        2, 2, 1],
+                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
+                                        3, 4, 1],
+                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
+                                        4, 2, 2])
+    constraints = DataFrame(:Enabled => [true, true, true, true, true],
+                            :Type => ["Each Asset in Subset", "Each Asset in Subset",
+                                      "Asset", "Subset", "Asset"],
+                            :Set => ["G2DBHT", "G2DBHT", "", "G2ward", ""],
+                            :Position => [2, 3, "AAPL", 2, "MA"],
+                            :Sign => [">=", "<=", ">=", "<=", ">="],
+                            :Weight => [0.03, 0.2, 0.032, "", ""],
+                            :Relative_Type => ["", "", "", "Asset", "Subset"],
+                            :Relative_Set => ["", "", "", "", "G2ward"],
+                            :Relative_Position => ["", "", "", "MA", 3],
+                            :Factor => ["", "", "", 2.2, 5])
+
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_mtx_ineq = A
+    portfolio.b_vec_ineq = B
+
+    w1 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+
+    @test all(w1.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
+    @test all(w1.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
+    @test all(w1.weights[w1.tickers .== "AAPL"] .>= 0.032)
+    @test sum(w1.weights[asset_sets.G2ward .== 2]) <=
+          w1.weights[w1.tickers .== "MA"][1] * 2.2
+    @test w1.weights[w1.tickers .== "MA"][1] * 5 >= sum(w1.weights[asset_sets.G2ward .== 3])
+
+    w2 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+
+    @test all(w2.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
+    @test all(w2.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
+    @test all(w2.weights[w2.tickers .== "AAPL"] .>= 0.032)
+    @test sum(w2.weights[asset_sets.G2ward .== 2]) <=
+          w2.weights[w2.tickers .== "MA"][1] * 2.2
+    @test w2.weights[w2.tickers .== "MA"][1] * 5 >= sum(w2.weights[asset_sets.G2ward .== 3])
+end
+
 @testset "Max Number of Assets" begin
     portfolio = Portfolio(; prices = prices, solvers = solvers)
     asset_statistics!(portfolio; calc_kurt = false)
