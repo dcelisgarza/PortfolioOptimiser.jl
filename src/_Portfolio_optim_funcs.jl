@@ -1004,10 +1004,6 @@ function _setup_risk_budget(portfolio)
     model = portfolio.model
     if isempty(portfolio.risk_budget)
         portfolio.risk_budget = ()
-    else
-        if !isapprox(sum(portfolio.risk_budget), one(eltype(portfolio.risk_budget)))
-            portfolio.risk_budget .= portfolio.risk_budget
-        end
     end
     @variable(model, k >= 0)
     return nothing
