@@ -13,6 +13,41 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
                                                                    "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
                                                                                                                "verbose" => false,
                                                                                                                "max_step_fraction" => 0.75))))
+@testset "Turnover" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75)),
+                                                :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                               :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+
+    rm = :SD
+
+    obj = :Sharpe
+    w1 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    to1 = 0.05
+    tow1 = copy(w1.weights)
+    portfolio.turnover = to1
+    portfolio.turnover_weights = tow1
+
+    obj = :Min_Risk
+    w2 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+
+    portfolio.turnover = Inf
+    obj = :Min_Risk
+    w3 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    to2 = 0.031
+    tow2 = copy(w3.weights)
+    portfolio.turnover = to2
+    portfolio.turnover_weights = tow2
+
+    obj = :Sharpe
+    w4 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+
+    @test all(abs.(w2.weights - tow1) .<= to1)
+    @test all(abs.(w4.weights - tow2) .<= to2)
+end
 @testset "Tracking Error" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
