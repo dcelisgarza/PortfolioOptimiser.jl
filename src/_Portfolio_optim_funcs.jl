@@ -1283,27 +1283,21 @@ end
 
 function _setup_tracking_err(portfolio, returns, obj, T)
     tracking_err = portfolio.tracking_err
-
-    if isinf(tracking_err)
-        return nothing
-    end
-
     kind_tracking_err = portfolio.kind_tracking_err
     tracking_err_weights = portfolio.tracking_err_weights
     tracking_err_returns = portfolio.tracking_err_returns
 
-    tracking_err_flag = false
-
-    if kind_tracking_err == :Weights && !isempty(tracking_err_weights)
-        benchmark = returns * tracking_err_weights
-        tracking_err_flag = true
-    elseif kind_tracking_err == :Returns && !isempty(tracking_err_returns)
-        benchmark = tracking_err_returns
-        tracking_err_flag = true
+    if isinf(tracking_err) ||
+       isfinite(tracking_err) &&
+       (kind_tracking_err == :Weights && isempty(tracking_err_weights) ||
+        kind_tracking_err == :Returns && isempty(tracking_err_returns))
+        return nothing
     end
 
-    if !tracking_err_flag
-        return nothing
+    benchmark = if kind_tracking_err == :Weights
+        returns * tracking_err_weights
+    elseif kind_tracking_err == :Returns
+        tracking_err_returns
     end
 
     model = portfolio.model
