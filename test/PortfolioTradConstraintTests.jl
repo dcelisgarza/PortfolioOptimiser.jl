@@ -13,6 +13,51 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
                                                                    "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
                                                                                                                "verbose" => false,
                                                                                                                "max_step_fraction" => 0.75))))
+@testset "Max Number of Assets" begin
+    portfolio = Portfolio(; prices = prices, solvers = solvers)
+    asset_statistics!(portfolio; calc_kurt = false)
+
+    rm = :SSD
+    w1 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    portfolio.max_number_assets = 5
+    w2 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    sort!(w1, :weights; rev = true)
+    sort!(w2, :weights; rev = true)
+
+    portfolio.max_number_assets = 0
+    w3 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    portfolio.max_number_assets = 4
+    w4 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    sort!(w3, :weights; rev = true)
+    sort!(w4, :weights; rev = true)
+
+    portfolio = Portfolio(; prices = prices, solvers = solvers, short = true)
+    asset_statistics!(portfolio; calc_kurt = false)
+
+    rm = :CVaR
+    w5 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    portfolio.max_number_assets = 7
+    w6 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    sort!(w5, :weights; rev = true)
+    sort!(w6, :weights; rev = true)
+
+    portfolio.max_number_assets = 0
+    w7 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    portfolio.max_number_assets = 5
+    w8 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    sort!(w7, :weights; rev = true)
+    sort!(w8, :weights; rev = true)
+
+    @test isempty(setdiff(w1.tickers[1:5], w2.tickers[1:5]))
+    @test isempty(setdiff(w3.tickers[1:4], w4.tickers[1:4]))
+
+    @test isempty(setdiff(w5.tickers[1:6], w6.tickers[1:6]))
+    @test isempty(setdiff(w5.tickers[end], w6.tickers[end]))
+
+    @test isempty(setdiff(w7.tickers[1:3], w8.tickers[1:3]))
+    @test isempty(setdiff(w7.tickers[(end - 1):end], w8.tickers[(end - 1):end]))
+end
+
 @testset "Network and Dendrogram Upper Dev Constraints" begin
     portfolio = Portfolio(; prices = prices, solvers = solvers)
     asset_statistics!(portfolio; calc_kurt = false)
