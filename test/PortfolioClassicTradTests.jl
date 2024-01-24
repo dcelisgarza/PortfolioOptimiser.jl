@@ -8,6 +8,54 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Mu Lower bound Sharpe" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75)),
+                                                :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                               :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
+                   obj = :Sharpe, kelly = :None)
+    r1 = dot(portfolio.mu, w1.weights)
+
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
+                   obj = :Max_Ret, kelly = :None)
+    r2 = dot(portfolio.mu, w2.weights)
+
+    r3 = (r1 + r2) / 2
+    portfolio.mu_l = r3
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
+                   obj = :Sharpe, kelly = :None)
+    r4 = dot(portfolio.mu, w2.weights)
+
+    portfolio.mu_l = Inf
+    T = size(portfolio.returns, 1)
+    w5 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
+                   obj = :Sharpe, kelly = :Exact)
+    r5 = sum(log.(1 .+ portfolio.returns * w5.weights)) / T
+
+    w6 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
+                   obj = :Max_Ret, kelly = :Exact)
+    r6 = sum(log.(1 .+ portfolio.returns * w6.weights)) / T
+
+    r7 = (r5 + r6) / 2
+    portfolio.mu_l = r7
+    w7 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
+                   obj = :Sharpe, kelly = :Exact)
+    r8 = sum(log.(1 .+ portfolio.returns * w7.weights)) / T
+
+    @test r4 >= r3
+    @test r4 <= r2
+    @test r4 >= r1
+
+    @test r8 >= r5
+    @test r8 <= r6
+    @test r8 >= r7
+end
+
 @testset "$(:Classic), $(:Trad), $(:SD)" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
