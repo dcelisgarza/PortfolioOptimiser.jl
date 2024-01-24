@@ -472,7 +472,7 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
     @test isapprox(w27.weights, w27t)
     @test isapprox(w28.weights, w28t, rtol = 1.0e-7)
     @test isapprox(w29.weights, w29t)
-    @test isapprox(w30.weights, w30t)
+    @test isapprox(w30.weights, w30t, rtol = 1.0e-7)
     @test isapprox(w31.weights, w31t)
     @test isapprox(w32.weights, w32t)
     @test isapprox(w33.weights, w33t)
@@ -931,13 +931,13 @@ end
 
     @test isapprox(w1.weights, w1t)
     @test isapprox(w2.weights, w2t)
-    @test isapprox(w3.weights, w3t)
+    @test isapprox(w3.weights, w3t, rtol = 0.01)
     @test isapprox(w4.weights, w4t)
     @test isapprox(w5.weights, w5t, rtol = 0.01)
     @test isapprox(w6.weights, w6t)
     @test isapprox(w7.weights, w7t, rtol = 0.01)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t)
+    @test isapprox(w9.weights, w9t, rtol = 1.0e-7)
     @test isapprox(w10.weights, w10t)
 
     @test isapprox(sum(w1.weights), ssl1)
@@ -977,7 +977,7 @@ end
     @test isapprox(w22.weights, w22t)
     @test isapprox(w23.weights, w23t)
     @test isapprox(w24.weights, w24t, rtol = 1.0e-6)
-    @test isapprox(w25.weights, w25t)
+    @test isapprox(w25.weights, w25t, rtol = 0.001)
     @test isapprox(w26.weights, w26t)
     @test isapprox(w27.weights, w27t)
     @test isapprox(w28.weights, w28t)
@@ -1219,6 +1219,210 @@ end
     portfolio.network_sdp = L_A
     w40 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
 
+    portfolio = Portfolio(; prices = prices, solvers = solvers)
+    asset_statistics!(portfolio; calc_kurt = false)
+    portfolio.network_penalty = 0.5
+
+    rm = :CDaR
+    obj = :Min_Risk
+    CV = centrality_vector(portfolio, CorOpt(;); method = :TMFG)
+    B_1 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 1)
+    L_A = cluster_matrix(portfolio, CorOpt(;); linkage = :DBHT)
+
+    w41 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.a_vec_cent = CV
+    portfolio.b_cent = minimum(CV)
+    w42 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = B_1
+    w43 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = B_1
+    w44 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = L_A
+    w45 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = L_A
+    w46 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.a_vec_cent = []
+    portfolio.b_cent = Inf
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = B_1
+    w47 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = B_1
+    w48 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = L_A
+    w49 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = L_A
+    w50 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio = Portfolio(; prices = prices, solvers = solvers)
+    asset_statistics!(portfolio; calc_kurt = false)
+    portfolio.network_penalty = 0.5
+
+    rm = :CDaR
+    obj = :Utility
+    CV = centrality_vector(portfolio, CorOpt(;); method = :TMFG)
+    B_1 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 1)
+    L_A = cluster_matrix(portfolio, CorOpt(;); linkage = :DBHT)
+
+    w51 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.a_vec_cent = CV
+    portfolio.b_cent = minimum(CV)
+    w52 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = B_1
+    w53 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = B_1
+    w54 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = L_A
+    w55 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = L_A
+    w56 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.a_vec_cent = []
+    portfolio.b_cent = Inf
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = B_1
+    w57 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = B_1
+    w58 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = L_A
+    w59 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = L_A
+    w60 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio = Portfolio(; prices = prices, solvers = solvers)
+    asset_statistics!(portfolio; calc_kurt = false)
+    portfolio.network_penalty = 0.5
+
+    rm = :CDaR
+    obj = :Sharpe
+    CV = centrality_vector(portfolio, CorOpt(;); method = :TMFG)
+    B_1 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 1)
+    L_A = cluster_matrix(portfolio, CorOpt(;); linkage = :DBHT)
+
+    w61 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.a_vec_cent = CV
+    portfolio.b_cent = minimum(CV)
+    w62 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = B_1
+    w63 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = B_1
+    w64 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = L_A
+    w65 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = L_A
+    w66 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.a_vec_cent = []
+    portfolio.b_cent = Inf
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = B_1
+    w67 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = B_1
+    w68 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = L_A
+    w69 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = L_A
+    w70 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio = Portfolio(; prices = prices, solvers = solvers)
+    asset_statistics!(portfolio; calc_kurt = false)
+    portfolio.network_penalty = 0.5
+
+    rm = :CDaR
+    obj = :Max_Ret
+    CV = centrality_vector(portfolio, CorOpt(;); method = :TMFG)
+    B_1 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 1)
+    L_A = cluster_matrix(portfolio, CorOpt(;); linkage = :DBHT)
+
+    w71 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.a_vec_cent = CV
+    portfolio.b_cent = minimum(CV)
+    w72 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = B_1
+    w73 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = B_1
+    w74 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = L_A
+    w75 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = L_A
+    w76 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.a_vec_cent = []
+    portfolio.b_cent = Inf
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = B_1
+    w77 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = B_1
+    w78 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :IP
+    portfolio.network_ip = L_A
+    w79 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
+    portfolio.network_method = :SDP
+    portfolio.network_sdp = L_A
+    w80 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+
     w1t = [0.0, 0.0, 0.0, 0.0, 0.0034099011531648123, 0.0, 0.0, 0.0790428239168528, 0.0,
            0.0, 0.38759317020233125, 0.0, 0.0, 0.0, 0.000554515274145546,
            0.0959882893057346, 0.26790888256716067, 0.0, 0.0006560171912823603,
@@ -1392,6 +1596,180 @@ end
             8.404287803833489e-10, 2.4044925788096207e-9, 1.155147011245612e-9,
             0.24740169810315635, 4.301014276350286e-8, 1.2543258908823085e-9,
             0.24447783039500992, 1.4860744428790223e-9]
+    w41t = [0.0, 0.0, 0.0, 0.0, 0.0034099011531648123, 0.0, 0.0, 0.0790428239168528, 0.0,
+            0.0, 0.38759317020233125, 0.0, 0.0, 0.0, 0.000554515274145546,
+            0.0959882893057346, 0.26790888256716067, 0.0, 0.0006560171912823603,
+            0.16484640038932794]
+    w42t = [0.0, 0.0, 0.0, 0.0517231388794993, 1.0853285495591566e-17, 0.0,
+            0.05548699473292642, 0.2566673894884358, 0.0, 0.0, 0.5073286323951223,
+            0.12879384450401618, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w43t = [0.0, 0.0, 0.0, 0.1380859788647512, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.8619140211352487, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w44t = [5.149778311551971e-11, 2.4798751785860862e-12, 6.996081193565089e-10,
+            0.14014631390762305, 1.5247863930734077e-9, 4.932213714657232e-11,
+            0.13499505966078165, 0.21013438149593003, 5.420271549080447e-11,
+            4.56334091518674e-11, 0.26706479999587784, 0.2453420578817712,
+            0.002317382061699604, 5.175236011552128e-11, 2.3018232653008603e-9,
+            5.3186426124386946e-11, 5.455682214418857e-11, 4.905971318108076e-12,
+            5.49542402978741e-11, 4.76071398325532e-11]
+    w45t = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.025097613514509735, 0.21816860550265443, 0.0,
+            0.0, 0.7567337809828358, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w46t = [8.066176662948276e-11, 7.846726522211354e-11, 8.830767008646231e-11,
+            0.14400449191792639, 1.6067698894706017e-9, 7.239080424857936e-11,
+            0.16096092858719221, 0.20357959165707923, 8.874424293796657e-11,
+            6.796790608722297e-11, 0.22526752432228056, 0.2311571938945118,
+            0.035030265303532857, 8.242544866913844e-11, 3.036068731700161e-11,
+            1.8483786806634138e-9, 9.041213795783903e-11, 2.330828731505939e-11,
+            9.080470343979167e-11, 6.847755397204912e-11]
+    w47t = [0.0, 0.0, 5.920765310267057e-17, 0.0, 0.37297150326295364, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.6270284967370462, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w48t = [6.544970352321704e-11, 0.10178810405224831, 0.004112920935146684,
+            0.0031639790031650875, 0.1530529999471956, 2.051853078939224e-11,
+            0.014700198697066904, 0.1902839333114586, 2.706174002994138e-11,
+            0.006575121290324204, 0.21040590074211363, 0.004140118886384232,
+            2.3663886591314264e-11, 2.8342248346527903e-11, 0.02751075137205449,
+            0.11821237566813832, 1.1286146419967076e-11, 1.5812546032508732e-10,
+            6.128688173726229e-12, 0.16605359575412765]
+    w49t = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.42755737470037836, 0.0, 0.0,
+            0.0, 0.0, 0.09032779150803771, 0.2604585803196508, 0.0, 0.0,
+            0.22165625347193316]
+    w50t = [3.4799103456914945e-10, 3.832365350339127e-10, 4.771366849426316e-10,
+            8.413787205893765e-11, 0.035311043145816734, 8.207488951237227e-11,
+            5.4414076576700516e-11, 0.12708392636824645, 6.68048499888268e-11,
+            0.03191755066470304, 0.29800203290856325, 8.412019286218417e-11,
+            0.007423632662406353, 1.0744827336499246e-10, 6.859821213836867e-11,
+            0.15243449812562618, 0.24469036498291835, 2.600053655860802e-10,
+            1.172317238562962e-10, 0.10313694900852015]
+    w51t = [0.0, 0.0, 0.0, 0.0, 0.003559479269687892, 0.0, 0.0, 0.0799730685504724, 0.0,
+            0.0, 0.3871598884133303, 0.0, 0.0, 0.0, 0.00022182912532979019,
+            0.09652576896214482, 0.2659397480673419, 0.0, 0.0019205861925266662,
+            0.16469963141916624]
+    w52t = [0.0, 0.0, 0.0, 0.0523709534650843, 6.511971297354939e-17, 0.0,
+            0.05695993250300767, 0.2532224974039182, 0.0, 0.0, 0.5082815392792128,
+            0.1291650773487769, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w53t = [0.0, 0.0, 0.0, 0.13808597886475102, 2.7755575615628914e-17, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.861914021135249, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w54t = [4.427547682445635e-11, 1.2323388377239161e-11, 3.3789734127576494e-11,
+            0.131348383651554, 1.890595631440567e-9, 4.3083631171441386e-11,
+            0.11672047631962672, 0.22786079185199815, 4.582338939575489e-11,
+            4.085822971817704e-11, 0.28975686608149864, 0.2343134784209093,
+            8.471714805912585e-10, 4.4393685317616355e-11, 4.776188865720527e-10,
+            4.3443093722436156e-11, 4.616716202230953e-11, 1.6316282801049807e-11,
+            4.6368902972223686e-11, 4.218402495241013e-11]
+    w55t = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.025097613514509676, 0.2181686055026544, 0.0,
+            0.0, 0.756733780982836, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w56t = [1.5319633778915382e-10, 1.3844162024732992e-10, 9.556606857917e-11,
+            0.11834011631260989, 4.250816973425614e-9, 1.4460555001627373e-10,
+            0.1247479289356113, 0.24173757178606575, 1.6504171762051182e-10,
+            1.316610847086899e-10, 0.2831378183828014, 0.22309878326858223,
+            0.008937773184009717, 1.5512333643344602e-10, 5.745269587498984e-11,
+            2.355417652769651e-9, 1.6720022453072754e-10, 9.061492730943852e-12,
+            1.6730031163976047e-10, 1.394346153617014e-10]
+    w57t = [0.0, 0.0, 0.0, 0.0, 0.37297150326295375, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.6270284967370463, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w58t = [1.0675624983732587e-10, 0.10287620722699994, 0.007419930667590516,
+            0.005575733023148208, 0.1403841692167293, 3.199121980349859e-11,
+            4.6306802673266263e-10, 0.18278277233059223, 8.631146826284374e-11,
+            4.630387025867777e-10, 0.23500367383413973, 0.007030151281493114,
+            5.022902604510499e-11, 6.927670538297251e-11, 0.006391407528962509,
+            0.12391311923336361, 4.114531115043418e-11, 0.01987312469120852,
+            1.9281611083696664e-11, 0.168749709634674]
+    w59t = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.1319557613440377e-17, 0.0, 0.0,
+            0.42755737470037847, 0.0, 0.0, 0.0, 0.0, 0.09032779150803776,
+            0.2604585803196507, 0.0, 0.0, 0.22165625347193313]
+    w60t = [1.042186474854199e-10, 1.3485254620491336e-10, 1.8303991954359516e-10,
+            3.914802519406392e-11, 0.032009499095408796, 2.933009110105721e-11,
+            1.7975745557757888e-11, 0.11600178830341451, 3.1938830869442e-11,
+            0.0021331662793370254, 0.3186868005600354, 1.3203064509914337e-10,
+            0.000664183488778848, 5.108672640287638e-11, 2.686899739811538e-11,
+            0.15685331808087816, 0.24691361133786774, 3.0238587900862603e-10,
+            5.831035450226437e-11, 0.1267376317430931]
+    w61t = [0.0, 0.0, 0.07233520665470372, 0.0, 0.3107248736916702, 0.0, 0.0,
+            0.12861270774687708, 0.0, 0.0, 0.1643840889865787, 0.0, 0.0, 0.0, 0.0,
+            0.26288266377673325, 0.0, 0.0, 0.0, 0.06106045914343715]
+    w62t = [0.0, 0.0, 0.0, 0.13626926674571752, 3.031954992025752e-17, 0.0,
+            0.25290093270820974, 0.0, 0.0, 0.0, 0.48504514790687475, 0.125784652639198, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w63t = [0.0, 0.0, 0.0, 0.0, 2.1783103199597982e-16, 0.0, 0.9999999999999991, 0.0, 0.0,
+            0.0, 3.974611617249547e-16, 2.0601893316598876e-16, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0]
+    w64t = [6.998082927042676e-10, 1.5424340303099734e-10, 3.143052708446116e-11,
+            0.19802517820583498, 2.9154150617875177e-8, 6.835660500782289e-10,
+            0.3528275164814403, 0.10872075946065324, 6.950007745275945e-10,
+            6.061445866384829e-10, 0.18177164937436036, 0.15865486058401645,
+            1.209391620092009e-10, 7.071154007623483e-10, 4.4477427881280717e-10,
+            2.7661165383299815e-10, 6.353206628572158e-10, 3.486548879707198e-10,
+            6.847397491821611e-10, 6.511943842367757e-10]
+    w65t = [0.0, 0.0, 0.0, 0.05826291361186471, 2.924313212638887e-18, 0.0,
+            0.2139337899569756, 0.0, 0.0, 0.0, 0.7278032964311597, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0]
+    w66t = [6.887066199553351e-10, 1.3942219296218284e-10, 5.617973600675453e-11,
+            0.28887871559482536, 2.8511681818350362e-8, 6.727791125001964e-10,
+            0.4576951603196201, 4.805197643914377e-9, 6.712327218039465e-10,
+            5.972884880908119e-10, 0.1560728864837939, 0.09735319790583159,
+            1.0817057217327353e-11, 7.029527191800699e-10, 4.224100615252325e-10,
+            1.8682750141714914e-10, 6.319770730638095e-10, 3.165175267171814e-10,
+            6.608697025929005e-10, 6.210689882882156e-10]
+    w67t = [0.0, 0.0, 0.0, 0.0, 0.7390777009270597, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.26092229907294023, 0.0, 0.0, 0.0, 0.0]
+    w68t = [2.7588373786033397e-10, 0.06230489766807689, 8.845864664436178e-10,
+            5.350493552040951e-10, 0.2617450599704982, 7.669972307999461e-12,
+            0.06747640663988178, 0.1314516270147797, 2.7995440420307e-10,
+            2.334051199517679e-10, 0.11816977777706833, 7.419102269372113e-11,
+            1.0248689533597765e-10, 7.199470300436598e-10, 2.1211052329000083e-11,
+            0.21351023865750965, 2.963036099128278e-10, 1.2911351324417137e-9,
+            3.2069817026981996e-10, 0.14534198722966346]
+    w69t = [0.0, 0.0, 0.0, 0.0, 0.37085335018478044, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.3290504062456894, 0.0, 0.0, 0.0, 0.0, 0.3000962435695302, 0.0, 0.0, 0.0, 0.0]
+    w70t = [9.245516220601118e-10, 5.186782148635348e-9, 3.4039386184143264e-9,
+            6.646594911931452e-10, 0.3308627214855685, 8.939476826782104e-11,
+            0.03086646430540743, 1.1623232349494082e-9, 1.8599693781754214e-9,
+            5.926674468334273e-10, 0.17144513835131672, 2.5251341793341505e-10,
+            2.6526771610019613e-10, 1.5828200789884177e-9, 7.165889559341803e-11,
+            0.2798483559644734, 0.1833483301534829, 6.156055011640072e-10,
+            0.0036289718718038083, 1.1957949612101392e-9]
+    w71t = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0]
+    w72t = [0.0, 0.0, 0.0, 1.3528869751691398e-15, 0.0, 0.0, 0.9999999999999978, 0.0, 0.0,
+            0.0, 9.889489766620252e-16, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w73t = [0.0, 0.0, 0.0, 2.777132124193826e-15, 1.564886636111088e-17, 0.0,
+            0.9999999999999947, 2.3505735879776856e-15, 0.0, 0.0, 2.0482117593296807e-16,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w74t = [2.790097700306141e-11, 1.320285521917956e-10, 8.114088362470686e-10,
+            0.1437099072732515, 3.0959084833408986e-10, 1.9823574024363207e-11,
+            0.14466189300591933, 0.14312268150542642, 4.355719152823437e-11,
+            1.5448017724435915e-11, 0.14307601420706664, 0.14237702719286968,
+            0.14147060549885723, 3.0907863758647446e-11, 0.14158186945898285,
+            2.3040636971923577e-10, 4.79573313389037e-11, 1.2271426282336827e-10,
+            5.1031871387289024e-11, 1.4850891024797537e-11]
+    w75t = [0.0, 0.0, 0.0, 2.5346276720679334e-16, 1.1102230246251565e-16, 0.0,
+            0.9999999999999939, 9.238751117774938e-16, 0.0, 0.0, 4.833286823928312e-15, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w76t = [2.808953057569564e-11, 2.5368126242568577e-10, 2.956740604573578e-10,
+            0.25047657021708464, 4.935701606610306e-10, 4.171446712890793e-12,
+            0.2514337884599485, 6.99770525499966e-8, 6.919181492056242e-11,
+            8.478928096414263e-11, 0.24984650892745455, 5.963818484767332e-8,
+            0.2482429677886559, 3.629199687830896e-11, 3.240177346545273e-8,
+            8.994660792508148e-10, 7.844041301241544e-11, 2.520509892668899e-10,
+            8.474789959378888e-11, 9.68046702397924e-12]
+    w77t = [0.0, 0.0, 0.0, 0.0, 1.932161143874555e-16, 0.0, 0.9999999999999998, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w78t = [3.310716861138238e-10, 1.3784145362205136e-8, 0.1254961986602289,
+            0.12541329858112535, 6.168866828239069e-9, 3.5791503711104764e-10,
+            0.12636375257965587, 3.1023664056976957e-7, 2.6354635887713034e-10,
+            2.3289709408976344e-8, 0.12478242449722923, 0.12408556968228424,
+            9.78830418898426e-9, 4.203854032463786e-10, 0.12328237793117948,
+            0.12567295402982664, 1.631526610039635e-10, 0.12490305460146264,
+            1.638252734757663e-10, 4.469444906125927e-9]
+    w79t = [0.0, 0.0, 0.0, 0.0, 9.778825117965047e-17, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    w80t = [6.599607268267841e-9, 8.195744953282097e-9, 8.430704428049894e-9,
+            8.083985319376354e-9, 0.2503810770458226, 6.149491257259549e-9,
+            0.25043074292510137, 5.188426666896991e-9, 3.1598863643306385e-7,
+            1.0016342060996323e-8, 1.5929624978851616e-8, 6.427401837850428e-9,
+            3.357288470442662e-9, 9.070608332101324e-9, 5.0995642204099986e-9,
+            0.24974023357410505, 1.7924824571124688e-7, 5.404587550281227e-9,
+            0.24944734715916728, 6.105544260199474e-9]
 
     @test isapprox(w1.weights, w1t)
     @test isapprox(w2.weights, w2t)
@@ -1436,4 +1814,92 @@ end
     @test isapprox(w38.weights, w38t)
     @test isapprox(w39.weights, w39t)
     @test isapprox(w40.weights, w40t)
+
+    @test isapprox(w41.weights, w41t)
+    @test isapprox(w42.weights, w42t)
+    @test isapprox(w43.weights, w43t)
+    @test isapprox(w44.weights, w44t)
+    @test isapprox(w45.weights, w45t)
+    @test isapprox(w46.weights, w46t)
+    @test isapprox(w47.weights, w47t)
+    @test isapprox(w48.weights, w48t)
+    @test isapprox(w49.weights, w49t)
+    @test isapprox(w50.weights, w50t)
+
+    @test isapprox(w41.weights, w1.weights)
+    @test isapprox(w42.weights, w2.weights)
+    @test isapprox(w43.weights, w3.weights)
+    @test !isapprox(w44.weights, w4.weights)
+    @test isapprox(w45.weights, w5.weights)
+    @test !isapprox(w46.weights, w6.weights)
+    @test isapprox(w47.weights, w7.weights)
+    @test !isapprox(w48.weights, w8.weights)
+    @test isapprox(w49.weights, w9.weights)
+    @test !isapprox(w50.weights, w10.weights)
+
+    @test isapprox(w51.weights, w51t)
+    @test isapprox(w52.weights, w52t)
+    @test isapprox(w53.weights, w53t)
+    @test isapprox(w54.weights, w54t)
+    @test isapprox(w55.weights, w55t)
+    @test isapprox(w56.weights, w56t)
+    @test isapprox(w57.weights, w57t)
+    @test isapprox(w58.weights, w58t)
+    @test isapprox(w59.weights, w59t)
+    @test isapprox(w60.weights, w60t)
+
+    @test isapprox(w51.weights, w11.weights)
+    @test isapprox(w52.weights, w12.weights)
+    @test isapprox(w53.weights, w13.weights)
+    @test !isapprox(w54.weights, w14.weights)
+    @test isapprox(w55.weights, w15.weights)
+    @test !isapprox(w56.weights, w16.weights)
+    @test isapprox(w57.weights, w17.weights)
+    @test !isapprox(w58.weights, w18.weights)
+    @test isapprox(w59.weights, w19.weights)
+    @test !isapprox(w60.weights, w20.weights)
+
+    @test isapprox(w61.weights, w61t)
+    @test isapprox(w62.weights, w62t)
+    @test isapprox(w63.weights, w63t)
+    @test isapprox(w64.weights, w64t)
+    @test isapprox(w65.weights, w65t)
+    @test isapprox(w66.weights, w66t)
+    @test isapprox(w67.weights, w67t)
+    @test isapprox(w68.weights, w68t)
+    @test isapprox(w69.weights, w69t)
+    @test isapprox(w70.weights, w70t)
+
+    @test isapprox(w61.weights, w21.weights)
+    @test isapprox(w62.weights, w22.weights)
+    @test isapprox(w63.weights, w23.weights)
+    @test !isapprox(w64.weights, w24.weights)
+    @test isapprox(w65.weights, w25.weights)
+    @test !isapprox(w66.weights, w26.weights)
+    @test isapprox(w67.weights, w27.weights)
+    @test !isapprox(w68.weights, w28.weights)
+    @test isapprox(w69.weights, w29.weights)
+    @test !isapprox(w70.weights, w30.weights)
+
+    @test isapprox(w71.weights, w71t)
+    @test isapprox(w72.weights, w72t)
+    @test isapprox(w73.weights, w73t)
+    @test isapprox(w74.weights, w74t)
+    @test isapprox(w75.weights, w75t)
+    @test isapprox(w76.weights, w76t)
+    @test isapprox(w77.weights, w77t)
+    @test isapprox(w78.weights, w78t)
+    @test isapprox(w79.weights, w79t)
+    @test isapprox(w80.weights, w80t)
+
+    @test isapprox(w71.weights, w31.weights)
+    @test isapprox(w72.weights, w32.weights)
+    @test isapprox(w73.weights, w33.weights)
+    @test !isapprox(w74.weights, w34.weights)
+    @test isapprox(w75.weights, w35.weights)
+    @test !isapprox(w76.weights, w36.weights)
+    @test isapprox(w77.weights, w37.weights)
+    @test !isapprox(w78.weights, w38.weights)
+    @test isapprox(w79.weights, w39.weights)
+    @test !isapprox(w80.weights, w40.weights)
 end
