@@ -1850,7 +1850,16 @@ efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic, hist::Intege
 """
 function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
                              hist::Integer = 1, kelly::Symbol = :None, rf::Real = 0.0,
-                             rm::Symbol = :SD, points::Integer = 20)
+                             rm::Symbol = :SD, points::Integer = 20, near_opt::Bool = false,
+                             M::Real = if near_opt
+                                 ceil(sqrt(size(portfolio.returns, 2)))
+                             else
+                                 0
+                             end,
+                             w_min::AbstractVector = Vector{eltype(portfolio.returns)}(undef,
+                                                                                       0),
+                             w_max::AbstractVector = Vector{eltype(portfolio.returns)}(undef,
+                                                                                       0))
     optimal1 = deepcopy(portfolio.optimal)
     fail1 = deepcopy(portfolio.fail)
 
@@ -1891,7 +1900,8 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     for (j, (r, m)) ∈ enumerate(zip(risks, mus))
         if i == 0
             w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
-                          obj = :Min_Risk, rf = rf, rm = rm, save_opt_params = false)
+                          obj = :Min_Risk, rf = rf, rm = rm, near_opt = near_opt, M = M,
+                          w_min = w_min, w_max = w_max, save_opt_params = false)
         else
             if !isempty(w)
                 w_ini = w.weights
@@ -1902,15 +1912,17 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
                 setproperty!(portfolio, rmf, Inf)
             end
             w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
-                          obj = :Max_Ret, rf = rf, rm = rm, save_opt_params = false,
-                          w_ini = w_ini)
+                          obj = :Max_Ret, rf = rf, rm = rm, near_opt = near_opt, M = M,
+                          w_ini = w_ini, w_min = w_min, w_max = w_max,
+                          save_opt_params = false)
             # Fallback in case :Max_Ret with maximum risk bounds fails.
             if isempty(w)
                 setproperty!(portfolio, rmf, Inf)
                 j != length(risks) ? portfolio.mu_l = m : portfolio.mu_l = Inf
                 w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
-                              obj = :Min_Risk, rf = rf, rm = rm, save_opt_params = false,
-                              w_ini = w_ini)
+                              obj = :Min_Risk, rf = rf, rm = rm, near_opt = near_opt, M = M,
+                              w_ini = w_ini, w_min = w_min, w_max = w_max,
+                              save_opt_params = false)
                 portfolio.mu_l = Inf
             end
         end
@@ -1928,7 +1940,8 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     setproperty!(portfolio, rmf, Inf)
 
     w = optimise!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Sharpe,
-                  rf = rf, rm = rm, save_opt_params = false)
+                  rf = rf, rm = rm, near_opt = near_opt, M = M, w_min = w_min,
+                  w_max = w_max, save_opt_params = false)
     sharpe = false
     if !isempty(w)
         rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
