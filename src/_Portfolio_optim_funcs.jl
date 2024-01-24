@@ -1287,7 +1287,8 @@ function _setup_tracking_err(portfolio, returns, obj, T)
     tracking_err_weights = portfolio.tracking_err_weights
     tracking_err_returns = portfolio.tracking_err_returns
 
-    if isinf(tracking_err) ||
+    if kind_tracking_err == :None ||
+       isinf(tracking_err) ||
        isfinite(tracking_err) &&
        (kind_tracking_err == :Weights && isempty(tracking_err_weights) ||
         kind_tracking_err == :Returns && isempty(tracking_err_returns))

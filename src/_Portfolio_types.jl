@@ -9,7 +9,7 @@ Available kinds of tracking errors for [`Portfolio`](@ref).
   - `:Returns`: directly provide the vector of benchmark returns.
     The benchmark is then used as a reference to optimise a portfolio that tracks it up to a given error.
 """
-const TrackingErrKinds = (:Weights, :Returns)
+const TrackingErrKinds = (:None, :Weights, :Returns)
 
 const NetworkMethods = (:None, :SDP, :IP)
 
@@ -558,7 +558,7 @@ function Portfolio(;
                    # Benchmark constraints
                    turnover::Real                               = Inf,
                    turnover_weights::AbstractVector{<:Real}     = Vector{Float64}(undef, 0),
-                   kind_tracking_err::Symbol                    = :Weights,
+                   kind_tracking_err::Symbol                    = :None,
                    tracking_err::Real                           = Inf,
                    tracking_err_returns::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
