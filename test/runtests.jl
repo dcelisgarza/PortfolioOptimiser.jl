@@ -59,12 +59,12 @@ end
     include("PortfolioClassicWCTests.jl")
 end
 
-@safetestset "Portfolio Traditional Optimisation Constraints" begin
-    include("PortfolioTradConstraintTests.jl")
-end
-
 @safetestset "Portfolio Classic Traditional Optimisation" begin
     include("PortfolioClassicTradTests.jl")
+end
+
+@safetestset "Portfolio Traditional Optimisation Constraints" begin
+    include("PortfolioTradConstraintTests.jl")
 end
 
 @safetestset "Asset Statistics" begin

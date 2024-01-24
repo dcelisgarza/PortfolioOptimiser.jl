@@ -56,6 +56,44 @@ l = 2.0
     @test r8 >= r7
 end
 
+@testset "MAD and LPM targets" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75)),
+                                                :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                               :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+    portfolio.msv_target = rf
+    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
+                   obj = :Sharpe, kelly = :None)
+    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
+                   obj = :Sharpe, kelly = :None)
+
+    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
+                   obj = :Sharpe, kelly = :None)
+    w4 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
+                   obj = :Sharpe, kelly = :None)
+
+    portfolio.msv_target = 0
+    portfolio.lpm_target = 0
+
+    w5 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
+                   obj = :Sharpe, kelly = :None)
+    w6 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
+                   obj = :Sharpe, kelly = :None)
+
+    w7 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
+                   obj = :Sharpe, kelly = :None)
+    w8 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
+                   obj = :Sharpe, kelly = :None)
+
+    @test isapprox(w1.weights, w2.weights)
+    @test isapprox(w3.weights, w4.weights)
+    @test isapprox(w5.weights, w6.weights)
+    @test isapprox(w7.weights, w8.weights)
+end
+
 @testset "$(:Classic), $(:Trad), $(:SD)" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,

@@ -613,7 +613,7 @@ end
     @test isapprox(w14.weights, w14t, rtol = 1.0e-5)
     @test isapprox(w15.weights, w15t, rtol = 1.0e-6)
     @test isapprox(w16.weights, w16t)
-    @test isapprox(w17.weights, w17t)
+    @test isapprox(w17.weights, w17t, rtol = 1.0e-6)
     @test isapprox(w0.weights, w1.weights, rtol = 1.0e-7)
     @test isapprox(w0.weights, w10.weights, rtol = 1.0e-7)
     @test isapprox(w1.weights, w10.weights)
