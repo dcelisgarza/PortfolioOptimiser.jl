@@ -13,6 +13,32 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
                                                                    "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
                                                                                                                "verbose" => false,
                                                                                                                "max_step_fraction" => 0.75))))
+@testset "Minimum Number of Effective Assets" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75)),
+                                                :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                               :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+
+    rm = :SD
+
+    w1 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    portfolio.min_number_effective_assets = 8
+    w2 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+
+    portfolio.min_number_effective_assets = 0
+    w3 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    portfolio.min_number_effective_assets = 6
+    w4 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+
+    @test count(w2.weights .>= 2e-2) >= 8
+    @test count(w2.weights .>= 2e-2) >= count(w1.weights .>= 2e-2)
+
+    @test count(w4.weights .>= 2e-2) >= 6
+    @test count(w4.weights .>= 2e-2) >= count(w3.weights .>= 2e-2)
+end
 @testset "Linear Constraints" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
