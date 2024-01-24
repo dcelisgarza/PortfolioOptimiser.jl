@@ -13,6 +13,51 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
                                                                    "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
                                                                                                                "verbose" => false,
                                                                                                                "max_step_fraction" => 0.75))))
+@testset "Network and Dendrogram Upper Dev Constraints" begin
+    portfolio = Portfolio(; prices = prices, solvers = solvers)
+    asset_statistics!(portfolio; calc_kurt = false)
+
+    rm = :SD
+    L_A = cluster_matrix(portfolio, CorOpt(;); linkage = :ward)
+
+    portfolio.network_method = :None
+    portfolio.network_ip = L_A
+    portfolio.network_sdp = L_A
+    w1 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    r1 = calc_risk(portfolio; rm = rm)
+
+    portfolio.sd_u = r1
+    portfolio.network_method = :IP
+    w2 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    r2 = calc_risk(portfolio; rm = rm)
+    w3 = optimise!(portfolio; obj = :Utility, rm = rm, l = l, rf = rf)
+    r3 = calc_risk(portfolio; rm = rm)
+    w4 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    r4 = calc_risk(portfolio; rm = rm)
+    w5 = optimise!(portfolio; obj = :Max_Ret, rm = rm, l = l, rf = rf)
+    r5 = calc_risk(portfolio; rm = rm)
+
+    portfolio.network_method = :SDP
+    w6 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    r6 = calc_risk(portfolio; rm = rm)
+    w7 = optimise!(portfolio; obj = :Utility, rm = rm, l = l, rf = rf)
+    r7 = calc_risk(portfolio; rm = rm)
+    w8 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    r8 = calc_risk(portfolio; rm = rm)
+    w9 = optimise!(portfolio; obj = :Max_Ret, rm = rm, l = l, rf = rf)
+    r9 = calc_risk(portfolio; rm = rm)
+
+    @test r2 <= r1 + sqrt(eps())
+    @test r3 <= r1 + sqrt(eps())
+    @test r4 <= r1 + sqrt(eps())
+    @test r5 <= r1 + length(w5.weights) * sqrt(eps())
+
+    @test r6 <= r1 + sqrt(eps())
+    @test r7 <= r1 + sqrt(eps())
+    @test r8 <= r1 + sqrt(eps())
+    @test r9 <= r1 + length(w5.weights) * sqrt(eps())
+end
+
 @testset "Network and Dendrogram Constraints $(:SD)" begin
     portfolio = Portfolio(; prices = prices, solvers = solvers)
     asset_statistics!(portfolio; calc_kurt = false)
