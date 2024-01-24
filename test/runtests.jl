@@ -55,6 +55,10 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
+@safetestset "Portfolio Traditional Class Picking" begin
+    include("PortfolioTradClassPickingTests.jl")
+end
+
 @safetestset "Portfolio Traditional Optimisation Constraints" begin
     include("PortfolioTradConstraintTests.jl")
 end
