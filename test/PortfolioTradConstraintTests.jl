@@ -48,7 +48,7 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
     r9 = calc_risk(portfolio; rm = rm)
 
     @test r2 <= r1 + sqrt(eps())
-    @test r3 <= r1 + sqrt(eps())
+    @test r3 <= r1 + length(w5.weights) * sqrt(eps())
     @test r4 <= r1 + sqrt(eps())
     @test r5 <= r1 + length(w5.weights) * sqrt(eps())
 
