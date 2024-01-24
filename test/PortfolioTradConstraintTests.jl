@@ -13,6 +13,72 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
                                                                    "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
                                                                                                                "verbose" => false,
                                                                                                                "max_step_fraction" => 0.75))))
+@testset "Tracking Error" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75)),
+                                                :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                               :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+
+    T = size(portfolio.returns, 1)
+    rm = :SD
+
+    obj = :Sharpe
+    w1 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    portfolio.kind_tracking_err = :Weights
+    te1 = 0.0005
+    tw1 = copy(w1.weights)
+    portfolio.tracking_err = te1
+    portfolio.tracking_err_weights = tw1
+
+    obj = :Min_Risk
+    w2 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+
+    portfolio.tracking_err = Inf
+    obj = :Min_Risk
+    w3 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    portfolio.kind_tracking_err = :Weights
+    te2 = 0.0003
+    tw2 = copy(w3.weights)
+    portfolio.tracking_err = te2
+    portfolio.tracking_err_weights = tw2
+
+    obj = :Sharpe
+    w4 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+
+    portfolio.tracking_err = Inf
+    obj = :Sharpe
+    w5 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    portfolio.kind_tracking_err = :Returns
+    te3 = 0.007
+    tw3 = vec(mean(portfolio.returns; dims = 2))
+    portfolio.tracking_err = te3
+    portfolio.tracking_err_returns = tw3
+
+    obj = :Min_Risk
+    w6 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+
+    portfolio.tracking_err = Inf
+    obj = :Min_Risk
+    w7 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    portfolio.kind_tracking_err = :Returns
+    te4 = 0.0024
+    tw4 = vec(mean(portfolio.returns; dims = 2))
+    portfolio.tracking_err = te4
+    portfolio.tracking_err_returns = tw4
+
+    obj = :Sharpe
+    w8 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+
+    @test norm(portfolio.returns * (w2.weights - tw1), 2) / sqrt(T - 1) <= te1
+    @test norm(portfolio.returns * (w4.weights - tw2), 2) / sqrt(T - 1) <= te2
+
+    @test norm(portfolio.returns * w6.weights - tw3, 2) / sqrt(T - 1) <= te3
+    @test norm(portfolio.returns * w8.weights - tw4, 2) / sqrt(T - 1) <= te4
+end
+
 @testset "Minimum Number of Effective Assets" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -39,6 +105,7 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
     @test count(w4.weights .>= 2e-2) >= 6
     @test count(w4.weights .>= 2e-2) >= count(w3.weights .>= 2e-2)
 end
+
 @testset "Linear Constraints" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
