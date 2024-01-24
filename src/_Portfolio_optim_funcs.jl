@@ -1745,8 +1745,12 @@ function optimise!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer
     end
     if near_opt
         @smart_assert(M > 0)
-        @smart_assert(length(w_min) == size(portfolio.returns, 2))
-        @smart_assert(length(w_max) == size(portfolio.returns, 2))
+        if !isempty(w_min)
+            @smart_assert(length(w_min) == size(portfolio.returns, 2))
+        end
+        if !isempty(w_max)
+            @smart_assert(length(w_max) == size(portfolio.returns, 2))
+        end
     end
 
     portfolio.model = JuMP.Model()

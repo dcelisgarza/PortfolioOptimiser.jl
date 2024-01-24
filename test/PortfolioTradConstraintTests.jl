@@ -51,6 +51,8 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
     portfolio.a_mtx_ineq = A
     portfolio.b_vec_ineq = B
 
+    rm = :SD
+
     w1 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
 
     @test all(w1.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
