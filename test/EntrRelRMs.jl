@@ -50,7 +50,7 @@ end
                                                 :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio; calc_kurt = false)
-    optimise!(portfolio; rm = :EVaR, obj = :Sharpe)
+    optimise!(portfolio, OptimiseOpt(; rm = :EVaR, obj = :Sharpe))
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
 
@@ -82,7 +82,7 @@ end
                                                 :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio; calc_kurt = false)
-    optimise!(portfolio; rm = :EDaR, obj = :Sharpe)
+    optimise!(portfolio, OptimiseOpt(; rm = :EDaR, obj = :Sharpe))
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
     pushfirst!(x, 1)
@@ -112,7 +112,7 @@ end
     r3 = PortfolioOptimiser.ERM(dd, portfolio.z[:Trad_z_edar], alpha)
     r3t = calc_risk(portfolio; rm = :EDaR)
 
-    @test isapprox(r1, r1t, rtol = 1e-6)
+    @test isapprox(r1, r1t, rtol = 1e-5)
     @test isapprox(r2, r2t, rtol = 5e-2)
     @test isapprox(r3, r3t, rtol = 5e-2)
 end

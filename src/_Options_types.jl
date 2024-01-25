@@ -229,16 +229,16 @@ Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in 
 const DBHTRootMethods = (:Unique, :Equal)
 
 @kwdef mutable struct GenericFunction
-    func::Union{Nothing, Function} = nothing
+    func::Union{Nothing,Function} = nothing
     args::Tuple = ()
     kwargs::NamedTuple = (;)
 end
 
 @kwdef mutable struct CovEstOpt
     estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
+    target_ret::Union{<:AbstractVector{<:Real},<:Real} = 0.0
     genfunc::GenericFunction = GenericFunction(; func = StatsBase.cov)
-    custom::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
+    custom::Union{<:AbstractMatrix{<:Real},Nothing} = nothing
 end
 
 mutable struct PosdefFixOpt
@@ -278,7 +278,7 @@ function Base.setproperty!(obj::GerberOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct DenoiseOpt{T1 <: Real, T2 <: Integer, T3, T4 <: Integer, T5 <: Integer}
+mutable struct DenoiseOpt{T1 <: Real,T2 <: Integer,T3,T4 <: Integer,T5 <: Integer}
     method::Symbol
     alpha::T1
     detone::Bool
@@ -294,8 +294,14 @@ function DenoiseOpt(; method::Symbol = :None, alpha::Real = 0.0, detone::Bool = 
     @smart_assert(method ∈ DenoiseMethods)
     @smart_assert(0 <= alpha <= 1)
 
-    return DenoiseOpt{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m),
-                      typeof(n)}(method, alpha, detone, mkt_comp, kernel, m, n, genfunc)
+    return DenoiseOpt{typeof(alpha),typeof(mkt_comp),typeof(kernel),typeof(m),typeof(n)}(method,
+                                                                                         alpha,
+                                                                                         detone,
+                                                                                         mkt_comp,
+                                                                                         kernel,
+                                                                                         m,
+                                                                                         n,
+                                                                                         genfunc)
 end
 function Base.setproperty!(obj::DenoiseOpt, sym::Symbol, val)
     if sym == :method
@@ -353,16 +359,16 @@ mutable struct MuOpt{T1 <: Real}
     target::Symbol
     rf::T1
     genfunc::GenericFunction
-    custom::Union{<:AbstractVector{<:Real}, Nothing}
-    mkt_ret::Union{<:AbstractVector{<:Real}, Nothing}
-    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
+    custom::Union{<:AbstractVector{<:Real},Nothing}
+    mkt_ret::Union{<:AbstractVector{<:Real},Nothing}
+    sigma::Union{<:AbstractMatrix{<:Real},Nothing}
 end
 function MuOpt(; method::Symbol = :Default, target::Symbol = :GM, rf::Real = 0.0,
                genfunc::GenericFunction = GenericFunction(; func = StatsBase.mean,
                                                           kwargs = (; dims = 1)),
-               custom::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
-               mkt_ret::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
-               sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing)
+               custom::Union{<:AbstractVector{<:Real},Nothing} = nothing,
+               mkt_ret::Union{<:AbstractVector{<:Real},Nothing} = nothing,
+               sigma::Union{<:AbstractMatrix{<:Real},Nothing} = nothing)
     @smart_assert(method ∈ MuMethods)
     @smart_assert(target ∈ MuTargets)
 
@@ -378,9 +384,9 @@ function Base.setproperty!(obj::MuOpt, sym::Symbol, val)
 end
 
 @kwdef mutable struct KurtEstOpt
-    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
-    custom_kurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
-    custom_skurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
+    target_ret::Union{<:AbstractVector{<:Real},<:Real} = 0.0
+    custom_kurt::Union{<:AbstractMatrix{<:Real},Nothing} = nothing
+    custom_skurt::Union{<:AbstractMatrix{<:Real},Nothing} = nothing
 end
 mutable struct KurtOpt
     # Estimation
@@ -401,18 +407,18 @@ end
 mutable struct CorEstOpt{T1 <: Real}
     estimator::CovarianceEstimator
     alpha::T1
-    bins_info::Union{Symbol, <:Integer}
+    bins_info::Union{Symbol,<:Integer}
     cor_genfunc::GenericFunction
     dist_genfunc::GenericFunction
-    target_ret::Union{<:AbstractVector{<:Real}, <:Real}
-    custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing}
-    custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing}
-    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
+    target_ret::Union{<:AbstractVector{<:Real},<:Real}
+    custom_cor::Union{<:AbstractMatrix{<:Real},Nothing}
+    custom_dist::Union{<:AbstractMatrix{<:Real},Nothing}
+    sigma::Union{<:AbstractMatrix{<:Real},Nothing}
 end
 function CorEstOpt(;
                    estimator::CovarianceEstimator = StatsBase.SimpleCovariance(;
                                                                                corrected = true),
-                   alpha::Real = 0.05, bins_info::Union{Symbol, <:Integer} = :KN,
+                   alpha::Real = 0.05, bins_info::Union{Symbol,<:Integer} = :KN,
                    cor_genfunc::GenericFunction = GenericFunction(; func = StatsBase.cor),
                    dist_genfunc::GenericFunction = GenericFunction(;
                                                                    func = x -> sqrt.(clamp!((1 .-
@@ -420,10 +426,10 @@ function CorEstOpt(;
                                                                                             2,
                                                                                             0,
                                                                                             1))),
-                   target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0,
-                   custom_cor::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-                   custom_dist::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-                   sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing)
+                   target_ret::Union{<:AbstractVector{<:Real},<:Real} = 0.0,
+                   custom_cor::Union{<:AbstractMatrix{<:Real},Nothing} = nothing,
+                   custom_dist::Union{<:AbstractMatrix{<:Real},Nothing} = nothing,
+                   sigma::Union{<:AbstractMatrix{<:Real},Nothing} = nothing)
     @smart_assert(0 <= alpha <= 1)
     @smart_assert(bins_info ∈ BinMethods ||
                   isa(bins_info, Int) && bins_info > zero(bins_info))
@@ -490,7 +496,7 @@ function Base.setproperty!(obj::CorOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <: Integer}
+mutable struct WCOpt{T1 <: Real,T2 <: Real,T3 <: Real,T4,T5 <: Integer,T6 <: Integer}
     calc_box::Bool
     calc_ellipse::Bool
     box::Symbol
@@ -499,7 +505,7 @@ mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <
     dmu::T2
     q::T3
     rng::T4
-    seed::Union{<:Integer, Nothing}
+    seed::Union{<:Integer,Nothing}
     n_sim::T5
     window::T6
     posdef::PosdefFixOpt
@@ -507,13 +513,13 @@ end
 function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true,
                box::Symbol = :Stationary, ellipse::Symbol = :Stationary, dcov::Real = 0.1,
                dmu::Real = 0.1, q::Real = 0.05, rng = Random.default_rng(),
-               seed::Union{<:Integer, Nothing} = nothing, n_sim::Integer = 3_000,
+               seed::Union{<:Integer,Nothing} = nothing, n_sim::Integer = 3_000,
                window::Integer = 3, posdef::PosdefFixOpt = PosdefFixOpt(;))
     @smart_assert(box ∈ BoxMethods)
     @smart_assert(ellipse ∈ EllipseMethods)
     @smart_assert(0 < q < 1)
 
-    return WCOpt{typeof(dcov), typeof(dmu), typeof(q), typeof(rng), typeof(n_sim),
+    return WCOpt{typeof(dcov),typeof(dmu),typeof(q),typeof(rng),typeof(n_sim),
                  typeof(window)}(calc_box, calc_ellipse, box, ellipse, dcov, dmu, q, rng,
                                  seed, n_sim, window, posdef)
 end
@@ -571,12 +577,12 @@ function Base.setproperty!(obj::LoadingsOpt, sym::Symbol, val)
 end
 
 mutable struct FactorOpt
-    B::Union{DataFrame, Nothing}
+    B::Union{DataFrame,Nothing}
     loadings_opt::LoadingsOpt
     error::Bool
     var_genfunc::GenericFunction
 end
-function FactorOpt(; B::Union{DataFrame, Nothing} = nothing,
+function FactorOpt(; B::Union{DataFrame,Nothing} = nothing,
                    loadings_opt::LoadingsOpt = LoadingsOpt(;), error::Bool = true,
                    var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
                                                                   kwargs = (; dims = 1)))
@@ -588,7 +594,7 @@ mutable struct BLOpt{T1 <: Real}
     constant::Bool
     diagonal::Bool
     eq::Bool
-    delta::Union{Nothing, <:Real}
+    delta::Union{Nothing,<:Real}
     rf::T1
     var_genfunc::GenericFunction
     denoise::DenoiseOpt
@@ -613,7 +619,7 @@ function Base.setproperty!(obj::BLOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
+mutable struct ClusterOpt{T1 <: Integer,T2 <: Integer}
     linkage::Symbol
     branchorder::Symbol
     dbht_method::Symbol
@@ -626,7 +632,7 @@ function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
     @smart_assert(branchorder ∈ BranchOrderTypes)
     @smart_assert(dbht_method ∈ DBHTRootMethods)
 
-    return ClusterOpt{typeof(max_k), typeof(k)}(linkage, branchorder, dbht_method, max_k, k)
+    return ClusterOpt{typeof(max_k),typeof(k)}(linkage, branchorder, dbht_method, max_k, k)
 end
 function Base.setproperty!(obj::ClusterOpt, sym::Symbol, val)
     if sym == :linkage
@@ -638,7 +644,7 @@ function Base.setproperty!(obj::ClusterOpt, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-mutable struct OptimiseOpt{T1 <: Integer, T2 <: Real, T3 <: Real, T4 <: Real, T5 <: Real}
+mutable struct OptimiseOpt{T1 <: Integer,T2 <: Real,T3 <: Real,T4 <: Real,T5 <: Real}
     type::Symbol
     rm::Symbol
     obj::Symbol
@@ -669,30 +675,33 @@ function OptimiseOpt(; type::Symbol = :Trad, rm::Symbol = :SD, obj::Symbol = :Sh
     @smart_assert(type ∈ PortTypes)
     @smart_assert(class ∈ PortClasses)
     @smart_assert(rm ∈ RiskMeasures)
-    @smart_assert(obj ∈ ObjFuncs)
+    @smart_assert(obj ∈ HCObjFuncs)
     @smart_assert(kelly ∈ KellyRet)
     @smart_assert(rrp_ver ∈ RRPVersions)
     @smart_assert(u_mu ∈ UncertaintyTypes)
     @smart_assert(u_cov ∈ UncertaintyTypes)
+    if near_opt
+        @smart_assert(M > 0)
+    end
 
-    return OptimiseOpt{typeof(hist), typeof(rf), typeof(l), typeof(rrp_penalty), typeof(M)}(type,
-                                                                                            rm,
-                                                                                            obj,
-                                                                                            kelly,
-                                                                                            class,
-                                                                                            rrp_ver,
-                                                                                            u_cov,
-                                                                                            u_mu,
-                                                                                            sd_cone,
-                                                                                            near_opt,
-                                                                                            hist,
-                                                                                            rf,
-                                                                                            l,
-                                                                                            rrp_penalty,
-                                                                                            M,
-                                                                                            w_ini,
-                                                                                            w_min,
-                                                                                            w_max)
+    return OptimiseOpt{typeof(hist),typeof(rf),typeof(l),typeof(rrp_penalty),typeof(M)}(type,
+                                                                                        rm,
+                                                                                        obj,
+                                                                                        kelly,
+                                                                                        class,
+                                                                                        rrp_ver,
+                                                                                        u_cov,
+                                                                                        u_mu,
+                                                                                        sd_cone,
+                                                                                        near_opt,
+                                                                                        hist,
+                                                                                        rf,
+                                                                                        l,
+                                                                                        rrp_penalty,
+                                                                                        M,
+                                                                                        w_ini,
+                                                                                        w_min,
+                                                                                        w_max)
 end
 function Base.setproperty!(obj::OptimiseOpt, sym::Symbol, val)
     if sym == :type
@@ -702,7 +711,7 @@ function Base.setproperty!(obj::OptimiseOpt, sym::Symbol, val)
     elseif sym == :rm
         @smart_assert(val ∈ RiskMeasures)
     elseif sym == :obj
-        @smart_assert(val ∈ ObjFuncs)
+        @smart_assert(val ∈ HCObjFuncs)
     elseif sym == :kelly
         @smart_assert(val ∈ KellyRet)
     elseif sym == :rrp_ver
@@ -711,6 +720,10 @@ function Base.setproperty!(obj::OptimiseOpt, sym::Symbol, val)
         @smart_assert(val ∈ UncertaintyTypes)
     elseif sym == :u_cov
         @smart_assert(val ∈ UncertaintyTypes)
+    elseif sym == :M
+        if obj.near_opt
+            @smart_assert(val > 0)
+        end
     else
         val = convert(typeof(getproperty(obj, sym)), val)
     end
