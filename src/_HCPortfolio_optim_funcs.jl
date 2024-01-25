@@ -27,40 +27,44 @@ function _naive_risk(portfolio, returns, covariance; rm = :SD, rf = 0.0,
     return weights
 end
 
-function _opt_w(portfolio, assets, returns, imu, icov; opt = OptimiseOpt(;),
-                asset_stat_kwargs = (;), portfolio_kwargs = (;))
+function _opt_w(portfolio, assets, returns, imu, icov; obj = :Min_Risk, kelly = :None,
+                rm = :SD, rf = 0.0, l = 2.0, sd_cone::Bool = true, near_opt::Bool = false,
+                M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+                asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
+                                     calc_kurt = if rm ∈ (:Kurt, :SKurt)
+                                         true
+                                     else
+                                         false
+                                     end),
+                portfolio_kwargs::NamedTuple = (; alpha = portfolio.alpha,
+                                                a_sim = portfolio.a_sim,
+                                                beta = portfolio.beta,
+                                                b_sim = portfolio.b_sim,
+                                                kappa = portfolio.kappa,
+                                                owa_w = portfolio.owa_w,
+                                                solvers = portfolio.solvers,
+                                                max_num_assets_kurt = portfolio.max_num_assets_kurt))
     port = Portfolio(; assets = assets, ret = returns, portfolio_kwargs...)
 
     if !isnothing(imu)
         port.mu = imu
     end
     port.cov = icov
-    if opt.rm ∈ (:Kurt, :SKurt)
+    if rm ∈ (:Kurt, :SKurt)
         asset_statistics!(port; asset_stat_kwargs...)
     end
 
-    M1 = opt.M
-    if opt.near_opt && iszero(opt.M)
-        opt.M = ceil(sqrt(size(portfolio.returns, 2)))
+    if near_opt && iszero(M)
+        M = ceil(sqrt(size(portfolio.returns, 2)))
     end
 
-    type1 = opt.type
-    class1 = opt.class
-    obj1 = opt.obj
-    weights = if opt.obj != :Equal
-        opt.type = :Trad
-        opt.class = :Classic
-        optimise!(port, opt)
+    weights = if obj != :Equal
+        optimise!(port; type = :Trad, class = :Classic, rm = rm, obj = obj, kelly = kelly,
+                  rf = rf, l = l, sd_cone = sd_cone, near_opt = near_opt, M = M)
     else
-        opt.obj = :Min_Risk
-        opt.type = :RP
-        opt.class = :Classic
-        optimise!(port, opt)
+        optimise!(port; type = :RP, class = :Classic, rm = rm, kelly = kelly, rf = rf,
+                  sd_cone = sd_cone, near_opt = near_opt, M = M)
     end
-    opt.obj = obj1
-    opt.type = type1
-    opt.class = class1
-    opt.M = M1
 
     w = !isempty(weights) ? weights.weights : zeros(eltype(returns), length(assets))
 
@@ -232,23 +236,23 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0,
     return weights
 end
 
-struct ClusterNode{tid,tl,tr,td,tcnt}
+struct ClusterNode{tid, tl, tr, td, tcnt}
     id::tid
     left::tl
     right::tr
     dist::td
     count::tcnt
 
-    function ClusterNode(id, left::Union{ClusterNode,Nothing} = nothing,
-                         right::Union{ClusterNode,Nothing} = nothing, dist::Real = 0.0,
+    function ClusterNode(id, left::Union{ClusterNode, Nothing} = nothing,
+                         right::Union{ClusterNode, Nothing} = nothing, dist::Real = 0.0,
                          count::Int = 1)
         icount = isnothing(left) ? count : (left.count + right.count)
 
-        return new{typeof(id),typeof(left),typeof(right),typeof(dist),typeof(count)}(id,
-                                                                                     left,
-                                                                                     right,
-                                                                                     dist,
-                                                                                     icount)
+        return new{typeof(id), typeof(left), typeof(right), typeof(dist), typeof(count)}(id,
+                                                                                         left,
+                                                                                         right,
+                                                                                         dist,
+                                                                                         icount)
     end
 end
 export ClusterNode
@@ -317,8 +321,7 @@ function to_tree(a::Hclust)
 end
 
 function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 0.0,
-                                           rf_o = rf, upper_bound = nothing,
-                                           lower_bound = nothing,
+                                           upper_bound = nothing, lower_bound = nothing,
                                            portfolio_kwargs::NamedTuple = (;
                                                                            alpha = portfolio.alpha,
                                                                            a_sim = portfolio.a_sim,
@@ -399,7 +402,7 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
         cidx = clustering_idx .== i
         cret = returns[:, cidx]
         ccov = covariance[cidx, cidx]
-        cweights = _naive_risk(portfolio, cret, ccov; rm = rm_o, rf = rf_o,
+        cweights = _naive_risk(portfolio, cret, ccov; rm = rm_o, rf = rf,
                                portfolio_kwargs = portfolio_kwargs_o)
         weights[cidx] .*= cweights
     end
@@ -407,8 +410,23 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
     return weights
 end
 
-function _intra_weights(portfolio, opt = OptimiseOpt(;); asset_stat_kwargs = (;),
-                        portfolio_kwargs = (;))
+function _intra_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf = 0.0,
+                        l = 2.0, sd_cone::Bool = true, near_opt::Bool = false,
+                        M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+                        asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
+                                             calc_kurt = if rm ∈ (:Kurt, :SKurt)
+                                                 true
+                                             else
+                                                 false
+                                             end),
+                        portfolio_kwargs::NamedTuple = (; alpha = portfolio.alpha,
+                                                        a_sim = portfolio.a_sim,
+                                                        beta = portfolio.beta,
+                                                        b_sim = portfolio.b_sim,
+                                                        kappa = portfolio.kappa,
+                                                        owa_w = portfolio.owa_w,
+                                                        solvers = portfolio.solvers,
+                                                        max_num_assets_kurt = portfolio.max_num_assets_kurt))
     returns = portfolio.returns
     mu = portfolio.mu
     covariance = portfolio.cov
@@ -417,7 +435,7 @@ function _intra_weights(portfolio, opt = OptimiseOpt(;); asset_stat_kwargs = (;)
     clustering_idx = cutree(clustering; k = k)
 
     intra_weights = zeros(eltype(covariance), size(portfolio.returns, 2), k)
-    cfails = Dict{Int,Dict}()
+    cfails = Dict{Int, Dict}()
 
     for i ∈ 1:k
         idx = clustering_idx .== i
@@ -425,7 +443,9 @@ function _intra_weights(portfolio, opt = OptimiseOpt(;); asset_stat_kwargs = (;)
         ccov = covariance[idx, idx]
         cret = returns[:, idx]
         cassets = portfolio.assets[idx]
-        weights, cfail = _opt_w(portfolio, cassets, cret, cmu, ccov; opt = opt,
+        weights, cfail = _opt_w(portfolio, cassets, cret, cmu, ccov; obj = obj,
+                                kelly = kelly, rm = rm, rf = rf, l = l, sd_cone = sd_cone,
+                                near_opt = near_opt, M = M,
                                 asset_stat_kwargs = asset_stat_kwargs,
                                 portfolio_kwargs = portfolio_kwargs)
         intra_weights[idx, i] .= weights
@@ -441,8 +461,23 @@ function _intra_weights(portfolio, opt = OptimiseOpt(;); asset_stat_kwargs = (;)
     return intra_weights
 end
 
-function _inter_weights(portfolio, intra_weights, opt = OptimiseOpt(;);
-                        asset_stat_kwargs = (;), portfolio_kwargs = (;))
+function _inter_weights(portfolio, intra_weights; obj = :Min_Risk, kelly = :None, rm = :SD,
+                        rf = 0.0, l = 2.0, sd_cone::Bool = true, near_opt::Bool = false,
+                        M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+                        asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
+                                             calc_kurt = if rm ∈ (:Kurt, :SKurt)
+                                                 true
+                                             else
+                                                 false
+                                             end),
+                        portfolio_kwargs::NamedTuple = (; alpha = portfolio.alpha,
+                                                        a_sim = portfolio.a_sim,
+                                                        beta = portfolio.beta,
+                                                        b_sim = portfolio.b_sim,
+                                                        kappa = portfolio.kappa,
+                                                        owa_w = portfolio.owa_w,
+                                                        solvers = portfolio.solvers,
+                                                        max_num_assets_kurt = portfolio.max_num_assets_kurt))
     mu = portfolio.mu
     returns = portfolio.returns
     covariance = portfolio.cov
@@ -450,8 +485,11 @@ function _inter_weights(portfolio, intra_weights, opt = OptimiseOpt(;);
     tcov = transpose(intra_weights) * covariance * intra_weights
     tret = returns * intra_weights
     inter_weights, inter_fail = _opt_w(portfolio, 1:size(tret, 2), tret, tmu, tcov;
-                                       opt = opt, asset_stat_kwargs = asset_stat_kwargs,
+                                       obj = obj, kelly = kelly, rm = rm, rf = rf, l = l,
+                                       sd_cone = sd_cone, near_opt = near_opt, M = M,
+                                       asset_stat_kwargs = asset_stat_kwargs,
                                        portfolio_kwargs = portfolio_kwargs)
+
     weights = intra_weights * inter_weights
 
     if !isempty(inter_fail)
@@ -461,17 +499,39 @@ function _inter_weights(portfolio, intra_weights, opt = OptimiseOpt(;);
     return weights
 end
 
-function _nco_weights(portfolio; nco_opt = OptimiseOpt(;), nco_opt_o = OptimiseOpt(;),
-                      asset_stat_kwargs = (;), asset_stat_kwargs_o = (;),
-                      portfolio_kwargs = (;), portfolio_kwargs_o = (;))
+function _nco_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf = 0.0,
+                      l = 2.0,
+                      asset_stat_kwargs = (; calc_mu = false, calc_cov = false,
+                                           calc_kurt = if rm ∈ (:Kurt, :SKurt)
+                                               true
+                                           else
+                                               false
+                                           end, kurt_opt = KurtOpt(;)),
+                      sd_cone::Bool = true, near_opt::Bool = false,
+                      M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+                      obj_o = obj, kelly_o = kelly, rm_o = rm, l_o = l,
+                      asset_stat_kwargs_o = asset_stat_kwargs, sd_cone_o::Bool = sd_cone,
+                      near_opt_o::Bool = near_opt, M_o::Integer = M,
+                      portfolio_kwargs::NamedTuple = (; alpha = portfolio.alpha,
+                                                      a_sim = portfolio.a_sim,
+                                                      beta = portfolio.beta,
+                                                      b_sim = portfolio.b_sim,
+                                                      kappa = portfolio.kappa,
+                                                      owa_w = portfolio.owa_w,
+                                                      solvers = portfolio.solvers,
+                                                      max_num_assets_kurt = portfolio.max_num_assets_kurt),
+                      portfolio_kwargs_o::NamedTuple = portfolio_kwargs)
 
     # Treat each cluster as an independent portfolio and optimise each one individually.
-    intra_weights = _intra_weights(portfolio, nco_opt;
+    intra_weights = _intra_weights(portfolio; obj = obj, kelly = kelly, rm = rm, rf = rf,
+                                   l = l, sd_cone = sd_cone, near_opt = near_opt, M = M,
                                    asset_stat_kwargs = asset_stat_kwargs,
                                    portfolio_kwargs = portfolio_kwargs)
 
     # Treat each cluster as an asset in a portfolio and optimise the portfolio.
-    weights = _inter_weights(portfolio, intra_weights, nco_opt_o;
+    weights = _inter_weights(portfolio, intra_weights; obj = obj_o, kelly = kelly_o,
+                             rm = rm_o, rf = rf, l = l_o, sd_cone = sd_cone_o,
+                             near_opt = near_opt_o, M = M_o,
                              asset_stat_kwargs = asset_stat_kwargs_o,
                              portfolio_kwargs = portfolio_kwargs_o)
 
@@ -525,27 +585,27 @@ function _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter = 100)
     return weights
 end
 
-# function _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, cluster_opt,
-#                               max_iter, save_opt_params)
-#     if !isempty(portfolio.fail)
-#         portfolio.fail = Dict()
-#     end
-#     if !save_opt_params
-#         return nothing
-#     end
+function _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, cluster_opt,
+                              max_iter, save_opt_params)
+    if !isempty(portfolio.fail)
+        portfolio.fail = Dict()
+    end
+    if !save_opt_params
+        return nothing
+    end
 
-#     opt_params_dict = if type != :NCO
-#         Dict(:rm => rm, :rf => rf, :cluster => cluster, :cluster_opt => cluster_opt,
-#              :max_iter => max_iter)
-#     else
-#         Dict(:rm => rm, :obj => obj, :kelly => kelly, :rf => rf, :l => l,
-#              :cluster => cluster, :cluster_opt => cluster_opt, :max_iter => max_iter)
-#     end
+    opt_params_dict = if type != :NCO
+        Dict(:rm => rm, :rf => rf, :cluster => cluster, :cluster_opt => cluster_opt,
+             :max_iter => max_iter)
+    else
+        Dict(:rm => rm, :obj => obj, :kelly => kelly, :rf => rf, :l => l,
+             :cluster => cluster, :cluster_opt => cluster_opt, :max_iter => max_iter)
+    end
 
-#     portfolio.opt_params[type] = opt_params_dict
+    portfolio.opt_params[type] = opt_params_dict
 
-#     return nothing
-# end
+    return nothing
+end
 
 function _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_bound, max_iter)
     portfolio.optimal[type] = if !isempty(portfolio.fail) || any(.!isfinite.(weights))
@@ -561,8 +621,7 @@ function _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_boun
     return portfolio.optimal[type]
 end
 
-function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD,
-                   rm_o::Symbol = rm, rf::Real = 0.0, rf_o::Real = rf, cluster::Bool = true,
+function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, cluster::Bool = true,
                    cluster_opt::ClusterOpt = ClusterOpt(; k = if cluster
                                                             0
                                                         else
@@ -571,15 +630,21 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                                                         max_k = ceil(Int,
                                                                      sqrt(size(portfolio.returns,
                                                                                2)))),
-                   nco_opt::OptimiseOpt = OptimiseOpt(;), nco_opt_o::OptimiseOpt = nco_opt,
+                   max_iter::Integer = 100, rm::Symbol = :SD, rm_o::Symbol = rm,
+                   kelly::Symbol = :None, kelly_o::Symbol = kelly, obj::Symbol = :Sharpe,
+                   obj_o::Symbol = obj, rf::Real = 0.0, l::Real = 2.0, l_o::Real = l,
+                   sd_cone::Bool = true, sd_cone_o::Bool = sd_cone, near_opt::Bool = false,
+                   near_opt_o::Bool = near_opt,
+                   M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+                   M_o::Integer = M,
                    asset_stat_kwargs::NamedTuple = (; calc_mu = false, calc_cov = false,
-                                                    calc_kurt = if nco_opt.rm ∈
-                                                                   (:Kurt, :SKurt)
+                                                    calc_kurt = if rm ∈ (:Kurt, :SKurt)
                                                         true
                                                     else
                                                         false
                                                     end),
                    asset_stat_kwargs_o::NamedTuple = asset_stat_kwargs,
+                   save_opt_params = true,
                    portfolio_kwargs::NamedTuple = if type != :NCO
                        (; alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                         beta = portfolio.beta, b_sim = portfolio.b_sim,
@@ -591,14 +656,18 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                         kappa = portfolio.kappa, owa_w = portfolio.owa_w,
                         solvers = portfolio.solvers,
                         max_num_assets_kurt = portfolio.max_num_assets_kurt)
-                   end, portfolio_kwargs_o::NamedTuple = portfolio_kwargs,
-                   max_iter::Integer = 100, save_opt_params = true)
+                   end, portfolio_kwargs_o::NamedTuple = portfolio_kwargs)
     @smart_assert(type ∈ HCPortTypes)
     @smart_assert(rm ∈ HCRiskMeasures)
-    @smart_assert(rm_o ∈ HCRiskMeasures)
+    @smart_assert(obj ∈ HCObjFuncs)
+    @smart_assert(obj_o ∈ HCObjFuncs)
+    @smart_assert(kelly ∈ KellyRet)
+    @smart_assert(kelly_o ∈ KellyRet)
+    @smart_assert(0 < portfolio.alpha < 1)
+    @smart_assert(0 < portfolio.kappa < 1)
 
-    # _hcp_save_opt_params(portfolio, type, rm, rm_o, rf, rf_o, cluster, cluster_opt, nco_opt,
-    #                      nco_opt_o, max_iter, save_opt_params)
+    _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, cluster_opt,
+                         max_iter, save_opt_params)
 
     N = size(portfolio.returns, 2)
 
@@ -613,16 +682,18 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
         _recursive_bisection(portfolio; rm = rm, rf = rf, upper_bound = upper_bound,
                              lower_bound = lower_bound, portfolio_kwargs = portfolio_kwargs)
     elseif type == :HERC
-        _hierarchical_recursive_bisection(portfolio; rm = rm, rm_o = rm_o, rf = rf,
-                                          rf_o = rf_o, portfolio_kwargs = portfolio_kwargs,
-                                          portfolio_kwargs_o = portfolio_kwargs_o,
+        _hierarchical_recursive_bisection(portfolio; rm = rm, rm_o = rm_o,
+                                          portfolio_kwargs = portfolio_kwargs,
+                                          portfolio_kwargs_o = portfolio_kwargs_o, rf = rf,
                                           upper_bound = upper_bound,
                                           lower_bound = lower_bound)
     else
-        _nco_weights(portfolio; nco_opt = nco_opt, nco_opt_o = nco_opt_o,
-                     asset_stat_kwargs = asset_stat_kwargs,
-                     asset_stat_kwargs_o = asset_stat_kwargs_o,
-                     portfolio_kwargs = portfolio_kwargs,
+        _nco_weights(portfolio; obj = obj, kelly = kelly, rm = rm, l = l,
+                     asset_stat_kwargs = asset_stat_kwargs, obj_o = obj_o,
+                     kelly_o = kelly_o, rm_o = rm_o, l_o = l_o,
+                     asset_stat_kwargs_o = asset_stat_kwargs_o, rf = rf, sd_cone = sd_cone,
+                     sd_cone_o = sd_cone_o, near_opt = near_opt, near_opt_o = near_opt_o,
+                     M = M, M_o = M_o, portfolio_kwargs = portfolio_kwargs,
                      portfolio_kwargs_o = portfolio_kwargs_o)
     end
     retval = _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_bound,

@@ -329,19 +329,19 @@ function _greedy_allocation!(portfolio, port_type, latest_prices, investment, ro
     return portfolio.alloc_optimal[key], long_leftover + short_leftover
 end
 
-# function _save_alloc_opt_params(portfolio, port_type, alloc_type, investment, rounding,
-#                                 reinvest, leftover, save_opt_params)
-#     if !save_opt_params
-#         return nothing
-#     end
+function _save_alloc_opt_params(portfolio, port_type, alloc_type, investment, rounding,
+                                reinvest, leftover, save_opt_params)
+    if !save_opt_params
+        return nothing
+    end
 
-#     key = Symbol(string(alloc_type) * "_" * string(port_type))
+    key = Symbol(string(alloc_type) * "_" * string(port_type))
 
-#     portfolio.alloc_params[key] = Dict(:investment => investment, :rounding => rounding,
-#                                        :reinvest => reinvest, :leftover => leftover)
+    portfolio.alloc_params[key] = Dict(:investment => investment, :rounding => rounding,
+                                       :reinvest => reinvest, :leftover => leftover)
 
-#     return nothing
-# end
+    return nothing
+end
 
 """
 ```julia
@@ -364,8 +364,8 @@ function allocate!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :H
                             reinvest)
     end
 
-    # _save_alloc_opt_params(portfolio, port_type, alloc_type, investment, rounding, reinvest,
-    #                        leftover, save_opt_params)
+    _save_alloc_opt_params(portfolio, port_type, alloc_type, investment, rounding, reinvest,
+                           leftover, save_opt_params)
 
     return retval
 end

@@ -55,14 +55,6 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-@safetestset "Asset Allocation" begin
-    include("AssetAllocationTests.jl")
-end
-
-@safetestset "HCPortfolio Optimisation" begin
-    include("HCPortfolioOptimisationTests.jl")
-end
-
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
 end
@@ -77,6 +69,10 @@ end
 
 @safetestset "Asset Statistics" begin
     include("AssetStatisticsTests.jl")
+end
+
+@safetestset "Asset Allocation" begin
+    include("AssetAllocationTests.jl")
 end
 
 @safetestset "BL Statistics" begin
@@ -117,6 +113,10 @@ end
 
 @safetestset "Efficient Frontier" begin
     include("PortfolioEfficientFrontierTests.jl")
+end
+
+@safetestset "HCPortfolio Optimisation" begin
+    include("HCPortfolioOptimisationTests.jl")
 end
 
 @safetestset "HCPortfolio OWA Optimisation" begin
