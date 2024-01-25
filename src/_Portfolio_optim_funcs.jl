@@ -1694,7 +1694,7 @@ function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, retu
         model = portfolio.model = copy(model1)
         @expression(model, log_ret, -log(model[:ret] - e1))
         @expression(model, log_risk, -log(e2 - model[:risk]))
-        @expression(model, neg_sum_log_ws, -sum(log.(1 .+ model[:w]) .+ log.(model[:w])))
+        @expression(model, neg_sum_log_ws, -sum(log.(1 .- model[:w]) .+ log.(model[:w])))
         @expression(model, near_opt_risk, log_ret + log_risk + neg_sum_log_ws)
         @objective(model, Min, near_opt_risk)
         term_status2, solvers_tried2 = _optimise_portfolio(portfolio, type, obj, true,
