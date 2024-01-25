@@ -29,19 +29,24 @@ function _sdp_setup(portfolio, obj, rm, type, N)
     return nothing
 end
 
-function _mv_risk(model, sigma, network_method)
+function _mv_risk(model, sigma, network_method, sd_cone::Bool = true)
     if network_method != :SDP
-        G = sqrt(sigma)
-        @variable(model, dev)
-        @constraint(model, [dev; G * model[:w]] ∈ SecondOrderCone())
-        @expression(model, dev_risk, dev^2)
+        if sd_cone
+            G = sqrt(sigma)
+            @variable(model, dev)
+            @constraint(model, [dev; G * model[:w]] ∈ SecondOrderCone())
+            @expression(model, dev_risk, dev^2)
+        else
+            @expression(model, dev_risk, dot(model[:w], sigma, model[:w]))
+        end
     else
         @expression(model, dev_risk, tr(sigma * model[:Wn]))
     end
     return nothing
 end
 
-function _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method)
+function _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method,
+                   sd_cone::Bool = true)
     sd_u = portfolio.sd_u
 
     if !(rm == :SD || kelly == :Approx || isfinite(sd_u))
@@ -50,17 +55,17 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method)
 
     model = portfolio.model
 
-    _mv_risk(model, sigma, network_method)
+    _mv_risk(model, sigma, network_method, sd_cone)
 
     if isfinite(sd_u) && type == :Trad
         if obj == :Sharpe
-            if network_method != :SDP
+            if network_method != :SDP && sd_cone
                 @constraint(model, model[:dev] <= sd_u * model[:k])
             else
                 @constraint(model, model[:dev_risk] <= sd_u^2 * model[:k])
             end
         else
-            if network_method != :SDP
+            if network_method != :SDP && sd_cone
                 @constraint(model, model[:dev] <= sd_u)
             else
                 @constraint(model, model[:dev_risk] <= sd_u^2)
@@ -517,9 +522,9 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
 end
 
 function _risk_setup(portfolio, type, rm, kelly, obj, rf, T, N, mu, returns, sigma,
-                     kurtosis, skurtosis, network_method)
+                     kurtosis, skurtosis, network_method, sd_cone::Bool = true)
     _sdp_setup(portfolio, obj, rm, type, N)
-    _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method)
+    _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method, sd_cone)
     _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
     _wr_setup(portfolio, rm, returns, obj, type)
@@ -1542,7 +1547,7 @@ end
 
 function _p_save_opt_params(portfolio, type, class, hist, rm, obj, kelly, rrp_ver, rf, l,
                             rrp_penalty, u_mu, u_cov, string_names, w_ini, M, w_min, w_max,
-                            save_opt_params)
+                            sd_cone, save_opt_params)
     if !save_opt_params
         return nothing
     end
@@ -1550,17 +1555,17 @@ function _p_save_opt_params(portfolio, type, class, hist, rm, obj, kelly, rrp_ve
     opt_params_dict = if type == :Trad
         Dict(:class => class, :rm => rm, :obj => obj, :kelly => kelly, :rf => rf, :l => l,
              :string_names => string_names, :hist => hist, :M => M, :w_ini => w_ini,
-             :w_min => w_min, :w_max => w_max)
+             :w_min => w_min, :w_max => w_max, :sd_cone => sd_cone)
     elseif type == :RP
         Dict(:class => class, :rm => rm, :obj => :Min_Risk,
              :kelly => (kelly == :Exact) ? :None : kelly, :rf => rf,
              :string_names => string_names, :hist => hist, :M => M, :w_ini => w_ini,
-             :w_min => w_min, :w_max => w_max)
+             :w_min => w_min, :w_max => w_max, :sd_cone => sd_cone)
     elseif type == :RRP
         Dict(:class => class, :rm => :SD, :obj => :Min_Risk, :kelly => kelly,
              :rrp_penalty => rrp_penalty, :rrp_ver => rrp_ver,
              :string_names => string_names, :hist => hist, :M => M, :w_ini => w_ini,
-             :w_min => w_min, :w_max => w_max)
+             :w_min => w_min, :w_max => w_max, :sd_cone => sd_cone)
     elseif type == :WC
         Dict(:rm => :SD, :obj => obj, :kelly => kelly, :rf => rf, :l => l, :u_mu => u_mu,
              :u_cov => u_cov, :string_names => string_names, :hist => hist, :M => M,
@@ -1626,10 +1631,11 @@ end
 function _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, returns, sigma,
                                  w_opt, M, type, N, obj,
                                  w1 = Vector{eltype(returns)}(undef, 0),
-                                 w2 = Vector{eltype(returns)}(undef, 0))
+                                 w2 = Vector{eltype(returns)}(undef, 0),
+                                 sd_cone::Bool = true)
     if isempty(w1) || isempty(w2)
         fl = frontier_limits!(portfolio; class = class, hist = hist, kelly = kelly, rf = rf,
-                              rm = rm, save_model = true)
+                              rm = rm, sd_cone = sd_cone, save_model = true)
 
         w1 = fl.w_min
         w2 = fl.w_max
@@ -1720,7 +1726,7 @@ function optimise!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer
                    kelly::Symbol = :None, type::Symbol = :Trad, rm::Symbol = :SD,
                    obj::Symbol = :Sharpe, rf::Real = 0.0, l::Real = 2.0,
                    rrp_ver::Symbol = :None, rrp_penalty::Real = 1.0, u_cov::Symbol = :Box,
-                   u_mu::Symbol = :Box, near_opt::Bool = false,
+                   u_mu::Symbol = :Box, sd_cone::Bool = true, near_opt::Bool = false,
                    M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
                    w_ini::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
                    w_min::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
@@ -1768,18 +1774,18 @@ function optimise!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer
     if type == :Trad
         _setup_sharpe_k(model, obj)
         _risk_setup(portfolio, :Trad, rm, kelly, obj, rf, T, N, mu, returns, sigma,
-                    kurtosis, skurtosis, network_method)
+                    kurtosis, skurtosis, network_method, sd_cone)
         _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
         _setup_trad_wc_constraints(portfolio, obj, T, N, :Trad, class, kelly, l, returns)
     elseif type == :RP
         _setup_risk_budget(portfolio)
         _rp_setup(portfolio, N)
         _risk_setup(portfolio, :RP, rm, kelly, obj, rf, T, N, mu, returns, sigma, kurtosis,
-                    skurtosis, network_method)
+                    skurtosis, network_method, sd_cone)
         _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
     elseif type == :RRP
         _setup_risk_budget(portfolio)
-        _mv_setup(portfolio, sigma, rm, kelly, obj, :RRP, network_method)
+        _mv_setup(portfolio, sigma, rm, kelly, obj, :RRP, network_method, sd_cone)
         _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
         _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
     else
@@ -1796,12 +1802,13 @@ function optimise!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer
 
     if near_opt
         retval = _near_optimal_centering(portfolio, class, hist, kelly, rf, rm, mu, returns,
-                                         sigma, retval, M, type, N, obj, w_min, w_max)
+                                         sigma, retval, M, type, N, obj, w_min, w_max,
+                                         sd_cone)
     end
 
     _p_save_opt_params(portfolio, type, class, hist, rm, obj, kelly, rrp_ver, rf, l,
                        rrp_penalty, u_mu, u_cov, string_names, w_ini, M, w_min, w_max,
-                       save_opt_params)
+                       sd_cone, save_opt_params)
 
     return retval
 end
@@ -1815,7 +1822,7 @@ frontier_limits!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer =
 """
 function frontier_limits!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
                           kelly::Symbol = :None, rf::Real = 0.0, rm::Symbol = :SD,
-                          save_model::Bool = false)
+                          sd_cone::Bool = true, save_model::Bool = false)
     optimal1 = deepcopy(portfolio.optimal)
     fail1 = deepcopy(portfolio.fail)
     if save_model
@@ -1823,10 +1830,10 @@ function frontier_limits!(portfolio::Portfolio; class::Symbol = :Classic, hist::
     end
 
     w_min = optimise!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Min_Risk,
-                      rf = rf, rm = rm, save_opt_params = false)
+                      rf = rf, rm = rm, sd_cone = sd_cone, save_opt_params = false)
 
     w_max = optimise!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Max_Ret,
-                      rf = rf, rm = rm, save_opt_params = false)
+                      rf = rf, rm = rm, sd_cone = sd_cone, save_opt_params = false)
 
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
@@ -1850,7 +1857,8 @@ efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic, hist::Intege
 """
 function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
                              hist::Integer = 1, kelly::Symbol = :None, rf::Real = 0.0,
-                             rm::Symbol = :SD, points::Integer = 20, near_opt::Bool = false,
+                             rm::Symbol = :SD, points::Integer = 20, sd_cone::Bool = true,
+                             near_opt::Bool = false,
                              M::Real = if near_opt
                                  ceil(sqrt(size(portfolio.returns, 2)))
                              else
@@ -1866,7 +1874,7 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     mu, sigma, returns = _setup_model_class(portfolio, class, hist)
 
     fl = frontier_limits!(portfolio; class = class, hist = hist, kelly = kelly, rf = rf,
-                          rm = rm)
+                          rm = rm, sd_cone = sd_cone)
 
     w1 = fl.w_min
     w2 = fl.w_max
@@ -1900,8 +1908,9 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     for (j, (r, m)) ∈ enumerate(zip(risks, mus))
         if i == 0
             w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
-                          obj = :Min_Risk, rf = rf, rm = rm, near_opt = near_opt, M = M,
-                          w_min = w_min, w_max = w_max, save_opt_params = false)
+                          obj = :Min_Risk, rf = rf, rm = rm, sd_cone = sd_cone,
+                          near_opt = near_opt, M = M, w_min = w_min, w_max = w_max,
+                          save_opt_params = false)
         else
             if !isempty(w)
                 w_ini = w.weights
@@ -1912,17 +1921,17 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
                 setproperty!(portfolio, rmf, Inf)
             end
             w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
-                          obj = :Max_Ret, rf = rf, rm = rm, near_opt = near_opt, M = M,
-                          w_ini = w_ini, w_min = w_min, w_max = w_max,
-                          save_opt_params = false)
+                          obj = :Max_Ret, rf = rf, rm = rm, sd_cone = sd_cone,
+                          near_opt = near_opt, M = M, w_ini = w_ini, w_min = w_min,
+                          w_max = w_max, save_opt_params = false)
             # Fallback in case :Max_Ret with maximum risk bounds fails.
             if isempty(w)
                 setproperty!(portfolio, rmf, Inf)
                 j != length(risks) ? portfolio.mu_l = m : portfolio.mu_l = Inf
                 w = optimise!(portfolio; class = class, hist = hist, kelly = kelly,
-                              obj = :Min_Risk, rf = rf, rm = rm, near_opt = near_opt, M = M,
-                              w_ini = w_ini, w_min = w_min, w_max = w_max,
-                              save_opt_params = false)
+                              obj = :Min_Risk, rf = rf, rm = rm, sd_cone = sd_cone,
+                              near_opt = near_opt, M = M, w_ini = w_ini, w_min = w_min,
+                              w_max = w_max, save_opt_params = false)
                 portfolio.mu_l = Inf
             end
         end
@@ -1940,8 +1949,8 @@ function efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic,
     setproperty!(portfolio, rmf, Inf)
 
     w = optimise!(portfolio; class = class, hist = hist, kelly = kelly, obj = :Sharpe,
-                  rf = rf, rm = rm, near_opt = near_opt, M = M, w_min = w_min,
-                  w_max = w_max, save_opt_params = false)
+                  rf = rf, rm = rm, sd_cone = sd_cone, near_opt = near_opt, M = M,
+                  w_min = w_min, w_max = w_max, save_opt_params = false)
     sharpe = false
     if !isempty(w)
         rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
