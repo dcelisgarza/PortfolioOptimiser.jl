@@ -1390,7 +1390,7 @@ function _optimise_portfolio(portfolio, type, obj, near_opt = false, coneopt = t
         "_" * String(type)
     else
         tmp = "_Near_"
-        tmp = coneopt ? tmp * "_Cone" : tmp * "_NL"
+        tmp = coneopt ? tmp * "Cone_" : tmp * "NL_"
         tmp * String(type)
     end
 
