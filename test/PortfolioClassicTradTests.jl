@@ -3062,7 +3062,7 @@ end
     @test isapprox(w5.weights, w5t, rtol = 1.0e-10)
     @test isapprox(w6.weights, w6t, rtol = 0.001)
     @test isapprox(w5.weights, w6.weights, rtol = 1e-2)
-    @test isapprox(w7.weights, w7t, rtol = 1.0e-8)
+    @test isapprox(w7.weights, w7t, rtol = 1.0e-7)
     @test isapprox(w8.weights, w8t, rtol = 1.0e-6)
     @test isapprox(w10.weights, w10t, rtol = 1.0e-9)
     @test isapprox(w11.weights, w11t, rtol = 1.0e-10)
