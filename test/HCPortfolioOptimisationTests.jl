@@ -55,8 +55,11 @@ end
                             "Weight" => [0.05, 0.04, 0.02, 0.07, 0.04, 0.08, 0.2])
 
     w_min, w_max = hrp_constraints(constraints, asset_sets)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    optimise!(portfolio; type = :HRP, rm = :CDaR, linkage = :ward, save_opt_params = false)
+    optimise!(portfolio; type = :HRP, rm = :CDaR, cluster_opt = cluster_opt,
+              save_opt_params = false)
     opt_params1 = copy(portfolio.opt_params)
     optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false, save_opt_params = false)
     opt_params2 = copy(portfolio.opt_params)
@@ -66,7 +69,7 @@ end
 
     portfolio.w_min = w_min
     portfolio.w_max = w_max
-    w1 = optimise!(portfolio; type = :HRP, rm = :CDaR, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :CDaR, cluster_opt = cluster_opt)
     w2 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
 
@@ -78,13 +81,13 @@ end
 
     portfolio.w_min = 0
     portfolio.w_max = 1
-    w7 = optimise!(portfolio; type = :HRP, rm = :CDaR, linkage = :ward)
+    w7 = optimise!(portfolio; type = :HRP, rm = :CDaR, cluster_opt = cluster_opt)
     w8 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
     w9 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
 
     portfolio.w_min = Float64[]
     portfolio.w_max = Float64[]
-    w10 = optimise!(portfolio; type = :HRP, rm = :CDaR, linkage = :ward)
+    w10 = optimise!(portfolio; type = :HRP, rm = :CDaR, cluster_opt = cluster_opt)
     w11 = optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false)
     w12 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, cluster = false)
 
@@ -122,7 +125,11 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :Variance, rf = rf, l = l, linkage = :ward)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
+
+    w1 = optimise!(portfolio; type = :HRP, rm = :Variance, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     rc1 = risk_contribution(portfolio; type = :HRP, rm = :Variance)
 
     w2 = optimise!(portfolio; type = :HERC, rm = :Variance, rf = rf, l = l, cluster = false)
@@ -174,8 +181,11 @@ end
                                                   :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :Equal, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :Equal, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     rc1 = risk_contribution(portfolio; type = :HRP, rm = :Equal)
     w2 = optimise!(portfolio; type = :HERC, rm = :Equal, rf = rf, l = l, cluster = false)
     rc2 = risk_contribution(portfolio; type = :HERC, rm = :Equal)
@@ -204,8 +214,11 @@ end
                                                   :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :VaR, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :VaR, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     rc1 = risk_contribution(portfolio; type = :HRP, rm = :VaR)
 
     w2 = optimise!(portfolio; type = :HERC, rm = :VaR, rf = rf, l = l, cluster = false)
@@ -257,8 +270,11 @@ end
                                                   :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :DaR, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :DaR, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     rc1 = risk_contribution(portfolio; type = :HRP, rm = :DaR)
 
     w2 = optimise!(portfolio; type = :HERC, rm = :DaR, rf = rf, l = l, cluster = false)
@@ -310,8 +326,11 @@ end
                                                   :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :DaR_r, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :DaR_r, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     rc1 = risk_contribution(portfolio; type = :HRP, rm = :DaR_r)
 
     w2 = optimise!(portfolio; type = :HERC, rm = :DaR_r, rf = rf, l = l, cluster = false)
@@ -363,8 +382,11 @@ end
                                                   :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :MDD_r, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :MDD_r, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     rc1 = risk_contribution(portfolio; type = :HRP, rm = :MDD_r)
 
     w2 = optimise!(portfolio; type = :HERC, rm = :MDD_r, rf = rf, l = l, cluster = false)
@@ -416,8 +438,11 @@ end
                                                   :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :ADD_r, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :ADD_r, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     rc1 = risk_contribution(portfolio; type = :HRP, rm = :ADD_r)
 
     w2 = optimise!(portfolio; type = :HERC, rm = :ADD_r, rf = rf, l = l, cluster = false)
@@ -469,8 +494,11 @@ end
                                                   :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :CDaR_r, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :CDaR_r, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     rc1 = risk_contribution(portfolio; type = :HRP, rm = :CDaR_r)
 
     w2 = optimise!(portfolio; type = :HERC, rm = :CDaR_r, rf = rf, l = l, cluster = false)
@@ -522,8 +550,11 @@ end
                                                   :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :UCI_r, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :UCI_r, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     rc1 = risk_contribution(portfolio; type = :HRP, rm = :UCI_r)
 
     w2 = optimise!(portfolio; type = :HERC, rm = :UCI_r, rf = rf, l = l, cluster = false)
@@ -575,8 +606,11 @@ end
                                                   :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :EDaR_r, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :EDaR_r, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     rc1 = risk_contribution(portfolio; type = :HRP, rm = :EDaR_r)
 
     w2 = optimise!(portfolio; type = :HERC, rm = :EDaR_r, rf = rf, l = l, cluster = false)
@@ -628,8 +662,11 @@ end
                                                   :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
+    cluster_opt = ClusterOpt(; linkage = :ward,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :RDaR_r, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :RDaR_r, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     rc1 = risk_contribution(portfolio; type = :HRP, rm = :RDaR_r)
 
     w2 = optimise!(portfolio; type = :HERC, rm = :RDaR_r, rf = rf, l = l, cluster = false)
@@ -682,7 +719,11 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :SD, rf = rf, l = l, linkage = :DBHT)
+    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
+
+    w1 = optimise!(portfolio; type = :HRP, rm = :SD, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     w2 = optimise!(portfolio; type = :HERC, rm = :SD, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :SD, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -813,7 +854,11 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :MAD, rf = rf, l = l, linkage = :DBHT)
+    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                             max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
+
+    w1 = optimise!(portfolio; type = :HRP, rm = :MAD, rf = rf, l = l,
+                   cluster_opt = cluster_opt)
     w2 = optimise!(portfolio; type = :HERC, rm = :MAD, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :MAD, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -944,7 +989,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :SSD, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :SSD, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :SSD, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :SSD, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -1075,7 +1123,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :FLPM, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :FLPM, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :FLPM, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :FLPM, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -1206,7 +1257,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :SLPM, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :SLPM, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :SLPM, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :SLPM, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -1337,7 +1391,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :WR, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :WR, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :WR, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :WR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -1468,7 +1525,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :CVaR, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :CVaR, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :CVaR, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :CVaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -1599,7 +1659,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :EVaR, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :EVaR, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :EVaR, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :EVaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -1729,7 +1792,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :RVaR, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :RVaR, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :RVaR, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :RVaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -1860,7 +1926,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :MDD, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :MDD, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :MDD, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :MDD, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -1991,7 +2060,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :ADD, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :ADD, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :ADD, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :ADD, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -2120,7 +2192,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :CDaR, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :CDaR, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :CDaR, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :CDaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -2251,7 +2326,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :UCI, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :UCI, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :UCI, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :UCI, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -2382,7 +2460,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :EDaR, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :EDaR, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :EDaR, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :EDaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -2513,7 +2594,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :RDaR, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :RDaR, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :RDaR, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :RDaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -2644,7 +2728,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :Kurt, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :Kurt, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :Kurt, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :Kurt, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -2854,7 +2941,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :SKurt, rf = rf, l = l, linkage = :DBHT)
+    w1 = optimise!(portfolio; type = :HRP, rm = :SKurt, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :SKurt, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :SKurt, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -3066,7 +3156,11 @@ end
 
     w1 = optimise!(portfolio; type = :NCO, rm = :SD, rm_o = :CDaR, obj = :Sharpe,
                    obj_o = :Utility, l = l, l_o = 10 * l, kelly = :Exact, kelly_o = :None,
-                   rf = rf, linkage = :DBHT, dbht_method = :Equal, branchorder = :default,)
+                   rf = rf,
+                   cluster_opt = ClusterOpt(; dbht_method = :Equal, branchorder = :default,
+                                            linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))),)
     w2 = optimise!(portfolio; type = :NCO, rm = :SD, rm_o = :CDaR, obj = :Sharpe,
                    obj_o = :Utility, l = l, l_o = 10 * l, kelly = :None, kelly_o = :Exact,
                    rf = rf, cluster = false,)
@@ -3247,7 +3341,9 @@ end
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HERC, rm = :SD, rm_o = :CDaR, rf = rf,
-                   linkage = :DBHT)
+                   cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm_o = :SD, rm = :CDaR, rf = rf,
                    cluster = false)
     w3 = optimise!(portfolio; type = :HERC, rm_o = :CDaR, rm = :CDaR, rf = rf,

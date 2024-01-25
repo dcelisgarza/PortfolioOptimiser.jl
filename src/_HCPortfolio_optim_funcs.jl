@@ -120,8 +120,12 @@ function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 
     return k
 end
 
-function _hcluster_choice(dist, corr, cor_method, linkage, branchorder, dbht_method, max_k)
+function _hcluster_choice(dist, corr, cor_method, cluster_opt::ClusterOpt)
+    linkage = cluster_opt.linkage
+    branchorder = cluster_opt.branchorder
+    max_k = cluster_opt.max_k
     if linkage == :DBHT
+        dbht_method = cluster_opt.dbht_method
         cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
         corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
@@ -136,17 +140,16 @@ function _hcluster_choice(dist, corr, cor_method, linkage, branchorder, dbht_met
 
     return clustering, k
 end
-function _hierarchical_clustering(portfolio::HCPortfolio, linkage = :single,
-                                  max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
-                                  branchorder = :optimal, dbht_method = :Unique)
-    @smart_assert(linkage ∈ LinkageTypes)
-
+function _hierarchical_clustering(portfolio::HCPortfolio,
+                                  cluster_opt::ClusterOpt = ClusterOpt(;
+                                                                       max_k = ceil(Int,
+                                                                                    sqrt(size(portfolio.dist,
+                                                                                              1)))))
     cor_method = portfolio.cor_method
     corr = portfolio.cor
     dist = portfolio.dist
 
-    clustering, k = _hcluster_choice(dist, corr, cor_method, linkage, branchorder,
-                                     dbht_method, max_k)
+    clustering, k = _hcluster_choice(dist, corr, cor_method, cluster_opt)
 
     return clustering, k
 end
@@ -233,23 +236,23 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0,
     return weights
 end
 
-struct ClusterNode{tid,tl,tr,td,tcnt}
+struct ClusterNode{tid, tl, tr, td, tcnt}
     id::tid
     left::tl
     right::tr
     dist::td
     count::tcnt
 
-    function ClusterNode(id, left::Union{ClusterNode,Nothing} = nothing,
-                         right::Union{ClusterNode,Nothing} = nothing, dist::Real = 0.0,
+    function ClusterNode(id, left::Union{ClusterNode, Nothing} = nothing,
+                         right::Union{ClusterNode, Nothing} = nothing, dist::Real = 0.0,
                          count::Int = 1)
         icount = isnothing(left) ? count : (left.count + right.count)
 
-        return new{typeof(id),typeof(left),typeof(right),typeof(dist),typeof(count)}(id,
-                                                                                     left,
-                                                                                     right,
-                                                                                     dist,
-                                                                                     icount)
+        return new{typeof(id), typeof(left), typeof(right), typeof(dist), typeof(count)}(id,
+                                                                                         left,
+                                                                                         right,
+                                                                                         dist,
+                                                                                         icount)
     end
 end
 export ClusterNode
@@ -432,7 +435,7 @@ function _intra_weights(portfolio; obj = :Min_Risk, kelly = :None, rm = :SD, rf 
     clustering_idx = cutree(clustering; k = k)
 
     intra_weights = zeros(eltype(covariance), size(portfolio.returns, 2), k)
-    cfails = Dict{Int,Dict}()
+    cfails = Dict{Int, Dict}()
 
     for i ∈ 1:k
         idx = clustering_idx .== i
@@ -582,8 +585,8 @@ function _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter = 100)
     return weights
 end
 
-function _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, linkage, k,
-                              max_k, branchorder, dbht_method, max_iter, save_opt_params)
+function _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, cluster_opt,
+                              max_iter, save_opt_params)
     if !isempty(portfolio.fail)
         portfolio.fail = Dict()
     end
@@ -592,16 +595,11 @@ function _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, l
     end
 
     opt_params_dict = if type != :NCO
-        Dict(:rm => rm, :rf => rf, :cluster => cluster, :linkage => linkage, :k => k,
-             :max_k => max_k, :branchorder => branchorder,
-             :dbht_method => linkage == :DBHT ? dbht_method : nothing,
+        Dict(:rm => rm, :rf => rf, :cluster => cluster, :cluster_opt => cluster_opt,
              :max_iter => max_iter)
     else
         Dict(:rm => rm, :obj => obj, :kelly => kelly, :rf => rf, :l => l,
-             :cluster => cluster, :linkage => linkage, :k => k, :max_k => max_k,
-             :branchorder => branchorder,
-             :dbht_method => linkage == :DBHT ? dbht_method : nothing,
-             :max_iter => max_iter)
+             :cluster => cluster, :cluster_opt => cluster_opt, :max_iter => max_iter)
     end
 
     portfolio.opt_params[type] = opt_params_dict
@@ -624,9 +622,14 @@ function _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_boun
 end
 
 function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, cluster::Bool = true,
-                   linkage::Symbol = :single, k::Integer = cluster ? 0 : portfolio.k,
-                   max_k::Int = ceil(Int, sqrt(size(portfolio.returns, 2))),
-                   branchorder::Symbol = :optimal, dbht_method::Symbol = :Unique,
+                   cluster_opt::ClusterOpt = ClusterOpt(; k = if cluster
+                                                            0
+                                                        else
+                                                            portfolio.k
+                                                        end,
+                                                        max_k = ceil(Int,
+                                                                     sqrt(size(portfolio.returns,
+                                                                               2)))),
                    max_iter::Integer = 100, rm::Symbol = :SD, rm_o::Symbol = rm,
                    kelly::Symbol = :None, kelly_o::Symbol = kelly, obj::Symbol = :Sharpe,
                    obj_o::Symbol = obj, rf::Real = 0.0, l::Real = 2.0, l_o::Real = l,
@@ -660,19 +663,17 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, cluster::Bool = 
     @smart_assert(obj_o ∈ HCObjFuncs)
     @smart_assert(kelly ∈ KellyRet)
     @smart_assert(kelly_o ∈ KellyRet)
-    @smart_assert(linkage ∈ LinkageTypes)
     @smart_assert(0 < portfolio.alpha < 1)
     @smart_assert(0 < portfolio.kappa < 1)
 
-    _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, linkage, k, max_k,
-                         branchorder, dbht_method, max_iter, save_opt_params)
+    _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, cluster_opt,
+                         max_iter, save_opt_params)
 
     N = size(portfolio.returns, 2)
 
     if cluster
-        portfolio.clusters, tk = _hierarchical_clustering(portfolio, linkage, max_k,
-                                                          branchorder, dbht_method)
-        portfolio.k = iszero(k) ? tk : k
+        portfolio.clusters, tk = _hierarchical_clustering(portfolio, cluster_opt)
+        portfolio.k = iszero(cluster_opt.k) ? tk : cluster_opt.k
     end
 
     upper_bound, lower_bound = _setup_hr_weights(portfolio.w_max, portfolio.w_min, N)

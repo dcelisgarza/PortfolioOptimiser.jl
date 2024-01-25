@@ -17,7 +17,10 @@ l = 2.0
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :GMD, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :GMD, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :ward,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :GMD, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :GMD, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -37,7 +40,10 @@ l = 2.0
                     rf = rf, l = l, cluster = false,)
     w11 = optimise!(portfolio; type = :NCO, rm = :GMD, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
-    w12 = optimise!(portfolio; type = :HRP, rm = :OWA, rf = rf, l = l, linkage = :ward)
+    w12 = optimise!(portfolio; type = :HRP, rm = :OWA, rf = rf, l = l,
+                    cluster_opt = ClusterOpt(; linkage = :ward,
+                                             max_k = ceil(Int,
+                                                          sqrt(size(portfolio.returns, 2)))))
     w13 = optimise!(portfolio; type = :HERC, rm = :OWA, rf = rf, l = l, cluster = false)
     w14 = optimise!(portfolio; type = :NCO, rm = :OWA, obj = :Min_Risk, rf = rf, l = l,
                     cluster = false,)
@@ -58,7 +64,10 @@ l = 2.0
     w22 = optimise!(portfolio; type = :NCO, rm = :OWA, obj = :Sharpe, obj_o = :Equal,
                     rf = rf, l = l, cluster = false,)
     portfolio.owa_w = owa_gmd(200)
-    w23 = optimise!(portfolio; type = :HRP, rm = :OWA, rf = rf, l = l, linkage = :ward)
+    w23 = optimise!(portfolio; type = :HRP, rm = :OWA, rf = rf, l = l,
+                    cluster_opt = ClusterOpt(; linkage = :ward,
+                                             max_k = ceil(Int,
+                                                          sqrt(size(portfolio.returns, 2)))))
     w24 = optimise!(portfolio; type = :HERC, rm = :OWA, rf = rf, l = l, cluster = false)
     w25 = optimise!(portfolio; type = :NCO, rm = :OWA, obj = :Min_Risk, rf = rf, l = l,
                     cluster = false,)
@@ -195,7 +204,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :RG, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :RG, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :ward,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :RG, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :RG, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -323,7 +335,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :RCVaR, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :RCVaR, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :ward,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :RCVaR, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :RCVaR, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -451,7 +466,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :TG, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :TG, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :ward,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :TG, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :TG, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)
@@ -571,7 +589,10 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :RTG, rf = rf, l = l, linkage = :ward)
+    w1 = optimise!(portfolio; type = :HRP, rm = :RTG, rf = rf, l = l,
+                   cluster_opt = ClusterOpt(; linkage = :ward,
+                                            max_k = ceil(Int,
+                                                         sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :RTG, rf = rf, l = l, cluster = false)
     w3 = optimise!(portfolio; type = :NCO, rm = :RTG, obj = :Min_Risk, rf = rf, l = l,
                    cluster = false,)

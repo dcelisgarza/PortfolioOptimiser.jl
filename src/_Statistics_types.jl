@@ -216,6 +216,18 @@ Methods for calculating optimal bin widths for the mutual and variational inform
 """
 const BinMethods = (:KN, :FD, :SC, :HGR)
 
+"""
+```julia
+DBHTRootMethods = (:Unique, :Equal)
+```
+
+Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in [`DBHTs`](@ref), in case there is more than one candidate.
+
+  - `:Unique`: create a unique root.
+  - `:Equal`: the root is created from the candidate's adjacency tree.
+"""
+const DBHTRootMethods = (:Unique, :Equal)
+
 @kwdef mutable struct GenericFunction
     func::Union{Nothing, Function} = nothing
     args::Tuple = ()
@@ -601,5 +613,129 @@ function Base.setproperty!(obj::BLOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
+    linkage::Symbol
+    branchorder::Symbol
+    dbht_method::Symbol
+    max_k::T1
+    k::T2
+end
+function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
+                    dbht_method::Symbol = :Unique, max_k::Integer = 10, k::Integer = 0)
+    @smart_assert(linkage ∈ LinkageTypes)
+    @smart_assert(branchorder ∈ BranchOrderTypes)
+    @smart_assert(dbht_method ∈ DBHTRootMethods)
+
+    return ClusterOpt{typeof(max_k), typeof(k)}(linkage, branchorder, dbht_method, max_k, k)
+end
+function Base.setproperty!(obj::ClusterOpt, sym::Symbol, val)
+    if sym == :linkage
+        @smart_assert(val ∈ LinkageTypes)
+    elseif sym == :branchorder
+        @smart_assert(val ∈ BranchOrderTypes)
+    elseif sym == :dbht_method
+        @smart_assert(val ∈ DBHTRootMethods)
+    end
+    return setfield!(obj, sym, val)
+end
+mutable struct OptimiseOpt{T1 <: Integer, T2 <: Real, T3 <: Real, T4 <: Real, T5 <: Real}
+    type::Symbol
+    rm::Symbol
+    obj::Symbol
+    kelly::Symbol
+    class::Symbol
+    rrp_ver::Symbol
+    u_cov::Symbol
+    u_mu::Symbol
+    sd_cone::Bool
+    near_opt::Bool
+    hist::T1
+    rf::T2
+    l::T3
+    rrp_penalty::T4
+    M::T5
+    w_ini::AbstractVector
+    w_min::AbstractVector
+    w_max::AbstractVector
+end
+function OptimiseOpt(type::Symbol = :Trad, rm::Symbol = :SD, obj::Symbol = :Sharpe,
+                     kelly::Symbol = :None, class::Symbol = :Classic,
+                     rrp_ver::Symbol = :None, u_cov::Symbol = :Box, u_mu::Symbol = :Box,
+                     sd_cone::Bool = true, near_opt::Bool = false, hist::Integer = 1,
+                     rf::Real = 0.0, l::Real = 2.0, rrp_penalty::Real = 1.0, M::Real = 0.0,
+                     w_ini::AbstractVector = Vector{typeof(rf)}(undef, 0),
+                     w_min::AbstractVector = Vector{typeof(rf)}(undef, 0),
+                     w_max::AbstractVector = Vector{typeof(rf)}(undef, 0))
+    @smart_assert(type ∈ PortTypes)
+    @smart_assert(class ∈ PortClasses)
+    @smart_assert(rm ∈ RiskMeasures)
+    @smart_assert(obj ∈ ObjFuncs)
+    @smart_assert(kelly ∈ KellyRet)
+    @smart_assert(rrp_ver ∈ RRPVersions)
+    @smart_assert(u_mu ∈ UncertaintyTypes)
+    @smart_assert(u_cov ∈ UncertaintyTypes)
+
+    return OptimiseOpt{typeof(hist), typeof(rf), typeof(l), typeof(rrp_penalty), typeof(M)}(type,
+                                                                                            rm,
+                                                                                            obj,
+                                                                                            kelly,
+                                                                                            class,
+                                                                                            rrp_ver,
+                                                                                            u_cov,
+                                                                                            u_mu,
+                                                                                            sd_cone,
+                                                                                            near_opt,
+                                                                                            hist,
+                                                                                            rf,
+                                                                                            l,
+                                                                                            rrp_penalty,
+                                                                                            M,
+                                                                                            w_ini,
+                                                                                            w_min,
+                                                                                            w_max)
+end
+function Base.setproperty!(obj::OptimiseOpt, sym::Symbol, val)
+    if sym == :type
+        @smart_assert(val ∈ PortTypes)
+    elseif sym == :class
+        @smart_assert(val ∈ PortClasses)
+    elseif sym == :rm
+        @smart_assert(val ∈ RiskMeasures)
+    elseif sym == :obj
+        @smart_assert(val ∈ ObjFuncs)
+    elseif sym == :kelly
+        @smart_assert(val ∈ KellyRet)
+    elseif sym == :rrp_ver
+        @smart_assert(val ∈ RRPVersions)
+    elseif sym == :u_mu
+        @smart_assert(val ∈ UncertaintyTypes)
+    elseif sym == :u_cov
+        @smart_assert(val ∈ UncertaintyTypes)
+    else
+        val = convert(typeof(getproperty(obj, sym)), val)
+    end
+
+    return setfield!(obj, sym, val)
+end
+
+# type::Symbol = :Trad,
+# rm::Symbol = :SD,
+# obj::Symbol = :Sharpe,
+# kelly::Symbol = :None,
+# class::Symbol = :Classic,
+# rrp_ver::Symbol = :None,
+# u_cov::Symbol = :Box,
+# u_mu::Symbol = :Box, 
+# sd_cone::Bool = true, 
+# near_opt::Bool = false,
+# hist::Integer = 1,
+# rf::Real = 0.0, 
+# l::Real = 2.0,
+# rrp_penalty::Real = 1.0, 
+# M::Real = near_opt ? ceil(sqrt(size(portfolio.returns, 2))) : 0,
+# w_ini::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
+# w_min::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0),
+# w_max::AbstractVector = Vector{eltype(portfolio.returns)}(undef, 0)
+
 export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
-       CorOpt, CorEstOpt, WCOpt, KurtOpt, PCROpt, LoadingsOpt, FactorOpt, BLOpt
+       CorOpt, CorEstOpt, WCOpt, KurtOpt, PCROpt, LoadingsOpt, FactorOpt, BLOpt, ClusterOpt

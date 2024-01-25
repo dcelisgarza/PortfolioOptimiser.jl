@@ -513,18 +513,6 @@ end
 
 """
 ```julia
-DBHTRootMethods = (:Unique, :Equal)
-```
-
-Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in [`DBHTs`](@ref), in case there is more than one candidate.
-
-  - `:Unique`: create a unique root.
-  - `:Equal`: the root is created from the candidate's adjacency tree.
-"""
-const DBHTRootMethods = (:Unique, :Equal)
-
-"""
-```julia
 CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}; method::Symbol = :Unique)
 ```
 

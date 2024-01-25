@@ -1904,42 +1904,40 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
     return nothing
 end
 
-function _hierarchical_clustering(returns::AbstractMatrix, opt::CorOpt = CorOpt(;),
-                                  linkage = :single,
-                                  max_k = ceil(Int, sqrt(size(returns, 2))),
-                                  branchorder = :optimal, dbht_method = :Unique)
-    cor_method = opt.method
-    corr, dist = cor_dist_mtx(returns, opt)
-    clustering, k = _hcluster_choice(dist, corr, cor_method, linkage, branchorder,
-                                     dbht_method, max_k)
+function _hierarchical_clustering(returns::AbstractMatrix, cor_opt::CorOpt = CorOpt(;),
+                                  cluster_opt::ClusterOpt = ClusterOpt(;
+                                                                       max_k = ceil(Int,
+                                                                                    sqrt(size(returns,
+                                                                                              2)))))
+    cor_method = cor_opt.method
+    corr, dist = cor_dist_mtx(returns, cor_opt)
+    clustering, k = _hcluster_choice(dist, corr, cor_method, cluster_opt)
 
     return clustering, k
 end
 
-function cluster_assets(portfolio::HCPortfolio; linkage = :single,
-                        max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
-                        branchorder = :optimal, k = portfolio.k, dbht_method = :Unique)
-    @smart_assert(linkage ∈ LinkageTypes)
+function cluster_assets(portfolio::HCPortfolio,
+                        opt::ClusterOpt = ClusterOpt(; k = portfolio.k,
+                                                     max_k = ceil(Int,
+                                                                  sqrt(size(portfolio.dist,
+                                                                            1)))))
+    clustering, tk = _hierarchical_clustering(portfolio, opt)
 
-    clustering, tk = _hierarchical_clustering(portfolio, linkage, max_k, branchorder,
-                                              dbht_method)
-
-    k = iszero(k) ? tk : k
+    k = iszero(opt.k) ? tk : opt.k
 
     clustering_idx = cutree(clustering; k = k)
 
     return clustering_idx, clustering, k
 end
 
-function cluster_assets!(portfolio::HCPortfolio; linkage = :single,
-                         max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
-                         branchorder = :optimal, k = portfolio.k, dbht_method = :Unique)
-    @smart_assert(linkage ∈ LinkageTypes)
+function cluster_assets!(portfolio::HCPortfolio,
+                         opt::ClusterOpt = ClusterOpt(; k = portfolio.k,
+                                                      max_k = ceil(Int,
+                                                                   sqrt(size(portfolio.dist,
+                                                                             1)))))
+    clustering, tk = _hierarchical_clustering(portfolio, opt)
 
-    clustering, tk = _hierarchical_clustering(portfolio, linkage, max_k, branchorder,
-                                              dbht_method)
-
-    k = iszero(k) ? tk : k
+    k = iszero(opt.k) ? tk : opt.k
 
     portfolio.clusters = clustering
     portfolio.k = k
@@ -1947,26 +1945,26 @@ function cluster_assets!(portfolio::HCPortfolio; linkage = :single,
     return nothing
 end
 
-function cluster_assets(returns::AbstractMatrix, opt::CorOpt = CorOpt(;); linkage = :single,
-                        max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
-                        k = 0, dbht_method = :Unique)
-    @smart_assert(linkage ∈ LinkageTypes)
+function cluster_assets(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
+                        cluster_opt::ClusterOpt = ClusterOpt(;
+                                                             max_k = ceil(Int,
+                                                                          sqrt(size(returns,
+                                                                                    2)))))
+    clustering, tk = _hierarchical_clustering(returns, cor_opt, cluster_opt)
 
-    clustering, tk = _hierarchical_clustering(returns, opt, linkage, max_k, branchorder,
-                                              dbht_method)
-
-    k = iszero(k) ? tk : k
+    k = iszero(cluster_opt.k) ? tk : cluster_opt.k
 
     clustering_idx = cutree(clustering; k = k)
 
     return clustering_idx, clustering, k
 end
 
-function cluster_assets(portfolio::Portfolio, opt::CorOpt = CorOpt(;); linkage = :single,
-                        max_k = ceil(Int, sqrt(size(portfolio.returns, 2))),
-                        branchorder = :optimal, k = 0, dbht_method = :Unique)
-    return cluster_assets(portfolio.returns, opt; linkage = linkage, max_k = max_k,
-                          branchorder = branchorder, k = k, dbht_method = dbht_method)
+function cluster_assets(portfolio::Portfolio; cor_opt::CorOpt = CorOpt(;),
+                        cluster_opt::ClusterOpt = ClusterOpt(;
+                                                             max_k = ceil(Int,
+                                                                          sqrt(size(portfolio.returns,
+                                                                                    2)))))
+    return cluster_assets(portfolio.returns; cor_opt = cor_opt, cluster_opt = cluster_opt)
 end
 
 export covgerber0, covgerber1, covgerber2, mut_var_info_mtx, cov_returns, block_vec_pq,

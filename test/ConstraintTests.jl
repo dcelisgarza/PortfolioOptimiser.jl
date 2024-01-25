@@ -7,6 +7,73 @@ prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Cluster matrix" begin
+    portfolio = Portfolio(; prices = prices_assets)
+
+    A = cluster_matrix(portfolio; cluster_opt = ClusterOpt(; linkage = :DBHT))
+
+    At = reshape([0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0,
+                  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+                  0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1,
+                  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+                  1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                  0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1,
+                  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1,
+                  0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                  0], (20, 20))
+
+    @test isapprox(A, At)
+end
+
+@testset "Connected and related assets" begin
+    portfolio = Portfolio(; prices = prices_assets,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75)),
+                                         :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                        :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+    w = optimise!(portfolio; obj = :Min_Risk)
+
+    C1 = connected_assets(portfolio; method = :MST, steps = 1)
+    C2 = connected_assets(portfolio; method = :MST, steps = 2)
+    C5 = connected_assets(portfolio; method = :MST, steps = 5)
+    C10 = connected_assets(portfolio; method = :MST, steps = 10)
+    D1 = connected_assets(portfolio; method = :TMFG, steps = 1)
+    D2 = connected_assets(portfolio; method = :TMFG, steps = 2)
+    D5 = connected_assets(portfolio; method = :TMFG, steps = 5)
+    D10 = connected_assets(portfolio; method = :TMFG, steps = 10)
+    R1 = related_assets(portfolio; cluster_opt = ClusterOpt(; linkage = :DBHT))
+
+    C1t = 0.15341826288065186
+    C2t = 0.26913944576606574
+    C5t = 0.8136084159385014
+    C10t = 0.8276674312142532
+    D1t = 0.20865448347802387
+    D2t = 0.7938552161072493
+    D5t = 0.8276674312142532
+    D10t = 0.8276674312142532
+    R1t = 0.285952759008733
+
+    @test isapprox(C1, C1t, rtol = 0.0001)
+    @test isapprox(C2, C2t, rtol = 0.0001)
+    @test isapprox(C5, C5t, rtol = 1.0e-5)
+    @test isapprox(C10, C10t, rtol = 1.0e-5)
+    @test isapprox(D1, D1t, rtol = 0.0001)
+    @test isapprox(D2, D2t, rtol = 0.0001)
+    @test isapprox(D5, D5t, rtol = 1.0e-5)
+    @test isapprox(D10, D10t, rtol = 1.0e-5)
+    @test isapprox(R1, R1t, rtol = 0.0001)
+end
+
 @testset "Asset constraints" begin
     portfolio = Portfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
@@ -928,71 +995,4 @@ end
 
     @test isapprox(A, At)
     @test isapprox(B, Bt)
-end
-
-@testset "Cluster matrix" begin
-    portfolio = Portfolio(; prices = prices_assets)
-
-    A = cluster_matrix(portfolio; linkage = :DBHT)
-
-    At = reshape([0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0,
-                  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
-                  0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1,
-                  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
-                  1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                  0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1,
-                  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
-                  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1,
-                  0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-                  0], (20, 20))
-
-    @test isapprox(A, At)
-end
-
-@testset "Connected and related assets" begin
-    portfolio = Portfolio(; prices = prices_assets,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75)),
-                                         :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                        :params => Dict("verbose" => false))))
-    asset_statistics!(portfolio)
-    w = optimise!(portfolio; obj = :Min_Risk)
-
-    C1 = connected_assets(portfolio; method = :MST, steps = 1)
-    C2 = connected_assets(portfolio; method = :MST, steps = 2)
-    C5 = connected_assets(portfolio; method = :MST, steps = 5)
-    C10 = connected_assets(portfolio; method = :MST, steps = 10)
-    D1 = connected_assets(portfolio; method = :TMFG, steps = 1)
-    D2 = connected_assets(portfolio; method = :TMFG, steps = 2)
-    D5 = connected_assets(portfolio; method = :TMFG, steps = 5)
-    D10 = connected_assets(portfolio; method = :TMFG, steps = 10)
-    R1 = related_assets(portfolio; linkage = :DBHT)
-
-    C1t = 0.15341826288065186
-    C2t = 0.26913944576606574
-    C5t = 0.8136084159385014
-    C10t = 0.8276674312142532
-    D1t = 0.20865448347802387
-    D2t = 0.7938552161072493
-    D5t = 0.8276674312142532
-    D10t = 0.8276674312142532
-    R1t = 0.285952759008733
-
-    @test isapprox(C1, C1t, rtol = 0.0001)
-    @test isapprox(C2, C2t, rtol = 0.0001)
-    @test isapprox(C5, C5t, rtol = 1.0e-5)
-    @test isapprox(C10, C10t, rtol = 1.0e-5)
-    @test isapprox(D1, D1t, rtol = 0.0001)
-    @test isapprox(D2, D2t, rtol = 0.0001)
-    @test isapprox(D5, D5t, rtol = 1.0e-5)
-    @test isapprox(D10, D10t, rtol = 1.0e-5)
-    @test isapprox(R1, R1t, rtol = 0.0001)
 end
