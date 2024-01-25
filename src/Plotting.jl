@@ -67,7 +67,7 @@ function plot_risk_contribution(
                                 beta_i::Real = alpha_i, beta::Real = alpha,
                                 b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
                                 owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                                solvers::Union{<:AbstractDict, Nothing} = nothing,                                # Plot args
+                                solvers::Union{<:AbstractDict,Nothing} = nothing,                                # Plot args
                                 percentage::Bool = false, erc_line::Bool = true,
                                 t_factor = 252, kwargs_bar = (;), kwargs_line = (;))
     rc = risk_contribution(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
@@ -353,7 +353,7 @@ end
 
 function plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
                        returns::AbstractMatrix; alpha::Real = 0.05, kappa::Real = 0.3,
-                       solvers::Union{<:AbstractDict, Nothing} = nothing, theme = :Dark2_5,
+                       solvers::Union{<:AbstractDict,Nothing} = nothing, theme = :Dark2_5,
                        kwargs_ret = (;), kwargs_dd = (;), kwargs_risks = (;), kwargs = (;))
     ret = returns * w
 
@@ -455,7 +455,7 @@ end
 
 function plot_hist(w::AbstractVector, returns::AbstractMatrix; alpha_i::Real = 0.0001,
                    alpha::Real = 0.05, a_sim::Int = 100, kappa::Real = 0.3,
-                   solvers::Union{<:AbstractDict, Nothing} = nothing,
+                   solvers::Union{<:AbstractDict,Nothing} = nothing,
                    points::Integer = ceil(Int, 4 * sqrt(size(returns, 1))),
                    theme = :Paired_10, kwargs_h = (;), kwargs_risks = (;))
     ret = returns * w * 100
@@ -588,8 +588,11 @@ function plot_range(portfolio::AbstractPortfolio;
                       kwargs_h = kwargs_h, kwargs_risks = kwargs_risks)
 end
 
-function plot_clusters(portfolio; max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
-                       linkage = :single, branchorder = :optimal, dbht_method = :Unique,
+function plot_clusters(portfolio;
+                       cluster_opt = opt::ClusterOpt = ClusterOpt(; k = portfolio.k,
+                                                                  max_k = ceil(Int,
+                                                                               sqrt(size(portfolio.dist,
+                                                                                         1)))),
                        cluster = true, show_clusters = true, theme_d = :Spectral,
                        theme_h = :Spectral, theme_h_kwargs = (;), kwargs_d1 = (;),
                        kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;), kwargs = (;))
@@ -599,11 +602,7 @@ function plot_clusters(portfolio; max_k = ceil(Int, sqrt(size(portfolio.dist, 1)
     N = length(assets)
 
     if cluster
-        clustering_idx, clustering, k = cluster_assets(portfolio; linkage = linkage,
-                                                       max_k = max_k,
-                                                       branchorder = branchorder,
-                                                       k = portfolio.k,
-                                                       dbht_method = dbht_method)
+        clustering_idx, clustering, k = cluster_assets(portfolio, cluster_opt)
         sort_order = clustering.order
         heights = clustering.heights
     else
@@ -811,8 +810,11 @@ function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
     return plt
 end
 
-function plot_dendrogram(portfolio; max_k = ceil(Int, sqrt(size(portfolio.dist, 1))),
-                         linkage = :single, branchorder = :optimal, dbht_method = :Unique,
+function plot_dendrogram(portfolio;
+                         cluster_opt = opt::ClusterOpt = ClusterOpt(; k = portfolio.k,
+                                                                    max_k = ceil(Int,
+                                                                                 sqrt(size(portfolio.dist,
+                                                                                           1)))),
                          show_clusters = true, cluster = true, theme = :Spectral,
                          kwargs = (;))
     corr = portfolio.cor
@@ -821,11 +823,7 @@ function plot_dendrogram(portfolio; max_k = ceil(Int, sqrt(size(portfolio.dist, 
     N = length(assets)
 
     if cluster
-        clustering_idx, clustering, k = cluster_assets(portfolio; linkage = linkage,
-                                                       max_k = max_k,
-                                                       branchorder = branchorder,
-                                                       k = portfolio.k,
-                                                       dbht_method = dbht_method)
+        clustering_idx, clustering, k = cluster_assets(portfolio, cluster_opt)
         sort_order = clustering.order
         heights = clustering.heights
     else

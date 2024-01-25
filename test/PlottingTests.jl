@@ -31,10 +31,13 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
                                                                :params => Dict("verbose" => false,
                                                                                "max_step_fraction" => 0.75))),)
     asset_statistics!(hcportfolio; calc_kurt = false)
-    plt12 = plot_clusters(hcportfolio; max_k = 10, linkage = :DBHT, branchorder = :r,
-                          dbht_method = :Unique,)
-    plt13 = plot_dendrogram(hcportfolio; max_k = 10, linkage = :DBHT,
-                            branchorder = :optimal, dbht_method = :Unique,)
+    plt12 = plot_clusters(hcportfolio;
+                          cluster_opt = ClusterOpt(; max_k = 10, linkage = :DBHT,
+                                                   branchorder = :r, dbht_method = :Unique))
+    plt13 = plot_dendrogram(hcportfolio;
+                            cluster_opt = ClusterOpt(; max_k = 10, linkage = :DBHT,
+                                                     branchorder = :optimal,
+                                                     dbht_method = :Unique))
     optimise!(hcportfolio; type = :HERC)
     plt14 = plot_clusters(hcportfolio; cluster = false)
     plt15 = plot_clusters(hcportfolio.assets, hcportfolio.returns)

@@ -55,6 +55,10 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
 @safetestset "Portfolio Classic Traditional Optimisation" begin
     include("PortfolioClassicTradTests.jl")
 end
@@ -73,10 +77,6 @@ end
 
 @safetestset "BL Statistics" begin
     include("BLStatisticsTests.jl")
-end
-
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
 end
 
 @safetestset "OWA Weights" begin
