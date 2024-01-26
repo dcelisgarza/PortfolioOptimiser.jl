@@ -1746,6 +1746,8 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
     w_min = opt.w_min
     w_max = opt.w_max
 
+    @smart_assert(obj ∈ ObjFuncs)
+
     if near_opt
         w_min = opt.w_min
         if !isempty(w_min)

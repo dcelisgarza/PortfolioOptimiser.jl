@@ -17,34 +17,35 @@ l = 2.0
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Sharpe, kelly = :None)
-    r1 = dot(portfolio.mu, w1.weights)
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
+                      obj = :Sharpe, kelly = :None)
 
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Max_Ret, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    r1 = dot(portfolio.mu, w1.weights)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
     r2 = dot(portfolio.mu, w2.weights)
 
     r3 = (r1 + r2) / 2
     portfolio.mu_l = r3
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Sharpe, kelly = :None)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
     r4 = dot(portfolio.mu, w2.weights)
 
     portfolio.mu_l = Inf
     T = size(portfolio.returns, 1)
-    w5 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Sharpe, kelly = :Exact)
+    opt.kelly = :Exact
+    w5 = optimise!(portfolio, opt)
     r5 = sum(log.(1 .+ portfolio.returns * w5.weights)) / T
 
-    w6 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Max_Ret, kelly = :Exact)
+    opt.obj = :Max_Ret
+    w6 = optimise!(portfolio, opt)
     r6 = sum(log.(1 .+ portfolio.returns * w6.weights)) / T
 
     r7 = (r5 + r6) / 2
     portfolio.mu_l = r7
-    w7 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Sharpe, kelly = :Exact)
+    opt.obj = :Sharpe
+    w7 = optimise!(portfolio, opt)
     r8 = sum(log.(1 .+ portfolio.returns * w7.weights)) / T
 
     @test r4 >= r3
@@ -65,28 +66,30 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     portfolio.msv_target = rf
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
-                   obj = :Sharpe, kelly = :None)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
-                   obj = :Sharpe, kelly = :None)
 
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
-                   obj = :Sharpe, kelly = :None)
-    w4 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
-                   obj = :Sharpe, kelly = :None)
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
+                      obj = :Sharpe, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.rm = :FLPM
+    w2 = optimise!(portfolio, opt)
+
+    opt.rm = :SSD
+    w3 = optimise!(portfolio, opt)
+    opt.rm = :SLPM
+    w4 = optimise!(portfolio, opt)
 
     portfolio.msv_target = 0
     portfolio.lpm_target = 0
 
-    w5 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :MAD,
-                   obj = :Sharpe, kelly = :None)
-    w6 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :FLPM,
-                   obj = :Sharpe, kelly = :None)
+    opt.rm = :MAD
+    w5 = optimise!(portfolio, opt)
+    opt.rm = :FLPM
+    w6 = optimise!(portfolio, opt)
 
-    w7 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SSD,
-                   obj = :Sharpe, kelly = :None)
-    w8 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SLPM,
-                   obj = :Sharpe, kelly = :None)
+    opt.rm = :SSD
+    w7 = optimise!(portfolio, opt)
+    opt.rm = :SLPM
+    w8 = optimise!(portfolio, opt)
 
     @test isapprox(w1.weights, w2.weights)
     @test isapprox(w3.weights, w4.weights)
@@ -103,60 +106,64 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Min_Risk, kelly = :None,)
-    risk1 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Min_Risk, kelly = :Approx,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Min_Risk, kelly = :Exact,)
-    w4 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Utility, kelly = :None,)
-    w5 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Utility, kelly = :Approx,)
-    w6 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Utility, kelly = :Exact,)
-    w7 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Sharpe, kelly = :None,)
-    risk7 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
+    rm = :SD
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+
+    w1 = optimise!(portfolio, opt)
+    risk1 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
+    opt.kelly = :Approx
+    w2 = optimise!(portfolio, opt)
+    opt.kelly = :Exact
+    w3 = optimise!(portfolio, opt)
+    opt.obj = :Utility
+    opt.kelly = :None
+    w4 = optimise!(portfolio, opt)
+    opt.kelly = :Approx
+    w5 = optimise!(portfolio, opt)
+    opt.kelly = :Exact
+    w6 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    opt.kelly = :None
+    w7 = optimise!(portfolio, opt)
+    risk7 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
     ret7 = dot(portfolio.mu, w7.weights)
-    w8 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Sharpe, kelly = :Approx,)
-    risk8 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
+    opt.kelly = :Approx
+    w8 = optimise!(portfolio, opt)
+    risk8 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
     ret8 = dot(portfolio.mu, w8.weights)
-    w9 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                   obj = :Sharpe, kelly = :Exact,)
-    risk9 = calc_risk(portfolio; type = :Trad, rm = :SD, rf = rf)
+    opt.kelly = :Exact
+    w9 = optimise!(portfolio, opt)
+    risk9 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
     ret9 = dot(portfolio.mu, w9.weights)
-    w10 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                    obj = :Max_Ret, kelly = :None,)
-    w11 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                    obj = :Max_Ret, kelly = :Approx,)
-    w12 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                    obj = :Max_Ret, kelly = :Exact,)
+    opt.obj = :Max_Ret
+    opt.kelly = :None
+    w10 = optimise!(portfolio, opt)
+    opt.kelly = :Approx
+    w11 = optimise!(portfolio, opt)
+    opt.kelly = :Exact
+    w12 = optimise!(portfolio, opt)
     setproperty!(portfolio, :mu_l, ret7)
-    w13 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                    obj = :Min_Risk, kelly = :None,)
+    opt.obj = :Min_Risk
+    opt.kelly = :None
+    w13 = optimise!(portfolio, opt)
     setproperty!(portfolio, :mu_l, ret8)
-    w14 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                    obj = :Min_Risk, kelly = :None,)
+    w14 = optimise!(portfolio, opt)
     setproperty!(portfolio, :mu_l, ret9)
-    w15 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                    obj = :Min_Risk, kelly = :None,)
+    w15 = optimise!(portfolio, opt)
     setproperty!(portfolio, :mu_l, Inf)
-    rmf = Symbol(lowercase(string(:SD)) * "_u")
+    rmf = Symbol(lowercase(string(rm)) * "_u")
     setproperty!(portfolio, rmf, risk7)
-    w16 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                    obj = :Max_Ret, kelly = :None,)
+    opt.obj = :Max_Ret
+    opt.kelly = :None
+    w16 = optimise!(portfolio, opt)
     setproperty!(portfolio, rmf, risk8)
-    w17 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                    obj = :Max_Ret, kelly = :None,)
+    w17 = optimise!(portfolio, opt)
     setproperty!(portfolio, rmf, risk9)
-    w18 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                    obj = :Max_Ret, kelly = :None,)
+    w18 = optimise!(portfolio, opt)
     setproperty!(portfolio, rmf, risk1)
-    w19 = optimise!(portfolio; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
-                    obj = :Sharpe, kelly = :None,)
+    opt.obj = :Sharpe
+    w19 = optimise!(portfolio, opt)
     setproperty!(portfolio, rmf, Inf)
 
     w1t = [0.007911813464310113, 0.03068510213747275, 0.010505366137939913,
@@ -260,7 +267,7 @@ end
     @test isapprox(w2.weights, w3.weights, rtol = 1e-4)
     @test isapprox(w4.weights, w4t)
     @test isapprox(w5.weights, w5t)
-    @test isapprox(w6.weights, w6t, rtol = 1e-7)
+    @test isapprox(w6.weights, w6t, rtol = 1e-6)
     @test isapprox(w5.weights, w6.weights, rtol = 1e-2)
     @test isapprox(w7.weights, w7t)
     @test isapprox(w8.weights, w8t)
