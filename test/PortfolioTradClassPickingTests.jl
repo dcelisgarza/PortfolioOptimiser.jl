@@ -15,32 +15,46 @@ l = 2.0
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
 
-    w1 = optimise!(portfolio; hist = 5)
-    w2 = optimise!(portfolio; class = :FM, hist = 1)
+    opt = OptimiseOpt(; hist = 5)
+    w1 = optimise!(portfolio, opt)
+    opt.class = :FM
+    opt.hist = 1
+    w2 = optimise!(portfolio, opt)
     portfolio.mu_fm = portfolio.mu
-    w3 = optimise!(portfolio; class = :FM, hist = 2)
-    @test_throws AssertionError optimise!(portfolio, class = :FM, hist = 3)
+    opt.hist = 2
+    w3 = optimise!(portfolio, opt)
+    opt.hist = 3
+    @test_throws AssertionError optimise!(portfolio, opt)
 
     portfolio.returns_fm = portfolio.returns
     portfolio.cov_fm = portfolio.cov
-    w4 = optimise!(portfolio; class = :FM, hist = 1)
-    w5 = optimise!(portfolio; class = :FM, hist = 2)
+    opt.hist = 1
+    w4 = optimise!(portfolio, opt)
+    opt.hist = 2
+    w5 = optimise!(portfolio, opt)
 
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
-
-    w6 = optimise!(portfolio; hist = 5)
-    @test_throws DimensionMismatch optimise!(portfolio, class = :BL, hist = 1)
+    opt.class = :Classic
+    opt.hist = 5
+    w6 = optimise!(portfolio, opt)
+    opt.class = :BL
+    opt.hist = 1
+    @test_throws DimensionMismatch optimise!(portfolio, opt)
     portfolio.mu_bl = portfolio.mu
-    w7 = optimise!(portfolio; class = :BL, hist = 2)
-    @test_throws AssertionError optimise!(portfolio, class = :BL, hist = 3)
+    opt.hist = 2
+    w7 = optimise!(portfolio, opt)
+    opt.hist = 3
+    @test_throws AssertionError optimise!(portfolio, opt)
 
     portfolio.cov_bl = portfolio.cov
-    w8 = optimise!(portfolio; class = :BL, hist = 1)
-    w9 = optimise!(portfolio; class = :BL, hist = 2)
+    opt.hist = 1
+    w8 = optimise!(portfolio, opt)
+    opt.hist = 2
+    w9 = optimise!(portfolio, opt)
 
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
@@ -48,19 +62,29 @@ l = 2.0
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
 
-    w10 = optimise!(portfolio; hist = 5)
-    w11 = optimise!(portfolio; class = :BLFM, hist = 1)
+    opt.class = :Classic
+    opt.hist = 5
+    w10 = optimise!(portfolio, opt)
+    opt.class = :BLFM
+    opt.hist = 1
+    w11 = optimise!(portfolio, opt)
     portfolio.mu_bl_fm = portfolio.mu
-    w12 = optimise!(portfolio; class = :BLFM, hist = 2)
-    @test_throws DimensionMismatch optimise!(portfolio, class = :BLFM, hist = 3)
+    opt.hist = 2
+    w12 = optimise!(portfolio, opt)
+    opt.hist = 3
+    @test_throws DimensionMismatch optimise!(portfolio, opt)
 
     portfolio.cov_bl_fm = portfolio.cov
     portfolio.returns_fm = portfolio.returns
-    w13 = optimise!(portfolio; class = :BLFM, hist = 1)
-    w14 = optimise!(portfolio; class = :BLFM, hist = 2)
-    @test_throws DimensionMismatch optimise!(portfolio, class = :BLFM, hist = 3)
+    opt.hist = 1
+    w13 = optimise!(portfolio, opt)
+    opt.hist = 2
+    w14 = optimise!(portfolio, opt)
+    opt.hist = 3
+    @test_throws DimensionMismatch optimise!(portfolio, opt)
     portfolio.cov_fm = portfolio.cov
-    w15 = optimise!(portfolio; class = :BLFM, hist = 3)
+    opt.hist = 3
+    w15 = optimise!(portfolio, opt)
 
     @test isempty(w2)
     @test isapprox(w1.weights, w3.weights)
