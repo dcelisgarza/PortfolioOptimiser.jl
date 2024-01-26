@@ -1,36 +1,43 @@
-function _sdp_setup(portfolio, obj, rm, type, N)
-    if type == :RP || type == :RRP || portfolio.network_method != :SDP
+function _sdp_setup(portfolio, obj, rm, type, N, u_cov = :None)
+    kurt_u = portfolio.kurt_u
+    skurt_u = portfolio.skurt_u
+    network_method = portfolio.network_method
+
+    if !(type ∈ (:Trad, :RP) && rm ∈ (:Kurt, :SKurt) ||
+         type ∈ (:Trad, :WC) && network_method == :SDP ||
+         type == :Trad && (isfinite(kurt_u) || isfinite(skurt_u)) ||
+         type == :WC && u_cov ∈ (:Box, :Ellipse))
         return nothing
     end
 
     model = portfolio.model
-    network_penalty = portfolio.network_penalty
-    sd_u = portfolio.sd_u
-    network_sdp = portfolio.network_sdp
-
-    @variable(model, Wn[1:N, 1:N], Symmetric)
-    @expression(model, M1n, vcat(Wn, transpose(model[:w])))
-
-    if obj == :Sharpe
-        @expression(model, M2n, vcat(model[:w], model[:k]))
+    @variable(model, W[1:N, 1:N], Symmetric)
+    @expression(model, M1, vcat(W, transpose(model[:w])))
+    if type ∈ (:Trad, :WC) && obj == :Sharpe
+        @expression(model, M2, vcat(model[:w], model[:k]))
     else
-        @expression(model, M2n, vcat(model[:w], 1))
+        @expression(model, M2, vcat(model[:w], 1))
     end
+    @expression(model, M3, hcat(M1, M2))
+    @constraint(model, M3 ∈ PSDCone())
 
-    @expression(model, M3n, hcat(M1n, M2n))
-    @constraint(model, M3n ∈ PSDCone())
-
-    if type == :Trad && rm != :SD && isinf(sd_u)
-        @expression(model, penalty_factor, network_penalty * tr(model[:Wn]))
+    if type ∈ (:Trad, :WC) && network_method == :SDP
+        network_sdp = portfolio.network_sdp
+        @constraint(model, network_sdp .* model[:W] .== 0)
+        sd_u = portfolio.sd_u
+        if type == :Trad && rm != :SD && isinf(sd_u)
+            network_penalty = portfolio.network_penalty
+            @expression(model, penalty_factor, network_penalty * tr(model[:W]))
+        end
     end
-
-    @constraint(model, network_sdp .* model[:Wn] .== 0)
 
     return nothing
 end
 
-function _mv_risk(model, sigma, network_method, sd_cone::Bool = true)
-    if network_method != :SDP
+function _mv_risk(model, sigma, type, network_method, sd_cone::Bool = true)
+    if type ∈ (:Trad, :WC) && network_method == :SDP
+        @expression(model, dev_risk, tr(sigma * model[:W]))
+    else
         if sd_cone
             G = sqrt(sigma)
             @variable(model, dev)
@@ -39,8 +46,6 @@ function _mv_risk(model, sigma, network_method, sd_cone::Bool = true)
         else
             @expression(model, dev_risk, dot(model[:w], sigma, model[:w]))
         end
-    else
-        @expression(model, dev_risk, tr(sigma * model[:Wn]))
     end
     return nothing
 end
@@ -55,7 +60,7 @@ function _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method,
 
     model = portfolio.model
 
-    _mv_risk(model, sigma, network_method, sd_cone)
+    _mv_risk(model, sigma, type, network_method, sd_cone)
 
     if isfinite(sd_u) && type == :Trad
         if obj == :Sharpe
@@ -910,12 +915,14 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
     return nothing
 end
 
-function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov, network_method)
+function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov, network_method,
+                   sd_cone::Bool = true)
     model = portfolio.model
 
     # Return uncertainy sets.
-    if kelly == :Approx || (u_cov != :Box && u_cov != :Ellipse)
-        _mv_risk(model, sigma, network_method)
+    _sdp_setup(portfolio, obj, rm, :WC, N, u_cov)
+    if kelly == :Approx || u_cov ∉ (:Box, :Ellipse)
+        _mv_risk(model, sigma, :WC, network_method, sd_cone)
     end
 
     returns = portfolio.returns
@@ -950,43 +957,20 @@ function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov, netw
         cov_l = portfolio.cov_l
         @variable(model, Au[1:N, 1:N] .>= 0, Symmetric)
         @variable(model, Al[1:N, 1:N] .>= 0, Symmetric)
-        @expression(model, M1, vcat(Au .- Al, transpose(model[:w])))
-
-        if obj == :Sharpe
-            @expression(model, M2, vcat(model[:w], model[:k]))
-        else
-            @expression(model, M2, vcat(model[:w], 1))
-        end
-
-        @expression(model, M3, hcat(M1, M2))
-        @constraint(model, M3 ∈ PSDCone())
+        @constraint(model, Au .- Al .== model[:W])
         @expression(model, risk, tr(Au * cov_u) - tr(Al * cov_l))
     elseif u_cov == :Ellipse
         k_sigma = portfolio.k_sigma
         G_sigma = sqrt(portfolio.cov_sigma)
 
-        @variable(model, E1[1:N, 1:N], Symmetric)
-        @variable(model, E2[1:N, 1:N], Symmetric)
-        @expression(model, M1, vcat(E1, transpose(model[:w])))
+        @variable(model, E[1:N, 1:N], Symmetric)
+        @constraint(model, E ∈ PSDCone())
 
-        if obj == :Sharpe
-            @expression(model, M2, vcat(model[:w], model[:k]))
-        else
-            @expression(model, M2, vcat(model[:w], 1))
-        end
-
-        @expression(model, M3, hcat(M1, M2))
-
-        @constraint(model, M3 ∈ PSDCone())
-        @constraint(model, E2 ∈ PSDCone())
-
-        @expression(model, E1_p_E2, E1 .+ E2)
-
-        @expression(model, x_ge, G_sigma * vec(E1_p_E2))
+        @expression(model, W_p_E, model[:W] .+ E)
+        @expression(model, x_ge, G_sigma * vec(W_p_E))
         @variable(model, t_ge)
         @constraint(model, [t_ge; x_ge] ∈ SecondOrderCone())
-
-        @expression(model, risk, tr(sigma * E1_p_E2) + k_sigma * t_ge)
+        @expression(model, risk, tr(sigma * W_p_E) + k_sigma * t_ge)
     else
         @expression(model, risk, model[:dev_risk])
     end
@@ -995,7 +979,7 @@ function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov, netw
         if kelly != :None
             @constraint(model, model[:risk] <= 1)
         else
-            @constraint(model, ret - rf * model[:k] >= 1)
+            @constraint(model, model[:ret] - rf * model[:k] >= 1)
         end
     end
 
@@ -1632,7 +1616,7 @@ function _setup_model_class(portfolio, class, hist)
     return mu, sigma, returns
 end
 
-function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, N, opt)
+function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, T, N, opt)
     type = opt.type
     rm = opt.rm
     obj = opt.obj
@@ -1646,13 +1630,10 @@ function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, N, opt)
 
     if isempty(w1) || isempty(w2)
         fl = frontier_limits!(portfolio, opt; save_model = true)
-
         w1 = fl.w_min
         w2 = fl.w_max
     end
-
-    ret1 = dot(mu, w1)
-    ret2 = dot(mu, w2)
+    w3 = w_opt.weights
 
     alpha_i = portfolio.alpha_i
     alpha = portfolio.alpha
@@ -1667,11 +1648,19 @@ function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, N, opt)
     risk1, risk2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
                             beta, a_sim, beta_i, b_sim, owa_w, 0)
 
-    w3 = w_opt.weights
-    ret3 = dot(mu, w3)
     risk3 = calc_risk(w3, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
                       alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
                       b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers)
+
+    if opt.kelly == :None
+        ret1 = dot(mu, w1)
+        ret2 = dot(mu, w2)
+        ret3 = dot(mu, w3)
+    else
+        ret1 = sum(log.(one(risk1) .+ returns * w1)) / T
+        ret2 = sum(log.(one(risk2) .+ returns * w2)) / T
+        ret3 = sum(log.(one(risk3) .+ returns * w3)) / T
+    end
 
     c1 = (ret2 - ret1) / M
     c2 = (risk2 - risk1) / M
@@ -1680,10 +1669,10 @@ function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, N, opt)
 
     model = portfolio.model
 
+    set_start_value.(model[:w], w3)
     @constraint(model, model[:ret] >= e1)
     @constraint(model, model[:risk] <= e2)
 
-    model1 = copy(model)
     @variable(model, log_ret)
     @constraint(model, [-log_ret, 1, model[:ret] - e1] ∈ MOI.ExponentialCone())
     @variable(model, log_risk)
@@ -1703,22 +1692,6 @@ function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, N, opt)
     term_status, solvers_tried = _optimise_portfolio(portfolio, type, obj, true, true)
     retval = _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
                                          type, rm, obj, true, true)
-
-    if term_status ∉ ValidTermination ||
-       any(.!isfinite.(value.(portfolio.model[:w]))) ||
-       all(isapprox.(abs.(value.(model[:w])), zero(eltype(portfolio.returns))))
-        model = portfolio.model = copy(model1)
-        @expression(model, log_ret, -log(model[:ret] - e1))
-        @expression(model, log_risk, -log(e2 - model[:risk]))
-        @expression(model, neg_sum_log_ws, -sum(log.(1 .- model[:w]) .+ log.(model[:w])))
-        @expression(model, near_opt_risk, log_ret + log_risk + neg_sum_log_ws)
-        @objective(model, Min, near_opt_risk)
-        term_status2, solvers_tried2 = _optimise_portfolio(portfolio, type, obj, true,
-                                                           false)
-        retval = _handle_errors_and_finalise(portfolio, term_status2, returns, N,
-                                             merge(solvers_tried, solvers_tried2), type, rm,
-                                             obj, true, false)
-    end
 
     return retval
 end
@@ -1801,7 +1774,8 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
         _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
     else
         _setup_sharpe_k(model, obj)
-        _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov, network_method)
+        _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov, network_method,
+                  sd_cone)
         _setup_trad_wc_constraints(portfolio, obj, T, N, :WC, class, kelly, l, returns)
     end
 
@@ -1812,7 +1786,7 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
                                          type, rm, obj)
 
     if near_opt
-        retval = _near_optimal_centering(portfolio, mu, returns, sigma, retval, N, opt)
+        retval = _near_optimal_centering(portfolio, mu, returns, sigma, retval, T, N, opt)
     end
 
     _p_save_opt_params(portfolio, type, class, hist, rm, obj, kelly, rrp_ver, rf, l,
@@ -1831,6 +1805,8 @@ frontier_limits!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer =
 """
 function frontier_limits!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
                           save_model::Bool = false)
+    near_opt1 = opt.near_opt
+    opt.near_opt = false
     optimal1 = deepcopy(portfolio.optimal)
     fail1 = deepcopy(portfolio.fail)
     if save_model
@@ -1838,13 +1814,13 @@ function frontier_limits!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;
     end
 
     w_min = optimise!(portfolio, opt; save_opt_params = false)
-
     w_max = optimise!(portfolio, opt; save_opt_params = false)
 
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
     portfolio.limits[rm] = limits
 
+    opt.near_opt = near_opt1
     portfolio.optimal = optimal1
     portfolio.fail = fail1
     if save_model
