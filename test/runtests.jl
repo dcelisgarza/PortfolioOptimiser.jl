@@ -56,6 +56,10 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
+@safetestset "Portfolio Traditional Optimisation Constraints" begin
+    include("PortfolioTradConstraintTests.jl")
+end
+
 @safetestset "Portfolio Classic RP OWA Optimisation" begin
     include("PortfolioClassicRPOWATests.jl")
 end
@@ -110,10 +114,6 @@ end
 
 @safetestset "Constraint Functions" begin
     include("ConstraintTests.jl")
-end
-
-@safetestset "Portfolio Traditional Optimisation Constraints" begin
-    include("PortfolioTradConstraintTests.jl")
 end
 
 @safetestset "Portfolio Classic Traditional OWA Optimisation" begin
