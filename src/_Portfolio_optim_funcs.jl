@@ -574,7 +574,7 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         @variable(model, W[1:N, 1:N], Symmetric)
         @expression(model, M1, vcat(W, transpose(model[:w])))
 
-        if obj == :Sharpe
+        if obj == :Sharpe && type == :Trad
             @expression(model, M2, vcat(model[:w], model[:k]))
         else
             @expression(model, M2, vcat(model[:w], 1))
@@ -625,7 +625,7 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         @variable(model, SW[1:N, 1:N], Symmetric)
         @expression(model, SM1, vcat(SW, transpose(model[:w])))
 
-        if obj == :Sharpe
+        if obj == :Sharpe && type == :Trad
             @expression(model, SM2, vcat(model[:w], model[:k]))
         else
             @expression(model, SM2, vcat(model[:w], 1))

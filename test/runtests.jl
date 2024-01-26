@@ -108,10 +108,6 @@ end
     include("DBHTClusteringTests.jl")
 end
 
-@safetestset "Portfolio Classic RP Optimisation" begin
-    include("PortfolioClassicRPTests.jl")
-end
-
 @safetestset "Constraint Functions" begin
     include("ConstraintTests.jl")
 end
@@ -122,6 +118,10 @@ end
 
 @safetestset "Portfolio Classic Traditional OWA Optimisation" begin
     include("PortfolioClassicTradOWATests.jl")
+end
+
+@safetestset "Portfolio Classic RP Optimisation" begin
+    include("PortfolioClassicRPTests.jl")
 end
 
 @safetestset "HCPortfolio Optimisation" begin
