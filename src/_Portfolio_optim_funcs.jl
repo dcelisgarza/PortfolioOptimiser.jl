@@ -1634,6 +1634,9 @@ function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, N, opt)
     obj = opt.obj
     rf = opt.rf
     M = opt.M
+    if iszero(M)
+        M = sqrt(size(sigma, 1))
+    end
     w1 = opt.w_min
     w2 = opt.w_max
 
