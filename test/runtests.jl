@@ -56,6 +56,10 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
+@safetestset "Portfolio Classic RP OWA Optimisation" begin
+    include("PortfolioClassicRPOWATests.jl")
+end
+
 @safetestset "Efficient Frontier" begin
     include("PortfolioEfficientFrontierTests.jl")
 end
@@ -98,10 +102,6 @@ end
 
 @safetestset "DBHT Clustering" begin
     include("DBHTClusteringTests.jl")
-end
-
-@safetestset "Portfolio Classic RP OWA Optimisation" begin
-    include("PortfolioClassicRPOWATests.jl")
 end
 
 @safetestset "Portfolio Classic RP Optimisation" begin
