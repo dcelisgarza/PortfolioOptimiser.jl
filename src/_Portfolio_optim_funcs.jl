@@ -576,24 +576,11 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
 
     if rm == :Kurt || isfinite(kurt_u)
         max_num_assets_kurt = portfolio.max_num_assets_kurt
-        @variable(model, W[1:N, 1:N], Symmetric)
-        @expression(model, M1, vcat(W, transpose(model[:w])))
-
-        if obj == :Sharpe && type == :Trad
-            @expression(model, M2, vcat(model[:w], model[:k]))
-        else
-            @expression(model, M2, vcat(model[:w], 1))
-        end
-
-        @expression(model, M3, hcat(M1, M2))
-        @constraint(model, M3 ∈ PSDCone())
-
         @variable(model, t_kurt)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
             N2 = 2 * N
             @variable(model, x_kurt[1:N2])
             @constraint(model, [t_kurt; x_kurt] ∈ SecondOrderCone())
-
             A = block_vec_pq(kurtosis, N, N)
             vals_A, vecs_A = eigen(A)
             vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
@@ -604,12 +591,12 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
                             N)
                 Bi[i] = B
             end
-            @constraint(model, [i = 1:N2], x_kurt[i] == tr(Bi[i] * W))
+            @constraint(model, [i = 1:N2], x_kurt[i] == tr(Bi[i] * model[:W]))
         else
             L_2 = portfolio.L_2
             S_2 = portfolio.S_2
             sqrt_sigma_4 = sqrt(S_2 * kurtosis * transpose(S_2))
-            @expression(model, zkurt, L_2 * vec(W))
+            @expression(model, zkurt, L_2 * vec(model[:W]))
             @constraint(model, [t_kurt; sqrt_sigma_4 * zkurt] ∈ SecondOrderCone())
         end
         @expression(model, kurt_risk, t_kurt)
@@ -629,18 +616,6 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
 
     if rm == :SKurt || isfinite(skurt_u)
         max_num_assets_kurt = portfolio.max_num_assets_kurt
-        @variable(model, SW[1:N, 1:N], Symmetric)
-        @expression(model, SM1, vcat(SW, transpose(model[:w])))
-
-        if obj == :Sharpe && type == :Trad
-            @expression(model, SM2, vcat(model[:w], model[:k]))
-        else
-            @expression(model, SM2, vcat(model[:w], 1))
-        end
-
-        @expression(model, SM3, hcat(SM1, SM2))
-        @constraint(model, SM3 ∈ PSDCone())
-
         @variable(model, t_skurt)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
             N2 = 2 * N
@@ -658,12 +633,12 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
                             N)
                 SBi[i] = B
             end
-            @constraint(model, [i = 1:N2], x_skurt[i] == tr(SBi[i] * SW))
+            @constraint(model, [i = 1:N2], x_skurt[i] == tr(SBi[i] * model[:W]))
         else
             L_2 = portfolio.L_2
             S_2 = portfolio.S_2
             sqrt_sigma_4 = sqrt(S_2 * skurtosis * transpose(S_2))
-            @expression(model, zskurt, L_2 * vec(SW))
+            @expression(model, zskurt, L_2 * vec(model[:W]))
             @constraint(model, [t_skurt; sqrt_sigma_4 * zskurt] ∈ SecondOrderCone())
         end
         @expression(model, skurt_risk, t_skurt)
