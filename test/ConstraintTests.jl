@@ -41,7 +41,7 @@ end
                                          :COSMO => Dict(:solver => COSMO.Optimizer,
                                                         :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
-    w = optimise!(portfolio; obj = :Min_Risk)
+    w = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk))
 
     C1 = connected_assets(portfolio; method = :MST, steps = 1)
     C2 = connected_assets(portfolio; method = :MST, steps = 2)
