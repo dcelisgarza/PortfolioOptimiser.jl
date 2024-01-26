@@ -14,47 +14,70 @@ l = 2.0
                                                 :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
-    w0 = optimise!(portfolio; class = :Classic, type = :Trad, obj = :Min_Risk, l = l,
-                   rf = rf, rm = :SD,)
+
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
+                      obj = :Min_Risk, kelly = :None)
+
+    w0 = optimise!(portfolio, opt)
 
     wc_statistics!(portfolio, WCOpt(; box = :Normal, ellipse = :Normal, seed = 123456789))
-    w1 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
-                   u_cov = :None, u_mu = :None,)
-    w2 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
-                   u_cov = :Box, u_mu = :None,)
-    w3 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
-                   u_cov = :Ellipse, u_mu = :None,)
-    w4 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
-                   u_cov = :None, u_mu = :Box,)
-    w5 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
-                   u_cov = :Box, u_mu = :Box,)
-    w6 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
-                   u_cov = :Ellipse, u_mu = :Box,)
-    w7 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
-                   u_cov = :None, u_mu = :Ellipse,)
-    w8 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
-                   u_cov = :Box, u_mu = :Ellipse,)
-    w9 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l, rf = rf,
-                   u_cov = :Ellipse, u_mu = :Ellipse,)
+    opt.type = :WC
+
+    opt.u_cov = :None
+    opt.u_mu = :None
+    w1 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :None
+    w2 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :None
+    w3 = optimise!(portfolio, opt)
+    opt.u_cov = :None
+    opt.u_mu = :Box
+    w4 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :Box
+    w5 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :Box
+    w6 = optimise!(portfolio, opt)
+    opt.u_cov = :None
+    opt.u_mu = :Ellipse
+    w7 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :Ellipse
+    w8 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :Ellipse
+    w9 = optimise!(portfolio, opt)
     wc_statistics!(portfolio, WCOpt(; box = :Delta, ellipse = :Normal, seed = 123456789))
-    w10 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
-                    rf = rf, u_cov = :None, u_mu = :None,)
-    w11 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
-                    rf = rf, u_cov = :Box, u_mu = :None,)
-    w12 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
-                    rf = rf, u_cov = :Ellipse, u_mu = :None,)
-    w13 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
-                    rf = rf, u_cov = :None, u_mu = :Box,)
-    w14 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
-                    rf = rf, u_cov = :Box, u_mu = :Box,)
-    w15 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
-                    rf = rf, u_cov = :Ellipse, u_mu = :Box,)
-    w16 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
-                    rf = rf, u_cov = :None, u_mu = :Ellipse,)
-    w17 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
-                    rf = rf, u_cov = :Box, u_mu = :Ellipse,)
-    w18 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Min_Risk, l = l,
-                    rf = rf, u_cov = :Ellipse, u_mu = :Ellipse,)
+    opt.u_cov = :None
+    opt.u_mu = :None
+    w10 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :None
+    w11 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :None
+    w12 = optimise!(portfolio, opt)
+    opt.u_cov = :None
+    opt.u_mu = :Box
+    w13 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :Box
+    w14 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :Box
+    w15 = optimise!(portfolio, opt)
+    opt.u_cov = :None
+    opt.u_mu = :Ellipse
+    w16 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :Ellipse
+    w17 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :Ellipse
+    w18 = optimise!(portfolio, opt)
 
     w1t = [0.007911813464310113, 0.03068510213747275, 0.010505366137939913,
            0.02748375285330511, 0.012276170276067139, 0.03340727036207522,
@@ -234,47 +257,70 @@ end
                                                 :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
-    w0 = optimise!(portfolio; class = :Classic, type = :Trad, obj = :Utility, l = l,
-                   rf = rf, rm = :SD,)
+
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
+                      obj = :Utility, kelly = :None)
+
+    w0 = optimise!(portfolio, opt)
 
     wc_statistics!(portfolio, WCOpt(; box = :Normal, ellipse = :Normal, seed = 123456789))
-    w1 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                   u_cov = :None, u_mu = :None,)
-    w2 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                   u_cov = :Box, u_mu = :None,)
-    w3 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                   u_cov = :Ellipse, u_mu = :None,)
-    w4 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                   u_cov = :None, u_mu = :Box,)
-    w5 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                   u_cov = :Box, u_mu = :Box,)
-    w6 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                   u_cov = :Ellipse, u_mu = :Box,)
-    w7 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                   u_cov = :None, u_mu = :Ellipse,)
-    w8 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                   u_cov = :Box, u_mu = :Ellipse,)
-    w9 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                   u_cov = :Ellipse, u_mu = :Ellipse,)
+    opt.type = :WC
+
+    opt.u_cov = :None
+    opt.u_mu = :None
+    w1 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :None
+    w2 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :None
+    w3 = optimise!(portfolio, opt)
+    opt.u_cov = :None
+    opt.u_mu = :Box
+    w4 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :Box
+    w5 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :Box
+    w6 = optimise!(portfolio, opt)
+    opt.u_cov = :None
+    opt.u_mu = :Ellipse
+    w7 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :Ellipse
+    w8 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :Ellipse
+    w9 = optimise!(portfolio, opt)
     wc_statistics!(portfolio, WCOpt(; box = :Delta, ellipse = :Normal, seed = 123456789))
-    w10 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                    u_cov = :None, u_mu = :None,)
-    w11 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                    u_cov = :Box, u_mu = :None,)
-    w12 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                    u_cov = :Ellipse, u_mu = :None,)
-    w13 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                    u_cov = :None, u_mu = :Box,)
-    w14 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                    u_cov = :Box, u_mu = :Box,)
-    w15 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                    u_cov = :Ellipse, u_mu = :Box,)
-    w16 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                    u_cov = :None, u_mu = :Ellipse,)
-    w17 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                    u_cov = :Box, u_mu = :Ellipse,)
-    w18 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Utility, l = l, rf = rf,
-                    u_cov = :Ellipse, u_mu = :Ellipse,)
+    opt.u_cov = :None
+    opt.u_mu = :None
+    w10 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :None
+    w11 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :None
+    w12 = optimise!(portfolio, opt)
+    opt.u_cov = :None
+    opt.u_mu = :Box
+    w13 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :Box
+    w14 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :Box
+    w15 = optimise!(portfolio, opt)
+    opt.u_cov = :None
+    opt.u_mu = :Ellipse
+    w16 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :Ellipse
+    w17 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :Ellipse
+    w18 = optimise!(portfolio, opt)
 
     w1t = [1.8806825315287365e-9, 3.862038288374664e-9, 5.3002004387495145e-9,
            4.036002575991236e-9, 0.7741908142503021, 3.8445966380599916e-10,
@@ -454,39 +500,57 @@ end
                                                 :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
-    w0 = optimise!(portfolio; class = :Classic, type = :Trad, obj = :Sharpe, l = l, rf = rf,
-                   rm = :SD,)
 
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = :SD,
+                      obj = :Sharpe, kelly = :None)
+
+    w0 = optimise!(portfolio, opt)
+
+    opt.type = :WC
     wc_statistics!(portfolio, WCOpt(; box = :Normal, ellipse = :Normal, seed = 123456789))
-    w1 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                   u_cov = :None, u_mu = :None,)
-    w2 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                   u_cov = :Box, u_mu = :None,)
-    w3 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                   u_cov = :Ellipse, u_mu = :None,)
-    w4 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                   u_cov = :None, u_mu = :Box,)
-    w5 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                   u_cov = :Box, u_mu = :Box,)
-    w6 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                   u_cov = :Ellipse, u_mu = :Box,)
+    opt.u_cov = :None
+    opt.u_mu = :None
+    w1 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :None
+    w2 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :None
+    w3 = optimise!(portfolio, opt)
+    opt.u_cov = :None
+    opt.u_mu = :Box
+    w4 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :Box
+    w5 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :Box
+    w6 = optimise!(portfolio, opt)
     wc_statistics!(portfolio, WCOpt(; box = :Delta, ellipse = :Normal, seed = 123456789))
-    w10 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                    u_cov = :None, u_mu = :None,)
-    w11 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                    u_cov = :Box, u_mu = :None,)
-    w12 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                    u_cov = :Ellipse, u_mu = :None,)
-    w13 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                    u_cov = :None, u_mu = :Box,)
-    w14 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                    u_cov = :Box, u_mu = :Box,)
-    w15 = optimise!(portfolio; class = :Classic, type = :WC, obj = :Sharpe, l = l, rf = rf,
-                    u_cov = :Ellipse, u_mu = :Box,)
-    w16 = optimise!(portfolio; class = :Classic, kelly = :Approx, type = :WC, obj = :Sharpe,
-                    l = l, rf = rf, u_cov = :None, u_mu = :None)
-    w17 = optimise!(portfolio; class = :Classic, kelly = :Exact, type = :WC, obj = :Sharpe,
-                    l = l, rf = rf, u_cov = :None, u_mu = :None)
+    opt.u_cov = :None
+    opt.u_mu = :None
+    w10 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :None
+    w11 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :None
+    w12 = optimise!(portfolio, opt)
+    opt.u_cov = :None
+    opt.u_mu = :Box
+    w13 = optimise!(portfolio, opt)
+    opt.u_cov = :Box
+    opt.u_mu = :Box
+    w14 = optimise!(portfolio, opt)
+    opt.u_cov = :Ellipse
+    opt.u_mu = :Box
+    w15 = optimise!(portfolio, opt)
+    opt.kelly = :Approx
+    opt.u_cov = :None
+    opt.u_mu = :None
+    w16 = optimise!(portfolio, opt)
+    opt.kelly = :Exact
+    w17 = optimise!(portfolio, opt)
 
     w1t = [1.0582219191763675e-9, 3.033341281368263e-9, 4.093973467616387e-9,
            2.4302432491378547e-9, 0.518058049464457, 3.284428917099043e-10,
