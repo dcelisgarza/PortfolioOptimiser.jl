@@ -3093,6 +3093,7 @@ end
     @test all(abs.(w2.weights - tow1) .<= to1)
     @test all(abs.(w4.weights - tow2) .<= to2)
 end
+
 @testset "Tracking Error" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -3105,52 +3106,54 @@ end
     T = size(portfolio.returns, 1)
     rm = :SD
 
-    obj = :Sharpe
-    w1 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    opt = OptimiseOpt(; rm = rm, l = l, rf = rf)
+
+    opt.obj = :Sharpe
+    w1 = optimise!(portfolio, opt)
     portfolio.kind_tracking_err = :Weights
     te1 = 0.0005
     tw1 = copy(w1.weights)
     portfolio.tracking_err = te1
     portfolio.tracking_err_weights = tw1
 
-    obj = :Min_Risk
-    w2 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    opt.obj = :Min_Risk
+    w2 = optimise!(portfolio, opt)
 
     portfolio.tracking_err = Inf
-    obj = :Min_Risk
-    w3 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    opt.obj = :Min_Risk
+    w3 = optimise!(portfolio, opt)
     portfolio.kind_tracking_err = :Weights
     te2 = 0.0003
     tw2 = copy(w3.weights)
     portfolio.tracking_err = te2
     portfolio.tracking_err_weights = tw2
 
-    obj = :Sharpe
-    w4 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    opt.obj = :Sharpe
+    w4 = optimise!(portfolio, opt)
 
     portfolio.tracking_err = Inf
-    obj = :Sharpe
-    w5 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    opt.obj = :Sharpe
+    w5 = optimise!(portfolio, opt)
     portfolio.kind_tracking_err = :Returns
     te3 = 0.007
     tw3 = vec(mean(portfolio.returns; dims = 2))
     portfolio.tracking_err = te3
     portfolio.tracking_err_returns = tw3
 
-    obj = :Min_Risk
-    w6 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    opt.obj = :Min_Risk
+    w6 = optimise!(portfolio, opt)
 
     portfolio.tracking_err = Inf
-    obj = :Min_Risk
-    w7 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    opt.obj = :Min_Risk
+    w7 = optimise!(portfolio, opt)
     portfolio.kind_tracking_err = :Returns
     te4 = 0.0024
     tw4 = vec(mean(portfolio.returns; dims = 2))
     portfolio.tracking_err = te4
     portfolio.tracking_err_returns = tw4
 
-    obj = :Sharpe
-    w8 = optimise!(portfolio; rm = rm, obj = obj, rf = rf, l = l)
+    opt.obj = :Sharpe
+    w8 = optimise!(portfolio, opt)
 
     @test norm(portfolio.returns * (w2.weights - tw1), 2) / sqrt(T - 1) <= te1
     @test norm(portfolio.returns * (w4.weights - tw2), 2) / sqrt(T - 1) <= te2
@@ -3169,15 +3172,17 @@ end
     asset_statistics!(portfolio)
 
     rm = :SD
+    opt = OptimiseOpt(; obj = :Min_Risk, rm = rm, l = l, rf = rf)
 
-    w1 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    w1 = optimise!(portfolio, opt)
     portfolio.min_number_effective_assets = 8
-    w2 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    w2 = optimise!(portfolio, opt)
 
     portfolio.min_number_effective_assets = 0
-    w3 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
     portfolio.min_number_effective_assets = 6
-    w4 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    w4 = optimise!(portfolio, opt)
 
     @test count(w2.weights .>= 2e-2) >= 8
     @test count(w2.weights .>= 2e-2) >= count(w1.weights .>= 2e-2)
@@ -3226,7 +3231,8 @@ end
 
     rm = :SD
 
-    w1 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    opt = OptimiseOpt(; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    w1 = optimise!(portfolio, opt)
 
     @test all(w1.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
     @test all(w1.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
@@ -3235,7 +3241,8 @@ end
           w1.weights[w1.tickers .== "MA"][1] * 2.2
     @test w1.weights[w1.tickers .== "MA"][1] * 5 >= sum(w1.weights[asset_sets.G2ward .== 3])
 
-    w2 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    opt.obj = :Sharpe
+    w2 = optimise!(portfolio, opt)
 
     @test all(w2.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
     @test all(w2.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
@@ -3250,16 +3257,18 @@ end
     asset_statistics!(portfolio; calc_kurt = false)
 
     rm = :SSD
-    w1 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    opt = OptimiseOpt(; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    w1 = optimise!(portfolio, opt)
     portfolio.max_number_assets = 5
-    w2 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    w2 = optimise!(portfolio, opt)
     sort!(w1, :weights; rev = true)
     sort!(w2, :weights; rev = true)
 
     portfolio.max_number_assets = 0
-    w3 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
     portfolio.max_number_assets = 4
-    w4 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    w4 = optimise!(portfolio, opt)
     sort!(w3, :weights; rev = true)
     sort!(w4, :weights; rev = true)
 
@@ -3267,16 +3276,19 @@ end
     asset_statistics!(portfolio; calc_kurt = false)
 
     rm = :CVaR
-    w5 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    opt.obj = :Min_Risk
+    opt.rm = rm
+    w5 = optimise!(portfolio, opt)
     portfolio.max_number_assets = 7
-    w6 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    w6 = optimise!(portfolio, opt)
     sort!(w5, :weights; rev = true)
     sort!(w6, :weights; rev = true)
 
     portfolio.max_number_assets = 0
-    w7 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    opt.obj = :Sharpe
+    w7 = optimise!(portfolio, opt)
     portfolio.max_number_assets = 5
-    w8 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    w8 = optimise!(portfolio, opt)
     sort!(w7, :weights; rev = true)
     sort!(w8, :weights; rev = true)
 
