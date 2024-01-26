@@ -60,10 +60,6 @@ end
     include("PortfolioEfficientFrontierTests.jl")
 end
 
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
 @safetestset "Portfolio Classic Traditional Optimisation" begin
     include("PortfolioClassicTradTests.jl")
 end
@@ -134,4 +130,8 @@ end
 
 @safetestset "Portfolio Traditional Class Picking" begin
     include("PortfolioTradClassPickingTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
 end
