@@ -25,28 +25,37 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
     portfolio.network_method = :None
     portfolio.network_ip = L_A
     portfolio.network_sdp = L_A
-    w1 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    opt = OptimiseOpt(; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    w1 = optimise!(portfolio, opt)
     r1 = calc_risk(portfolio; rm = rm)
 
     portfolio.sd_u = r1
     portfolio.network_method = :IP
-    w2 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    opt.obj = :Min_Risk
+    w2 = optimise!(portfolio, opt)
     r2 = calc_risk(portfolio; rm = rm)
-    w3 = optimise!(portfolio; obj = :Utility, rm = rm, l = l, rf = rf)
+    opt.obj = :Utility
+    w3 = optimise!(portfolio, opt)
     r3 = calc_risk(portfolio; rm = rm)
-    w4 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    opt.obj = :Sharpe
+    w4 = optimise!(portfolio, opt)
     r4 = calc_risk(portfolio; rm = rm)
-    w5 = optimise!(portfolio; obj = :Max_Ret, rm = rm, l = l, rf = rf)
+    opt.obj = :Max_Ret
+    w5 = optimise!(portfolio, opt)
     r5 = calc_risk(portfolio; rm = rm)
 
     portfolio.network_method = :SDP
-    w6 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    opt.obj = :Min_Risk
+    w6 = optimise!(portfolio, opt)
     r6 = calc_risk(portfolio; rm = rm)
-    w7 = optimise!(portfolio; obj = :Utility, rm = rm, l = l, rf = rf)
+    opt.obj = :Utility
+    w7 = optimise!(portfolio, opt)
     r7 = calc_risk(portfolio; rm = rm)
-    w8 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
+    opt.obj = :Sharpe
+    w8 = optimise!(portfolio, opt)
     r8 = calc_risk(portfolio; rm = rm)
-    w9 = optimise!(portfolio; obj = :Max_Ret, rm = rm, l = l, rf = rf)
+    opt.obj = :Max_Ret
+    w9 = optimise!(portfolio, opt)
     r9 = calc_risk(portfolio; rm = rm)
 
     @test r2 <= r1 + sqrt(eps())
@@ -66,204 +75,208 @@ end
 
     rm = :SD
     obj = :Min_Risk
+    opt = OptimiseOpt(; obj = obj, rm = rm, l = l, rf = rf)
     CV = centrality_vector(portfolio, CorOpt(;))
     B_1 = connection_matrix(portfolio, CorOpt(;); method = :MST, steps = 1)
     L_A = cluster_matrix(portfolio; cor_opt = CorOpt(;),
                          cluster_opt = ClusterOpt(; linkage = :ward))
 
-    w1 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w1 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = CV
     portfolio.b_cent = minimum(CV)
-    w2 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w2 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w3 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w3 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w4 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w4 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w5 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w5 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w6 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w6 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = []
     portfolio.b_cent = Inf
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w7 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w7 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w8 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w8 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w9 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w9 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w10 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w10 = optimise!(portfolio, opt)
 
     portfolio = Portfolio(; prices = prices, solvers = solvers)
     asset_statistics!(portfolio; calc_kurt = false)
 
     rm = :SD
     obj = :Utility
+    opt = OptimiseOpt(; obj = obj, rm = rm, l = l, rf = rf)
     CV = centrality_vector(portfolio, CorOpt(;); method = :TMFG)
     B_1 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 1)
     L_A = cluster_matrix(portfolio; cor_opt = CorOpt(;),
                          cluster_opt = ClusterOpt(; linkage = :DBHT))
 
-    w11 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w11 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = CV
     portfolio.b_cent = minimum(CV)
-    w12 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w12 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w13 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w13 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w14 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w14 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w15 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w15 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w16 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w16 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = []
     portfolio.b_cent = Inf
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w17 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w17 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w18 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w18 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w19 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w19 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w20 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w20 = optimise!(portfolio, opt)
 
     portfolio = Portfolio(; prices = prices, solvers = solvers)
     asset_statistics!(portfolio; calc_kurt = false)
 
     rm = :SD
     obj = :Sharpe
+    opt = OptimiseOpt(; obj = obj, rm = rm, l = l, rf = rf)
     CV = centrality_vector(portfolio, CorOpt(;); method = :TMFG)
     B_1 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 1)
     L_A = cluster_matrix(portfolio; cor_opt = CorOpt(;),
                          cluster_opt = ClusterOpt(; linkage = :DBHT))
 
-    w21 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w21 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = CV
     portfolio.b_cent = minimum(CV)
-    w22 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w22 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w23 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w23 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w24 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w24 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w25 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w25 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w26 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w26 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = []
     portfolio.b_cent = Inf
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w27 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w27 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w28 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w28 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w29 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w29 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w30 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w30 = optimise!(portfolio, opt)
 
     portfolio = Portfolio(; prices = prices, solvers = solvers)
     asset_statistics!(portfolio; calc_kurt = false)
 
     rm = :SD
     obj = :Max_Ret
+    opt = OptimiseOpt(; obj = obj, rm = rm, l = l, rf = rf)
     CV = centrality_vector(portfolio, CorOpt(;); method = :TMFG)
     B_1 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 1)
     L_A = cluster_matrix(portfolio; cor_opt = CorOpt(;),
                          cluster_opt = ClusterOpt(; linkage = :DBHT))
 
-    w31 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w31 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = CV
     portfolio.b_cent = minimum(CV)
-    w32 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w32 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w33 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w33 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w34 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w34 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w35 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w35 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w36 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w36 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = []
     portfolio.b_cent = Inf
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w37 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w37 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w38 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w38 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w39 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w39 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w40 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w40 = optimise!(portfolio, opt)
 
     w1t = [0.00791850924098073, 0.030672065216453506, 0.010501402809199123,
            0.027475241969187995, 0.012272329269527841, 0.03339587076426262,
@@ -546,51 +559,52 @@ end
 
     rm = :SD
     obj = :Min_Risk
+    opt = OptimiseOpt(; obj = obj, rm = rm, l = l, rf = rf)
     CV = centrality_vector(portfolio, CorOpt(;))
     B_1 = connection_matrix(portfolio, CorOpt(;); method = :MST, steps = 1)
     L_A = cluster_matrix(portfolio; cor_opt = CorOpt(;),
                          cluster_opt = ClusterOpt(; linkage = :ward))
 
-    w1 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w1 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = CV
     portfolio.b_cent = minimum(CV)
-    w2 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w2 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w3 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w3 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w4 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w4 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w5 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w5 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w6 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w6 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = []
     portfolio.b_cent = Inf
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w7 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w7 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w8 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w8 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w9 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w9 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w10 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w10 = optimise!(portfolio, opt)
 
     portfolio = Portfolio(; prices = prices, solvers = solvers)
     asset_statistics!(portfolio; calc_kurt = false)
@@ -601,51 +615,52 @@ end
 
     rm = :SD
     obj = :Utility
+    opt = OptimiseOpt(; obj = obj, rm = rm, l = l, rf = rf)
     CV = centrality_vector(portfolio, CorOpt(;); method = :TMFG)
     B_1 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 1)
     L_A = cluster_matrix(portfolio; cor_opt = CorOpt(;),
                          cluster_opt = ClusterOpt(; linkage = :DBHT))
 
-    w11 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w11 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = CV
     portfolio.b_cent = minimum(CV)
-    w12 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w12 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w13 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w13 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w14 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w14 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w15 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w15 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w16 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w16 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = []
     portfolio.b_cent = Inf
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w17 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w17 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w18 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w18 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w19 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w19 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w20 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w20 = optimise!(portfolio, opt)
 
     portfolio = Portfolio(; prices = prices, solvers = solvers)
     asset_statistics!(portfolio; calc_kurt = false)
@@ -656,51 +671,52 @@ end
 
     rm = :SD
     obj = :Sharpe
+    opt = OptimiseOpt(; obj = obj, rm = rm, l = l, rf = rf)
     CV = centrality_vector(portfolio, CorOpt(;); method = :TMFG)
     B_1 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 1)
     L_A = cluster_matrix(portfolio; cor_opt = CorOpt(;),
                          cluster_opt = ClusterOpt(; linkage = :DBHT))
 
-    w21 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w21 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = CV
     portfolio.b_cent = minimum(CV)
-    w22 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w22 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w23 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w23 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w24 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w24 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w25 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w25 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w26 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w26 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = []
     portfolio.b_cent = Inf
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w27 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w27 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w28 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w28 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w29 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w29 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w30 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w30 = optimise!(portfolio, opt)
 
     portfolio = Portfolio(; prices = prices, solvers = solvers)
     asset_statistics!(portfolio; calc_kurt = false)
@@ -711,51 +727,52 @@ end
 
     rm = :SD
     obj = :Max_Ret
+    opt = OptimiseOpt(; obj = obj, rm = rm, l = l, rf = rf)
     CV = centrality_vector(portfolio, CorOpt(;); method = :TMFG)
     B_1 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 1)
     L_A = cluster_matrix(portfolio; cor_opt = CorOpt(;),
                          cluster_opt = ClusterOpt(; linkage = :DBHT))
 
-    w31 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w31 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = CV
     portfolio.b_cent = minimum(CV)
-    w32 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w32 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w33 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w33 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w34 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w34 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w35 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w35 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w36 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w36 = optimise!(portfolio, opt)
 
     portfolio.a_vec_cent = []
     portfolio.b_cent = Inf
 
     portfolio.network_method = :IP
     portfolio.network_ip = B_1
-    w37 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w37 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = B_1
-    w38 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w38 = optimise!(portfolio, opt)
 
     portfolio.network_method = :IP
     portfolio.network_ip = L_A
-    w39 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w39 = optimise!(portfolio, opt)
 
     portfolio.network_method = :SDP
     portfolio.network_sdp = L_A
-    w40 = optimise!(portfolio; obj = obj, rm = rm, l = l, rf = rf)
+    w40 = optimise!(portfolio, opt)
 
     w1t = [0.0023732458314435797, 0.02478417654578371, 0.011667587595578982,
            0.02183585978966643, 0.008241287070974379, 0.03550224724861833,
