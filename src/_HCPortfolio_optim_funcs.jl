@@ -59,11 +59,14 @@ function _opt_w(portfolio, assets, returns, imu, icov; obj = :Min_Risk, kelly = 
     end
 
     weights = if obj != :Equal
-        optimise!(port; type = :Trad, class = :Classic, rm = rm, obj = obj, kelly = kelly,
-                  rf = rf, l = l, sd_cone = sd_cone, near_opt = near_opt, M = M)
+        opt = OptimiseOpt(; type = :Trad, class = :Classic, rm = rm, obj = obj,
+                          kelly = kelly, rf = rf, l = l, sd_cone = sd_cone,
+                          near_opt = near_opt, M = M)
+        optimise!(port, opt)
     else
-        optimise!(port; type = :RP, class = :Classic, rm = rm, kelly = kelly, rf = rf,
-                  sd_cone = sd_cone, near_opt = near_opt, M = M)
+        opt = OptimiseOpt(; type = :RP, class = :Classic, rm = rm, kelly = kelly, rf = rf,
+                          sd_cone = sd_cone, near_opt = near_opt, M = M)
+        optimise!(port, opt)
     end
 
     w = !isempty(weights) ? weights.weights : zeros(eltype(returns), length(assets))
