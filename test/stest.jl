@@ -1,62 +1,155 @@
 using COSMO, CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra,
       OrderedCollections, Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries,
-      Logging, GLPK, Ipopt, SCS, NLopt, ECOS
+      Logging, GLPK, Ipopt, SCS, NLopt, ECOS, PyCall
 
 prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
+returns = dropmissing!(DataFrame(percentchange(prices)))
 
-solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                   "verbose" => false,
-                                                                   "oa_solver" => optimizer_with_attributes(GLPK.Optimizer,
-                                                                                                            MOI.Silent() => true),
-                                                                   "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                               "verbose" => false,
-                                                                                                               "max_step_fraction" => 0.75))))
-portfolio = Portfolio(; prices = prices, solvers = solvers)
-asset_statistics!(portfolio; calc_kurt = false)
+portfolio = Portfolio(; prices = prices,
+                      solvers = OrderedDict(#:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                            #                 :params => Dict("verbose" => false,
+                                            #                                "max_step_fraction" => 0.75))
+                                            :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                           :params => Dict("verbose" => false))))
+asset_statistics!(portfolio)
 
-rm = :SD
-L_A = cluster_matrix(portfolio; cor_opt = CorOpt(;),
-                     cluster_opt = ClusterOpt(; linkage = :ward))
+py"""
+import numpy as np
+import pandas as pd
+import riskfolio as rp
+"""
 
-portfolio.network_method = :None
-portfolio.network_ip = L_A
-portfolio.network_sdp = L_A
-w1 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
-r1 = calc_risk(portfolio; rm = rm)
+py"""
+method_mu='hist' # Method to estimate expected returns based on historical data.
+method_cov='hist' # Method to estimate covariance matrix based on historical data.
+method_kurt='hist' # Method to estimate cokurtosis square matrix based on historical data.
 
-portfolio.sd_u = r1
-portfolio.network_method = :IP
-w2 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
-r2 = calc_risk(portfolio; rm = rm)
-w3 = optimise!(portfolio; obj = :Utility, rm = rm, l = l, rf = rf)
-r3 = calc_risk(portfolio; rm = rm)
-w4 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
-r4 = calc_risk(portfolio; rm = rm)
-w5 = optimise!(portfolio; obj = :Max_Ret, rm = rm, l = l, rf = rf)
-r5 = calc_risk(portfolio; rm = rm)
+returns = pd.DataFrame($(Matrix(returns[!,2:end])), columns=$(names(returns[!,2:end])))
+port = rp.Portfolio(returns=returns)
+port.assets_stats(method_mu=method_mu,
+                  method_cov=method_cov,
+                  method_kurt=method_kurt,
+                  )
+port.n_max_kurt=1
 
-portfolio.network_method = :SDP
-w6 = optimise!(portfolio; obj = :Min_Risk, rm = rm, l = l, rf = rf)
-r6 = calc_risk(portfolio; rm = rm)
-w7 = optimise!(portfolio; obj = :Utility, rm = rm, l = l, rf = rf)
-r7 = calc_risk(portfolio; rm = rm)
-w8 = optimise!(portfolio; obj = :Sharpe, rm = rm, l = l, rf = rf)
-r8 = calc_risk(portfolio; rm = rm)
-w9 = optimise!(portfolio; obj = :Max_Ret, rm = rm, l = l, rf = rf)
-r9 = calc_risk(portfolio; rm = rm)
+port.kurt = pd.DataFrame($(portfolio.kurt))
+port.skurt = pd.DataFrame($(portfolio.skurt))
+"""
 
-@test r2 <= r1 + sqrt(eps())
-@test r3 <= r1 + length(w5.weights) * sqrt(eps())
-@test r4 <= r1 + sqrt(eps())
-@test r5 <= r1 + length(w5.weights) * sqrt(eps())
+py"""
+test = np.array($(portfolio.risk_budget)).reshape(1,-1)
+# Estimate optimal portfolio:
+model ='Classic' # Could be Classic (historical), BL (Black Litterman) or FM (Factor Model)
+rm = 'SKT' # Risk measure used, this time will be Tail Gini Range
+obj = 'MaxRet' # Objective function, could be MinRisk, MaxRet, Utility or Utility
+hist = True # Use historical scenarios for risk measures that depend on scenarios
+rf = $rf # Risk free rate
+l = $l # Risk aversion factor, only useful when obj is 'Utility'
+b=test
+"""
 
-@test r6 <= r1 + sqrt(eps())
-@test r7 <= r1 + sqrt(eps())
-@test r8 <= r1 + sqrt(eps())
-@test r9 <= r1 + length(w5.weights) * sqrt(eps())
+py"""
+w = port.rp_optimization(model=model, rm=rm, rf=rf,b=b, hist=hist)
+"""
+
+py"""
+import riskfolio.src.AuxFunctions as af
+A = af.block_vec_pq(port.kurt,20, 20)
+s_A, V_A = np.linalg.eig(A)
+"""
+A = block_vec_pq(portfolio.kurt, 20, 20)
+vals_A, vecs_A = eigen(A)
+
+portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                           :params => Dict("verbose" => false)))
+portfolio.max_num_assets_kurt = 1
+portfolio.risk_budget = rand(1.0:20, 20)
+rm = :SKurt
+obj = :Min_Risk
+opt = OptimiseOpt(; type = :RP, rm = rm, obj = obj, rf = rf, l = l)
+w1 = optimise!(portfolio, opt)
+fig1 = plot_risk_contribution(portfolio; type = :RP, rm = rm)
+fig2 = plot_risk_contribution(portfolio.assets, vec(py"np.array(w)"), portfolio.returns;
+                              rm = rm)
+
+norm(vec(py"np.array(w)") - w1.weights)
+
+portfolio.solvers = Dict(:COSMO => Dict(:solver => COSMO.Optimizer,
+                                        :params => Dict("verbose" => false)))
+portfolio.skurt = portfolio.kurt
+portfolio.max_num_assets_kurt = 0
+
+rm = :Kurt
+obj = :Min_Risk
+opt = OptimiseOpt(; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
+w1 = optimise!(portfolio, opt)
+opt.obj = :Utility
+w2 = optimise!(portfolio, opt)
+opt.obj = :Sharpe
+w3 = optimise!(portfolio, opt)
+opt.obj = :Max_Ret
+w4 = optimise!(portfolio, opt)
+
+rm = :SKurt
+obj = :Min_Risk
+opt = OptimiseOpt(; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
+w5 = optimise!(portfolio, opt)
+opt.obj = :Utility
+w6 = optimise!(portfolio, opt)
+opt.obj = :Sharpe
+w7 = optimise!(portfolio, opt)
+opt.obj = :Max_Ret
+w8 = optimise!(portfolio, opt)
+
+portfolio.max_num_assets_kurt = 1
+rm = :Kurt
+obj = :Min_Risk
+opt = OptimiseOpt(; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
+w9 = optimise!(portfolio, opt)
+opt.obj = :Utility
+w10 = optimise!(portfolio, opt)
+opt.obj = :Sharpe
+w11 = optimise!(portfolio, opt)
+opt.obj = :Max_Ret
+w12 = optimise!(portfolio, opt)
+
+rm = :SKurt
+obj = :Min_Risk
+opt = OptimiseOpt(; type = :Trad, rm = rm, obj = obj, rf = rf, l = l)
+w13 = optimise!(portfolio, opt)
+opt.obj = :Utility
+w14 = optimise!(portfolio, opt)
+opt.obj = :Sharpe
+w15 = optimise!(portfolio, opt)
+opt.obj = :Max_Ret
+w16 = optimise!(portfolio, opt)
+
+@test isapprox(w1.weights, w5.weights)
+@test isapprox(w2.weights, w6.weights)
+@test isapprox(w3.weights, w7.weights)
+@test isapprox(w4.weights, w8.weights)
+
+@test isapprox(w9.weights, w13.weights)
+@test isapprox(w10.weights, w14.weights)
+@test isapprox(w11.weights, w15.weights)
+@test isapprox(w12.weights, w16.weights)
+
+# For relaxed utility and sharpe use cosmo.
+
+opt = OptimiseOpt(; type = :RP, rm = rm)
+
+portfolio.risk_budget = []
+w1 = optimise!(portfolio, opt)
+rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
+lrc1, hrc1 = extrema(rc1)
+
+portfolio.risk_budget = 1:size(portfolio.returns, 2)
+w2 = optimise!(portfolio, opt)
+rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
+lrc2, hrc2 = extrema(rc2)
 
 ################################################################
 

@@ -62,10 +62,12 @@ function plot_risk_contribution(
                                 # RC args
                                 assets::AbstractVector, w::AbstractVector,
                                 returns::AbstractMatrix; rm::Symbol = :SD, rf::Real = 0.0,
-                                sigma::AbstractMatrix, alpha_i::Real = 0.0001,
-                                alpha::Real = 0.05, a_sim::Int = 100,
-                                beta_i::Real = alpha_i, beta::Real = alpha,
-                                b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
+                                sigma::AbstractMatrix = Matrix{eltype(returns)}(undef, 0,
+                                                                                0),
+                                alpha_i::Real = 0.0001, alpha::Real = 0.05,
+                                a_sim::Int = 100, beta_i::Real = alpha_i,
+                                beta::Real = alpha, b_sim::Integer = a_sim, di::Real = 1e-6,
+                                kappa::Real = 0.3,
                                 owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                                 solvers::Union{<:AbstractDict, Nothing} = nothing,                                # Plot args
                                 percentage::Bool = false, erc_line::Bool = true,

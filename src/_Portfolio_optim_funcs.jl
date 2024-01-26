@@ -594,7 +594,9 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
             Bi = Vector{Matrix{eltype(kurtosis)}}(undef, N2)
             for i ∈ 1:N2
-                B = reshape(real.(complex(sqrt(vals_A[i])) * vecs_A[:, i]), N, N)
+                j = i - 1
+                B = reshape(real.(complex(sqrt(vals_A[end - j])) * vecs_A[:, end - j]), N,
+                            N)
                 Bi[i] = B
             end
             @constraint(model, [i = 1:N2], x_kurt[i] == tr(Bi[i] * W))
@@ -646,7 +648,9 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
             SBi = Vector{Matrix{eltype(skurtosis)}}(undef, N2)
             for i ∈ 1:N2
-                B = reshape(real.(sqrt(complex(vals_A[i])) * vecs_A[:, i]), N, N)
+                j = i - 1
+                B = reshape(real.(sqrt(complex(vals_A[end - j])) * vecs_A[:, end - j]), N,
+                            N)
                 SBi[i] = B
             end
             @constraint(model, [i = 1:N2], x_skurt[i] == tr(SBi[i] * SW))

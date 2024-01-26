@@ -239,23 +239,23 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0,
     return weights
 end
 
-struct ClusterNode{tid,tl,tr,td,tcnt}
+struct ClusterNode{tid, tl, tr, td, tcnt}
     id::tid
     left::tl
     right::tr
     dist::td
     count::tcnt
 
-    function ClusterNode(id, left::Union{ClusterNode,Nothing} = nothing,
-                         right::Union{ClusterNode,Nothing} = nothing, dist::Real = 0.0,
+    function ClusterNode(id, left::Union{ClusterNode, Nothing} = nothing,
+                         right::Union{ClusterNode, Nothing} = nothing, dist::Real = 0.0,
                          count::Int = 1)
         icount = isnothing(left) ? count : (left.count + right.count)
 
-        return new{typeof(id),typeof(left),typeof(right),typeof(dist),typeof(count)}(id,
-                                                                                     left,
-                                                                                     right,
-                                                                                     dist,
-                                                                                     icount)
+        return new{typeof(id), typeof(left), typeof(right), typeof(dist), typeof(count)}(id,
+                                                                                         left,
+                                                                                         right,
+                                                                                         dist,
+                                                                                         icount)
     end
 end
 export ClusterNode
@@ -437,7 +437,7 @@ function _intra_weights(portfolio, opt;
     clustering_idx = cutree(clustering; k = k)
 
     intra_weights = zeros(eltype(covariance), size(portfolio.returns, 2), k)
-    cfails = Dict{Int,Dict}()
+    cfails = Dict{Int, Dict}()
 
     for i ∈ 1:k
         idx = clustering_idx .== i
