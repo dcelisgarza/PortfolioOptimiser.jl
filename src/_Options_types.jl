@@ -662,18 +662,21 @@ function OptimiseOpt(; type::Symbol = :Trad, rm::Symbol = :SD, obj::Symbol = :Sh
                      kelly::Symbol = :None, class::Symbol = :Classic,
                      rrp_ver::Symbol = :None, u_cov::Symbol = :Box, u_mu::Symbol = :Box,
                      sd_cone::Bool = true, near_opt::Bool = false, hist::Integer = 1,
-                     rf::Real = 0.0, l::Real = 2.0, rrp_penalty::Real = 1.0, M::Real = 0.0,
+                     rf::Real = 0.0, l::Real = 2.0, rrp_penalty::Real = 1.0, M::Real = 20.0,
                      w_ini::AbstractVector = Vector{typeof(rf)}(undef, 0),
                      w_min::AbstractVector = Vector{typeof(rf)}(undef, 0),
                      w_max::AbstractVector = Vector{typeof(rf)}(undef, 0))
     @smart_assert(type ∈ PortTypes)
     @smart_assert(class ∈ PortClasses)
     @smart_assert(rm ∈ RiskMeasures)
-    @smart_assert(obj ∈ ObjFuncs)
+    @smart_assert(obj ∈ HCObjFuncs)
     @smart_assert(kelly ∈ KellyRet)
     @smart_assert(rrp_ver ∈ RRPVersions)
     @smart_assert(u_mu ∈ UncertaintyTypes)
     @smart_assert(u_cov ∈ UncertaintyTypes)
+    if near_opt
+        @smart_assert(M > zero(M))
+    end
 
     return OptimiseOpt{typeof(hist), typeof(rf), typeof(l), typeof(rrp_penalty), typeof(M)}(type,
                                                                                             rm,
@@ -702,7 +705,7 @@ function Base.setproperty!(obj::OptimiseOpt, sym::Symbol, val)
     elseif sym == :rm
         @smart_assert(val ∈ RiskMeasures)
     elseif sym == :obj
-        @smart_assert(val ∈ ObjFuncs)
+        @smart_assert(val ∈ HCObjFuncs)
     elseif sym == :kelly
         @smart_assert(val ∈ KellyRet)
     elseif sym == :rrp_ver
@@ -711,6 +714,10 @@ function Base.setproperty!(obj::OptimiseOpt, sym::Symbol, val)
         @smart_assert(val ∈ UncertaintyTypes)
     elseif sym == :u_cov
         @smart_assert(val ∈ UncertaintyTypes)
+    elseif sym == :M
+        if obj.near_opt
+            @smart_assert(val > zero(val))
+        end
     else
         val = convert(typeof(getproperty(obj, sym)), val)
     end

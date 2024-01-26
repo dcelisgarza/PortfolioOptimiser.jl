@@ -3,7 +3,7 @@ using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioO
 
 Logging.disable_logging(Logging.Warn)
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
@@ -28,17 +28,16 @@ l = 2.0
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SD, obj = :Min_Risk,
-                   kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SD, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SD, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :SD, points = 5,)
+    rm = :SD
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :SD, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -81,17 +80,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MAD, obj = :Min_Risk,
-                   kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MAD, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MAD, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :MAD, points = 5,)
+    rm = :MAD
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :MAD, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -134,17 +132,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SSD, obj = :Min_Risk,
-                   kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SSD, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SSD, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :SSD, points = 5,)
+    rm = :SSD
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :SSD, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -187,17 +184,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :FLPM,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :FLPM, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :FLPM, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :FLPM, points = 5,)
+    rm = :FLPM
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :FLPM, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -240,17 +236,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SLPM,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SLPM, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SLPM, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :SLPM, points = 5,)
+    rm = :SLPM
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :SLPM, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -293,17 +288,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :WR, obj = :Min_Risk,
-                   kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :WR, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :WR, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :WR, points = 5,)
+    rm = :WR
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :WR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -346,17 +340,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CVaR,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CVaR, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CVaR, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :CVaR, points = 5,)
+    rm = :CVaR
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :CVaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -399,17 +392,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EVaR,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EVaR, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EVaR, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :EVaR, points = 5,)
+    rm = :EVaR
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :EVaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -452,17 +444,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RVaR,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RVaR, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RVaR, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :RVaR, points = 5,)
+    rm = :RVaR
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :RVaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -505,17 +496,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MDD, obj = :Min_Risk,
-                   kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MDD, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :MDD, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :MDD, points = 5,)
+    rm = :MDD
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :MDD, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -558,17 +548,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :ADD, obj = :Min_Risk,
-                   kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :ADD, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :ADD, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :ADD, points = 5,)
+    rm = :ADD
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :ADD, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -611,17 +600,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :CDaR, points = 5,)
+    rm = :CDaR
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :CDaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -664,17 +652,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :UCI, obj = :Min_Risk,
-                   kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :UCI, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :UCI, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :UCI, points = 5,)
+    rm = :UCI
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :UCI, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -717,17 +704,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EDaR,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EDaR, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :EDaR, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :EDaR, points = 5,)
+    rm = :EDaR
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :EDaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -770,17 +756,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RDaR,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RDaR, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :RDaR, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :RDaR, points = 5,)
+    rm = :RDaR
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :RDaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -823,17 +808,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :Kurt, points = 5,)
+    rm = :Kurt
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :Kurt, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -877,17 +861,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt, obj = :Max_Ret,
-                   kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :Kurt, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :Kurt, points = 5,)
+    rm = :Kurt
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :Kurt, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -930,17 +913,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
-                   obj = :Max_Ret, kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :SKurt, points = 5,)
+    rm = :SKurt
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :SKurt, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -984,17 +966,16 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
-                   obj = :Min_Risk, kelly = :None,)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
-                   obj = :Max_Ret, kelly = :None,)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt, obj = :Sharpe,
-                   kelly = :None,)
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :SKurt, points = 5,)
+    rm = :SKurt
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
     risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :SKurt, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
@@ -1026,29 +1007,28 @@ end
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
-                   obj = :Min_Risk, kelly = :None,)
-    sr1 = sharpe_ratio(portfolio; rf = rf, rm = :SKurt)
-    w2 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
-                   obj = :Max_Ret, kelly = :None,)
-    sr2 = sharpe_ratio(portfolio; rf = rf, rm = :SKurt)
-    w3 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt, obj = :Sharpe,
-                   kelly = :None,)
-    sr3 = sharpe_ratio(portfolio; rf = rf, rm = :SKurt)
+    rm = :SKurt
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+    w1 = optimise!(portfolio, opt)
+    sr1 = sharpe_ratio(portfolio; rf = rf, rm = rm)
+    opt.obj = :Max_Ret
+    w2 = optimise!(portfolio, opt)
+    sr2 = sharpe_ratio(portfolio; rf = rf, rm = rm)
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    sr3 = sharpe_ratio(portfolio; rf = rf, rm = rm)
+    fw1 = efficient_frontier!(portfolio, opt; points = 25)
 
-    fw1 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                              rm = :SKurt, points = 25,)
-    risks1 = [calc_risk(fw1[:weights][!, i], portfolio.returns; rm = :SKurt, rf = rf,
+    risks1 = [calc_risk(fw1[:weights][!, i], portfolio.returns; rm = rm, rf = rf,
                         solvers = portfolio.solvers,)
               for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     rets1 = [dot(fw1[:weights][!, i], portfolio.mu)
              for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
     sharpes1 = (rets1 .- rf) ./ risks1
-    sharpes1t = [sharpe_ratio(fw1[:weights][!, i], portfolio.mu, portfolio.returns;
-                              rm = :SKurt, rf = rf, kelly = false)
+    sharpes1t = [sharpe_ratio(fw1[:weights][!, i], portfolio.mu, portfolio.returns; rm = rm,
+                              rf = rf, kelly = false)
                  for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
 
     idx = findlast(x -> x < risks1[end], risks1) + 1
@@ -1058,18 +1038,21 @@ end
     tmp = rets1[end]
     rets1[(idx + 1):end] = rets1[idx:(end - 1)]
     rets1[idx] = tmp
-    w4 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
-                   obj = :Min_Risk, kelly = :Approx,)
-    w5 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt,
-                   obj = :Max_Ret, kelly = :Approx,)
-    w6 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :SKurt, obj = :Sharpe,
-                   kelly = :Approx,)
-    fw2 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :Approx,
-                              rf = rf, rm = :SKurt, points = 25,)
-    risks2 = [calc_risk(fw2[:weights][!, i], portfolio.returns; rm = :SKurt, rf = rf,
+
+    rm = :SKurt
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :Approx)
+    w4 = optimise!(portfolio, opt)
+    sr4 = sharpe_ratio(portfolio; rf = rf, rm = rm, kelly = true)
+    opt.obj = :Max_Ret
+    w5 = optimise!(portfolio, opt)
+    sr5 = sharpe_ratio(portfolio; rf = rf, rm = rm, kelly = true)
+    opt.obj = :Sharpe
+    w6 = optimise!(portfolio, opt)
+    sr6 = sharpe_ratio(portfolio; rf = rf, rm = rm, kelly = true)
+    fw2 = efficient_frontier!(portfolio, opt; points = 25)
+    risks2 = [calc_risk(fw2[:weights][!, i], portfolio.returns; rm = rm, rf = rf,
                         solvers = portfolio.solvers,)
               for i ∈ 2:size(Matrix(fw2[:weights]), 2)]
     rets2 = [1 / size(portfolio.returns, 1) *
@@ -1082,29 +1065,29 @@ end
     tmp = rets2[end]
     rets2[(idx + 1):end] = rets2[idx:(end - 1)]
     rets2[idx] = tmp
-    w7 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR,
-                   obj = :Min_Risk, kelly = :Exact,)
-    sr7 = sharpe_ratio(portfolio; rf = rf, rm = :CDaR, kelly = true)
-    w8 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR, obj = :Max_Ret,
-                   kelly = :Exact,)
-    sr8 = sharpe_ratio(portfolio; rf = rf, rm = :CDaR, kelly = true)
-    w9 = optimise!(portfolio; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = :CDaR, obj = :Sharpe,
-                   kelly = :Exact,)
-    sr9 = sharpe_ratio(portfolio; rf = rf, rm = :CDaR, kelly = true)
-    fw3 = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :Exact,
-                              rf = rf, rm = :CDaR, points = 25,)
-    risks3 = [calc_risk(fw3[:weights][!, i], portfolio.returns; rm = :CDaR, rf = rf,
+
+    rm = :CDaR
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
+                      rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
+                      obj = :Min_Risk, kelly = :Exact)
+    w7 = optimise!(portfolio, opt)
+    sr7 = sharpe_ratio(portfolio; rf = rf, rm = rm, kelly = true)
+    opt.obj = :Max_Ret
+    w8 = optimise!(portfolio, opt)
+    sr8 = sharpe_ratio(portfolio; rf = rf, rm = rm, kelly = true)
+    opt.obj = :Sharpe
+    w9 = optimise!(portfolio, opt)
+    sr9 = sharpe_ratio(portfolio; rf = rf, rm = rm, kelly = true)
+    fw3 = efficient_frontier!(portfolio, opt; points = 25)
+    risks3 = [calc_risk(fw3[:weights][!, i], portfolio.returns; rm = rm, rf = rf,
                         solvers = portfolio.solvers,)
               for i ∈ 2:size(Matrix(fw3[:weights]), 2)]
     rets3 = [1 / size(portfolio.returns, 1) *
              sum(log.(1 .+ portfolio.returns * fw3[:weights][!, i]))
              for i ∈ 2:size(Matrix(fw3[:weights]), 2)]
     sharpes3 = (rets3 .- rf) ./ risks3
-    sharpes3t = [sharpe_ratio(fw3[:weights][!, i], portfolio.mu, portfolio.returns;
-                              rm = :CDaR, rf = rf, kelly = true)
+    sharpes3t = [sharpe_ratio(fw3[:weights][!, i], portfolio.mu, portfolio.returns; rm = rm,
+                              rf = rf, kelly = true)
                  for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
 
     idx = findlast(x -> x < risks3[end], risks3) + 1
@@ -1137,17 +1120,4 @@ end
     @test isapprox(fw3[:weights][!, 2], w7.weights)
     @test isapprox(fw3[:weights][!, end - 1], w8.weights)
     @test isapprox(fw3[:weights][!, end], w9.weights)
-end
-
-@testset "Efficient frontier, sharpe ratio" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
-    asset_statistics!(portfolio)
-
-    fw = efficient_frontier!(portfolio; class = :Classic, hist = 1, kelly = :None, rf = rf,
-                             rm = :SKurt, points = 25)
 end
