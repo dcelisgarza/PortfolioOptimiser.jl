@@ -44,9 +44,7 @@ function _opt_w(portfolio, assets, returns, imu, icov, opt;
                                                 max_num_assets_kurt = portfolio.max_num_assets_kurt))
     port = Portfolio(; assets = assets, ret = returns, portfolio_kwargs...)
 
-    if !isnothing(imu)
-        port.mu = imu
-    end
+    port.mu = imu
     port.cov = icov
     if opt.rm ∈ (:Kurt, :SKurt)
         asset_statistics!(port; asset_stat_kwargs...)
@@ -447,7 +445,7 @@ function _intra_weights(portfolio, opt;
 
     for i ∈ 1:k
         idx = clustering_idx .== i
-        cmu = !isnothing(mu) ? mu[idx] : nothing
+        cmu = !isempty(mu) ? mu[idx] : Vector{eltype(returns)}(undef, 0)
         ccov = covariance[idx, idx]
         cret = returns[:, idx]
         cassets = portfolio.assets[idx]
@@ -485,16 +483,13 @@ function _inter_weights(portfolio, intra_weights, opt;
     mu = portfolio.mu
     returns = portfolio.returns
     covariance = portfolio.cov
-    tmu = !isnothing(mu) ? transpose(intra_weights) * mu : nothing
+    tmu = !isempty(mu) ? transpose(intra_weights) * mu : Vector{eltype(returns)}(undef, 0)
     tcov = transpose(intra_weights) * covariance * intra_weights
     tret = returns * intra_weights
-
     inter_weights, inter_fail, success = _opt_w(portfolio, 1:size(tret, 2), tret, tmu, tcov,
                                                 opt; asset_stat_kwargs = asset_stat_kwargs,
                                                 portfolio_kwargs = portfolio_kwargs)
-
     weights = intra_weights * inter_weights
-
     if !success
         portfolio.fail[:inter] = inter_fail
     end
