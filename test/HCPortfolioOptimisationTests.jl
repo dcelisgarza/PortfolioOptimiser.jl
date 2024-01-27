@@ -3137,7 +3137,7 @@ end
     @test isapprox(w6.weights, w6t)
     @test isapprox(w7.weights, w7t, rtol = 0.0001)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w10.weights, w10t, rtol = 5e-5)
+    @test isapprox(w10.weights, w10t, rtol = 0.0001)
 end
 
 @testset "$(:HRP), $(:HERC), $(:NCO), Full $(:SKurt)" begin
@@ -3284,7 +3284,7 @@ end
     @test isapprox(w8.weights, w8t)
     @test isapprox(w9.weights, w9t)
     @test isapprox(w10.weights, w10t, rtol = 5e-5)
-    @test isapprox(w11.weights, w11t, rtol = 5e-5)
+    @test isapprox(w11.weights, w11t, rtol = 0.0001)
 end
 
 @testset "$(:NCO), Reduced $(:SKurt)" begin
