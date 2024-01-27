@@ -124,14 +124,14 @@ end
     include("PortfolioClassicRPTests.jl")
 end
 
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
 @safetestset "HCPortfolio Optimisation" begin
     include("HCPortfolioOptimisationTests.jl")
 end
 
 @safetestset "HCPortfolio OWA Optimisation" begin
     include("HCPortfolioOWAOptimisationTests.jl")
-end
-
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
 end
