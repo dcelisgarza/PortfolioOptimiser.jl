@@ -69,7 +69,7 @@ function _opt_w(portfolio, assets, returns, imu, icov, opt;
     opt.class = class1
     opt.obj = obj1
 
-    if isempty(weights)
+    if !isempty(weights)
         w = weights.weights
         success = true
     else
