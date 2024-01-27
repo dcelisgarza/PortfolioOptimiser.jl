@@ -1,21 +1,19 @@
 using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, LinearAlgebra
 
-@testset "Plotting" begin
-    A = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-    Y = percentchange(A)
-    returns = dropmissing!(DataFrame(Y))
+prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
-    portfolio = Portfolio(; returns = returns,
+@testset "Plotting" begin
+    portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     rm = :SD
     obj = :Min_Risk
-    w = optimise!(portfolio; rm = rm, obj = obj, save_opt_params = true)
+    w = optimise!(portfolio, OptimiseOpt(; rm = rm, obj = obj); save_opt_params = true)
     plt1 = plot_risk_contribution(portfolio; rm = rm, percentage = true)
     plt2 = plot_risk_contribution(portfolio; rm = rm, percentage = false)
-    frontier = efficient_frontier!(portfolio; rm = rm)
+    frontier = efficient_frontier!(portfolio, OptimiseOpt(; rm = rm))
     plt3 = plot_frontier(portfolio; rm = rm)
     plt4 = plot_frontier_area(portfolio; rm = rm)
     plt5 = plot_frontier_area(frontier; rm = rm)
@@ -26,7 +24,7 @@ using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, Li
     plt10 = plot_returns(portfolio; per_asset = true)
     plt11 = plot_bar(portfolio)
 
-    hcportfolio = HCPortfolio(; returns = returns,
+    hcportfolio = HCPortfolio(; prices = prices,
                               solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                :params => Dict("verbose" => false,
                                                                                "max_step_fraction" => 0.75))),)

@@ -1,9 +1,5 @@
 using SafeTestsets
 
-# @safetestset "Misc" begin
-#     include("MiscTests.jl")
-# end
-
 # @safetestset "Risk measures" begin
 #     include("_RiskMeasureTests.jl")
 # end
@@ -51,6 +47,10 @@ using SafeTestsets
 # @safetestset "Traditional optimisations" begin
 #     include("TraditionalOptimisationTests.jl")
 # end
+
+@safetestset "Misc" begin
+    include("MiscTests.jl")
+end
 
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")

@@ -1780,6 +1780,7 @@ frontier_limits!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer =
 """
 function frontier_limits!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
                           save_model::Bool = false)
+    obj1 = opt.obj
     near_opt1 = opt.near_opt
     opt.near_opt = false
     optimal1 = deepcopy(portfolio.optimal)
@@ -1788,13 +1789,16 @@ function frontier_limits!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;
         model1 = copy(portfolio.model)
     end
 
+    opt.obj = :Min_Risk
     w_min = optimise!(portfolio, opt; save_opt_params = false)
+    opt.obj = :Max_Ret
     w_max = optimise!(portfolio, opt; save_opt_params = false)
 
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
     portfolio.limits[rm] = limits
 
+    opt.obj = obj1
     opt.near_opt = near_opt1
     portfolio.optimal = optimal1
     portfolio.fail = fail1
@@ -1887,6 +1891,7 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
                        alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                        beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
                        solvers = solvers)
+
         append!(frontier, w.weights)
         push!(srisk, rk)
         i += 1
@@ -1911,7 +1916,8 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
                                                    DataFrame(reshape(frontier, length(w1),
                                                                      :),
                                                              string.(range(1, i)))),
-                                  :opt => opt, :points => points)
+                                  :opt => opt, :points => points, :risk => srisk,
+                                  :sharpe => sharpe)
 
     portfolio.optimal = optimal1
     portfolio.fail = fail1
