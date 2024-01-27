@@ -69,9 +69,15 @@ function _opt_w(portfolio, assets, returns, imu, icov, opt;
     opt.class = class1
     opt.obj = obj1
 
-    w = !isempty(weights) ? weights.weights : zeros(eltype(returns), length(assets))
+    if isempty(weights)
+        w = weights.weights
+        success = true
+    else
+        w = zeros(eltype(returns), length(assets))
+        success = false
+    end
 
-    return w, port.fail
+    return w, port.fail, success
 end
 
 function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 1))))
@@ -239,23 +245,23 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0,
     return weights
 end
 
-struct ClusterNode{tid, tl, tr, td, tcnt}
+struct ClusterNode{tid,tl,tr,td,tcnt}
     id::tid
     left::tl
     right::tr
     dist::td
     count::tcnt
 
-    function ClusterNode(id, left::Union{ClusterNode, Nothing} = nothing,
-                         right::Union{ClusterNode, Nothing} = nothing, dist::Real = 0.0,
+    function ClusterNode(id, left::Union{ClusterNode,Nothing} = nothing,
+                         right::Union{ClusterNode,Nothing} = nothing, dist::Real = 0.0,
                          count::Int = 1)
         icount = isnothing(left) ? count : (left.count + right.count)
 
-        return new{typeof(id), typeof(left), typeof(right), typeof(dist), typeof(count)}(id,
-                                                                                         left,
-                                                                                         right,
-                                                                                         dist,
-                                                                                         icount)
+        return new{typeof(id),typeof(left),typeof(right),typeof(dist),typeof(count)}(id,
+                                                                                     left,
+                                                                                     right,
+                                                                                     dist,
+                                                                                     icount)
     end
 end
 export ClusterNode
@@ -437,7 +443,7 @@ function _intra_weights(portfolio, opt;
     clustering_idx = cutree(clustering; k = k)
 
     intra_weights = zeros(eltype(covariance), size(portfolio.returns, 2), k)
-    cfails = Dict{Int, Dict}()
+    cfails = Dict{Int,Dict}()
 
     for i ∈ 1:k
         idx = clustering_idx .== i
@@ -445,11 +451,11 @@ function _intra_weights(portfolio, opt;
         ccov = covariance[idx, idx]
         cret = returns[:, idx]
         cassets = portfolio.assets[idx]
-        weights, cfail = _opt_w(portfolio, cassets, cret, cmu, ccov, opt;
-                                asset_stat_kwargs = asset_stat_kwargs,
-                                portfolio_kwargs = portfolio_kwargs)
+        weights, cfail, success = _opt_w(portfolio, cassets, cret, cmu, ccov, opt;
+                                         asset_stat_kwargs = asset_stat_kwargs,
+                                         portfolio_kwargs = portfolio_kwargs)
         intra_weights[idx, i] .= weights
-        if !isempty(cfail)
+        if !success
             cfails[i] = cfail
         end
     end
@@ -483,13 +489,13 @@ function _inter_weights(portfolio, intra_weights, opt;
     tcov = transpose(intra_weights) * covariance * intra_weights
     tret = returns * intra_weights
 
-    inter_weights, inter_fail = _opt_w(portfolio, 1:size(tret, 2), tret, tmu, tcov, opt;
-                                       asset_stat_kwargs = asset_stat_kwargs,
-                                       portfolio_kwargs = portfolio_kwargs)
+    inter_weights, inter_fail, success = _opt_w(portfolio, 1:size(tret, 2), tret, tmu, tcov,
+                                                opt; asset_stat_kwargs = asset_stat_kwargs,
+                                                portfolio_kwargs = portfolio_kwargs)
 
     weights = intra_weights * inter_weights
 
-    if !isempty(inter_fail)
+    if !success
         portfolio.fail[:inter] = inter_fail
     end
 
@@ -524,7 +530,6 @@ function _nco_weights(portfolio, opt, opt_o;
                                    portfolio_kwargs = portfolio_kwargs)
 
     # Treat each cluster as an asset in a portfolio and optimise the portfolio.
-
     weights = _inter_weights(portfolio, intra_weights, opt_o;
                              asset_stat_kwargs = asset_stat_kwargs_o,
                              portfolio_kwargs = portfolio_kwargs_o)
@@ -579,21 +584,37 @@ function _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter = 100)
     return weights
 end
 
-function _hcp_save_opt_params(portfolio, type, rm, obj, kelly, rf, l, cluster, cluster_opt,
-                              max_iter, save_opt_params)
-    if !isempty(portfolio.fail)
-        portfolio.fail = Dict()
-    end
+function _hcp_save_opt_params(portfolio, type, rm, rm_o, rf, rf_o, nco_opt, nco_opt_o,
+                              cluster, cluster_opt, asset_stat_kwargs, asset_stat_kwargs_o,
+                              portfolio_kwargs, portfolio_kwargs_o, max_iter,
+                              save_opt_params)
     if !save_opt_params
         return nothing
     end
 
+    Dict(:type => type, :rm => rm, :rm_o => rm_o, :rf => rf, :rf_o => rf_o,
+         :nco_opt => nco_opt, :nco_opt_o => nco_opt_o, :cluster => cluster,
+         :cluster_opt => cluster_opt, :asset_stat_kwargs => asset_stat_kwargs,
+         :asset_stat_kwargs_o => asset_stat_kwargs_o, :portfolio_kwargs => portfolio_kwargs,
+         :portfolio_kwargs_o => portfolio_kwargs_o, :max_iter => max_iter,
+         :save_opt_params => save_opt_params)
+
     opt_params_dict = if type != :NCO
-        Dict(:rm => rm, :rf => rf, :cluster => cluster, :cluster_opt => cluster_opt,
-             :max_iter => max_iter)
+        Dict(:type => type, :rm => rm, :rm_o => rm_o, :rf => rf, :rf_o => rf_o,
+             :cluster => cluster, :cluster_opt => cluster_opt,
+             :asset_stat_kwargs => asset_stat_kwargs,
+             :asset_stat_kwargs_o => asset_stat_kwargs_o,
+             :portfolio_kwargs => portfolio_kwargs,
+             :portfolio_kwargs_o => portfolio_kwargs_o, :max_iter => max_iter,
+             :save_opt_params => save_opt_params)
     else
-        Dict(:rm => rm, :obj => obj, :kelly => kelly, :rf => rf, :l => l,
-             :cluster => cluster, :cluster_opt => cluster_opt, :max_iter => max_iter)
+        Dict(:type => type, :rm => rm, :rm_o => rm_o, :rf => rf, :rf_o => rf_o,
+             :nco_opt => nco_opt, :nco_opt_o => nco_opt_o, :cluster => cluster,
+             :cluster_opt => cluster_opt, :asset_stat_kwargs => asset_stat_kwargs,
+             :asset_stat_kwargs_o => asset_stat_kwargs_o,
+             :portfolio_kwargs => portfolio_kwargs,
+             :portfolio_kwargs_o => portfolio_kwargs_o, :max_iter => max_iter,
+             :save_opt_params => save_opt_params)
     end
 
     portfolio.opt_params[type] = opt_params_dict
@@ -647,7 +668,7 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                                                           true
                                                       else
                                                           false
-                                                      end), save_opt_params = true,
+                                                      end),
                    portfolio_kwargs::NamedTuple = if type != :NCO
                        (; alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                         beta = portfolio.beta, b_sim = portfolio.b_sim,
@@ -660,13 +681,15 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                         solvers = portfolio.solvers,
                         max_num_assets_kurt = portfolio.max_num_assets_kurt)
                    end, portfolio_kwargs_o::NamedTuple = portfolio_kwargs,
-                   max_iter::Integer = 100)
+                   max_iter::Integer = 100, save_opt_params::Bool = false)
     @smart_assert(type ∈ HCPortTypes)
     @smart_assert(rm ∈ HCRiskMeasures)
     @smart_assert(rm_o ∈ HCRiskMeasures)
+    portfolio.fail = Dict()
 
-    _hcp_save_opt_params(portfolio, type, rm, nco_opt.obj, nco_opt.kelly, rf, nco_opt.l,
-                         cluster, cluster_opt, max_iter, save_opt_params)
+    _hcp_save_opt_params(portfolio, type, rm, rm_o, rf, rf_o, nco_opt, nco_opt_o, cluster,
+                         cluster_opt, asset_stat_kwargs, asset_stat_kwargs_o,
+                         portfolio_kwargs, portfolio_kwargs_o, max_iter, save_opt_params)
 
     N = size(portfolio.returns, 2)
 

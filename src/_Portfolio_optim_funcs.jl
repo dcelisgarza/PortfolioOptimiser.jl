@@ -1345,7 +1345,7 @@ function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l
     return nothing
 end
 
-function _optimise_portfolio(portfolio, type, obj, near_opt = false, coneopt = true)
+function _optimise_portfolio(portfolio, type, obj, near_opt = false)
     solvers = portfolio.solvers
     model = portfolio.model
 
@@ -1358,7 +1358,6 @@ function _optimise_portfolio(portfolio, type, obj, near_opt = false, coneopt = t
         "_" * String(type)
     else
         tmp = "_Near_"
-        tmp = coneopt ? tmp * "Cone_" : tmp * "NL_"
         tmp * String(type)
     end
 
@@ -1429,14 +1428,13 @@ function _optimise_portfolio(portfolio, type, obj, near_opt = false, coneopt = t
 end
 
 function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj,
-                             near_opt = false, coneopt = true)
+                             near_opt = false)
     model = portfolio.model
 
     strtype = if !near_opt
         String(type)
     else
         tmp = "Near_"
-        tmp = coneopt ? tmp * "Cone_" : tmp * "NL_"
         tmp * String(type)
     end
 
@@ -1485,7 +1483,7 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
 end
 
 function _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
-                                     type, rm, obj, near_opt = false, coneopt = true)
+                                     type, rm, obj, near_opt = false)
     model = portfolio.model
 
     retval = if term_status ∉ ValidTermination ||
@@ -1496,46 +1494,23 @@ function _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers
         portfolio.fail = solvers_tried
         if near_opt
             tmp = "Near_"
-            tmp = coneopt ? tmp * "Cone_" : tmp * "NL_"
             type = Symbol(tmp * String(type))
         end
         portfolio.optimal[type] = DataFrame()
     else
-        _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj, near_opt,
-                            coneopt)
+        _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj, near_opt)
     end
 
     return retval
 end
 
-function _p_save_opt_params(portfolio, type, class, hist, rm, obj, kelly, rrp_ver, rf, l,
-                            rrp_penalty, u_mu, u_cov, string_names, w_ini, M, w_min, w_max,
-                            sd_cone, save_opt_params)
+function _p_save_opt_params(portfolio, opt, string_names, save_opt_params)
     if !save_opt_params
         return nothing
     end
 
-    opt_params_dict = if type == :Trad
-        Dict(:class => class, :rm => rm, :obj => obj, :kelly => kelly, :rf => rf, :l => l,
-             :string_names => string_names, :hist => hist, :M => M, :w_ini => w_ini,
-             :w_min => w_min, :w_max => w_max, :sd_cone => sd_cone)
-    elseif type == :RP
-        Dict(:class => class, :rm => rm, :obj => :Min_Risk,
-             :kelly => (kelly == :Exact) ? :None : kelly, :rf => rf,
-             :string_names => string_names, :hist => hist, :M => M, :w_ini => w_ini,
-             :w_min => w_min, :w_max => w_max, :sd_cone => sd_cone)
-    elseif type == :RRP
-        Dict(:class => class, :rm => :SD, :obj => :Min_Risk, :kelly => kelly,
-             :rrp_penalty => rrp_penalty, :rrp_ver => rrp_ver,
-             :string_names => string_names, :hist => hist, :M => M, :w_ini => w_ini,
-             :w_min => w_min, :w_max => w_max, :sd_cone => sd_cone)
-    elseif type == :WC
-        Dict(:rm => :SD, :obj => obj, :kelly => kelly, :rf => rf, :l => l, :u_mu => u_mu,
-             :u_cov => u_cov, :string_names => string_names, :hist => hist, :M => M,
-             :w_ini => w_ini, :w_min => w_min, :w_max => w_max)
-    end
-
-    portfolio.opt_params[type] = opt_params_dict
+    portfolio.opt_params[opt.type] = Dict(:opt => opt, :string_names => string_names,
+                                          :save_opt_params => save_opt_params)
 
     return nothing
 end
@@ -1664,9 +1639,9 @@ function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, T, N, opt
     @expression(model, near_opt_risk, log_ret + log_risk + neg_sum_log_ws)
     @objective(model, Min, near_opt_risk)
 
-    term_status, solvers_tried = _optimise_portfolio(portfolio, type, obj, true, true)
+    term_status, solvers_tried = _optimise_portfolio(portfolio, type, obj, true)
     retval = _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
-                                         type, rm, obj, true, true)
+                                         type, rm, obj, true)
 
     return retval
 end
@@ -1681,7 +1656,7 @@ optimise!(portfolio::Portfolio; class::Symbol = :Classic, hist::Integer = 1,
 ```
 """
 function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
-                   save_opt_params::Bool = true, string_names::Bool = false)
+                   string_names::Bool = false, save_opt_params::Bool = false)
     type = opt.type
     rm = opt.rm
     obj = opt.obj
@@ -1713,6 +1688,7 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
             @smart_assert(length(w_max) == size(portfolio.returns, 2))
         end
     end
+    _p_save_opt_params(portfolio, opt, string_names, save_opt_params)
 
     mu, sigma, returns = _setup_model_class(portfolio, class, hist)
     T, N = size(returns)
@@ -1764,10 +1740,6 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
         retval = _near_optimal_centering(portfolio, mu, returns, sigma, retval, T, N, opt)
     end
 
-    _p_save_opt_params(portfolio, type, class, hist, rm, obj, kelly, rrp_ver, rf, l,
-                       rrp_penalty, u_mu, u_cov, string_names, w_ini, M, w_min, w_max,
-                       sd_cone, save_opt_params)
-
     return retval
 end
 
@@ -1790,9 +1762,10 @@ function frontier_limits!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;
     end
 
     opt.obj = :Min_Risk
-    w_min = optimise!(portfolio, opt; save_opt_params = false)
+    w_min = optimise!(portfolio, opt)
+
     opt.obj = :Max_Ret
-    w_max = optimise!(portfolio, opt; save_opt_params = false)
+    w_max = optimise!(portfolio, opt)
 
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
@@ -1818,9 +1791,9 @@ efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic, hist::Intege
 """
 function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
                              points::Integer = 20)
+    obj1 = opt.obj
     optimal1 = deepcopy(portfolio.optimal)
     fail1 = deepcopy(portfolio.fail)
-    obj1 = opt.obj
 
     class = opt.class
     hist = opt.hist
@@ -1831,8 +1804,13 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
     w1 = fl.w_min
     w2 = fl.w_max
 
-    ret1 = dot(mu, w1)
-    ret2 = dot(mu, w2)
+    if opt.kelly == :None
+        ret1 = dot(mu, w1)
+        ret2 = dot(mu, w2)
+    else
+        ret1 = sum(log.(one(eltype(mu)) .+ returns * w1)) / size(returns, 1)
+        ret2 = sum(log.(one(eltype(mu)) .+ returns * w1)) / size(returns, 1)
+    end
 
     alpha_i = portfolio.alpha_i
     alpha = portfolio.alpha
@@ -1863,7 +1841,7 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
     for (j, (r, m)) ∈ enumerate(zip(risks, mus))
         if i == 0
             opt.obj = :Min_Risk
-            w = optimise!(portfolio, opt; save_opt_params = false)
+            w = optimise!(portfolio, opt)
         else
             if !isempty(w)
                 w_ini = w.weights
@@ -1874,13 +1852,13 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
                 setproperty!(portfolio, rmf, Inf)
             end
             opt.obj = :Max_Ret
-            w = optimise!(portfolio, opt; save_opt_params = false)
+            w = optimise!(portfolio, opt)
             # Fallback in case :Max_Ret with maximum risk bounds fails.
             if isempty(w)
                 opt.obj = :Min_Risk
                 setproperty!(portfolio, rmf, Inf)
                 j != length(risks) ? portfolio.mu_l = m : portfolio.mu_l = Inf
-                w = optimise!(portfolio, opt; save_opt_params = false)
+                w = optimise!(portfolio, opt)
                 portfolio.mu_l = Inf
             end
         end
@@ -1899,7 +1877,7 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
     setproperty!(portfolio, rmf, Inf)
 
     opt.obj = :Sharpe
-    w = optimise!(portfolio, opt; save_opt_params = false)
+    w = optimise!(portfolio, opt)
     sharpe = false
     if !isempty(w)
         rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
@@ -1919,9 +1897,9 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
                                   :opt => opt, :points => points, :risk => srisk,
                                   :sharpe => sharpe)
 
+    opt.obj = obj1
     portfolio.optimal = optimal1
     portfolio.fail = fail1
-    opt.obj = obj1
 
     return portfolio.frontier[rm]
 end

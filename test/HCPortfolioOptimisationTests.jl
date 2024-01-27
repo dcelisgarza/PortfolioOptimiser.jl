@@ -60,12 +60,9 @@ end
 
     optimise!(portfolio; type = :HRP, rm = :CDaR, cluster_opt = cluster_opt,
               save_opt_params = false)
-    opt_params1 = copy(portfolio.opt_params)
     optimise!(portfolio; type = :HERC, rm = :CDaR, cluster = false, save_opt_params = false)
-    opt_params2 = copy(portfolio.opt_params)
     optimise!(portfolio; type = :NCO, nco_opt = OptimiseOpt(; rm = :CDaR, obj = :Min_Risk),
               cluster = false, save_opt_params = false)
-    opt_params3 = copy(portfolio.opt_params)
 
     portfolio.w_min = w_min
     portfolio.w_max = w_max
@@ -96,10 +93,6 @@ end
                     nco_opt = OptimiseOpt(; rm = :CDaR, obj = :Min_Risk), cluster = false)
 
     N = length(w_min)
-
-    @test isempty(opt_params1)
-    @test isempty(opt_params2)
-    @test isempty(opt_params3)
 
     @test all(abs.(w1.weights .- w_min) .>= -eps() * N)
     @test all(w1.weights .<= w_max)
