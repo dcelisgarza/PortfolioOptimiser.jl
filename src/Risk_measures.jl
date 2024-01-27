@@ -1270,8 +1270,6 @@ end
 
 function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i, beta,
                   a_sim, beta_i, b_sim, owa_w, di)
-    @smart_assert(rm ∈ HCRiskMeasures)
-
     a1 = returns * w1
     a2 = returns * w2
 

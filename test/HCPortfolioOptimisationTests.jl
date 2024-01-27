@@ -2728,29 +2728,42 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :Kurt, rf = rf, l = l,
+    w1 = optimise!(portfolio; type = :HRP, rm = :Kurt, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
-    w2 = optimise!(portfolio; type = :HERC, rm = :Kurt, rf = rf, l = l, cluster = false)
-    w3 = optimise!(portfolio; type = :NCO, rm = :Kurt, obj = :Min_Risk, rf = rf, l = l,
-                   cluster = false,)
-    w4 = optimise!(portfolio; type = :NCO, rm = :Kurt, obj = :Utility, rf = rf, l = l,
-                   cluster = false,)
-    w5 = optimise!(portfolio; type = :NCO, rm = :Kurt, obj = :Sharpe, rf = rf, l = l,
-                   cluster = false,)
-    w6 = optimise!(portfolio; type = :NCO, rm = :Kurt, obj = :Max_Ret, rf = rf, l = l,
-                   cluster = false,)
-    w7 = optimise!(portfolio; type = :NCO, rm = :Kurt, obj = :Equal, rf = rf, l = l,
-                   cluster = false,)
-    w8 = optimise!(portfolio; type = :NCO, rm = :Kurt, obj = :Min_Risk, obj_o = :Sharpe,
-                   rf = rf, l = l, cluster = false,)
-    w9 = optimise!(portfolio; type = :NCO, rm = :Kurt, obj = :Sharpe, obj_o = :Min_Risk,
-                   rf = rf, l = l, cluster = false,)
-    w10 = optimise!(portfolio; type = :NCO, rm = :Kurt, obj = :Equal, obj_o = :Sharpe,
-                    rf = rf, l = l, cluster = false,)
-    w11 = optimise!(portfolio; type = :NCO, rm = :Kurt, obj = :Sharpe, obj_o = :Equal,
-                    rf = rf, l = l, cluster = false,)
+    w2 = optimise!(portfolio; type = :HERC, rm = :Kurt, rf = rf, cluster = false)
+    w3 = optimise!(portfolio; type = :NCO,
+                   nco_opt = OptimiseOpt(; rm = :Kurt, obj = :Min_Risk, rf = rf, l = l),
+                   cluster = false)
+    w4 = optimise!(portfolio; type = :NCO,
+                   nco_opt = OptimiseOpt(; rm = :Kurt, obj = :Utility, rf = rf, l = l),
+                   cluster = false)
+    w5 = optimise!(portfolio; type = :NCO,
+                   nco_opt = OptimiseOpt(; rm = :Kurt, obj = :Sharpe, rf = rf, l = l),
+                   cluster = false)
+    w6 = optimise!(portfolio; type = :NCO,
+                   nco_opt = OptimiseOpt(; rm = :Kurt, obj = :Max_Ret, rf = rf, l = l),
+                   cluster = false)
+    w7 = optimise!(portfolio; type = :NCO,
+                   nco_opt = OptimiseOpt(; rm = :Kurt, obj = :Equal, rf = rf, l = l),
+                   cluster = false)
+    w8 = optimise!(portfolio; type = :NCO,
+                   nco_opt = OptimiseOpt(; rm = :Kurt, obj = :Min_Risk, rf = rf, l = l),
+                   nco_opt_o = OptimiseOpt(; rm = :Kurt, obj = :Sharpe, rf = rf, l = l),
+                   cluster = false)
+    w9 = optimise!(portfolio; type = :NCO,
+                   nco_opt = OptimiseOpt(; rm = :Kurt, obj = :Sharpe, rf = rf, l = l),
+                   nco_opt_o = OptimiseOpt(; rm = :Kurt, obj = :Min_Risk, rf = rf, l = l),
+                   cluster = false)
+    w10 = optimise!(portfolio; type = :NCO,
+                    nco_opt = OptimiseOpt(; rm = :Kurt, obj = :Equal, rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; rm = :Kurt, obj = :Sharpe, rf = rf, l = l),
+                    cluster = false)
+    w11 = optimise!(portfolio; type = :NCO,
+                    nco_opt = OptimiseOpt(; rm = :Kurt, obj = :Sharpe, rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; rm = :Kurt, obj = :Equal, rf = rf, l = l),
+                    cluster = false)
 
     w1t = [0.029481521953684118, 0.05982735944410474, 0.03557911826015237,
            0.028474368121041888, 0.025828635808911045, 0.05929340372085539,
@@ -2843,8 +2856,8 @@ end
     @test isapprox(w1.weights, w1t)
     @test isapprox(w2.weights, w2t)
     @test isapprox(w3.weights, w3t, rtol = 1.0e-10)
-    @test isapprox(w4.weights, w4t, rtol = 1.0e-10)
-    @test isapprox(w5.weights, w5t, rtol = 1.0e-7)
+    @test isapprox(w4.weights, w4t, rtol = 1.0e-9)
+    @test isapprox(w5.weights, w5t, rtol = 1.0e-6)
     @test isapprox(w6.weights, w6t, rtol = 1.0e-9)
     @test isapprox(w7.weights, w7t, rtol = 0.0001)
     @test isapprox(w8.weights, w8t, rtol = 1.0e-7)

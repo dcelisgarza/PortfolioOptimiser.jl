@@ -19,7 +19,7 @@ l = 2.0
     portfolio = Portfolio(; prices = prices, solvers = solvers,
                           alloc_solvers = alloc_solvers)
     asset_statistics!(portfolio; calc_kurt = false)
-    w0 = optimise!(portfolio; obj = :Min_Risk)
+    w0 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk))
 
     allocate!(portfolio; alloc_type = :LP, save_opt_params = false)
     alloc_params1 = copy(portfolio.alloc_params)
@@ -36,7 +36,7 @@ l = 2.0
     w8 = allocate!(portfolio; alloc_type = :Greedy, investment = 1e8)
 
     portfolio.short = true
-    w9 = optimise!(portfolio; obj = :Min_Risk)
+    w9 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk))
     w10 = allocate!(portfolio; alloc_type = :LP, reinvest = false)
     w11 = allocate!(portfolio; alloc_type = :Greedy, reinvest = false)
     w12 = allocate!(portfolio; alloc_type = :LP, investment = 1e4, reinvest = false)

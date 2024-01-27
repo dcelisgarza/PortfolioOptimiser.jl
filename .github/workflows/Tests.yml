@@ -5,6 +5,7 @@ on:
       - main
       - release-*
       - dev
+      - interfaces
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:

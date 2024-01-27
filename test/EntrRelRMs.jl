@@ -50,7 +50,7 @@ end
                                                 :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio; calc_kurt = false)
-    optimise!(portfolio; rm = :EVaR, obj = :Sharpe)
+    optimise!(portfolio, OptimiseOpt(; rm = :EVaR, obj = :Sharpe))
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
 
@@ -82,7 +82,7 @@ end
                                                 :COSMO => Dict(:solver => COSMO.Optimizer,
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio; calc_kurt = false)
-    optimise!(portfolio; rm = :EDaR, obj = :Sharpe)
+    optimise!(portfolio, OptimiseOpt(; rm = :EDaR, obj = :Sharpe))
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
     pushfirst!(x, 1)

@@ -51,12 +51,21 @@ using SafeTestsets
 # @safetestset "Traditional optimisations" begin
 #     include("TraditionalOptimisationTests.jl")
 # end
+
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
 end
 
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
+@safetestset "Portfolio Traditional Optimisation Constraints" begin
+    include("PortfolioTradConstraintTests.jl")
+end
+
+@safetestset "Portfolio Classic RP OWA Optimisation" begin
+    include("PortfolioClassicRPOWATests.jl")
+end
+
+@safetestset "Efficient Frontier" begin
+    include("PortfolioEfficientFrontierTests.jl")
 end
 
 @safetestset "Portfolio Classic Traditional Optimisation" begin
@@ -99,20 +108,20 @@ end
     include("DBHTClusteringTests.jl")
 end
 
-@safetestset "Portfolio Classic RP OWA Optimisation" begin
-    include("PortfolioClassicRPOWATests.jl")
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
 end
 
-@safetestset "Portfolio Classic RP Optimisation" begin
-    include("PortfolioClassicRPTests.jl")
+@safetestset "Portfolio Traditional Class Picking" begin
+    include("PortfolioTradClassPickingTests.jl")
 end
 
 @safetestset "Portfolio Classic Traditional OWA Optimisation" begin
     include("PortfolioClassicTradOWATests.jl")
 end
 
-@safetestset "Efficient Frontier" begin
-    include("PortfolioEfficientFrontierTests.jl")
+@safetestset "Portfolio Classic RP Optimisation" begin
+    include("PortfolioClassicRPTests.jl")
 end
 
 @safetestset "HCPortfolio Optimisation" begin
@@ -123,14 +132,6 @@ end
     include("HCPortfolioOWAOptimisationTests.jl")
 end
 
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
-@safetestset "Portfolio Traditional Optimisation Constraints" begin
-    include("PortfolioTradConstraintTests.jl")
-end
-
-@safetestset "Portfolio Traditional Class Picking" begin
-    include("PortfolioTradClassPickingTests.jl")
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
 end
