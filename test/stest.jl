@@ -16,50 +16,6 @@ portfolio = Portfolio(; prices = prices,
                                                            :params => Dict("verbose" => false))))
 asset_statistics!(portfolio)
 
-py"""
-import numpy as np
-import pandas as pd
-import riskfolio as rp
-"""
-
-py"""
-method_mu='hist' # Method to estimate expected returns based on historical data.
-method_cov='hist' # Method to estimate covariance matrix based on historical data.
-method_kurt='hist' # Method to estimate cokurtosis square matrix based on historical data.
-
-returns = pd.DataFrame($(Matrix(returns[!,2:end])), columns=$(names(returns[!,2:end])))
-port = rp.Portfolio(returns=returns)
-port.assets_stats(method_mu=method_mu,
-                  method_cov=method_cov,
-                  method_kurt=method_kurt,
-                  )
-port.n_max_kurt=1
-
-port.kurt = pd.DataFrame($(portfolio.kurt))
-port.skurt = pd.DataFrame($(portfolio.skurt))
-"""
-
-py"""
-test = np.array($(portfolio.risk_budget)).reshape(1,-1)
-# Estimate optimal portfolio:
-model ='Classic' # Could be Classic (historical), BL (Black Litterman) or FM (Factor Model)
-rm = 'SKT' # Risk measure used, this time will be Tail Gini Range
-obj = 'MaxRet' # Objective function, could be MinRisk, MaxRet, Utility or Utility
-hist = True # Use historical scenarios for risk measures that depend on scenarios
-rf = $rf # Risk free rate
-l = $l # Risk aversion factor, only useful when obj is 'Utility'
-b=test
-"""
-
-py"""
-w = port.rp_optimization(model=model, rm=rm, rf=rf,b=b, hist=hist)
-"""
-
-py"""
-import riskfolio.src.AuxFunctions as af
-A = af.block_vec_pq(port.kurt,20, 20)
-s_A, V_A = np.linalg.eig(A)
-"""
 A = block_vec_pq(portfolio.kurt, 20, 20)
 vals_A, vecs_A = eigen(A)
 
