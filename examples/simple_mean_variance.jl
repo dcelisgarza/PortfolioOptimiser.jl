@@ -121,6 +121,8 @@ fig7 = plot_clusters(portfolio; cluster_opt = cluster_opt)
 
 fig8 = plot_dendrogram(portfolio; cluster_opt = cluster_opt)
 
+# ## Asset and Cluster Networks
+
 # We can also visualise the asset network.
 
 fig9 = plot_network(portfolio; cluster_opt = cluster_opt, kwargs = (; method = :stress))
@@ -130,4 +132,4 @@ fig9 = plot_network(portfolio; cluster_opt = cluster_opt, kwargs = (; method = :
 fig10 = plot_cluster_network(portfolio; cluster_opt = cluster_opt,
                              kwargs = (; method = :stress))
 
-# By default, in both network plots, the nodes are all the same size. But we can scale them according to their allocation, we will show this in a later example.
+# By default, the nodes are all the same size in both network plots, but we can scale them according to their allocation. We will show this in a later example.
