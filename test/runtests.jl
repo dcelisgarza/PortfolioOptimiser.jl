@@ -4,28 +4,8 @@ using SafeTestsets
 #     include("LogTests.jl")
 # end
 
-@safetestset "Misc" begin
-    include("MiscTests.jl")
-end
-
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
-end
-
-@safetestset "HCPortfolio OWA Optimisation" begin
-    include("HCPortfolioOWAOptimisationTests.jl")
-end
-
-@safetestset "HCPortfolio Optimisation" begin
-    include("HCPortfolioOptimisationTests.jl")
-end
-
-@safetestset "Portfolio Traditional Optimisation Constraints" begin
-    include("PortfolioTradConstraintTests.jl")
-end
-
-@safetestset "Portfolio Classic RP OWA Optimisation" begin
-    include("PortfolioClassicRPOWATests.jl")
 end
 
 @safetestset "Efficient Frontier" begin
@@ -90,4 +70,24 @@ end
 
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
+end
+
+@safetestset "Misc" begin
+    include("MiscTests.jl")
+end
+
+@safetestset "HCPortfolio OWA Optimisation" begin
+    include("HCPortfolioOWAOptimisationTests.jl")
+end
+
+@safetestset "HCPortfolio Optimisation" begin
+    include("HCPortfolioOptimisationTests.jl")
+end
+
+@safetestset "Portfolio Traditional Optimisation Constraints" begin
+    include("PortfolioTradConstraintTests.jl")
+end
+
+@safetestset "Portfolio Classic RP OWA Optimisation" begin
+    include("PortfolioClassicRPOWATests.jl")
 end

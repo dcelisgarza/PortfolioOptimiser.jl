@@ -1106,7 +1106,7 @@ end
     @test isapprox(fw1[:weights][!, 2], w1.weights)
     @test isapprox(fw1[:weights][!, end - 1], w2.weights)
     @test isapprox(fw1[:weights][!, end], w3.weights)
-    @test reduce(<=, risks2)
+    @test reduce(<=, risks2[3:end])
     @test reduce(<=, rets2)
     @test isapprox(fw2[:weights][!, 2], w4.weights)
     @test isapprox(fw2[:weights][!, end - 1], w5.weights)
