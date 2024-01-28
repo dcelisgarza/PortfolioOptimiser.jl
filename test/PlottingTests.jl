@@ -40,4 +40,6 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     plt14 = plot_clusters(hcportfolio; cluster = false)
     plt15 = plot_clusters(hcportfolio.assets, hcportfolio.returns)
     plt16 = plot_clusters(hcportfolio.assets, hcportfolio.returns; linkage = :DBHT)
+    plt17 = plot_network(portfolio)
+    plt18 = plot_cluster_network(portfolio)
 end

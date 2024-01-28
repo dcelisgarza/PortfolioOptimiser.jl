@@ -911,10 +911,172 @@ function plot_dendrogram(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(
     return plot(dend1; kwargs...)
 end
 
-function plot_network()
-    # https://docs.juliaplots.org/latest/GraphRecipes/introduction/
-    # https://juliagraphs.org/GraphPlot.jl/index.html#usage
+function plot_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
+                      cluster_opt = opt::ClusterOpt = ClusterOpt(;
+                                                                 k = if isa(portfolio,
+                                                                            HCPortfolio)
+                                                                     portfolio.k
+                                                                 else
+                                                                     0
+                                                                 end,
+                                                                 max_k = ceil(Int,
+                                                                              sqrt(size(portfolio.returns,
+                                                                                        2)))),
+                      tree::GenericFunction = GenericFunction(; func = Graphs.kruskal_mst),
+                      allocation = false, type = isa(portfolio, HCPortfolio) ? :HRP : :Trad,
+                      theme = :Spectral, kwargs::NamedTuple = (;))
+    returns = portfolio.returns
+    corr, dist = cor_dist_mtx(returns, cor_opt)
+    N = size(corr, 2)
+
+    linkage = cluster_opt.linkage
+    branchorder = cluster_opt.branchorder
+
+    if linkage == :DBHT
+        dbht_method = cluster_opt.dbht_method
+        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
+        corr = cor_opt.method ∈ cors ? 1 .- dist .^ 2 : corr
+        missing, Rpm, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
+                                                                             branchorder = branchorder,
+                                                                             method = dbht_method)
+        G = adjacency_matrix(SimpleGraph(Rpm))
+    else
+        tfunc = tree.func
+        targs = tree.args
+        tkwargs = tree.kwargs
+        clustering = hclust(dist; linkage = linkage,
+                            branchorder = branchorder == :default ? :r : branchorder)
+        G = SimpleWeightedGraph(dist)
+        G = adjacency_matrix(SimpleGraph(G[tfunc(G, targs...; tkwargs...)]))
+    end
+
+    tk = cluster_opt.k
+    max_k = cluster_opt.max_k
+    k = iszero(tk) ? _two_diff_gap_stat(dist, clustering, max_k) : tk
+    clustering_idx = cutree(clustering; k = k)
+
+    colours = palette(theme, k)
+
+    if !haskey(kwargs, :names)
+        assets = portfolio.assets
+        ml = maximum(length.(assets))
+        names = similar(assets)
+        for (i, asset) ∈ pairs(assets)
+            diff = ml - length(asset)
+            d, r = divrem(diff, 2)
+            name = repeat(" ", d + r + 1) * asset * repeat(" ", d + 1)
+            names[i] = name
+        end
+        kwargs = (kwargs..., names = names)
+    end
+
+    if !haskey(kwargs, :nodecolor)
+        nodecols = Vector{eltype(colours)}(undef, N)
+        for (i, j) ∈ pairs(clustering_idx)
+            nodecols[i] = colours[j]
+        end
+        kwargs = (kwargs..., nodecolor = nodecols)
+    end
+
+    if !haskey(kwargs, :nodeshape)
+        kwargs = (kwargs..., nodeshape = :circle)
+    end
+
+    if allocation
+        kwargs = (kwargs..., nodeweights = portfolio.optimal[type][!, :weights])
+    end
+
+    return graphplot(G; kwargs...)
+end
+
+function plot_cluster_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
+                              cluster_opt = opt::ClusterOpt = ClusterOpt(;
+                                                                         k = if isa(portfolio,
+                                                                                    HCPortfolio)
+                                                                             portfolio.k
+                                                                         else
+                                                                             0
+                                                                         end,
+                                                                         max_k = ceil(Int,
+                                                                                      sqrt(size(portfolio.returns,
+                                                                                                2)))),
+                              tree::GenericFunction = GenericFunction(;
+                                                                      func = Graphs.kruskal_mst),
+                              allocation = false,
+                              type = isa(portfolio, HCPortfolio) ? :HRP : :Trad,
+                              theme = :Spectral, kwargs::NamedTuple = (;))
+    returns = portfolio.returns
+    corr, dist = cor_dist_mtx(returns, cor_opt)
+    N = size(corr, 2)
+
+    linkage = cluster_opt.linkage
+    branchorder = cluster_opt.branchorder
+
+    if linkage == :DBHT
+        dbht_method = cluster_opt.dbht_method
+        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
+        corr = cor_opt.method ∈ cors ? 1 .- dist .^ 2 : corr
+        missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
+                                                                                 branchorder = branchorder,
+                                                                                 method = dbht_method)
+    else
+        tfunc = tree.func
+        targs = tree.args
+        tkwargs = tree.kwargs
+        clustering = hclust(dist; linkage = linkage,
+                            branchorder = branchorder == :default ? :r : branchorder)
+    end
+
+    tk = cluster_opt.k
+    max_k = cluster_opt.max_k
+    k = iszero(tk) ? _two_diff_gap_stat(dist, clustering, max_k) : tk
+    clustering_idx = cutree(clustering; k = k)
+
+    G = Vector{Int}(undef, 0)
+    for i ∈ unique(clustering_idx)
+        idx = clustering_idx .== i
+        tmp = zeros(Int, N)
+        tmp[idx] .= 1
+        append!(G, tmp)
+    end
+
+    G = reshape(G, N, :)
+    G = G * transpose(G) - I
+
+    colours = palette(theme, k)
+
+    if !haskey(kwargs, :names)
+        assets = portfolio.assets
+        ml = maximum(length.(assets))
+        names = similar(assets)
+        for (i, asset) ∈ pairs(assets)
+            diff = ml - length(asset)
+            d, r = divrem(diff, 2)
+            name = repeat(" ", d + r + 1) * asset * repeat(" ", d + 1)
+            names[i] = name
+        end
+        kwargs = (kwargs..., names = names)
+    end
+
+    if !haskey(kwargs, :nodecolor)
+        nodecols = Vector{eltype(colours)}(undef, length(portfolio.assets))
+        for (i, j) ∈ pairs(clustering_idx)
+            nodecols[i] = colours[j]
+        end
+        kwargs = (kwargs..., nodecolor = nodecols)
+    end
+
+    if !haskey(kwargs, :nodeshape)
+        kwargs = (kwargs..., nodeshape = :circle)
+    end
+
+    if allocation
+        kwargs = (kwargs..., nodeweights = portfolio.optimal[type][!, :weights])
+    end
+
+    return graphplot(G; kwargs...)
 end
 
 export plot_returns, plot_bar, plot_risk_contribution, plot_frontier_area, plot_drawdown,
-       plot_hist, plot_range, plot_frontier, plot_clusters, plot_dendrogram, plot_network
+       plot_hist, plot_range, plot_frontier, plot_clusters, plot_dendrogram, plot_network,
+       plot_network, plot_cluster_network
