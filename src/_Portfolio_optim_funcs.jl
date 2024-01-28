@@ -1617,9 +1617,9 @@ function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, T, N, opt
     model = portfolio.model
 
     set_start_value.(model[:w], w3)
+
     @constraint(model, model[:ret] >= e1)
     @constraint(model, model[:risk] <= e2)
-
     @variable(model, log_ret)
     @constraint(model, [-log_ret, 1, model[:ret] - e1] ∈ MOI.ExponentialCone())
     @variable(model, log_risk)

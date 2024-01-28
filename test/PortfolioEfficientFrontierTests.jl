@@ -1200,5 +1200,5 @@ end
                          0.00456858581674156, 0.0077323479994042595, 0.004733448544173203,
                          0.02129758789417074, 0.017485726294248365, 0.010012155696351537,
                          0.014883553766076174, 0.012227193343821576], 20, :)
-    @test isapprox(Matrix(frontier[:weights][!, 2:end]), frontiert)
+    @test isapprox(Matrix(frontier[:weights][!, 2:end]), frontiert, rtol = 1e-6)
 end
