@@ -12,12 +12,12 @@ end
     include("EntrRelRMs.jl")
 end
 
-@safetestset "HCPortfolio Optimisation" begin
-    include("HCPortfolioOptimisationTests.jl")
-end
-
 @safetestset "HCPortfolio OWA Optimisation" begin
     include("HCPortfolioOWAOptimisationTests.jl")
+end
+
+@safetestset "HCPortfolio Optimisation" begin
+    include("HCPortfolioOptimisationTests.jl")
 end
 
 @safetestset "Portfolio Traditional Optimisation Constraints" begin
