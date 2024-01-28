@@ -601,30 +601,42 @@ function plot_range(portfolio::AbstractPortfolio;
                       kwargs_h = kwargs_h, kwargs_risks = kwargs_risks)
 end
 
-function plot_clusters(portfolio;
-                       cluster_opt = opt::ClusterOpt = ClusterOpt(; k = portfolio.k,
+function plot_clusters(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
+                       cluster_opt = opt::ClusterOpt = ClusterOpt(;
+                                                                  k = if isa(portfolio,
+                                                                             HCPortfolio)
+                                                                      portfolio.k
+                                                                  else
+                                                                      0
+                                                                  end,
                                                                   max_k = ceil(Int,
-                                                                               sqrt(size(portfolio.dist,
-                                                                                         1)))),
+                                                                               sqrt(size(portfolio.returns,
+                                                                                         2)))),
                        cluster = true, show_clusters = true, theme_d = :Spectral,
                        theme_h = :Spectral, theme_h_kwargs = (;), kwargs_d1 = (;),
                        kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;), kwargs = (;))
-    corr = portfolio.cor
     assets = portfolio.assets
-    cor_method = portfolio.cor_method
     N = length(assets)
 
-    if cluster
-        clustering_idx, clustering, k = cluster_assets(portfolio, cluster_opt)
-        sort_order = clustering.order
-        heights = clustering.heights
+    if isa(portfolio, HCPortfolio)
+        corr = portfolio.cor
+        cor_method = portfolio.cor_method
+        if cluster
+            clustering_idx, clustering, k = cluster_assets(portfolio, cluster_opt)
+        else
+            clustering = portfolio.clusters
+            k = portfolio.k
+            clustering_idx = cutree(clustering; k = k)
+        end
     else
-        clustering = portfolio.clusters
-        sort_order = clustering.order
-        heights = clustering.heights
-        k = portfolio.k
-        clustering_idx = cutree(clustering; k = k)
+        clustering_idx, clustering, k, corr, missing = cluster_assets(portfolio;
+                                                                      cor_opt = cor_opt,
+                                                                      cluster_opt = cluster_opt)
+        cor_method = cor_opt.method
     end
+
+    sort_order = clustering.order
+    heights = clustering.heights
 
     ordered_corr = corr[sort_order, sort_order]
     ordered_assets = assets[sort_order]
@@ -823,29 +835,41 @@ function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
     return plt
 end
 
-function plot_dendrogram(portfolio;
-                         cluster_opt = opt::ClusterOpt = ClusterOpt(; k = portfolio.k,
+function plot_dendrogram(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
+                         cluster_opt = opt::ClusterOpt = ClusterOpt(;
+                                                                    k = if isa(portfolio,
+                                                                               HCPortfolio)
+                                                                        portfolio.k
+                                                                    else
+                                                                        0
+                                                                    end,
                                                                     max_k = ceil(Int,
-                                                                                 sqrt(size(portfolio.dist,
-                                                                                           1)))),
+                                                                                 sqrt(size(portfolio.returns,
+                                                                                           2)))),
                          show_clusters = true, cluster = true, theme = :Spectral,
                          kwargs = (;))
-    corr = portfolio.cor
     assets = portfolio.assets
-    cor_method = portfolio.cor_method
     N = length(assets)
 
-    if cluster
-        clustering_idx, clustering, k = cluster_assets(portfolio, cluster_opt)
-        sort_order = clustering.order
-        heights = clustering.heights
+    if isa(portfolio, HCPortfolio)
+        corr = portfolio.cor
+        cor_method = portfolio.cor_method
+        if cluster
+            clustering_idx, clustering, k = cluster_assets(portfolio, cluster_opt)
+        else
+            clustering = portfolio.clusters
+            k = portfolio.k
+            clustering_idx = cutree(clustering; k = k)
+        end
     else
-        clustering = portfolio.clusters
-        sort_order = clustering.order
-        heights = clustering.heights
-        k = portfolio.k
-        clustering_idx = cutree(clustering; k = k)
+        clustering_idx, clustering, k, corr, missing = cluster_assets(portfolio;
+                                                                      cor_opt = cor_opt,
+                                                                      cluster_opt = cluster_opt)
+        cor_method = cor_opt.method
     end
+
+    sort_order = clustering.order
+    heights = clustering.heights
 
     ordered_corr = corr[sort_order, sort_order]
     ordered_assets = assets[sort_order]

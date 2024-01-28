@@ -1913,7 +1913,7 @@ function _hierarchical_clustering(returns::AbstractMatrix, cor_opt::CorOpt = Cor
     corr, dist = cor_dist_mtx(returns, cor_opt)
     clustering, k = _hcluster_choice(dist, corr, cor_method, cluster_opt)
 
-    return clustering, k
+    return clustering, k, corr, dist
 end
 
 function cluster_assets(portfolio::HCPortfolio,
@@ -1950,13 +1950,13 @@ function cluster_assets(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
                                                              max_k = ceil(Int,
                                                                           sqrt(size(returns,
                                                                                     2)))))
-    clustering, tk = _hierarchical_clustering(returns, cor_opt, cluster_opt)
+    clustering, tk, corr, dist = _hierarchical_clustering(returns, cor_opt, cluster_opt)
 
     k = iszero(cluster_opt.k) ? tk : cluster_opt.k
 
     clustering_idx = cutree(clustering; k = k)
 
-    return clustering_idx, clustering, k
+    return clustering_idx, clustering, k, corr, dist
 end
 
 function cluster_assets(portfolio::Portfolio; cor_opt::CorOpt = CorOpt(;),

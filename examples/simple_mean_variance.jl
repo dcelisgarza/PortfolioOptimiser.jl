@@ -19,7 +19,7 @@ end;# ## Creating a [`Portfolio`](@ref) instance
 
 # We can directly provide a `TimeArray` of price data to the constructor. Which computes the return data as follows.
 
-prices = TimeArray(CSV.File("./stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File(joinpath(@__DIR__, "stock_prices.csv")); timestamp = :date)
 returns = dropmissing!(DataFrame(percentchange(prices)))
 pretty_table(returns[1:5, :]; formatters = fmt)
 
@@ -105,16 +105,10 @@ fig6 = plot_frontier_area(portfolio)
 
 # Since we also provide various hierarchical optimisation methods we can use some of this machinery to showcase how assets relate to one another via hierarchical clustering. 
 
-# For this we need to create an instance of [`HCPortfolio`](@ref).
-
-hcportfolio = HCPortfolio(; prices = prices);# Compute the codependence matrix with [`asset_statistics!`](@ref).
-
-asset_statistics!(hcportfolio; calc_kurt = false)
-
 # And plot the clusters defined by it, we use Ward's linkage function because it gives the best cluster separation.
 
-fig7 = plot_clusters(hcportfolio; linkage = :ward)
+fig7 = plot_clusters(portfolio; cluster_opt = ClusterOpt(; linkage = :ward))
 
 # There's also a function to plot the dendrogram, but it's not as interesting.
 
-fig8 = plot_dendrogram(hcportfolio; linkage = :ward)
+fig8 = plot_dendrogram(portfolio; cluster_opt = ClusterOpt(; linkage = :ward))
