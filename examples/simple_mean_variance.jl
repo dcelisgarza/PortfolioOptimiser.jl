@@ -4,7 +4,7 @@
 # This is a minimal working example of `PortfolioOptimiser.jl`. We use only the default keyword arguments for all functions. In later examples we will explore more of `PortfolioOptimiser.jl`'s functionality.
 
 #=
-!!! Note
+!!! note
     `PortfolioOptimiser.jl` currently uses `Plots.jl`, where some recipes are a bit janky (particularly graph plots). We'll be looking to switch to `Makie.jl` in the future, once the copatibility issues resolve.
 =#
 
@@ -127,9 +127,9 @@ fig8 = plot_dendrogram(portfolio; cluster_opt = cluster_opt)
 
 fig9 = plot_network(portfolio; cluster_opt = cluster_opt, kwargs = (; method = :stress))
 
-# We can also visualise the cluster network.
+# And the cluster network.
 
 fig10 = plot_cluster_network(portfolio; cluster_opt = cluster_opt,
                              kwargs = (; method = :stress))
 
-# By default, the nodes are all the same size in both network plots, but we can scale them according to their allocation. We will show this in a later example.
+# By default, all nodes are the same size, but we can scale them according to their allocation. We will show this in a later example.

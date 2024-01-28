@@ -8,7 +8,7 @@ EditURL = "../../../examples/simple_mean_variance.jl"
 
 This is a minimal working example of `PortfolioOptimiser.jl`. We use only the default keyword arguments for all functions. In later examples we will explore more of `PortfolioOptimiser.jl`'s functionality.
 
-!!! Note
+!!! note
     
     `PortfolioOptimiser.jl` currently uses `Plots.jl`, where some recipes are a bit janky (particularly graph plots). We'll be looking to switch to `Makie.jl` in the future, once the copatibility issues resolve.
 
