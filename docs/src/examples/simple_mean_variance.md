@@ -8,6 +8,10 @@ EditURL = "../../../examples/simple_mean_variance.jl"
 
 This is a minimal working example of `PortfolioOptimiser.jl`. We use only the default keyword arguments for all functions. In later examples we will explore more of `PortfolioOptimiser.jl`'s functionality.
 
+!!! Note
+    
+    `PortfolioOptimiser.jl` currently uses `Plots.jl`, where some recipes are a bit janky (particularly graph plots). We'll be looking to switch to `Makie.jl` in the future, once the copatibility issues resolve.
+
 ````@example simple_mean_variance
 using PortfolioOptimiser, PrettyTables, TimeSeries, DataFrames, CSV, Clarabel
 
@@ -19,16 +23,18 @@ fmt = (v, i, j) -> begin
     else
         return isa(v, Number) ? "$(round(v*100, digits=3)) %" : v
     end
-end;# ## Creating a [`Portfolio`](@ref) instance
+end;
 nothing #hide
 ````
+
+## Creating a [`Portfolio`](@ref) instance
 
 We can create an instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref) by calling its keyword constructor. This is a minimum viable example. There are many other keyword arguments that fine-tune the portfolio. Alternatively, you can directly modify the instance's fields. Many are guarded by assertions to ensure correctness, some are immutable for the same reason.
 
 We can directly provide a `TimeArray` of price data to the constructor. Which computes the return data as follows.
 
 ````@example simple_mean_variance
-prices = TimeArray(CSV.File("./stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File(joinpath(@__DIR__, "stock_prices.csv")); timestamp = :date)
 returns = dropmissing!(DataFrame(percentchange(prices)))
 pretty_table(returns[1:5, :]; formatters = fmt)
 ````
@@ -138,25 +144,36 @@ fig6 = plot_frontier_area(portfolio)
 
 Since we also provide various hierarchical optimisation methods we can use some of this machinery to showcase how assets relate to one another via hierarchical clustering.
 
-For this we need to create an instance of [`HCPortfolio`](@ref).
-
-````@example simple_mean_variance
-hcportfolio = HCPortfolio(; prices = prices);# Compute the codependence matrix with [`asset_statistics!`](@ref).
-
-asset_statistics!(hcportfolio; calc_kurt = false)
-````
-
 And plot the clusters defined by it, we use Ward's linkage function because it gives the best cluster separation.
 
 ````@example simple_mean_variance
-fig7 = plot_clusters(hcportfolio; linkage = :ward)
+cluster_opt = ClusterOpt(; linkage = :ward);
+
+fig7 = plot_clusters(portfolio; cluster_opt = cluster_opt)
 ````
 
 There's also a function to plot the dendrogram, but it's not as interesting.
 
 ````@example simple_mean_variance
-fig8 = plot_dendrogram(hcportfolio; linkage = :ward)
+fig8 = plot_dendrogram(portfolio; cluster_opt = cluster_opt)
 ````
+
+## Asset and Cluster Networks
+
+We can also visualise the asset network.
+
+````@example simple_mean_variance
+fig9 = plot_network(portfolio; cluster_opt = cluster_opt, kwargs = (; method = :stress))
+````
+
+We can also visualise the cluster network.
+
+````@example simple_mean_variance
+fig10 = plot_cluster_network(portfolio; cluster_opt = cluster_opt,
+                             kwargs = (; method = :stress))
+````
+
+By default, the nodes are all the same size in both network plots, but we can scale them according to their allocation. We will show this in a later example.
 
 * * *
 

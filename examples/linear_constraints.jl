@@ -63,7 +63,7 @@ for method ∈ (:Pearson, :Semi_Pearson, :Gerber2)
         cor_opt.method = method
 
         ## Clusterise assets.
-        clustering_idx, clustering, k, corr, dist = cluster_assets(portfolio;
+        clustering_idx, clustering, k, corr, dist = cluster_assets(returns;
                                                                    cor_opt = cor_opt,
                                                                    cluster_opt = ClusterOpt(;
                                                                                             linkage = linkage))

@@ -45,12 +45,12 @@ examples_nav = fix_suffix.("./examples/" .* code_files)
 
 for file ∈ data_files
     cp(joinpath(@__DIR__, "../examples/" * file),
-       joinpath(@__DIR__, "src/examples/" * file); force = true,)
+       joinpath(@__DIR__, "src/examples/" * file); force = true)
 end
 
 for file ∈ code_files
     Literate.markdown(example_path * file, build_path; preprocess = fix_math_md,
-                      postprocess = postprocess, documenter = true, credit = true,)
+                      postprocess = postprocess, documenter = true, credit = true)
 end
 
 makedocs(;
@@ -60,13 +60,13 @@ makedocs(;
          sitename = "PortfolioOptimiser.jl",
          format = Documenter.HTML(; prettyurls = get(ENV, "CI", "false") == "true",
                                   canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
-                                  assets = String[],),
+                                  assets = String[]),
          pages = ["Home" => "index.md", "DBHT" => "DBHT.md",
                   "Constraint Functions" => "Constraint_functions.md", "OWA" => "OWA.md",
                   "Risk Measures" => "Risk_measures.md",
                   "Portfolio Optimisation" => "Portfolio.md", "Examples" => examples_nav,
                   "API" => ["Definitions" => "Definitions.md",
-                            "Statistics" => "Statistics.md"], "Index" => "idx.md"],)
+                            "Statistics" => "Statistics.md"], "Index" => "idx.md"])
 
 deploydocs(; repo = "github.com/dcelisgarza/PortfolioOptimiser.jl.git", push_preview = true,
-           devbranch = "main",)
+           devbranch = "main")

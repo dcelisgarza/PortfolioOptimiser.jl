@@ -27,7 +27,7 @@ nothing #hide
 Load the stock prices, get the asset names and compute the returns.
 
 ````@example linear_constraints
-prices = TimeArray(CSV.File("./stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File(joinpath(@__DIR__, "stock_prices.csv")); timestamp = :date)
 # We'll be sorting the assets by alphabetical order.
 assets = sort(colnames(prices))
 # Make sure we index the prices by the sorted assets to maintain consistency.
@@ -77,11 +77,14 @@ for method ∈ (:Pearson, :Semi_Pearson, :Gerber2)
         cor_opt.method = method
 
         # Clusterise assets.
-        clustering, k = cluster_assets(returns; linkage = linkage, cor_opt = cor_opt)
+        clustering_idx, clustering, k, corr, dist = cluster_assets(returns;
+                                                                   cor_opt = cor_opt,
+                                                                   cluster_opt = ClusterOpt(;
+                                                                                            linkage = linkage))
 
         # Cut the tree at k clusters and return the label each asset belongs to
         # in each set.
-        asset_sets[!, colname] = cutree(clustering; k = k)
+        asset_sets[!, colname] = clustering_idx
     end
 end
 
