@@ -666,7 +666,7 @@ mutable struct OptimiseOpt{T1 <: Integer, T2 <: Real, T3 <: Real, T4 <: Real, T5
     rf::T2
     l::T3
     rrp_penalty::T4
-    M::T5
+    n::T5
     w_ini::AbstractVector
     w_min::AbstractVector
     w_max::AbstractVector
@@ -675,7 +675,7 @@ function OptimiseOpt(; type::Symbol = :Trad, rm::Symbol = :SD, obj::Symbol = :Sh
                      kelly::Symbol = :None, class::Symbol = :Classic,
                      rrp_ver::Symbol = :None, u_cov::Symbol = :Box, u_mu::Symbol = :Box,
                      sd_cone::Bool = true, near_opt::Bool = false, hist::Integer = 1,
-                     rf::Real = 0.0, l::Real = 2.0, rrp_penalty::Real = 1.0, M::Real = 20.0,
+                     rf::Real = 0.0, l::Real = 2.0, rrp_penalty::Real = 1.0, n::Real = 20.0,
                      w_ini::AbstractVector = Vector{typeof(rf)}(undef, 0),
                      w_min::AbstractVector = Vector{typeof(rf)}(undef, 0),
                      w_max::AbstractVector = Vector{typeof(rf)}(undef, 0))
@@ -688,10 +688,10 @@ function OptimiseOpt(; type::Symbol = :Trad, rm::Symbol = :SD, obj::Symbol = :Sh
     @smart_assert(u_mu ∈ UncertaintyTypes)
     @smart_assert(u_cov ∈ UncertaintyTypes)
     if near_opt
-        @smart_assert(M >= zero(M))
+        @smart_assert(n > zero(n))
     end
 
-    return OptimiseOpt{typeof(hist), typeof(rf), typeof(l), typeof(rrp_penalty), typeof(M)}(type,
+    return OptimiseOpt{typeof(hist), typeof(rf), typeof(l), typeof(rrp_penalty), typeof(n)}(type,
                                                                                             rm,
                                                                                             obj,
                                                                                             kelly,
@@ -705,7 +705,7 @@ function OptimiseOpt(; type::Symbol = :Trad, rm::Symbol = :SD, obj::Symbol = :Sh
                                                                                             rf,
                                                                                             l,
                                                                                             rrp_penalty,
-                                                                                            M,
+                                                                                            n,
                                                                                             w_ini,
                                                                                             w_min,
                                                                                             w_max)
@@ -727,9 +727,9 @@ function Base.setproperty!(obj::OptimiseOpt, sym::Symbol, val)
         @smart_assert(val ∈ UncertaintyTypes)
     elseif sym == :u_cov
         @smart_assert(val ∈ UncertaintyTypes)
-    elseif sym == :M
+    elseif sym == :n
         if obj.near_opt
-            @smart_assert(val >= zero(val))
+            @smart_assert(val > zero(val))
         end
     else
         val = convert(typeof(getproperty(obj, sym)), val)

@@ -1571,10 +1571,7 @@ function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, T, N, opt
     rm = opt.rm
     obj = opt.obj
     rf = opt.rf
-    M = opt.M
-    if iszero(M)
-        M = sqrt(size(sigma, 1))
-    end
+    n = opt.n
     w1 = opt.w_min
     w2 = opt.w_max
 
@@ -1612,8 +1609,8 @@ function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, T, N, opt
         ret3 = sum(log.(one(risk3) .+ returns * w3)) / T
     end
 
-    c1 = (ret2 - ret1) / M
-    c2 = (risk2 - risk1) / M
+    c1 = (ret2 - ret1) / n
+    c2 = (risk2 - risk1) / n
     e1 = ret3 - c1
     e2 = risk3 + c2
 
@@ -1627,12 +1624,8 @@ function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, T, N, opt
     @constraint(model, [-log_ret, 1, model[:ret] - e1] ∈ MOI.ExponentialCone())
     @variable(model, log_risk)
     @constraint(model, [-log_risk, 1, e2 - model[:risk]] ∈ MOI.ExponentialCone())
-    if !haskey(model, :log_w)
-        @variable(model, log_w[1:N])
-        @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] ∈ MOI.ExponentialCone())
-    else
-        log_w = model[:log_w]
-    end
+    @variable(model, log_w[1:N])
+    @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] ∈ MOI.ExponentialCone())
     @variable(model, log_omw[1:N])
     @constraint(model, [i = 1:N], [log_omw[i], 1, 1 - model[:w][i]] ∈ MOI.ExponentialCone())
     @expression(model, neg_sum_log_ws, -sum(log_w .+ log_omw))
@@ -1671,7 +1664,6 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
     rf = opt.rf
     l = opt.l
     rrp_penalty = opt.rrp_penalty
-    M = opt.M
     w_ini = opt.w_ini
     w_min = opt.w_min
     w_max = opt.w_max
@@ -1736,7 +1728,7 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
     retval = _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
                                          type, rm, obj)
 
-    if near_opt
+    if near_opt && type ∈ (:Trad, :WC)
         retval = _near_optimal_centering(portfolio, mu, returns, sigma, retval, T, N, opt)
     end
 
@@ -1769,7 +1761,7 @@ function frontier_limits!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;
 
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
-    portfolio.limits[rm] = limits
+    portfolio.limits[opt.rm] = limits
 
     opt.obj = obj1
     opt.near_opt = near_opt1
@@ -1779,7 +1771,7 @@ function frontier_limits!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;
         portfolio.model = model1
     end
 
-    return portfolio.limits[rm]
+    return portfolio.limits[opt.rm]
 end
 
 """
@@ -1791,6 +1783,7 @@ efficient_frontier!(portfolio::Portfolio; class::Symbol = :Classic, hist::Intege
 """
 function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
                              points::Integer = 20)
+    @smart_assert(opt.type == :Trad)
     obj1 = opt.obj
     optimal1 = deepcopy(portfolio.optimal)
     fail1 = deepcopy(portfolio.fail)
@@ -1809,7 +1802,7 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
         ret2 = dot(mu, w2)
     else
         ret1 = sum(log.(one(eltype(mu)) .+ returns * w1)) / size(returns, 1)
-        ret2 = sum(log.(one(eltype(mu)) .+ returns * w1)) / size(returns, 1)
+        ret2 = sum(log.(one(eltype(mu)) .+ returns * w2)) / size(returns, 1)
     end
 
     alpha_i = portfolio.alpha_i
@@ -1890,16 +1883,22 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
         sharpe = true
     end
 
-    portfolio.frontier[rm] = Dict(:weights => hcat(DataFrame(; tickers = portfolio.assets),
-                                                   DataFrame(reshape(frontier, length(w1),
-                                                                     :),
-                                                             string.(range(1, i)))),
-                                  :opt => opt, :points => points, :risk => srisk,
-                                  :sharpe => sharpe)
+    key = if opt.near_opt
+        Symbol("Near_" * string(rm))
+    else
+        rm
+    end
+
+    portfolio.frontier[key] = Dict(:weights => hcat(DataFrame(; tickers = portfolio.assets),
+                                                    DataFrame(reshape(frontier, length(w1),
+                                                                      :),
+                                                              string.(range(1, i)))),
+                                   :opt => opt, :points => points, :risk => srisk,
+                                   :sharpe => sharpe)
 
     opt.obj = obj1
     portfolio.optimal = optimal1
     portfolio.fail = fail1
 
-    return portfolio.frontier[rm]
+    return portfolio.frontier[key]
 end

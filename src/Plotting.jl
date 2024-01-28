@@ -258,10 +258,15 @@ function plot_frontier(frontier; alpha::Real = 0.05, beta::Real = alpha, kappa::
 
     return plt
 end
-function plot_frontier(portfolio::AbstractPortfolio; rm::Symbol = :SD, rf::Real = 0.0,
-                       kelly::Bool = false, t_factor = 252, theme = :Spectral,
-                       kwargs_f = (;), kwargs_s = (;))
-    return plot_frontier(portfolio.frontier[rm]; alpha = portfolio.alpha,
+function plot_frontier(portfolio::AbstractPortfolio; rm::Symbol = :SD, near_opt = false,
+                       rf::Real = 0.0, kelly::Bool = false, t_factor = 252,
+                       theme = :Spectral, kwargs_f = (;), kwargs_s = (;))
+    key = if near_opt
+        Symbol("Near_" * string(rm))
+    else
+        rm
+    end
+    return plot_frontier(portfolio.frontier[key]; alpha = portfolio.alpha,
                          beta = portfolio.beta, kappa = portfolio.kappa, mu = portfolio.mu,
                          returns = portfolio.returns, t_factor = t_factor, kelly = kelly,
                          rf = rf, rm = rm, theme = theme, kwargs_f = kwargs_f,
@@ -345,9 +350,15 @@ function plot_frontier_area(frontier; alpha::Real = 0.05, beta::Real = alpha,
 
     return plt
 end
-function plot_frontier_area(portfolio::AbstractPortfolio; rm = :SD, t_factor = 252,
-                            kwargs_a = (;), kwargs_l = (;), show_sharpe = true)
-    return plot_frontier_area(portfolio.frontier[rm]; alpha = portfolio.alpha,
+function plot_frontier_area(portfolio::AbstractPortfolio; rm = :SD, near_opt::Bool = false,
+                            t_factor = 252, kwargs_a = (;), kwargs_l = (;),
+                            show_sharpe = true)
+    key = if near_opt
+        Symbol("Near_" * string(rm))
+    else
+        rm
+    end
+    return plot_frontier_area(portfolio.frontier[key]; alpha = portfolio.alpha,
                               beta = portfolio.beta, kappa = portfolio.kappa, rm = rm,
                               t_factor = t_factor, kwargs_a = kwargs_a, kwargs_l = kwargs_l,
                               show_sharpe = show_sharpe)
