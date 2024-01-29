@@ -32,8 +32,10 @@ pretty_table(returns[1:5, :]; formatters = fmt)
 
 # The advantage of using pricing information over returns is that all `missing` data is dropped, which ensures the statistics are well-behaved. It also allows the function to automatically find the latest pricing information, which is needed for discretely allocating portfolios according to available funds and stock prices.
 
-portfolio = Portfolio(;                      ## Prices TimeArray, the returns are internally computed.
-                      prices = prices,                      ## We need to provide solvers and solver-specific options.
+portfolio = Portfolio(;
+                      ## Prices TimeArray, the returns are internally computed.
+                      prices = prices,
+                      ## We need to provide solvers and solver-specific options.
                       solvers = Dict(
                                      ## We will use the Clarabel.jl optimiser. In this case we use a dictionary
                                      ## for the value, but we can also use named tuples, all we need are key-value
@@ -48,11 +50,15 @@ portfolio = Portfolio(;                      ## Prices TimeArray, the returns ar
                                                        ##               Clarabel.Optimizer, 
                                                        ##               "verbose" => false, "max_step_fraction" => 0.75
                                                        ##            )
-                                                       :solver => Clarabel.Optimizer,                                                       ## :params key is optional, but if it is present, it defines solver-specific
-                                                       ## attributes/configurations. This often needs to be a dictionary as the 
-                                                       ## solver attributes are usually strings.
+                                                       :solver => Clarabel.Optimizer,
+                                                       ## :params key is optional, but if it is present, it 
+                                                       ## defines solver-specific attributes/configurations. 
+                                                       ## This often needs to be a dictionary as the solver 
+                                                       ## attributes are usually strings.
                                                        :params => Dict("verbose" => false,
-                                                                       "max_step_fraction" => 0.75))),);# We can show how the `prices` `TimeArray` is used to compute the returns series, which is decomposed into a vector of timestamps, and the returns `Matrix`. We can check this is the case by reconstructing the `returns` `DataFrame` form above.
+                                                                       "max_step_fraction" => 0.75))));
+
+# We can show how the `prices` `TimeArray` is used to compute the returns series, which is decomposed into a vector of timestamps, and the returns `Matrix`. We can check this is the case by reconstructing the `returns` `DataFrame` form above.
 
 returns == hcat(DataFrame(; timestamp = portfolio.timestamps),
                 DataFrame([portfolio.returns[:, i] for i ∈ axes(portfolio.returns, 2)],

@@ -170,7 +170,11 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
                                                        owa_w = portfolio.owa_w,
                                                        solvers = portfolio.solvers))
     cret = returns[:, cluster]
-    ccov = covariance[cluster, cluster]
+    ccov = if !isempty(covariance)
+        covariance[cluster, cluster]
+    else
+        Matrix{eltype(returns)}(undef, 0, 0)
+    end
     cw = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf,
                      portfolio_kwargs = portfolio_kwargs)
 
@@ -409,7 +413,11 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
     for i ∈ 1:k
         cidx = clustering_idx .== i
         cret = returns[:, cidx]
-        ccov = covariance[cidx, cidx]
+        ccov = if !isempty(covariance)
+            covariance[cidx, cidx]
+        else
+            Matrix{eltype(returns)}(undef, 0, 0)
+        end
         cweights = _naive_risk(portfolio, cret, ccov; rm = rm_o, rf = rf_o,
                                portfolio_kwargs = portfolio_kwargs_o)
         weights[cidx] .*= cweights
@@ -446,7 +454,11 @@ function _intra_weights(portfolio, opt;
     for i ∈ 1:k
         idx = clustering_idx .== i
         cmu = !isempty(mu) ? mu[idx] : Vector{eltype(returns)}(undef, 0)
-        ccov = covariance[idx, idx]
+        ccov = if !isempty(covariance)
+            covariance[idx, idx]
+        else
+            Matrix{eltype(returns)}(undef, 0, 0)
+        end
         cret = returns[:, idx]
         cassets = portfolio.assets[idx]
         weights, cfail, success = _opt_w(portfolio, cassets, cret, cmu, ccov, opt;
@@ -484,7 +496,11 @@ function _inter_weights(portfolio, intra_weights, opt;
     returns = portfolio.returns
     covariance = portfolio.cov
     tmu = !isempty(mu) ? transpose(intra_weights) * mu : Vector{eltype(returns)}(undef, 0)
-    tcov = transpose(intra_weights) * covariance * intra_weights
+    tcov = if !isempty(covariance)
+        transpose(intra_weights) * covariance * intra_weights
+    else
+        Matrix{eltype(returns)}(undef, 0, 0)
+    end
     tret = returns * intra_weights
     inter_weights, inter_fail, success = _opt_w(portfolio, 1:size(tret, 2), tret, tmu, tcov,
                                                 opt; asset_stat_kwargs = asset_stat_kwargs,

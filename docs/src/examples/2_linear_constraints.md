@@ -1,14 +1,14 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
 
 ```@meta
-EditURL = "../../../examples/linear_constraints.jl"
+EditURL = "../../../examples/2_linear_constraints.jl"
 ```
 
 # Linear asset constraints
 
 This tutorial explains step by step how the constraint functions can be used to generate linear constraints. We also show how we can generate our own sets using clustering techniques.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 using Clustering, CovarianceEstimation, CSV, DataFrames, LinearAlgebra, PortfolioOptimiser,
       PrettyTables, TimeSeries
 
@@ -26,7 +26,7 @@ nothing #hide
 
 Load the stock prices, get the asset names and compute the returns.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 prices = TimeArray(CSV.File(joinpath(@__DIR__, "stock_prices.csv")); timestamp = :date)
 # We'll be sorting the assets by alphabetical order.
 assets = sort(colnames(prices))
@@ -53,7 +53,7 @@ When we use `:Pearson` and `:Semi_Pearson` to compute the correlation, we're int
 
 ### Building the asset sets dataframe.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 asset_sets = DataFrame(:Asset => assets)
 cor_opt = CorOpt(; estimation = CorEstOpt(; estimator = AnalyticalNonlinearShrinkage(),
                                           # `target_ret` is used as the return threshold for
@@ -99,7 +99,7 @@ As previously mentioned, assets are categorised on their industry sectors, but t
 
 Say we want to ensure we have at least 3% of our portfolio allocated to `GOOG`, ``w_{\mathrm{goog}} \geq 0.03``.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(
                         # Enable the constraint.
                         :Enabled => [true],
@@ -122,13 +122,13 @@ nothing #hide
 
 Recall that the linear constraints are defined as ``\mathbf{A} \bm{w} \geq \bm{b}``, we can show that the constraint will be applied to `GOOG`, as its weight coefficient is 1, while all the others are `0`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 hcat(asset_sets[!, :Asset], DataFrame(:A_t => vec(A)))
 ````
 
 Using the definition of the linear constraints, `B` should be `0.03`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 B
 ````
 
@@ -136,7 +136,7 @@ Substituting these values into the linear constraint definition and removing all
 
 Say we also don't want our portfolio to be more than 10 % `GOOG`. Here's how we can do so. Note how the only things that change are `:Sign` and `:Weight`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(:Enabled => [true],
                         # Constraining a single asset.
                         :Type => ["Asset"],
@@ -159,13 +159,13 @@ In practice, we would create all constraints at once, but this is a showcase so 
 
 The sign in the `A` matrix will be inverted.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 hcat(asset_sets[!, :Asset], DataFrame(:A_t => vec(A)))
 ````
 
 And so will the sign of the `B` vector.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 B
 ````
 
@@ -175,7 +175,7 @@ By substituting these values into the definition of the linear constraints above
 
 We can also constrain an asset with respect to another one. For example, say we wish to ensure `:AAPL` contributes at least a factor of what `:T` contributes. Mathematically, the constraint can be written as ``w_{\mathrm{aapl}} \geq f w_{\mathrm{t}}``, where ``f`` is a scalar factor. Here we use `f = 0.5`
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(:Enabled => [true],
                         # We want to constrain an asset.
                         :Type => ["Asset"],
@@ -201,19 +201,19 @@ nothing #hide
 
 Recalling the definition of the linear constraints, as well as the constraint we want to create, we can conclude that `A` will contain all zero coefficients except for those of `:AAPL` and `:T`. These two will be `1` and `-f = -0.5`, respectively.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 hcat(asset_sets[!, :Asset], DataFrame(:A_t => vec(A)))
 ````
 
 Naturally `B` should be 0.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 B
 ````
 
 This pattern of `A` and `B` is the case for all relative constraints. The `anchor` asset/subset will have its coeficient set to 1, the relative asset/set will be set to `-f`, and `B` will be 0. If the sign is `<=`, the values will be multiplied by -1. To illustrate this, we will constrain `:AMZN` to contribute at most twice of what `:GM` does.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(:Enabled => [true],
                         # We want to constrain an asset.
                         :Type => ["Asset"],
@@ -239,13 +239,13 @@ nothing #hide
 
 Again B is equal to `0`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 B
 ````
 
 See how the coefficient of `:AMZN` is `-1` while the one for `:GM` is `2`. When substituting into the linear constraint definition, noting that `B` is equal to `0`, we get ``-w_{\mathrm{amzn}} + 2 w_{\mathrm{gm}} \geq 0 \to 2 w_{\mathrm{gm}} \geq w_{\mathrm{amzn}}.``
 
-````@example linear_constraints
+````@example 2_linear_constraints
 hcat(asset_sets[!, :Asset], DataFrame(:A_t => vec(A)))
 ````
 
@@ -255,7 +255,7 @@ We can also constrain a single asset relative to a whole asset set. This is esse
 
 We will constrain the weight of asset `:T` to have a lower bound greater than or equal to `0.03` times the sum of the weights of subset `3` of set `:PD`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(:Enabled => [true],
                         # Constraining a single asset.
                         :Type => ["Asset"],
@@ -283,19 +283,19 @@ nothing #hide
 
 As expected, `B` is equal to `0`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 B
 ````
 
 And if we place `A` next to the asset set dataframe and the set `:PD`, we see that the only assets with non-zero coefficients in `A`, are the `anchor` and the `subset` from `:Pw` with label `3`. Of note is the fact that `:T` has a coefficient of `0.97`, this is because it belongs to subset `3` of set `:Pw`, so its coefficient will be `1 - f`, and as per above `f := 0.03`. Substituting and rearranging into the definition of the linear constraints we get ``0.97 w_{x} \geq \sum \bm{w}_{\mathcal{\Omega} \setminus x}``, where `x := :T` and `Ω := 3 ∈ {:PD}`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 hcat(asset_sets[!, [:Asset, :PD]], DataFrame(:A_t => vec(A)))
 ````
 
 Now we will show how the sign is inverted when we're defining an upper bound. We will constrain the weight of asset `:T` to have an upper bound less than or equal to `0.4` times the sum of the weights of subset `1` of set `:SD`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(:Enabled => [true],
                         # Constraining a single asset.
                         :Type => ["Asset"],
@@ -323,13 +323,13 @@ nothing #hide
 
 Again `B` is equal to `0`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 B
 ````
 
 And as expected, the coefficient of `:T` is `-1`, and the coefficients of all assets belonging to subset `1` in set `:SD` are `0.4`. Substituting into the definition of the linear constraints and rearranging, we get ``\sum \bm{w}_{\mathcal{\Omega}} \geq w_{x}``, where `x := :T` and `Ω := 1 ∈ {:SD}`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 hcat(asset_sets[!, [:Asset, :SD]], DataFrame(:A_t => vec(A)))
 ````
 
@@ -337,7 +337,7 @@ hcat(asset_sets[!, [:Asset, :SD]], DataFrame(:A_t => vec(A)))
 
 We can constrain all assets simultaneously. This is equivalent to constraining single assets one at a time. Here we constrain all assets to contribute at least `0.01` to the portfolio.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(:Enabled => [true],
                         # Constrain all assets.
                         :Type => ["All Assets"],
@@ -355,13 +355,13 @@ nothing #hide
 
 Since we have 20 assets, `A` should be a `20×20` Identity matrix and `B` a `20×1` row vector whose entries are all `0.01`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 A == I, B == fill(0.01, length(assets))
 ````
 
 For completeness we will show how all other cases generalise to constraining all assets. First we constrain the assets to be less than or equal to `0.35`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(:Enabled => [true],
                         # Constrain all assets.
                         :Type => ["All Assets"],
@@ -380,7 +380,7 @@ A == -I, B == fill(-0.35, length(assets))
 
 Constraining all assets relative to another asset.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(:Enabled => [true],
                         # Constrain all assets.
                         :Type => ["All Assets"],
@@ -404,19 +404,19 @@ nothing #hide
 
 Since it's a relative constraint, `B` is a `20×1` vector of zeros.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 B == zeros(20)
 ````
 
 We can show that the column vector for each asset has the coefficient for the asset as `1` and the coefficient of the relative asset as `-0.3`. The exception is `:GM`, where the asset and relative asset are the same, so the coefficient is the sum of `1 - 0.3 = 0.7`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 hcat(asset_sets[!, :Asset], DataFrame(A', asset_sets[!, :Asset]))
 ````
 
 By making the constraint an upper bound, the coeffcients in `A` have their signs reversed.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(:Enabled => [true],
                         # Constraining all assets.
                         :Type => ["All Assets"],
@@ -438,13 +438,13 @@ nothing #hide
 
 `B` is again a `20×1` vector of zeros.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 B == zeros(20)
 ````
 
 The column vector for each asset has the coefficient for the asset as `-1` and the coefficient of the relative asset as `2`. The exception is `:PFE`, where the asset and relative asset are the same, so the coefficient is the sum of `-1 + 2 = 1`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 hcat(asset_sets[!, :Asset], DataFrame(A', asset_sets[!, :Asset]))
 ````
 
@@ -452,7 +452,7 @@ hcat(asset_sets[!, :Asset], DataFrame(A', asset_sets[!, :Asset]))
 
 We can constrain the sum of the weights of a subset, ``\sum\left(\bm{w}_{\mathcal{\Omega}}\right)\right) \geq B`` where ``\mathcal{\Omega}`` is a subset of assets. We'll use subset `3` from set `:PD`, and constrain the sum of their weights to be greater than or equal to `0.04`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(:Enabled => [true],
                         # Subset constraint.
                         :Type => ["Subset"],
@@ -474,19 +474,19 @@ nothing #hide
 
 `B` is equal to `0.04`
 
-````@example linear_constraints
+````@example 2_linear_constraints
 B
 ````
 
 If we set `A` next to the assets and the set from which it was derived, we can see that the subset `3` of set `:PD` has coefficients equal to `1` while the rest have coefficients equal to `0`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 hcat(asset_sets[!, [:Asset, :PD]], DataFrame(:A_t => vec(A)))
 ````
 
 If we want a lower bound, the signs of `A` and `B` will be inverted so ``B \geq \sum\left(\bm{w}_{\mathcal{\Omega}}\right)\right)`` where ``\mathcal{\Omega}`` is a subset of assets. We will constrain the sum of the weights of subset `2` from set `:PD` to be less than or equal to `0.2`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 constraints = DataFrame(:Enabled => [true],
                         # Subset constraint.
                         :Type => ["Subset"],
@@ -508,13 +508,13 @@ nothing #hide
 
 `B` is `-0.2`.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 B
 ````
 
 If we set `A` next to the assets and the set from which it was derived, we can see that the subset `2` of set `:PD` has coefficients equal to `-1` while the rest have coefficients equal to `0`. As we've done before, after subsituting into the definition of the linear constraints and rearranging we recover the aforementioned equation defining the constraint.
 
-````@example linear_constraints
+````@example 2_linear_constraints
 hcat(asset_sets[!, [:Asset, :PD]], DataFrame(:A_t => vec(A)))
 ````
 
