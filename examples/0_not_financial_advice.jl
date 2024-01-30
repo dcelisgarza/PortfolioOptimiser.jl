@@ -124,6 +124,8 @@ w1 = optimise!(portfolio, opt)
 
 # and a nested cluster optimisation (`:NCO`). This takes the cluster structure and treats each cluster as its own portfolio and performs a traditional optimisation on each one. The weights get put into an `N×k` matrix where each column represents one of `k` clusters, and each row one of `N` assets. All columns are disjointed sets with zero values for assets that do not belong in a given cluster. This matrix is then used to compute the statistics for each cluster via linear algebra. Simply put, each cluster is turned into a synthetic asset. We then create a portfolio made up of said synthetic assets and optimise it with a traditional optimisation, yielding a `k×1` vector column vector of weights for each cluster. Once this is done, the aforementioned matrix can be multiplied by this vector to recover the vector of weights for each asset. This way, we take the best of both worlds and have an optimised portfolio that takes advantage of the relational structure of the assets.
 
+# Since we're performing various sub optimisations, we want to pass on our optimisation options into them, we do this with the `nco_opt` keyword.
+
 w2 = optimise!(hcportfolio; type = :NCO, nco_opt = opt, cluster_opt = cluster_opt)
 
 # Both portfolios are fairly similar, but that's mostly because we have very few assets. The hierarchical approach shields the investor from highly correlated assets. I tend to prefer it even if its flashy statistics are always less flashy. I like an uncorrelated yet performant portfolio. This seems to be a good way of having your cake and eating it too.
