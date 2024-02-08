@@ -203,6 +203,6 @@ fig6 = plot_network(portfolio; type = :Combo, cluster_opt = cluster_opt,
 fig7 = plot_cluster_network(portfolio; type = :Combo, cluster_opt = cluster_opt,
                             kwargs = (; method = :stress, curves = false))
 
-## Conclusion
+# ## Conclusion
 
 # Hopefully this gives a good starting overview on how you can use the library to make reasonable, justifiable, and robust investment choices... ahh who are we kidding, we're all YOLOing 0 DTE TSLA options 🚀🌔🙌💎🦍.

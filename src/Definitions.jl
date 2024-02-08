@@ -62,40 +62,48 @@ Available optimisation types for [`Portfolio`](@ref).
 
 Available objective functions for `:Trad` optimisations. We can chose any of the objective functions in [`ObjFuncs`](@ref) and risk measures in [`RiskMeasures`](@ref).
 
-  - `:Min_Risk`: minimum risk portfolio,```math
+  - `:Min_Risk`: minimum risk portfolio,
+
+```math
+  \\begin{align*}
+  \\underset{\\bm{w}}{\\min} &\\qquad \\phi_{j}(\\bm{w}) \\\\
+  \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
+  &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
+  &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
+  \\end{align*}\\,.
+```
+
+  - `:Utility`: maximum utility portfolio,
+
+```math
     \\begin{align*}
-    \\underset{\\bm{w}}{\\min} &\\qquad \\phi_{j}(\\bm{w}) \\\\
+    \\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) - \\lambda \\phi_{j}(\\bm{w}) \\\\
     \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
     &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
     &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
     \\end{align*}\\,.
-
-```
-- `:Utility`: maximum utility portfolio,```math
-\\begin{align*}
-\\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) - \\lambda \\phi_{j}(\\bm{w}) \\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
-&\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
-&\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
-\\end{align*}\\,.
 ```
 
-  - `:Sharpe`: maximum risk-adjusted return ratio portfolio,```math
+  - `:Sharpe`: maximum risk-adjusted return ratio portfolio,
+
+```math
     \\begin{align*}
     \\underset{\\bm{w}}{\\max} &\\qquad \\dfrac{R(\\bm{w}) - r}{\\phi_{j}(\\bm{w})} \\\\
     \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
     &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
     &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
     \\end{align*}\\,.
-
 ```
-- `:Max_Ret`: maximum return portfolio,```math
-\\begin{align*}
-\\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) \\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
-&\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
-&\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
-\\end{align*}\\,.
+
+  - `:Max_Ret`: maximum return portfolio,
+
+```math
+    \\begin{align*}
+    \\underset{\\bm{w}}{\\max} &\\qquad R(\\bm{w}) \\\\
+    \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B} \\\\
+    &\\qquad \\phi_{i}(\\bm{w}) \\leq c_{i} \\, \\forall \\, \\phi_{i} \\in \\left\\{\\Phi\\right\\} \\\\
+    &\\qquad R(\\bm{w}) \\geq \\overline{\\mu}
+    \\end{align*}\\,.
 ```
 
 Where:
@@ -172,32 +180,40 @@ Where:
 
 Computes the worst case mean variance portfolio according to user-selected uncertainty sets (see [`UncertaintyTypes`](@ref)) for the portfolio return and covariance. We can chose any of the objective functions in [`ObjFuncs`](@ref).
 
-  - `:Min_Risk`: worst case minimum risk mean-variance portfolio,```math
-    \\begin{align*}
-    \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\\\
-    \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
-    \\end{align*}
+  - `:Min_Risk`: worst case minimum risk mean-variance portfolio,
 
+```math
+  \\begin{align*}
+  \\underset{\\bm{w}}{\\min} &\\qquad \\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\\\
+  \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
+  \\end{align*}
 ```
-- `:Utility`: worst case maximum utility mean-variance portfolio,```math
+
+  - `:Utility`: worst case maximum utility mean-variance portfolio,
+
+```math
 \\begin{align*}
 \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w})\\, -\\, \\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\lambda \\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\\\
 \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
 \\end{align*}
 ```
 
-  - `:Sharpe`: worst case maximum risk-adjusted return ratio mean-variance portfolio,```math
+  - `:Sharpe`: worst case maximum risk-adjusted return ratio mean-variance portfolio,
+
+```math
     \\begin{align*}
     \\underset{\\bm{w}}{\\max} &\\qquad \\dfrac{\\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w}) - r}{\\underset{\\mathbf{\\Sigma}\\, \\in\\, U_{\\mathbf{\\Sigma}}}{\\max}\\, \\left(\\bm{w}^{\\intercal}\\, \\mathbf{\\Sigma}\\, \\bm{w}\\right)^{1/2}} \\\\
     \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
     \\end{align*}
-
 ```
-- `:Max_Ret`: worst case maximum return mean-variance portfolio,```math
-\\begin{align*}
-\\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w})\\\\
-\\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
-\\end{align*}
+
+  - `:Max_Ret`: worst case maximum return mean-variance portfolio,
+
+```math
+  \\begin{align*}
+  \\underset{\\bm{w}}{\\max} &\\qquad \\underset{\\bm{\\mu}\\, \\in\\, U_{\\bm{\\mu}}}{\\min} R(\\bm{w})\\\\
+  \\mathrm{s.t.} &\\qquad \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
+  \\end{align*}
 ```
 
 Where:
@@ -255,7 +271,8 @@ Available optimisation types for [`HCPortfolio`](@ref).
   - `:HRP`: Hierarchical Risk Parity.
   - `:HERC`: Hierarhical Equal Risk Contribution.
   - `:NCO`: Nested Clustered Optimisation.
-    Both `:HERC` and `:NCO` split their optimisations into two parts:
+
+Both `:HERC` and `:NCO` split their optimisations into two parts:
 
  1. inter-cluster optimisation.
  2. intra-cluster optimisation.
@@ -284,7 +301,7 @@ Choice of what estimate of ``\\mathbf{\\Sigma}`` to use. Factor models, `:FM` an
       + `:FM`: uses the standard estimates of ``\\mathbf{\\Sigma}`` and ``\\mathbf{X}``.
       + `:BL`: uses the standard estimate of ``\\mathbf{\\Sigma}``.
       + `:BLFM`: uses the standard estimates of ``\\mathbf{\\Sigma}`` and ``\\mathbf{X}``.
-  - `3`
+  - `3`:
 
       + `:FM` and `:BL` do not support this option.
       + `:BLFM`: uses the factor model estimates of ``\\mathbf{\\Sigma}`` and ``\\mathbf{X}``.

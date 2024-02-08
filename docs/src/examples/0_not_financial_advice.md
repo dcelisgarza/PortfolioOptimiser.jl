@@ -42,7 +42,8 @@ The allocation solver takes care of the discrete asset allocation at the end. Th
 
 ````@example 0_not_financial_advice
 alloc_solvers = Dict(:GLPK => Dict(:solver => GLPK.Optimizer,
-                                   :params => Dict(MOI.Silent() => true)))
+                                   :params => Dict(MOI.Silent() => true)));
+nothing #hide
 ````
 
 ## Maximum Number of Assets Approach
@@ -58,10 +59,11 @@ nothing #hide
 
 I often have too many assets to start with (a few hundreds to thoudands), so I filter them first just to keep the best ones. There are multiple ways of doing this, the first is to use the maximum number of assets constraint. This may not be suitable when the number of assets is too large, and I haven't tried it with thousands of assets yet.
 
-I like to minimise my drawdown risk so I like to minimise the relativistic drawdown at risk (:RDaR) with default parameters. Say we want to use only the top `x %` least risky assets. Since we only have 20 assets, we'll make this the top `25 %`. We can do this by setting the maximum number of assets to equal the number of assets divided by two.
+I like to minimise my drawdown risk so I like to minimise the relativistic drawdown at risk (`:RDaR`) with default parameters. Say we want to use only the top `x%` least risky assets. Since we only have 20 assets, we'll make this the top `25%`. We can do this by setting the maximum number of assets to equal the number of assets divided by two.
 
 ````@example 0_not_financial_advice
-portfolio.max_number_assets = div(length(portfolio.assets), 4)
+portfolio.max_number_assets = div(length(portfolio.assets), 4);
+nothing #hide
 ````
 
 Because this is a drawdown risk measure, and we're minimising the risk, we don't need to compute any statistics. We can optimise directly.
@@ -74,11 +76,8 @@ We'll save the significant tickers for later.
 
 ````@example 0_not_financial_advice
 idx = w.weights .>= 1e-6;
-tickers_1 = Symbol.(w.tickers[idx]);
-nothing #hide
+tickers_1 = Symbol.(w.tickers[idx])
 ````
-
-We will use these weights later in this example.
 
 ## Hierarchical Clustering to Filter Assets
 
@@ -93,20 +92,22 @@ nothing #hide
 The Gerber 2 statistic is quite a robust covariance matrix, which is turned into a correlation and distance matrices within the `asset_statistics!` function.
 
 ````@example 0_not_financial_advice
-cor_opt = CorOpt(; method = :Gerber2)
-cluster_opt = ClusterOpt(; linkage = :ward)
+cor_opt = CorOpt(; method = :Gerber2);
+cluster_opt = ClusterOpt(; linkage = :ward);
+nothing #hide
 ````
 
-Now lets define a function that leaves us with `x %` after removing the bottom `q'th` quantile `n` times. In other words, ``x = (1-q)^n``, solving for ``q``, ``q = 1 - \exp\left(\dfrac{1}{n}\log x\right)``.
+Now lets define a function that leaves us with `x%` after removing the bottom `q'th` quantile `n` times. In other words, ``x = (1-q)^n \to q = 1 - \exp\left(\dfrac{1}{n}\log x\right)``.
 
 ````@example 0_not_financial_advice
-gen_q(x, n) = 1 - exp(log(x) / n)
+gen_q(x, n) = 1 - exp(log(x) / n);
+nothing #hide
 ````
 
-Why do we need this? Well, because we'll filter the stocks using a few risk measures, I like to use downside and drawdown risk measures. For our example we'll only use drawdown risk measures.
+Why do we need this? Well, because we'll filter the stocks using a few risk measures. We can define a function to do so.
 
 ````@example 0_not_financial_advice
-function get_best_tickers(tickers, x, rms)
+function get_best_tickers(tickers, x, rms, cor_opt, cluster_opt)
     new_tickers = tickers
     q = gen_q(x, length(rms))
     for rm ∈ rms
@@ -121,14 +122,20 @@ function get_best_tickers(tickers, x, rms)
     end
 
     return Symbol.(new_tickers)
-end
+end;
+nothing #hide
+````
 
-tickers_2 = get_best_tickers(hcportfolio.assets, 0.25, [:DaR, :CDaR, :EDaR, :RDaR])
+I like to use downside and drawdown risk measures, but for our example we'll only use drawdown risk measures.
+
+````@example 0_not_financial_advice
+tickers_2 = get_best_tickers(hcportfolio.assets, 0.25, [:DaR, :CDaR, :EDaR, :RDaR], cor_opt,
+                             cluster_opt)
 ````
 
 `tickers_2` contains the filtered tickers.
 
-Observant readers may have figured out that we can take a similar approach with the traditional portfolio without the need for constraining the maximum number of assets, it's just much more computationally intensive. One could also use a single step and simply take the top `q'th` percentile. We're simply showcasing a couple of simple approaches.
+Observant readers may have figured out that we can take a similar approach with the traditional portfolio without the need for constraining the maximum number of assets, it's just much more computationally intensive. One could also use a single step and simply take the top `q'th` percentile. We're only showing two ways of doing it, there is more than one right answer.
 
 ## Optimising and Allocating our Reduced Portfolio
 
@@ -156,27 +163,32 @@ asset_statistics!(hcportfolio; calc_mu = false, calc_cov = false, calc_kurt = fa
 nothing #hide
 ````
 
-Since we filtered the assets by minimising the risk measure, we can be more comfortable in using a different objective function. As such we'll maximise the risk-return (Sharpe) ratio using exact kelly returns, which have to be computed in accordance to the asset weights whilst being optimised, which is why we didn't need to compute the mean returns.
+Since we filtered the assets by minimising the risk measure, we can be more comfortable in using a different objective function. As such we'll maximise the risk-return (Sharpe) ratio using exact kelly returns, which have to be computed in accordance to the asset weights that are being optimised, which is why we didn't need to compute the mean return vector.
 
 ````@example 0_not_financial_advice
-opt = OptimiseOpt(; rm = :RDaR, obj = :Sharpe, kelly = :Exact)
+opt = OptimiseOpt(; rm = :RDaR, obj = :Sharpe, kelly = :Exact);
+nothing #hide
 ````
 
-We'll be using both a traditional optimisation,
+Perform the traditional optimisation,
 
 ````@example 0_not_financial_advice
 w1 = optimise!(portfolio, opt)
 ````
 
-and a nested cluster optimisation (NCO), which is a series of traditional optimisations that make use of hierarchical clustering. This is a special optimisation for which we need to provide optimisation options to pass on to each sub-optimisation.
+and a nested cluster optimisation (`:NCO`). This takes the cluster structure and treats each cluster as its own portfolio and performs a traditional optimisation on each one. The weights get put into an `N×k` matrix where each column represents one of `k` clusters, and each row one of `N` assets. All columns are disjointed sets with zero values for assets that do not belong in a given cluster. This matrix is then used to compute the statistics for each cluster via linear algebra. Simply put, each cluster is turned into a synthetic asset. We then create a portfolio made up of said synthetic assets and optimise it with a traditional optimisation, yielding a `k×1` vector column vector of weights for each cluster. Once this is done, the aforementioned matrix can be multiplied by this vector to recover the vector of weights for each asset. This way, we take the best of both worlds and have an optimised portfolio that takes advantage of the relational structure of the assets.
+
+Since we're performing various sub optimisations, we want to pass on our optimisation options into them, we do this with the `nco_opt` keyword.
 
 ````@example 0_not_financial_advice
 w2 = optimise!(hcportfolio; type = :NCO, nco_opt = opt, cluster_opt = cluster_opt)
 ````
 
+Both portfolios are fairly similar, but that's mostly because we have very few assets. The hierarchical approach shields the investor from highly correlated assets. I tend to prefer it even if its flashy statistics are always less flashy. I like an uncorrelated yet performant portfolio. This seems to be a good way of having your cake and eating it too.
+
 ## Discrete Allocation of Assets
 
-Again we have a few things we can do here, we can either allocate each portfolio individually, or we can combine them in some way. We'll combine them into a single portfolio using the risk return ratio for RDaR. For this need the mean returns, the type doesn't matter because we'll be using the same for both and the ratio should cancel it out anyway.
+Again we have a few things we can do here, we can either allocate each portfolio individually, or we can combine them in some way. We'll combine them into a single portfolio using the risk return ratio for `:RDaR`. For this need to compute the mean returns vector. The type of the mean return doesn't matter because we'll be using the same for both, and we'll be using a ratio to compute the linear combination coefficients.
 
 ````@example 0_not_financial_advice
 asset_statistics!(portfolio; calc_mu = true, calc_cov = false, calc_kurt = false)
@@ -191,43 +203,95 @@ We don't need to provide the portfolio type since it defaults to `:Trad` for `Po
 sr1 = sharpe_ratio(portfolio; rm = :RDaR)
 ````
 
-We need to tell the sharpe ratio function to take the :NCO type because it defaults to `:HRP` for `HCPortfolio` variables.
+We need to set `type = :NCO` because the function defaults to `:HRP` for `HCPortfolio` variables.
 
 ````@example 0_not_financial_advice
 sr2 = sharpe_ratio(hcportfolio; type = :NCO, rm = :RDaR)
 ````
 
-The hierarchical optimisation will not have a sharpe ratio that is as large, but it usually leads to more robust portfolios, particularly if the correlation used is robust itself. So we'll take them as they are.
+The value of an NCO portfolio's objective function will never be as good as that of a traditional portfolio (higher min risk, lower utility, lower sharpe ratio, lower max return), but there is also less overfitting thanks to the hierarchical clustering, especially if using a robust correlation matrix. Which is why I tend to prefer them over the traditional approach. For the example, I will assign it the larger coefficient (alpha) for our linear combination.
 
 ````@example 0_not_financial_advice
-alpha = sr1 / (sr1 + sr2)
-beta = 1 - alpha
+alpha = sr1 / (sr1 + sr2);
+beta = 1 - alpha;
+nothing #hide
 ````
 
 Now we can take these values and use them to make a linear combination of the weights and renormalise.
 
 ````@example 0_not_financial_advice
-weights3 = alpha * w1.weights + beta * w2.weights
-weights3 ./= sum(weights3)
+weights3 = beta * w1.weights + alpha * w2.weights;
+weights3 ./= sum(weights3);
+nothing #hide
 ````
 
-We can create a dataframe and then assign it to one of the portfolios, it doesn't matter which.
+We can create a dataframe and assign it to one of the portfolios, it doesn't matter which.
 
 ````@example 0_not_financial_advice
 portfolio.optimal[:Combo] = DataFrame(; tickers = w1.tickers, weights = weights3)
 ````
 
-Finally, we can discretely allocate the combined portfolio. We have to provide the `port_type` argument because for `Portfolio` it defaults to `:Trad` and for `HCPortfolio` to `:HRP`. We have to tell the function to take the assets and weights from `optimal[:Combo]`. We also need to provide how much money we can invest, the default is 10_000. Say we only have 2674 dollars.
+Finally, we can discretely allocate the combined portfolio. We have to provide the `port_type` argument because for `Portfolio` it defaults to `:Trad` and for `HCPortfolio` to `:HRP`. We have to tell the function to take the assets and weights from the `optimal[:Combo]` field of the portfolio. We also need to tell the function how much money we can/want to invest, the default is 10,000. Say we only have 2674 dollars.
 
 !!! note
     
-    The value of `investment` is not a currency, so you have to ensure the currency of the prices and currency of the investment match.
+    The value of `investment` is not a currency, it's a number, so you have to ensure the currency of the prices and investment match.
 
 ````@example 0_not_financial_advice
 w4 = allocate!(portfolio; port_type = :Combo, investment = 2674)
 ````
 
-This gives the portfolio that we can afford that minimises the difference between its weights and the ideal weights. By default, it assumes the asset price to be the last row of `prices`. Alternatively you can provide the keyword argument `asset_prices`, which takes a vector of prices where the `i'th` entry is the price of the `i'th` asset.
+This gives the portfolio that we can afford that minimises the difference between its weights and the ideal weights. By default, it assumes the asset price to be the last row of `prices`. Alternatively, you can provide the keyword argument `asset_prices`, which takes a vector of prices where the `i'th` entry is the price of the `i'th` asset.
+
+### Plots of Allocated Portfolio
+
+There are a number of plots we can create from an optimised portfolio. For example we can plot the composition as a bar chart.
+
+````@example 0_not_financial_advice
+fig1 = plot_bar(portfolio, :Combo)
+````
+
+We can also plot various expected ranges of returns of this portfolio.
+
+````@example 0_not_financial_advice
+fig2 = plot_range(portfolio; type = :Combo)
+````
+
+We can view downside risk measures as well.
+
+````@example 0_not_financial_advice
+fig3 = plot_hist(portfolio; type = :Combo)
+````
+
+Cumulative uncompounded drawdowns too.
+
+````@example 0_not_financial_advice
+fig4 = plot_drawdown(portfolio; type = :Combo)
+````
+
+The asset clusters.
+
+````@example 0_not_financial_advice
+fig5 = plot_clusters(portfolio; cluster_opt = cluster_opt)
+````
+
+We can also visualise the asset network.
+
+````@example 0_not_financial_advice
+fig6 = plot_network(portfolio; type = :Combo, cluster_opt = cluster_opt,
+                    kwargs = (; method = :stress, curves = false))
+````
+
+And the cluster network.
+
+````@example 0_not_financial_advice
+fig7 = plot_cluster_network(portfolio; type = :Combo, cluster_opt = cluster_opt,
+                            kwargs = (; method = :stress, curves = false))
+````
+
+## Conclusion
+
+Hopefully this gives a good starting overview on how you can use the library to make reasonable, justifiable, and robust investment choices... ahh who are we kidding, we're all YOLOing 0 DTE TSLA options 🚀🌔🙌💎🦍.
 
 * * *
 
