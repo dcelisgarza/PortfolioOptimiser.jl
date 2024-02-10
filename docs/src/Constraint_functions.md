@@ -14,5 +14,4 @@ rp_constraints
 ## Private API
 
 ```@docs
-RPConstraintTypes
 ```

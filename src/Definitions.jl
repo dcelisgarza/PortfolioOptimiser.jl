@@ -488,5 +488,5 @@ function _filled_by(msg::String)
     return "This parameter is filled after calling $msg."
 end
 
-export KellyRet, ObjFuncs, ValidTermination, PortClasses, PortTypes, RPConstraintTypes,
-       HCPortTypes, LinkageTypes, BranchOrderTypes, HCObjFuncs, AllocTypes, BLHist
+export KellyRet, ObjFuncs, ValidTermination, PortClasses, PortTypes, HCPortTypes,
+       LinkageTypes, BranchOrderTypes, HCObjFuncs, AllocTypes, BLHist

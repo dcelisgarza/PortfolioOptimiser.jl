@@ -505,7 +505,6 @@ Constructs risk contribution constraint vector for the risk parity optimisation 
 - `asset_sets`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
     - `Asset`: list of assets, this is the only mandatory column.
     - Subsequent columns specify the asset class sets. They are only used if `type == :Subset`.
-- `type`: what the risk parity is applied relative to, must be one of [`RPConstraintTypes`](@ref).
 - `class_col`: index of set of classes from `asset_sets` to use in when `type == :Subset`.
 # Outputs
 - `rw`: risk contribution constraint vector.
