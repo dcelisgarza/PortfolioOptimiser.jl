@@ -778,6 +778,7 @@ end
 end
 
 @testset "Turnover constraints" begin
+    portfolio = Portfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],
@@ -793,9 +794,8 @@ end
                                         4, 2, 2])
 
     constraints = DataFrame("Enabled" => [true, true, true, true, false],
-                            "Type" => ["All Assets", "Each Asset in Subset", "Asset",
-                                       "Asset", "All Assets"],
-                            "Set" => ["", "PDBHT", "", "", ""],
+                            "Type" => ["All Assets", "Subset", "Asset", "Asset",
+                                       "All Assets"], "Set" => ["", "PDBHT", "", "", ""],
                             "Position" => ["", 3, "WMT", "T", ""],
                             "Weight" => [0.05, 0.71, 0.02, 0.93, 0.69])
 
@@ -820,11 +820,22 @@ end
                                         3, 4, 1],
                            "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
                                         4, 2, 2])
+    constraints = DataFrame("Enabled" => [true], "Type" => ["All Assets"],
+                            "Position" => [""], "Weight" => [""])
+    w1 = rp_constraints(constraints, asset_sets)
+    constraints = DataFrame("Enabled" => [true], "Type" => ["All Subsets"],
+                            "Set" => ["G2ward"], "Weight" => [""])
+    w2 = rp_constraints(constraints, asset_sets)
+    constraints = DataFrame("Enabled" => [true], "Type" => ["All Subsets"],
+                            "Set" => ["G2DBHT"], "Weight" => [""])
+    w3 = rp_constraints(constraints, asset_sets)
 
-    w1 = rp_constraints(asset_sets, :Asset)
-    w2 = rp_constraints(asset_sets, :Subset, :G2ward)
-    w3 = rp_constraints(asset_sets, :Subset, :G2DBHT)
-    w4 = rp_constraints(asset_sets, :Subset, 6)
+    constraints = DataFrame("Enabled" => [true, true, true, true, false],
+                            "Type" => ["Asset", "Asset", "Subset", "Subset", "All Assets"],
+                            "Position" => ["GOOG", "FB", 2, 4, ""],
+                            "Weight" => [0.15, "", 0.3, "", ""],
+                            "Set" => ["", "", "G2ward", "G2ward", ""])
+    w4 = rp_constraints(constraints, asset_sets)
 
     w1t = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
            0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
@@ -839,11 +850,20 @@ end
            0.08333333333333333, 0.03571428571428571, 0.05, 0.03571428571428571, 0.05,
            0.03571428571428571, 0.03571428571428571, 0.05, 0.05, 0.03571428571428571,
            0.08333333333333333, 0.03571428571428571, 0.05, 0.05]
-
+    w4t = [0.052631578947368425, 0.01754385964912281, 0.01754385964912281,
+           0.01754385964912281, 0.01754385964912281, 0.10526315789473685,
+           0.01754385964912281, 0.01754385964912281, 0.10526315789473685,
+           0.10526315789473685, 0.01754385964912281, 0.10526315789473685,
+           0.01754385964912281, 0.01754385964912281, 0.01754385964912281,
+           0.10526315789473685, 0.01754385964912281, 0.01754385964912281,
+           0.10526315789473685, 0.10526315789473685]
     @test isapprox(w1, w1t)
     @test isapprox(w2, w2t)
     @test isapprox(w3, w3t)
-    @test isapprox(w3, w4)
+    @test isapprox(w4, w4t)
+    @test isapprox(w4[1] / w4[2], 3)
+    @test isapprox(w4[6] / w4[2], 6)
+    @test isapprox(w4[6] / w4[1], 2)
 end
 
 @testset "Connection matrix" begin

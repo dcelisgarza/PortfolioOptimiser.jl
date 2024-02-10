@@ -497,18 +497,6 @@ end
 
 """
 ```julia
-RPConstraintTypes = (:Asset, :Subset)
-```
-
-Types of risk parity constraints for building the set of linear constraints via [`rp_constraints`](@ref).
-
-  - `:Asset`: equal risk contribution per asset.
-  - `:Subset`: equal risk contribution per class.
-"""
-const RPConstraintTypes = (:Asset, :Subset)
-
-"""
-```julia
 rp_constraints(
     asset_sets::DataFrame,    type::Symbol = :Asset,    class_col::Union{String, Symbol, Nothing} = nothing)
 ```
@@ -530,34 +518,67 @@ rw_a = rp_constraints(asset_sets, :Asset)
 rw_c = rp_constraints(asset_sets, :Subset, "Class 2")
 ```
 """
-function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
-                        class_col::Union{String, Symbol, Int, Nothing} = nothing)
-    @smart_assert(type ∈ RPConstraintTypes)
+function rp_constraints(constraints::DataFrame, asset_sets::DataFrame)
     N = nrow(asset_sets)
+    inv_N = 1 / N
+    rw = fill(inv_N, N)
 
-    rw = if type == :Asset
-        fill(1 / N, N)
-    else
-        classes = names(asset_sets)
-        A = DataFrame(; a = asset_sets[!, class_col])
-        if isa(class_col, String) || isa(class_col, Symbol)
-            DataFrames.rename!(A, [class_col])
-        elseif isa(class_col, Int)
-            DataFrames.rename!(A, [classes[class_col]])
+    for row ∈ eachrow(constraints)
+        if !row["Enabled"]
+            continue
         end
 
-        col = names(A)[1]
-        A[!, :weight] .= 1
-        B = combine(groupby(A, col), nrow => :count)
-        A = leftjoin(A, B; on = col)
-        A[!, :weight] ./= A[!, :count]
-        A[!, :weight] ./= sum(A[!, :weight])
-        A[!, :weight]
+        if row["Type"] == "Asset"
+            idx = findfirst(x -> x == row["Position"], asset_sets[!, "Asset"])
+            rw[idx] = if row["Weight"] != ""
+                row["Weight"]
+            else
+                inv_N
+            end
+        elseif row["Type"] == "All Assets"
+            rw .= inv_N
+        elseif row["Type"] == "Subset"
+            assets = asset_sets[asset_sets[!, row["Set"]] .== row["Position"], "Asset"]
+            idx = [findfirst(x -> x == asset, asset_sets[!, "Asset"]) for asset ∈ assets]
+            rw[idx] .= if row["Weight"] != ""
+                row["Weight"]
+            else
+                inv_N
+            end
+        elseif row["Type"] == "All Subsets"
+            class_col = row["Set"]
+            classes = names(asset_sets)
+            A = DataFrame(; a = asset_sets[!, class_col])
+            if isa(class_col, String) || isa(class_col, Symbol)
+                DataFrames.rename!(A, [class_col])
+            elseif isa(class_col, Int)
+                DataFrames.rename!(A, [classes[class_col]])
+            end
+
+            col = names(A)[1]
+            A[!, :weight] .= 1
+            B = combine(groupby(A, col), nrow => :count)
+            A = leftjoin(A, B; on = col)
+            A[!, :weight] ./= A[!, :count]
+            A[!, :weight] ./= sum(A[!, :weight])
+            rw .= A[!, :weight]
+        end
     end
+
+    rw ./= sum(rw)
 
     return rw
 end
 
+"""
+```
+turnover_constraints(constraints::DataFrame, asset_sets::DataFrame)
+```
+
+  - "Asset"
+  - "All Assets"
+  - "Each Asset in Subset"
+"""
 function turnover_constraints(constraints::DataFrame, asset_sets::DataFrame)
     N = nrow(asset_sets)
     turnover = zeros(N)
@@ -571,7 +592,7 @@ function turnover_constraints(constraints::DataFrame, asset_sets::DataFrame)
             turnover[idx] = row["Weight"]
         elseif row["Type"] == "All Assets"
             turnover .= row["Weight"]
-        elseif row["Type"] == "Each Asset in Subset"
+        elseif row["Type"] == "Subset"
             assets = asset_sets[asset_sets[!, row["Set"]] .== row["Position"], "Asset"]
             idx = [findfirst(x -> x == asset, asset_sets[!, "Asset"]) for asset ∈ assets]
             turnover[idx] .= row["Weight"]
