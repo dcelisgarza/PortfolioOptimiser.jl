@@ -556,13 +556,12 @@ function Portfolio(;
                    kappa::Real                                       = 0.3,
                    max_num_assets_kurt::Integer                      = 0,
                    # Benchmark constraints
-                   turnover::Real                               = Inf,
-                   turnover_weights::AbstractVector{<:Real}     = Vector{Float64}(undef, 0),
-                   kind_tracking_err::Symbol                    = :None,
-                   tracking_err::Real                           = Inf,
+                   turnover::Union{Real, AbstractVector{<:Real}} = Inf,
+                   turnover_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                   kind_tracking_err::Symbol = :None, tracking_err::Real = Inf,
                    tracking_err_returns::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                   bl_bench_weights::AbstractVector{<:Real}     = Vector{Float64}(undef, 0),
+                   bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    # Risk and return constraints
                    a_mtx_ineq::AbstractMatrix{<:Real}  = Matrix{Float64}(undef, 0, 0),
                    b_vec_ineq::AbstractVector{<:Real}  = Vector{Float64}(undef, 0),
@@ -659,6 +658,9 @@ function Portfolio(;
     @smart_assert(b_sim > zero(b_sim))
     @smart_assert(0 < kappa < 1)
     @smart_assert(max_num_assets_kurt >= 0)
+    if isa(turnover, AbstractVector) && !isempty(turnover)
+        @smart_assert(length(turnover) == size(returns, 2))
+    end
     if !isempty(turnover_weights)
         @smart_assert(length(turnover_weights) == size(returns, 2))
     end
@@ -769,9 +771,10 @@ function Portfolio(;
                      typeof(a_sim), typeof(beta_i), typeof(beta), typeof(b_sim),
                      typeof(kappa), typeof(max_num_assets_kurt),
                      # Benchmark constraints
-                     typeof(turnover), typeof(turnover_weights), typeof(kind_tracking_err),
-                     typeof(tracking_err), typeof(tracking_err_returns),
-                     typeof(tracking_err_weights), typeof(bl_bench_weights),
+                     Union{<:Real, AbstractVector{<:Real}}, typeof(turnover_weights),
+                     typeof(kind_tracking_err), typeof(tracking_err),
+                     typeof(tracking_err_returns), typeof(tracking_err_weights),
+                     typeof(bl_bench_weights),
                      # Risk and return constraints
                      typeof(a_mtx_ineq), typeof(b_vec_ineq), typeof(risk_budget),
                      # Network constraints
@@ -885,6 +888,10 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         @smart_assert(0 < val < 1)
     elseif sym == :max_num_assets_kurt
         @smart_assert(val >= 0)
+    elseif sym == :turnover
+        if isa(val, AbstractVector) && !isempty(val)
+            @smart_assert(length(val) == size(obj.returns, 2))
+        end
     elseif sym == :turnover_weights
         if !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 2))
@@ -1006,7 +1013,7 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.beta), typeof(obj.b_sim), typeof(obj.kappa),
                      typeof(obj.max_num_assets_kurt),
                      # Benchmark constraints
-                     typeof(obj.turnover), typeof(obj.turnover_weights),
+                     Union{<:Real, AbstractVector{<:Real}}, typeof(obj.turnover_weights),
                      typeof(obj.kind_tracking_err), typeof(obj.tracking_err),
                      typeof(obj.tracking_err_returns), typeof(obj.tracking_err_weights),
                      typeof(obj.bl_bench_weights),

@@ -3090,8 +3090,32 @@ end
     opt.obj = :Sharpe
     w4 = optimise!(portfolio, opt)
 
+    portfolio.turnover = Inf
+    opt.obj = :Sharpe
+    w5 = optimise!(portfolio, opt)
+    to3 = range(; start = 0.001, stop = 0.003, length = 20)
+    tow3 = copy(w5.weights)
+    portfolio.turnover = to3
+    portfolio.turnover_weights = tow3
+
+    opt.obj = :Min_Risk
+    w6 = optimise!(portfolio, opt)
+
+    portfolio.turnover = Inf
+    opt.obj = :Min_Risk
+    w7 = optimise!(portfolio, opt)
+    to4 = [fill(0.01, 5); fill(0.03, 5); fill(0.07, 5); fill(0.04, 5)]
+    tow4 = copy(w7.weights)
+    portfolio.turnover = to4
+    portfolio.turnover_weights = tow4
+
+    opt.obj = :Sharpe
+    w8 = optimise!(portfolio, opt)
+
     @test all(abs.(w2.weights - tow1) .<= to1)
     @test all(abs.(w4.weights - tow2) .<= to2)
+    @test all(abs.(w6.weights - tow3) .<= to3)
+    @test all(abs.(w8.weights - tow4) .<= to4)
 end
 
 @testset "Tracking Error" begin

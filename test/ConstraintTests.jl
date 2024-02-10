@@ -777,6 +777,34 @@ end
     @test isapprox(w_max, w_maxt)
 end
 
+@testset "Turnover constraints" begin
+    asset_sets = DataFrame("Asset" => portfolio.assets,
+                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                                       3, 1],
+                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
+                                        4, 2, 1],
+                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                                       2, 1],
+                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
+                                        2, 2, 1],
+                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
+                                        3, 4, 1],
+                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
+                                        4, 2, 2])
+
+    constraints = DataFrame("Enabled" => [true, true, true, true, false],
+                            "Type" => ["All Assets", "Each Asset in Subset", "Asset",
+                                       "Asset", "All Assets"],
+                            "Set" => ["", "PDBHT", "", "", ""],
+                            "Position" => ["", 3, "WMT", "T", ""],
+                            "Weight" => [0.05, 0.71, 0.02, 0.93, 0.69])
+
+    to = turnover_constraints(constraints, asset_sets)
+    tot = [0.05, 0.05, 0.05, 0.05, 0.05, 0.71, 0.05, 0.02, 0.71, 0.71, 0.93, 0.05, 0.05,
+           0.71, 0.71, 0.05, 0.05, 0.05, 0.71, 0.05]
+    @test isapprox(to, tot)
+end
+
 @testset "RP constraints" begin
     portfolio = Portfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,

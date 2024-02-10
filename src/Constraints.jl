@@ -558,6 +558,29 @@ function rp_constraints(asset_sets::DataFrame, type::Symbol = :Asset,
     return rw
 end
 
+function turnover_constraints(constraints::DataFrame, asset_sets::DataFrame)
+    N = nrow(asset_sets)
+    turnover = zeros(N)
+    for row ∈ eachrow(constraints)
+        if !row["Enabled"]
+            continue
+        end
+
+        if row["Type"] == "Asset"
+            idx = findfirst(x -> x == row["Position"], asset_sets[!, "Asset"])
+            turnover[idx] = row["Weight"]
+        elseif row["Type"] == "All Assets"
+            turnover .= row["Weight"]
+        elseif row["Type"] == "Each Asset in Subset"
+            assets = asset_sets[asset_sets[!, row["Set"]] .== row["Position"], "Asset"]
+            idx = [findfirst(x -> x == asset, asset_sets[!, "Asset"]) for asset ∈ assets]
+            turnover[idx] .= row["Weight"]
+        end
+    end
+
+    return turnover
+end
+
 const GraphMethods = (:MST, :TMFG)
 function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
                            method::Symbol = :MST, steps::Integer = 1,
@@ -696,5 +719,5 @@ function related_assets(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;
 end
 
 export asset_constraints, factor_constraints, asset_views, factor_views, hrp_constraints,
-       rp_constraints, connection_matrix, centrality_vector, cluster_matrix,
-       connected_assets, related_assets, cluster_assets, cluster_assets!
+       rp_constraints, turnover_constraints, connection_matrix, centrality_vector,
+       cluster_matrix, connected_assets, related_assets, cluster_assets, cluster_assets!

@@ -1289,7 +1289,8 @@ function _setup_turnover(portfolio, N, obj)
     turnover = portfolio.turnover
     turnover_weights = portfolio.turnover_weights
 
-    if isinf(turnover) || isempty(turnover_weights)
+    if (isa(turnover, Real) && isinf(turnover) ||
+        isa(turnover, AbstractVector) && isempty(turnover)) || isempty(turnover_weights)
         return nothing
     end
 
