@@ -35,15 +35,9 @@ makedocs(;
                                   canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
                                   assets = String[]),
          pages = ["Home" => "index.md", "Examples" => examples_nav,
-                  "Constants" => "Constants.md", "DBHTs" => "DBHTs.md", "OWA" => "OWA.md",
-                  "Constraints" => "Constraints.md", "Types" => "Types.md"])
+                  "API" => ["Constants" => "Constants.md", "DBHTs" => "DBHTs.md",
+                            "OWA" => "OWA.md", "Constraints" => "Constraints.md",
+                            "Types" => "Types.md"]])
 
 deploydocs(; repo = "github.com/dcelisgarza/PortfolioOptimiser.jl.git", push_preview = true,
            devbranch = "main")
-#
-#              ,
-#            "Constraint Functions" => "Constraint_functions.md",
-#            "Risk Measures" => "Risk_measures.md",
-#            "Portfolio Optimisation" => "Portfolio.md", "Examples" => examples_nav,
-#            "API" => [,
-#                      "Statistics" => "Statistics.md"], "Index" => "idx.md"])
