@@ -175,7 +175,7 @@ function DenoiseOpt(; method::Symbol = :None, alpha::Real = 0.0, detone::Bool = 
                     mkt_comp::Integer = 1, kernel = ASH.Kernels.gaussian, m::Integer = 10,
                     n::Integer = 1000, genfunc::GenericFunction = GenericFunction(;))
     @smart_assert(method ∈ DenoiseMethods)
-    @smart_assert(zero(alpha) < alpha < one(alpha))
+    @smart_assert(zero(alpha) <= alpha <= one(alpha))
 
     return DenoiseOpt{typeof(alpha),typeof(mkt_comp),typeof(kernel),typeof(m),typeof(n)}(method,
                                                                                          alpha,
@@ -190,7 +190,7 @@ function Base.setproperty!(obj::DenoiseOpt, sym::Symbol, val)
     if sym == :method
         @smart_assert(val ∈ DenoiseMethods)
     elseif sym == :alpha
-        @smart_assert(zero(val) < val < one(val))
+        @smart_assert(zero(val) <= val <= one(val))
     end
     return setfield!(obj, sym, val)
 end
