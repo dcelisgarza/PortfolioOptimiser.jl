@@ -20,9 +20,9 @@ fmt = (v, i, j) -> begin
     end
 end;
 
-# ## Creating a [`Portfolio`](@ref) instance
+# ## Creating a [`Portfolio`]() instance
 
-# We can create an instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref) by calling its keyword constructor. This is a minimum viable example. There are many other keyword arguments that fine-tune the portfolio. Alternatively, you can directly modify the instance's fields. Many are guarded by assertions to ensure correctness, some are immutable for the same reason.
+# We can create an instance of [`Portfolio`]() or [`HCPortfolio`]() by calling its keyword constructor. This is a minimum viable example. There are many other keyword arguments that fine-tune the portfolio. Alternatively, you can directly modify the instance's fields. Many are guarded by assertions to ensure correctness, some are immutable for the same reason.
 
 # We can directly provide a `TimeArray` of price data to the constructor. Which computes the return data as follows.
 
@@ -64,18 +64,18 @@ returns == hcat(DataFrame(; timestamp = portfolio.timestamps),
                 DataFrame([portfolio.returns[:, i] for i ∈ axes(portfolio.returns, 2)],
                           portfolio.assets))
 
-# Another nice thing about [`Portfolio()`](@ref) and [`HCPortfolio()`](@ref) is that the asset tickers and timestamps can be obtained from either a `TimeArray` with price information, or `DataFrame` with returns information. Since we used pricing data, we can obtain the latest prices too.
+# Another nice thing about [`Portfolio()`]() and [`HCPortfolio()`]() is that the asset tickers and timestamps can be obtained from either a `TimeArray` with price information, or `DataFrame` with returns information. Since we used pricing data, we can obtain the latest prices too.
 
 pretty_table(DataFrame(; assets = portfolio.assets,
                        latest_prices = portfolio.latest_prices))
 
 # ## Optimal Risk-adjusted Return Ratio
 
-# For some risk measures/constraints, we need to compute some statistical quantities. Since we're going to showcase a mean-variance optimisation, we need to estimate the asset mean returns and covariance. We can do this by calling [`asset_statistics!`](@ref). This function also has myriad keyword options, but we'll stick to the basics.
+# For some risk measures/constraints, we need to compute some statistical quantities. Since we're going to showcase a mean-variance optimisation, we need to estimate the asset mean returns and covariance. We can do this by calling [`asset_statistics!`](). This function also has myriad keyword options, but we'll stick to the basics.
 
 asset_statistics!(portfolio; calc_kurt = false)
 
-# We can then call [`optimise!`](@ref) with default arguments, which optimises for the risk adjusted return ratio of the mean variance portfolio.
+# We can then call [`optimise!`]() with default arguments, which optimises for the risk adjusted return ratio of the mean variance portfolio.
 
 w = optimise!(portfolio)
 pretty_table(w; formatters = fmt)

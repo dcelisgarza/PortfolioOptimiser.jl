@@ -31,7 +31,7 @@ returns = Matrix(returns[!, 2:end]);
 
 # ## Defining asset sets with hierachical clustering
 
-# We can use predefined sets of assets, such as the economic sectors that are traditionally used to classify companies. Instead, we'll define our own sets using various clustering methods. These use a distance matrix to compute the clusters, for this we can use a correlation matrix. We provide various types of correlation matrices from which we'll pick a few examples. For a more thorough explanation of these methods see [`cor_dist_mtx`](@ref).
+# We can use predefined sets of assets, such as the economic sectors that are traditionally used to classify companies. Instead, we'll define our own sets using various clustering methods. These use a distance matrix to compute the clusters, for this we can use a correlation matrix. We provide various types of correlation matrices from which we'll pick a few examples. For a more thorough explanation of these methods see [`cor_dist_mtx`]().
 
 # Note that returns data can be noisy which means some covariance/correlation measures can be thrown off from the true value by outliers and statistically insignificant noise. This can be problem for algorithms that depend on covariance/correlation matrices, such as mean-variance optimisation and clustering.
 

@@ -1,4 +1,4 @@
-# Ordered Weight Arrays
+# Constraint Functions
 
 ## Public
 
@@ -6,7 +6,7 @@
 Modules = [PortfolioOptimiser]
 Public = true
 Private = false
-Pages = ["OWA.jl"]
+Pages = ["Constraints.jl"]
 ```
 
 ## Private
@@ -15,5 +15,5 @@ Pages = ["OWA.jl"]
 Modules = [PortfolioOptimiser]
 Public = false
 Private = true
-Pages = ["OWA.jl"]
+Pages = ["Constraints.jl"]
 ```

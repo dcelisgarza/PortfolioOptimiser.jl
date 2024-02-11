@@ -1,4 +1,4 @@
-# Ordered Weight Arrays
+# Types
 
 ## Public
 
@@ -6,7 +6,7 @@
 Modules = [PortfolioOptimiser]
 Public = true
 Private = false
-Pages = ["OWA.jl"]
+Pages = ["_Options_types.jl", "_Portfolio_types.jl"]
 ```
 
 ## Private
@@ -15,5 +15,5 @@ Pages = ["OWA.jl"]
 Modules = [PortfolioOptimiser]
 Public = false
 Private = true
-Pages = ["OWA.jl"]
+Pages = ["_Options_types.jl", "_Portfolio_types.jl"]
 ```

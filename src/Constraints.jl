@@ -500,7 +500,7 @@ end
 rp_constraints(
     asset_sets::DataFrame,    type::Symbol = :Asset,    class_col::Union{String, Symbol, Nothing} = nothing)
 ```
-Constructs risk contribution constraint vector for the risk parity optimisation (`:RP` and `:RRP` types of [`PortTypes`](@ref)).
+Constructs risk contribution constraint vector for the risk parity optimisation (`:RP` and `:RRP` types of [`PortTypes`]()).
 # Inputs
 - `asset_sets`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
     - `Asset`: list of assets, this is the only mandatory column.

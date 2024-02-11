@@ -1,4 +1,0 @@
-# PortfolioOptimiser API Index
-
-```@index
-```

@@ -1,4 +1,4 @@
-# Ordered Weight Arrays
+# Constants
 
 ## Public
 
@@ -6,7 +6,7 @@
 Modules = [PortfolioOptimiser]
 Public = true
 Private = false
-Pages = ["OWA.jl"]
+Pages = ["Constants.jl"]
 ```
 
 ## Private
@@ -15,5 +15,5 @@ Pages = ["OWA.jl"]
 Modules = [PortfolioOptimiser]
 Public = false
 Private = true
-Pages = ["OWA.jl"]
+Pages = ["Constants.jl"]
 ```

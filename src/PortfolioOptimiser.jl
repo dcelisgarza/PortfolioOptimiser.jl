@@ -4,7 +4,7 @@ using AverageShiftedHistograms, Clustering, DataFrames, Dates, Distances, Distri
       GraphRecipes, SimpleWeightedGraphs, StatsPlots, PyCall, Random, SmartAsserts,
       SparseArrays, Statistics, StatsBase, TimeSeries
 
-include("Definitions.jl")
+include("Constants.jl")
 include("Types.jl")
 include("DBHTs.jl")
 include("OWA.jl")

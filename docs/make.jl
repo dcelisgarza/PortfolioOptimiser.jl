@@ -1,32 +1,5 @@
 using Documenter, DocumenterTools, Literate, PortfolioOptimiser
 
-# DBHTs internals.
-import PortfolioOptimiser.distance_wei, PortfolioOptimiser.clique3,
-       PortfolioOptimiser.breadth, PortfolioOptimiser.FindDisjoint,
-       PortfolioOptimiser.CliqHierarchyTree2s, PortfolioOptimiser.DBHTRootMethods,
-       PortfolioOptimiser.BubbleCluster8s, PortfolioOptimiser.BuildHierarchy,
-       PortfolioOptimiser.AdjCliq, PortfolioOptimiser.BubbleHierarchy,
-       PortfolioOptimiser.DirectHb, PortfolioOptimiser.HierarchyConstruct4s,
-       PortfolioOptimiser.LinkageFunction, PortfolioOptimiser._build_link_and_dendro,
-       PortfolioOptimiser.DendroConstruct, PortfolioOptimiser.BubbleMember,
-       PortfolioOptimiser.turn_into_Hclust_merges,
-# OWA
-       PortfolioOptimiser._optimise_owa, PortfolioOptimiser._crra_method,
-       PortfolioOptimiser.OWAMethods,
-# Portfolio
-       PortfolioOptimiser.AbstractPortfolio, PortfolioOptimiser.TrackingErrKinds,
-# Asset Statistics
-       PortfolioOptimiser.BLFMMethods, PortfolioOptimiser.BinMethods,
-       PortfolioOptimiser.EllipseMethods, PortfolioOptimiser.BoxMethods,
-       PortfolioOptimiser.BootstrapMethods, PortfolioOptimiser.MuMethods,
-       PortfolioOptimiser.MuTargets, PortfolioOptimiser.CovMethods,
-       PortfolioOptimiser.PosdefFixMethods, PortfolioOptimiser.DenoiseMethods,
-       PortfolioOptimiser.RegCriteria, PortfolioOptimiser.FSMethods,
-       PortfolioOptimiser.CorMethods, PortfolioOptimiser.RRPVersions,
-       PortfolioOptimiser.UncertaintyTypes,
-# Risk Measures
-       PortfolioOptimiser.RiskMeasures, PortfolioOptimiser.HCRiskMeasures
-
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
 fix_math_md(content) = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
 fix_suffix(filename) = replace(filename, ".jl" => ".md")
@@ -54,19 +27,23 @@ for file ∈ code_files
 end
 
 makedocs(;
-         # modules = [PortfolioOptimiser],
+         #  modules = [PortfolioOptimiser],
          authors = "Daniel Celis Garza",
          repo = "https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/{commit}{path}#{line}",
          sitename = "PortfolioOptimiser.jl",
          format = Documenter.HTML(; prettyurls = get(ENV, "CI", "false") == "true",
                                   canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
                                   assets = String[]),
-         pages = ["Home" => "index.md", "DBHT" => "DBHT.md",
-                  "Constraint Functions" => "Constraint_functions.md", "OWA" => "OWA.md",
-                  "Risk Measures" => "Risk_measures.md",
-                  "Portfolio Optimisation" => "Portfolio.md", "Examples" => examples_nav,
-                  "API" => ["Definitions" => "Definitions.md",
-                            "Statistics" => "Statistics.md"], "Index" => "idx.md"])
+         pages = ["Home" => "index.md", "Constants" => "Constants.md",
+                  "DBHTs" => "DBHTs.md", "OWA" => "OWA.md",
+                  "Constraints" => "Constraints.md", "Types" => "Types.md"])
 
 deploydocs(; repo = "github.com/dcelisgarza/PortfolioOptimiser.jl.git", push_preview = true,
            devbranch = "main")
+#
+#              ,
+#            "Constraint Functions" => "Constraint_functions.md",
+#            "Risk Measures" => "Risk_measures.md",
+#            "Portfolio Optimisation" => "Portfolio.md", "Examples" => examples_nav,
+#            "API" => [,
+#                      "Statistics" => "Statistics.md"], "Index" => "idx.md"])

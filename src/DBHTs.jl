@@ -1,5 +1,17 @@
 """
 ```julia
+BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
+```
+
+Choice of algorithm for ordering hierarchical clustering dendrogram leaves and branches.
+
+  - `:default`: if linkage is `:DBHT`, the leaves and branches remain as the algorithm orders them. If any other linkage is used, they fall back to `:r` as that is their default according to [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
+  - All other branch orders are as defined by [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
+"""
+const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
+
+"""
+```julia
 PMFG_T2s(W::AbstractMatrix{<:Real}; nargout::Integer = 3)
 ```
 
@@ -137,7 +149,7 @@ The distance matrix contains lengths of shortest paths between all node pairs. A
   - `L`: Directed/undirected connection-length matrix.
 
       + Lengths between disconnected nodes are set to `Inf`.
-      + Lengths on the main diagonal are set to 0.
+      + Lengths on the main diagonal are set to `0`.
 
 !!! note
 
@@ -156,15 +168,6 @@ The distance matrix contains lengths of shortest paths between all node pairs. A
 
       - Mika Rubinov, UNSW/U Cambridge, 2007-2012.
       - Rick Betzel and Andrea Avena, IU, 2012
-
-# Distance matrix
-
-    Modification history:     # Number of edges matrix
-
-      - 2007: original (MR)
-      - 2009-08-04: min() function vectorized (MR)   # Distance permanence (true is temporary)
-      - 2012: added number of edges in shortest path as additional output (RB/AA)
-      - 2013: variable names changed for consistency with other functions (MR)
 """
 function distance_wei(L::AbstractMatrix{<:Real})
     N = size(L, 1)
@@ -510,6 +513,18 @@ function BubbleHierarchy(Pred::AbstractVector{<:Real}, Sb::AbstractVector{<:Real
     H = H - Diagonal(H)
     return H, Mb
 end
+
+"""
+```julia
+DBHTRootMethods = (:Unique, :Equal)
+```
+
+Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in [`DBHTs`](@ref), in case there is more than one candidate.
+
+  - `:Unique`: create a unique root.
+  - `:Equal`: the root is created from the candidate's adjacency tree.
+"""
+const DBHTRootMethods = (:Unique, :Equal)
 
 """
 ```julia
