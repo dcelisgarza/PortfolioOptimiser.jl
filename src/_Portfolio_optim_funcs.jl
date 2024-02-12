@@ -1786,6 +1786,7 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
                              points::Integer = 20)
     @smart_assert(opt.type == :Trad)
     obj1 = opt.obj
+    w_ini1 = opt.w_ini
     optimal1 = deepcopy(portfolio.optimal)
     fail1 = deepcopy(portfolio.fail)
 
@@ -1838,7 +1839,7 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
             w = optimise!(portfolio, opt)
         else
             if !isempty(w)
-                w_ini = w.weights
+                opt.w_ini = w.weights
             end
             if j != length(risks)
                 setproperty!(portfolio, rmf, r)
@@ -1851,7 +1852,7 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
             if isempty(w)
                 opt.obj = :Min_Risk
                 setproperty!(portfolio, rmf, Inf)
-                j != length(risks) ? portfolio.mu_l = m : portfolio.mu_l = Inf
+                portfolio.mu_l = m
                 w = optimise!(portfolio, opt)
                 portfolio.mu_l = Inf
             end
@@ -1898,6 +1899,7 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
                                    :sharpe => sharpe)
 
     opt.obj = obj1
+    opt.w_ini = w_ini1
     portfolio.optimal = optimal1
     portfolio.fail = fail1
 
