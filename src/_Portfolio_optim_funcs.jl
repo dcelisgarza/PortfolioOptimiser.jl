@@ -1542,6 +1542,7 @@ function _setup_model_class(portfolio, class, hist)
         end
     elseif class == :BL
         mu = portfolio.mu_bl
+        returns = portfolio.returns
         if hist == 1
             sigma = portfolio.cov_bl
         elseif hist == 2
@@ -1549,7 +1550,6 @@ function _setup_model_class(portfolio, class, hist)
         else
             throw(AssertionError("for class = $class, hist = $hist can only be 1 or 2"))
         end
-        returns = portfolio.returns
     elseif class == :BLFM
         mu = portfolio.mu_bl_fm
         if hist == 1
