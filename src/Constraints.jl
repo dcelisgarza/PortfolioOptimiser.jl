@@ -546,12 +546,9 @@ function rp_constraints(constraints::DataFrame, asset_sets::DataFrame)
             end
         elseif row["Type"] == "All Subsets"
             class_col = row["Set"]
-            classes = names(asset_sets)
             A = DataFrame(; a = asset_sets[!, class_col])
             if isa(class_col, String) || isa(class_col, Symbol)
                 DataFrames.rename!(A, [class_col])
-            elseif isa(class_col, Int)
-                DataFrames.rename!(A, [classes[class_col]])
             end
 
             col = names(A)[1]
