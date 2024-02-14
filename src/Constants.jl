@@ -31,8 +31,36 @@ BLFMMethods = (:A, :B)
 
 Versions of the factor Black-Litterman Model.
 
-  - `:B`: Bayesian Black-Litterman, which uses the factors to generate the Black-Litterman estimates.
-  - `:A`: Augmented Black-Litterman, which uses the factors to adjust the Black-Litterman views.
+# `:A` -- Augmented Black-Litterman
+
+# `:B`-- Bayesian Black-Litterman
+
+Estimates the covariance and expected returns vector based on a modified Black-Litterman model which updates its views with Bayesian statistics [^BBL].
+
+```math
+\\begin{align*}
+\\mathbf{\\Sigma} &= \\mathbf{B} \\mathbf{\\Sigma}_{F} \\mathbf{B}^{\\intercal} + \\mathbf{D} \\\\
+\\mathbf{D} &= \\begin{cases}\\mathrm{Diagonal}\\left(\\mathrm{var}\\left(\\mathbf{X} - \\mathbf{F} \\mathbf{B}^{\\intercal},\\, \\mathrm{dims} = 1\\right)\\right) &\\quad \\mathrm{if~ flag = true}\\\\
+\\mathbf{0} &\\quad \\mathrm{if~ flag = false}
+\\end{cases}\\\\
+\\overline{\\mathbf{\\Sigma}}_{F} &= \\left(\\mathbf{\\Sigma}_{F}^{-1} + \\mathbf{P}_{F}^{\\intercal} \\mathbf{\\Omega}_{F}^{-1} \\mathbf{P}_{F}\\right)^{-1}\\\\
+\\mathbf{\\Omega}_{F} &= \\dfrac{1}{T}\\mathrm{Diagonal}\\left(P_{F} \\mathbf{\\Sigma}_{F} P_{F}^{\\intercal}\\right)\\\\
+\\mathbf{\\Pi}_{F} &= \\overline{\\mathbf{\\Sigma}}_{F}^{-1} \\left(\\mathbf{\\Sigma}_{F}^{-1}\\right)
+\\end{align*}
+```
+
+Where:
+
+  - ``\\mathbf{\\Sigma}`` is the estimated asset covariance matrix computed using the factor model.
+  - ``\\mathbf{B}`` is the loadings matrix.
+  - ``\\mathbf{\\Sigma}_{F}`` is the covariance matrix of the factors.
+  - ``\\mathbf{D}`` is a diagonal matrix constructed from the variances of the errors between the asset and factor returns corrected by the loadings matrix i.e. the variance is taken for all ``T`` timestamps of ``N_{a}`` assets. If a flag is false this matrix can be set to ``\\mathbf{0}``.
+  - ``\\mathbf{X}`` is the `T×Na` matrix of asset returns, where `T` is the number of timestamps and `Na` the number of assets.
+  - ``\\mathbf{F}`` is the `T×Nf` matrix of factor returns, where `T` is the number of timestamps and `Nf` the number of factors.
+  - ``\\overline{\\mathbf{\\Sigma}}_{F}`` is the posterior covariance matrix of the factors after being adjusted by the factor views.
+  - ``\\mathbf{\\Omega}_{F}`` is the covariance matrix of the of the factor views.
+
+[^BBL]: Petter Kolm, Gordon Ritter, "On the Bayesian interpretation of Black–Litterman", European Journal of Operational Research, Volume 258, Issue 2, 2017, Pages 564-572, ISSN 0377-2217, https://doi.org/10.1016/j.ejor.2016.10.027. (https://www.sciencedirect.com/science/article/pii/S037722171630861X)
 """
 const BLFMMethods = (:A, :B)
 
@@ -538,8 +566,8 @@ Choice of estimate of the covariance matrix ``\\mathbf{\\Sigma}``, means vector 
 
   - No suffix: standard, computed by [`asset_statistics!`]().
   - ``\\mathrm{fm}``: factor model, computed by [`factor_statistics!`]().
-  - ``\\mathrm{bl}``: Black Bitterman model, computed by [`black_litterman_statistics!`]().
-  - ``\\mathrm{bl, fm}``: Black Litterman factor model, computed by [`black_litterman_factor_satistics!`]().
+  - ``\\mathrm{bl}``: Black-Litterman model, computed by [`black_litterman_statistics!`]().
+  - ``\\mathrm{bl, fm}``: Black-Litterman factor model, computed by [`black_litterman_factor_satistics!`]().
 
 The choices are:
 
