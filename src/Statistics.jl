@@ -1576,7 +1576,7 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
     is_b_iish_b_is_b = inv_sigma * B * iish_b_is_b
 
     sigma_bbl = (inv_sigma - is_b_iish_b_is_b * transpose(B) * inv_sigma) \ I
-    Pi_bbl = (sigma_bbl * is_b_iish_b_is_b * inv_sigma_hat * Pi_hat)
+    Pi_bbl = sigma_bbl * is_b_iish_b_is_b * inv_sigma_hat * Pi_hat
 
     mu = Pi_bbl .+ rf
 

@@ -44,8 +44,12 @@ Estimates the covariance and expected returns vector based on a modified Black-L
 \\mathbf{0} &\\quad \\mathrm{if~ flag = false}
 \\end{cases}\\\\
 \\overline{\\mathbf{\\Sigma}}_{F} &= \\left(\\mathbf{\\Sigma}_{F}^{-1} + \\mathbf{P}_{F}^{\\intercal} \\mathbf{\\Omega}_{F}^{-1} \\mathbf{P}_{F}\\right)^{-1}\\\\
-\\mathbf{\\Omega}_{F} &= \\dfrac{1}{T}\\mathrm{Diagonal}\\left(P_{F} \\mathbf{\\Sigma}_{F} P_{F}^{\\intercal}\\right)\\\\
-\\mathbf{\\Pi}_{F} &= \\overline{\\mathbf{\\Sigma}}_{F}^{-1} \\left(\\mathbf{\\Sigma}_{F}^{-1}\\right)
+\\mathbf{\\Omega}_{F} &= \\dfrac{1}{T}\\mathrm{Diagonal}\\left(\\mathbf{P}_{F} \\mathbf{\\Sigma}_{F} \\mathbf{P}_{F}^{\\intercal}\\right)\\\\
+\\overline{\\bm{\\Pi}}_{F} &= \\overline{\\mathbf{\\Sigma}}_{F}^{-1} \\left(\\mathbf{\\Sigma}_{F}^{-1} \\bm{\\Pi}_{F} + \\mathbf{P}_{F}^{\\intercal} \\mathbf{\\Omega}_{F}^{-1} \\mathbf{Q}_{F}\\right)\\\\
+\\bm{\\Pi}_{F} &= \\bm{\\mu}_{F} - r\\\\
+\\mathbf{\\Sigma}_{\\mathrm{BF}} &= \\mathbf{\\Sigma}^{-1} \\mathbf{B} \\left( \\overline{\\mathbf{\\Sigma}}_{F}^{-1} + \\mathbf{B}^{\\intercal} \\mathbf{\\Sigma}^{-1} \\mathbf{B} \\right)^{-1}\\\\
+\\mathbf{\\Sigma}_{\\mathrm{BLB}} &= \\left(\\mathbf{\\Sigma}^{-1} - \\mathbf{\\Sigma}_{\\mathrm{BF}} \\mathbf{B}^{\\intercal} \\mathbf{\\Sigma}^{-1}\\right)^{-1}\\\\
+\\bm{\\mu}_{\\mathrm{BLB}} &= \\mathbf{\\Sigma}_{\\mathrm{BLB}} \\mathbf{\\Sigma}_{\\mathrm{BF}} \\overline{\\mathbf{\\Sigma}}_{F}^{-1} \\overline{\\bm{\\Pi}}_{F} + r
 \\end{align*}
 ```
 
@@ -55,10 +59,19 @@ Where:
   - ``\\mathbf{B}`` is the loadings matrix.
   - ``\\mathbf{\\Sigma}_{F}`` is the covariance matrix of the factors.
   - ``\\mathbf{D}`` is a diagonal matrix constructed from the variances of the errors between the asset and factor returns corrected by the loadings matrix i.e. the variance is taken for all ``T`` timestamps of ``N_{a}`` assets. If a flag is false this matrix can be set to ``\\mathbf{0}``.
-  - ``\\mathbf{X}`` is the `T×Na` matrix of asset returns, where `T` is the number of timestamps and `Na` the number of assets.
-  - ``\\mathbf{F}`` is the `T×Nf` matrix of factor returns, where `T` is the number of timestamps and `Nf` the number of factors.
-  - ``\\overline{\\mathbf{\\Sigma}}_{F}`` is the posterior covariance matrix of the factors after being adjusted by the factor views.
+  - ``\\mathbf{X}`` is the `T×Na` matrix of asset returns, where `T` is the number of returns observations and `Na` the number of assets.
+  - ``\\mathbf{F}`` is the `T×Nf` matrix of factor returns, where `T` is the number of returns observations and `Nf` the number of factors.
+  - ``\\overline{\\mathbf{\\Sigma}}_{F}`` is the posterior covariance matrix of the factors after adjusting by the factor views.
+  - ``\\mathbf{P}_{F}`` is the factor views matrix.
   - ``\\mathbf{\\Omega}_{F}`` is the covariance matrix of the of the factor views.
+  - ``\\overline{\\bm{\\Pi}}_{F}`` is the posterior equilibrium excess returns of the factors after adjusting by the factor views.
+  - ``\\bm{\\Pi}_{F}`` is the equilibrium excess returns vector of the factors.
+  - ``\\bm{\\mu}_{F}`` is the expected returns vector of the factors.
+  - ``r`` is the risk-free rate.
+  - ``\\mathbf{Q}_{F}`` is the factor views returns matrix.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{BF}}`` is an intermediate covariance matrix.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{BLB}}`` is the posterior asset covariance matrix, aka the asset covariance matrix obtained via the Bayesian Black-Litterman model.
+  - ``\\bm{\\mu}_{\\mathrm{BLB}}`` is the posterior asset expected returns vector, aka the asset returns vector obtained via the Bayesian Black-Litterman model.
 
 [^BBL]: Petter Kolm, Gordon Ritter, "On the Bayesian interpretation of Black–Litterman", European Journal of Operational Research, Volume 258, Issue 2, 2017, Pages 564-572, ISSN 0377-2217, https://doi.org/10.1016/j.ejor.2016.10.027. (https://www.sciencedirect.com/science/article/pii/S037722171630861X)
 """
