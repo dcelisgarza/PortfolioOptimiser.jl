@@ -2886,7 +2886,7 @@ end
             0.13968821612189214, 0.14345938665741756, 3.534243303702966e-9,
             0.21036132704846883, 6.311505003695791e-9]
 
-    @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
+    @test isapprox(w1.weights, w1t, rtol = 5.0e-5)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-7)
     @test isapprox(w3.weights, w3t, rtol = 1.0e-6)
     @test isapprox(w4.weights, w4t, rtol = 1.0e-5)

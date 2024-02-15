@@ -33,9 +33,39 @@ Versions of the factor Black-Litterman Model.
 
 # `:A` -- Augmented Black-Litterman
 
+Estimates the covariance matrix and expected returns vector based on a modified Black-Litterman model which augments its asset views with those of the factors [^BBA].
+
+```math
+\\begin{align*}
+\\bm{\\Pi}_{a} &= \\delta\\begin{bmatrix}
+                            \\mathbf{\\Sigma}\\\\
+                            \\mathbf{\\Sigma}_{F} \\mathbf{B}^{\\intercal}
+                          \\end{bmatrix} w\\\\
+\\mathbf{P}_{a} &=  \\begin{bmatrix}
+                      \\mathbf{P} & \\mathbf{0}\\\\
+                      \\mathbf{0} & \\mathbf{P}_{F}
+                    \\end{bmatrix}\\\\
+\\bm{Q}_{a} &=  \\begin{bmatrix}
+                \\bm{Q}\\\\
+                \\bm{Q}_{F}
+                \\end{bmatrix}\\\\
+\\mathbf{\\Sigma}_{a} &=  \\begin{bmatrix}
+                            \\mathbf{\\Sigma} & \\mathbf{B} \\mathbf{\\Sigma}_{F}\\\\
+                            \\mathbf{\\Sigma}_{F} \\mathbf{B}^{\\intercal} & \\mathbf{\\Sigma}_{F}
+                          \\end{bmatrix}\\\\
+\\mathbf{\\Omega}_{a} &=  \\begin{bmatrix}
+                            \\mathbf{\\Omega} & \\mathbf{0}\\\\
+                            \\mathbf{0} & \\mathbf{\\Omega}_{F}
+                          \\end{bmatrix}\\\\
+\\mathbf{\\Omega} &= \\dfrac{1}{T}\\mathrm{Diagonal}\\left(\\mathbf{P} \\mathbf{\\Sigma} \\mathbf{P}^{\\intercal}\\right)\\\\
+\\mathbf{\\Omega}_{F} &= \\dfrac{1}{T}\\mathrm{Diagonal}\\left(\\mathbf{P}_{F} \\mathbf{\\Sigma}_{F} \\mathbf{P}_{F}^{\\intercal}\\right)\\\\
+\\end{align*}
+```
+
+[^BBA]: Cheung, Wing, The Augmented Black-Litterman Model: A Ranking-Free Approach to Factor-Based Portfolio Construction and Beyond (August 30, 2007). Quantitative Finance, Vol. 13, No. 2, 2013, DOI: 10.1080/14697688.2012.714902, Available at SSRN: https://ssrn.com/abstract=1347648 or http://dx.doi.org/10.2139/ssrn.1347648
 # `:B`-- Bayesian Black-Litterman
 
-Estimates the covariance and expected returns vector based on a modified Black-Litterman model which updates its views with Bayesian statistics [^BBL].
+Estimates the covariance matrix and expected returns vector based on a modified Black-Litterman model which updates its views with Bayesian statistics [^BBL].
 
 ```math
 \\begin{align*}
@@ -45,7 +75,7 @@ Estimates the covariance and expected returns vector based on a modified Black-L
 \\end{cases}\\\\
 \\overline{\\mathbf{\\Sigma}}_{F} &= \\left(\\mathbf{\\Sigma}_{F}^{-1} + \\mathbf{P}_{F}^{\\intercal} \\mathbf{\\Omega}_{F}^{-1} \\mathbf{P}_{F}\\right)^{-1}\\\\
 \\mathbf{\\Omega}_{F} &= \\dfrac{1}{T}\\mathrm{Diagonal}\\left(\\mathbf{P}_{F} \\mathbf{\\Sigma}_{F} \\mathbf{P}_{F}^{\\intercal}\\right)\\\\
-\\overline{\\bm{\\Pi}}_{F} &= \\overline{\\mathbf{\\Sigma}}_{F}^{-1} \\left(\\mathbf{\\Sigma}_{F}^{-1} \\bm{\\Pi}_{F} + \\mathbf{P}_{F}^{\\intercal} \\mathbf{\\Omega}_{F}^{-1} \\mathbf{Q}_{F}\\right)\\\\
+\\overline{\\bm{\\Pi}}_{F} &= \\overline{\\mathbf{\\Sigma}}_{F}^{-1} \\left(\\mathbf{\\Sigma}_{F}^{-1} \\bm{\\Pi}_{F} + \\mathbf{P}_{F}^{\\intercal} \\mathbf{\\Omega}_{F}^{-1} \\bm{Q}_{F}\\right)\\\\
 \\bm{\\Pi}_{F} &= \\bm{\\mu}_{F} - r\\\\
 \\mathbf{\\Sigma}_{\\mathrm{BF}} &= \\mathbf{\\Sigma}^{-1} \\mathbf{B} \\left( \\overline{\\mathbf{\\Sigma}}_{F}^{-1} + \\mathbf{B}^{\\intercal} \\mathbf{\\Sigma}^{-1} \\mathbf{B} \\right)^{-1}\\\\
 \\mathbf{\\Sigma}_{\\mathrm{BLB}} &= \\left(\\mathbf{\\Sigma}^{-1} - \\mathbf{\\Sigma}_{\\mathrm{BF}} \\mathbf{B}^{\\intercal} \\mathbf{\\Sigma}^{-1}\\right)^{-1}\\\\
@@ -68,7 +98,7 @@ Where:
   - ``\\bm{\\Pi}_{F}`` is the equilibrium excess returns vector of the factors.
   - ``\\bm{\\mu}_{F}`` is the expected returns vector of the factors.
   - ``r`` is the risk-free rate.
-  - ``\\mathbf{Q}_{F}`` is the factor views returns matrix.
+  - ``\\bm{Q}_{F}`` is the factor views returns matrix.
   - ``\\mathbf{\\Sigma}_{\\mathrm{BF}}`` is an intermediate covariance matrix.
   - ``\\mathbf{\\Sigma}_{\\mathrm{BLB}}`` is the posterior asset covariance matrix, aka the asset covariance matrix obtained via the Bayesian Black-Litterman model.
   - ``\\bm{\\mu}_{\\mathrm{BLB}}`` is the posterior asset expected returns vector, aka the asset returns vector obtained via the Bayesian Black-Litterman model.
