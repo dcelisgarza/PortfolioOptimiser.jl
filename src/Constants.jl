@@ -37,10 +37,13 @@ Estimates the covariance matrix and expected returns vector based on a modified 
 
 ```math
 \\begin{align*}
-\\bm{\\Pi}_{a} &= \\delta\\begin{bmatrix}
-                            \\mathbf{\\Sigma}\\\\
-                            \\mathbf{\\Sigma}_{F} \\mathbf{B}^{\\intercal}
-                          \\end{bmatrix} w\\\\
+\\bm{\\Pi}_{a} &= \\begin{cases}
+                    \\delta\\begin{bmatrix}
+                      \\mathbf{\\Sigma}\\\\
+                      \\mathbf{\\Sigma}_{F} \\mathbf{B}^{\\intercal}
+                      \\end{bmatrix} \\bm{w} &\\quad \\mathrm{if~ flag = true}\\\\
+                      \\bm{\\mu} - r &\\quad \\mathrm{if~ flag = false}
+                  \\end{cases}\\\\
 \\mathbf{P}_{a} &=  \\begin{bmatrix}
                       \\mathbf{P} & \\mathbf{0}\\\\
                       \\mathbf{0} & \\mathbf{P}_{F}
@@ -61,9 +64,34 @@ Estimates the covariance matrix and expected returns vector based on a modified 
 \\mathbf{\\Omega} &= \\tau \\mathrm{Diagonal}\\left(\\mathbf{P} \\mathbf{\\Sigma} \\mathbf{P}^{\\intercal}\\right)\\\\
 \\mathbf{\\Omega}_{F} &= \\tau \\mathrm{Diagonal}\\left(\\mathbf{P}_{F} \\mathbf{\\Sigma}_{F} \\mathbf{P}_{F}^{\\intercal}\\right)\\\\
 \\mathbf{M}_{a} &= \\left[ \\left(\\tau  \\mathbf{\\Sigma}_{a} \\right)^{-1} + \\mathbf{P}_{a}^{\\intercal} \\mathbf{\\Omega}_{a}^{-1} \\mathbf{P}_{a}\\right]^{-1}\\\\
-\\mathbf{\\Pi}_{\\mathrm{ABL}} &= \\mathbf{M}_{a} \\left[\\left(\\tau \\mathbf{\\Sigma}_{a}\\right)^{-1} \\mathbf{\\Pi}_{a} + \\mathbf{P}_{a}^{\\intercal} \\mathbf{\\Omega}_{a}^{-1} \\mathbf{Q}_{a} \\right]
+\\bm{\\Pi}_{\\mathrm{ABL}} &= \\mathbf{M}_{a} \\left[\\left(\\tau \\mathbf{\\Sigma}_{a}\\right)^{-1} \\bm{\\Pi}_{a} + \\mathbf{P}_{a}^{\\intercal} \\mathbf{\\Omega}_{a}^{-1} \\mathbf{Q}_{a} \\right]\\\\
+\\bm{\\mu}_{\\mathrm{ABL}} &= \\bm{\\Pi}_{\\mathrm{ABL}} + r\\\\
+\\mathbf{\\Sigma}_{\\mathrm{ABL}} &= \\mathbf{\\Sigma}_{a} + \\mathbf{M}_{a}
 \\end{align*}
 ```
+
+Where:
+
+  - ``\\bm{\\Pi}_{a}`` is the augmented equilibrium excess returns.
+  - ``\\delta`` is the risk aversion parameter.
+  - ``\\mathbf{\\Sigma}`` is the asset covariance matrix.
+  - ``\\mathbf{\\Sigma}_{F}`` is the factor covariance matrix.
+  - ``\\bm{w}`` is the vector of benchmark asset weights.
+  - ``\\mathbf{P}_{a}`` is the augmented views matrix. The zeros pad the matrix so all columns and rows are of equal length.
+  - ``\\mathbf{P}`` is the asset views matrix.
+  - ``\\mathbf{P}_{F}`` is the factor views matrix.
+  - ``\\bm{Q}_{a}`` is the augmented views returns vector.
+  - ``\\bm{Q}`` is the asset views returns vector.
+  - ``\\bm{Q}_{F}`` is the factor views returns vector.
+  - ``\\mathbf{\\Sigma}_{a}`` is the augmented covariance matrix.
+  - ``\\mathbf{B}`` is the loadings matrix.
+  - ``\\mathbf{\\Omega}_{a}`` is the covariance matrix of the augmented views.
+  - ``\\mathbf{\\Omega}`` is the covariance matrix of the asset views.
+  - ``\\mathbf{\\Omega}_{F}`` is the covariance matrix of the factor views.
+  - ``\\mathbf{M}_{a}`` is an intermediate covariance matrix.
+  - ``\\bm{\\Pi}_{\\mathbf{ABL}}`` is the equilibrium excess returns after being adjusted by the views.
+  - ``\\bm{\\mu}_{\\mathbf{ABL}}`` is the vector of asset expected returns obtained via the Augmented Black Litterman model.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{ABL}}`` is the asset covariance matrix obtained via the Augmented Black Litterman model.
 
 [^BBA]: Cheung, Wing, The Augmented Black-Litterman Model: A Ranking-Free Approach to Factor-Based Portfolio Construction and Beyond (August 30, 2007). Quantitative Finance, Vol. 13, No. 2, 2013, DOI: 10.1080/14697688.2012.714902, Available at SSRN: https://ssrn.com/abstract=1347648 or http://dx.doi.org/10.2139/ssrn.1347648
 # `:B`-- Bayesian Black-Litterman
@@ -97,12 +125,12 @@ Where:
   - ``\\mathbf{F}`` is the `T×Nf` matrix of factor returns, where `T` is the number of returns observations and `Nf` the number of factors.
   - ``\\overline{\\mathbf{\\Sigma}}_{F}`` is the posterior covariance matrix of the factors after adjusting by the factor views.
   - ``\\mathbf{P}_{F}`` is the factor views matrix.
-  - ``\\mathbf{\\Omega}_{F}`` is the covariance matrix of the of the factor views.
+  - ``\\mathbf{\\Omega}_{F}`` is the covariance matrix of the factor views.
   - ``\\overline{\\bm{\\Pi}}_{F}`` is the posterior equilibrium excess returns of the factors after adjusting by the factor views.
   - ``\\bm{\\Pi}_{F}`` is the equilibrium excess returns vector of the factors.
   - ``\\bm{\\mu}_{F}`` is the expected returns vector of the factors.
   - ``r`` is the risk-free rate.
-  - ``\\bm{Q}_{F}`` is the factor views returns matrix.
+  - ``\\bm{Q}_{F}`` is the factor views returns vector.
   - ``\\mathbf{\\Sigma}_{\\mathrm{BF}}`` is an intermediate covariance matrix.
   - ``\\mathbf{\\Sigma}_{\\mathrm{BLB}}`` is the posterior asset covariance matrix, aka the asset covariance matrix obtained via the Bayesian Black-Litterman model.
   - ``\\bm{\\mu}_{\\mathrm{BLB}}`` is the posterior asset expected returns vector, aka the asset returns vector obtained via the Bayesian Black-Litterman model.
