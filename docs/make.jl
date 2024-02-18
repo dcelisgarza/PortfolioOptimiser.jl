@@ -1,4 +1,4 @@
-using Documenter, DocumenterTools, Literate, PortfolioOptimiser
+using Documenter, DocumenterTools, DocumenterCitations, Literate, PortfolioOptimiser
 
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
 fix_math_md(content) = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
@@ -37,7 +37,11 @@ makedocs(;
          pages = ["Home" => "index.md", "Examples" => examples_nav,
                   "API" => ["Constants" => "Constants.md", "DBHTs" => "DBHTs.md",
                             "OWA" => "OWA.md", "Constraints" => "Constraints.md",
-                            "Types" => "Types.md"]])
+                            "Types" => "Types.md", "Optimisation" => "Portfolio.md",
+                            "Statistics" => "Statistics.md",
+                            "References" => "References.md"]],
+         plugins = [CitationBibliography(joinpath(@__DIR__, "src", "refs.bib");
+                                         style = :numeric)])
 
 deploydocs(; repo = "github.com/dcelisgarza/PortfolioOptimiser.jl.git", push_preview = true,
            devbranch = "main")
