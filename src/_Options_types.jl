@@ -40,7 +40,6 @@ Structure and keyword constructor for storing the options for estimating covaria
 # Inputs
 
   - `estimator`: covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
-
   - `target_ret`: target return for semicovariance estimation.
   - `genfunc`: [`GenericFunction`](@ref) for computing the covariance matrix.
   - `custom`: custom covariance function.
@@ -150,7 +149,7 @@ Structure and keyword constructor for storing the options for denoising matrices
 # Inputs
 
   - `method`: method for denoising matrices, must be in [`DenoiseMethods`](@ref).
-  - `alpha`: shrink method significance level, must be ∈ (0, 1).
+  - `alpha`: shrink method significance level, must be ∈ [0, 1].
   - `detone`: if `true`, take only the largest `mkt_comp` eigenvalues from the correlation matrix.
   - `mkt_comp`: the number of largest eigenvalues to keep from the correlation matrix.
   - `kernel`: kernel for fitting the average shifted histograms according to the covariance matrix's kernel density.
@@ -192,10 +191,26 @@ end
 
 """
 ```
-CovOpt
+@kwdef mutable struct CovOpt
+    method::Symbol = :Full
+    estimation::CovEstOpt = CovEstOpt(;)
+    gerber::GerberOpt = GerberOpt(;)
+    denoise::DenoiseOpt = DenoiseOpt(;)
+    posdef::PosdefFixOpt = PosdefFixOpt(;)
+    jlogo::Bool = false
+end
 ```
 
-  - `cov_method`: method for estimating the covariance matrices `cov`, `cov_fm`, `cov_bl`, `cov_bl_fm` in [`covar_mtx`](), see [`CovMethods`]() for available choices.
+Structure and keyword constructor for computing covariance matrices.
+
+# Inputs
+
+  - `method`: covariance estimation method from [`CovMethods`](@ref).
+  - `estimation`: covariance estimation options [`CovEstOpt`](@ref).
+  - `gerber`: Gerber covariance options [`GerberOpt`](@ref).
+  - `denoise`: denoising options [`DenoiseOpt`](@ref).
+  - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
+  - `jlogo`: if `true` uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
 """
 mutable struct CovOpt
     # Cov method

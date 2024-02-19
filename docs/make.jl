@@ -34,7 +34,7 @@ makedocs(;
          format = Documenter.HTML(; prettyurls = get(ENV, "CI", "false") == "true",
                                   canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
                                   assets = String[]),
-         pages = ["Home" => "index.md", "Examples" => examples_nav,
+         pages = ["Home" => "index.md", #"Examples" => examples_nav,
                   "API" => ["Constants" => "Constants.md", "DBHTs" => "DBHTs.md",
                             "OWA" => "OWA.md", "Constraints" => "Constraints.md",
                             "Types" => "Types.md", "Optimisation" => "Portfolio.md",

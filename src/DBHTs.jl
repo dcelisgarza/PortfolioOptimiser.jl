@@ -1157,7 +1157,7 @@ Compute the sparse inverse covariance from a clique tree and separators [^J_LoGo
 # Inputs
 
   - `sigma`: `N×N` covariance matrix.
-  - `separators`: list of 3-cliques taht are not triangular faces.
+  - `separators`: list of 3-cliques that are not triangular faces.
   - `cliques`: list of all 4-cliques.
 
 # Outputs
