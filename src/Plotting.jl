@@ -602,16 +602,16 @@ function plot_range(portfolio::AbstractPortfolio;
 end
 
 function plot_clusters(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
-                       cluster_opt = opt::ClusterOpt = ClusterOpt(;
-                                                                  k = if isa(portfolio,
-                                                                             HCPortfolio)
-                                                                      portfolio.k
-                                                                  else
-                                                                      0
-                                                                  end,
-                                                                  max_k = ceil(Int,
-                                                                               sqrt(size(portfolio.returns,
-                                                                                         2)))),
+                       cluster_opt::ClusterOpt = ClusterOpt(;
+                                                            k = if isa(portfolio,
+                                                                       HCPortfolio)
+                                                                portfolio.k
+                                                            else
+                                                                0
+                                                            end,
+                                                            max_k = ceil(Int,
+                                                                         sqrt(size(portfolio.returns,
+                                                                                   2)))),
                        cluster = true, show_clusters = true, theme_d = :Spectral,
                        theme_h = :Spectral, theme_h_kwargs = (;), kwargs_d1 = (;),
                        kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;), kwargs = (;))
@@ -934,7 +934,8 @@ function plot_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
 
     if linkage == :DBHT
         dbht_method = cluster_opt.dbht_method
-        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
+        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2,
+                :SB0, :SB1, :Gerber_SB0, :Gerber_SB1)
         corr = cor_opt.method ∈ cors ? 1 .- dist .^ 2 : corr
         missing, Rpm, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                              branchorder = branchorder,
@@ -1014,7 +1015,8 @@ function plot_cluster_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = Co
 
     if linkage == :DBHT
         dbht_method = cluster_opt.dbht_method
-        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
+        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2,
+                :SB0, :SB1, :Gerber_SB0, :Gerber_SB1)
         corr = cor_opt.method ∈ cors ? 1 .- dist .^ 2 : corr
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,

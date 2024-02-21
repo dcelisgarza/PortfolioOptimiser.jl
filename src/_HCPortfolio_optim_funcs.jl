@@ -133,7 +133,8 @@ function _hcluster_choice(dist, corr, cor_method, cluster_opt::ClusterOpt)
     max_k = cluster_opt.max_k
     if linkage == :DBHT
         dbht_method = cluster_opt.dbht_method
-        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
+        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2,
+                :SB0, :SB1, :Gerber_SB0, :Gerber_SB1)
         corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,

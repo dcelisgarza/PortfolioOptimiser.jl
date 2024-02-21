@@ -4,9 +4,8 @@ using COSMO, CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra,
 
 prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
-rf = 1.0329^(1 / 252) - 1
+rf = 0.0329 / 252
 l = 2.0
-returns = dropmissing!(DataFrame(percentchange(prices)))
 
 portfolio = Portfolio(; prices = prices,
                       solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -14,7 +13,39 @@ portfolio = Portfolio(; prices = prices,
                                                                               "max_step_fraction" => 0.7)),
                                             :COSMO => Dict(:solver => COSMO.Optimizer,
                                                            :params => Dict("verbose" => false))))
-asset_statistics!(portfolio)
+
+plot_clusters(portfolio; cor_opt = CorOpt(; method = :Gerber0, sb = SBOpt(;)),
+              cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio; cor_opt = CorOpt(; method = :SB0, sb = SBOpt(;)),
+              cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio; cor_opt = CorOpt(; method = :Gerber_SB0, sb = SBOpt(;)),
+              cluster_opt = ClusterOpt(; linkage = :DBHT))
+
+plot_clusters(portfolio; cor_opt = CorOpt(; method = :Gerber1, sb = SBOpt(;)),
+              cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio; cor_opt = CorOpt(; method = :SB1, sb = SBOpt(;)),
+              cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio; cor_opt = CorOpt(; method = :Gerber_SB1, sb = SBOpt(;)),
+              cluster_opt = ClusterOpt(; linkage = :ward))
+
+asset_statistics!(portfolio; calc_kurt = false,
+                  cov_opt = CovOpt(; method = :SB0, sb = SBOpt(; c1 = 0.8, c2 = 0.9)))
+sb0 = copy(portfolio.cov)
+
+asset_statistics!(portfolio; calc_kurt = false, cov_opt = CovOpt(; method = :SB1))
+sb1 = copy(portfolio.cov)
+
+asset_statistics!(portfolio; calc_kurt = false, cov_opt = CovOpt(; method = :Gerber0))
+g0 = copy(portfolio.cov)
+
+asset_statistics!(portfolio; calc_kurt = false, cov_opt = CovOpt(; method = :Gerber1))
+g1 = copy(portfolio.cov)
+
+asset_statistics!(portfolio; calc_kurt = false, cov_opt = CovOpt(; method = :Gerber2))
+g2 = copy(portfolio.cov)
+
+portfolio.cov
+
 frontier = efficient_frontier!(portfolio,
                                OptimiseOpt(; type = :Trad, rm = :CVaR, near_opt = true,
                                            n = 5); points = 10)

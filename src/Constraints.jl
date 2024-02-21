@@ -607,7 +607,8 @@ function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
 
     corr, dist = cor_dist_mtx(returns, opt)
     A = if method == :TMFG
-        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2)
+        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2,
+                :SB0, :SB1, :Gerber_SB0, :Gerber_SB1)
         corr = opt.method ∈ cors ? 1 .- dist .^ 2 : corr
         Rpm = PMFG_T2s(corr)[1]
         adjacency_matrix(SimpleGraph(Rpm))

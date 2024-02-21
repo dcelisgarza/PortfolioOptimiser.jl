@@ -129,6 +129,29 @@ function Base.setproperty!(obj::GerberOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+mutable struct SBOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: Real}
+    c1::T1
+    c2::T2
+    c3::T3
+    n::T4
+    genfunc::GenericFunction
+end
+function SBOpt(; c1::Real = 0.5, c2::Real = 0.5, c3::Real = 4, n::Real = 2,
+               genfunc::GenericFunction = GenericFunction(; func = StatsBase.mean,
+                                                          kwargs = (; dims = 1)))
+    @smart_assert(zero(c1) < c1 <= one(c1))
+
+    return SBOpt{typeof(c1), typeof(c2), typeof(c3), typeof(n)}(c1, c2, c3, n, genfunc)
+end
+function Base.setproperty!(obj::SBOpt, sym::Symbol, val)
+    if sym ∈ (:c1, :c2)
+        @smart_assert(zero(val) < val <= one(val))
+    elseif sym == :c3
+        @smart_assert(val >= obj.c2)
+    end
+    return setfield!(obj, sym, val)
+end
+
 """
 ```julia
 @kwdef mutable struct DenoiseOpt{T1 <: Real, T2 <: Integer, T3, T4 <: Integer,
@@ -219,6 +242,8 @@ mutable struct CovOpt
     estimation::CovEstOpt
     # Gerber
     gerber::GerberOpt
+    # SB
+    sb::SBOpt
     # Denoise
     denoise::DenoiseOpt
     # Posdef fix
@@ -227,11 +252,12 @@ mutable struct CovOpt
     jlogo::Bool
 end
 function CovOpt(; method::Symbol = :Full, estimation::CovEstOpt = CovEstOpt(;),
-                gerber::GerberOpt = GerberOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
-                posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false)
+                gerber::GerberOpt = GerberOpt(;), sb::SBOpt = SBOpt(;),
+                denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
+                jlogo::Bool = false)
     @smart_assert(method ∈ CovMethods)
 
-    return CovOpt(method, estimation, gerber, denoise, posdef, jlogo)
+    return CovOpt(method, estimation, gerber, sb, denoise, posdef, jlogo)
 end
 function Base.setproperty!(obj::CovOpt, sym::Symbol, val)
     if sym == :method
@@ -393,6 +419,8 @@ mutable struct CorOpt
     estimation::CorEstOpt
     # Gerber
     gerber::GerberOpt
+    # SB
+    sb::SBOpt
     # Denoise
     denoise::DenoiseOpt
     # Posdef fix
@@ -403,12 +431,12 @@ mutable struct CorOpt
     uplo::Symbol
 end
 function CorOpt(; method::Symbol = :Pearson, estimation::CorEstOpt = CorEstOpt(;),
-                gerber::GerberOpt = GerberOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
-                posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,
-                uplo::Symbol = :L)
+                gerber::GerberOpt = GerberOpt(;), sb::SBOpt = SBOpt(;),
+                denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
+                jlogo::Bool = false, uplo::Symbol = :L)
     @smart_assert(method ∈ CorMethods)
 
-    return CorOpt(method, estimation, gerber, denoise, posdef, jlogo, uplo)
+    return CorOpt(method, estimation, gerber, sb, denoise, posdef, jlogo, uplo)
 end
 function Base.setproperty!(obj::CorOpt, sym::Symbol, val)
     if sym == :method
@@ -654,4 +682,4 @@ end
 
 export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
        CorOpt, CorEstOpt, WCOpt, KurtOpt, PCROpt, LoadingsOpt, FactorOpt, BLOpt, ClusterOpt,
-       OptimiseOpt
+       OptimiseOpt, SBOpt
