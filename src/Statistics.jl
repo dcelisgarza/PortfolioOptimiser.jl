@@ -70,7 +70,7 @@ end
 
 """
 ```julia
-mut_var_info_mtx(x::AbstractMatrix{<:Real}; bins_info::Union{Symbol, <:Integer} = :KN,
+mut_var_info_mtx(x::AbstractMatrix{<:Real}; bins_info::Union{Symbol,<:Integer} = :KN,
                  normed::Bool = true)
 ```
 
@@ -92,7 +92,7 @@ Compute the mutual information and variation of information matrices.
           * `:HGR`: Hacine-Gharbi and Ravier's choice.
 """
 function mut_var_info_mtx(x::AbstractMatrix{<:Real},
-                          bins_info::Union{Symbol, <:Integer} = :KN, normed::Bool = true)
+                          bins_info::Union{Symbol,<:Integer} = :KN, normed::Bool = true)
     @smart_assert(bins_info ∈ BinMethods ||
                   isa(bins_info, Int) && bins_info > zero(bins_info))
 
@@ -206,10 +206,19 @@ end
 
 function covgerber0(x, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
-    func = opt.genfunc.func
-    args = opt.genfunc.args
-    kwargs = opt.genfunc.kwargs
-    std_vec = vec(func(x, args...; kwargs...))
+    normalise = opt.normalise
+
+    if normalise
+        mean_func = opt.mean_func.func
+        mean_args = opt.mean_func.args
+        mean_kwargs = opt.mean_func.kwargs
+        mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
+    end
+
+    std_func = opt.std_func.func
+    std_args = opt.std_func.args
+    std_kwargs = opt.std_func.kwargs
+    std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
@@ -219,14 +228,20 @@ function covgerber0(x, opt::GerberOpt = GerberOpt(;))
             neg = 0
             pos = 0
             for k ∈ 1:T
-                if (x[k, i] >= threshold * std_vec[i] && x[k, j] >= threshold * std_vec[j]) ||
-                   (x[k, i] <= -threshold * std_vec[i] &&
-                    x[k, j] <= -threshold * std_vec[j])
+                if normalise
+                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                    ti = threshold
+                    tj = threshold
+                else
+                    xi = x[k, i]
+                    xj = x[k, j]
+                    ti = threshold * std_vec[i]
+                    tj = threshold * std_vec[j]
+                end
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
                     pos += 1
-                elseif (x[k, i] >= threshold * std_vec[i] &&
-                        x[k, j] <= -threshold * std_vec[j]) ||
-                       (x[k, i] <= -threshold * std_vec[i] &&
-                        x[k, j] >= threshold * std_vec[j])
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
                     neg += 1
                 end
             end
@@ -243,10 +258,19 @@ end
 
 function covgerber1(x, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
-    func = opt.genfunc.func
-    args = opt.genfunc.args
-    std_kwargs = opt.genfunc.kwargs
-    std_vec = vec(func(x, args...; std_kwargs...))
+    normalise = opt.normalise
+
+    if normalise
+        mean_func = opt.mean_func.func
+        mean_args = opt.mean_func.args
+        mean_kwargs = opt.mean_func.kwargs
+        mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
+    end
+
+    std_func = opt.std_func.func
+    std_args = opt.std_func.args
+    std_kwargs = opt.std_func.kwargs
+    std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
@@ -256,17 +280,23 @@ function covgerber1(x, opt::GerberOpt = GerberOpt(;))
             pos = 0
             nn = 0
             for k ∈ 1:T
-                if (x[k, i] >= threshold * std_vec[i] && x[k, j] >= threshold * std_vec[j]) ||
-                   (x[k, i] <= -threshold * std_vec[i] &&
-                    x[k, j] <= -threshold * std_vec[j])
+                if normalise
+                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                    ti = threshold
+                    tj = threshold
+                else
+                    xi = x[k, i]
+                    xj = x[k, j]
+                    ti = threshold * std_vec[i]
+                    tj = threshold * std_vec[j]
+                end
+
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
                     pos += 1
-                elseif (x[k, i] >= threshold * std_vec[i] &&
-                        x[k, j] <= -threshold * std_vec[j]) ||
-                       (x[k, i] <= -threshold * std_vec[i] &&
-                        x[k, j] >= threshold * std_vec[j])
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
                     neg += 1
-                elseif abs(x[k, i]) < threshold * std_vec[i] &&
-                       abs(x[k, j]) < threshold * std_vec[j]
+                elseif abs(xi) < ti && abs(xj) < tj
                     nn += 1
                 end
             end
@@ -281,18 +311,35 @@ end
 
 function covgerber2(x, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
-    func = opt.genfunc.func
-    args = opt.genfunc.args
-    std_kwargs = opt.genfunc.kwargs
-    std_vec = vec(func(x, args...; std_kwargs...))
+    normalise = opt.normalise
+
+    if normalise
+        mean_func = opt.mean_func.func
+        mean_args = opt.mean_func.args
+        mean_kwargs = opt.mean_func.kwargs
+        mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
+    end
+
+    std_func = opt.std_func.func
+    std_args = opt.std_func.args
+    std_kwargs = opt.std_func.kwargs
+    std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
     T, N = size(x)
     U = Matrix{Bool}(undef, T, N)
     D = Matrix{Bool}(undef, T, N)
 
     for i ∈ 1:N
-        U[:, i] .= x[:, i] .>= std_vec[i] * threshold
-        D[:, i] .= x[:, i] .<= -std_vec[i] * threshold
+        if normalise
+            xi = (x[:, i] .- mean_vec[i]) / std_vec[i]
+            ti = threshold
+        else
+            xi = x[:, i]
+            ti = threshold * std_vec[i]
+        end
+
+        U[:, i] .= xi .>= ti
+        D[:, i] .= xi .<= -ti
     end
 
     # nconc = transpose(U) * U + transpose(D) * D
@@ -337,15 +384,17 @@ function covsb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     c3 = sbopt.c3
     n = sbopt.n
 
-    mean_func = sbopt.genfunc.func
-    mean_args = sbopt.genfunc.args
-    mean_kwargs = sbopt.genfunc.kwargs
+    threshold = gerberopt.threshold
+    normalise = gerberopt.normalise
+
+    mean_func = gerberopt.mean_func.func
+    mean_args = gerberopt.mean_func.args
+    mean_kwargs = gerberopt.mean_func.kwargs
     mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
 
-    threshold = gerberopt.threshold
-    std_func = gerberopt.genfunc.func
-    std_args = gerberopt.genfunc.args
-    std_kwargs = gerberopt.genfunc.kwargs
+    std_func = gerberopt.std_func.func
+    std_args = gerberopt.std_func.args
+    std_kwargs = gerberopt.std_func.kwargs
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
     T, N = size(x)
@@ -356,18 +405,30 @@ function covsb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
             neg = zero(eltype(x))
             pos = zero(eltype(x))
             for k ∈ 1:T
-                if (x[k, i] >= threshold * std_vec[i] && x[k, j] >= threshold * std_vec[j]) ||
-                   (x[k, i] <= -threshold * std_vec[i] &&
-                    x[k, j] <= -threshold * std_vec[j])
-                    pos += _sb_delta(x[k, i], x[k, j], mean_vec[i], mean_vec[j], std_vec[i],
-                                     std_vec[j], c1, c2, c3, n)
+                if normalise
+                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                    ti = threshold
+                    tj = threshold
+                    mui = zero(threshold)
+                    muj = zero(threshold)
+                    sigmai = 1
+                    sigmaj = 1
+                else
+                    xi = x[k, i]
+                    xj = x[k, j]
+                    ti = threshold * std_vec[i]
+                    tj = threshold * std_vec[j]
+                    mui = mean_vec[i]
+                    muj = mean_vec[j]
+                    sigmai = std_vec[i]
+                    sigmaj = std_vec[j]
+                end
 
-                elseif (x[k, i] >= threshold * std_vec[i] &&
-                        x[k, j] <= -threshold * std_vec[j]) ||
-                       (x[k, i] <= -threshold * std_vec[i] &&
-                        x[k, j] >= threshold * std_vec[j])
-                    neg += _sb_delta(x[k, i], x[k, j], mean_vec[i], mean_vec[j], std_vec[i],
-                                     std_vec[j], c1, c2, c3, n)
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                 end
             end
             mtx[i, j] = (pos - neg) / (pos + neg)
@@ -387,16 +448,18 @@ function covsb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     c3 = sbopt.c3
     n = sbopt.n
 
-    mean_func = sbopt.genfunc.func
-    mean_args = sbopt.genfunc.args
-    mean_kwargs = sbopt.genfunc.kwargs
+    threshold = gerberopt.threshold
+    normalise = gerberopt.normalise
+
+    mean_func = gerberopt.mean_func.func
+    mean_args = gerberopt.mean_func.args
+    mean_kwargs = gerberopt.mean_func.kwargs
     mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
 
-    threshold = gerberopt.threshold
-    func = gerberopt.genfunc.func
-    args = gerberopt.genfunc.args
-    std_kwargs = gerberopt.genfunc.kwargs
-    std_vec = vec(func(x, args...; std_kwargs...))
+    std_func = gerberopt.std_func.func
+    std_args = gerberopt.std_func.args
+    std_kwargs = gerberopt.std_func.kwargs
+    std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
@@ -406,21 +469,32 @@ function covsb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
             pos = 0
             nn = 0
             for k ∈ 1:T
-                if (x[k, i] >= threshold * std_vec[i] && x[k, j] >= threshold * std_vec[j]) ||
-                   (x[k, i] <= -threshold * std_vec[i] &&
-                    x[k, j] <= -threshold * std_vec[j])
-                    pos += _sb_delta(x[k, i], x[k, j], mean_vec[i], mean_vec[j], std_vec[i],
-                                     std_vec[j], c1, c2, c3, n)
-                elseif (x[k, i] >= threshold * std_vec[i] &&
-                        x[k, j] <= -threshold * std_vec[j]) ||
-                       (x[k, i] <= -threshold * std_vec[i] &&
-                        x[k, j] >= threshold * std_vec[j])
-                    neg += _sb_delta(x[k, i], x[k, j], mean_vec[i], mean_vec[j], std_vec[i],
-                                     std_vec[j], c1, c2, c3, n)
-                elseif abs(x[k, i]) < threshold * std_vec[i] &&
-                       abs(x[k, j]) < threshold * std_vec[j]
-                    nn += _sb_delta(x[k, i], x[k, j], mean_vec[i], mean_vec[j], std_vec[i],
-                                    std_vec[j], c1, c2, c3, n)
+                if normalise
+                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                    ti = threshold
+                    tj = threshold
+                    mui = zero(threshold)
+                    muj = zero(threshold)
+                    sigmai = 1
+                    sigmaj = 1
+                else
+                    xi = x[k, i]
+                    xj = x[k, j]
+                    ti = threshold * std_vec[i]
+                    tj = threshold * std_vec[j]
+                    mui = mean_vec[i]
+                    muj = mean_vec[j]
+                    sigmai = std_vec[i]
+                    sigmaj = std_vec[j]
+                end
+
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                elseif abs(xi) < ti && abs(xj) < tj
+                    nn += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                 end
             end
             mtx[i, j] = (pos - neg) / (pos + neg + nn)
@@ -438,15 +512,17 @@ function covgerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
     c3 = sbopt.c3
     n = sbopt.n
 
-    mean_func = sbopt.genfunc.func
-    mean_args = sbopt.genfunc.args
-    mean_kwargs = sbopt.genfunc.kwargs
+    threshold = gerberopt.threshold
+    normalise = gerberopt.normalise
+
+    mean_func = gerberopt.mean_func.func
+    mean_args = gerberopt.mean_func.args
+    mean_kwargs = gerberopt.mean_func.kwargs
     mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
 
-    threshold = gerberopt.threshold
-    std_func = gerberopt.genfunc.func
-    std_args = gerberopt.genfunc.args
-    std_kwargs = gerberopt.genfunc.kwargs
+    std_func = gerberopt.std_func.func
+    std_args = gerberopt.std_func.args
+    std_kwargs = gerberopt.std_func.kwargs
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
     T, N = size(x)
@@ -459,18 +535,31 @@ function covgerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
             cneg = 0
             cpos = 0
             for k ∈ 1:T
-                if (x[k, i] >= threshold * std_vec[i] && x[k, j] >= threshold * std_vec[j]) ||
-                   (x[k, i] <= -threshold * std_vec[i] &&
-                    x[k, j] <= -threshold * std_vec[j])
-                    pos += _sb_delta(x[k, i], x[k, j], mean_vec[i], mean_vec[j], std_vec[i],
-                                     std_vec[j], c1, c2, c3, n)
+                if normalise
+                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                    ti = threshold
+                    tj = threshold
+                    mui = zero(threshold)
+                    muj = zero(threshold)
+                    sigmai = 1
+                    sigmaj = 1
+                else
+                    xi = x[k, i]
+                    xj = x[k, j]
+                    ti = threshold * std_vec[i]
+                    tj = threshold * std_vec[j]
+                    mui = mean_vec[i]
+                    muj = mean_vec[j]
+                    sigmai = std_vec[i]
+                    sigmaj = std_vec[j]
+                end
+
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cpos += 1
-                elseif (x[k, i] >= threshold * std_vec[i] &&
-                        x[k, j] <= -threshold * std_vec[j]) ||
-                       (x[k, i] <= -threshold * std_vec[i] &&
-                        x[k, j] >= threshold * std_vec[j])
-                    neg += _sb_delta(x[k, i], x[k, j], mean_vec[i], mean_vec[j], std_vec[i],
-                                     std_vec[j], c1, c2, c3, n)
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cneg += 1
                 end
             end
@@ -493,16 +582,18 @@ function covgerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
     c3 = sbopt.c3
     n = sbopt.n
 
-    mean_func = sbopt.genfunc.func
-    mean_args = sbopt.genfunc.args
-    mean_kwargs = sbopt.genfunc.kwargs
+    threshold = gerberopt.threshold
+    normalise = gerberopt.normalise
+
+    mean_func = gerberopt.mean_func.func
+    mean_args = gerberopt.mean_func.args
+    mean_kwargs = gerberopt.mean_func.kwargs
     mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
 
-    threshold = gerberopt.threshold
-    func = gerberopt.genfunc.func
-    args = gerberopt.genfunc.args
-    std_kwargs = gerberopt.genfunc.kwargs
-    std_vec = vec(func(x, args...; std_kwargs...))
+    std_func = gerberopt.std_func.func
+    std_args = gerberopt.std_func.args
+    std_kwargs = gerberopt.std_func.kwargs
+    std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
@@ -515,23 +606,34 @@ function covgerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
             cpos = 0
             cnn = 0
             for k ∈ 1:T
-                if (x[k, i] >= threshold * std_vec[i] && x[k, j] >= threshold * std_vec[j]) ||
-                   (x[k, i] <= -threshold * std_vec[i] &&
-                    x[k, j] <= -threshold * std_vec[j])
-                    pos += _sb_delta(x[k, i], x[k, j], mean_vec[i], mean_vec[j], std_vec[i],
-                                     std_vec[j], c1, c2, c3, n)
+                if normalise
+                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                    ti = threshold
+                    tj = threshold
+                    mui = zero(threshold)
+                    muj = zero(threshold)
+                    sigmai = 1
+                    sigmaj = 1
+                else
+                    xi = x[k, i]
+                    xj = x[k, j]
+                    ti = threshold * std_vec[i]
+                    tj = threshold * std_vec[j]
+                    mui = mean_vec[i]
+                    muj = mean_vec[j]
+                    sigmai = std_vec[i]
+                    sigmaj = std_vec[j]
+                end
+
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cpos += 1
-                elseif (x[k, i] >= threshold * std_vec[i] &&
-                        x[k, j] <= -threshold * std_vec[j]) ||
-                       (x[k, i] <= -threshold * std_vec[i] &&
-                        x[k, j] >= threshold * std_vec[j])
-                    neg += _sb_delta(x[k, i], x[k, j], mean_vec[i], mean_vec[j], std_vec[i],
-                                     std_vec[j], c1, c2, c3, n)
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cneg += 1
-                elseif abs(x[k, i]) < threshold * std_vec[i] &&
-                       abs(x[k, j]) < threshold * std_vec[j]
-                    nn += _sb_delta(x[k, i], x[k, j], mean_vec[i], mean_vec[j], std_vec[i],
-                                    std_vec[j], c1, c2, c3, n)
+                elseif abs(xi) < ti && abs(xj) < tj
+                    nn += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cnn += 1
                 end
             end
@@ -548,7 +650,7 @@ function covgerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
 end
 
 function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
-                     rng = Random.default_rng(), seed::Union{Nothing, <:Integer} = nothing)
+                     rng = Random.default_rng(), seed::Union{Nothing,<:Integer} = nothing)
     if !isnothing(seed)
         Random.seed!(rng, seed)
     end
@@ -580,7 +682,7 @@ function cokurt(x::AbstractMatrix, mu::AbstractArray)
 end
 
 function scokurt(x::AbstractMatrix, mu::AbstractArray,
-                 target_ret::Union{Real, <:AbstractVector{<:Real}} = 0.0)
+                 target_ret::Union{Real,<:AbstractVector{<:Real}} = 0.0)
     T, N = size(x)
     y = x .- mu
     y .= min.(y, target_ret)
@@ -602,7 +704,7 @@ function coskew(x::AbstractMatrix, mu::AbstractArray)
 end
 
 function scoskew(x::AbstractMatrix, mu::AbstractArray,
-                 target_ret::Union{Real, <:AbstractVector{<:Real}} = 0.0)
+                 target_ret::Union{Real,<:AbstractVector{<:Real}} = 0.0)
     T, N = size(x)
     y = x .- mu
     y .= min.(y, target_ret)
@@ -979,11 +1081,11 @@ end
 
 """
 ```julia
-mean_vec(returns::AbstractMatrix; custom_mu::Union{AbstractVector, Nothing} = nothing,
+mean_vec(returns::AbstractMatrix; custom_mu::Union{AbstractVector,Nothing} = nothing,
          mean_args::Tuple = (), mean_func::Function = mean, mean_kwargs::NamedTuple = (;),
          mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-         mu_weights::Union{AbstractWeights, Nothing} = nothing, rf::Real = 0.0,
-         sigma::Union{AbstractMatrix, Nothing} = nothing)
+         mu_weights::Union{AbstractWeights,Nothing} = nothing, rf::Real = 0.0,
+         sigma::Union{AbstractMatrix,Nothing} = nothing)
 ```
 """
 function mean_vec(returns::AbstractMatrix, opt::MuOpt = MuOpt(;))
@@ -1259,8 +1361,7 @@ end
 
 function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
                        n_sim::Integer = 3_000, window::Integer = 3,
-                       seed::Union{<:Integer, Nothing} = nothing,
-                       rng = Random.default_rng())
+                       seed::Union{<:Integer,Nothing} = nothing, rng = Random.default_rng())
     @smart_assert(kind ∈ BootstrapMethods)
     if !isnothing(seed)
         Random.seed!(rng, seed)
@@ -1634,7 +1735,7 @@ function backward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
     return included
 end
 
-function pcr(x::DataFrame, y::Union{Vector, DataFrame}, opt::PCROpt = PCROpt(;))
+function pcr(x::DataFrame, y::Union{Vector,DataFrame}, opt::PCROpt = PCROpt(;))
     mean_genfunc = opt.mean_genfunc
     std_genfunc = opt.std_genfunc
     pca_s_genfunc = opt.pca_s_genfunc
@@ -1852,17 +1953,17 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
 end
 
 function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
-                                   F::Union{AbstractMatrix, Nothing}   = nothing,
-                                   B::Union{AbstractMatrix, Nothing}   = nothing,
-                                   P::Union{AbstractMatrix, Nothing}   = nothing,
-                                   P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                   Q::Union{AbstractVector, Nothing}   = nothing,
-                                   Q_f::Union{AbstractVector, Nothing} = nothing,
-                                   cov_opt::CovOpt                     = CovOpt(;),
-                                   mu_opt::MuOpt                       = MuOpt(;),
-                                   f_cov_opt::CovOpt                   = CovOpt(;),
-                                   f_mu_opt::MuOpt                     = MuOpt(;),
-                                   bl_opt::BLOpt                       = BLOpt(;))
+                                   F::Union{AbstractMatrix,Nothing}   = nothing,
+                                   B::Union{AbstractMatrix,Nothing}   = nothing,
+                                   P::Union{AbstractMatrix,Nothing}   = nothing,
+                                   P_f::Union{AbstractMatrix,Nothing} = nothing,
+                                   Q::Union{AbstractVector,Nothing}   = nothing,
+                                   Q_f::Union{AbstractVector,Nothing} = nothing,
+                                   cov_opt::CovOpt                    = CovOpt(;),
+                                   mu_opt::MuOpt                      = MuOpt(;),
+                                   f_cov_opt::CovOpt                  = CovOpt(;),
+                                   f_mu_opt::MuOpt                    = MuOpt(;),
+                                   bl_opt::BLOpt                      = BLOpt(;))
     asset_tuple = (!isnothing(P), !isnothing(Q))
     any_asset_provided = any(asset_tuple)
     all_asset_provided = all(asset_tuple)
@@ -1957,35 +2058,35 @@ end
 ```julia
 black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
                             Q::AbstractVector;
-                            w::AbstractVector                               = Vector{Float64}(undef, 0),    # cov_mtx
-                            cov_args::Tuple                                 = (),
-                            cov_est::CovarianceEstimator                    = StatsBase.SimpleCovariance(; corrected = true),
-                            cov_func::Function                              = cov,
-                            cov_kwargs::NamedTuple                          = (;),
-                            cov_method::Symbol                              = :Full,
-                            cov_weights::Union{AbstractWeights, Nothing}    = nothing,
-                            custom_cov::Union{AbstractMatrix, Nothing}      = nothing,
-                            gs_threshold::Real                              = portfolio.gs_threshold,
-                            jlogo::Bool                                     = false,
-                            posdef_args::Tuple                              = (),
-                            posdef_fix::Symbol                              = :Nearest,
-                            posdef_func::Function                           = x -> x,
-                            posdef_kwargs::NamedTuple                       = (;),
-                            std_args::Tuple                                 = (),
-                            std_func::Function                              = std,
-                            std_kwargs::NamedTuple                          = (;),
-                            target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,    # mean_vec
-                            custom_mu::Union{AbstractVector, Nothing}       = nothing,
-                            mean_args::Tuple                                = (),
-                            mean_func::Function                             = mean,
-                            mean_kwargs::NamedTuple                         = (;),
-                            mkt_ret::Union{AbstractVector, Nothing}         = nothing,
-                            mu_target::Symbol                               = :GM,
-                            mu_method::Symbol                               = :Default,
-                            mu_weights::Union{AbstractWeights, Nothing}     = nothing,    # Black Litterman
-                            delta::Union{Real, Nothing}                     = nothing,
-                            eq::Bool                                        = true,
-                            rf::Real                                        = 0.0)
+                            w::AbstractVector                              = Vector{Float64}(undef, 0),    # cov_mtx
+                            cov_args::Tuple                                = (),
+                            cov_est::CovarianceEstimator                   = StatsBase.SimpleCovariance(; corrected = true),
+                            cov_func::Function                             = cov,
+                            cov_kwargs::NamedTuple                         = (;),
+                            cov_method::Symbol                             = :Full,
+                            cov_weights::Union{AbstractWeights,Nothing}    = nothing,
+                            custom_cov::Union{AbstractMatrix,Nothing}      = nothing,
+                            gs_threshold::Real                             = portfolio.gs_threshold,
+                            jlogo::Bool                                    = false,
+                            posdef_args::Tuple                             = (),
+                            posdef_fix::Symbol                             = :Nearest,
+                            posdef_func::Function                          = x -> x,
+                            posdef_kwargs::NamedTuple                      = (;),
+                            std_args::Tuple                                = (),
+                            std_func::Function                             = std,
+                            std_kwargs::NamedTuple                         = (;),
+                            target_ret::Union{Real,AbstractVector{<:Real}} = 0.0,    # mean_vec
+                            custom_mu::Union{AbstractVector,Nothing}       = nothing,
+                            mean_args::Tuple                               = (),
+                            mean_func::Function                            = mean,
+                            mean_kwargs::NamedTuple                        = (;),
+                            mkt_ret::Union{AbstractVector,Nothing}         = nothing,
+                            mu_target::Symbol                              = :GM,
+                            mu_method::Symbol                              = :Default,
+                            mu_weights::Union{AbstractWeights,Nothing}     = nothing,    # Black Litterman
+                            delta::Union{Real,Nothing}                     = nothing,
+                            eq::Bool                                       = true,
+                            rf::Real                                       = 0.0)
 ```
 """
 function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
@@ -2024,8 +2125,8 @@ factor_statistics!(portfolio::AbstractPortfolio;    # cov_mtx
                                                                              corrected = true),
                    cov_func::Function = cov, cov_kwargs::NamedTuple = (;),
                    cov_method::Symbol = :Full,
-                   cov_weights::Union{AbstractWeights, Nothing} = nothing,
-                   custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+                   cov_weights::Union{AbstractWeights,Nothing} = nothing,
+                   custom_cov::Union{AbstractMatrix,Nothing} = nothing,
                    denoise::Bool = false, detone::Bool = false,
                    gs_threshold::Real = portfolio.gs_threshold, jlogo::Bool = false,
                    kernel = ASH.Kernels.gaussian, m::Integer = 10, method::Symbol = :Fixed,
@@ -2034,14 +2135,14 @@ factor_statistics!(portfolio::AbstractPortfolio;    # cov_mtx
                    posdef_func::Function = x -> x, posdef_kwargs::NamedTuple = (;),
                    std_args::Tuple = (), std_func::Function = std,
                    std_kwargs::NamedTuple = (;),
-                   target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,    # mean_vec
-                   custom_mu::Union{AbstractVector, Nothing} = nothing,
+                   target_ret::Union{Real,AbstractVector{<:Real}} = 0.0,    # mean_vec
+                   custom_mu::Union{AbstractVector,Nothing} = nothing,
                    mean_args::Tuple = (), mean_func::Function = mean,
                    mean_kwargs::NamedTuple = (;),
-                   mkt_ret::Union{AbstractVector, Nothing} = nothing,
+                   mkt_ret::Union{AbstractVector,Nothing} = nothing,
                    mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-                   mu_weights::Union{AbstractWeights, Nothing} = nothing, rf = 0.0,    # Loadings matrix
-                   B::Union{DataFrame, Nothing} = nothing, criterion::Symbol = :pval,
+                   mu_weights::Union{AbstractWeights,Nothing} = nothing, rf = 0.0,    # Loadings matrix
+                   B::Union{DataFrame,Nothing} = nothing, criterion::Symbol = :pval,
                    error::Bool = true, pca_kwargs::NamedTuple = (;),
                    pca_std_kwargs::NamedTuple = (;), pca_std_type = ZScoreTransform,
                    reg_method::Symbol = :FReg, threshold::Real = 0.05,
@@ -2079,26 +2180,26 @@ black_litterman_factor_satistics!(portfolio::AbstractPortfolio;
                                                                                             corrected = true),
                                   cov_func::Function = cov, cov_kwargs::NamedTuple = (;),
                                   cov_method::Symbol = :Full,
-                                  cov_weights::Union{AbstractWeights, Nothing} = nothing,
-                                  custom_cov::Union{AbstractMatrix, Nothing} = nothing,
+                                  cov_weights::Union{AbstractWeights,Nothing} = nothing,
+                                  custom_cov::Union{AbstractMatrix,Nothing} = nothing,
                                   gs_threshold::Real = portfolio.gs_threshold,
                                   jlogo::Bool = false, posdef_args::Tuple = (),                                           # Black Litterman
                                   posdef_fix::Symbol = :Nearest,
                                   posdef_func::Function = x -> x,
                                   posdef_kwargs::NamedTuple = (;), std_args::Tuple = (),
                                   std_func::Function = std, std_kwargs::NamedTuple = (;),
-                                  target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,    # mean_vec                                           # Settings
-                                  custom_mu::Union{AbstractVector, Nothing} = nothing,
+                                  target_ret::Union{Real,AbstractVector{<:Real}} = 0.0,    # mean_vec                                           # Settings
+                                  custom_mu::Union{AbstractVector,Nothing} = nothing,
                                   mean_args::Tuple = (), mean_func::Function = mean,
                                   mean_kwargs::NamedTuple = (;),
-                                  mkt_ret::Union{AbstractVector, Nothing} = nothing,
+                                  mkt_ret::Union{AbstractVector,Nothing} = nothing,
                                   mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-                                  mu_weights::Union{AbstractWeights, Nothing} = nothing,    # Black Litterman
-                                  B::Union{DataFrame, Nothing} = nothing,
-                                  P::Union{AbstractMatrix, Nothing} = nothing,
-                                  P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                  Q::Union{AbstractVector, Nothing} = nothing,
-                                  Q_f::Union{AbstractVector, Nothing} = nothing,
+                                  mu_weights::Union{AbstractWeights,Nothing} = nothing,    # Black Litterman
+                                  B::Union{DataFrame,Nothing} = nothing,
+                                  P::Union{AbstractMatrix,Nothing} = nothing,
+                                  P_f::Union{AbstractMatrix,Nothing} = nothing,
+                                  Q::Union{AbstractVector,Nothing} = nothing,
+                                  Q_f::Union{AbstractVector,Nothing} = nothing,
                                   bl_method::Symbol = :B, delta::Real = 1.0,
                                   diagonal::Bool = true, eq::Bool = true, rf::Real = 0.0,
                                   var_args::Tuple = (), var_func::Function = var,
@@ -2110,18 +2211,18 @@ black_litterman_factor_satistics!(portfolio::AbstractPortfolio;
 ```
 """
 function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
-                                           w::AbstractVector                   = Vector{Float64}(undef, 0);
-                                           B::Union{DataFrame, Nothing}        = nothing,
-                                           P::Union{AbstractMatrix, Nothing}   = nothing,
-                                           P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                           Q::Union{AbstractVector, Nothing}   = nothing,
-                                           Q_f::Union{AbstractVector, Nothing} = nothing,
-                                           loadings_opt::LoadingsOpt           = LoadingsOpt(;),
-                                           cov_opt::CovOpt                     = CovOpt(;),
-                                           mu_opt::MuOpt                       = MuOpt(;),
-                                           f_cov_opt::CovOpt                   = CovOpt(;),
-                                           f_mu_opt::MuOpt                     = MuOpt(;),
-                                           bl_opt::BLOpt                       = BLOpt(;))
+                                           w::AbstractVector                  = Vector{Float64}(undef, 0);
+                                           B::Union{DataFrame,Nothing}        = nothing,
+                                           P::Union{AbstractMatrix,Nothing}   = nothing,
+                                           P_f::Union{AbstractMatrix,Nothing} = nothing,
+                                           Q::Union{AbstractVector,Nothing}   = nothing,
+                                           Q_f::Union{AbstractVector,Nothing} = nothing,
+                                           loadings_opt::LoadingsOpt          = LoadingsOpt(;),
+                                           cov_opt::CovOpt                    = CovOpt(;),
+                                           mu_opt::MuOpt                      = MuOpt(;),
+                                           f_cov_opt::CovOpt                  = CovOpt(;),
+                                           f_mu_opt::MuOpt                    = MuOpt(;),
+                                           bl_opt::BLOpt                      = BLOpt(;))
     returns = portfolio.returns
     F = portfolio.f_returns
 

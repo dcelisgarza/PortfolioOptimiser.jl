@@ -14,19 +14,64 @@ portfolio = Portfolio(; prices = prices,
                                             :COSMO => Dict(:solver => COSMO.Optimizer,
                                                            :params => Dict("verbose" => false))))
 
-plot_clusters(portfolio; cor_opt = CorOpt(; method = :Gerber0, sb = SBOpt(;)),
+asset_statistics!(portfolio; calc_kurt = false,
+                  cov_opt = CovOpt(; method = :SB1, gerber = GerberOpt(; normalise = false),
+                                   sb = SBOpt(;)))
+cov1 = copy(portfolio.cov)
+
+asset_statistics!(portfolio; calc_kurt = false,
+                  cov_opt = CovOpt(; method = :SB1, gerber = GerberOpt(; normalise = false),
+                                   sb = SBOpt(;)))
+cov2 = copy(portfolio.cov)
+
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :Gerber0, gerber = GerberOpt(; normalise = false),
+                               sb = SBOpt(;)), cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :Gerber0, gerber = GerberOpt(; normalise = true),
+                               sb = SBOpt(;)), cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :SB0, gerber = GerberOpt(; normalise = false),
+                               sb = SBOpt(;)), cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :SB0, gerber = GerberOpt(; normalise = true),
+                               sb = SBOpt(;)), cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :Gerber_SB0,
+                               gerber = GerberOpt(; normalise = false), sb = SBOpt(;)),
               cluster_opt = ClusterOpt(; linkage = :DBHT))
-plot_clusters(portfolio; cor_opt = CorOpt(; method = :SB0, sb = SBOpt(;)),
-              cluster_opt = ClusterOpt(; linkage = :DBHT))
-plot_clusters(portfolio; cor_opt = CorOpt(; method = :Gerber_SB0, sb = SBOpt(;)),
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :Gerber_SB0,
+                               gerber = GerberOpt(; normalise = true), sb = SBOpt(;)),
               cluster_opt = ClusterOpt(; linkage = :DBHT))
 
-plot_clusters(portfolio; cor_opt = CorOpt(; method = :Gerber1, sb = SBOpt(;)),
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :Gerber1, gerber = GerberOpt(; normalise = false),
+                               sb = SBOpt(;)), cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :Gerber1, gerber = GerberOpt(; normalise = true),
+                               sb = SBOpt(;)), cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :SB1, gerber = GerberOpt(; normalise = false),
+                               sb = SBOpt(;)), cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :SB1, gerber = GerberOpt(; normalise = true),
+                               sb = SBOpt(;)), cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :Gerber_SB1,
+                               gerber = GerberOpt(; normalise = false), sb = SBOpt(;)),
               cluster_opt = ClusterOpt(; linkage = :DBHT))
-plot_clusters(portfolio; cor_opt = CorOpt(; method = :SB1, sb = SBOpt(;)),
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :Gerber_SB1,
+                               gerber = GerberOpt(; normalise = true), sb = SBOpt(;)),
               cluster_opt = ClusterOpt(; linkage = :DBHT))
-plot_clusters(portfolio; cor_opt = CorOpt(; method = :Gerber_SB1, sb = SBOpt(;)),
-              cluster_opt = ClusterOpt(; linkage = :ward))
+
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :Gerber2, gerber = GerberOpt(; normalise = false),
+                               sb = SBOpt(;)), cluster_opt = ClusterOpt(; linkage = :DBHT))
+plot_clusters(portfolio;
+              cor_opt = CorOpt(; method = :Gerber2, gerber = GerberOpt(; normalise = true),
+                               sb = SBOpt(;)), cluster_opt = ClusterOpt(; linkage = :DBHT))
 
 asset_statistics!(portfolio; calc_kurt = false,
                   cov_opt = CovOpt(; method = :SB0, sb = SBOpt(; c1 = 0.8, c2 = 0.9)))
