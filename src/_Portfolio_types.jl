@@ -973,7 +973,6 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-
     else
         if (isa(getfield(obj, sym), AbstractArray) && isa(val, AbstractArray)) ||
            (isa(getfield(obj, sym), Real) && isa(val, Real))

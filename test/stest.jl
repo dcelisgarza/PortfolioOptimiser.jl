@@ -1,18 +1,57 @@
 using COSMO, CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra,
       OrderedCollections, Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries,
-      Logging, GLPK, Ipopt, SCS, NLopt, ECOS, PyCall
+      Logging, GLPK, Ipopt, SCS, NLopt, ECOS, PyCall, JSON3, FileIO, CovarianceEstimation
 
 prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
 rf = 0.0329 / 252
 l = 2.0
 
-portfolio = Portfolio(; prices = prices,
-                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                              :params => Dict("verbose" => false,
-                                                                              "max_step_fraction" => 0.7)),
-                                            :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                           :params => Dict("verbose" => false))))
+portfolio = HCPortfolio(;
+                        # prices = prices,
+                        #                       solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                        #                                                               :params => Dict("verbose" => false,
+                        #                                                                               "max_step_fraction" => 0.7)),
+                        #                                             :COSMO => Dict(:solver => COSMO.Optimizer,
+                        #                                                            :params => Dict("verbose" => false)))
+
+                        )
+
+cor_opt = CorOpt(; method = :Gerber_SB1,
+                 estimation = CorEstOpt(; estimator = AnalyticalNonlinearShrinkage()))
+cov_opt = CovOpt(; method = :Gerber_SB1,
+                 estimation = CovEstOpt(; estimator = AnalyticalNonlinearShrinkage()))
+cluster_opt = ClusterOpt(; linkage = :DBHT)
+
+using StructTypes
+function StructTypes.StructType(::Type{typeof(cor_opt.estimation.cor_genfunc.func)})
+    return StructTypes.StringType()
+end
+function StructTypes.StructType(::Type{typeof(cor_opt.estimation.cor_genfunc.func)})
+    return StructTypes.StringType()
+end
+function StructTypes.StructType(::Type{typeof(cor_opt.estimation.dist_genfunc.func)})
+    return StructTypes.StringType()
+end
+function StructTypes.StructType(::Type{typeof(cor_opt.gerber.mean_func.func)})
+    return StructTypes.StringType()
+end
+function StructTypes.StructType(::Type{typeof(cor_opt.gerber.std_func.func)})
+    return StructTypes.StringType()
+end
+function StructTypes.StructType(::Type{typeof(cor_opt.gerber.posdef.genfunc.func)})
+    return StructTypes.StringType()
+end
+StructTypes.StructType(::Type{typeof(cor_opt.denoise.kernel)}) = StructTypes.StringType()
+function StructTypes.StructType(::Type{typeof(cov_opt.estimation.genfunc.func)})
+    return StructTypes.StringType()
+end
+
+println(JSON3.write(cluster_opt; allow_inf = true))
+
+cor_opt.denoise.kernel
+
+propertynames(cov_opt.estimation)
 
 asset_statistics!(portfolio; calc_kurt = false,
                   cov_opt = CovOpt(; method = :SB1, gerber = GerberOpt(; normalise = false),

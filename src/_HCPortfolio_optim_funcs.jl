@@ -82,6 +82,10 @@ function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 
     N = size(dist, 1)
     cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]
 
+    if iszero(max_k)
+        max_k = ceil(Int, sqrt(size(dist, 1)))
+    end
+
     c1 = min(N, max_k)
     W_list = Vector{eltype(dist)}(undef, c1)
 

@@ -223,7 +223,7 @@ function covgerber0(x, opt::GerberOpt = GerberOpt(;))
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
-    for j ∈ 1:N
+    @inbounds for j ∈ 1:N
         for i ∈ 1:j
             neg = 0
             pos = 0
@@ -274,7 +274,7 @@ function covgerber1(x, opt::GerberOpt = GerberOpt(;))
 
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
-    for j ∈ 1:N
+    @inbounds for j ∈ 1:N
         for i ∈ 1:j
             neg = 0
             pos = 0
@@ -329,7 +329,7 @@ function covgerber2(x, opt::GerberOpt = GerberOpt(;))
     U = Matrix{Bool}(undef, T, N)
     D = Matrix{Bool}(undef, T, N)
 
-    for i ∈ 1:N
+    @inbounds for i ∈ 1:N
         if normalise
             xi = (x[:, i] .- mean_vec[i]) / std_vec[i]
             ti = threshold
@@ -400,7 +400,7 @@ function covsb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
-    for j ∈ 1:N
+    @inbounds for j ∈ 1:N
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
@@ -463,7 +463,7 @@ function covsb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
 
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
-    for j ∈ 1:N
+    @inbounds for j ∈ 1:N
         for i ∈ 1:j
             neg = 0
             pos = 0
@@ -528,7 +528,7 @@ function covgerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
-    for j ∈ 1:N
+    @inbounds for j ∈ 1:N
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
@@ -597,7 +597,7 @@ function covgerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
 
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
-    for j ∈ 1:N
+    @inbounds for j ∈ 1:N
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
