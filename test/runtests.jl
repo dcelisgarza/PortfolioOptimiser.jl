@@ -9,6 +9,10 @@ end
     include("AssetStatisticsTests2.jl")
 end
 
+@safetestset "Portfolio Traditional Optimisation Constraints" begin
+    include("PortfolioTradConstraintTests.jl")
+end
+
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
 end
@@ -79,10 +83,6 @@ end
 
 @safetestset "HCPortfolio Optimisation" begin
     include("HCPortfolioOptimisationTests.jl")
-end
-
-@safetestset "Portfolio Traditional Optimisation Constraints" begin
-    include("PortfolioTradConstraintTests.jl")
 end
 
 @safetestset "Portfolio Classic RP OWA Optimisation" begin
