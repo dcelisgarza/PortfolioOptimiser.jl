@@ -704,7 +704,7 @@ const HCObjFuncs = (ObjFuncs..., :Equal)
 
 """
 ```julia
-AllocTypes = (:LP, :Greedy)
+AllocMethods = (:LP, :Greedy)
 ```
 
 Methods for allocating assets to an [`AbstractPortfolio`]() according to the optimised weights and latest asset prices.
@@ -712,7 +712,7 @@ Methods for allocating assets to an [`AbstractPortfolio`]() according to the opt
   - `:LP`: uses Mixed-Integer Linear Programming optimisation to allocate the portfolio.
   - `:Greedy`: uses a greedy iterative algorithm.
 """
-const AllocTypes = (:LP, :Greedy)
+const AllocMethods = (:LP, :Greedy)
 
 const ASH = AverageShiftedHistograms
 const NCM = NearestCorrelationMatrix

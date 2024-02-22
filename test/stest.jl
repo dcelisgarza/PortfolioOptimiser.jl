@@ -22,6 +22,7 @@ cor_opt = CorOpt(; method = :Gerber_SB1,
 cov_opt = CovOpt(; method = :Gerber_SB1,
                  estimation = CovEstOpt(; estimator = AnalyticalNonlinearShrinkage()))
 cluster_opt = ClusterOpt(; linkage = :DBHT)
+port_opt = OptimiseOpt(; obj = :Sharpe, rf = rf, type = :Trad, kelly = :Exact)
 
 using StructTypes
 function StructTypes.StructType(::Type{typeof(cor_opt.estimation.cor_genfunc.func)})
@@ -47,7 +48,7 @@ function StructTypes.StructType(::Type{typeof(cov_opt.estimation.genfunc.func)})
     return StructTypes.StringType()
 end
 
-println(JSON3.write(cluster_opt; allow_inf = true))
+println(JSON3.write(port_opt; allow_inf = true))
 
 cor_opt.denoise.kernel
 

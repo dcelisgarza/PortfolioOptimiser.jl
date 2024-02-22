@@ -681,6 +681,27 @@ function Base.setproperty!(obj::OptimiseOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+mutable struct AllocOpt
+    port_type::Symbol
+    method::Symbol
+    latest_prices::AbstractVector
+    investment::Real
+    rounding::Integer
+    reinvest::Bool
+end
+function AllocOpt(; port_type::Symbol = :Trad, method::Symbol = :LP,
+                  latest_prices::AbstractVector = Float64[], investment::Real = 1e6,
+                  rounding::Integer = 1, reinvest::Bool = false)
+    @smart_assert(method ∈ AllocMethods)
+    return AllocOpt(port_type, method, latest_prices, investment, rounding, reinvest)
+end
+function Base.setproperty!(obj::AllocOpt, sym::Symbol, val)
+    if sym == :method
+        @smart_assert(val ∈ AllocMethods)
+    end
+    return setfield!(obj, sym, val)
+end
+
 export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
        CorOpt, CorEstOpt, WCOpt, KurtOpt, PCROpt, LoadingsOpt, FactorOpt, BLOpt, ClusterOpt,
-       OptimiseOpt, SBOpt
+       OptimiseOpt, SBOpt, AllocOpt

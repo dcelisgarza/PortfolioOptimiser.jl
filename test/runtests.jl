@@ -1,9 +1,5 @@
 using SafeTestsets
 
-# @safetestset "Log Tests" begin
-#     include("LogTests.jl")
-# end
-
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
 end

@@ -243,7 +243,7 @@ function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, ro
 
     N = length(tickers)
     available_funds = investment
-    shares = zeros(eltype(rounding), N)
+    shares = zeros(typeof(rounding), N)
     weights ./= sum(weights)
 
     # First loop
@@ -350,13 +350,24 @@ allocate!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :HRP, alloc
           reinvest = false, string_names = false, save_opt_params = true)
 ```
 """
-function allocate!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :HRP,
-                   alloc_type = :LP, latest_prices = portfolio.latest_prices,
-                   investment = 1e6, rounding = 1, reinvest = false, string_names = false,
-                   save_opt_params = true)
-    @smart_assert(alloc_type ∈ AllocTypes)
+function allocate!(portfolio,
+                   opt::AllocOpt = AllocOpt(; port_type = if isa(portfolio, Portfolio)
+                                                :Trad
+                                            else
+                                                :HRP
+                                            end, latest_prices = portfolio.latest_prices);
+                   string_names = false, save_opt_params = true)
+    port_type = opt.port_type
+    method = opt.method
+    latest_prices = opt.latest_prices
+    if isempty(latest_prices)
+        latest_prices = portfolio.latest_prices
+    end
+    investment = opt.investment
+    rounding = opt.rounding
+    reinvest = opt.reinvest
 
-    retval, leftover = if alloc_type == :LP
+    retval, leftover = if method == :LP
         _lp_allocation!(portfolio, port_type, latest_prices, investment, reinvest,
                         string_names)
     else
@@ -364,7 +375,7 @@ function allocate!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :H
                             reinvest)
     end
 
-    _save_alloc_opt_params(portfolio, port_type, alloc_type, investment, rounding, reinvest,
+    _save_alloc_opt_params(portfolio, port_type, method, investment, rounding, reinvest,
                            leftover, save_opt_params)
 
     return retval

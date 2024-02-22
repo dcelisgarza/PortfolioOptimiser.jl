@@ -21,32 +21,69 @@ l = 2.0
     asset_statistics!(portfolio; calc_kurt = false)
     w0 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk))
 
-    allocate!(portfolio; alloc_type = :LP, save_opt_params = false)
+    alloc_opt = AllocOpt(; method = :LP)
+
+    allocate!(portfolio, alloc_opt; save_opt_params = false)
     alloc_params1 = copy(portfolio.alloc_params)
-    allocate!(portfolio; alloc_type = :Greedy, save_opt_params = false)
+    alloc_opt.method = :Greedy
+    allocate!(portfolio, alloc_opt; save_opt_params = false)
     alloc_params2 = copy(portfolio.alloc_params)
 
-    w1 = allocate!(portfolio; alloc_type = :LP)
-    w2 = allocate!(portfolio; alloc_type = :Greedy)
-    w3 = allocate!(portfolio; alloc_type = :LP, investment = 1e4)
-    w4 = allocate!(portfolio; alloc_type = :Greedy, investment = 1e4)
-    w5 = allocate!(portfolio; alloc_type = :LP, investment = 1e2)
-    w6 = allocate!(portfolio; alloc_type = :Greedy, investment = 1e2)
-    w7 = allocate!(portfolio; alloc_type = :LP, investment = 1e8)
-    w8 = allocate!(portfolio; alloc_type = :Greedy, investment = 1e8)
+    alloc_opt.method = :LP
+    w1 = allocate!(portfolio, alloc_opt)
+    alloc_opt.method = :Greedy
+    w2 = allocate!(portfolio, alloc_opt)
+
+    alloc_opt.method = :LP
+    alloc_opt.investment = 1e4
+    w3 = allocate!(portfolio, alloc_opt)
+    alloc_opt.method = :Greedy
+    w4 = allocate!(portfolio, alloc_opt)
+
+    alloc_opt.method = :LP
+    alloc_opt.investment = 1e2
+    w5 = allocate!(portfolio, alloc_opt)
+    alloc_opt.method = :Greedy
+    w6 = allocate!(portfolio, alloc_opt)
+
+    alloc_opt.method = :LP
+    alloc_opt.investment = 1e8
+    w7 = allocate!(portfolio, alloc_opt)
+    alloc_opt.method = :Greedy
+    w8 = allocate!(portfolio, alloc_opt)
 
     portfolio.short = true
+    alloc_opt = AllocOpt(; method = :LP)
     w9 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk))
-    w10 = allocate!(portfolio; alloc_type = :LP, reinvest = false)
-    w11 = allocate!(portfolio; alloc_type = :Greedy, reinvest = false)
-    w12 = allocate!(portfolio; alloc_type = :LP, investment = 1e4, reinvest = false)
-    w13 = allocate!(portfolio; alloc_type = :Greedy, investment = 1e4, reinvest = false)
-    w14 = allocate!(portfolio; alloc_type = :LP, investment = 1e2, reinvest = false)
-    w15 = allocate!(portfolio; alloc_type = :Greedy, investment = 1e2, reinvest = false)
-    w16 = allocate!(portfolio; alloc_type = :LP, investment = 1e8, reinvest = false)
-    w17 = allocate!(portfolio; alloc_type = :Greedy, investment = 1e8, reinvest = false)
-    w18 = allocate!(portfolio; alloc_type = :LP, reinvest = true)
-    w19 = allocate!(portfolio; alloc_type = :Greedy, reinvest = true)
+    alloc_opt.method = :LP
+    w10 = allocate!(portfolio, alloc_opt)
+    alloc_opt.method = :Greedy
+    w11 = allocate!(portfolio, alloc_opt)
+
+    alloc_opt.method = :LP
+    alloc_opt.investment = 1e4
+    w12 = allocate!(portfolio, alloc_opt)
+    alloc_opt.method = :Greedy
+    w13 = allocate!(portfolio, alloc_opt)
+
+    alloc_opt.method = :LP
+    alloc_opt.investment = 1e2
+    w14 = allocate!(portfolio, alloc_opt)
+    alloc_opt.method = :Greedy
+    w15 = allocate!(portfolio, alloc_opt)
+
+    alloc_opt.method = :LP
+    alloc_opt.investment = 1e8
+    w16 = allocate!(portfolio, alloc_opt)
+    alloc_opt.method = :Greedy
+    w17 = allocate!(portfolio, alloc_opt)
+
+    alloc_opt.method = :LP
+    alloc_opt.investment = 1e6
+    alloc_opt.reinvest = true
+    w18 = allocate!(portfolio, alloc_opt)
+    alloc_opt.method = :Greedy
+    w19 = allocate!(portfolio, alloc_opt)
 
     @test isempty(alloc_params1)
     @test isempty(alloc_params2)
