@@ -151,7 +151,7 @@ sr2 = sharpe_ratio(hcportfolio; type = :NCO, rm = :RDaR)
 alpha = sr1 / (sr1 + sr2);
 beta = 1 - alpha;
 
-# Now we can take these values and use them to make a linear combination of the weights and renormalise.
+# Now we can take these values and use them to make a linear combination of the weights and renormalise (the renormalisation isn't needed but I do it anyway because floating point arithmetic can be weird).
 
 weights3 = beta * w1.weights + alpha * w2.weights;
 weights3 ./= sum(weights3);
@@ -167,7 +167,8 @@ portfolio.optimal[:Combo] = DataFrame(; tickers = w1.tickers, weights = weights3
     The value of `investment` is not a currency, it's a number, so you have to ensure the currency of the prices and investment match.
 =#
 
-w4 = allocate!(portfolio; port_type = :Combo, investment = 2674)
+alloc_opt = AllocOpt(; type = :Combo, investment = 2674)
+w4 = allocate!(portfolio, alloc_opt)
 
 # This gives the portfolio that we can afford that minimises the difference between its weights and the ideal weights. By default, it assumes the asset price to be the last row of `prices`. Alternatively, you can provide the keyword argument `asset_prices`, which takes a vector of prices where the `i'th` entry is the price of the `i'th` asset.
 
