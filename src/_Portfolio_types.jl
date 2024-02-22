@@ -243,7 +243,7 @@ mutable struct Portfolio{
                          # Risk parameters
                          msvt, lpmt, ai, a, as, bi, b, bs, k, mnak,
                          # Benchmark constraints
-                         to, tobw, kte, te, rbi, bw, blbw,
+                         rb, rbw, to, tobw, kte, te, rbi, bw, blbw,
                          # Risk and return constraints
                          ami, bvi, rbv,
                          # Network constraints
@@ -286,6 +286,8 @@ mutable struct Portfolio{
     kappa::k
     max_num_assets_kurt::mnak
     # Benchmark constraints
+    rebalance::rb
+    rebalance_weights::rbw
     turnover::to
     turnover_weights::tobw
     kind_tracking_err::kte
@@ -541,6 +543,8 @@ function Portfolio(;
                    kappa::Real                                       = 0.3,
                    max_num_assets_kurt::Integer                      = 0,
                    # Benchmark constraints
+                   rebalance::Union{Real, AbstractVector{<:Real}} = Inf,
+                   rebalance_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    turnover::Union{Real, AbstractVector{<:Real}} = Inf,
                    turnover_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    kind_tracking_err::Symbol = :None, tracking_err::Real = Inf,
@@ -643,6 +647,12 @@ function Portfolio(;
     @smart_assert(b_sim > zero(b_sim))
     @smart_assert(0 < kappa < 1)
     @smart_assert(max_num_assets_kurt >= 0)
+    if isa(rebalance, AbstractVector) && !isempty(rebalance)
+        @smart_assert(length(rebalance) == size(returns, 2))
+    end
+    if !isempty(rebalance_weights)
+        @smart_assert(length(rebalance_weights) == size(returns, 2))
+    end
     if isa(turnover, AbstractVector) && !isempty(turnover)
         @smart_assert(length(turnover) == size(returns, 2))
     end
@@ -756,6 +766,7 @@ function Portfolio(;
                      typeof(a_sim), typeof(beta_i), typeof(beta), typeof(b_sim),
                      typeof(kappa), typeof(max_num_assets_kurt),
                      # Benchmark constraints
+                     Union{<:Real, AbstractVector{<:Real}}, typeof(rebalance_weights),
                      Union{<:Real, AbstractVector{<:Real}}, typeof(turnover_weights),
                      typeof(kind_tracking_err), typeof(tracking_err),
                      typeof(tracking_err_returns), typeof(tracking_err_weights),
@@ -803,8 +814,9 @@ function Portfolio(;
                        msv_target, lpm_target, alpha_i, alpha, a_sim, beta_i, beta, b_sim,
                        kappa, max_num_assets_kurt,
                        # Benchmark constraints
-                       turnover, turnover_weights, kind_tracking_err, tracking_err,
-                       tracking_err_returns, tracking_err_weights, bl_bench_weights,
+                       rebalance, rebalance_weights, turnover, turnover_weights,
+                       kind_tracking_err, tracking_err, tracking_err_returns,
+                       tracking_err_weights, bl_bench_weights,
                        # Risk and return constraints
                        a_mtx_ineq, b_vec_ineq, risk_budget,
                        # Network constraints
@@ -873,11 +885,11 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         @smart_assert(0 < val < 1)
     elseif sym == :max_num_assets_kurt
         @smart_assert(val >= 0)
-    elseif sym == :turnover
+    elseif sym ∈ (:rebalance, :turnover)
         if isa(val, AbstractVector) && !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 2))
         end
-    elseif sym == :turnover_weights
+    elseif sym ∈ (:rebalance_weights, :turnover_weights)
         if !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 2))
         end
@@ -1056,6 +1068,7 @@ function Base.deepcopy(obj::Portfolio)
                        deepcopy(obj.beta_i), deepcopy(obj.beta), deepcopy(obj.b_sim),
                        deepcopy(obj.kappa), deepcopy(obj.max_num_assets_kurt),
                        # Benchmark constraints
+                       deepcopy(obj.rebalance), deepcopy(obj.rebalance_weights),
                        deepcopy(obj.turnover), deepcopy(obj.turnover_weights),
                        deepcopy(obj.kind_tracking_err), deepcopy(obj.tracking_err),
                        deepcopy(obj.tracking_err_returns),

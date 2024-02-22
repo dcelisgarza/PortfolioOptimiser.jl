@@ -27,7 +27,7 @@ function _sdp_setup(portfolio, obj, rm, type, N, u_cov = :None)
         sd_u = portfolio.sd_u
         if type == :Trad && rm != :SD && isinf(sd_u)
             network_penalty = portfolio.network_penalty
-            @expression(model, penalty_factor, network_penalty * tr(model[:W]))
+            @expression(model, network_penalty_factor, network_penalty * tr(model[:W]))
         end
     end
 
@@ -901,10 +901,13 @@ function _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov, netw
     end
 
     returns = portfolio.returns
+    rebalance = portfolio.rebalance
+    rebalance_weights = portfolio.rebalance_weights
     if obj == :Sharpe
-        _setup_sharpe_ret(kelly, model, T, rf, returns, mu, Inf, false)
+        _setup_sharpe_ret(rebalance, rebalance_weights, kelly, model, T, N, rf, returns, mu,
+                          Inf, false)
     else
-        _setup_ret(kelly, model, T, returns, mu, Inf)
+        _setup_ret(rebalance, rebalance_weights, kelly, model, T, N, returns, mu, Inf)
     end
 
     if haskey(model, :_ret)
@@ -977,7 +980,7 @@ function _setup_risk_budget(portfolio)
     return nothing
 end
 
-function _setup_ret(kelly, model, T, returns, mu, mu_l)
+function _setup_ret(rebalance, rebalance_weights, kelly, model, T, N, returns, mu, mu_l)
     if kelly == :Exact
         @variable(model, texact_kelly[1:T])
         @expression(model, _ret, sum(texact_kelly) / T)
@@ -993,10 +996,20 @@ function _setup_ret(kelly, model, T, returns, mu, mu_l)
         @constraint(model, _ret >= mu_l)
     end
 
+    if !((isa(rebalance, Real) && isinf(rebalance) ||
+          isa(rebalance, AbstractVector) && isempty(rebalance)) ||
+         isempty(rebalance_weights))
+        @variable(model, t_rebal[1:N] >= 0)
+        @expression(model, rebal, model[:w] .- rebalance_weights)
+        @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
+        @expression(model, sum_t_rebal, sum(rebalance .* t_rebal))
+    end
+
     return nothing
 end
 
-function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l, trad = true)
+function _setup_sharpe_ret(rebalance, rebalance_weights, kelly, model, T, N, rf, returns,
+                           mu, mu_l, trad = true)
     if kelly == :Exact
         @variable(model, texact_kelly[1:T])
         @expression(model, _ret, sum(texact_kelly) / T - rf * model[:k])
@@ -1027,19 +1040,31 @@ function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l, trad = true)
         @constraint(model, _ret >= mu_l * model[:k])
     end
 
+    if !((isa(rebalance, Real) && isinf(rebalance) ||
+          isa(rebalance, AbstractVector) && isempty(rebalance)) ||
+         isempty(rebalance_weights))
+        @variable(model, t_rebal[1:N] >= 0)
+        @expression(model, rebal, model[:w] .- rebalance_weights * model[:k])
+        @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
+        @expression(model, sum_t_rebal, sum(rebalance .* t_rebal))
+    end
+
     return nothing
 end
 
-function _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
+function _setup_trad_return(portfolio, class, kelly, obj, T, N, rf, returns, mu)
     model = portfolio.model
     mu_l = portfolio.mu_l
+    rebalance = portfolio.rebalance
+    rebalance_weights = portfolio.rebalance_weights
 
     kelly = class == :Classic ? kelly : :None
 
     if obj == :Sharpe
-        _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l)
+        _setup_sharpe_ret(rebalance, rebalance_weights, kelly, model, T, N, rf, returns, mu,
+                          mu_l)
     else
-        _setup_ret(kelly, model, T, returns, mu, mu_l)
+        _setup_ret(rebalance, rebalance_weights, kelly, model, T, N, returns, mu, mu_l)
     end
 
     if haskey(model, :_ret)
@@ -1049,10 +1074,13 @@ function _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
     return nothing
 end
 
-function _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
+function _setup_rp_rrp_return_and_obj(portfolio, kelly, T, N, returns, mu)
     model = portfolio.model
     mu_l = portfolio.mu_l
-    _setup_ret(kelly, model, T, returns, mu, mu_l)
+    rebalance = portfolio.rebalance
+    rebalance_weights = portfolio.rebalance_weights
+
+    _setup_ret(rebalance, rebalance_weights, kelly, model, T, N, returns, mu, mu_l)
     if haskey(model, :_ret)
         @expression(model, ret, model[:_ret])
     end
@@ -1324,24 +1352,30 @@ end
 function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l)
     model = portfolio.model
 
-    pf = if type == :Trad && haskey(model, :penalty_factor)
-        model[:penalty_factor]
+    npf = if type == :Trad && haskey(model, :network_penalty_factor)
+        model[:network_penalty_factor]
+    else
+        zero(eltype(portfolio.returns))
+    end
+
+    rbf = if haskey(model, :sum_t_rebal)
+        model[:sum_t_rebal]
     else
         zero(eltype(portfolio.returns))
     end
 
     if obj == :Sharpe
         if (type == :Trad && class == :Classic || type == :WC) && kelly != :None
-            @objective(model, Max, model[:ret] - pf)
+            @objective(model, Max, model[:ret] - npf - rbf)
         else
-            @objective(model, Min, model[:risk] + pf)
+            @objective(model, Min, model[:risk] + npf + rbf)
         end
     elseif obj == :Min_Risk
-        @objective(model, Min, model[:risk] + pf)
+        @objective(model, Min, model[:risk] + npf + rbf)
     elseif obj == :Utility
-        @objective(model, Max, model[:ret] - l * model[:risk] - pf)
+        @objective(model, Max, model[:ret] - l * model[:risk] - npf - rbf)
     elseif obj == :Max_Ret
-        @objective(model, Max, model[:ret] - pf)
+        @objective(model, Max, model[:ret] - npf - rbf)
     end
     return nothing
 end
@@ -1703,19 +1737,19 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
         _setup_sharpe_k(model, obj)
         _risk_setup(portfolio, :Trad, rm, kelly, obj, rf, T, N, mu, returns, sigma,
                     kurtosis, skurtosis, network_method, sd_cone)
-        _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
+        _setup_trad_return(portfolio, class, kelly, obj, T, N, rf, returns, mu)
         _setup_trad_wc_constraints(portfolio, obj, T, N, :Trad, class, kelly, l, returns)
     elseif type == :RP
         _setup_risk_budget(portfolio)
         _rp_setup(portfolio, N)
         _risk_setup(portfolio, :RP, rm, kelly, obj, rf, T, N, mu, returns, sigma, kurtosis,
                     skurtosis, network_method, sd_cone)
-        _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
+        _setup_rp_rrp_return_and_obj(portfolio, kelly, T, N, returns, mu)
     elseif type == :RRP
         _setup_risk_budget(portfolio)
         _mv_setup(portfolio, sigma, rm, kelly, obj, :RRP, network_method, sd_cone)
         _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
-        _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
+        _setup_rp_rrp_return_and_obj(portfolio, kelly, T, N, returns, mu)
     else
         _setup_sharpe_k(model, obj)
         _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov, network_method,

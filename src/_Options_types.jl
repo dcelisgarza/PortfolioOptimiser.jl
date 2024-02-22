@@ -623,13 +623,13 @@ function OptimiseOpt(; type::Symbol = :Trad, rm::Symbol = :SD, obj::Symbol = :Sh
                      w_min::AbstractVector = Vector{typeof(rf)}(undef, 0),
                      w_max::AbstractVector = Vector{typeof(rf)}(undef, 0))
     @smart_assert(type ∈ PortTypes)
-    @smart_assert(class ∈ PortClasses)
     @smart_assert(rm ∈ RiskMeasures)
     @smart_assert(obj ∈ HCObjFuncs)
     @smart_assert(kelly ∈ KellyRet)
+    @smart_assert(class ∈ PortClasses)
     @smart_assert(rrp_ver ∈ RRPVersions)
-    @smart_assert(u_mu ∈ UncertaintyTypes)
     @smart_assert(u_cov ∈ UncertaintyTypes)
+    @smart_assert(u_mu ∈ UncertaintyTypes)
     if near_opt
         @smart_assert(n > zero(n))
     end

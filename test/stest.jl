@@ -7,15 +7,31 @@ prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date
 rf = 0.0329 / 252
 l = 2.0
 
-portfolio = HCPortfolio(;
-                        # prices = prices,
-                        #                       solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                        #                                                               :params => Dict("verbose" => false,
-                        #                                                                               "max_step_fraction" => 0.7)),
-                        #                                             :COSMO => Dict(:solver => COSMO.Optimizer,
-                        #                                                            :params => Dict("verbose" => false)))
+portfolio = Portfolio(; prices = prices,
+                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                              :params => Dict("verbose" => false,
+                                                                              "max_step_fraction" => 0.7)),
+                                            :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                           :params => Dict("verbose" => false))))
+asset_statistics!(portfolio; calc_kurt = false)
 
-                        )
+portfolio.rebalance = Inf
+w1 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, kelly = :None))
+w2 = optimise!(portfolio, OptimiseOpt(; obj = :Utility, kelly = :None))
+w3 = optimise!(portfolio, OptimiseOpt(; obj = :Sharpe, kelly = :None))
+w4 = optimise!(portfolio, OptimiseOpt(; obj = :Max_Ret, kelly = :None))
+portfolio.rebalance_weights = w1.weights
+portfolio.rebalance = 0.0005
+w5 = optimise!(portfolio, OptimiseOpt(; obj = :Utility, kelly = :None))
+w6 = optimise!(portfolio, OptimiseOpt(; obj = :Sharpe, kelly = :None))
+w7 = optimise!(portfolio, OptimiseOpt(; obj = :Max_Ret, kelly = :None))
+portfolio.rebalance_weights = w3.weights
+portfolio.rebalance = 1e-4
+w8 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, kelly = :None))
+
+display(DataFrame(; tickers = w1.tickers, min_risk = w1.weights, utility = w2.weights,
+                  sharpe = w3.weights, max_ret = w4.weights, min_risk2 = w8.weights,
+                  utility2 = w5.weights, sharpe2 = w6.weights, max_ret2 = w7.weights))
 
 cor_opt = CorOpt(; method = :Gerber_SB1,
                  estimation = CorEstOpt(; estimator = AnalyticalNonlinearShrinkage()))
