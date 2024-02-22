@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Entropic and Relativistic RM tests" begin
+    include("EntrRelRMs.jl")
+end
+
 @safetestset "Misc" begin
     include("MiscTests.jl")
 end
@@ -11,10 +15,6 @@ end
 
 @safetestset "Portfolio Traditional Optimisation Constraints" begin
     include("PortfolioTradConstraintTests.jl")
-end
-
-@safetestset "Entropic and Relativistic RM tests" begin
-    include("EntrRelRMs.jl")
 end
 
 @safetestset "Efficient Frontier" begin
