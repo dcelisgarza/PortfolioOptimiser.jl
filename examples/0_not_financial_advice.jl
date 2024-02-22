@@ -167,7 +167,7 @@ portfolio.optimal[:Combo] = DataFrame(; tickers = w1.tickers, weights = weights3
     The value of `investment` is not a currency, it's a number, so you have to ensure the currency of the prices and investment match.
 =#
 
-alloc_opt = AllocOpt(; type = :Combo, investment = 2674)
+alloc_opt = AllocOpt(; port_type = :Combo, investment = 2674)
 w4 = allocate!(portfolio, alloc_opt)
 
 # This gives the portfolio that we can afford that minimises the difference between its weights and the ideal weights. By default, it assumes the asset price to be the last row of `prices`. Alternatively, you can provide the keyword argument `asset_prices`, which takes a vector of prices where the `i'th` entry is the price of the `i'th` asset.
