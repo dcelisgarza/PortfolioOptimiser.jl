@@ -1009,6 +1009,7 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.beta), typeof(obj.b_sim), typeof(obj.kappa),
                      typeof(obj.max_num_assets_kurt),
                      # Benchmark constraints
+                     Union{<:Real, AbstractVector{<:Real}}, typeof(obj.rebalance_weights),
                      Union{<:Real, AbstractVector{<:Real}}, typeof(obj.turnover_weights),
                      typeof(obj.kind_tracking_err), typeof(obj.tracking_err),
                      typeof(obj.tracking_err_returns), typeof(obj.tracking_err_weights),

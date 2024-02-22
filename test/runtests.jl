@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Misc" begin
+    include("MiscTests.jl")
+end
+
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
 end
@@ -66,10 +70,6 @@ end
 
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
-end
-
-@safetestset "Misc" begin
-    include("MiscTests.jl")
 end
 
 @safetestset "HCPortfolio OWA Optimisation" begin
