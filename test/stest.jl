@@ -7,91 +7,22 @@ prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-portfolio = Portfolio(; prices = prices,
-                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                              :params => Dict("verbose" => false,
-                                                                              "max_step_fraction" => 0.7)),
-                                            :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                           :params => Dict("verbose" => false))))
-asset_statistics!(portfolio; calc_kurt = false)
+portfolio = HCPortfolio(; prices = prices,
+                        solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                :params => Dict("verbose" => false,
+                                                                                "max_step_fraction" => 0.7)),
+                                              :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                             :params => Dict("verbose" => false))))
+#################
+portfolio = Portfolio(; prices = prices)
 
-portfolio.rebalance = Inf
-portfolio.rebalance_weights = []
-w1 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, rf = rf))
-r1 = calc_risk(portfolio)
-sr1 = sharpe_ratio(portfolio)
-w2 = optimise!(portfolio, OptimiseOpt(; obj = :Utility, rf = rf))
-r2 = calc_risk(portfolio)
-w3 = optimise!(portfolio, OptimiseOpt(; obj = :Sharpe, rf = rf))
-r3 = calc_risk(portfolio)
-sr3 = sharpe_ratio(portfolio)
-w4 = optimise!(portfolio, OptimiseOpt(; obj = :Max_Ret, rf = rf))
-r4 = calc_risk(portfolio)
+###################
 
-portfolio.rebalance = 0
-portfolio.rebalance_weights = w3.weights
-w5 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, rf = rf))
-portfolio.rebalance_weights = w1.weights
-w6 = optimise!(portfolio, OptimiseOpt(; obj = :Utility, rf = rf))
-w7 = optimise!(portfolio, OptimiseOpt(; obj = :Sharpe, rf = rf))
-w8 = optimise!(portfolio, OptimiseOpt(; obj = :Max_Ret, rf = rf))
+cor_opt = CorOpt(; method = :Gerber1, gerber = GerberOpt(; normalise = true))
+cor_opt = CorOpt(; method = :Gerber2, gerber = GerberOpt(; normalise = true))
 
-portfolio.rebalance = 1e10
-portfolio.rebalance_weights = w3.weights
-w9 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, rf = rf))
-portfolio.rebalance_weights = w1.weights
-w10 = optimise!(portfolio, OptimiseOpt(; obj = :Utility, rf = rf))
-w11 = optimise!(portfolio, OptimiseOpt(; obj = :Sharpe, rf = rf))
-w12 = optimise!(portfolio, OptimiseOpt(; obj = :Max_Ret, rf = rf))
+cov_opt = CovOpt(; method = :Gerber1)
 
-portfolio.rebalance_weights = []
-w13 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, rf = rf))
-
-portfolio.rebalance = 1e-4
-portfolio.rebalance_weights = w3.weights
-w14 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, rf = rf))
-r14 = calc_risk(portfolio)
-sr14 = sharpe_ratio(portfolio)
-
-portfolio.rebalance = 5e-4
-portfolio.rebalance_weights = w1.weights
-w15 = optimise!(portfolio, OptimiseOpt(; obj = :Utility, rf = rf))
-r15 = calc_risk(portfolio)
-w16 = optimise!(portfolio, OptimiseOpt(; obj = :Sharpe, rf = rf))
-r16 = calc_risk(portfolio)
-sr16 = sharpe_ratio(portfolio)
-
-w17 = optimise!(portfolio, OptimiseOpt(; obj = :Max_Ret, rf = rf))
-r17 = calc_risk(portfolio)
-
-@test isapprox(w1.weights, w5.weights)
-@test isapprox(w2.weights, w6.weights)
-@test isapprox(w3.weights, w7.weights)
-@test isapprox(w4.weights, w8.weights)
-@test isapprox(w3.weights, w9.weights)
-@test isapprox(w1.weights, w10.weights)
-@test isapprox(w1.weights, w11.weights)
-@test isapprox(w1.weights, w12.weights)
-@test isapprox(w1.weights, w13.weights)
-@test !isapprox(w1.weights, w14.weights)
-@test !isapprox(w3.weights, w14.weights)
-@test !isapprox(w1.weights, w15.weights)
-@test !isapprox(w2.weights, w15.weights)
-@test !isapprox(w1.weights, w16.weights)
-@test !isapprox(w3.weights, w16.weights)
-@test !isapprox(w1.weights, w17.weights)
-@test !isapprox(w4.weights, w17.weights)
-@test r1 < r14 < r3
-@test sr1 < sr14 < sr3
-@test r1 < r15 < r2
-@test r1 < r3 < r16
-@test sr1 < sr16 < sr3
-@test r1 < r17 < r4
-
-cor_opt = CorOpt(; method = :Gerber_SB1,
-                 estimation = CorEstOpt(; estimator = AnalyticalNonlinearShrinkage()))
-cov_opt = CovOpt(; method = :Gerber_SB1,
-                 estimation = CovEstOpt(; estimator = AnalyticalNonlinearShrinkage()))
 cluster_opt = ClusterOpt(; linkage = :DBHT)
 port_opt = OptimiseOpt(; obj = :Sharpe, rf = rf, type = :Trad, kelly = :Exact)
 

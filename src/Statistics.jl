@@ -571,7 +571,7 @@ function covgerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
 
     mtx .= Matrix(Symmetric(mtx, :U))
 
-    posdef_fix!(mtx, gerberopt.posdef; msg = "SB0 Covariance ")
+    posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber SB0 Covariance ")
 
     return mtx .* (std_vec * transpose(std_vec))
 end
