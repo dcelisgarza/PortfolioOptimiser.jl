@@ -666,7 +666,7 @@ function Portfolio(;
         @smart_assert(length(turnover_weights) == size(returns, 2))
     end
     @smart_assert(kind_tracking_err ∈ TrackingErrKinds)
-    @smart_assert(tracking_err >= zero(tracking_err)))
+    @smart_assert(tracking_err >= zero(tracking_err))
     if !isempty(tracking_err_returns)
         @smart_assert(length(tracking_err_returns) == size(returns, 1))
     end
