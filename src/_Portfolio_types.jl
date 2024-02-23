@@ -649,7 +649,7 @@ function Portfolio(;
     @smart_assert(max_num_assets_kurt >= 0)
     if isa(rebalance, AbstractVector) && !isempty(rebalance)
         @smart_assert(length(rebalance) == size(returns, 2) &&
-        @smart_assert(all(rebalance .>= zero(rebalance))))
+                      all(rebalance .>= zero(rebalance)))
     elseif isa(rebalance, Real)
         @smart_assert(rebalance >= zero(rebalance))
     end
@@ -658,7 +658,7 @@ function Portfolio(;
     end
     if isa(turnover, AbstractVector) && !isempty(turnover)
         @smart_assert(length(turnover) == size(returns, 2) &&
-        @smart_assert(all(turnover .>= zero(turnover))))
+                      all(turnover .>= zero(turnover)))
     elseif isa(turnover, Real)
         @smart_assert(turnover >= zero(turnover))
     end
@@ -894,8 +894,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         @smart_assert(val >= 0)
     elseif sym ∈ (:rebalance, :turnover)
         if isa(val, AbstractVector) && !isempty(val)
-            @smart_assert(length(val) == size(obj.returns, 2) &&
-            @smart_assert(all(val .>= zero(val))))
+            @smart_assert(length(val) == size(obj.returns, 2) && all(val .>= zero(val)))
         elseif isa(val, Real)
             @smart_assert(val >= zero(val))
         end
