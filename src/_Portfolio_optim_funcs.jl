@@ -1280,7 +1280,6 @@ function _setup_tracking_err(portfolio, returns, obj, T)
 
     if kind_tracking_err == :None ||
        isinf(tracking_err) ||
-       iszero(tracking_err) ||
        isfinite(tracking_err) &&
        (kind_tracking_err == :Weights && isempty(tracking_err_weights) ||
         kind_tracking_err == :Returns && isempty(tracking_err_returns))
@@ -1313,7 +1312,7 @@ function _setup_turnover(portfolio, N, obj)
     turnover = portfolio.turnover
     turnover_weights = portfolio.turnover_weights
 
-    if (isa(turnover, Real) && (isinf(turnover) || iszero(turnover)) ||
+    if (isa(turnover, Real) && isinf(turnover) ||
         isa(turnover, AbstractVector) && isempty(turnover)) || isempty(turnover_weights)
         return nothing
     end
