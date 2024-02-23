@@ -648,18 +648,25 @@ function Portfolio(;
     @smart_assert(0 < kappa < 1)
     @smart_assert(max_num_assets_kurt >= 0)
     if isa(rebalance, AbstractVector) && !isempty(rebalance)
-        @smart_assert(length(rebalance) == size(returns, 2))
+        @smart_assert(length(rebalance) == size(returns, 2) &&
+            all(@smart_assert(rebalance .>= zero(rebalance))))
+    elseif isa(rebalance, Real)
+        @smart_assert(rebalance >= zero(rebalance))
     end
     if !isempty(rebalance_weights)
         @smart_assert(length(rebalance_weights) == size(returns, 2))
     end
     if isa(turnover, AbstractVector) && !isempty(turnover)
-        @smart_assert(length(turnover) == size(returns, 2))
+        @smart_assert(length(turnover) == size(returns, 2) &&
+            all(@smart_assert(turnover .>= zero(turnover))))
+    elseif isa(turnover, Real)
+        @smart_assert(turnover >= zero(turnover))
     end
     if !isempty(turnover_weights)
         @smart_assert(length(turnover_weights) == size(returns, 2))
     end
     @smart_assert(kind_tracking_err ∈ TrackingErrKinds)
+    @smart_assert(tracking_err >= zero(tracking_err)))
     if !isempty(tracking_err_returns)
         @smart_assert(length(tracking_err_returns) == size(returns, 1))
     end
@@ -887,7 +894,12 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         @smart_assert(val >= 0)
     elseif sym ∈ (:rebalance, :turnover)
         if isa(val, AbstractVector) && !isempty(val)
-            @smart_assert(length(val) == size(obj.returns, 2))
+            if isa(val, AbstractVector) && !isempty(val)
+                @smart_assert(length(val) == size(obj.returns, 2) &&
+                all(@smart_assert(val .>= zero(val))))
+            elseif isa(val, Real)
+                @smart_assert(val >= zero(val))
+            end
         end
     elseif sym ∈ (:rebalance_weights, :turnover_weights)
         if !isempty(val)
@@ -896,6 +908,9 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :kind_tracking_err
         @smart_assert(val ∈ TrackingErrKinds)
+    elseif sym == :tracking_err
+        @smart_assert(val >= zero(val))
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :tracking_err_returns
         if !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 1))
