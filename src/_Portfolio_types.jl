@@ -638,15 +638,15 @@ function Portfolio(;
         f_returns = f_ret
     end
 
-    @smart_assert(min_number_effective_assets >= 0)
-    @smart_assert(max_number_assets >= 0)
-    @smart_assert(max_number_assets_factor >= 0)
-    @smart_assert(0 < alpha_i < alpha < 1)
+    @smart_assert(min_number_effective_assets >= zero(min_number_effective_assets))
+    @smart_assert(max_number_assets >= zero(max_number_assets))
+    @smart_assert(max_number_assets_factor >= zero(max_number_assets_factor))
+    @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
-    @smart_assert(0 < beta_i < beta < 1)
+    @smart_assert(zero(beta) < beta_i < beta < one(beta))
     @smart_assert(b_sim > zero(b_sim))
-    @smart_assert(0 < kappa < 1)
-    @smart_assert(max_num_assets_kurt >= 0)
+    @smart_assert(zero(kappa) < kappa < one(kappa))
+    @smart_assert(max_num_assets_kurt >= zero(max_num_assets_kurt))
     if isa(rebalance, AbstractVector) && !isempty(rebalance)
         @smart_assert(length(rebalance) == size(returns, 2) &&
                       all(rebalance .>= zero(rebalance)))
@@ -877,21 +877,21 @@ end
 
 function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
     if sym == :alpha_i
-        @smart_assert(0 < val < obj.alpha < 1)
+        @smart_assert(zero(val) < val < obj.alpha < one(val))
     elseif sym == :alpha
-        @smart_assert(0 < obj.alpha_i < val < 1)
+        @smart_assert(zero(val) < obj.alpha_i < val < one(val))
     elseif sym == :a_sim
         @smart_assert(val > zero(val))
     elseif sym == :beta
-        @smart_assert(0 < obj.beta_i < val < 1)
+        @smart_assert(zero(val) < obj.beta_i < val < one(val))
     elseif sym == :beta_i
-        @smart_assert(0 < val < obj.beta < 1)
+        @smart_assert(zero(val) < val < obj.beta < one(val))
     elseif sym == :b_sim
         @smart_assert(val > zero(val))
     elseif sym == :kappa
-        @smart_assert(0 < val < 1)
+        @smart_assert(zero(val) < val < one(val))
     elseif sym == :max_num_assets_kurt
-        @smart_assert(val >= 0)
+        @smart_assert(val >= zero(val))
     elseif sym ∈ (:rebalance, :turnover)
         if isa(val, AbstractVector) && !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 2) && all(val .>= zero(val)))
@@ -964,7 +964,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
     elseif sym ∈ (:risk_budget, :bl_bench_weights)
         if isempty(val)
             N = size(obj.returns, 2)
-            val = fill(1 / N, N)
+            val = fill(one(eltype(obj.returns)) / N, N)
         else
             @smart_assert(length(val) == size(obj.returns, 2))
             if sym == :risk_budget
@@ -979,7 +979,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym ∈
            (:min_number_effective_assets, :max_number_assets, :max_number_assets_factor)
-        @smart_assert(val >= 0)
+        @smart_assert(val >= zero(val))
     elseif sym ∈ (:kurt, :skurt, :cov_sigma)
         if !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2)^2)
@@ -1411,13 +1411,13 @@ function HCPortfolio(;
         returns = ret
     end
 
-    @smart_assert(0 < alpha_i < alpha < 1)
+    @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
-    @smart_assert(0 < beta_i < beta < 1)
+    @smart_assert(zero(beta) < beta_i < beta < one(beta))
     @smart_assert(b_sim > zero(b_sim))
-    @smart_assert(0 < kappa < 1)
-    @smart_assert(0 < alpha_tail < 1)
-    @smart_assert(max_num_assets_kurt >= 0)
+    @smart_assert(zero(kappa) < kappa < one(kappa))
+    @smart_assert(zero(alpha_tail) < alpha_tail < one(alpha_tail))
+    @smart_assert(max_num_assets_kurt >= zero(max_num_assets_kurt))
     if !isempty(owa_w)
         @smart_assert(length(owa_w) == size(returns, 1))
     end
@@ -1527,23 +1527,23 @@ end
 
 function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
     if sym == :alpha_i
-        @smart_assert(0 < val < obj.alpha < 1)
+        @smart_assert(zero(val) < val < obj.alpha < one(val))
     elseif sym == :alpha
-        @smart_assert(0 < obj.alpha_i < val < 1)
+        @smart_assert(zero(val) < obj.alpha_i < val < one(val))
     elseif sym == :a_sim
         @smart_assert(val > zero(val))
     elseif sym == :beta
-        @smart_assert(0 < obj.beta_i < val < 1)
+        @smart_assert(zero(val) < obj.beta_i < val < one(val))
     elseif sym == :beta_i
-        @smart_assert(0 < val < obj.beta < 1)
+        @smart_assert(zero(val) < val < obj.beta < one(val))
     elseif sym == :b_sim
         @smart_assert(val > zero(val))
     elseif sym == :kappa
-        @smart_assert(0 < val < 1)
+        @smart_assert(zero(val) < val < one(val))
     elseif sym == :alpha_tail
-        @smart_assert(0 < val < 1)
+        @smart_assert(zero(val) < val < one(val))
     elseif sym == :max_num_assets_kurt
-        @smart_assert(val >= 0)
+        @smart_assert(val >= zero(val))
     elseif sym == :owa_w
         if !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 1))

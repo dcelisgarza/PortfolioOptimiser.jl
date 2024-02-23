@@ -7,13 +7,38 @@ prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-portfolio = HCPortfolio(; prices = prices,
-                        solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                :params => Dict("verbose" => false,
-                                                                                "max_step_fraction" => 0.7)),
-                                              :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                             :params => Dict("verbose" => false))))
+to1 = range(; start = 0.001, stop = 0.003, length = 20)
+to2 = collect(range(; start = 0.001, stop = 0.003, length = 20))
+to3 = 1
+
+portfolio = Portfolio(; prices = prices,
+                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                              :params => Dict("verbose" => false,
+                                                                              "max_step_fraction" => 0.7)),
+                                            :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                           :params => Dict("verbose" => false))),
+                      turnover = fill(0, 10))
+
+portfolio.turnover = fill(1, 10)
+portfolio.rebalance = to1
+portfolio.rebalance = Inf
+portfolio.rebalance = to2
+portfolio.rebalance = Inf
+portfolio.rebalance = to3
+portfolio.rebalance = to1
+portfolio.rebalance = to1
+portfolio.rebalance = to1
+portfolio.rebalance = to2
+portfolio.rebalance = to1
+portfolio.rebalance = to3
+portfolio.rebalance = to2
+portfolio.rebalance = to1
+portfolio.rebalance = to2
+portfolio.rebalance = to2
+portfolio.rebalance = to2
+portfolio.rebalance = to3
 #################
+
 portfolio = Portfolio(; prices = prices)
 
 ###################
@@ -312,9 +337,29 @@ lrc2, hrc2 = extrema(rc2)
 
 for rtol ∈
     [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 5e-5, 1e-4, 1e-3, 1e-2, 1e-1, 2.5e-1, 5e-1, 1e0]
-    a1, a2 = w1.weights, w12.weights
+    a1, a2 = [0.007912815539227893, 0.030684158137603355, 0.010505481089860155,
+              0.02748304050638512, 0.01227608683923936, 0.033406726347054695,
+              4.979001356859074e-7, 0.13984662423039537, 8.455000738135401e-7,
+              1.641508118980489e-5, 0.28781850599196224, 5.385898204689966e-7,
+              4.1704218023081966e-7, 0.12527392531639392, 2.2403604800736575e-6,
+              0.015083459673501923, 2.6492572626202413e-5, 0.19311576046724435,
+              1.073062147490772e-6, 0.11654489575247784],
+             [0.00791281834237678, 0.030684161066520534, 0.010505483907386459,
+              0.027483043417634665, 0.012276089666545422, 0.03340672929099824,
+              4.931726443376965e-7, 0.1398466277617973, 8.41988363367507e-7,
+              1.6417823795536e-5, 0.2878185103400416, 5.315593356830661e-7,
+              3.850003345260784e-7, 0.12527392876736715, 2.2428381861961006e-6,
+              0.015083462516310419, 2.649531825877551e-5, 0.19311576429264615,
+              1.0737741825833327e-6, 0.11654489915527423]
     if isapprox(a1, a2; rtol = rtol)
         println(", rtol = $(rtol)")
         break
     end
 end
+
+cov_optn = CovOpt(; method = :SB1, gerber = GerberOpt(; normalise = true))
+asset_statistics!(portfolio; calc_kurt = false, cov_opt = cov_optn)
+mu15n = portfolio.mu
+cov15n = portfolio.cov
+
+println("covt15n = reshape($(vec(cov15n)), $(size(cov15n)))")

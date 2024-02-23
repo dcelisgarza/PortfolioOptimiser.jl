@@ -366,7 +366,7 @@ function CorEstOpt(;
                    custom_cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    custom_dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    sigma::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0))
-    @smart_assert(0 <= alpha <= 1)
+    @smart_assert(zero(alpha) <= alpha <= one(alpha))
     @smart_assert(bins_info ∈ BinMethods ||
                   isa(bins_info, Int) && bins_info > zero(bins_info))
     if !isempty(custom_cor)
@@ -391,7 +391,7 @@ function CorEstOpt(;
 end
 function Base.setproperty!(obj::CorEstOpt, sym::Symbol, val)
     if sym == :alpha
-        @smart_assert(0 <= val <= 1)
+        @smart_assert(zero(val) <= val <= one(val))
     elseif sym == :bins_info
         @smart_assert(val ∈ BinMethods || isa(val, Int) && val > zero(val))
     elseif sym == :custom_cor
@@ -467,7 +467,7 @@ function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true,
                window::Integer = 3, posdef::PosdefFixOpt = PosdefFixOpt(;))
     @smart_assert(box ∈ BoxMethods)
     @smart_assert(ellipse ∈ EllipseMethods)
-    @smart_assert(0 < q < 1)
+    @smart_assert(zero(q) < q < one(q))
 
     return WCOpt{typeof(dcov), typeof(dmu), typeof(q), typeof(rng), typeof(n_sim),
                  typeof(window)}(calc_box, calc_ellipse, box, ellipse, dcov, dmu, q, rng,
@@ -479,7 +479,7 @@ function Base.setproperty!(obj::WCOpt, sym::Symbol, val)
     elseif sym == :ellipse
         @smart_assert(val ∈ EllipseMethods)
     elseif sym == :q
-        @smart_assert(0 < val < 1)
+        @smart_assert(zero(val) < val < one(val))
     end
     return setfield!(obj, sym, val)
 end

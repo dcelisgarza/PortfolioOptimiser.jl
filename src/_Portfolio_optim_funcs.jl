@@ -1254,7 +1254,7 @@ end
 function _setup_min_number_effective_assets(portfolio, obj)
     mnea = portfolio.min_number_effective_assets
 
-    if mnea < 1
+    if mnea < one(mnea)
         return nothing
     end
 

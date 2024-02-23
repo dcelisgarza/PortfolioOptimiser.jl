@@ -33,7 +33,7 @@ $(_sigdef("CVaR", :a))
 $_owaw
 """
 function owa_cvar(T::Integer, alpha::Real = 0.05)
-    @smart_assert(0 < alpha < 1)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
 
     k = floor(Int, T * alpha)
     w = zeros(typeof(alpha), T)
@@ -80,7 +80,7 @@ $(_sigdef("Tail Gini losses", :a))
 $_owaw
 """
 function owa_tg(T::Integer; alpha_i::Real = 1e-4, alpha::Real = 0.05, a_sim::Integer = 100)
-    @smart_assert(0 < alpha_i < alpha < 1)
+    @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
 
     alphas = range(; start = alpha_i, stop = alpha, length = a_sim)
@@ -357,8 +357,8 @@ function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::R
                           max_phi::Real = 0.5, solvers = Dict())
     @smart_assert(k >= 2)
     @smart_assert(method ∈ OWAMethods)
-    @smart_assert(0 < g < 1)
-    @smart_assert(0 < max_phi < 1)
+    @smart_assert(zero(g) < g < one(g))
+    @smart_assert(zero(max_phi) < max_phi < one(max_phi))
 
     rg = 2:k
     weights = Matrix{typeof(inv(T * k))}(undef, T, length(rg))

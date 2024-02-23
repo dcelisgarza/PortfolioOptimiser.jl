@@ -252,13 +252,13 @@ $(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
 
 """
 function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
-    @smart_assert(0 < alpha < 1)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
     val = mean(exp.(-x / z))
     val = z * log(val / alpha)
     return val
 end
 function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
-    @smart_assert(0 < alpha < 1)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
 
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
@@ -328,8 +328,8 @@ $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 """
 function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
              kappa::Real = 0.3)
-    @smart_assert(0 < alpha < 1)
-    @smart_assert(0 < kappa < 1)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
+    @smart_assert(zero(kappa) < kappa < one(kappa))
 
     T = length(x)
 
@@ -989,7 +989,7 @@ Compute the Tail Gini.
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
+  - `alpha_i`: start value of the significance level of CVaR losses, `0 <alpha_i < alpha < 1`.
   - `alpha`: end value of the significance level of CVaR losses, `alpha in (0, 1)`.
   - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
 """
@@ -1010,7 +1010,7 @@ Compute the Tail Gini Range.
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
+  - `alpha_i`: start value of the significance level of CVaR losses, `0 <alpha_i < alpha < 1`.
   - `alpha`: end value of the significance level of CVaR losses, `alpha in (0, 1)`.
   - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
   - `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
@@ -1070,7 +1070,7 @@ Compute the value of a risk measure given a vector of asset weights and returns.
 - `rm`: risk measure from [`RiskMeasures`](@ref) and [`HCRiskMeasures`](@ref).
 - `rf`: risk-free rate at the frequency of `returns`, used as the minimum return target, `r`, in [`FLPM`](@ref) and [`SLPM`](@ref).
 - `sigma`: covariance matrix of asset returns.
-- `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
+- `alpha_i`: start value of the significance level of CVaR losses, `0 <alpha_i < alpha < 1`.
 - `alpha`: `alpha in (0, 1)`
     - if `rm` *is not* an OWA range measure: significance level; 
     - if `rm` *is* an OWA range measure: end value of the significance level of CVaR losses.
