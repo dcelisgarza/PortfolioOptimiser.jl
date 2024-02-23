@@ -894,12 +894,10 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         @smart_assert(val >= 0)
     elseif sym ∈ (:rebalance, :turnover)
         if isa(val, AbstractVector) && !isempty(val)
-            if isa(val, AbstractVector) && !isempty(val)
-                @smart_assert(length(val) == size(obj.returns, 2) &&
-                @smart_assert(all(val .>= zero(val))))
-            elseif isa(val, Real)
-                @smart_assert(val >= zero(val))
-            end
+            @smart_assert(length(val) == size(obj.returns, 2) &&
+            @smart_assert(all(val .>= zero(val))))
+        elseif isa(val, Real)
+            @smart_assert(val >= zero(val))
         end
     elseif sym ∈ (:rebalance_weights, :turnover_weights)
         if !isempty(val)
