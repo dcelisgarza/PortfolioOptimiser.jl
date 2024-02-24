@@ -1897,7 +1897,14 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
         B = loadings_matrix(x, y, factor_opt.loadings_opt)
     end
     namesB = names(B)
-    x1 = "const" ∈ namesB ? [ones(nrow(y)) Matrix(x)] : Matrix(x)
+    old_posdef = nothing
+    if "const" ∈ namesB
+        x1 = [ones(nrow(y)) Matrix(x)]
+        old_posdef = cov_opt.posdef.method
+        cov_opt.posdef.method = :None
+    else
+        x1 = Matrix(x)
+    end
     B_mtx = Matrix(B[!, setdiff(namesB, ("ticker",))])
 
     cov_f, mu_f = covar_mtx_mean_vec(x1; cov_opt = cov_opt, mu_opt = mu_opt)
@@ -1914,6 +1921,10 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
         B_mtx * cov_f * transpose(B_mtx) + S_e
     else
         B_mtx * cov_f * transpose(B_mtx)
+    end
+
+    if !isnothing(old_posdef)
+        cov_opt.posdef.method = old_posdef
     end
 
     posdef_fix!(sigma, cov_opt.posdef; msg = "Factor Covariance ")

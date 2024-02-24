@@ -4,47 +4,6 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-@safetestset "Misc" begin
-    include("MiscTests.jl")
-end
-
-@safetestset "Asset Statistics" begin
-    include("AssetStatisticsTests1.jl")
-    include("AssetStatisticsTests2.jl")
-end
-
-@safetestset "Portfolio Traditional Optimisation Constraints" begin
-    include("PortfolioTradConstraintTests.jl")
-end
-
-@safetestset "Efficient Frontier" begin
-    include("PortfolioEfficientFrontierTests.jl")
-end
-
-@safetestset "Portfolio Classic Traditional Optimisation" begin
-    include("PortfolioClassicTradTests.jl")
-end
-
-@safetestset "Portfolio Classic WC Optimisation" begin
-    include("PortfolioClassicWCTests.jl")
-end
-
-@safetestset "Asset Allocation" begin
-    include("AssetAllocationTests.jl")
-end
-
-@safetestset "BL Statistics" begin
-    include("BLStatisticsTests.jl")
-end
-
-@safetestset "OWA Weights" begin
-    include("OWAWeightsTests.jl")
-end
-
-@safetestset "Misc Statistics" begin
-    include("MiscStatisticsTests.jl")
-end
-
 @safetestset "Factor Statistics" begin
     include("FactorStatisticsTests.jl")
 end
@@ -87,4 +46,45 @@ end
 
 @safetestset "Portfolio Classic RP OWA Optimisation" begin
     include("PortfolioClassicRPOWATests.jl")
+end
+
+@safetestset "Misc" begin
+    include("MiscTests.jl")
+end
+
+@safetestset "Asset Statistics" begin
+    include("AssetStatisticsTests1.jl")
+    include("AssetStatisticsTests2.jl")
+end
+
+@safetestset "Portfolio Traditional Optimisation Constraints" begin
+    include("PortfolioTradConstraintTests.jl")
+end
+
+@safetestset "Efficient Frontier" begin
+    include("PortfolioEfficientFrontierTests.jl")
+end
+
+@safetestset "Portfolio Classic Traditional Optimisation" begin
+    include("PortfolioClassicTradTests.jl")
+end
+
+@safetestset "Portfolio Classic WC Optimisation" begin
+    include("PortfolioClassicWCTests.jl")
+end
+
+@safetestset "Asset Allocation" begin
+    include("AssetAllocationTests.jl")
+end
+
+@safetestset "BL Statistics" begin
+    include("BLStatisticsTests.jl")
+end
+
+@safetestset "OWA Weights" begin
+    include("OWAWeightsTests.jl")
+end
+
+@safetestset "Misc Statistics" begin
+    include("MiscStatisticsTests.jl")
 end
