@@ -144,7 +144,7 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
         end
     end
 
-    return Symmetric(mut_mtx, :L), Symmetric(var_mtx, :L)
+    return Matrix(Symmetric(mut_mtx, :L)), Matrix(Symmetric(var_mtx, :L))
 end
 
 function cordistance(v1::AbstractVector, v2::AbstractVector)
@@ -178,7 +178,7 @@ function cordistance(x::AbstractMatrix)
         end
     end
 
-    return Symmetric(mtx, :L)
+    return Matrix(Symmetric(mtx, :L))
 end
 
 function ltdi_mtx(x, alpha = 0.05)
@@ -201,24 +201,32 @@ function ltdi_mtx(x, alpha = 0.05)
         end
     end
 
-    return Symmetric(mtx, :L)
+    return Matrix(Symmetric(mtx, :L))
 end
 
 function covgerber0(x, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
     normalise = opt.normalise
 
+    std_func = opt.std_func.func
+    std_args = opt.std_func.args
+    std_kwargs = opt.std_func.kwargs
+    std_vec = vec(std_func(x, std_args...; std_kwargs...))
+
     if normalise
         mean_func = opt.mean_func.func
         mean_args = opt.mean_func.args
         mean_kwargs = opt.mean_func.kwargs
         mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
-    end
 
-    std_func = opt.std_func.func
-    std_args = opt.std_func.args
-    std_kwargs = opt.std_func.kwargs
-    std_vec = vec(std_func(x, std_args...; std_kwargs...))
+        #     for i ∈ eachindex(mean_vec)
+        #         x[:, i] .= (x[:, i] .- mean_vec[i]) ./ std_vec[i]
+        #         threshold = range(; start = threshold, stop = threshold,
+        #                           length = length(std_vec))
+        #     end
+        # else
+        #     threshold = threshold * std_vec
+    end
 
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
@@ -253,7 +261,7 @@ function covgerber0(x, opt::GerberOpt = GerberOpt(;))
 
     posdef_fix!(mtx, opt.posdef; msg = "Gerber0 Covariance ")
 
-    return mtx .* (std_vec * transpose(std_vec))
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
 function covgerber1(x, opt::GerberOpt = GerberOpt(;))
@@ -304,9 +312,9 @@ function covgerber1(x, opt::GerberOpt = GerberOpt(;))
         end
     end
 
-    mtx .= Symmetric(mtx, :U)
+    mtx .= Matrix(Symmetric(mtx, :U))
 
-    return mtx .* (std_vec * transpose(std_vec))
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
 function covgerber2(x, opt::GerberOpt = GerberOpt(;))
@@ -353,7 +361,7 @@ function covgerber2(x, opt::GerberOpt = GerberOpt(;))
 
     mtx = H ./ (h * transpose(h))
 
-    return mtx .* (std_vec * transpose(std_vec))
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
 function _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
@@ -439,7 +447,7 @@ function covsb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
 
     posdef_fix!(mtx, gerberopt.posdef; msg = "SB0 Covariance ")
 
-    return mtx .* (std_vec * transpose(std_vec))
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
 function covsb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
@@ -501,9 +509,9 @@ function covsb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
         end
     end
 
-    mtx .= Symmetric(mtx, :U)
+    mtx .= Matrix(Symmetric(mtx, :U))
 
-    return mtx .* (std_vec * transpose(std_vec))
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
 function covgerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
@@ -573,7 +581,7 @@ function covgerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
 
     posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber SB0 Covariance ")
 
-    return mtx .* (std_vec * transpose(std_vec))
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
 function covgerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
@@ -644,9 +652,9 @@ function covgerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
         end
     end
 
-    mtx .= Symmetric(mtx, :U)
+    mtx .= Matrix(Symmetric(mtx, :U))
 
-    return mtx .* (std_vec * transpose(std_vec))
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
 function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
@@ -770,14 +778,70 @@ function dup_elim_sum_matrices(n::Int)
 end
 
 function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton())
-    clamp!(mtx, zero(eltype(mtx)), Inf)
-    s = sqrt.(diag(mtx))
-    corr = cov2cor(mtx)
-    corr[.!isfinite.(corr)] .= zero(eltype(corr))
+    etype = eltype(mtx)
+    _mtx = clamp.(mtx, zero(etype), Inf)
+    s = sqrt.(diag(_mtx))
+    corr = cov2cor(_mtx)
     NCM.nearest_cor!(corr, method)
-    _mtx = cor2cov(corr, s)
+    _mtx .= cor2cov(corr, s)
 
     return any(.!isfinite.(_mtx)) ? mtx : _mtx
+end
+
+function _optimize_psd_cov(model, solvers::AbstractDict)
+    term_status = termination_status(model)
+    solvers_tried = Dict()
+
+    for (key, val) ∈ solvers
+        if haskey(val, :solver)
+            set_optimizer(model, val[:solver])
+        end
+
+        if haskey(val, :params)
+            for (attribute, value) ∈ val[:params]
+                set_attribute(model, attribute, value)
+            end
+        end
+        try
+            JuMP.optimize!(model)
+        catch jump_error
+            push!(solvers_tried, key => Dict(:jump_error => jump_error))
+            continue
+        end
+
+        term_status = termination_status(model)
+
+        if term_status ∈ ValidTermination
+            break
+        end
+
+        push!(solvers_tried,
+              key => Dict(:objective_val => objective_value(model),
+                          :term_status => term_status,
+                          :params => haskey(val, :params) ? val[:params] : missing))
+    end
+
+    return solvers_tried
+end
+
+function psd_cov(mtx::AbstractMatrix, solvers)
+    n = size(mtx, 1)
+    q = -vec(mtx)
+    r = 0.5 * vec(mtx)' * vec(mtx)
+
+    model = JuMP.Model()
+    set_string_names_on_creation(model, false)
+
+    @variable(model, X[1:n, 1:n] ∈ PSDCone())
+    x = vec(X)
+    @objective(m, Min, 0.5 * x' * x + q' * x + r)
+    for i ∈ 1:n
+        @constraint(m, X[i, i] == 1.0)
+    end
+
+    _optimize_psd_cov(model, solvers)
+
+    return value.(X)
 end
 
 function posdef_fix!(mtx::AbstractMatrix, opt::PosdefFixOpt = PosdefFixOpt(;);
@@ -793,9 +857,12 @@ function posdef_fix!(mtx::AbstractMatrix, opt::PosdefFixOpt = PosdefFixOpt(;);
     func = opt.genfunc.func
     args = opt.genfunc.args
     kwargs = opt.genfunc.kwargs
+    solvers = opt.solvers
 
     _mtx = if method == :Nearest
         nearest_cov(mtx, args...; kwargs...)
+    elseif method == :PSD
+        psd_cov(mtx, solvers)
     elseif method == :Custom_Func
         func(mtx, args...; kwargs...)
     end
@@ -1051,19 +1118,19 @@ function covar_mtx(returns::AbstractMatrix, opt::CovOpt = CovOpt(;))
         end
         StatsBase.cov(estimator, returns, args...; kwargs...)
     elseif method == :Gerber0
-        covgerber0(returns, opt.gerber)
+        covgerber0(returns, opt.gerber)[2]
     elseif method == :Gerber1
-        covgerber1(returns, opt.gerber)
+        covgerber1(returns, opt.gerber)[2]
     elseif method == :Gerber2
-        covgerber2(returns, opt.gerber)
+        covgerber2(returns, opt.gerber)[2]
     elseif method == :SB0
-        covsb0(returns, opt.gerber, opt.sb)
+        covsb0(returns, opt.gerber, opt.sb)[2]
     elseif method == :SB1
-        covsb1(returns, opt.gerber, opt.sb)
+        covsb1(returns, opt.gerber, opt.sb)[2]
     elseif method == :Gerber_SB0
-        covgerbersb0(returns, opt.gerber, opt.sb)
+        covgerbersb0(returns, opt.gerber, opt.sb)[2]
     elseif method == :Gerber_SB1
-        covgerbersb1(returns, opt.gerber, opt.sb)
+        covgerbersb1(returns, opt.gerber, opt.sb)[2]
     elseif method == :Custom_Func
         estimation = opt.estimation
         func = estimation.genfunc.func
@@ -1208,31 +1275,31 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif method == :Gerber0
-        corr = cov2cor(covgerber0(returns, opt.gerber))
+        corr = covgerber0(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Gerber1
-        corr = cov2cor(covgerber1(returns, opt.gerber))
+        corr = covgerber1(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Gerber2
-        corr = cov2cor(covgerber2(returns, opt.gerber))
+        corr = covgerber2(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :SB0
-        corr = cov2cor(covsb0(returns, opt.gerber, opt.sb))
+        corr = covsb0(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :SB1
-        corr = cov2cor(covsb1(returns, opt.gerber, opt.sb))
+        corr = covsb1(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Gerber_SB0
-        corr = cov2cor(covgerbersb0(returns, opt.gerber, opt.sb))
+        corr = covgerbersb0(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Gerber_SB1
-        corr = cov2cor(covgerbersb1(returns, opt.gerber, opt.sb))
+        corr = covgerbersb1(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Distance
@@ -2273,9 +2340,8 @@ function _hierarchical_clustering(returns::AbstractMatrix, cor_opt::CorOpt = Cor
                                                                        max_k = ceil(Int,
                                                                                     sqrt(size(returns,
                                                                                               2)))))
-    cor_method = cor_opt.method
     corr, dist = cor_dist_mtx(returns, cor_opt)
-    clustering, k = _hcluster_choice(dist, corr, cor_method, cluster_opt)
+    clustering, k = _hcluster_choice(dist, cluster_opt)
 
     return clustering, k, corr, dist
 end

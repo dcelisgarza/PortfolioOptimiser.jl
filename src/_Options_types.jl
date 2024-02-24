@@ -76,13 +76,14 @@ Structure and keyword constructor for storing the options for fixing non-positiv
 """
 mutable struct PosdefFixOpt
     method::Symbol
+    solvers::AbstractDict
     genfunc::GenericFunction
 end
-function PosdefFixOpt(; method::Symbol = :Nearest,
+function PosdefFixOpt(; method::Symbol = :Nearest, solvers::AbstractDict = Dict(),
                       genfunc::GenericFunction = GenericFunction(; func = x -> x))
     @smart_assert(method ∈ PosdefFixMethods)
 
-    return PosdefFixOpt(method, genfunc)
+    return PosdefFixOpt(method, solvers, genfunc)
 end
 function Base.setproperty!(obj::PosdefFixOpt, sym::Symbol, val)
     if sym == :method
@@ -575,14 +576,17 @@ mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
     dbht_method::Symbol
     max_k::T1
     k::T2
+    genfunc::GenericFunction
 end
 function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
-                    dbht_method::Symbol = :Unique, max_k::Integer = 0, k::Integer = 0)
+                    dbht_method::Symbol = :Unique, max_k::Integer = 0, k::Integer = 0,
+                    genfunc::GenericFunction = GenericFunction(; x -> 2 .- (x .^ 2) / 2))
     @smart_assert(linkage ∈ LinkageTypes)
     @smart_assert(branchorder ∈ BranchOrderTypes)
     @smart_assert(dbht_method ∈ DBHTRootMethods)
 
-    return ClusterOpt{typeof(max_k), typeof(k)}(linkage, branchorder, dbht_method, max_k, k)
+    return ClusterOpt{typeof(max_k), typeof(k)}(linkage, branchorder, dbht_method, max_k, k,
+                                                genfunc)
 end
 function Base.setproperty!(obj::ClusterOpt, sym::Symbol, val)
     if sym == :linkage

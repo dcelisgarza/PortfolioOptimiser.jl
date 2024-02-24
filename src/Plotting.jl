@@ -726,17 +726,15 @@ function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
                        k = 0, dbht_method = :Unique, show_clusters = true,
                        theme_d = :Spectral, theme_h = :Spectral, theme_h_kwargs = (;),
                        kwargs_d1 = (;), kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;),
-                       kwargs = (;))
+                       kwargs = (;), cluster_func = x -> 2 .- (x .^ 2) / 2)
     @smart_assert(linkage ∈ LinkageTypes)
 
     N = length(assets)
     cor_method = cor_opt.method
     corr, dist = cor_dist_mtx(returns, cor_opt)
 
-    cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber1, :Gerber2, :custom)
-
     if linkage == :DBHT
-        corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
+        corr = cluster_func(dist)
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,
                                                                                  method = dbht_method)
@@ -934,9 +932,12 @@ function plot_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
 
     if linkage == :DBHT
         dbht_method = cluster_opt.dbht_method
-        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2,
-                :SB0, :SB1, :Gerber_SB0, :Gerber_SB1)
-        corr = cor_opt.method ∈ cors ? 1 .- dist .^ 2 : corr
+
+        func = cluster_opt.genfunc.func
+        args = cluster_opt.genfunc.args
+        kwargs = cluster_opt.genfunc.kwargs
+        corr = func(dist, args...; kwargs...)
+
         missing, Rpm, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                              branchorder = branchorder,
                                                                              method = dbht_method)
@@ -1015,9 +1016,12 @@ function plot_cluster_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = Co
 
     if linkage == :DBHT
         dbht_method = cluster_opt.dbht_method
-        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2,
-                :SB0, :SB1, :Gerber_SB0, :Gerber_SB1)
-        corr = cor_opt.method ∈ cors ? 1 .- dist .^ 2 : corr
+
+        func = cluster_opt.genfunc.func
+        args = cluster_opt.genfunc.args
+        kwargs = cluster_opt.genfunc.kwargs
+        corr = func(dist, args...; kwargs...)
+
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,
                                                                                  method = dbht_method)

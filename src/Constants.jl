@@ -268,7 +268,7 @@ Methods for fixing non-positive definite matrices.
   - `:Nearest`: nearest correlation matrix.
   - `Custom_Func`: custom function provided.
 """
-const PosdefFixMethods = (:None, :Nearest, :Custom_Func)
+const PosdefFixMethods = (:None, :Nearest, :PSD, :Custom_Func)
 
 """
 ```julia

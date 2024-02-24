@@ -131,15 +131,18 @@ function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 
     return k
 end
 
-function _hcluster_choice(dist, corr, cor_method, cluster_opt::ClusterOpt)
+function _hcluster_choice(dist, cluster_opt::ClusterOpt)
     linkage = cluster_opt.linkage
     branchorder = cluster_opt.branchorder
     max_k = cluster_opt.max_k
     if linkage == :DBHT
         dbht_method = cluster_opt.dbht_method
-        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2,
-                :SB0, :SB1, :Gerber_SB0, :Gerber_SB1)
-        corr = cor_method ∈ cors ? 1 .- dist .^ 2 : corr
+
+        func = cluster_opt.genfunc.func
+        args = cluster_opt.genfunc.args
+        kwargs = cluster_opt.genfunc.kwargs
+        corr = func(dist, args...; kwargs...)
+
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,
                                                                                  method = dbht_method)
@@ -157,11 +160,9 @@ function _hierarchical_clustering(portfolio::HCPortfolio,
                                                                        max_k = ceil(Int,
                                                                                     sqrt(size(portfolio.dist,
                                                                                               1)))))
-    cor_method = portfolio.cor_method
-    corr = portfolio.cor
     dist = portfolio.dist
 
-    clustering, k = _hcluster_choice(dist, corr, cor_method, cluster_opt)
+    clustering, k = _hcluster_choice(dist, cluster_opt)
 
     return clustering, k
 end
