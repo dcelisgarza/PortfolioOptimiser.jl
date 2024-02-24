@@ -75,7 +75,7 @@ function StructTypes.StructType(::Type{typeof(cov_opt.estimation.genfunc.func)})
     return StructTypes.StringType()
 end
 
-println(JSON3.write(Portfolio(;); allow_inf = true))
+println(JSON3.write(AllocOpt(;); allow_inf = true))
 
 cor_opt.denoise.kernel
 

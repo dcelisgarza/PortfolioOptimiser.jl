@@ -638,11 +638,62 @@ function _hcp_save_opt_params(portfolio, type, rm, rm_o, rf, rf_o, nco_opt, nco_
     return nothing
 end
 
-function _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_bound, max_iter)
+function _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_bound, max_iter,
+                               portfolio_kwargs, portfolio_kwargs_o)
     portfolio.optimal[type] = if !isempty(portfolio.fail) || any(.!isfinite.(weights))
         portfolio.fail[:portfolio] = DataFrame(; tickers = portfolio.assets,
                                                weights = weights)
         DataFrame()
+    elseif type == :NCO && (haskey(portfolio_kwargs, :short) && portfolio_kwargs.short ||
+                            haskey(portfolio_kwargs_o, :short) && portfolio_kwargs_o.short)
+        la = nothing
+        ha = nothing
+        lb = nothing
+        hb = nothing
+
+        if haskey(portfolio_kwargs, :short) && portfolio_kwargs.short
+            if haskey(portfolio_kwargs, :short_u)
+                la = portfolio_kwargs.short_u
+            end
+            if haskey(portfolio_kwargs, :long_u)
+                ha = portfolio_kwargs.long_u
+            end
+        end
+
+        if haskey(portfolio_kwargs_o, :short) && portfolio_kwargs_o.short
+            if haskey(portfolio_kwargs_o, :short_u)
+                lb = portfolio_kwargs_o.short_u
+            end
+            if haskey(portfolio_kwargs_o, :long_u)
+                hb = portfolio_kwargs_o.long_u
+            end
+        end
+
+        if isnothing(la) && isnothing(lb)
+            la = lb = 0.2
+        elseif isnothing(la)
+            la = lb
+        elseif isnothing(lb)
+            lb = la
+        end
+
+        if isnothing(ha) && isnothing(hb)
+            ha = hb = one(hb)
+        elseif isnothing(ha)
+            ha = hb
+        elseif isnothing(hb)
+            hb = ha
+        end
+
+        lo = min(-la, -lb)
+        hi = max(ha, hb)
+
+        N = length(weights)
+        upper_bound = range(; start = hi, stop = hi, length = N)
+        lower_bound = range(; start = lo, stop = lo, length = N)
+
+        weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
+        DataFrame(; tickers = portfolio.assets, weights = weights)
     else
         weights = _opt_weight_bounds(upper_bound, lower_bound, weights, max_iter)
         weights ./= sum(weights)
@@ -732,7 +783,7 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                      portfolio_kwargs_o = portfolio_kwargs_o)
     end
     retval = _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_bound,
-                                   max_iter)
+                                   max_iter, portfolio_kwargs, portfolio_kwargs_o)
 
     return retval
 end
