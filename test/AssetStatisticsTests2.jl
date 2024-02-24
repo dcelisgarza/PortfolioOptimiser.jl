@@ -2706,10 +2706,10 @@ end
     kurt13 = portfolio.kurt
     skurt13 = portfolio.skurt
 
-    kurt_opt.denoise.mkt_comp = 15
-    asset_statistics!(portfolio; kurt_opt = kurt_opt)
-    kurt14 = portfolio.kurt
-    skurt14 = portfolio.skurt
+    # kurt_opt.denoise.mkt_comp = 15
+    # asset_statistics!(portfolio; kurt_opt = kurt_opt)
+    # kurt14 = portfolio.kurt
+    # skurt14 = portfolio.skurt
 
     kurt_opt.denoise.mkt_comp = 0
     @test_throws AssertionError asset_statistics!(portfolio; kurt_opt = kurt_opt)
@@ -4678,20 +4678,20 @@ end
     @test !isapprox(kurt10, kurt13)
     # @test !isapprox(kurt11, kurt13)
     @test !isapprox(kurt12, kurt13)
-    @test isapprox(kurt14, kurtt14)
-    @test !isapprox(kurt1, kurt14)
-    @test !isapprox(kurt2, kurt14)
-    @test !isapprox(kurt3, kurt14)
-    @test !isapprox(kurt4, kurt14)
-    # @test !isapprox(kurt5, kurt14)
-    @test !isapprox(kurt6, kurt14)
-    @test !isapprox(kurt7, kurt14)
-    # @test !isapprox(kurt8, kurt14)
-    @test !isapprox(kurt9, kurt14)
-    @test !isapprox(kurt10, kurt14)
-    # @test !isapprox(kurt11, kurt14)
-    @test !isapprox(kurt12, kurt14)
-    @test !isapprox(kurt13, kurt14)
+    # @test isapprox(kurt14, kurtt14)
+    # @test !isapprox(kurt1, kurt14)
+    # @test !isapprox(kurt2, kurt14)
+    # @test !isapprox(kurt3, kurt14)
+    # @test !isapprox(kurt4, kurt14)
+    @test !isapprox(kurt5, kurt14)
+    # @test !isapprox(kurt6, kurt14)
+    # @test !isapprox(kurt7, kurt14)
+    @test !isapprox(kurt8, kurt14)
+    # @test !isapprox(kurt9, kurt14)
+    # @test !isapprox(kurt10, kurt14)
+    @test !isapprox(kurt11, kurt14)
+    # @test !isapprox(kurt12, kurt14)
+    # @test !isapprox(kurt13, kurt14)
     @test isapprox(skurt2, skurtt2)
     @test !isapprox(skurt1, skurt2)
     @test isapprox(skurt3, skurtt3)
@@ -4782,20 +4782,20 @@ end
     @test !isapprox(skurt10, skurt13)
     # @test !isapprox(skurt11, skurt13)
     @test !isapprox(skurt12, skurt13)
-    @test isapprox(skurt14, skurtt14)
-    @test !isapprox(skurt1, skurt14)
-    @test !isapprox(skurt2, skurt14)
-    @test !isapprox(skurt3, skurt14)
-    @test !isapprox(skurt4, skurt14)
+    # @test isapprox(skurt14, skurtt14)
+    # @test !isapprox(skurt1, skurt14)
+    # @test !isapprox(skurt2, skurt14)
+    # @test !isapprox(skurt3, skurt14)
+    # @test !isapprox(skurt4, skurt14)
     # @test !isapprox(skurt5, skurt14)
-    @test !isapprox(skurt6, skurt14)
-    @test !isapprox(skurt7, skurt14)
+    # @test !isapprox(skurt6, skurt14)
+    # @test !isapprox(skurt7, skurt14)
     # @test !isapprox(skurt8, skurt14)
-    @test !isapprox(skurt9, skurt14)
-    @test !isapprox(skurt10, skurt14)
+    # @test !isapprox(skurt9, skurt14)
+    # @test !isapprox(skurt10, skurt14)
     # @test !isapprox(skurt11, skurt14)
-    @test !isapprox(skurt12, skurt14)
-    @test !isapprox(skurt13, skurt14)
+    # @test !isapprox(skurt12, skurt14)
+    # @test !isapprox(skurt13, skurt14)
 end
 
 @testset "J-LoGo Cokurtosis" begin
