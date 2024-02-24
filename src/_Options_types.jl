@@ -580,7 +580,8 @@ mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
 end
 function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
                     dbht_method::Symbol = :Unique, max_k::Integer = 0, k::Integer = 0,
-                    genfunc::GenericFunction = GenericFunction(; x -> 2 .- (x .^ 2) / 2))
+                    genfunc::GenericFunction = GenericFunction(;
+                                                               func = x -> 2 .- (x .^ 2) / 2))
     @smart_assert(linkage ∈ LinkageTypes)
     @smart_assert(branchorder ∈ BranchOrderTypes)
     @smart_assert(dbht_method ∈ DBHTRootMethods)
