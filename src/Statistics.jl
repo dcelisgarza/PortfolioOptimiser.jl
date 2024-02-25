@@ -1039,13 +1039,13 @@ function _optimize_psd_cov(model, solvers::AbstractDict)
     return solvers_tried
 end
 
-function psd_cov(mtx::AbstractMatrix, solvers)
+function psd_cov(mtx::AbstractMatrix, solvers::AbstractDict)
     s = sqrt.(diag(mtx))
-    corr = cov2cor(mtx)
+    _mtx = cov2cor(mtx)
 
-    n = size(corr, 1)
-    q = -vec(corr)
-    r = 0.5 * vec(corr)' * vec(corr)
+    n = size(_mtx, 1)
+    q = -vec(_mtx)
+    r = 0.5 * vec(_mtx)' * vec(_mtx)
 
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
@@ -1066,7 +1066,7 @@ function psd_cov(mtx::AbstractMatrix, solvers)
         return mtx
     end
 
-    _mtx = cor2cov(value.(X), s)
+    _mtx .= cor2cov(value.(X), s)
 
     return _mtx
 end
