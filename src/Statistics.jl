@@ -204,30 +204,7 @@ function ltdi_mtx(x, alpha = 0.05)
     return Matrix(Symmetric(mtx, :L))
 end
 
-function covgerber0(x, opt::GerberOpt = GerberOpt(;))
-    threshold = opt.threshold
-    normalise = opt.normalise
-
-    std_func = opt.std_func.func
-    std_args = opt.std_func.args
-    std_kwargs = opt.std_func.kwargs
-    std_vec = vec(std_func(x, std_args...; std_kwargs...))
-
-    if normalise
-        mean_func = opt.mean_func.func
-        mean_args = opt.mean_func.args
-        mean_kwargs = opt.mean_func.kwargs
-        mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
-
-        #     for i ∈ eachindex(mean_vec)
-        #         x[:, i] .= (x[:, i] .- mean_vec[i]) ./ std_vec[i]
-        #         threshold = range(; start = threshold, stop = threshold,
-        #                           length = length(std_vec))
-        #     end
-        # else
-        #     threshold = threshold * std_vec
-    end
-
+function _covgerber0_norm(x, mean_vec, std_vec, threshold)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
@@ -236,17 +213,10 @@ function covgerber0(x, opt::GerberOpt = GerberOpt(;))
             neg = 0
             pos = 0
             for k ∈ 1:T
-                if normalise
-                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
-                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
-                    ti = threshold
-                    tj = threshold
-                else
-                    xi = x[k, i]
-                    xj = x[k, j]
-                    ti = threshold * std_vec[i]
-                    tj = threshold * std_vec[j]
-                end
+                xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                ti = threshold
+                tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
                     pos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
@@ -259,27 +229,62 @@ function covgerber0(x, opt::GerberOpt = GerberOpt(;))
 
     mtx .= Matrix(Symmetric(mtx, :U))
 
-    posdef_fix!(mtx, opt.posdef; msg = "Gerber0 Covariance ")
-
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+    return mtx
 end
 
-function covgerber1(x, opt::GerberOpt = GerberOpt(;))
+function _covgerber0(x, std_vec, threshold)
+    T, N = size(x)
+    mtx = Matrix{eltype(x)}(undef, N, N)
+
+    @inbounds for j ∈ 1:N
+        for i ∈ 1:j
+            neg = 0
+            pos = 0
+            for k ∈ 1:T
+                xi = x[k, i]
+                xj = x[k, j]
+                ti = threshold * std_vec[i]
+                tj = threshold * std_vec[j]
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += 1
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += 1
+                end
+            end
+            mtx[i, j] = (pos - neg) / (pos + neg)
+        end
+    end
+
+    mtx .= Matrix(Symmetric(mtx, :U))
+
+    return mtx
+end
+
+function covgerber0(x, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
     normalise = opt.normalise
-
-    if normalise
-        mean_func = opt.mean_func.func
-        mean_args = opt.mean_func.args
-        mean_kwargs = opt.mean_func.kwargs
-        mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
-    end
 
     std_func = opt.std_func.func
     std_args = opt.std_func.args
     std_kwargs = opt.std_func.kwargs
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
+    mtx = if normalise
+        mean_func = opt.mean_func.func
+        mean_args = opt.mean_func.args
+        mean_kwargs = opt.mean_func.kwargs
+        mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
+        _covgerber0_norm(x, mean_vec, std_vec, threshold)
+    else
+        _covgerber0(x, std_vec, threshold)
+    end
+
+    posdef_fix!(mtx, opt.posdef; msg = "Gerber0 Covariance ")
+
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+end
+
+function _covgerber1_norm(x, mean_vec, std_vec, threshold)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
@@ -288,18 +293,10 @@ function covgerber1(x, opt::GerberOpt = GerberOpt(;))
             pos = 0
             nn = 0
             for k ∈ 1:T
-                if normalise
-                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
-                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
-                    ti = threshold
-                    tj = threshold
-                else
-                    xi = x[k, i]
-                    xj = x[k, j]
-                    ti = threshold * std_vec[i]
-                    tj = threshold * std_vec[j]
-                end
-
+                xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                ti = threshold
+                tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
                     pos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
@@ -314,38 +311,69 @@ function covgerber1(x, opt::GerberOpt = GerberOpt(;))
 
     mtx .= Matrix(Symmetric(mtx, :U))
 
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+    return mtx
 end
 
-function covgerber2(x, opt::GerberOpt = GerberOpt(;))
+function _covgerber1(x, std_vec, threshold)
+    T, N = size(x)
+    mtx = Matrix{eltype(x)}(undef, N, N)
+    @inbounds for j ∈ 1:N
+        for i ∈ 1:j
+            neg = 0
+            pos = 0
+            nn = 0
+            for k ∈ 1:T
+                xi = x[k, i]
+                xj = x[k, j]
+                ti = threshold * std_vec[i]
+                tj = threshold * std_vec[j]
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += 1
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += 1
+                elseif abs(xi) < ti && abs(xj) < tj
+                    nn += 1
+                end
+            end
+            mtx[i, j] = (pos - neg) / (T - nn)
+        end
+    end
+
+    mtx .= Matrix(Symmetric(mtx, :U))
+
+    return mtx
+end
+
+function covgerber1(x, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
     normalise = opt.normalise
-
-    if normalise
-        mean_func = opt.mean_func.func
-        mean_args = opt.mean_func.args
-        mean_kwargs = opt.mean_func.kwargs
-        mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
-    end
 
     std_func = opt.std_func.func
     std_args = opt.std_func.args
     std_kwargs = opt.std_func.kwargs
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
+    mtx = if normalise
+        mean_func = opt.mean_func.func
+        mean_args = opt.mean_func.args
+        mean_kwargs = opt.mean_func.kwargs
+        mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
+        _covgerber1_norm(x, mean_vec, std_vec, threshold)
+    else
+        _covgerber1(x, std_vec, threshold)
+    end
+
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+end
+
+function _covgerber2_norm(x, mean_vec, std_vec, threshold)
     T, N = size(x)
     U = Matrix{Bool}(undef, T, N)
     D = Matrix{Bool}(undef, T, N)
 
     @inbounds for i ∈ 1:N
-        if normalise
-            xi = (x[:, i] .- mean_vec[i]) / std_vec[i]
-            ti = threshold
-        else
-            xi = x[:, i]
-            ti = threshold * std_vec[i]
-        end
-
+        xi = (x[:, i] .- mean_vec[i]) / std_vec[i]
+        ti = threshold
         U[:, i] .= xi .>= ti
         D[:, i] .= xi .<= -ti
     end
@@ -359,7 +387,51 @@ function covgerber2(x, opt::GerberOpt = GerberOpt(;))
 
     h = sqrt.(diag(H))
 
-    mtx = H ./ (h * transpose(h))
+    return H ./ (h * transpose(h))
+end
+
+function _covgerber2(x, std_vec, threshold)
+    T, N = size(x)
+    U = Matrix{Bool}(undef, T, N)
+    D = Matrix{Bool}(undef, T, N)
+
+    @inbounds for i ∈ 1:N
+        xi = x[:, i]
+        ti = threshold * std_vec[i]
+        U[:, i] .= xi .>= ti
+        D[:, i] .= xi .<= -ti
+    end
+
+    # nconc = transpose(U) * U + transpose(D) * D
+    # ndisc = transpose(U) * D + transpose(D) * U
+    # H = nconc - ndisc
+
+    UmD = U - D
+    H = transpose(UmD) * (UmD)
+
+    h = sqrt.(diag(H))
+
+    return H ./ (h * transpose(h))
+end
+
+function covgerber2(x, opt::GerberOpt = GerberOpt(;))
+    threshold = opt.threshold
+    normalise = opt.normalise
+
+    std_func = opt.std_func.func
+    std_args = opt.std_func.args
+    std_kwargs = opt.std_func.kwargs
+    std_vec = vec(std_func(x, std_args...; std_kwargs...))
+
+    mtx = if normalise
+        mean_func = opt.mean_func.func
+        mean_args = opt.mean_func.args
+        mean_kwargs = opt.mean_func.kwargs
+        mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
+        _covgerber2_norm(x, mean_vec, std_vec, threshold)
+    else
+        _covgerber2(x, std_vec, threshold)
+    end
 
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
@@ -386,6 +458,69 @@ function _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
     return kappa / (1 + gamma^n)
 end
 
+function _covsb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    T, N = size(x)
+    mtx = Matrix{eltype(x)}(undef, N, N)
+    @inbounds for j ∈ 1:N
+        for i ∈ 1:j
+            neg = zero(eltype(x))
+            pos = zero(eltype(x))
+            for k ∈ 1:T
+                xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                ti = threshold
+                tj = threshold
+                mui = zero(threshold)
+                muj = zero(threshold)
+                sigmai = 1
+                sigmaj = 1
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                end
+            end
+            mtx[i, j] = (pos - neg) / (pos + neg)
+        end
+    end
+
+    mtx .= Matrix(Symmetric(mtx, :U))
+
+    return mtx
+end
+
+function _covsb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    T, N = size(x)
+    mtx = Matrix{eltype(x)}(undef, N, N)
+
+    @inbounds for j ∈ 1:N
+        for i ∈ 1:j
+            neg = zero(eltype(x))
+            pos = zero(eltype(x))
+            for k ∈ 1:T
+                xi = x[k, i]
+                xj = x[k, j]
+                ti = threshold * std_vec[i]
+                tj = threshold * std_vec[j]
+                mui = mean_vec[i]
+                muj = mean_vec[j]
+                sigmai = std_vec[i]
+                sigmaj = std_vec[j]
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                end
+            end
+            mtx[i, j] = (pos - neg) / (pos + neg)
+        end
+    end
+
+    mtx .= Matrix(Symmetric(mtx, :U))
+
+    return mtx
+end
+
 function covsb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     c1 = sbopt.c1
     c2 = sbopt.c2
@@ -405,49 +540,84 @@ function covsb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     std_kwargs = gerberopt.std_func.kwargs
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
+    mtx = if normalise
+        _covsb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    else
+        _covsb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    end
+
+    posdef_fix!(mtx, gerberopt.posdef; msg = "SB0 Covariance ")
+
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+end
+
+function _covsb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     @inbounds for j ∈ 1:N
         for i ∈ 1:j
-            neg = zero(eltype(x))
-            pos = zero(eltype(x))
+            neg = 0
+            pos = 0
+            nn = 0
             for k ∈ 1:T
-                if normalise
-                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
-                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
-                    ti = threshold
-                    tj = threshold
-                    mui = zero(threshold)
-                    muj = zero(threshold)
-                    sigmai = 1
-                    sigmaj = 1
-                else
-                    xi = x[k, i]
-                    xj = x[k, j]
-                    ti = threshold * std_vec[i]
-                    tj = threshold * std_vec[j]
-                    mui = mean_vec[i]
-                    muj = mean_vec[j]
-                    sigmai = std_vec[i]
-                    sigmaj = std_vec[j]
-                end
-
+                xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                ti = threshold
+                tj = threshold
+                mui = zero(threshold)
+                muj = zero(threshold)
+                sigmai = 1
+                sigmaj = 1
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
                     pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
                     neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                elseif abs(xi) < ti && abs(xj) < tj
+                    nn += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                 end
             end
-            mtx[i, j] = (pos - neg) / (pos + neg)
+            mtx[i, j] = (pos - neg) / (pos + neg + nn)
         end
     end
 
     mtx .= Matrix(Symmetric(mtx, :U))
 
-    posdef_fix!(mtx, gerberopt.posdef; msg = "SB0 Covariance ")
+    return mtx
+end
 
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+function _covsb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    T, N = size(x)
+    mtx = Matrix{eltype(x)}(undef, N, N)
+    @inbounds for j ∈ 1:N
+        for i ∈ 1:j
+            neg = 0
+            pos = 0
+            nn = 0
+            for k ∈ 1:T
+                xi = x[k, i]
+                xj = x[k, j]
+                ti = threshold * std_vec[i]
+                tj = threshold * std_vec[j]
+                mui = mean_vec[i]
+                muj = mean_vec[j]
+                sigmai = std_vec[i]
+                sigmaj = std_vec[j]
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                elseif abs(xi) < ti && abs(xj) < tj
+                    nn += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                end
+            end
+            mtx[i, j] = (pos - neg) / (pos + neg + nn)
+        end
+    end
+
+    mtx .= Matrix(Symmetric(mtx, :U))
+
+    return mtx
 end
 
 function covsb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
@@ -469,49 +639,91 @@ function covsb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     std_kwargs = gerberopt.std_func.kwargs
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
+    mtx = if normalise
+        _covsb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    else
+        _covsb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    end
+
+    posdef_fix!(mtx, gerberopt.posdef; msg = "SB1 Covariance ")
+
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+end
+
+function _covgerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
+
     @inbounds for j ∈ 1:N
         for i ∈ 1:j
-            neg = 0
-            pos = 0
-            nn = 0
+            neg = zero(eltype(x))
+            pos = zero(eltype(x))
+            cneg = 0
+            cpos = 0
             for k ∈ 1:T
-                if normalise
-                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
-                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
-                    ti = threshold
-                    tj = threshold
-                    mui = zero(threshold)
-                    muj = zero(threshold)
-                    sigmai = 1
-                    sigmaj = 1
-                else
-                    xi = x[k, i]
-                    xj = x[k, j]
-                    ti = threshold * std_vec[i]
-                    tj = threshold * std_vec[j]
-                    mui = mean_vec[i]
-                    muj = mean_vec[j]
-                    sigmai = std_vec[i]
-                    sigmaj = std_vec[j]
-                end
-
+                xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                ti = threshold
+                tj = threshold
+                mui = zero(threshold)
+                muj = zero(threshold)
+                sigmai = 1
+                sigmaj = 1
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
                     pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    cpos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
                     neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
-                elseif abs(xi) < ti && abs(xj) < tj
-                    nn += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    cneg += 1
                 end
             end
-            mtx[i, j] = (pos - neg) / (pos + neg + nn)
+            tpos = pos * cpos
+            tneg = neg * cneg
+            mtx[i, j] = (tpos - tneg) / (tpos + tneg)
         end
     end
 
     mtx .= Matrix(Symmetric(mtx, :U))
 
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+    return mtx
+end
+
+function _covgerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    T, N = size(x)
+    mtx = Matrix{eltype(x)}(undef, N, N)
+
+    @inbounds for j ∈ 1:N
+        for i ∈ 1:j
+            neg = zero(eltype(x))
+            pos = zero(eltype(x))
+            cneg = 0
+            cpos = 0
+            for k ∈ 1:T
+                xi = x[k, i]
+                xj = x[k, j]
+                ti = threshold * std_vec[i]
+                tj = threshold * std_vec[j]
+                mui = mean_vec[i]
+                muj = mean_vec[j]
+                sigmai = std_vec[i]
+                sigmaj = std_vec[j]
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    cpos += 1
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    cneg += 1
+                end
+            end
+            tpos = pos * cpos
+            tneg = neg * cneg
+            mtx[i, j] = (tpos - tneg) / (tpos + tneg)
+        end
+    end
+
+    mtx .= Matrix(Symmetric(mtx, :U))
+
+    return mtx
 end
 
 function covgerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
@@ -533,55 +745,101 @@ function covgerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
     std_kwargs = gerberopt.std_func.kwargs
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
+    mtx = if normalise
+        _covgerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    else
+        _covgerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    end
+
+    posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber SB0 Covariance ")
+
+    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+end
+
+function _covgerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
-
     @inbounds for j ∈ 1:N
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
+            nn = zero(eltype(x))
             cneg = 0
             cpos = 0
+            cnn = 0
             for k ∈ 1:T
-                if normalise
-                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
-                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
-                    ti = threshold
-                    tj = threshold
-                    mui = zero(threshold)
-                    muj = zero(threshold)
-                    sigmai = 1
-                    sigmaj = 1
-                else
-                    xi = x[k, i]
-                    xj = x[k, j]
-                    ti = threshold * std_vec[i]
-                    tj = threshold * std_vec[j]
-                    mui = mean_vec[i]
-                    muj = mean_vec[j]
-                    sigmai = std_vec[i]
-                    sigmaj = std_vec[j]
-                end
-
+                xi = (x[k, i] - mean_vec[i]) / std_vec[i]
+                xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                ti = threshold
+                tj = threshold
+                mui = zero(threshold)
+                muj = zero(threshold)
+                sigmai = 1
+                sigmaj = 1
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
                     pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cpos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
                     neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cneg += 1
+                elseif abs(xi) < ti && abs(xj) < tj
+                    nn += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    cnn += 1
                 end
             end
             tpos = pos * cpos
             tneg = neg * cneg
-            mtx[i, j] = (tpos - tneg) / (tpos + tneg)
+            tnn = nn * cnn
+            mtx[i, j] = (tpos - tneg) / (tpos + tneg + tnn)
         end
     end
 
     mtx .= Matrix(Symmetric(mtx, :U))
 
-    posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber SB0 Covariance ")
+    return mtx
+end
 
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+function _covgerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    T, N = size(x)
+    mtx = Matrix{eltype(x)}(undef, N, N)
+    @inbounds for j ∈ 1:N
+        for i ∈ 1:j
+            neg = zero(eltype(x))
+            pos = zero(eltype(x))
+            nn = zero(eltype(x))
+            cneg = 0
+            cpos = 0
+            cnn = 0
+            for k ∈ 1:T
+                xi = x[k, i]
+                xj = x[k, j]
+                ti = threshold * std_vec[i]
+                tj = threshold * std_vec[j]
+                mui = mean_vec[i]
+                muj = mean_vec[j]
+                sigmai = std_vec[i]
+                sigmaj = std_vec[j]
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    cpos += 1
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    cneg += 1
+                elseif abs(xi) < ti && abs(xj) < tj
+                    nn += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    cnn += 1
+                end
+            end
+            tpos = pos * cpos
+            tneg = neg * cneg
+            tnn = nn * cnn
+            mtx[i, j] = (tpos - tneg) / (tpos + tneg + tnn)
+        end
+    end
+
+    mtx .= Matrix(Symmetric(mtx, :U))
+
+    return mtx
 end
 
 function covgerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
@@ -603,56 +861,13 @@ function covgerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
     std_kwargs = gerberopt.std_func.kwargs
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
-    T, N = size(x)
-    mtx = Matrix{eltype(x)}(undef, N, N)
-    @inbounds for j ∈ 1:N
-        for i ∈ 1:j
-            neg = zero(eltype(x))
-            pos = zero(eltype(x))
-            nn = zero(eltype(x))
-            cneg = 0
-            cpos = 0
-            cnn = 0
-            for k ∈ 1:T
-                if normalise
-                    xi = (x[k, i] - mean_vec[i]) / std_vec[i]
-                    xj = (x[k, j] - mean_vec[j]) / std_vec[j]
-                    ti = threshold
-                    tj = threshold
-                    mui = zero(threshold)
-                    muj = zero(threshold)
-                    sigmai = 1
-                    sigmaj = 1
-                else
-                    xi = x[k, i]
-                    xj = x[k, j]
-                    ti = threshold * std_vec[i]
-                    tj = threshold * std_vec[j]
-                    mui = mean_vec[i]
-                    muj = mean_vec[j]
-                    sigmai = std_vec[i]
-                    sigmaj = std_vec[j]
-                end
-
-                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
-                    cpos += 1
-                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
-                    cneg += 1
-                elseif abs(xi) < ti && abs(xj) < tj
-                    nn += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
-                    cnn += 1
-                end
-            end
-            tpos = pos * cpos
-            tneg = neg * cneg
-            tnn = nn * cnn
-            mtx[i, j] = (tpos - tneg) / (tpos + tneg + tnn)
-        end
+    mtx = if normalise
+        _covgerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+    else
+        _covgerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber SB1 Covariance ")
 
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
