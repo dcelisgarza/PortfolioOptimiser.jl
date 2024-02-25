@@ -1,42 +1,47 @@
-using COSMO, CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra,
-      OrderedCollections, Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries,
-      Logging, GLPK, Ipopt, SCS, NLopt, ECOS, PyCall, JSON3, FileIO, CovarianceEstimation
+using COSMO, CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries,
+      PortfolioOptimiser
 
 prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-to1 = range(; start = 0.001, stop = 0.003, length = 20)
-to2 = collect(range(; start = 0.001, stop = 0.003, length = 20))
-to3 = 1
+portfolio = HCPortfolio(; prices = prices,
+                        solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                :params => Dict("verbose" => false,
+                                                                                "max_step_fraction" => 0.75))))
+asset_statistics!(portfolio; calc_kurt = false)
 
-portfolio = Portfolio(; prices = prices,
-                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                              :params => Dict("verbose" => false,
-                                                                              "max_step_fraction" => 0.7)),
-                                            :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                           :params => Dict("verbose" => false))),
-                      turnover = fill(0, 10))
+cluster_opt = ClusterOpt(; linkage = :ward)
+portfolio.w_min = -0.2
+portfolio.w_max = 0.8
+w1 = optimise!(portfolio; type = :NCO, cluster_opt = cluster_opt,
+               portfolio_kwargs = (; short = true, solvers = portfolio.solvers))
 
-portfolio.turnover = fill(1, 10)
-portfolio.rebalance = to1
-portfolio.rebalance = Inf
-portfolio.rebalance = to2
-portfolio.rebalance = Inf
-portfolio.rebalance = to3
-portfolio.rebalance = to1
-portfolio.rebalance = to1
-portfolio.rebalance = to1
-portfolio.rebalance = to2
-portfolio.rebalance = to1
-portfolio.rebalance = to3
-portfolio.rebalance = to2
-portfolio.rebalance = to1
-portfolio.rebalance = to2
-portfolio.rebalance = to2
-portfolio.rebalance = to2
-portfolio.rebalance = to3
+println(w4.weights)
+
+wt1 = [-0.08726389402313346, 0.011317249181056496, 0.013253016575221386,
+       0.004454184002517527, 0.2245511142560241, -0.04408637268783615, 0.03915549732130178,
+       0.025745539025900332, 3.6894867631938156e-10, 4.4083502491786396e-8,
+       0.03822047247965015, -4.320061212000542e-10, -0.02081862955745606,
+       -4.193369599093359e-11, -0.007831099391187125, 0.10409315248736516,
+       0.1827439131011679, 0.03478127793561621, 0.1216845329015553, 2.4137250911802204e-9]
+
+@test isapprox(w1.weights, wt1)
+@test sum(w1.weights[w1.weights .>= 0]) <= 0.8
+@test sum(w1.weights[w1.weights .<= 0]) >= -0.2
+
+@test isapprox(w2.weights, wt2)
+@test sum(w2.weights[w2.weights .>= 0]) <= 0.7
+@test sum(w2.weights[w2.weights .<= 0]) >= -0.23
+
+@test isapprox(w3.weights, wt3)
+@test sum(w3.weights[w3.weights .>= 0]) <= 0.65
+@test sum(w3.weights[w3.weights .<= 0]) >= -0.17
+
+@test isapprox(w4.weights, wt4)
+@test sum(w4.weights[w4.weights .>= 0]) <= 0.85
+@test sum(w4.weights[w4.weights .<= 0]) >= -0.07
 #################
 
 portfolio = Portfolio(; prices = prices)

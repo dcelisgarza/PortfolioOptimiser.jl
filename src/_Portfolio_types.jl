@@ -1436,33 +1436,17 @@ function HCPortfolio(;
     @smart_assert(bins_info ∈ BinMethods ||
                   (isa(bins_info, Int) && bins_info > zero(bins_info)))
     if isa(w_min, Real)
-        @smart_assert(zero(w_min) <= w_min <= one(w_min) && all(w_min .<= w_max))
+        @smart_assert(all(w_min .<= w_max))
     elseif isa(w_min, AbstractVector)
         if !isempty(w_min)
-            @smart_assert(length(w_min) == size(returns, 2) &&
-                          all(x -> zero(eltype(w_min)) <= x <= one(eltype(w_min)), w_min) &&
-                          begin
-                              try
-                                  all(w_min .<= w_max)
-                              catch DimensionMismatch
-                                  false
-                              end
-                          end)
+            @smart_assert(length(w_min) == size(returns, 2) && all(w_min .<= w_max))
         end
     end
     if isa(w_max, Real)
-        @smart_assert(zero(w_max) <= w_max <= one(w_max) && all(w_min .<= w_max))
+        @smart_assert(all(w_min .<= w_max))
     elseif isa(w_max, AbstractVector)
         if !isempty(w_max)
-            @smart_assert(length(w_max) == size(returns, 2) &&
-                          all(x -> zero(eltype(w_max)) <= x <= one(eltype(w_max)), w_max) &&
-                          begin
-                              try
-                                  all(w_min .<= w_max)
-                              catch DimensionMismatch
-                                  false
-                              end
-                          end)
+            @smart_assert(length(w_max) == size(returns, 2) && all(w_min .<= w_max))
         end
     end
     @smart_assert(cor_method ∈ CorMethods)
@@ -1572,11 +1556,10 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         lmax = length(vmax)
 
         if isa(val, Real)
-            @smart_assert(zero(val) <= val <= one(val) && all(vmin .<= vmax))
+            @smart_assert(all(vmin .<= vmax))
         elseif isa(val, AbstractVector)
             if !isempty(val)
-                @smart_assert(length(val) == size(obj.returns, 2) &&
-                              all(x -> zero(eltype(val)) <= x <= one(eltype(val)), val))
+                @smart_assert(length(val) == size(obj.returns, 2))
 
                 if !isempty(vmin) && !isempty(vmax) && lmin == lmax
                     @smart_assert(all(vmin .<= vmax))

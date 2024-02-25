@@ -1054,7 +1054,14 @@ function psd_cov(mtx::AbstractMatrix, solvers)
         @constraint(m, X[i, i] == 1.0)
     end
 
-    _optimize_psd_cov(model, solvers)
+    solvers_tried = _optimize_psd_cov(model, solvers)
+    term_status = termination_status(model)
+
+    if term_status ∉ ValidTermination
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.psd_cov))"
+        @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
+        return mtx
+    end
 
     return value.(X)
 end
