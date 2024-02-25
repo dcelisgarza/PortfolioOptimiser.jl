@@ -1,47 +1,19 @@
 using COSMO, CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries,
-      PortfolioOptimiser
+      PortfolioOptimiser, LinearAlgebra
 
-prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-portfolio = HCPortfolio(; prices = prices,
-                        solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                :params => Dict("verbose" => false,
-                                                                                "max_step_fraction" => 0.75))))
-asset_statistics!(portfolio; calc_kurt = false)
+portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
-cluster_opt = ClusterOpt(; linkage = :ward)
-portfolio.w_min = -0.2
-portfolio.w_max = 0.8
-w1 = optimise!(portfolio; type = :NCO, cluster_opt = cluster_opt,
-               portfolio_kwargs = (; short = true, solvers = portfolio.solvers))
+println(cov_f17)
+mu_f17 = portfolio.mu_f
+cov_fm17 = portfolio.cov_fm
+mu_fm17 = portfolio.mu_fm
 
-println(w4.weights)
-
-wt1 = [-0.08726389402313346, 0.011317249181056496, 0.013253016575221386,
-       0.004454184002517527, 0.2245511142560241, -0.04408637268783615, 0.03915549732130178,
-       0.025745539025900332, 3.6894867631938156e-10, 4.4083502491786396e-8,
-       0.03822047247965015, -4.320061212000542e-10, -0.02081862955745606,
-       -4.193369599093359e-11, -0.007831099391187125, 0.10409315248736516,
-       0.1827439131011679, 0.03478127793561621, 0.1216845329015553, 2.4137250911802204e-9]
-
-@test isapprox(w1.weights, wt1)
-@test sum(w1.weights[w1.weights .>= 0]) <= 0.8
-@test sum(w1.weights[w1.weights .<= 0]) >= -0.2
-
-@test isapprox(w2.weights, wt2)
-@test sum(w2.weights[w2.weights .>= 0]) <= 0.7
-@test sum(w2.weights[w2.weights .<= 0]) >= -0.23
-
-@test isapprox(w3.weights, wt3)
-@test sum(w3.weights[w3.weights .>= 0]) <= 0.65
-@test sum(w3.weights[w3.weights .<= 0]) >= -0.17
-
-@test isapprox(w4.weights, wt4)
-@test sum(w4.weights[w4.weights .>= 0]) <= 0.85
-@test sum(w4.weights[w4.weights .<= 0]) >= -0.07
 #################
 
 portfolio = Portfolio(; prices = prices)

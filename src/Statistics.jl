@@ -1040,18 +1040,21 @@ function _optimize_psd_cov(model, solvers::AbstractDict)
 end
 
 function psd_cov(mtx::AbstractMatrix, solvers)
-    n = size(mtx, 1)
-    q = -vec(mtx)
-    r = 0.5 * vec(mtx)' * vec(mtx)
+    s = sqrt.(diag(mtx))
+    corr = cov2cor(mtx)
+
+    n = size(corr, 1)
+    q = -vec(corr)
+    r = 0.5 * vec(corr)' * vec(corr)
 
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
 
     @variable(model, X[1:n, 1:n] ∈ PSDCone())
     x = vec(X)
-    @objective(m, Min, 0.5 * x' * x + q' * x + r)
+    @objective(model, Min, 0.5 * x' * x + q' * x + r)
     for i ∈ 1:n
-        @constraint(m, X[i, i] == 1.0)
+        @constraint(model, X[i, i] == 1.0)
     end
 
     solvers_tried = _optimize_psd_cov(model, solvers)
@@ -1063,7 +1066,9 @@ function psd_cov(mtx::AbstractMatrix, solvers)
         return mtx
     end
 
-    return value.(X)
+    _mtx = cor2cov(value.(X), s)
+
+    return _mtx
 end
 
 function posdef_fix!(mtx::AbstractMatrix, opt::PosdefFixOpt = PosdefFixOpt(;);
