@@ -741,10 +741,21 @@ Available optimisation types for [`HCPortfolio`]().
 
 Both `:HERC` and `:NCO` types classify assets into `k` clusters and split the optimisation into two sub-optimisations.
 
- 1. Intra-cluster optimisation, where each cluster is optimised as its own independent portfolio.
- 2. Inter-cluster optimisation, each cluster is treated as a synthetic asset, for which relevant statistics are computed. These are then optimised like a regular portfolio.
+ 1. Intra-cluster optimisation: where each cluster is treated as an independent portfolio, where the weight contribution per asset is *locally* computed.
+ 2. Inter-cluster optimisation: each cluster is treated as a synthetic asset, where the weight contribution of the *whole* cluster is computed with respect to other clusters.
 
-Both optimisations are combined to produce the final answer.
+Intra- and inter-cluster weights are combined as follows:
+
+```math
+w_{i}^\\mathrm{G} = w_{i}^\\mathrm{L} \\cdot w_{i \\in \\mathcal{C} \\subseteq \\mathcal{K}}\\qquad \\forall \\, i = 1,\\, \\ldots{},\\, N\\,.
+```
+
+Where:
+
+  - ``w_{i}^\\mathrm{G}`` is the global weight for asset ``i``;
+  - ``w_{i}^\\mathrm{L}`` is the intra-cluster weight for asset ``i``;
+  - ``w_{i \\in \\mathcal{C} \\subseteq \\mathcal{K}}`` is the weight of cluster ``\\mathcal{C}``, from the set of `k` clusters ``\\mathcal{K}``, that asset ``i`` belongs to and;
+  - ``N`` is the number of assets.
 """
 const HCPortTypes = (:HRP, :HERC, :NCO)
 
