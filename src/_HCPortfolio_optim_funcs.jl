@@ -387,20 +387,20 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
         lc = Int[]
         rc = Int[]
 
-        if rm == :Equal
+        if rm_o == :Equal
             alpha_1 = 0.5
         else
             for j ∈ eachindex(clusters)
                 if issubset(clusters[j], ln)
                     _lrisk = _cluster_risk(portfolio, returns, covariance, clusters[j];
-                                           rm = rm, rf = rf,
-                                           portfolio_kwargs = portfolio_kwargs)
+                                           rm = rm_o, rf = rf_o,
+                                           portfolio_kwargs = portfolio_kwargs_o)
                     lrisk += _lrisk
                     append!(lc, clusters[j])
                 elseif issubset(clusters[j], rn)
                     _rrisk = _cluster_risk(portfolio, returns, covariance, clusters[j];
-                                           rm = rm, rf = rf,
-                                           portfolio_kwargs = portfolio_kwargs)
+                                           rm = rm_o, rf = rf_o,
+                                           portfolio_kwargs = portfolio_kwargs_o)
                     rrisk += _rrisk
                     append!(rc, clusters[j])
                 end
@@ -424,8 +424,8 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
         else
             Matrix{eltype(returns)}(undef, 0, 0)
         end
-        cweights = _naive_risk(portfolio, cret, ccov; rm = rm_o, rf = rf_o,
-                               portfolio_kwargs = portfolio_kwargs_o)
+        cweights = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf,
+                               portfolio_kwargs = portfolio_kwargs)
         weights[cidx] .*= cweights
     end
 

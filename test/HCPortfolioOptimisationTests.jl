@@ -3683,13 +3683,13 @@ end
                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    w1 = optimise!(portfolio; type = :HERC, rm = :SD, rm_o = :CDaR, rf = rf,
+    w1 = optimise!(portfolio; type = :HERC, rm_o = :SD, rm = :CDaR, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
-    w2 = optimise!(portfolio; type = :HERC, rm_o = :SD, rm = :CDaR, rf = rf,
+    w2 = optimise!(portfolio; type = :HERC, rm = :SD, rm_o = :CDaR, rf = rf,
                    cluster = false)
-    w3 = optimise!(portfolio; type = :HERC, rm_o = :CDaR, rm = :CDaR, rf = rf,
+    w3 = optimise!(portfolio; type = :HERC, rm = :CDaR, rm_o = :CDaR, rf = rf,
                    cluster = false)
     w4 = optimise!(portfolio; type = :HERC, rm = :CDaR, rf = rf, cluster = false)
 
