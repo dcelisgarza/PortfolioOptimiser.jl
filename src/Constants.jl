@@ -1,3 +1,104 @@
+function _sigdom(sym::Symbol)
+    return if sym == :a
+        "alpha"
+    elseif sym == :b
+        "beta"
+    end * " in (0, 1)"
+end
+
+function _sigdef(msg::String, sym::Symbol)
+    ab = if sym == :a
+        "alpha"
+    elseif sym == :b
+        "beta"
+    end
+
+    return "- `$ab`: significance level of $msg, `$(_sigdom(sym))`."
+end
+
+function _isigdef(msg::String, sym::Symbol)
+    alfbet, ab = if sym == :a
+        "alpha", "a"
+    elseif sym == :b
+        "beta", "b"
+    end
+
+    return "- `$(alfbet)_i`: initial significance level of $msg, `0 < $(alfbet)_i < $(alfbet) < 1`.\n- `$(ab)_sim`: number of CVaRs to approximate the $msg, `$(ab)_sim > 0`."
+end
+
+function _ndef(sym::Symbol)
+    return if sym == :a1
+        "`N` is the number of assets"
+    elseif sym == :a2
+        "`Na` is the number of assets"
+    elseif sym == :a3
+        "``N`` is the number of assets"
+    elseif sym == :f1
+        "`N` is the number of factors"
+    elseif sym == :f2
+        "`Nf` is the number of factors"
+    elseif sym == :c1
+        "`Nc` is the number of constraints"
+    end
+end
+
+function _tstr(sym::Symbol)
+    if sym == :t1
+        "`T` is the number of returns observations"
+    elseif sym == :t2
+        "``T`` is the number of returns observations"
+    end
+end
+
+function _mudef(msg::String, sym::Symbol = :a2)
+    if sym == :a2
+        n = "Na"
+    elseif sym == :f2
+        n = "Nf"
+    end
+
+    return "`$n×1` vector, where $(_ndef(sym))). Set the value of the $(msg) expected returns at instance construction. When choosing `:Custom_Val` in `mu_method`, this is the value of `mu` used, can also be set after a call to [`mean_vec`]() to replace the old value with the new."
+end
+
+function _covdef(msg::String, sym::Symbol = :a2)
+    if sym == :a2
+        n = "Na"
+    elseif sym == :f2
+        n = "Nf"
+    elseif sym == :a22
+        n = "(Na×Na)"
+        sym = :a2
+    end
+
+    return "`$n×$n` matrix, where $(_ndef(sym)). Set the value of the $(msg) covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cov` used by [`covar_mtx`]()."
+end
+
+function _dircomp(msg::String)
+    return "Can be directly computed by $msg."
+end
+
+const _tdef = "- `T`: number of returns observations."
+const _owaw = "- `w`: `T×1` ordered weight vector."
+const _edst = "Empty concrete subtype of `AbstractDictionary`"
+function _solver_reqs(msg::String)
+    return if isempty(msg)
+        ""
+    else
+        "Solver must support $msg, or `JuMP` must be able to transform it/them into a supported form."
+    end
+end
+function _solver_desc(msg::String = "the `JuMP` model.", pref::String = "",
+                      req::String = "")
+    return """
+           - `$(pref*"solvers")`: Provides the solvers and corresponding parameters for solving $msg `Dict` or `NamedTuple` with key value pairs where the values are other `Dict`s or `NamedTuple`s, e.g. `Dict(solver_key => Dict(...))`, the keys of the sub-dictionary/tuple must be:
+               - `:solver`: which contains the JuMP optimiser. $(_solver_reqs(req))
+               - `:params`: (optional) for the solver-specific parameters.
+           """
+end
+function _filled_by(msg::String)
+    return "This parameter is filled after calling $msg."
+end
+
 """
 ```julia
 TrackingErrKinds = (:Weights, :Returns)
@@ -5,7 +106,10 @@ TrackingErrKinds = (:Weights, :Returns)
 
 Available kinds of tracking errors for [`Portfolio`]().
 
-  - `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns,    - ``\\bm{b} = \\mathbf{X} \\bm{w}``,where ``\\bm{b}`` is the benchmark returns vector, ``\\mathbf{X}`` the ``T \\times{} N`` asset returns matrix, and ``\\bm{w}`` the asset weights vector.
+  - `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns,
+
+      + ``\\bm{b} = \\mathbf{X} \\bm{w}``, where ``\\bm{b}`` is the benchmark returns vector, ``\\mathbf{X}`` the ``T \\times{} N`` asset returns matrix, and ``\\bm{w}`` the asset weights vector.
+
   - `:Returns`: directly provide the vector of benchmark returns.
     The benchmark is then used as a reference to optimise a portfolio that tracks it up to a given error.
 """
@@ -19,7 +123,7 @@ NetworkMethods = (:None, :SDP, :IP)
 Methods for enforcing network constraints for optimising [`Portfolio`]().
 
   - `:None`: No network constraint is used.
-  - `:SDP`: Semi-definite programming constraint.
+  - `:SDP`: Semi-definite programming constraint. $(_solver_reqs("`MOI.PSD`"))
   - `:IP`: Integer programming constraint.
 """
 const NetworkMethods = (:None, :SDP, :IP)
@@ -259,16 +363,17 @@ const CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Ger
 
 """
 ```julia
-PosdefFixMethods = (:None, :Nearest, :Custom_Func)
+PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
 ```
 
 Methods for fixing non-positive definite matrices.
 
   - `:None`: no fix is applied.
   - `:Nearest`: nearest correlation matrix.
+  - `:SDP`: Semi-definite programming constraint by finding the nearest correlation matrix with `JuMP`. $(_solver_reqs("`MOI.PSD`"))
   - `Custom_Func`: custom function provided.
 """
-const PosdefFixMethods = (:None, :Nearest, :PSD, :Custom_Func)
+const PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
 
 """
 ```julia
@@ -778,125 +883,24 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
                           EDaR_r = "Entropic Compounded Drawdown at Risk",
                           RDaR_r = "Relativistic Compounded Drawdown at Risk")
 
-function _sigdom(sym::Symbol)
-    return if sym == :a
-        "alpha"
-    elseif sym == :b
-        "beta"
-    end * " in (0, 1)"
-end
-
-function _sigdef(msg::String, sym::Symbol)
-    ab = if sym == :a
-        "alpha"
-    elseif sym == :b
-        "beta"
-    end
-
-    return "- `$ab`: significance level of $msg, `$(_sigdom(sym))`."
-end
-
-function _isigdef(msg::String, sym::Symbol)
-    alfbet, ab = if sym == :a
-        "alpha", "a"
-    elseif sym == :b
-        "beta", "b"
-    end
-
-    return "- `$(alfbet)_i`: initial significance level of $msg, `0 < $(alfbet)_i < $(alfbet) < 1`.\n- `$(ab)_sim`: number of CVaRs to approximate the $msg, `$(ab)_sim > 0`."
-end
-
-function _ndef(sym::Symbol)
-    return if sym == :a1
-        "`N` is the number of assets"
-    elseif sym == :a2
-        "`Na` is the number of assets"
-    elseif sym == :a3
-        "``N`` is the number of assets"
-    elseif sym == :f1
-        "`N` is the number of factors"
-    elseif sym == :f2
-        "`Nf` is the number of factors"
-    elseif sym == :c1
-        "`Nc` is the number of constraints"
-    end
-end
-
-function _tstr(sym::Symbol)
-    if sym == :t1
-        "`T` is the number of returns observations"
-    elseif sym == :t2
-        "``T`` is the number of returns observations"
-    end
-end
-
-function _mudef(msg::String, sym::Symbol = :a2)
-    if sym == :a2
-        n = "Na"
-    elseif sym == :f2
-        n = "Nf"
-    end
-
-    return "`$n×1` vector, where $(_ndef(sym))). Set the value of the $(msg) expected returns at instance construction. When choosing `:Custom_Val` in `mu_method`, this is the value of `mu` used, can also be set after a call to [`mean_vec`]() to replace the old value with the new."
-end
-
-function _covdef(msg::String, sym::Symbol = :a2)
-    if sym == :a2
-        n = "Na"
-    elseif sym == :f2
-        n = "Nf"
-    elseif sym == :a22
-        n = "(Na×Na)"
-        sym = :a2
-    end
-
-    return "`$n×$n` matrix, where $(_ndef(sym)). Set the value of the $(msg) covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cov` used by [`covar_mtx`]()."
-end
-
-function _dircomp(msg::String)
-    return "Can be directly computed by $msg."
-end
-
-const _tdef = "- `T`: number of returns observations."
-const _owaw = "- `w`: `T×1` ordered weight vector."
-const _edst = "Empty concrete subtype of `AbstractDictionary`"
-function _solver_desc(msg::String = "the `JuMP` model.", pref::String = "",
-                      req::String = "")
-    return """
-           - `$(pref*"solvers")`: Provides the solvers and corresponding parameters for solving $msg `Dict` or `NamedTuple` with key value pairs where the values are other `Dict`s or `NamedTuple`s, e.g. `Dict(solver_key => Dict(...))`, the keys of the sub-dictionary/tuple must be:
-               - `:solver`: which contains the JuMP optimiser.$(_solver_reqs(req))
-               - `:params`: (optional) for the solver-specific parameters.
-           """
-end
-function _solver_reqs(msg::String)
-    return if isempty(msg)
-        ""
-    else
-        " Solver must support $msg, or `JuMP` must be able to transform it/them into a supported form."
-    end
-end
-function _filled_by(msg::String)
-    return "This parameter is filled after calling $msg."
-end
-
 const _rmstr = """
-                - `:SD`: standard deviation ([`SD`]()).$(_solver_reqs("`MOI.SecondOrderCone`"))
+                - `:SD`: standard deviation ([`SD`]()). $(_solver_reqs("`MOI.SecondOrderCone`"))
                 - `:MAD`: max absolute deviation ([`MAD`]()).
-                - `:SSD`: semi standard deviation ([`SSD`]()).$(_solver_reqs("`MOI.SecondOrderCone`"))
+                - `:SSD`: semi standard deviation ([`SSD`]()). $(_solver_reqs("`MOI.SecondOrderCone`"))
                 - `:FLPM`: first lower partial moment (omega ratio) ([`FLPM`]()).
-                - `:SLPM`: second lower partial moment (sortino ratio) ([`SLPM`]()).$(_solver_reqs("`MOI.SecondOrderCone`"))
+                - `:SLPM`: second lower partial moment (sortino ratio) ([`SLPM`]()). $(_solver_reqs("`MOI.SecondOrderCone`"))
                 - `:WR`: worst realisation ([`WR`]()).
                 - `:CVaR`: conditional value at risk ([`CVaR`]()).
-                - `:EVaR`: entropic value at risk ([`EVaR`]()).$(_solver_reqs("`MOI.ExponentialCone`"))
-                - `:RVaR`: relativistic value at risk ([`RVaR`]()).$(_solver_reqs("`MOI.PowerCone`"))
+                - `:EVaR`: entropic value at risk ([`EVaR`]()). $(_solver_reqs("`MOI.ExponentialCone`"))
+                - `:RVaR`: relativistic value at risk ([`RVaR`]()). $(_solver_reqs("`MOI.PowerCone`"))
                 - `:MDD`: maximum drawdown of uncompounded cumulative returns ([`MDD_abs`]()).
                 - `:ADD`: average drawdown of uncompounded cumulative returns ([`ADD_abs`]()).
                 - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns ([`CDaR_abs`]()).
-                - `:UCI`: ulcer index of uncompounded cumulative returns ([`UCI_abs`]()).$(_solver_reqs("`MOI.SecondOrderCone`"))
-                - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns ([`EDaR_abs`]()).$(_solver_reqs("`MOI.ExponentialCone`"))
-                - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns ([`RDaR_abs`]()).$(_solver_reqs("`MOI.PowerCone`"))
-                - `:Kurt`: square root kurtosis ([`Kurt`]()).$(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
-                - `:SKurt`: square root semi-kurtosis ([`SKurt`]()).$(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+                - `:UCI`: ulcer index of uncompounded cumulative returns ([`UCI_abs`]()). $(_solver_reqs("`MOI.SecondOrderCone`"))
+                - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns ([`EDaR_abs`]()). $(_solver_reqs("`MOI.ExponentialCone`"))
+                - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns ([`RDaR_abs`]()). $(_solver_reqs("`MOI.PowerCone`"))
+                - `:Kurt`: square root kurtosis ([`Kurt`]()). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+                - `:SKurt`: square root semi-kurtosis ([`SKurt`]()). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
                 - `:GMD`: gini mean difference ([`GMD`]()).
                 - `:RG`: range of returns ([`RG`]()).
                 - `:RCVaR`: range of conditional value at risk ([`RCVaR`]()).
@@ -939,9 +943,9 @@ These risk measures are not available with `:NCO` optimisations.
 - `:MDD_r`: maximum drawdown of compounded cumulative returns ([`MDD_rel`]()).
 - `:ADD_r`: average drawdown of compounded cumulative returns ([`ADD_rel`]()).
 - `:CDaR_r`: conditional drawdown at risk of compounded cumulative returns ([`CDaR_rel`]()).
-- `:UCI_r`: ulcer index of compounded cumulative returns ([`UCI_rel`]()).$(_solver_reqs("`MOI.SecondOrderCone`"))
-- `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`]()).$(_solver_reqs("`MOI.ExponentialCone`"))
-- `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`]()).$(_solver_reqs("`MOI.PowerCone`"))
+- `:UCI_r`: ulcer index of compounded cumulative returns ([`UCI_rel`]()). $(_solver_reqs("`MOI.SecondOrderCone`"))
+- `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`]()). $(_solver_reqs("`MOI.ExponentialCone`"))
+- `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`]()). $(_solver_reqs("`MOI.PowerCone`"))
 """
 const HCRiskMeasures = (RiskMeasures..., :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r,
                         :ADD_r, :CDaR_r, :UCI_r, :EDaR_r, :RDaR_r)

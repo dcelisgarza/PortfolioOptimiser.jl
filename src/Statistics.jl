@@ -1088,7 +1088,7 @@ function posdef_fix!(mtx::AbstractMatrix, opt::PosdefFixOpt = PosdefFixOpt(;);
 
     _mtx = if method == :Nearest
         nearest_cov(mtx, args...; kwargs...)
-    elseif method == :PSD
+    elseif method == :SDP
         psd_cov(mtx, solvers)
     elseif method == :Custom_Func
         func(mtx, args...; kwargs...)

@@ -151,7 +151,7 @@ l = 2.0
     mu_fm16 = portfolio.mu_fm
 
     factor_opt.error = true
-    posdef.method = :PSD
+    posdef.method = :SDP
     posdef.solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                    :params => Dict("verbose" => false)))
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
