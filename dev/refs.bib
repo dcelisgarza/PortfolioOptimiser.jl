@@ -24,6 +24,36 @@
   abstract = {We present the most general model of the type considered by Black and Litterman (1991) after fully clarifying the duality between Black–Litterman optimization and Bayesian regression. Our generalization is itself a special case of a Bayesian network or graphical model. As an example, we work out in full detail the treatment of views on factor risk premia in the context of APT. We also consider a more speculative example in which the portfolio manager specifies a view on realized volatility by trading a variance swap.}
 }
 
+@article{BOP,
+  title    = {Optimal shrinkage estimator for high-dimensional mean vector},
+  journal  = {Journal of Multivariate Analysis},
+  volume   = {170},
+  pages    = {63-79},
+  year     = {2019},
+  note     = {Special Issue on Functional Data Analysis and Related Topics},
+  issn     = {0047-259X},
+  doi      = {https://doi.org/10.1016/j.jmva.2018.07.004},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0047259X17306036},
+  author   = {Taras Bodnar and Ostap Okhrin and Nestor Parolya},
+  keywords = {Large-dimensional asymptotics, Mean vector estimation, Random matrix theory, Shrinkage estimator},
+  abstract = {In this paper we derive the optimal linear shrinkage estimator for the high-dimensional mean vector using random matrix theory. The results are obtained under the assumption that both the dimension p and the sample size n tend to infinity in such a way that p∕n→c∈(0,∞). Under weak conditions imposed on the underlying data generating mechanism, we find the asymptotic equivalents to the optimal shrinkage intensities and estimate them consistently. The proposed nonparametric estimator for the high-dimensional mean vector has a simple structure and is proven to minimize asymptotically, with probability 1, the quadratic loss when c∈(0,1). When c∈(1,∞) we modify the estimator by using a feasible estimator for the precision covariance matrix. To this end, an exhaustive simulation study and an application to real data are provided where the proposed estimator is compared with known benchmarks from the literature. It turns out that the existing estimators of the mean vector, including the new proposal, converge to the sample mean vector when the true mean vector has an unbounded Euclidean norm.}
+}
+
+@article{BS,
+  issn      = {00221090, 17566916},
+  url       = {http://www.jstor.org/stable/2331042},
+  abstract  = {In portfolio analysis, uncertainty about parameter values leads to suboptimal portfolio choices. The resulting loss in the investor's utility is a function of the particular estimator chosen for expected returns. So, this is a problem of simultaneous estimation of normal means under a well-specified loss function. In this situation, as Stein has shown, the classical sample mean is inadmissible. This paper presents a simple empirical Bayes estimator that should outperform the sample mean in the context of a portfolio. Simulation analysis shows that these Bayes-Stein estimators provide significant gains in portfolio selection problems.},
+  author    = {Philippe Jorion},
+  journal   = {The Journal of Financial and Quantitative Analysis},
+  number    = {3},
+  pages     = {279--292},
+  publisher = {Cambridge University Press},
+  title     = {Bayes-Stein Estimation for Portfolio Analysis},
+  urldate   = {2024-03-01},
+  volume    = {21},
+  year      = {1986}
+}
+
 @article{Gerber,
   title     = {The Gerber statistic: A robust co-movement measure for portfolio optimization},
   author    = {Gerber, Sander and Markowitz, Harry M and Ernst, Philip A and Miao, Yinsen and Javid, Babak and Sargen, Paul},
@@ -78,6 +108,53 @@
   year    = {2019}
 }
 
+
+@book{JS1,
+  title     = {Risk and asset allocation},
+  author    = {Meucci, Attilio},
+  volume    = {1},
+  year      = {2005},
+  publisher = {Springer}
+}
+
+@article{JS2,
+  url     = {http://dx.doi.org/10.1561/2000000072},
+  year    = {2016},
+  volume  = {9},
+  journal = {Foundations and Trends® in Signal Processing},
+  title   = {A Signal Processing Perspective on Financial Engineering},
+  doi     = {10.1561/2000000072},
+  issn    = {1932-8346},
+  number  = {1–2},
+  pages   = {1-231},
+  author  = {Yiyong Feng and Daniel P. Palomar}
+}
+
+
+@incollection{Kelly1,
+  title     = {Chaper 9 - The kelly criterion in blackjack sports betting, and the stock market*},
+  editor    = {S.A. Zenios and W.T. Ziemba},
+  booktitle = {Handbook of Asset and Liability Management},
+  publisher = {North-Holland},
+  address   = {San Diego},
+  pages     = {385-428},
+  year      = {2008},
+  isbn      = {978-0-444-53248-0},
+  doi       = {https://doi.org/10.1016/B978-044453248-0.50015-0},
+  url       = {https://www.sciencedirect.com/science/article/pii/B9780444532480500150},
+  author    = {Edward O. Thorp},
+  abstract  = {Publisher Summary
+               The central problem for gamblers is to find positive expectation bets. But the gambler also needs to know how to manage his money, i.e., how much to bet. In the stock market (more inclusively, the securities markets), the problem is similar but more complex. The gambler, who is now an “investor”, looks for “excess risk adjusted return”. In both these settings, this chapter explores the use of the Kelly criterion, which is to maximize the expected value of the logarithm of wealth (“maximize expected logarithmic utility”). The criterion is known to economists and financial theorists by names such as the ”geometric mean maximizing portfolio strategy”, maximizing logarithmic utility, the growth-optimal strategy, and the capital growth criterion. It initiates the practical application of the Kelly criterion by using it for card counting in blackjack. It presents some useful formulas and methods to answer various natural questions about it that arise in blackjack and other gambling games. It illustrates its recent use in a successful casino sports betting system. It discusses its application to the securities markets where it has helped the author to make a 30-year total of 80 billion dollars worth of “bets”.}
+}
+
+@article{Kelly2,
+  title   = {Kelly portfolio optimization: a disciplined convex programming framework},
+  author  = {Cajas, Dany},
+  journal = {Available at SSRN 3833617},
+  year    = {2021}
+}
+
+
 @book{MLAM,
   place      = {Cambridge},
   series     = {Elements in Quantitative Finance},
@@ -93,6 +170,19 @@
   author  = {Lopez de Prado, Marcos},
   journal = {Available at SSRN 3469961},
   year    = {2016}
+}
+
+@article{NWK1,
+  title   = {A Graph Theory Approach to Portfolio Optimization},
+  author  = {Cajas, Dany},
+  journal = {Available at SSRN},
+  year    = {2023}
+}
+@article{NWK2,
+  title   = {A Graph Theory Approach to Portfolio Optimization Part II},
+  author  = {Cajas, Dany},
+  journal = {Available at SSRN 4667426},
+  year    = {2023}
 }
 
 @article{SB,
