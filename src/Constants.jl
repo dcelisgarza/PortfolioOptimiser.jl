@@ -345,9 +345,8 @@ CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB
 
 Methods for estimating the covariance matrix in [`covar_mtx`](@ref).
 
-  - `:Full`: full covariance matrix. Uses the [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) interface and [`StatsBase.cov`](https://juliastats.org/StatsBase.jl/stable/cov/#Statistics.cov-Tuple%7BCovarianceEstimator,%20AbstractMatrix%7D) method. Letting the user take advantage of weights and covariance estimation packages.
-
-  - `:Semi`: lower semi-covariance matrix. Uses the [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) interface and [`StatsBase.cov`](https://juliastats.org/StatsBase.jl/stable/cov/#Statistics.cov-Tuple%7BCovarianceEstimator,%20AbstractMatrix%7D) method. Letting the user take advantage of weights and covariance estimation packages. Also lets the user provide a threshold value below which returns are considered bad enough to be included in the lower semi-covariance.
+  - `:Full`: full covariance matrix. Uses the [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) interface and [`StatsBase.cov`](https://juliastats.org/StatsBase.jl/stable/cov/#Statistics.cov-Tuple%7BCovarianceEstimator,%20AbstractMatrix%7D) method. Giving the user the ability to provide any `args` and `kwargs` defined therein.
+  - `:Semi`: lower semi-covariance matrix. Uses the [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) interface and [`StatsBase.cov`](https://juliastats.org/StatsBase.jl/stable/cov/#Statistics.cov-Tuple%7BCovarianceEstimator,%20AbstractMatrix%7D) method. Giving the user the ability to provide any `args` and `kwargs` defined therein. Also lets the user provide a threshold value below which returns are considered bad enough to be included in the lower semi-covariance.
   - `:Gerber0`: Gerber statistic 0 [Gerber](@cite).
   - `:Gerber1`: Gerber statistic 1 [Gerber](@cite).
   - `:Gerber2`: Gerber statistic 2 [Gerber](@cite).
