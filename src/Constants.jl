@@ -57,7 +57,7 @@ function _mudef(msg::String, sym::Symbol = :a2)
         n = "Nf"
     end
 
-    return "`$n×1` vector, where $(_ndef(sym))). Set the value of the $(msg) expected returns at instance construction. When choosing `:Custom_Val` in `mu_method`, this is the value of `mu` used, can also be set after a call to [`mean_vec`]() to replace the old value with the new."
+    return "`$n×1` vector, where $(_ndef(sym))). Set the value of the $(msg) expected returns at instance construction. When choosing `:Custom_Val` in `mu_method`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new."
 end
 
 function _covdef(msg::String, sym::Symbol = :a2)
@@ -70,7 +70,7 @@ function _covdef(msg::String, sym::Symbol = :a2)
         sym = :a2
     end
 
-    return "`$n×$n` matrix, where $(_ndef(sym)). Set the value of the $(msg) covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cov` used by [`covar_mtx`]()."
+    return "`$n×$n` matrix, where $(_ndef(sym)). Set the value of the $(msg) covariance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cov` used by [`covar_mtx`](@ref)."
 end
 
 function _dircomp(msg::String)
@@ -104,7 +104,7 @@ end
 TrackingErrKinds = (:Weights, :Returns)
 ```
 
-Available kinds of tracking errors for [`Portfolio`]().
+Available kinds of tracking errors for [`Portfolio`](@ref).
 
   - `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns,
 
@@ -120,7 +120,7 @@ const TrackingErrKinds = (:None, :Weights, :Returns)
 NetworkMethods = (:None, :SDP, :IP)
 ```
 
-Methods for enforcing network constraints for optimising [`Portfolio`]().
+Methods for enforcing network constraints for optimising [`Portfolio`](@ref).
 
   - `:None`: No network constraint is used.
   - `:SDP`: Semi-definite programming constraint. $(_solver_reqs("`MOI.PSD`"))
@@ -133,7 +133,7 @@ const NetworkMethods = (:None, :SDP, :IP)
 BLFMMethods = (:A, :B)
 ```
 
-Versions of the factor Black-Litterman Model.
+Versions of the factor Black-Litterman Model, computed by [`black_litterman_factor_satistics!`](@ref).
 
 # `:A` -- Augmented Black-Litterman
 
@@ -245,7 +245,7 @@ const BLFMMethods = (:A, :B)
 UncertaintyTypes = (:None, :Box, :Ellipse)
 ```
 
-Available types of uncertainty sets that can be computed with [`wc_statistics!`](), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](), [`EllipseMethods`](), and [`BoxMethods`]()).
+Available types of uncertainty sets that can be computed with [`wc_statistics!`](@ref), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](@ref), [`EllipseMethods`](@ref), and [`BoxMethods`](@ref)).
 
   - `:Box`: are box uncertainty sets, ie the sets are full matrices.
   - `:Ellipse`: are elliptical uncertainty sets, ie the sets are diagonal matrices.
@@ -257,7 +257,7 @@ const UncertaintyTypes = (:None, :Box, :Ellipse)
 RRPVersions = (:None, :Reg, :Reg_Pen)
 ```
 
-Available versions of Relaxed Risk Parity Optimisations (see [`PortTypes`]()).
+Available versions of Relaxed Risk Parity Optimisations (see [`PortTypes`](@ref)).
 
   - `:None`: no penalty.
   - `:Reg`: regularisation constraint, ``\\rho``.
@@ -270,7 +270,7 @@ const RRPVersions = (:None, :Reg, :Reg_Pen)
 EllipseMethods = (:Stationary, :Circular, :Moving, :Normal)
 ```
 
-Available types of elliptical sets that can be computed with [`wc_statistics!`](), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`]()).
+Available types of elliptical sets that can be computed with [`wc_statistics!`](@ref), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](@ref)).
 
   - `:Stationary`: [stationary](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.StationaryBootstrap.html#arch.bootstrap.StationaryBootstrap).
   - `:Circular`: [circular block](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.CircularBlockBootstrap.html#arch.bootstrap.CircularBlockBootstrap).
@@ -284,7 +284,7 @@ const EllipseMethods = (:Stationary, :Circular, :Moving, :Normal)
 BoxMethods = (:Stationary, :Circular, :Moving, :Normal, :Delta)
 ```
 
-Available types of box sets that can be computed with [`wc_statistics!`](), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`]()).
+Available types of box sets that can be computed with [`wc_statistics!`](@ref), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](@ref)).
 
   - `:Stationary`: [stationary](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.StationaryBootstrap.html#arch.bootstrap.StationaryBootstrap).
   - `:Circular`: [circular block](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.CircularBlockBootstrap.html#arch.bootstrap.CircularBlockBootstrap).
@@ -299,7 +299,7 @@ const BoxMethods = (EllipseMethods..., :Delta)
 BootstrapMethods = (:Stationary, :Circular, :Moving)
 ```
 
-Bootstrapping method for computing the uncertainty sets with [`wc_statistics!`](), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`]()).
+Bootstrapping method for computing the uncertainty sets with [`wc_statistics!`](@ref), which are used by Worst Case Mean Variance Optimisations (see [`PortTypes`](@ref)).
 
   - `:Stationary`: [stationary](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.StationaryBootstrap.html#arch.bootstrap.StationaryBootstrap).
   - `:Circular`: [circular block](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.CircularBlockBootstrap.html#arch.bootstrap.CircularBlockBootstrap).
@@ -312,7 +312,7 @@ const BootstrapMethods = (:Stationary, :Circular, :Moving)
 MuMethods = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 ```
 
-Methods for estimating the expected returns vector in [`mean_vec`]().
+Methods for estimating the expected returns vector in [`mean_vec`](@ref).
 
   - `:Default`: is the standard historical.
   - `:JS`: James-Stein.
@@ -329,7 +329,7 @@ const MuMethods = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 MuTargets = (:GM, :VW, :SE)
 ```
 
-Targets for the `:JS`, `:BS` and `:BOP` estimators in [`mean_vec`]() and [`mu_estimator`]().
+Targets for the `:JS`, `:BS` and `:BOP` estimators in [`mean_vec`](@ref) and [`mu_estimator`](@ref).
 
   - `:GM`: grand mean.
   - `:VW`: volatility-weighted grand mean.
@@ -343,7 +343,7 @@ CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB
               :Gerber_SB1, :Custom_Func, :Custom_Val)
 ```
 
-Methods for estimating the covariance matrix in [`covar_mtx`]().
+Methods for estimating the covariance matrix in [`covar_mtx`](@ref).
 
   - `:Full`: full covariance matrix. Uses the [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) interface and [`StatsBase.cov`](https://juliastats.org/StatsBase.jl/stable/cov/#Statistics.cov-Tuple%7BCovarianceEstimator,%20AbstractMatrix%7D) method. Letting the user take advantage of weights and covariance estimation packages.
 
@@ -424,7 +424,7 @@ CorMethods = (:Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2, :SB0,
               :Distance, :Mutual_Info, :Tail, :Cov_to_Cor, :Custom_Func, :Custom_Val)
 ```
 
-Methods for estimating the correlation ``\\mathbf{C}``, and distance matrices ``\\mathbf{D}`` in [`cor_dist_mtx`]().
+Methods for estimating the correlation ``\\mathbf{C}``, and distance matrices ``\\mathbf{D}`` in [`cor_dist_mtx`](@ref).
 
   - `:Pearson`: Pearson correlation, ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
   - `:Spearman`: Spearman correlation, ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
@@ -456,7 +456,7 @@ const CorMethods = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Ger
 BinMethods = (:KN, :FD, :SC, :HGR)
 ```
 
-Methods for calculating optimal bin widths for the mutual and variational information matrices computed by [`mut_var_info_mtx`]().
+Methods for calculating optimal bin widths for the mutual and variational information matrices computed by [`mut_var_info_mtx`](@ref).
 
   - `:KN`: [Knuth's](https://docs.astropy.org/en/stable/api/astropy.stats.knuth_bin_width.html).
   - `:FD`: [Freedman-Diaconis'](https://docs.astropy.org/en/stable/api/astropy.stats.freedman_bin_width.html).
@@ -470,7 +470,7 @@ const BinMethods = (:KN, :FD, :SC, :HGR)
 KellyRet = (:None, :Approx, :Exact)
 ```
 
-Available types of Kelly returns for [`Portfolio`]().
+Available types of Kelly returns for [`Portfolio`](@ref).
 
   - `:None`: arithmetic expected returns, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w}``.
   - `:Approx`: first moment approximation of the logarithmic returns, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w} - \\dfrac{1}{2} \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}``.
@@ -488,7 +488,7 @@ const KellyRet = (:None, :Approx, :Exact)
 ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 ```
 
-Objective functions available for use in `:Trad` and `:WC` optimisations of [`Portfolio`]() (see [`PortTypes`]()).
+Objective functions available for use in `:Trad` and `:WC` optimisations of [`Portfolio`](@ref) (see [`PortTypes`](@ref)).
 """
 const ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 
@@ -498,7 +498,7 @@ ValidTermination = (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED,
                     MOI.ALMOST_LOCALLY_SOLVED, MOI.SOLUTION_LIMIT, MOI.OBJECTIVE_LIMIT)
 ```
 
-Valid `JuMP` termination codes after optimising an instance of [`Portfolio`](). If the termination code is different to these, then the failures are logged in the `.fail` field of [`HCPortfolio`]() and [`Portfolio`]().
+Valid `JuMP` termination codes after optimising an instance of [`Portfolio`](@ref). If the termination code is different to these, then the failures are logged in the `.fail` field of [`HCPortfolio`](@ref) and [`Portfolio`](@ref).
 """
 const ValidTermination = (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED,
                           MOI.ALMOST_LOCALLY_SOLVED, MOI.SOLUTION_LIMIT,
@@ -509,12 +509,12 @@ const ValidTermination = (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED,
 PortClasses = (:Classic, :FM, :BL, :BLFM)
 ```
 
-Available choicees of summary parameters ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` [`Portfolio`]().
+Available choicees of summary parameters ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` [`Portfolio`](@ref).
 
-  - `:Classic`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from historical estimates computed by [`asset_statistics!`]().
-  - `:FM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor model computed by [`factor_statistics!`]().
-  - `:BL`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the Black-Litterman model computed by [`black_litterman_statistics!`]().
-  - `:BLFM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor Black-Litterman model computed by [`black_litterman_factor_satistics!`](). This model has two versions defined in [`BLFMMethods`]().
+  - `:Classic`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from historical estimates computed by [`asset_statistics!`](@ref).
+  - `:FM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor model computed by [`factor_statistics!`](@ref).
+  - `:BL`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the Black-Litterman model computed by [`black_litterman_statistics!`](@ref).
+  - `:BLFM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor Black-Litterman model computed by [`black_litterman_factor_satistics!`](@ref). This model has two versions defined in [`BLFMMethods`](@ref).
 """
 const PortClasses = (:Classic, :FM, :BL, :BLFM)
 
@@ -523,11 +523,11 @@ const PortClasses = (:Classic, :FM, :BL, :BLFM)
 PortTypes = (:Trad, :RP, :RRP, :WC)
 ```
 
-Available optimisation types for [`Portfolio`]().
+Available optimisation types for [`Portfolio`](@ref).
 
 # `:Trad` -- Traditional Optimisations
 
-Available objective functions for `:Trad` optimisations. We can chose any of the objective functions in [`ObjFuncs`]() and risk measures in [`RiskMeasures`]().
+Available objective functions for `:Trad` optimisations. We can chose any of the objective functions in [`ObjFuncs`](@ref) and risk measures in [`RiskMeasures`](@ref).
 
   - `:Min_Risk`: minimum risk portfolio,
 
@@ -576,17 +576,17 @@ Available objective functions for `:Trad` optimisations. We can chose any of the
 Where:
 
   - ``\\bm{w}`` are the asset weights.
-  - ``\\phi_{i}`` is risk measure ``i`` from the set of available risk measures ``\\left\\{\\Phi\\right\\}`` (see [`RiskMeasures`]()).
+  - ``\\phi_{i}`` is risk measure ``i`` from the set of available risk measures ``\\left\\{\\Phi\\right\\}`` (see [`RiskMeasures`](@ref)).
   - ``\\mathbf{A} \\bm{w} \\geq \\bm{B}`` is a set of linear constraints.
   - ``c_{i}`` is the maximum acceptable value for risk measure ``\\phi_{i}`` of the optimised portfolio.
-  - ``R(\\bm{w})`` is the return function from [`KellyRet`]().
+  - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref).
   - ``\\overline{\\mu}`` is the minimum acceptable return of the optimised portfolio.
   - ``\\lambda`` is the risk aversion coefficient.
   - and ``r`` is the risk-free rate.
 
 # `:RP` -- Risk Parity Optimisations
 
-Optimises portfolios based on a vector of risk contributions per asset. We can chose any of the risk measures in [`RiskMeasures`]().
+Optimises portfolios based on a vector of risk contributions per asset. We can chose any of the risk measures in [`RiskMeasures`](@ref).
 
 ```math
 \\begin{align*}
@@ -601,11 +601,11 @@ Optimises portfolios based on a vector of risk contributions per asset. We can c
 Where:
 
   - ``\\bm{w}`` are the asset weights.
-  - ``\\phi`` a risk measure from the set of available risk measures (see [`RiskMeasures`]()).
+  - ``\\phi`` a risk measure from the set of available risk measures (see [`RiskMeasures`](@ref)).
   - ``\\mathbf{A} \\bm{w} \\geq \\bm{B}`` is a set of linear constraints.
   - ``\\bm{b}`` is the vector of maximum allowable risk contribution per asset to the optimised portfolio.
   - ``c`` is an auxiliary variable.
-  - ``R(\\bm{w})`` is the return function from [`KellyRet`]().
+  - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref).
   - and ``\\overline{\\mu}`` is the minimum acceptable return of the optimised portfolio.
 
 # `:RRP` -- Relaxed Risk Parity Optimisations
@@ -636,16 +636,16 @@ Where:
   - ``\\mathbf{\\Sigma}`` is the portfolio covariance.
   - ``\\rho`` is a regularisation variable.
   - ``\\mathbf{\\Theta} = \\mathrm{diag}\\left(\\mathbf{\\Sigma}\\right)`` .
-  - ``\\lambda`` is a penalty parameter for ``\\rho``, taken from the available choices in [`RRPVersions`]().
+  - ``\\lambda`` is a penalty parameter for ``\\rho``, taken from the available choices in [`RRPVersions`](@ref).
   - ``\\bm{\\zeta}`` is the vector of marginal risk for each asset.
   - ``b_{i}`` is the maximum allowable risk contribution for asset ``i``.
   - ``N`` is the number of assets.
-  - ``R(\\bm{w})`` is the return function from [`KellyRet`]().
+  - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref).
   - and ``\\overline{\\mu}`` is the minimum acceptable return of the optimised portfolio.
 
 # `:WC` -- Worst Case Mean Variance Optimisations
 
-Computes the worst case mean variance portfolio according to user-selected uncertainty sets (see [`UncertaintyTypes`]()) for the portfolio return and covariance. We can chose any of the objective functions in [`ObjFuncs`]().
+Computes the worst case mean variance portfolio according to user-selected uncertainty sets (see [`UncertaintyTypes`](@ref)) for the portfolio return and covariance. We can chose any of the objective functions in [`ObjFuncs`](@ref).
 
   - `:Min_Risk`: worst case minimum risk mean-variance portfolio,
 
@@ -696,7 +696,7 @@ U_{\\Sigma}^{\\mathrm{ellipse}} &= \\left\\{\\mathbf{\\Sigma}\\, \\vert\\, \\lef
 \\end{align*}
 ```
 
-  - Where the following variables are estimated by assuming that the portfolio's asset return covariance can be generated by *some* matrix distribution. The distribution is sampled, and the estimates are calculated from them. Available choices can be found in [`BoxMethods`]() and [`EllipseMethods`]() for the box and ellipse sets respectively:
+  - Where the following variables are estimated by assuming that the portfolio's asset return covariance can be generated by *some* matrix distribution. The distribution is sampled, and the estimates are calculated from them. Available choices can be found in [`BoxMethods`](@ref) and [`EllipseMethods`](@ref) for the box and ellipse sets respectively:
 
       + the ``\\mathrm{l}`` and ``\\mathrm{u}`` subscripts denote lower and upper bounds for the covariance matrix given the samples.
       + ``\\mathbf{\\Sigma}_{\\mathbf{\\Sigma}}`` is the covariance of the samples.
@@ -705,7 +705,7 @@ U_{\\Sigma}^{\\mathrm{ellipse}} &= \\left\\{\\mathbf{\\Sigma}\\, \\vert\\, \\lef
 
   - ``\\mathbf{A} \\bm{w} \\geq \\bm{B}`` is a set of linear constraints.
   - ``\\bm{\\mu}`` is the vector of expected returns for each asset.
-  - ``R(\\bm{w})`` is the return function from [`KellyRet`]().
+  - ``R(\\bm{w})`` is the return function from [`KellyRet`](@ref).
   - ``U_{\\bm{\\mu}}`` is the uncertainty set for the asset returns, they can be:
 
 ```math
@@ -715,7 +715,7 @@ U_{\\bm{\\mu}}^{\\mathrm{ellipse}} &= \\left\\{\\bm{\\mu}\\, \\vert\\, \\left(\\
 \\end{align*}
 ```
 
-  - Where the following variables are estimated by assuming that the portfolio's asset expected returns can be generated by *some* distribution. The distribution is sampled, and the estimates are calculated from them. Available choices can be found in [`BoxMethods`]() and [`EllipseMethods`]() for the box and ellipse sets respectively:
+  - Where the following variables are estimated by assuming that the portfolio's asset expected returns can be generated by *some* distribution. The distribution is sampled, and the estimates are calculated from them. Available choices can be found in [`BoxMethods`](@ref) and [`EllipseMethods`](@ref) for the box and ellipse sets respectively:
 
       + ``\\hat{\\bm{\\mu}}`` the expected portfolio asset expected returns given the samples.
       + ``\\mathbf{\\Sigma}_{\\bm{\\mu}}`` is the covariance of the samples.
@@ -724,7 +724,7 @@ U_{\\bm{\\mu}}^{\\mathrm{ellipse}} &= \\left\\{\\bm{\\mu}\\, \\vert\\, \\left(\\
   - ``\\lambda`` is the risk aversion coefficient.
   - and ``r`` is the risk-free rate.
 
-The worst case uncertainty sets are computed by [`wc_statistics!`]().
+The worst case uncertainty sets are computed by [`wc_statistics!`](@ref).
 """
 const PortTypes = (:Trad, :RP, :RRP, :WC)
 
@@ -733,7 +733,7 @@ const PortTypes = (:Trad, :RP, :RRP, :WC)
 HCPortTypes = (:HRP, :HERC, :NCO)
 ```
 
-Available optimisation types for [`HCPortfolio`]().
+Available optimisation types for [`HCPortfolio`](@ref).
 
   - `:HRP`: Hierarchical Risk Parity [HRP1, HRP2, HRP3](@cite).
   - `:HERC`: Hierarhical Equal Risk Contribution [HRP2, HERC1, HERC2](@cite).
@@ -752,7 +752,7 @@ w_{i}^\\mathrm{G} = w_{i}^\\mathrm{L} \\cdot w_{i \\in \\mathcal{C} \\subseteq \
 
 Where:
 
-  - ``w_{i}^\\mathrm{G}`` is the global weight for asset ``i``;
+  - ``w_{i}^\\mathrm{G}`` is the global (final) weight for asset ``i``;
   - ``w_{i}^\\mathrm{L}`` is the intra-cluster weight for asset ``i``;
   - ``w_{i \\in \\mathcal{C} \\subseteq \\mathcal{K}}`` is the weight of cluster ``\\mathcal{C}``, from the set of `k` clusters ``\\mathcal{K}``, that asset ``i`` belongs to and;
   - ``N`` is the number of assets.
@@ -766,10 +766,10 @@ BLHist = (1, 2, 3)
 
 Choice of estimate of the covariance matrix ``\\mathbf{\\Sigma}``, means vector ``\\bm{\\mu}``, and returns matrix ``\\mathbf{X}`` for optimising with different [`PortClasses`](@ref). Each different estimate is appended by the suffixes:
 
-  - No suffix: standard, computed by [`asset_statistics!`]().
-  - ``\\mathrm{fm}``: factor model, computed by [`factor_statistics!`]().
-  - ``\\mathrm{bl}``: Black-Litterman model, computed by [`black_litterman_statistics!`]().
-  - ``\\mathrm{bl, fm}``: Black-Litterman factor model, computed by [`black_litterman_factor_satistics!`]().
+  - No suffix: standard, computed by [`asset_statistics!`](@ref).
+  - ``\\mathrm{fm}``: factor model, computed by [`factor_statistics!`](@ref).
+  - ``\\mathrm{bl}``: Black-Litterman model, computed by [`black_litterman_statistics!`](@ref).
+  - ``\\mathrm{bl, fm}``: Black-Litterman factor model, computed by [`black_litterman_factor_satistics!`](@ref).
 
 The choices are:
 
@@ -798,7 +798,7 @@ const BLHist = (1, 2, 3)
 LinkageTypes = (:single, :complete, :average, :ward, :ward_presquared, :DBHT)
 ```
 
-Linkage types available when optimising a [`HCPortfolio`]().
+Linkage types available when optimising a [`HCPortfolio`](@ref).
 
   - `:DBHT`: is Direct Bubble Hierarchical Tree clustering.
   - The rest are linkage types supported by [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
@@ -810,10 +810,10 @@ const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :DB
 HCObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret, :Equal)
 ```
 
-Objective funcions for `:NCO` [`HCPortTypes`]() of [`HCPortfolio`]().
+Objective funcions for `:NCO` [`HCPortTypes`](@ref) of [`HCPortfolio`](@ref).
 
-  - `:Min_Risk`, `:Utility`, `:Sharpe` and `:Max_Ret`: optimise the sub-portfolios as `:Trad` [`PortTypes`]() of [`Portfolio`]() according to their respective definitions in [`ObjFuncs`]().
-  - `:Equal`: optimises the sub-portfolios as `:RP` [`PortTypes`]() optimisations with equal risk contribution per asset/cluster. We can't offer customiseable risk contributions because the size and composition of the clusters is initially unknown and depends on the chosen linkage method.
+  - `:Min_Risk`, `:Utility`, `:Sharpe` and `:Max_Ret`: optimise the sub-portfolios as `:Trad` [`PortTypes`](@ref) of [`Portfolio`](@ref) according to their respective definitions in [`ObjFuncs`](@ref).
+  - `:Equal`: optimises the sub-portfolios as `:RP` [`PortTypes`](@ref) optimisations with equal risk contribution per asset/cluster. We can't offer customiseable risk contributions because the size and composition of the clusters is initially unknown and depends on the chosen linkage method.
 """
 const HCObjFuncs = (ObjFuncs..., :Equal)
 
@@ -822,7 +822,7 @@ const HCObjFuncs = (ObjFuncs..., :Equal)
 AllocMethods = (:LP, :Greedy)
 ```
 
-Methods for allocating assets to an [`AbstractPortfolio`]() according to the optimised weights and latest asset prices.
+Methods for allocating assets to an [`AbstractPortfolio`](@ref) according to the optimised weights and latest asset prices.
 
   - `:LP`: uses Mixed-Integer Linear Programming optimisation. $(_solver_reqs("MIP constraints"))
   - `:Greedy`: uses a greedy iterative algorithm. This may not give the true optimal solution, but can be used when `:LP` fails to find one.
@@ -894,29 +894,29 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
                           RDaR_r = "Relativistic Compounded Drawdown at Risk")
 
 const _rmstr = """
-                - `:SD`: standard deviation ([`SD`]()). $(_solver_reqs("`MOI.SecondOrderCone`"))
-                - `:MAD`: max absolute deviation ([`MAD`]()).
-                - `:SSD`: semi standard deviation ([`SSD`]()). $(_solver_reqs("`MOI.SecondOrderCone`"))
-                - `:FLPM`: first lower partial moment (omega ratio) ([`FLPM`]()).
-                - `:SLPM`: second lower partial moment (sortino ratio) ([`SLPM`]()). $(_solver_reqs("`MOI.SecondOrderCone`"))
-                - `:WR`: worst realisation ([`WR`]()).
-                - `:CVaR`: conditional value at risk ([`CVaR`]()).
-                - `:EVaR`: entropic value at risk ([`EVaR`]()). $(_solver_reqs("`MOI.ExponentialCone`"))
-                - `:RVaR`: relativistic value at risk ([`RVaR`]()). $(_solver_reqs("`MOI.PowerCone`"))
-                - `:MDD`: maximum drawdown of uncompounded cumulative returns ([`MDD_abs`]()).
-                - `:ADD`: average drawdown of uncompounded cumulative returns ([`ADD_abs`]()).
-                - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns ([`CDaR_abs`]()).
-                - `:UCI`: ulcer index of uncompounded cumulative returns ([`UCI_abs`]()). $(_solver_reqs("`MOI.SecondOrderCone`"))
-                - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns ([`EDaR_abs`]()). $(_solver_reqs("`MOI.ExponentialCone`"))
-                - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns ([`RDaR_abs`]()). $(_solver_reqs("`MOI.PowerCone`"))
-                - `:Kurt`: square root kurtosis ([`Kurt`]()). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
-                - `:SKurt`: square root semi-kurtosis ([`SKurt`]()). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
-                - `:GMD`: gini mean difference ([`GMD`]()).
-                - `:RG`: range of returns ([`RG`]()).
-                - `:RCVaR`: range of conditional value at risk ([`RCVaR`]()).
-                - `:TG`: tail gini ([`TG`]()).
-                - `:RTG`: range of tail gini ([`RTG`]()).
-                - `:OWA`: ordered weight array (generic OWA weights) ([`OWA`]()).
+                - `:SD`: standard deviation ([`SD`](@ref)). $(_solver_reqs("`MOI.SecondOrderCone` if `sd_cone == true`, else it must support quadratic expressions"))
+                - `:MAD`: max absolute deviation ([`MAD`](@ref)).
+                - `:SSD`: semi standard deviation ([`SSD`](@ref)). $(_solver_reqs("`MOI.SecondOrderCone`"))
+                - `:FLPM`: first lower partial moment (omega ratio) ([`FLPM`](@ref)).
+                - `:SLPM`: second lower partial moment (sortino ratio) ([`SLPM`](@ref)). $(_solver_reqs("`MOI.SecondOrderCone`"))
+                - `:WR`: worst realisation ([`WR`](@ref)).
+                - `:CVaR`: conditional value at risk ([`CVaR`](@ref)).
+                - `:EVaR`: entropic value at risk ([`EVaR`](@ref)). $(_solver_reqs("`MOI.ExponentialCone`"))
+                - `:RVaR`: relativistic value at risk ([`RVaR`](@ref)). $(_solver_reqs("`MOI.PowerCone`"))
+                - `:MDD`: maximum drawdown of uncompounded cumulative returns ([`MDD_abs`](@ref)).
+                - `:ADD`: average drawdown of uncompounded cumulative returns ([`ADD_abs`](@ref)).
+                - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns ([`CDaR_abs`](@ref)).
+                - `:UCI`: ulcer index of uncompounded cumulative returns ([`UCI_abs`](@ref)). $(_solver_reqs("`MOI.SecondOrderCone`"))
+                - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns ([`EDaR_abs`](@ref)). $(_solver_reqs("`MOI.ExponentialCone`"))
+                - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns ([`RDaR_abs`](@ref)). $(_solver_reqs("`MOI.PowerCone`"))
+                - `:Kurt`: square root kurtosis ([`Kurt`](@ref)). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+                - `:SKurt`: square root semi-kurtosis ([`SKurt`](@ref)). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+                - `:GMD`: gini mean difference ([`GMD`](@ref)).
+                - `:RG`: range of returns ([`RG`](@ref)).
+                - `:RCVaR`: range of conditional value at risk ([`RCVaR`](@ref)).
+                - `:TG`: tail gini ([`TG`](@ref)).
+                - `:RTG`: range of tail gini ([`RTG`](@ref)).
+                - `:OWA`: ordered weight array (generic OWA weights) ([`OWA`](@ref)).
                """
 
 """
@@ -925,7 +925,7 @@ RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :
                 :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG,
                 :RTG, :OWA)
 ```
-Available risk measures for `:Trad` and `:RP` type (see [`PortTypes`]()) of [`Portfolio`]().
+Available risk measures for `:Trad` and `:RP` type (see [`PortTypes`](@ref)) of [`Portfolio`](@ref).
 $_rmstr
 """
 const RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
@@ -939,23 +939,23 @@ HCRiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD,
                   :RTG, :OWA, :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r, :ADD_r,
                   :CDaR_r, :UCI_r, :EDaR_r, :RDaR_r)
 ```
-Available risk measures for optimisations of [`HCPortfolio`](). 
+Available risk measures for optimisations of [`HCPortfolio`](@ref). 
 
 These risk measures are available for all optimisation types:
 $_rmstr
 
 These risk measures are not available with `:NCO` optimisations.
-- `:Variance`: variance ([`Variance`]()).
+- `:Variance`: variance ([`Variance`](@ref)).
 - `:Equal`: equal risk contribution, `1/N` where N is the number of assets.
-- `:VaR`: value at risk ([`VaR`]()).
-- `:DaR`: drawdown at risk of uncompounded cumulative returns ([`DaR_abs`]()).
-- `:DaR_r`: drawdown at risk of compounded cumulative returns ([`DaR_rel`]()).
-- `:MDD_r`: maximum drawdown of compounded cumulative returns ([`MDD_rel`]()).
-- `:ADD_r`: average drawdown of compounded cumulative returns ([`ADD_rel`]()).
-- `:CDaR_r`: conditional drawdown at risk of compounded cumulative returns ([`CDaR_rel`]()).
-- `:UCI_r`: ulcer index of compounded cumulative returns ([`UCI_rel`]()). $(_solver_reqs("`MOI.SecondOrderCone`"))
-- `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`]()). $(_solver_reqs("`MOI.ExponentialCone`"))
-- `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`]()). $(_solver_reqs("`MOI.PowerCone`"))
+- `:VaR`: value at risk ([`VaR`](@ref)).
+- `:DaR`: drawdown at risk of uncompounded cumulative returns ([`DaR_abs`](@ref)).
+- `:DaR_r`: drawdown at risk of compounded cumulative returns ([`DaR_rel`](@ref)).
+- `:MDD_r`: maximum drawdown of compounded cumulative returns ([`MDD_rel`](@ref)).
+- `:ADD_r`: average drawdown of compounded cumulative returns ([`ADD_rel`](@ref)).
+- `:CDaR_r`: conditional drawdown at risk of compounded cumulative returns ([`CDaR_rel`](@ref)).
+- `:UCI_r`: ulcer index of compounded cumulative returns ([`UCI_rel`](@ref)). $(_solver_reqs("`MOI.SecondOrderCone`"))
+- `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns ([`EDaR_rel`](@ref)). $(_solver_reqs("`MOI.ExponentialCone`"))
+- `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns ([`RDaR_rel`](@ref)). $(_solver_reqs("`MOI.PowerCone`"))
 """
 const HCRiskMeasures = (RiskMeasures..., :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r,
                         :ADD_r, :CDaR_r, :UCI_r, :EDaR_r, :RDaR_r)
