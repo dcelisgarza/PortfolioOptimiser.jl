@@ -120,11 +120,10 @@ const TrackingErrKinds = (:None, :Weights, :Returns)
 NetworkMethods = (:None, :SDP, :IP)
 ```
 
-Methods for enforcing network constraints for optimising [`Portfolio`](@ref).
-
+Methods for enforcing network constraints [NWK1, NWK2](@cite) for optimising [`Portfolio`](@ref).
   - `:None`: No network constraint is used.
   - `:SDP`: Semi-definite programming constraint. $(_solver_reqs("`MOI.PSD`"))
-  - `:IP`: Integer programming constraint.
+  - `:IP`: uses Mixed-Integer Linear Programming (MIP) optimisation. $(_solver_reqs("MIP constraints"))
 """
 const NetworkMethods = (:None, :SDP, :IP)
 
@@ -314,13 +313,14 @@ MuMethods = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 
 Methods for estimating the expected returns vector in [`mean_vec`](@ref).
 
-  - `:Default`: is the standard historical.
-  - `:JS`: James-Stein.
-  - `:BS`: Bayes-Stein.
-  - `:BOP`: Bodnar-Okhrin-Parolya.
-  - `:CAPM`: Capital Asset Pricing Model.
-  - `:Custom_Func`: custom function provided.
-  - `:Custom_Val`: custom value provided.
+  - `:Default`: uses [`StatsBase.mean`](https://juliastats.org/StatsBase.jl/stable/scalarstats/#Statistics.mean). Giving the user the ability to provide any `args` and `kwargs` defined therein.
+
+  - `:JS`: James-Stein [JS1, JS2](@cite).
+  - `:BS`: Bayes-Stein [BS](@cite).
+  - `:BOP`: Bodnar-Okhrin-Parolya [BOP](@cite).
+  - `:CAPM`: Capital Asset Pricing Model ([CAPM](https://en.wikipedia.org/wiki/Capital_asset_pricing_model)).
+  - `:Custom_Func`: user-provided custom function.
+  - `:Custom_Val`: user-provided custom value.
 """
 const MuMethods = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 
@@ -329,7 +329,7 @@ const MuMethods = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 MuTargets = (:GM, :VW, :SE)
 ```
 
-Targets for the `:JS`, `:BS` and `:BOP` estimators in [`mean_vec`](@ref) and [`mu_estimator`](@ref).
+Targets for the `:JS` [JS1, JS2](@cite), `:BS` [BS](@cite), and `:BOP` [BOP](@cite) estimators in [`mean_vec`](@ref) and [`mu_estimator`](@ref).
 
   - `:GM`: grand mean.
   - `:VW`: volatility-weighted grand mean.
@@ -354,8 +354,8 @@ Methods for estimating the covariance matrix in [`covar_mtx`](@ref).
   - `:SB1`: Smyth-Broby modification of the Gerber statistic 1 [SB](@cite).
   - `:Gerber_SB0`: Smyth-Broby modification of the Gerber statistic 0 that scales the contributions of significant co-movements by the vanilla Gerber count, as described in the conclusion of [SB](@cite).
   - `:Gerber_SB1`: Smyth-Broby modification of the Gerber statistic 1 that scales the contributions of significant co-movements by the vanilla Gerber count, as described in the conclusion of [SB](@cite).
-  - `:Custom_Func`: custom function provided.
-  - `:Custom_Val`: custom value provided.
+  - `:Custom_Func`: user-provided custom function.
+  - `:Custom_Val`: user-provided custom value.
 """
 const CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB0,
                     :Gerber_SB1, :Custom_Func, :Custom_Val)
@@ -442,8 +442,8 @@ Methods for estimating the correlation ``\\mathbf{C}``, and distance matrices ``
   - `:Mutual_Info`: mutual information matrix, ``\\mathbf{D}`` is the variation of information matrix.
   - `:Tail`: lower tail dependence index matrix, ``\\mathbf{D}_{i,\\,j} = -\\log\\left(\\mathbf{C}_{i,\\,j}\\right)``
   - `:Cov_to_Cor`: the covariance matrix is converted to a correlation matrix, the distance matrix is computed by a distance function which defaults to ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:Custom_Func`: custom functions for the correlation and distance matrices have to be provided. They default to the Pearson correlation and ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``, respectively.
-  - `:Custom_Val`: custom values for the correlation and distance matrices have to be provided.
+  - `:Custom_Func`: user-provided custom functions for the correlation and distance matrices. They default to the Pearson correlation and ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``, respectively.
+  - `:Custom_Val`: user-provided custom values for the correlation and distance matrices.
 """
 const CorMethods = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1,
                     :Gerber2, :SB0, :SB1, :Gerber_SB0, :Gerber_SB1, :Abs_Pearson,
@@ -472,13 +472,13 @@ KellyRet = (:None, :Approx, :Exact)
 Available types of Kelly returns for [`Portfolio`](@ref).
 
   - `:None`: arithmetic expected returns, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w}``.
-  - `:Approx`: first moment approximation of the logarithmic returns, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w} - \\dfrac{1}{2} \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}``.
-  - `:Exact`: exact logarithmic returns, ``R(\\bm{w}) = \\dfrac{1}{T}\\sum\\limits_{t=1}^{T}\\ln\\left(1 + \\bm{x}_t \\cdot \\bm{w}\\right)``.
+  - `:Approx`: first moment approximation of the logarithmic returns [Kelly1](@cite), ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w} - \\dfrac{1}{2} \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}``.
+  - `:Exact`: exact logarithmic returns [Kelly2](@cite), ``R(\\bm{w}) = \\dfrac{1}{T}\\sum\\limits_{t=1}^{T}\\ln\\left(1 + \\bm{x}_t \\cdot \\bm{w}\\right)``.
     Where:
   - ``\\mathbf{\\Sigma}`` is the covariance matrix of the asset returns.
   - ``\\bm{x}_t`` is the vector of asset returns at timestep ``t``.
   - ``\\bm{\\mu}`` is the vector of expected returns for each asset.
-  - and ``\\bm{w}`` is the asset weights vector.
+  - ``\\bm{w}`` is the asset weights vector.
 """
 const KellyRet = (:None, :Approx, :Exact)
 
@@ -751,9 +751,9 @@ w_{i}^\\mathrm{G} = w_{i}^\\mathrm{L} \\cdot w_{i \\in \\mathcal{C} \\subseteq \
 
 Where:
 
-  - ``w_{i}^\\mathrm{G}`` is the global (final) weight for asset ``i``;
-  - ``w_{i}^\\mathrm{L}`` is the intra-cluster weight for asset ``i``;
-  - ``w_{i \\in \\mathcal{C} \\subseteq \\mathcal{K}}`` is the weight of cluster ``\\mathcal{C}``, from the set of `k` clusters ``\\mathcal{K}``, that asset ``i`` belongs to and;
+  - ``w_{i}^\\mathrm{G}`` is the global (final) weight for asset ``i``.
+  - ``w_{i}^\\mathrm{L}`` is the intra-cluster weight for asset ``i``.
+  - ``w_{i \\in \\mathcal{C} \\subseteq \\mathcal{K}}`` is the weight of cluster ``\\mathcal{C}``, from the set of `k` clusters ``\\mathcal{K}``, that asset ``i`` belongs.
   - ``N`` is the number of assets.
 """
 const HCPortTypes = (:HRP, :HERC, :NCO)
@@ -774,20 +774,20 @@ The choices are:
 
   - `:Classic`: `BLHist` has no effect, always use ``\\bm{\\mu}``, ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
 
-  - `:FM`: ``\\bm{\\mu}_{\\mathrm{fm}}``;
+  - `:FM`: ``\\bm{\\mu}_{\\mathrm{fm}}``.
 
-      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{fm}``, ``\\mathbf{X}_\\mathrm{fm}``;
-      + `2`: ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``;
+      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{fm}``, ``\\mathbf{X}_\\mathrm{fm}``.
+      + `2`: ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
       + `3`: throws error.
-  - `:BL`: ``\\bm{\\mu}_\\mathrm{bl}``, ``\\mathbf{X}``;
+  - `:BL`: ``\\bm{\\mu}_\\mathrm{bl}``, ``\\mathbf{X}``.
 
-      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{bl}``;
-      + `2`: ``\\mathbf{\\Sigma}``;
+      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{bl}``.
+      + `2`: ``\\mathbf{\\Sigma}``.
       + `3`: throws error.
-  - `:BLFM`: ``\\bm{\\mu}_\\mathrm{bl, fm}``;
+  - `:BLFM`: ``\\bm{\\mu}_\\mathrm{bl, fm}``.
 
-      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{bl, fm}``, ``\\mathbf{X}_\\mathrm{fm}``;
-      + `2`: ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``;
+      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{bl, fm}``, ``\\mathbf{X}_\\mathrm{fm}``.
+      + `2`: ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
       + `3`: ``\\mathbf{\\Sigma}_\\mathrm{fm}``, ``\\mathbf{X}_\\mathrm{fm}``.
 """
 const BLHist = (1, 2, 3)
@@ -799,7 +799,7 @@ LinkageTypes = (:single, :complete, :average, :ward, :ward_presquared, :DBHT)
 
 Linkage types available when optimising a [`HCPortfolio`](@ref).
 
-  - `:DBHT`: is Direct Bubble Hierarchical Tree clustering.
+  - `:DBHT`: is Direct Bubble Hierarchical Tree clustering [`DBHTs`](@ref).
   - The rest are linkage types supported by [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
 """
 const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :DBHT)
@@ -823,7 +823,7 @@ AllocMethods = (:LP, :Greedy)
 
 Methods for allocating assets to an [`AbstractPortfolio`](@ref) according to the optimised weights and latest asset prices.
 
-  - `:LP`: uses Mixed-Integer Linear Programming optimisation. $(_solver_reqs("MIP constraints"))
+  - `:LP`: uses Mixed-Integer Linear Programming (MIP) optimisation. $(_solver_reqs("MIP constraints"))
   - `:Greedy`: uses a greedy iterative algorithm. This may not give the true optimal solution, but can be used when `:LP` fails to find one.
 """
 const AllocMethods = (:LP, :Greedy)
