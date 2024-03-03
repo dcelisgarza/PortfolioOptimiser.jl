@@ -15,7 +15,7 @@ const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
 PMFG_T2s(W::AbstractMatrix{<:Real}; nargout::Integer = 3)
 ```
 
-Constructs a Triangulated Maximally Filtered Graph (TMFG) starting from a tetrahedron and recursively inserting vertices inside existing triangles (T2 move) in order to approximate a Maximal Planar Graph with the largest total weight, aka Planar Maximally Filtered Graph (PMFG). All weights are non-negative [^PMFG].
+Constructs a Triangulated Maximally Filtered Graph (TMFG) starting from a tetrahedron and recursively inserting vertices inside existing triangles (T2 move) in order to approximate a Maximal Planar Graph with the largest total weight, aka Planar Maximally Filtered Graph (PMFG). All weights are non-negative [PMFG](@cite).
 
 # Arguments
 
@@ -29,8 +29,6 @@ Constructs a Triangulated Maximally Filtered Graph (TMFG) starting from a tetrah
   - `clique3`: list of 3-cliques taht are not triangular faces, all 3-cliques are given by `[tri; clique3]`.
   - `cliques`: list of all 4-cliques, if `nargout <= 3`, this will be returned as an empty array.
   - `cliqueTree`: 4-cliques tree structure (adjacency matrix), if `nargout <= 4`, it is returned as an empty array.
-
-[^PMFG]: [Guido Previde Massara, T. Di Matteo, Tomaso Aste, Network Filtering for Big Data: Triangulated Maximally Filtered Graph, Journal of Complex Networks, Volume 5, Issue 2, June 2017, Pages 161–178, https://doi.org/10.1093/comnet/cnw015](https://academic.oup.com/comnet/article-abstract/5/2/161/2555365).
 """
 function PMFG_T2s(W::AbstractMatrix{<:Real}, nargout::Integer = 3)
     N = size(W, 1)
@@ -532,7 +530,7 @@ const DBHTRootMethods = (:Unique, :Equal)
 CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}; method::Symbol = :Unique)
 ```
 
-Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy of the cliques with the definition of "inside" a clique being a subgraph of smaller size when the entire graph is made disjoint by removing the clique [^NHPG].
+Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy of the cliques with the definition of "inside" a clique being a subgraph of smaller size when the entire graph is made disjoint by removing the clique [NHPG](@cite).
 
 # Inputs
 
@@ -550,8 +548,6 @@ Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy 
   - `Mb`: `Nc×Nb` bubble membership matrix for 3-cliques. `Mb[n, bi] = 1` indicated that 3-clique `n` belongs to bubble `bi`.
   - `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
   - `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates 3-clique `n` is separating.
-
-[^NHPG]: [Song, W. M., Di Matteo, T., & Aste, T. (2011). Nested hierarchies in planar graphs. Discrete Applied Mathematics, 159(17), 2135-2146.](https://www.sciencedirect.com/science/article/pii/S0166218X11002794)
 """
 function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Unique)
     @smart_assert(method ∈ DBHTRootMethods)
@@ -698,7 +694,9 @@ end
 
 """
 ```julia
-BubbleCluster8s(Rpm, Dpm, Hb, Mb, Mv, CliqList)
+BubbleCluster8s(Rpm::AbstractMatrix{<:Real}, Dpm::AbstractMatrix{<:Real},
+                Hb::AbstractMatrix{<:Real}, Mb::AbstractMatrix{<:Real},
+                Mv::AbstractMatrix{<:Real}, CliqList::AbstractMatrix{<:Real})
 ```
 
 Obtains non-discrete and discrete clusterings from the bubble topology of the Planar Maximally Filtered Graph (PMFG).
@@ -1058,13 +1056,17 @@ DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real}; branchorder::Symbol 
       method::Symbol = :Unique)
 ```
 
-Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering algorithm [^DBHTs]. This version uses a graph-theoretic filtering technique called Triangulated Maximally Filtered Graph (TMFG).
+Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering algorithm [DBHTs](@cite). This version uses a graph-theoretic filtering technique called Triangulated Maximally Filtered Graph (TMFG).
 
 # Arguments
 
   - `D`: `N×N` dissimilarity matrix, e.g. a distance matrix.
 
-  - `S`: `N×N` non-negative similarity matrix, e.g. a correlation matrix + 1, `S = 2 .- D .^2 / 2`; or another choice could be `S = exp.(-D).`
+  - `S`: `N×N` non-negative similarity matrix, examples include:
+
+      + ``\\mathbf{S} = \\mathbf{C} + 1``: where ``\\mathbf{C}`` is a correlation matrix.
+      + ``\\mathbf{S} = 2 - \\dfrac{1}{2}\\mathbf{D}^{\\circ 2}``: where ``\\circ`` denotes elementwise squaring, and ``\\mathbf{D}`` is the dissimilarity matrix `D`.
+      + ``\\mathbf{S} = \\exp \\circ (-\\mathbf{D})``: where ``\\circ`` denotes elementwise exponentiation, and ``\\mathbf{D}`` is the dissimilarity matrix `D`.
   - `branchorder`: is a parameter for ordering the final dendrogram's branches. The choices are defined by [`BranchOrderTypes`](@ref).
   - `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethods`](@ref).
 
@@ -1080,8 +1082,6 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
   - `Mv`: `N×Nb` bubble membership matrix. `Mv[n, bi] = 1` means vertex `n` is a vertex of bubble `bi`.
   - `Z`: `(N-1)×3` linkage matrix in the same format as the output from Matlab.
   - `Z_hclust`: Z matrix in [Clustering.Hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) format.
-
-[^DBHTs]: [Song, Won-Min, T. Di Matteo, and Tomaso Aste. "Hierarchical information clustering by means of topologically embedded graphs." PloS one 7.3 (2012): e31929](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0031929).
 """
 function DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real};
                branchorder::Symbol = :optimal, method::Symbol = :Unique)
@@ -1153,7 +1153,7 @@ end
 J_LoGo(sigma, separators, cliques)
 ```
 
-Compute the sparse inverse covariance from a clique tree and separators [^J_LoGo].
+Compute the sparse inverse covariance from a clique tree and separators [J_LoGo](@cite).
 
 # Inputs
 
@@ -1164,8 +1164,6 @@ Compute the sparse inverse covariance from a clique tree and separators [^J_LoGo
 # Outputs
 
   - `jlogo`: J_LoGo covariance matrix.
-
-[^J_LoGo]: [Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016). Parsimonious modeling with information filtering networks. Physical Review E, 94(6), 062306.](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.94.062306)
 """
 function J_LoGo(sigma, separators, cliques)
     jlogo = zeros(eltype(sigma), size(sigma))
