@@ -111,7 +111,7 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
 
     for j ∈ 1:N
         xj = x[:, j]
-        for i ∈ j:N
+        for i ∈ 1:j
             xi = x[:, i]
             bins = if bins_info == :HGR
                 corr = cor(xj, xi)
@@ -144,7 +144,7 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
         end
     end
 
-    return Matrix(Symmetric(mut_mtx, :L)), Matrix(Symmetric(var_mtx, :L))
+    return Matrix(Symmetric(mut_mtx, :U)), Matrix(Symmetric(var_mtx, :U))
 end
 
 function cordistance(v1::AbstractVector, v2::AbstractVector)
@@ -173,12 +173,12 @@ function cordistance(x::AbstractMatrix)
     mtx = Matrix{eltype(x)}(undef, N, N)
     for j ∈ 1:N
         xj = x[:, j]
-        for i ∈ j:N
+        for i ∈ 1:j
             mtx[i, j] = cordistance(x[:, i], xj)
         end
     end
 
-    return Matrix(Symmetric(mtx, :L))
+    return Matrix(Symmetric(mtx, :U))
 end
 
 function ltdi_mtx(x, alpha = 0.05)
@@ -192,7 +192,7 @@ function ltdi_mtx(x, alpha = 0.05)
             xj = x[:, j]
             v = sort(xj)[k]
             maskj = xj .<= v
-            for i ∈ j:N
+            for i ∈ 1:j
                 xi = x[:, i]
                 u = sort(xi)[k]
                 ltd = sum(xi .<= u .&& maskj) / k
@@ -201,7 +201,7 @@ function ltdi_mtx(x, alpha = 0.05)
         end
     end
 
-    return Matrix(Symmetric(mtx, :L))
+    return Matrix(Symmetric(mtx, :U))
 end
 
 function _covgerber0_norm(x, mean_vec, std_vec, threshold)
@@ -1368,6 +1368,8 @@ function covar_mtx(returns::AbstractMatrix, opt::CovOpt = CovOpt(;))
     end
     T, N = size(returns)
     mtx = _denoise_logo_mtx(T, N, mtx, opt, :cov)
+
+    mtx = issymmetric(mtx) ? mtx : Symmetric(mtx, opt.uplo)
 
     return mtx
 end

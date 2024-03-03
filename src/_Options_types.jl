@@ -39,10 +39,10 @@ Structure and keyword constructor for estimating covariance matrices.
 
 # Inputs
 
-  - `estimator`: abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator), enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl) for `:Full` and `:Semi` of [`CovMethods`](@ref).
-  - `target_ret`: target return for `:Semi` estimation of [`CovMethods`](@ref).
-  - `genfunc`: [`GenericFunction`](@ref) for computing the covariance matrix.
-  - `custom`: custom covariance matrix.
+  - `estimator`: abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator), enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl) when `method ∈ (:Full, :Semi)` from [`CovMethods`](@ref).
+  - `target_ret`: target return for semi covariance estimation when `method == :Semi` from [`CovMethods`](@ref).
+  - `genfunc`: [`GenericFunction`](@ref) for computing the covariance matrix when `method ∈ (:Full, :Semi, :Custom_Func)` from [`CovMethods`](@ref).
+  - `custom`: custom covariance matrix when `method == :Custom_Val` from [`CovMethods`](@ref).
 """
 mutable struct CovEstOpt
     estimator::CovarianceEstimator
@@ -109,7 +109,7 @@ Structure and keyword constructor for computing Gerber-derived matrices from [`C
 
 # Inputs
 
-  - `threshold`: significance threshold, must be ∈ (0, 1).
+  - `threshold`: significance threshold, must be `threshold ∈ (0, 1)`.
   - `normalise`: whether to normalise the returns to have a mean equal to zero and a standard deviation equal to 1.
   - `mean_func`: [`GenericFunction`](@ref) for computing the expected returns vector.
   - `std_func`: [`GenericFunction`](@ref) for computing the standard deviation of the returns.
@@ -149,7 +149,7 @@ end
 end
 ```
 
-Structure for storing options for computing Smyth-Broby modifications of the Gerber statistic when `method ∈ (:SB0, :SB1, :Gerber_SB0, :Gerber_SB1)` [SB](@cite).
+Structure for storing options for computing Smyth-Broby modifications of the Gerber statistic when `method ∈ (:SB0, :SB1, :Gerber_SB0, :Gerber_SB1)` from [`CovMethods`](@ref) or [`CorMethods`](@ref) [SB](@cite).
 
 # Inputs
 
@@ -198,8 +198,7 @@ Structure and keyword constructor for denoising matrices.
 # Inputs
 
   - `method`: method for denoising matrices, must be one of [`DenoiseMethods`](@ref).
-
-  - `alpha`: shrink method significance level, must be ∈ [0, 1].
+  - `alpha`: shrink method significance level, `alpha ∈ [0, 1]`.
   - `detone`: if `true`, take only the largest `mkt_comp` eigenvalues from the correlation matrix.
   - `mkt_comp`: the number of largest eigenvalues to keep from the correlation matrix.
   - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
@@ -245,9 +244,11 @@ end
     method::Symbol = :Full
     estimation::CovEstOpt = CovEstOpt(;)
     gerber::GerberOpt = GerberOpt(;)
+    sb::SBOpt = SBOpt(;)
     denoise::DenoiseOpt = DenoiseOpt(;)
     posdef::PosdefFixOpt = PosdefFixOpt(;)
     jlogo::Bool = false
+    uplo::Symbol = :U
 end
 ```
 
@@ -258,9 +259,11 @@ Structure and keyword constructor for computing covariance matrices.
   - `method`: covariance estimation method from [`CovMethods`](@ref).
   - `estimation`: covariance estimation options [`CovEstOpt`](@ref).
   - `gerber`: Gerber covariance options [`GerberOpt`](@ref).
+  - `sb`: Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
   - `jlogo`: if `true` uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
+  - `uplo`: argument for [Symmetric](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.Symmetric) to ensure the covariance matrix is symmetric (to combat floating point arithmetic problems).
 """
 mutable struct CovOpt
     # Cov method
@@ -277,14 +280,16 @@ mutable struct CovOpt
     posdef::PosdefFixOpt
     # J-LoGo
     jlogo::Bool
+    # Symmetric
+    uplo::Symbol
 end
 function CovOpt(; method::Symbol = :Full, estimation::CovEstOpt = CovEstOpt(;),
                 gerber::GerberOpt = GerberOpt(;), sb::SBOpt = SBOpt(;),
                 denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
-                jlogo::Bool = false)
+                jlogo::Bool = false, uplo::Symbol = :U)
     @smart_assert(method ∈ CovMethods)
 
-    return CovOpt(method, estimation, gerber, sb, denoise, posdef, jlogo)
+    return CovOpt(method, estimation, gerber, sb, denoise, posdef, jlogo, uplo)
 end
 function Base.setproperty!(obj::CovOpt, sym::Symbol, val)
     if sym == :method
@@ -311,7 +316,7 @@ Structure and keyword constructor for computing expected returns vectors.
 
 # Inputs
 
-  - `mu_method`: one of [`MuMethods`](@ref) methods for estimating the expected returns vector in [`mean_vec`](@ref).
+  - `method`: one of [`MuMethods`](@ref) methods for estimating the expected returns vector in [`mean_vec`](@ref).
 
   - `target`: one of [`MuTargets`](@ref) for estimating the expected returns vector in [`mean_vec`](@ref).
   - `rf`: risk-free rate.
@@ -365,7 +370,7 @@ Structure and keyword constructor for estimating cokurtosis matrices.
 
 # Inputs
 
-  - `target_ret`: target return for semi cokurtosis.
+  - `target_ret`: target return for semi cokurtosis estimation.
   - `custom_kurt`: custom value for the cokurtosis matrix.
   - `custom_skurt`:  custom value for the semi cokurtosis matrix.
 """
@@ -415,6 +420,42 @@ function KurtOpt(; estimation::KurtEstOpt = KurtEstOpt(;),
     return KurtOpt(estimation, denoise, posdef, jlogo)
 end
 
+"""
+```julia
+@kwdef mutable struct CorEstOpt{T1 <: Real, T2 <: AbstractMatrix{<:Real},
+                                T3 <: AbstractMatrix{<:Real}, T4 <: AbstractMatrix{<:Real}}
+    estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
+    alpha::T1 = 0.05
+    bins_info::Union{Symbol, <:Integer} = bins_info::Union{Symbol, <:Integer} = :KN
+    cor_genfunc::GenericFunction = GenericFunction(; func = StatsBase.cor)
+    dist_genfunc::GenericFunction = GenericFunction(;
+                                                    func = x -> sqrt.(clamp!((1 .- x) / 2,
+                                                                             0, 1)))
+    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
+    custom_cor::T2 = Matrix{Float64}(undef, 0, 0)
+    custom_dist::T3 = Matrix{Float64}(undef, 0, 0)
+    sigma::T4 = Matrix{Float64}(undef, 0, 0)
+end
+```
+
+Structure and keyword constructor for estimating covariance matrices.
+
+# Inputs
+
+  - `estimator`: abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator), enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl) for `:Full` and `:Semi` of [`CovMethods`](@ref).
+
+  - `alpha`: significance parameter when `method == :Tail` from [`CorMethods`](@ref), `alpha ∈ [0, 1]`.
+  - `bins_info`: number of bins when `method == :Mutual_Info` from [`CorMethods`](@ref). It can take on two types.
+
+      + `bins_info isa Symbol`: bin width choice method must be one of [`BinMethods`](@ref).
+      + `bins_info isa Integer`: the data is split into as many bins as specified.
+  - `cor_genfunc`: [`GenericFunction`](@ref) for computing the correlation matrix when `method ∈ (:Pearson, :Semi_Pearson, :Abs_Pearson, :Abs_Semi_Pearson, :Custom_Func)` from [`CorMethods`](@ref).
+  - `dist_genfunc`: [`GenericFunction`](@ref) for computing the distance matrix when `method ∈ (:Cov_to_Cor, :Custom_Func)` from [`CorMethods`](@ref).
+  - `target_ret`: target return for semi covariance estimation when `method ∈ (:Semi_Pearson, :Abs_Semi_Pearson)` from [`CorMethods`](@ref).
+  - `custom_cor`: custom correlation matrix function when `method == :Custom_Val` from [`CorMethods`](@ref).
+  - `custom_dist`: custom distance matrix function when `method == :Custom_Val` from [`CorMethods`](@ref).
+  - `sigma`: value of covariance matrix when `method == :Cov_to_Cor` from [`CorMethods`](@ref).
+"""
 mutable struct CorEstOpt{T1 <: Real, T2 <: AbstractMatrix{<:Real},
                          T3 <: AbstractMatrix{<:Real}, T4 <: AbstractMatrix{<:Real}}
     estimator::CovarianceEstimator
@@ -489,6 +530,34 @@ function Base.setproperty!(obj::CorEstOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
+@kwdef mutable struct CorOpt
+    method::Symbol = :Pearson
+    estimation::CorEstOpt = CovEstOpt(;)
+    gerber::GerberOpt = GerberOpt(;)
+    sb::SBOpt = SBOpt(;)
+    denoise::DenoiseOpt = DenoiseOpt(;)
+    posdef::PosdefFixOpt = PosdefFixOpt(;)
+    jlogo::Bool = false
+    uplo::Symbol = :U
+end
+```
+
+Structure and keyword constructor for computing covariance matrices.
+
+# Inputs
+
+  - `method`: covariance estimation method from [`CovMethods`](@ref).
+
+  - `estimation`: covariance estimation options [`CovEstOpt`](@ref).
+  - `gerber`: Gerber covariance options [`GerberOpt`](@ref).
+  - `sb`: Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
+  - `denoise`: denoising options [`DenoiseOpt`](@ref).
+  - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
+  - `jlogo`: if `true` uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
+  - `uplo`: argument for [Symmetric](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.Symmetric) to ensure the correlation and distance matrices are symmetric (to combat floating point arithmetic problems).
+"""
 mutable struct CorOpt
     # Cov method
     method::Symbol
@@ -504,13 +573,13 @@ mutable struct CorOpt
     posdef::PosdefFixOpt
     # J-LoGo
     jlogo::Bool
-    # uplo
+    # Symmetric
     uplo::Symbol
 end
 function CorOpt(; method::Symbol = :Pearson, estimation::CorEstOpt = CorEstOpt(;),
                 gerber::GerberOpt = GerberOpt(;), sb::SBOpt = SBOpt(;),
                 denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
-                jlogo::Bool = false, uplo::Symbol = :L)
+                jlogo::Bool = false, uplo::Symbol = :U)
     @smart_assert(method ∈ CorMethods)
 
     return CorOpt(method, estimation, gerber, sb, denoise, posdef, jlogo, uplo)
