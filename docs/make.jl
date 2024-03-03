@@ -26,9 +26,7 @@ for file ∈ code_files
                       postprocess = postprocess, documenter = true, credit = true)
 end
 
-makedocs(;
-         #  modules = [PortfolioOptimiser],
-         authors = "Daniel Celis Garza",
+makedocs(; modules = [PortfolioOptimiser], authors = "Daniel Celis Garza",
          repo = "https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/{commit}{path}#{line}",
          sitename = "PortfolioOptimiser.jl",
          format = Documenter.HTML(; prettyurls = get(ENV, "CI", "false") == "true",

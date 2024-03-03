@@ -908,32 +908,6 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
                           EDaR_r = "Entropic Compounded Drawdown at Risk",
                           RDaR_r = "Relativistic Compounded Drawdown at Risk")
 
-const _rmstr = """
-                - `:SD`: standard deviation, [`SD`](@ref) [SD1](@cite). $(_solver_reqs("`MOI.SecondOrderCone` if `sd_cone == true`, else it must support quadratic expressions"))
-                - `:MAD`: mean absolute deviation, [`MAD`](@ref) [MAD](@cite).
-                - `:SSD`: semi standard deviation, [`SSD`](@ref) [SSD](@cite). $(_solver_reqs("`MOI.SecondOrderCone`"))
-                - `:FLPM`: first lower partial moment (Omega ratio), [`FLPM`](@ref) [LPM](@cite).
-                - `:SLPM`: second lower partial moment (Sortino ratio), [`SLPM`](@ref) [LPM](@cite). $(_solver_reqs("`MOI.SecondOrderCone`"))
-                - `:WR`: worst realisation (Minimax), [`WR`](@ref) [WR](@cite).
-                - `:CVaR`: conditional value at risk, [`CVaR`](@ref) [CVaR](@cite).
-                - `:EVaR`: entropic value at risk, [`EVaR`](@ref) [EVaR1, EVaR2, EVaR3](@cite). $(_solver_reqs("`MOI.ExponentialCone`"))
-                - `:RVaR`: relativistic value at risk, [`RVaR`](@ref) [RVaR](@cite). $(_solver_reqs("`MOI.PowerCone`"))
-                - `:MDD`: maximum drawdown of uncompounded cumulative returns (Calmar ratio), [`MDD_abs`](@ref) [DDs](@cite).
-                - `:ADD`: average drawdown of uncompounded cumulative returns, [`ADD_abs`](@ref) [DDs](@cite).
-                - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns, [`CDaR_abs`](@ref) [DDs](@cite).
-                - `:UCI`: ulcer index of uncompounded cumulative returns, [`UCI_abs`](@ref) [UCI](@cite). $(_solver_reqs("`MOI.SecondOrderCone`"))
-                - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns, [`EDaR_abs`](@ref) [EVaR3](@cite). $(_solver_reqs("`MOI.ExponentialCone`"))
-                - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RVaR](@cite). $(_solver_reqs("`MOI.PowerCone`"))
-                - `:Kurt`: square root kurtosis, [`Kurt`](@ref) [KT1, KT2](@cite). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
-                - `:SKurt`: square root semi-kurtosis, [`SKurt`](@ref) [KT1, KT2](@cite). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
-                - `:GMD`: gini mean difference, [`GMD`](@ref) [GMD, OWA](@cite).
-                - `:RG`: range of returns, [`RG`](@ref) [OWA](@cite).
-                - `:RCVaR`: range of conditional value at risk, [`RCVaR`](@ref) [OWA](@cite).
-                - `:TG`: tail gini, [`TG`](@ref) [TG, OWA](@cite).
-                - `:RTG`: range of tail gini, [`RTG`](@ref) [OWA](@cite).
-                - `:OWA`: ordered weight array (generic OWA weights) which can be computed via [`owa_l_moment`](@ref) and [`owa_l_moment_crm`](@ref) [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
-               """
-
 """
 ```julia
 RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
@@ -941,7 +915,30 @@ RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :
                 :RTG, :OWA)
 ```
 Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref) of [`Portfolio`](@ref).
-$_rmstr
+
+  - `:SD`: standard deviation, [`SD`](@ref) [SD1](@cite). $(_solver_reqs("`MOI.SecondOrderCone` if `sd_cone == true`, else it must support quadratic expressions"))
+  - `:MAD`: mean absolute deviation, [`MAD`](@ref) [MAD](@cite).
+  - `:SSD`: semi standard deviation, [`SSD`](@ref) [SSD](@cite). $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:FLPM`: first lower partial moment (Omega ratio), [`FLPM`](@ref) [LPM](@cite).
+  - `:SLPM`: second lower partial moment (Sortino ratio), [`SLPM`](@ref) [LPM](@cite). $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:WR`: worst realisation (Minimax), [`WR`](@ref) [WR](@cite).
+  - `:CVaR`: conditional value at risk, [`CVaR`](@ref) [CVaR](@cite).
+  - `:EVaR`: entropic value at risk, [`EVaR`](@ref) [EVaR1, EVaR2, EVaR3](@cite). $(_solver_reqs("`MOI.ExponentialCone`"))
+  - `:RVaR`: relativistic value at risk, [`RVaR`](@ref) [RVaR](@cite). $(_solver_reqs("`MOI.PowerCone`"))
+  - `:MDD`: maximum drawdown of uncompounded cumulative returns (Calmar ratio), [`MDD_abs`](@ref) [DDs](@cite).
+  - `:ADD`: average drawdown of uncompounded cumulative returns, [`ADD_abs`](@ref) [DDs](@cite).
+  - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns, [`CDaR_abs`](@ref) [DDs](@cite).
+  - `:UCI`: ulcer index of uncompounded cumulative returns, [`UCI_abs`](@ref) [UCI](@cite). $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns, [`EDaR_abs`](@ref) [EVaR3](@cite). $(_solver_reqs("`MOI.ExponentialCone`"))
+  - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RVaR](@cite). $(_solver_reqs("`MOI.PowerCone`"))
+  - `:Kurt`: square root kurtosis, [`Kurt`](@ref) [KT1, KT2](@cite). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+  - `:SKurt`: square root semi-kurtosis, [`SKurt`](@ref) [KT1, KT2](@cite). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+  - `:GMD`: gini mean difference, [`GMD`](@ref) [GMD, OWA](@cite).
+  - `:RG`: range of returns, [`RG`](@ref) [OWA](@cite).
+  - `:RCVaR`: range of conditional value at risk, [`RCVaR`](@ref) [OWA](@cite).
+  - `:TG`: tail gini, [`TG`](@ref) [TG, OWA](@cite).
+  - `:RTG`: range of tail gini, [`RTG`](@ref) [OWA](@cite).
+  - `:OWA`: ordered weight array (generic OWA weights) which can be computed via [`owa_l_moment`](@ref) and [`owa_l_moment_crm`](@ref) [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
 """
 const RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
                       :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG,
@@ -956,21 +953,51 @@ HCRiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD,
 ```
 Available risk measures for optimisations of [`HCPortfolio`](@ref). 
 
-These risk measures are available for all optimisation types:
-$_rmstr
+These risk measures are available for all optimisation types.
+
+  - `:SD`: standard deviation, [`SD`](@ref) [SD1](@cite). 
+    + If `:NCO`: $(_solver_reqs("`MOI.SecondOrderCone` if `sd_cone == true`, else it must support quadratic expressions"))
+  - `:MAD`: mean absolute deviation, [`MAD`](@ref) [MAD](@cite).
+  - `:SSD`: semi standard deviation, [`SSD`](@ref) [SSD](@cite). 
+    + If `:NCO`: $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:FLPM`: first lower partial moment (Omega ratio), [`FLPM`](@ref) [LPM](@cite).
+  - `:SLPM`: second lower partial moment (Sortino ratio), [`SLPM`](@ref) [LPM](@cite). 
+    + If `:NCO`: $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:WR`: worst realisation (Minimax), [`WR`](@ref) [WR](@cite).
+  - `:CVaR`: conditional value at risk, [`CVaR`](@ref) [CVaR](@cite).
+  - `:EVaR`: entropic value at risk, [`EVaR`](@ref) [EVaR1, EVaR2, EVaR3](@cite). $(_solver_reqs("`MOI.ExponentialCone`"))
+  - `:RVaR`: relativistic value at risk, [`RVaR`](@ref) [RVaR](@cite). $(_solver_reqs("`MOI.PowerCone`"))
+  - `:MDD`: maximum drawdown of uncompounded cumulative returns (Calmar ratio), [`MDD_abs`](@ref) [DDs](@cite).
+  - `:ADD`: average drawdown of uncompounded cumulative returns, [`ADD_abs`](@ref) [DDs](@cite).
+  - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns, [`CDaR_abs`](@ref) [DDs](@cite).
+  - `:UCI`: ulcer index of uncompounded cumulative returns, [`UCI_abs`](@ref) [UCI](@cite). 
+    + If `:NCO`: $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns, [`EDaR_abs`](@ref) [EVaR3](@cite). $(_solver_reqs("`MOI.ExponentialCone`"))
+  - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RVaR](@cite). $(_solver_reqs("`MOI.PowerCone`"))
+  - `:Kurt`: square root kurtosis, [`Kurt`](@ref) [KT1, KT2](@cite). 
+    + If `:NCO`: $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+  - `:SKurt`: square root semi-kurtosis, [`SKurt`](@ref) [KT1, KT2](@cite). 
+    + If `:NCO`: $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+  - `:GMD`: gini mean difference, [`GMD`](@ref) [GMD, OWA](@cite).
+  - `:RG`: range of returns, [`RG`](@ref) [OWA](@cite).
+  - `:RCVaR`: range of conditional value at risk, [`RCVaR`](@ref) [OWA](@cite).
+  - `:TG`: tail gini, [`TG`](@ref) [TG, OWA](@cite).
+  - `:RTG`: range of tail gini, [`RTG`](@ref) [OWA](@cite).
+  - `:OWA`: ordered weight array (generic OWA weights) which can be computed via [`owa_l_moment`](@ref) and [`owa_l_moment_crm`](@ref) [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
 
 These risk measures are not available with `:NCO` optimisations.
-- `:Variance`: variance, [`Variance`](@ref).
-- `:Equal`: equal risk contribution, `1/N` where N is the number of assets.
-- `:VaR`: value at risk, [`VaR`](@ref).
-- `:DaR`: drawdown at risk of uncompounded cumulative returns, [`DaR_abs`](@ref).
-- `:DaR_r`: drawdown at risk of compounded cumulative returns, [`DaR_rel`](@ref).
-- `:MDD_r`: maximum drawdown of compounded cumulative returns, [`MDD_rel`](@ref).
-- `:ADD_r`: average drawdown of compounded cumulative returns, [`ADD_rel`](@ref).
-- `:CDaR_r`: conditional drawdown at risk of compounded cumulative returns, [`CDaR_rel`](@ref).
-- `:UCI_r`: ulcer index of compounded cumulative returns, [`UCI_rel`](@ref). $(_solver_reqs("`MOI.SecondOrderCone`"))
-- `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns, [`EDaR_rel`](@ref). $(_solver_reqs("`MOI.ExponentialCone`"))
-- `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns, [`RDaR_rel`](@ref). $(_solver_reqs("`MOI.PowerCone`"))
+
+  - `:Variance`: variance, [`Variance`](@ref).
+  - `:Equal`: equal risk contribution, `1/N` where N is the number of assets.
+  - `:VaR`: value at risk, [`VaR`](@ref).
+  - `:DaR`: drawdown at risk of uncompounded cumulative returns, [`DaR_abs`](@ref).
+  - `:DaR_r`: drawdown at risk of compounded cumulative returns, [`DaR_rel`](@ref).
+  - `:MDD_r`: maximum drawdown of compounded cumulative returns, [`MDD_rel`](@ref).
+  - `:ADD_r`: average drawdown of compounded cumulative returns, [`ADD_rel`](@ref).
+  - `:CDaR_r`: conditional drawdown at risk of compounded cumulative returns, [`CDaR_rel`](@ref).
+  - `:UCI_r`: ulcer index of compounded cumulative returns, [`UCI_rel`](@ref). $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns, [`EDaR_rel`](@ref). $(_solver_reqs("`MOI.ExponentialCone`"))
+  - `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns, [`RDaR_rel`](@ref). $(_solver_reqs("`MOI.PowerCone`"))
 """
 const HCRiskMeasures = (RiskMeasures..., :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r,
                         :ADD_r, :CDaR_r, :UCI_r, :EDaR_r, :RDaR_r)
