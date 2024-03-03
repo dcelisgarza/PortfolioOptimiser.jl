@@ -106,12 +106,23 @@ TrackingErrKinds = (:Weights, :Returns)
 
 Available kinds of tracking errors for [`Portfolio`](@ref).
 
-  - `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns,
+  - `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns.
 
-      + ``\\bm{b} = \\mathbf{X} \\bm{w}``, where ``\\bm{b}`` is the benchmark returns vector, ``\\mathbf{X}`` the ``T \\times{} N`` asset returns matrix, and ``\\bm{w}`` the asset weights vector.
+```math
+\\bm{b} = \\mathbf{X} \\bm{w}
+```
+
+Where:
+
+  - ``\\bm{b}``: is the benchmark returns vector.
+  - ``\\mathbf{X}``: is the ``T \\times N`` asset returns matrix.
+  - ``\\bm{w}``: is the asset weights vector.
+
+Or bypass the benchmark calculation by direclty providing the benchmark vector ``\\bm{b}``.
 
   - `:Returns`: directly provide the vector of benchmark returns.
-    The benchmark is then used as a reference to optimise a portfolio that tracks it up to a given error.
+
+The optimisation then attempts keep the square root deviation between the benchmark and portfolio's return below or equal to the user-provided tracking error.
 """
 const TrackingErrKinds = (:None, :Weights, :Returns)
 
@@ -122,7 +133,7 @@ NetworkMethods = (:None, :SDP, :IP)
 
 Methods for enforcing network constraints [NWK1, NWK2](@cite) for optimising [`Portfolio`](@ref).
   - `:None`: No network constraint is used.
-  - `:SDP`: Semi-definite programming constraint. $(_solver_reqs("`MOI.PSDCone`"))
+  - `:SDP`: Semi-Definite Programming constraint. $(_solver_reqs("`MOI.PSDCone`"))
   - `:IP`: uses Mixed-Integer Linear Programming (MIP) optimisation. $(_solver_reqs("MIP constraints"))
 """
 const NetworkMethods = (:None, :SDP, :IP)
@@ -246,8 +257,8 @@ UncertaintyTypes = (:None, :Box, :Ellipse)
 
 Available types of uncertainty sets that can be computed with [`wc_statistics!`](@ref), which are used by `:WC` [`PortTypes`](@ref).
 
-  - `:Box`: are box uncertainty sets, ie the sets are full matrices, [`BoxMethods`](@ref).
-  - `:Ellipse`: are elliptical uncertainty sets, ie the sets are diagonal matrices, [`EllipseMethods`](@ref).
+  - `:Box`: are box uncertainty sets chosen from [`BoxMethods`](@ref).
+  - `:Ellipse`: are elliptical uncertainty sets chosen from [`EllipseMethods`](@ref).
 """
 const UncertaintyTypes = (:None, :Box, :Ellipse)
 
@@ -368,8 +379,8 @@ PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
 Methods for fixing non-positive definite matrices.
 
   - `:None`: no fix is applied.
-  - `:Nearest`: nearest correlation matrix.
-  - `:SDP`: Semi-definite programming constraint by finding the nearest correlation matrix with `JuMP`. $(_solver_reqs("`MOI.PSDCone`"))
+  - `:Nearest`: nearest correlation matrix from [NearestCorrelationMatrix.jl](https://github.com/adknudson/NearestCorrelationMatrix.jl).
+  - `:SDP`: find the nearest correlation matrix via Semi-Definite Programming with `JuMP`, formulation taken from the [COSMO.jl Examples](https://oxfordcontrol.github.io/COSMO.jl/stable/examples/closest_correlation_matrix/). $(_solver_reqs("`MOI.PSDCone`"))
   - `Custom_Func`: custom function provided.
 """
 const PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
@@ -578,7 +589,8 @@ Available objective functions for `:Trad` optimisations. We can chose any of the
 Where:
 
   - ``\\bm{w}``: are the asset weights.
-  - ``\\phi_{i}``: is risk measure ``i`` from the set of available risk measures ``\\left\\{\\Phi\\right\\}``, [`RiskMeasures`](@ref).
+
+  - ``\\phi_{i}``: is risk measure ``i`` from the set of available risk measures [`RiskMeasures`](@ref) ``\\left\\{\\Phi\\right\\}``.
   - ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``: is a set of linear constraints.
   - ``c_{i}``: is the maximum acceptable value for risk measure ``\\phi_{i}`` of the optimised portfolio.
   - ``R(\\bm{w})``: is the return function from [`KellyRet`](@ref).
@@ -603,7 +615,7 @@ Optimises portfolios based on a vector of risk contributions per asset. We can c
 Where:
 
   - ``\\bm{w}``: are the asset weights.
-  - ``\\phi``: a risk measure from the set of available risk measures, [`RiskMeasures`](@ref).
+  - ``\\phi_{i}``: is risk measure ``i`` from the set of available risk measures [`RiskMeasures`](@ref) ``\\left\\{\\Phi\\right\\}``.
   - ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``: is a set of linear constraints.
   - ``\\bm{b}``: is the vector of maximum allowable risk contribution per asset to the optimised portfolio.
   - ``c``: is an auxiliary variable.
@@ -632,13 +644,14 @@ Optimises portfolios based on a vector of risk contributions per asset. Defines 
 Where:
 
   - ``\\bm{w}``: are the asset weights.
+
   - ``\\psi``: is the average risk of the portfolio.
   - ``\\gamma``: is the lower bound of the risk contribution for each asset.
   - ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``: is a set of linear constraints.
   - ``\\mathbf{\\Sigma}``: is the portfolio covariance.
-  - ``\\rho``: is a regularisation variable.
+  - ``\\rho``: is a regularisation variable from [`RRPVersions`](@ref).
   - ``\\mathbf{\\Theta} = \\mathrm{diag}\\left(\\mathbf{\\Sigma}\\right)``: .
-  - ``\\lambda``: is a penalty parameter for ``\\rho``, taken from the available choices in [`RRPVersions`](@ref).
+  - ``\\lambda``: is a penalty parameter for ``\\rho`` from [`RRPVersions`](@ref).
   - ``\\bm{\\zeta}``: is the vector of marginal risk for each asset.
   - ``b_{i}``: is the maximum allowable risk contribution for asset ``i``.
   - ``N``: is the number of assets.
@@ -865,7 +878,7 @@ RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviation",
                     RDaR_r = "Relativistic Compounded Drawdown at Risk")
 ```
 
-Names of risk measures.
+Risk measure names [`RiskMeasures`](@ref) and [`HCRiskMeasures`](@ref).
 """
 const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviation",
                           SSD = "Semi Standard Deviation",
@@ -918,7 +931,7 @@ const _rmstr = """
                 - `:RCVaR`: range of conditional value at risk, [`RCVaR`](@ref) [OWA](@cite).
                 - `:TG`: tail gini, [`TG`](@ref) [TG, OWA](@cite).
                 - `:RTG`: range of tail gini, [`RTG`](@ref) [OWA](@cite).
-                - `:OWA`: ordered weight array (generic OWA weights) which can be computed via [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref) and [`OWA`](@ref) [OWA, OWAL](@cite).
+                - `:OWA`: ordered weight array (generic OWA weights) which can be computed via [`owa_l_moment`](@ref) and [`owa_l_moment_crm`](@ref) [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
                """
 
 """
@@ -969,12 +982,12 @@ const GraphMethods = (:MST, :TMFG)
 OWAMethods = (:CRRA, :E, :SS, :SD)
 ```
 
-Methods for computing the weights used to combine L-moments higher than 2, used in [`owa_l_moment_crm`](@ref) [OWAL](@cite).
+Methods for computing the weights used in [`owa_l_moment_crm`](@ref) to combine L-moments higher than 2 [OWAL](@cite).
 
   - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
-  - `:E`: Maximum Entropy. Uses `MOI.RelativeEntropyCone` and `MOI.NormOneCone`, in order for the optimisation to succeed `JuMP` needs to be able to transform these into supported forms for a solver.
-  - `:SS`: Minimum Sum of Squares.
-  - `:SD`: Minimum Square Distance.
+  - `:E`: Maximum Entropy. $(_solver_reqs("`MOI.RelativeEntropyCone` and `MOI.NormOneCone`"))
+  - `:SS`: Minimum Sum of Squares. $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:SD`: Minimum Square Distance. $(_solver_reqs("`MOI.SecondOrderCone`"))
 """
 const OWAMethods = (:CRRA, :E, :SS, :SD)
 
