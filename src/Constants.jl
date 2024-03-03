@@ -390,7 +390,7 @@ const PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
 DenoiseMethods = (:Fixed, :Spectral, :Shrink)
 ```
 
-Methods for matrix denoising. See [MLAM; Ch. 2](@cite) for details.
+Methods for covariance matrix denoising [MLAM; Ch. 2](@cite).
 
   - `:Fixed`: fixed.
   - `:Spectral`: spectral.

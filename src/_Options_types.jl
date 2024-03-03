@@ -39,10 +39,10 @@ Structure and keyword constructor for storing the options for estimating covaria
 
 # Inputs
 
-  - `estimator`: covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
-  - `target_ret`: target return for semicovariance estimation.
+  - `estimator`: abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator), enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl) for `:Full` and `:Semi` of [`CovMethods`](@ref).
+  - `target_ret`: target return for `:Semi` estimation of [`CovMethods`](@ref).
   - `genfunc`: [`GenericFunction`](@ref) for computing the covariance matrix.
-  - `custom`: custom covariance function.
+  - `custom`: custom covariance matrix.
 """
 mutable struct CovEstOpt
     estimator::CovarianceEstimator
@@ -71,7 +71,7 @@ Structure and keyword constructor for storing the options for fixing non-positiv
 
 # Inputs
 
-  - `method`: method must be one of [`PosdefFixMethods`](@ref).
+  - `method`: method for fixing non-positive definite matrices from [`PosdefFixMethods`](@ref).
   - `genfunc`: [`GenericFunction`](@ref) when `method == :Custom`, for fixing non-positive definite matrices.
 """
 mutable struct PosdefFixOpt
@@ -96,18 +96,21 @@ end
 ```julia
 @kwdef mutable struct GerberOpt{T1 <: Real}
     threshold::T1 = 0.5
-    genfunc::GenericFunction = GenericFunction(; func = StatsBase.std,
-                                               kwargs = (; dims = 1))
+    mean_func::GenericFunction = GenericFunction(; func = StatsBase.mean,
+                                                 kwargs = (; dims = 1))
+    std_func::GenericFunction = GenericFunction(; func = StatsBase.std,
+                                                kwargs = (; dims = 1))
     posdef::PosdefFixOpt = PosdefFixOpt(;)
 end
 ```
 
-Structure and keyword constructor for storing the options for fixing non-positive definite matrices.
+Structure and keyword constructor for computing Gerber-derived matrices from [`CovMethods`](@ref) and [`CorMethods`](@ref).
 
 # Inputs
 
-  - `threshold`: significance threshold for Gerber covariance matrix methods, must be ∈ (0, 1).
-  - `genfunc`: [`GenericFunction`](@ref) for computing the standard deviation in Gerber covariance matrix methods.
+  - `threshold`: significance threshold, must be ∈ (0, 1).
+  - `mean_func`: [`GenericFunction`](@ref) for computing the expected returns vector.
+  - `std_func`: [`GenericFunction`](@ref) for computing the standard deviation of the returns.
   - `posdef`: [`PosdefFixOpt`](@ref) options for fixing non-positive definite matrices.
 """
 mutable struct GerberOpt{T1 <: Real}
@@ -173,14 +176,15 @@ Structure and keyword constructor for storing the options for denoising matrices
 
 # Inputs
 
-  - `method`: method for denoising matrices, must be in [`DenoiseMethods`](@ref).
+  - `method`: method for denoising matrices, must be one of [`DenoiseMethods`](@ref).
+
   - `alpha`: shrink method significance level, must be ∈ [0, 1].
   - `detone`: if `true`, take only the largest `mkt_comp` eigenvalues from the correlation matrix.
   - `mkt_comp`: the number of largest eigenvalues to keep from the correlation matrix.
-  - `kernel`: kernel for fitting the average shifted histograms according to the covariance matrix's kernel density.
-  - `m`: number of adjacent histograms to smooth over.
-  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted.
-  - `genfunc`: only `genfunc.args` and `genfunc.kwargs` are used. These are the `args` and `kwargs` passed to `Optim.optimize`. This is used for finding the eigenvalue that minimises the residual error between the fitted average shifted histogram and an idealised state. Eigenvalues larger than this are considered significant.
+  - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
+  - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `genfunc`: only `genfunc.args` and `genfunc.kwargs` are used. These are the `args` and `kwargs` passed to `Optim.optimize`. This is used for finding the eigenvalue that minimises the residual error between the fitted average shifted histogram and a covariance matrix arising from normally distributed returns. Eigenvalues larger than this are considered significant [MLAM; Ch. 2](@cite).
 
 !!! warning
 
@@ -270,10 +274,33 @@ end
 
 """
 ```
-MuOpt
+@kwdef mutable struct MuOpt{T1 <: Real}
+    method::Symbol = :Default
+    target::Symbol = :GM
+    rf::T1 = 0.0
+    genfunc::GenericFunction = GenericFunction(; func = StatsBase.mean,
+                                                kwargs = (; dims = 1))
+    custom::Union{<:AbstractVector{<:Real}, Nothing}
+    mkt_ret::Union{<:AbstractVector{<:Real}, Nothing}
+    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
+end
 ```
 
-  - `mu_method`: method for estimating the mean returns vectors `mu`, `mu_fm`, `mu_bl`, `mu_bl_fm` in [`mean_vec`](), see [`MuMethods`]() for available choices.
+Structure and keyword constructor for computing expected returns vectors.
+
+# Inputs
+
+  - `mu_method`: one of [`MuMethods`](@ref) methods for estimating the expected returns vector in [`mean_vec`](@ref).
+
+  - `target`: one of [`MuTargets`](@ref) for estimating the expected returns vector in [`mean_vec`](@ref).
+  - `rf`: risk-free rate.
+  - `genfunc`: generic function for estimating the unadjusted expected returns vector.
+
+      + `method ∈ (:Default, :Custom_Func)`: return this value.
+      + `method ∈ (:JS, :BS, :BOP, :CAPM)`: the value is used to compute the adjusted expected returns vector according to the method and target (if applicable) provided.
+  - `custom`: user provided value for the mean returns vector when `method == :Custom_Val`.
+  - `mkt_ret`: market return used when `method == :CAPM`.
+  - `sigma`: value of the covariance matrix used when adjusting the expected returns vector when `method ∈ (:JS, :BS, :BOP, :CAPM)`.
 """
 mutable struct MuOpt{T1 <: Real}
     method::Symbol
@@ -307,11 +334,19 @@ end
 """
 ```
 @kwdef mutable struct KurtEstOpt
-    target_ret::Union{<:AbstractVector{<:Real},<:Real} = 0.0
-    custom_kurt::Union{<:AbstractMatrix{<:Real},Nothing} = nothing
-    custom_skurt::Union{<:AbstractMatrix{<:Real},Nothing} = nothing
+    target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
+    custom_kurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
+    custom_skurt::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing
 end
 ```
+
+Structure and keyword constructor for computing cokurtosis matrices.
+
+# Inputs
+
+  - `target_ret`: target return for semi cokurtosis.
+  - `custom_kurt`: custom value for the cokurtosis matrix.
+  - `custom_skurt`:  custom value for the semi cokurtosis matrix.
 """
 mutable struct KurtEstOpt
     target_ret::Union{<:AbstractVector{<:Real}, <:Real}
@@ -708,5 +743,5 @@ function Base.setproperty!(obj::AllocOpt, sym::Symbol, val)
 end
 
 export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
-       CorOpt, CorEstOpt, WCOpt, KurtOpt, PCROpt, LoadingsOpt, FactorOpt, BLOpt, ClusterOpt,
-       OptimiseOpt, SBOpt, AllocOpt
+       CorOpt, CorEstOpt, WCOpt, KurtOpt, KurtEstOpt, PCROpt, LoadingsOpt, FactorOpt, BLOpt,
+       ClusterOpt, OptimiseOpt, SBOpt, AllocOpt
