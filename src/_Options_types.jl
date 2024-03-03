@@ -35,7 +35,7 @@ end
 end
 ```
 
-Structure and keyword constructor for storing the options for estimating covariance matrices.
+Structure and keyword constructor for estimating covariance matrices.
 
 # Inputs
 
@@ -67,7 +67,7 @@ end
 end
 ```
 
-Structure and keyword constructor for storing the options for fixing non-positive definite matrices.
+Structure and keyword constructor for fixing non-positive definite matrices.
 
 # Inputs
 
@@ -96,6 +96,7 @@ end
 ```julia
 @kwdef mutable struct GerberOpt{T1 <: Real}
     threshold::T1 = 0.5
+    normalise::Bool = false
     mean_func::GenericFunction = GenericFunction(; func = StatsBase.mean,
                                                  kwargs = (; dims = 1))
     std_func::GenericFunction = GenericFunction(; func = StatsBase.std,
@@ -109,6 +110,7 @@ Structure and keyword constructor for computing Gerber-derived matrices from [`C
 # Inputs
 
   - `threshold`: significance threshold, must be ∈ (0, 1).
+  - `normalise`: whether to normalise the returns to have a mean equal to zero and a standard deviation equal to 1.
   - `mean_func`: [`GenericFunction`](@ref) for computing the expected returns vector.
   - `std_func`: [`GenericFunction`](@ref) for computing the standard deviation of the returns.
   - `posdef`: [`PosdefFixOpt`](@ref) options for fixing non-positive definite matrices.
@@ -137,6 +139,25 @@ function Base.setproperty!(obj::GerberOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```julia
+@kwdef mutable struct SBOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: Real}
+    c1::T1 = 0.5
+    c2::T2 = 0.5
+    c3::T3 = 4
+    n::T4 = 2
+end
+```
+
+Structure for storing options for computing Smyth-Broby modifications of the Gerber statistic when `method ∈ (:SB0, :SB1, :Gerber_SB0, :Gerber_SB1)` [SB](@cite).
+
+# Inputs
+
+  - `c1`: confusion zone threshold (``c_1`` in the paper), `c1 ∈ (0, 1]`.
+  - `c2`: indecision zone threshold (``c_2`` in the paper), `c2 ∈ (0, 1]`.
+  - `c3`: large co-movement threshold (4 in the paper).
+  - `n`: exponent of the regularisation term (``n`` in the paper).
+"""
 mutable struct SBOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: Real}
     c1::T1
     c2::T2
@@ -172,7 +193,7 @@ end
 end
 ```
 
-Structure and keyword constructor for storing the options for denoising matrices.
+Structure and keyword constructor for denoising matrices.
 
 # Inputs
 
@@ -340,7 +361,7 @@ end
 end
 ```
 
-Structure and keyword constructor for computing cokurtosis matrices.
+Structure and keyword constructor for estimating cokurtosis matrices.
 
 # Inputs
 
@@ -359,6 +380,25 @@ function KurtEstOpt(; target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0,
     return KurtEstOpt(target_ret, custom_kurt, custom_skurt)
 end
 
+"""
+```julia
+@kwdef mutable struct KurtOpt
+    estimation::KurtEstOpt = KurtEstOpt(;)
+    denoise::DenoiseOpt = DenoiseOpt(;)
+    posdef::PosdefFixOpt = PosdefFixOpt(;)
+    jlogo::Bool = false
+end
+```
+
+Structure and keyword constructor for computing cokurtosis matrices.
+
+# Inputs
+
+  - `estimation`: cokurtosis estimation options [`CovEstOpt`](@ref).
+  - `denoise`: denoising options [`DenoiseOpt`](@ref).
+  - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
+  - `jlogo`: if `true` uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the cokurtosis from its relationship structure.
+"""
 mutable struct KurtOpt
     # Estimation
     estimation::KurtEstOpt
