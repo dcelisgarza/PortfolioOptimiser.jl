@@ -1269,7 +1269,6 @@ function mu_estimator(returns::AbstractMatrix, opt::MuOpt = MuOpt(;))
     return mu
 end
 
-const DenoiseLoGoNames = (:cov, :cor, :kurt, :skurt, :bl_cov, :a_bl_cov, :af_bl_cov)
 function _denoise_logo_mtx(T, N, mtx, opt, mtx_name::Symbol = :cov)
     @smart_assert(mtx_name ∈ DenoiseLoGoNames)
 

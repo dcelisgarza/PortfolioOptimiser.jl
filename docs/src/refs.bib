@@ -54,6 +54,71 @@
   year      = {1986}
 }
 
+@article{CVaR,
+  title     = {Optimization of conditional value-at-risk},
+  author    = {Rockafellar, R Tyrrell and Uryasev, Stanislav and others},
+  journal   = {Journal of risk},
+  volume    = {2},
+  pages     = {21--42},
+  year      = {2000},
+  publisher = {Citeseer}
+}
+
+@incollection{DDs,
+  author    = {A. Chekhlov and S. Uryasev and M. Zabarankin},
+  editor    = {Panos M Pardalos and Athanasios Migdalas and George Baourakis},
+  title     = {{Portfolio Optimization With Drawdown Constraints}},
+  booktitle = {{Supply Chain And Finance}},
+  publisher = {World Scientific Publishing Co. Pte. Ltd.},
+  year      = 2004,
+  month     = {Juni},
+  volume    = {},
+  number    = {},
+  series    = {World Scientific Book Chapters},
+  edition   = {},
+  chapter   = {13},
+  pages     = {209-228},
+  doi       = {},
+  keywords  = {Finance; Supply Chain; E-Commerce; Optimization; Mathematical Modeling; Operations Research},
+  abstract  = {We propose a new one-parameter family of risk measures, which is called Conditional Draw-down-at-Risk (CDaR). These measures of risk are functionals of the portfolio drawdown (underwater) curve considered in an active portfolio management. For some value of the tolerance parameter β, the CDaR is defined as the mean of the worst (1 - β) * 100\% drawdowns. The CDaR risk measure includes the Maximal Drawdown and Average Drawdown as its limiting cases. For a particular example, we find the optimal portfolios for a case of Maximal Drawdown, a case of Average Drawdown, and several intermediate cases between these two. The CDaR family of risk measures is similar to Conditional Value-at-Risk (CVaR), which is also called Mean Shortfall, Mean Access loss, or Tail Value-at-Risk. Some recommendations on how to select the optimal risk measure for getting practically stable portfolios are provided. We solved a real life portfolio allocation problem using the proposed measures.},
+  url       = {https://ideas.repec.org/h/wsi/wschap/9789812562586_0013.html}
+}
+
+
+
+@article{EVaR1,
+  title     = {Entropic value-at-risk: A new coherent risk measure},
+  author    = {Ahmadi-Javid, Amir},
+  journal   = {Journal of Optimization Theory and Applications},
+  volume    = {155},
+  pages     = {1105--1123},
+  year      = {2012},
+  publisher = {Springer}
+}
+
+@article{EVaR2,
+  title    = {Portfolio optimization with entropic value-at-risk},
+  journal  = {European Journal of Operational Research},
+  volume   = {279},
+  number   = {1},
+  pages    = {225-241},
+  year     = {2019},
+  issn     = {0377-2217},
+  doi      = {https://doi.org/10.1016/j.ejor.2019.02.007},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0377221719301183},
+  author   = {Amir Ahmadi-Javid and Malihe Fallah-Tafti},
+  keywords = {Risk analysis, Portfolio optimization, Coherent risk measures, Stochastic programming, Large-scale convex optimization},
+  abstract = {The entropic value-at-risk (EVaR) is a new coherent risk measure, which is an upper bound for both the value-at-risk (VaR) and conditional value-at-risk (CVaR). One of the important properties of the EVaR is that it is strongly monotone over its domain and strictly monotone over a broad sub-domain including all continuous distributions, whereas well-known monotone risk measures such as the VaR and CVaR lack this property. A key feature of a risk measure, besides its financial properties, is its applicability in large-scale sample-based portfolio optimization. If the negative return of an investment portfolio is a differentiable convex function for any sampling observation, the portfolio optimization with the EVaR results in a differentiable convex program whose number of variables and constraints is independent of the sample size, which is not the case for the VaR and CVaR even if the portfolio rate linearly depends on the decision variables. This enables us to design an efficient algorithm using differentiable convex optimization. Our extensive numerical study indicates the high efficiency of the algorithm in large scales, when compared with the existing convex optimization software packages. The computational efficiency of the EVaR and CVaR approaches are generally similar, but the EVaR approach outperforms the other as the sample size increases. Moreover, the comparison of the portfolios obtained for a real case by the EVaR and CVaR approaches shows that the EVaR-based portfolios can have better best, mean, and worst return rates as well as Sharpe ratios.}
+}
+
+@article{EVaR3,
+  title   = {Entropic portfolio optimization: a disciplined convex programming framework},
+  author  = {Cajas, Dany},
+  journal = {Available at SSRN 3792520},
+  year    = {2021}
+}
+
+
 @article{Gerber,
   title     = {The Gerber statistic: A robust co-movement measure for portfolio optimization},
   author    = {Gerber, Sander and Markowitz, Harry M and Ernst, Philip A and Miao, Yinsen and Javid, Babak and Sargen, Paul},
@@ -63,6 +128,17 @@
   pages     = {87--102},
   year      = {2022},
   publisher = {Institutional Investor Journals Umbrella}
+}
+
+@article{GMD,
+  title     = {Stochastic dominance, mean variance, and Gini's mean difference},
+  author    = {Yitzhaki, Shlomo},
+  journal   = {The American Economic Review},
+  volume    = {72},
+  number    = {1},
+  pages     = {178--185},
+  year      = {1982},
+  publisher = {JSTOR}
 }
 
 @article{HERC1,
@@ -82,6 +158,20 @@
   journal = {Available at SSRN 3237540},
   year    = {2018}
 }
+@article{HGR,
+  title    = {Low bias histogram-based estimation of mutual information for feature selection},
+  journal  = {Pattern Recognition Letters},
+  volume   = {33},
+  number   = {10},
+  pages    = {1302-1308},
+  year     = {2012},
+  issn     = {0167-8655},
+  doi      = {https://doi.org/10.1016/j.patrec.2012.02.022},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0167865512000761},
+  author   = {Abdenour Hacine-Gharbi and Philippe Ravier and Rachid Harba and Tayeb Mohamadi},
+  keywords = {Mutual information, Feature selection, Bias, Dimensionality reduction, Shannon entropy, Speech recognition},
+  abstract = {This paper presents a low bias histogram-based estimation of mutual information and its application to feature selection problems. By canceling the first order bias, the estimation avoids the bias accumulation problem that affects classical methods. As a consequence, on a synthetic feature selection problem, only the proposed method results in the exact number of features to be chosen in the Gaussian case when compared to four other approaches. In a speech recognition application, the proposed method and the Sturges method are the only ones that lead to a correct number of selected features in the noise free case. In the reduced data case, only the proposed method points out the optimal number of features to select. Finally, in the noisy case, only the proposed method leads to results of high quality; other methods show severely underestimated numbers of selected features.}
+}
 
 @article{HRP1,
   title     = {Building diversified portfolios that outperform out of sample},
@@ -93,6 +183,7 @@
   year      = {2016},
   publisher = {Institutional Investor Journals Umbrella}
 }
+
 
 @phdthesis{HRP2,
   title  = {Exploration of Hierarchical Clustering in Long-Only Risk-Based Portfolio Optimization},
@@ -108,7 +199,6 @@
   year    = {2019}
 }
 
-
 @book{JS1,
   title     = {Risk and asset allocation},
   author    = {Meucci, Attilio},
@@ -116,6 +206,7 @@
   year      = {2005},
   publisher = {Springer}
 }
+
 
 @article{JS2,
   url     = {http://dx.doi.org/10.1561/2000000072},
@@ -129,7 +220,6 @@
   pages   = {1-231},
   author  = {Yiyong Feng and Daniel P. Palomar}
 }
-
 
 @incollection{Kelly1,
   title     = {Chaper 9 - The kelly criterion in blackjack sports betting, and the stock market*},
@@ -153,7 +243,48 @@
   journal = {Available at SSRN 3833617},
   year    = {2021}
 }
+@article{KT1,
+  title   = {Convex Optimization of Portfolio Kurtosis},
+  author  = {Cajas, Dany},
+  journal = {Available at SSRN},
+  year    = {2022}
+}
 
+@article{KT2,
+  title   = {Approximation of Portfolio Kurtosis through Sum of Squared Quadratic Forms},
+  author  = {Cajas, Dany},
+  journal = {Available at SSRN 4472793},
+  year    = {2023}
+}
+
+@inbook{LPM,
+  author    = {Mansini, Renata
+               and Ogryczak, W{\l}odzimierz
+               and Speranza, M. Grazia},
+  title     = {Linear Models for Portfolio Optimization},
+  booktitle = {Linear and Mixed Integer Programming for Portfolio Optimization},
+  year      = {2015},
+  publisher = {Springer International Publishing},
+  address   = {Cham},
+  pages     = {19--45},
+  abstract  = {Nowadays, Quadratic Programming (QP) models, like Markowitz model, are not hard to solve, thanks to technological and algorithmic progress. Nevertheless, Linear Programming (LP) models remain much more attractive from a computational point of view for several reasons. In order to guarantee that a portfolio takes advantage from diversification, no risk or safety measures can be a linear function of the weights of the assets. Is it possible to have linear models for portfolio optimization? How can we measure the risk or safety in order to have a linear model? In this chapter, we show how it is possible to achieve a linear form of the overall optimization problem for several different risk measures through the concept of scenarios for the rates of return. The variance is the classical statistical quantity used to measure the dispersion of a random variable from its mean. However, there are several other ways to measure dispersion. We introduce the mean absolute deviation (MAD), the Gini's mean difference (GMD) as basic LP computable risk measures and the worst realization (Minimax) and the Conditional Value-at-Risk (CVaR) as basic LP computable safety measures. We show how from each risk measure it is possible to build its safety measure and vice versa. Ratio measures and further enhanced risk measures and shortfall risk measures based on the concept of risk as failure to achieve a defined target are also discussed.},
+  isbn      = {978-3-319-18482-1},
+  doi       = {10.1007/978-3-319-18482-1_2},
+  url       = {https://doi.org/10.1007/978-3-319-18482-1_2}
+}
+
+@article{MAD,
+  title    = {Mean-Absolute Deviation Portfolio Optimization Model and Its Applications to Tokyo Stock Market},
+  author   = {Konno, Hiroshi and Yamazaki, Hiroaki},
+  year     = {1991},
+  journal  = {Management Science},
+  volume   = {37},
+  number   = {5},
+  pages    = {519-531},
+  abstract = {The purpose of this paper is to demonstrate that a portfolio optimization model using the L 1 risk (mean absolute deviation risk) function can remove most of the difficulties associated with the classical Markowitz's model while maintaining its advantages over equilibrium models. In particular, the L 1 risk model leads to a linear program instead of a quadratic program, so that a large-scale optimization problem consisting of more than 1,000 stocks may be solved on a real time basis. Numerical experiments using the historical data of NIKKEI 225 stocks show that the L 1 risk model generates a portfolio quite similar to that of the Markowitz's model within a fraction of time required to solve the latter.},
+  keywords = {portfolio optimization; L1 risk function; linear programming; Markowitz's model; single-factor model},
+  url      = {https://EconPapers.repec.org/RePEc:inm:ormnsc:v:37:y:1991:i:5:p:519-531}
+}
 
 @book{MLAM,
   place      = {Cambridge},
@@ -178,10 +309,33 @@
   journal = {Available at SSRN},
   year    = {2023}
 }
+
 @article{NWK2,
   title   = {A Graph Theory Approach to Portfolio Optimization Part II},
   author  = {Cajas, Dany},
   journal = {Available at SSRN 4667426},
+  year    = {2023}
+}
+
+@article{OWA,
+  title   = {OWA Portfolio Optimization: A Disciplined Convex Programming Framework},
+  author  = {Cajas, Dany},
+  journal = {Available at SSRN 3988927},
+  year    = {2021}
+}
+
+@article{OWAL,
+  title   = {Higher Order Moment Portfolio Optimization with L-Moments},
+  author  = {Cajas, Dany},
+  journal = {Available at SSRN 4393155},
+  year    = {2023}
+}
+
+
+@article{RVaR,
+  title   = {Portfolio Optimization of Relativistic Value at Risk},
+  author  = {Cajas, Dany},
+  journal = {Available at SSRN 4378498},
   year    = {2023}
 }
 
@@ -197,4 +351,63 @@
   author   = {William Smyth and Daniel Broby},
   keywords = {Estimation error, Gerber statistic, Portfolio optimization, Shrinkage, Equity co-movements, Modern portfolio theory},
   abstract = {The purpose of this letter is to introduce a modified version of the Gerber statistic resulting in the enhancement of its function as a measure of statistical co-movement. The modification centres around the redefinition of zones and thresholds, alongside the use of finite real-valued contributions rather than discrete binary counts in assigning value to individual co-movements. Arguments for the former are based on the statistical alignment of data series for the purposes of more effectively delineating concordant and discordant co-movement. Arguments for the latter are based on attributing greater weight to better information. Collectively this approach simultaneously incorporates the merits of Gerber-like thresholds and zoning, and conventional correlation-like co-movement measurement.}
+}
+
+@article{SD1,
+  issn      = {00221082, 15406261},
+  url       = {http://www.jstor.org/stable/2975974},
+  author    = {Harry Markowitz},
+  journal   = {The Journal of Finance},
+  number    = {1},
+  pages     = {77--91},
+  publisher = {[American Finance Association, Wiley]},
+  title     = {Portfolio Selection},
+  urldate   = {2024-03-03},
+  volume    = {7},
+  year      = {1952}
+}
+
+@article{SSD,
+  title    = {Twenty years of linear programming based portfolio optimization},
+  journal  = {European Journal of Operational Research},
+  volume   = {234},
+  number   = {2},
+  pages    = {518-535},
+  year     = {2014},
+  note     = {60 years following Harry Markowitz’s contribution to portfolio theory and operations research},
+  issn     = {0377-2217},
+  doi      = {https://doi.org/10.1016/j.ejor.2013.08.035},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0377221713007194},
+  author   = {Renata Mansini and Wlodzimierz Ogryczak and M. Grazia Speranza},
+  keywords = {Survey, LP computable mean-risk and mean-safety models, Real features, Transaction costs, Exact and heuristic algorithms},
+  abstract = {Markowitz formulated the portfolio optimization problem through two criteria: the expected return and the risk, as a measure of the variability of the return. The classical Markowitz model uses the variance as the risk measure and is a quadratic programming problem. Many attempts have been made to linearize the portfolio optimization problem. Several different risk measures have been proposed which are computationally attractive as (for discrete random variables) they give rise to linear programming (LP) problems. About twenty years ago, the mean absolute deviation (MAD) model drew a lot of attention resulting in much research and speeding up development of other LP models. Further, the LP models based on the conditional value at risk (CVaR) have a great impact on new developments in portfolio optimization during the first decade of the 21st century. The LP solvability may become relevant for real-life decisions when portfolios have to meet side constraints and take into account transaction costs or when large size instances have to be solved. In this paper we review the variety of LP solvable portfolio optimization models presented in the literature, the real features that have been modeled and the solution approaches to the resulting models, in most of the cases mixed integer linear programming (MILP) models. We also discuss the impact of the inclusion of the real features.}
+}
+
+@article{TG,
+  title     = {Dual stochastic dominance and quantile risk measures},
+  author    = {Ogryczak, Wlodzimierz and Ruszczy{\'n}ski, Andrzej},
+  journal   = {International Transactions in Operational Research},
+  volume    = {9},
+  number    = {5},
+  pages     = {661--680},
+  year      = {2002},
+  publisher = {Wiley Online Library}
+}
+
+@article{UCI,
+  title   = {The investor's guide to fidelity funds},
+  author  = {Martin, Peter G and McCann, Byron B},
+  journal = {(No Title)},
+  year    = {1989}
+}
+
+@article{WR,
+  title     = {On LP solvable models for portfolio selection},
+  author    = {Mansini, Renata and Ogryczak, W{\l}odzimierz and Speranza, M Grazia},
+  journal   = {Informatica},
+  volume    = {14},
+  number    = {1},
+  pages     = {37--62},
+  year      = {2003},
+  publisher = {Institute of Mathematics and Informatics}
 }

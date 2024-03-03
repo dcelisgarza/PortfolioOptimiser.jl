@@ -291,15 +291,12 @@ end
 ```julia
 owa_l_moment(T::Integer, k::Integer = 2)
 ```
-Calculates the OWA weights of the k'th linear moment (L-moment) of a returns series [^OWAL].
+Calculates the OWA weights of the k'th linear moment (L-moment) of a returns series [OWAL](@cite).
 # Inputs
 $_tdef
 - `k`: order of the L-moment.
 # Outputs
 $_owaw
-
-[^OWAL]:
-    [Cajas, Dany, Higher Order Moment Portfolio Optimization with L-Moments (March 19, 2023). Available at SSRN: https://ssrn.com/abstract=4393155 or http://dx.doi.org/10.2139/ssrn.4393155](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4393155)
 """
 function owa_l_moment(T::Integer, k::Integer = 2)
     w = Vector{typeof(inv(T * k))}(undef, T)
@@ -321,24 +318,10 @@ end
 
 """
 ```julia
-OWAMethods = (:CRRA, :E, :SS, :SD)
-```
-
-Methods for computing the weights used to combine L-moments higher than 2, used in [`owa_l_moment_crm`](@ref).
-
-  - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
-  - `:E`: Maximum Entropy. Uses `MOI.RelativeEntropyCone` and `MOI.NormOneCone`, in order for the optimisation to succeed `JuMP` needs to be able to transform these into supported forms for a solver.
-  - `:SS`: Minimum Sum of Squares.
-  - `:SD`: Minimum Square Distance.
-"""
-const OWAMethods = (:CRRA, :E, :SS, :SD)
-
-"""
-```julia
 owa_l_moment_crm(
     T::Integer;    k::Integer = 2,    method::Symbol = :SD,    g::Real = 0.5,    max_phi::Real = 0.5,    solvers = Dict())
 ```
-Compute the OWA weights for the convex risk measure considering higher order L-moments [^OWAL].
+Compute the OWA weights for the convex risk measure considering higher order L-moments [OWAL](@cite).
 # Inputs
 $_tdef
 - `k`: order of the L-moment, `k ≥ 2`.

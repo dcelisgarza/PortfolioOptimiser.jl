@@ -598,7 +598,6 @@ function turnover_constraints(constraints::DataFrame, asset_sets::DataFrame)
     return turnover
 end
 
-const GraphMethods = (:MST, :TMFG)
 function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
                            method::Symbol = :MST, steps::Integer = 1,
                            tree::GenericFunction = GenericFunction(;
