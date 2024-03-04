@@ -1655,7 +1655,7 @@ function commutation_matrix(x::AbstractMatrix)
 end
 
 function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
-                       n_sim::Integer = 3_000, window::Integer = 3,
+                       n_sim::Integer = 3_000, block_size::Integer = 3,
                        seed::Union{<:Integer, Nothing} = nothing,
                        rng = Random.default_rng())
     @smart_assert(kind ∈ BootstrapMethods)
@@ -1676,7 +1676,7 @@ function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
         pyimport("arch.bootstrap").MovingBlockBootstrap
     end
 
-    gen = bootstrap_func(window, returns; seed = seed)
+    gen = bootstrap_func(block_size, returns; seed = seed)
     for data ∈ gen.bootstrap(n_sim)
         A = data[1][1]
         push!(mus, vec(mean(A; dims = 1)))
@@ -1693,7 +1693,7 @@ end
 """
 ```julia
 wc_statistics!(portfolio; box = :Stationary, ellipse = :Stationary, calc_box = true,
-               calc_ellipse = true, q = 0.05, n_sim = 3_000, window = 3, dmu = 0.1,
+               calc_ellipse = true, q = 0.05, n_sim = 3_000, block_size = 3, dmu = 0.1,
                dcov = 0.1, seed = nothing, rng = Random.default_rng(),
                fix_cov_args::Tuple = (), fix_cov_kwargs::NamedTuple = (;))
 ```
@@ -1711,7 +1711,7 @@ function wc_statistics!(portfolio::AbstractPortfolio, opt::WCOpt = WCOpt(;))
     rng = opt.rng
     seed = opt.seed
     n_sim = opt.n_sim
-    window = opt.window
+    block_size = opt.block_size
     posdef = opt.posdef
 
     @smart_assert(calc_box || calc_ellipse)
@@ -1732,7 +1732,7 @@ function wc_statistics!(portfolio::AbstractPortfolio, opt::WCOpt = WCOpt(;))
 
     if calc_box
         if box == :Stationary || box == :Circular || box == :Moving
-            mus, covs = gen_bootstrap(returns, box, n_sim, window, seed, rng)
+            mus, covs = gen_bootstrap(returns, box, n_sim, block_size, seed, rng)
 
             mu_s = vec_of_vecs_to_mtx(mus)
             mu_l = [quantile(mu_s[:, i], q / 2) for i ∈ 1:N]
@@ -1761,7 +1761,7 @@ function wc_statistics!(portfolio::AbstractPortfolio, opt::WCOpt = WCOpt(;))
 
     if calc_ellipse
         if ellipse == :Stationary || ellipse == :Circular || ellipse == :Moving
-            mus, covs = gen_bootstrap(returns, ellipse, n_sim, window, seed, rng)
+            mus, covs = gen_bootstrap(returns, ellipse, n_sim, block_size, seed, rng)
 
             cov_mu = Diagonal(cov(vec_of_vecs_to_mtx([mu_s .- mu for mu_s ∈ mus])))
             cov_sigma = Diagonal(cov(vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma)
@@ -2073,6 +2073,11 @@ function pcr(x::DataFrame, y::Union{Vector, DataFrame}, opt::PCROpt = PCROpt(;))
     return beta
 end
 
+"""
+```julia
+loadings_matrix(x::DataFrame, y::DataFrame; opt::LoadingsOpt = LoadingsOpt(;))
+```
+"""
 function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
     features = names(x)
     rows = ncol(y)

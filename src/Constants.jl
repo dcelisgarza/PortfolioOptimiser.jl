@@ -90,9 +90,9 @@ end
 function _solver_desc(msg::String = "the `JuMP` model.", pref::String = "",
                       req::String = "")
     return """
-           - `$(pref*"solvers")`: Provides the solvers and corresponding parameters for solving $msg `Dict` or `NamedTuple` with key value pairs where the values are other `Dict`s or `NamedTuple`s, e.g. `Dict(solver_key => Dict(...))`, the keys of the sub-dictionary/tuple must be:
-               - `:solver`: which contains the JuMP optimiser. $(_solver_reqs(req))
-               - `:params`: (optional) for the solver-specific parameters.
+           - `$(pref*"solvers")`: Provides the solvers and corresponding parameters for solving $msg There can be two `key => value` pairs.
+               - `:solver => value`: `value` is a `JuMP` optimiser. The optimiser can be declared alongside its attributes by using `JuMP.solver_with_attributes`. $(_solver_reqs(req))
+               - `:params => value`: (optional) `value` must be a `Dict` or `NamedTuple` whose `key => value` pairs are the solver-specific settings.
            """
 end
 function _filled_by(msg::String)

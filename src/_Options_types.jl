@@ -63,6 +63,7 @@ end
 ```julia
 @kwdef mutable struct PosdefFixOpt
     method::Symbol = :Nearest
+    solvers::Union{<:AbstractDict, NamedTuple} = Dict()
     genfunc::GenericFunction = GenericFunction(; func = x -> x)
 end
 ```
@@ -72,14 +73,16 @@ Structure and keyword constructor for fixing non-positive definite matrices.
 # Inputs
 
   - `method`: method for fixing non-positive definite matrices from [`PosdefFixMethods`](@ref).
+$(_solver_desc("the `JuMP` model when `method == :PSD`.", "", "`MOI.PSDCone`"))
   - `genfunc`: [`GenericFunction`](@ref) when `method == :Custom`, for fixing non-positive definite matrices.
 """
 mutable struct PosdefFixOpt
     method::Symbol
-    solvers::AbstractDict
+    solvers::Union{<:AbstractDict, NamedTuple}
     genfunc::GenericFunction
 end
-function PosdefFixOpt(; method::Symbol = :Nearest, solvers::AbstractDict = Dict(),
+function PosdefFixOpt(; method::Symbol = :Nearest,
+                      solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
                       genfunc::GenericFunction = GenericFunction(; func = x -> x))
     @smart_assert(method ∈ PosdefFixMethods)
 
@@ -591,6 +594,42 @@ function Base.setproperty!(obj::CorOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```julia
+@kwdef mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer,
+                            T6 <: Integer}
+    calc_box::Bool = true
+    calc_ellipse::Bool = true
+    box::Symbol = :Stationary
+    ellipse::Symbol = :Stationary
+    dcov::T1 = 0.1
+    dmu::T2 = 0.1
+    q::T3 = 0.05
+    rng::T4 = Random.default_rng()
+    seed::Union{<:Integer, Nothing} = nothing
+    n_sim::T5 = 3_000
+    block_size::T6 = 3
+    posdef::PosdefFixOpt = PosdefFixOpt(;)
+end
+```
+
+Structure and keyword constructor for computing worst case statistics.
+
+# Inputs
+
+  - `calc_box`: whether to compute box sets.
+  - `calc_ellipse`: whether to compute elliptical sets.
+  - `box`: method from [`BoxMethods`](@ref) for computing box sets.
+  - `ellipse`: method from [`EllipseMethods`](@ref) for computing elliptical sets.
+  - `dcov`: when `box == :Delta`, the percentage of the covariance matrix that parametrises its box set.
+  - `dmu`: when `box == :Delta`, the percentage of the expected returns vector that parametrises its box set.
+  - `q`: significance level of the selected bootstrapping method.
+  - `rng`: random number generator for the bootstrapping method. If `isnothing(seed)` then uses the default generator with a random seed.
+  - `seed`: seed for the random number generator used in the bootstrapping method.
+  - `n_sim`: number of simulations for the bootstrapping method.
+  - `block_size`: average block size when using `:Stationary`, `:Circular` or `:Moving` bootstrapping methods.
+  - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
+"""
 mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <: Integer}
     calc_box::Bool
     calc_ellipse::Bool
@@ -602,21 +641,21 @@ mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <
     rng::T4
     seed::Union{<:Integer, Nothing}
     n_sim::T5
-    window::T6
+    block_size::T6
     posdef::PosdefFixOpt
 end
 function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true,
                box::Symbol = :Stationary, ellipse::Symbol = :Stationary, dcov::Real = 0.1,
                dmu::Real = 0.1, q::Real = 0.05, rng = Random.default_rng(),
                seed::Union{<:Integer, Nothing} = nothing, n_sim::Integer = 3_000,
-               window::Integer = 3, posdef::PosdefFixOpt = PosdefFixOpt(;))
+               block_size::Integer = 3, posdef::PosdefFixOpt = PosdefFixOpt(;))
     @smart_assert(box ∈ BoxMethods)
     @smart_assert(ellipse ∈ EllipseMethods)
     @smart_assert(zero(q) < q < one(q))
 
     return WCOpt{typeof(dcov), typeof(dmu), typeof(q), typeof(rng), typeof(n_sim),
-                 typeof(window)}(calc_box, calc_ellipse, box, ellipse, dcov, dmu, q, rng,
-                                 seed, n_sim, window, posdef)
+                 typeof(block_size)}(calc_box, calc_ellipse, box, ellipse, dcov, dmu, q,
+                                     rng, seed, n_sim, block_size, posdef)
 end
 function Base.setproperty!(obj::WCOpt, sym::Symbol, val)
     if sym == :box
@@ -629,6 +668,30 @@ function Base.setproperty!(obj::WCOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```julia
+@kwdef mutable struct PCROpt
+    mean_genfunc::GenericFunction = GenericFunction(; func = StatsBase.mean,
+                                                    kwargs = (; dims = 2))
+    std_genfunc::GenericFunction = GenericFunction(; func = StatsBase.std,
+                                                   kwargs = (; dims = 2))
+    pca_s_genfunc::GenericFunction = GenericFunction(; func = StatsBase.standardize,
+                                                     args = (StatsBase.ZScoreTransform,),
+                                                     kwargs = (; dims = 2))
+    pca_genfunc::GenericFunction = GenericFunction(; func = MultivariateStats.fit,
+                                                   args = (MultivariateStats.PCA,))
+end
+```
+
+Structure and keyword constructor for the `:PCR` method from [`FSMethods`](@ref) of [`loadings_matrix`](@ref).
+
+# Inputs
+
+  - `mean_genfunc`: [`GenericFunction`](@ref) for computing the mean of the observations in the PCR function.
+  - `std_genfunc`: [`GenericFunction`](@ref) for computing the standard deviation of the observations in the PCR function.
+  - `pca_s_genfunc`: [`GenericFunction`](@ref) for standardising the data to prepare it for PCA.
+  - `pca_genfunc`: [`GenericFunction`](@ref) for standardising fitting the data to a PCA model.
+"""
 mutable struct PCROpt
     mean_genfunc::GenericFunction
     std_genfunc::GenericFunction
@@ -650,6 +713,25 @@ function PCROpt(;
     return PCROpt(mean_genfunc, std_genfunc, pca_s_genfunc, pca_genfunc)
 end
 
+"""
+```julia
+@kwdef mutable struct LoadingsOpt{T1 <: Real}
+    method::Symbol = :FReg
+    criterion::Symbol = :pval
+    threshold::T1 = 0.05
+    pcr_opt::PCROpt = PCROpt(;)
+end
+```
+
+Structure and keyword constructor for computing the loadings matrix in [`loadings_matrix`](@ref).
+
+# Inputs
+
+  - `method`: method from [`FSMethods`](@ref) for computing the loadings matrix.
+  - `criterion`: criterion from [`RegCriteria`](@ref) for feature selection.
+  - `threshold`: threshold value when `criterion == :pval`, values below this are considered insignificant.
+  - `pcr_opt`: options when `method == :PCR`.
+"""
 mutable struct LoadingsOpt{T1 <: Real}
     method::Symbol
     criterion::Symbol
