@@ -2122,6 +2122,12 @@ function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = Loadings
     return hcat(DataFrame(; ticker = names(y)), DataFrame(loadings, ["const"; features]))
 end
 
+"""
+```julia
+risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = FactorOpt(;),
+             cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;))
+```
+"""
 function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = FactorOpt(;),
                       cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;))
     B = factor_opt.B

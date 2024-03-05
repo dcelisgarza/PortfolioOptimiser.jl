@@ -419,7 +419,7 @@ const RegCriteria = (:pval, :aic, :aicc, :bic, :r2, :adjr2)
 FSMethods = (:FReg, :BReg, :PCR)
 ```
 
-Methods for feature selection when creating the loadings matrix.
+Methods for feature selection via regression when creating the loadings matrix.
 
   - `:FReg`: forward regression.
   - `:Breg`: backward regression.

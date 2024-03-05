@@ -41,7 +41,7 @@ Structure and keyword constructor for estimating covariance matrices.
 
   - `estimator`: abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator), enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl) when `method ∈ (:Full, :Semi)` from [`CovMethods`](@ref).
   - `target_ret`: target return for semi covariance estimation when `method == :Semi` from [`CovMethods`](@ref).
-  - `genfunc`: [`GenericFunction`](@ref) for computing the covariance matrix when `method ∈ (:Full, :Semi, :Custom_Func)` from [`CovMethods`](@ref).
+  - `genfunc`: generic function [`GenericFunction`](@ref) for computing the covariance matrix when `method ∈ (:Full, :Semi, :Custom_Func)` from [`CovMethods`](@ref).
   - `custom`: custom covariance matrix when `method == :Custom_Val` from [`CovMethods`](@ref).
 """
 mutable struct CovEstOpt
@@ -74,7 +74,7 @@ Structure and keyword constructor for fixing non-positive definite matrices.
 
   - `method`: method for fixing non-positive definite matrices from [`PosdefFixMethods`](@ref).
 $(_solver_desc("the `JuMP` model when `method == :PSD`.", "", "`MOI.PSDCone`"))
-  - `genfunc`: [`GenericFunction`](@ref) when `method == :Custom`, for fixing non-positive definite matrices.
+  - `genfunc`: generic function [`GenericFunction`](@ref) when `method == :Custom`, for fixing non-positive definite matrices.
 """
 mutable struct PosdefFixOpt
     method::Symbol
@@ -323,7 +323,7 @@ Structure and keyword constructor for computing expected returns vectors.
 
   - `target`: one of [`MuTargets`](@ref) for estimating the expected returns vector in [`mean_vec`](@ref).
   - `rf`: risk-free rate.
-  - `genfunc`: generic function for estimating the unadjusted expected returns vector.
+  - `genfunc`: generic function [`GenericFunction`](@ref) for estimating the unadjusted expected returns vector.
 
       + `method ∈ (:Default, :Custom_Func)`: return this value.
       + `method ∈ (:JS, :BS, :BOP, :CAPM)`: the value is used to compute the adjusted expected returns vector according to the method and target (if applicable) provided.
@@ -452,8 +452,8 @@ Structure and keyword constructor for estimating covariance matrices.
 
       + `bins_info isa Symbol`: bin width choice method must be one of [`BinMethods`](@ref).
       + `bins_info isa Integer`: the data is split into as many bins as specified.
-  - `cor_genfunc`: [`GenericFunction`](@ref) for computing the correlation matrix when `method ∈ (:Pearson, :Semi_Pearson, :Abs_Pearson, :Abs_Semi_Pearson, :Custom_Func)` from [`CorMethods`](@ref).
-  - `dist_genfunc`: [`GenericFunction`](@ref) for computing the distance matrix when `method ∈ (:Cov_to_Cor, :Custom_Func)` from [`CorMethods`](@ref).
+  - `cor_genfunc`: generic function [`GenericFunction`](@ref) for computing the correlation matrix when `method ∈ (:Pearson, :Semi_Pearson, :Abs_Pearson, :Abs_Semi_Pearson, :Custom_Func)` from [`CorMethods`](@ref).
+  - `dist_genfunc`: generic function [`GenericFunction`](@ref) for computing the distance matrix when `method ∈ (:Cov_to_Cor, :Custom_Func)` from [`CorMethods`](@ref).
   - `target_ret`: target return for semi covariance estimation when `method ∈ (:Semi_Pearson, :Abs_Semi_Pearson)` from [`CorMethods`](@ref).
   - `custom_cor`: custom correlation matrix function when `method == :Custom_Val` from [`CorMethods`](@ref).
   - `custom_dist`: custom distance matrix function when `method == :Custom_Val` from [`CorMethods`](@ref).
@@ -687,10 +687,10 @@ Structure and keyword constructor for the `:PCR` method from [`FSMethods`](@ref)
 
 # Inputs
 
-  - `mean_genfunc`: [`GenericFunction`](@ref) for computing the mean of the observations in the PCR function.
-  - `std_genfunc`: [`GenericFunction`](@ref) for computing the standard deviation of the observations in the PCR function.
-  - `pca_s_genfunc`: [`GenericFunction`](@ref) for standardising the data to prepare it for PCA.
-  - `pca_genfunc`: [`GenericFunction`](@ref) for standardising fitting the data to a PCA model.
+  - `mean_genfunc`: generic function [`GenericFunction`](@ref) for computing the mean of the observations in the PCR function.
+  - `std_genfunc`: generic function [`GenericFunction`](@ref) for computing the standard deviation of the observations in the PCR function.
+  - `pca_s_genfunc`: generic function [`GenericFunction`](@ref) for standardising the data to prepare it for PCA.
+  - `pca_genfunc`: generic function [`GenericFunction`](@ref) for standardising fitting the data to a PCA model.
 """
 mutable struct PCROpt
     mean_genfunc::GenericFunction
@@ -728,7 +728,7 @@ Structure and keyword constructor for computing the loadings matrix in [`loading
 # Inputs
 
   - `method`: method from [`FSMethods`](@ref) for computing the loadings matrix.
-  - `criterion`: criterion from [`RegCriteria`](@ref) for feature selection.
+  - `criterion`: regression criterion from [`RegCriteria`](@ref) for feature selection.
   - `threshold`: threshold value when `criterion == :pval`, values below this are considered insignificant.
   - `pcr_opt`: options when `method == :PCR`.
 """
@@ -753,6 +753,26 @@ function Base.setproperty!(obj::LoadingsOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```julia
+@kwdef mutable struct FactorOpt
+    B::Union{DataFrame, Nothing} = nothing
+    loadings_opt::LoadingsOpt = LoadingsOpt(;)
+    error::Bool = true
+    var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
+                                                   kwargs = (; dims = 1))
+end
+```
+
+Structure and keyword constructor for computing factor statistics in [`risk_factors`](@ref).
+
+# Input
+
+  - `B`: loadings matrix.
+  - `loadings_opt`: options for computing the loadings matrix.
+  - `error`: if `error == true`, account for the error between the asset returns and the regression with the factors.
+  - `var_genfunc`: generic function [`GenericFunction`](@ref) for computing the standard deviation of the error when `error == true`.
+"""
 mutable struct FactorOpt
     B::Union{DataFrame, Nothing}
     loadings_opt::LoadingsOpt
@@ -766,6 +786,39 @@ function FactorOpt(; B::Union{DataFrame, Nothing} = nothing,
     return FactorOpt(B, loadings_opt, error, var_genfunc)
 end
 
+"""
+```julia
+@kwdef mutable struct BLOpt{T1 <: Real}
+    method::Symbol = :B
+    constant::Bool = true
+    diagonal::Bool = true
+    eq::Bool = true
+    delta::Union{Nothing, <:Real} = 1.0
+    rf::T1 = 0.0
+    var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
+                                                   kwargs = (; dims = 1))
+    denoise::DenoiseOpt = DenoiseOpt(;)
+    posdef::PosdefFixOpt = PosdefFixOpt(;)
+    jlogo::Bool = false
+end
+```
+
+Structure and keyword constructor for computing Black-Litterman statistics in [`black_litterman_statistics`](@ref) and [`black_litterman_factor_satistics`](@ref).
+
+# Inputs
+
+  - `method`: method from [`BLFMMethods`](@ref) for choosing what model to use in [`black_litterman_statistics`](@ref).
+  - `constant`: flag to state whether or not the loadings matrix includes a constant column. This is set inside [`black_litterman_factor_satistics!`](@ref) to reflect the loadings matrix.
+  - `diagonal`: whether or not to add a diagonal term when `method == :B` when using [`black_litterman_factor_satistics!`](@ref).
+  - `eq`:
+  - `delta`:
+  - `rf`:
+  - `var_genfunc`:
+  - `kwargs`:
+  - `denoise`:
+  - `posdef`:
+  - `jlogo`:
+"""
 mutable struct BLOpt{T1 <: Real}
     method::Symbol
     constant::Bool
@@ -778,8 +831,8 @@ mutable struct BLOpt{T1 <: Real}
     posdef::PosdefFixOpt
     jlogo::Bool
 end
-function BLOpt(; method::Symbol = :B, constant::Bool = true, eq::Bool = true,
-               diagonal::Bool = true, delta::Real = 1.0, rf::Real = 0.0,
+function BLOpt(; method::Symbol = :B, constant::Bool = true, diagonal::Bool = true,
+               eq::Bool = true, delta::Real = 1.0, rf::Real = 0.0,
                var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
                                                               kwargs = (; dims = 1)),
                denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),

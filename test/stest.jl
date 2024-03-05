@@ -340,3 +340,28 @@ mu15n = portfolio.mu
 cov15n = portfolio.cov
 
 println("covt15n = reshape($(vec(cov15n)), $(size(cov15n)))")
+
+function f(rpe, warm)
+    rpe = rpe * 10
+
+    if warm == 1
+        rpew = 0.6 * rpe[1]
+        repsw = range(; start = 6, stop = 10)
+    elseif warm == 2
+        rpew = [0.5; 0.7] * rpe[1]
+        repsw = [range(; start = 6, stop = 10), range(; start = 4, stop = 6)]
+    elseif warm == 3
+        rpew = [0.45; 0.65; 0.85] * rpe[1]
+        repsw = [range(; start = 6, stop = 10), range(; start = 4, stop = 6),
+                 range(; start = 3, stop = 4)]
+    elseif warm == 4
+        rpew = [0.3; 0.5; 0.7; 0.9] * rpe[1]
+        repsw = [range(; start = 6, stop = 10), range(; start = 4, stop = 6),
+                 range(; start = 3, stop = 4), range(; start = 2, stop = 3)]
+    end
+
+    return rpew, repsw
+end
+
+r = range(; start = 7, stop = 8, length = 3)
+f(r, 1)
