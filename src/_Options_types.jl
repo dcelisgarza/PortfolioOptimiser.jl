@@ -429,7 +429,7 @@ end
                                 T3 <: AbstractMatrix{<:Real}, T4 <: AbstractMatrix{<:Real}}
     estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
     alpha::T1 = 0.05
-    bins_info::Union{Symbol, <:Integer} = bins_info::Union{Symbol, <:Integer} = :KN
+    bins_info::Union{Symbol, <:Integer} = :KN
     cor_genfunc::GenericFunction = GenericFunction(; func = StatsBase.cor)
     dist_genfunc::GenericFunction = GenericFunction(;
                                                     func = x -> sqrt.(clamp!((1 .- x) / 2,
@@ -803,21 +803,20 @@ end
 end
 ```
 
-Structure and keyword constructor for computing Black-Litterman statistics in [`black_litterman_statistics`](@ref) and [`black_litterman_factor_satistics`](@ref).
+Structure and keyword constructor for computing Black-Litterman statistics in [`black_litterman_statistics!`](@ref) and [`black_litterman_factor_satistics!`](@ref).
 
 # Inputs
 
-  - `method`: method from [`BLFMMethods`](@ref) for choosing what model to use in [`black_litterman_statistics`](@ref).
-  - `constant`: flag to state whether or not the loadings matrix includes a constant column. This is set inside [`black_litterman_factor_satistics!`](@ref) to reflect the loadings matrix.
-  - `diagonal`: whether or not to add a diagonal term when `method == :B` when using [`black_litterman_factor_satistics!`](@ref).
-  - `eq`:
-  - `delta`:
-  - `rf`:
-  - `var_genfunc`:
-  - `kwargs`:
-  - `denoise`:
-  - `posdef`:
-  - `jlogo`:
+  - `method`: method from [`BLFMMethods`](@ref) for choosing what model to use in [`black_litterman_statistics!`](@ref).
+  - `constant`: flag to state whether or not the loadings matrix includes a constant column. This is automatically set inside [`black_litterman_factor_satistics!`](@ref) to reflect the loadings matrix.
+  - `diagonal`: flag that decides what value ``\\mathbf{D}`` takes on when `method == :B`.
+  - `eq`: flag that decides what value ``\\bm{\\Pi}_{a}`` takes on when `method == :A`.
+  - `delta`: value of delta for computing ``\\bm{\\Pi}_{a}``, only used when `method == :A` and `eq == true`.
+  - `rf`: risk free rate.
+  - `var_genfunc`: generic function [`GenericFunction`](@ref) for computing ``\\mathbf{D}``, only used when `method == :B` and `diagonal == true`.
+  - `denoise`: denoising options [`DenoiseOpt`](@ref).
+  - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
+  - `jlogo`: if `true` uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
 """
 mutable struct BLOpt{T1 <: Real}
     method::Symbol
@@ -849,6 +848,29 @@ function Base.setproperty!(obj::BLOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```julia
+@kwdef mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
+    linkage::Symbol = :single
+    branchorder::Symbol = :optimal
+    dbht_method::Symbol = :Unique
+    max_k::T1 = 0
+    k::T2 = 0
+    genfunc::GenericFunction = GenericFunction(; func = x -> 2 .- (x .^ 2) / 2)
+end
+```
+
+Structure and keyword constructor for clustering options.
+
+# Inputs
+
+  - `linkage`: clustering linkage method from [`LinkageMethods`](@ref).
+  - `branchorder`: branch order for ordering leaves and branches from [hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
+  - `dbht_method`: root finding method from [`DBHTRootMethods`](@ref).
+  - `max_k`: maximum number of clusters to cut the sample into. If `max_k == 0` this is computed to be ``\\left\\lceil \\sqrt{N} \\right\\rceil`` where ``N`` is the number of samples by [`_two_diff_gap_stat`](@ref).
+  - `k`: number of clusters to cut the sample into. If `k == 0` this is set automatically by [`_two_diff_gap_stat`](@ref).
+  - `genfunc`: function for computing a non-negative distance matrix from the correlation matrix when `method == :DBHT` as per [`DBHTs`](@ref).
+"""
 mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
     linkage::Symbol
     branchorder::Symbol
@@ -861,7 +883,7 @@ function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
                     dbht_method::Symbol = :Unique, max_k::Integer = 0, k::Integer = 0,
                     genfunc::GenericFunction = GenericFunction(;
                                                                func = x -> 2 .- (x .^ 2) / 2))
-    @smart_assert(linkage ∈ LinkageTypes)
+    @smart_assert(linkage ∈ LinkageMethods)
     @smart_assert(branchorder ∈ BranchOrderTypes)
     @smart_assert(dbht_method ∈ DBHTRootMethods)
 
@@ -870,7 +892,7 @@ function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
 end
 function Base.setproperty!(obj::ClusterOpt, sym::Symbol, val)
     if sym == :linkage
-        @smart_assert(val ∈ LinkageTypes)
+        @smart_assert(val ∈ LinkageMethods)
     elseif sym == :branchorder
         @smart_assert(val ∈ BranchOrderTypes)
     elseif sym == :dbht_method

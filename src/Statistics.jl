@@ -2224,9 +2224,6 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
     diagonal = bl_opt.diagonal
     delta = bl_opt.delta
     rf = bl_opt.rf
-    var_args = bl_opt.var_genfunc.args
-    var_func = bl_opt.var_genfunc.func
-    var_kwargs = bl_opt.var_genfunc.kwargs
 
     mu_f .-= rf
 
@@ -2240,6 +2237,9 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
     sigma = B * sigma_f * transpose(B)
 
     if diagonal
+        var_args = bl_opt.var_genfunc.args
+        var_func = bl_opt.var_genfunc.func
+        var_kwargs = bl_opt.var_genfunc.kwargs
         D = returns - F * transpose(B)
         D = Diagonal(vec(var_func(D, var_args...; var_kwargs...)))
         sigma .+= D

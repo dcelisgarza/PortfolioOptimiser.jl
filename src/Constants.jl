@@ -810,15 +810,15 @@ const BLHist = (1, 2, 3)
 
 """
 ```julia
-LinkageTypes = (:single, :complete, :average, :ward, :ward_presquared, :DBHT)
+LinkageMethods = (:single, :complete, :average, :ward, :ward_presquared, :DBHT)
 ```
 
-Linkage types available when optimising a [`HCPortfolio`](@ref).
+Linkage methods available when optimising a [`HCPortfolio`](@ref).
 
   - `:DBHT`: Direct Bubble Hierarchical Tree clustering, [`DBHTs`](@ref).
-  - The rest are linkage types supported by [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
+  - The rest are linkage methods supported by [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
 """
-const LinkageTypes = (:single, :complete, :average, :ward_presquared, :ward, :DBHT)
+const LinkageMethods = (:single, :complete, :average, :ward_presquared, :ward, :DBHT)
 
 """
 ```julia

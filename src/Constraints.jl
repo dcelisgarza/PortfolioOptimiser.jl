@@ -601,14 +601,20 @@ end
 function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
                            method::Symbol = :MST, steps::Integer = 1,
                            tree::GenericFunction = GenericFunction(;
-                                                                   func = Graphs.kruskal_mst))
+                                                                   func = Graphs.kruskal_mst),
+                           tmfg_func::GenericFunction = GenericFunction(;
+                                                                        func = x -> 2 .-
+                                                                                    (x .^ 2) /
+                                                                                    2))
     @smart_assert(method ∈ GraphMethods)
 
     corr, dist = cor_dist_mtx(returns, opt)
     A = if method == :TMFG
-        cors = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2,
-                :SB0, :SB1, :Gerber_SB0, :Gerber_SB1)
-        corr = opt.method ∈ cors ? 1 .- dist .^ 2 : corr
+        func = tmfg_func.func
+        args = tmfg_func.args
+        kwargs = tmfg_func.kwargs
+        corr = func(dist, args...; kwargs...)
+
         Rpm = PMFG_T2s(corr)[1]
         adjacency_matrix(SimpleGraph(Rpm))
     else

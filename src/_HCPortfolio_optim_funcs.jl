@@ -78,6 +78,11 @@ function _opt_w(portfolio, assets, returns, imu, icov, opt;
     return w, port.fail, success
 end
 
+"""
+```julia
+_two_diff_gap_stat(dist, clustering; max_k = ceil(Int, sqrt(size(dist, 1))))
+```
+"""
 function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 1))))
     N = size(dist, 1)
     cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]

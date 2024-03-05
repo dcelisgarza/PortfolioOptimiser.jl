@@ -727,7 +727,7 @@ function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
                        theme_d = :Spectral, theme_h = :Spectral, theme_h_kwargs = (;),
                        kwargs_d1 = (;), kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;),
                        kwargs = (;), cluster_func = x -> 2 .- (x .^ 2) / 2)
-    @smart_assert(linkage ∈ LinkageTypes)
+    @smart_assert(linkage ∈ LinkageMethods)
 
     N = length(assets)
     cor_method = cor_opt.method
