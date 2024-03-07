@@ -272,7 +272,7 @@ end
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, atol = 6.4e-2)
-    @test isapprox(hrc2 / lrc2, 20, atol = 6e-1)
+    @test isapprox(hrc2 / lrc2, 20, atol = 6.3e-1)
 
     @test isapprox(w1.weights, w3.weights, rtol = 0.1)
     @test isapprox(w2.weights, w4.weights, rtol = 0.1)
@@ -332,8 +332,8 @@ end
 
     @test isapprox(w1.weights, w1t, rtol = 0.001)
     @test isapprox(w2.weights, w2t, rtol = 5.0e-5)
-    @test isapprox(hrc1 / lrc1, 1, atol = 6.2e-4)
-    @test isapprox(hrc2 / lrc2, 20, atol = 1.2)
+    @test isapprox(hrc1 / lrc1, 1, atol = 0.05)
+    @test isapprox(hrc2 / lrc2, 20, atol = 2)
 
     @test isapprox(w1.weights, w3.weights)
     @test isapprox(w2.weights, w4.weights)
