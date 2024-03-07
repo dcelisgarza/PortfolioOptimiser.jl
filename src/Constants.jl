@@ -371,6 +371,8 @@ Methods for estimating the covariance matrix in [`covar_mtx`](@ref).
 const CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB0,
                     :Gerber_SB1, :Custom_Func, :Custom_Val)
 
+const kMethods = (:Normal, :General)
+
 """
 ```julia
 PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
@@ -519,7 +521,7 @@ const ValidTermination = (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED,
 
 """
 ```julia
-PortClasses = (:Classic, :FM, :BL, :BLFM)
+PortClasses = (:Classic, :FM, :BL, :BLFM, :FC)
 ```
 
 Available choicees of summary parameters ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` [`Portfolio`](@ref).
@@ -528,8 +530,9 @@ Available choicees of summary parameters ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` [`
   - `:FM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor model computed by [`factor_statistics!`](@ref).
   - `:BL`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the Black-Litterman model computed by [`black_litterman_statistics!`](@ref).
   - `:BLFM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor Black-Litterman model computed by [`black_litterman_factor_satistics!`](@ref). This model has two versions defined in [`BLFMMethods`](@ref).
+  - `:FC`: when optimising with this option, the `:RP` [`PortType`](@ref) takes the risk contribution based on the factors.
 """
-const PortClasses = (:Classic, :FM, :BL, :BLFM)
+const PortClasses = (:Classic, :FM, :BL, :BLFM, :FC)
 
 """
 ```julia

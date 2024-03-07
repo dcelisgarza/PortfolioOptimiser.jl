@@ -1310,7 +1310,8 @@ function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbo
                            beta_i::Real = alpha_i, beta::Real = alpha,
                            b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
                            owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                           solvers::Union{<:AbstractDict, Nothing} = nothing)
+                           solvers::Union{<:AbstractDict, Nothing} = nothing,
+                           marginal::Bool = false)
     ew = eltype(w)
     rc = zeros(ew, length(w))
     w1 = zeros(ew, length(w))
@@ -1328,7 +1329,11 @@ function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbo
         r1, r2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
                           beta, a_sim, beta_i, b_sim, owa_w, di)
 
-        rci = (r1 - r2) / (2 * di) * w[i]
+        rci = if !marginal
+            (r1 - r2) / (2 * di) * w[i]
+        else
+            (r1 - r2) / (2 * di)
+        end
         rc[i] = rci
     end
 
@@ -1338,13 +1343,80 @@ end
 function risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
                            type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                            rm::Symbol = :SD, rf::Real = 0.0,
-                           owa_w::AbstractVector{<:Real} = portfolio.owa_w)
+                           owa_w::AbstractVector{<:Real} = portfolio.owa_w,
+                           marginal::Bool = false)
     return risk_contribution(portfolio.optimal[type].weights, portfolio.returns; rm = rm,
                              rf = rf, sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
                              alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                              beta_i = portfolio.beta_i, beta = portfolio.beta,
                              b_sim = portfolio.b_sim, di = di, kappa = portfolio.kappa,
-                             owa_w = owa_w, solvers = portfolio.solvers)
+                             owa_w = owa_w, solvers = portfolio.solvers,
+                             marginal = marginal)
+end
+
+function factor_risk_contribution(w::AbstractVector, assets::AbstractVector,
+                                  returns::AbstractMatrix, f_assets::AbstractVector,
+                                  factors::AbstractMatrix, B::DataFrame = DataFrame();
+                                  loadings_opt::LoadingsOpt = LoadingsOpt(;),
+                                  rm::Symbol = :SD, rf::Real = 0.0,
+                                  sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                  alpha_i::Real = 0.0001, alpha::Real = 0.05,
+                                  a_sim::Int = 100, beta_i::Real = alpha_i,
+                                  beta::Real = alpha, b_sim::Integer = a_sim,
+                                  di::Real = 1e-6, kappa::Real = 0.3,
+                                  owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                                  solvers::Union{<:AbstractDict, Nothing} = nothing)
+    marginal_risk = risk_contribution(w, returns; rm = rm, rf = rf, sigma = sigma,
+                                      alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
+                                      beta_i = beta_i, beta = beta, b_sim = b_sim, di = di,
+                                      kappa = kappa, owa_w = owa_w, solvers = solvers,
+                                      marginal = true)
+
+    if isempty(B)
+        B = loadings_matrix(DataFrame(factors, f_assets), DataFrame(returns, assets),
+                            loadings_opt)
+    end
+    namesB = names(B)
+
+    B = Matrix(B[!, setdiff(namesB, ("ticker", "const"))])
+
+    if loadings_opt.method == :PCR
+        pcr_opt = loadings_opt.pcr_opt
+
+        std_genfunc = pcr_opt.std_genfunc
+        pca_s_genfunc = pcr_opt.pca_s_genfunc
+        pca_genfunc = pcr_opt.pca_genfunc
+
+        X = transpose(factors)
+
+        pca_s_func = pca_s_genfunc.func
+        pca_s_args = pca_s_genfunc.args
+        pca_s_kwargs = pca_s_genfunc.kwargs
+        X_std = pca_s_func(pca_s_args..., X; pca_s_kwargs...)
+
+        pca_func = pca_genfunc.func
+        pca_args = pca_genfunc.args
+        pca_kwargs = pca_genfunc.kwargs
+        model = pca_func(pca_args..., X_std; pca_kwargs...)
+        Vp = projection(model)
+
+        std_func = std_genfunc.func
+        std_args = std_genfunc.args
+        std_kwargs = std_genfunc.kwargs
+        sdev = vec(std_func(X, std_args...; std_kwargs...))
+
+        B = transpose(pinv(Vp) * transpose(B .* transpose(sdev)))
+    end
+
+    b1 = pinv(transpose(B))
+    b2 = pinv(nullspace(transpose(B)))
+    b3 = pinv(transpose(b2))
+
+    rc_f = (transpose(B) * w) .* (transpose(b1) * marginal_risk)
+    rc_of = sum((b2 * w) .* (b3 * marginal_risk))
+    rc_f = [rc_f; rc_of]
+
+    return rc_f
 end
 
 function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMatrix;
@@ -1389,4 +1461,4 @@ end
 export Variance, SD, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR, RRM, RVaR, DaR_abs,
        MDD_abs, ADD_abs, CDaR_abs, UCI_abs, EDaR_abs, RDaR_abs, DaR_rel, MDD_rel, ADD_rel,
        CDaR_rel, UCI_rel, EDaR_rel, RDaR_rel, Kurt, SKurt, GMD, RG, RCVaR, TG, RTG, OWA,
-       calc_risk, risk_contribution, sharpe_ratio
+       calc_risk, risk_contribution, sharpe_ratio, factor_risk_contribution

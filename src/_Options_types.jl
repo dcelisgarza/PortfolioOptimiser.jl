@@ -600,6 +600,7 @@ end
                             T6 <: Integer}
     calc_box::Bool = true
     calc_ellipse::Bool = true
+    diagonal::Bool = false
     box::Symbol = :Stationary
     ellipse::Symbol = :Stationary
     dcov::T1 = 0.1
@@ -619,6 +620,7 @@ Structure and keyword constructor for computing worst case statistics.
 
   - `calc_box`: whether to compute box sets.
   - `calc_ellipse`: whether to compute elliptical sets.
+  - `diagonal`: whether to consider only the diagonal of the covariance matrices of estimation errors.
   - `box`: method from [`BoxMethods`](@ref) for computing box sets.
   - `ellipse`: method from [`EllipseMethods`](@ref) for computing elliptical sets.
   - `dcov`: when `box == :Delta`, the percentage of the covariance matrix that parametrises its box set.
@@ -633,8 +635,11 @@ Structure and keyword constructor for computing worst case statistics.
 mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <: Integer}
     calc_box::Bool
     calc_ellipse::Bool
+    diagonal::Bool
     box::Symbol
     ellipse::Symbol
+    k_mu_method::Union{Symbol, <:Real}
+    k_sigma_method::Union{Symbol, <:Real}
     dcov::T1
     dmu::T2
     q::T3
@@ -644,24 +649,37 @@ mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <
     block_size::T6
     posdef::PosdefFixOpt
 end
-function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true,
-               box::Symbol = :Stationary, ellipse::Symbol = :Stationary, dcov::Real = 0.1,
+function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true, diagonal::Bool = false,
+               box::Symbol = :Stationary, ellipse::Symbol = :Stationary,
+               k_mu_method::Union{Symbol, <:Real} = :Normal,
+               k_sigma_method::Union{Symbol, <:Real} = :Normal, dcov::Real = 0.1,
                dmu::Real = 0.1, q::Real = 0.05, rng = Random.default_rng(),
                seed::Union{<:Integer, Nothing} = nothing, n_sim::Integer = 3_000,
                block_size::Integer = 3, posdef::PosdefFixOpt = PosdefFixOpt(;))
     @smart_assert(box ∈ BoxMethods)
     @smart_assert(ellipse ∈ EllipseMethods)
+    if isa(k_mu_method, Symbol)
+        @smart_assert(k_mu_method ∈ kMethods)
+    end
+    if isa(k_sigma_method, Symbol)
+        @smart_assert(k_sigma_method ∈ kMethods)
+    end
     @smart_assert(zero(q) < q < one(q))
 
     return WCOpt{typeof(dcov), typeof(dmu), typeof(q), typeof(rng), typeof(n_sim),
-                 typeof(block_size)}(calc_box, calc_ellipse, box, ellipse, dcov, dmu, q,
-                                     rng, seed, n_sim, block_size, posdef)
+                 typeof(block_size)}(calc_box, calc_ellipse, diagonal, box, ellipse,
+                                     k_mu_method, k_sigma_method, dcov, dmu, q, rng, seed,
+                                     n_sim, block_size, posdef)
 end
 function Base.setproperty!(obj::WCOpt, sym::Symbol, val)
     if sym == :box
         @smart_assert(val ∈ BoxMethods)
     elseif sym == :ellipse
         @smart_assert(val ∈ EllipseMethods)
+    elseif sym ∈ (:k_mu_method, :k_sigma_method)
+        if isa(val, Symbol)
+            @smart_assert(val ∈ kMethods)
+        end
     elseif sym == :q
         @smart_assert(zero(val) < val < one(val))
     end

@@ -7,12 +7,39 @@ prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestam
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors,
+                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                              :params => Dict("verbose" => false,
+                                                                              "max_step_fraction" => 0.75)),
+                                            :COSMO => Dict(:solver => COSMO.Optimizer,
+                                                           :params => Dict("verbose" => false))))
 
-println(cov_f17)
-mu_f17 = portfolio.mu_f
-cov_fm17 = portfolio.cov_fm
-mu_fm17 = portfolio.mu_fm
+loadings_opt = LoadingsOpt(;)
+factor_opt = FactorOpt(; loadings_opt = loadings_opt)
+posdef = PosdefFixOpt(; method = :Nearest)
+cov_f_opt = CovOpt(; posdef = posdef)
+cov_fm_opt = CovOpt(; posdef = posdef)
+
+asset_statistics!(portfolio; calc_kurt = false)
+loadings_opt.method = :PCR
+factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                   factor_opt = factor_opt)
+
+optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+
+test = factor_risk_contribution(portfolio.optimal[:Trad].weights, portfolio.assets,
+                                portfolio.returns, portfolio.f_assets, portfolio.f_returns,
+                                DataFrame(); loadings_opt = loadings_opt, rm = :SD,
+                                rf = 0.0, sigma = portfolio.cov,
+                                solvers = portfolio.solvers)
+
+loadings_opt.method = :PCR
+loadings_opt.pcr_opt.pca_genfunc.kwargs = (; pratio = 0.99)
+test = factor_risk_contribution(portfolio.optimal[:Trad].weights, portfolio.assets,
+                                portfolio.returns, portfolio.f_assets, portfolio.f_returns,
+                                DataFrame(); loadings_opt = loadings_opt, rm = :SD,
+                                rf = 0.0, sigma = portfolio.cov,
+                                solvers = portfolio.solvers)
 
 #################
 

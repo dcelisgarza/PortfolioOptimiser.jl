@@ -843,13 +843,69 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
     return nothing
 end
 
-function _rp_setup(portfolio, N)
+function _rp_setup(portfolio, N, class)
     model = portfolio.model
-    rb = portfolio.risk_budget
-    @variable(model, log_w[1:N])
-    @constraint(model, dot(rb, log_w) >= 1)
-    @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] ∈ MOI.ExponentialCone())
-    @constraint(model, model[:w] .>= 0)
+    if class != :FC
+        rb = portfolio.risk_budget
+        @variable(model, log_w[1:N])
+        @constraint(model, dot(rb, log_w) >= 1)
+        @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] ∈ MOI.ExponentialCone())
+        @constraint(model, model[:w] .>= 0)
+    else
+        B = portfolio.loadings
+        namesB = names(B)
+        B = Matrix(B[!, setdiff(namesB, ("ticker", "const"))])
+
+        loadings_opt = portfolio.loadings_opt
+        if loadings_opt.method == :PCR
+            pcr_opt = loadings_opt.pcr_opt
+
+            std_genfunc = pcr_opt.std_genfunc
+            pca_s_genfunc = pcr_opt.pca_s_genfunc
+            pca_genfunc = pcr_opt.pca_genfunc
+
+            X = transpose(portfolio.f_returns)
+
+            pca_s_func = pca_s_genfunc.func
+            pca_s_args = pca_s_genfunc.args
+            pca_s_kwargs = pca_s_genfunc.kwargs
+            X_std = pca_s_func(pca_s_args..., X; pca_s_kwargs...)
+
+            pca_func = pca_genfunc.func
+            pca_args = pca_genfunc.args
+            pca_kwargs = pca_genfunc.kwargs
+            pca_model = pca_func(pca_args..., X_std; pca_kwargs...)
+            Vp = projection(pca_model)
+
+            std_func = std_genfunc.func
+            std_args = std_genfunc.args
+            std_kwargs = std_genfunc.kwargs
+            sdev = vec(std_func(X, std_args...; std_kwargs...))
+
+            B = transpose(pinv(Vp) * transpose(B .* transpose(sdev)))
+        end
+
+        b1 = pinv(transpose(B))
+        b2 = pinv(nullspace(transpose(B)))
+        N_f = size(b1, 2)
+
+        rb = portfolio.f_risk_budget
+        if isempty(rb) || length(rb) != N_f
+            rb = portfolio.f_risk_budget = fill(1 / N_f, N_f)
+        end
+
+        @variable(model, w1[1:N_f])
+        @variable(model, w2[1:(N - N_f)])
+        delete(model, model[:w])
+        unregister(model, :w)
+        @expression(model, w, b1 * w1 + transpose(b2) * w2)
+
+        @variable(model, log_w[1:N_f])
+        @constraint(model, dot(rb, log_w) >= 1)
+        @constraint(model, [i = 1:N_f],
+                    [log_w[i], 1, model[:w1][i]] ∈ MOI.ExponentialCone())
+    end
+
     @constraint(model, sum(model[:w]) == model[:k])
 
     return nothing
@@ -1376,7 +1432,7 @@ function _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l
     return nothing
 end
 
-function _optimise_portfolio(portfolio, type, obj, near_opt = false)
+function _optimise_portfolio(portfolio, class, type, obj, near_opt = false)
     solvers = portfolio.solvers
     model = portfolio.model
 
@@ -1438,7 +1494,18 @@ function _optimise_portfolio(portfolio, type, obj, near_opt = false)
                 sum_w = sum_w > eps() ? sum_w : 1
                 weights .= abs.(weights) / sum_w * sum_short_long
             end
-        elseif type == :RP || type == :RRP
+        elseif type == :RP
+            weights .= value.(model[:w])
+            if class != :FC
+                sum_w = sum(abs.(weights))
+                sum_w = sum_w > eps() ? sum_w : 1
+                weights .= abs.(weights) / sum_w
+            else
+                sum_w = value(model[:k])
+                sum_w = sum_w > eps() ? sum_w : 1
+                weights .= weights / sum_w
+            end
+        elseif type == :RRP
             weights .= value.(model[:w])
             sum_w = sum(abs.(weights))
             sum_w = sum_w > eps() ? sum_w : 1
@@ -1458,7 +1525,7 @@ function _optimise_portfolio(portfolio, type, obj, near_opt = false)
     return term_status, solvers_tried
 end
 
-function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj,
+function _finalise_portfolio(portfolio, class, returns, N, solvers_tried, type, rm, obj,
                              near_opt = false)
     model = portfolio.model
 
@@ -1495,7 +1562,18 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
             sum_w = sum_w > eps() ? sum_w : 1
             weights .= abs.(weights) / sum_w * sum_short_long
         end
-    elseif type == :RP || type == :RRP
+    elseif type == :RP
+        weights .= value.(model[:w])
+        if class != :FC
+            sum_w = sum(abs.(weights))
+            sum_w = sum_w > eps() ? sum_w : 1
+            weights .= abs.(weights) / sum_w
+        else
+            sum_w = value(model[:k])
+            sum_w = sum_w > eps() ? sum_w : 1
+            weights .= weights / sum_w
+        end
+    elseif type == :RRP
         weights .= value.(model[:w])
         sum_w = sum(abs.(weights))
         sum_w = sum_w > eps() ? sum_w : 1
@@ -1513,8 +1591,8 @@ function _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj
     return portfolio.optimal[type]
 end
 
-function _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
-                                     type, rm, obj, near_opt = false)
+function _handle_errors_and_finalise(portfolio, class, term_status, returns, N,
+                                     solvers_tried, type, rm, obj, near_opt = false)
     model = portfolio.model
 
     retval = if term_status ∉ ValidTermination ||
@@ -1529,7 +1607,8 @@ function _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers
         end
         portfolio.optimal[type] = DataFrame()
     else
-        _finalise_portfolio(portfolio, returns, N, solvers_tried, type, rm, obj, near_opt)
+        _finalise_portfolio(portfolio, class, returns, N, solvers_tried, type, rm, obj,
+                            near_opt)
     end
 
     return retval
@@ -1555,7 +1634,7 @@ function _setup_model_class(portfolio, class, hist)
         @smart_assert(hist ∈ BLHist)
     end
 
-    if class == :Classic
+    if class ∈ (:Classic, :FC)
         mu = portfolio.mu
         sigma = portfolio.cov
         returns = portfolio.returns
@@ -1597,7 +1676,7 @@ function _setup_model_class(portfolio, class, hist)
     return mu, sigma, returns
 end
 
-function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, T, N, opt)
+function _near_optimal_centering(portfolio, class, mu, returns, sigma, w_opt, T, N, opt)
     type = opt.type
     rm = opt.rm
     obj = opt.obj
@@ -1663,9 +1742,9 @@ function _near_optimal_centering(portfolio, mu, returns, sigma, w_opt, T, N, opt
     @expression(model, near_opt_risk, log_ret + log_risk + neg_sum_log_ws)
     @objective(model, Min, near_opt_risk)
 
-    term_status, solvers_tried = _optimise_portfolio(portfolio, type, obj, true)
-    retval = _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
-                                         type, rm, obj, true)
+    term_status, solvers_tried = _optimise_portfolio(portfolio, class, type, obj, true)
+    retval = _handle_errors_and_finalise(portfolio, class, term_status, returns, N,
+                                         solvers_tried, type, rm, obj, true)
 
     return retval
 end
@@ -1737,7 +1816,7 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
         _setup_trad_wc_constraints(portfolio, obj, T, N, :Trad, class, kelly, l, returns)
     elseif type == :RP
         _setup_risk_budget(portfolio)
-        _rp_setup(portfolio, N)
+        _rp_setup(portfolio, N, class)
         _risk_setup(portfolio, :RP, rm, kelly, obj, rf, T, N, mu, returns, sigma, kurtosis,
                     skurtosis, network_method, sd_cone)
         _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
@@ -1755,12 +1834,13 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
 
     _setup_linear_constraints(portfolio, obj, type)
 
-    term_status, solvers_tried = _optimise_portfolio(portfolio, type, obj)
-    retval = _handle_errors_and_finalise(portfolio, term_status, returns, N, solvers_tried,
-                                         type, rm, obj)
+    term_status, solvers_tried = _optimise_portfolio(portfolio, class, type, obj)
+    retval = _handle_errors_and_finalise(portfolio, class, term_status, returns, N,
+                                         solvers_tried, type, rm, obj)
 
     if near_opt && type ∈ (:Trad, :WC)
-        retval = _near_optimal_centering(portfolio, mu, returns, sigma, retval, T, N, opt)
+        retval = _near_optimal_centering(portfolio, class, mu, returns, sigma, retval, T, N,
+                                         opt)
     end
 
     return retval

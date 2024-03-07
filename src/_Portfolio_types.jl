@@ -14,7 +14,7 @@ mutable struct Portfolio{
     ast,    dat,    r,    s,    us,    ul,    ssl,    mnea,    mna,    mnaf,    tfa,    tfdat,    tretf,    l,    # Risk parameters
     msvt,    lpmt,    ai,    a,    as,    bi,    b,    bs,    k,    mnak,    # Benchmark constraints
     to,    tobw,    kte,    te,    rbi,    bw,    blbw,    # Risk and return constraints
-    ami,    bvi,    rbv,    ler,    ud,    umad,    usd,    ucvar,    uwr,    uflpm,    uslpm,    umd,    uad,    ucdar,    uuci,    uevar,    uedar,    urvar,    urdar,    uk,    usk,    ugmd,    ur,    urcvar,    utg,    urtg,    uowa,    # Cusom OWA weights
+    ami,    bvi,    rbv, frbv,    ler,    ud,    umad,    usd,    ucvar,    uwr,    uflpm,    uslpm,    umd,    uad,    ucdar,    uuci,    uevar,    uedar,    urvar,    urdar,    uk,    usk,    ugmd,    ur,    urcvar,    utg,    urtg,    uowa,    # Cusom OWA weights
     wowa,    # Optimisation model inputs
     tmu,    tcov,    tkurt,    tskurt,    tl2,    ts2,    tmuf,    tcovf,    tmufm,    tcovfm,    tmubl,    tcovbl,    tmublf,    tcovblf,    trfm,    tcovl,    tcovu,    tcovmu,    tcovs,    tdmu,    tkmu,    tks,    topt,    tz,    tlim,    tfront,    tsolv,    tf,    toptpar,    tmod,    # Allocation
     tlp,    taopt,    tasolv,    taoptpar,    taf,    tamod,} <: AbstractPortfolio
@@ -32,6 +32,7 @@ mutable struct Portfolio{
     f_timestamps::tfdat
     f_returns::tretf
     loadings::l
+    loadings_opt::Union{Nothing, LoadingsOpt}
     # Risk parameters
     msv_target::msvt
     lpm_target::lpmt
@@ -55,6 +56,7 @@ mutable struct Portfolio{
     a_mtx_ineq::ami
     b_vec_ineq::bvi
     risk_budget::rbv
+    f_risk_budget::frbv
     # Bounds constraints
     mu_l::ler
     sd_u::ud
@@ -167,6 +169,7 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`]() an
 - `a_mtx_ineq`: `C×Na` A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints, and $(_ndef(:a2)).
 - `b_vec_ineq`: `C×1` B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints.
 - `risk_budget`: `Na×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:a2)).
+- `f_risk_budget`: `Nf×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:f2)). 
 ## Bounds constraints
 The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`]() in lower case, they also bring the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
 - `mu_l`: mean expected return.
@@ -239,13 +242,13 @@ $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer pro
 """
 mutable struct Portfolio{
                          # Portfolio characteristics
-                         ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tretf, l,
+                         ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tretf, l, lo,
                          # Risk parameters
                          msvt, lpmt, ai, a, as, bi, b, bs, k, mnak,
                          # Benchmark constraints
                          rb, rbw, to, tobw, kte, te, rbi, bw, blbw,
                          # Risk and return constraints
-                         ami, bvi, rbv,
+                         ami, bvi, rbv, frbv,
                          # Network constraints
                          nm, nsdp, np, ni, nif, amc, bvc,
                          # Bounds constraints
@@ -274,6 +277,7 @@ mutable struct Portfolio{
     f_timestamps::tfdat
     f_returns::tretf
     loadings::l
+    loadings_opt::lo
     # Risk parameters
     msv_target::msvt
     lpm_target::lpmt
@@ -299,6 +303,7 @@ mutable struct Portfolio{
     a_mtx_ineq::ami
     b_vec_ineq::bvi
     risk_budget::rbv
+    f_risk_budget::frbv
     # Network constraints
     network_method::nm
     network_sdp::nsdp
@@ -514,23 +519,21 @@ $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer pro
 """
 function Portfolio(;
                    # Portfolio characteristics
-                   prices::TimeArray                    = TimeArray(TimeType[], []),
-                   returns::DataFrame                   = DataFrame(),
-                   ret::AbstractMatrix{<:Real}          = Matrix{Float64}(undef, 0, 0),
-                   timestamps::AbstractVector           = Vector{Date}(undef, 0),
-                   assets::AbstractVector               = Vector{String}(undef, 0),
-                   short::Bool                          = false,
-                   short_u::Real                        = 0.2,
-                   long_u::Real                         = 1.0,
-                   min_number_effective_assets::Integer = 0,
-                   max_number_assets::Integer           = 0,
-                   max_number_assets_factor::Real       = 100_000.0,
-                   f_prices::TimeArray                  = TimeArray(TimeType[], []),
-                   f_returns::DataFrame                 = DataFrame(),
-                   f_ret::AbstractMatrix{<:Real}        = Matrix{Float64}(undef, 0, 0),
-                   f_timestamps::AbstractVector         = Vector{Date}(undef, 0),
-                   f_assets::AbstractVector             = Vector{String}(undef, 0),
-                   loadings::DataFrame                  = DataFrame(),
+                   prices::TimeArray = TimeArray(TimeType[], []),
+                   returns::DataFrame = DataFrame(),
+                   ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                   timestamps::AbstractVector = Vector{Date}(undef, 0),
+                   assets::AbstractVector = Vector{String}(undef, 0), short::Bool = false,
+                   short_u::Real = 0.2, long_u::Real = 1.0,
+                   min_number_effective_assets::Integer = 0, max_number_assets::Integer = 0,
+                   max_number_assets_factor::Real = 100_000.0,
+                   f_prices::TimeArray = TimeArray(TimeType[], []),
+                   f_returns::DataFrame = DataFrame(),
+                   f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                   f_timestamps::AbstractVector = Vector{Date}(undef, 0),
+                   f_assets::AbstractVector = Vector{String}(undef, 0),
+                   loadings::DataFrame = DataFrame(),
+                   loadings_opt::Union{LoadingsOpt, Nothing} = nothing,
                    # Risk parameters
                    msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
                    lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
@@ -552,9 +555,10 @@ function Portfolio(;
                    tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    # Risk and return constraints
-                   a_mtx_ineq::AbstractMatrix{<:Real}  = Matrix{Float64}(undef, 0, 0),
-                   b_vec_ineq::AbstractVector{<:Real}  = Vector{Float64}(undef, 0),
+                   a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                   b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                   f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    # Network constraints
                    network_method::Symbol = :None,
                    network_sdp::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -591,8 +595,8 @@ function Portfolio(;
                    # Inputs of Worst Case Optimization Models
                    cov_l::AbstractMatrix{<:Real}     = Matrix{Float64}(undef, 0, 0),
                    cov_u::AbstractMatrix{<:Real}     = Matrix{Float64}(undef, 0, 0),
-                   cov_mu::AbstractMatrix{<:Real}    = Diagonal{Float64}(undef, 0),
-                   cov_sigma::AbstractMatrix{<:Real} = Diagonal{Float64}(undef, 0),
+                   cov_mu::AbstractMatrix{<:Real}    = Matrix{Float64}(undef, 0, 0),
+                   cov_sigma::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    d_mu::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
                    k_mu::Real                        = Inf,
                    k_sigma::Real                     = Inf,
@@ -766,7 +770,7 @@ function Portfolio(;
                      typeof(short_u), typeof(long_u), typeof(min_number_effective_assets),
                      typeof(max_number_assets), typeof(max_number_assets_factor),
                      typeof(f_assets), typeof(f_timestamps), typeof(f_returns),
-                     typeof(loadings),
+                     typeof(loadings), Union{LoadingsOpt, Nothing},
                      # Risk parameters
                      Union{<:Real, AbstractVector{<:Real}},
                      Union{<:Real, AbstractVector{<:Real}}, typeof(alpha_i), typeof(alpha),
@@ -780,6 +784,7 @@ function Portfolio(;
                      typeof(bl_bench_weights),
                      # Risk and return constraints
                      typeof(a_mtx_ineq), typeof(b_vec_ineq), typeof(risk_budget),
+                     typeof(f_risk_budget),
                      # Network constraints
                      typeof(network_method), typeof(network_sdp), typeof(network_penalty),
                      typeof(network_ip), typeof(network_ip_factor), typeof(a_vec_cent),
@@ -816,7 +821,7 @@ function Portfolio(;
                        assets, timestamps, returns, short, short_u, long_u,
                        min_number_effective_assets, max_number_assets,
                        max_number_assets_factor, f_assets, f_timestamps, f_returns,
-                       loadings,
+                       loadings, loadings_opt,
                        # Risk parameters
                        msv_target, lpm_target, alpha_i, alpha, a_sim, beta_i, beta, b_sim,
                        kappa, max_num_assets_kurt,
@@ -825,7 +830,7 @@ function Portfolio(;
                        kind_tracking_err, tracking_err, tracking_err_returns,
                        tracking_err_weights, bl_bench_weights,
                        # Risk and return constraints
-                       a_mtx_ineq, b_vec_ineq, risk_budget,
+                       a_mtx_ineq, b_vec_ineq, risk_budget, f_risk_budget,
                        # Network constraints
                        network_method, network_sdp, network_penalty, network_ip,
                        network_ip_factor, a_vec_cent, b_cent,
@@ -1014,6 +1019,7 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.min_number_effective_assets), typeof(obj.max_number_assets),
                      typeof(obj.max_number_assets_factor), typeof(obj.f_assets),
                      typeof(obj.f_timestamps), typeof(obj.f_returns), typeof(obj.loadings),
+                     Union{LoadingsOpt, Nothing},
                      # Risk parameters
                      Union{<:Real, AbstractVector{<:Real}},
                      Union{<:Real, AbstractVector{<:Real}}, typeof(obj.alpha_i),
@@ -1028,7 +1034,7 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.bl_bench_weights),
                      # Risk and return constraints
                      typeof(obj.a_mtx_ineq), typeof(obj.b_vec_ineq),
-                     typeof(obj.risk_budget),
+                     typeof(obj.risk_budget), typeof(obj.f_risk_budget),
                      # Network constraints
                      typeof(obj.network_method), typeof(obj.network_sdp),
                      typeof(obj.network_penalty), typeof(obj.network_ip),
@@ -1074,7 +1080,7 @@ function Base.deepcopy(obj::Portfolio)
                        deepcopy(obj.max_number_assets),
                        deepcopy(obj.max_number_assets_factor), deepcopy(obj.f_assets),
                        deepcopy(obj.f_timestamps), deepcopy(obj.f_returns),
-                       deepcopy(obj.loadings),
+                       deepcopy(obj.loadings), deepcopy(obj.loadings_opt),
                        # Risk parameters
                        deepcopy(obj.msv_target), deepcopy(obj.lpm_target),
                        deepcopy(obj.alpha_i), deepcopy(obj.alpha), deepcopy(obj.a_sim),
@@ -1088,7 +1094,7 @@ function Base.deepcopy(obj::Portfolio)
                        deepcopy(obj.tracking_err_weights), deepcopy(obj.bl_bench_weights),
                        # Risk and return constraints
                        deepcopy(obj.a_mtx_ineq), deepcopy(obj.b_vec_ineq),
-                       deepcopy(obj.risk_budget),
+                       deepcopy(obj.risk_budget), deepcopy(obj.f_risk_budget),
                        # Network constraints
                        deepcopy(obj.network_method), deepcopy(obj.network_sdp),
                        deepcopy(obj.network_penalty), deepcopy(obj.network_ip),

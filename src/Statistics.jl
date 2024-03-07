@@ -1703,8 +1703,11 @@ Worst case optimisation statistics.
 function wc_statistics!(portfolio::AbstractPortfolio, opt::WCOpt = WCOpt(;))
     calc_box = opt.calc_box
     calc_ellipse = opt.calc_ellipse
+    diagonal = opt.diagonal
     box = opt.box
     ellipse = opt.ellipse
+    k_mu_method = opt.k_mu_method
+    k_sigma_method = opt.k_sigma_method
     dcov = opt.dcov
     dmu = opt.dmu
     q = opt.q
@@ -1719,16 +1722,8 @@ function wc_statistics!(portfolio::AbstractPortfolio, opt::WCOpt = WCOpt(;))
     returns = portfolio.returns
     T, N = size(returns)
 
-    if box == :Delta || ellipse == :Stationary || ellipse == :Circular || ellipse == :Moving
-        mu = vec(mean(returns; dims = 1))
-    end
-
-    if calc_ellipse || box == :Normal || box == :Delta
-        sigma = cov(returns)
-    end
-
-    cov_l = Matrix{eltype(returns)}(undef, 0, 0)
-    cov_u = Matrix{eltype(returns)}(undef, 0, 0)
+    mu = vec(mean(returns; dims = 1))
+    sigma = cov(returns)
 
     if calc_box
         if box == :Stationary || box == :Circular || box == :Moving
@@ -1747,49 +1742,79 @@ function wc_statistics!(portfolio::AbstractPortfolio, opt::WCOpt = WCOpt(;))
             if !isnothing(seed)
                 Random.seed!(rng, seed)
             end
-            d_mu = cquantile(Normal(), q / 2) * sqrt.(diag(sigma) / T)
-            cov_s = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, sigma / T), n_sim)))
 
-            cov_l = reshape([quantile(cov_s[:, i], q / 2) for i ∈ 1:(N * N)], N, N)
-            cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i ∈ 1:(N * N)], N, N)
+            cov_mu = sigma / T
+            d_mu = cquantile(Normal(), q / 2) * sqrt.(diag(cov_mu))
+
+            covs = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, cov_mu), n_sim)))
+            cov_l = reshape([quantile(covs[:, i], q / 2) for i ∈ 1:(N * N)], N, N)
+            cov_u = reshape([quantile(covs[:, i], 1 - q / 2) for i ∈ 1:(N * N)], N, N)
         elseif box == :Delta
             d_mu = dmu * abs.(mu)
             cov_l = sigma - dcov * abs.(sigma)
             cov_u = sigma + dcov * abs.(sigma)
         end
+
+        posdef_fix!(cov_l, posdef; msg = "WC cov_l ")
+        posdef_fix!(cov_u, posdef; msg = "WC cov_u ")
+
+        portfolio.cov_l = cov_l
+        portfolio.cov_u = cov_u
+        portfolio.d_mu = d_mu
     end
 
     if calc_ellipse
         if ellipse == :Stationary || ellipse == :Circular || ellipse == :Moving
             mus, covs = gen_bootstrap(returns, ellipse, n_sim, block_size, seed, rng)
 
-            cov_mu = Diagonal(cov(vec_of_vecs_to_mtx([mu_s .- mu for mu_s ∈ mus])))
-            cov_sigma = Diagonal(cov(vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma)
-                                                         for cov_s ∈ covs])))
+            A_mu = vec_of_vecs_to_mtx([mu_s .- mu for mu_s ∈ mus])
+            cov_mu = cov(A_mu)
+
+            A_sigma = vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma) for cov_s ∈ covs])
+            cov_sigma = cov(A_sigma)
         elseif ellipse == :Normal
-            cov_mu = Diagonal(sigma) / T
+            A_mu = transpose(rand(MvNormal(mu, sigma), n_sim))
+            if !calc_box || calc_box && box != :Normal
+                cov_mu = sigma / T
+                covs = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, cov_mu), n_sim)))
+            end
+            A_sigma = covs .- transpose(vec(sigma))
+
             K = commutation_matrix(sigma)
-            cov_sigma = T * Diagonal((I + K) * kron(cov_mu, cov_mu))
+            cov_sigma = T * (I + K) * kron(cov_mu, cov_mu)
         end
-    end
 
-    if !isposdef(cov_l)
-        posdef_fix!(cov_l, posdef; msg = "WC cov_l ")
-    end
-    if !isposdef(cov_u)
-        posdef_fix!(cov_u, posdef; msg = "WC cov_u ")
-    end
+        posdef_fix!(cov_mu, posdef; msg = "WC cov_mu ")
+        posdef_fix!(cov_sigma, posdef; msg = "WC cov_sigma ")
 
-    k_mu = sqrt(cquantile(Chisq(N), q))
-    k_sigma = sqrt(cquantile(Chisq(N * N), q))
+        if diagonal
+            cov_mu = Diagonal(cov_mu)
+            cov_sigma = Diagonal(cov_sigma)
+        end
 
-    portfolio.cov_l = cov_l
-    portfolio.cov_u = cov_u
-    portfolio.cov_mu = cov_mu
-    portfolio.cov_sigma = cov_sigma
-    portfolio.d_mu = d_mu
-    portfolio.k_mu = k_mu
-    portfolio.k_sigma = k_sigma
+        k_mu = if k_mu_method == :Normal
+            k_mus = diag(A_mu * (cov_mu \ I) * transpose(A_mu))
+            sqrt(quantile(k_mus, 1 - q))
+        elseif k_mu_method == :General
+            sqrt((1 - q) / q)
+        else
+            k_mu_method
+        end
+
+        k_sigma = if k_sigma_method == :Normal
+            k_sigmas = diag(A_sigma * (cov_sigma \ I) * transpose(A_sigma))
+            sqrt(quantile(k_sigmas, 1 - q))
+        elseif k_sigma_method == :General
+            sqrt((1 - q) / q)
+        else
+            k_sigma_method
+        end
+
+        portfolio.cov_mu = cov_mu
+        portfolio.cov_sigma = cov_sigma
+        portfolio.k_mu = k_mu
+        portfolio.k_sigma = k_sigma
+    end
 
     return nothing
 end
@@ -2485,6 +2510,8 @@ function factor_statistics!(portfolio::AbstractPortfolio; cov_f_opt::CovOpt = Co
                                                                                                factor_opt = factor_opt,
                                                                                                cov_opt = cov_fm_opt,
                                                                                                mu_opt = mu_fm_opt)
+
+    portfolio.loadings_opt = factor_opt.loadings_opt
 
     return nothing
 end
