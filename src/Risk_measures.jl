@@ -1409,11 +1409,11 @@ function factor_risk_contribution(w::AbstractVector, assets::AbstractVector,
     end
 
     b1 = pinv(transpose(B))
-    b2 = pinv(nullspace(transpose(B)))
+    b2 = pinv(transpose(nullspace(transpose(B))))
     b3 = pinv(transpose(b2))
 
     rc_f = (transpose(B) * w) .* (transpose(b1) * marginal_risk)
-    rc_of = sum((b2 * w) .* (b3 * marginal_risk))
+    rc_of = sum((transpose(b2) * w) .* (transpose(b3) * marginal_risk))
     rc_f = [rc_f; rc_of]
 
     return rc_f

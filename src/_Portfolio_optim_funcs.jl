@@ -886,7 +886,7 @@ function _rp_setup(portfolio, N, class)
         end
 
         b1 = pinv(transpose(B))
-        b2 = pinv(nullspace(transpose(B)))
+        b2 = pinv(transpose(nullspace(transpose(B))))
         N_f = size(b1, 2)
 
         rb = portfolio.f_risk_budget
@@ -898,7 +898,7 @@ function _rp_setup(portfolio, N, class)
         @variable(model, w2[1:(N - N_f)])
         delete(model, model[:w])
         unregister(model, :w)
-        @expression(model, w, b1 * w1 + transpose(b2) * w2)
+        @expression(model, w, b1 * w1 + b2 * w2)
 
         @variable(model, log_w[1:N_f])
         @constraint(model, dot(rb, log_w) >= 1)
@@ -1029,7 +1029,7 @@ function _setup_risk_budget(portfolio)
     if isempty(portfolio.risk_budget)
         portfolio.risk_budget = ()
     end
-    @variable(model, k >= 0)
+    @variable(model, k)
     return nothing
 end
 
@@ -1570,7 +1570,7 @@ function _finalise_portfolio(portfolio, class, returns, N, solvers_tried, type, 
             weights .= abs.(weights) / sum_w
         else
             sum_w = value(model[:k])
-            sum_w = sum_w > eps() ? sum_w : 1
+            sum_w = abs(sum_w) > eps() ? sum_w : 1
             weights .= weights / sum_w
         end
     elseif type == :RRP
