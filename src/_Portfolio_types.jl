@@ -866,6 +866,12 @@ function Base.getproperty(obj::Portfolio, sym::Symbol)
         one(typeof(obj.at)) / (obj.at)
     elseif sym == :ln_k
         (obj.invat^obj.kappa - obj.invat^(-obj.kappa)) / (2 * obj.kappa)
+    elseif sym == :bt
+        obj.beta * size(obj.returns, 1)
+    elseif sym == :invbt
+        one(typeof(obj.bt)) / (obj.bt)
+    elseif sym == :ln_kb
+        (obj.invbt^obj.kappa - obj.invbt^(-obj.kappa)) / (2 * obj.kappa)
     elseif sym == :omk
         one(typeof(obj.kappa)) - obj.kappa
     elseif sym == :opk

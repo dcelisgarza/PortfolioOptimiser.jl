@@ -1,5 +1,5 @@
 using COSMO, CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries,
-      PortfolioOptimiser, LinearAlgebra
+      PortfolioOptimiser, LinearAlgebra, PyCall
 
 prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
@@ -7,12 +7,59 @@ prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestam
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors,
+portfolio = Portfolio(; prices = prices_assets[(end - 400):end],
+                      f_prices = prices_factors[(end - 400):end],
                       solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                              :params => Dict("verbose" => false,
-                                                                              "max_step_fraction" => 0.75)),
-                                            :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                           :params => Dict("verbose" => false))))
+                                                              :params => Dict("verbose" => true
+                                                                              #   "max_step_fraction" => 0.75,
+                                                                              #   "max_iter"=>150,
+                                                                              #   "tol_gap_abs" => 1e-8,
+                                                                              #   "tol_gap_rel" => 1e-8,
+                                                                              #   "tol_feas" => 1e-8,
+                                                                              #   "tol_ktratio" => 1e-8,
+                                                                              #   "equilibrate_max_iter" => 30,
+                                                                              #   "reduced_tol_gap_abs" => 1e-6,
+                                                                              #   "reduced_tol_gap_rel" => 1e-5,
+                                                                              #   "reduced_tol_feas" => 1e-6,
+                                                                              #   "reduced_tol_ktratio" => 1e-6,
+                                                                              ))))
+asset_statistics!(portfolio; calc_kurt = false)
+
+w1 = optimise!(portfolio,
+               OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :RTG, owa_approx = false);
+               string_names = true)
+
+portfolio.owa_w = owa_rtg(400)
+w2 = optimise!(portfolio,
+               OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :OWA, owa_approx = false);
+               string_names = true)
+w3 = optimise!(portfolio,
+               OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :RTG, owa_approx = true);
+               string_names = true)
+
+# portfolio.solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+#                                                   :params => Dict("verbose" => true,
+#                                                                   "max_step_fraction" => 0.75
+#                                                                   #   "max_iter"=>250,
+#                                                                   #   "tol_gap_abs" => 1e-10,
+#                                                                   #   "tol_gap_rel" => 1e-10,
+#                                                                   #   "tol_feas" => 1e-10,
+#                                                                   #   "tol_ktratio" => 1e-10,
+#                                                                   #   "equilibrate_max_iter" => 30,
+#                                                                   #   "reduced_tol_gap_abs" => 1e-10,
+#                                                                   #   "reduced_tol_gap_rel" => 1e-10,
+#                                                                   #   "reduced_tol_feas" => 1e-10,
+#                                                                   #   "reduced_tol_ktratio" => 1e-10,
+#                                                                   )))
+# portfolio.owa_p = [2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 40, 50]
+
+w4 = optimise!(portfolio,
+               OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :OWA, owa_approx = true);
+               string_names = true)
+
+display(DataFrame(; tickers = w1.tickers, w1 = w1.weights, w2 = w2.weights, w3 = w3.weights,
+                  w4 = w4.weights, d12 = w1.weights - w2.weights,
+                  d13 = w1.weights - w3.weights, d34 = w3.weights - w4.weights))
 
 loadings_opt = LoadingsOpt(;)
 factor_opt = FactorOpt(; loadings_opt = loadings_opt)
@@ -20,19 +67,217 @@ posdef = PosdefFixOpt(; method = :Nearest)
 cov_f_opt = CovOpt(; posdef = posdef)
 cov_fm_opt = CovOpt(; posdef = posdef)
 
-asset_statistics!(portfolio; calc_kurt = false)
-loadings_opt.method = :PCR
-factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
-                   factor_opt = factor_opt)
-
-optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
-
-test = factor_risk_contribution(portfolio.optimal[:Trad].weights, portfolio.assets,
+test = factor_risk_contribution(portfolio.optimal[:RP].weights, portfolio.assets,
                                 portfolio.returns, portfolio.f_assets, portfolio.f_returns,
                                 DataFrame(); loadings_opt = loadings_opt, rm = :SD,
                                 rf = 0.0, sigma = portfolio.cov,
                                 solvers = portfolio.solvers)
 
+py"""
+import riskfolio as rk
+import numpy as np
+import pandas as pd
+import riskfolio.src.ParamsEstimation as pe
+from scipy.linalg import null_space
+from numpy.linalg import pinv
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import cvxpy as cp
+from scipy.linalg import sqrtm, norm, null_space
+import riskfolio.src.OwaWeights as owa
+
+"""
+
+py"""
+method_mu='hist' # Method to estimate expected returns based on historical data.
+method_cov='hist' # Method to estimate covariance matrix based on historical data.
+model = 'FC' # Factor Contribution Model
+rm = 'MV' # Risk measure used, this time will be variance
+rf = $rf # Risk free rate
+b_f = None # Risk factor contribution vector
+port = rk.Portfolio(returns = pd.DataFrame($(portfolio.returns), columns = $(portfolio.assets)), factors = pd.DataFrame($(portfolio.f_returns), columns = $(portfolio.f_assets)))
+
+port.assets_stats(method_mu=method_mu,
+                  method_cov=method_cov)
+
+feature_selection = 'PCR' # Method to select best model, could be PCR or Stepwise
+n_components = 0.95 # 95% of explained variance. See PCA in scikit learn for more information
+port.factors_stats(method_mu=method_mu,
+                   method_cov=method_cov,
+                   feature_selection=feature_selection,
+                   dict_risk=dict(n_components=n_components)
+                  )
+
+w1 = port.rp_optimization(model=model,
+                         rm=rm,
+                         rf=rf,
+                         b_f=b_f,
+                         )
+
+feature_selection = 'stepwise' # Method to select best model, could be PCR or Stepwise
+stepwise = 'Forward' # Forward or Backward regression
+
+port.factors_stats(method_mu=method_mu,
+                    method_cov=method_cov,
+                    feature_selection=feature_selection,
+                    dict_risk=dict(stepwise=stepwise)
+                    )
+
+w2 = port.rp_optimization(model=model,
+                         rm=rm,
+                         rf=rf,
+                         b_f=b_f,
+                         )
+
+feature_selection = 'stepwise' # Method to select best model, could be PCR or Stepwise
+stepwise = 'Backward' # Forward or Backward regression
+
+port.factors_stats(method_mu=method_mu,
+                    method_cov=method_cov,
+                    feature_selection=feature_selection,
+                    dict_risk=dict(stepwise=stepwise)
+                    )
+
+w3 = port.rp_optimization(model=model,
+                         rm=rm,
+                         rf=rf,
+                         b_f=b_f,
+                         )
+
+w4 = port.rp_optimization(model="Classic",
+                         rm=rm,
+                         rf=rf,
+                         b_f=b_f,
+                         )
+
+"""
+
+asset_statistics!(portfolio; calc_kurt = false)
+loadings_opt.method = :PCR
+loadings_opt.pcr_opt.pca_genfunc.kwargs = (; pratio = 0.95)
+factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                   factor_opt = factor_opt)
+
+w1 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+
+loadings_opt.method = :FReg
+factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                   factor_opt = factor_opt)
+
+w2 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+
+loadings_opt.method = :BReg
+factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
+                   factor_opt = factor_opt)
+
+w3 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+
+w4 = optimise!(portfolio, OptimiseOpt(; type = :RP))
+
+py"""
+
+
+def Factors_Risk_Contribution(
+    w,
+    cov=None,
+    returns=None,
+    factors=None,
+    B=None,
+    const=False,
+    rm="MV",
+    rf=0,
+    alpha=0.05,
+    a_sim=100,
+    beta=None,
+    b_sim=None,
+    kappa=0.3,
+    solver="CLARABEL",
+    feature_selection="stepwise",
+    stepwise="Forward",
+    criterion="pvalue",
+    threshold=0.05,
+    n_components=0.95,
+):
+    w_ = np.array(w, ndmin=2)
+    if w_.shape[0] == 1 and w_.shape[1] > 1:
+        w_ = w_.T
+    if w_.shape[0] > 1 and w_.shape[1] > 1:
+        raise ValueError("weights must have n_assets x 1 size")
+
+    RM = rk.Risk_Margin(
+        w=w,
+        cov=cov,
+        returns=returns,
+        rm=rm,
+        rf=rf,
+        alpha=alpha,
+        a_sim=a_sim,
+        beta=beta,
+        b_sim=b_sim,
+        kappa=kappa,
+        solver=solver,
+    ).reshape(-1, 1)
+
+    if B is None:
+        B = pe.loadings_matrix(
+            X=factors,
+            Y=returns,
+            feature_selection=feature_selection,
+            stepwise=stepwise,
+            criterion=criterion,
+            threshold=threshold,
+            n_components=n_components,
+        )
+        const = True
+    elif not isinstance(B, pd.DataFrame):
+        raise ValueError("B must be a DataFrame")
+
+    if const == True or factors.shape[1] + 1 == B.shape[1]:
+        B = B.iloc[:, 1:].to_numpy()
+
+    if feature_selection == "PCR":
+        scaler = StandardScaler()
+        scaler.fit(factors)
+        factors_std = scaler.transform(factors)
+        pca = PCA(n_components=n_components)
+        pca.fit(factors_std)
+        V_p = pca.components_.T
+        std = np.array(np.std(factors, axis=0, ddof=1), ndmin=2)
+        B = (pinv(V_p) @ (B.T * std.T)).T
+
+    B1 = pinv(B.T)
+    B2 = pinv(null_space(B.T).T)
+    print(B2)
+    B3 = pinv(B2.T)
+
+    RC_F = (B.T @ w_) * (B1.T @ RM)
+    RC_OF = np.array(((B2.T @ w.to_numpy()) * (B3.T @ RM)).sum(), ndmin=2)
+    RC_F = np.vstack([RC_F, RC_OF]).ravel()
+
+    return RC_F
+
+test = Factors_Risk_Contribution(
+    w=pd.DataFrame($(portfolio.optimal[:Trad].weights)),
+    cov=pd.DataFrame($(portfolio.cov), columns = $(portfolio.assets)),
+    returns=pd.DataFrame($(portfolio.returns), columns = $(portfolio.assets)),
+    factors=pd.DataFrame($(portfolio.f_returns), columns = $(portfolio.f_assets)),
+    B=None,
+    const=False,
+    rm="MV",
+    rf=0,
+    alpha=0.05,
+    a_sim=100,
+    beta=None,
+    b_sim=None,
+    kappa=0.3,
+    solver="CLARABEL",
+    feature_selection="PCR",
+    stepwise="Forward",
+    criterion="pvalue",
+    threshold=0.05,
+    n_components=0.99,
+)
+"""
 loadings_opt.method = :PCR
 loadings_opt.pcr_opt.pca_genfunc.kwargs = (; pratio = 0.99)
 test = factor_risk_contribution(portfolio.optimal[:Trad].weights, portfolio.assets,

@@ -221,30 +221,60 @@ end
 
 function _wr_setup(portfolio, rm, returns, obj, type)
     wr_u = portfolio.wr_u
+    rg_u = portfolio.rg_u
 
-    if !(rm == :WR || isfinite(wr_u))
+    if !(rm == :WR || rm == :RG || isfinite(wr_u) || isfinite(rg_u))
         return nothing
     end
 
     model = portfolio.model
 
-    @variable(model, wr)
     if !haskey(model, :hist_ret)
         @expression(model, hist_ret, returns * model[:w])
     end
-    @constraint(model, -model[:hist_ret] .<= wr)
-    @expression(model, wr_risk, wr)
 
-    if isfinite(wr_u) && type == :Trad
-        if obj == :Sharpe
-            @constraint(model, -model[:hist_ret] .<= wr_u * model[:k])
-        else
-            @constraint(model, -model[:hist_ret] .<= wr_u)
+    if rm == :WR || isfinite(wr_u)
+        @variable(model, wr)
+        @constraint(model, -model[:hist_ret] .<= wr)
+        @expression(model, wr_risk, wr)
+
+        if isfinite(wr_u) && type == :Trad
+            if obj == :Sharpe
+                @constraint(model, -model[:hist_ret] .<= wr_u * model[:k])
+            else
+                @constraint(model, -model[:hist_ret] .<= wr_u)
+            end
+        end
+
+        if rm == :WR
+            @expression(model, risk, wr_risk)
         end
     end
 
-    if rm == :WR
-        @expression(model, risk, wr_risk)
+    if !(rm == :RG || isfinite(rg_u))
+        return nothing
+    end
+
+    if !haskey(model, :wr_risk)
+        @variable(model, wr)
+        @constraint(model, -model[:hist_ret] .<= wr)
+        @expression(model, wr_risk, wr)
+    end
+
+    @variable(model, br)
+    @constraint(model, -model[:hist_ret] .>= br)
+    @expression(model, rg_risk, wr_risk - br)
+
+    if isfinite(rg_u) && type == :Trad
+        if obj == :Sharpe
+            @constraint(model, rg_risk <= rg_u * model[:k])
+        else
+            @constraint(model, rg_risk <= rg_u)
+        end
+    end
+
+    if rm == :RG
+        @expression(model, risk, rg_risk)
     end
 
     return nothing
@@ -252,14 +282,17 @@ end
 
 function _var_setup(portfolio, rm, T, returns, obj, type)
     cvar_u = portfolio.cvar_u
+    rcvar_u = portfolio.rcvar_u
     evar_u = portfolio.evar_u
     rvar_u = portfolio.rvar_u
 
     if !(rm == :CVaR ||
+         rm == :RCVaR ||
          rm == :EVaR ||
          rm == :RVaR ||
-         isfinite(evar_u) ||
          isfinite(cvar_u) ||
+         isfinite(rcvar_u) ||
+         isfinite(evar_u) ||
          isfinite(rvar_u))
         return nothing
     end
@@ -273,7 +306,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     if rm == :CVaR || isfinite(cvar_u)
         invat = portfolio.invat
         @variable(model, var)
-        @variable(model, z_var[1:T] >= 0)
+        @variable(model, z_var[1:T] .>= 0)
         @constraint(model, z_var .>= -model[:hist_ret] .- var)
         @expression(model, cvar_risk, var + sum(z_var) * invat)
 
@@ -287,6 +320,36 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
 
         if rm == :CVaR
             @expression(model, risk, cvar_risk)
+        end
+    end
+
+    if rm == :RCVaR || isfinite(rcvar_u)
+        if !haskey(model, :cvar_risk)
+            invat = portfolio.invat
+            @variable(model, var)
+            @variable(model, z_var[1:T] .>= 0)
+            @constraint(model, z_var .>= -model[:hist_ret] .- var)
+            @expression(model, cvar_risk, var + sum(z_var) * invat)
+        end
+
+        invbt = portfolio.invbt
+        @variable(model, var2)
+        @variable(model, z_var2[1:T] .<= 0)
+        @constraint(model, z_var2 .<= -model[:hist_ret] .- var2)
+        @expression(model, cvar2_risk, var2 + sum(z_var2) * invbt)
+
+        @expression(model, rcvar_risk, cvar_risk - cvar2_risk)
+
+        if isfinite(rcvar_u) && type == :Trad
+            if obj == :Sharpe
+                @constraint(model, rcvar_risk <= rcvar_u * model[:k])
+            else
+                @constraint(model, rcvar_risk <= rcvar_u)
+            end
+        end
+
+        if rm == :RCVaR
+            @expression(model, risk, rcvar_risk)
         end
     end
 
@@ -527,7 +590,8 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
 end
 
 function _risk_setup(portfolio, type, rm, kelly, obj, rf, T, N, mu, returns, sigma,
-                     kurtosis, skurtosis, network_method, sd_cone::Bool = true)
+                     kurtosis, skurtosis, network_method, sd_cone::Bool = true,
+                     owa_approx::Bool = true)
     _sdp_setup(portfolio, obj, rm, type, N)
     _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method, sd_cone)
     _mad_setup(portfolio, rm, T, returns, mu, obj, type)
@@ -536,7 +600,7 @@ function _risk_setup(portfolio, type, rm, kelly, obj, rf, T, N, mu, returns, sig
     _var_setup(portfolio, rm, T, returns, obj, type)
     _drawdown_setup(portfolio, rm, T, returns, obj, type)
     _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
-    _owa_setup(portfolio, rm, T, returns, obj, type)
+    _owa_setup(portfolio, rm, T, returns, obj, type, owa_approx)
 
     return nothing
 end
@@ -657,24 +721,24 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
     end
 end
 
-function _owa_setup(portfolio, rm, T, returns, obj, type)
+function _owa_setup(portfolio, rm, T, returns, obj, type, owa_approx)
     gmd_u = portfolio.gmd_u
-    rg_u = portfolio.rg_u
+    # rg_u = portfolio.rg_u
     tg_u = portfolio.tg_u
-    rcvar_u = portfolio.rcvar_u
+    # rcvar_u = portfolio.rcvar_u
     rtg_u = portfolio.rtg_u
     owa_u = portfolio.owa_u
 
     if !(rm == :GMD ||
-         rm == :RG ||
+         #  rm == :RG ||
          rm == :TG ||
-         rm == :RCVaR ||
+         #  rm == :RCVaR ||
          rm == :RTG ||
          rm == :OWA ||
          isfinite(gmd_u) ||
+         #  isfinite(rg_u)||
          isfinite(tg_u) ||
-         isfinite(rg_u) ||
-         isfinite(rcvar_u) ||
+         #  isfinite(rcvar_u) ||
          isfinite(rtg_u) ||
          isfinite(owa_u))
         return nothing
@@ -686,17 +750,59 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
     if !haskey(model, :hist_ret)
         @expression(model, hist_ret, returns * model[:w])
     end
-    @variable(model, owa[1:T])
-    @constraint(model, model[:hist_ret] == owa)
+
+    if !owa_approx
+        @variable(model, owa[1:T])
+        @constraint(model, model[:hist_ret] == owa)
+    else
+        owa_p = portfolio.owa_p
+        M = length(owa_p)
+    end
 
     if rm == :GMD || isfinite(gmd_u)
-        @variable(model, gmda[1:T])
-        @variable(model, gmdb[1:T])
-        @expression(model, gmd_risk, sum(gmda .+ gmdb))
-        gmd_w = owa_gmd(T)
-        @constraint(model,
-                    owa * transpose(gmd_w) .<=
-                    onesvec * transpose(gmda) + gmdb * transpose(onesvec))
+        if !owa_approx
+            @variable(model, gmda[1:T])
+            @variable(model, gmdb[1:T])
+            @expression(model, gmd_risk, sum(gmda .+ gmdb))
+
+            gmd_w = owa_gmd(T)
+
+            @constraint(model,
+                        owa * transpose(gmd_w) .<=
+                        onesvec * transpose(gmda) + gmdb * transpose(onesvec))
+        else
+            @variable(model, gmd_t)
+            @variable(model, gmd_nu[1:T] .>= 0)
+            @variable(model, gmd_eta[1:T] .>= 0)
+
+            @variable(model, gmd_epsilon[1:T, 1:M])
+            @variable(model, gmd_psi[1:T, 1:M])
+            @variable(model, gmd_z[1:M])
+            @variable(model, gmd_y[1:M] .>= 0)
+
+            gmd_w = -owa_gmd(T)
+
+            gmd_s = sum(gmd_w)
+            gmd_l = minimum(gmd_w)
+            gmd_h = maximum(gmd_w)
+
+            gmd_d = [norm(gmd_w, p) for p ∈ owa_p]
+
+            @expression(model, gmd_risk,
+                        gmd_s * gmd_t - gmd_l * sum(gmd_nu) +
+                        gmd_h * sum(gmd_eta) +
+                        dot(gmd_d, gmd_y))
+
+            @constraint(model,
+                        model[:hist_ret] .+ gmd_t .- gmd_nu .+ gmd_eta .-
+                        vec(sum(gmd_epsilon; dims = 2)) .== 0)
+
+            @constraint(model, gmd_z .+ gmd_y .== vec(sum(gmd_psi; dims = 1)))
+
+            @constraint(model, [i = 1:M, j = 1:T],
+                        [-gmd_z[i] * owa_p[i], gmd_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+                         gmd_epsilon[j, i]] ∈ MOI.PowerCone(1 / owa_p[i]))
+        end
 
         if isfinite(gmd_u) && type == :Trad
             if obj == :Sharpe
@@ -711,65 +817,99 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
         end
     end
 
-    if rm == :RG || isfinite(rg_u)
-        @variable(model, rga[1:T])
-        @variable(model, rgb[1:T])
-        @expression(model, rg_risk, sum(rga .+ rgb))
-        rg_w = owa_rg(T)
-        @constraint(model,
-                    owa * transpose(rg_w) .<=
-                    onesvec * transpose(rga) + rgb * transpose(onesvec))
+    # if rm == :RG || isfinite(rg_u)
+    #     @variable(model, rga[1:T])
+    #     @variable(model, rgb[1:T])
+    #     @expression(model, rg_risk, sum(rga .+ rgb))
+    #     rg_w = owa_rg(T)
+    #     @constraint(model,
+    #                 owa * transpose(rg_w) .<=
+    #                 onesvec * transpose(rga) + rgb * transpose(onesvec))
 
-        if isfinite(rg_u) && type == :Trad
-            if obj == :Sharpe
-                @constraint(model, rg_risk <= rg_u * model[:k])
-            else
-                @constraint(model, rg_risk <= rg_u)
-            end
-        end
+    #     if isfinite(rg_u) && type == :Trad
+    #         if obj == :Sharpe
+    #             @constraint(model, rg_risk <= rg_u * model[:k])
+    #         else
+    #             @constraint(model, rg_risk <= rg_u)
+    #         end
+    #     end
 
-        if rm == :RG
-            @expression(model, risk, rg_risk)
-        end
-    end
+    #     if rm == :RG
+    #         @expression(model, risk, rg_risk)
+    #     end
+    # end
 
-    if rm == :RCVaR || isfinite(rcvar_u)
-        alpha = portfolio.alpha
-        beta = portfolio.beta
+    # if rm == :RCVaR || isfinite(rcvar_u)
+    #     alpha = portfolio.alpha
+    #     beta = portfolio.beta
 
-        @variable(model, rcvara[1:T])
-        @variable(model, rcvarb[1:T])
-        @expression(model, rcvar_risk, sum(rcvara .+ rcvarb))
-        rcvar_w = owa_rcvar(T; alpha = alpha, beta = beta)
-        @constraint(model,
-                    owa * transpose(rcvar_w) .<=
-                    onesvec * transpose(rcvara) + rcvarb * transpose(onesvec))
+    #     @variable(model, rcvara[1:T])
+    #     @variable(model, rcvarb[1:T])
+    #     @expression(model, rcvar_risk, sum(rcvara .+ rcvarb))
+    #     rcvar_w = owa_rcvar(T; alpha = alpha, beta = beta)
+    #     @constraint(model,
+    #                 owa * transpose(rcvar_w) .<=
+    #                 onesvec * transpose(rcvara) + rcvarb * transpose(onesvec))
 
-        if isfinite(rcvar_u) && type == :Trad
-            if obj == :Sharpe
-                @constraint(model, rcvar_risk <= rcvar_u * model[:k])
-            else
-                @constraint(model, rcvar_risk <= rcvar_u)
-            end
-        end
+    #     if isfinite(rcvar_u) && type == :Trad
+    #         if obj == :Sharpe
+    #             @constraint(model, rcvar_risk <= rcvar_u * model[:k])
+    #         else
+    #             @constraint(model, rcvar_risk <= rcvar_u)
+    #         end
+    #     end
 
-        if rm == :RCVaR
-            @expression(model, risk, rcvar_risk)
-        end
-    end
+    #     if rm == :RCVaR
+    #         @expression(model, risk, rcvar_risk)
+    #     end
+    # end
 
     if rm == :TG || isfinite(tg_u)
         alpha = portfolio.alpha
         a_sim = portfolio.a_sim
         alpha_i = portfolio.alpha_i
+        if !owa_approx
+            @variable(model, tga[1:T])
+            @variable(model, tgb[1:T])
+            @expression(model, tg_risk, sum(tga .+ tgb))
+            tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+            @constraint(model,
+                        owa * transpose(tg_w) .<=
+                        onesvec * transpose(tga) + tgb * transpose(onesvec))
 
-        @variable(model, tga[1:T])
-        @variable(model, tgb[1:T])
-        @expression(model, tg_risk, sum(tga .+ tgb))
-        tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-        @constraint(model,
-                    owa * transpose(tg_w) .<=
-                    onesvec * transpose(tga) + tgb * transpose(onesvec))
+        else
+            @variable(model, tg_t)
+            @variable(model, tg_nu[1:T] .>= 0)
+            @variable(model, tg_eta[1:T] .>= 0)
+
+            @variable(model, tg_epsilon[1:T, 1:M])
+            @variable(model, tg_psi[1:T, 1:M])
+            @variable(model, tg_z[1:M])
+            @variable(model, tg_y[1:M] .>= 0)
+
+            tg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+
+            tg_s = sum(tg_w)
+            tg_l = minimum(tg_w)
+            tg_h = maximum(tg_w)
+
+            tg_d = [norm(tg_w, p) for p ∈ owa_p]
+
+            @expression(model, tg_risk,
+                        tg_s * tg_t - tg_l * sum(tg_nu) +
+                        tg_h * sum(tg_eta) +
+                        dot(tg_d, tg_y))
+
+            @constraint(model,
+                        model[:hist_ret] .+ tg_t .- tg_nu .+ tg_eta .-
+                        vec(sum(tg_epsilon; dims = 2)) .== 0)
+
+            @constraint(model, tg_z .+ tg_y .== vec(sum(tg_psi; dims = 1)))
+
+            @constraint(model, [i = 1:M, j = 1:T],
+                        [-tg_z[i] * owa_p[i], tg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+                         tg_epsilon[j, i]] ∈ MOI.PowerCone(1 / owa_p[i]))
+        end
 
         if isfinite(tg_u) && type == :Trad
             if obj == :Sharpe
@@ -792,14 +932,82 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
         b_sim = portfolio.b_sim
         beta_i = portfolio.beta_i
 
-        @variable(model, rtga[1:T])
-        @variable(model, rtgb[1:T])
-        @expression(model, rtg_risk, sum(rtga .+ rtgb))
-        rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                        beta = beta, b_sim = b_sim)
-        @constraint(model,
-                    owa * transpose(rtg_w) .<=
-                    onesvec * transpose(rtga) + rtgb * transpose(onesvec))
+        if !owa_approx
+            @variable(model, rtga[1:T])
+            @variable(model, rtgb[1:T])
+            @expression(model, rtg_risk, sum(rtga .+ rtgb))
+            rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
+                            beta_i = beta_i, beta = beta, b_sim = b_sim)
+            @constraint(model,
+                        owa * transpose(rtg_w) .<=
+                        onesvec * transpose(rtga) + rtgb * transpose(onesvec))
+        else
+            if !haskey(model, :tg_risk)
+                @variable(model, tg_t)
+                @variable(model, tg_nu[1:T] .>= 0)
+                @variable(model, tg_eta[1:T] .>= 0)
+
+                @variable(model, tg_epsilon[1:T, 1:M])
+                @variable(model, tg_psi[1:T, 1:M])
+                @variable(model, tg_z[1:M])
+                @variable(model, tg_y[1:M] .>= 0)
+
+                tg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+
+                tg_s = sum(tg_w)
+                tg_l = minimum(tg_w)
+                tg_h = maximum(tg_w)
+
+                tg_d = [norm(tg_w, p) for p ∈ owa_p]
+
+                @expression(model, tg_risk,
+                            tg_s * tg_t - tg_l * sum(tg_nu) +
+                            tg_h * sum(tg_eta) +
+                            dot(tg_d, tg_y))
+
+                @constraint(model,
+                            model[:hist_ret] .+ tg_t .- tg_nu .+ tg_eta .-
+                            vec(sum(tg_epsilon; dims = 2)) .== 0)
+
+                @constraint(model, tg_z .+ tg_y .== vec(sum(tg_psi; dims = 1)))
+
+                @constraint(model, [i = 1:M, j = 1:T],
+                            [-tg_z[i] * owa_p[i], tg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+                             tg_epsilon[j, i]] ∈ MOI.PowerCone(1 / owa_p[i]))
+            end
+
+            @variable(model, tg2_t)
+            @variable(model, tg2_nu[1:T] .>= 0)
+            @variable(model, tg2_eta[1:T] .>= 0)
+
+            @variable(model, tg2_epsilon[1:T, 1:M])
+            @variable(model, tg2_psi[1:T, 1:M])
+            @variable(model, tg2_z[1:M])
+            @variable(model, tg2_y[1:M] .>= 0)
+
+            tg2_w = -owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim)
+
+            tg2_s = sum(tg2_w)
+            tg2_l = minimum(tg2_w)
+            tg2_h = maximum(tg2_w)
+
+            tg2_d = [norm(tg2_w, p) for p ∈ owa_p]
+
+            @expression(model, rtg_risk,
+                        tg_risk + tg2_s * tg2_t - tg2_l * sum(tg2_nu) +
+                        tg2_h * sum(tg2_eta) +
+                        dot(tg2_d, tg2_y))
+
+            @constraint(model,
+                        -model[:hist_ret] .+ tg2_t .- tg2_nu .+ tg2_eta .-
+                        vec(sum(tg2_epsilon; dims = 2)) .== 0)
+
+            @constraint(model, tg2_z .+ tg2_y .== vec(sum(tg2_psi; dims = 1)))
+
+            @constraint(model, [i = 1:M, j = 1:T],
+                        [-tg2_z[i] * owa_p[i], tg2_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+                         tg2_epsilon[j, i]] ∈ MOI.PowerCone(1 / owa_p[i]))
+        end
 
         if isfinite(rtg_u) && type == :Trad
             if obj == :Sharpe
@@ -818,15 +1026,49 @@ function _owa_setup(portfolio, rm, T, returns, obj, type)
         return nothing
     end
 
-    @variable(model, owa_a[1:T])
-    @variable(model, owa_b[1:T])
-    @expression(model, owa_risk, sum(owa_a .+ owa_b))
+    if !owa_approx
+        @variable(model, owa_a[1:T])
+        @variable(model, owa_b[1:T])
+        @expression(model, owa_risk, sum(owa_a .+ owa_b))
 
-    owa_w = isempty(portfolio.owa_w) ? owa_gmd(T) : portfolio.owa_w
+        owa_w = isempty(portfolio.owa_w) ? owa_gmd(T) : portfolio.owa_w
 
-    @constraint(model,
-                owa * transpose(owa_w) .<=
-                onesvec * transpose(owa_a) + owa_b * transpose(onesvec))
+        @constraint(model,
+                    owa * transpose(owa_w) .<=
+                    onesvec * transpose(owa_a) + owa_b * transpose(onesvec))
+    else
+        @variable(model, owa_t)
+        @variable(model, owa_nu[1:T] .>= 0)
+        @variable(model, owa_eta[1:T] .>= 0)
+
+        @variable(model, owa_epsilon[1:T, 1:M])
+        @variable(model, owa_psi[1:T, 1:M])
+        @variable(model, owa_z[1:M])
+        @variable(model, owa_y[1:M] .>= 0)
+
+        owa_w = isempty(portfolio.owa_w) ? -owa_gmd(T) : -portfolio.owa_w
+
+        owa_s = sum(owa_w)
+        owa_l = minimum(owa_w)
+        owa_h = maximum(owa_w)
+
+        owa_d = [norm(owa_w, p) for p ∈ owa_p]
+
+        @expression(model, owa_risk,
+                    owa_s * owa_t - owa_l * sum(owa_nu) +
+                    owa_h * sum(owa_eta) +
+                    dot(owa_d, owa_y))
+
+        @constraint(model,
+                    model[:hist_ret] .+ owa_t .- owa_nu .+ owa_eta .-
+                    vec(sum(owa_epsilon; dims = 2)) .== 0)
+
+        @constraint(model, owa_z .+ owa_y .== vec(sum(owa_psi; dims = 1)))
+
+        @constraint(model, [i = 1:M, j = 1:T],
+                    [-owa_z[i] * owa_p[i], owa_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+                     owa_epsilon[j, i]] ∈ MOI.PowerCone(1 / owa_p[i]))
+    end
 
     if isfinite(owa_u) && type == :Trad
         if obj == :Sharpe
@@ -1769,6 +2011,7 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
     u_cov = opt.u_cov
     u_mu = opt.u_mu
     sd_cone = opt.sd_cone
+    owa_approx = opt.owa_approx
     near_opt = opt.near_opt
     hist = opt.hist
     rf = opt.rf
@@ -1811,14 +2054,14 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
     if type == :Trad
         _setup_sharpe_k(model, obj)
         _risk_setup(portfolio, :Trad, rm, kelly, obj, rf, T, N, mu, returns, sigma,
-                    kurtosis, skurtosis, network_method, sd_cone)
+                    kurtosis, skurtosis, network_method, sd_cone, owa_approx)
         _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
         _setup_trad_wc_constraints(portfolio, obj, T, N, :Trad, class, kelly, l, returns)
     elseif type == :RP
         _setup_risk_budget(portfolio)
         _rp_setup(portfolio, N, class)
         _risk_setup(portfolio, :RP, rm, kelly, obj, rf, T, N, mu, returns, sigma, kurtosis,
-                    skurtosis, network_method, sd_cone)
+                    skurtosis, network_method, sd_cone, owa_approx)
         _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
     elseif type == :RRP
         _setup_risk_budget(portfolio)
