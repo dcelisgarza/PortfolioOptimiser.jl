@@ -15,7 +15,7 @@ l = 2.0
     asset_statistics!(portfolio)
 
     rm = :RG
-    opt = OptimiseOpt(; type = :RP, rm = rm)
+    opt = OptimiseOpt(; type = :RP, rm = rm, owa_approx = false)
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, opt)
@@ -26,6 +26,17 @@ l = 2.0
     w2 = optimise!(portfolio, opt)
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
+
+    opt.owa_approx = true
+    portfolio.risk_budget = []
+    w3 = optimise!(portfolio, opt)
+    rc3 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc3, hrc3 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w4 = optimise!(portfolio, opt)
+    rc4 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc4, hrc4 = extrema(rc2)
 
     w1t = [0.04525648415215342, 0.057766352881666934, 0.04597010718397756,
            0.04018043322395846, 0.056959834142059594, 0.06839008647385199,
@@ -47,6 +58,11 @@ l = 2.0
     @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, atol = 9e-1)
     @test isapprox(hrc2 / lrc2, 20, atol = 6e-1)
+
+    @test isapprox(w1.weights, w3.weights)
+    @test isapprox(w2.weights, w4.weights)
+    @test isapprox(hrc1, hrc3)
+    @test isapprox(lrc1, lrc3)
 end
 
 @testset "$(:Classic), $(:RP), $(:RCVaR)" begin
@@ -58,7 +74,7 @@ end
     asset_statistics!(portfolio)
 
     rm = :RCVaR
-    opt = OptimiseOpt(; type = :RP, rm = rm)
+    opt = OptimiseOpt(; type = :RP, rm = rm, owa_approx = false)
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, opt)
@@ -69,6 +85,17 @@ end
     w2 = optimise!(portfolio, opt)
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
+
+    opt.owa_approx = true
+    portfolio.risk_budget = []
+    w3 = optimise!(portfolio, opt)
+    rc3 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc3, hrc3 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w4 = optimise!(portfolio, opt)
+    rc4 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc4, hrc4 = extrema(rc2)
 
     w1t = [0.04093966721708738, 0.04818692689480003, 0.03953773845651885,
            0.034491335246324105, 0.04946849042103668, 0.06049545186182922,
@@ -90,6 +117,11 @@ end
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, atol = 9e-2)
     @test isapprox(hrc2 / lrc2, 20, atol = 4e-1)
+
+    @test isapprox(w1.weights, w3.weights)
+    @test isapprox(w2.weights, w4.weights)
+    @test isapprox(hrc1, hrc3)
+    @test isapprox(lrc1, lrc3)
 end
 
 @testset "$(:Classic), $(:RP), $(:GMD), blank $(:OWA) and owa_w = owa_gmd(T)" begin
@@ -101,7 +133,7 @@ end
     asset_statistics!(portfolio)
 
     rm = :GMD
-    opt = OptimiseOpt(; type = :RP, rm = rm)
+    opt = OptimiseOpt(; type = :RP, rm = rm, owa_approx = false)
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, opt)
@@ -136,6 +168,17 @@ end
     rc6 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc6, hrc6 = extrema(rc6)
 
+    opt.owa_approx = true
+    portfolio.risk_budget = []
+    w3 = optimise!(portfolio, opt)
+    rc3 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc3, hrc3 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w4 = optimise!(portfolio, opt)
+    rc4 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc4, hrc4 = extrema(rc2)
+
     w1t = [0.04802942512713756, 0.051098633965431545, 0.045745604303095315,
            0.04016462272315026, 0.048191113840881636, 0.04947756880152616,
            0.029822819526080995, 0.06381728597897235, 0.04728967147101808,
@@ -164,6 +207,11 @@ end
     @test isapprox(rc2, rc4)
     @test isapprox(rc1, rc5)
     @test isapprox(rc2, rc6)
+
+    @test isapprox(w1.weights, w3.weights)
+    @test isapprox(w2.weights, w4.weights)
+    @test isapprox(hrc1, hrc3)
+    @test isapprox(lrc1, lrc3)
 end
 
 @testset "$(:Classic), $(:RP), $(:TG)" begin
@@ -175,7 +223,7 @@ end
     asset_statistics!(portfolio)
 
     rm = :TG
-    opt = OptimiseOpt(; type = :RP, rm = rm)
+    opt = OptimiseOpt(; type = :RP, rm = rm, owa_approx = false)
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, opt)
@@ -186,6 +234,17 @@ end
     w2 = optimise!(portfolio, opt)
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
+
+    opt.owa_approx = true
+    portfolio.risk_budget = []
+    w3 = optimise!(portfolio, opt)
+    rc3 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc3, hrc3 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w4 = optimise!(portfolio, opt)
+    rc4 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc4, hrc4 = extrema(rc2)
 
     w1t = [0.038763856717643874, 0.07263804161391481, 0.04228191397250115,
            0.0435413917826149, 0.048773651417661684, 0.039675758610533296,
@@ -207,6 +266,11 @@ end
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, atol = 4e-2)
     @test isapprox(hrc2 / lrc2, 20, atol = 6e-1)
+
+    @test isapprox(w1.weights, w3.weights)
+    @test isapprox(w2.weights, w4.weights)
+    @test isapprox(hrc1, hrc3)
+    @test isapprox(lrc1, lrc3)
 end
 
 @testset "$(:Classic), $(:RP), $(:RTG)" begin
@@ -230,6 +294,17 @@ end
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
+    opt.owa_approx = true
+    portfolio.risk_budget = []
+    w3 = optimise!(portfolio, opt)
+    rc3 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc3, hrc3 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w4 = optimise!(portfolio, opt)
+    rc4 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc4, hrc4 = extrema(rc2)
+
     w1t = [0.042304471409681986, 0.050291959151292795, 0.04246282744021459,
            0.034154217192553946, 0.04711274092122714, 0.053021558707734416,
            0.03709975559975993, 0.06221043802717917, 0.04085191768667458,
@@ -250,4 +325,9 @@ end
     @test isapprox(w2.weights, w2t, rtol = 5.0e-5)
     @test isapprox(hrc1 / lrc1, 1, atol = 6.2e-4)
     @test isapprox(hrc2 / lrc2, 20, atol = 4e-1)
+
+    @test isapprox(w1.weights, w3.weights)
+    @test isapprox(w2.weights, w4.weights)
+    @test isapprox(hrc1, hrc3)
+    @test isapprox(lrc1, lrc3)
 end

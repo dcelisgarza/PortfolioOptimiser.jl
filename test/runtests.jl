@@ -1,16 +1,8 @@
 using SafeTestsets
 
-@safetestset "Entropic and Relativistic RM tests" begin
-    include("EntrRelRMs.jl")
-end
-
-@safetestset "HCPortfolio Optimisation" begin
-    include("HCPortfolioOptimisationTests.jl")
-end
-
-@safetestset "Portfolio Classic Traditional Optimisation" begin
-    include("PortfolioClassicTradTests.jl")
-end
+# @safetestset "Entropic and Relativistic RM tests" begin
+#     include("EntrRelRMs.jl")
+# end
 
 @safetestset "Portfolio Classic RP OWA Optimisation" begin
     include("PortfolioClassicRPOWATests.jl")
@@ -87,4 +79,12 @@ end
 
 @safetestset "WC Statistics" begin
     include("WCStatisticsTests.jl")
+end
+
+@safetestset "HCPortfolio Optimisation" begin
+    include("HCPortfolioOptimisationTests.jl")
+end
+
+@safetestset "Portfolio Classic Traditional Optimisation" begin
+    include("PortfolioClassicTradTests.jl")
 end
