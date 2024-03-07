@@ -750,13 +750,13 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                    portfolio_kwargs::NamedTuple = if type != :NCO
                        (; alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                         beta = portfolio.beta, b_sim = portfolio.b_sim,
-                        kappa = portfolio.kappa, owa_w = portfolio.owa_w,
-                        solvers = portfolio.solvers)
+                        kappa = portfolio.kappa, owa_p = portfolio.owa_p,
+                        owa_w = portfolio.owa_w, solvers = portfolio.solvers)
                    else
                        (; alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                         beta = portfolio.beta, b_sim = portfolio.b_sim,
-                        kappa = portfolio.kappa, owa_w = portfolio.owa_w,
-                        solvers = portfolio.solvers,
+                        kappa = portfolio.kappa, owa_p = portfolio.owa_p,
+                        owa_w = portfolio.owa_w, solvers = portfolio.solvers,
                         max_num_assets_kurt = portfolio.max_num_assets_kurt)
                    end, portfolio_kwargs_o::NamedTuple = portfolio_kwargs,
                    max_iter::Integer = 100, save_opt_params::Bool = false)

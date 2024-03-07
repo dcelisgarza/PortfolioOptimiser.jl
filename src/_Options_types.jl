@@ -928,6 +928,7 @@ mutable struct OptimiseOpt{T1 <: Integer, T2 <: Real, T3 <: Real, T4 <: Real, T5
     u_cov::Symbol
     u_mu::Symbol
     sd_cone::Bool
+    owa_approx::Bool
     near_opt::Bool
     hist::T1
     rf::T2
@@ -941,8 +942,9 @@ end
 function OptimiseOpt(; type::Symbol = :Trad, rm::Symbol = :SD, obj::Symbol = :Sharpe,
                      kelly::Symbol = :None, class::Symbol = :Classic,
                      rrp_ver::Symbol = :None, u_cov::Symbol = :Box, u_mu::Symbol = :Box,
-                     sd_cone::Bool = true, near_opt::Bool = false, hist::Integer = 1,
-                     rf::Real = 0.0, l::Real = 2.0, rrp_penalty::Real = 1.0, n::Real = 20.0,
+                     sd_cone::Bool = true, owa_approx::Bool = true, near_opt::Bool = false,
+                     hist::Integer = 1, rf::Real = 0.0, l::Real = 2.0,
+                     rrp_penalty::Real = 1.0, n::Real = 20.0,
                      w_ini::AbstractVector = Vector{typeof(rf)}(undef, 0),
                      w_min::AbstractVector = Vector{typeof(rf)}(undef, 0),
                      w_max::AbstractVector = Vector{typeof(rf)}(undef, 0))
@@ -967,6 +969,7 @@ function OptimiseOpt(; type::Symbol = :Trad, rm::Symbol = :SD, obj::Symbol = :Sh
                                                                                             u_cov,
                                                                                             u_mu,
                                                                                             sd_cone,
+                                                                                            owa_approx,
                                                                                             near_opt,
                                                                                             hist,
                                                                                             rf,

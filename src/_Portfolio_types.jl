@@ -83,6 +83,7 @@ mutable struct Portfolio{
     rtg_u::urtg
     owa_u::uowa
     # Custom OWA weights
+    owa_p::owap
     owa_w::wowa
     # Model statistics
     mu::tmu
@@ -256,7 +257,7 @@ mutable struct Portfolio{
                          uuci, uevar, uedar, urvar, urdar, uk, usk, ugmd, ur, urcvar, utg,
                          urtg, uowa,
                          # Cusom OWA weights
-                         wowa,
+                         owap, wowa,
                          # Optimisation model inputs
                          tmu, tcov, tkurt, tskurt, tl2, ts2, tmuf, tcovf, tmufm, tcovfm,
                          tmubl, tcovbl, tmublf, tcovblf, trfm, tcovl, tcovu, tcovmu, tcovs,
@@ -338,6 +339,7 @@ mutable struct Portfolio{
     rtg_u::urtg
     owa_u::uowa
     # Custom OWA weights
+    owa_p::owap
     owa_w::wowa
     # Model statistics
     mu::tmu
@@ -577,6 +579,7 @@ function Portfolio(;
                    gmd_u::Real   = Inf, rg_u::Real    = Inf, rcvar_u::Real = Inf,
                    tg_u::Real    = Inf, rtg_u::Real   = Inf, owa_u::Real   = Inf,
                    # Custom OWA weights
+                   owa_p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50],
                    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    # Model statistics
                    mu::AbstractVector                 = Vector{Float64}(undef, 0),
@@ -797,7 +800,7 @@ function Portfolio(;
                      typeof(kurt_u), typeof(skurt_u), typeof(gmd_u), typeof(rg_u),
                      typeof(rcvar_u), typeof(tg_u), typeof(rtg_u), typeof(owa_u),
                      # Custom OWA weights
-                     typeof(owa_w),
+                     typeof(owa_p), typeof(owa_w),
                      # Model statistics
                      typeof(mu), typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2),
                      typeof(S_2), typeof(mu_f), typeof(cov_f), typeof(mu_fm),
@@ -839,7 +842,7 @@ function Portfolio(;
                        cdar_u, uci_u, evar_u, edar_u, rvar_u, rdar_u, kurt_u, skurt_u,
                        gmd_u, rg_u, rcvar_u, tg_u, rtg_u, owa_u,
                        # Custom OWA weights
-                       owa_w,
+                       owa_p, owa_w,
                        # Model statistics
                        mu, cov, kurt, skurt, L_2, S_2, mu_f, cov_f, mu_fm, cov_fm, mu_bl,
                        cov_bl, mu_bl_fm, cov_bl_fm, returns_fm,
@@ -1050,7 +1053,7 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.gmd_u), typeof(obj.rg_u), typeof(obj.rcvar_u),
                      typeof(obj.tg_u), typeof(obj.rtg_u), typeof(obj.owa_u),
                      # Custom OWA weights
-                     typeof(obj.owa_w),
+                     typeof(obj.owa_p), typeof(obj.owa_w),
                      # Model statistics
                      typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt), typeof(obj.skurt),
                      typeof(obj.L_2), typeof(obj.S_2), typeof(obj.mu_f), typeof(obj.cov_f),
@@ -1110,7 +1113,7 @@ function Base.deepcopy(obj::Portfolio)
                        deepcopy(obj.gmd_u), deepcopy(obj.rg_u), deepcopy(obj.rcvar_u),
                        deepcopy(obj.tg_u), deepcopy(obj.rtg_u), deepcopy(obj.owa_u),
                        # Custom OWA weights
-                       deepcopy(obj.owa_w),
+                       deepcopy(obj.owa_p), deepcopy(obj.owa_w),
                        # Model statistics
                        deepcopy(obj.mu), deepcopy(obj.cov), deepcopy(obj.kurt),
                        deepcopy(obj.skurt), deepcopy(obj.L_2), deepcopy(obj.S_2),
@@ -1159,6 +1162,7 @@ mutable struct HCPortfolio{
     alpha_tail::ata
     max_num_assets_kurt::mnak
     # Custom OWA weights
+    owa_p::owap
     owa_w::wowa
     # Optimisation parameters
     mu::tmu
@@ -1243,7 +1247,7 @@ mutable struct HCPortfolio{
                            # Risk parmeters
                            ai, a, as, bi, b, bs, k, ata, mnak,
                            # Custom OWA weights
-                           wowa,
+                           owap, wowa,
                            # Optimisation parameters
                            tmu, tcov, tkurt, tskurt, tl2, ts2, tbin, wmi, wma, ttco, tco,
                            tdist, tcl, tk,
@@ -1268,6 +1272,7 @@ mutable struct HCPortfolio{
     alpha_tail::ata
     max_num_assets_kurt::mnak
     # Custom OWA weights
+    owa_p::owap
     owa_w::wowa
     # Optimisation parameters
     mu::tmu
@@ -1376,6 +1381,7 @@ function HCPortfolio(;
                      kappa::Real = 0.3, alpha_tail::Real = 0.05,
                      max_num_assets_kurt::Integer = 0,
                      # Custom OWA weights
+                     owa_p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50],
                      owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                      # Optimisation parameters
                      mu::AbstractVector{<:Real}                   = Vector{Float64}(undef, 0),
@@ -1478,7 +1484,7 @@ function HCPortfolio(;
                        typeof(beta), typeof(b_sim), typeof(kappa), typeof(alpha_tail),
                        typeof(max_num_assets_kurt),
                        # Custom OWA weights
-                       typeof(owa_w),
+                       typeof(owa_p), typeof(owa_w),
                        # Optimisation parameters
                        typeof(mu), typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2),
                        typeof(S_2), Union{Symbol, <:Integer},
@@ -1502,7 +1508,7 @@ function HCPortfolio(;
                          alpha_i, alpha, a_sim, beta_i, beta, b_sim, kappa, alpha_tail,
                          max_num_assets_kurt,
                          # Custom OWA weights
-                         owa_w,
+                         owa_p, owa_w,
                          # Optimisation parameters
                          mu, cov, kurt, skurt, L_2, S_2, bins_info, w_min, w_max,
                          cor_method, cor, dist, clusters, k,
@@ -1621,7 +1627,7 @@ function Base.deepcopy(obj::HCPortfolio)
                        typeof(obj.kappa), typeof(obj.alpha_tail),
                        typeof(obj.max_num_assets_kurt),
                        # Custom OWA weights
-                       typeof(obj.owa_w),
+                       typeof(obj.owa_p), typeof(obj.owa_w),
                        # Optimisation parameters
                        typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt), typeof(obj.skurt),
                        typeof(obj.L_2), typeof(obj.S_2), Union{Symbol, <:Integer},
@@ -1649,7 +1655,7 @@ function Base.deepcopy(obj::HCPortfolio)
                          deepcopy(obj.kappa), deepcopy(obj.alpha_tail),
                          deepcopy(obj.max_num_assets_kurt),
                          # Custom OWA weights
-                         deepcopy(obj.owa_w),
+                         deepcopy(obj.owa_p), deepcopy(obj.owa_w),
                          # Optimisation parameters
                          deepcopy(obj.mu), deepcopy(obj.cov), deepcopy(obj.kurt),
                          deepcopy(obj.skurt), deepcopy(obj.L_2), deepcopy(obj.S_2),

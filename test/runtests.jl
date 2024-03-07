@@ -4,15 +4,8 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-#=
-# These tests were broken by the update. Need to fix them.
 @safetestset "WC Statistics" begin
     include("WCStatisticsTests.jl")
-end
-=#
-
-@safetestset "Portfolio Classic WC Optimisation" begin
-    include("PortfolioClassicWCTests.jl")
 end
 
 @safetestset "HCPortfolio Optimisation" begin
@@ -90,4 +83,8 @@ end
 
 @safetestset "HCPortfolio OWA Optimisation" begin
     include("HCPortfolioOWAOptimisationTests.jl")
+end
+
+@safetestset "Portfolio Classic WC Optimisation" begin
+    include("PortfolioClassicWCTests.jl")
 end
