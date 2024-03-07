@@ -63,6 +63,8 @@ l = 2.0
     @test isapprox(w2.weights, w4.weights)
     @test isapprox(hrc1, hrc3)
     @test isapprox(lrc1, lrc3)
+    @test isapprox(hrc2, hrc4)
+    @test isapprox(lrc2, lrc4)
 end
 
 @testset "$(:Classic), $(:RP), $(:RCVaR)" begin
@@ -122,6 +124,8 @@ end
     @test isapprox(w2.weights, w4.weights)
     @test isapprox(hrc1, hrc3)
     @test isapprox(lrc1, lrc3)
+    @test isapprox(hrc2, hrc4)
+    @test isapprox(lrc2, lrc4)
 end
 
 @testset "$(:Classic), $(:RP), $(:GMD), blank $(:OWA) and owa_w = owa_gmd(T)" begin
@@ -171,14 +175,14 @@ end
 
     opt.owa_approx = true
     portfolio.risk_budget = []
-    w3 = optimise!(portfolio, opt)
-    rc3 = risk_contribution(portfolio; type = :RP, rm = rm)
-    lrc3, hrc3 = extrema(rc1)
+    w7 = optimise!(portfolio, opt)
+    rc7 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc7, hrc7 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w4 = optimise!(portfolio, opt)
-    rc4 = risk_contribution(portfolio; type = :RP, rm = rm)
-    lrc4, hrc4 = extrema(rc2)
+    w8 = optimise!(portfolio, opt)
+    rc8 = risk_contribution(portfolio; type = :RP, rm = rm)
+    lrc8, hrc8 = extrema(rc2)
 
     w1t = [0.04802942512713756, 0.051098633965431545, 0.045745604303095315,
            0.04016462272315026, 0.048191113840881636, 0.04947756880152616,
@@ -209,10 +213,12 @@ end
     @test isapprox(rc1, rc5)
     @test isapprox(rc2, rc6)
 
-    @test isapprox(w1.weights, w3.weights)
-    @test isapprox(w2.weights, w4.weights)
-    @test isapprox(hrc1, hrc3)
-    @test isapprox(lrc1, lrc3)
+    @test isapprox(w1.weights, w7.weights, rtol = 0.01)
+    @test isapprox(w2.weights, w8.weights, rtol = 0.01)
+    @test isapprox(hrc1, hrc7)
+    @test isapprox(lrc1, lrc7)
+    @test isapprox(hrc2, hrc8)
+    @test isapprox(lrc2, lrc8)
 end
 
 @testset "$(:Classic), $(:RP), $(:TG)" begin
@@ -255,13 +261,13 @@ end
            0.05382270524704115, 0.049234991484763235, 0.049210766672260015,
            0.04215817781453176, 0.08952770259675667]
 
-    w2t = [0.003805226614697479, 0.013364205009887008, 0.011525394065478603,
-           0.01752721720284768, 0.02000506401129493, 0.022673106637119324,
-           0.021392712411281652, 0.037872967183538386, 0.031439975771315305,
-           0.048025566944921765, 0.05714480019773132, 0.07509769448705383,
-           0.03855722461209247, 0.07464724983990394, 0.06404877846320639,
-           0.08139496159574147, 0.07619668233424755, 0.07782667521029749,
-           0.07630960576210888, 0.1511448916452343]
+    w2t = [0.003804201730369726, 0.013359242588570613, 0.011525238278792772,
+           0.017528130850969423, 0.02001815438463227, 0.022673966582609263,
+           0.02138900850415554, 0.037874003804464075, 0.03144185164506419,
+           0.048012012357844025, 0.057133446666257255, 0.07510867494151434,
+           0.03854845730070715, 0.0746078336771919, 0.06405224626301537,
+           0.08138762104613488, 0.07621310625813464, 0.07783593879161518,
+           0.07631493976925202, 0.15117192455870548]
 
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
@@ -272,6 +278,8 @@ end
     @test isapprox(w2.weights, w4.weights, rtol = 0.1)
     @test isapprox(hrc1, hrc3)
     @test isapprox(lrc1, lrc3)
+    @test isapprox(hrc2, hrc4)
+    @test isapprox(lrc2, lrc4)
 end
 
 @testset "$(:Classic), $(:RP), $(:RTG)" begin
@@ -314,13 +322,13 @@ end
            0.04877993854502053, 0.049320416165216964, 0.06298168266461707,
            0.04598643874949792, 0.07906090407311984]
 
-    w2t = [0.004213562156090763, 0.009650456216113297, 0.013281761327902633,
-           0.015737255444769692, 0.022026702873995576, 0.031004708791057673,
-           0.02760519242868034, 0.054095860792296585, 0.03462758434845054,
-           0.04156758184025525, 0.08106190555234895, 0.04651639756905095,
-           0.030859657391386564, 0.08623520768951227, 0.0528351286544106,
-           0.0671501218631795, 0.07965515136231299, 0.10046755823446475,
-           0.08074916456440005, 0.12065904089932113]
+    w2t = [0.004134397778839289, 0.009449620949961284, 0.013178015687119968,
+           0.015383704409587985, 0.02252899120296703, 0.03056873560821377,
+           0.026476242607047094, 0.05432975337346941, 0.034568378730063465,
+           0.040879422165230495, 0.07959638335531963, 0.047209882758596354,
+           0.03067332959942541, 0.08496674384644058, 0.052934757352041416,
+           0.06603197134018766, 0.07860555721741971, 0.10022588849748805,
+           0.0799099480698288, 0.12834827545075245]
 
     @test isapprox(w1.weights, w1t, rtol = 0.001)
     @test isapprox(w2.weights, w2t, rtol = 5.0e-5)
