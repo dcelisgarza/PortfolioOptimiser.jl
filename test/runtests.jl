@@ -1,8 +1,8 @@
 using SafeTestsets
 
-# @safetestset "Entropic and Relativistic RM tests" begin
-#     include("EntrRelRMs.jl")
-# end
+@safetestset "Entropic and Relativistic RM tests" begin
+    include("EntrRelRMs.jl")
+end
 
 @safetestset "Portfolio Classic Traditional OWA Optimisation" begin
     include("PortfolioClassicTradOWATests.jl")
