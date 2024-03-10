@@ -530,7 +530,7 @@ Available choicees of summary parameters ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` [`
   - `:FM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor model computed by [`factor_statistics!`](@ref).
   - `:BL`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the Black-Litterman model computed by [`black_litterman_statistics!`](@ref).
   - `:BLFM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor Black-Litterman model computed by [`black_litterman_factor_satistics!`](@ref). This model has two versions defined in [`BLFMMethods`](@ref).
-  - `:FC`: when optimising with this option, the `:RP` [`PortType`](@ref) takes the risk contribution based on the factors.
+  - `:FC`: when optimising with this option, the `:RP` [`PortTypes`](@ref) takes the risk contribution based on the factors.
 """
 const PortClasses = (:Classic, :FM, :BL, :BLFM, :FC)
 

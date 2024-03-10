@@ -7,11 +7,11 @@ prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestam
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-portfolio = Portfolio(; prices = prices_assets[(end - 400):end],
-                      f_prices = prices_factors[(end - 400):end],
+portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors,
                       solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                              :params => Dict("verbose" => true
-                                                                              #   "max_step_fraction" => 0.75,
+                                                              :params => Dict("verbose" => false,
+                                                                              "max_step_fraction" => 0.75
+                                                                              #   "max_iter" => 400,
                                                                               #   "max_iter"=>150,
                                                                               #   "tol_gap_abs" => 1e-8,
                                                                               #   "tol_gap_rel" => 1e-8,
@@ -21,13 +21,19 @@ portfolio = Portfolio(; prices = prices_assets[(end - 400):end],
                                                                               #   "reduced_tol_gap_abs" => 1e-6,
                                                                               #   "reduced_tol_gap_rel" => 1e-5,
                                                                               #   "reduced_tol_feas" => 1e-6,
-                                                                              #   "reduced_tol_ktratio" => 1e-6,
+                                                                              #   "reduced_tol_ktratio" => 1e-6
                                                                               ))))
 asset_statistics!(portfolio; calc_kurt = false)
 
-w1 = optimise!(portfolio,
-               OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :RTG, owa_approx = false);
+portfolio.alpha = 0.2
+portfolio.beta = 0.05
+w1 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :REVaR);
                string_names = true)
+portfolio.beta_i = 0.00000001
+portfolio.beta = 0.000001
+w2 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :REVaR);
+               string_names = true)
+display(hcat(w1, w2; makeunique = true))
 
 portfolio.owa_w = owa_rtg(400)
 w2 = optimise!(portfolio,
@@ -72,85 +78,6 @@ test = factor_risk_contribution(portfolio.optimal[:RP].weights, portfolio.assets
                                 DataFrame(); loadings_opt = loadings_opt, rm = :SD,
                                 rf = 0.0, sigma = portfolio.cov,
                                 solvers = portfolio.solvers)
-
-py"""
-import riskfolio as rk
-import numpy as np
-import pandas as pd
-import riskfolio.src.ParamsEstimation as pe
-from scipy.linalg import null_space
-from numpy.linalg import pinv
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
-import cvxpy as cp
-from scipy.linalg import sqrtm, norm, null_space
-import riskfolio.src.OwaWeights as owa
-
-"""
-
-py"""
-method_mu='hist' # Method to estimate expected returns based on historical data.
-method_cov='hist' # Method to estimate covariance matrix based on historical data.
-model = 'FC' # Factor Contribution Model
-rm = 'MV' # Risk measure used, this time will be variance
-rf = $rf # Risk free rate
-b_f = None # Risk factor contribution vector
-port = rk.Portfolio(returns = pd.DataFrame($(portfolio.returns), columns = $(portfolio.assets)), factors = pd.DataFrame($(portfolio.f_returns), columns = $(portfolio.f_assets)))
-
-port.assets_stats(method_mu=method_mu,
-                  method_cov=method_cov)
-
-feature_selection = 'PCR' # Method to select best model, could be PCR or Stepwise
-n_components = 0.95 # 95% of explained variance. See PCA in scikit learn for more information
-port.factors_stats(method_mu=method_mu,
-                   method_cov=method_cov,
-                   feature_selection=feature_selection,
-                   dict_risk=dict(n_components=n_components)
-                  )
-
-w1 = port.rp_optimization(model=model,
-                         rm=rm,
-                         rf=rf,
-                         b_f=b_f,
-                         )
-
-feature_selection = 'stepwise' # Method to select best model, could be PCR or Stepwise
-stepwise = 'Forward' # Forward or Backward regression
-
-port.factors_stats(method_mu=method_mu,
-                    method_cov=method_cov,
-                    feature_selection=feature_selection,
-                    dict_risk=dict(stepwise=stepwise)
-                    )
-
-w2 = port.rp_optimization(model=model,
-                         rm=rm,
-                         rf=rf,
-                         b_f=b_f,
-                         )
-
-feature_selection = 'stepwise' # Method to select best model, could be PCR or Stepwise
-stepwise = 'Backward' # Forward or Backward regression
-
-port.factors_stats(method_mu=method_mu,
-                    method_cov=method_cov,
-                    feature_selection=feature_selection,
-                    dict_risk=dict(stepwise=stepwise)
-                    )
-
-w3 = port.rp_optimization(model=model,
-                         rm=rm,
-                         rf=rf,
-                         b_f=b_f,
-                         )
-
-w4 = port.rp_optimization(model="Classic",
-                         rm=rm,
-                         rf=rf,
-                         b_f=b_f,
-                         )
-
-"""
 
 asset_statistics!(portfolio; calc_kurt = false)
 loadings_opt.method = :PCR
@@ -586,20 +513,20 @@ lrc2, hrc2 = extrema(rc2)
 
 for rtol ∈
     [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 5e-5, 1e-4, 1e-3, 1e-2, 1e-1, 2.5e-1, 5e-1, 1e0]
-    a1, a2 = [0.0425354272767062, 0.04991571895368152, 0.04298329828063256,
-              0.03478231208822956, 0.04824894701525979, 0.05320453060693792,
-              0.03659423924135794, 0.06323743284904297, 0.04112041989604676,
-              0.044360488824348794, 0.08117513451607743, 0.04385016868298808,
-              0.025563101387777416, 0.06928268651446567, 0.036317664547475315,
-              0.048489360135118655, 0.04932838211979579, 0.06279913028520855,
-              0.04589944098267767, 0.08031211579617145],
-             [0.042304471409681986, 0.050291959151292795, 0.04246282744021459,
-              0.034154217192553946, 0.04711274092122714, 0.053021558707734416,
-              0.03709975559975993, 0.06221043802717917, 0.04085191768667458,
-              0.044856782603669765, 0.08316716558090284, 0.04356886923048706,
-              0.02551608637477467, 0.07053717563638451, 0.03671465423999034,
-              0.04877993854502053, 0.049320416165216964, 0.06298168266461707,
-              0.04598643874949792, 0.07906090407311984]
+    a1, a2 = [7.1225604903281e-11, 3.89346920257538e-10, 7.441316769482621e-11,
+              1.7616726662201127e-10, 0.08771741819188573, 2.7368941051846073e-11,
+              8.940832850246839e-12, 0.12008326700540226, 4.329933751596991e-9,
+              3.6655362863808624e-10, 1.9364738146358e-10, 3.6455610440793596e-11,
+              1.8696963313940842e-11, 1.3437844004619931e-10, 1.4233089709444487e-11,
+              0.15120880083006258, 0.5292695130113965, 2.574637293655506e-10,
+              0.11172099466095674, 2.0147073944192543e-10],
+             [7.258550303162134e-10, 3.510882669681817e-9, 6.950239505552793e-10,
+              1.0609124257825676e-9, 0.08771778791840867, 2.0738014860049013e-10,
+              2.8312640337460793e-10, 0.12008375612593049, 2.032593825607953e-8,
+              3.021490433133468e-9, 9.570405521537858e-9, 5.380706152519343e-10,
+              2.3209931783627336e-10, 2.103112203820464e-9, 2.516769264462635e-10,
+              0.15120889278610558, 0.5292690063020407, 1.6500103551629395e-8,
+              0.11172049348167974, 4.359757243300342e-9]
     if isapprox(a1, a2; rtol = rtol)
         println(", rtol = $(rtol)")
         break
@@ -635,5 +562,6 @@ function f(rpe, warm)
     return rpew, repsw
 end
 
-r = range(; start = 7, stop = 8, length = 3)
+r = collect(range(; start = 7, stop = 8, length = 3))
 f(r, 1)
+display(r * 10)
