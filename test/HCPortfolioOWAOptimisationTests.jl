@@ -23,72 +23,81 @@ l = 2.0
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :GMD, rf = rf, cluster = false)
     w3 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :GMD, obj = :Min_Risk, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Min_Risk,
+                                         rf = rf, l = l), cluster = false)
     w4 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :GMD, obj = :Utility, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Utility,
+                                         rf = rf, l = l), cluster = false)
     w5 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :GMD, obj = :Sharpe, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Sharpe,
+                                         rf = rf, l = l), cluster = false)
     w6 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :GMD, obj = :Max_Ret, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Max_Ret,
+                                         rf = rf, l = l), cluster = false)
     w7 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :GMD, obj = :Equal, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Equal,
+                                         rf = rf, l = l), cluster = false)
     w8 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :GMD, obj = :Min_Risk, l = l, rf = rf),
-                   nco_opt_o = OptimiseOpt(; rm = :GMD, obj = :Sharpe, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Min_Risk,
+                                         l = l, rf = rf),
+                   nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Sharpe,
+                                           rf = rf, l = l), cluster = false)
     w9 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :GMD, obj = :Sharpe, l = l, rf = rf),
-                   nco_opt_o = OptimiseOpt(; rm = :GMD, obj = :Min_Risk, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Sharpe,
+                                         l = l, rf = rf),
+                   nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Min_Risk,
+                                           rf = rf, l = l), cluster = false)
     w10 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :GMD, obj = :Equal, l = l, rf = rf),
-                    nco_opt_o = OptimiseOpt(; rm = :GMD, obj = :Sharpe, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Equal,
+                                          l = l, rf = rf),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Sharpe,
+                                            rf = rf, l = l), cluster = false)
     w11 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :GMD, obj = :Sharpe, l = l, rf = rf),
-                    nco_opt_o = OptimiseOpt(; rm = :GMD, obj = :Equal, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Sharpe,
+                                          l = l, rf = rf),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :GMD, obj = :Equal,
+                                            rf = rf, l = l), cluster = false)
     w12 = optimise!(portfolio; type = :HRP, rm = :OWA, rf = rf,
                     cluster_opt = ClusterOpt(; linkage = :ward,
                                              max_k = ceil(Int,
                                                           sqrt(size(portfolio.returns, 2)))))
     w13 = optimise!(portfolio; type = :HERC, rm = :OWA, rf = rf, cluster = false)
     w14 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Min_Risk, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Min_Risk,
+                                          rf = rf, l = l), cluster = false)
     w15 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Utility, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Utility,
+                                          rf = rf, l = l), cluster = false)
     w16 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Sharpe, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Sharpe,
+                                          rf = rf, l = l), cluster = false)
     w17 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Max_Ret, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Max_Ret,
+                                          rf = rf, l = l), cluster = false)
     w18 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Equal, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Equal,
+                                          rf = rf, l = l), cluster = false)
     w19 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Min_Risk, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :OWA, obj = :Sharpe, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Min_Risk,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Sharpe,
+                                            rf = rf, l = l), cluster = false)
     w20 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Sharpe, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :OWA, obj = :Min_Risk, rf = rf, l = l),
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Sharpe,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :OWA,
+                                            obj = :Min_Risk, rf = rf, l = l),
                     cluster = false)
     w21 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Equal, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :OWA, obj = :Sharpe, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Equal,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Sharpe,
+                                            rf = rf, l = l), cluster = false)
     w22 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Sharpe, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :OWA, obj = :Equal, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Sharpe,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Equal,
+                                            rf = rf, l = l), cluster = false)
     portfolio.owa_w = owa_gmd(200)
     w23 = optimise!(portfolio; type = :HRP, rm = :OWA, rf = rf,
                     cluster_opt = ClusterOpt(; linkage = :ward,
@@ -96,36 +105,41 @@ l = 2.0
                                                           sqrt(size(portfolio.returns, 2)))))
     w24 = optimise!(portfolio; type = :HERC, rm = :OWA, rf = rf, cluster = false)
     w25 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Min_Risk, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Min_Risk,
+                                          rf = rf, l = l), cluster = false)
     w26 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Utility, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Utility,
+                                          rf = rf, l = l), cluster = false)
     w27 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Sharpe, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Sharpe,
+                                          rf = rf, l = l), cluster = false)
     w28 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Max_Ret, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Max_Ret,
+                                          rf = rf, l = l), cluster = false)
     w29 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Equal, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Equal,
+                                          rf = rf, l = l), cluster = false)
     w30 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Min_Risk, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :OWA, obj = :Sharpe, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Min_Risk,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Sharpe,
+                                            rf = rf, l = l), cluster = false)
     w31 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Sharpe, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :OWA, obj = :Min_Risk, rf = rf, l = l),
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Sharpe,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :OWA,
+                                            obj = :Min_Risk, rf = rf, l = l),
                     cluster = false)
     w32 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Equal, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :OWA, obj = :Sharpe, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Equal,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Sharpe,
+                                            rf = rf, l = l), cluster = false)
     w33 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :OWA, obj = :Sharpe, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :OWA, obj = :Equal, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Sharpe,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :OWA, obj = :Equal,
+                                            rf = rf, l = l), cluster = false)
 
     w1t = [0.03354709337144272, 0.06342772851033758, 0.028766393880563925,
            0.045655364086333534, 0.05858145457649635, 0.028471101324400793,
@@ -249,36 +263,40 @@ end
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :RG, rf = rf, cluster = false)
     w3 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RG, obj = :Min_Risk, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Min_Risk,
+                                         rf = rf, l = l), cluster = false)
     w4 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RG, obj = :Utility, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Utility,
+                                         rf = rf, l = l), cluster = false)
     w5 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RG, obj = :Sharpe, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Sharpe,
+                                         rf = rf, l = l), cluster = false)
     w6 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RG, obj = :Max_Ret, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Max_Ret,
+                                         rf = rf, l = l), cluster = false)
     w7 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RG, obj = :Equal, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Equal,
+                                         rf = rf, l = l), cluster = false)
     w8 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RG, obj = :Min_Risk, rf = rf, l = l),
-                   nco_opt_o = OptimiseOpt(; rm = :RG, obj = :Sharpe, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Min_Risk,
+                                         rf = rf, l = l),
+                   nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Sharpe,
+                                           rf = rf, l = l), cluster = false)
     w9 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RG, obj = :Sharpe, rf = rf, l = l),
-                   nco_opt_o = OptimiseOpt(; rm = :RG, obj = :Min_Risk, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Sharpe,
+                                         rf = rf, l = l),
+                   nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Min_Risk,
+                                           rf = rf, l = l), cluster = false)
     w10 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :RG, obj = :Equal, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :RG, obj = :Sharpe, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Equal,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Sharpe,
+                                            rf = rf, l = l), cluster = false)
     w11 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :RG, obj = :Sharpe, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :RG, obj = :Equal, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Sharpe,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RG, obj = :Equal,
+                                            rf = rf, l = l), cluster = false)
 
     w1t = [0.039151540315525625, 0.07627752703443909, 0.03420720478669321,
            0.061642909486682454, 0.043487500726191786, 0.03514534246543564,
@@ -393,36 +411,41 @@ end
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :RCVaR, rf = rf, cluster = false)
     w3 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RCVaR, obj = :Min_Risk, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RCVaR, obj = :Min_Risk,
+                                         rf = rf, l = l), cluster = false)
     w4 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RCVaR, obj = :Utility, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RCVaR, obj = :Utility,
+                                         rf = rf, l = l), cluster = false)
     w5 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RCVaR, obj = :Sharpe, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RCVaR, obj = :Sharpe,
+                                         rf = rf, l = l), cluster = false)
     w6 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RCVaR, obj = :Max_Ret, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RCVaR, obj = :Max_Ret,
+                                         rf = rf, l = l), cluster = false)
     w7 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RCVaR, obj = :Equal, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RCVaR, obj = :Equal,
+                                         rf = rf, l = l), cluster = false)
     w8 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RCVaR, obj = :Min_Risk, rf = rf, l = l),
-                   nco_opt_o = OptimiseOpt(; rm = :RCVaR, obj = :Sharpe, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RCVaR, obj = :Min_Risk,
+                                         rf = rf, l = l),
+                   nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RCVaR, obj = :Sharpe,
+                                           rf = rf, l = l), cluster = false)
     w9 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RCVaR, obj = :Sharpe, rf = rf, l = l),
-                   nco_opt_o = OptimiseOpt(; rm = :RCVaR, obj = :Min_Risk, rf = rf, l = l),
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RCVaR, obj = :Sharpe,
+                                         rf = rf, l = l),
+                   nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RCVaR,
+                                           obj = :Min_Risk, rf = rf, l = l),
                    cluster = false)
     w10 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :RCVaR, obj = :Equal, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :RCVaR, obj = :Sharpe, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :RCVaR, obj = :Equal,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RCVaR,
+                                            obj = :Sharpe, rf = rf, l = l), cluster = false)
     w11 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :RCVaR, obj = :Sharpe, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :RCVaR, obj = :Equal, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :RCVaR, obj = :Sharpe,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RCVaR, obj = :Equal,
+                                            rf = rf, l = l), cluster = false)
 
     w1t = [0.0330739462814986, 0.06546151173358211, 0.028106124164109084,
            0.049902753874119445, 0.05369883279541233, 0.03061438896454119,
@@ -537,36 +560,40 @@ end
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :TG, rf = rf, cluster = false)
     w3 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :TG, obj = :Min_Risk, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Min_Risk,
+                                         rf = rf, l = l), cluster = false)
     w4 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :TG, obj = :Utility, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Utility,
+                                         rf = rf, l = l), cluster = false)
     w5 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :TG, obj = :Sharpe, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Sharpe,
+                                         rf = rf, l = l), cluster = false)
     w6 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :TG, obj = :Max_Ret, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Max_Ret,
+                                         rf = rf, l = l), cluster = false)
     w7 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :TG, obj = :Equal, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Equal,
+                                         rf = rf, l = l), cluster = false)
     w8 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :TG, obj = :Min_Risk, rf = rf, l = l),
-                   nco_opt_o = OptimiseOpt(; rm = :TG, obj = :Sharpe, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Min_Risk,
+                                         rf = rf, l = l),
+                   nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Sharpe,
+                                           rf = rf, l = l), cluster = false)
     w9 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :TG, obj = :Sharpe, rf = rf, l = l),
-                   nco_opt_o = OptimiseOpt(; rm = :TG, obj = :Min_Risk, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Sharpe,
+                                         rf = rf, l = l),
+                   nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Min_Risk,
+                                           rf = rf, l = l), cluster = false)
     w10 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :TG, obj = :Equal, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :TG, obj = :Sharpe, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Equal,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Sharpe,
+                                            rf = rf, l = l), cluster = false)
     w11 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :TG, obj = :Sharpe, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :TG, obj = :Equal, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Sharpe,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :TG, obj = :Equal,
+                                            rf = rf, l = l), cluster = false)
 
     w1t = [0.030145659814900954, 0.07840591923890466, 0.026028557387842006,
            0.05855716810600732, 0.06477769251800919, 0.027802001185735552,
@@ -673,36 +700,40 @@ end
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :RTG, rf = rf, cluster = false)
     w3 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RTG, obj = :Min_Risk, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Min_Risk,
+                                         rf = rf, l = l), cluster = false)
     w4 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RTG, obj = :Utility, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Utility,
+                                         rf = rf, l = l), cluster = false)
     w5 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RTG, obj = :Sharpe, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Sharpe,
+                                         rf = rf, l = l), cluster = false)
     w6 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RTG, obj = :Max_Ret, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Max_Ret,
+                                         rf = rf, l = l), cluster = false)
     w7 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RTG, obj = :Equal, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Equal,
+                                         rf = rf, l = l), cluster = false)
     w8 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RTG, obj = :Min_Risk, rf = rf, l = l),
-                   nco_opt_o = OptimiseOpt(; rm = :RTG, obj = :Sharpe, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Min_Risk,
+                                         rf = rf, l = l),
+                   nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Sharpe,
+                                           rf = rf, l = l), cluster = false)
     w9 = optimise!(portfolio; type = :NCO,
-                   nco_opt = OptimiseOpt(; rm = :RTG, obj = :Sharpe, rf = rf, l = l),
-                   nco_opt_o = OptimiseOpt(; rm = :RTG, obj = :Min_Risk, rf = rf, l = l),
-                   cluster = false)
+                   nco_opt = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Sharpe,
+                                         rf = rf, l = l),
+                   nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Min_Risk,
+                                           rf = rf, l = l), cluster = false)
     w10 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :RTG, obj = :Equal, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :RTG, obj = :Sharpe, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Equal,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Sharpe,
+                                            rf = rf, l = l), cluster = false)
     w11 = optimise!(portfolio; type = :NCO,
-                    nco_opt = OptimiseOpt(; rm = :RTG, obj = :Sharpe, rf = rf, l = l),
-                    nco_opt_o = OptimiseOpt(; rm = :RTG, obj = :Equal, rf = rf, l = l),
-                    cluster = false)
+                    nco_opt = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Sharpe,
+                                          rf = rf, l = l),
+                    nco_opt_o = OptimiseOpt(; owa_approx = false, rm = :RTG, obj = :Equal,
+                                            rf = rf, l = l), cluster = false)
 
     w1t = [0.03421556945613498, 0.06755134870542995, 0.029347182427415453,
            0.05308166337900148, 0.05313714050710668, 0.03148965688772591,
