@@ -6889,8 +6889,8 @@ l = 2.0
     k_mut11 = 159.34546173091024
     k_sigmat11 = 15.4036940642565
 
-    wc_statistics!(portfolio, wc_opt)
     try
+        wc_statistics!(portfolio, wc_opt)
         cov_l1 = portfolio.cov_l
         cov_u1 = portfolio.cov_u
         cov_mu1 = portfolio.cov_mu
