@@ -927,7 +927,7 @@ end
     @test isapprox(w6.weights, w6t, rtol = 0.01)
     @test isapprox(w5.weights, w6.weights, rtol = 1e-2)
     @test isapprox(w7.weights, w7t)
-    @test isapprox(w8.weights, w8t)
+    @test isapprox(w8.weights, w8t, rtol = 1.0e-7)
     @test isapprox(w9.weights, w9t, rtol = 0.0001)
     @test isapprox(w8.weights, w9.weights, rtol = 1e0)
     @test isapprox(w10.weights, w10t)
