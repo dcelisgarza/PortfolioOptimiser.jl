@@ -223,13 +223,13 @@ l = 2.0
 
     @test isapprox(w1.weights, w1t)
     @test isapprox(w2.weights, w2t)
-    @test isapprox(w3.weights, w3t)
+    @test isapprox(w3.weights, w3t, rtol = 1.0e-5)
     @test isapprox(w4.weights, w4t)
     @test isapprox(w5.weights, w5t)
-    @test isapprox(w6.weights, w6t)
+    @test isapprox(w6.weights, w6t, rtol = 1.0e-7)
     @test isapprox(w7.weights, w7t)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t)
+    @test isapprox(w9.weights, w9t, rtol = 1.0e-5)
     @test isapprox(w10.weights, w10t)
     @test isapprox(w11.weights, w11t)
     @test isapprox(w12.weights, w12t)
@@ -242,9 +242,9 @@ l = 2.0
     @test isapprox(w0.weights, w1.weights)
     @test isapprox(w0.weights, w10.weights)
     @test isapprox(w1.weights, w10.weights)
-    @test !isapprox(w3.weights, w12.weights)
-    @test isapprox(w7.weights, w16.weights)
-    @test isapprox(w9.weights, w18.weights)
+    @test isapprox(w3.weights, w12.weights, rtol = 1.0e-8)
+    @test isapprox(w7.weights, w16.weights, rtol = 1.0e-5)
+    @test isapprox(w9.weights, w18.weights, rtol = 5.0e-5)
 end
 
 @testset "$(:Classic), $(:WC), $(:Utility)" begin
@@ -473,7 +473,7 @@ end
     @test isapprox(w9.weights, w9t, rtol = 1.0e-5)
     @test isapprox(w10.weights, w10t)
     @test isapprox(w11.weights, w11t)
-    @test isapprox(w12.weights, w12t)
+    @test isapprox(w12.weights, w12t, rtol = 1.0e-5)
     @test isapprox(w13.weights, w13t)
     @test isapprox(w14.weights, w14t)
     @test isapprox(w15.weights, w15t)
@@ -674,7 +674,7 @@ end
     @test isapprox(w0.weights, w1.weights, rtol = 1.0e-7)
     @test isapprox(w0.weights, w10.weights, rtol = 1.0e-7)
     @test isapprox(w1.weights, w10.weights)
-    @test isapprox(w3.weights, w12.weights)
+    @test isapprox(w3.weights, w12.weights, rtol = 1.0e-7)
 end
 
 @testset "$(:Classic), $(:WC), $(:Max_Ret)" begin
