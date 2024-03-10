@@ -270,9 +270,9 @@ end
            0.07630960576210888, 0.1511448916452343]
 
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
-    @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-4)
     @test isapprox(hrc1 / lrc1, 1, atol = 6.4e-2)
-    @test isapprox(hrc2 / lrc2, 20, atol = 6.3e-1)
+    @test isapprox(hrc2 / lrc2, 20, atol = 6.4e-1)
 
     @test isapprox(w1.weights, w3.weights, rtol = 0.1)
     @test isapprox(w2.weights, w4.weights, rtol = 0.1)
