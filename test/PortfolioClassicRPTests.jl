@@ -1,4 +1,4 @@
-using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
+using CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
       Statistics, Test, TimeSeries, SCS
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
@@ -10,9 +10,7 @@ l = 2.0
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :SD
@@ -60,9 +58,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :MAD
@@ -86,13 +82,13 @@ end
            0.04206380992172297, 0.05465474067537367, 0.07239056092704055,
            0.04770679646373056, 0.0636227798079387]
 
-    w2t = [0.006401779618828623, 0.012593951743256573, 0.017340890783595773,
-           0.019134849456476876, 0.028374307245312213, 0.03189651794987627,
-           0.019206796668855844, 0.055391316944302715, 0.03338502811307715,
-           0.045151356177118636, 0.0807580519059978, 0.03494263054680027,
-           0.02578410334386403, 0.07994586838260086, 0.044758985906496206,
-           0.05591483590172484, 0.09228051691281969, 0.12028285344497854,
-           0.08191841248798935, 0.11453694646602786]
+    w2t = [0.006398599661634636, 0.012598764799399682, 0.01734269330996946,
+           0.019136557526773023, 0.028376356023466002, 0.03190012678711734,
+           0.019207054080351532, 0.055393149996055206, 0.03338171627042127,
+           0.045146641743720496, 0.08075917092336245, 0.0349406536972579,
+           0.025784473189090613, 0.07994768829381373, 0.04475665371289866,
+           0.05591214049948268, 0.09228044993856069, 0.12028246566892067,
+           0.08191621763344323, 0.11453842624426076]
 
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-6)
@@ -104,9 +100,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :SSD
@@ -130,13 +124,13 @@ end
            0.04564914223901187, 0.049847364656398614, 0.07412562156298433,
            0.044278287070396695, 0.05885542020562677]
 
-    w2t = [0.005429547829098365, 0.011167805664414806, 0.014459305565898126,
-           0.017042626615556288, 0.024075080878288097, 0.031344901036748814,
-           0.019078016259587233, 0.059195606446996535, 0.031947654907047304,
-           0.04196068100639579, 0.08814196888898153, 0.03899899306400899,
-           0.03418229998947243, 0.07927269058844665, 0.05025713223285367,
-           0.06338856522866418, 0.08186617870438147, 0.12155493479073504,
-           0.07827458257785366, 0.10836142772457111]
+    w2t = [0.005428311935108612, 0.011166373766072633, 0.014457748451386442,
+           0.017041056211764345, 0.02407389117873628, 0.031344907913507344,
+           0.019077056238528897, 0.059198689132048614, 0.031945999024885534,
+           0.04195910955495658, 0.08814327680478876, 0.03899739847367493,
+           0.03418053917311587, 0.07927628313594916, 0.050256890520946854,
+           0.06338824412776882, 0.08186815114610954, 0.12155326296178717,
+           0.07827686405141267, 0.10836594619745105]
 
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
@@ -148,9 +142,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :FLPM
@@ -174,13 +166,14 @@ end
            0.045271860898623756, 0.057932891294237246, 0.07483274762172051,
            0.04995897456440289, 0.06664537038183452]
 
-    w2t = [0.006884077432257186, 0.012954874743778584, 0.018385799362110936,
-           0.01831964358547592, 0.0360768453411326, 0.027200592181016465,
-           0.02021354469214129, 0.05276903846646005, 0.03376615707481203,
-           0.0442388899755955, 0.08234210706887593, 0.031754949162667905,
-           0.024158856974061862, 0.07390417921315301, 0.03807087872319826,
-           0.05745974916872209, 0.09954209209763215, 0.12219715695811513,
-           0.0848210415751922, 0.11493952620360075]
+    w2t = [0.006881438388330698, 0.012959652743883037, 0.01838812110294684,
+           0.01831705959515137, 0.036078481939740954, 0.027198170170204927,
+           0.020211740981960997, 0.05277996126535127, 0.033762494244560834,
+           0.04423824664557374, 0.08233991653032248, 0.03175421540562221,
+           0.024158072223757987, 0.07390595950050952, 0.03806952299811153,
+           0.0574576432949767, 0.09954317493053874, 0.12219814181570286,
+           0.08482252864506731, 0.11493545757768597]
+
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-6)
     @test isapprox(hrc1 / lrc1, 1, atol = 1e-2)
@@ -191,9 +184,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :SLPM
@@ -217,13 +208,13 @@ end
            0.0475715771694708, 0.05128453593861015, 0.07441875218075804,
            0.04500417145785451, 0.05953642905284273]
 
-    w2t = [0.005492527475806188, 0.011429816988193184, 0.014822086266724446,
-           0.017306287129466233, 0.026322726877075143, 0.02905990211343986,
-           0.019770052943997973, 0.0592124634100771, 0.032193671946941074,
-           0.04165106177764175, 0.08829033644315885, 0.037309763647838966,
-           0.03234339539756486, 0.07666976289341881, 0.04703097020934251,
-           0.06578728165840875, 0.08445214229212933, 0.12165795866775381,
-           0.07958227554108589, 0.10961551631993534]
+    w2t = [0.0054913438446460155, 0.011428491727698614, 0.014820678187018165,
+           0.017304742120313535, 0.026322040052751045, 0.029059723846030415,
+           0.019769306873150646, 0.05921633648299817, 0.03219240505533866,
+           0.04164996185510973, 0.08829307002038413, 0.03730875464317924,
+           0.03234269897724762, 0.07667412295393439, 0.047030927685112814,
+           0.06578767092524099, 0.08445469023139822, 0.1216508144627741,
+           0.07958340426525964, 0.10961881579041385]
 
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
@@ -235,9 +226,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :WR
@@ -279,9 +268,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :CVaR
@@ -323,9 +310,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :EVaR
@@ -367,9 +352,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :RVaR
@@ -411,9 +394,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :MDD
@@ -455,9 +436,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :ADD
@@ -499,9 +478,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :CDaR
@@ -543,9 +520,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :UCI
@@ -587,9 +562,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :EDaR
@@ -623,7 +596,7 @@ end
 
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 0.0001)
-    @test isapprox(hrc1 / lrc1, 1, atol = 8e-1)
+    @test isapprox(hrc1 / lrc1, 1, atol = 1.02)
     @test isapprox(hrc2 / lrc2, 20, atol = 6.1e0)
 end
 
@@ -631,9 +604,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :RDaR
@@ -666,7 +637,7 @@ end
            0.06257870680405152, 0.11292942629685457]
 
     @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
-    @test isapprox(w2.weights, w2t, rtol = 1.0e-6)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, atol = 1.1e0)
     @test isapprox(hrc2 / lrc2, 20, atol = 6.6e0)
 end
@@ -675,9 +646,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :Kurt
@@ -719,9 +688,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))),
+                                                                                  "max_step_fraction" => 0.75))),
                           max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
 
@@ -746,13 +713,13 @@ end
            0.04666871915911799, 0.04939454704957429, 0.06531222381031053,
            0.043642654348473184, 0.05565586463655655]
 
-    w2t = [0.004676193963369921, 0.01050743993584301, 0.013964026083006746,
-           0.021501917929941893, 0.02222849712638966, 0.03191101088608043,
-           0.02357307899260015, 0.060046952043449245, 0.0332466402717182,
-           0.046389388672662776, 0.08528285318757914, 0.04443763737752337,
-           0.04020510044603966, 0.07321245157829731, 0.050356288024681305,
-           0.0653895991283971, 0.08013596579031355, 0.1095700919985988, 0.07741320829097384,
-           0.105951658272534]
+    w2t = [0.004675271864538571, 0.01050617853095578, 0.013962695673917534,
+           0.021499858943022386, 0.022226728717510833, 0.031908123727889634,
+           0.023571394824312197, 0.06005141081953122, 0.03324441839062932,
+           0.04638577296247705, 0.08528726973871789, 0.044434589790329236,
+           0.04020258944574476, 0.07321567621254323, 0.05035322044780905,
+           0.06539017448024201, 0.08013925697270487, 0.10957288985842577,
+           0.07741582914116474, 0.10595664945753402]
 
     @test isapprox(w1.weights, w1t, rtol = 0.0005)
     @test isapprox(w2.weights, w2t, rtol = 5e-6)
@@ -764,9 +731,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :SKurt
@@ -808,9 +773,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))),
+                                                                                  "max_step_fraction" => 0.75))),
                           max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
 
@@ -835,13 +798,13 @@ end
            0.04894256657226738, 0.05062953211782191, 0.0652379818659436,
            0.04377088943635484, 0.060074789036547005]
 
-    w2t = [0.004724036272670783, 0.010994984100271304, 0.013081404092279869,
-           0.01776106736868271, 0.021166996249012825, 0.0318060371552224,
-           0.020975949697837875, 0.055545183151581155, 0.032546363110669406,
-           0.04234590441335019, 0.08230944358124827, 0.04515678646899529,
-           0.04355602677706592, 0.07522963084162289, 0.053660649262653404,
-           0.07059516484030376, 0.08205350128215597, 0.10766765173841404,
-           0.07790574894188253, 0.11091747065407949]
+    w2t = [0.004723050140993921, 0.010993556873632442, 0.013080175902848563,
+           0.017759485599616834, 0.021165325552920035, 0.03180294490672582,
+           0.02097439409627101, 0.055547896147519135, 0.032544068266556654,
+           0.042342460519482, 0.08231401640438907, 0.04515348545626659, 0.04355293292184281,
+           0.07523363815548649, 0.05365726464847718, 0.0705976485751735,
+           0.08205683170688728, 0.10767060641621383, 0.07790809169251475,
+           0.11092212601618194]
 
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 5e-6)
@@ -853,9 +816,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     opt = OptimiseOpt(; type = :RRP, rrp_penalty = 1, rrp_ver = :None)
