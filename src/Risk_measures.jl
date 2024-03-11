@@ -1419,6 +1419,23 @@ function factor_risk_contribution(w::AbstractVector, assets::AbstractVector,
     return rc_f
 end
 
+function factor_risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
+                                  type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                                  rm::Symbol = :SD, rf::Real = 0.0,
+                                  owa_w::AbstractVector{<:Real} = portfolio.owa_w,
+                                  loadings_opt = LoadingsOpt(;))
+    return factor_risk_contribution(portfolio.optimal[type].weights, portfolio.assets,
+                                    portfolio.returns, portfolio.f_assets,
+                                    portfolio.f_returns, portfolio.loadings;
+                                    loadings_opt = loadings_opt, rm = rm, rf = rf,
+                                    sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
+                                    alpha = portfolio.alpha, a_sim = portfolio.a_sim,
+                                    beta_i = portfolio.beta_i, beta = portfolio.beta,
+                                    b_sim = portfolio.b_sim, di = di,
+                                    kappa = portfolio.kappa, owa_w = owa_w,
+                                    solvers = portfolio.solvers)
+end
+
 function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMatrix;
                       rm::Symbol                              = :SD,
                       rf::Real                                = 0.0,

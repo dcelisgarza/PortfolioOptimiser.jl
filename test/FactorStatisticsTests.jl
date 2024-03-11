@@ -9,6 +9,54 @@ prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Factor Risk Contribution" begin
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio; calc_kurt = false)
+
+    w = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, type = :Trad))
+
+    pcr_opt = PCROpt(;)
+    loadings_opt = LoadingsOpt(; pcr_opt = pcr_opt)
+    factor_opt = FactorOpt(; loadings_opt = loadings_opt)
+    posdef = PosdefFixOpt(; method = :Nearest)
+    cov_f_opt = CovOpt(; posdef = posdef)
+    cov_fm_opt = CovOpt(; posdef = posdef)
+    mu_f_opt = MuOpt(;)
+    mu_fm_opt = MuOpt(;)
+
+    loadings_opt.method = :PCR
+    pcr_opt.pca_genfunc.kwargs = (; pratio = 0.99)
+    frc1 = factor_risk_contribution(portfolio; loadings_opt = loadings_opt, rm = :SD,
+                                    rf = rf)
+
+    pcr_opt.pca_genfunc.kwargs = (; pratio = 0.95)
+    frc2 = factor_risk_contribution(portfolio; loadings_opt = loadings_opt, rm = :SD,
+                                    rf = rf)
+
+    pcr_opt.pca_genfunc.kwargs = (; pratio = 0.9)
+    frc3 = factor_risk_contribution(portfolio; loadings_opt = loadings_opt, rm = :SD,
+                                    rf = rf)
+
+    loadings_opt.method = :BReg
+    frc4 = factor_risk_contribution(portfolio; loadings_opt = loadings_opt, rm = :SD,
+                                    rf = rf)
+
+    frct1 = [-0.00012583487653909062, 0.0039444500777872935, -0.0001287190047624421,
+             0.00033159258960745104, 0.0036831046227966294]
+    frct2 = [-2.0019777612459764e-5, 0.0043447960866020326, -0.00025151936874992324,
+             0.0036313364686502056]
+    frct3 = [-7.625172831510642e-5, 0.004415699114600328, 0.003365146022604624]
+    frct4 = [0.00036998502844144286, 0.0024825597377311722, 0.0007145799906877934,
+             0.00125413569557648, -1.8584054876612562e-5, 0.0029019170113295687]
+
+    @test isapprox(frc1, frct1)
+    @test isapprox(frc2, frct2)
+    @test isapprox(frc3, frct3)
+    @test isapprox(frc4, frct4)
+end
+
 @testset "Factor Statistics" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 

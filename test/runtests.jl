@@ -4,8 +4,8 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-@safetestset "Portfolio Classic WC Optimisation" begin
-    include("PortfolioClassicWCTests.jl")
+@safetestset "Factor Statistics" begin
+    include("FactorStatisticsTests.jl")
 end
 
 @safetestset "Portfolio Classic RP OWA Optimisation" begin
@@ -31,7 +31,6 @@ end
 @safetestset "WC Statistics" begin
     include("WCStatisticsTests.jl")
 end
-
 
 @safetestset "Misc" begin
     include("MiscTests.jl")
@@ -66,10 +65,6 @@ end
     include("MiscStatisticsTests.jl")
 end
 
-@safetestset "Factor Statistics" begin
-    include("FactorStatisticsTests.jl")
-end
-
 @safetestset "DBHT Clustering" begin
     include("DBHTClusteringTests.jl")
 end
@@ -88,4 +83,8 @@ end
 
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
+end
+
+@safetestset "Portfolio Classic WC Optimisation" begin
+    include("PortfolioClassicWCTests.jl")
 end
