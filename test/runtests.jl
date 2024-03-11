@@ -32,7 +32,6 @@ end
     include("WCStatisticsTests.jl")
 end
 
-
 @safetestset "Misc" begin
     include("MiscTests.jl")
 end
