@@ -706,6 +706,15 @@ function Portfolio(;
             risk_budget ./= sum(risk_budget)
         end
     end
+    if !isempty(f_risk_budget)
+        @smart_assert(all(f_risk_budget .>= zero(eltype(returns))))
+
+        if isa(f_risk_budget, AbstractRange)
+            f_risk_budget = collect(f_risk_budget / sum(f_risk_budget))
+        else
+            f_risk_budget ./= sum(f_risk_budget)
+        end
+    end
     if !isempty(owa_w)
         @smart_assert(length(owa_w) == size(returns, 1))
     end
@@ -981,6 +990,18 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             val = fill(one(eltype(obj.returns)) / N, N)
         else
             @smart_assert(length(val) == size(obj.returns, 2))
+            if sym == :risk_budget
+                @smart_assert(all(val .>= zero(eltype(obj.returns))))
+            end
+            if isa(val, AbstractRange)
+                val = collect(val / sum(val))
+            else
+                val ./= sum(val)
+            end
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :f_risk_budget
+        if !isempty(val)
             if sym == :risk_budget
                 @smart_assert(all(val .>= zero(eltype(obj.returns))))
             end

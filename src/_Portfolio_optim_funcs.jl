@@ -1085,55 +1085,76 @@ function _owa_setup(portfolio, rm, T, returns, obj, type, owa_approx)
     return nothing
 end
 
+function _calc_factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix,
+                                loadings_opt::LoadingsOpt = LoadingsOpt(;))
+    namesB = names(B)
+
+    B = Matrix(B[!, setdiff(namesB, ("ticker", "const"))])
+
+    if loadings_opt.method == :PCR
+        pcr_opt = loadings_opt.pcr_opt
+
+        std_genfunc = pcr_opt.std_genfunc
+        pca_s_genfunc = pcr_opt.pca_s_genfunc
+        pca_genfunc = pcr_opt.pca_genfunc
+
+        X = transpose(factors)
+
+        pca_s_func = pca_s_genfunc.func
+        pca_s_args = pca_s_genfunc.args
+        pca_s_kwargs = pca_s_genfunc.kwargs
+        X_std = pca_s_func(pca_s_args..., X; pca_s_kwargs...)
+
+        pca_func = pca_genfunc.func
+        pca_args = pca_genfunc.args
+        pca_kwargs = pca_genfunc.kwargs
+        model = pca_func(pca_args..., X_std; pca_kwargs...)
+        Vp = projection(model)
+
+        std_func = std_genfunc.func
+        std_args = std_genfunc.args
+        std_kwargs = std_genfunc.kwargs
+        sdev = vec(std_func(X, std_args...; std_kwargs...))
+
+        B = transpose(pinv(Vp) * transpose(B .* transpose(sdev)))
+    end
+
+    b1 = pinv(transpose(B))
+    b2 = pinv(transpose(nullspace(transpose(B))))
+    b3 = pinv(transpose(b2))
+
+    return b1, b2, b3, B
+end
+
 function _rp_setup(portfolio, N, class)
     model = portfolio.model
+
+    model = portfolio.model
+    @variable(model, k)
+
     if class != :FC
+        if isempty(portfolio.risk_budget)
+            portfolio.risk_budget = ()
+        elseif !isapprox(sum(portfolio.risk_budget), one(eltype(portfolio.returns)))
+            portfolio.risk_budget ./= sum(portfolio.risk_budget)
+        end
         rb = portfolio.risk_budget
         @variable(model, log_w[1:N])
         @constraint(model, dot(rb, log_w) >= 1)
         @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] ∈ MOI.ExponentialCone())
         @constraint(model, model[:w] .>= 0)
     else
-        B = portfolio.loadings
-        namesB = names(B)
-        B = Matrix(B[!, setdiff(namesB, ("ticker", "const"))])
+        b1, b2, missing, missing = _calc_factors_b1_b2_b3(portfolio.loadings,
+                                                          portfolio.f_returns,
+                                                          portfolio.loadings_opt)
 
-        loadings_opt = portfolio.loadings_opt
-        if loadings_opt.method == :PCR
-            pcr_opt = loadings_opt.pcr_opt
-
-            std_genfunc = pcr_opt.std_genfunc
-            pca_s_genfunc = pcr_opt.pca_s_genfunc
-            pca_genfunc = pcr_opt.pca_genfunc
-
-            X = transpose(portfolio.f_returns)
-
-            pca_s_func = pca_s_genfunc.func
-            pca_s_args = pca_s_genfunc.args
-            pca_s_kwargs = pca_s_genfunc.kwargs
-            X_std = pca_s_func(pca_s_args..., X; pca_s_kwargs...)
-
-            pca_func = pca_genfunc.func
-            pca_args = pca_genfunc.args
-            pca_kwargs = pca_genfunc.kwargs
-            pca_model = pca_func(pca_args..., X_std; pca_kwargs...)
-            Vp = projection(pca_model)
-
-            std_func = std_genfunc.func
-            std_args = std_genfunc.args
-            std_kwargs = std_genfunc.kwargs
-            sdev = vec(std_func(X, std_args...; std_kwargs...))
-
-            B = transpose(pinv(Vp) * transpose(B .* transpose(sdev)))
-        end
-
-        b1 = pinv(transpose(B))
-        b2 = pinv(transpose(nullspace(transpose(B))))
         N_f = size(b1, 2)
 
         rb = portfolio.f_risk_budget
         if isempty(rb) || length(rb) != N_f
             rb = portfolio.f_risk_budget = fill(1 / N_f, N_f)
+        elseif !isapprox(sum(portfolio.f_risk_budget), one(eltype(portfolio.returns)))
+            portfolio.f_risk_budget ./= sum(portfolio.f_risk_budget)
         end
 
         @variable(model, w1[1:N_f])
@@ -1270,6 +1291,8 @@ function _setup_risk_budget(portfolio)
     model = portfolio.model
     if isempty(portfolio.risk_budget)
         portfolio.risk_budget = ()
+    elseif !isapprox(sum(portfolio.risk_budget), one(eltype(portfolio.returns)))
+        portfolio.risk_budget ./= sum(portfolio.risk_budget)
     end
     @variable(model, k)
     return nothing
@@ -2058,7 +2081,6 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
         _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
         _setup_trad_wc_constraints(portfolio, obj, T, N, :Trad, class, kelly, l, returns)
     elseif type == :RP
-        _setup_risk_budget(portfolio)
         _rp_setup(portfolio, N, class)
         _risk_setup(portfolio, :RP, rm, kelly, obj, rf, T, N, mu, returns, sigma, kurtosis,
                     skurtosis, network_method, sd_cone, owa_approx)

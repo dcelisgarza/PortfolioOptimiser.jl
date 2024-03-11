@@ -9,6 +9,70 @@ prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "$(:FC), $(:RP)" begin
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio; calc_kurt = false)
+
+    pcr_opt = PCROpt(;)
+    loadings_opt = LoadingsOpt(; pcr_opt = pcr_opt)
+    factor_opt = FactorOpt(; loadings_opt = loadings_opt)
+    posdef = PosdefFixOpt(; method = :Nearest)
+    cov_f_opt = CovOpt(; posdef = posdef)
+    cov_fm_opt = CovOpt(; posdef = posdef)
+    mu_f_opt = MuOpt(;)
+    mu_fm_opt = MuOpt(;)
+
+    loadings_opt.method = :PCR
+    pcr_opt.pca_genfunc.kwargs = (; pratio = 0.95)
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, mu_f_opt = mu_f_opt,
+                       cov_fm_opt = cov_fm_opt, mu_fm_opt = mu_fm_opt,
+                       factor_opt = factor_opt)
+    w1 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+    portfolio.f_risk_budget = 1:3
+    w2 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+
+    loadings_opt.method = :BReg
+    factor_statistics!(portfolio; cov_f_opt = cov_f_opt, mu_f_opt = mu_f_opt,
+                       cov_fm_opt = cov_fm_opt, mu_fm_opt = mu_fm_opt,
+                       factor_opt = factor_opt)
+    w3 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+    portfolio.f_risk_budget = 1:5
+    w4 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+
+    w1t = [-0.21773678293532656, 0.2678286433406289, 0.22580201434765002,
+           0.13009711209340935, -0.278769279772971, -0.331380980832027,
+           -0.051650987176009834, 0.13460603215061595, -0.37358551690369,
+           -0.9529827367064128, 0.30660697444264795, -0.09510590387915907,
+           -0.15495259672856798, 0.23632593974465374, 0.29817635929005415,
+           0.12937409438378805, 0.340897478693138, 0.3861788696698697, 0.30571854158323103,
+           0.6945527251944786]
+    w2t = [-0.060392894539612385, 0.20233103102025976, 0.27317239156127254,
+           0.14623348260674732, -0.3038293219871962, -0.3213998509220644,
+           -0.030081946832234717, 0.046976552558119423, -0.4473942798228809,
+           -0.9617196645566132, 0.4467481399314188, -0.07727045650413009,
+           -0.14070387560969616, 0.1455351423668605, 0.2583135617369249, 0.1530902041977934,
+           0.07799306488349253, 0.5004440951067239, 0.371710254291287, 0.7202443705135283]
+    w3t = [-2.30147257861377, 1.015594350375363, 1.4946718630838827, -0.5828485475120959,
+           -0.4635674617121809, -0.07533572762551083, -0.5191177391071375,
+           1.1904188964246432, -0.4104970685871811, -0.8832844775538449,
+           -0.9184915810813326, -0.8998509840079932, -0.6699607121244088,
+           1.0150741280736368, 0.8241685984816146, 0.495292306033691, 2.8349366425935556,
+           -0.8499048852808291, 0.9994635077334864, -0.29528852959358637]
+    w4t = [-2.2577765287237592, 0.9178982669292839, 1.2033733533210704, -0.3633175736239475,
+           -0.43199497771239365, -0.5355766908797392, -0.46103809474646834,
+           1.0896247234056198, -0.1390372227481579, -0.6979034498174019,
+           -0.7912768221485822, -0.76610343722116, -0.5799298212148584, 1.0421468464220744,
+           0.6556120082685148, 0.3203723397086974, 2.6063724055147026, -0.8934040981887952,
+           1.1777198625438983, -0.0957610890885971]
+
+    @test isapprox(w1.weights, w1t; rtol = 5e-5)
+    @test isapprox(w2.weights, w2t; rtol = 5e-5)
+    @test isapprox(w3.weights, w3t; rtol = 5e-5)
+    @test isapprox(w4.weights, w4t; rtol = 1e-4)
+end
+
 @testset "Factor Risk Contribution" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,

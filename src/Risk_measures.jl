@@ -1376,41 +1376,8 @@ function factor_risk_contribution(w::AbstractVector, assets::AbstractVector,
         B = loadings_matrix(DataFrame(factors, f_assets), DataFrame(returns, assets),
                             loadings_opt)
     end
-    namesB = names(B)
 
-    B = Matrix(B[!, setdiff(namesB, ("ticker", "const"))])
-
-    if loadings_opt.method == :PCR
-        pcr_opt = loadings_opt.pcr_opt
-
-        std_genfunc = pcr_opt.std_genfunc
-        pca_s_genfunc = pcr_opt.pca_s_genfunc
-        pca_genfunc = pcr_opt.pca_genfunc
-
-        X = transpose(factors)
-
-        pca_s_func = pca_s_genfunc.func
-        pca_s_args = pca_s_genfunc.args
-        pca_s_kwargs = pca_s_genfunc.kwargs
-        X_std = pca_s_func(pca_s_args..., X; pca_s_kwargs...)
-
-        pca_func = pca_genfunc.func
-        pca_args = pca_genfunc.args
-        pca_kwargs = pca_genfunc.kwargs
-        model = pca_func(pca_args..., X_std; pca_kwargs...)
-        Vp = projection(model)
-
-        std_func = std_genfunc.func
-        std_args = std_genfunc.args
-        std_kwargs = std_genfunc.kwargs
-        sdev = vec(std_func(X, std_args...; std_kwargs...))
-
-        B = transpose(pinv(Vp) * transpose(B .* transpose(sdev)))
-    end
-
-    b1 = pinv(transpose(B))
-    b2 = pinv(transpose(nullspace(transpose(B))))
-    b3 = pinv(transpose(b2))
+    b1, b2, b3, B = _calc_factors_b1_b2_b3(B, factors, loadings_opt)
 
     rc_f = (transpose(B) * w) .* (transpose(b1) * marginal_risk)
     rc_of = sum((transpose(b2) * w) .* (transpose(b3) * marginal_risk))
