@@ -1,6 +1,5 @@
-using COSMO, CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra,
-      OrderedCollections, Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries,
-      Logging, GLPK
+using CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra, OrderedCollections,
+      Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries, Logging
 
 Logging.disable_logging(Logging.Warn)
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)

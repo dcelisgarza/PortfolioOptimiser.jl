@@ -1,4 +1,4 @@
-using COSMO, CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, OrderedCollections,
+using CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, OrderedCollections,
       PortfolioOptimiser, Statistics, Test, TimeSeries, Logging
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
@@ -10,9 +10,7 @@ l = 2.0
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
     optimise!(portfolio)
 
@@ -46,9 +44,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
     optimise!(portfolio, OptimiseOpt(; rm = :EVaR, obj = :Sharpe))
 
@@ -78,9 +74,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
     optimise!(portfolio, OptimiseOpt(; rm = :EDaR, obj = :Sharpe))
 

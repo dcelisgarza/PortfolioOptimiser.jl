@@ -1,5 +1,5 @@
-using COSMO, CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries,
-      PortfolioOptimiser, LinearAlgebra, PyCall
+using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, PortfolioOptimiser,
+      LinearAlgebra, PyCall
 
 prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
@@ -9,8 +9,8 @@ l = 2.0
 
 portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors,
                       solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                              :params => Dict("verbose" => false,
-                                                                              "max_step_fraction" => 0.75
+                                                              :params => Dict("verbose" => false
+                                                                              #   "max_step_fraction" => 0.75
                                                                               #   "max_iter" => 400,
                                                                               #   "max_iter"=>150,
                                                                               #   "tol_gap_abs" => 1e-8,
@@ -25,59 +25,189 @@ portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors,
                                                                               ))))
 asset_statistics!(portfolio; calc_kurt = false)
 
-portfolio.alpha = 0.2
-portfolio.beta = 0.05
-w1 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :REVaR);
-               string_names = true)
-portfolio.beta_i = 0.00000001
-portfolio.beta = 0.000001
-w2 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :REVaR);
-               string_names = true)
-display(hcat(w1, w2; makeunique = true))
-
-portfolio.owa_w = owa_rtg(400)
-w2 = optimise!(portfolio,
-               OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :OWA, owa_approx = false);
-               string_names = true)
-w3 = optimise!(portfolio,
-               OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :RTG, owa_approx = true);
-               string_names = true)
-
-# portfolio.solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-#                                                   :params => Dict("verbose" => true,
-#                                                                   "max_step_fraction" => 0.75
-#                                                                   #   "max_iter"=>250,
-#                                                                   #   "tol_gap_abs" => 1e-10,
-#                                                                   #   "tol_gap_rel" => 1e-10,
-#                                                                   #   "tol_feas" => 1e-10,
-#                                                                   #   "tol_ktratio" => 1e-10,
-#                                                                   #   "equilibrate_max_iter" => 30,
-#                                                                   #   "reduced_tol_gap_abs" => 1e-10,
-#                                                                   #   "reduced_tol_gap_rel" => 1e-10,
-#                                                                   #   "reduced_tol_feas" => 1e-10,
-#                                                                   #   "reduced_tol_ktratio" => 1e-10,
-#                                                                   )))
-# portfolio.owa_p = [2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 40, 50]
-
-w4 = optimise!(portfolio,
-               OptimiseOpt(; obj = :Min_Risk, type = :Trad, rm = :OWA, owa_approx = true);
-               string_names = true)
-
-display(DataFrame(; tickers = w1.tickers, w1 = w1.weights, w2 = w2.weights, w3 = w3.weights,
-                  w4 = w4.weights, d12 = w1.weights - w2.weights,
-                  d13 = w1.weights - w3.weights, d34 = w3.weights - w4.weights))
-
-loadings_opt = LoadingsOpt(;)
+pcr_opt = PCROpt(;)
+loadings_opt = LoadingsOpt(; pcr_opt = pcr_opt)
 factor_opt = FactorOpt(; loadings_opt = loadings_opt)
 posdef = PosdefFixOpt(; method = :Nearest)
 cov_f_opt = CovOpt(; posdef = posdef)
 cov_fm_opt = CovOpt(; posdef = posdef)
+mu_f_opt = MuOpt(;)
+mu_fm_opt = MuOpt(;)
 
-test = factor_risk_contribution(portfolio.optimal[:RP].weights, portfolio.assets,
-                                portfolio.returns, portfolio.f_assets, portfolio.f_returns,
-                                DataFrame(); loadings_opt = loadings_opt, rm = :SD,
-                                rf = 0.0, sigma = portfolio.cov,
-                                solvers = portfolio.solvers)
+loadings_opt.method = :PCR
+pcr_opt.pca_genfunc.kwargs = (; pratio = 0.95)
+factor_statistics!(portfolio; cov_f_opt = cov_f_opt, mu_f_opt = mu_f_opt,
+                   cov_fm_opt = cov_fm_opt, mu_fm_opt = mu_fm_opt, factor_opt = factor_opt)
+w1 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+portfolio.f_risk_budget = 1:3
+w2 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+
+loadings_opt.method = :BReg
+factor_statistics!(portfolio; cov_f_opt = cov_f_opt, mu_f_opt = mu_f_opt,
+                   cov_fm_opt = cov_fm_opt, mu_fm_opt = mu_fm_opt, factor_opt = factor_opt)
+w3 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+portfolio.f_risk_budget = 1:5
+w4 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
+
+w1t = [-0.21773678293532656, 0.2678286433406289, 0.22580201434765002, 0.13009711209340935,
+       -0.278769279772971, -0.331380980832027, -0.051650987176009834, 0.13460603215061595,
+       -0.37358551690369, -0.9529827367064128, 0.30660697444264795, -0.09510590387915907,
+       -0.15495259672856798, 0.23632593974465374, 0.29817635929005415, 0.12937409438378805,
+       0.340897478693138, 0.3861788696698697, 0.30571854158323103, 0.6945527251944786]
+w2t = [-0.060392894539612385, 0.20233103102025976, 0.27317239156127254, 0.14623348260674732,
+       -0.3038293219871962, -0.3213998509220644, -0.030081946832234717,
+       0.046976552558119423, -0.4473942798228809, -0.9617196645566132, 0.4467481399314188,
+       -0.07727045650413009, -0.14070387560969616, 0.1455351423668605, 0.2583135617369249,
+       0.1530902041977934, 0.07799306488349253, 0.5004440951067239, 0.371710254291287,
+       0.7202443705135283]
+w3t = [-2.30147257861377, 1.015594350375363, 1.4946718630838827, -0.5828485475120959,
+       -0.4635674617121809, -0.07533572762551083, -0.5191177391071375, 1.1904188964246432,
+       -0.4104970685871811, -0.8832844775538449, -0.9184915810813326, -0.8998509840079932,
+       -0.6699607121244088, 1.0150741280736368, 0.8241685984816146, 0.495292306033691,
+       2.8349366425935556, -0.8499048852808291, 0.9994635077334864, -0.29528852959358637]
+w4t = [-2.2577765287237592, 0.9178982669292839, 1.2033733533210704, -0.3633175736239475,
+       -0.43199497771239365, -0.5355766908797392, -0.46103809474646834, 1.0896247234056198,
+       -0.1390372227481579, -0.6979034498174019, -0.7912768221485822, -0.76610343722116,
+       -0.5799298212148584, 1.0421468464220744, 0.6556120082685148, 0.3203723397086974,
+       2.6063724055147026, -0.8934040981887952, 1.1777198625438983, -0.0957610890885971]
+
+@test isapprox(w1.weights, w1t; rtol = 5e-5)
+@test isapprox(w2.weights, w2t; rtol = 5e-5)
+@test isapprox(w3.weights, w3t; rtol = 5e-5)
+@test isapprox(w4.weights, w4t; rtol = 1e-4)
+
+py"""
+import riskfolio as rk
+import numpy as np
+import pandas as pd
+import riskfolio.src.ParamsEstimation as pe
+from scipy.linalg import null_space
+from numpy.linalg import pinv
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import cvxpy as cp
+from scipy.linalg import sqrtm, norm, null_space
+import riskfolio.src.OwaWeights as owa
+"""
+
+py"""
+method_mu='hist' # Method to estimate expected returns based on historical data.
+method_cov='hist' # Method to estimate covariance matrix based on historical data.
+model = 'FC' # Factor Contribution Model
+rm = 'MV' # Risk measure used, this time will be variance
+rf = $rf # Risk free rate
+b_f = np.array([1,2,3,4,5]) # Risk factor contribution vector
+port = rk.Portfolio(returns = pd.DataFrame($(portfolio.returns), columns = $(portfolio.assets)), factors = pd.DataFrame($(portfolio.f_returns), columns = $(portfolio.f_assets)))
+port.assets_stats(method_mu=method_mu,
+                  method_cov=method_cov)
+
+# feature_selection = 'PCR' # Method to select best model, could be PCR or Stepwise
+# n_components = 0.95 # 95% of explained variance. See PCA in scikit learn for more information
+# port.factors_stats(method_mu=method_mu,
+#                    method_cov=method_cov,
+#                    feature_selection=feature_selection,
+#                    dict_risk=dict(n_components=n_components)
+#                   )
+
+feature_selection = 'stepwise' # Method to select best model, could be PCR or Stepwise
+stepwise = 'Backward' # Forward or Backward regression
+
+port.factors_stats(method_mu=method_mu,
+                    method_cov=method_cov,
+                    feature_selection=feature_selection,
+                    dict_risk=dict(stepwise=stepwise)
+                    )
+
+w = port.rp_optimization(model=model,
+                         rm=rm,
+                         rf=rf,
+                         b_f=b_f,
+                         )
+"""
+
+py"""
+method_mu='hist' # Method to estimate expected returns based on historical data.
+method_cov='hist' # Method to estimate covariance matrix based on historical data.
+model = 'FC' # Factor Contribution Model
+rm = 'MV' # Risk measure used, this time will be variance
+rf = $rf # Risk free rate
+b_f = None # Risk factor contribution vector
+port = rk.Portfolio(returns = pd.DataFrame($(portfolio.returns), columns = $(portfolio.assets)), factors = pd.DataFrame($(portfolio.f_returns), columns = $(portfolio.f_assets)))
+
+port.assets_stats(method_mu=method_mu,
+                  method_cov=method_cov)
+
+feature_selection = 'PCR' # Method to select best model, could be PCR or Stepwise
+n_components = 0.95 # 95% of explained variance. See PCA in scikit learn for more information
+port.factors_stats(method_mu=method_mu,
+                   method_cov=method_cov,
+                   feature_selection=feature_selection,
+                   dict_risk=dict(n_components=n_components)
+                  )
+
+w = port.rp_optimization(model=model,
+                         rm=rm,
+                         rf=rf,
+                         b_f=b_f,
+                         )
+
+feature_selection = 'stepwise' # Method to select best model, could be PCR or Stepwise
+stepwise = 'Forward' # Forward or Backward regression
+
+port.factors_stats(method_mu=method_mu,
+                    method_cov=method_cov,
+                    feature_selection=feature_selection,
+                    dict_risk=dict(stepwise=stepwise)
+                    )
+
+w2 = port.rp_optimization(model=model,
+                         rm=rm,
+                         rf=rf,
+                         b_f=b_f,
+                         )
+
+feature_selection = 'stepwise' # Method to select best model, could be PCR or Stepwise
+stepwise = 'Backward' # Forward or Backward regression
+
+port.factors_stats(method_mu=method_mu,
+                    method_cov=method_cov,
+                    feature_selection=feature_selection,
+                    dict_risk=dict(stepwise=stepwise)
+                    )
+
+w3 = port.rp_optimization(model=model,
+                         rm=rm,
+                         rf=rf,
+                         b_f=b_f,
+                         )
+
+w4 = port.rp_optimization(model="Classic",
+                         rm=rm,
+                         rf=rf,
+                         b_f=b_f,
+                         )
+# test = rk.Factors_Risk_Contribution(
+#     w=pd.DataFrame($(portfolio.optimal[:Trad].weights)),
+#     cov=pd.DataFrame($(portfolio.cov), columns = $(portfolio.assets)),
+#     returns=pd.DataFrame($(portfolio.returns), columns = $(portfolio.assets)),
+#     factors=pd.DataFrame($(portfolio.f_returns), columns = $(portfolio.f_assets)),
+#     B=None,
+#     const=False,
+#     rm="MV",
+#     rf=0,
+#     alpha=0.05,
+#     a_sim=100,
+#     beta=None,
+#     b_sim=None,
+#     kappa=0.3,
+#     solver="CLARABEL",
+#     feature_selection="stepwise",
+#     stepwise="Backward",
+#     criterion="pvalue",
+#     threshold=0.05,
+#     n_components=0.9,
+# )
+"""
 
 asset_statistics!(portfolio; calc_kurt = false)
 loadings_opt.method = :PCR
@@ -513,20 +643,20 @@ lrc2, hrc2 = extrema(rc2)
 
 for rtol ∈
     [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 5e-5, 1e-4, 1e-3, 1e-2, 1e-1, 2.5e-1, 5e-1, 1e0]
-    a1, a2 = [7.1225604903281e-11, 3.89346920257538e-10, 7.441316769482621e-11,
-              1.7616726662201127e-10, 0.08771741819188573, 2.7368941051846073e-11,
-              8.940832850246839e-12, 0.12008326700540226, 4.329933751596991e-9,
-              3.6655362863808624e-10, 1.9364738146358e-10, 3.6455610440793596e-11,
-              1.8696963313940842e-11, 1.3437844004619931e-10, 1.4233089709444487e-11,
-              0.15120880083006258, 0.5292695130113965, 2.574637293655506e-10,
-              0.11172099466095674, 2.0147073944192543e-10],
-             [7.258550303162134e-10, 3.510882669681817e-9, 6.950239505552793e-10,
-              1.0609124257825676e-9, 0.08771778791840867, 2.0738014860049013e-10,
-              2.8312640337460793e-10, 0.12008375612593049, 2.032593825607953e-8,
-              3.021490433133468e-9, 9.570405521537858e-9, 5.380706152519343e-10,
-              2.3209931783627336e-10, 2.103112203820464e-9, 2.516769264462635e-10,
-              0.15120889278610558, 0.5292690063020407, 1.6500103551629395e-8,
-              0.11172049348167974, 4.359757243300342e-9]
+    a1, a2 = [0.003805057077720475, 0.013362144802989017, 0.011525620387319522,
+              0.01752839831716637, 0.02000864997157379, 0.022673794355691532,
+              0.021391369027783737, 0.03787322895976612, 0.0314415086025676,
+              0.04802467647738356, 0.057141807652855814, 0.07509900549299194,
+              0.03855349536049795, 0.07463567804566047, 0.06404621156028294,
+              0.08139033736318348, 0.07620092688442118, 0.0778304986558992,
+              0.07631497536210331, 0.15115261564214197],
+             [0.003805226614697479, 0.013364205009887008, 0.011525394065478603,
+              0.01752721720284768, 0.02000506401129493, 0.022673106637119324,
+              0.021392712411281652, 0.037872967183538386, 0.031439975771315305,
+              0.048025566944921765, 0.05714480019773132, 0.07509769448705383,
+              0.03855722461209247, 0.07464724983990394, 0.06404877846320639,
+              0.08139496159574147, 0.07619668233424755, 0.07782667521029749,
+              0.07630960576210888, 0.1511448916452343]
     if isapprox(a1, a2; rtol = rtol)
         println(", rtol = $(rtol)")
         break

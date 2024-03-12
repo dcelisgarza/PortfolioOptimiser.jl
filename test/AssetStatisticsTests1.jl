@@ -1,4 +1,4 @@
-using COSMO, CovarianceEstimation, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections,
+using CovarianceEstimation, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections,
       PortfolioOptimiser, Statistics, StatsBase, Test, TimeSeries, Logging
 
 Logging.disable_logging(Logging.Warn)
@@ -12,9 +12,7 @@ l = 2.0
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
 
     cs = coskew(portfolio.returns, transpose(portfolio.mu))

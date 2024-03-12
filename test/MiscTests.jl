@@ -1,4 +1,4 @@
-using COSMO, CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, OrderedCollections,
+using CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, OrderedCollections,
       PortfolioOptimiser, Statistics, Test, TimeSeries, Clustering
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
@@ -11,9 +11,7 @@ l = 2.0
 
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))),
+                                                                  :params => Dict("verbose" => false))),
                           alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
                                                               :params => Dict("log_to_console" => false))))
     asset_statistics!(portfolio)
@@ -23,9 +21,7 @@ l = 2.0
 
     hcportfolio = HCPortfolio(; prices = prices,
                               solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                      :params => Dict("verbose" => false)),
-                                                    :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                   :params => Dict("verbose" => false))),
+                                                                      :params => Dict("verbose" => false))),
                               alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
                                                                   :params => Dict("log_to_console" => false))))
     asset_statistics!(hcportfolio)

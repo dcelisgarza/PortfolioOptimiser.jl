@@ -2,20 +2,18 @@
 
 # This is not financial advice, this is merely how I use the library for my own purposes. I typically use thousands of assets and whittle them down using something akin to this. I'm also using severely outdated pricing information and a meme stock for these examples. Use your own data and do your own research.
 
-using PortfolioOptimiser, Clarabel, COSMO, CSV, CovarianceEstimation, DataFrames, GLPK,
-      JuMP, OrderedCollections, Pajarito, Statistics, StatsBase, TimeSeries
+using PortfolioOptimiser, Clarabel, CSV, CovarianceEstimation, DataFrames, GLPK, JuMP,
+      OrderedCollections, Pajarito, Statistics, StatsBase, TimeSeries
 
 # The test data only contains a few stocks for convenience.
 
 prices = TimeArray(CSV.File(joinpath(@__DIR__, "stock_prices.csv")); timestamp = :date);
 
-# I like to use `Clarabel.jl` as a conic solver since it's quite fast and supports a wide variety of cones. For the times when `Clarabel.jl` fails, `COSMO.jl` usually succeeds. For MIP constraints, `Pajarito.jl` with `GLPK.jl` and `Clarabel.jl` has been my go-to.
+# I like to use `Clarabel.jl` as a conic solver since it's quite fast and supports a wide variety of cones. For MIP constraints, `Pajarito.jl` with `GLPK.jl` and `Clarabel.jl` has been my go-to.
 
 solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                         :params => Dict("verbose" => false,
                                                         "max_step_fraction" => 0.7)),
-                      :COSMO => Dict(:solver => COSMO.Optimizer,
-                                     :params => Dict("verbose" => false)),
                       :PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
                                                                           MOI.Silent() => true,
                                                                           "oa_solver" => optimizer_with_attributes(GLPK.Optimizer,

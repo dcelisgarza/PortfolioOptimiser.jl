@@ -1,4 +1,4 @@
-using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
+using CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
       Statistics, Test, TimeSeries, Logging
 
 Logging.disable_logging(Logging.Warn)
@@ -11,9 +11,7 @@ l = 2.0
 @testset "Asset allocation" begin
     solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                             :params => Dict("verbose" => false,
-                                                            "max_step_fraction" => 0.75)),
-                          :COSMO => Dict(:solver => COSMO.Optimizer,
-                                         :params => Dict("verbose" => false)))
+                                                            "max_step_fraction" => 0.75)))
     alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
                                         :params => Dict("log_to_console" => false)))
     portfolio = Portfolio(; prices = prices, solvers = solvers,

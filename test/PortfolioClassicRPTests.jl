@@ -1,5 +1,5 @@
 using CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
-      Statistics, Test, TimeSeries, SCS
+      Statistics, Test, TimeSeries
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 

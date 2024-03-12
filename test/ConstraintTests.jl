@@ -1,5 +1,5 @@
-using COSMO, CSV, DataFrames, LinearAlgebra, PortfolioOptimiser, Statistics, StatsBase,
-      Test, TimeSeries, Clarabel, Graphs
+using CSV, DataFrames, LinearAlgebra, PortfolioOptimiser, Statistics, StatsBase, Test,
+      TimeSeries, Clarabel, Graphs
 
 prices_assets = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
@@ -37,9 +37,7 @@ end
     portfolio = Portfolio(; prices = prices_assets,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75)),
-                                         :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                        :params => Dict("verbose" => false))))
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     w = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk))
 

@@ -1,5 +1,5 @@
-using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
-      Statistics, Test, TimeSeries, SCS
+using CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
+      Statistics, Test, TimeSeries
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
@@ -9,9 +9,7 @@ l = 2.0
 @testset "$(:Classic), $(:RP), $(:RG)" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     rm = :RG
@@ -70,9 +68,7 @@ end
 @testset "$(:Classic), $(:RP), $(:RCVaR)" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     rm = :RCVaR
@@ -132,9 +128,7 @@ end
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :GMD
@@ -234,9 +228,7 @@ end
 @testset "$(:Classic), $(:RP), $(:TG)" begin
     portfolio = Portfolio(; prices = prices[(end - 125):end],
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     rm = :TG
@@ -295,9 +287,7 @@ end
 @testset "$(:Classic), $(:RP), $(:RTG)" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                  :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     rm = :RTG

@@ -1,4 +1,4 @@
-using COSMO, CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, OrderedCollections,
+using CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, OrderedCollections,
       PortfolioOptimiser, Statistics, Test, TimeSeries, Clustering
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
@@ -26,9 +26,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
@@ -215,9 +213,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     cluster_opt = ClusterOpt(; linkage = :ward,
@@ -272,9 +268,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
@@ -304,9 +298,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
@@ -359,9 +351,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
@@ -414,9 +404,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
@@ -469,9 +457,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
@@ -524,9 +510,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
@@ -579,9 +563,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
@@ -634,9 +616,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
@@ -689,9 +669,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
@@ -744,9 +722,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
@@ -799,9 +775,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     cluster_opt = ClusterOpt(; linkage = :DBHT,
@@ -946,9 +920,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     cluster_opt = ClusterOpt(; linkage = :DBHT,
@@ -1093,9 +1065,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :SSD, rf = rf,
@@ -1240,9 +1210,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :FLPM, rf = rf,
@@ -1387,9 +1355,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :SLPM, rf = rf,
@@ -1534,9 +1500,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :WR, rf = rf,
@@ -1681,9 +1645,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :CVaR, rf = rf,
@@ -1828,9 +1790,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :EVaR, rf = rf,
@@ -1974,9 +1934,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :RVaR, rf = rf,
@@ -2121,9 +2079,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :MDD, rf = rf,
@@ -2268,9 +2224,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :ADD, rf = rf,
@@ -2413,9 +2367,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :CDaR, rf = rf,
@@ -2560,9 +2512,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :UCI, rf = rf,
@@ -2707,9 +2657,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :EDaR, rf = rf,
@@ -2854,9 +2802,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :RDaR, rf = rf,
@@ -3001,9 +2947,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :Kurt, rf = rf,
@@ -3148,9 +3092,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))),
+                                                                                    "max_step_fraction" => 0.75))),
                             max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
 
@@ -3235,9 +3177,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HRP, rm = :SKurt, rf = rf,
@@ -3382,9 +3322,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))),
+                                                                                    "max_step_fraction" => 0.75))),
                             max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
 
@@ -3469,9 +3407,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :NCO,
@@ -3678,9 +3614,7 @@ end
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
-                                                                                    "max_step_fraction" => 0.75)),
-                                                  :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                                 :params => Dict("verbose" => false))))
+                                                                                    "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; type = :HERC, rm_o = :SD, rm = :CDaR, rf = rf,

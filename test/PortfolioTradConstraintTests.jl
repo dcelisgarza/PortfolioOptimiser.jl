@@ -1,5 +1,5 @@
-using COSMO, CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra,
-      OrderedCollections, Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries, GLPK
+using CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra, OrderedCollections,
+      Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries, GLPK
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
@@ -18,9 +18,7 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.7)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.7))))
     asset_statistics!(portfolio; calc_kurt = false)
 
     portfolio.rebalance = Inf
@@ -3144,9 +3142,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :SD
@@ -3204,9 +3200,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     T = size(portfolio.returns, 1)
@@ -3272,9 +3266,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = :SD
@@ -3301,9 +3293,7 @@ end
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75)),
-                                                :COSMO => Dict(:solver => COSMO.Optimizer,
-                                                               :params => Dict("verbose" => false))))
+                                                                                  "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,

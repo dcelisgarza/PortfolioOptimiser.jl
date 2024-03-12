@@ -1,4 +1,4 @@
-using COSMO, CovarianceEstimation, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections,
+using CovarianceEstimation, CSV, HiGHS, LinearAlgebra, OrderedCollections,
       PortfolioOptimiser, Statistics, StatsBase, Test, TimeSeries, Logging
 
 Logging.disable_logging(Logging.Warn)
