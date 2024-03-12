@@ -1094,7 +1094,7 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
                    rf::Real = 0.0, sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                    alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100,
                    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
-                   kappa::Real = 0.3, owa_p = nothing,
+                   kappa::Real = 0.3,
                    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    solvers::Union{<:AbstractDict, Nothing} = nothing)
     @smart_assert(rm ∈ HCRiskMeasures)

@@ -132,7 +132,7 @@ NetworkMethods = (:None, :SDP, :IP)
 ```
 
 Methods for enforcing network constraints [NWK1, NWK2](@cite) for optimising [`Portfolio`](@ref).
-  - `:None`: No network constraint is used.
+  - `:None`: no network constraint is applied.
   - `:SDP`: Semi-Definite Programming constraint. $(_solver_reqs("`MOI.PSDCone`"))
   - `:IP`: uses Mixed-Integer Linear Programming (MIP) optimisation. $(_solver_reqs("MIP constraints"))
 """
@@ -257,6 +257,7 @@ UncertaintyTypes = (:None, :Box, :Ellipse)
 
 Available types of uncertainty sets that can be computed with [`wc_statistics!`](@ref), which are used by `:WC` [`PortTypes`](@ref).
 
+  - `:None`: no uncertainty set is used.
   - `:Box`: are box uncertainty sets chosen from [`BoxMethods`](@ref).
   - `:Ellipse`: are elliptical uncertainty sets chosen from [`EllipseMethods`](@ref).
 """

@@ -748,12 +748,14 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                                                           false
                                                       end),
                    portfolio_kwargs::NamedTuple = if type != :NCO
-                       (; alpha = portfolio.alpha, a_sim = portfolio.a_sim,
+                       (; alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
+                        a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
                         beta = portfolio.beta, b_sim = portfolio.b_sim,
-                        kappa = portfolio.kappa, owa_p = portfolio.owa_p,
-                        owa_w = portfolio.owa_w, solvers = portfolio.solvers)
+                        kappa = portfolio.kappa, owa_w = portfolio.owa_w,
+                        solvers = portfolio.solvers)
                    else
-                       (; alpha = portfolio.alpha, a_sim = portfolio.a_sim,
+                       (; alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
+                        a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
                         beta = portfolio.beta, b_sim = portfolio.b_sim,
                         kappa = portfolio.kappa, owa_p = portfolio.owa_p,
                         owa_w = portfolio.owa_w, solvers = portfolio.solvers,
