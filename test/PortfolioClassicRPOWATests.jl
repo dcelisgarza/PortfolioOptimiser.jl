@@ -150,6 +150,14 @@ end
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
+    opt.owa_approx = true
+    portfolio.risk_budget = []
+    w9 = optimise!(portfolio, opt)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w10 = optimise!(portfolio, opt)
+
+    opt.owa_approx = false
     rm = :OWA
     portfolio.risk_budget = []
     opt.rm = rm
@@ -215,6 +223,8 @@ end
 
     @test isapprox(w1.weights, w7.weights, rtol = 0.01)
     @test isapprox(w2.weights, w8.weights, rtol = 0.01)
+    @test isapprox(w9.weights, w7.weights)
+    @test isapprox(w10.weights, w8.weights)
     @test isapprox(hrc1, hrc7)
     @test isapprox(lrc1, lrc7)
     @test isapprox(hrc2, hrc8)
