@@ -486,7 +486,6 @@ KellyRet = (:None, :Approx, :Exact)
 Available types of Kelly returns for [`Portfolio`](@ref).
 
   - `:None`: arithmetic expected returns, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w}``.
-
   - `:Approx`: first moment approximation of the logarithmic returns [Kelly1](@cite), ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w} - \\dfrac{1}{2} \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}``.
   - `:Exact`: exact logarithmic returns [Kelly2](@cite), ``R(\\bm{w}) = \\dfrac{1}{T}\\sum\\limits_{t=1}^{T}\\ln\\left(1 + \\bm{x}_t \\cdot \\bm{w}\\right)``.
 

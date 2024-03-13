@@ -201,8 +201,12 @@ Structure and keyword constructor for denoising matrices.
 # Inputs
 
   - `method`: method for denoising matrices, must be one of [`DenoiseMethods`](@ref).
+
   - `alpha`: shrink method significance level, `alpha ∈ [0, 1]`.
-  - `detone`: if `true`, take only the largest `mkt_comp` eigenvalues from the correlation matrix.
+  - `detone`:
+
+      + `true`: take only the largest `mkt_comp` eigenvalues from the correlation matrix.
+      + `false`: no effect.
   - `mkt_comp`: the number of largest eigenvalues to keep from the correlation matrix.
   - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
   - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
@@ -260,12 +264,16 @@ Structure and keyword constructor for computing covariance matrices.
 # Inputs
 
   - `method`: covariance estimation method from [`CovMethods`](@ref).
+
   - `estimation`: covariance estimation options [`CovEstOpt`](@ref).
   - `gerber`: Gerber covariance options [`GerberOpt`](@ref).
   - `sb`: Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
-  - `jlogo`: if `true` uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
+  - `jlogo`:
+
+      + `true`: uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
+      + `false`: no effect.
   - `uplo`: argument for [Symmetric](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.Symmetric) to ensure the covariance matrix is symmetric (to combat floating point arithmetic problems).
 """
 mutable struct CovOpt
@@ -403,9 +411,13 @@ Structure and keyword constructor for computing cokurtosis matrices.
 # Inputs
 
   - `estimation`: cokurtosis estimation options [`CovEstOpt`](@ref).
+
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
-  - `jlogo`: if `true` uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the cokurtosis from its relationship structure.
+  - `jlogo`:
+
+      + `true`: uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the cokurtosis from its relationship structure.
+      + `false`: no effect.
 """
 mutable struct KurtOpt
     # Estimation
@@ -558,7 +570,10 @@ Structure and keyword constructor for computing covariance matrices.
   - `sb`: Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
-  - `jlogo`: if `true` uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
+  - `jlogo`:
+
+      + `true`: uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
+      + `false`: no effect.
   - `uplo`: argument for [Symmetric](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.Symmetric) to ensure the correlation and distance matrices are symmetric (to combat floating point arithmetic problems).
 """
 mutable struct CorOpt
@@ -614,11 +629,12 @@ end
 end
 ```
 
-Structure and keyword constructor for computing worst case statistics.
+Structure and keyword constructor for computing worst case statistics in [`wc_statistics!`](@ref).
 
 # Inputs
 
   - `calc_box`: whether to compute box sets.
+
   - `calc_ellipse`: whether to compute elliptical sets.
   - `diagonal`: whether to consider only the diagonal of the covariance matrices of estimation errors.
   - `box`: method from [`BoxMethods`](@ref) for computing box sets.
@@ -626,8 +642,8 @@ Structure and keyword constructor for computing worst case statistics.
   - `dcov`: when `box == :Delta`, the percentage of the covariance matrix that parametrises its box set.
   - `dmu`: when `box == :Delta`, the percentage of the expected returns vector that parametrises its box set.
   - `q`: significance level of the selected bootstrapping method.
-  - `rng`: random number generator for the bootstrapping method. If `isnothing(seed)` then uses the default generator with a random seed.
-  - `seed`: seed for the random number generator used in the bootstrapping method.
+  - `rng`: generator for the random numbers used in [`gen_bootstrap`](@ref) and [`wc_statistics!`](@ref).
+  - `seed`: seed for the random number generator used in [`gen_bootstrap`](@ref) and [`wc_statistics!`](@ref). If `rng` does not support the seed, the function will error.
   - `n_sim`: number of simulations for the bootstrapping method.
   - `block_size`: average block size when using `:Stationary`, `:Circular` or `:Moving` bootstrapping methods.
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
@@ -793,7 +809,10 @@ Structure and keyword constructor for computing factor statistics in [`risk_fact
       + The other columns must be the names of the factors.
 
   - `loadings_opt`: options for computing the loadings matrix.
-  - `error`: if `error == true`, account for the error between the asset returns and factor regression.
+  - `error`:
+
+      + `true`: account for the error between the asset returns and factor regression.
+      + `false`: no effect.
   - `var_genfunc`: generic function [`GenericFunction`](@ref) for computing the standard deviation of the error when `error == true`.
 """
 mutable struct FactorOpt
@@ -842,20 +861,23 @@ Structure and keyword constructor for computing Black-Litterman statistics in [`
   - `diagonal`:
 
       + [`black_litterman_statistics!`](@ref): does nothing.
-      + [`black_litterman_factor_satistics!`](@ref): flag that decides what value ``\\mathbf{D}`` takes on when `method == :B`.
+      + [`black_litterman_factor_satistics!`](@ref): flag that decides how ``\\mathbf{D}`` is defined when `method == :B`.
   - `eq`:
 
-      + [`black_litterman_statistics!`](@ref): flag that decides what value ``\\bm{\\Pi}``
-      + [`black_litterman_factor_satistics!`](@ref): flag that decides what value ``\\bm{\\Pi}_{a}``
+      + [`black_litterman_statistics!`](@ref): flag that decides how ``\\bm{\\Pi}`` is defined.
+      + [`black_litterman_factor_satistics!`](@ref): flag that decides how ``\\bm{\\Pi}_{a}`` is defined when `method == :A`.
   - `delta`:
 
       + [`black_litterman_statistics!`](@ref): value of ``\\delta`` when `eq == true` for computing ``\\bm{\\Pi}``.
-      + [`black_litterman_factor_satistics!`](@ref): value of ``\\delta`` when `eq == true` for computing ``\\bm{\\Pi}_{a}``.
+      + [`black_litterman_factor_satistics!`](@ref): value of ``\\delta`` when `eq == true` for computing ``\\bm{\\Pi}_{a}`` when `method == :A`.
   - `rf`: risk-free rate.
   - `var_genfunc`: generic function [`GenericFunction`](@ref) for computing ``\\mathbf{D}``, only used when `method == :B` and `diagonal == true`.
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
-  - `jlogo`: if `true` uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
+  - `jlogo`:
+
+      + `true`: uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
+      + `falce`: no effect.
 """
 mutable struct BLOpt{T1 <: Real}
     method::Symbol
@@ -904,10 +926,15 @@ Structure and keyword constructor for clustering options.
 # Inputs
 
   - `linkage`: clustering linkage method from [`LinkageMethods`](@ref).
+
   - `branchorder`: branch order for ordering leaves and branches from [hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
   - `dbht_method`: root finding method from [`DBHTRootMethods`](@ref).
-  - `max_k`: maximum number of clusters to cut the sample into. If `max_k == 0` this is computed by [`_two_diff_gap_stat`](@ref), as ``\\left\\lceil \\sqrt{N} \\right\\rceil`` where ``N`` is the number of assets.
-  - `k`: number of clusters to cut the sample into. If `k == 0`, it is automatically determined by [`_two_diff_gap_stat`](@ref).
+  - `max_k`: maximum number of clusters to cut the sample into.
+
+      + `iszero(max_k)`: computes the value in [`_two_diff_gap_stat`](@ref) as ``k_{\\mathrm{max}} = \\left\\lceil \\sqrt{N} \\right\\rceil`` where ``N`` is the number of assets.
+  - `k`: number of clusters to cut the sample into.
+
+      + `iszero(k)`: determined by [`_two_diff_gap_stat`](@ref).
   - `genfunc`: function for computing a non-negative distance matrix from the correlation matrix when `method == :DBHT` as per [`DBHTs`](@ref).
 """
 mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
@@ -939,6 +966,72 @@ function Base.setproperty!(obj::ClusterOpt, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+
+"""
+```julia
+@kwdef mutable struct OptimiseOpt{T1 <: Integer, T2 <: Real, T3 <: Real, T4 <: Real,
+                                  T5 <: Real}
+    type::Symbol = :Trad
+    rm::Symbol = :SD
+    obj::Symbol = :Sharpe
+    kelly::Symbol = :None
+    class::Symbol = :Classic
+    rrp_ver::Symbol = :None
+    u_cov::Symbol = :Box
+    u_mu::Symbol = :Box
+    sd_cone::Bool = true
+    owa_approx::Bool = true
+    near_opt::Bool = false
+    hist::T1 = 1
+    rf::T2 = 0.0
+    l::T3 = 2.0
+    rrp_penalty::T4 = 1.0
+    n::T5 = 20.0
+    w_ini::AbstractVector = Vector{typeof(rf)}(undef, 0)
+    w_min::AbstractVector = Vector{typeof(rf)}(undef, 0)
+    w_max::AbstractVector = Vector{typeof(rf)}(undef, 0)
+end
+```
+
+Structure and keyword constructor for optimisation options in [`optimise!`](@ref) for all [`PortTypes`](@ref) and `:NCO` [`HCPortTypes`](@ref).
+
+# Inputs
+
+  - `type`: portfolio type from [`PortTypes`](@ref).
+
+  - `rm`: risk measure from [`RiskMeasures`](@ref).
+  - `obj`: objective function from [`ObjFuncs`](@ref).
+  - `kelly`: kelly return from [`KellyRet`].
+  - `class`: portfolio class from [`PortClasses`](@ref).
+  - `rrp_ver`: version of relaxed risk parity from [`RRPVersions`](@ref) when `type == :RRP`
+  - `u_cov`: type of uncertainty set from [`UncertaintyTypes`](@ref) for covariance matrix.
+  - `u_mu`: type of uncertainty set from [`UncertaintyTypes`](@ref) for expected returns vector.
+  - `sd_cone`:
+
+      + `true`: use `MOI.SecondOrderCone` to model the standard deviation when `rm == :SD`.
+      + `false`: use the quadratic expression for the standard deviation when `rm == :SD`.
+  - `owa_approx`:
+
+      + `true`: use the power cone expansion approximation when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
+      + `false`: use the full Ordered Weight formulation when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
+  - `near_opt`:
+    + `true`: use the near optimal centering formulation. May not work with all risk measures depending on the solver. $(_solver_reqs("`MOI.ExponentialCone`"))
+    + `false`: normal optimisation.
+  - `hist`: choice of expected returns vector and covariance matrix from [`BLHist`](@ref).
+  - `rf`: risk-free rate.
+  - `l`: risk aversion parameter when `obj == :Utility`.
+  - `rrp_penalty`: value of the penalty when `type == :RRP` and `rrp_ver == :Reg_Pen`.
+  - `n`: number of sections to split the range between the minimum risk and maximum return portfolios when `near_opt == true`.
+  - `w_ini`: 
+    + `!isempty(w_ini)`: initial guess for the weights of the optimised portfolio. Some solvers do not support initial guesses and will see no benefit.
+    + `isempty(w_ini)`: no initial for the weights of the optimised portfolio.
+  - `w_min`: only used when `near_opt == true`.
+    + `!isempty(w_min)`: assumed to be the value of the weights of the minimum risk portfolio.
+    + `isempty(w_min)`: weights of the minimum risk portfolio are computed by [`optimise!`](@ref).
+  - `w_max`: only used when `near_opt == true`.
+    + `!isempty(w_min)`: assumed to be the value of the weights of the maximum return portfolio.
+    + `isempty(w_min)`: weights of the maximum return portfolio are computed by [`optimise!`](@ref).
+"""
 mutable struct OptimiseOpt{T1 <: Integer, T2 <: Real, T3 <: Real, T4 <: Real, T5 <: Real}
     type::Symbol
     rm::Symbol

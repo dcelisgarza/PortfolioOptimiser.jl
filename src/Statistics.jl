@@ -874,9 +874,7 @@ end
 
 function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
                      rng = Random.default_rng(), seed::Union{Nothing, <:Integer} = nothing)
-    if !isnothing(seed)
-        Random.seed!(rng, seed)
-    end
+    Random.seed!(rng, seed)
 
     n = size(x, 1)
     a = randn(rng, n + len, n)
@@ -1654,14 +1652,19 @@ function commutation_matrix(x::AbstractMatrix)
     return com
 end
 
+"""
+```julia
+gen_bootstrap(returns::AbstractMatrix; kind::Symbol = :Stationary, n_sim::Integer = 3_000,
+              block_size::Integer = 3, seed::Union{<:Integer, Nothing} = nothing,
+              rng = Random.default_rng())
+```
+"""
 function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
                        n_sim::Integer = 3_000, block_size::Integer = 3,
                        seed::Union{<:Integer, Nothing} = nothing,
                        rng = Random.default_rng())
     @smart_assert(kind ∈ BootstrapMethods)
-    if !isnothing(seed)
-        Random.seed!(rng, seed)
-    end
+    Random.seed!(rng, seed)
 
     mus = Vector{Vector{eltype(returns)}}(undef, 0)
     sizehint!(mus, n_sim)
@@ -1739,9 +1742,7 @@ function wc_statistics!(portfolio::AbstractPortfolio, opt::WCOpt = WCOpt(;))
 
             d_mu = (mu_u - mu_l) / 2
         elseif box == :Normal
-            if !isnothing(seed)
-                Random.seed!(rng, seed)
-            end
+            Random.seed!(rng, seed)
 
             cov_mu = sigma / T
             d_mu = cquantile(Normal(), q / 2) * sqrt.(diag(cov_mu))
