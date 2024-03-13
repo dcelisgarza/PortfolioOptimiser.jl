@@ -825,11 +825,27 @@ Structure and keyword constructor for computing Black-Litterman statistics in [`
 
 # Inputs
 
-  - `method`: method from [`BLFMMethods`](@ref) for choosing what model to use in [`black_litterman_statistics!`](@ref).
-  - `constant`: flag to state whether or not the loadings matrix includes a constant column. This is automatically set inside [`black_litterman_factor_satistics!`](@ref) to reflect the loadings matrix.
-  - `diagonal`: flag that decides what value ``\\mathbf{D}`` takes on when `method == :B`.
-  - `eq`: flag that decides what value ``\\bm{\\Pi}_{a}`` takes on when `method == :A`.
-  - `delta`: value of delta for computing ``\\bm{\\Pi}_{a}``, only used when `method == :A` and `eq == true`.
+  - `method`:
+
+      + [`black_litterman_statistics!`](@ref): does nothing.
+      + [`black_litterman_factor_satistics!`](@ref): `method` from [`BLFMMethods`](@ref) for choosing what model to use.
+
+  - `constant`:
+
+      + [`black_litterman_statistics!`](@ref): does nothing.
+      + [`black_litterman_factor_satistics!`](@ref): automatically set inside to reflect the loadings matrix.
+  - `diagonal`:
+
+      + [`black_litterman_statistics!`](@ref): does nothing.
+      + [`black_litterman_factor_satistics!`](@ref): flag that decides what value ``\\mathbf{D}`` takes on when `method == :B`.
+  - `eq`:
+
+      + [`black_litterman_statistics!`](@ref): flag that decides what value ``\\bm{\\Pi}``
+      + [`black_litterman_factor_satistics!`](@ref): flag that decides what value ``\\bm{\\Pi}_{a}``
+  - `delta`:
+
+      + [`black_litterman_statistics!`](@ref): value of ``\\delta`` when `eq == true` for computing ``\\bm{\\Pi}``.
+      + [`black_litterman_factor_satistics!`](@ref): value of ``\\delta`` when `eq == true` for computing ``\\bm{\\Pi}_{a}``.
   - `rf`: risk free rate.
   - `var_genfunc`: generic function [`GenericFunction`](@ref) for computing ``\\mathbf{D}``, only used when `method == :B` and `diagonal == true`.
   - `denoise`: denoising options [`DenoiseOpt`](@ref).

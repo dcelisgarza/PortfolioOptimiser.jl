@@ -1,4 +1,4 @@
-using COSMO, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
+using CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
       Statistics, Test, TimeSeries, Logging
 
 Logging.disable_logging(Logging.Warn)
@@ -37,9 +37,7 @@ end
 @testset "OWA L-Moment" begin
     solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                             :params => Dict("verbose" => false,
-                                                            "max_step_fraction" => 0.75)),
-                          :COSMO => Dict(:solver => COSMO.Optimizer,
-                                         :params => Dict("verbose" => false)))
+                                                            "max_step_fraction" => 0.75)))
 
     w1 = owa_l_moment_crm(200; k = 2, method = :CRRA, g = 0.25)
     w2 = owa_l_moment_crm(200; k = 4, method = :CRRA, g = 0.25)
