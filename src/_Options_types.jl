@@ -786,9 +786,14 @@ Structure and keyword constructor for computing factor statistics in [`risk_fact
 
 # Input
 
-  - `B`: loadings matrix.
+  - `B`: loadings matrix. Must have a few different columns.
+
+      + `tickers`: (optional) contains the list of tickers.
+      + `const`: (optional) contains the regression constant.
+      + The other columns must be the names of the factors.
+
   - `loadings_opt`: options for computing the loadings matrix.
-  - `error`: if `error == true`, account for the error between the asset returns and the regression with the factors.
+  - `error`: if `error == true`, account for the error between the asset returns and factor regression.
   - `var_genfunc`: generic function [`GenericFunction`](@ref) for computing the standard deviation of the error when `error == true`.
 """
 mutable struct FactorOpt
@@ -846,7 +851,7 @@ Structure and keyword constructor for computing Black-Litterman statistics in [`
 
       + [`black_litterman_statistics!`](@ref): value of ``\\delta`` when `eq == true` for computing ``\\bm{\\Pi}``.
       + [`black_litterman_factor_satistics!`](@ref): value of ``\\delta`` when `eq == true` for computing ``\\bm{\\Pi}_{a}``.
-  - `rf`: risk free rate.
+  - `rf`: risk-free rate.
   - `var_genfunc`: generic function [`GenericFunction`](@ref) for computing ``\\mathbf{D}``, only used when `method == :B` and `diagonal == true`.
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
@@ -901,8 +906,8 @@ Structure and keyword constructor for clustering options.
   - `linkage`: clustering linkage method from [`LinkageMethods`](@ref).
   - `branchorder`: branch order for ordering leaves and branches from [hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
   - `dbht_method`: root finding method from [`DBHTRootMethods`](@ref).
-  - `max_k`: maximum number of clusters to cut the sample into. If `max_k == 0` this is computed to be ``\\left\\lceil \\sqrt{N} \\right\\rceil`` where ``N`` is the number of samples by [`_two_diff_gap_stat`](@ref).
-  - `k`: number of clusters to cut the sample into. If `k == 0` this is set automatically by [`_two_diff_gap_stat`](@ref).
+  - `max_k`: maximum number of clusters to cut the sample into. If `max_k == 0` this is computed by [`_two_diff_gap_stat`](@ref), as ``\\left\\lceil \\sqrt{N} \\right\\rceil`` where ``N`` is the number of assets.
+  - `k`: number of clusters to cut the sample into. If `k == 0`, it is automatically determined by [`_two_diff_gap_stat`](@ref).
   - `genfunc`: function for computing a non-negative distance matrix from the correlation matrix when `method == :DBHT` as per [`DBHTs`](@ref).
 """
 mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}

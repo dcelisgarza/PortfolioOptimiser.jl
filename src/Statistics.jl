@@ -2144,7 +2144,7 @@ function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = Loadings
         end
     end
 
-    return hcat(DataFrame(; ticker = names(y)), DataFrame(loadings, ["const"; features]))
+    return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
 end
 
 """
@@ -2169,7 +2169,7 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
     else
         x1 = Matrix(x)
     end
-    B_mtx = Matrix(B[!, setdiff(namesB, ("ticker",))])
+    B_mtx = Matrix(B[!, setdiff(namesB, ("tickers",))])
 
     cov_f, mu_f = covar_mtx_mean_vec(x1; cov_opt = cov_opt, mu_opt = mu_opt)
 
@@ -2597,7 +2597,7 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
     end
     namesB = names(B)
     bl_opt.constant = "const" ∈ namesB
-    B = Matrix(B[!, setdiff(namesB, ("ticker",))])
+    B = Matrix(B[!, setdiff(namesB, ("tickers",))])
 
     portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_opt.method == :B
         bayesian_black_litterman(returns, F, B, P_f, Q_f; cov_opt = cov_opt,

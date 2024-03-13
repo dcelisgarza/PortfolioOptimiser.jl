@@ -559,9 +559,9 @@ end
                                                   "", "", "SIZE"])
     C, D = factor_constraints(constraints, loadings)
 
-    loadingst = hcat(DataFrame(:ticker => ["GOOG", "AAPL", "FB", "BABA", "AMZN", "GE",
-                                           "AMD", "WMT", "BAC", "GM", "T", "UAA", "SHLD",
-                                           "XOM", "RRC", "BBY", "MA", "PFE", "JPM", "SBUX"]),
+    loadingst = hcat(DataFrame(:tickers => ["GOOG", "AAPL", "FB", "BABA", "AMZN", "GE",
+                                            "AMD", "WMT", "BAC", "GM", "T", "UAA", "SHLD",
+                                            "XOM", "RRC", "BBY", "MA", "PFE", "JPM", "SBUX"]),
                      DataFrame(reshape([0.0006682666783877028, 0.0008125085541546204,
                                         0.0009938539577313578, 0.0008448251080905889,
                                         0.0017791646483353075, -0.0005632788650349695,
@@ -655,9 +655,9 @@ end
 end
 
 @testset "Factor views" begin
-    loadings = hcat(DataFrame(:ticker => ["GOOG", "AAPL", "FB", "BABA", "AMZN", "GE", "AMD",
-                                          "WMT", "BAC", "GM", "T", "UAA", "SHLD", "XOM",
-                                          "RRC", "BBY", "MA", "PFE", "JPM", "SBUX"]),
+    loadings = hcat(DataFrame(:tickers => ["GOOG", "AAPL", "FB", "BABA", "AMZN", "GE",
+                                           "AMD", "WMT", "BAC", "GM", "T", "UAA", "SHLD",
+                                           "XOM", "RRC", "BBY", "MA", "PFE", "JPM", "SBUX"]),
                     DataFrame(reshape([0.0006662517554895613, 0.0007849399521007353,
                                        0.0009459643095974261, 0.0008592165739551059,
                                        0.0017810088172303237, -0.0005785685052765102,

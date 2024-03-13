@@ -266,7 +266,7 @@ function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, ro
 
         deficit = weights - current_weights
 
-        # Try to buy ticker whose deficit is the greatest.
+        # Try to buy tickers whose deficit is the greatest.
         idx = argmax(deficit)
         price = latest_prices[idx]
 

@@ -377,12 +377,7 @@ P, Q = factor_views(views, loadings)
 """
 function factor_views(views::DataFrame, loadings::DataFrame)
     factor_list = names(loadings)
-    if "const" ∈ factor_list
-        factor_list = setdiff(factor_list, ("const",))
-    end
-    if "ticker" ∈ factor_list
-        factor_list = setdiff(factor_list, ("ticker",))
-    end
+    factor_list = setdiff(factor_list, ("const", "tickers"))
 
     N = length(factor_list)
 

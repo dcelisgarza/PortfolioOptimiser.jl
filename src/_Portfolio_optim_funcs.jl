@@ -1089,7 +1089,7 @@ function _calc_factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix,
                                 loadings_opt::LoadingsOpt = LoadingsOpt(;))
     namesB = names(B)
 
-    B = Matrix(B[!, setdiff(namesB, ("ticker", "const"))])
+    B = Matrix(B[!, setdiff(namesB, ("tickers", "const"))])
 
     if loadings_opt.method == :PCR
         pcr_opt = loadings_opt.pcr_opt

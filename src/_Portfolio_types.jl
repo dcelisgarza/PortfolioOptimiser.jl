@@ -148,7 +148,7 @@ Structure for convex portfolio optimisation.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
     - Else the target is the value of `msv_target`. If `msv_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 - `lpm_target`: target value for the First and Second Lower Partial Moment risk measures. It can have two meanings depending on its type and value.
-    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`optimise!`]() function.
+    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk-free rate `rf`, provided in the [`optimise!`]() function.
     - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 $(_isigdef("Tail Gini losses", :a))
 $(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`]() and upper bounds being used", :a))
@@ -423,7 +423,7 @@ Creates an instance of [`Portfolio`]() containing all internal data necessary fo
     - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
     - Else the target is the value of `msv_target`. If `msv_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 - `lpm_target`: target value for the First and Second Lower Partial Moment risk measures. It can have two meanings depending on its type and value.
-    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk free rate `rf`, provided in the [`optimise!`]() function.
+    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk-free rate `rf`, provided in the [`optimise!`]() function.
     - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 $(_isigdef("Tail Gini losses", :a))
 $(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`]() and upper bounds being used", :a))

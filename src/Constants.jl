@@ -773,7 +773,7 @@ Where:
 
   - ``w_{i}^\\mathrm{G}``: is the global (final) weight for asset ``i``.
   - ``w_{i}^\\mathrm{L}``: is the intra-cluster weight for asset ``i``.
-  - ``w_{i \\in \\mathcal{C} \\subseteq \\mathcal{K}}``: is the weight of cluster ``\\mathcal{C}``, from the set of `k` clusters ``\\mathcal{K}``, that asset ``i`` belongs to.
+  - ``w_{i \\in \\mathcal{C} \\subseteq \\mathcal{K}}``: is the weight of cluster ``\\mathcal{C}``, from the set of clusters ``\\mathcal{K}``, that asset ``i`` belongs to.
   - ``N``: is the number of assets.
 """
 const HCPortTypes = (:HRP, :HERC, :NCO)
