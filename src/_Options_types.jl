@@ -484,7 +484,7 @@ Structure and keyword constructor for estimating covariance matrices.
 
   - `estimator`:
 
-        + `method ∈ (:Full, :Semi)` from [`CorMethods`](@ref): abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator). Enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl).
+      + `method ∈ (:Full, :Semi)` from [`CorMethods`](@ref): abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator). Enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl).
 
   - `alpha`: significance parameter when `method == :Tail` from [`CorMethods`](@ref), `alpha ∈ [0, 1]`.
   - `bins_info`: number of bins when `method == :Mutual_Info` from [`CorMethods`](@ref). It can take on two types.
@@ -508,7 +508,7 @@ Structure and keyword constructor for estimating covariance matrices.
       + `method == :Semi` from [`CorMethods`](@ref): returns less than or equal to this value are considered downside returns.
   - `sigma`:
 
-      + `method == :Cov_to_Cor`: value of covariance matrix from which the correlation is to be computed. When computing from [`asset_statistics!`](@ref), this value is set automatically.
+      + `method == :Cov_to_Cor` from [`CorMethods`](@ref): value of covariance matrix from which the correlation is to be computed. When computing from [`asset_statistics!`](@ref), this value is set automatically.
 """
 mutable struct CorEstOpt{T1 <: Real, T2 <: AbstractMatrix{<:Real},
                          T3 <: AbstractMatrix{<:Real}, T4 <: AbstractMatrix{<:Real}}
