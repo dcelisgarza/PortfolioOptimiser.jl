@@ -217,7 +217,7 @@ Structure and keyword constructor for denoising matrices.
 
 # Inputs
 
-  - `method`: method for denoising matrices, must be one of [`DenoiseMethods`](@ref).
+  - `method`: method for denoising matrices from [`DenoiseMethods`](@ref).
 
   - `alpha`: shrink method significance level, `alpha ∈ [0, 1]`.
   - `detone`:
@@ -228,7 +228,7 @@ Structure and keyword constructor for denoising matrices.
   - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
   - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
   - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
-  - `genfunc`: only `genfunc.args` and `genfunc.kwargs` are used. These are the `args` and `kwargs` passed to `Optim.optimize`. This is used for finding the eigenvalue that minimises the residual error between the fitted average shifted histogram and a covariance matrix arising from normally distributed returns. Eigenvalues larger than this are considered significant [MLAM; Ch. 2](@cite).
+  - `genfunc`: only `genfunc.args` and `genfunc.kwargs` are used. These are the `args` and `kwargs` passed to [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/#user/minimization/). This is used for finding the eigenvalue that minimises the residual error between the fitted average shifted histogram and a covariance matrix arising from normally distributed returns. Eigenvalues larger than this are considered significant [MLAM; Ch. 2](@cite).
 
 !!! warning
 
@@ -284,7 +284,7 @@ Structure and keyword constructor for computing covariance matrices.
 
   - `estimation`: covariance estimation options [`CovEstOpt`](@ref).
   - `gerber`: Gerber covariance options [`GerberOpt`](@ref).
-  - `sb`: Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
+  - `sb`: options for Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
   - `jlogo`:
@@ -344,17 +344,25 @@ Structure and keyword constructor for computing expected returns vectors.
 
 # Inputs
 
-  - `method`: one of [`MuMethods`](@ref) methods for estimating the expected returns vector in [`mean_vec`](@ref).
+  - `method`: method for estimating the expected returns vector from [`MuMethods`](@ref).
 
-  - `target`: one of [`MuTargets`](@ref) for estimating the expected returns vector in [`mean_vec`](@ref).
+  - `target`:
+
+      + `method ∈ (:JS, :BS, :BOP)`: target from [`MuTargets`](@ref).
   - `rf`: risk-free rate.
   - `genfunc`: generic function [`GenericFunction`](@ref) for estimating the unadjusted expected returns vector.
 
       + `method ∈ (:Default, :Custom_Func)`: return this value.
-      + `method ∈ (:JS, :BS, :BOP, :CAPM)`: the value is used to compute the adjusted expected returns vector according to the method and target (if applicable) provided.
-  - `custom`: user provided value for the mean returns vector when `method == :Custom_Val`.
-  - `mkt_ret`: market return used when `method == :CAPM`.
-  - `sigma`: value of the covariance matrix used when adjusting the expected returns vector when `method ∈ (:JS, :BS, :BOP, :CAPM)`.
+      + `method ∈ (:JS, :BS, :BOP, :CAPM)`: the value is used as the starting point for computing the adjusted expected returns vector using the given `method` and---if applicable---`target`.
+  - `custom`:
+
+      + `method == :Custom_Val`: value of the mean returns vector.
+  - `mkt_ret`:
+
+      + `method == :CAPM`: market returns.
+  - `sigma`:
+
+      + `method ∈ (:JS, :BS, :BOP, :CAPM)`: value of the covariance matrix used when computing the adjusted expected returns vector. When computing from [`asset_statistics!`](@ref), this value is set automatically.
 """
 mutable struct MuOpt{T1 <: Real}
     method::Symbol
@@ -398,9 +406,9 @@ Structure and keyword constructor for estimating cokurtosis matrices.
 
 # Inputs
 
-  - `target_ret`: target return for semi cokurtosis estimation.
+  - `target_ret`: returns less than or equal to this value are considered downside returns when computing the semi cokurtosis matrix.
   - `custom_kurt`: custom value for the cokurtosis matrix.
-  - `custom_skurt`:  custom value for the semi cokurtosis matrix.
+  - `custom_skurt`: custom value for the semi cokurtosis matrix.
 """
 mutable struct KurtEstOpt
     target_ret::Union{<:AbstractVector{<:Real}, <:Real}
@@ -427,7 +435,7 @@ Structure and keyword constructor for computing cokurtosis matrices.
 
 # Inputs
 
-  - `estimation`: cokurtosis estimation options [`CovEstOpt`](@ref).
+  - `estimation`: cokurtosis estimation options [`KurtEstOpt`](@ref).
 
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
@@ -474,19 +482,33 @@ Structure and keyword constructor for estimating covariance matrices.
 
 # Inputs
 
-  - `estimator`: abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator), enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl) for `:Full` and `:Semi` of [`CovMethods`](@ref).
+  - `estimator`:
+
+        + `method ∈ (:Full, :Semi)` from [`CorMethods`](@ref): abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator). Enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl).
 
   - `alpha`: significance parameter when `method == :Tail` from [`CorMethods`](@ref), `alpha ∈ [0, 1]`.
   - `bins_info`: number of bins when `method == :Mutual_Info` from [`CorMethods`](@ref). It can take on two types.
 
       + `bins_info isa Symbol`: bin width choice method must be one of [`BinMethods`](@ref).
       + `bins_info isa Integer`: the data is split into as many bins as specified.
-  - `cor_genfunc`: generic function [`GenericFunction`](@ref) for computing the correlation matrix when `method ∈ (:Pearson, :Semi_Pearson, :Abs_Pearson, :Abs_Semi_Pearson, :Custom_Func)` from [`CorMethods`](@ref).
-  - `dist_genfunc`: generic function [`GenericFunction`](@ref) for computing the distance matrix when `method ∈ (:Cov_to_Cor, :Custom_Func)` from [`CorMethods`](@ref).
-  - `target_ret`: target return for semi covariance estimation when `method ∈ (:Semi_Pearson, :Abs_Semi_Pearson)` from [`CorMethods`](@ref).
-  - `custom_cor`: custom correlation matrix function when `method == :Custom_Val` from [`CorMethods`](@ref).
-  - `custom_dist`: custom distance matrix function when `method == :Custom_Val` from [`CorMethods`](@ref).
-  - `sigma`: value of covariance matrix when `method == :Cov_to_Cor` from [`CorMethods`](@ref).
+  - `cor_genfunc`:
+
+      + `method ∈ (:Full, :Semi, :Custom_Func)` from [`CorMethods`](@ref): generic function [`GenericFunction`](@ref) for computing the correlation matrix.
+  - `dist_genfunc`:
+
+      + `method ∈ (:Full, :Semi, :Custom_Func)` from [`CorMethods`](@ref): generic function [`GenericFunction`](@ref) for computing the distance matrix.
+  - `custom_cor`:
+
+      + `method == :Custom_Val` from [`CorMethods`](@ref): custom correlation matrix.
+  - `custom_dist`:
+
+      + `method == :Custom_Val` from [`CorMethods`](@ref): custom distance matrix.
+  - `target_ret`:
+
+      + `method == :Semi` from [`CorMethods`](@ref): returns less than or equal to this value are considered downside returns.
+  - `sigma`:
+
+      + `method == :Cov_to_Cor`: value of covariance matrix from which the correlation is to be computed. When computing from [`asset_statistics!`](@ref), this value is set automatically.
 """
 mutable struct CorEstOpt{T1 <: Real, T2 <: AbstractMatrix{<:Real},
                          T3 <: AbstractMatrix{<:Real}, T4 <: AbstractMatrix{<:Real}}
@@ -580,11 +602,11 @@ Structure and keyword constructor for computing covariance matrices.
 
 # Inputs
 
-  - `method`: covariance estimation method from [`CovMethods`](@ref).
+  - `method`: covariance estimation method from [`CorMethods`](@ref).
 
   - `estimation`: covariance estimation options [`CovEstOpt`](@ref).
   - `gerber`: Gerber covariance options [`GerberOpt`](@ref).
-  - `sb`: Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
+  - `sb`: options for Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
   - `jlogo`:
@@ -1037,7 +1059,7 @@ Structure and keyword constructor for optimisation options in [`optimise!`](@ref
 
   - `rm`: risk measure from [`RiskMeasures`](@ref).
   - `obj`: objective function from [`ObjFuncs`](@ref).
-  - `kelly`: kelly return from [`KellyRet`].
+  - `kelly`: kelly return from [`KellyRet`](@ref).
   - `class`: portfolio class from [`PortClasses`](@ref).
   - `rrp_ver`: version of relaxed risk parity from [`RRPVersions`](@ref) when `type == :RRP`
   - `u_cov`: type of uncertainty set from [`UncertaintyTypes`](@ref) for covariance matrix.
