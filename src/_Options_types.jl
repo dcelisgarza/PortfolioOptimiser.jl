@@ -223,7 +223,6 @@ Structure and keyword constructor for denoising matrices.
   - `detone`:
 
       + `true`: take only the largest `mkt_comp` eigenvalues from the correlation matrix.
-      + `false`: no effect.
   - `mkt_comp`: the number of largest eigenvalues to keep from the correlation matrix.
   - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
   - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
@@ -290,7 +289,6 @@ Structure and keyword constructor for computing covariance matrices.
   - `jlogo`:
 
       + `true`: uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
-      + `false`: no effect.
   - `uplo`: argument for [Symmetric](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.Symmetric) to ensure the covariance matrix is symmetric (to combat floating point arithmetic problems).
 """
 mutable struct CovOpt
@@ -442,7 +440,6 @@ Structure and keyword constructor for computing cokurtosis matrices.
   - `jlogo`:
 
       + `true`: uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the cokurtosis from its relationship structure.
-      + `false`: no effect.
 """
 mutable struct KurtOpt
     # Estimation
@@ -612,7 +609,6 @@ Structure and keyword constructor for computing covariance matrices.
   - `jlogo`:
 
       + `true`: uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
-      + `false`: no effect.
   - `uplo`: argument for [Symmetric](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.Symmetric) to ensure the correlation and distance matrices are symmetric (to combat floating point arithmetic problems).
 """
 mutable struct CorOpt
@@ -678,13 +674,22 @@ Structure and keyword constructor for computing worst case statistics in [`wc_st
   - `diagonal`: whether to consider only the diagonal of the covariance matrices of estimation errors.
   - `box`: method from [`BoxMethods`](@ref) for computing box sets.
   - `ellipse`: method from [`EllipseMethods`](@ref) for computing elliptical sets.
-  - `dcov`: when `box == :Delta`, the percentage of the covariance matrix that parametrises its box set.
-  - `dmu`: when `box == :Delta`, the percentage of the expected returns vector that parametrises its box set.
+  - `dcov`:
+
+      + `box == :Delta`: the percentage of the covariance matrix that parametrises its box set.
+  - `dmu`:
+
+      + `box == :Delta`: the percentage of the expected returns vector that parametrises its box set.
   - `q`: significance level of the selected bootstrapping method.
   - `rng`: generator for the random numbers used in [`gen_bootstrap`](@ref) and [`wc_statistics!`](@ref).
   - `seed`: seed for the random number generator used in [`gen_bootstrap`](@ref) and [`wc_statistics!`](@ref). If `rng` does not support the seed, the function will error.
   - `n_sim`: number of simulations for the bootstrapping method.
-  - `block_size`: average block size when using `:Stationary`, `:Circular` or `:Moving` bootstrapping methods.
+  - `block_size`:
+
+      + `box ∈ (:Stationary, :Circular, :Moving)`: average block size when bootstrapping methods.
+  - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
+
+      + `ellipse ∈ (:Stationary, :Circular, :Moving)`: average block size when bootstrapping methods.
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
 """
 mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <: Integer}
@@ -800,10 +805,17 @@ Structure and keyword constructor for computing the loadings matrix in [`loading
 
 # Inputs
 
-  - `method`: method from [`FSMethods`](@ref) for computing the loadings matrix.
-  - `criterion`: regression criterion from [`RegCriteria`](@ref) for feature selection.
-  - `threshold`: threshold value when `criterion == :pval`, values below this are considered insignificant.
-  - `pcr_opt`: options when `method == :PCR`.
+  - `method`: method for computing the loadings matrix from [`FSMethods`](@ref) .
+
+  - `criterion`:
+
+      + `method ∈ (:FReg, :BReg)`: regression criterion from [`RegCriteria`](@ref) for feature selection.
+  - `threshold`:
+
+      + `method ∈ (:FReg, :BReg)` and `criterion == :pval`: values greater than this are considered significant.
+  - `pcr_opt`:
+
+      + `method == :PCR`: options for the method [`PCROpt`](@ref).
 """
 mutable struct LoadingsOpt{T1 <: Real}
     method::Symbol
@@ -847,12 +859,13 @@ Structure and keyword constructor for computing factor statistics in [`risk_fact
       + `const`: (optional) contains the regression constant.
       + The other columns must be the names of the factors.
 
-  - `loadings_opt`: options for computing the loadings matrix.
+  - `loadings_opt`: options for computing the loadings matrix [`LoadingsOpt`](@ref).
   - `error`:
 
       + `true`: account for the error between the asset returns and factor regression.
-      + `false`: no effect.
-  - `var_genfunc`: generic function [`GenericFunction`](@ref) for computing the standard deviation of the error when `error == true`.
+  - `var_genfunc`:
+
+      + `error == true`: generic function [`GenericFunction`](@ref) for computing the variance of the error between the asset returns and factor regression.
 """
 mutable struct FactorOpt
     B::Union{DataFrame, Nothing}
@@ -891,7 +904,7 @@ Structure and keyword constructor for computing Black-Litterman statistics in [`
   - `method`:
 
       + [`black_litterman_statistics!`](@ref): does nothing.
-      + [`black_litterman_factor_satistics!`](@ref): `method` from [`BLFMMethods`](@ref) for choosing what model to use.
+      + [`black_litterman_factor_satistics!`](@ref): `method` for choosing what Black-Litterman Factor model to use from [`BLFMMethods`](@ref).
 
   - `constant`:
 
@@ -935,7 +948,6 @@ Structure and keyword constructor for computing Black-Litterman statistics in [`
   - `jlogo`:
 
       + `true`: uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
-      + `false`: no effect.
 """
 mutable struct BLOpt{T1 <: Real}
     method::Symbol

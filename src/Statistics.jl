@@ -2178,9 +2178,10 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
     mu = B_mtx * mu_f
 
     sigma = if factor_opt.error
-        var_func = factor_opt.var_genfunc.func
-        var_args = factor_opt.var_genfunc.args
-        var_kwargs = factor_opt.var_genfunc.kwargs
+        var_genfunc = factor_opt.var_genfunc
+        var_func = var_genfunc.func
+        var_args = var_genfunc.args
+        var_kwargs = var_genfunc.kwargs
         e = Matrix(y) - returns
         S_e = diagm(vec(var_func(e, var_args...; var_kwargs...)))
         B_mtx * cov_f * transpose(B_mtx) + S_e
