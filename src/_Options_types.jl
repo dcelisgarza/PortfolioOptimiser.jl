@@ -39,10 +39,19 @@ Structure and keyword constructor for estimating covariance matrices.
 
 # Inputs
 
-  - `estimator`: abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator), enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl) when `method ∈ (:Full, :Semi)` from [`CovMethods`](@ref).
-  - `target_ret`: target return for semi covariance estimation when `method == :Semi` from [`CovMethods`](@ref).
-  - `genfunc`: generic function [`GenericFunction`](@ref) for computing the covariance matrix when `method ∈ (:Full, :Semi, :Custom_Func)` from [`CovMethods`](@ref).
-  - `custom`: custom covariance matrix when `method == :Custom_Val` from [`CovMethods`](@ref).
+  - `estimator`:
+
+      + `method ∈ (:Full, :Semi)` from [`CovMethods`](@ref): abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator). Enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl).
+
+  - `target_ret`:
+
+      + `method == :Semi` from [`CovMethods`](@ref): returns less than or equal to this value are considered downside returns.
+  - `genfunc`:
+
+      + `method ∈ (:Full, :Semi, :Custom_Func)` from [`CovMethods`](@ref): generic function [`GenericFunction`](@ref) for computing the covariance matrix.
+  - `custom`:
+
+      + `method == :Custom_Val` from [`CovMethods`](@ref): custom covariance matrix.
 """
 mutable struct CovEstOpt
     estimator::CovarianceEstimator
@@ -73,8 +82,16 @@ Structure and keyword constructor for fixing non-positive definite matrices.
 # Inputs
 
   - `method`: method for fixing non-positive definite matrices from [`PosdefFixMethods`](@ref).
-$(_solver_desc("the `JuMP` model when `method == :PSD`.", "", "`MOI.PSDCone`"))
-  - `genfunc`: generic function [`GenericFunction`](@ref) when `method == :Custom`, for fixing non-positive definite matrices.
+
+  - `solvers`:
+
+      + `method == :PSD`: provides the solvers and corresponding parameters for solving the `JuMP` model. There can be two `key => value` pairs.
+
+          * `:solver => value`: `value` is a `JuMP` optimiser. The optimiser can be declared alongside its attributes by using `JuMP.solver_with_attributes`. Solver must support `MOI.PSDCone`, or `JuMP` must be able to transform it/them into a supported form.
+          * `:params => value`: (optional) `value` must be a `Dict` or `NamedTuple` whose `key => value` pairs are the solver-specific settings.
+  - `genfunc`:
+
+      + `method == :Custom`: generic function [`GenericFunction`](@ref) for fixing non-positive definite matrices.
 """
 mutable struct PosdefFixOpt
     method::Symbol
@@ -108,12 +125,12 @@ end
 end
 ```
 
-Structure and keyword constructor for computing Gerber-derived matrices from [`CovMethods`](@ref) and [`CorMethods`](@ref).
+Structure and keyword constructor for when `method ∈ (:Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB0, :Gerber_SB1)` from [`CovMethods`](@ref) and [`CorMethods`](@ref).
 
 # Inputs
 
-  - `threshold`: significance threshold, must be `threshold ∈ (0, 1)`.
-  - `normalise`: whether to normalise the returns to have a mean equal to zero and a standard deviation equal to 1.
+  - `threshold`: significance threshold, `threshold ∈ (0, 1)`.
+  - `normalise`: whether to normalise the returns to have a mean equal to `0` and a standard deviation equal to `1`.
   - `mean_func`: [`GenericFunction`](@ref) for computing the expected returns vector.
   - `std_func`: [`GenericFunction`](@ref) for computing the standard deviation of the returns.
   - `posdef`: [`PosdefFixOpt`](@ref) options for fixing non-positive definite matrices.
@@ -159,7 +176,7 @@ Structure for storing options for computing Smyth-Broby modifications of the Ger
   - `c1`: confusion zone threshold (``c_1`` in the paper), `c1 ∈ (0, 1]`.
   - `c2`: indecision zone threshold (``c_2`` in the paper), `c2 ∈ (0, 1]`.
   - `c3`: large co-movement threshold (4 in the paper).
-  - `n`: exponent of the regularisation term (``n`` in the paper).
+  - `n`: exponent of the regularisation term (``n = 2`` in the paper).
 """
 mutable struct SBOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: Real}
     c1::T1
@@ -857,27 +874,46 @@ Structure and keyword constructor for computing Black-Litterman statistics in [`
   - `constant`:
 
       + [`black_litterman_statistics!`](@ref): does nothing.
-      + [`black_litterman_factor_satistics!`](@ref): automatically set inside to reflect the loadings matrix.
+      + [`black_litterman_factor_satistics!`](@ref): indicates whether the loadings matrix contains a `"const"` column, automatically set inside the function.
   - `diagonal`:
 
       + [`black_litterman_statistics!`](@ref): does nothing.
-      + [`black_litterman_factor_satistics!`](@ref): flag that decides how ``\\mathbf{D}`` is defined when `method == :B`.
+
+      + [`black_litterman_factor_satistics!`](@ref):
+
+          * `method == :A`: does nothing.
+          * `method == :B`: flag used in the definition of ``\\mathbf{D}``.
   - `eq`:
 
-      + [`black_litterman_statistics!`](@ref): flag that decides how ``\\bm{\\Pi}`` is defined.
-      + [`black_litterman_factor_satistics!`](@ref): flag that decides how ``\\bm{\\Pi}_{a}`` is defined when `method == :A`.
+      + [`black_litterman_statistics!`](@ref): flag used in the definition of ``\\bm{\\Pi}``.
+
+      + [`black_litterman_factor_satistics!`](@ref):
+
+          * `method == :A`: flag used in the definition of ``\\bm{\\Pi}_{a}``.
+          * `method == :B`: does nothing.
   - `delta`:
 
-      + [`black_litterman_statistics!`](@ref): value of ``\\delta`` when `eq == true` for computing ``\\bm{\\Pi}``.
-      + [`black_litterman_factor_satistics!`](@ref): value of ``\\delta`` when `eq == true` for computing ``\\bm{\\Pi}_{a}`` when `method == :A`.
+      + [`black_litterman_statistics!`](@ref): value of ``\\delta`` in the definition of ``\\bm{\\Pi}`` when `eq == true`.
+
+      + [`black_litterman_factor_satistics!`](@ref):
+
+          * `method == :A`: value of ``\\delta`` in the definition of ``\\bm{\\Pi}_{a}`` when `eq == true`.
+          * `method == :B`: does nothing
   - `rf`: risk-free rate.
-  - `var_genfunc`: generic function [`GenericFunction`](@ref) for computing ``\\mathbf{D}``, only used when `method == :B` and `diagonal == true`.
+  - `var_genfunc`:
+
+      + [`black_litterman_statistics!`](@ref): does nothing.
+
+      + [`black_litterman_factor_satistics!`](@ref):
+
+          * `method == :A`: does nothing.
+          * `method == :B`: generic function [`GenericFunction`](@ref) for the variance in the definition of ``\\mathbf{D}`` when `diagonal == true`.
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
   - `jlogo`:
 
       + `true`: uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
-      + `falce`: no effect.
+      + `false`: no effect.
 """
 mutable struct BLOpt{T1 <: Real}
     method::Symbol

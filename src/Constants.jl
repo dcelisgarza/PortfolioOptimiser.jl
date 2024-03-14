@@ -90,7 +90,7 @@ end
 function _solver_desc(msg::String = "the `JuMP` model.", pref::String = "",
                       req::String = "")
     return """
-           - `$(pref*"solvers")`: Provides the solvers and corresponding parameters for solving $msg There can be two `key => value` pairs.
+           - `$(pref*"solvers")`: provides the solvers and corresponding parameters for solving $msg There can be two `key => value` pairs.
                - `:solver => value`: `value` is a `JuMP` optimiser. The optimiser can be declared alongside its attributes by using `JuMP.solver_with_attributes`. $(_solver_reqs(req))
                - `:params => value`: (optional) `value` must be a `Dict` or `NamedTuple` whose `key => value` pairs are the solver-specific settings.
            """
@@ -425,7 +425,7 @@ FSMethods = (:FReg, :BReg, :PCR)
 Methods for feature selection via regression when creating the loadings matrix.
 
   - `:FReg`: forward regression.
-  - `:Breg`: backward regression.
+  - `:BReg`: backward regression.
   - `:PCR`: Principal Component Regression using [PCA](https://juliastats.org/MultivariateStats.jl/stable/pca/).
 """
 const FSMethods = (:FReg, :BReg, :PCR)
