@@ -96,8 +96,8 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     model = portfolio.model
     msv_target = portfolio.msv_target
 
-    abs_dev = if (isa(msv_target, Real) && isinf(msv_target)) ||
-                 (isa(msv_target, AbstractVector) && isempty(msv_target))
+    abs_dev = if isa(msv_target, Real) && isinf(msv_target) ||
+                 isa(msv_target, AbstractVector) && isempty(msv_target)
         returns .- transpose(mu)
     elseif isa(msv_target, Real) && isfinite(msv_target)
         returns .- msv_target
@@ -160,8 +160,8 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
 
     lpm_target = portfolio.lpm_target
 
-    lpm_t = if (isa(lpm_target, Real) && isinf(lpm_target)) ||
-               (isa(lpm_target, AbstractVector) && isempty(lpm_target))
+    lpm_t = if isa(lpm_target, Real) && isinf(lpm_target) ||
+               isa(lpm_target, AbstractVector) && isempty(lpm_target)
         rf
     elseif isa(lpm_target, Real) && isfinite(lpm_target)
         lpm_target
@@ -1351,28 +1351,6 @@ function _setup_sharpe_ret(kelly, model, T, rf, returns, mu, mu_l, trad = true)
     return nothing
 end
 
-function _setup_rebalance(portfolio, N, obj)
-    rebalance = portfolio.rebalance
-    rebalance_weights = portfolio.rebalance_weights
-    if (isa(rebalance, Real) && (isinf(rebalance) || iszero(rebalance)) ||
-        isa(rebalance, AbstractVector) && isempty(rebalance)) || isempty(rebalance_weights)
-        return
-    end
-
-    model = portfolio.model
-
-    @variable(model, t_rebal[1:N] >= 0)
-    if obj == :Sharpe
-        @expression(model, rebal, model[:w] .- rebalance_weights * model[:k])
-        @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
-        @expression(model, sum_t_rebal, sum(rebalance .* t_rebal))
-    else
-        @expression(model, rebal, model[:w] .- rebalance_weights)
-        @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
-        @expression(model, sum_t_rebal, sum(rebalance .* t_rebal))
-    end
-end
-
 function _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
     model = portfolio.model
     mu_l = portfolio.mu_l
@@ -1633,8 +1611,9 @@ function _setup_turnover(portfolio, N, obj)
     turnover = portfolio.turnover
     turnover_weights = portfolio.turnover_weights
 
-    if (isa(turnover, Real) && isinf(turnover) ||
-        isa(turnover, AbstractVector) && isempty(turnover)) || isempty(turnover_weights)
+    if isa(turnover, Real) && isinf(turnover) ||
+       isa(turnover, AbstractVector) && isempty(turnover) ||
+       isempty(turnover_weights)
         return nothing
     end
 
@@ -1652,6 +1631,29 @@ function _setup_turnover(portfolio, N, obj)
     end
 
     return nothing
+end
+
+function _setup_rebalance(portfolio, N, obj)
+    rebalance = portfolio.rebalance
+    rebalance_weights = portfolio.rebalance_weights
+    if isa(rebalance, Real) && (isinf(rebalance) || iszero(rebalance)) ||
+       isa(rebalance, AbstractVector) && isempty(rebalance) ||
+       isempty(rebalance_weights)
+        return
+    end
+
+    model = portfolio.model
+
+    @variable(model, t_rebal[1:N] >= 0)
+    if obj == :Sharpe
+        @expression(model, rebal, model[:w] .- rebalance_weights * model[:k])
+        @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
+        @expression(model, sum_t_rebal, sum(rebalance .* t_rebal))
+    else
+        @expression(model, rebal, model[:w] .- rebalance_weights)
+        @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
+        @expression(model, sum_t_rebal, sum(rebalance .* t_rebal))
+    end
 end
 
 function _setup_trad_wc_constraints(portfolio, obj, T, N, type, class, kelly, l, returns)

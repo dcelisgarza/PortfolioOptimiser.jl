@@ -175,12 +175,14 @@ Structure for portfolio optimisation.
   + `const`: (optional) contains the regression constant.
   + The other columns must be the names of the factors.
 # Risk parameters
-- `msv_target`: target value for for Absolute Deviation and Semivariance risk measures.
-  + `(isa(msv_target, Real) && isinf(msv_target)) || (isa(msv_target, AbstractVector) && isempty(msv_target))`: the target for each column of the `returns` matrix is the expected returns vector `mu`.
-  + else: the target for each column of the `returns` matrix is the value of `msv_target`.
-- `lpm_target`: target value for the First and Second Lower Partial Moment risk measures. 
-  + `(isa(lpm_target, Real) && isinf(lpm_target)) || (isa(lpm_target, AbstractVector) && isempty(lpm_target))`: the target for each column of the `returns` matrix is the risk-free rate taken from the `opt` argument of [optimise!](@ref).
-  + else: the target for each column of the `returns` matrix is the value of `lpm_target`.
+- `msv_target`: 
+  + `rm == :MAD || rm == :SSD || isfinite(mad_u) || isfinite(ssd_u)`: target value for Absolute Deviation and Semivariance risk measures, `rm` is taken from the `opt` argument of [optimise!](@ref).
+    * `isa(msv_target, Real) && isinf(msv_target) || isa(msv_target, AbstractVector) && isempty(msv_target)`: the target for each column of the `returns` matrix is the expected returns vector `mu`.
+    * else: the target for each column of the `returns` matrix is the broadcasted value of `msv_target`.
+- `lpm_target`: 
+  + `rm == :FLPM || rm == :SLPM || isfinite(flpm_u) || isfinite(slpm_u)`: target value for the First and Second Lower Partial Moment risk measures, `rm` is taken from the `opt` argument of [optimise!](@ref). 
+    * `isa(lpm_target, Real) && isinf(lpm_target) || isa(lpm_target, AbstractVector) && isempty(lpm_target)`: the target for each column of the `returns` matrix is the risk-free rate taken from the `opt` argument of [optimise!](@ref).
+    * else: the target for each column of the `returns` matrix is the broadcasted value of `lpm_target`.
 $(_isigdef("Tail Gini losses", :a))
 $(_sigdef("VaR, CVaR, EVaR, RVaR, CVaR losses, Tail Gini losses, DaR, CDaR, EDaR, RDaR, DaR\\_r, CDaR\\_r, EDaR\\_r, RDaR\\_r", :a))
 $(_isigdef("Tail Gini gains", :b))
@@ -190,15 +192,24 @@ $(_sigdef("CVaR gains or Tail Gini gains", :b))
   + `iszero(max_num_assets_kurt)`: always use the full kurtosis model.
   + `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
 # Benchmark constraints
-- `turnover`:
-  + `(isa(turnover, Real) && isinf(turnover) || isa(turnover, AbstractVector) && isempty(turnover)) || isempty(turnover_weights)`: define the maximum turnover `turnover_weights` for each asset.
-- `turnover_weights`: target weights for turnover constraint.
-  + The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq e_{1} \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``t_{i}`` is the value of the turnover for the `i'th` asset, and $(_ndef(:a3)).
-- `kind_tracking_err`: `:Weights` when providing a vector of asset weights for computing the tracking error benchmark from the asset returns, or `:Returns` to directly providing the tracking benchmark. See [`TrackingErrKinds`](@ref) for more information.
-- `tracking_err`: if finite, define the maximum tracking error deviation. Else the constraint is disabled.
-- `tracking_err_returns`: `T×1` vector of returns to be tracked, where $(_tstr(:t1)). When `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
-- `tracking_err_weights`: `Na×1` vector of weights, where $(_ndef(:a2)), when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
-    - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq e_{2}``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``e_{2}`` the tracking error, and $(_tstr(:t2)).
+- `rebalance`: the rebalancing penalty is somewhat of an inverse of the `turnover` constraint. It defines a penalty for the objective function that penalises deviations away from a target weights vector as ``r_{i} \\rvert w_{i} - \\hat{w}_{i} \\lvert\\, \\forall\\, i \\in N``, where ``r_i`` is the rebalancing coefficient, ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, and $(_ndef(:a3)).
+  + `!(isa(rebalance, Real) && (isinf(rebalance) || iszero(rebalance)) ||
+       isa(rebalance, AbstractVector) && isempty(rebalance) ||
+       isempty(rebalance_weights))`:
+    * `isa(turnover, Real)`: all assets have the same rebalancing penalty.
+    * `isa(turnover, AbstractVector)`: each asset has its own rebalancing penalty.
+- `rebalance_weights`: define the target weights for the rebalancing penalty.
+- `turnover`: the turnover constraint is somewhat of an inverse of `rebalance`. It is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t_{i} \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``t_{i}`` is the value of the turnover for the `i'th` asset, and $(_ndef(:a3)).
+  + `!(isa(turnover, Real) && isinf(turnover) || isa(turnover, AbstractVector) && isempty(turnover) || isempty(turnover_weights))`: 
+    * `isa(turnover, Real)`: all assets have the same turnover value.
+    * `isa(turnover, AbstractVector)`: each asset has its own turnover value.
+- `turnover_weights`:
+  + `!(isa(turnover, Real) && isinf(turnover) || isa(turnover, AbstractVector) && isempty(turnover) || isempty(turnover_weights))`: define the target weights for the turnover constraint.
+- `kind_tracking_err`: kind of tracking error from [`TrackingErrKinds`](@ref).
+- `tracking_err`: the tracking error constraint is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and $(_tstr(:t2)).
+  + `!(kind_tracking_err == :None || isinf(tracking_err) || isfinite(tracking_err) && (kind_tracking_err == :Weights && isempty(tracking_err_weights) || kind_tracking_err == :Returns && isempty(tracking_err_returns)))`: define the value of the tracking error.
+- `tracking_err_returns`: `T×1` vector of benchmark returns for the tracking error constraint as per [`TrackingErrKinds`](@ref), where $(_tstr(:t1)).
+- `tracking_err_weights`: `Na×1` vector of weights used for computing the benchmark vector for the tracking error constraint as per [`TrackingErrKinds`](@ref), where $(_ndef(:a2)).
 - `bl_bench_weights`: `Na×1` vector of benchmark weights for Black Litterman models, where $(_ndef(:a2)).
 # Risk and return constraints
 - `a_mtx_ineq`: `C×Na` A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints, and $(_ndef(:a2)).

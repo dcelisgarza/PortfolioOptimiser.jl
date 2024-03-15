@@ -101,12 +101,13 @@ end
 
 """
 ```julia
-TrackingErrKinds = (:Weights, :Returns)
+TrackingErrKinds = (:None, :Weights, :Returns)
 ```
 
 Available kinds of tracking errors for [`Portfolio`](@ref).
 
-  - `:Weights`: provide a vector of asset weights which is used to compute the vector of benchmark returns.
+  - `:None`: no tracking error.
+  - `:Weights`: provide a `Na×1` vector of asset weights which is used to compute the vector of benchmark returns, `tracking_err_weights` from [`Portfolio`](@ref), where $(_ndef(:a2)).
 
 ```math
 \\bm{b} = \\mathbf{X} \\bm{w}
@@ -120,7 +121,7 @@ Where:
 
 Or bypass the benchmark calculation by direclty providing the benchmark vector ``\\bm{b}``.
 
-  - `:Returns`: directly provide the vector of benchmark returns.
+  - `:Returns`: directly provide a `T×1` vector of benchmark returns, `tracking_err_returns` from [`Portfolio`](@ref), where $(_tstr(:t1)).
 
 The optimisation then attempts keep the square root deviation between the benchmark and portfolio's return below or equal to the user-provided tracking error.
 """
