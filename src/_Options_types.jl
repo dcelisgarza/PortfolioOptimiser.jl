@@ -486,8 +486,8 @@ Structure and keyword constructor for estimating covariance matrices.
   - `alpha`: significance parameter when `method == :Tail` from [`CorMethods`](@ref), `alpha ∈ [0, 1]`.
   - `bins_info`: number of bins when `method == :Mutual_Info` from [`CorMethods`](@ref). It can take on two types.
 
-      + `bins_info isa Symbol`: bin width choice method must be one of [`BinMethods`](@ref).
-      + `bins_info isa Integer`: the data is split into as many bins as specified.
+      + `isa(bins_info, Symbol)`: bin width choice method must be one of [`BinMethods`](@ref).
+      + `isa(bins_info, Integer)`: the data is split into as many bins as specified.
   - `cor_genfunc`:
 
       + `method ∈ (:Full, :Semi, :Custom_Func)` from [`CorMethods`](@ref): generic function [`GenericFunction`](@ref) for computing the correlation matrix.
@@ -812,7 +812,7 @@ Structure and keyword constructor for computing the loadings matrix in [`loading
       + `method ∈ (:FReg, :BReg)`: regression criterion from [`RegCriteria`](@ref) for feature selection.
   - `threshold`:
 
-      + `method ∈ (:FReg, :BReg)` and `criterion == :pval`: values greater than this are considered significant.
+      + `method ∈ (:FReg, :BReg) && criterion == :pval`: values greater than this are considered significant.
   - `pcr_opt`:
 
       + `method == :PCR`: options for the method [`PCROpt`](@ref).
@@ -853,7 +853,7 @@ Structure and keyword constructor for computing factor statistics in [`risk_fact
 
 # Input
 
-  - `B`: loadings matrix. Must have a few different columns.
+  - `B`: loadings matrix in dataframe form. The number of rows must be equal to the number of asset and factor returns observations, `T`. Must have a few different columns.
 
       + `tickers`: (optional) contains the list of tickers.
       + `const`: (optional) contains the regression constant.
@@ -1090,7 +1090,8 @@ Structure and keyword constructor for storing the options to optimising portfoli
   - `hist`: choice of expected returns vector and covariance matrix from [`BLHist`](@ref).
   - `rf`: risk-free rate.
   - `l`: risk aversion parameter when `obj == :Utility`.
-  - `rrp_penalty`: value of the penalty when `type == :RRP` and `rrp_ver == :Reg_Pen`.
+  - `rrp_penalty`: 
+    + `type == :RRP && rrp_ver == :Reg_Pen`: value of the relaxed risk penalty.
   - `n`: 
     + `near_opt == true`: number of sections to split the range between the minimum risk and maximum return portfolios.
   - `w_ini`:

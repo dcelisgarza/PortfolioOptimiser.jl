@@ -3,21 +3,35 @@
 AbstractPortfolio
 ```
 
-Abstract type for portfolios. Concrete portfolios subtype this see [`Portfolio`]() and [`HCPortfolio`]().
+Abstract type for subtyping portfolios.
 """
 abstract type AbstractPortfolio end
 
 """
 ```julia
 mutable struct Portfolio{
-    # Portfolio characteristics
-    ast,    dat,    r,    s,    us,    ul,    ssl,    mnea,    mna,    mnaf,    tfa,    tfdat,    tretf,    l,    # Risk parameters
-    msvt,    lpmt,    ai,    a,    as,    bi,    b,    bs,    k,    mnak,    # Benchmark constraints
-    to,    tobw,    kte,    te,    rbi,    bw,    blbw,    # Risk and return constraints
-    ami,    bvi,    rbv, frbv,    ler,    ud,    umad,    usd,    ucvar,    uwr,    uflpm,    uslpm,    umd,    uad,    ucdar,    uuci,    uevar,    uedar,    urvar,    urdar,    uk,    usk,    ugmd,    ur,    urcvar,    utg,    urtg,    uowa,    # Cusom OWA weights
-    wowa,    # Optimisation model inputs
-    tmu,    tcov,    tkurt,    tskurt,    tl2,    ts2,    tmuf,    tcovf,    tmufm,    tcovfm,    tmubl,    tcovbl,    tmublf,    tcovblf,    trfm,    tcovl,    tcovu,    tcovmu,    tcovs,    tdmu,    tkmu,    tks,    topt,    tz,    tlim,    tfront,    tsolv,    tf,    toptpar,    tmod,    # Allocation
-    tlp,    taopt,    tasolv,    taoptpar,    taf,    tamod,} <: AbstractPortfolio
+                         # Portfolio characteristics
+                         ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tretf, l, lo,
+                         # Risk parameters
+                         msvt, lpmt, ai, a, as, bi, b, bs, k, mnak,
+                         # Benchmark constraints
+                         rb, rbw, to, tobw, kte, te, rbi, bw, blbw,
+                         # Risk and return constraints
+                         ami, bvi, rbv, frbv,
+                         # Network constraints
+                         nm, nsdp, np, ni, nif, amc, bvc,
+                         # Bounds constraints
+                         ler, ud, umad, usd, ucvar, uwr, uflpm, uslpm, umd, uad, ucdar,
+                         uuci, uevar, uedar, urvar, urdar, uk, usk, ugmd, ur, urcvar, utg,
+                         urtg, uowa,
+                         # Cusom OWA weights
+                         owap, wowa,
+                         # Optimisation model inputs
+                         tmu, tcov, tkurt, tskurt, tl2, ts2, tmuf, tcovf, tmufm, tcovfm,
+                         tmubl, tcovbl, tmublf, tcovblf, trfm, tcovl, tcovu, tcovmu, tcovs,
+                         tdmu, tkmu, tks, topt, tz, tlim, tfront, tsolv, tf, toptpar, tmod,
+                         # Allocation
+                         tlp, taopt, tasolv, taoptpar, taf, tamod} <: AbstractPortfolio
     # Portfolio characteristics
     assets::ast
     timestamps::dat
@@ -32,7 +46,7 @@ mutable struct Portfolio{
     f_timestamps::tfdat
     f_returns::tretf
     loadings::l
-    loadings_opt::Union{Nothing, LoadingsOpt}
+    loadings_opt::lo
     # Risk parameters
     msv_target::msvt
     lpm_target::lpmt
@@ -45,6 +59,8 @@ mutable struct Portfolio{
     kappa::k
     max_num_assets_kurt::mnak
     # Benchmark constraints
+    rebalance::rb
+    rebalance_weights::rbw
     turnover::to
     turnover_weights::tobw
     kind_tracking_err::kte
@@ -57,6 +73,14 @@ mutable struct Portfolio{
     b_vec_ineq::bvi
     risk_budget::rbv
     f_risk_budget::frbv
+    # Network constraints
+    network_method::nm
+    network_sdp::nsdp
+    network_penalty::np
+    network_ip::ni
+    network_ip_factor::nif
+    a_vec_cent::amc
+    b_cent::bvc
     # Bounds constraints
     mu_l::ler
     sd_u::ud
@@ -82,7 +106,7 @@ mutable struct Portfolio{
     tg_u::utg
     rtg_u::urtg
     owa_u::uowa
-    # Custom OWA weights
+    # OWA parameters
     owa_p::owap
     owa_w::wowa
     # Model statistics
@@ -128,7 +152,8 @@ mutable struct Portfolio{
     alloc_model::tamod
 end
 ```
-Structure for convex portfolio optimisation.
+Structure for portfolio optimisation.
+
 # Portfolio characteristics
 - `assets`: `Na×1` vector of assets, where $(_ndef(:a2)).
 - `timestamps`: `T×1` vector of timestamps, where $(_tstr(:t1)).
@@ -136,34 +161,43 @@ Structure for convex portfolio optimisation.
 - `short`: whether or not to allow negative weights, i.e. whether a portfolio accepts shorting.
 - `short_u`: absolute value of the sum of all short (negative) weights.
 - `long_u`: sum of all long (positive) weights.
-- `min_number_effective_assets`: if non-zero, guarantees that at least number of assets make significant contributions to the final portfolio weights.
-- `max_number_assets`: if non-zero, guarantees at most this number of assets make non-zero contributions to the final portfolio weights. Requires an optimiser that supports binary variables.
-- `max_number_assets_factor`: scaling factor needed to create a decision variable when `max_number_assets` is non-zero.
+- `min_number_effective_assets`:
+  + `!iszero(min_number_effective_assets)`: guarantees that *at least* this number of assets make significant contributions to the final portfolio weights. $(_solver_reqs("`MOI.SecondOrderCone`"))
+- `max_number_assets`:
+  + `!iszero(max_number_assets)`: guarantees *at most* this number of assets make non-zero contributions to the final portfolio weights. $(_solver_reqs("MIP constraints"))
+- `max_number_assets_factor`:
+  + `!iszero(max_number_assets)`: scaling factor needed to create the decision variable for the constraint. Changing the scaling factor can improve the solution.
 - `f_assets`: `Nf×1` vector of factors, where $(_ndef(:f2)).
 - `f_timestamps`: `T×1` vector of factor timestamps, where $(_tstr(:t1)).
 - `f_returns`: `T×Nf` matrix of factor returns, where $(_ndef(:f2)).
-- `loadings`: loadings dataframe for factor models.
+- `loadings`: loadings matrix in dataframe form. Calling [`factor_statistics!`](@ref) will generate and set the dataframe. The number of rows must be equal to the number of asset and factor returns observations, `T`. Must have a few different columns.
+  + `tickers`: (optional) contains the list of tickers.
+  + `const`: (optional) contains the regression constant.
+  + The other columns must be the names of the factors.
 # Risk parameters
-- `msv_target`: target value for for Absolute Deviation and Semivariance risk measures. It can have two meanings depending on its type and value.
-    - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
-    - Else the target is the value of `msv_target`. If `msv_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
-- `lpm_target`: target value for the First and Second Lower Partial Moment risk measures. It can have two meanings depending on its type and value.
-    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk-free rate `rf`, provided in the [`optimise!`]() function.
-    - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
+- `msv_target`: target value for for Absolute Deviation and Semivariance risk measures.
+  + `(isa(msv_target, Real) && isinf(msv_target)) || (isa(msv_target, AbstractVector) && isempty(msv_target))`: the target for each column of the `returns` matrix is the expected returns vector `mu`.
+  + else: the target for each column of the `returns` matrix is the value of `msv_target`.
+- `lpm_target`: target value for the First and Second Lower Partial Moment risk measures. 
+  + `(isa(lpm_target, Real) && isinf(lpm_target)) || (isa(lpm_target, AbstractVector) && isempty(lpm_target))`: the target for each column of the `returns` matrix is the risk-free rate taken from the `opt` argument of [optimise!](@ref).
+  + else: the target for each column of the `returns` matrix is the value of `lpm_target`.
 $(_isigdef("Tail Gini losses", :a))
-$(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`]() and upper bounds being used", :a))
+$(_sigdef("VaR, CVaR, EVaR, RVaR, CVaR losses, Tail Gini losses, DaR, CDaR, EDaR, RDaR, DaR\\_r, CDaR\\_r, EDaR\\_r, RDaR\\_r", :a))
 $(_isigdef("Tail Gini gains", :b))
-$(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`]() and upper bounds being used", :b))
-- `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
-- `max_num_assets_kurt`: maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
+$(_sigdef("CVaR gains or Tail Gini gains", :b))
+- `kappa`: deformation parameter for relativistic risk measures (RVaR, RDaR, and RDaR\\_r).
+- `max_num_assets_kurt`:
+  + `iszero(max_num_assets_kurt)`: always use the full kurtosis model.
+  + `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
 # Benchmark constraints
-- `turnover`: if finite, define the maximum turnover deviations from `turnover_weights` to the optimised portfolio. Else the constraint is disabled.
+- `turnover`:
+  + `(isa(turnover, Real) && isinf(turnover) || isa(turnover, AbstractVector) && isempty(turnover)) || isempty(turnover_weights)`: define the maximum turnover `turnover_weights` for each asset.
 - `turnover_weights`: target weights for turnover constraint.
-    - The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq e_{1} \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``e_{1}`` is the value of the turnover, and $(_ndef(:a3)).
-- `kind_tracking_err`: `:Weights` when providing a vector of asset weights for computing the tracking error benchmark from the asset returns, or `:Returns` to directly providing the tracking benchmark. See [`TrackingErrKinds`]() for more information.
+  + The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq e_{1} \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``t_{i}`` is the value of the turnover for the `i'th` asset, and $(_ndef(:a3)).
+- `kind_tracking_err`: `:Weights` when providing a vector of asset weights for computing the tracking error benchmark from the asset returns, or `:Returns` to directly providing the tracking benchmark. See [`TrackingErrKinds`](@ref) for more information.
 - `tracking_err`: if finite, define the maximum tracking error deviation. Else the constraint is disabled.
 - `tracking_err_returns`: `T×1` vector of returns to be tracked, where $(_tstr(:t1)). When `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
-- `tracking_err_weights`: `Na×1` vector of weights, where $(_ndef(:a2)), when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`]().
+- `tracking_err_weights`: `Na×1` vector of weights, where $(_ndef(:a2)), when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
     - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq e_{2}``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``e_{2}`` the tracking error, and $(_tstr(:t2)).
 - `bl_bench_weights`: `Na×1` vector of benchmark weights for Black Litterman models, where $(_ndef(:a2)).
 # Risk and return constraints
@@ -172,7 +206,7 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`]() an
 - `risk_budget`: `Na×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:a2)).
 - `f_risk_budget`: `Nf×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:f2)). 
 ## Bounds constraints
-The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`]() in lower case, they also bring the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
+The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case, they also bring the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
 - `mu_l`: mean expected return.
 - `sd_u`: standard deviation.
 - `mad_u`: max absolute devia.
@@ -197,49 +231,49 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `tg_u`: tail gini.
 - `rtg_u`: tail gini range.
 - `owa_u`: custom ordered weight risk (use with `owa_w`).
-# Custom OWA weights
+# OWA parameters
 - `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 # Model statistics
-- `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`]()"))
-- `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`]()"))
-- `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`]().
-- `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`]().
-- `L_2`: `(Na×Na) × ((Na×(Na+1)/2))` elimination matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`]()"))
-- `S_2`: `((Na×(Na+1)/2)) × (Na×Na)` summation matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`]()"))
-- `mu_f`: $(_mudef("factors", :f2)) $(_dircomp("[`factor_statistics!`]()"))
-- `cov_f`: $(_covdef("factors", :f2)) $(_dircomp("[`factor_statistics!`]()"))
-- `mu_fm`: $(_mudef("feature selected factors")) $(_dircomp("[`factor_statistics!`]()"))
-- `cov_fm`: $(_covdef("feature selected factors")) $(_dircomp("[`factor_statistics!`]()"))
-- `mu_bl`: $(_mudef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`]()"))
-- `cov_bl`: $(_covdef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`]()"))
-- `mu_bl_fm`: $(_mudef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`]()"))
-- `cov_bl_fm`: $(_covdef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`]()"))
-- `returns_fm`: `T×Na` matrix of feature selcted adjusted returns, where $(_tstr(:t1)) and $(_ndef(:a2)). $(_dircomp("[`factor_statistics!`]()"))
+- `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
+- `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
+- `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `L_2`: `(Na×Na) × ((Na×(Na+1)/2))` elimination matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
+- `S_2`: `((Na×(Na+1)/2)) × (Na×Na)` summation matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
+- `mu_f`: $(_mudef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
+- `cov_f`: $(_covdef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
+- `mu_fm`: $(_mudef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
+- `cov_fm`: $(_covdef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
+- `mu_bl`: $(_mudef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`](@ref)"))
+- `cov_bl`: $(_covdef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`](@ref)"))
+- `mu_bl_fm`: $(_mudef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`](@ref)"))
+- `cov_bl_fm`: $(_covdef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`](@ref)"))
+- `returns_fm`: `T×Na` matrix of feature selcted adjusted returns, where $(_tstr(:t1)) and $(_ndef(:a2)). $(_dircomp("[`factor_statistics!`](@ref)"))
 # Inputs of Worst Case Optimization Models
-- `cov_l`: $(_covdef("worst case lower bound asset")) $(_dircomp("[`wc_statistics!`]()"))
-- `cov_u`: $(_covdef("worst case upper bound asset")) $(_dircomp("[`wc_statistics!`]()"))
-- `cov_mu`: $(_covdef("estimation errors of the mean vector")) $(_dircomp("[`wc_statistics!`]()"))
-- `cov_sigma`: $(_covdef("estimation errors of the covariance matrix", :a22)) $(_dircomp("[`wc_statistics!`]()"))
-- `d_mu`: $(_mudef("delta", :a2)) $(_dircomp("[`wc_statistics!`]()"))
-- `k_mu`: set the percentile of a sample of size `Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`]()"))
-- `k_sigma`: set the percentile of a sample of size `Na×Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`]()"))
+- `cov_l`: $(_covdef("worst case lower bound asset")) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `cov_u`: $(_covdef("worst case upper bound asset")) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `cov_mu`: $(_covdef("estimation errors of the mean vector")) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `cov_sigma`: $(_covdef("estimation errors of the covariance matrix", :a22)) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `d_mu`: $(_mudef("delta", :a2)) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `k_mu`: set the percentile of a sample of size `Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
+- `k_sigma`: set the percentile of a sample of size `Na×Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
 # Optimal portfolios
-- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`]()"))
-- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`optimise!`]()"))
-- `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures. $(_filled_by("[`frontier_limits!`]()"))
-- `frontier`: $_edst containing points in the efficient frontier for given risk measures. $(_filled_by("[`efficient_frontier!`]()"))
+- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))
+- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`optimise!`](@ref)"))
+- `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures. $(_filled_by("[`frontier_limits!`](@ref)"))
+- `frontier`: $_edst containing points in the efficient frontier for given risk measures. $(_filled_by("[`efficient_frontier!`](@ref)"))
 # Solutions
 $(_solver_desc("risk measure `JuMP` model."))
-- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`]()"))
-- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`]()"))
-- `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`optimise!`]()"))
+- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
+- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
+- `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`optimise!`](@ref)"))
 # Allocation
 - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
-- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`]()"))
+- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
 $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
-- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`]()"))
-- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`]()"))
-- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`]()"))
+- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
 """
 mutable struct Portfolio{
                          # Portfolio characteristics
@@ -338,7 +372,7 @@ mutable struct Portfolio{
     tg_u::utg
     rtg_u::urtg
     owa_u::uowa
-    # Custom OWA weights
+    # OWA parameters
     owa_p::owap
     owa_w::wowa
     # Model statistics
@@ -391,7 +425,7 @@ Portfolio(;    # Portfolio characteristics
     msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,    lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Integer = 100,    beta_i::Real = alpha_i,    beta::Real = alpha,    b_sim::Integer = a_sim,    kappa::Real = 0.3,    max_num_assets_kurt::Integer = 0,    # Benchmark constraints
     turnover::Real = Inf,    turnover_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    kind_tracking_err::Symbol = :Weights,    tracking_err::Real = Inf,    tracking_err_returns::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    # Risk and return constraints
     a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    # Bounds constraints
-    mu_l::Real = Inf,    sd_u::Real = Inf,    mad_u::Real = Inf,    ssd_u::Real = Inf,    cvar_u::Real = Inf,    wr_u::Real = Inf,    flpm_u::Real = Inf,    slpm_u::Real = Inf,    mdd_u::Real = Inf,    add_u::Real = Inf,    cdar_u::Real = Inf,    uci_u::Real = Inf,    evar_u::Real = Inf,    edar_u::Real = Inf,    rvar_u::Real = Inf,    rdar_u::Real = Inf,    kurt_u::Real = Inf,    skurt_u::Real = Inf,    gmd_u::Real = Inf,    rg_u::Real = Inf,    rcvar_u::Real = Inf,    tg_u::Real = Inf,    rtg_u::Real = Inf,    owa_u::Real = Inf,    # Custom OWA weights
+    mu_l::Real = Inf,    sd_u::Real = Inf,    mad_u::Real = Inf,    ssd_u::Real = Inf,    cvar_u::Real = Inf,    wr_u::Real = Inf,    flpm_u::Real = Inf,    slpm_u::Real = Inf,    mdd_u::Real = Inf,    add_u::Real = Inf,    cdar_u::Real = Inf,    uci_u::Real = Inf,    evar_u::Real = Inf,    edar_u::Real = Inf,    rvar_u::Real = Inf,    rdar_u::Real = Inf,    kurt_u::Real = Inf,    skurt_u::Real = Inf,    gmd_u::Real = Inf,    rg_u::Real = Inf,    rcvar_u::Real = Inf,    tg_u::Real = Inf,    rtg_u::Real = Inf,    owa_u::Real = Inf,    # OWA parameters
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    # Model statistics
     mu::AbstractVector = Vector{Float64}(undef, 0),    cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    mu_f::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    cov_f::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    mu_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    cov_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    mu_bl::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    cov_bl::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    mu_bl_fm::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    cov_bl_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    returns_fm::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    # Inputs of Worst Case Optimization Models
     cov_l::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    cov_u::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    cov_mu::AbstractMatrix{<:Real} = Diagonal{Float64}(undef, 0),    cov_sigma::AbstractMatrix{<:Real} = Diagonal{Float64}(undef, 0),    d_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    k_mu::Real = Inf,    k_sigma::Real = Inf,    # Optimal portfolios
@@ -399,46 +433,47 @@ Portfolio(;    # Portfolio characteristics
     solvers::Union{<:AbstractDict, NamedTuple} = Dict(),    opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),    fail::AbstractDict = Dict(),    model::JuMP.Model = JuMP.Model(),    # Allocation
     latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    alloc_optimal::AbstractDict = Dict(),    alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),    alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),    alloc_fail::AbstractDict = Dict(),    alloc_model::JuMP.Model = JuMP.Model())
 ```
-Creates an instance of [`Portfolio`]() containing all internal data necessary for convex portfolio optimisations as well as failed and successful results.
+Creates an instance of [`Portfolio`](@ref) containing all internal data necessary for convex portfolio optimisations as well as failed and successful results.
 # Inputs
 ## Portfolio characteristics
 - `prices`: `(T+1)×Na` `TimeArray` of asset prices, where the time stamp field is `timestamp`, where $(_tstr(:t1)) and $(_ndef(:a2)). If `prices` is not empty, then `returns`, `ret`, `timestamps`, `assets`, and `latest_prices` are ignored because their respective fields are obtained from `prices`.
 - `returns`: `T×(Na+1)` `DataFrame` of asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)), the extra column is `timestamp`, which contains the timestamps of the returns. If `prices` is empty and `returns` is not empty, `ret`, `timestamps`, and `assets` are ignored because their respective fields are obtained from `returns`.
-- `ret`: `T×Na` matrix of asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)). Its value is saved in the `returns` field of [`Portfolio`](). If `prices` or `returns` are not empty, this value is obtained from within the function, where $(_tstr(:t1)) and $(_ndef(:a2)).
-- `timestamps`: `T×1` vector of timestamps, where $(_tstr(:t1)). Its value is saved in the `timestamps` field of [`Portfolio`](). If `prices` or `returns` are not empty, this value is obtained from within the function.
-- `assets`: `Na×1` vector of assets, where $(_ndef(:a2)). Its value is saved in the `assets` field of [`Portfolio`](). If `prices` or `returns` are not empty, this value is obtained from within the function.
+- `ret`: `T×Na` matrix of asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)). Its value is saved in the `returns` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function, where $(_tstr(:t1)) and $(_ndef(:a2)).
+- `timestamps`: `T×1` vector of timestamps, where $(_tstr(:t1)). Its value is saved in the `timestamps` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
+- `assets`: `Na×1` vector of assets, where $(_ndef(:a2)). Its value is saved in the `assets` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
 - `short`: whether or not to allow negative weights, i.e. whether a portfolio accepts shorting.
 - `short_u`: absolute value of the sum of all short (negative) weights.
 - `long_u`: sum of all long (positive) weights.
-- `min_number_effective_assets`: if non-zero, guarantees that at least number of assets make significant contributions to the final portfolio weights.
+- `min_number_effective_assets`: 
+  + `!iszero(min_number_effective_assets)`: guarantees that at least this number of assets make significant contributions to the final portfolio weights.
 - `max_number_assets`: if non-zero, guarantees at most this number of assets make non-zero contributions to the final portfolio weights. Requires an optimiser that supports binary variables.
 - `max_number_assets_factor`: scaling factor needed to create a decision variable when `max_number_assets` is non-zero.
 - `f_prices`: `(T+1)×Nf` `TimeArray` of factor prices, where the time stamp field is `f_timestamp`, where $(_tstr(:t1)) and $(_ndef(:f2)). If `f_prices` is not empty, then `f_returns`, `f_ret`, `f_timestamps`, `f_assets`, and `latest_prices` are ignored because their respective fields are obtained from `f_prices`.
 - `f_returns`: `T×(Nf+1)` `DataFrame` of factor returns, where $(_tstr(:t1)) and $(_ndef(:f2)), the extra column is `f_timestamp`, which contains the timestamps of the factor returns. If `f_prices` is empty and `f_returns` is not empty, `f_ret`, `f_timestamps`, and `f_assets` are ignored because their respective fields are obtained from `f_returns`.
-- `f_ret`: `T×Nf` matrix of factor returns, where $(_ndef(:f2)). Its value is saved in the `f_returns` field of [`Portfolio`](). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function, where $(_tstr(:t1)) and $(_ndef(:f2)).
-- `f_timestamps`: `T×1` vector of factor timestamps, where $(_tstr(:t1)). Its value is saved in the `f_timestamps` field of [`Portfolio`](). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
-- `f_assets`: `Nf×1` vector of factors, where $(_ndef(:f2)). Its value is saved in the `f_assets` field of [`Portfolio`](). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
+- `f_ret`: `T×Nf` matrix of factor returns, where $(_ndef(:f2)). Its value is saved in the `f_returns` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function, where $(_tstr(:t1)) and $(_ndef(:f2)).
+- `f_timestamps`: `T×1` vector of factor timestamps, where $(_tstr(:t1)). Its value is saved in the `f_timestamps` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
+- `f_assets`: `Nf×1` vector of factors, where $(_ndef(:f2)). Its value is saved in the `f_assets` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function.
 ## Risk parameters
 - `msv_target`: target value for for Absolute Deviation and Semivariance risk measures. It can have two meanings depending on its type and value.
     - If it's a `Real` number and infinite, or an empty vector. The target will be the mean returns vector `mu`.
     - Else the target is the value of `msv_target`. If `msv_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 - `lpm_target`: target value for the First and Second Lower Partial Moment risk measures. It can have two meanings depending on its type and value.
-    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk-free rate `rf`, provided in the [`optimise!`]() function.
+    - If it's a `Real` number and infinite, or an empty vector. The target will be the value of the risk-free rate `rf`, provided in the [`optimise!`](@ref) function.
     - Else the target is the value of `lpm_target`. If `lpm_target` is a vector, its length should be `Na`, where $(_ndef(:a2)).
 $(_isigdef("Tail Gini losses", :a))
-$(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`]() and upper bounds being used", :a))
+$(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :a))
 $(_isigdef("Tail Gini gains", :b))
-$(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`]() and upper bounds being used", :b))
+$(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :b))
 - `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
 - `max_num_assets_kurt`: maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
 ## Benchmark constraints
 - `turnover`: if finite, define the maximum turnover deviations from `turnover_weights` to the optimised portfolio. Else the constraint is disabled.
 - `turnover_weights`: target weights for turnover constraint.
     - The turnover constraint is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq e_{1} \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``e_{1}`` is the value of the turnover, and $(_ndef(:a3)).
-- `kind_tracking_err`: `:Weights` when providing a vector of asset weights for computing the tracking error benchmark from the asset returns, or `:Returns` to directly providing the tracking benchmark. See [`TrackingErrKinds`]() for more information.
+- `kind_tracking_err`: `:Weights` when providing a vector of asset weights for computing the tracking error benchmark from the asset returns, or `:Returns` to directly providing the tracking benchmark. See [`TrackingErrKinds`](@ref) for more information.
 - `tracking_err`: if finite, define the maximum tracking error deviation. Else the constraint is disabled.
 - `tracking_err_returns`: `T×1` vector of returns to be tracked, where $(_tstr(:t1)). When `kind_tracking_err == :Returns`, this is used directly tracking benchmark.
-- `tracking_err_weights`: `Na×1` vector of weights, where $(_ndef(:a2)), when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`]().
+- `tracking_err_weights`: `Na×1` vector of weights, where $(_ndef(:a2)), when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
     - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq e_{2}``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``e_{2}`` the tracking error, and $(_tstr(:t2)).
 - `bl_bench_weights`: `Na×1` vector of benchmark weights for Black Litterman models, where $(_ndef(:a2)).
 ## Risk and return constraints
@@ -446,7 +481,7 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`]() an
 - `b_vec_ineq`: `C×1` B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints.
 - `risk_budget`: `Na×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:a2)).
 ### Bounds constraints
-The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`]() in lower case, they also bring the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
+The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case, they also bring the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
 - `mu_l`: mean expected return.
 - `sd_u`: standard deviation.
 - `mad_u`: max absolute devia.
@@ -471,50 +506,50 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `tg_u`: tail gini.
 - `rtg_u`: tail gini range.
 - `owa_u`: custom ordered weight risk (use with `owa_w`).
-## Custom OWA weights
+## OWA parameters
 - `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 ## Model statistics
-- `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`]()"))
-- `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`]()"))
-- `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`]().
-- `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`]().
-- `mu_f`: $(_mudef("factors", :f2)) $(_dircomp("[`factor_statistics!`]()"))
-- `cov_f`: $(_covdef("factors", :f2)) $(_dircomp("[`factor_statistics!`]()"))
-- `mu_fm`: $(_mudef("feature selected factors")) $(_dircomp("[`factor_statistics!`]()"))
-- `cov_fm`: $(_covdef("feature selected factors")) $(_dircomp("[`factor_statistics!`]()"))
-- `mu_bl`: $(_mudef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`]()"))
-- `cov_bl`: $(_covdef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`]()"))
-- `mu_bl_fm`: $(_mudef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`]()"))
-- `cov_bl_fm`: $(_covdef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`]()"))
-- `returns_fm`: `T×Na` matrix of feature selcted adjusted returns, where $(_tstr(:t1)) and $(_ndef(:a2)). $(_dircomp("[`factor_statistics!`]()"))
+- `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
+- `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
+- `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `mu_f`: $(_mudef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
+- `cov_f`: $(_covdef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
+- `mu_fm`: $(_mudef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
+- `cov_fm`: $(_covdef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
+- `mu_bl`: $(_mudef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`](@ref)"))
+- `cov_bl`: $(_covdef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`](@ref)"))
+- `mu_bl_fm`: $(_mudef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`](@ref)"))
+- `cov_bl_fm`: $(_covdef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`](@ref)"))
+- `returns_fm`: `T×Na` matrix of feature selcted adjusted returns, where $(_tstr(:t1)) and $(_ndef(:a2)). $(_dircomp("[`factor_statistics!`](@ref)"))
 ## Inputs of Worst Case Optimization Models
-- `cov_l`: $(_covdef("worst case lower bound asset")) $(_dircomp("[`wc_statistics!`]()"))
-- `cov_u`: $(_covdef("worst case upper bound asset")) $(_dircomp("[`wc_statistics!`]()"))
-- `cov_mu`: $(_covdef("estimation errors of the mean vector")) $(_dircomp("[`wc_statistics!`]()"))
-- `cov_sigma`: $(_covdef("estimation errors of the covariance matrix", :a22)) $(_dircomp("[`wc_statistics!`]()"))
-- `d_mu`: $(_mudef("delta", :a2)) $(_dircomp("[`wc_statistics!`]()"))
-- `k_mu`: set the percentile of a sample of size `Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`]()"))
-- `k_sigma`: set the percentile of a sample of size `Na×Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`]()"))
+- `cov_l`: $(_covdef("worst case lower bound asset")) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `cov_u`: $(_covdef("worst case upper bound asset")) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `cov_mu`: $(_covdef("estimation errors of the mean vector")) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `cov_sigma`: $(_covdef("estimation errors of the covariance matrix", :a22)) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `d_mu`: $(_mudef("delta", :a2)) $(_dircomp("[`wc_statistics!`](@ref)"))
+- `k_mu`: set the percentile of a sample of size `Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
+- `k_sigma`: set the percentile of a sample of size `Na×Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
 ## Optimal portfolios
-- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`]()"))
-- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`optimise!`]()"))
-- `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures. $(_filled_by("[`frontier_limits!`]()"))
-- `frontier`: $_edst containing points in the efficient frontier for given risk measures. $(_filled_by("[`efficient_frontier!`]()"))
+- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))
+- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`optimise!`](@ref)"))
+- `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures. $(_filled_by("[`frontier_limits!`](@ref)"))
+- `frontier`: $_edst containing points in the efficient frontier for given risk measures. $(_filled_by("[`efficient_frontier!`](@ref)"))
 ## Solutions
 $(_solver_desc("risk measure `JuMP` model."))
-- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`]()"))
-- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`]()"))
-- `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`optimise!`]()"))
+- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
+- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
+- `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`optimise!`](@ref)"))
 ## Allocation
 - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
-- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`]()"))
+- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
 $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
-- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`]()"))
-- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`]()"))
-- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`]()"))
+- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
 
 # Outputs
-- [`Portfolio`]() instance.
+- [`Portfolio`](@ref) instance.
 
 [^jLoGo]:
     [Barfuss, W., Massara, G. P., Di Matteo, T., & Aste, T. (2016). Parsimonious modeling with information filtering networks. Physical Review E, 94(6), 062306.](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.94.062306)
@@ -578,7 +613,7 @@ function Portfolio(;
                    rdar_u::Real  = Inf, kurt_u::Real  = Inf, skurt_u::Real = Inf,
                    gmd_u::Real   = Inf, rg_u::Real    = Inf, rcvar_u::Real = Inf,
                    tg_u::Real    = Inf, rtg_u::Real   = Inf, owa_u::Real   = Inf,
-                   # Custom OWA weights
+                   # OWA parameters
                    owa_p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50],
                    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    # Model statistics
@@ -808,7 +843,7 @@ function Portfolio(;
                      typeof(evar_u), typeof(edar_u), typeof(rvar_u), typeof(rdar_u),
                      typeof(kurt_u), typeof(skurt_u), typeof(gmd_u), typeof(rg_u),
                      typeof(rcvar_u), typeof(tg_u), typeof(rtg_u), typeof(owa_u),
-                     # Custom OWA weights
+                     # OWA parameters
                      typeof(owa_p), typeof(owa_w),
                      # Model statistics
                      typeof(mu), typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2),
@@ -850,7 +885,7 @@ function Portfolio(;
                        mu_l, sd_u, mad_u, ssd_u, cvar_u, wr_u, flpm_u, slpm_u, mdd_u, add_u,
                        cdar_u, uci_u, evar_u, edar_u, rvar_u, rdar_u, kurt_u, skurt_u,
                        gmd_u, rg_u, rcvar_u, tg_u, rtg_u, owa_u,
-                       # Custom OWA weights
+                       # OWA parameters
                        owa_p, owa_w,
                        # Model statistics
                        mu, cov, kurt, skurt, L_2, S_2, mu_f, cov_f, mu_fm, cov_fm, mu_bl,
@@ -1079,7 +1114,7 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.rdar_u), typeof(obj.kurt_u), typeof(obj.skurt_u),
                      typeof(obj.gmd_u), typeof(obj.rg_u), typeof(obj.rcvar_u),
                      typeof(obj.tg_u), typeof(obj.rtg_u), typeof(obj.owa_u),
-                     # Custom OWA weights
+                     # OWA parameters
                      typeof(obj.owa_p), typeof(obj.owa_w),
                      # Model statistics
                      typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt), typeof(obj.skurt),
@@ -1139,7 +1174,7 @@ function Base.deepcopy(obj::Portfolio)
                        deepcopy(obj.rdar_u), deepcopy(obj.kurt_u), deepcopy(obj.skurt_u),
                        deepcopy(obj.gmd_u), deepcopy(obj.rg_u), deepcopy(obj.rcvar_u),
                        deepcopy(obj.tg_u), deepcopy(obj.rtg_u), deepcopy(obj.owa_u),
-                       # Custom OWA weights
+                       # OWA parameters
                        deepcopy(obj.owa_p), deepcopy(obj.owa_w),
                        # Model statistics
                        deepcopy(obj.mu), deepcopy(obj.cov), deepcopy(obj.kurt),
@@ -1168,7 +1203,7 @@ end
 ```julia
 mutable struct HCPortfolio{
     ast,    dat,    r,    # Risk parmeters
-    ai,    a,    as,    bi,    b,    bs,    k,    ata,    mnak,    # Custom OWA weights
+    ai,    a,    as,    bi,    b,    bs,    k,    ata,    mnak,    # OWA parameters
     wowa,    # Optimisation parameters
     tmu,    tcov,    tkurt,    tskurt,    tl2,    ts2,    tbin,    wmi,    wma,    ttco,    tco,    tdist,    tcl,    tk,    # Optimal portfolios
     topt,    # Solutions
@@ -1188,7 +1223,7 @@ mutable struct HCPortfolio{
     kappa::k
     alpha_tail::ata
     max_num_assets_kurt::mnak
-    # Custom OWA weights
+    # OWA parameters
     owa_p::owap
     owa_w::wowa
     # Optimisation parameters
@@ -1228,52 +1263,52 @@ Structure for hierarchical portfolio optimisation.
 - `returns`: `T×Na` matrix of asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)).
 # Risk parameters
 $(_isigdef("Tail Gini losses", :a))
-$(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`]() and upper bounds being used", :a))
+$(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :a))
 - `at`: protected value of `alpha * T`, where $(_tstr(:t1)). Used when optimising a entropic risk measures (EVaR and EDaR).
 $(_isigdef("Tail Gini gains", :b))
-$(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`]() and upper bounds being used", :b))
+$(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :b))
 - `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
 - `alpha_tail`: significance level for lower tail dependence index, `0 < alpha_tail < 1`.
 - `max_num_assets_kurt`: maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
-# Custom OWA weights
+# OWA parameters
 - `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 # Model statistics
-- `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`]()"))
-- `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`]()"))
-- `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`]().
-- `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`]().
-- `L_2`: `(Na×Na) × ((Na×(Na+1)/2))` elimination matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`]()"))
-- `S_2`: `((Na×(Na+1)/2)) × (Na×Na)` summation matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`]()"))
-- `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`]() for available choices.
+- `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
+- `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
+- `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `L_2`: `(Na×Na) × ((Na×(Na+1)/2))` elimination matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
+- `S_2`: `((Na×(Na+1)/2)) × (Na×Na)` summation matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
+- `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`](@ref) for available choices.
 - `w_min`: `Na×1` vector of the lower bounds for asset weights, where $(_ndef(:a2)).
 - `w_max`: `Na×1` vector of the upper bounds for asset weights, where $(_ndef(:a2)).
 - `cor_method`: method for estimating the codependence matrix.
-- `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cor` used by [`cor_dist_mtx`]().
-- `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `dist` used by [`cor_dist_mtx`]().
-- `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`]() and [`optimise!`]()"))
+- `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cor` used by [`cor_dist_mtx`](@ref).
+- `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `dist` used by [`cor_dist_mtx`](@ref).
+- `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`optimise!`](@ref)"))
 - `k`: number of clusters to cut the dendrogram into.
-    - If `k == 0`, automatically compute `k` using the two difference gap statistic [^TDGS]. $(_dircomp("[`asset_statistics!`]() and [`optimise!`]()"))
+    - If `k == 0`, automatically compute `k` using the two difference gap statistic [^TDGS]. $(_dircomp("[`asset_statistics!`](@ref) and [`optimise!`](@ref)"))
     - If `k != 0`, use the value directly.
 # Optimal portfolios
-- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`]()"))- `optimal`:
+- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))- `optimal`:
 # Solutions
 $(_solver_desc("risk measure `JuMP` model for `:NCO` optimisations."))
-- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`]()"))
-- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`]()"))
+- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
+- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
 # Allocation
 - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
-- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`]()"))
+- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
 $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
-- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`]()"))
-- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`]()"))
-- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`]()"))
+- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
 """
 mutable struct HCPortfolio{
                            # Portfolio characteristics
                            ast, dat, r,
                            # Risk parmeters
                            ai, a, as, bi, b, bs, k, ata, mnak,
-                           # Custom OWA weights
+                           # OWA parameters
                            owap, wowa,
                            # Optimisation parameters
                            tmu, tcov, tkurt, tskurt, tl2, ts2, tbin, wmi, wma, ttco, tco,
@@ -1298,7 +1333,7 @@ mutable struct HCPortfolio{
     kappa::k
     alpha_tail::ata
     max_num_assets_kurt::mnak
-    # Custom OWA weights
+    # OWA parameters
     owa_p::owap
     owa_w::wowa
     # Optimisation parameters
@@ -1335,7 +1370,7 @@ end
 ```julia
 HCPortfolio(;    # Portfolio characteristics
     prices::TimeArray = TimeArray(TimeType[], []),    returns::DataFrame = DataFrame(),    ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),    timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),    assets::AbstractVector = Vector{String}(undef, 0),    # Risk parmeters
-    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Integer = 100,    beta_i::Real = alpha_i,    beta::Real = alpha,    b_sim::Integer = a_sim,    kappa::Real = 0.3,    alpha_tail::Real = 0.05,    max_num_assets_kurt::Integer = 0,    # Custom OWA weights
+    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Integer = 100,    beta_i::Real = alpha_i,    beta::Real = alpha,    b_sim::Integer = a_sim,    kappa::Real = 0.3,    alpha_tail::Real = 0.05,    max_num_assets_kurt::Integer = 0,    # OWA parameters
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    # Optimisation parameters
     mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    bins_info::Union{Symbol, <:Integer} = :KN,    w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,    w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,    cor_method::Symbol = :Pearson,    cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    clusters::Clustering.Hclust = Hclust{Float64}(
         Matrix{Int64}(undef, 0, 2),        Float64[],        Int64[],        :nothing,    ),    k::Integer = 0,    # Optimal portfolios
@@ -1347,50 +1382,50 @@ HCPortfolio(;    # Portfolio characteristics
 ## Portfolio characteristics
 - `prices`: `(T+1)×Na` `TimeArray` of asset prices, where the time stamp field is `timestamp`, where $(_tstr(:t1)) and $(_ndef(:a2)). If `prices` is not empty, then `returns`, `ret`, `timestamps`, `assets`, and `latest_prices` are ignored because their respective fields are obtained from `prices`.
 - `returns`: `T×(Na+1)` `DataFrame` of asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)), the extra column is `timestamp`, which contains the timestamps of the returns. If `prices` is empty and `returns` is not empty, `ret`, `timestamps`, and `assets` are ignored because their respective fields are obtained from `returns`.
-- `ret`: `T×Na` matrix of asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)). Its value is saved in the `returns` field of [`Portfolio`](). If `prices` or `returns` are not empty, this value is obtained from within the function, where $(_tstr(:t1)) and $(_ndef(:a2)).
-- `timestamps`: `T×1` vector of timestamps, where $(_tstr(:t1)). Its value is saved in the `timestamps` field of [`Portfolio`](). If `prices` or `returns` are not empty, this value is obtained from within the function.
-- `assets`: `Na×1` vector of assets, where $(_ndef(:a2)). Its value is saved in the `assets` field of [`Portfolio`](). If `prices` or `returns` are not empty, this value is obtained from within the function.
+- `ret`: `T×Na` matrix of asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)). Its value is saved in the `returns` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function, where $(_tstr(:t1)) and $(_ndef(:a2)).
+- `timestamps`: `T×1` vector of timestamps, where $(_tstr(:t1)). Its value is saved in the `timestamps` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
+- `assets`: `Na×1` vector of assets, where $(_ndef(:a2)). Its value is saved in the `assets` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
 ## Risk parmeters
 $(_isigdef("Tail Gini losses", :a))
-$(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`]() and upper bounds being used", :a))
+$(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :a))
 - `at`: protected value of `alpha * T`, where $(_tstr(:t1)). Used when optimising a entropic risk measures (EVaR and EDaR).
 $(_isigdef("Tail Gini gains", :b))
-$(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`]() and upper bounds being used", :b))
+$(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :b))
 - `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
 - `alpha_tail`: significance level for lower tail dependence index, `0 < alpha_tail < 1`.
-- `max_num_assets_kurt`: when optimising `:NCO` type of [`HCPortfolio`](), maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
-## Custom OWA weights
+- `max_num_assets_kurt`: when optimising `:NCO` type of [`HCPortfolio`](@ref), maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
+## OWA parameters
 - `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 ## Model statistics
-- `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`]()"))
-- `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`]()"))
-- `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`]().
-- `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`]().
-- `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`]() for available choices.
+- `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
+- `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
+- `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
+- `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`](@ref) for available choices.
 - `w_min`: `Na×1` vector of the lower bounds for asset weights, where $(_ndef(:a2)).
 - `w_max`: `Na×1` vector of the upper bounds for asset weights, where $(_ndef(:a2)).
 - `cor_method`: method for estimating the codependence matrix.
-- `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cor` used by [`cor_dist_mtx`]().
-- `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `dist` used by [`cor_dist_mtx`]().
-- `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`]() and [`optimise!`]()"))
+- `cor`: `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cor` used by [`cor_dist_mtx`](@ref).
+- `dist`:  `Na×Na` matrix, where where $(_ndef(:a2)). Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `dist` used by [`cor_dist_mtx`](@ref).
+- `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`optimise!`](@ref)"))
 - `k`: number of clusters to cut the dendrogram into.
-    - If `k == 0`, automatically compute `k` using the two difference gap statistic [^TDGS]. $(_dircomp("[`asset_statistics!`]() and [`optimise!`]()"))
+    - If `k == 0`, automatically compute `k` using the two difference gap statistic [^TDGS]. $(_dircomp("[`asset_statistics!`](@ref) and [`optimise!`](@ref)"))
     - If `k != 0`, use the value directly.
 ## Optimal portfolios
-- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`]()"))- `optimal`:
+- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))- `optimal`:
 ## Solutions
 $(_solver_desc("risk measure `JuMP` model for `:NCO` optimisations."))
-- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`]()"))
-- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`]()"))
+- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
+- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
 ## Allocation
 - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
-- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`]()"))
+- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
 $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
-- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`]()"))
-- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`]()"))
-- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`]()"))
+- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
+- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
 # Outputs
-- [`HCPortfolio`]() instance.
+- [`HCPortfolio`](@ref) instance.
 
 [^TDGS]: 
     [Yue, S., Wang, X. & Wei, M. Application of two-order difference to gap statistic. Trans. Tianjin Univ. 14, 217–221 (2008). https://doi.org/10.1007/s12209-008-0039-1](https://doi.org/10.1007/s12209-008-0039-1)
@@ -1407,7 +1442,7 @@ function HCPortfolio(;
                      beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                      kappa::Real = 0.3, alpha_tail::Real = 0.05,
                      max_num_assets_kurt::Integer = 0,
-                     # Custom OWA weights
+                     # OWA parameters
                      owa_p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50],
                      owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                      # Optimisation parameters
@@ -1510,7 +1545,7 @@ function HCPortfolio(;
                        typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i),
                        typeof(beta), typeof(b_sim), typeof(kappa), typeof(alpha_tail),
                        typeof(max_num_assets_kurt),
-                       # Custom OWA weights
+                       # OWA parameters
                        typeof(owa_p), typeof(owa_w),
                        # Optimisation parameters
                        typeof(mu), typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2),
@@ -1534,7 +1569,7 @@ function HCPortfolio(;
                          # Risk parmeters
                          alpha_i, alpha, a_sim, beta_i, beta, b_sim, kappa, alpha_tail,
                          max_num_assets_kurt,
-                         # Custom OWA weights
+                         # OWA parameters
                          owa_p, owa_w,
                          # Optimisation parameters
                          mu, cov, kurt, skurt, L_2, S_2, bins_info, w_min, w_max,
@@ -1653,7 +1688,7 @@ function Base.deepcopy(obj::HCPortfolio)
                        typeof(obj.beta_i), typeof(obj.beta), typeof(obj.b_sim),
                        typeof(obj.kappa), typeof(obj.alpha_tail),
                        typeof(obj.max_num_assets_kurt),
-                       # Custom OWA weights
+                       # OWA parameters
                        typeof(obj.owa_p), typeof(obj.owa_w),
                        # Optimisation parameters
                        typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt), typeof(obj.skurt),
@@ -1681,7 +1716,7 @@ function Base.deepcopy(obj::HCPortfolio)
                          deepcopy(obj.beta_i), deepcopy(obj.beta), deepcopy(obj.b_sim),
                          deepcopy(obj.kappa), deepcopy(obj.alpha_tail),
                          deepcopy(obj.max_num_assets_kurt),
-                         # Custom OWA weights
+                         # OWA parameters
                          deepcopy(obj.owa_p), deepcopy(obj.owa_w),
                          # Optimisation parameters
                          deepcopy(obj.mu), deepcopy(obj.cov), deepcopy(obj.kurt),
@@ -1699,3 +1734,5 @@ function Base.deepcopy(obj::HCPortfolio)
                          deepcopy(obj.alloc_solvers), deepcopy(obj.alloc_params),
                          deepcopy(obj.alloc_fail), copy(obj.alloc_model))
 end
+
+export Portfolio, HCPortfolio
