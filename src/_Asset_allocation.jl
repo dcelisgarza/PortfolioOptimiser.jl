@@ -362,6 +362,8 @@ function allocate!(portfolio,
     latest_prices = opt.latest_prices
     if isempty(latest_prices)
         latest_prices = portfolio.latest_prices
+    else
+        @smart_assert(length(latest_prices) == size(portfolio.returns, 2))
     end
     investment = opt.investment
     rounding = opt.rounding

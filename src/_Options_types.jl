@@ -1063,7 +1063,7 @@ end
 end
 ```
 
-Structure and keyword constructor for optimisation options in [`optimise!`](@ref) for all [`PortTypes`](@ref) and `:NCO` [`HCPortTypes`](@ref).
+Structure and keyword constructor for storing the options to optimising portfolios in [`optimise!`](@ref) for all [`PortTypes`](@ref) and `:NCO` [`HCPortTypes`](@ref).
 
 # Inputs
 
@@ -1091,16 +1091,19 @@ Structure and keyword constructor for optimisation options in [`optimise!`](@ref
   - `rf`: risk-free rate.
   - `l`: risk aversion parameter when `obj == :Utility`.
   - `rrp_penalty`: value of the penalty when `type == :RRP` and `rrp_ver == :Reg_Pen`.
-  - `n`: number of sections to split the range between the minimum risk and maximum return portfolios when `near_opt == true`.
-  - `w_ini`: 
+  - `n`: 
+    + `near_opt == true`: number of sections to split the range between the minimum risk and maximum return portfolios.
+  - `w_ini`:
     + `!isempty(w_ini)`: initial guess for the weights of the optimised portfolio. Some solvers do not support initial guesses and will see no benefit.
     + `isempty(w_ini)`: no initial for the weights of the optimised portfolio.
-  - `w_min`: only used when `near_opt == true`.
-    + `!isempty(w_min)`: assumed to be the value of the weights of the minimum risk portfolio.
-    + `isempty(w_min)`: weights of the minimum risk portfolio are computed by [`optimise!`](@ref).
-  - `w_max`: only used when `near_opt == true`.
-    + `!isempty(w_min)`: assumed to be the value of the weights of the maximum return portfolio.
-    + `isempty(w_min)`: weights of the maximum return portfolio are computed by [`optimise!`](@ref).
+  - `w_min`:
+    + `near_opt == true`:
+      * `!isempty(w_min)`: assumed to be the value of the weights of the minimum risk portfolio.
+      * `isempty(w_min)`: weights of the minimum risk portfolio are computed by [`optimise!`](@ref).
+  - `w_max`:
+    + `near_opt == true`:
+      * `!isempty(w_min)`: assumed to be the value of the weights of the maximum return portfolio.
+      * `isempty(w_min)`: weights of the maximum return portfolio are computed by [`optimise!`](@ref).
 """
 mutable struct OptimiseOpt{T1 <: Integer, T2 <: Real, T3 <: Real, T4 <: Real, T5 <: Real}
     type::Symbol
@@ -1192,6 +1195,39 @@ function Base.setproperty!(obj::OptimiseOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```julia
+@kwdef mutable struct AllocOpt
+    port_type::Symbol = :Trad
+    method::Symbol = :LP
+    latest_prices::AbstractVector = Float64[]
+    investment::Real = 1e6
+    rounding::Integer = 1
+    reinvest::Bool = false
+end
+```
+
+Structure and keyword constructor for storing the options to optimising the discrete allocation of portfolios in [`allocate!`](@ref).
+
+# Inputs
+
+  - `port_type`: key for the `optimal` fieldname of [`Portfolio`](@ref) and [`HCPortfolio`](@ref) which contains the asset weights of the optimised portfolio.
+
+  - `method`: method for discretely allocating the portfolio from [`AllocMethods`](@ref).
+  - `latest_prices`: vector of latest stock prices.
+  - `investment`: amount of money available to allocate.
+  - `rounding`:
+
+      + `method == :LP`: the number of decimal places used for rounding stocks.
+  - `reinvest`: only has an effect if the portfolio being allocated shorts stocks.
+
+      + `true`: reinvest the money acquired from shorting.
+      + `false`: do not reinvest the money acquired from shorting.
+
+!!! warning
+
+    `latest_prices` and `investment` must be the same currency.
+"""
 mutable struct AllocOpt
     port_type::Symbol
     method::Symbol
