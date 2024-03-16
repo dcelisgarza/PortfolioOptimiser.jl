@@ -192,21 +192,33 @@ $(_sigdef("CVaR gains or Tail Gini gains", :b))
   + `iszero(max_num_assets_kurt)`: always use the full kurtosis model.
   + `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
 # Benchmark constraints
-- `rebalance`: the rebalancing penalty is somewhat of an inverse of the `turnover` constraint. It defines a penalty for the objective function that penalises deviations away from a target weights vector as ``r_{i} \\rvert w_{i} - \\hat{w}_{i} \\lvert\\, \\forall\\, i \\in N``, where ``r_i`` is the rebalancing coefficient, ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, and $(_ndef(:a3)).
+- `rebalance`: the rebalancing penalty is somewhat of an inverse of the `turnover` constraint. It defines a penalty for the objective function that penalises deviations away from a target weights vector as
+```math
+r_{i} \\rvert w_{i} - \\hat{w}_{i} \\lvert\\, \\forall\\, i \\in N\\,.
+```
+- Where ``r_i`` is the rebalancing coefficient, ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, and $(_ndef(:a3)).
   + `!(isa(rebalance, Real) && (isinf(rebalance) || iszero(rebalance)) ||
        isa(rebalance, AbstractVector) && isempty(rebalance) ||
        isempty(rebalance_weights))`:
     * `isa(turnover, Real)`: all assets have the same rebalancing penalty.
     * `isa(turnover, AbstractVector)`: each asset has its own rebalancing penalty.
 - `rebalance_weights`: define the target weights for the rebalancing penalty.
-- `turnover`: the turnover constraint is somewhat of an inverse of `rebalance`. It is defined as ``\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t_{i} \\, \\forall\\, i \\in N``, where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``t_{i}`` is the value of the turnover for the `i'th` asset, and $(_ndef(:a3)).
+- `turnover`: the turnover constraint is somewhat of an inverse of the `rebalance` penalty. It is defined as
+```math
+\\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t_{i} \\, \\forall\\, i \\in N\\,.
+```
+- Where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``t_{i}`` is the value of the turnover for the `i'th` asset, and $(_ndef(:a3)).
   + `!(isa(turnover, Real) && isinf(turnover) || isa(turnover, AbstractVector) && isempty(turnover) || isempty(turnover_weights))`: 
     * `isa(turnover, Real)`: all assets have the same turnover value.
     * `isa(turnover, AbstractVector)`: each asset has its own turnover value.
 - `turnover_weights`:
   + `!(isa(turnover, Real) && isinf(turnover) || isa(turnover, AbstractVector) && isempty(turnover) || isempty(turnover_weights))`: define the target weights for the turnover constraint.
 - `kind_tracking_err`: kind of tracking error from [`TrackingErrKinds`](@ref).
-- `tracking_err`: the tracking error constraint is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and $(_tstr(:t2)).
+- `tracking_err`: the tracking error constraint is defined as
+```math
+\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t\\,.
+```
+- Where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and $(_tstr(:t2)).
   + `!(kind_tracking_err == :None || isinf(tracking_err) || isfinite(tracking_err) && (kind_tracking_err == :Weights && isempty(tracking_err_weights) || kind_tracking_err == :Returns && isempty(tracking_err_returns)))`: define the value of the tracking error.
 - `tracking_err_returns`: `T×1` vector of benchmark returns for the tracking error constraint as per [`TrackingErrKinds`](@ref), where $(_tstr(:t1)).
 - `tracking_err_weights`: `Na×1` vector of weights used for computing the benchmark vector for the tracking error constraint as per [`TrackingErrKinds`](@ref), where $(_ndef(:a2)).
@@ -214,8 +226,10 @@ $(_sigdef("CVaR gains or Tail Gini gains", :b))
 # Risk and return constraints
 - `a_mtx_ineq`: `C×Na` A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints, and $(_ndef(:a2)).
 - `b_vec_ineq`: `C×1` B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints.
-- `risk_budget`: `Na×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:a2)).
-- `f_risk_budget`: `Nf×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:f2)). 
+- `risk_budget`: 
+  + `type == :RP && class != :FC || type == :RRP` from [`OptimiseOpt`](@ref): `Na×1` asset risk budget constraint vector for risk measure `rm` from [`OptimiseOpt`](@ref), where $(_ndef(:a2)). Asset `i` contributes the amount of `rm` risk in position `risk_budget[i]`.
+- `f_risk_budget`: 
+  + `type == :RP && class == :FC` from [`OptimiseOpt`](@ref): `Nf×1` factor risk budget constraint vector for risk measure `rm` from [`OptimiseOpt`](@ref), where $(_ndef(:f2)). Factor `i` contributes the amount of `rm` risk in position `f_risk_budget[i]`.
 ## Bounds constraints
 The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case, they also bring the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
 - `mu_l`: mean expected return.
