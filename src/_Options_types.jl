@@ -653,6 +653,8 @@ end
     diagonal::Bool = false
     box::Symbol = :Stationary
     ellipse::Symbol = :Stationary
+    k_mu_method::Union{Symbol, <:Real} = :Normal
+    k_sigma_method::Union{Symbol, <:Real} = :Normal
     dcov::T1 = 0.1
     dmu::T2 = 0.1
     q::T3 = 0.05
@@ -674,6 +676,14 @@ Structure and keyword constructor for computing worst case statistics in [`wc_st
   - `diagonal`: whether to consider only the diagonal of the covariance matrices of estimation errors.
   - `box`: method from [`BoxMethods`](@ref) for computing box sets.
   - `ellipse`: method from [`EllipseMethods`](@ref) for computing elliptical sets.
+  - `k_mu_method`:
+
+      + `isa(k_sigma_method, Symbol)`: method from [`kMethods`](@ref) for computing the distance parameter of the elliptical set for the asset expected returns vector.
+      + `isa(k_sigma_method, Real)`: value of the distance parameter of the elliptical set for the asset expected returns vector.
+  - `k_sigma_method`:
+
+      + `isa(k_sigma_method, Symbol)`: method from [`kMethods`](@ref) for computing the distance parameter of the elliptical set for the asset covariance matrix.
+      + `isa(k_sigma_method, Real)`: value of the distance parameter of the elliptical set for the asset covariance matrix.
   - `dcov`:
 
       + `box == :Delta`: the percentage of the covariance matrix that parametrises its box set.

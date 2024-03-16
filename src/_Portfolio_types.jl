@@ -16,8 +16,10 @@ mutable struct Portfolio{
                          msvt, lpmt, ai, a, as, bi, b, bs, k, mnak,
                          # Benchmark constraints
                          rb, rbw, to, tobw, kte, te, rbi, bw, blbw,
-                         # Risk and return constraints
-                         ami, bvi, rbv, frbv,
+                         # Asset constraints
+                         ami, bvi,
+                         # Risk budget constraints
+                         rbv, frbv,
                          # Network constraints
                          nm, nsdp, np, ni, nif, amc, bvc,
                          # Bounds constraints
@@ -68,9 +70,10 @@ mutable struct Portfolio{
     tracking_err_returns::rbi
     tracking_err_weights::bw
     bl_bench_weights::blbw
-    # Risk and return constraints
+    # Asset constraints
     a_mtx_ineq::ami
     b_vec_ineq::bvi
+    # Risk budget constraints
     risk_budget::rbv
     f_risk_budget::frbv
     # Network constraints
@@ -169,7 +172,7 @@ Structure for portfolio optimisation.
   + `!iszero(max_number_assets)`: scaling factor needed to create the decision variable for the constraint. Changing the scaling factor can improve the solution.
 - `f_assets`: `Nf×1` vector of factors, where $(_ndef(:f2)).
 - `f_timestamps`: `T×1` vector of factor timestamps, where $(_tstr(:t1)).
-- `f_returns`: `T×Nf` matrix of factor returns, where $(_ndef(:f2)).
+- `f_returns`: `T×Nf` matrix of factor returns, where $(_tstr(:t1)) and $(_ndef(:f2)).
 - `loadings`: loadings matrix in dataframe form. Calling [`factor_statistics!`](@ref) will generate and set the dataframe. The number of rows must be equal to the number of asset and factor returns observations, `T`. Must have a few different columns.
   + `tickers`: (optional) contains the list of tickers.
   + `const`: (optional) contains the regression constant.
@@ -226,7 +229,7 @@ The tracking error constraint is defined as
 ```
 Where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and $(_tstr(:t2)).
 - `bl_bench_weights`: `Na×1` vector of benchmark weights for Black Litterman models, where $(_ndef(:a2)).
-# Risk and return constraints
+# Asset constraints
 - `a_mtx_ineq`: `C×Na` A matrix of the linear asset constraints, where `C` is the number of constraints, and $(_ndef(:a2)).
 - `b_vec_ineq`: `C×1` B vector of the linear asset constraints, where `C` is the number of constraints.
 The linear asset constraint is defined as
@@ -234,6 +237,7 @@ The linear asset constraint is defined as
 \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
 ```
 Where ``\\mathbf{A}`` is the matrix of linear constraints `a_mtx_ineq`, ``\\bm{w}`` the asset weights, and ``\\bm{B}`` is the vector of linear asset constraints `b_vec_ineq`. The constraint is only defined when both `a_mtx_ineq` and `b_vec_ineq` are defined.
+# Risk budget constraints
 - `risk_budget`: 
   + `type == :RP && class != :FC || type == :RRP` from [`OptimiseOpt`](@ref): `Na×1` asset risk budget constraint vector for risk measure `rm` from [`OptimiseOpt`](@ref), where $(_ndef(:a2)). Asset `i` contributes the amount of `rm` risk in position `risk_budget[i]`.
 - `f_risk_budget`: 
@@ -280,34 +284,34 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `rcvar_u`: critical value at risk range.
 - `tg_u`: tail gini.
 - `rtg_u`: tail gini range.
-- `owa_u`: custom ordered weight risk (use with `owa_w`).
+- `owa_u`: custom ordered weight risk (used with `owa_w`).
 # OWA parameters
 - `owa_p`: `C×1` vector for the approximate formulation of GMD, TG and RTG risk measures. The more entries and larger their range, the more accurate the approximation, where `C` is an arbitrary number of entries for the approximation.
 - `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
 # Model statistics
-- `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
-- `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
-- `kurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `skurt`: `(Na×Na)×(Na×Na)` matrix, where $(_ndef(:a2)). Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `L_2`: `(Na×Na) × ((Na×(Na+1)/2))` elimination matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
-- `S_2`: `((Na×(Na+1)/2)) × (Na×Na)` summation matrix, where $(_ndef(:a2)). $(_dircomp("[`cokurt_mtx`](@ref)"))
-- `mu_f`: $(_mudef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
-- `cov_f`: $(_covdef("factors", :f2)) $(_dircomp("[`factor_statistics!`](@ref)"))
-- `mu_fm`: $(_mudef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
-- `cov_fm`: $(_covdef("feature selected factors")) $(_dircomp("[`factor_statistics!`](@ref)"))
-- `mu_bl`: $(_mudef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`](@ref)"))
-- `cov_bl`: $(_covdef("Black Litterman")) $(_dircomp("[`black_litterman_statistics!`](@ref)"))
-- `mu_bl_fm`: $(_mudef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`](@ref)"))
-- `cov_bl_fm`: $(_covdef("Black Litterman feature selected factors")) $(_dircomp("[`black_litterman_factor_satistics!`](@ref)"))
-- `returns_fm`: `T×Na` matrix of feature selcted adjusted returns, where $(_tstr(:t1)) and $(_ndef(:a2)). $(_dircomp("[`factor_statistics!`](@ref)"))
+- `mu`: `Na×1` asset expected returns vector, where $(_ndef(:a2)).
+- `cov`: `Na×Na` asset covariance matrix, where $(_ndef(:a2)).
+- `kurt`: `(Na^2)×(Na^2)` asset cokurtosis matrix, where $(_ndef(:a2)).
+- `skurt`: `(Na^2)×(Na^2)` asset semi cokurtosis matrix, where $(_ndef(:a2)).
+- `L_2`: `(Na^2)×((Na^2 + Na)/2)` elimination matrix, where $(_ndef(:a2)).
+- `S_2`: `((Na^2 + Na)/2)×(Na^2)` summation matrix, where $(_ndef(:a2)).
+- `mu_f`: `Nf×1` factor expected returns vector, where $(_ndef(:f2)).
+- `cov_f`: `Nf×Nf` factor covariance matrix, where $(_ndef(:f2)).
+- `mu_fm`: `Na×1` factor adjusted asset expected returns vector, where $(_ndef(:a2)).
+- `cov_fm`: `Na×Na` factor adjusted asset covariance matrix, where $(_ndef(:a2)).
+- `mu_bl`: `Na×1` Black-Litterman adjusted asset expected returns vector, where $(_ndef(:a2)).
+- `cov_bl`: `Na×Na` Black-Litterman adjusted asset covariance matrix, where $(_ndef(:a2)).
+- `mu_bl_fm`: `Na×1` Black-Litterman factor model adjusted asset expected returns vector, where $(_ndef(:a2)).
+- `cov_bl_fm`: `Na×Na` Black-Litterman factor model adjusted asset covariance matrix, where $(_ndef(:a2)).
+- `returns_fm`: `T×Na` matrix of factor adjusted asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)).
 # Inputs of Worst Case Optimization Models
-- `cov_l`: $(_covdef("worst case lower bound asset")) $(_dircomp("[`wc_statistics!`](@ref)"))
-- `cov_u`: $(_covdef("worst case upper bound asset")) $(_dircomp("[`wc_statistics!`](@ref)"))
-- `cov_mu`: $(_covdef("estimation errors of the mean vector")) $(_dircomp("[`wc_statistics!`](@ref)"))
-- `cov_sigma`: $(_covdef("estimation errors of the covariance matrix", :a22)) $(_dircomp("[`wc_statistics!`](@ref)"))
-- `d_mu`: $(_mudef("delta", :a2)) $(_dircomp("[`wc_statistics!`](@ref)"))
-- `k_mu`: set the percentile of a sample of size `Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
-- `k_sigma`: set the percentile of a sample of size `Na×Na`, where `Na` is the number of assets, at instance creation. $(_dircomp("[`wc_statistics!`](@ref)"))
+- `cov_l`: `Na×Na` worst case lower bound for the asset covariance matrix, where $(_ndef(:a2)).
+- `cov_u`: `Na×Na` worst case upper bound for the asset covariance matrix, where $(_ndef(:a2)).
+- `cov_mu`: `Na×Na` matrix of the estimation errors of the asset expected returns vector, where $(_ndef(:a2)).
+- `cov_sigma`: `Na×Na` matrix of the estimation errors of the asset covariance matrix, where $(_ndef(:a2)).
+- `d_mu`: `Na×1` absolute deviation of the worst case upper and lower asset expected returns vectors, where $(_ndef(:a2)).
+- `k_mu`: distance parameter of the elliptical uncertainty in the asset expected returns vector for the worst case optimisation.
+- `k_sigma`: distance parameter of the elliptical uncertainty in the asset covariance matrix for the worst case optimisation.
 # Optimal portfolios
 - `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))
 - `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`optimise!`](@ref)"))
@@ -333,8 +337,10 @@ mutable struct Portfolio{
                          msvt, lpmt, ai, a, as, bi, b, bs, k, mnak,
                          # Benchmark constraints
                          rb, rbw, to, tobw, kte, te, rbi, bw, blbw,
-                         # Risk and return constraints
-                         ami, bvi, rbv, frbv,
+                         # Asset constraints
+                         ami, bvi,
+                         # Risk budget constraints
+                         rbv, frbv,
                          # Network constraints
                          nm, nsdp, np, ni, nif, amc, bvc,
                          # Bounds constraints
@@ -385,9 +391,10 @@ mutable struct Portfolio{
     tracking_err_returns::rbi
     tracking_err_weights::bw
     bl_bench_weights::blbw
-    # Risk and return constraints
+    # Asset constraints
     a_mtx_ineq::ami
     b_vec_ineq::bvi
+    # Risk budget constraints
     risk_budget::rbv
     f_risk_budget::frbv
     # Network constraints
@@ -474,7 +481,7 @@ end
 Portfolio(;    # Portfolio characteristics
     prices::TimeArray = TimeArray(TimeType[], []),    returns::DataFrame = DataFrame(),    ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    timestamps::AbstractVector = Vector{Date}(undef, 0),    assets::AbstractVector = Vector{String}(undef, 0),    short::Bool = false,    short_u::Real = 0.2,    long_u::Real = 1.0,    min_number_effective_assets::Integer = 0,    max_number_assets::Integer = 0,    max_number_assets_factor::Real = 100_000.0,    f_prices::TimeArray = TimeArray(TimeType[], []),    f_returns::DataFrame = DataFrame(),    f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    f_timestamps::AbstractVector = Vector{Date}(undef, 0),    f_assets::AbstractVector = Vector{String}(undef, 0),    loadings::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    # Risk parameters
     msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,    lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Integer = 100,    beta_i::Real = alpha_i,    beta::Real = alpha,    b_sim::Integer = a_sim,    kappa::Real = 0.3,    max_num_assets_kurt::Integer = 0,    # Benchmark constraints
-    turnover::Real = Inf,    turnover_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    kind_tracking_err::Symbol = :Weights,    tracking_err::Real = Inf,    tracking_err_returns::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    # Risk and return constraints
+    turnover::Real = Inf,    turnover_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    kind_tracking_err::Symbol = :Weights,    tracking_err::Real = Inf,    tracking_err_returns::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    # Asset constraints
     a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    # Bounds constraints
     mu_l::Real = Inf,    sd_u::Real = Inf,    mad_u::Real = Inf,    ssd_u::Real = Inf,    cvar_u::Real = Inf,    wr_u::Real = Inf,    flpm_u::Real = Inf,    slpm_u::Real = Inf,    mdd_u::Real = Inf,    add_u::Real = Inf,    cdar_u::Real = Inf,    uci_u::Real = Inf,    evar_u::Real = Inf,    edar_u::Real = Inf,    rvar_u::Real = Inf,    rdar_u::Real = Inf,    kurt_u::Real = Inf,    skurt_u::Real = Inf,    gmd_u::Real = Inf,    rg_u::Real = Inf,    rcvar_u::Real = Inf,    tg_u::Real = Inf,    rtg_u::Real = Inf,    owa_u::Real = Inf,    # OWA parameters
     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    # Model statistics
@@ -527,7 +534,7 @@ $(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref
 - `tracking_err_weights`: `Na×1` vector of weights, where $(_ndef(:a2)), when `kind_tracking_err == :Weights`, the returns benchmark is computed from the `returns` field of [`Portfolio`](@ref).
     - The tracking error is defined as ``\\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq e_{2}``, where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``e_{2}`` the tracking error, and $(_tstr(:t2)).
 - `bl_bench_weights`: `Na×1` vector of benchmark weights for Black Litterman models, where $(_ndef(:a2)).
-## Risk and return constraints
+## Asset constraints
 - `a_mtx_ineq`: `C×Na` A matrix of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints, and $(_ndef(:a2)).
 - `b_vec_ineq`: `C×1` B vector of the linear asset constraints ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``, where `C` is the number of constraints.
 - `risk_budget`: `Na×1` risk budget constraint vector for risk parity optimisations, where $(_ndef(:a2)).
@@ -642,9 +649,10 @@ function Portfolio(;
                    tracking_err_returns::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                   # Risk and return constraints
+                   # Asset constraints
                    a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                   # Risk budget constraints
                    risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    # Network constraints
@@ -880,9 +888,10 @@ function Portfolio(;
                      typeof(kind_tracking_err), typeof(tracking_err),
                      typeof(tracking_err_returns), typeof(tracking_err_weights),
                      typeof(bl_bench_weights),
-                     # Risk and return constraints
-                     typeof(a_mtx_ineq), typeof(b_vec_ineq), typeof(risk_budget),
-                     typeof(f_risk_budget),
+                     # Asset constraints
+                     typeof(a_mtx_ineq), typeof(b_vec_ineq),
+                     # Risk budget constraints
+                     typeof(risk_budget), typeof(f_risk_budget),
                      # Network constraints
                      typeof(network_method), typeof(network_sdp), typeof(network_penalty),
                      typeof(network_ip), typeof(network_ip_factor), typeof(a_vec_cent),
@@ -927,8 +936,10 @@ function Portfolio(;
                        rebalance, rebalance_weights, turnover, turnover_weights,
                        kind_tracking_err, tracking_err, tracking_err_returns,
                        tracking_err_weights, bl_bench_weights,
-                       # Risk and return constraints
-                       a_mtx_ineq, b_vec_ineq, risk_budget, f_risk_budget,
+                       # Asset constraints
+                       a_mtx_ineq, b_vec_ineq,
+                       # Risk budget constraints
+                       risk_budget, f_risk_budget,
                        # Network constraints
                        network_method, network_sdp, network_penalty, network_ip,
                        network_ip_factor, a_vec_cent, b_cent,
@@ -1148,8 +1159,9 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.kind_tracking_err), typeof(obj.tracking_err),
                      typeof(obj.tracking_err_returns), typeof(obj.tracking_err_weights),
                      typeof(obj.bl_bench_weights),
-                     # Risk and return constraints
+                     # Asset constraints
                      typeof(obj.a_mtx_ineq), typeof(obj.b_vec_ineq),
+                     # Risk budget constraints
                      typeof(obj.risk_budget), typeof(obj.f_risk_budget),
                      # Network constraints
                      typeof(obj.network_method), typeof(obj.network_sdp),
@@ -1208,8 +1220,9 @@ function Base.deepcopy(obj::Portfolio)
                        deepcopy(obj.kind_tracking_err), deepcopy(obj.tracking_err),
                        deepcopy(obj.tracking_err_returns),
                        deepcopy(obj.tracking_err_weights), deepcopy(obj.bl_bench_weights),
-                       # Risk and return constraints
+                       # Asset constraints
                        deepcopy(obj.a_mtx_ineq), deepcopy(obj.b_vec_ineq),
+                       # Risk budget constraints
                        deepcopy(obj.risk_budget), deepcopy(obj.f_risk_budget),
                        # Network constraints
                        deepcopy(obj.network_method), deepcopy(obj.network_sdp),

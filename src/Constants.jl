@@ -57,7 +57,7 @@ function _mudef(msg::String, sym::Symbol = :a2)
         n = "Nf"
     end
 
-    return "`$n×1` vector, where $(_ndef(sym))). Set the value of the $(msg) expected returns at instance construction. When choosing `:Custom_Val` in `mu_method`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new."
+    return "`$n×1` vector, where $(_ndef(sym)). Set the value of the $(msg) expected returns at instance construction. When choosing `:Custom_Val` in `mu_method`, this is the value of `mu` used, can also be set after a call to [`mean_vec`](@ref) to replace the old value with the new."
 end
 
 function _covdef(msg::String, sym::Symbol = :a2)
@@ -373,6 +373,16 @@ Methods for estimating the covariance matrix in [`covar_mtx`](@ref).
 const CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB0,
                     :Gerber_SB1, :Custom_Func, :Custom_Val)
 
+"""
+```julia
+const kMethods = (:Normal, :General)
+```
+
+Methods for computing the distance parameters of elliptical sets in `:WC` optimisation type of [`PortTypes`](@ref).
+
+  - `:Normal`: assume a normal distribution for the returns.
+  - `:General`: any possible distribution of returns, uses ``\\sqrt{\\dfrac{1-q}{q}}``, where ``q`` is the significance level.
+"""
 const kMethods = (:Normal, :General)
 
 """
