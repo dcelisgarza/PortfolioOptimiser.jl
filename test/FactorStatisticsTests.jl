@@ -131,35 +131,35 @@ end
     cov_fm_opt = CovOpt(; posdef = posdef)
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt)
-    cov_f1 = portfolio.cov_f
-    mu_f1 = portfolio.mu_f
-    cov_fm1 = portfolio.cov_fm
-    mu_fm1 = portfolio.mu_fm
+    cov_f1 = portfolio.f_cov
+    mu_f1 = portfolio.f_mu
+    cov_fm1 = portfolio.fm_cov
+    mu_fm1 = portfolio.fm_mu
 
     factor_opt.error = false
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f2 = portfolio.cov_f
-    mu_f2 = portfolio.mu_f
-    cov_fm2 = portfolio.cov_fm
-    mu_fm2 = portfolio.mu_fm
+    cov_f2 = portfolio.f_cov
+    mu_f2 = portfolio.f_mu
+    cov_fm2 = portfolio.fm_cov
+    mu_fm2 = portfolio.fm_mu
 
     factor_opt.error = true
     posdef.method = :None
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f3 = portfolio.cov_f
-    mu_f3 = portfolio.mu_f
-    cov_fm3 = portfolio.cov_fm
-    mu_fm3 = portfolio.mu_fm
+    cov_f3 = portfolio.f_cov
+    mu_f3 = portfolio.f_mu
+    cov_fm3 = portfolio.fm_cov
+    mu_fm3 = portfolio.fm_mu
 
     factor_opt.error = false
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f4 = portfolio.cov_f
-    mu_f4 = portfolio.mu_f
-    cov_fm4 = portfolio.cov_fm
-    mu_fm4 = portfolio.mu_fm
+    cov_f4 = portfolio.f_cov
+    mu_f4 = portfolio.f_mu
+    cov_fm4 = portfolio.fm_cov
+    mu_fm4 = portfolio.fm_mu
 
     loadings_opt = LoadingsOpt(;)
     loadings_opt.threshold = 0.5
@@ -168,26 +168,26 @@ end
     cov_fm_opt = CovOpt(;)
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f5 = portfolio.cov_f
-    mu_f5 = portfolio.mu_f
-    cov_fm5 = portfolio.cov_fm
-    mu_fm5 = portfolio.mu_fm
+    cov_f5 = portfolio.f_cov
+    mu_f5 = portfolio.f_mu
+    cov_fm5 = portfolio.fm_cov
+    mu_fm5 = portfolio.fm_mu
 
     loadings_opt.criterion = :aic
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f6 = portfolio.cov_f
-    mu_f6 = portfolio.mu_f
-    cov_fm6 = portfolio.cov_fm
-    mu_fm6 = portfolio.mu_fm
+    cov_f6 = portfolio.f_cov
+    mu_f6 = portfolio.f_mu
+    cov_fm6 = portfolio.fm_cov
+    mu_fm6 = portfolio.fm_mu
 
     loadings_opt.criterion = :adjr2
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f7 = portfolio.cov_f
-    mu_f7 = portfolio.mu_f
-    cov_fm7 = portfolio.cov_fm
-    mu_fm7 = portfolio.mu_fm
+    cov_f7 = portfolio.f_cov
+    mu_f7 = portfolio.f_mu
+    cov_fm7 = portfolio.fm_cov
+    mu_fm7 = portfolio.fm_mu
 
     loadings_opt = LoadingsOpt(; method = :BReg)
     factor_opt = FactorOpt(; loadings_opt = loadings_opt)
@@ -195,10 +195,10 @@ end
     cov_fm_opt = CovOpt(;)
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f8 = portfolio.cov_f
-    mu_f8 = portfolio.mu_f
-    cov_fm8 = portfolio.cov_fm
-    mu_fm8 = portfolio.mu_fm
+    cov_f8 = portfolio.f_cov
+    mu_f8 = portfolio.f_mu
+    cov_fm8 = portfolio.fm_cov
+    mu_fm8 = portfolio.fm_mu
 
     loadings_opt.threshold = 0.5
     factor_opt = FactorOpt(; loadings_opt = loadings_opt)
@@ -206,26 +206,26 @@ end
     cov_fm_opt = CovOpt(;)
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f9 = portfolio.cov_f
-    mu_f9 = portfolio.mu_f
-    cov_fm9 = portfolio.cov_fm
-    mu_fm9 = portfolio.mu_fm
+    cov_f9 = portfolio.f_cov
+    mu_f9 = portfolio.f_mu
+    cov_fm9 = portfolio.fm_cov
+    mu_fm9 = portfolio.fm_mu
 
     loadings_opt.criterion = :aic
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f10 = portfolio.cov_f
-    mu_f10 = portfolio.mu_f
-    cov_fm10 = portfolio.cov_fm
-    mu_fm10 = portfolio.mu_fm
+    cov_f10 = portfolio.f_cov
+    mu_f10 = portfolio.f_mu
+    cov_fm10 = portfolio.fm_cov
+    mu_fm10 = portfolio.fm_mu
 
     loadings_opt.criterion = :adjr2
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f11 = portfolio.cov_f
-    mu_f11 = portfolio.mu_f
-    cov_fm11 = portfolio.cov_fm
-    mu_fm11 = portfolio.mu_fm
+    cov_f11 = portfolio.f_cov
+    mu_f11 = portfolio.f_mu
+    cov_fm11 = portfolio.fm_cov
+    mu_fm11 = portfolio.fm_mu
 
     loadings_opt.method = :PCR
     factor_opt = FactorOpt(; loadings_opt = loadings_opt)
@@ -233,19 +233,19 @@ end
     cov_fm_opt = CovOpt(;)
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f12 = portfolio.cov_f
-    mu_f12 = portfolio.mu_f
-    cov_fm12 = portfolio.cov_fm
-    mu_fm12 = portfolio.mu_fm
+    cov_f12 = portfolio.f_cov
+    mu_f12 = portfolio.f_mu
+    cov_fm12 = portfolio.fm_cov
+    mu_fm12 = portfolio.fm_mu
 
     loadings_opt.method = :PCR
     loadings_opt.threshold = 1e-5
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f13 = portfolio.cov_f
-    mu_f13 = portfolio.mu_f
-    cov_fm13 = portfolio.cov_fm
-    mu_fm13 = portfolio.mu_fm
+    cov_f13 = portfolio.f_cov
+    mu_f13 = portfolio.f_mu
+    cov_fm13 = portfolio.fm_cov
+    mu_fm13 = portfolio.fm_mu
 
     loadings_opt = LoadingsOpt(;)
     factor_opt = FactorOpt(; loadings_opt = loadings_opt)
@@ -257,10 +257,10 @@ end
     posdef.method = :Nearest
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f16 = portfolio.cov_f
-    mu_f16 = portfolio.mu_f
-    cov_fm16 = portfolio.cov_fm
-    mu_fm16 = portfolio.mu_fm
+    cov_f16 = portfolio.f_cov
+    mu_f16 = portfolio.f_mu
+    cov_fm16 = portfolio.fm_cov
+    mu_fm16 = portfolio.fm_mu
 
     factor_opt.error = true
     posdef.method = :SDP
@@ -268,10 +268,10 @@ end
                                                    :params => Dict("verbose" => false)))
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt)
-    cov_f17 = portfolio.cov_f
-    mu_f17 = portfolio.mu_f
-    cov_fm17 = portfolio.cov_fm
-    mu_fm17 = portfolio.mu_fm
+    cov_f17 = portfolio.f_cov
+    mu_f17 = portfolio.f_mu
+    cov_fm17 = portfolio.fm_cov
+    mu_fm17 = portfolio.fm_mu
 
     cov_ft1 = reshape([8.105068334247097e-5, 6.737792030107118e-5, 6.526436064638604e-5,
                        5.172315242594955e-5, 5.51672771198704e-5, 6.737792030107118e-5,
@@ -2450,83 +2450,83 @@ end
     loadings_opt.criterion = :aic
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f1 = portfolio.cov_f
-    mu_f1 = portfolio.mu_f
-    cov_fm1 = portfolio.cov_fm
-    mu_fm1 = portfolio.mu_fm
+    cov_f1 = portfolio.f_cov
+    mu_f1 = portfolio.f_mu
+    cov_fm1 = portfolio.fm_cov
+    mu_fm1 = portfolio.fm_mu
 
     loadings_opt.criterion = :aicc
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f2 = portfolio.cov_f
-    mu_f2 = portfolio.mu_f
-    cov_fm2 = portfolio.cov_fm
-    mu_fm2 = portfolio.mu_fm
+    cov_f2 = portfolio.f_cov
+    mu_f2 = portfolio.f_mu
+    cov_fm2 = portfolio.fm_cov
+    mu_fm2 = portfolio.fm_mu
 
     loadings_opt.criterion = :bic
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f3 = portfolio.cov_f
-    mu_f3 = portfolio.mu_f
-    cov_fm3 = portfolio.cov_fm
-    mu_fm3 = portfolio.mu_fm
+    cov_f3 = portfolio.f_cov
+    mu_f3 = portfolio.f_mu
+    cov_fm3 = portfolio.fm_cov
+    mu_fm3 = portfolio.fm_mu
 
     loadings_opt.criterion = :r2
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f4 = portfolio.cov_f
-    mu_f4 = portfolio.mu_f
-    cov_fm4 = portfolio.cov_fm
-    mu_fm4 = portfolio.mu_fm
+    cov_f4 = portfolio.f_cov
+    mu_f4 = portfolio.f_mu
+    cov_fm4 = portfolio.fm_cov
+    mu_fm4 = portfolio.fm_mu
 
     loadings_opt.criterion = :adjr2
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f5 = portfolio.cov_f
-    mu_f5 = portfolio.mu_f
-    cov_fm5 = portfolio.cov_fm
-    mu_fm5 = portfolio.mu_fm
+    cov_f5 = portfolio.f_cov
+    mu_f5 = portfolio.f_mu
+    cov_fm5 = portfolio.fm_cov
+    mu_fm5 = portfolio.fm_mu
 
     loadings_opt.method = :BReg
     loadings_opt.criterion = :aic
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f6 = portfolio.cov_f
-    mu_f6 = portfolio.mu_f
-    cov_fm6 = portfolio.cov_fm
-    mu_fm6 = portfolio.mu_fm
+    cov_f6 = portfolio.f_cov
+    mu_f6 = portfolio.f_mu
+    cov_fm6 = portfolio.fm_cov
+    mu_fm6 = portfolio.fm_mu
 
     loadings_opt.criterion = :aicc
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f7 = portfolio.cov_f
-    mu_f7 = portfolio.mu_f
-    cov_fm7 = portfolio.cov_fm
-    mu_fm7 = portfolio.mu_fm
+    cov_f7 = portfolio.f_cov
+    mu_f7 = portfolio.f_mu
+    cov_fm7 = portfolio.fm_cov
+    mu_fm7 = portfolio.fm_mu
 
     loadings_opt.criterion = :bic
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f8 = portfolio.cov_f
-    mu_f8 = portfolio.mu_f
-    cov_fm8 = portfolio.cov_fm
-    mu_fm8 = portfolio.mu_fm
+    cov_f8 = portfolio.f_cov
+    mu_f8 = portfolio.f_mu
+    cov_fm8 = portfolio.fm_cov
+    mu_fm8 = portfolio.fm_mu
 
     loadings_opt.criterion = :r2
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f9 = portfolio.cov_f
-    mu_f9 = portfolio.mu_f
-    cov_fm9 = portfolio.cov_fm
-    mu_fm9 = portfolio.mu_fm
+    cov_f9 = portfolio.f_cov
+    mu_f9 = portfolio.f_mu
+    cov_fm9 = portfolio.fm_cov
+    mu_fm9 = portfolio.fm_mu
 
     loadings_opt.criterion = :adjr2
     factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                        factor_opt = factor_opt,)
-    cov_f10 = portfolio.cov_f
-    mu_f10 = portfolio.mu_f
-    cov_fm10 = portfolio.cov_fm
-    mu_fm10 = portfolio.mu_fm
+    cov_f10 = portfolio.f_cov
+    mu_f10 = portfolio.f_mu
+    cov_fm10 = portfolio.fm_cov
+    mu_fm10 = portfolio.fm_mu
 
     cov_ft1 = reshape([8.105068334247097e-5, 6.737792030107118e-5, 6.526436064638604e-5,
                        5.172315242594955e-5, 5.51672771198704e-5, 6.737792030107118e-5,

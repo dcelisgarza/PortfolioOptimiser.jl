@@ -723,22 +723,16 @@ end
 
 function _owa_setup(portfolio, rm, T, returns, obj, type, owa_approx)
     gmd_u = portfolio.gmd_u
-    # rg_u = portfolio.rg_u
     tg_u = portfolio.tg_u
-    # rcvar_u = portfolio.rcvar_u
     rtg_u = portfolio.rtg_u
     owa_u = portfolio.owa_u
 
     if !(rm == :GMD ||
-         #  rm == :RG ||
          rm == :TG ||
-         #  rm == :RCVaR ||
          rm == :RTG ||
          rm == :OWA ||
          isfinite(gmd_u) ||
-         #  isfinite(rg_u)||
          isfinite(tg_u) ||
-         #  isfinite(rcvar_u) ||
          isfinite(rtg_u) ||
          isfinite(owa_u))
         return nothing
@@ -816,53 +810,6 @@ function _owa_setup(portfolio, rm, T, returns, obj, type, owa_approx)
             @expression(model, risk, gmd_risk)
         end
     end
-
-    # if rm == :RG || isfinite(rg_u)
-    #     @variable(model, rga[1:T])
-    #     @variable(model, rgb[1:T])
-    #     @expression(model, rg_risk, sum(rga .+ rgb))
-    #     rg_w = owa_rg(T)
-    #     @constraint(model,
-    #                 owa * transpose(rg_w) .<=
-    #                 onesvec * transpose(rga) + rgb * transpose(onesvec))
-
-    #     if isfinite(rg_u) && type == :Trad
-    #         if obj == :Sharpe
-    #             @constraint(model, rg_risk <= rg_u * model[:k])
-    #         else
-    #             @constraint(model, rg_risk <= rg_u)
-    #         end
-    #     end
-
-    #     if rm == :RG
-    #         @expression(model, risk, rg_risk)
-    #     end
-    # end
-
-    # if rm == :RCVaR || isfinite(rcvar_u)
-    #     alpha = portfolio.alpha
-    #     beta = portfolio.beta
-
-    #     @variable(model, rcvara[1:T])
-    #     @variable(model, rcvarb[1:T])
-    #     @expression(model, rcvar_risk, sum(rcvara .+ rcvarb))
-    #     rcvar_w = owa_rcvar(T; alpha = alpha, beta = beta)
-    #     @constraint(model,
-    #                 owa * transpose(rcvar_w) .<=
-    #                 onesvec * transpose(rcvara) + rcvarb * transpose(onesvec))
-
-    #     if isfinite(rcvar_u) && type == :Trad
-    #         if obj == :Sharpe
-    #             @constraint(model, rcvar_risk <= rcvar_u * model[:k])
-    #         else
-    #             @constraint(model, rcvar_risk <= rcvar_u)
-    #         end
-    #     end
-
-    #     if rm == :RCVaR
-    #         @expression(model, risk, rcvar_risk)
-    #     end
-    # end
 
     if rm == :TG || isfinite(tg_u)
         alpha = portfolio.alpha
@@ -1906,10 +1853,10 @@ function _setup_model_class(portfolio, class, hist)
         sigma = portfolio.cov
         returns = portfolio.returns
     elseif class == :FM
-        mu = portfolio.mu_fm
+        mu = portfolio.fm_mu
         if hist == 1
-            sigma = portfolio.cov_fm
-            returns = portfolio.returns_fm
+            sigma = portfolio.fm_cov
+            returns = portfolio.fm_returns
         elseif hist == 2
             sigma = portfolio.cov
             returns = portfolio.returns
@@ -1917,26 +1864,26 @@ function _setup_model_class(portfolio, class, hist)
             throw(AssertionError("for class = $class, hist = $hist can only be 1 or 2"))
         end
     elseif class == :BL
-        mu = portfolio.mu_bl
+        mu = portfolio.bl_mu
         returns = portfolio.returns
         if hist == 1
-            sigma = portfolio.cov_bl
+            sigma = portfolio.bl_cov
         elseif hist == 2
             sigma = portfolio.cov
         else
             throw(AssertionError("for class = $class, hist = $hist can only be 1 or 2"))
         end
     elseif class == :BLFM
-        mu = portfolio.mu_bl_fm
+        mu = portfolio.blfm_mu
         if hist == 1
-            sigma = portfolio.cov_bl_fm
-            returns = portfolio.returns_fm
+            sigma = portfolio.blfm_cov
+            returns = portfolio.fm_returns
         elseif hist == 2
             sigma = portfolio.cov
             returns = portfolio.returns
         else
-            sigma = portfolio.cov_fm
-            returns = portfolio.returns_fm
+            sigma = portfolio.fm_cov
+            returns = portfolio.fm_returns
         end
     end
 

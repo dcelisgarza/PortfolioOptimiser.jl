@@ -19,14 +19,14 @@ l = 2.0
     opt.class = :FM
     opt.hist = 1
     w2 = optimise!(portfolio, opt)
-    portfolio.mu_fm = portfolio.mu
+    portfolio.fm_mu = portfolio.mu
     opt.hist = 2
     w3 = optimise!(portfolio, opt)
     opt.hist = 3
     @test_throws AssertionError optimise!(portfolio, opt)
 
-    portfolio.returns_fm = portfolio.returns
-    portfolio.cov_fm = portfolio.cov
+    portfolio.fm_returns = portfolio.returns
+    portfolio.fm_cov = portfolio.cov
     opt.hist = 1
     w4 = optimise!(portfolio, opt)
     opt.hist = 2
@@ -43,13 +43,13 @@ l = 2.0
     opt.class = :BL
     opt.hist = 1
     @test_throws DimensionMismatch optimise!(portfolio, opt)
-    portfolio.mu_bl = portfolio.mu
+    portfolio.bl_mu = portfolio.mu
     opt.hist = 2
     w7 = optimise!(portfolio, opt)
     opt.hist = 3
     @test_throws AssertionError optimise!(portfolio, opt)
 
-    portfolio.cov_bl = portfolio.cov
+    portfolio.bl_cov = portfolio.cov
     opt.hist = 1
     w8 = optimise!(portfolio, opt)
     opt.hist = 2
@@ -67,21 +67,21 @@ l = 2.0
     opt.class = :BLFM
     opt.hist = 1
     w11 = optimise!(portfolio, opt)
-    portfolio.mu_bl_fm = portfolio.mu
+    portfolio.blfm_mu = portfolio.mu
     opt.hist = 2
     w12 = optimise!(portfolio, opt)
     opt.hist = 3
     @test_throws DimensionMismatch optimise!(portfolio, opt)
 
-    portfolio.cov_bl_fm = portfolio.cov
-    portfolio.returns_fm = portfolio.returns
+    portfolio.blfm_cov = portfolio.cov
+    portfolio.fm_returns = portfolio.returns
     opt.hist = 1
     w13 = optimise!(portfolio, opt)
     opt.hist = 2
     w14 = optimise!(portfolio, opt)
     opt.hist = 3
     @test_throws DimensionMismatch optimise!(portfolio, opt)
-    portfolio.cov_fm = portfolio.cov
+    portfolio.fm_cov = portfolio.cov
     opt.hist = 3
     w15 = optimise!(portfolio, opt)
 

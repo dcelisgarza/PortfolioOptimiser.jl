@@ -2172,10 +2172,10 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
     end
     B_mtx = Matrix(B[!, setdiff(namesB, ("tickers",))])
 
-    cov_f, mu_f = covar_mtx_mean_vec(x1; cov_opt = cov_opt, mu_opt = mu_opt)
+    f_cov, f_mu = covar_mtx_mean_vec(x1; cov_opt = cov_opt, mu_opt = mu_opt)
 
     returns = x1 * transpose(B_mtx)
-    mu = B_mtx * mu_f
+    mu = B_mtx * f_mu
 
     sigma = if factor_opt.error
         var_genfunc = factor_opt.var_genfunc
@@ -2184,9 +2184,9 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
         var_kwargs = var_genfunc.kwargs
         e = Matrix(y) - returns
         S_e = diagm(vec(var_func(e, var_args...; var_kwargs...)))
-        B_mtx * cov_f * transpose(B_mtx) + S_e
+        B_mtx * f_cov * transpose(B_mtx) + S_e
     else
-        B_mtx * cov_f * transpose(B_mtx)
+        B_mtx * f_cov * transpose(B_mtx)
     end
 
     if !isnothing(old_posdef)
@@ -2245,14 +2245,14 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
                                   B::AbstractMatrix, P_f::AbstractMatrix,
                                   Q_f::AbstractVector; cov_opt::CovOpt = CovOpt(;),
                                   mu_opt::MuOpt = MuOpt(;), bl_opt::BLOpt = BLOpt(;))
-    sigma_f, mu_f = covar_mtx_mean_vec(F; cov_opt = cov_opt, mu_opt = mu_opt)
+    sigma_f, f_mu = covar_mtx_mean_vec(F; cov_opt = cov_opt, mu_opt = mu_opt)
 
     constant = bl_opt.constant
     diagonal = bl_opt.diagonal
     delta = bl_opt.delta
     rf = bl_opt.rf
 
-    mu_f .-= rf
+    f_mu .-= rf
 
     if constant
         alpha = B[:, 1]
@@ -2278,7 +2278,7 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
     inv_sigma_f = sigma_f \ I
     inv_omega_f = omega_f \ I
     sigma_hat = (inv_sigma_f + transpose(P_f) * inv_omega_f * P_f) \ I
-    Pi_hat = sigma_hat * (inv_sigma_f * mu_f + transpose(P_f) * inv_omega_f * Q_f)
+    Pi_hat = sigma_hat * (inv_sigma_f * f_mu + transpose(P_f) * inv_omega_f * Q_f)
     inv_sigma_hat = sigma_hat \ I
     iish_b_is_b = (inv_sigma_hat + transpose(B) * inv_sigma * B) \ I
     is_b_iish_b_is_b = inv_sigma * B * iish_b_is_b
@@ -2335,7 +2335,7 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
     end
 
     if all_factor_provided
-        sigma_f, mu_f = covar_mtx_mean_vec(F; cov_opt = f_cov_opt, mu_opt = f_mu_opt)
+        sigma_f, f_mu = covar_mtx_mean_vec(F; cov_opt = f_cov_opt, mu_opt = f_mu_opt)
     end
 
     constant = bl_opt.constant
@@ -2361,7 +2361,7 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
         P_a = P_f
         Q_a = Q_f
         omega_a = _omega(P_a, tau * sigma_a)
-        Pi_a = _Pi(eq, delta, sigma_a * transpose(B), w, mu_f, rf)
+        Pi_a = _Pi(eq, delta, sigma_a * transpose(B), w, f_mu, rf)
     elseif all_asset_provided && all_factor_provided
         sigma_a = hcat(vcat(sigma, sigma_f * transpose(B)), vcat(B * sigma_f, sigma_f))
 
@@ -2378,7 +2378,7 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
 
         omega_a = hcat(vcat(omega, transpose(zeros_3)), vcat(zeros_3, omega_f))
 
-        Pi_a = _Pi(eq, delta, vcat(sigma, sigma_f * transpose(B)), w, vcat(mu, mu_f), rf)
+        Pi_a = _Pi(eq, delta, vcat(sigma, sigma_f * transpose(B)), w, vcat(mu, f_mu), rf)
     end
 
     T, N = size(returns)
@@ -2454,7 +2454,7 @@ function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMa
         bl_opt.delta = (dot(portfolio.mu, w) - bl_opt.rf) / dot(w, portfolio.cov, w)
     end
 
-    portfolio.mu_bl, portfolio.cov_bl, missing = black_litterman(returns, P, Q, w;
+    portfolio.bl_mu, portfolio.bl_cov, missing = black_litterman(returns, P, Q, w;
                                                                  cov_opt = cov_opt,
                                                                  mu_opt = mu_opt,
                                                                  bl_opt = bl_opt)
@@ -2502,10 +2502,10 @@ function factor_statistics!(portfolio::AbstractPortfolio; cov_f_opt::CovOpt = Co
     returns = portfolio.returns
     f_returns = portfolio.f_returns
 
-    portfolio.cov_f, portfolio.mu_f = covar_mtx_mean_vec(f_returns; cov_opt = cov_f_opt,
+    portfolio.f_cov, portfolio.f_mu = covar_mtx_mean_vec(f_returns; cov_opt = cov_f_opt,
                                                          mu_opt = mu_f_opt)
 
-    portfolio.mu_fm, portfolio.cov_fm, portfolio.returns_fm, portfolio.loadings = risk_factors(DataFrame(f_returns,
+    portfolio.fm_mu, portfolio.fm_cov, portfolio.fm_returns, portfolio.loadings = risk_factors(DataFrame(f_returns,
                                                                                                          portfolio.f_assets),
                                                                                                DataFrame(returns,
                                                                                                          portfolio.assets);
@@ -2601,7 +2601,7 @@ function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
     bl_opt.constant = "const" ∈ namesB
     B = Matrix(B[!, setdiff(namesB, ("tickers",))])
 
-    portfolio.mu_bl_fm, portfolio.cov_bl_fm, missing = if bl_opt.method == :B
+    portfolio.blfm_mu, portfolio.blfm_cov, missing = if bl_opt.method == :B
         bayesian_black_litterman(returns, F, B, P_f, Q_f; cov_opt = cov_opt,
                                  mu_opt = mu_opt, bl_opt = bl_opt)
     else

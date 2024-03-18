@@ -91,21 +91,21 @@ l = 2.0
 
     asset_statistics!(portfolio)
     black_litterman_statistics!(portfolio, P, Q)
-    mu7 = copy(portfolio.mu_bl)
-    cov_mtx7 = copy(portfolio.cov_bl)
+    mu7 = copy(portfolio.bl_mu)
+    cov_mtx7 = copy(portfolio.bl_cov)
 
     bl_opt = BLOpt(;)
     bl_opt.delta = nothing
     black_litterman_statistics!(portfolio, P, Q; bl_opt = bl_opt)
 
-    mu8 = copy(portfolio.mu_bl)
-    cov_mtx8 = copy(portfolio.cov_bl)
+    mu8 = copy(portfolio.bl_mu)
+    cov_mtx8 = copy(portfolio.bl_cov)
 
     mu9, cov_mtx9, wb9 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
 
     black_litterman_statistics!(portfolio, P, Q, w)
-    mu10 = copy(portfolio.mu_bl)
-    cov_mtx10 = copy(portfolio.cov_bl)
+    mu10 = copy(portfolio.bl_mu)
+    cov_mtx10 = copy(portfolio.bl_cov)
 
     mu1t = [0.8314554378117776, 0.494488205282382, 1.7158843606509437, 1.0416315473347288,
             0.6313818264543124, -0.20763384226376083, 0.4287427933477371,
@@ -3551,13 +3551,13 @@ end
     black_litterman_factor_satistics!(portfolio; P = P, P_f = P_f, Q = Q, Q_f = Q_f,
                                       bl_opt = bl_opt,
                                       loadings_opt = LoadingsOpt(; method = :PCR))
-    mu0 = copy(portfolio.mu_bl_fm)
-    cov0 = copy(portfolio.cov_bl_fm)
+    mu0 = copy(portfolio.blfm_mu)
+    cov0 = copy(portfolio.blfm_cov)
 
     black_litterman_factor_satistics!(portfolio, Vector{Float64}(undef, 0); B = loadings,
                                       P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
-    mu1 = copy(portfolio.mu_bl_fm)
-    cov1 = copy(portfolio.cov_bl_fm)
+    mu1 = copy(portfolio.blfm_mu)
+    cov1 = copy(portfolio.blfm_cov)
 
     mu2, cov2, missing = bayesian_black_litterman(portfolio.returns, portfolio.f_returns,
                                                   Matrix(loadings[!, 2:end]), P_f, Q_f;
@@ -3567,8 +3567,8 @@ end
     bl_opt.delta = nothing
     black_litterman_factor_satistics!(portfolio, Vector{Float64}(undef, 0); B = loadings,
                                       P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
-    mu3 = copy(portfolio.mu_bl_fm)
-    cov3 = copy(portfolio.cov_bl_fm)
+    mu3 = copy(portfolio.blfm_mu)
+    cov3 = copy(portfolio.blfm_cov)
 
     mu4, cov4, missing = bayesian_black_litterman(portfolio.returns, portfolio.f_returns,
                                                   Matrix(loadings[!, 2:end]), P_f, Q_f;
@@ -3576,8 +3576,8 @@ end
 
     black_litterman_factor_satistics!(portfolio, Vector{Float64}(undef, 0); B = nothing,
                                       P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
-    mu5 = copy(portfolio.mu_bl_fm)
-    cov5 = copy(portfolio.cov_bl_fm)
+    mu5 = copy(portfolio.blfm_mu)
+    cov5 = copy(portfolio.blfm_cov)
 
     loadings_opt = LoadingsOpt(; method = :PCR)
     B2 = Matrix(loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
@@ -3589,13 +3589,13 @@ end
 
     black_litterman_factor_satistics!(portfolio, (1:20) / (sum(1:20)); B = loadings, P = P,
                                       P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
-    mu7 = copy(portfolio.mu_bl_fm)
-    cov7 = copy(portfolio.cov_bl_fm)
+    mu7 = copy(portfolio.blfm_mu)
+    cov7 = copy(portfolio.blfm_cov)
 
     black_litterman_factor_satistics!(portfolio; B = loadings, P = P, P_f = P_f, Q = Q,
                                       Q_f = Q_f, bl_opt = bl_opt)
-    mu8 = copy(portfolio.mu_bl_fm)
-    cov8 = copy(portfolio.cov_bl_fm)
+    mu8 = copy(portfolio.blfm_mu)
+    cov8 = copy(portfolio.blfm_cov)
 
     @test isapprox(mu0, mu1)
     @test isapprox(cov0, cov1)
@@ -3757,8 +3757,8 @@ end
 
     black_litterman_factor_satistics!(portfolio, w; B = loadings, P = P, P_f = P_f, Q = Q,
                                       Q_f = Q_f, bl_opt = bl_opt)
-    mu1 = copy(portfolio.mu_bl_fm)
-    cov1 = copy(portfolio.cov_bl_fm)
+    mu1 = copy(portfolio.blfm_mu)
+    cov1 = copy(portfolio.blfm_cov)
 
     mu2, cov2, missing = augmented_black_litterman(portfolio.returns, w;
                                                    #
@@ -3777,8 +3777,8 @@ end
                                       B = loadings, P_f = P_f, Q_f = Q_f,
                                       #
                                       bl_opt = bl_opt)
-    mu3 = copy(portfolio.mu_bl_fm)
-    cov3 = copy(portfolio.cov_bl_fm)
+    mu3 = copy(portfolio.blfm_mu)
+    cov3 = copy(portfolio.blfm_cov)
 
     mu4, cov4, missing = augmented_black_litterman(portfolio.returns, w;
                                                    #
@@ -3797,8 +3797,8 @@ end
                                       #   B = loadings, P_f = P_f, Q_f = Q_f,
                                       #
                                       bl_opt = bl_opt)
-    mu5 = copy(portfolio.mu_bl_fm)
-    cov5 = copy(portfolio.cov_bl_fm)
+    mu5 = copy(portfolio.blfm_mu)
+    cov5 = copy(portfolio.blfm_cov)
 
     mu6, cov6, missing = augmented_black_litterman(portfolio.returns, w;
                                                    #
