@@ -1,7 +1,7 @@
 function _sdp_setup(portfolio, obj, rm, type, N, u_cov = :None)
+    network_method = portfolio.network_method
     kurt_u = portfolio.kurt_u
     skurt_u = portfolio.skurt_u
-    network_method = portfolio.network_method
 
     if !(type ∈ (:Trad, :RP) && rm ∈ (:Kurt, :SKurt) ||
          type ∈ (:Trad, :WC) && network_method == :SDP ||
@@ -89,7 +89,7 @@ function _mad_setup(portfolio, rm, T, returns, mu, obj, type)
     mad_u = portfolio.mad_u
     ssd_u = portfolio.ssd_u
 
-    if !(rm == :MAD || rm == :SSD || isfinite(mad_u) || isfinite(ssd_u))
+    if !(rm ∈ (:MAD, :SSD) || isfinite(mad_u) || isfinite(ssd_u))
         return nothing
     end
 
@@ -152,7 +152,7 @@ function _lpm_setup(portfolio, rm, T, returns, obj, rf, type)
     flpm_u = portfolio.flpm_u
     slpm_u = portfolio.slpm_u
 
-    if !(rm == :FLPM || rm == :SLPM || isfinite(flpm_u) || isfinite(slpm_u))
+    if !(rm ∈ (:FLPM, :SLPM) || isfinite(flpm_u) || isfinite(slpm_u))
         return nothing
     end
 
@@ -223,7 +223,7 @@ function _wr_setup(portfolio, rm, returns, obj, type)
     wr_u = portfolio.wr_u
     rg_u = portfolio.rg_u
 
-    if !(rm == :WR || rm == :RG || isfinite(wr_u) || isfinite(rg_u))
+    if !(rm ∈ (:WR, :RG) || isfinite(wr_u) || isfinite(rg_u))
         return nothing
     end
 
@@ -286,10 +286,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     evar_u = portfolio.evar_u
     rvar_u = portfolio.rvar_u
 
-    if !(rm == :CVaR ||
-         rm == :RCVaR ||
-         rm == :EVaR ||
-         rm == :RVaR ||
+    if !(rm ∈ (:CVaR, :RCVaR, :EVaR, :RVaR) ||
          isfinite(cvar_u) ||
          isfinite(rcvar_u) ||
          isfinite(evar_u) ||
@@ -427,12 +424,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     edar_u = portfolio.edar_u
     rdar_u = portfolio.rdar_u
 
-    if !(rm == :MDD ||
-         rm == :ADD ||
-         rm == :CDaR ||
-         rm == :UCI ||
-         rm == :EDaR ||
-         rm == :RDaR ||
+    if !(rm ∈ (:MDD, :ADD, :CDaR, :UCI, :EDaR, :RDaR) ||
          isfinite(mdd_u) ||
          isfinite(add_u) ||
          isfinite(cdar_u) ||
@@ -632,7 +624,7 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
     kurt_u = portfolio.kurt_u
     skurt_u = portfolio.skurt_u
 
-    if !(rm == :Kurt || rm == :SKurt || isfinite(kurt_u) || isfinite(skurt_u))
+    if !(rm ∈ (:Kurt, :SKurt) || isfinite(kurt_u) || isfinite(skurt_u))
         return nothing
     end
 
@@ -727,10 +719,7 @@ function _owa_setup(portfolio, rm, T, returns, obj, type, owa_approx)
     rtg_u = portfolio.rtg_u
     owa_u = portfolio.owa_u
 
-    if !(rm == :GMD ||
-         rm == :TG ||
-         rm == :RTG ||
-         rm == :OWA ||
+    if !(rm ∈ (:GMD, :TG, :RTG, :OWA) ||
          isfinite(gmd_u) ||
          isfinite(tg_u) ||
          isfinite(rtg_u) ||
@@ -1139,7 +1128,7 @@ function _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
                  2 * gamma * sqrt(rb[i])
                  model[:w][i] - zeta[i]] ∈ SecondOrderCone())
     # RRP version constraints
-    if rrp_ver == :Reg || rrp_ver == :Reg_Pen
+    if rrp_ver ∈ (:Reg, :Reg_Pen)
         @variable(model, rho)
         @constraint(model, [2 * psi; 2 * G * model[:w]; -2 * rho] ∈ SecondOrderCone())
     end
@@ -1331,9 +1320,9 @@ function _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
 end
 
 function _setup_weights(portfolio, obj, N)
-    max_number_assets = portfolio.max_number_assets
-    factor_mna = portfolio.max_number_assets_factor
-    factor_nip = portfolio.network_ip_factor
+    num_assets_u = portfolio.num_assets_u
+    factor_mna = portfolio.num_assets_u_scale
+    factor_nip = portfolio.network_ip_scale
     short = portfolio.short
     short_u = portfolio.short_u
     long_u = portfolio.long_u
@@ -1344,7 +1333,7 @@ function _setup_weights(portfolio, obj, N)
     model = portfolio.model
 
     # Boolean variables max number of assets.
-    if max_number_assets > 0
+    if num_assets_u > 0
         if obj == :Sharpe
             @variable(model, tass_bin[1:N], binary = true)
             @variable(model, tass_bin_sharpe[1:N] >= 0)
@@ -1381,8 +1370,8 @@ function _setup_weights(portfolio, obj, N)
         end
 
         # Maximum number of assets constraints.
-        if max_number_assets > 0
-            @constraint(model, sum(tass_bin) <= max_number_assets)
+        if num_assets_u > 0
+            @constraint(model, sum(tass_bin) <= num_assets_u)
         end
 
         if network_method == :IP
@@ -1403,7 +1392,7 @@ function _setup_weights(portfolio, obj, N)
             @constraint(model, model[:w] .>= -tw_ushort)
 
             # Maximum number of assets constraints.
-            if max_number_assets > 0
+            if num_assets_u > 0
                 @constraint(model, model[:w] .>= -short_u * tass_bin_sharpe)
             end
 
@@ -1423,8 +1412,8 @@ function _setup_weights(portfolio, obj, N)
         end
 
         # Maximum number of assets constraints.
-        if max_number_assets > 0
-            @constraint(model, sum(tass_bin) <= max_number_assets)
+        if num_assets_u > 0
+            @constraint(model, sum(tass_bin) <= num_assets_u)
         end
 
         if network_method == :IP
@@ -1445,7 +1434,7 @@ function _setup_weights(portfolio, obj, N)
             @constraint(model, model[:w] .>= -tw_ushort)
 
             # Maximum number of assets constraints.
-            if max_number_assets > 0
+            if num_assets_u > 0
                 @constraint(model, model[:w] .>= -short_u * tass_bin)
             end
 
@@ -1498,9 +1487,9 @@ function _setup_centrality_constraints(portfolio, obj)
 end
 
 function _setup_min_number_effective_assets(portfolio, obj)
-    mnea = portfolio.min_number_effective_assets
+    nal = portfolio.num_assets_l
 
-    if mnea < one(mnea)
+    if nal < one(nal)
         return nothing
     end
 
@@ -1510,9 +1499,9 @@ function _setup_min_number_effective_assets(portfolio, obj)
     @constraint(model, [tmnea; model[:w]] ∈ SecondOrderCone())
 
     if obj == :Sharpe
-        @constraint(model, tmnea * sqrt(mnea) <= model[:k])
+        @constraint(model, tmnea * sqrt(nal) <= model[:k])
     else
-        @constraint(model, tmnea * sqrt(mnea) <= 1)
+        @constraint(model, tmnea * sqrt(nal) <= 1)
     end
 
     return nothing

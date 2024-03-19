@@ -9,9 +9,9 @@ abstract type AbstractPortfolio end
 
 """
 ```julia
-mutable struct Portfolio{ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tretf, l, lo,
+mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
                          msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, rb, rbw, to, tobw, kte,
-                         te, rbi, bw, blbw, ami, bvi, rbv, frbv, nm, nsdp, np, ni, nif, amc,
+                         te, rbi, bw, blbw, ami, bvi, rbv, frbv, nm, nsdp, np, ni, nis, amc,
                          bvc, ler, ud, umad, usd, ucvar, urcvar, uevar, urvar, uwr, ur,
                          uflpm, uslpm, umd, uad, ucdar, uuci, uedar, urdar, uk, usk, ugmd,
                          utg, urtg, uowa, owap, wowa, tmu, tcov, tkurt, tskurt, tl2, ts2,
@@ -25,9 +25,9 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tr
     short::s
     short_u::us
     long_u::ul
-    min_number_effective_assets::mnea
-    max_number_assets::mna
-    max_number_assets_factor::mnaf
+    num_assets_l::nal
+    num_assets_u::nau
+    num_assets_u_scale::naus
     f_assets::tfa
     f_timestamps::tfdat
     f_returns::tretf
@@ -60,7 +60,7 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tr
     network_sdp::nsdp
     network_penalty::np
     network_ip::ni
-    network_ip_factor::nif
+    network_ip_scale::nis
     a_vec_cent::amc
     b_cent::bvc
     mu_l::ler
@@ -127,52 +127,79 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tr
     alloc_model::tamod
 end
 ```
-Structure for portfolio optimisation.
+Structure for portfolio optimisation. 
+    
+Some of these only have an effect when certain fields from [`OptimiseOpt`](@ref) take on a specific value:
 
-# Portfolio characteristics
-- `assets`: `Na×1` vector of assets, where $(_ndef(:a2)).
-- `timestamps`: `T×1` vector of timestamps, where $(_tstr(:t1)).
-- `returns`: `T×Na` matrix of asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)).
-- `short`: whether or not to allow negative weights, i.e. whether a portfolio accepts shorting.
-- `short_u`: absolute value of the sum of all short (negative) weights.
-- `long_u`: sum of all long (positive) weights.
-- `min_number_effective_assets`:
-  + `!iszero(min_number_effective_assets)`: guarantees that *at least* this number of assets make significant contributions to the final portfolio weights. $(_solver_reqs("`MOI.SecondOrderCone`"))
-- `max_number_assets`:
-  + `!iszero(max_number_assets)`: guarantees *at most* this number of assets make non-zero contributions to the final portfolio weights. $(_solver_reqs("MIP constraints"))
-- `max_number_assets_factor`:
-  + `!iszero(max_number_assets)`: scaling factor needed to create the decision variable for the constraint. Changing the scaling factor can improve the solution.
-- `f_assets`: `Nf×1` vector of factors, where $(_ndef(:f2)).
-- `f_timestamps`: `T×1` vector of factor timestamps, where $(_tstr(:t1)).
-- `f_returns`: `T×Nf` matrix of factor returns, where $(_tstr(:t1)) and $(_ndef(:f2)).
-- `loadings`: loadings matrix in dataframe form. Calling [`factor_statistics!`](@ref) will generate and set the dataframe. The number of rows must be equal to the number of asset and factor returns observations, `T`. Must have a few different columns.
-  + `tickers`: (optional) contains the list of tickers.
-  + `const`: (optional) contains the regression constant.
-  + The other columns must be the names of the factors.
-# Risk parameters
+  - `type`: one of [`PortTypes`](@ref).
+  - `rm`: one of [`RiskMeasures`](@ref).
+  - `class`: one of [`PortClasses`](@ref).
+  - `hist`: one of [`BLHist`](@ref).
+
+In order for a constraint to be applied, all of its constituents must be appropriately defined according to their type:
+
+  - `:Real`: must be finite.
+  - `:Integer`: must be non-zero.
+  - `:AbstractArray`: must be non-empty and of the proper shape.
+
+Some constraints define decision variables using scaling factors. The scaling factor should be large enough to be outside of the problem's scale, but not too large as to incur numerical instabilities. Solution quality may be improved by changing the scaling factor.
+
+# Inputs
+
+## Portfolio characteristics
+
+  - `assets`: `Na×1` vector of assets, where $(_ndef(:a2)).
+  - `timestamps`: `T×1` vector of timestamps, where $(_tstr(:t1)).
+  - `returns`: `T×Na` matrix of asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)).
+  - `short`: whether or not to allow negative weights, i.e. whether a portfolio accepts shorting.
+  - `short_u`: absolute value of the sum of all short (negative) weights.
+  - `long_u`: sum of all long (positive) weights.
+  - `num_assets_l`: lower bound for the integer number of assets that make significant contributions to the final portfolio weights. $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `num_assets_u`: upper bound for the integer number of assets that make significant contributions to the final portfolio weights. $(_solver_reqs("MIP constraints"))
+  - `num_assets_u_scale`: scaling factor needed to create the decision variable for the `num_assets_u` constraint.
+  - `f_assets`: `Nf×1` vector of factors, where $(_ndef(:f2)).
+  - `f_timestamps`: `T×1` vector of factor timestamps, where $(_tstr(:t1)).
+  - `f_returns`: `T×Nf` matrix of factor returns, where $(_tstr(:t1)) and $(_ndef(:f2)).
+  - `loadings`: loadings matrix in dataframe form. Calling [`factor_statistics!`](@ref) will generate and set the dataframe. The number of rows must be equal to the number of asset and factor returns observations, `T`. Must have a few different columns.
+    + `tickers`: (optional) contains the list of tickers.
+    + `const`: (optional) contains the regression constant.
+    + The other columns must be the names of the factors.
+
+## Risk parameters
+
 - `msv_target`: 
-  + `rm == :MAD || rm == :SSD || isfinite(mad_u) || isfinite(ssd_u)`: target value for Absolute Deviation and Semivariance risk measures, `rm` is taken from the `opt` argument of [optimise!](@ref).
+  + `rm ∈ (:MAD, :SSD) || isfinite(mad_u) || isfinite(ssd_u)`: target value for Absolute Deviation and Semivariance risk measures.
     * `isa(msv_target, Real) && isinf(msv_target) || isa(msv_target, AbstractVector) && isempty(msv_target)`: the target for each column of the `returns` matrix is the expected returns vector `mu`.
     * else: the target for each column of the `returns` matrix is the broadcasted value of `msv_target`.
 - `lpm_target`: 
-  + `rm == :FLPM || rm == :SLPM || isfinite(flpm_u) || isfinite(slpm_u)`: target value for the First and Second Lower Partial Moment risk measures, `rm` is taken from the `opt` argument of [optimise!](@ref). 
+  + `rm ∈ (:FLPM, :SLPM) || isfinite(flpm_u) || isfinite(slpm_u)`: target value for the First and Second Lower Partial Moment risk measures. 
     * `isa(lpm_target, Real) && isinf(lpm_target) || isa(lpm_target, AbstractVector) && isempty(lpm_target)`: the target for each column of the `returns` matrix is the risk-free rate taken from the `opt` argument of [optimise!](@ref).
     * else: the target for each column of the `returns` matrix is the broadcasted value of `lpm_target`.
-$(_isigdef("Tail Gini losses", :a))
-$(_sigdef("VaR, CVaR, EVaR, RVaR, CVaR losses, Tail Gini losses, DaR, CDaR, EDaR, RDaR, DaR\\_r, CDaR\\_r, EDaR\\_r, RDaR\\_r", :a))
-$(_isigdef("Tail Gini gains", :b))
-$(_sigdef("CVaR gains or Tail Gini gains", :b))
-- `kappa`: deformation parameter for relativistic risk measures (RVaR, RDaR, and RDaR\\_r).
+- `alpha_i`:
+  + `rm ∈ (:TG, :RTG)`: initial significance level of losses, `0 < alpha_i < alpha < 1`.
+- `a_sim`: 
+  + `rm ∈ (:TG, :RTG)`: number of CVaRs to approximate the losses, `a_sim > 0`.
+- `alpha`:
+  + `rm ∈ (:VaR, :CVaR, :EVaR, :RVaR, :RCVaR, :TG, :RTG, :DaR, :CDaR, :EDaR, :RDaR, :DaR_r, :CDaR_r, :EDaR_r, :RDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
+- `beta_i`:
+  + `rm == :RTG`: initial significance level of gains, `0 < beta_i < beta < 1`.
+- `b_sim`: 
+  + `rm == :RTG`: number of CVaRs to approximate the gains, `b_sim > 0`.
+- `beta`:
+  + `rm ∈ (:RCVaR, :RTG)`: significance level of gains, `beta ∈ (0, 1)`.
+- `kappa`: 
+  + `rm ∈ (:RVaR, :RDaR, :RDaR_r)`: relativistic deformation parameter.
 - `max_num_assets_kurt`:
   + `iszero(max_num_assets_kurt)`: always use the full kurtosis model.
   + `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
-# Benchmark constraints
+
+## Benchmark constraints
+
+Only relevant when `type ∈ (:Trad, :WC)`. The constraints are only applied if all the prerequisites are properly defined, this means that scalars must be finite and vectors must be non-empty and of the appropriate length.
+
 - `rebalance`: the rebalancing penalty is somewhat of an inverse of the `turnover` constraint. It defines a penalty for the objective function that penalises deviations away from a target weights vector.
-  + `!(isa(rebalance, Real) && (isinf(rebalance) || iszero(rebalance)) ||
-       isa(rebalance, AbstractVector) && isempty(rebalance) ||
-       isempty(rebalance_weights))`:
-    * `isa(turnover, Real)`: all assets have the same rebalancing penalty.
-    * `isa(turnover, AbstractVector)`: each asset has its own rebalancing penalty.
+  + `isa(turnover, Real)`: all assets have the same rebalancing penalty.
+  + `isa(turnover, AbstractVector)`: each asset has its own rebalancing penalty.
 - `rebalance_weights`: define the target weights for the rebalancing penalty.
 The rebalance penalty is defined as
 ```math
@@ -180,11 +207,9 @@ r_{i} \\rvert w_{i} - \\hat{w}_{i} \\lvert\\, \\forall\\, i \\in N\\,.
 ```
 Where ``r_i`` is the rebalancing coefficient, ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, and $(_ndef(:a3)).
 - `turnover`: the turnover constraint is somewhat of an inverse of the `rebalance` penalty.
-  + `!(isa(turnover, Real) && isinf(turnover) || isa(turnover, AbstractVector) && isempty(turnover) || isempty(turnover_weights))`: 
-    * `isa(turnover, Real)`: all assets have the same turnover value.
-    * `isa(turnover, AbstractVector)`: each asset has its own turnover value.
-- `turnover_weights`:
-  + `!(isa(turnover, Real) && isinf(turnover) || isa(turnover, AbstractVector) && isempty(turnover) || isempty(turnover_weights))`: define the target weights for the turnover constraint.
+  + `isa(turnover, Real)`: all assets have the same turnover value.
+  + `isa(turnover, AbstractVector)`: each asset has its own turnover value.
+- `turnover_weights`: define the target weights for the turnover constraint.
 The turnover constraint is defined as
 ```math
 \\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t_{i} \\, \\forall\\, i \\in N\\,.
@@ -201,29 +226,38 @@ The tracking error constraint is defined as
 ```
 Where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and $(_tstr(:t2)).
 - `bl_bench_weights`: `Na×1` vector of benchmark weights for Black Litterman models, where $(_ndef(:a2)).
-# Asset constraints
+
+## Asset constraints
+
+The constraint is only defined when both `a_mtx_ineq` and `b_vec_ineq` are defined.
 - `a_mtx_ineq`: `C×Na` A matrix of the linear asset constraints, where `C` is the number of constraints, and $(_ndef(:a2)).
 - `b_vec_ineq`: `C×1` B vector of the linear asset constraints, where `C` is the number of constraints.
 The linear asset constraint is defined as
 ```math
 \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
 ```
-Where ``\\mathbf{A}`` is the matrix of linear constraints `a_mtx_ineq`, ``\\bm{w}`` the asset weights, and ``\\bm{B}`` is the vector of linear asset constraints `b_vec_ineq`. The constraint is only defined when both `a_mtx_ineq` and `b_vec_ineq` are defined.
-# Risk budget constraints
+Where ``\\mathbf{A}`` is the matrix of linear constraints `a_mtx_ineq`, ``\\bm{w}`` the asset weights, and ``\\bm{B}`` is the vector of linear asset constraints `b_vec_ineq`.
+
+## Risk budget constraints
+
+Only relevant when `type ∈ (:RP, :RRP)`.
 - `risk_budget`: 
-  + `type == :RP && class != :FC || type == :RRP` from [`OptimiseOpt`](@ref): `Na×1` asset risk budget constraint vector for risk measure `rm` from [`OptimiseOpt`](@ref), where $(_ndef(:a2)). Asset `i` contributes the amount of `rm` risk in position `risk_budget[i]`.
+  + `class != :FC || type == :RRP`: `Na×1` asset risk budget constraint vector for risk measure `rm`, where $(_ndef(:a2)). Asset `i` contributes the amount of `rm` risk in position `risk_budget[i]`.
 - `f_risk_budget`: 
-  + `type == :RP && class == :FC` from [`OptimiseOpt`](@ref): `Nf×1` factor risk budget constraint vector for risk measure `rm` from [`OptimiseOpt`](@ref), where $(_ndef(:f2)). Factor `i` contributes the amount of `rm` risk in position `f_risk_budget[i]`.
-# Network constraints
+  + `class == :FC && type == :RP`: `Nf×1` factor risk budget constraint vector for risk measure `rm`, where $(_ndef(:f2)). Factor `i` contributes the amount of `rm` risk in position `f_risk_budget[i]`.
+
+## Network constraints
+
+Only relevant when `type ∈ (:Trad, :WC)`.
 - `network_method`: network constraint method from [`NetworkMethods`](@ref).
 - `network_sdp`: 
   + `network_method == :SDP`: network matrix.
 - `network_penalty`:
-  + `network_method == :SDP` and `type == :Trad && rm != :SD` from [`OptimiseOpt`](@ref): weight of the SDP network constraint.
+  + `network_method == :SDP` and `type == :Trad && rm != :SD`: weight of the SDP network constraint.
 - `network_ip`: 
   + `network_method == :IP`: network matrix.
-- `network_ip_factor`:
-  + `network_method == :IP`: scaling factor needed to create the decision variable for the constraint. Changing the scaling factor can improve the solution.
+- `network_ip_scale`:
+  + `network_method == :IP`: scaling factor needed to create the decision variable for the constraint. Changing the value of the scaling factor can improve the solution.
 - `a_vec_cent`: `Na×1` centrality measure vector for the centrality constraint, where $(_ndef(:a2)).
 - `b_cent`: average centrality measure for the centraility constraint.
 The centrality measure constraint is defined as
@@ -231,8 +265,14 @@ The centrality measure constraint is defined as
 \\bm{A} \\cdot \\bm{w} = b\\,.
 ```
 Where ``\\bm{A}`` is the centrality measure vector, ``\\bm{w}`` the portfolio weights, and ``b`` the centrality measure vector. The constraint is only applied when both `a_vec_cent` and `b_cent` are defined.
-# Bounds constraints
-The bounds constraints are only active if they are finite. They define lower bounds denoted by the suffix `_l`, and upper bounds denoted by the suffix `_u`, of various portfolio characteristics. The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case, they also bring the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make finding a solution infeasable.
+
+## Bounds constraints
+
+The bounds constraints are *only active if they are finite*. 
+- Lower bounds denoted by the suffix `_l`.
+- Upper bounds denoted by the suffix `_u`. 
+The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case. They have the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make the problem infeasable.
+
 - `mu_l`: mean expected return.
 - `sd_u`: standard deviation.
 - `mad_u`: max absolute devia.
@@ -257,19 +297,29 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `tg_u`: tail gini.
 - `rtg_u`: tail gini range.
 - `owa_u`: custom ordered weight risk (used with `owa_w`).
-# OWA parameters
-- `owa_p`: `C×1` vector for the approximate formulation of GMD, TG and RTG risk measures. The more entries and larger their range, the more accurate the approximation, where `C` is an arbitrary number of entries for the approximation.
-- `owa_w`: `T×1` OWA vector, where $(_tstr(:t1)) containing. Useful for optimising higher OWA L-moments.
-# Model statistics
-- `mu`: `Na×1` asset expected returns vector, where $(_ndef(:a2)).
-- `cov`: `Na×Na` asset covariance matrix, where $(_ndef(:a2)).
+
+## OWA parameters
+
+Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
+- `owa_p`: 
+  + `owa_approx = true`: C×1` vector containing the order of the p-norms used in the approximate formulation of the risk measures, where `C` is the number of p-norms. The more entries and larger their range, the more accurate the approximation.
+- `owa_w`: 
+  + `rm == :OWA`: `T×1` OWA vector, where $(_tstr(:t1)). Useful for optimising higher L-moments.
+
+## Model statistics
+
+- `mu`:
+  + `:class ∈ (:Classic, :FM)`: `Na×1` asset expected returns vector, where $(_ndef(:a2)).
+- `cov`:
+  + `:class ∈ (:Classic, :FM)`: `Na×Na` asset covariance matrix, where $(_ndef(:a2)).
 - `kurt`: `(Na^2)×(Na^2)` asset cokurtosis matrix, where $(_ndef(:a2)).
 - `skurt`: `(Na^2)×(Na^2)` asset semi cokurtosis matrix, where $(_ndef(:a2)).
 - `L_2`: `(Na^2)×((Na^2 + Na)/2)` elimination matrix, where $(_ndef(:a2)).
 - `S_2`: `((Na^2 + Na)/2)×(Na^2)` summation matrix, where $(_ndef(:a2)).
 - `f_mu`: `Nf×1` factor expected returns vector, where $(_ndef(:f2)).
 - `f_cov`: `Nf×Nf` factor covariance matrix, where $(_ndef(:f2)).
-- `fm_returns`: `T×Na` matrix of factor adjusted asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)).
+- `fm_returns`:
+  + `:class ∈ (:Classic, :FM) || :hist == 1`: `T×Na` matrix of factor adjusted asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)).
 - `fm_mu`: `Na×1` factor adjusted asset expected returns vector, where $(_ndef(:a2)).
 - `fm_cov`: `Na×Na` factor adjusted asset covariance matrix, where $(_ndef(:a2)).
 - `bl_mu`: `Na×1` Black-Litterman adjusted asset expected returns vector, where $(_ndef(:a2)).
@@ -278,12 +328,14 @@ The bounds constraints are only active if they are finite. They define lower bou
 - `blfm_cov`: `Na×Na` Black-Litterman factor model adjusted asset covariance matrix, where $(_ndef(:a2)).
 - `cov_l`: `Na×Na` worst case lower bound for the asset covariance matrix, where $(_ndef(:a2)).
 - `cov_u`: `Na×Na` worst case upper bound for the asset covariance matrix, where $(_ndef(:a2)).
-- `cov_mu`: `Na×Na` matrix of the estimation errors of the asset expected returns vector, where $(_ndef(:a2)).
+- `cov_mu`: `Na×Na` matrix of the estimation errors of the asset expected returns vector for elliptical sets in worst case optimisation, where $(_ndef(:a2)).
 - `cov_sigma`: `Na×Na` matrix of the estimation errors of the asset covariance matrix, where $(_ndef(:a2)).
 - `d_mu`: `Na×1` absolute deviation of the worst case upper and lower asset expected returns vectors, where $(_ndef(:a2)).
 - `k_mu`: distance parameter of the elliptical uncertainty in the asset expected returns vector for the worst case optimisation.
 - `k_sigma`: distance parameter of the elliptical uncertainty in the asset covariance matrix for the worst case optimisation.
-# Optimal portfolios
+
+## Optimal portfolios
+
 - `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))
 - `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`optimise!`](@ref)"))
 - `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures. $(_filled_by("[`frontier_limits!`](@ref)"))
@@ -293,7 +345,9 @@ $(_solver_desc("risk measure `JuMP` model."))
 - `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
 - `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
 - `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`optimise!`](@ref)"))
-# Allocation
+
+## Allocation
+
 - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
 - `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
 $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
@@ -301,9 +355,9 @@ $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer pro
 - `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
 - `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
 """
-mutable struct Portfolio{ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tretf, l, lo,
+mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
                          msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, rb, rbw, to, tobw, kte,
-                         te, rbi, bw, blbw, ami, bvi, rbv, frbv, nm, nsdp, np, ni, nif, amc,
+                         te, rbi, bw, blbw, ami, bvi, rbv, frbv, nm, nsdp, np, ni, nis, amc,
                          bvc, ler, ud, umad, usd, ucvar, urcvar, uevar, urvar, uwr, ur,
                          uflpm, uslpm, umd, uad, ucdar, uuci, uedar, urdar, uk, usk, ugmd,
                          utg, urtg, uowa, owap, wowa, tmu, tcov, tkurt, tskurt, tl2, ts2,
@@ -317,9 +371,9 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tr
     short::s
     short_u::us
     long_u::ul
-    min_number_effective_assets::mnea
-    max_number_assets::mna
-    max_number_assets_factor::mnaf
+    num_assets_l::nal
+    num_assets_u::nau
+    num_assets_u_scale::naus
     f_assets::tfa
     f_timestamps::tfdat
     f_returns::tretf
@@ -352,7 +406,7 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, mnea, mna, mnaf, tfa, tfdat, tr
     network_sdp::nsdp
     network_penalty::np
     network_ip::ni
-    network_ip_factor::nif
+    network_ip_scale::nis
     a_vec_cent::amc
     b_cent::bvc
     mu_l::ler
@@ -422,7 +476,7 @@ end
 """
 ```julia
 Portfolio(;    # Portfolio characteristics
-    prices::TimeArray = TimeArray(TimeType[], []),    returns::DataFrame = DataFrame(),    ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    timestamps::AbstractVector = Vector{Date}(undef, 0),    assets::AbstractVector = Vector{String}(undef, 0),    short::Bool = false,    short_u::Real = 0.2,    long_u::Real = 1.0,    min_number_effective_assets::Integer = 0,    max_number_assets::Integer = 0,    max_number_assets_factor::Real = 100_000.0,    f_prices::TimeArray = TimeArray(TimeType[], []),    f_returns::DataFrame = DataFrame(),    f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    f_timestamps::AbstractVector = Vector{Date}(undef, 0),    f_assets::AbstractVector = Vector{String}(undef, 0),    loadings::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    # Risk parameters
+    prices::TimeArray = TimeArray(TimeType[], []),    returns::DataFrame = DataFrame(),    ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    timestamps::AbstractVector = Vector{Date}(undef, 0),    assets::AbstractVector = Vector{String}(undef, 0),    short::Bool = false,    short_u::Real = 0.2,    long_u::Real = 1.0,    num_assets_l::Integer = 0,    num_assets_u::Integer = 0,    num_assets_u_scale::Real = 100_000.0,    f_prices::TimeArray = TimeArray(TimeType[], []),    f_returns::DataFrame = DataFrame(),    f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    f_timestamps::AbstractVector = Vector{Date}(undef, 0),    f_assets::AbstractVector = Vector{String}(undef, 0),    loadings::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    # Risk parameters
     msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,    lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Integer = 100,    beta_i::Real = alpha_i,    beta::Real = alpha,    b_sim::Integer = a_sim,    kappa::Real = 0.3,    max_num_assets_kurt::Integer = 0,    # Benchmark constraints
     turnover::Real = Inf,    turnover_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    kind_tracking_err::Symbol = :Weights,    tracking_err::Real = Inf,    tracking_err_returns::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    # Asset constraints
     a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),    b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    # Bounds constraints
@@ -445,10 +499,10 @@ Creates an instance of [`Portfolio`](@ref) containing all internal data necessar
 - `short`: whether or not to allow negative weights, i.e. whether a portfolio accepts shorting.
 - `short_u`: absolute value of the sum of all short (negative) weights.
 - `long_u`: sum of all long (positive) weights.
-- `min_number_effective_assets`: 
-  + `!iszero(min_number_effective_assets)`: guarantees that at least this number of assets make significant contributions to the final portfolio weights.
-- `max_number_assets`: if non-zero, guarantees at most this number of assets make non-zero contributions to the final portfolio weights. Requires an optimiser that supports binary variables.
-- `max_number_assets_factor`: scaling factor needed to create a decision variable when `max_number_assets` is non-zero.
+- `num_assets_l`: 
+  + `!iszero(num_assets_l)`: guarantees that at least this number of assets make significant contributions to the final portfolio weights.
+- `num_assets_u`: if non-zero, guarantees at most this number of assets make non-zero contributions to the final portfolio weights. Requires an optimiser that supports binary variables.
+- `num_assets_u_scale`: scaling factor needed to create a decision variable when `num_assets_u` is non-zero.
 - `f_prices`: `(T+1)×Nf` `TimeArray` of factor prices, where the time stamp field is `f_timestamp`, where $(_tstr(:t1)) and $(_ndef(:f2)). If `f_prices` is not empty, then `f_returns`, `f_ret`, `f_timestamps`, `f_assets`, and `latest_prices` are ignored because their respective fields are obtained from `f_prices`.
 - `f_returns`: `T×(Nf+1)` `DataFrame` of factor returns, where $(_tstr(:t1)) and $(_ndef(:f2)), the extra column is `f_timestamp`, which contains the timestamps of the factor returns. If `f_prices` is empty and `f_returns` is not empty, `f_ret`, `f_timestamps`, and `f_assets` are ignored because their respective fields are obtained from `f_returns`.
 - `f_ret`: `T×Nf` matrix of factor returns, where $(_ndef(:f2)). Its value is saved in the `f_returns` field of [`Portfolio`](@ref). If `f_prices` or `f_returns` are not empty, this value is obtained from within the function, where $(_tstr(:t1)) and $(_ndef(:f2)).
@@ -564,9 +618,9 @@ function Portfolio(;
                    short::Bool                                       = false,
                    short_u::Real                                     = 0.2,
                    long_u::Real                                      = 1.0,
-                   min_number_effective_assets::Integer              = 0,
-                   max_number_assets::Integer                        = 0,
-                   max_number_assets_factor::Real                    = 100_000.0,
+                   num_assets_l::Integer                             = 0,
+                   num_assets_u::Integer                             = 0,
+                   num_assets_u_scale::Real                          = 100_000.0,
                    f_prices::TimeArray                               = TimeArray(TimeType[], []),
                    f_returns::DataFrame                              = DataFrame(),
                    f_ret::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
@@ -601,7 +655,7 @@ function Portfolio(;
                    network_sdp::AbstractMatrix{<:Real}               = Matrix{Float64}(undef, 0, 0),
                    network_penalty::Real                             = 0.05,
                    network_ip::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
-                   network_ip_factor::Real                           = 100_000.0,
+                   network_ip_scale::Real                            = 100_000.0,
                    a_vec_cent::AbstractVector{<:Real}                = Vector{Float64}(undef, 0),
                    b_cent::Real                                      = Inf,
                    mu_l::Real                                        = Inf,
@@ -691,9 +745,9 @@ function Portfolio(;
         f_returns = f_ret
     end
 
-    @smart_assert(min_number_effective_assets >= zero(min_number_effective_assets))
-    @smart_assert(max_number_assets >= zero(max_number_assets))
-    @smart_assert(max_number_assets_factor >= zero(max_number_assets_factor))
+    @smart_assert(num_assets_l >= zero(num_assets_l))
+    @smart_assert(num_assets_u >= zero(num_assets_u))
+    @smart_assert(num_assets_u_scale >= zero(num_assets_u_scale))
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
     @smart_assert(zero(beta) < beta_i < beta < one(beta))
@@ -823,11 +877,10 @@ function Portfolio(;
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
 
     return Portfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(short),
-                     typeof(short_u), typeof(long_u), typeof(min_number_effective_assets),
-                     typeof(max_number_assets), typeof(max_number_assets_factor),
-                     typeof(f_assets), typeof(f_timestamps), typeof(f_returns),
-                     typeof(loadings), Union{LoadingsOpt, Nothing},
-                     Union{<:Real, AbstractVector{<:Real}},
+                     typeof(short_u), typeof(long_u), typeof(num_assets_l),
+                     typeof(num_assets_u), typeof(num_assets_u_scale), typeof(f_assets),
+                     typeof(f_timestamps), typeof(f_returns), typeof(loadings),
+                     Union{LoadingsOpt, Nothing}, Union{<:Real, AbstractVector{<:Real}},
                      Union{<:Real, AbstractVector{<:Real}}, typeof(alpha_i), typeof(alpha),
                      typeof(a_sim), typeof(beta_i), typeof(beta), typeof(b_sim),
                      typeof(kappa), typeof(max_num_assets_kurt),
@@ -838,7 +891,7 @@ function Portfolio(;
                      typeof(bl_bench_weights), typeof(a_mtx_ineq), typeof(b_vec_ineq),
                      typeof(risk_budget), typeof(f_risk_budget), typeof(network_method),
                      typeof(network_sdp), typeof(network_penalty), typeof(network_ip),
-                     typeof(network_ip_factor), typeof(a_vec_cent), typeof(b_cent),
+                     typeof(network_ip_scale), typeof(a_vec_cent), typeof(b_cent),
                      typeof(mu_l), typeof(sd_u), typeof(mad_u), typeof(ssd_u),
                      typeof(cvar_u), typeof(rcvar_u), typeof(evar_u), typeof(rvar_u),
                      typeof(wr_u), typeof(rg_u), typeof(flpm_u), typeof(slpm_u),
@@ -857,15 +910,14 @@ function Portfolio(;
                      Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
                      typeof(alloc_fail), typeof(alloc_model)}(assets, timestamps, returns,
                                                               short, short_u, long_u,
-                                                              min_number_effective_assets,
-                                                              max_number_assets,
-                                                              max_number_assets_factor,
-                                                              f_assets, f_timestamps,
-                                                              f_returns, loadings,
-                                                              loadings_opt, msv_target,
-                                                              lpm_target, alpha_i, alpha,
-                                                              a_sim, beta_i, beta, b_sim,
-                                                              kappa, max_num_assets_kurt,
+                                                              num_assets_l, num_assets_u,
+                                                              num_assets_u_scale, f_assets,
+                                                              f_timestamps, f_returns,
+                                                              loadings, loadings_opt,
+                                                              msv_target, lpm_target,
+                                                              alpha_i, alpha, a_sim, beta_i,
+                                                              beta, b_sim, kappa,
+                                                              max_num_assets_kurt,
                                                               rebalance, rebalance_weights,
                                                               turnover, turnover_weights,
                                                               kind_tracking_err,
@@ -876,7 +928,7 @@ function Portfolio(;
                                                               b_vec_ineq, risk_budget,
                                                               f_risk_budget, network_method,
                                                               network_sdp, network_penalty,
-                                                              network_ip, network_ip_factor,
+                                                              network_ip, network_ip_scale,
                                                               a_vec_cent, b_cent, mu_l,
                                                               sd_u, mad_u, ssd_u, cvar_u,
                                                               rcvar_u, evar_u, rvar_u, wr_u,
@@ -1044,8 +1096,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             end
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈
-           (:min_number_effective_assets, :max_number_assets, :max_number_assets_factor)
+    elseif sym ∈ (:num_assets_l, :num_assets_u, :num_assets_u_scale)
         @smart_assert(val >= zero(val))
     elseif sym ∈ (:kurt, :skurt, :cov_sigma)
         if !isempty(val)
@@ -1076,8 +1127,8 @@ end
 function Base.deepcopy(obj::Portfolio)
     return Portfolio{typeof(obj.assets), typeof(obj.timestamps), typeof(obj.returns),
                      typeof(obj.short), typeof(obj.short_u), typeof(obj.long_u),
-                     typeof(obj.min_number_effective_assets), typeof(obj.max_number_assets),
-                     typeof(obj.max_number_assets_factor), typeof(obj.f_assets),
+                     typeof(obj.num_assets_l), typeof(obj.num_assets_u),
+                     typeof(obj.num_assets_u_scale), typeof(obj.f_assets),
                      typeof(obj.f_timestamps), typeof(obj.f_returns), typeof(obj.loadings),
                      Union{LoadingsOpt, Nothing}, Union{<:Real, AbstractVector{<:Real}},
                      Union{<:Real, AbstractVector{<:Real}}, typeof(obj.alpha_i),
@@ -1092,7 +1143,7 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.risk_budget), typeof(obj.f_risk_budget),
                      typeof(obj.network_method), typeof(obj.network_sdp),
                      typeof(obj.network_penalty), typeof(obj.network_ip),
-                     typeof(obj.network_ip_factor), typeof(obj.a_vec_cent),
+                     typeof(obj.network_ip_scale), typeof(obj.a_vec_cent),
                      typeof(obj.b_cent), typeof(obj.mu_l), typeof(obj.sd_u),
                      typeof(obj.mad_u), typeof(obj.ssd_u), typeof(obj.cvar_u),
                      typeof(obj.rcvar_u), typeof(obj.evar_u), typeof(obj.rvar_u),
@@ -1118,9 +1169,9 @@ function Base.deepcopy(obj::Portfolio)
                                               deepcopy(obj.timestamps),
                                               deepcopy(obj.returns), deepcopy(obj.short),
                                               deepcopy(obj.short_u), deepcopy(obj.long_u),
-                                              deepcopy(obj.min_number_effective_assets),
-                                              deepcopy(obj.max_number_assets),
-                                              deepcopy(obj.max_number_assets_factor),
+                                              deepcopy(obj.num_assets_l),
+                                              deepcopy(obj.num_assets_u),
+                                              deepcopy(obj.num_assets_u_scale),
                                               deepcopy(obj.f_assets),
                                               deepcopy(obj.f_timestamps),
                                               deepcopy(obj.f_returns),
@@ -1150,7 +1201,7 @@ function Base.deepcopy(obj::Portfolio)
                                               deepcopy(obj.network_sdp),
                                               deepcopy(obj.network_penalty),
                                               deepcopy(obj.network_ip),
-                                              deepcopy(obj.network_ip_factor),
+                                              deepcopy(obj.network_ip_scale),
                                               deepcopy(obj.a_vec_cent),
                                               deepcopy(obj.b_cent), deepcopy(obj.mu_l),
                                               deepcopy(obj.sd_u), deepcopy(obj.mad_u),

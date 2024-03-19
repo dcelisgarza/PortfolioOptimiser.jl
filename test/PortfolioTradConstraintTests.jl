@@ -3273,13 +3273,13 @@ end
     opt = OptimiseOpt(; obj = :Min_Risk, rm = rm, l = l, rf = rf)
 
     w1 = optimise!(portfolio, opt)
-    portfolio.min_number_effective_assets = 8
+    portfolio.num_assets_l = 8
     w2 = optimise!(portfolio, opt)
 
-    portfolio.min_number_effective_assets = 0
+    portfolio.num_assets_l = 0
     opt.obj = :Sharpe
     w3 = optimise!(portfolio, opt)
-    portfolio.min_number_effective_assets = 6
+    portfolio.num_assets_l = 6
     w4 = optimise!(portfolio, opt)
 
     @test count(w2.weights .>= 2e-2) >= 8
@@ -3355,15 +3355,15 @@ end
     rm = :SSD
     opt = OptimiseOpt(; obj = :Min_Risk, rm = rm, l = l, rf = rf)
     w1 = optimise!(portfolio, opt)
-    portfolio.max_number_assets = 5
+    portfolio.num_assets_u = 5
     w2 = optimise!(portfolio, opt)
     sort!(w1, :weights; rev = true)
     sort!(w2, :weights; rev = true)
 
-    portfolio.max_number_assets = 0
+    portfolio.num_assets_u = 0
     opt.obj = :Sharpe
     w3 = optimise!(portfolio, opt)
-    portfolio.max_number_assets = 4
+    portfolio.num_assets_u = 4
     w4 = optimise!(portfolio, opt)
     sort!(w3, :weights; rev = true)
     sort!(w4, :weights; rev = true)
@@ -3375,15 +3375,15 @@ end
     opt.obj = :Min_Risk
     opt.rm = rm
     w5 = optimise!(portfolio, opt)
-    portfolio.max_number_assets = 7
+    portfolio.num_assets_u = 7
     w6 = optimise!(portfolio, opt)
     sort!(w5, :weights; rev = true)
     sort!(w6, :weights; rev = true)
 
-    portfolio.max_number_assets = 0
+    portfolio.num_assets_u = 0
     opt.obj = :Sharpe
     w7 = optimise!(portfolio, opt)
-    portfolio.max_number_assets = 5
+    portfolio.num_assets_u = 5
     w8 = optimise!(portfolio, opt)
     sort!(w7, :weights; rev = true)
     sort!(w8, :weights; rev = true)
