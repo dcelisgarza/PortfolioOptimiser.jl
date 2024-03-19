@@ -39,7 +39,7 @@ portfolio = Portfolio(; prices = prices, solvers = solvers, alloc_solvers = allo
 
 # I like to minimise my drawdown risk so I like to minimise the relativistic drawdown at risk (`:RDaR`) with default parameters. Say we want to use only the top `x%` least risky assets. Since we only have 20 assets, we'll make this the top `25%`. We can do this by setting the maximum number of assets to equal the number of assets divided by two.
 
-portfolio.max_number_assets = div(length(portfolio.assets), 4);
+portfolio.num_assets_u = div(length(portfolio.assets), 4);
 
 # Because this is a drawdown risk measure, and we're minimising the risk, we don't need to compute any statistics. We can optimise directly.
 
