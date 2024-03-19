@@ -1321,8 +1321,8 @@ end
 
 function _setup_weights(portfolio, obj, N)
     num_assets_u = portfolio.num_assets_u
-    factor_mna = portfolio.num_assets_u_scale
-    factor_nip = portfolio.network_ip_scale
+    scale_nau = portfolio.num_assets_u_scale
+    scale_nau = portfolio.network_ip_scale
     short = portfolio.short
     short_u = portfolio.short_u
     long_u = portfolio.long_u
@@ -1335,47 +1335,46 @@ function _setup_weights(portfolio, obj, N)
     # Boolean variables max number of assets.
     if num_assets_u > 0
         if obj == :Sharpe
-            @variable(model, tass_bin[1:N], binary = true)
-            @variable(model, tass_bin_sharpe[1:N] >= 0)
+            @variable(model, tnau_bin[1:N], binary = true)
+            @variable(model, tnau_bin_sharpe[1:N] >= 0)
         else
-            @variable(model, tass_bin[1:N], binary = true)
+            @variable(model, tnau_bin[1:N], binary = true)
         end
     end
     if network_method == :IP
         if obj == :Sharpe
-            @variable(model, tass_bin2[1:N], binary = true)
-            @variable(model, tass_bin_sharpe2[1:N] >= 0)
+            @variable(model, tnau_bin2[1:N], binary = true)
+            @variable(model, tnau_bin_sharpe2[1:N] >= 0)
         else
-            @variable(model, tass_bin2[1:N], binary = true)
+            @variable(model, tnau_bin2[1:N], binary = true)
         end
     end
 
     # Weight constraints.
     if obj == :Sharpe
         @constraint(model, sum(model[:w]) == sum_short_long * model[:k])
-        if haskey(model, :tass_bin)
-            @constraint(model, tass_bin_sharpe .<= model[:k])
-            @constraint(model, tass_bin_sharpe .<= factor_mna * tass_bin)
-            @constraint(model,
-                        tass_bin_sharpe .>= model[:k] .- factor_mna * (1 .- tass_bin))
-            @constraint(model, model[:w] .<= long_u * tass_bin_sharpe)
+        if haskey(model, :tnau_bin)
+            @constraint(model, tnau_bin_sharpe .<= model[:k])
+            @constraint(model, tnau_bin_sharpe .<= scale_nau * tnau_bin)
+            @constraint(model, tnau_bin_sharpe .>= model[:k] .- scale_nau * (1 .- tnau_bin))
+            @constraint(model, model[:w] .<= long_u * tnau_bin_sharpe)
         end
 
-        if haskey(model, :tass_bin2)
-            @constraint(model, tass_bin_sharpe2 .<= model[:k])
-            @constraint(model, tass_bin_sharpe2 .<= factor_nip * tass_bin2)
+        if haskey(model, :tnau_bin2)
+            @constraint(model, tnau_bin_sharpe2 .<= model[:k])
+            @constraint(model, tnau_bin_sharpe2 .<= scale_nau * tnau_bin2)
             @constraint(model,
-                        tass_bin_sharpe2 .>= model[:k] .- factor_nip * (1 .- tass_bin2))
-            @constraint(model, model[:w] .<= long_u * tass_bin_sharpe2)
+                        tnau_bin_sharpe2 .>= model[:k] .- scale_nau * (1 .- tnau_bin2))
+            @constraint(model, model[:w] .<= long_u * tnau_bin_sharpe2)
         end
 
         # Maximum number of assets constraints.
         if num_assets_u > 0
-            @constraint(model, sum(tass_bin) <= num_assets_u)
+            @constraint(model, sum(tnau_bin) <= num_assets_u)
         end
 
         if network_method == :IP
-            @constraint(model, unique(network_ip + I; dims = 1) * tass_bin2 .<= 1)
+            @constraint(model, unique(network_ip + I; dims = 1) * tnau_bin2 .<= 1)
         end
 
         if short == false
@@ -1393,31 +1392,31 @@ function _setup_weights(portfolio, obj, N)
 
             # Maximum number of assets constraints.
             if num_assets_u > 0
-                @constraint(model, model[:w] .>= -short_u * tass_bin_sharpe)
+                @constraint(model, model[:w] .>= -short_u * tnau_bin_sharpe)
             end
 
             if network_method == :IP
-                @constraint(model, model[:w] .>= -short_u * tass_bin_sharpe2)
+                @constraint(model, model[:w] .>= -short_u * tnau_bin_sharpe2)
             end
         end
     else
         @constraint(model, sum(model[:w]) == sum_short_long)
 
-        if haskey(model, :tass_bin)
-            @constraint(model, model[:w] .<= long_u * tass_bin)
+        if haskey(model, :tnau_bin)
+            @constraint(model, model[:w] .<= long_u * tnau_bin)
         end
 
-        if haskey(model, :tass_bin2)
-            @constraint(model, model[:w] .<= long_u * tass_bin2)
+        if haskey(model, :tnau_bin2)
+            @constraint(model, model[:w] .<= long_u * tnau_bin2)
         end
 
         # Maximum number of assets constraints.
         if num_assets_u > 0
-            @constraint(model, sum(tass_bin) <= num_assets_u)
+            @constraint(model, sum(tnau_bin) <= num_assets_u)
         end
 
         if network_method == :IP
-            @constraint(model, unique(network_ip + I; dims = 1) * tass_bin2 .<= 1)
+            @constraint(model, unique(network_ip + I; dims = 1) * tnau_bin2 .<= 1)
         end
 
         if short == false
@@ -1435,11 +1434,11 @@ function _setup_weights(portfolio, obj, N)
 
             # Maximum number of assets constraints.
             if num_assets_u > 0
-                @constraint(model, model[:w] .>= -short_u * tass_bin)
+                @constraint(model, model[:w] .>= -short_u * tnau_bin)
             end
 
             if network_method == :IP
-                @constraint(model, model[:w] .>= -short_u * tass_bin2)
+                @constraint(model, model[:w] .>= -short_u * tnau_bin2)
             end
         end
     end
@@ -1489,19 +1488,19 @@ end
 function _setup_min_number_effective_assets(portfolio, obj)
     nal = portfolio.num_assets_l
 
-    if nal < one(nal)
+    if iszero(nal)
         return nothing
     end
 
     model = portfolio.model
 
-    @variable(model, tmnea >= 0)
-    @constraint(model, [tmnea; model[:w]] ∈ SecondOrderCone())
+    @variable(model, tnal >= 0)
+    @constraint(model, [tnal; model[:w]] ∈ SecondOrderCone())
 
     if obj == :Sharpe
-        @constraint(model, tmnea * sqrt(nal) <= model[:k])
+        @constraint(model, tnal * sqrt(nal) <= model[:k])
     else
-        @constraint(model, tmnea * sqrt(nal) <= 1)
+        @constraint(model, tnal * sqrt(nal) <= 1)
     end
 
     return nothing

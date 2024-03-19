@@ -129,18 +129,21 @@ end
 ```
 Structure for portfolio optimisation. 
     
-Some of these only have an effect when certain fields from [`OptimiseOpt`](@ref) take on a specific value:
+Some of these require external data from [`OptimiseOpt`](@ref) given to the [`optimise!`](@ref) function:
 
   - `type`: one of [`PortTypes`](@ref).
   - `rm`: one of [`RiskMeasures`](@ref).
   - `class`: one of [`PortClasses`](@ref).
   - `hist`: one of [`BLHist`](@ref).
+  - `rf`: risk free rate.
 
-In order for a constraint to be applied, all of its constituents must be appropriately defined according to their type:
+In order for a parameter to be considered "appropriately defined", it must meet the following criteria:
 
   - `:Real`: must be finite.
   - `:Integer`: must be non-zero.
   - `:AbstractArray`: must be non-empty and of the proper shape.
+
+Constraints are set if and only if all their constituents are appropriately defined.
 
 Some constraints define decision variables using scaling factors. The scaling factor should be large enough to be outside of the problem's scale, but not too large as to incur numerical instabilities. Solution quality may be improved by changing the scaling factor.
 
@@ -167,65 +170,70 @@ Some constraints define decision variables using scaling factors. The scaling fa
 
 ## Risk parameters
 
-- `msv_target`: 
-  + `rm ∈ (:MAD, :SSD) || isfinite(mad_u) || isfinite(ssd_u)`: target value for Absolute Deviation and Semivariance risk measures.
-    * `isa(msv_target, Real) && isinf(msv_target) || isa(msv_target, AbstractVector) && isempty(msv_target)`: the target for each column of the `returns` matrix is the expected returns vector `mu`.
-    * else: the target for each column of the `returns` matrix is the broadcasted value of `msv_target`.
-- `lpm_target`: 
-  + `rm ∈ (:FLPM, :SLPM) || isfinite(flpm_u) || isfinite(slpm_u)`: target value for the First and Second Lower Partial Moment risk measures. 
-    * `isa(lpm_target, Real) && isinf(lpm_target) || isa(lpm_target, AbstractVector) && isempty(lpm_target)`: the target for each column of the `returns` matrix is the risk-free rate taken from the `opt` argument of [optimise!](@ref).
-    * else: the target for each column of the `returns` matrix is the broadcasted value of `lpm_target`.
-- `alpha_i`:
-  + `rm ∈ (:TG, :RTG)`: initial significance level of losses, `0 < alpha_i < alpha < 1`.
-- `a_sim`: 
-  + `rm ∈ (:TG, :RTG)`: number of CVaRs to approximate the losses, `a_sim > 0`.
-- `alpha`:
-  + `rm ∈ (:VaR, :CVaR, :EVaR, :RVaR, :RCVaR, :TG, :RTG, :DaR, :CDaR, :EDaR, :RDaR, :DaR_r, :CDaR_r, :EDaR_r, :RDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
-- `beta_i`:
-  + `rm == :RTG`: initial significance level of gains, `0 < beta_i < beta < 1`.
-- `b_sim`: 
-  + `rm == :RTG`: number of CVaRs to approximate the gains, `b_sim > 0`.
-- `beta`:
-  + `rm ∈ (:RCVaR, :RTG)`: significance level of gains, `beta ∈ (0, 1)`.
-- `kappa`: 
-  + `rm ∈ (:RVaR, :RDaR, :RDaR_r)`: relativistic deformation parameter.
-- `max_num_assets_kurt`:
-  + `iszero(max_num_assets_kurt)`: always use the full kurtosis model.
-  + `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
+  - `msv_target`: 
+    + `rm ∈ (:MAD, :SSD) || isfinite(mad_u) || isfinite(ssd_u)`: target value for Absolute Deviation and Semivariance risk measures.
+      * `msv_target` is appropriately defined: the target for each column of the `returns` matrix is the broadcasted value of `msv_target`.
+      * else: the target for each column of the `returns` matrix is the expected returns vector `mu`.
+  - `lpm_target`: 
+    + `rm ∈ (:FLPM, :SLPM) || isfinite(flpm_u) || isfinite(slpm_u)`: target value for the First and Second Lower Partial Moment risk measures. 
+      * `lpm_target` is appropriately defined: the target for each column of the `returns` matrix is the broadcasted value of `lpm_target`.
+      * else: the target for each column of the `returns` matrix is `rf`.
+  - `alpha_i`:
+    + `rm ∈ (:TG, :RTG)`: initial significance level of losses, `0 < alpha_i < alpha < 1`.
+  - `a_sim`: 
+    + `rm ∈ (:TG, :RTG)`: number of CVaRs to approximate the losses, `a_sim > 0`.
+  - `alpha`:
+    + `rm ∈ (:VaR, :CVaR, :EVaR, :RVaR, :RCVaR, :TG, :RTG, :DaR, :CDaR, :EDaR, :RDaR, :DaR_r, :CDaR_r, :EDaR_r, :RDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
+  - `beta_i`:
+    + `rm == :RTG`: initial significance level of gains, `0 < beta_i < beta < 1`.
+  - `b_sim`: 
+    + `rm == :RTG`: number of CVaRs to approximate the gains, `b_sim > 0`.
+  - `beta`:
+    + `rm ∈ (:RCVaR, :RTG)`: significance level of gains, `beta ∈ (0, 1)`.
+  - `kappa`: 
+    + `rm ∈ (:RVaR, :RDaR, :RDaR_r)`: relativistic deformation parameter.
+  - `max_num_assets_kurt`:
+    + `iszero(max_num_assets_kurt)`: use the full kurtosis model.
+    + `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
 
 ## Benchmark constraints
 
-Only relevant when `type ∈ (:Trad, :WC)`. The constraints are only applied if all the prerequisites are properly defined, this means that scalars must be finite and vectors must be non-empty and of the appropriate length.
+Only relevant when `type ∈ (:Trad, :WC)`.
 
-- `rebalance`: the rebalancing penalty is somewhat of an inverse of the `turnover` constraint. It defines a penalty for the objective function that penalises deviations away from a target weights vector.
-  + `isa(turnover, Real)`: all assets have the same rebalancing penalty.
-  + `isa(turnover, AbstractVector)`: each asset has its own rebalancing penalty.
-- `rebalance_weights`: define the target weights for the rebalancing penalty.
+  - `rebalance`: the rebalancing penalty is somewhat of an inverse of the `turnover` constraint. It defines a penalty for the objective function that penalises deviations away from a target weights vector.
+    + `isa(turnover, Real)`: all assets have the same rebalancing penalty.
+    + `isa(turnover, AbstractVector)`: each asset has its own rebalancing penalty.
+  - `rebalance_weights`: define the target weights for the rebalancing penalty.
+
 The rebalance penalty is defined as
 ```math
 r_{i} \\rvert w_{i} - \\hat{w}_{i} \\lvert\\, \\forall\\, i \\in N\\,.
 ```
 Where ``r_i`` is the rebalancing coefficient, ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, and $(_ndef(:a3)).
-- `turnover`: the turnover constraint is somewhat of an inverse of the `rebalance` penalty.
-  + `isa(turnover, Real)`: all assets have the same turnover value.
-  + `isa(turnover, AbstractVector)`: each asset has its own turnover value.
-- `turnover_weights`: define the target weights for the turnover constraint.
+
+  - `turnover`: the turnover constraint is somewhat of an inverse of the `rebalance` penalty.
+    + `isa(turnover, Real)`: all assets have the same turnover value.
+    + `isa(turnover, AbstractVector)`: each asset has its own turnover value.
+  - `turnover_weights`: define the target weights for the turnover constraint.
+
 The turnover constraint is defined as
 ```math
 \\lvert w_{i} - \\hat{w}_{i}\\rvert \\leq t_{i} \\, \\forall\\, i \\in N\\,.
 ```
 Where ``w_i`` is the optimal weight for the `i'th` asset, ``\\hat{w}_i`` target weight for the `i'th` asset, ``t_{i}`` is the value of the turnover for the `i'th` asset, and $(_ndef(:a3)).
-- `kind_tracking_err`: kind of tracking error from [`TrackingErrKinds`](@ref).
-- `tracking_err`:
-  + `!(kind_tracking_err == :None || isinf(tracking_err) || isfinite(tracking_err) && (kind_tracking_err == :Weights && isempty(tracking_err_weights) || kind_tracking_err == :Returns && isempty(tracking_err_returns)))`: define the value of the tracking error.
-- `tracking_err_returns`: `T×1` vector of benchmark returns for the tracking error constraint as per [`TrackingErrKinds`](@ref), where $(_tstr(:t1)).
-- `tracking_err_weights`: `Na×1` vector of weights used for computing the benchmark vector for the tracking error constraint as per [`TrackingErrKinds`](@ref), where $(_ndef(:a2)).
+
+  - `kind_tracking_err`: kind of tracking error from [`TrackingErrKinds`](@ref).
+  - `tracking_err`: define the value of the tracking error.
+  - `tracking_err_returns`: `T×1` vector of benchmark returns for the tracking error constraint as per [`TrackingErrKinds`](@ref), where $(_tstr(:t1)).
+  - `tracking_err_weights`: `Na×1` vector of weights used for computing the benchmark vector for the tracking error constraint as per [`TrackingErrKinds`](@ref), where $(_ndef(:a2)).
+
 The tracking error constraint is defined as
 ```math
 \\sqrt{\\dfrac{1}{T-1}\\sum\\limits_{i=1}^{T}\\left(\\mathbf{X}_{i} \\bm{w} - b_{i}\\right)^{2}}\\leq t\\,.
 ```
 Where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and $(_tstr(:t2)).
-- `bl_bench_weights`: `Na×1` vector of benchmark weights for Black Litterman models, where $(_ndef(:a2)).
+
+  - `bl_bench_weights`: `Na×1` vector of benchmark weights for Black Litterman models, where $(_ndef(:a2)).
 
 ## Asset constraints
 
@@ -253,7 +261,7 @@ Only relevant when `type ∈ (:Trad, :WC)`.
 - `network_sdp`: 
   + `network_method == :SDP`: network matrix.
 - `network_penalty`:
-  + `network_method == :SDP` and `type == :Trad && rm != :SD`: weight of the SDP network constraint.
+  + `network_method == :SDP && rm != :SD`: weight of the SDP network constraint.
 - `network_ip`: 
   + `network_method == :IP`: network matrix.
 - `network_ip_scale`:
