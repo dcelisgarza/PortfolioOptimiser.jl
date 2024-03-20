@@ -1097,7 +1097,7 @@ Structure and keyword constructor for storing the options to optimising portfoli
   - `near_opt`:
     + `true`: use the near optimal centering formulation. May not work with all risk measures depending on the solver. $(_solver_reqs("`MOI.ExponentialCone`"))
     + `false`: normal optimisation.
-  - `hist`: choice of expected returns vector and covariance matrix from [`BLHist`](@ref).
+  - `hist`: choice of expected returns vector and covariance matrix from [`ClassHist`](@ref).
   - `rf`: risk-free rate.
   - `l`: risk aversion parameter when `obj == :Utility`.
   - `rrp_penalty`: 

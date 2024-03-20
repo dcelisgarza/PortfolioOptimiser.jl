@@ -134,17 +134,17 @@ Some of these require external data from [`OptimiseOpt`](@ref) given to the [`op
   - `type`: one of [`PortTypes`](@ref).
   - `rm`: one of [`RiskMeasures`](@ref).
   - `class`: one of [`PortClasses`](@ref).
-  - `hist`: one of [`BLHist`](@ref).
+  - `hist`: one of [`ClassHist`](@ref).
   - `rf`: risk free rate.
   - `owa_approx`: flag for using the approximate OWA formulation.
 
-In order for a parameter to be considered "appropriately defined", it must meet the following criteria:
+Constraints are set if and only if all their variables are appropriately defined. 
+    
+In order for a variable to be considered "appropriately defined", it must meet the following criteria:
 
   - `:Real`: must be finite.
   - `:Integer`: must be non-zero.
   - `:AbstractArray`: must be non-empty and of the proper shape.
-
-Constraints are set if and only if all their constituents are appropriately defined.
 
 Some constraints define decision variables using scaling factors. The scaling factor should be large enough to be outside of the problem's scale, but not too large as to incur numerical instabilities. Solution quality may be improved by changing the scaling factor.
 
@@ -251,7 +251,7 @@ Where ``\\mathbf{A}`` is the matrix of linear constraints `a_mtx_ineq`, ``\\bm{w
 
 ## Risk budget constraints
 
-Only relevant when `type ∈ (:RP, :RRP)`. [`PortClasses`](@ref) and [`BLHist`](@ref) define which one to use when calling [`optimise!`](@ref).
+Only relevant when `type ∈ (:RP, :RRP)`. [`PortClasses`](@ref) and [`ClassHist`](@ref) define which one to use when calling [`optimise!`](@ref).
 
   - `risk_budget`: `Na×1` asset risk budget constraint vector for risk measure `rm`, where $(_ndef(:a2)). Asset `i` contributes the amount of `rm` risk in position `risk_budget[i]`.
   - `f_risk_budget`: `Nf×1` factor risk budget constraint vector for risk measure `rm`, where $(_ndef(:f2)). Factor `i` contributes the amount of `rm` risk in position `f_risk_budget[i]`.
@@ -322,12 +322,21 @@ Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
 
 ## Model statistics
 
+### Asset statistics
+
+These are the default statistics. See [`PortClasses`](@ref) and [`ClassHist`](@ref) for details.
+
   - `mu`: `Na×1` asset expected returns vector, where $(_ndef(:a2)).
   - `cov`: `Na×Na` asset covariance matrix, where $(_ndef(:a2)).
   - `kurt`: `(Na^2)×(Na^2)` asset cokurtosis matrix, where $(_ndef(:a2)).
   - `skurt`: `(Na^2)×(Na^2)` asset semi cokurtosis matrix, where $(_ndef(:a2)).
   - `L_2`: `(Na^2)×((Na^2 + Na)/2)` elimination matrix, where $(_ndef(:a2)).
   - `S_2`: `((Na^2 + Na)/2)×(Na^2)` summation matrix, where $(_ndef(:a2)).
+
+### Adjusted asset statistics
+
+Only relevant for certain combinations of [`PortClasses`](@ref) and [`ClassHist`](@ref).
+
   - `f_mu`: `Nf×1` factor expected returns vector, where $(_ndef(:f2)).
   - `f_cov`: `Nf×Nf` factor covariance matrix, where $(_ndef(:f2)).
   - `fm_returns`: `T×Na` matrix of factor adjusted asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)).
@@ -337,6 +346,11 @@ Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
   - `bl_cov`: `Na×Na` Black-Litterman adjusted asset covariance matrix, where $(_ndef(:a2)).
   - `blfm_mu`: `Na×1` Black-Litterman factor model adjusted asset expected returns vector, where $(_ndef(:a2)).
   - `blfm_cov`: `Na×Na` Black-Litterman factor model adjusted asset covariance matrix, where $(_ndef(:a2)).
+
+### Worst case statistics
+
+Only relevant when `type == :WC`.
+
   - `cov_l`: `Na×Na` worst case lower bound for the asset covariance matrix, where $(_ndef(:a2)).
   - `cov_u`: `Na×Na` worst case upper bound for the asset covariance matrix, where $(_ndef(:a2)).
   - `cov_mu`: `Na×Na` matrix of the estimation errors of the asset expected returns vector for elliptical sets in worst case optimisation, where $(_ndef(:a2)).
@@ -347,26 +361,26 @@ Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
 
 ## Optimal portfolios
 
-  - `optimal`: $_edst for storing optimal portfolios.
-  - `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures.
-  - `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures.
-  - `frontier`: $_edst containing points in the efficient frontier for given risk measures.
+  - `optimal`: collection capable of storing key value pairs for storing optimal portfolios.
+  - `z`: collection capable of storing key value pairs for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures.
+  - `limits`: collection capable of storing key value pairs for storing the minimal and maximal risk portfolios for a given risk measure.
+  - `frontier`: collection capable of storing key value pairs for containing points in the efficient frontier for a given risk measure.
   
 ## Solutions
 
   $(_solver_desc("risk measure `JuMP` model."))
-  - `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
-  - `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
-  - `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`optimise!`](@ref)"))
+  - `opt_params`: collection capable of storing key value pairs for storing parameters used for optimising.
+  - `fail`: collection capable of storing key value pairs for storing failed optimisation attempts.
+  - `model`: `JuMP.Model()` for optimising a portfolio.
 
 ## Allocation
 
-  - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
-  - `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
+  - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)).
+  - `alloc_optimal`: collection capable of storing key value pairs for storing optimal portfolios after allocating discrete stocks.
   $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
-  - `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
-  - `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
-  - `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
+  - `alloc_params`: collection capable of storing key value pairs for storing parameters used for optimising the portfolio allocation.
+  - `alloc_fail`: collection capable of storing key value pairs for storing failed optimisation attempts.
+  - `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation.
 """
 mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
                          msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, rb, rbw, to, tobw, kte,

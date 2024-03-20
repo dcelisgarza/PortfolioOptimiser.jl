@@ -692,6 +692,6 @@ function f(rpe, warm)
     return rpew, repsw
 end
 
-r = collect(range(; start = 7.5, stop = 8.5, length = 2))
-f(r, 2)
+r = collect(range(; start = 7.5, stop = 8, length = 2))
+f(r, 1)
 display(r * 10)

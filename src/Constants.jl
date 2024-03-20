@@ -537,7 +537,7 @@ PortClasses = (:Classic, :FM, :BL, :BLFM, :FC)
 
 Available portfolio classes.
 
-Together with [`BLHist`](@ref), they are used to decide which version of ``\\bm{\\mu}``, ``\\mathbf{\\Sigma}`` and ``\\mathbf{X}`` will be used in the optimisation.
+Together with [`ClassHist`](@ref), they are used to decide which version of ``\\bm{\\mu}``, ``\\mathbf{\\Sigma}`` and ``\\mathbf{X}`` will be used in the optimisation.
 
 When optimising with `type == :RP` from [`PortTypes`](@ref) they have extra behaviours.
 
@@ -791,7 +791,7 @@ const HCPortTypes = (:HRP, :HERC, :NCO)
 
 """
 ```julia
-BLHist = (1, 2, 3)
+ClassHist = (1, 2, 3)
 ```
 
 Choice of estimate of the covariance matrix ``\\mathbf{\\Sigma}``, means vector ``\\bm{\\mu}``, and returns matrix ``\\mathbf{X}`` for optimising with different [`PortClasses`](@ref). Each estimate is subscripted by:
@@ -803,7 +803,7 @@ Choice of estimate of the covariance matrix ``\\mathbf{\\Sigma}``, means vector 
 
 The choices are:
 
-  - `:Classic || :FC`: `BLHist` has no effect, always use ``\\bm{\\mu}``, ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
+  - `:Classic || :FC`: `ClassHist` has no effect, always use ``\\bm{\\mu}``, ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
 
   - `:FM`: ``\\bm{\\mu}_{\\mathrm{fm}}``.
 
@@ -821,7 +821,7 @@ The choices are:
       + `2`: ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
       + `3`: ``\\mathbf{\\Sigma}_\\mathrm{fm}``, ``\\mathbf{X}_\\mathrm{fm}``.
 """
-const BLHist = (1, 2, 3)
+const ClassHist = (1, 2, 3)
 
 """
 ```julia

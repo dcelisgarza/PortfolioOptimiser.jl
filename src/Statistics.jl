@@ -204,7 +204,7 @@ function ltdi_mtx(x, alpha = 0.05)
     return Matrix(Symmetric(mtx, :U))
 end
 
-function _covgerber0_norm(x, mean_vec, std_vec, threshold)
+function _gerber0_norm(x, mean_vec, std_vec, threshold)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
@@ -232,7 +232,7 @@ function _covgerber0_norm(x, mean_vec, std_vec, threshold)
     return mtx
 end
 
-function _covgerber0(x, std_vec, threshold)
+function _gerber0(x, std_vec, threshold)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
@@ -260,7 +260,7 @@ function _covgerber0(x, std_vec, threshold)
     return mtx
 end
 
-function covgerber0(x, opt::GerberOpt = GerberOpt(;))
+function gerber0(x, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
     normalise = opt.normalise
 
@@ -274,9 +274,9 @@ function covgerber0(x, opt::GerberOpt = GerberOpt(;))
         mean_args = opt.mean_func.args
         mean_kwargs = opt.mean_func.kwargs
         mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
-        _covgerber0_norm(x, mean_vec, std_vec, threshold)
+        _gerber0_norm(x, mean_vec, std_vec, threshold)
     else
-        _covgerber0(x, std_vec, threshold)
+        _gerber0(x, std_vec, threshold)
     end
 
     posdef_fix!(mtx, opt.posdef; msg = "Gerber0 Covariance ")
@@ -284,7 +284,7 @@ function covgerber0(x, opt::GerberOpt = GerberOpt(;))
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
-function _covgerber1_norm(x, mean_vec, std_vec, threshold)
+function _gerber1_norm(x, mean_vec, std_vec, threshold)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
@@ -314,7 +314,7 @@ function _covgerber1_norm(x, mean_vec, std_vec, threshold)
     return mtx
 end
 
-function _covgerber1(x, std_vec, threshold)
+function _gerber1(x, std_vec, threshold)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
@@ -344,7 +344,7 @@ function _covgerber1(x, std_vec, threshold)
     return mtx
 end
 
-function covgerber1(x, opt::GerberOpt = GerberOpt(;))
+function gerber1(x, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
     normalise = opt.normalise
 
@@ -358,15 +358,15 @@ function covgerber1(x, opt::GerberOpt = GerberOpt(;))
         mean_args = opt.mean_func.args
         mean_kwargs = opt.mean_func.kwargs
         mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
-        _covgerber1_norm(x, mean_vec, std_vec, threshold)
+        _gerber1_norm(x, mean_vec, std_vec, threshold)
     else
-        _covgerber1(x, std_vec, threshold)
+        _gerber1(x, std_vec, threshold)
     end
 
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
-function _covgerber2_norm(x, mean_vec, std_vec, threshold)
+function _gerber2_norm(x, mean_vec, std_vec, threshold)
     T, N = size(x)
     U = Matrix{Bool}(undef, T, N)
     D = Matrix{Bool}(undef, T, N)
@@ -390,7 +390,7 @@ function _covgerber2_norm(x, mean_vec, std_vec, threshold)
     return H ./ (h * transpose(h))
 end
 
-function _covgerber2(x, std_vec, threshold)
+function _gerber2(x, std_vec, threshold)
     T, N = size(x)
     U = Matrix{Bool}(undef, T, N)
     D = Matrix{Bool}(undef, T, N)
@@ -414,7 +414,7 @@ function _covgerber2(x, std_vec, threshold)
     return H ./ (h * transpose(h))
 end
 
-function covgerber2(x, opt::GerberOpt = GerberOpt(;))
+function gerber2(x, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
     normalise = opt.normalise
 
@@ -428,9 +428,9 @@ function covgerber2(x, opt::GerberOpt = GerberOpt(;))
         mean_args = opt.mean_func.args
         mean_kwargs = opt.mean_func.kwargs
         mean_vec = vec(mean_func(x, mean_args...; mean_kwargs...))
-        _covgerber2_norm(x, mean_vec, std_vec, threshold)
+        _gerber2_norm(x, mean_vec, std_vec, threshold)
     else
-        _covgerber2(x, std_vec, threshold)
+        _gerber2(x, std_vec, threshold)
     end
 
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
@@ -458,7 +458,7 @@ function _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
     return kappa / (1 + gamma^n)
 end
 
-function _covsb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+function _sb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
@@ -489,7 +489,7 @@ function _covsb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function _covsb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+function _sb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
@@ -521,7 +521,7 @@ function _covsb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function covsb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
+function sb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     c1 = sbopt.c1
     c2 = sbopt.c2
     c3 = sbopt.c3
@@ -541,9 +541,9 @@ function covsb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
     mtx = if normalise
-        _covsb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+        _sb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     else
-        _covsb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+        _sb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     end
 
     posdef_fix!(mtx, gerberopt.posdef; msg = "SB0 Covariance ")
@@ -551,7 +551,7 @@ function covsb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
-function _covsb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+function _sb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
@@ -586,7 +586,7 @@ function _covsb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function _covsb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+function _sb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
@@ -620,7 +620,7 @@ function _covsb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function covsb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
+function sb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     c1 = sbopt.c1
     c2 = sbopt.c2
     c3 = sbopt.c3
@@ -640,9 +640,9 @@ function covsb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
     mtx = if normalise
-        _covsb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+        _sb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     else
-        _covsb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+        _sb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     end
 
     posdef_fix!(mtx, gerberopt.posdef; msg = "SB1 Covariance ")
@@ -650,7 +650,7 @@ function covsb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
-function _covgerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+function _gerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
@@ -688,7 +688,7 @@ function _covgerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function _covgerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+function _gerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
@@ -726,7 +726,7 @@ function _covgerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function covgerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
+function gerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     c1 = sbopt.c1
     c2 = sbopt.c2
     c3 = sbopt.c3
@@ -746,9 +746,9 @@ function covgerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
     mtx = if normalise
-        _covgerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+        _gerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     else
-        _covgerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+        _gerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     end
 
     posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber SB0 Covariance ")
@@ -756,7 +756,7 @@ function covgerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
-function _covgerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+function _gerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
@@ -799,7 +799,7 @@ function _covgerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function _covgerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+function _gerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
@@ -842,7 +842,7 @@ function _covgerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function covgerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
+function gerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
     c1 = sbopt.c1
     c2 = sbopt.c2
     c3 = sbopt.c3
@@ -862,9 +862,9 @@ function covgerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBO
     std_vec = vec(std_func(x, std_args...; std_kwargs...))
 
     mtx = if normalise
-        _covgerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+        _gerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     else
-        _covgerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
+        _gerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     end
 
     posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber SB1 Covariance ")
@@ -1342,19 +1342,19 @@ function covar_mtx(returns::AbstractMatrix, opt::CovOpt = CovOpt(;))
         end
         StatsBase.cov(estimator, returns, args...; kwargs...)
     elseif method == :Gerber0
-        covgerber0(returns, opt.gerber)[2]
+        gerber0(returns, opt.gerber)[2]
     elseif method == :Gerber1
-        covgerber1(returns, opt.gerber)[2]
+        gerber1(returns, opt.gerber)[2]
     elseif method == :Gerber2
-        covgerber2(returns, opt.gerber)[2]
+        gerber2(returns, opt.gerber)[2]
     elseif method == :SB0
-        covsb0(returns, opt.gerber, opt.sb)[2]
+        sb0(returns, opt.gerber, opt.sb)[2]
     elseif method == :SB1
-        covsb1(returns, opt.gerber, opt.sb)[2]
+        sb1(returns, opt.gerber, opt.sb)[2]
     elseif method == :Gerber_SB0
-        covgerbersb0(returns, opt.gerber, opt.sb)[2]
+        gerbersb0(returns, opt.gerber, opt.sb)[2]
     elseif method == :Gerber_SB1
-        covgerbersb1(returns, opt.gerber, opt.sb)[2]
+        gerbersb1(returns, opt.gerber, opt.sb)[2]
     elseif method == :Custom_Func
         estimation = opt.estimation
         func = estimation.genfunc.func
@@ -1501,31 +1501,31 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif method == :Gerber0
-        corr = covgerber0(returns, opt.gerber)[1]
+        corr = gerber0(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Gerber1
-        corr = covgerber1(returns, opt.gerber)[1]
+        corr = gerber1(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Gerber2
-        corr = covgerber2(returns, opt.gerber)[1]
+        corr = gerber2(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :SB0
-        corr = covsb0(returns, opt.gerber, opt.sb)[1]
+        corr = sb0(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :SB1
-        corr = covsb1(returns, opt.gerber, opt.sb)[1]
+        corr = sb1(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Gerber_SB0
-        corr = covgerbersb0(returns, opt.gerber, opt.sb)[1]
+        corr = gerbersb0(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Gerber_SB1
-        corr = covgerbersb1(returns, opt.gerber, opt.sb)[1]
+        corr = gerbersb1(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Distance
@@ -2676,11 +2676,11 @@ function cluster_assets(portfolio::Portfolio; cor_opt::CorOpt = CorOpt(;),
     return cluster_assets(portfolio.returns; cor_opt = cor_opt, cluster_opt = cluster_opt)
 end
 
-export covgerber0, covgerber1, covgerber2, covsb0, covsb1, covgerbersb0, covgerbersb1,
-       mut_var_info_mtx, cov_returns, block_vec_pq, duplication_matrix, elimination_matrix,
-       summation_matrix, dup_elim_sum_matrices, cokurt, scokurt, asset_statistics!,
-       wc_statistics!, forward_regression, backward_regression, pcr, loadings_matrix,
-       risk_factors, black_litterman, augmented_black_litterman, bayesian_black_litterman,
+export gerber0, gerber1, gerber2, sb0, sb1, gerbersb0, gerbersb1, mut_var_info_mtx,
+       cov_returns, block_vec_pq, duplication_matrix, elimination_matrix, summation_matrix,
+       dup_elim_sum_matrices, cokurt, scokurt, asset_statistics!, wc_statistics!,
+       forward_regression, backward_regression, pcr, loadings_matrix, risk_factors,
+       black_litterman, augmented_black_litterman, bayesian_black_litterman,
        black_litterman_statistics!, factor_statistics!, black_litterman_factor_satistics!,
        nearest_cov, covar_mtx, mean_vec, cokurt_mtx, mu_estimator, cor_dist_mtx,
        cluster_assets, coskew, scoskew

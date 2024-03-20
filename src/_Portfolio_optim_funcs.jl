@@ -1833,7 +1833,7 @@ function _setup_model_class(portfolio, class, hist)
                           Matrix{eltype(portfolio.returns)}(undef, 0, 0))
 
     if class != :Classic
-        @smart_assert(hist ∈ BLHist)
+        @smart_assert(hist ∈ ClassHist)
     end
 
     if class ∈ (:Classic, :FC)
