@@ -62,6 +62,7 @@ function plot_risk_contribution(
                                 # RC args
                                 assets::AbstractVector, w::AbstractVector,
                                 returns::AbstractMatrix; rm::Symbol = :SD, rf::Real = 0.0,
+                                mu::AbstractVector = Vector{Float64}(undef, 0),
                                 sigma::AbstractMatrix = Matrix{eltype(returns)}(undef, 0,
                                                                                 0),
                                 alpha_i::Real = 0.0001, alpha::Real = 0.05,
@@ -127,9 +128,10 @@ function plot_risk_contribution(
         if percentage
             erc = 1 / length(rc)
         else
-            erc = calc_risk(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
-                            alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
-                            b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers)
+            erc = calc_risk(w, returns; rm = rm, rf = rf, mu = mu, sigma = sigma,
+                            alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
+                            beta_i = beta_i, beta = beta, b_sim = b_sim, kappa = kappa,
+                            owa_w = owa_w, solvers = solvers)
 
             erc /= length(rc)
             if rm ∉ DDs
@@ -155,7 +157,7 @@ function plot_risk_contribution(portfolio; di::Real = 1e-6,
     return plot_risk_contribution(
                                   # RC args
                                   portfolio.assets, portfolio.optimal[type].weights,
-                                  portfolio.returns; rm = rm, rf = rf,
+                                  portfolio.returns; rm = rm, rf = rf, mu = portfolio.mu,
                                   sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
                                   alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                                   beta_i = portfolio.beta_i, beta = portfolio.beta,

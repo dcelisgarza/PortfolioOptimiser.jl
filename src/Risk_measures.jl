@@ -53,8 +53,10 @@ Compute the Mean Absolute Deviation.
 
   - `x`: vector of portfolio returns.
 """
-function MAD(x::AbstractVector)
-    mu = mean(x)
+function MAD(x::AbstractVector, mu::AbstractVector = Vector{Float64}(undef, 0))
+    if isempty(mu)
+        mu = mean(x)
+    end
     return mean(abs.(x .- mu))
 end
 """
@@ -72,9 +74,11 @@ Compute the mean Semi-Standard Deviation.
 
   - `x`: vector of portfolio returns.
 """
-function SSD(x::AbstractVector)
+function SSD(x::AbstractVector, mu::AbstractVector = Vector{Float64}(undef, 0))
     T = length(x)
-    mu = mean(x)
+    if isempty(mu)
+        mu = mean(x)
+    end
     val = mu .- x
     return sqrt(sum(val[val .>= 0] .^ 2) / (T - 1))
 end
@@ -897,9 +901,11 @@ Compute the square root kurtosis.
 
   - `x`: vector of portfolio returns.
 """
-function Kurt(x::AbstractVector)
+function Kurt(x::AbstractVector, mu::AbstractVector = Vector{Float64}(undef, 0))
     T = length(x)
-    mu = mean(x)
+    if isempty(mu)
+        mu = mean(x)
+    end
     val = x .- mu
     return sqrt(sum(val .^ 4) / T)
 end
@@ -919,9 +925,11 @@ Compute the square root semi-kurtosis.
 
   - `x`: vector of portfolio returns.
 """
-function SKurt(x::AbstractVector)
+function SKurt(x::AbstractVector, mu::AbstractVector = Vector{Float64}(undef, 0))
     T = length(x)
-    mu = mean(x)
+    if isempty(x)
+        mu = mean(x)
+    end
     val = x .- mu
     return sqrt(sum(val[val .< 0] .^ 4) / T)
 end
@@ -1091,7 +1099,8 @@ Compute the value of a risk measure given a portfolio.
 - `rf`: risk-free rate at the frequency of `portfolio.returns`, used as the minimum return target, `r`, in [`FLPM`](@ref) and [`SLPM`](@ref).
 """
 function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
-                   rf::Real = 0.0, sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                   rf::Real = 0.0, mu::AbstractVector = Vector{Float64}(undef, 0),
+                   sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                    alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100,
                    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                    kappa::Real = 0.3,
@@ -1106,9 +1115,9 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
     elseif rm == :Variance
         Variance(w, sigma)
     elseif rm == :MAD
-        MAD(x)
+        MAD(x, mu)
     elseif rm == :SSD
-        SSD(x)
+        SSD(x, mu)
     elseif rm == :FLPM
         FLPM(x, rf)
     elseif rm == :SLPM
@@ -1152,9 +1161,9 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
     elseif rm == :RDaR_r
         RDaR_rel(x, solvers, alpha, kappa)
     elseif rm == :Kurt
-        Kurt(x)
+        Kurt(x, mu)
     elseif rm == :SKurt
-        SKurt(x)
+        SKurt(x, mu)
     elseif rm == :GMD
         GMD(x)
     elseif rm == :RG
@@ -1181,14 +1190,14 @@ function calc_risk(portfolio::AbstractPortfolio;
                    rm::Symbol = :SD, rf::Real = 0.0,
                    owa_w::AbstractVector{<:Real} = portfolio.owa_w)
     return calc_risk(portfolio.optimal[type].weights, portfolio.returns; rm = rm, rf = rf,
-                     sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
+                     mu = portfolio.mu, sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
                      alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                      beta_i = portfolio.beta_i, beta = portfolio.beta,
                      b_sim = portfolio.b_sim, kappa = portfolio.kappa, owa_w = owa_w,
                      solvers = portfolio.solvers)
 end
 
-function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i, beta,
+function _ul_risk(rm, returns, w1, w2, mu, sigma, rf, solvers, alpha, kappa, alpha_i, beta,
                   a_sim, beta_i, b_sim, owa_w, di)
     a1 = returns * w1
     a2 = returns * w2
@@ -1200,11 +1209,11 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
         r1 = Variance(w1, sigma)
         r2 = Variance(w2, sigma)
     elseif rm == :MAD
-        r1 = MAD(a1)
-        r2 = MAD(a2)
+        r1 = MAD(a1, mu)
+        r2 = MAD(a2, mu)
     elseif rm == :SSD
-        r1 = SSD(a1)
-        r2 = SSD(a2)
+        r1 = SSD(a1, mu)
+        r2 = SSD(a2, mu)
     elseif rm == :FLPM
         r1 = FLPM(a1, rf)
         r2 = FLPM(a2, rf)
@@ -1269,11 +1278,11 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
         r1 = RDaR_rel(a1, solvers, alpha, kappa)
         r2 = RDaR_rel(a2, solvers, alpha, kappa)
     elseif rm == :Kurt
-        r1 = Kurt(a1) * 0.5
-        r2 = Kurt(a2) * 0.5
+        r1 = Kurt(a1, mu) * 0.5
+        r2 = Kurt(a2, mu) * 0.5
     elseif rm == :SKurt
-        r1 = SKurt(a1) * 0.5
-        r2 = SKurt(a2) * 0.5
+        r1 = SKurt(a1, mu) * 0.5
+        r2 = SKurt(a2, mu) * 0.5
     elseif rm == :GMD
         r1 = GMD(a1)
         r2 = GMD(a2)
@@ -1304,7 +1313,7 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
 end
 
 function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
-                           rf::Real = 0.0,
+                           rf::Real = 0.0, mu::AbstractVector = Vector{Float64}(undef, 0),
                            sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                            alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100,
                            beta_i::Real = alpha_i, beta::Real = alpha,
@@ -1326,8 +1335,8 @@ function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbo
         w2 .= w
         w2[i] -= di
 
-        r1, r2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
-                          beta, a_sim, beta_i, b_sim, owa_w, di)
+        r1, r2 = _ul_risk(rm, returns, w1, w2, mu, sigma, rf, solvers, alpha, kappa,
+                          alpha_i, beta, a_sim, beta_i, b_sim, owa_w, di)
 
         rci = if !marginal
             (r1 - r2) / (2 * di) * w[i]
@@ -1346,12 +1355,12 @@ function risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
                            owa_w::AbstractVector{<:Real} = portfolio.owa_w,
                            marginal::Bool = false)
     return risk_contribution(portfolio.optimal[type].weights, portfolio.returns; rm = rm,
-                             rf = rf, sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
-                             alpha = portfolio.alpha, a_sim = portfolio.a_sim,
-                             beta_i = portfolio.beta_i, beta = portfolio.beta,
-                             b_sim = portfolio.b_sim, di = di, kappa = portfolio.kappa,
-                             owa_w = owa_w, solvers = portfolio.solvers,
-                             marginal = marginal)
+                             rf = rf, mu = portfolio.mu, sigma = portfolio.cov,
+                             alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
+                             a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
+                             beta = portfolio.beta, b_sim = portfolio.b_sim, di = di,
+                             kappa = portfolio.kappa, owa_w = owa_w,
+                             solvers = portfolio.solvers, marginal = marginal)
 end
 
 function factor_risk_contribution(w::AbstractVector, assets::AbstractVector,
@@ -1359,6 +1368,7 @@ function factor_risk_contribution(w::AbstractVector, assets::AbstractVector,
                                   factors::AbstractMatrix, B::DataFrame = DataFrame();
                                   loadings_opt::LoadingsOpt = LoadingsOpt(;),
                                   rm::Symbol = :SD, rf::Real = 0.0,
+                                  mu::AbstractVector = Vector{Float64}(undef, 0),
                                   sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                                   alpha_i::Real = 0.0001, alpha::Real = 0.05,
                                   a_sim::Int = 100, beta_i::Real = alpha_i,
@@ -1366,7 +1376,7 @@ function factor_risk_contribution(w::AbstractVector, assets::AbstractVector,
                                   di::Real = 1e-6, kappa::Real = 0.3,
                                   owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                                   solvers::Union{<:AbstractDict, Nothing} = nothing)
-    marginal_risk = risk_contribution(w, returns; rm = rm, rf = rf, sigma = sigma,
+    marginal_risk = risk_contribution(w, returns; rm = rm, rf = rf, mu = mu, sigma = sigma,
                                       alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
                                       beta_i = beta_i, beta = beta, b_sim = b_sim, di = di,
                                       kappa = kappa, owa_w = owa_w, solvers = solvers,
@@ -1395,10 +1405,10 @@ function factor_risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
                                     portfolio.returns, portfolio.f_assets,
                                     portfolio.f_returns, portfolio.loadings;
                                     loadings_opt = loadings_opt, rm = rm, rf = rf,
-                                    sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
-                                    alpha = portfolio.alpha, a_sim = portfolio.a_sim,
-                                    beta_i = portfolio.beta_i, beta = portfolio.beta,
-                                    b_sim = portfolio.b_sim, di = di,
+                                    mu = portfolio.mu, sigma = portfolio.cov,
+                                    alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
+                                    a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
+                                    beta = portfolio.beta, b_sim = portfolio.b_sim, di = di,
                                     kappa = portfolio.kappa, owa_w = owa_w,
                                     solvers = portfolio.solvers)
 end
@@ -1423,9 +1433,10 @@ function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMa
         dot(mu, w)
     end
 
-    risk = calc_risk(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
-                     alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
-                     b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers)
+    risk = calc_risk(w, returns; rm = rm, rf = rf, mu = mu, sigma = sigma,
+                     alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
+                     beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
+                     solvers = solvers)
 
     return (ret - rf) / risk
 end

@@ -1904,12 +1904,13 @@ function _near_optimal_centering(portfolio, class, mu, returns, sigma, w_opt, T,
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    risk1, risk2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
-                            beta, a_sim, beta_i, b_sim, owa_w, 0)
+    risk1, risk2 = _ul_risk(rm, returns, w1, w2, mu, sigma, rf, solvers, alpha, kappa,
+                            alpha_i, beta, a_sim, beta_i, b_sim, owa_w, 0)
 
-    risk3 = calc_risk(w3, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
-                      alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
-                      b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers)
+    risk3 = calc_risk(w3, returns; rm = rm, rf = rf, mu = mu, sigma = sigma,
+                      alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
+                      beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
+                      solvers = solvers)
 
     if opt.kelly == :None
         ret1 = dot(mu, w1)
@@ -2132,8 +2133,8 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
     rm = opt.rm
     rf = opt.rf
 
-    risk1, risk2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
-                            beta, a_sim, beta_i, b_sim, owa_w, 0)
+    risk1, risk2 = _ul_risk(rm, returns, w1, w2, mu, sigma, rf, solvers, alpha, kappa,
+                            alpha_i, beta, a_sim, beta_i, b_sim, owa_w, 0)
 
     mus = range(ret1; stop = ret2, length = points)
     risks = range(risk1; stop = risk2, length = points)
@@ -2172,7 +2173,7 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
         if isempty(w)
             continue
         end
-        rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
+        rk = calc_risk(w.weights, returns; rm = rm, rf = rf, mu = mu, sigma = sigma,
                        alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                        beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
                        solvers = solvers)
@@ -2187,7 +2188,7 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
     w = optimise!(portfolio, opt)
     sharpe = false
     if !isempty(w)
-        rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
+        rk = calc_risk(w.weights, returns; rm = rm, rf = rf, mu = mu, sigma = sigma,
                        alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                        beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
                        solvers = solvers)

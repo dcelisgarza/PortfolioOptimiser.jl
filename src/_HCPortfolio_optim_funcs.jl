@@ -1,4 +1,4 @@
-function _naive_risk(portfolio, returns, covariance; rm = :SD, rf = 0.0,
+function _naive_risk(portfolio, returns, mu, covariance; rm = :SD, rf = 0.0,
                      portfolio_kwargs::NamedTuple = (; alpha = portfolio.alpha,
                                                      a_sim = portfolio.a_sim,
                                                      beta = portfolio.beta,
@@ -17,7 +17,7 @@ function _naive_risk(portfolio, returns, covariance; rm = :SD, rf = 0.0,
         for i ∈ eachindex(w)
             w .= zero(tcov)
             w[i] = one(tcov)
-            risk = calc_risk(w, returns; rm = rm, rf = rf, sigma = covariance,
+            risk = calc_risk(w, returns; rm = rm, rf = rf, mu = mu, sigma = covariance,
                              portfolio_kwargs...)
             inv_risk[i] = 1 / risk
         end
@@ -172,7 +172,7 @@ function _hierarchical_clustering(portfolio::HCPortfolio,
     return clustering, k
 end
 
-function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0.0,
+function _cluster_risk(portfolio, returns, mu, covariance, cluster; rm = :SD, rf = 0.0,
                        portfolio_kwargs::NamedTuple = (; alpha = portfolio.alpha,
                                                        a_sim = portfolio.a_sim,
                                                        beta = portfolio.beta,
@@ -186,10 +186,16 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
     else
         Matrix{eltype(returns)}(undef, 0, 0)
     end
-    cw = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf,
+    cmu = if !isempty(mu)
+        mu[cluster]
+    else
+        AbstractVector{eltype(returns)}(undef, 0, 0)
+    end
+    cw = _naive_risk(portfolio, cret, cmu, ccov; rm = rm, rf = rf,
                      portfolio_kwargs = portfolio_kwargs)
 
-    crisk = calc_risk(cw, cret; rm = rm, rf = rf, sigma = ccov, portfolio_kwargs...)
+    crisk = calc_risk(cw, cret; rm = rm, rf = rf, mu = cmu, sigma = ccov,
+                      portfolio_kwargs...)
 
     return crisk
 end
@@ -225,6 +231,7 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0,
 
     items = [sort_order]
     returns = portfolio.returns
+    mu = portfolio.mu
     covariance = portfolio.cov
 
     while length(items) > 0
@@ -237,11 +244,11 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0,
             rc = items[i + 1]
 
             # Left cluster.
-            lrisk = _cluster_risk(portfolio, returns, covariance, lc; rm = rm, rf = rf,
+            lrisk = _cluster_risk(portfolio, returns, mu, covariance, lc; rm = rm, rf = rf,
                                   portfolio_kwargs = portfolio_kwargs)
 
             # Right cluster.
-            rrisk = _cluster_risk(portfolio, returns, covariance, rc; rm = rm, rf = rf,
+            rrisk = _cluster_risk(portfolio, returns, mu, covariance, rc; rm = rm, rf = rf,
                                   portfolio_kwargs = portfolio_kwargs)
 
             # Allocate weight to clusters.
@@ -355,6 +362,7 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
                                                                            solvers = portfolio.solvers),
                                            portfolio_kwargs_o = portfolio_kwargs)
     returns = portfolio.returns
+    mu = portfolio.mu
     covariance = portfolio.cov
     clustering = portfolio.clusters
 
@@ -397,13 +405,13 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
         else
             for j ∈ eachindex(clusters)
                 if issubset(clusters[j], ln)
-                    _lrisk = _cluster_risk(portfolio, returns, covariance, clusters[j];
+                    _lrisk = _cluster_risk(portfolio, returns, mu, covariance, clusters[j];
                                            rm = rm_o, rf = rf_o,
                                            portfolio_kwargs = portfolio_kwargs_o)
                     lrisk += _lrisk
                     append!(lc, clusters[j])
                 elseif issubset(clusters[j], rn)
-                    _rrisk = _cluster_risk(portfolio, returns, covariance, clusters[j];
+                    _rrisk = _cluster_risk(portfolio, returns, mu, covariance, clusters[j];
                                            rm = rm_o, rf = rf_o,
                                            portfolio_kwargs = portfolio_kwargs_o)
                     rrisk += _rrisk
@@ -429,7 +437,12 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
         else
             Matrix{eltype(returns)}(undef, 0, 0)
         end
-        cweights = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf,
+        cmu = if !isempty(mu)
+            mu[cidx]
+        else
+            AbstractVector{eltype(returns)}(undef, 0, 0)
+        end
+        cweights = _naive_risk(portfolio, cret, cmu, ccov; rm = rm, rf = rf,
                                portfolio_kwargs = portfolio_kwargs)
         weights[cidx] .*= cweights
     end
