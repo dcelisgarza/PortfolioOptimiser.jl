@@ -535,13 +535,14 @@ const ValidTermination = (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED,
 PortClasses = (:Classic, :FM, :BL, :BLFM, :FC)
 ```
 
-Available choicees of summary parameters ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` [`Portfolio`](@ref).
+Available portfolio classes.
 
-  - `:Classic`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from historical estimates computed by [`asset_statistics!`](@ref).
-  - `:FM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor model computed by [`factor_statistics!`](@ref).
-  - `:BL`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the Black-Litterman model computed by [`black_litterman_statistics!`](@ref).
-  - `:BLFM`: when optimising with this option, ``\\bm{\\mu}`` and ``\\bm{\\Sigma}`` take their values from the factor Black-Litterman model computed by [`black_litterman_factor_satistics!`](@ref). This model has two versions defined in [`BLFMMethods`](@ref).
-  - `:FC`: when optimising with this option, the `:RP` [`PortTypes`](@ref) takes the risk contribution based on the factors.
+Together with [`BLHist`](@ref), they are used to decide which version of ``\\bm{\\mu}``, ``\\mathbf{\\Sigma}`` and ``\\mathbf{X}`` will be used in the optimisation.
+
+When optimising with `type == :RP` from [`PortTypes`](@ref) they have extra behaviours.
+
+  - `:Classic || :FM || :BL || :BLFM`: use the asset risk budget vector `risk_budget` from [`Portfolio`](@ref).
+  - `:FC` and `type == :RP` from [`PortTypes`](@ref): use the factor risk budget vector `f_risk_budget` from [`Portfolio`](@ref).
 """
 const PortClasses = (:Classic, :FM, :BL, :BLFM, :FC)
 
@@ -793,16 +794,16 @@ const HCPortTypes = (:HRP, :HERC, :NCO)
 BLHist = (1, 2, 3)
 ```
 
-Choice of estimate of the covariance matrix ``\\mathbf{\\Sigma}``, means vector ``\\bm{\\mu}``, and returns matrix ``\\mathbf{X}`` for optimising with different [`PortClasses`](@ref). Each different estimate is appended by the suffixes:
+Choice of estimate of the covariance matrix ``\\mathbf{\\Sigma}``, means vector ``\\bm{\\mu}``, and returns matrix ``\\mathbf{X}`` for optimising with different [`PortClasses`](@ref). Each estimate is subscripted by:
 
-  - No suffix: standard, computed by [`asset_statistics!`](@ref).
-  - ``\\mathrm{fm}``: factor model, computed by [`factor_statistics!`](@ref).
-  - ``\\mathrm{bl}``: Black-Litterman model, computed by [`black_litterman_statistics!`](@ref).
-  - ``\\mathrm{bl, fm}``: Black-Litterman factor model, computed by [`black_litterman_factor_satistics!`](@ref).
+  - No label: standard, computed by [`asset_statistics!`](@ref). In [`Portfolio`](@ref) these are `mu`, `cov`, and `returns`.
+  - ``\\mathrm{fm}``: factor model, computed by [`factor_statistics!`](@ref). In [`Portfolio`](@ref) these are `fm_mu`, `fm_cov`, and `fm_returns`.
+  - ``\\mathrm{bl}``: Black-Litterman model, computed by [`black_litterman_statistics!`](@ref). In [`Portfolio`](@ref) these are `bl_mu`, `bl_cov`, and `bl_returns`.
+  - ``\\mathrm{bl, fm}``: Black-Litterman factor model, computed by [`black_litterman_factor_satistics!`](@ref). In [`Portfolio`](@ref) these are `blfm_mu`, `blfm_cov`, and `blfm_returns`.
 
 The choices are:
 
-  - `:Classic`: `BLHist` has no effect, always use ``\\bm{\\mu}``, ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
+  - `:Classic || :FC`: `BLHist` has no effect, always use ``\\bm{\\mu}``, ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
 
   - `:FM`: ``\\bm{\\mu}_{\\mathrm{fm}}``.
 

@@ -136,6 +136,7 @@ Some of these require external data from [`OptimiseOpt`](@ref) given to the [`op
   - `class`: one of [`PortClasses`](@ref).
   - `hist`: one of [`BLHist`](@ref).
   - `rf`: risk free rate.
+  - `owa_approx`: flag for using the approximate OWA formulation.
 
 In order for a parameter to be considered "appropriately defined", it must meet the following criteria:
 
@@ -238,8 +239,10 @@ Where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix 
 ## Asset constraints
 
 The constraint is only defined when both `a_mtx_ineq` and `b_vec_ineq` are defined.
-- `a_mtx_ineq`: `C×Na` A matrix of the linear asset constraints, where `C` is the number of constraints, and $(_ndef(:a2)).
-- `b_vec_ineq`: `C×1` B vector of the linear asset constraints, where `C` is the number of constraints.
+
+  - `a_mtx_ineq`: `C×Na` A matrix of the linear asset constraints, where `C` is the number of constraints, and $(_ndef(:a2)).
+  - `b_vec_ineq`: `C×1` B vector of the linear asset constraints, where `C` is the number of constraints.
+
 The linear asset constraint is defined as
 ```math
 \\mathbf{A} \\bm{w} \\geq \\bm{B}\\,.
@@ -248,120 +251,122 @@ Where ``\\mathbf{A}`` is the matrix of linear constraints `a_mtx_ineq`, ``\\bm{w
 
 ## Risk budget constraints
 
-Only relevant when `type ∈ (:RP, :RRP)`.
-- `risk_budget`: 
-  + `class != :FC || type == :RRP`: `Na×1` asset risk budget constraint vector for risk measure `rm`, where $(_ndef(:a2)). Asset `i` contributes the amount of `rm` risk in position `risk_budget[i]`.
-- `f_risk_budget`: 
-  + `class == :FC && type == :RP`: `Nf×1` factor risk budget constraint vector for risk measure `rm`, where $(_ndef(:f2)). Factor `i` contributes the amount of `rm` risk in position `f_risk_budget[i]`.
+Only relevant when `type ∈ (:RP, :RRP)`. [`PortClasses`](@ref) and [`BLHist`](@ref) define which one to use when calling [`optimise!`](@ref).
+
+  - `risk_budget`: `Na×1` asset risk budget constraint vector for risk measure `rm`, where $(_ndef(:a2)). Asset `i` contributes the amount of `rm` risk in position `risk_budget[i]`.
+  - `f_risk_budget`: `Nf×1` factor risk budget constraint vector for risk measure `rm`, where $(_ndef(:f2)). Factor `i` contributes the amount of `rm` risk in position `f_risk_budget[i]`.
 
 ## Network constraints
 
 Only relevant when `type ∈ (:Trad, :WC)`.
-- `network_method`: network constraint method from [`NetworkMethods`](@ref).
-- `network_sdp`: 
-  + `network_method == :SDP`: network matrix.
-- `network_penalty`:
-  + `network_method == :SDP && rm != :SD`: weight of the SDP network constraint.
-- `network_ip`: 
-  + `network_method == :IP`: network matrix.
-- `network_ip_scale`:
-  + `network_method == :IP`: scaling factor needed to create the decision variable for the constraint. Changing the value of the scaling factor can improve the solution.
-- `a_vec_cent`: `Na×1` centrality measure vector for the centrality constraint, where $(_ndef(:a2)).
-- `b_cent`: average centrality measure for the centraility constraint.
+
+  - `network_method`: network constraint method from [`NetworkMethods`](@ref).
+  - `network_sdp`: 
+    + `network_method == :SDP`: network matrix.
+  - `network_penalty`:
+    + `network_method == :SDP && rm != :SD`: weight of the SDP network constraint.
+  - `network_ip`: 
+    + `network_method == :IP`: network matrix.
+  - `network_ip_scale`:
+    + `network_method == :IP`: scaling factor needed to create the decision variable for the constraint. Changing the value of the scaling factor can improve the solution.
+  - `a_vec_cent`: `Na×1` centrality measure vector for the centrality constraint, where $(_ndef(:a2)).
+  - `b_cent`: average centrality measure for the centrality constraint.
+
 The centrality measure constraint is defined as
 ```math
 \\bm{A} \\cdot \\bm{w} = b\\,.
 ```
-Where ``\\bm{A}`` is the centrality measure vector, ``\\bm{w}`` the portfolio weights, and ``b`` the centrality measure vector. The constraint is only applied when both `a_vec_cent` and `b_cent` are defined.
+Where ``\\bm{A}`` is the centrality measure vector `a_vec_cent`, ``\\bm{w}`` the asset weights, and ``b`` average centrality measure `b_cent`. The constraint is only applied when both `a_vec_cent` and `b_cent` are defined.
 
 ## Bounds constraints
 
-The bounds constraints are *only active if they are finite*. 
-- Lower bounds denoted by the suffix `_l`.
-- Upper bounds denoted by the suffix `_u`. 
+  - Lower bounds denoted by the suffix `_l`.
+  - Upper bounds denoted by the suffix `_u`. 
+
 The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref) in lower case. They have the same solver requirements as their corresponding risk measure. Multiple bounds constraints can be active at any time but may make the problem infeasable.
 
-- `mu_l`: mean expected return.
-- `sd_u`: standard deviation.
-- `mad_u`: max absolute devia.
-- `ssd_u`: semi standard deviation.
-- `cvar_u`: critical value at risk.
-- `rcvar_u`: critical value at risk range.
-- `evar_u`: entropic value at risk.
-- `rvar_u`: relativistic value at risk.
-- `wr_u`: worst realisation.
-- `rg_u`: range.
-- `flpm_u`: first lower partial moment.
-- `slpm_u`: second lower partial moment.
-- `mdd_u`: max drawdown.
-- `add_u`: average drawdown.
-- `cdar_u`: critical drawdown at risk.
-- `uci_u`: ulcer index.
-- `edar_u`: entropic drawdown at risk.
-- `rdar_u`: relativistic drawdown at risk.
-- `kurt_u`: square root kurtosis.
-- `skurt_u`: square root semi kurtosis.
-- `gmd_u`: gini mean difference.
-- `tg_u`: tail gini.
-- `rtg_u`: tail gini range.
-- `owa_u`: custom ordered weight risk (used with `owa_w`).
+  - `mu_l`: mean expected return.
+  - `sd_u`: standard deviation.
+  - `mad_u`: max absolute devia.
+  - `ssd_u`: semi standard deviation.
+  - `cvar_u`: critical value at risk.
+  - `rcvar_u`: critical value at risk range.
+  - `evar_u`: entropic value at risk.
+  - `rvar_u`: relativistic value at risk.
+  - `wr_u`: worst realisation.
+  - `rg_u`: range.
+  - `flpm_u`: first lower partial moment.
+  - `slpm_u`: second lower partial moment.
+  - `mdd_u`: max drawdown.
+  - `add_u`: average drawdown.
+  - `cdar_u`: critical drawdown at risk.
+  - `uci_u`: ulcer index.
+  - `edar_u`: entropic drawdown at risk.
+  - `rdar_u`: relativistic drawdown at risk.
+  - `kurt_u`: square root kurtosis.
+  - `skurt_u`: square root semi kurtosis.
+  - `gmd_u`: gini mean difference.
+  - `tg_u`: tail gini.
+  - `rtg_u`: tail gini range.
+  - `owa_u`: 
+    + `owa_w` must be properly defined: ordered weight risk.
 
 ## OWA parameters
 
 Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
-- `owa_p`: 
-  + `owa_approx = true`: C×1` vector containing the order of the p-norms used in the approximate formulation of the risk measures, where `C` is the number of p-norms. The more entries and larger their range, the more accurate the approximation.
-- `owa_w`: 
-  + `rm == :OWA`: `T×1` OWA vector, where $(_tstr(:t1)). Useful for optimising higher L-moments.
+
+  - `owa_p`: 
+    + `owa_approx = true`: `C×1` vector containing the order of the p-norms used in the approximate formulation of the risk measures, where `C` is the number of p-norms. The more entries and larger their range, the more accurate the approximation.
+  - `owa_w`: 
+    + `rm == :OWA`: `T×1` OWA vector, where $(_tstr(:t1)). Useful for optimising higher L-moments.
 
 ## Model statistics
 
-- `mu`:
-  + `:class ∈ (:Classic, :FM)`: `Na×1` asset expected returns vector, where $(_ndef(:a2)).
-- `cov`:
-  + `:class ∈ (:Classic, :FM)`: `Na×Na` asset covariance matrix, where $(_ndef(:a2)).
-- `kurt`: `(Na^2)×(Na^2)` asset cokurtosis matrix, where $(_ndef(:a2)).
-- `skurt`: `(Na^2)×(Na^2)` asset semi cokurtosis matrix, where $(_ndef(:a2)).
-- `L_2`: `(Na^2)×((Na^2 + Na)/2)` elimination matrix, where $(_ndef(:a2)).
-- `S_2`: `((Na^2 + Na)/2)×(Na^2)` summation matrix, where $(_ndef(:a2)).
-- `f_mu`: `Nf×1` factor expected returns vector, where $(_ndef(:f2)).
-- `f_cov`: `Nf×Nf` factor covariance matrix, where $(_ndef(:f2)).
-- `fm_returns`:
-  + `:class ∈ (:Classic, :FM) || :hist == 1`: `T×Na` matrix of factor adjusted asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)).
-- `fm_mu`: `Na×1` factor adjusted asset expected returns vector, where $(_ndef(:a2)).
-- `fm_cov`: `Na×Na` factor adjusted asset covariance matrix, where $(_ndef(:a2)).
-- `bl_mu`: `Na×1` Black-Litterman adjusted asset expected returns vector, where $(_ndef(:a2)).
-- `bl_cov`: `Na×Na` Black-Litterman adjusted asset covariance matrix, where $(_ndef(:a2)).
-- `blfm_mu`: `Na×1` Black-Litterman factor model adjusted asset expected returns vector, where $(_ndef(:a2)).
-- `blfm_cov`: `Na×Na` Black-Litterman factor model adjusted asset covariance matrix, where $(_ndef(:a2)).
-- `cov_l`: `Na×Na` worst case lower bound for the asset covariance matrix, where $(_ndef(:a2)).
-- `cov_u`: `Na×Na` worst case upper bound for the asset covariance matrix, where $(_ndef(:a2)).
-- `cov_mu`: `Na×Na` matrix of the estimation errors of the asset expected returns vector for elliptical sets in worst case optimisation, where $(_ndef(:a2)).
-- `cov_sigma`: `Na×Na` matrix of the estimation errors of the asset covariance matrix, where $(_ndef(:a2)).
-- `d_mu`: `Na×1` absolute deviation of the worst case upper and lower asset expected returns vectors, where $(_ndef(:a2)).
-- `k_mu`: distance parameter of the elliptical uncertainty in the asset expected returns vector for the worst case optimisation.
-- `k_sigma`: distance parameter of the elliptical uncertainty in the asset covariance matrix for the worst case optimisation.
+  - `mu`: `Na×1` asset expected returns vector, where $(_ndef(:a2)).
+  - `cov`: `Na×Na` asset covariance matrix, where $(_ndef(:a2)).
+  - `kurt`: `(Na^2)×(Na^2)` asset cokurtosis matrix, where $(_ndef(:a2)).
+  - `skurt`: `(Na^2)×(Na^2)` asset semi cokurtosis matrix, where $(_ndef(:a2)).
+  - `L_2`: `(Na^2)×((Na^2 + Na)/2)` elimination matrix, where $(_ndef(:a2)).
+  - `S_2`: `((Na^2 + Na)/2)×(Na^2)` summation matrix, where $(_ndef(:a2)).
+  - `f_mu`: `Nf×1` factor expected returns vector, where $(_ndef(:f2)).
+  - `f_cov`: `Nf×Nf` factor covariance matrix, where $(_ndef(:f2)).
+  - `fm_returns`: `T×Na` matrix of factor adjusted asset returns, where $(_tstr(:t1)) and $(_ndef(:a2)).
+  - `fm_mu`: `Na×1` factor adjusted asset expected returns vector, where $(_ndef(:a2)).
+  - `fm_cov`: `Na×Na` factor adjusted asset covariance matrix, where $(_ndef(:a2)).
+  - `bl_mu`: `Na×1` Black-Litterman adjusted asset expected returns vector, where $(_ndef(:a2)).
+  - `bl_cov`: `Na×Na` Black-Litterman adjusted asset covariance matrix, where $(_ndef(:a2)).
+  - `blfm_mu`: `Na×1` Black-Litterman factor model adjusted asset expected returns vector, where $(_ndef(:a2)).
+  - `blfm_cov`: `Na×Na` Black-Litterman factor model adjusted asset covariance matrix, where $(_ndef(:a2)).
+  - `cov_l`: `Na×Na` worst case lower bound for the asset covariance matrix, where $(_ndef(:a2)).
+  - `cov_u`: `Na×Na` worst case upper bound for the asset covariance matrix, where $(_ndef(:a2)).
+  - `cov_mu`: `Na×Na` matrix of the estimation errors of the asset expected returns vector for elliptical sets in worst case optimisation, where $(_ndef(:a2)).
+  - `cov_sigma`: `Na×Na` matrix of the estimation errors of the asset covariance matrix, where $(_ndef(:a2)).
+  - `d_mu`: `Na×1` absolute deviation of the worst case upper and lower asset expected returns vectors, where $(_ndef(:a2)).
+  - `k_mu`: distance parameter of the elliptical uncertainty in the asset expected returns vector for the worst case optimisation.
+  - `k_sigma`: distance parameter of the elliptical uncertainty in the asset covariance matrix for the worst case optimisation.
 
 ## Optimal portfolios
 
-- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))
-- `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures. $(_filled_by("[`optimise!`](@ref)"))
-- `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures. $(_filled_by("[`frontier_limits!`](@ref)"))
-- `frontier`: $_edst containing points in the efficient frontier for given risk measures. $(_filled_by("[`efficient_frontier!`](@ref)"))
-# Solutions
-$(_solver_desc("risk measure `JuMP` model."))
-- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
-- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
-- `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`optimise!`](@ref)"))
+  - `optimal`: $_edst for storing optimal portfolios.
+  - `z`: $_edst for storing optimal `z` values of portfolios optimised for entropy and relativistic risk measures.
+  - `limits`: $_edst for storing the minimal and maximal risk portfolios for given risk measures.
+  - `frontier`: $_edst containing points in the efficient frontier for given risk measures.
+  
+## Solutions
+
+  $(_solver_desc("risk measure `JuMP` model."))
+  - `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
+  - `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
+  - `model`: `JuMP.Model()` for optimising a portfolio. $(_filled_by("[`optimise!`](@ref)"))
 
 ## Allocation
 
-- `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
-- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
-$(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
-- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
-- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
-- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
+  - `latest_prices`: `Na×1` vector of asset prices, $(_ndef(:a2)). If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
+  - `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
+  $(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
+  - `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
+  - `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
+  - `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
 """
 mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
                          msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, rb, rbw, to, tobw, kte,
