@@ -661,6 +661,11 @@ function centrality_vector(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;)
                              method = method, steps = steps)
 end
 
+"""
+```julia
+cluster_matrix
+```
+"""
 function cluster_matrix(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
                         cluster_opt::ClusterOpt = ClusterOpt(;
                                                              max_k = ceil(Int,
@@ -684,6 +689,11 @@ function cluster_matrix(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
     return A_c
 end
 
+"""
+```julia
+cluster_matrix
+```
+"""
 function cluster_matrix(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
                         cluster_opt::ClusterOpt = ClusterOpt(;
                                                              max_k = ceil(Int,
@@ -715,6 +725,11 @@ function connected_assets(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
                             method = method, steps = steps)
 end
 
+"""
+```julia
+related_assets
+```
+"""
 function related_assets(returns::AbstractMatrix, w::AbstractVector;
                         cor_opt::CorOpt = CorOpt(;),
                         cluster_opt::ClusterOpt = ClusterOpt(;
@@ -726,6 +741,11 @@ function related_assets(returns::AbstractMatrix, w::AbstractVector;
     return R_a
 end
 
+"""
+```julia
+related_assets
+```
+"""
 function related_assets(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
                         cluster_opt::ClusterOpt = ClusterOpt(;
                                                              max_k = ceil(Int,

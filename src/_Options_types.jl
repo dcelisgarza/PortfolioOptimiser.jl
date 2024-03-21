@@ -35,23 +35,23 @@ end
 end
 ```
 
-Structure and keyword constructor for estimating covariance matrices.
+Structure and keyword constructor for estimating covariance matrices. This is part of [`CovOpt`](@ref), and as such some of these are only relevant when `method` has a specific value.
 
 # Inputs
 
   - `estimator`:
 
-      + `method ∈ (:Full, :Semi)` from [`CovMethods`](@ref): abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator). Enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl).
+      + `method ∈ (:Full, :Semi)`: abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator). Enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl).
 
   - `target_ret`:
 
-      + `method == :Semi` from [`CovMethods`](@ref): returns less than or equal to this value are considered downside returns.
+      + `method == :Semi`: returns less than or equal to this value are considered downside returns.
   - `genfunc`:
 
-      + `method ∈ (:Full, :Semi, :Custom_Func)` from [`CovMethods`](@ref): generic function [`GenericFunction`](@ref) for computing the covariance matrix.
+      + `method ∈ (:Full, :Semi, :Custom_Func)`: generic function [`GenericFunction`](@ref) for computing the covariance matrix.
   - `custom`:
 
-      + `method == :Custom_Val` from [`CovMethods`](@ref): custom covariance matrix.
+      + `method == :Custom_Val`: custom covariance matrix.
 """
 mutable struct CovEstOpt
     estimator::CovarianceEstimator
@@ -125,7 +125,7 @@ end
 end
 ```
 
-Structure and keyword constructor for when `method ∈ (:Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB0, :Gerber_SB1)` from [`CovMethods`](@ref) and [`CorMethods`](@ref).
+Structure and keyword constructor for Gerber and Gerber-derived covariance and correlation matrices. This is part of [`CovOpt`](@ref) and [`CorOpt`](@ref). It is only relevant when `method ∈ (:Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB0, :Gerber_SB1)`.
 
 # Inputs
 
@@ -219,7 +219,9 @@ Structure and keyword constructor for denoising matrices.
 
   - `method`: method for denoising matrices from [`DenoiseMethods`](@ref).
 
-  - `alpha`: shrink method significance level, `alpha ∈ [0, 1]`.
+  - `alpha`:
+
+      + `method == :Shrink`: significance level, `alpha ∈ [0, 1]`.
   - `detone`:
 
       + `true`: take only the largest `mkt_comp` eigenvalues from the correlation matrix.
@@ -400,7 +402,7 @@ end
 end
 ```
 
-Structure and keyword constructor for estimating cokurtosis matrices.
+Structure and keyword constructor for estimating cokurtosis matrices. This is part of [`KurtOpt`](@ref).
 
 # Inputs
 
@@ -599,7 +601,7 @@ end
 end
 ```
 
-Structure and keyword constructor for computing covariance matrices. Some of these are only relevant when the external parameter `method` from [`CorOpt`](@ref) takes on a specific value.
+Structure and keyword constructor for computing covariance matrices.
 
 # Inputs
 
@@ -863,7 +865,7 @@ end
 end
 ```
 
-Structure and keyword constructor for computing factor statistics in [`risk_factors`](@ref).
+Structure and keyword constructor for computing factor statistics.
 
 # Input
 
@@ -912,6 +914,13 @@ end
 ```
 
 Structure and keyword constructor for computing Black-Litterman statistics in [`black_litterman_statistics!`](@ref) and [`black_litterman_factor_satistics!`](@ref).
+
+  - [`black_litterman_statistics!`](@ref): calls [`black_litterman`](@ref).
+
+  - [`black_litterman_factor_satistics!`](@ref):
+
+      + `method == :A`: calls [`augmented_black_litterman`](@ref).
+      + `method == :B`: calls [`bayesian_black_litterman`](@ref).
 
 # Inputs
 
@@ -995,7 +1004,11 @@ end
 end
 ```
 
-Structure and keyword constructor for clustering options.
+Structure and keyword constructor for clustering options in [`optimise!`](@ref), [`cluster_matrix`](@ref).
+
+  - [`optimise!`](@ref): calls [`_hierarchical_clustering`](@ref).
+  - [`cluster_matrix`](@ref): calls
+  - [`_hierarchical_clustering`](@ref): calls [`_hcluster_choice`](@ref).
 
 # Inputs
 

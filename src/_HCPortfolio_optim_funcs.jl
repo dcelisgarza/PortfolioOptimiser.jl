@@ -136,6 +136,10 @@ function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 
     return k
 end
 
+"""
+```julia
+```
+"""
 function _hcluster_choice(dist, cluster_opt::ClusterOpt)
     linkage = cluster_opt.linkage
     branchorder = cluster_opt.branchorder
@@ -160,6 +164,12 @@ function _hcluster_choice(dist, cluster_opt::ClusterOpt)
 
     return clustering, k
 end
+
+"""
+```julia
+_hierarchical_clustering
+```
+"""
 function _hierarchical_clustering(portfolio::HCPortfolio,
                                   cluster_opt::ClusterOpt = ClusterOpt(;
                                                                        max_k = ceil(Int,
@@ -714,6 +724,11 @@ function _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_boun
     return portfolio.optimal[type]
 end
 
+"""
+```julia
+optimise!
+```
+"""
 function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD,
                    rm_o::Symbol = rm, rf::Real = 0.0, rf_o::Real = rf,
                    nco_opt::OptimiseOpt = OptimiseOpt(;), nco_opt_o::OptimiseOpt = nco_opt,

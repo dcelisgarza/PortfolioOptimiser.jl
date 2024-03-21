@@ -345,9 +345,13 @@ end
 
 """
 ```julia
-allocate!(portfolio; port_type = isa(portfolio, Portfolio) ? :Trad : :HRP, alloc_type = :LP,
-          latest_prices = portfolio.latest_prices, investment = 1e4, rounding = 1,
-          reinvest = false, string_names = false, save_opt_params = true)
+allocate!(portfolio;
+          opt::AllocOpt = AllocOpt(; port_type = if isa(portfolio, Portfolio)
+                                       :Trad
+                                   else
+                                       :HRP
+                                   end, latest_prices = portfolio.latest_prices),
+          string_names = false, save_opt_params = true)
 ```
 """
 function allocate!(portfolio,

@@ -601,6 +601,11 @@ function plot_range(portfolio::AbstractPortfolio;
                       kwargs_h = kwargs_h, kwargs_risks = kwargs_risks)
 end
 
+"""
+```julia
+plot_clusters()
+```
+"""
 function plot_clusters(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
                        cluster_opt::ClusterOpt = ClusterOpt(;
                                                             k = if isa(portfolio,
@@ -833,6 +838,11 @@ function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
     return plt
 end
 
+"""
+```julia
+plot_dendrogram
+```
+"""
 function plot_dendrogram(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
                          cluster_opt = opt::ClusterOpt = ClusterOpt(;
                                                                     k = if isa(portfolio,
@@ -909,6 +919,11 @@ function plot_dendrogram(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(
     return plot(dend1; kwargs...)
 end
 
+"""
+```julia
+plot_network
+```
+"""
 function plot_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
                       cluster_opt = opt::ClusterOpt = ClusterOpt(;
                                                                  k = if isa(portfolio,
@@ -991,6 +1006,11 @@ function plot_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
     return graphplot(G; kwargs...)
 end
 
+"""
+```julia
+plot_cluster_network
+```
+"""
 function plot_cluster_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
                               cluster_opt = opt::ClusterOpt = ClusterOpt(;
                                                                          k = if isa(portfolio,
