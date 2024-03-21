@@ -475,37 +475,41 @@ end
 end
 ```
 
-Structure and keyword constructor for estimating covariance matrices.
+Structure and keyword constructor for estimating covariance matrices. This is part of [`CorOpt`](@ref), and as such some of these are only relevant when `method` has a specific value.
 
 # Inputs
 
   - `estimator`:
 
-      + `method ∈ (:Full, :Semi)` from [`CorMethods`](@ref): abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator). Enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl).
+      + `method ∈ (:Full, :Semi)`: abstract covariance estimator as defined by [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator). Enables users to use packages which subtype this interface such as [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl).
 
-  - `alpha`: significance parameter when `method == :Tail` from [`CorMethods`](@ref), `alpha ∈ [0, 1]`.
-  - `bins_info`: number of bins when `method == :Mutual_Info` from [`CorMethods`](@ref). It can take on two types.
+  - `alpha`:
 
-      + `isa(bins_info, Symbol)`: bin width choice method must be one of [`BinMethods`](@ref).
-      + `isa(bins_info, Integer)`: the data is split into as many bins as specified.
+      + `method == :Tail`: significance parameter, `alpha ∈ (0, 1)`.
+  - `bins_info`:
+
+      + `method == :Mutual_Info`: number of bins. It can take on two types of values:
+
+          * `isa(bins_info, Symbol)`: bin width choice method must be one of [`BinMethods`](@ref).
+          * `isa(bins_info, Integer)`: the data is split into as many bins as specified.
   - `cor_genfunc`:
 
-      + `method ∈ (:Full, :Semi, :Custom_Func)` from [`CorMethods`](@ref): generic function [`GenericFunction`](@ref) for computing the correlation matrix.
+      + `method ∈ (:Full, :Semi, :Custom_Func)`: generic function [`GenericFunction`](@ref) for computing the correlation matrix.
   - `dist_genfunc`:
 
-      + `method ∈ (:Full, :Semi, :Custom_Func)` from [`CorMethods`](@ref): generic function [`GenericFunction`](@ref) for computing the distance matrix.
+      + `method ∈ (:Full, :Semi, :Custom_Func)`: generic function [`GenericFunction`](@ref) for computing the distance matrix.
   - `custom_cor`:
 
-      + `method == :Custom_Val` from [`CorMethods`](@ref): custom correlation matrix.
+      + `method == :Custom_Val`: custom correlation matrix.
   - `custom_dist`:
 
-      + `method == :Custom_Val` from [`CorMethods`](@ref): custom distance matrix.
+      + `method == :Custom_Val`: custom distance matrix.
   - `target_ret`:
 
-      + `method == :Semi` from [`CorMethods`](@ref): returns less than or equal to this value are considered downside returns.
+      + `method == :Semi`: returns less than or equal to this value are considered downside returns.
   - `sigma`:
 
-      + `method == :Cov_to_Cor` from [`CorMethods`](@ref): value of covariance matrix from which the correlation is to be computed. When computing from [`asset_statistics!`](@ref), this value is set automatically.
+      + `method == :Cov_to_Cor`: value of covariance matrix from which the correlation is to be computed. When computing from [`asset_statistics!`](@ref), this value is set automatically.
 """
 mutable struct CorEstOpt{T1 <: Real, T2 <: AbstractMatrix{<:Real},
                          T3 <: AbstractMatrix{<:Real}, T4 <: AbstractMatrix{<:Real}}
@@ -534,7 +538,7 @@ function CorEstOpt(;
                    custom_cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    custom_dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    sigma::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0))
-    @smart_assert(zero(alpha) <= alpha <= one(alpha))
+    @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(bins_info ∈ BinMethods ||
                   isa(bins_info, Int) && bins_info > zero(bins_info))
     if !isempty(custom_cor)
@@ -595,7 +599,7 @@ end
 end
 ```
 
-Structure and keyword constructor for computing covariance matrices.
+Structure and keyword constructor for computing covariance matrices. Some of these are only relevant when the external parameter `method` from [`CorOpt`](@ref) takes on a specific value.
 
 # Inputs
 
@@ -911,22 +915,17 @@ Structure and keyword constructor for computing Black-Litterman statistics in [`
 
 # Inputs
 
-  - `method`:
+  - `method`: one of [`BLFMMethods`](@ref).
 
-      + [`black_litterman_statistics!`](@ref): does nothing.
-      + [`black_litterman_factor_satistics!`](@ref): `method` for choosing what Black-Litterman Factor model to use from [`BLFMMethods`](@ref).
+      + [`black_litterman_factor_satistics!`](@ref): `method` for choosing what Black-Litterman Factor model to use.
 
   - `constant`:
 
-      + [`black_litterman_statistics!`](@ref): does nothing.
       + [`black_litterman_factor_satistics!`](@ref): indicates whether the loadings matrix contains a `"const"` column, automatically set inside the function.
   - `diagonal`:
 
-      + [`black_litterman_statistics!`](@ref): does nothing.
-
       + [`black_litterman_factor_satistics!`](@ref):
 
-          * `method == :A`: does nothing.
           * `method == :B`: flag used in the definition of ``\\mathbf{D}``.
   - `eq`:
 
@@ -935,7 +934,6 @@ Structure and keyword constructor for computing Black-Litterman statistics in [`
       + [`black_litterman_factor_satistics!`](@ref):
 
           * `method == :A`: flag used in the definition of ``\\bm{\\Pi}_{a}``.
-          * `method == :B`: does nothing.
   - `delta`:
 
       + [`black_litterman_statistics!`](@ref): value of ``\\delta`` in the definition of ``\\bm{\\Pi}`` when `eq == true`.
@@ -943,16 +941,12 @@ Structure and keyword constructor for computing Black-Litterman statistics in [`
       + [`black_litterman_factor_satistics!`](@ref):
 
           * `method == :A`: value of ``\\delta`` in the definition of ``\\bm{\\Pi}_{a}`` when `eq == true`.
-          * `method == :B`: does nothing
   - `rf`: risk-free rate.
   - `var_genfunc`:
 
-      + [`black_litterman_statistics!`](@ref): does nothing.
-
       + [`black_litterman_factor_satistics!`](@ref):
 
-          * `method == :A`: does nothing.
-          * `method == :B`: generic function [`GenericFunction`](@ref) for the variance in the definition of ``\\mathbf{D}`` when `diagonal == true`.
+          * `method == :B && diagonal == true`: generic function [`GenericFunction`](@ref) for the variance in the definition of ``\\mathbf{D}`` .
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
   - `jlogo`:
@@ -1226,10 +1220,10 @@ Structure and keyword constructor for storing the options to optimising the disc
 
   - `method`: method for discretely allocating the portfolio from [`AllocMethods`](@ref).
   - `latest_prices`: vector of latest stock prices.
-  - `investment`: amount of money available to allocate.
+  - `investment`: amount of money available for buying assets.
   - `rounding`:
 
-      + `method == :LP`: the number of decimal places used for rounding stocks.
+      + `method == :Greedy`: the number of decimal places used for rounding stocks.
   - `reinvest`: only has an effect if the portfolio being allocated shorts stocks.
 
       + `true`: reinvest the money acquired from shorting.
@@ -1237,7 +1231,7 @@ Structure and keyword constructor for storing the options to optimising the disc
 
 !!! warning
 
-    `latest_prices` and `investment` must be the same currency.
+    `latest_prices` and `investment` must be in the same currency.
 """
 mutable struct AllocOpt
     port_type::Symbol

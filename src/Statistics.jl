@@ -182,7 +182,7 @@ function cordistance(x::AbstractMatrix)
 end
 
 function ltdi_mtx(x, alpha = 0.05)
-    @smart_assert(zero(alpha) <= alpha <= one(alpha))
+    @smart_assert(zero(alpha) < alpha < one(alpha))
     T, N = size(x)
     k = ceil(Int, T * alpha)
     mtx = Matrix{eltype(x)}(undef, N, N)
