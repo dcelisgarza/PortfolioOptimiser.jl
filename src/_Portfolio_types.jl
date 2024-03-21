@@ -128,9 +128,9 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
 end
 ```
 
-Structure for portfolio optimisation.
+Structure for working with regular portfolios.
 
-Some of these require external data from [`OptimiseOpt`](@ref) given to the [`optimise!`](@ref) function:
+Some of these require external information from the arguments of functions that use the an instance of [`Portfolio`](@ref):
 
   - `type`: one of [`PortTypes`](@ref).
   - `rm`: one of [`RiskMeasures`](@ref).
@@ -667,11 +667,11 @@ Performs data validation and creates an instance of [`Portfolio`](@ref). Union d
 
   - `prices`:
 
-      + `!isempty(prices)`: automatically sets `assets`, `timestamps`, `returns` and `latest_prices`. Takes priority over the `returns`, `ret`, `timestamps`, `assets` and `latest_prices` arguments.
+      + `!isempty(prices)`: timearray of asset prices, automatically sets `assets`, `timestamps`, computes `returns` and `latest_prices`. Takes priority over the `returns`, `ret`, `timestamps`, `assets` and `latest_prices` arguments.
 
   - `returns`:
 
-      + `!isempty(returns)`: automatically sets `assets`, `timestamps`, `returns`. Takes priority over the, `ret`, `timestamps` and `assets` arguments.
+      + `!isempty(returns)`: dataframe of asset returns, automatically sets `assets`, `timestamps`, `returns`. Takes priority over the, `ret`, `timestamps` and `assets` arguments.
   - `ret`: sets `returns`.
   - `timestamps`: sets `timestamps`.
   - `assets`: sets `assets`.
@@ -683,10 +683,10 @@ Performs data validation and creates an instance of [`Portfolio`](@ref). Union d
   - `num_assets_u_scale`: sets `num_assets_u_scale`.
   - `f_prices`:
 
-      + `!isempty(f_prices)`: automatically sets `f_assets`, `f_timestamps` and `f_returns`. Takes priority over the `f_returns`, `f_ret`, `f_timestamps` and `f_assets` arguments.
+      + `!isempty(f_prices)`: timearray of factor prices automatically sets `f_assets`, `f_timestamps` and `f_returns`. Takes priority over the `f_returns`, `f_ret`, `f_timestamps` and `f_assets` arguments.
   - `f_returns`:
 
-      + `!isempty(f_returns)`: automatically sets `f_assets`, `f_timestamps`, `f_returns`. Takes priority over the, `f_ret`, `f_timestamps` and `f_assets` arguments.
+      + `!isempty(f_returns)`: dataframe of factor returns automatically sets `f_assets`, `f_timestamps`, `f_returns`. Takes priority over the, `f_ret`, `f_timestamps` and `f_assets` arguments.
   - `f_ret`: sets `f_returns`.
   - `f_timestamps`: sets `f_timestamps`.
   - `f_assets`: sets `f_assets`.
@@ -783,7 +783,7 @@ Performs data validation and creates an instance of [`Portfolio`](@ref). Union d
   - `alloc_fail`: sets `alloc_fail`.
   - `alloc_model`: sets `alloc_model`.
 
-# Output
+# Outputs
 
   - [`Portfolio`](@ref) instance.
 """
@@ -1464,9 +1464,9 @@ mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, owap
 end
 ```
 
-Structure for hierarchical portfolio optimisation.
+Structure for working with hierarchical portfolios.
 
-Some of these require external data from given to the [`optimise!`](@ref) function:
+Some of these require external information from the arguments of functions that use the an instance of [`HCPortfolio`](@ref):
 
   - `type`: one of [`PortTypes`](@ref).
   - `rm`: one of [`RiskMeasures`](@ref).
@@ -1484,33 +1484,32 @@ Some of these require external data from given to the [`optimise!`](@ref) functi
 
   - `alpha_i`:
 
-        + `rm ∈ (:TG, :RTG)`: initial significance level of losses, `0 < alpha_i < alpha < 1`.
+      + `rm ∈ (:TG, :RTG)`: initial significance level of losses, `0 < alpha_i < alpha < 1`.
 
-      + `a_sim`:
+  - `a_sim`:
 
-          * `rm ∈ (:TG, :RTG)`: number of CVaRs to approximate the losses, `a_sim > 0`.
+      + `rm ∈ (:TG, :RTG)`: number of CVaRs to approximate the losses, `a_sim > 0`.
+  - `alpha`:
 
-      + `alpha`:
+      + `rm ∈ (:VaR, :CVaR, :EVaR, :RVaR, :RCVaR, :TG, :RTG, :DaR, :CDaR, :EDaR, :RDaR, :DaR_r, :CDaR_r, :EDaR_r, :RDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
+  - `beta_i`:
 
-          * `rm ∈ (:VaR, :CVaR, :EVaR, :RVaR, :RCVaR, :TG, :RTG, :DaR, :CDaR, :EDaR, :RDaR, :DaR_r, :CDaR_r, :EDaR_r, :RDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
-      + `beta_i`:
+      + `rm == :RTG`: initial significance level of gains, `0 < beta_i < beta < 1`.
+  - `b_sim`:
 
-          * `rm == :RTG`: initial significance level of gains, `0 < beta_i < beta < 1`.
-      + `b_sim`:
+      + `rm == :RTG`: number of CVaRs to approximate the gains, `b_sim > 0`.
+  - `beta`:
 
-          * `rm == :RTG`: number of CVaRs to approximate the gains, `b_sim > 0`.
-      + `beta`:
+      + `rm ∈ (:RCVaR, :RTG)`: significance level of gains, `beta ∈ (0, 1)`.
+  - `kappa`:
 
-          * `rm ∈ (:RCVaR, :RTG)`: significance level of gains, `beta ∈ (0, 1)`.
-      + `kappa`:
+      + `rm ∈ (:RVaR, :RDaR, :RDaR_r)`: relativistic deformation parameter.
+  - `max_num_assets_kurt`:
 
-          * `rm ∈ (:RVaR, :RDaR, :RDaR_r)`: relativistic deformation parameter.
-      + `max_num_assets_kurt`:
+      + `type == :NCO`:
 
-          * `type == :NCO`:
-
-              - `iszero(max_num_assets_kurt)`: use the full kurtosis model.
-              - `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
+          * `iszero(max_num_assets_kurt)`: use the full kurtosis model.
+          * `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
 
 ## OWA parameters
 
@@ -1627,58 +1626,92 @@ end
 
 """
 ```julia
+HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
+            returns::DataFrame = DataFrame(),
+            ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
+            assets::AbstractVector = Vector{String}(undef, 0), alpha_i::Real = 0.0001,
+            alpha::Real = 0.05, a_sim::Integer = 100, beta_i::Real = alpha_i,
+            beta::Real = alpha, b_sim::Integer = a_sim, kappa::Real = 0.3,
+            alpha_tail::Real = 0.05, max_num_assets_kurt::Integer = 0,
+            owa_p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50],
+            owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            bins_info::Union{Symbol, <:Integer} = :KN,
+            w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
+            w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
+            cor_method::Symbol = :Pearson,
+            cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            clusters::Clustering.Hclust = Hclust{Float64}(Matrix{Int64}(undef, 0, 2),
+                                                          Float64[], Int64[], :nothing),
+            k::Integer = 0, optimal::AbstractDict = Dict(),
+            solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
+            opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),
+            fail::AbstractDict = Dict(),
+            latest_prices::AbstractVector = Vector{Float64}(undef, 0),
+            alloc_optimal::AbstractDict = Dict(),
+            alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
+            alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),
+            alloc_fail::AbstractDict = Dict(), alloc_model::JuMP.Model = JuMP.Model())
 ```
-# Inputs
-## Portfolio characteristics
-- `prices`: `(T+1)×Na` `TimeArray` of asset prices, where the time stamp field is `timestamp`, where `T` is the number of returns observations and `Na` is the number of assets. If `prices` is not empty, then `returns`, `ret`, `timestamps`, `assets`, and `latest_prices` are ignored because their respective fields are obtained from `prices`.
-- `returns`: `T×(Na+1)` `DataFrame` of asset returns, where `T` is the number of returns observations and `Na` is the number of assets, the extra column is `timestamp`, which contains the timestamps of the returns. If `prices` is empty and `returns` is not empty, `ret`, `timestamps`, and `assets` are ignored because their respective fields are obtained from `returns`.
-- `ret`: `T×Na` matrix of asset returns, where `T` is the number of returns observations and `Na` is the number of assets. Its value is saved in the `returns` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function, where `T` is the number of returns observations and `Na` is the number of assets.
-- `timestamps`: `T×1` vector of timestamps, where `T` is the number of returns observations. Its value is saved in the `timestamps` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
-- `assets`: `Na×1` vector of assets, where `Na` is the number of assets. Its value is saved in the `assets` field of [`Portfolio`](@ref). If `prices` or `returns` are not empty, this value is obtained from within the function.
-## Risk parmeters
-$(_isigdef("Tail Gini losses", :a))
-$(_sigdef("VaR, CVaR, EVaR, RVaR, DaR, CDaR, EDaR, RDaR, CVaR losses, or Tail Gini losses, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :a))
-- `at`: protected value of `alpha * T`, where `T` is the number of returns observations. Used when optimising a entropic risk measures (EVaR and EDaR).
-$(_isigdef("Tail Gini gains", :b))
-$(_sigdef("CVaR gains or Tail Gini gains, depending on the [`RiskMeasures`](@ref) and upper bounds being used", :b))
-- `kappa`: deformation parameter for relativistic risk measures (RVaR and RDaR).
-- `alpha_tail`: significance level for lower tail dependence index, `0 < alpha_tail < 1`.
-- `max_num_assets_kurt`: when optimising `:NCO` type of [`HCPortfolio`](@ref), maximum number of assets to use the full kurtosis model, if the number of assets surpases this value use the relaxed kurtosis model.
-## OWA parameters
-- `owa_w`: `T×1` OWA vector, where `T` is the number of returns observations containing. Useful for optimising higher OWA L-moments.
-## Model statistics
-- `mu`: $(_mudef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
-- `cov`: $(_covdef("asset")) $(_dircomp("[`asset_statistics!`](@ref)"))
-- `kurt`: `(Na×Na)×(Na×Na)` matrix, where `Na` is the number of assets. Set the cokurtosis matrix at instance construction. The cokurtosis matrix `kurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `skurt`: `(Na×Na)×(Na×Na)` matrix, where `Na` is the number of assets. Set the semi cokurtosis matrix at instance construction. The semi cokurtosis matrix `skurt` can be computed by calling [`cokurt_mtx`](@ref).
-- `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`](@ref) for available choices.
-- `w_min`: `Na×1` vector of the lower bounds for asset weights, where `Na` is the number of assets.
-- `w_max`: `Na×1` vector of the upper bounds for asset weights, where `Na` is the number of assets.
-- `cor_method`: method for estimating the codependence matrix.
-- `cor`: `Na×Na` matrix, where where `Na` is the number of assets. Set the value of the codependence matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `cor` used by [`cor_dist_mtx`](@ref).
-- `dist`:  `Na×Na` matrix, where where `Na` is the number of assets. Set the value of the distance matrix at instance construction. When choosing `:Custom_Val` in `cov_method`, this is the value of `dist` used by [`cor_dist_mtx`](@ref).
-- `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters. $(_dircomp("[`asset_statistics!`](@ref) and [`optimise!`](@ref)"))
-- `k`: number of clusters to cut the dendrogram into.
-    - If `k == 0`, automatically compute `k` using the two difference gap statistic [^TDGS]. $(_dircomp("[`asset_statistics!`](@ref) and [`optimise!`](@ref)"))
-    - If `k != 0`, use the value directly.
-## Optimal portfolios
-- `optimal`: $_edst for storing optimal portfolios. $(_filled_by("[`optimise!`](@ref)"))- `optimal`:
-## Solutions
-$(_solver_desc("risk measure `JuMP` model for `:NCO` optimisations."))
-- `opt_params`: $_edst for storing parameters used for optimising. $(_filled_by("[`optimise!`](@ref)"))
-- `fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`optimise!`](@ref)"))
-## Allocation
-- `latest_prices`: `Na×1` vector of asset prices, `Na` is the number of assets. If `prices` is not empty, this is automatically obtained from the last entry. This is used for discretely allocating stocks according to their prices, weight in the portfolio, and money to be invested.
-- `alloc_optimal`: $_edst for storing optimal portfolios after allocating discrete stocks. $(_filled_by("[`allocate!`](@ref)"))
-$(_solver_desc("discrete allocation `JuMP` model.", "alloc_", "mixed-integer problems"))
-- `alloc_params`: $_edst for storing parameters used for optimising the portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
-- `alloc_fail`: $_edst for storing failed optimisation attempts. $(_filled_by("[`allocate!`](@ref)"))
-- `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation. $(_filled_by("[`allocate!`](@ref)"))
-# Outputs
-- [`HCPortfolio`](@ref) instance.
 
-[^TDGS]: 
-    [Yue, S., Wang, X. & Wei, M. Application of two-order difference to gap statistic. Trans. Tianjin Univ. 14, 217–221 (2008). https://doi.org/10.1007/s12209-008-0039-1](https://doi.org/10.1007/s12209-008-0039-1)
+Performs data validation and creates an instance of [`HCPortfolio`](@ref). Union datatypes remain union datatypes in the instance.
+
+# Inputs
+
+  - `prices`:
+
+      + `!isempty(prices)`: timearray of asset prices, automatically sets `assets`, `timestamps`, computes `returns` and `latest_prices`. Takes priority over the `returns`, `ret`, `timestamps`, `assets` and `latest_prices` arguments.
+
+  - `returns`:
+
+      + `!isempty(returns)`: dataframe of asset returns, automatically sets `assets`, `timestamps`, `returns`. Takes priority over the, `ret`, `timestamps` and `assets` arguments.
+  - `ret`: sets `returns`.
+  - `timestamps`: sets `timestamps`.
+  - `assets`: sets `assets`.
+  - `alpha_i`: sets `alpha_i`.
+  - `alpha`: sets `alpha`.
+  - `a_sim`: sets `a_sim`.
+  - `beta_i`: sets `beta_i`.
+  - `beta`: sets `beta`.
+  - `b_sim`: sets `b_sim`.
+  - `kappa`: sets `kappa`.
+  - `alpha_tail`: sets `alpha_tail`.
+  - `max_num_assets_kurt`: sets `max_num_assets_kurt`.
+  - `owa_p`: sets `owa_p`.
+  - `owa_w`: sets `owa_w`.
+  - `mu`: sets `mu`.
+  - `cov`: sets `cov`.
+  - `kurt`: sets `kurt`.
+  - `skurt`: sets `skurt`.
+  - `L_2`: sets `L_2`.
+  - `S_2`: sets `S_2`.
+  - `bins_info`: sets `bins_info`.
+  - `w_min`: sets `w_min`.
+  - `w_max`: sets `w_max`.
+  - `cor_method`: sets `cor_method`.
+  - `cor`: sets `cor`.
+  - `dist`: sets `dist`.
+  - `clusters`: sets `clusters`.
+  - `k`: sets `k`.
+  - `optimal`: sets `optimal`.
+  - `solvers`: sets `solvers`.
+  - `opt_params`: sets `opt_params`.
+  - `fail`: sets `fail`.
+  - `latest_prices`: sets `latest_prices`.
+  - `alloc_optimal`: sets `alloc_optimal`.
+  - `alloc_solvers`: sets `alloc_solvers`.
+  - `alloc_params`: sets `alloc_params`.
+  - `alloc_fail`: sets `alloc_fail`.
+  - `alloc_model`: sets `alloc_model`.
+
+# Outputs
+
+  - [`HCPortfolio`](@ref) instance.
 """
 function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                      returns::DataFrame = DataFrame(),
