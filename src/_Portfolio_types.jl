@@ -171,7 +171,9 @@ Some constraints define decision variables using scaling factors. The scaling fa
       + `tickers`: (optional) contains the list of tickers.
       + `const`: (optional) contains the regression constant.
       + The other columns must be the names of the factors.
-  - `loadings_opt`: instance of [`LoadingsOpt`](@ref) used when `class == :FC` to recover the factor risk budget vector.
+  - `loadings_opt`:
+
+      + `class == :FC`: instance of [`LoadingsOpt`](@ref) used to recover the factor risk budget vector.
 
 ## Risk parameters
 
