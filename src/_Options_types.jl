@@ -35,7 +35,7 @@ end
 end
 ```
 
-Structure and keyword constructor for estimating covariance matrices. This is part of [`CovOpt`](@ref), and as such some of these are only relevant when `method` has a specific value.
+Structure and keyword constructor for estimating covariance matrices. This is part of [`CovOpt`](@ref), and as such some of these are only relevant when its `method` field has a specific value.
 
 # Inputs
 
@@ -353,7 +353,7 @@ Structure and keyword constructor for computing expected returns vectors.
   - `genfunc`: generic function [`GenericFunction`](@ref) for estimating the unadjusted expected returns vector.
 
       + `method ∈ (:Default, :Custom_Func)`: return this value.
-      + `method ∈ (:JS, :BS, :BOP, :CAPM)`: the value is used as the starting point for computing the adjusted expected returns vector using the given `method` and---if applicable---`target`.
+      + `method ∈ (:JS, :BS, :BOP, :CAPM)`: the value is used as the starting point for computing the adjusted expected returns vector using the given `method` and `target` if applicable.
   - `custom`:
 
       + `method == :Custom_Val`: value of the mean returns vector.
@@ -477,7 +477,7 @@ end
 end
 ```
 
-Structure and keyword constructor for estimating covariance matrices. This is part of [`CorOpt`](@ref), and as such some of these are only relevant when `method` has a specific value.
+Structure and keyword constructor for estimating covariance matrices. This is part of [`CorOpt`](@ref), and as such some of these are only relevant when its `method` field has a specific value.
 
 # Inputs
 
@@ -591,7 +591,7 @@ end
 ```
 @kwdef mutable struct CorOpt
     method::Symbol = :Pearson
-    estimation::CorEstOpt = CovEstOpt(;)
+    estimation::CorEstOpt = CorEstOpt(;)
     gerber::GerberOpt = GerberOpt(;)
     sb::SBOpt = SBOpt(;)
     denoise::DenoiseOpt = DenoiseOpt(;)
@@ -607,7 +607,7 @@ Structure and keyword constructor for computing covariance matrices.
 
   - `method`: covariance estimation method from [`CorMethods`](@ref).
 
-  - `estimation`: covariance estimation options [`CovEstOpt`](@ref).
+  - `estimation`: covariance estimation options [`CorEstOpt`](@ref).
   - `gerber`: Gerber covariance options [`GerberOpt`](@ref).
   - `sb`: options for Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
@@ -702,10 +702,10 @@ Structure and keyword constructor for computing worst case statistics in [`wc_st
   - `n_sim`: number of simulations for the bootstrapping method.
   - `block_size`:
 
-      + `box ∈ (:Stationary, :Circular, :Moving)`: average block size when bootstrapping methods.
+      + `box ∈ (:Stationary, :Circular, :Moving)`: average block size used by the bootstrapping method.
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
 
-      + `ellipse ∈ (:Stationary, :Circular, :Moving)`: average block size when bootstrapping methods.
+      + `ellipse ∈ (:Stationary, :Circular, :Moving)`: average block size used by the bootstrapping method.
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
 """
 mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <: Integer}
@@ -913,14 +913,7 @@ end
 end
 ```
 
-Structure and keyword constructor for computing Black-Litterman statistics in [`black_litterman_statistics!`](@ref) and [`black_litterman_factor_satistics!`](@ref).
-
-  - [`black_litterman_statistics!`](@ref): calls [`black_litterman`](@ref).
-
-  - [`black_litterman_factor_satistics!`](@ref):
-
-      + `method == :A`: calls [`augmented_black_litterman`](@ref).
-      + `method == :B`: calls [`bayesian_black_litterman`](@ref).
+Structure and keyword constructor for computing Black-Litterman asset and factor statistics.
 
 # Inputs
 
@@ -945,11 +938,13 @@ Structure and keyword constructor for computing Black-Litterman statistics in [`
           * `method == :A`: flag used in the definition of ``\\bm{\\Pi}_{a}``.
   - `delta`:
 
-      + [`black_litterman_statistics!`](@ref): value of ``\\delta`` in the definition of ``\\bm{\\Pi}`` when `eq == true`.
+      + `eq == true`:
 
-      + [`black_litterman_factor_satistics!`](@ref):
+          * [`black_litterman_statistics!`](@ref): value of ``\\delta`` in the definition of ``\\bm{\\Pi}``.
 
-          * `method == :A`: value of ``\\delta`` in the definition of ``\\bm{\\Pi}_{a}`` when `eq == true`.
+          * [`black_litterman_factor_satistics!`](@ref):
+
+              - `method == :A`: value of ``\\delta`` in the definition of ``\\bm{\\Pi}_{a}``.
   - `rf`: risk-free rate.
   - `var_genfunc`:
 
@@ -1006,10 +1001,6 @@ end
 
 Structure and keyword constructor for clustering options in [`optimise!`](@ref), [`cluster_matrix`](@ref).
 
-  - [`optimise!`](@ref): calls [`_hierarchical_clustering`](@ref).
-  - [`cluster_matrix`](@ref): calls
-  - [`_hierarchical_clustering`](@ref): calls [`_hcluster_choice`](@ref).
-
 # Inputs
 
   - `linkage`: clustering linkage method from [`LinkageMethods`](@ref).
@@ -1022,7 +1013,9 @@ Structure and keyword constructor for clustering options in [`optimise!`](@ref),
   - `k`: number of clusters to cut the sample into.
 
       + `iszero(k)`: determined by [`_two_diff_gap_stat`](@ref).
-  - `genfunc`: function for computing a non-negative distance matrix from the correlation matrix when `method == :DBHT` as per [`DBHTs`](@ref).
+  - `genfunc`:
+
+      + `method == :DBHT`: function for computing a non-negative distance matrix from the correlation matrix when as per [`DBHTs`](@ref).
 """
 mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
     linkage::Symbol
@@ -1090,38 +1083,56 @@ Structure and keyword constructor for storing the options to optimising portfoli
   - `obj`: objective function from [`ObjFuncs`](@ref).
   - `kelly`: kelly return from [`KellyRet`](@ref).
   - `class`: portfolio class from [`PortClasses`](@ref).
-  - `rrp_ver`: version of relaxed risk parity from [`RRPVersions`](@ref) when `type == :RRP`
+  - `rrp_ver`:
+
+      + `type == :RRP`: version of relaxed risk parity from [`RRPVersions`](@ref).
   - `u_cov`: type of uncertainty set from [`UncertaintyTypes`](@ref) for covariance matrix.
   - `u_mu`: type of uncertainty set from [`UncertaintyTypes`](@ref) for expected returns vector.
   - `sd_cone`:
 
-      + `true`: use `MOI.SecondOrderCone` to model the standard deviation when `rm == :SD`.
-      + `false`: use the quadratic expression for the standard deviation when `rm == :SD`.
+      + `rm == :SD`:
+
+          * `true`: use `MOI.SecondOrderCone` to model the standard deviation.
+          * `false`: use the quadratic expression for the standard deviation.
   - `owa_approx`:
 
-      + `true`: use the power cone expansion approximation when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
-      + `false`: use the full Ordered Weight formulation when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
+      + `rm ∈ (:GMD, :TG, :RTG, :OWA)`:
+
+          * `true`: use the power cone expansion approximation .
+          * `false`: use the full Ordered Weight formulation.
   - `near_opt`:
-    + `true`: use the near optimal centering formulation. May not work with all risk measures depending on the solver. $(_solver_reqs("`MOI.ExponentialCone`"))
-    + `false`: normal optimisation.
+
+      + `true`: use the near optimal centering formulation. May not work with all risk measures depending on the solver. $(_solver_reqs("`MOI.ExponentialCone`"))
+      + `false`: normal optimisation.
   - `hist`: choice of expected returns vector and covariance matrix from [`ClassHist`](@ref).
   - `rf`: risk-free rate.
-  - `l`: risk aversion parameter when `obj == :Utility`.
-  - `rrp_penalty`: 
-    + `type == :RRP && rrp_ver == :Reg_Pen`: value of the relaxed risk penalty.
-  - `n`: 
-    + `near_opt == true`: number of sections to split the range between the minimum risk and maximum return portfolios.
+  - `l`:
+
+      + `obj == :Utility`:
+
+          * risk aversion parameter.
+  - `rrp_penalty`:
+
+      + `type == :RRP && rrp_ver == :Reg_Pen`: value of the relaxed risk penalty.
+  - `n`:
+
+      + `near_opt == true`: number of sections to split the range between the minimum risk and maximum return portfolios.
   - `w_ini`:
-    + `!isempty(w_ini)`: initial guess for the weights of the optimised portfolio. Some solvers do not support initial guesses and will see no benefit.
-    + `isempty(w_ini)`: no initial for the weights of the optimised portfolio.
+
+      + `!isempty(w_ini)`: initial guess for the weights of the optimised portfolio. Some solvers do not support initial guesses and will see no benefit.
+      + `isempty(w_ini)`: no initial for the weights of the optimised portfolio.
   - `w_min`:
-    + `near_opt == true`:
-      * `!isempty(w_min)`: assumed to be the value of the weights of the minimum risk portfolio.
-      * `isempty(w_min)`: weights of the minimum risk portfolio are computed by [`optimise!`](@ref).
+
+      + `near_opt == true`:
+
+          * `!isempty(w_min)`: assumed to be the value of the weights of the minimum risk portfolio.
+          * `isempty(w_min)`: weights of the minimum risk portfolio are computed by [`optimise!`](@ref).
   - `w_max`:
-    + `near_opt == true`:
-      * `!isempty(w_min)`: assumed to be the value of the weights of the maximum return portfolio.
-      * `isempty(w_min)`: weights of the maximum return portfolio are computed by [`optimise!`](@ref).
+
+      + `near_opt == true`:
+
+          * `!isempty(w_min)`: assumed to be the value of the weights of the maximum return portfolio.
+          * `isempty(w_min)`: weights of the maximum return portfolio are computed by [`optimise!`](@ref).
 """
 mutable struct OptimiseOpt{T1 <: Integer, T2 <: Real, T3 <: Real, T4 <: Real, T5 <: Real}
     type::Symbol
@@ -1225,7 +1236,7 @@ end
 end
 ```
 
-Structure and keyword constructor for storing the options to optimising the discrete allocation of portfolios in [`allocate!`](@ref).
+Structure and keyword constructor for storing the options to optimising the discrete allocation of portfolios.
 
 # Inputs
 
