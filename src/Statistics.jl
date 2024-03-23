@@ -2223,6 +2223,9 @@ end
 
 """
 ```julia
+black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
+                w::AbstractVector; cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
+                bl_opt::BLOpt = BLOpt(;))
 ```
 """
 function black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
@@ -2247,6 +2250,10 @@ end
 
 """
 ```julia
+bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix, B::AbstractMatrix,
+                         P_f::AbstractMatrix, Q_f::AbstractVector;
+                         cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
+                         bl_opt::BLOpt = BLOpt(;))
 ```
 """
 function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
@@ -2307,6 +2314,18 @@ end
 
 """
 ```julia
+augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
+                          F::Union{AbstractMatrix, Nothing}   = nothing,
+                          B::Union{AbstractMatrix, Nothing}   = nothing,
+                          P::Union{AbstractMatrix, Nothing}   = nothing,
+                          P_f::Union{AbstractMatrix, Nothing} = nothing,
+                          Q::Union{AbstractVector, Nothing}   = nothing,
+                          Q_f::Union{AbstractVector, Nothing} = nothing,
+                          cov_opt::CovOpt                     = CovOpt(;),
+                          mu_opt::MuOpt                       = MuOpt(;),
+                          f_cov_opt::CovOpt                   = CovOpt(;),
+                          f_mu_opt::MuOpt                     = MuOpt(;),
+                          bl_opt::BLOpt                       = BLOpt(;))
 ```
 """
 function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
@@ -2413,6 +2432,11 @@ end
 
 """
 ```julia
+black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
+                            Q::AbstractVector;
+                            w::AbstractVector = Vector{Float64}(undef, 0),
+                            cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
+                            bl_opt::BLOpt = BLOpt(;))
 ```
 """
 function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
@@ -2501,6 +2525,19 @@ end
 
 """
 ```julia
+black_litterman_factor_satistics!(portfolio::AbstractPortfolio;
+                                  w::AbstractVector                   = Vector{Float64}(undef, 0),
+                                  B::Union{DataFrame, Nothing}        = nothing,
+                                  P::Union{AbstractMatrix, Nothing}   = nothing,
+                                  P_f::Union{AbstractMatrix, Nothing} = nothing,
+                                  Q::Union{AbstractVector, Nothing}   = nothing,
+                                  Q_f::Union{AbstractVector, Nothing} = nothing,
+                                  loadings_opt::LoadingsOpt           = LoadingsOpt(;),
+                                  cov_opt::CovOpt                     = CovOpt(;),
+                                  mu_opt::MuOpt                       = MuOpt(;),
+                                  f_cov_opt::CovOpt                   = CovOpt(;),
+                                  f_mu_opt::MuOpt                     = MuOpt(;),
+                                  bl_opt::BLOpt                       = BLOpt(;))
 ```
 """
 function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,

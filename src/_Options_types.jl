@@ -1102,7 +1102,7 @@ Structure and keyword constructor for storing the options to optimising portfoli
           * `false`: use the full Ordered Weight formulation.
   - `near_opt`:
 
-      + `true`: use the near optimal centering formulation. May not work with all risk measures depending on the solver. $(_solver_reqs("`MOI.ExponentialCone`"))
+      + `true`: use the near optimal centering formulation. May not work with all risk measures depending on the solver. Solver must support `MOI.ExponentialCone`.
       + `false`: normal optimisation.
   - `hist`: choice of expected returns vector and covariance matrix from [`ClassHist`](@ref).
   - `rf`: risk-free rate.

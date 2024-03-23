@@ -107,7 +107,7 @@ TrackingErrKinds = (:None, :Weights, :Returns)
 Available kinds of tracking errors for [`Portfolio`](@ref).
 
   - `:None`: no tracking error.
-  - `:Weights`: provide a `Na×1` vector of asset weights which is used to compute the vector of benchmark returns, `tracking_err_weights` from [`Portfolio`](@ref), where $(_ndef(:a2)).
+  - `:Weights`: provide a `Na×1` vector of asset weights which is used to compute the vector of benchmark returns, `tracking_err_weights` field in [`Portfolio`](@ref), where $(_ndef(:a2)).
 
 ```math
 \\bm{b} = \\mathbf{X} \\bm{w}
@@ -116,12 +116,12 @@ Available kinds of tracking errors for [`Portfolio`](@ref).
 Where:
 
   - ``\\bm{b}``: is the benchmark returns vector.
-  - ``\\mathbf{X}``: is the ``T \\times N`` asset returns matrix.
+  - ``\\mathbf{X}``: is the `T×Na` asset returns matrix, where $(_tstr(:t1)), and $(_ndef(:a2)).
   - ``\\bm{w}``: is the asset weights vector.
 
 Or bypass the benchmark calculation by direclty providing the benchmark vector ``\\bm{b}``.
 
-  - `:Returns`: directly provide a `T×1` vector of benchmark returns, `tracking_err_returns` from [`Portfolio`](@ref), where $(_tstr(:t1)).
+  - `:Returns`: directly provide a `T×1` vector of benchmark returns, `tracking_err_returns` in [`Portfolio`](@ref), where $(_tstr(:t1)).
 
 The optimisation then attempts keep the square root deviation between the benchmark and portfolio's return below or equal to the user-provided tracking error.
 """
@@ -133,9 +133,11 @@ NetworkMethods = (:None, :SDP, :IP)
 ```
 
 Methods for enforcing network constraints [NWK1, NWK2](@cite) for optimising [`Portfolio`](@ref).
+
   - `:None`: no network constraint is applied.
-  - `:SDP`: Semi-Definite Programming constraint. $(_solver_reqs("`MOI.PSDCone`"))
-  - `:IP`: uses Mixed-Integer Linear Programming (MIP) optimisation. $(_solver_reqs("MIP constraints"))
+
+  - `:SDP`: Semi-Definite Programming constraint. Solver must support `MOI.PSDCone`.
+  - `:IP`: uses Mixed-Integer Linear Programming (MIP) optimisation. Solver must support "MIP constraints.
 """
 const NetworkMethods = (:None, :SDP, :IP)
 
@@ -380,8 +382,9 @@ const kMethods = (:Normal, :General)
 
 Methods for computing the distance parameters of elliptical sets in `:WC` optimisation type of [`PortTypes`](@ref).
 
-  - `:Normal`: assume a normal distribution for the returns.
-  - `:General`: any possible distribution of returns, uses ``\\sqrt{\\dfrac{1-q}{q}}``, where ``q`` is the significance level.
+  - `:Normal`: assume a normal distribution for the returns [WC1, WC2](@cite).
+
+  - `:General`: any possible distribution of returns, uses ``\\sqrt{\\dfrac{1-q}{q}}``, where ``q`` is the significance level [WC3, WC4](@cite).
 """
 const kMethods = (:Normal, :General)
 
@@ -393,8 +396,9 @@ PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
 Methods for fixing non-positive definite matrices.
 
   - `:None`: no fix is applied.
+
   - `:Nearest`: nearest correlation matrix from [NearestCorrelationMatrix.jl](https://github.com/adknudson/NearestCorrelationMatrix.jl).
-  - `:SDP`: find the nearest correlation matrix via Semi-Definite Programming with `JuMP`, formulation taken from the [COSMO.jl Examples](https://oxfordcontrol.github.io/COSMO.jl/stable/examples/closest_correlation_matrix/). $(_solver_reqs("`MOI.PSDCone`"))
+  - `:SDP`: find the nearest correlation matrix via Semi-Definite Programming with `JuMP`, formulation taken from the [COSMO.jl Examples](https://oxfordcontrol.github.io/COSMO.jl/stable/examples/closest_correlation_matrix/). Solver must support `MOI.PSDCone`.
   - `Custom_Func`: custom function provided.
 """
 const PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
@@ -794,7 +798,7 @@ const HCPortTypes = (:HRP, :HERC, :NCO)
 ClassHist = (1, 2, 3)
 ```
 
-Choice of estimate of the covariance matrix ``\\mathbf{\\Sigma}``, means vector ``\\bm{\\mu}``, and returns matrix ``\\mathbf{X}`` for optimising with different [`PortClasses`](@ref). Each estimate is subscripted by:
+Choice of estimate of the expected returns vector ``\\bm{\\mu}``, covariance matrix ``\\mathbf{\\Sigma}``, and returns matrix ``\\mathbf{X}`` for optimising with different [`PortClasses`](@ref). Each estimate is subscripted by:
 
   - No label: standard, computed by [`asset_statistics!`](@ref). In [`Portfolio`](@ref) these are `mu`, `cov`, and `returns`.
   - ``\\mathrm{fm}``: factor model, computed by [`factor_statistics!`](@ref). In [`Portfolio`](@ref) these are `fm_mu`, `fm_cov`, and `fm_returns`.
@@ -803,7 +807,7 @@ Choice of estimate of the covariance matrix ``\\mathbf{\\Sigma}``, means vector 
 
 The choices are:
 
-  - `:Classic || :FC`: `ClassHist` has no effect, always use ``\\bm{\\mu}``, ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
+  - `:Classic || :FC`: no effect, always use ``\\bm{\\mu}``, ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
 
   - `:FM`: ``\\bm{\\mu}_{\\mathrm{fm}}``.
 
@@ -854,7 +858,8 @@ AllocMethods = (:LP, :Greedy)
 
 Methods for allocating assets to an [`AbstractPortfolio`](@ref) according to the optimised weights and latest asset prices.
 
-  - `:LP`: uses Mixed-Integer Linear Programming (MIP) optimisation. $(_solver_reqs("MIP constraints"))
+  - `:LP`: uses Mixed-Integer Linear Programming (MIP) optimisation. Solver must support MIP constraints
+
   - `:Greedy`: uses a greedy iterative algorithm. This may not give the true optimal solution, but can be used when `:LP` fails to find one.
 """
 const AllocMethods = (:LP, :Greedy)
@@ -925,29 +930,33 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
 
 """
 ```julia
-RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
-                :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG,
-                :RTG, :OWA)
+RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD, :CDaR,
+                :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG, :OWA)
 ```
+
 Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref) of [`Portfolio`](@ref).
 
-  - `:SD`: standard deviation, [`SD`](@ref) [SD1](@cite). $(_solver_reqs("`MOI.SecondOrderCone` if `sd_cone == true`, else it must support quadratic expressions"))
+  - `:SD`: standard deviation, [`SD`](@ref) [SD](@cite).
+
+      + `sd_cone == true`: solver must support `MOI.SecondOrderCone`.
+      + else: it must support quadratic expressions.
+
   - `:MAD`: mean absolute deviation, [`MAD`](@ref) [MAD](@cite).
-  - `:SSD`: semi standard deviation, [`SSD`](@ref) [SSD](@cite). $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:SSD`: semi standard deviation, [`SSD`](@ref) [SSD](@cite). Solver must support `MOI.SecondOrderCone`.
   - `:FLPM`: first lower partial moment (Omega ratio), [`FLPM`](@ref) [LPM](@cite).
-  - `:SLPM`: second lower partial moment (Sortino ratio), [`SLPM`](@ref) [LPM](@cite). $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:SLPM`: second lower partial moment (Sortino ratio), [`SLPM`](@ref) [LPM](@cite). Solver must support `MOI.SecondOrderCone`.
   - `:WR`: worst realisation (Minimax), [`WR`](@ref) [WR](@cite).
   - `:CVaR`: conditional value at risk, [`CVaR`](@ref) [CVaR](@cite).
-  - `:EVaR`: entropic value at risk, [`EVaR`](@ref) [EVaR1, EVaR2, EVaR3](@cite). $(_solver_reqs("`MOI.ExponentialCone`"))
-  - `:RVaR`: relativistic value at risk, [`RVaR`](@ref) [RVaR](@cite). $(_solver_reqs("`MOI.PowerCone`"))
+  - `:EVaR`: entropic value at risk, [`EVaR`](@ref) [EVaR1, EVaR2, EVaR3](@cite). Solver must support `MOI.ExponentialCone`.
+  - `:RVaR`: relativistic value at risk, [`RVaR`](@ref) [RVaR](@cite). Solver must support `MOI.PowerCone`.
   - `:MDD`: maximum drawdown of uncompounded cumulative returns (Calmar ratio), [`MDD_abs`](@ref) [DDs](@cite).
   - `:ADD`: average drawdown of uncompounded cumulative returns, [`ADD_abs`](@ref) [DDs](@cite).
   - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns, [`CDaR_abs`](@ref) [DDs](@cite).
-  - `:UCI`: ulcer index of uncompounded cumulative returns, [`UCI_abs`](@ref) [UCI](@cite). $(_solver_reqs("`MOI.SecondOrderCone`"))
-  - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns, [`EDaR_abs`](@ref) [EVaR3](@cite). $(_solver_reqs("`MOI.ExponentialCone`"))
-  - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RVaR](@cite). $(_solver_reqs("`MOI.PowerCone`"))
-  - `:Kurt`: square root kurtosis, [`Kurt`](@ref) [KT1, KT2](@cite). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
-  - `:SKurt`: square root semi-kurtosis, [`SKurt`](@ref) [KT1, KT2](@cite). $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+  - `:UCI`: ulcer index of uncompounded cumulative returns, [`UCI_abs`](@ref) [UCI](@cite). Solver must support `MOI.SecondOrderCone`.
+  - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns, [`EDaR_abs`](@ref) [EVaR3](@cite). Solver must support `MOI.ExponentialCone`.
+  - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RVaR](@cite). Solver must support `MOI.PowerCone`.
+  - `:Kurt`: square root kurtosis, [`Kurt`](@ref) [KT1, KT2](@cite). Solver must support `MOI.PSDCone` and `MOI.SecondOrderCone`.
+  - `:SKurt`: square root semi-kurtosis, [`SKurt`](@ref) [KT1, KT2](@cite). Solver must support `MOI.PSDCone` and `MOI.SecondOrderCone`.
   - `:GMD`: gini mean difference, [`GMD`](@ref) [GMD, OWA](@cite).
   - `:RG`: range of returns, [`RG`](@ref) [OWA](@cite).
   - `:RCVaR`: range of conditional value at risk, [`RCVaR`](@ref) [OWA](@cite).
@@ -962,37 +971,48 @@ const RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :
 """
 ```julia
 HCRiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
-                  :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG,
-                  :RTG, :OWA, :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r, :ADD_r,
-                  :CDaR_r, :UCI_r, :EDaR_r, :RDaR_r)
+                  :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG,
+                  :OWA, :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r, :ADD_r, :CDaR_r,
+                  :UCI_r, :EDaR_r, :RDaR_r)
 ```
-Available risk measures for optimisations of [`HCPortfolio`](@ref). 
+
+Available risk measures for optimisations of [`HCPortfolio`](@ref).
 
 These risk measures are available for all optimisation types.
 
-  - `:SD`: standard deviation, [`SD`](@ref) [SD1](@cite). 
-    + If `:NCO`: $(_solver_reqs("`MOI.SecondOrderCone` if `sd_cone == true`, else it must support quadratic expressions"))
+  - `:SD`: standard deviation, [`SD`](@ref) [SD](@cite).
+
+      + If `:NCO`:
+
+          * `sd_cone == true`: solver must support `MOI.SecondOrderCone`.
+          * else: it must support quadratic expressions.
+
   - `:MAD`: mean absolute deviation, [`MAD`](@ref) [MAD](@cite).
-  - `:SSD`: semi standard deviation, [`SSD`](@ref) [SSD](@cite). 
-    + If `:NCO`: $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:SSD`: semi standard deviation, [`SSD`](@ref) [SSD](@cite).
+
+      + If `:NCO`: solver must support `MOI.SecondOrderCone`.
   - `:FLPM`: first lower partial moment (Omega ratio), [`FLPM`](@ref) [LPM](@cite).
-  - `:SLPM`: second lower partial moment (Sortino ratio), [`SLPM`](@ref) [LPM](@cite). 
-    + If `:NCO`: $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:SLPM`: second lower partial moment (Sortino ratio), [`SLPM`](@ref) [LPM](@cite).
+
+      + If `:NCO`: solver must support `MOI.SecondOrderCone`.
   - `:WR`: worst realisation (Minimax), [`WR`](@ref) [WR](@cite).
   - `:CVaR`: conditional value at risk, [`CVaR`](@ref) [CVaR](@cite).
-  - `:EVaR`: entropic value at risk, [`EVaR`](@ref) [EVaR1, EVaR2, EVaR3](@cite). $(_solver_reqs("`MOI.ExponentialCone`"))
-  - `:RVaR`: relativistic value at risk, [`RVaR`](@ref) [RVaR](@cite). $(_solver_reqs("`MOI.PowerCone`"))
+  - `:EVaR`: entropic value at risk, [`EVaR`](@ref) [EVaR1, EVaR2, EVaR3](@cite). Solver must support `MOI.ExponentialCone`.
+  - `:RVaR`: relativistic value at risk, [`RVaR`](@ref) [RVaR](@cite). Solver must support `MOI.PowerCone`.
   - `:MDD`: maximum drawdown of uncompounded cumulative returns (Calmar ratio), [`MDD_abs`](@ref) [DDs](@cite).
   - `:ADD`: average drawdown of uncompounded cumulative returns, [`ADD_abs`](@ref) [DDs](@cite).
   - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns, [`CDaR_abs`](@ref) [DDs](@cite).
-  - `:UCI`: ulcer index of uncompounded cumulative returns, [`UCI_abs`](@ref) [UCI](@cite). 
-    + If `:NCO`: $(_solver_reqs("`MOI.SecondOrderCone`"))
-  - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns, [`EDaR_abs`](@ref) [EVaR3](@cite). $(_solver_reqs("`MOI.ExponentialCone`"))
-  - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RVaR](@cite). $(_solver_reqs("`MOI.PowerCone`"))
-  - `:Kurt`: square root kurtosis, [`Kurt`](@ref) [KT1, KT2](@cite). 
-    + If `:NCO`: $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
-  - `:SKurt`: square root semi-kurtosis, [`SKurt`](@ref) [KT1, KT2](@cite). 
-    + If `:NCO`: $(_solver_reqs("`MOI.PSDCone` and `MOI.SecondOrderCone`"))
+  - `:UCI`: ulcer index of uncompounded cumulative returns, [`UCI_abs`](@ref) [UCI](@cite).
+
+      + If `:NCO`: solver must support `MOI.SecondOrderCone`.
+  - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns, [`EDaR_abs`](@ref) [EVaR3](@cite). Solver must support `MOI.ExponentialCone`.
+  - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RVaR](@cite). Solver must support `MOI.PowerCone`.
+  - `:Kurt`: square root kurtosis, [`Kurt`](@ref) [KT1, KT2](@cite).
+
+      + If `:NCO`: solver must support `MOI.PSDCone` and `MOI.SecondOrderCone`.
+  - `:SKurt`: square root semi-kurtosis, [`SKurt`](@ref) [KT1, KT2](@cite).
+
+      + If `:NCO`: solver must support `MOI.PSDCone` and `MOI.SecondOrderCone`.
   - `:GMD`: gini mean difference, [`GMD`](@ref) [GMD, OWA](@cite).
   - `:RG`: range of returns, [`RG`](@ref) [OWA](@cite).
   - `:RCVaR`: range of conditional value at risk, [`RCVaR`](@ref) [OWA](@cite).
@@ -1002,17 +1022,18 @@ These risk measures are available for all optimisation types.
 
 These risk measures are not available with `:NCO` optimisations.
 
-  - `:Variance`: variance, [`Variance`](@ref).
+  - `:Variance`: variance, [`Variance`](@ref) [SD](@cite).
+
   - `:Equal`: equal risk contribution, `1/N` where N is the number of assets.
-  - `:VaR`: value at risk, [`VaR`](@ref).
-  - `:DaR`: drawdown at risk of uncompounded cumulative returns, [`DaR_abs`](@ref).
-  - `:DaR_r`: drawdown at risk of compounded cumulative returns, [`DaR_rel`](@ref).
-  - `:MDD_r`: maximum drawdown of compounded cumulative returns, [`MDD_rel`](@ref).
-  - `:ADD_r`: average drawdown of compounded cumulative returns, [`ADD_rel`](@ref).
-  - `:CDaR_r`: conditional drawdown at risk of compounded cumulative returns, [`CDaR_rel`](@ref).
-  - `:UCI_r`: ulcer index of compounded cumulative returns, [`UCI_rel`](@ref). $(_solver_reqs("`MOI.SecondOrderCone`"))
-  - `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns, [`EDaR_rel`](@ref). $(_solver_reqs("`MOI.ExponentialCone`"))
-  - `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns, [`RDaR_rel`](@ref). $(_solver_reqs("`MOI.PowerCone`"))
+  - `:VaR`: value at risk, [`VaR`](@ref) [CVaR](@cite).
+  - `:DaR`: drawdown at risk of uncompounded cumulative returns, [`DaR_abs`](@ref) [DDs](@cite).
+  - `:DaR_r`: drawdown at risk of compounded cumulative returns, [`DaR_rel`](@ref) [DDs](@cite).
+  - `:MDD_r`: maximum drawdown of compounded cumulative returns, [`MDD_rel`](@ref) [DDs](@cite).
+  - `:ADD_r`: average drawdown of compounded cumulative returns, [`ADD_rel`](@ref) [DDs](@cite).
+  - `:CDaR_r`: conditional drawdown at risk of compounded cumulative returns, [`CDaR_rel`](@ref) [DDs](@cite).
+  - `:UCI_r`: ulcer index of compounded cumulative returns, [`UCI_rel`](@ref) [DDs](@cite).
+  - `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns, [`EDaR_rel`](@ref) [DDs](@cite). Solver must support `MOI.ExponentialCone`.
+  - `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns, [`RDaR_rel`](@ref) [DDs](@cite). Solver must support `MOI.PowerCone`.
 """
 const HCRiskMeasures = (RiskMeasures..., :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r,
                         :ADD_r, :CDaR_r, :UCI_r, :EDaR_r, :RDaR_r)
@@ -1027,9 +1048,9 @@ OWAMethods = (:CRRA, :E, :SS, :SD)
 Methods for computing the weights used in [`owa_l_moment_crm`](@ref) to combine L-moments higher than 2 [OWAL](@cite).
 
   - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
-  - `:E`: Maximum Entropy. $(_solver_reqs("`MOI.RelativeEntropyCone` and `MOI.NormOneCone`"))
-  - `:SS`: Minimum Sum of Squares. $(_solver_reqs("`MOI.SecondOrderCone`"))
-  - `:SD`: Minimum Square Distance. $(_solver_reqs("`MOI.SecondOrderCone`"))
+  - `:E`: Maximum Entropy. Solver must support `MOI.RelativeEntropyCone` and `MOI.NormOneCone`.
+  - `:SS`: Minimum Sum of Squares. Solver must support `MOI.SecondOrderCone`.
+  - `:SD`: Minimum Square Distance. Solver must support `MOI.SecondOrderCone`.
 """
 const OWAMethods = (:CRRA, :E, :SS, :SD)
 

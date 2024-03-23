@@ -138,6 +138,7 @@ end
 
 """
 ```julia
+_hcluster_choice(dist, cluster_opt::ClusterOpt)
 ```
 """
 function _hcluster_choice(dist, cluster_opt::ClusterOpt)
