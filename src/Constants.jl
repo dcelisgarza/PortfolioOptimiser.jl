@@ -619,7 +619,7 @@ Where:
 
 # `:RP` -- Risk Parity Optimisations
 
-Optimises portfolios based on a vector of risk contributions per asset. We can chose any of the risk measures in [`RiskMeasures`](@ref).
+Optimises portfolios based on a vector of risk contributions per asset [RP1, RP2](@cite). We can chose any of the risk measures in [`RiskMeasures`](@ref).
 
 ```math
 \\begin{align*}
@@ -643,7 +643,7 @@ Where:
 
 # `:RRP` -- Relaxed Risk Parity Optimisations
 
-Optimises portfolios based on a vector of risk contributions per asset. Defines its own risk measure using the portfolio returns covariance.
+Optimises portfolios based on a vector of risk contributions per asset [RRP1](@cite). Defines its own risk measure using the portfolio returns covariance.
 
 ```math
 \\begin{align*}
@@ -679,7 +679,7 @@ Where:
 
 # `:WC` -- Worst Case Mean Variance Optimisations
 
-Computes the worst case mean variance portfolio according to user-selected uncertainty sets, [`UncertaintyTypes`](@ref), for the portfolio return and covariance. We can chose any of the objective functions in [`ObjFuncs`](@ref).
+Computes the worst case mean variance portfolio according to user-selected uncertainty sets, [`UncertaintyTypes`](@ref), for the portfolio return and covariance [WC2, WC3, WC5, WC6](@cite). We can chose any of the objective functions in [`ObjFuncs`](@ref).
 
   - `:Min_Risk`: worst case minimum risk mean-variance portfolio,
 

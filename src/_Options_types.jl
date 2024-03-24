@@ -129,7 +129,7 @@ Structure and keyword constructor for Gerber and Gerber-derived covariance and c
 
 # Inputs
 
-  - `threshold`: significance threshold, `threshold ∈ (0, 1)`.
+  - `threshold`: Gerber significance threshold, `threshold ∈ (0, 1)`.
   - `normalise`: whether to normalise the returns to have a mean equal to `0` and a standard deviation equal to `1`.
   - `mean_func`: [`GenericFunction`](@ref) for computing the expected returns vector.
   - `std_func`: [`GenericFunction`](@ref) for computing the standard deviation of the returns.
@@ -169,7 +169,7 @@ end
 end
 ```
 
-Structure for storing options for computing Smyth-Broby modifications of the Gerber statistic when `method ∈ (:SB0, :SB1, :Gerber_SB0, :Gerber_SB1)` from [`CovMethods`](@ref) or [`CorMethods`](@ref) [SB](@cite).
+Structure for storing options for computing Smyth-Broby modifications of the Gerber statistic when `method ∈ (:SB0, :SB1, :Gerber_SB0, :Gerber_SB1)` from [`CovMethods`](@ref) or [`CorMethods`](@ref).
 
 # Inputs
 
@@ -352,8 +352,8 @@ Structure and keyword constructor for computing expected returns vectors.
   - `rf`: risk-free rate.
   - `genfunc`: generic function [`GenericFunction`](@ref) for estimating the unadjusted expected returns vector.
 
-      + `method ∈ (:Default, :Custom_Func)`: return this value.
-      + `method ∈ (:JS, :BS, :BOP, :CAPM)`: the value is used as the starting point for computing the adjusted expected returns vector using the given `method` and `target` if applicable.
+      + `method ∈ (:Default, :Custom_Func)`: return the value computed by `genfunc`.
+      + `method ∈ (:JS, :BS, :BOP, :CAPM)`: the value computed by `genfunc` is used as the starting point for computing the adjusted expected returns vector using the given `method` and `target` if applicable.
   - `custom`:
 
       + `method == :Custom_Val`: value of the mean returns vector.
@@ -362,7 +362,7 @@ Structure and keyword constructor for computing expected returns vectors.
       + `method == :CAPM`: market returns.
   - `sigma`:
 
-      + `method ∈ (:JS, :BS, :BOP, :CAPM)`: value of the covariance matrix used when computing the adjusted expected returns vector. When computing from [`asset_statistics!`](@ref), this value is set automatically.
+      + `method ∈ (:JS, :BS, :BOP, :CAPM)`: value of the covariance matrix used when computing the adjusted expected returns vector. When computing from [`asset_statistics!`](@ref), `sigma` is set automatically using the `cov_opt` keyword argument.
 """
 mutable struct MuOpt{T1 <: Real}
     method::Symbol
@@ -672,24 +672,24 @@ end
 end
 ```
 
-Structure and keyword constructor for computing worst case statistics in [`wc_statistics!`](@ref).
+Structure and keyword constructor for computing worst case statistics.
 
 # Inputs
 
   - `calc_box`: whether to compute box sets.
 
   - `calc_ellipse`: whether to compute elliptical sets.
-  - `diagonal`: whether to consider only the diagonal of the covariance matrices of estimation errors.
+  - `diagonal`: whether to consider only the diagonal of the covariance matrices of estimation errors [WC3](@cite).
   - `box`: method from [`BoxMethods`](@ref) for computing box sets.
   - `ellipse`: method from [`EllipseMethods`](@ref) for computing elliptical sets.
   - `k_mu_method`:
 
       + `isa(k_sigma_method, Symbol)`: method from [`kMethods`](@ref) for computing the distance parameter of the elliptical set for the asset expected returns vector.
-      + `isa(k_sigma_method, Real)`: value of the distance parameter of the elliptical set for the asset expected returns vector.
+      + `isa(k_sigma_method, Real)`: value of the distance parameter of the elliptical set for the asset expected returns vector [WC5](@cite).
   - `k_sigma_method`:
 
       + `isa(k_sigma_method, Symbol)`: method from [`kMethods`](@ref) for computing the distance parameter of the elliptical set for the asset covariance matrix.
-      + `isa(k_sigma_method, Real)`: value of the distance parameter of the elliptical set for the asset covariance matrix.
+      + `isa(k_sigma_method, Real)`: value of the distance parameter of the elliptical set for the asset covariance matrix [WC5](@cite).
   - `dcov`:
 
       + `box == :Delta`: the percentage of the covariance matrix that parametrises its box set.
@@ -777,7 +777,7 @@ end
 end
 ```
 
-Structure and keyword constructor for the `:PCR` method from [`FSMethods`](@ref) of [`loadings_matrix`](@ref).
+Structure and keyword constructor for the `:PCR` method from [`FSMethods`](@ref).
 
 # Inputs
 
@@ -817,7 +817,7 @@ end
 end
 ```
 
-Structure and keyword constructor for computing the loadings matrix in [`loadings_matrix`](@ref).
+Structure and keyword constructor for computing the loadings matrix.
 
 # Inputs
 
@@ -999,7 +999,7 @@ end
 end
 ```
 
-Structure and keyword constructor for clustering options in [`optimise!`](@ref), [`cluster_matrix`](@ref).
+Structure and keyword constructor for clustering options.
 
 # Inputs
 
@@ -1012,7 +1012,7 @@ Structure and keyword constructor for clustering options in [`optimise!`](@ref),
       + `iszero(max_k)`: computes the value in [`_two_diff_gap_stat`](@ref) as ``k_{\\mathrm{max}} = \\left\\lceil \\sqrt{N} \\right\\rceil`` where ``N`` is the number of assets.
   - `k`: number of clusters to cut the sample into.
 
-      + `iszero(k)`: determined by [`_two_diff_gap_stat`](@ref).
+      + `iszero(k)`: computed by [`_two_diff_gap_stat`](@ref) using the dendrogram heights.
   - `genfunc`:
 
       + `method == :DBHT`: function for computing a non-negative distance matrix from the correlation matrix when as per [`DBHTs`](@ref).
@@ -1073,7 +1073,7 @@ end
 end
 ```
 
-Structure and keyword constructor for storing the options to optimising portfolios in [`optimise!`](@ref) for all [`PortTypes`](@ref) and `:NCO` [`HCPortTypes`](@ref).
+Structure and keyword constructor for storing the options for optimising all [`PortTypes`](@ref) and `:NCO` [`HCPortTypes`](@ref) portfolios.
 
 # Inputs
 
@@ -1098,7 +1098,7 @@ Structure and keyword constructor for storing the options to optimising portfoli
 
       + `rm ∈ (:GMD, :TG, :RTG, :OWA)`:
 
-          * `true`: use the power cone expansion approximation .
+          * `true`: use the power cone expansion approximation [OWAA](@cite).
           * `false`: use the full Ordered Weight formulation.
   - `near_opt`:
 

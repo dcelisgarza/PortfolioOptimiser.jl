@@ -161,7 +161,7 @@ Some constraints define decision variables using scaling factors. The scaling fa
   - `short_u`: absolute value of the sum of all short (negative) weights.
   - `long_u`: sum of all long (positive) weights.
   - `num_assets_l`: lower bound for the integer number of assets that make significant contributions to the final portfolio weights. Solver must support `MOI.SecondOrderCone`.
-  - `num_assets_u`: upper bound for the integer number of assets that make significant contributions to the final portfolio weights. Solver must support MIP constraints.
+  - `num_assets_u`: upper bound for the integer number of assets that make significant contributions to the final portfolio weights [MIP1](@cite). Solver must support MIP constraints.
   - `num_assets_u_scale`: scaling factor needed to create the decision variable for the `num_assets_u` constraint.
   - `f_assets`: `Nf×1` vector of factors, where `Nf` is the number of factors.
   - `f_timestamps`: `T×1` vector of factor timestamps, where `T` is the number of returns observations.
@@ -308,7 +308,7 @@ Only relevant when `type ∈ (:Trad, :WC)`.
   - `a_vec_cent`: `Na×1` centrality measure vector for the centrality constraint, where `Na` is the number of assets.
   - `b_cent`: average centrality measure for the centrality constraint.
 
-The centrality measure constraint is defined as
+The centrality measure constraint [NWK1](@cite) is defined as
 
 ```math
 \\bm{A} \\cdot \\bm{w} = b\\,.
