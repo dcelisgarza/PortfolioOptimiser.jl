@@ -39,6 +39,14 @@
   abstract = {In this paper we derive the optimal linear shrinkage estimator for the high-dimensional mean vector using random matrix theory. The results are obtained under the assumption that both the dimension p and the sample size n tend to infinity in such a way that p∕n→c∈(0,∞). Under weak conditions imposed on the underlying data generating mechanism, we find the asymptotic equivalents to the optimal shrinkage intensities and estimate them consistently. The proposed nonparametric estimator for the high-dimensional mean vector has a simple structure and is proven to minimize asymptotically, with probability 1, the quadratic loss when c∈(0,1). When c∈(1,∞) we modify the estimator by using a feasible estimator for the precision covariance matrix. To this end, an exhaustive simulation study and an application to real data are provided where the proposed estimator is compared with known benchmarks from the literature. It turns out that the existing estimators of the mean vector, including the new proposal, converge to the sample mean vector when the true mean vector has an unbounded Euclidean norm.}
 }
 
+
+@article{bruder2012managing,
+  title   = {Managing risk exposures using the risk budgeting approach},
+  author  = {Bruder, Benjamin and Roncalli, Thierry},
+  journal = {Available at SSRN 2009778},
+  year    = {2012}
+}
+
 @article{BS,
   issn      = {00221090, 17566916},
   url       = {http://www.jstor.org/stable/2331042},
@@ -75,8 +83,6 @@
   publisher = {Public Library of Science San Francisco, USA}
 }
 
-
-
 @incollection{DDs,
   author    = {A. Chekhlov and S. Uryasev and M. Zabarankin},
   editor    = {Panos M Pardalos and Athanasios Migdalas and George Baourakis},
@@ -107,6 +113,8 @@
   publisher = {Springer}
 }
 
+
+
 @article{EVaR2,
   title    = {Portfolio optimization with entropic value-at-risk},
   journal  = {European Journal of Operational Research},
@@ -121,7 +129,6 @@
   keywords = {Risk analysis, Portfolio optimization, Coherent risk measures, Stochastic programming, Large-scale convex optimization},
   abstract = {The entropic value-at-risk (EVaR) is a new coherent risk measure, which is an upper bound for both the value-at-risk (VaR) and conditional value-at-risk (CVaR). One of the important properties of the EVaR is that it is strongly monotone over its domain and strictly monotone over a broad sub-domain including all continuous distributions, whereas well-known monotone risk measures such as the VaR and CVaR lack this property. A key feature of a risk measure, besides its financial properties, is its applicability in large-scale sample-based portfolio optimization. If the negative return of an investment portfolio is a differentiable convex function for any sampling observation, the portfolio optimization with the EVaR results in a differentiable convex program whose number of variables and constraints is independent of the sample size, which is not the case for the VaR and CVaR even if the portfolio rate linearly depends on the decision variables. This enables us to design an efficient algorithm using differentiable convex optimization. Our extensive numerical study indicates the high efficiency of the algorithm in large scales, when compared with the existing convex optimization software packages. The computational efficiency of the EVaR and CVaR approaches are generally similar, but the EVaR approach outperforms the other as the sample size increases. Moreover, the comparison of the portfolios obtained for a real case by the EVaR and CVaR approaches shows that the EVaR-based portfolios can have better best, mean, and worst return rates as well as Sharpe ratios.}
 }
-
 
 @article{EVaR3,
   title   = {Entropic portfolio optimization: a disciplined convex programming framework},
@@ -162,6 +169,7 @@
   year      = {2017},
   publisher = {Institutional Investor Journals Umbrella}
 }
+
 @article{HERC2,
   title   = {The hierarchical equal risk contribution portfolio},
   author  = {Raffinot, Thomas},
@@ -184,7 +192,6 @@
   abstract = {This paper presents a low bias histogram-based estimation of mutual information and its application to feature selection problems. By canceling the first order bias, the estimation avoids the bias accumulation problem that affects classical methods. As a consequence, on a synthetic feature selection problem, only the proposed method results in the exact number of features to be chosen in the Gaussian case when compared to four other approaches. In a speech recognition application, the proposed method and the Sturges method are the only ones that lead to a correct number of selected features in the noise free case. In the reduced data case, only the proposed method points out the optimal number of features to select. Finally, in the noisy case, only the proposed method leads to results of high quality; other methods show severely underestimated numbers of selected features.}
 }
 
-
 @article{HRP1,
   title     = {Building diversified portfolios that outperform out of sample},
   author    = {De Prado, Marcos Lopez},
@@ -195,7 +202,6 @@
   year      = {2016},
   publisher = {Institutional Investor Journals Umbrella}
 }
-
 @phdthesis{HRP2,
   title  = {Exploration of Hierarchical Clustering in Long-Only Risk-Based Portfolio Optimization},
   author = {Sj{\"o}strand, Daniel and Behnejad, Nima and Richter, Martin},
@@ -246,6 +252,8 @@
   pages   = {1-231},
   author  = {Yiyong Feng and Daniel P. Palomar}
 }
+
+
 @incollection{Kelly1,
   title     = {Chaper 9 - The kelly criterion in blackjack sports betting, and the stock market*},
   editor    = {S.A. Zenios and W.T. Ziemba},
@@ -267,7 +275,7 @@
   author  = {Cajas, Dany},
   journal = {Available at SSRN 3833617},
   year    = {2021}
-}
+} 
 
 @article{KT1,
   title   = {Convex Optimization of Portfolio Kurtosis},
@@ -282,7 +290,6 @@
   journal = {Available at SSRN 4472793},
   year    = {2023}
 }
-
 @inbook{LPM,
   author    = {Mansini, Renata
                and Ogryczak, W{\l}odzimierz
@@ -310,6 +317,16 @@
   abstract = {The purpose of this paper is to demonstrate that a portfolio optimization model using the L 1 risk (mean absolute deviation risk) function can remove most of the difficulties associated with the classical Markowitz's model while maintaining its advantages over equilibrium models. In particular, the L 1 risk model leads to a linear program instead of a quadratic program, so that a large-scale optimization problem consisting of more than 1,000 stocks may be solved on a real time basis. Numerical experiments using the historical data of NIKKEI 225 stocks show that the L 1 risk model generates a portfolio quite similar to that of the Markowitz's model within a fraction of time required to solve the latter.},
   keywords = {portfolio optimization; L1 risk function; linear programming; Markowitz's model; single-factor model},
   url      = {https://EconPapers.repec.org/RePEc:inm:ormnsc:v:37:y:1991:i:5:p:519-531}
+}
+
+@incollection{MIP1,
+  title     = {Reformulation-linearization method for global optimization of mixed integer linear fractional programming problems with application on sustainable batch scheduling},
+  author    = {Yue, Dajun and You, Fengqi},
+  booktitle = {Computer Aided Chemical Engineering},
+  volume    = {33},
+  pages     = {949--954},
+  year      = {2014},
+  publisher = {Elsevier}
 }
 
 @book{MLAM,
@@ -358,12 +375,18 @@
   year    = {2023}
 }
 
-
 @article{OWA,
   title   = {OWA Portfolio Optimization: A Disciplined Convex Programming Framework},
   author  = {Cajas, Dany},
   journal = {Available at SSRN 3988927},
   year    = {2021}
+}
+
+@article{OWAA,
+  title   = {Efficient Gini Mean Difference and Tail Gini Portfolio Optimization based on P-Norms},
+  author  = {Cajas, Dany},
+  journal = {Available at SSRN 4711326},
+  year    = {2024}
 }
 
 @article{OWAL,
@@ -372,7 +395,6 @@
   journal = {Available at SSRN 4393155},
   year    = {2023}
 }
-
 
 @article{PMFG,
   author   = {Massara, Guido Previde and Di Matteo, T. and Aste, Tomaso},
@@ -390,12 +412,41 @@
   eprint   = {https://academic.oup.com/comnet/article-pdf/5/2/161/13794756/cnw015.pdf}
 }
 
+
+@article{RP1,
+  title   = {Managing risk exposures using the risk budgeting approach},
+  author  = {Bruder, Benjamin and Roncalli, Thierry},
+  journal = {Available at SSRN 2009778},
+  year    = {2012}
+}
+
+@article{RP2,
+  title   = {Constrained risk budgeting portfolios: Theory, algorithms, applications \& puzzles},
+  author  = {Richard, Jean-Charles and Roncalli, Thierry},
+  journal = {arXiv preprint arXiv:1902.05710},
+  year    = {2019}
+}
+
+
+@article{RRP1,
+  title     = {Risk return trade-off in relaxed risk parity portfolio optimization},
+  author    = {Gambeta, Vaughn and Kwon, Roy},
+  journal   = {Journal of risk and financial management},
+  volume    = {13},
+  number    = {10},
+  pages     = {237},
+  year      = {2020},
+  publisher = {MDPI}
+}
+
 @article{RVaR,
   title   = {Portfolio Optimization of Relativistic Value at Risk},
   author  = {Cajas, Dany},
   journal = {Available at SSRN 4378498},
   year    = {2023}
 }
+
+
 @article{SB,
   title    = {An enhanced Gerber statistic for portfolio optimization},
   journal  = {Finance Research Letters},
@@ -409,7 +460,6 @@
   keywords = {Estimation error, Gerber statistic, Portfolio optimization, Shrinkage, Equity co-movements, Modern portfolio theory},
   abstract = {The purpose of this letter is to introduce a modified version of the Gerber statistic resulting in the enhancement of its function as a measure of statistical co-movement. The modification centres around the redefinition of zones and thresholds, alongside the use of finite real-valued contributions rather than discrete binary counts in assigning value to individual co-movements. Arguments for the former are based on the statistical alignment of data series for the purposes of more effectively delineating concordant and discordant co-movement. Arguments for the latter are based on attributing greater weight to better information. Collectively this approach simultaneously incorporates the merits of Gerber-like thresholds and zoning, and conventional correlation-like co-movement measurement.}
 }
-
 @article{SD,
   issn      = {00221082, 15406261},
   url       = {http://www.jstor.org/stable/2975974},
@@ -492,6 +542,22 @@
   year      = {2003},
   publisher = {INFORMS}
 }
+
+@article{WC5,
+  title   = {The worst-case risk of a portfolio},
+  author  = {Lobo, Miguel Sousa and Boyd, Stephen},
+  journal = {Unpublished manuscript. Available from http://faculty. fuqua. duke. edu/\% 7Emlobo/bio/researchfiles/rsk-bnd. pdf},
+  year    = {2000}
+}
+
+@misc{WC6,
+  url     = {https://palomar.home.ece.ust.hk/ELEC5470_lectures/slides_robust_optim.pdf},
+  journal = {Robust optimization with applications},
+  author  = {Palomar, Daniel P.},
+  year    = {2020},
+  month   = {Sep}
+}
+
 
 @article{WR,
   title     = {On LP solvable models for portfolio selection},
