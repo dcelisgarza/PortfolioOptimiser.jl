@@ -107,7 +107,7 @@ TrackingErrKinds = (:None, :Weights, :Returns)
 Available kinds of tracking errors for [`Portfolio`](@ref).
 
   - `:None`: no tracking error.
-  - `:Weights`: provide a `Na×1` vector of asset weights which is used to compute the vector of benchmark returns, `tracking_err_weights` field in [`Portfolio`](@ref), where $(_ndef(:a2)).
+  - `:Weights`: provide a `Na×1` vector of asset weights which is used to compute the vector of benchmark returns, `tracking_err_weights` field in [`Portfolio`](@ref), where `Na` is the number of assets.
 
 ```math
 \\bm{b} = \\mathbf{X} \\bm{w}
@@ -116,12 +116,12 @@ Available kinds of tracking errors for [`Portfolio`](@ref).
 Where:
 
   - ``\\bm{b}``: is the benchmark returns vector.
-  - ``\\mathbf{X}``: is the `T×Na` asset returns matrix, where $(_tstr(:t1)), and $(_ndef(:a2)).
+  - ``\\mathbf{X}``: is the `T×Na` asset returns matrix, where `T` is the number of returns observations, and `Na` is the number of assets.
   - ``\\bm{w}``: is the asset weights vector.
 
 Or bypass the benchmark calculation by direclty providing the benchmark vector ``\\bm{b}``.
 
-  - `:Returns`: directly provide a `T×1` vector of benchmark returns, `tracking_err_returns` in [`Portfolio`](@ref), where $(_tstr(:t1)).
+  - `:Returns`: directly provide a `T×1` vector of benchmark returns, `tracking_err_returns` in [`Portfolio`](@ref), where `T` is the number of returns observations.
 
 The optimisation then attempts keep the square root deviation between the benchmark and portfolio's return below or equal to the user-provided tracking error.
 """
@@ -132,12 +132,12 @@ const TrackingErrKinds = (:None, :Weights, :Returns)
 NetworkMethods = (:None, :SDP, :IP)
 ```
 
-Methods for enforcing network constraints [NWK1, NWK2](@cite) for optimising [`Portfolio`](@ref).
+Methods for enforcing network constraints [NWK1, NWK2](@cite) when optimising a [`Portfolio`](@ref).
 
   - `:None`: no network constraint is applied.
 
   - `:SDP`: Semi-Definite Programming constraint. Solver must support `MOI.PSDCone`.
-  - `:IP`: uses Mixed-Integer Linear Programming (MIP) optimisation. Solver must support "MIP constraints.
+  - `:IP`: uses Mixed-Integer Linear Programming (MIP) optimisation. Solver must support MIP constraints.
 """
 const NetworkMethods = (:None, :SDP, :IP)
 
@@ -146,7 +146,7 @@ const NetworkMethods = (:None, :SDP, :IP)
 BLFMMethods = (:A, :B)
 ```
 
-Versions of the factor Black-Litterman Model, computed by [`black_litterman_factor_satistics!`](@ref).
+Versions of the factor Black-Litterman Model.
 
 # `:A` -- Augmented Black-Litterman
 
@@ -258,7 +258,7 @@ const BLFMMethods = (:A, :B)
 UncertaintyTypes = (:None, :Box, :Ellipse)
 ```
 
-Available types of uncertainty sets that can be computed with [`wc_statistics!`](@ref), which are used by `:WC` [`PortTypes`](@ref).
+Available types of uncertainty sets available for `:WC` [`PortTypes`](@ref).
 
   - `:None`: no uncertainty set is used.
   - `:Box`: are box uncertainty sets chosen from [`BoxMethods`](@ref).
@@ -284,7 +284,7 @@ const RRPVersions = (:None, :Reg, :Reg_Pen)
 EllipseMethods = (:Stationary, :Circular, :Moving, :Normal)
 ```
 
-Available types of elliptical sets that can be computed with [`wc_statistics!`](@ref), which are used by `:WC` [`PortTypes`](@ref) optimisations.
+Available types of elliptical sets used by `:WC` [`PortTypes`](@ref) optimisations.
 
   - `:Stationary`: [stationary](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.StationaryBootstrap.html#arch.bootstrap.StationaryBootstrap).
   - `:Circular`: [circular block](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.CircularBlockBootstrap.html#arch.bootstrap.CircularBlockBootstrap).
@@ -298,7 +298,7 @@ const EllipseMethods = (:Stationary, :Circular, :Moving, :Normal)
 BoxMethods = (:Stationary, :Circular, :Moving, :Normal, :Delta)
 ```
 
-Available types of box sets that can be computed with [`wc_statistics!`](@ref), which are used by `:WC` [`PortTypes`](@ref) optimisations.
+Available types of box sets used by `:WC` [`PortTypes`](@ref) optimisations.
 
   - `:Stationary`: [stationary](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.StationaryBootstrap.html#arch.bootstrap.StationaryBootstrap).
   - `:Circular`: [circular block](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.CircularBlockBootstrap.html#arch.bootstrap.CircularBlockBootstrap).
@@ -313,7 +313,7 @@ const BoxMethods = (EllipseMethods..., :Delta)
 BootstrapMethods = (:Stationary, :Circular, :Moving)
 ```
 
-Bootstrapping method for computing the uncertainty sets with [`wc_statistics!`](@ref), which are used by `:WC` [`PortTypes`](@ref) optimisations.
+Bootstrapping method for computing the uncertainty sets used by `:WC` [`PortTypes`](@ref) optimisations.
 
   - `:Stationary`: [stationary](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.StationaryBootstrap.html#arch.bootstrap.StationaryBootstrap).
   - `:Circular`: [circular block](https://bashtage.github.io/arch/bootstrap/generated/arch.bootstrap.CircularBlockBootstrap.html#arch.bootstrap.CircularBlockBootstrap).
@@ -326,7 +326,7 @@ const BootstrapMethods = (:Stationary, :Circular, :Moving)
 MuMethods = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 ```
 
-Methods for estimating the expected returns vector in [`mean_vec`](@ref).
+Methods for estimating the expected returns vector.
 
   - `:Default`: uses [`StatsBase.mean`](https://juliastats.org/StatsBase.jl/stable/scalarstats/#Statistics.mean). Giving the user the ability to provide any `args` and `kwargs` defined therein.
 
@@ -344,7 +344,7 @@ const MuMethods = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 MuTargets = (:GM, :VW, :SE)
 ```
 
-Targets for the `:JS` [JS1, JS2](@cite), `:BS` [BS](@cite), and `:BOP` [BOP](@cite) estimators in [`mean_vec`](@ref) and [`mu_estimator`](@ref).
+Targets for the `:JS` [JS1, JS2](@cite), `:BS` [BS](@cite), and `:BOP` [BOP](@cite) expected returns vector estimators.
 
   - `:GM`: grand mean.
   - `:VW`: volatility-weighted grand mean.
@@ -358,7 +358,7 @@ CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB
               :Gerber_SB1, :Custom_Func, :Custom_Val)
 ```
 
-Methods for estimating the covariance matrix in [`covar_mtx`](@ref).
+Methods for estimating covariance matrices.
 
   - `:Full`: full covariance matrix. Uses the [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) interface and [`StatsBase.cov`](https://juliastats.org/StatsBase.jl/stable/cov/#Statistics.cov-Tuple%7BCovarianceEstimator,%20AbstractMatrix%7D) method. Giving the user the ability to provide any `args` and `kwargs` defined therein.
   - `:Semi`: lower semi-covariance matrix. Uses the [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) interface and [`StatsBase.cov`](https://juliastats.org/StatsBase.jl/stable/cov/#Statistics.cov-Tuple%7BCovarianceEstimator,%20AbstractMatrix%7D) method. Giving the user the ability to provide any `args` and `kwargs` defined therein. Also lets the user provide a threshold value below which returns are considered bad enough to be included in the lower semi-covariance.
@@ -380,7 +380,7 @@ const CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Ger
 const kMethods = (:Normal, :General)
 ```
 
-Methods for computing the distance parameters of elliptical sets in `:WC` optimisation type of [`PortTypes`](@ref).
+Methods for computing the distance parameters of elliptical sets in `:WC` [`PortTypes`](@ref).
 
   - `:Normal`: assume a normal distribution for the returns [WC1, WC2](@cite).
 
@@ -408,7 +408,7 @@ const PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
 DenoiseMethods = (:Fixed, :Spectral, :Shrink)
 ```
 
-Methods for covariance matrix denoising [MLAM; Ch. 2](@cite).
+Methods for matrix denoising [MLAM; Ch. 2](@cite).
 
   - `:Fixed`: fixed.
   - `:Spectral`: spectral.
@@ -452,7 +452,7 @@ CorMethods = (:Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2, :SB0,
               :Distance, :Mutual_Info, :Tail, :Cov_to_Cor, :Custom_Func, :Custom_Val)
 ```
 
-Methods for estimating the correlation ``\\mathbf{C}``, and distance matrices ``\\mathbf{D}`` in [`cor_dist_mtx`](@ref).
+Methods for estimating the correlation ``\\mathbf{C}``, and distance matrices ``\\mathbf{D}``.
 
   - `:Pearson`: Pearson correlation, ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
   - `:Spearman`: Spearman correlation, ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
@@ -484,7 +484,7 @@ const CorMethods = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Ger
 BinMethods = (:KN, :FD, :SC, :HGR)
 ```
 
-Methods for calculating optimal bin widths for the mutual and variational information matrices computed by [`mut_var_info_mtx`](@ref).
+Methods for calculating optimal bin widths for the mutual and variational information matrices.
 
   - `:KN`: [Knuth's](https://docs.astropy.org/en/stable/api/astropy.stats.knuth_bin_width.html).
   - `:FD`: [Freedman-Diaconis'](https://docs.astropy.org/en/stable/api/astropy.stats.freedman_bin_width.html).
@@ -498,7 +498,7 @@ const BinMethods = (:KN, :FD, :SC, :HGR)
 KellyRet = (:None, :Approx, :Exact)
 ```
 
-Available types of Kelly returns for [`Portfolio`](@ref).
+Types of Kelly returns available when optimising a [`Portfolio`](@ref).
 
   - `:None`: arithmetic expected returns, ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w}``.
   - `:Approx`: first moment approximation of the logarithmic returns [Kelly1](@cite), ``R(\\bm{w}) = \\bm{\\mu} \\cdot \\bm{w} - \\dfrac{1}{2} \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}``.
@@ -518,7 +518,7 @@ const KellyRet = (:None, :Approx, :Exact)
 ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 ```
 
-Objective functions available for use in `:Trad` and `:WC` [`PortTypes`](@ref) optimisations of [`Portfolio`](@ref).
+Objective functions available for use in `:Trad` and `:WC` [`PortTypes`](@ref) optimisations.
 """
 const ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 
@@ -545,8 +545,8 @@ Together with [`ClassHist`](@ref), they are used to decide which version of ``\\
 
 When optimising with `type == :RP` from [`PortTypes`](@ref) they have extra behaviours.
 
-  - `:Classic || :FM || :BL || :BLFM`: use the asset risk budget vector `risk_budget` from [`Portfolio`](@ref).
-  - `:FC` and `type == :RP` from [`PortTypes`](@ref): use the factor risk budget vector `f_risk_budget` from [`Portfolio`](@ref).
+  - `:Classic || :FM || :BL || :BLFM`: use the asset risk budget vector, `risk_budget` field in [`Portfolio`](@ref).
+  - `:FC` and `type == :RP` from [`PortTypes`](@ref): use the factor risk budget vector, `f_risk_budget` field in [`Portfolio`](@ref).
 """
 const PortClasses = (:Classic, :FM, :BL, :BLFM, :FC)
 
@@ -757,8 +757,6 @@ U_{\\bm{\\mu}}^{\\mathrm{ellipse}} &= \\left\\{\\bm{\\mu}\\, \\vert\\, \\left(\\
 
   - ``\\lambda`` is the risk aversion coefficient.
   - and ``r`` is the risk-free rate.
-
-The worst case uncertainty sets are computed by [`wc_statistics!`](@ref).
 """
 const PortTypes = (:Trad, :RP, :RRP, :WC)
 
@@ -800,10 +798,10 @@ ClassHist = (1, 2, 3)
 
 Choice of estimate of the expected returns vector ``\\bm{\\mu}``, covariance matrix ``\\mathbf{\\Sigma}``, and returns matrix ``\\mathbf{X}`` for optimising with different [`PortClasses`](@ref). Each estimate is subscripted by:
 
-  - No label: standard, computed by [`asset_statistics!`](@ref). In [`Portfolio`](@ref) these are `mu`, `cov`, and `returns`.
-  - ``\\mathrm{fm}``: factor model, computed by [`factor_statistics!`](@ref). In [`Portfolio`](@ref) these are `fm_mu`, `fm_cov`, and `fm_returns`.
-  - ``\\mathrm{bl}``: Black-Litterman model, computed by [`black_litterman_statistics!`](@ref). In [`Portfolio`](@ref) these are `bl_mu`, `bl_cov`, and `bl_returns`.
-  - ``\\mathrm{bl, fm}``: Black-Litterman factor model, computed by [`black_litterman_factor_satistics!`](@ref). In [`Portfolio`](@ref) these are `blfm_mu`, `blfm_cov`, and `blfm_returns`.
+  - No label: standard. In [`Portfolio`](@ref) these are `mu`, `cov`, and `returns`.
+  - `fm`: factor model. In [`Portfolio`](@ref) these are `fm_mu`, `fm_cov`, and `fm_returns`.
+  - `bl`: Black-Litterman model. In [`Portfolio`](@ref) these are `bl_mu`, `bl_cov`, and `bl_returns`.
+  - `bl, fm`: Black-Litterman factor model. In [`Portfolio`](@ref) these are `blfm_mu`, `blfm_cov`, and `blfm_returns`.
 
 The choices are:
 
@@ -819,9 +817,9 @@ The choices are:
       + `1`: ``\\mathbf{\\Sigma}_\\mathrm{bl}``.
       + `2`: ``\\mathbf{\\Sigma}``.
       + `3`: throws error.
-  - `:BLFM`: ``\\bm{\\mu}_\\mathrm{bl, fm}``.
+  - `:BLFM`: ``\\bm{\\mu}_\\mathrm{bl,\\, fm}``.
 
-      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{bl, fm}``, ``\\mathbf{X}_\\mathrm{fm}``.
+      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{bl,\\, fm}``, ``\\mathbf{X}_\\mathrm{fm}``.
       + `2`: ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
       + `3`: ``\\mathbf{\\Sigma}_\\mathrm{fm}``, ``\\mathbf{X}_\\mathrm{fm}``.
 """
@@ -934,7 +932,7 @@ RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :
                 :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG, :OWA)
 ```
 
-Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref) of [`Portfolio`](@ref).
+Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref).
 
   - `:SD`: standard deviation, [`SD`](@ref) [SD](@cite).
 
@@ -962,7 +960,7 @@ Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref) of [`Portfolio
   - `:RCVaR`: range of conditional value at risk, [`RCVaR`](@ref) [OWA](@cite).
   - `:TG`: tail gini, [`TG`](@ref) [TG, OWA](@cite).
   - `:RTG`: range of tail gini, [`RTG`](@ref) [OWA](@cite).
-  - `:OWA`: ordered weight array (generic OWA weights) which can be computed via [`owa_l_moment`](@ref) and [`owa_l_moment_crm`](@ref) [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
+  - `:OWA`: ordered weight array, used with generic OWA weights [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
 """
 const RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
                       :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG,
@@ -1018,7 +1016,7 @@ These risk measures are available for all optimisation types.
   - `:RCVaR`: range of conditional value at risk, [`RCVaR`](@ref) [OWA](@cite).
   - `:TG`: tail gini, [`TG`](@ref) [TG, OWA](@cite).
   - `:RTG`: range of tail gini, [`RTG`](@ref) [OWA](@cite).
-  - `:OWA`: ordered weight array (generic OWA weights) which can be computed via [`owa_l_moment`](@ref) and [`owa_l_moment_crm`](@ref) [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
+  - `:OWA`: ordered weight array, used with generic OWA weights [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
 
 These risk measures are not available with `:NCO` optimisations.
 
@@ -1045,7 +1043,7 @@ const GraphMethods = (:MST, :TMFG)
 OWAMethods = (:CRRA, :E, :SS, :SD)
 ```
 
-Methods for computing the weights used in [`owa_l_moment_crm`](@ref) to combine L-moments higher than 2 [OWAL](@cite).
+Methods for computing the weights used to combine L-moments higher than 2 [OWAL](@cite).
 
   - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
   - `:E`: Maximum Entropy. Solver must support `MOI.RelativeEntropyCone` and `MOI.NormOneCone`.

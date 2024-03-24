@@ -1568,7 +1568,27 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     return corr, dist
 end
 
-function covar_mtx_mean_vec(returns; cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;))
+"""
+```julia
+covar_mtx_mean_vec(returns::AbstractMatrix; cov_opt::CovOpt = CovOpt(;),
+                   mu_opt::MuOpt = MuOpt(;))
+```
+
+Compute the expected returns vector and covariance matrix. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref) and [`cokurt_mtx`](@ref).
+
+# Inputs
+
+  - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` is the number of assets or factors.
+  - `cov_opt`: instance of [`CovOpt`](@ref)
+  - `mu_opt`: instance of [`MuOpt`](@ref)
+
+# Outputs
+
+  - `sigma`: `N×N` covariance matrix, where `N` is the number of assets or factors.
+  - `mu`: `N×1` vector of expected returns, where `N` is the number of assets or factors.
+"""
+function covar_mtx_mean_vec(returns::AbstractMatrix; cov_opt::CovOpt = CovOpt(;),
+                            mu_opt::MuOpt = MuOpt(;))
     mu_method = mu_opt.method
     if mu_method == :CAPM
         mkt_ret = mu_opt.mkt_ret
@@ -1593,27 +1613,50 @@ end
 
 """
 ```julia
-asset_statistics!(portfolio::AbstractPortfolio; target_ret::AbstractFloat = 0.0,
-                  mean_func::Function = mean, cov_func::Function = cov,
-                  cor_func::Function = cor, std_func = std,
-                  dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),
-                  cor_method::Symbol = if isa(portfolio, HCPortfolio)
-                      portfolio.cor_method                           # flags
-                  else                           # flags
-                      :Pearson
-                  end, custom_mu = nothing, custom_cov = nothing, custom_kurt = nothing,
-                  custom_skurt = nothing, mean_args::Tuple = (),                           # cov_mtx
-                  cov_args::Tuple = (), cor_args::Tuple = (), dist_args::Tuple = (),
-                  std_args::Tuple = (), calc_kurt = true, mean_kwargs = (; dims = 1),
-                  cov_kwargs::NamedTuple = (;), cor_kwargs::NamedTuple = (;),
-                  dist_kwargs::NamedTuple = (;), std_kwargs::NamedTuple = (;), uplo = :L)                           # flags
+asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true, calc_mu::Bool = true,
+                  calc_kurt::Bool = true, calc_cor::Bool = true,
+                  cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
+                  kurt_opt::KurtOpt = KurtOpt(;), cor_opt::CorOpt = CorOpt(;))
 ```
+
+Compute the asset statistics for a given portfolio in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref) and [`cokurt_mtx`](@ref).
+
+# Inputs
+
+  - `portfolio`: instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+
+## Flags
+
+  - `calc_cor`:
+
+      + `isa(portfolio, HCPortfolio)`:
+
+          * `true`: compute the correlation matrix, setting the value of `portfolio.cor`.
+
+  - `calc_cov`:
+
+      + `true`: compute the covariance matrix, setting the value of `portfolio.cov`.
+  - `calc_mu`:
+
+      + `true`: compute the expected returns matrix, setting the value of `portfolio.mu`.
+
+          * `mu_opt.method ∈ (:JS, :BS, :BOP, :CAPM)`: use the covariance matrix. Therefore, the covariance matrix is computed whenever `calc_mu == true`, but `portfolio.cov` is only set when `calc_cov == true`.
+  - `calc_kurt`:
+
+      + `true`: compute the cokurtosis and semi cokurtosis matrices, setting `portfolio.kurt` and `portfolio.skurt`.
+
+## Options
+
+  - `cov_opt`: instance of [`CovOpt`](@ref)
+  - `mu_opt`: instance of [`MuOpt`](@ref)
+  - `kurt_opt`: instance of [`KurtOpt`](@ref)
+  - `cor_opt`: instance of [`CorOpt`](@ref)
 """
-function asset_statistics!(portfolio::AbstractPortfolio;                           # flags
-                           calc_cor::Bool = true, calc_cov::Bool = true,
-                           calc_mu::Bool = true, calc_kurt::Bool = true,                           # cov_mtx
-                           cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
-                           kurt_opt::KurtOpt = KurtOpt(;), cor_opt::CorOpt = CorOpt(;))
+function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
+                           calc_mu::Bool = true, calc_kurt::Bool = true,
+                           calc_cor::Bool = true, cov_opt::CovOpt = CovOpt(;),
+                           mu_opt::MuOpt = MuOpt(;), kurt_opt::KurtOpt = KurtOpt(;),
+                           cor_opt::CorOpt = CorOpt(;))
     returns = portfolio.returns
 
     if calc_cov || calc_mu
