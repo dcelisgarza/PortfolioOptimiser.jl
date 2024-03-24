@@ -1323,7 +1323,7 @@ Compute the covariance matrix.
 # Inputs
 
   - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` is the number of assets or factors.
-  - `cov_opt`: instance of [`CovOpt`](@ref), defines how the covariance matrix is computed.
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the covariance matrix.
 
 # Outputs
 
@@ -1393,7 +1393,7 @@ Compute the expected returns vector for a returns series.
 # Inputs
 
   - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` is the number of assets or factors.
-  - `mu_opt`: instance of [`MuOpt`](@ref), defines how the expected returns vector is computed.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected returns vector.
 
 # Outputs
 
@@ -1597,8 +1597,8 @@ Compute the expected returns vector and covariance matrix. See [`covar_mtx`](@re
 # Inputs
 
   - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` is the number of assets or factors.
-  - `cov_opt`: instance of [`CovOpt`](@ref), defines how the covariance matrix is computed.
-  - `mu_opt`: instance of [`MuOpt`](@ref), defines how the expected returns vector is computed.
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the covariance matrix.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected returns vector.
 
 # Outputs
 
@@ -1665,8 +1665,8 @@ Compute the asset statistics for a given portfolio in-place. See [`covar_mtx_mea
 
 ## Options
 
-  - `cov_opt`: instance of [`CovOpt`](@ref), defines how the covariance matrix is computed.
-  - `mu_opt`: instance of [`MuOpt`](@ref), defines how the expected returns vector is computed.
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the covariance matrix.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected returns vector.
   - `kurt_opt`: instance of [`KurtOpt`](@ref), defines how the cokurtosis and semi cokurtoes are computed.
   - `cor_opt`: instance of [`CorOpt`](@ref), defines how the correlation matrix is computed.
 """
@@ -2499,6 +2499,48 @@ black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
                             cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
                             bl_opt::BLOpt = BLOpt(;))
 ```
+
+Compute the Black Litterman statistics, `portfolio.bl_mu` and `portfolio.bl_cov`, for a given portfolio in-place. See [`black_litterman`](@ref).
+
+# Inputs
+
+  - `portfolio`: instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+
+  - `P`: `Nv×Na` analyst's views matrix, can be relative or absolute, where `Nv` is the number of views, and `Na` the number of assets.
+  - `Q`: `Nv×1` analyst's expected returns vector, where `Nv` is the number of views.
+  - `w`: `Na×1` benchmark weights vector, sets `portfolio.bl_bench_weights`.
+
+      + `isempty(w)`:
+
+          * `isempty(portfolio.bl_bench_weights)`: every entry is in `portfolio.bl_bench_weights` is assumed to be equal to `1/Na`, and `w` is set to be equal to `portfolio.bl_bench_weights`.
+          * `!isempty(portfolio.bl_bench_weights)`: `w` is set to be equal to `portfolio.bl_bench_weights`.
+
+      + `!isempty(w)`: `portfolio.bl_bench_weights` is set to be equal to `w`.
+
+## Options
+
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the covariance matrix.
+
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected returns vector.
+  - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the Black Litterman model's statistics.
+
+      + `isnothing(bl_opt.delta)`: it is defined internally as:
+
+        ```math
+        \\delta = \\dfrac{\\bm{\\mu} \\cdot \\bm{w} - r}{\\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}}\\,.
+        ```
+
+        Where:
+
+          * ``\\delta``: is `bl_opt.delta`.
+          * ``\\bm{\\mu}``: is `portfolio.mu`.
+          * ``\\bm{w}``: is `portfolio.bl_bench_weights`.
+          * ``r``: is `bl_opt.rf`.
+          * ``\\mathbf{\\Sigma}``: is `portfolio.cov`.
+
+!!! note
+
+    Note that both `bl_opt` and `mu_opt` have `rf` fields for the risk-free rate (see [`MuOpt`](@ref) and [`BLOpt`](@ref)). This gives users more granular control over the model.
 """
 function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
                                      Q::AbstractVector,
