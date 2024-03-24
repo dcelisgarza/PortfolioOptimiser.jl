@@ -1315,8 +1315,19 @@ end
 
 """
 ```julia
-covar_mtx
+covar_mtx(returns::AbstractMatrix; opt::CovOpt = CovOpt(;))
 ```
+
+Compute the covariance matrix.
+
+# Inputs
+
+  - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` is the number of assets or factors.
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines how the covariance matrix is computed.
+
+# Outputs
+
+  - `sigma`: `N×N` covariance matrix, where `N` is the number of assets or factors.
 """
 function covar_mtx(returns::AbstractMatrix, opt::CovOpt = CovOpt(;))
     method = opt.method
@@ -1374,12 +1385,19 @@ end
 
 """
 ```julia
-mean_vec(returns::AbstractMatrix; custom_mu::Union{AbstractVector, Nothing} = nothing,
-         mean_args::Tuple = (), mean_func::Function = mean, mean_kwargs::NamedTuple = (;),
-         mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-         mu_weights::Union{AbstractWeights, Nothing} = nothing, rf::Real = 0.0,
-         sigma::Union{AbstractMatrix, Nothing} = nothing)
+mean_vec(returns::AbstractMatrix; opt::MuOpt = MuOpt(;))
 ```
+
+Compute the expected returns vector for a returns series.
+
+# Inputs
+
+  - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` is the number of assets or factors.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines how the expected returns vector is computed.
+
+# Outputs
+
+  - `mu`: `N×1` vector of expected returns, where `N` is the number of assets or factors.
 """
 function mean_vec(returns::AbstractMatrix, opt::MuOpt = MuOpt(;))
     method = opt.method
@@ -1574,13 +1592,13 @@ covar_mtx_mean_vec(returns::AbstractMatrix; cov_opt::CovOpt = CovOpt(;),
                    mu_opt::MuOpt = MuOpt(;))
 ```
 
-Compute the expected returns vector and covariance matrix. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref) and [`cokurt_mtx`](@ref).
+Compute the expected returns vector and covariance matrix. See [`covar_mtx`](@ref) and [`mean_vec`](@ref).
 
 # Inputs
 
   - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` is the number of assets or factors.
-  - `cov_opt`: instance of [`CovOpt`](@ref)
-  - `mu_opt`: instance of [`MuOpt`](@ref)
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines how the covariance matrix is computed.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines how the expected returns vector is computed.
 
 # Outputs
 
@@ -1647,10 +1665,10 @@ Compute the asset statistics for a given portfolio in-place. See [`covar_mtx_mea
 
 ## Options
 
-  - `cov_opt`: instance of [`CovOpt`](@ref)
-  - `mu_opt`: instance of [`MuOpt`](@ref)
-  - `kurt_opt`: instance of [`KurtOpt`](@ref)
-  - `cor_opt`: instance of [`CorOpt`](@ref)
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines how the covariance matrix is computed.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines how the expected returns vector is computed.
+  - `kurt_opt`: instance of [`KurtOpt`](@ref), defines how the cokurtosis and semi cokurtoes are computed.
+  - `cor_opt`: instance of [`CorOpt`](@ref), defines how the correlation matrix is computed.
 """
 function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
                            calc_mu::Bool = true, calc_kurt::Bool = true,
