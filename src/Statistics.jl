@@ -1637,7 +1637,7 @@ asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true, calc_mu::
                   kurt_opt::KurtOpt = KurtOpt(;), cor_opt::CorOpt = CorOpt(;))
 ```
 
-Compute the asset statistics for a given portfolio in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref) and [`cokurt_mtx`](@ref).
+Compute the asset statistics for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref) and [`cokurt_mtx`](@ref).
 
 # Inputs
 
@@ -2288,6 +2288,55 @@ black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
                 w::AbstractVector; cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
                 bl_opt::BLOpt = BLOpt(;))
 ```
+
+Estimates the expected returns vector and covariance matrix based on the Black Litterman model [BL1, BL2](@cite).
+
+```math
+\\begin{align*}
+\\bm{\\Pi} &= \\begin{cases}
+                    \\delta \\mathbf{\\Sigma} \\bm{w} &\\quad \\mathrm{if~ eq = true}\\\\
+                      \\bm{\\mu} - r &\\quad \\mathrm{if~ eq = false}
+                  \\end{cases}\\\\                            
+\\mathbf{\\Omega} &= \\tau \\mathrm{Diagonal}\\left(\\mathbf{P} \\mathbf{\\Sigma} \\mathbf{P}^{\\intercal}\\right)\\\\
+\\mathbf{M} &= \\left[ \\left(\\tau  \\mathbf{\\Sigma} \\right)^{-1} + \\mathbf{P}^{\\intercal} \\mathbf{\\Omega}^{-1} \\mathbf{P}\\right]^{-1}\\\\
+\\bm{\\Pi}_{\\mathrm{BL}} &= \\mathbf{M} \\left[\\left(\\tau \\mathbf{\\Sigma}\\right)^{-1} \\bm{\\Pi} + \\mathbf{P}^{\\intercal} \\mathbf{\\Omega}^{-1} \\mathbf{Q} \\right]\\\\
+\\tau &= \\dfrac{1}{T}\\\\
+\\bm{\\mu}_{\\mathrm{BL}} &= \\bm{\\Pi}_{\\mathrm{BL}} + r\\\\
+\\mathbf{\\Sigma}_{\\mathrm{BL}} &= \\mathbf{\\Sigma} + \\mathbf{M}
+\\end{align*}
+```
+
+Where:
+
+  - ``\\bm{\\Pi}``: is the equilibrium excess returns.
+  - ``\\delta``: is the risk aversion parameter.
+  - ``\\mathbf{\\Sigma}``: is the asset covariance matrix.
+  - ``\\bm{w}``: is the vector of benchmark asset weights.
+  - ``\\mathbf{P}``: is the asset views matrix.
+  - ``\\bm{Q}``: is the asset views returns vector.
+  - ``\\mathbf{\\Omega}``: is the covariance matrix of the errors of the asset views.
+  - ``\\mathbf{M}``: is an intermediate covariance matrix.
+  - ``\\bm{\\Pi}_{\\mathbf{BL}}``: is the equilibrium excess returns after being adjusted by the views.
+  - ``T``: is the number of returns observations.
+  - ``\\bm{\\mu}_{\\mathbf{BL}}``: is the vector of asset expected returns obtained via the Black Litterman model.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{BL}}``: is the asset covariance matrix obtained via the Black Litterman model.
+
+# Inputs
+
+  - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` is the number of assets or factors.
+  - `P`: `Nv×Na` analyst's views matrix, can be relative or absolute, where `Nv` is the number of views, and `Na` the number of assets.
+  - `Q`: `Nv×1` analyst's expected returns vector, where `Nv` is the number of views.
+  - `w`: `Na×1` benchmark weights vector, where `Na` is the number of assets.
+
+## Options
+
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the covariance matrix.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected returns vector.
+  - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the Black Litterman model's statistics.
+
+!!! note
+
+    Note that both `bl_opt` and `mu_opt` have `rf` fields for the risk-free rate (see [`MuOpt`](@ref) and [`BLOpt`](@ref)). This gives users more granular control over the model.
 """
 function black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
                          w::AbstractVector; cov_opt::CovOpt = CovOpt(;),
@@ -2500,7 +2549,7 @@ black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
                             bl_opt::BLOpt = BLOpt(;))
 ```
 
-Compute the Black Litterman statistics, `portfolio.bl_mu` and `portfolio.bl_cov`, for a given portfolio in-place. See [`black_litterman`](@ref).
+Estimates the expected returns vector, `portfolio.bl_mu`, and covariance matrix, `portfolio.bl_cov`, based on the Black Litterman model (see [`black_litterman`](@ref)) for a given `portfolio` in-place.
 
 # Inputs
 
@@ -2508,7 +2557,7 @@ Compute the Black Litterman statistics, `portfolio.bl_mu` and `portfolio.bl_cov`
 
   - `P`: `Nv×Na` analyst's views matrix, can be relative or absolute, where `Nv` is the number of views, and `Na` the number of assets.
   - `Q`: `Nv×1` analyst's expected returns vector, where `Nv` is the number of views.
-  - `w`: `Na×1` benchmark weights vector, sets `portfolio.bl_bench_weights`.
+  - `w`: `Na×1` benchmark weights vector, sets `portfolio.bl_bench_weights`, where `Na` is the number of assets.
 
       + `isempty(w)`:
 

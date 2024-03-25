@@ -150,7 +150,7 @@ Versions of the factor Black-Litterman Model.
 
 # `:A` -- Augmented Black-Litterman
 
-Estimates the covariance matrix and expected returns vector based on a modified Black-Litterman model which augments its asset views with those of the factors [ABL](@cite).
+Estimates the expected returns vector and covariance matrix based on a modified Black-Litterman model which augments its asset views with those of the factors [ABL](@cite).
 
 ```math
 \\begin{align*}
@@ -158,8 +158,8 @@ Estimates the covariance matrix and expected returns vector based on a modified 
                     \\delta\\begin{bmatrix}
                       \\mathbf{\\Sigma}\\\\
                       \\mathbf{\\Sigma}_{F} \\mathbf{B}^{\\intercal}
-                      \\end{bmatrix} \\bm{w} &\\quad \\mathrm{if~ flag = true}\\\\
-                      \\bm{\\mu} - r &\\quad \\mathrm{if~ flag = false}
+                      \\end{bmatrix} \\bm{w} &\\quad \\mathrm{if~ eq = true}\\\\
+                      \\bm{\\mu} - r &\\quad \\mathrm{if~ eq = false}
                   \\end{cases}\\\\
 \\mathbf{P}_{a} &=  \\begin{bmatrix}
                       \\mathbf{P} & \\mathbf{0}\\\\
@@ -177,11 +177,11 @@ Estimates the covariance matrix and expected returns vector based on a modified 
                             \\mathbf{\\Omega} & \\mathbf{0}\\\\
                             \\mathbf{0} & \\mathbf{\\Omega}_{F}
                           \\end{bmatrix}\\\\
-\\tau &= \\dfrac{1}{T}\\\\
 \\mathbf{\\Omega} &= \\tau \\mathrm{Diagonal}\\left(\\mathbf{P} \\mathbf{\\Sigma} \\mathbf{P}^{\\intercal}\\right)\\\\
 \\mathbf{\\Omega}_{F} &= \\tau \\mathrm{Diagonal}\\left(\\mathbf{P}_{F} \\mathbf{\\Sigma}_{F} \\mathbf{P}_{F}^{\\intercal}\\right)\\\\
 \\mathbf{M}_{a} &= \\left[ \\left(\\tau  \\mathbf{\\Sigma}_{a} \\right)^{-1} + \\mathbf{P}_{a}^{\\intercal} \\mathbf{\\Omega}_{a}^{-1} \\mathbf{P}_{a}\\right]^{-1}\\\\
 \\bm{\\Pi}_{\\mathrm{ABL}} &= \\mathbf{M}_{a} \\left[\\left(\\tau \\mathbf{\\Sigma}_{a}\\right)^{-1} \\bm{\\Pi}_{a} + \\mathbf{P}_{a}^{\\intercal} \\mathbf{\\Omega}_{a}^{-1} \\mathbf{Q}_{a} \\right]\\\\
+\\tau &= \\dfrac{1}{T}\\\\
 \\bm{\\mu}_{\\mathrm{ABL}} &= \\bm{\\Pi}_{\\mathrm{ABL}} + r\\\\
 \\mathbf{\\Sigma}_{\\mathrm{ABL}} &= \\mathbf{\\Sigma}_{a} + \\mathbf{M}_{a}
 \\end{align*}
@@ -202,27 +202,28 @@ Where:
   - ``\\bm{Q}_{F}``: is the factor views returns vector.
   - ``\\mathbf{\\Sigma}_{a}``: is the augmented covariance matrix.
   - ``\\mathbf{B}``: is the loadings matrix.
-  - ``\\mathbf{\\Omega}_{a}``: is the covariance matrix of the augmented views.
-  - ``\\mathbf{\\Omega}``: is the covariance matrix of the asset views.
-  - ``\\mathbf{\\Omega}_{F}``: is the covariance matrix of the factor views.
+  - ``\\mathbf{\\Omega}_{a}``: is the covariance matrix of the errors of the augmented views.
+  - ``\\mathbf{\\Omega}``: is the covariance matrix of the errors of the asset views.
+  - ``\\mathbf{\\Omega}_{F}``: is the covariance matrix of the errors of the factor views.
   - ``\\mathbf{M}_{a}``: is an intermediate covariance matrix.
   - ``\\bm{\\Pi}_{\\mathbf{ABL}}``: is the equilibrium excess returns after being adjusted by the augmented views.
+  - ``T``: is the number of returns observations.
   - ``\\bm{\\mu}_{\\mathbf{ABL}}``: is the vector of asset expected returns obtained via the Augmented Black Litterman model.
   - ``\\mathbf{\\Sigma}_{\\mathrm{ABL}}``: is the asset covariance matrix obtained via the Augmented Black Litterman model.
 
 # `:B`-- Bayesian Black-Litterman
 
-Estimates the covariance matrix and expected returns vector based on a modified Black-Litterman model which updates its views with Bayesian statistics [BBL](@cite).
+Estimates the expected returns vector and covariance matrix based on a modified Black-Litterman model which updates its views with Bayesian statistics [BBL](@cite).
 
 ```math
 \\begin{align*}
 \\mathbf{\\Sigma} &= \\mathbf{B} \\mathbf{\\Sigma}_{F} \\mathbf{B}^{\\intercal} + \\mathbf{D} \\\\
-\\mathbf{D} &= \\begin{cases}\\mathrm{Diagonal}\\left(\\mathrm{var}\\left(\\mathbf{X} - \\mathbf{F} \\mathbf{B}^{\\intercal},\\, \\mathrm{dims} = 1\\right)\\right) &\\quad \\mathrm{if~ flag = true}\\\\
-\\mathbf{0} &\\quad \\mathrm{if~ flag = false}
+\\mathbf{D} &= \\begin{cases}\\mathrm{Diagonal}\\left(\\mathrm{var}\\left(\\mathbf{X} - \\mathbf{F} \\mathbf{B}^{\\intercal},\\, \\mathrm{dims} = 1\\right)\\right) &\\quad \\mathrm{if~ diagonal = true}\\\\
+\\mathbf{0} &\\quad \\mathrm{if~ diagonal = false}
 \\end{cases}\\\\
 \\overline{\\mathbf{\\Sigma}}_{F} &= \\left(\\mathbf{\\Sigma}_{F}^{-1} + \\mathbf{P}_{F}^{\\intercal} \\mathbf{\\Omega}_{F}^{-1} \\mathbf{P}_{F}\\right)^{-1}\\\\
-\\tau &= \\dfrac{1}{T}\\\\
 \\mathbf{\\Omega}_{F} &= \\tau \\mathrm{Diagonal}\\left(\\mathbf{P}_{F} \\mathbf{\\Sigma}_{F} \\mathbf{P}_{F}^{\\intercal}\\right)\\\\
+\\tau &= \\dfrac{1}{T}\\\\
 \\overline{\\bm{\\Pi}}_{F} &= \\overline{\\mathbf{\\Sigma}}_{F}^{-1} \\left(\\mathbf{\\Sigma}_{F}^{-1} \\bm{\\Pi}_{F} + \\mathbf{P}_{F}^{\\intercal} \\mathbf{\\Omega}_{F}^{-1} \\bm{Q}_{F}\\right)\\\\
 \\bm{\\Pi}_{F} &= \\bm{\\mu}_{F} - r\\\\
 \\mathbf{\\Sigma}_{\\mathrm{BF}} &= \\mathbf{\\Sigma}^{-1} \\mathbf{B} \\left( \\overline{\\mathbf{\\Sigma}}_{F}^{-1} + \\mathbf{B}^{\\intercal} \\mathbf{\\Sigma}^{-1} \\mathbf{B} \\right)^{-1}\\\\
@@ -236,12 +237,13 @@ Where:
   - ``\\mathbf{\\Sigma}``: is the estimated asset covariance matrix computed using the factor model.
   - ``\\mathbf{B}``: is the loadings matrix.
   - ``\\mathbf{\\Sigma}_{F}``: is the covariance matrix of the factors.
-  - ``\\mathbf{D}``: is a diagonal matrix constructed from the variances of the errors between the asset and factor returns corrected by the loadings matrix i.e. the variance is taken for all ``T``: timestamps of ``N_{a}``: assets. If a flag is false this matrix can be set to ``\\mathbf{0}``.
+  - ``\\mathbf{D}``: is a diagonal matrix constructed from the variances of the errors between the asset and factor returns corrected by the loadings matrix i.e. the variance is taken for all ``T`` timestamps of ``N_{a}`` assets.
   - ``\\mathbf{X}``: is the `T×Na` matrix of asset returns, where `T` is the number of returns observations and `Na` the number of assets.
   - ``\\mathbf{F}``: is the `T×Nf` matrix of factor returns, where `T` is the number of returns observations and `Nf` the number of factors.
   - ``\\overline{\\mathbf{\\Sigma}}_{F}``: is the posterior covariance matrix of the factors after adjusting by the factor views.
   - ``\\mathbf{P}_{F}``: is the factor views matrix.
-  - ``\\mathbf{\\Omega}_{F}``: is the covariance matrix of the factor views.
+  - ``\\mathbf{\\Omega}_{F}``: is the covariance matrix of the errors of the factor views.
+  - ``T``: is the number of returns observations.
   - ``\\overline{\\bm{\\Pi}}_{F}``: is the posterior equilibrium excess returns of the factors after adjusting by the factor views.
   - ``\\bm{\\Pi}_{F}``: is the equilibrium excess returns vector of the factors.
   - ``\\bm{\\mu}_{F}``: is the expected returns vector of the factors.

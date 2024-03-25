@@ -136,7 +136,7 @@ Some of these require external information from the arguments of functions that 
   - `rm`: one of [`RiskMeasures`](@ref).
   - `class`: one of [`PortClasses`](@ref).
   - `hist`: one of [`ClassHist`](@ref).
-  - `rf`: risk free rate.
+  - `rf`: risk-free rate.
   - `owa_approx`: flag for using the approximate OWA formulation.
 
 Constraints are set if and only if all their variables are appropriately defined.
