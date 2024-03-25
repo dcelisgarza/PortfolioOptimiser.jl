@@ -1637,7 +1637,7 @@ asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true, calc_mu::
                   kurt_opt::KurtOpt = KurtOpt(;), cor_opt::CorOpt = CorOpt(;))
 ```
 
-Compute the asset statistics for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref) and [`cokurt_mtx`](@ref).
+Compute the asset statistics for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref), [`cokurt_mtx`](@ref), [`cor_dist_mtx`](@ref).
 
 # Inputs
 
@@ -1649,14 +1649,14 @@ Compute the asset statistics for a given `portfolio` in-place. See [`covar_mtx_m
 
       + `isa(portfolio, HCPortfolio)`:
 
-          * `true`: compute the correlation matrix, setting the value of `portfolio.cor`.
+          * `true`: compute the correlation and distance matrices, setting `portfolio.cor` and `portfolio.dist`.
 
   - `calc_cov`:
 
-      + `true`: compute the covariance matrix, setting the value of `portfolio.cov`.
+      + `true`: compute the covariance matrix, setting `portfolio.cov`.
   - `calc_mu`:
 
-      + `true`: compute the expected returns matrix, setting the value of `portfolio.mu`.
+      + `true`: compute the expected returns matrix, setting `portfolio.mu`.
 
           * `mu_opt.method ∈ (:JS, :BS, :BOP, :CAPM)`: use the covariance matrix. Therefore, the covariance matrix is computed whenever `calc_mu == true`, but `portfolio.cov` is only set when `calc_cov == true`.
   - `calc_kurt`:
@@ -1668,7 +1668,7 @@ Compute the asset statistics for a given `portfolio` in-place. See [`covar_mtx_m
   - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the covariance matrix.
   - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected returns vector.
   - `kurt_opt`: instance of [`KurtOpt`](@ref), defines how the cokurtosis and semi cokurtoes are computed.
-  - `cor_opt`: instance of [`CorOpt`](@ref), defines how the correlation matrix is computed.
+  - `cor_opt`: instance of [`CorOpt`](@ref), defines how the correlation and distance matrices are computed.
 """
 function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
                            calc_mu::Bool = true, calc_kurt::Bool = true,
@@ -1764,7 +1764,7 @@ wc_statistics!(portfolio; box = :Stationary, ellipse = :Stationary, calc_box = t
 
 Worst case optimisation statistics.
 """
-function wc_statistics!(portfolio::AbstractPortfolio, opt::WCOpt = WCOpt(;))
+function wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
     calc_box = opt.calc_box
     calc_ellipse = opt.calc_ellipse
     diagonal = opt.diagonal
@@ -2289,7 +2289,7 @@ black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
                 bl_opt::BLOpt = BLOpt(;))
 ```
 
-Estimates the expected returns vector and covariance matrix based on the Black Litterman model [BL1, BL2](@cite).
+Estimates the expected returns vector and covariance matrix based on the Black Litterman model [BL1, BL2](@cite). See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), and [`mean_vec`](@ref).
 
 ```math
 \\begin{align*}
@@ -2333,6 +2333,12 @@ Where:
   - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the covariance matrix.
   - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected returns vector.
   - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the Black Litterman model's statistics.
+
+# Outputs
+
+  - `mu`: `Na×1` Black Litterman adjusted expected returns vector, where `Na` is the number of assets.
+  - `cov_mtx`: `Na×Na` Black Litterman adjusted covariance matrix, where `Na` is the number of assets.
+  - `w`: `Na×1` Black Litterman adjusted asset weights vector, where `Na` is the number of assets.
 
 !!! note
 
@@ -2542,18 +2548,22 @@ end
 
 """
 ```julia
-black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
-                            Q::AbstractVector;
+black_litterman_statistics!(portfolio::Portfolio, P::AbstractMatrix, Q::AbstractVector;
                             w::AbstractVector = Vector{Float64}(undef, 0),
                             cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
                             bl_opt::BLOpt = BLOpt(;))
 ```
 
-Estimates the expected returns vector, `portfolio.bl_mu`, and covariance matrix, `portfolio.bl_cov`, based on the Black Litterman model (see [`black_litterman`](@ref)) for a given `portfolio` in-place.
+Estimates the expected returns vector and covariance matrix based on the Black Litterman model (see [`black_litterman`](@ref)) for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), and [`mean_vec`](@ref).
+
+Sets:
+
+  - `portfolio.bl_mu`
+  - `portfolio.bl_cov`
 
 # Inputs
 
-  - `portfolio`: instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+  - `portfolio`: instance of [`Portfolio`](@ref).
 
   - `P`: `Nv×Na` analyst's views matrix, can be relative or absolute, where `Nv` is the number of views, and `Na` the number of assets.
   - `Q`: `Nv×1` analyst's expected returns vector, where `Nv` is the number of views.
@@ -2561,7 +2571,7 @@ Estimates the expected returns vector, `portfolio.bl_mu`, and covariance matrix,
 
       + `isempty(w)`:
 
-          * `isempty(portfolio.bl_bench_weights)`: every entry is in `portfolio.bl_bench_weights` is assumed to be equal to `1/Na`, and `w` is set to be equal to `portfolio.bl_bench_weights`.
+          * `isempty(portfolio.bl_bench_weights)`: every entry is in `portfolio.bl_bench_weights` is assumed to be equal to `1/Na`, `w` is set to be equal to `portfolio.bl_bench_weights`.
           * `!isempty(portfolio.bl_bench_weights)`: `w` is set to be equal to `portfolio.bl_bench_weights`.
 
       + `!isempty(w)`: `portfolio.bl_bench_weights` is set to be equal to `w`.
@@ -2573,7 +2583,7 @@ Estimates the expected returns vector, `portfolio.bl_mu`, and covariance matrix,
   - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected returns vector.
   - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the Black Litterman model's statistics.
 
-      + `isnothing(bl_opt.delta)`: it is defined internally as:
+      + `isnothing(bl_opt.delta)`: modifies `bl_opt` by setting `bl_opt.delta` to:
 
         ```math
         \\delta = \\dfrac{\\bm{\\mu} \\cdot \\bm{w} - r}{\\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}}\\,.
@@ -2591,7 +2601,7 @@ Estimates the expected returns vector, `portfolio.bl_mu`, and covariance matrix,
 
     Note that both `bl_opt` and `mu_opt` have `rf` fields for the risk-free rate (see [`MuOpt`](@ref) and [`BLOpt`](@ref)). This gives users more granular control over the model.
 """
-function black_litterman_statistics!(portfolio::AbstractPortfolio, P::AbstractMatrix,
+function black_litterman_statistics!(portfolio::Portfolio, P::AbstractMatrix,
                                      Q::AbstractVector,
                                      w::AbstractVector = Vector{Float64}(undef, 0);
                                      cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
@@ -2621,38 +2631,34 @@ end
 
 """
 ```julia
-factor_statistics!(portfolio::AbstractPortfolio;    # cov_mtx
-                   alpha::Real = 0.0, cov_args::Tuple = (),
-                   cov_est::CovarianceEstimator = StatsBase.SimpleCovariance(;
-                                                                             corrected = true),
-                   cov_func::Function = cov, cov_kwargs::NamedTuple = (;),
-                   cov_method::Symbol = :Full,
-                   cov_weights::Union{AbstractWeights, Nothing} = nothing,
-                   custom_cov::Union{AbstractMatrix, Nothing} = nothing,
-                   denoise::Bool = false, detone::Bool = false,
-                   gs_threshold::Real = portfolio.gs_threshold, jlogo::Bool = false,
-                   kernel = ASH.Kernels.gaussian, m::Integer = 10, method::Symbol = :Fixed,
-                   mkt_comp::Integer = 1, n::Integer = 1000, opt_args = (),
-                   opt_kwargs = (;), posdef_args::Tuple = (), posdef_fix::Symbol = :Nearest,
-                   posdef_func::Function = x -> x, posdef_kwargs::NamedTuple = (;),
-                   std_args::Tuple = (), std_func::Function = std,
-                   std_kwargs::NamedTuple = (;),
-                   target_ret::Union{Real, AbstractVector{<:Real}} = 0.0,    # mean_vec
-                   custom_mu::Union{AbstractVector, Nothing} = nothing,
-                   mean_args::Tuple = (), mean_func::Function = mean,
-                   mean_kwargs::NamedTuple = (;),
-                   mkt_ret::Union{AbstractVector, Nothing} = nothing,
-                   mu_target::Symbol = :GM, mu_method::Symbol = :Default,
-                   mu_weights::Union{AbstractWeights, Nothing} = nothing, rf = 0.0,    # Loadings matrix
-                   B::Union{DataFrame, Nothing} = nothing, criterion::Symbol = :pval,
-                   error::Bool = true, pca_kwargs::NamedTuple = (;),
-                   pca_std_kwargs::NamedTuple = (;), pca_std_type = ZScoreTransform,
-                   reg_method::Symbol = :FReg, threshold::Real = 0.05,
-                   var_func::Function = var, var_args::Tuple = (),
-                   var_kwargs::NamedTuple = (;))
+factor_statistics!(portfolio::Portfolio; cov_f_opt::CovOpt = CovOpt(;),
+                   mu_f_opt::MuOpt = MuOpt(;), cov_fm_opt::CovOpt = CovOpt(;),
+                   mu_fm_opt::MuOpt = MuOpt(;), factor_opt::FactorOpt = FactorOpt(;))
 ```
+
+Compute the factor and factor adjusted expected returns vectors and covariance matrices for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref), and [`risk_factors`](@ref).
+
+Sets:
+
+  - `portfolio.f_cov`
+  - `portfolio.f_mu`
+  - `portfolio.fm_mu`
+  - `portfolio.fm_cov`
+  - `portfolio.fm_returns`
+
+# Inputs
+
+  - `portfolio`: instance of [`Portfolio`](@ref).
+
+## Options
+
+  - `cov_f_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the factor covariance matrix.
+  - `mu_f_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the factor expected returns vector.
+  - `cov_fm_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the factor adjusted covariance matrix.
+  - `mu_fm_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the factor adjusted expected returns vector.
+  - `factor_opt`: instance of [`FactorOpt`](@ref), defines how the factor statistics are computed.
 """
-function factor_statistics!(portfolio::AbstractPortfolio; cov_f_opt::CovOpt = CovOpt(;),
+function factor_statistics!(portfolio::Portfolio; cov_f_opt::CovOpt = CovOpt(;),
                             mu_f_opt::MuOpt = MuOpt(;), cov_fm_opt::CovOpt = CovOpt(;),
                             mu_fm_opt::MuOpt = MuOpt(;),
                             factor_opt::FactorOpt = FactorOpt(;))
@@ -2677,7 +2683,7 @@ end
 
 """
 ```julia
-black_litterman_factor_satistics!(portfolio::AbstractPortfolio;
+black_litterman_factor_satistics!(portfolio::Portfolio;
                                   w::AbstractVector                   = Vector{Float64}(undef, 0),
                                   B::Union{DataFrame, Nothing}        = nothing,
                                   P::Union{AbstractMatrix, Nothing}   = nothing,
@@ -2692,7 +2698,7 @@ black_litterman_factor_satistics!(portfolio::AbstractPortfolio;
                                   bl_opt::BLOpt                       = BLOpt(;))
 ```
 """
-function black_litterman_factor_satistics!(portfolio::AbstractPortfolio,
+function black_litterman_factor_satistics!(portfolio::Portfolio,
                                            w::AbstractVector                   = Vector{Float64}(undef, 0);
                                            B::Union{DataFrame, Nothing}        = nothing,
                                            P::Union{AbstractMatrix, Nothing}   = nothing,
