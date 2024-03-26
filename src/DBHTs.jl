@@ -1,18 +1,6 @@
 """
-```julia
-BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
 ```
-
-Choice of algorithm for ordering hierarchical clustering dendrogram leaves and branches.
-
-  - `:default`: if linkage is `:DBHT`, the leaves and branches remain as the algorithm orders them. If any other linkage is used, they fall back to `:r` as that is their default according to [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
-  - All other branch orders are as defined by [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
-"""
-const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
-
-"""
-```julia
-PMFG_T2s(W::AbstractMatrix{<:Real}; nargout::Integer = 3)
+PMFG_T2s(W::AbstractMatrix{<:Real}, nargout::Integer = 3)
 ```
 
 Constructs a Triangulated Maximally Filtered Graph (TMFG) starting from a tetrahedron and recursively inserting vertices inside existing triangles (T2 move) in order to approximate a Maximal Planar Graph with the largest total weight, aka Planar Maximally Filtered Graph (PMFG). All weights are non-negative [PMFG](@cite).
@@ -137,7 +125,7 @@ function PMFG_T2s(W::AbstractMatrix{<:Real}, nargout::Integer = 3)
 end
 
 """
-```julia
+```
 distance_wei(L::AbstractMatrix{<:Real})
 ```
 
@@ -209,7 +197,7 @@ function distance_wei(L::AbstractMatrix{<:Real})
 end
 
 """
-```julia
+```
 clique3(A::AbstractMatrix{<:Real})
 ```
 
@@ -275,7 +263,7 @@ function clique3(A::AbstractMatrix{<:Real})
 end
 
 """
-```julia
+```
 breadth(CIJ::AbstractMatrix{<:Real}, source::Integer)
 ```
 
@@ -339,7 +327,7 @@ function breadth(CIJ::AbstractMatrix{<:Real}, source::Integer)
 end
 
 """
-```julia
+```
 FindDisjoint(Adj::AbstractMatrix{<:Real}, Cliq::AbstractVector{<:Real})
 ```
 
@@ -378,7 +366,7 @@ function FindDisjoint(Adj::AbstractMatrix{<:Real}, Cliq::AbstractVector{<:Real})
 end
 
 """
-```julia
+```
 BuildHierarchy(M::AbstractMatrix{<:Real})
 ```
 
@@ -413,7 +401,7 @@ function BuildHierarchy(M::AbstractMatrix{<:Real})
 end
 
 """
-```julia
+```
 AdjCliq(A::AbstractMatrix{<:Real}, CliqList::AbstractMatrix{<:Real},
         CliqRoot::AbstractVector{<:Real})
 ```
@@ -450,7 +438,7 @@ function AdjCliq(A::AbstractMatrix{<:Real}, CliqList::AbstractMatrix{<:Real},
 end
 
 """
-```julia
+```
 BubbleHierarchy(Pred::AbstractVector{<:Real}, Sb::AbstractVector{<:Real})
 ```
 
@@ -514,20 +502,8 @@ function BubbleHierarchy(Pred::AbstractVector{<:Real}, Sb::AbstractVector{<:Real
 end
 
 """
-```julia
-DBHTRootMethods = (:Unique, :Equal)
 ```
-
-Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in [`DBHTs`](@ref), in case there is more than one candidate.
-
-  - `:Unique`: create a unique root.
-  - `:Equal`: the root is created from the candidate's adjacency tree.
-"""
-const DBHTRootMethods = (:Unique, :Equal)
-
-"""
-```julia
-CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}; method::Symbol = :Unique)
+CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Unique)
 ```
 
 Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy of the cliques with the definition of "inside" a clique being a subgraph of smaller size when the entire graph is made disjoint by removing the clique [NHPG](@cite).
@@ -623,7 +599,7 @@ function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Uniq
 end
 
 """
-```julia
+```
 DirectHb(Rpm::AbstractMatrix{<:Real}, Hb::AbstractMatrix{<:Real},
          Mb::AbstractMatrix{<:Real}, Mv::AbstractMatrix{<:Real},
          CliqList::AbstractMatrix{<:Real})
@@ -693,7 +669,7 @@ function DirectHb(Rpm::AbstractMatrix{<:Real}, Hb::AbstractMatrix{<:Real},
 end
 
 """
-```julia
+```
 BubbleCluster8s(Rpm::AbstractMatrix{<:Real}, Dpm::AbstractMatrix{<:Real},
                 Hb::AbstractMatrix{<:Real}, Mb::AbstractMatrix{<:Real},
                 Mv::AbstractMatrix{<:Real}, CliqList::AbstractMatrix{<:Real})
@@ -771,7 +747,7 @@ function BubbleCluster8s(Rpm::AbstractMatrix{<:Real}, Dpm::AbstractMatrix{<:Real
 end
 
 """
-```julia
+```
 BubbleMember(Rpm::AbstractMatrix{<:Real}, Mv::AbstractMatrix{<:Real},
              Mc::AbstractMatrix{<:Real})
 ```
@@ -810,7 +786,7 @@ function BubbleMember(Rpm::AbstractMatrix{<:Real}, Mv::AbstractMatrix{<:Real},
 end
 
 """
-```julia
+```
 DendroConstruct(Zi::AbstractMatrix{<:Real}, LabelVec1::AbstractVector{<:Real},
                 LabelVec2::AbstractVector{<:Real},
                 LinkageDist::Union{<:Real, AbstractVector{<:Real}})
@@ -837,7 +813,7 @@ function DendroConstruct(Zi::AbstractMatrix{<:Real}, LabelVec1::AbstractVector{<
 end
 
 """
-```julia
+```
 LinkageFunction(d::AbstractMatrix{<:Real}, labelvec::AbstractVector{<:Real})
 ```
 
@@ -879,11 +855,11 @@ function LinkageFunction(d::AbstractMatrix{<:Real}, labelvec::AbstractVector{<:R
 end
 
 """
-```julia
+```
 _build_link_and_dendro(rg::AbstractRange, dpm::AbstractMatrix{<:Real},
                        LabelVec::AbstractVector{<:Real}, LabelVec1::AbstractVector{<:Real},
                        LabelVec2::AbstractVector{<:Real}, V::AbstractVector{<:Real},
-                       nc::Number, Z::AbstractMatrix{<:Real})
+                       nc::Real, Z::AbstractMatrix{<:Real})
 ```
 
 Computes iterates over the vertices to construct the linkage matrix iteration by iteration.
@@ -906,7 +882,7 @@ function _build_link_and_dendro(rg::AbstractRange, dpm::AbstractMatrix{<:Real},
                                 LabelVec::AbstractVector{<:Real},
                                 LabelVec1::AbstractVector{<:Real},
                                 LabelVec2::AbstractVector{<:Real},
-                                V::AbstractVector{<:Real}, nc::Number,
+                                V::AbstractVector{<:Real}, nc::Real,
                                 Z::AbstractMatrix{<:Real})
     for _ ∈ rg
         PairLink, dvu = LinkageFunction(dpm, LabelVec)  # Look for the pair of clusters which produces the best linkage
@@ -921,7 +897,7 @@ function _build_link_and_dendro(rg::AbstractRange, dpm::AbstractMatrix{<:Real},
 end
 
 """
-```julia
+```
 HierarchyConstruct4s(Rpm::AbstractMatrix{<:Real}, Dpm::AbstractMatrix{<:Real},
                      Tc::AbstractVector{<:Real}, Mv::AbstractMatrix{<:Real})
 ```
@@ -997,7 +973,7 @@ function HierarchyConstruct4s(Rpm::AbstractMatrix{<:Real}, Dpm::AbstractMatrix{<
 end
 
 """
-```julia
+```
 turn_into_Hclust_merges(Z::AbstractMatrix{<:Real})
 ```
 
@@ -1051,7 +1027,7 @@ function turn_into_Hclust_merges(Z::AbstractMatrix{<:Real})
 end
 
 """
-```julia
+```
 DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real}; branchorder::Symbol = :optimal,
       method::Symbol = :Unique)
 ```
@@ -1149,7 +1125,7 @@ function _jlogo!(jlogo, sigma, source, sign)
 end
 
 """
-```julia
+```
 J_LoGo(sigma, separators, cliques)
 ```
 

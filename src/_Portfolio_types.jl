@@ -1,5 +1,5 @@
 """
-```julia
+```
 AbstractPortfolio
 ```
 
@@ -8,7 +8,7 @@ Abstract type for subtyping portfolios.
 abstract type AbstractPortfolio end
 
 """
-```julia
+```
 mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
                          msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, rb, rbw, to, tobw, kte,
                          te, rbi, bw, blbw, ami, bvi, rbv, frbv, nm, nsdp, np, ni, nis, amc,
@@ -552,7 +552,7 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
 end
 
 """
-```julia
+```
 Portfolio(; prices::TimeArray                                 = TimeArray(TimeType[], []),
           returns::DataFrame                                = DataFrame(),
           ret::AbstractMatrix{<:Real}                       = Matrix{Float64}(undef, 0, 0),
@@ -1420,7 +1420,7 @@ function Base.deepcopy(obj::Portfolio)
 end
 
 """
-```julia
+```
 mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, owap, wowa, tmu,
                            tcov, tkurt, tskurt, tl2, ts2, tbin, wmi, wma, ttco, tco, tdist,
                            tcl, tk, topt, tsolv, toptpar, tf, tlp, taopt, tasolv, taoptpar,
@@ -1627,7 +1627,7 @@ mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, owap
 end
 
 """
-```julia
+```
 HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
             returns::DataFrame = DataFrame(),
             ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),

@@ -100,7 +100,31 @@ function _filled_by(msg::String)
 end
 
 """
-```julia
+```
+BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
+```
+
+Choice of algorithm for ordering hierarchical clustering dendrogram leaves and branches.
+
+  - `:default`: if linkage is `:DBHT`, the leaves and branches remain as the algorithm orders them. If any other linkage is used, they fall back to `:r` as that is their default according to [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
+  - All other branch orders are as defined by [Clustering.hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
+"""
+const BranchOrderTypes = (:optimal, :barjoseph, :r, :default)
+
+"""
+```
+DBHTRootMethods = (:Unique, :Equal)
+```
+
+Methods for finding the root of a Direct Bubble Hierarchical Clustering Tree in [`DBHTs`](@ref), in case there is more than one candidate.
+
+  - `:Unique`: create a unique root.
+  - `:Equal`: the root is created from the candidate's adjacency tree.
+"""
+const DBHTRootMethods = (:Unique, :Equal)
+
+"""
+```
 TrackingErrKinds = (:None, :Weights, :Returns)
 ```
 
@@ -128,7 +152,7 @@ The optimisation then attempts keep the square root deviation between the benchm
 const TrackingErrKinds = (:None, :Weights, :Returns)
 
 """
-```julia
+```
 NetworkMethods = (:None, :SDP, :IP)
 ```
 
@@ -142,7 +166,7 @@ Methods for enforcing network constraints [NWK1, NWK2](@cite) when optimising a 
 const NetworkMethods = (:None, :SDP, :IP)
 
 """
-```julia
+```
 BLFMMethods = (:A, :B)
 ```
 
@@ -256,7 +280,7 @@ Where:
 const BLFMMethods = (:A, :B)
 
 """
-```julia
+```
 UncertaintyTypes = (:None, :Box, :Ellipse)
 ```
 
@@ -269,7 +293,7 @@ Available types of uncertainty sets available for `:WC` [`PortTypes`](@ref).
 const UncertaintyTypes = (:None, :Box, :Ellipse)
 
 """
-```julia
+```
 RRPVersions = (:None, :Reg, :Reg_Pen)
 ```
 
@@ -282,7 +306,7 @@ Available versions of `:RP` [`PortTypes`](@ref) optimisations.
 const RRPVersions = (:None, :Reg, :Reg_Pen)
 
 """
-```julia
+```
 EllipseMethods = (:Stationary, :Circular, :Moving, :Normal)
 ```
 
@@ -296,7 +320,7 @@ Available types of elliptical sets used by `:WC` [`PortTypes`](@ref) optimisatio
 const EllipseMethods = (:Stationary, :Circular, :Moving, :Normal)
 
 """
-```julia
+```
 BoxMethods = (:Stationary, :Circular, :Moving, :Normal, :Delta)
 ```
 
@@ -311,7 +335,7 @@ Available types of box sets used by `:WC` [`PortTypes`](@ref) optimisations.
 const BoxMethods = (EllipseMethods..., :Delta)
 
 """
-```julia
+```
 BootstrapMethods = (:Stationary, :Circular, :Moving)
 ```
 
@@ -324,7 +348,7 @@ Bootstrapping method for computing the uncertainty sets used by `:WC` [`PortType
 const BootstrapMethods = (:Stationary, :Circular, :Moving)
 
 """
-```julia
+```
 MuMethods = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 ```
 
@@ -342,7 +366,7 @@ Methods for estimating the expected returns vector.
 const MuMethods = (:Default, :JS, :BS, :BOP, :CAPM, :Custom_Func, :Custom_Val)
 
 """
-```julia
+```
 MuTargets = (:GM, :VW, :SE)
 ```
 
@@ -355,7 +379,7 @@ Targets for the `:JS` [JS1, JS2](@cite), `:BS` [BS](@cite), and `:BOP` [BOP](@ci
 const MuTargets = (:GM, :VW, :SE)
 
 """
-```julia
+```
 CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB0,
               :Gerber_SB1, :Custom_Func, :Custom_Val)
 ```
@@ -378,7 +402,7 @@ const CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Ger
                     :Gerber_SB1, :Custom_Func, :Custom_Val)
 
 """
-```julia
+```
 const kMethods = (:Normal, :General)
 ```
 
@@ -391,7 +415,7 @@ Methods for computing the distance parameters of elliptical sets in `:WC` [`Port
 const kMethods = (:Normal, :General)
 
 """
-```julia
+```
 PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
 ```
 
@@ -406,7 +430,7 @@ Methods for fixing non-positive definite matrices.
 const PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
 
 """
-```julia
+```
 DenoiseMethods = (:Fixed, :Spectral, :Shrink)
 ```
 
@@ -419,7 +443,7 @@ Methods for matrix denoising [MLAM; Ch. 2](@cite).
 const DenoiseMethods = (:None, :Fixed, :Spectral, :Shrink)
 
 """
-```julia
+```
 RegCriteria = (:pval, :aic, :aicc, :bic, :r2, :adjr2)
 ```
 
@@ -435,7 +459,7 @@ Criteria for feature selection in regression functions.
 const RegCriteria = (:pval, :aic, :aicc, :bic, :r2, :adjr2)
 
 """
-```julia
+```
 FSMethods = (:FReg, :BReg, :PCR)
 ```
 
@@ -448,7 +472,7 @@ Methods for feature selection via regression when creating the loadings matrix.
 const FSMethods = (:FReg, :BReg, :PCR)
 
 """
-```julia
+```
 CorMethods = (:Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1,
               :Gerber_SB0, :Gerber_SB1, :Abs_Pearson, :Abs_Spearman, :Abs_Kendall,
               :Distance, :Mutual_Info, :Tail, :Cov_to_Cor, :Custom_Func, :Custom_Val)
@@ -482,7 +506,7 @@ const CorMethods = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Ger
                     :Tail, :Cov_to_Cor, :Custom_Func, :Custom_Val)
 
 """
-```julia
+```
 BinMethods = (:KN, :FD, :SC, :HGR)
 ```
 
@@ -496,7 +520,7 @@ Methods for calculating optimal bin widths for the mutual and variational inform
 const BinMethods = (:KN, :FD, :SC, :HGR)
 
 """
-```julia
+```
 KellyRet = (:None, :Approx, :Exact)
 ```
 
@@ -516,7 +540,7 @@ Where:
 const KellyRet = (:None, :Approx, :Exact)
 
 """
-```julia
+```
 ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 ```
 
@@ -525,7 +549,7 @@ Objective functions available for use in `:Trad` and `:WC` [`PortTypes`](@ref) o
 const ObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret)
 
 """
-```julia
+```
 ValidTermination = (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED,
                     MOI.ALMOST_LOCALLY_SOLVED, MOI.SOLUTION_LIMIT, MOI.OBJECTIVE_LIMIT)
 ```
@@ -537,7 +561,7 @@ const ValidTermination = (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL, MOI.LOCALLY_SOLVED,
                           MOI.OBJECTIVE_LIMIT)
 
 """
-```julia
+```
 PortClasses = (:Classic, :FM, :BL, :BLFM, :FC)
 ```
 
@@ -553,7 +577,7 @@ When optimising with `type == :RP` from [`PortTypes`](@ref) they have extra beha
 const PortClasses = (:Classic, :FM, :BL, :BLFM, :FC)
 
 """
-```julia
+```
 PortTypes = (:Trad, :RP, :RRP, :WC)
 ```
 
@@ -763,7 +787,7 @@ U_{\\bm{\\mu}}^{\\mathrm{ellipse}} &= \\left\\{\\bm{\\mu}\\, \\vert\\, \\left(\\
 const PortTypes = (:Trad, :RP, :RRP, :WC)
 
 """
-```julia
+```
 HCPortTypes = (:HRP, :HERC, :NCO)
 ```
 
@@ -794,7 +818,7 @@ Where:
 const HCPortTypes = (:HRP, :HERC, :NCO)
 
 """
-```julia
+```
 ClassHist = (1, 2, 3)
 ```
 
@@ -809,26 +833,26 @@ The choices are:
 
   - `:Classic || :FC`: no effect, always use ``\\bm{\\mu}``, ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
 
-  - `:FM`: ``\\bm{\\mu}_{\\mathrm{fm}}``.
+  - `:FM`: ``\\bm{\\mu}_{\\mathrm{FM}}``.
 
-      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{fm}``, ``\\mathbf{X}_\\mathrm{fm}``.
+      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{FM}``, ``\\mathbf{X}_\\mathrm{FM}``.
       + `2`: ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
       + `3`: throws error.
-  - `:BL`: ``\\bm{\\mu}_\\mathrm{bl}``, ``\\mathbf{X}``.
+  - `:BL`: ``\\bm{\\mu}_\\mathrm{BL}``, ``\\mathbf{X}``.
 
-      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{bl}``.
+      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{BL}``.
       + `2`: ``\\mathbf{\\Sigma}``.
       + `3`: throws error.
-  - `:BLFM`: ``\\bm{\\mu}_\\mathrm{bl,\\, fm}``.
+  - `:BLFM`: ``\\bm{\\mu}_\\mathrm{BL,\\, FM}``.
 
-      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{bl,\\, fm}``, ``\\mathbf{X}_\\mathrm{fm}``.
+      + `1`: ``\\mathbf{\\Sigma}_\\mathrm{BL,\\, FM}``, ``\\mathbf{X}_\\mathrm{FM}``.
       + `2`: ``\\mathbf{\\Sigma}``, ``\\mathbf{X}``.
-      + `3`: ``\\mathbf{\\Sigma}_\\mathrm{fm}``, ``\\mathbf{X}_\\mathrm{fm}``.
+      + `3`: ``\\mathbf{\\Sigma}_\\mathrm{FM}``, ``\\mathbf{X}_\\mathrm{FM}``.
 """
 const ClassHist = (1, 2, 3)
 
 """
-```julia
+```
 LinkageMethods = (:single, :complete, :average, :ward, :ward_presquared, :DBHT)
 ```
 
@@ -840,7 +864,7 @@ Linkage methods available when optimising a [`HCPortfolio`](@ref).
 const LinkageMethods = (:single, :complete, :average, :ward_presquared, :ward, :DBHT)
 
 """
-```julia
+```
 HCObjFuncs = (:Min_Risk, :Utility, :Sharpe, :Max_Ret, :Equal)
 ```
 
@@ -852,7 +876,7 @@ Objective funcions for `:NCO` [`HCPortTypes`](@ref) of [`HCPortfolio`](@ref).
 const HCObjFuncs = (ObjFuncs..., :Equal)
 
 """
-```julia
+```
 AllocMethods = (:LP, :Greedy)
 ```
 
@@ -929,7 +953,7 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
                           RDaR_r = "Relativistic Compounded Drawdown at Risk")
 
 """
-```julia
+```
 RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD, :CDaR,
                 :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG, :OWA)
 ```
@@ -969,7 +993,7 @@ const RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :
                       :RTG, :OWA)
 
 """
-```julia
+```
 HCRiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
                   :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG,
                   :OWA, :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r, :ADD_r, :CDaR_r,
@@ -1041,7 +1065,7 @@ const HCRiskMeasures = (RiskMeasures..., :Variance, :Equal, :VaR, :DaR, :DaR_r, 
 const GraphMethods = (:MST, :TMFG)
 
 """
-```julia
+```
 OWAMethods = (:CRRA, :E, :SS, :SD)
 ```
 

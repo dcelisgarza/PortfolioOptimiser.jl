@@ -1,5 +1,5 @@
 """
-```julia
+```
 @kwdef mutable struct GenericFunction
     func::Union{Nothing, Function} = nothing
     args::Tuple = ()
@@ -26,7 +26,7 @@ function GenericFunction(; func::Union{Nothing, Function} = nothing, args::Tuple
 end
 
 """
-```julia
+```
 @kwdef mutable struct CovEstOpt
     estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
     target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
@@ -69,7 +69,7 @@ function CovEstOpt(;
 end
 
 """
-```julia
+```
 @kwdef mutable struct PosdefFixOpt
     method::Symbol = :Nearest
     solvers::Union{<:AbstractDict, NamedTuple} = Dict()
@@ -113,7 +113,7 @@ function Base.setproperty!(obj::PosdefFixOpt, sym::Symbol, val)
 end
 
 """
-```julia
+```
 @kwdef mutable struct GerberOpt{T1 <: Real}
     threshold::T1 = 0.5
     normalise::Bool = false
@@ -160,7 +160,7 @@ function Base.setproperty!(obj::GerberOpt, sym::Symbol, val)
 end
 
 """
-```julia
+```
 @kwdef mutable struct SBOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: Real}
     c1::T1 = 0.5
     c2::T2 = 0.5
@@ -199,7 +199,7 @@ function Base.setproperty!(obj::SBOpt, sym::Symbol, val)
 end
 
 """
-```julia
+```
 @kwdef mutable struct DenoiseOpt{T1 <: Real, T2 <: Integer, T3, T4 <: Integer,
                                  T5 <: Integer}
     method::Symbol = :None
@@ -422,7 +422,7 @@ function KurtEstOpt(; target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0,
 end
 
 """
-```julia
+```
 @kwdef mutable struct KurtOpt
     estimation::KurtEstOpt = KurtEstOpt(;)
     denoise::DenoiseOpt = DenoiseOpt(;)
@@ -460,7 +460,7 @@ function KurtOpt(; estimation::KurtEstOpt = KurtEstOpt(;),
 end
 
 """
-```julia
+```
 @kwdef mutable struct CorEstOpt{T1 <: Real, T2 <: AbstractMatrix{<:Real},
                                 T3 <: AbstractMatrix{<:Real}, T4 <: AbstractMatrix{<:Real}}
     estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
@@ -651,7 +651,7 @@ function Base.setproperty!(obj::CorOpt, sym::Symbol, val)
 end
 
 """
-```julia
+```
 @kwdef mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer,
                             T6 <: Integer}
     calc_box::Bool = true
@@ -763,7 +763,7 @@ function Base.setproperty!(obj::WCOpt, sym::Symbol, val)
 end
 
 """
-```julia
+```
 @kwdef mutable struct PCROpt
     mean_genfunc::GenericFunction = GenericFunction(; func = StatsBase.mean,
                                                     kwargs = (; dims = 2))
@@ -808,7 +808,7 @@ function PCROpt(;
 end
 
 """
-```julia
+```
 @kwdef mutable struct LoadingsOpt{T1 <: Real}
     method::Symbol = :FReg
     criterion::Symbol = :pval
@@ -855,7 +855,7 @@ function Base.setproperty!(obj::LoadingsOpt, sym::Symbol, val)
 end
 
 """
-```julia
+```
 @kwdef mutable struct FactorOpt
     B::Union{DataFrame, Nothing} = nothing
     loadings_opt::LoadingsOpt = LoadingsOpt(;)
@@ -897,7 +897,7 @@ function FactorOpt(; B::Union{DataFrame, Nothing} = nothing,
 end
 
 """
-```julia
+```
 @kwdef mutable struct BLOpt{T1 <: Real}
     method::Symbol = :B
     constant::Bool = true
@@ -988,7 +988,7 @@ function Base.setproperty!(obj::BLOpt, sym::Symbol, val)
 end
 
 """
-```julia
+```
 @kwdef mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
     linkage::Symbol = :single
     branchorder::Symbol = :optimal
@@ -1048,7 +1048,7 @@ function Base.setproperty!(obj::ClusterOpt, sym::Symbol, val)
 end
 
 """
-```julia
+```
 @kwdef mutable struct OptimiseOpt{T1 <: Integer, T2 <: Real, T3 <: Real, T4 <: Real,
                                   T5 <: Real}
     type::Symbol = :Trad
@@ -1225,7 +1225,7 @@ function Base.setproperty!(obj::OptimiseOpt, sym::Symbol, val)
 end
 
 """
-```julia
+```
 @kwdef mutable struct AllocOpt
     port_type::Symbol = :Trad
     method::Symbol = :LP

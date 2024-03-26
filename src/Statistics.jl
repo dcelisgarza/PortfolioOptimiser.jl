@@ -69,8 +69,8 @@ function _calc_hist_data(xj, xi, bins)
 end
 
 """
-```julia
-mut_var_info_mtx(x::AbstractMatrix{<:Real}; bins_info::Union{Symbol, <:Integer} = :KN,
+```
+mut_var_info_mtx(x::AbstractMatrix{<:Real}, bins_info::Union{Symbol, <:Integer} = :KN,
                  normed::Bool = true)
 ```
 
@@ -260,7 +260,12 @@ function _gerber0(x, std_vec, threshold)
     return mtx
 end
 
-function gerber0(x, opt::GerberOpt = GerberOpt(;))
+"""
+```
+gerber0(x::AbstractMatrix, opt::GerberOpt = GerberOpt(;))
+```
+"""
+function gerber0(x::AbstractMatrix, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
     normalise = opt.normalise
 
@@ -344,7 +349,12 @@ function _gerber1(x, std_vec, threshold)
     return mtx
 end
 
-function gerber1(x, opt::GerberOpt = GerberOpt(;))
+"""
+```
+gerber1(x::AbstractMatrix, opt::GerberOpt = GerberOpt(;))
+```
+"""
+function gerber1(x::AbstractMatrix, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
     normalise = opt.normalise
 
@@ -414,7 +424,12 @@ function _gerber2(x, std_vec, threshold)
     return H ./ (h * transpose(h))
 end
 
-function gerber2(x, opt::GerberOpt = GerberOpt(;))
+"""
+```
+gerber2(x::AbstractMatrix, opt::GerberOpt = GerberOpt(;))
+```
+"""
+function gerber2(x::AbstractMatrix, opt::GerberOpt = GerberOpt(;))
     threshold = opt.threshold
     normalise = opt.normalise
 
@@ -521,7 +536,13 @@ function _sb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function sb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
+"""
+```
+sb0(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
+```
+"""
+function sb0(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;),
+             sbopt::SBOpt = SBOpt(;))
     c1 = sbopt.c1
     c2 = sbopt.c2
     c3 = sbopt.c3
@@ -620,7 +641,13 @@ function _sb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function sb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
+"""
+```
+sb1(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
+```
+"""
+function sb1(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;),
+             sbopt::SBOpt = SBOpt(;))
     c1 = sbopt.c1
     c2 = sbopt.c2
     c3 = sbopt.c3
@@ -726,7 +753,13 @@ function _gerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function gerbersb0(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
+"""
+```
+gerbersb0(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
+```
+"""
+function gerbersb0(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;),
+                   sbopt::SBOpt = SBOpt(;))
     c1 = sbopt.c1
     c2 = sbopt.c2
     c3 = sbopt.c3
@@ -842,7 +875,13 @@ function _gerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     return mtx
 end
 
-function gerbersb1(x, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt(;))
+"""
+```
+gerbersb1(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;), sbopt::SBOpt = SBOpt
+```
+"""
+function gerbersb1(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;),
+                   sbopt::SBOpt = SBOpt(;))
     c1 = sbopt.c1
     c2 = sbopt.c2
     c3 = sbopt.c3
@@ -1069,6 +1108,11 @@ function psd_cov(mtx::AbstractMatrix, solvers::AbstractDict)
     return _mtx
 end
 
+"""
+```
+posdef_fix!(mtx::AbstractMatrix, opt::PosdefFixOpt = PosdefFixOpt(;), msg::String = "")
+```
+"""
 function posdef_fix!(mtx::AbstractMatrix, opt::PosdefFixOpt = PosdefFixOpt(;);
                      msg::String = "")
     method = opt.method
@@ -1101,7 +1145,6 @@ function posdef_fix!(mtx::AbstractMatrix, opt::PosdefFixOpt = PosdefFixOpt(;);
 
     return nothing
 end
-export posdef_fix!
 
 function errPDF(x, vals; kernel = ASH.Kernels.gaussian, m = 10, n = 1000, q = 1000)
     e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
@@ -1213,7 +1256,7 @@ end
 export denoise_cov
 
 """
-```julia
+```
 mu_estimator
 ```
 """
@@ -1267,7 +1310,15 @@ function mu_estimator(returns::AbstractMatrix, opt::MuOpt = MuOpt(;))
     return mu
 end
 
-function _denoise_logo_mtx(T, N, mtx, opt, mtx_name::Symbol = :cov)
+"""
+```
+_denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
+                  opt::Union{CovOpt, CorOpt, KurtOpt, BLOpt}, mtx_name::Symbol = :cov)
+```
+"""
+function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
+                           opt::Union{CovOpt, CorOpt, KurtOpt, BLOpt},
+                           mtx_name::Symbol = :cov)
     @smart_assert(mtx_name ∈ DenoiseLoGoNames)
 
     if mtx_name == :cov
@@ -1314,8 +1365,8 @@ function _denoise_logo_mtx(T, N, mtx, opt, mtx_name::Symbol = :cov)
 end
 
 """
-```julia
-covar_mtx(returns::AbstractMatrix; opt::CovOpt = CovOpt(;))
+```
+covar_mtx(returns::AbstractMatrix, opt::CovOpt = CovOpt(;))
 ```
 
 Compute the covariance matrix. See [`gerber0`](@ref), [`gerber1`](@ref), [`gerber2`](@ref), [`sb0`](@ref), [`sb1`](@ref), [`gerbersb0`](@ref), [`gerbersb1`](@ref), [`_denoise_logo_mtx`](@ref), [`posdef_fix!`](@ref).
@@ -1384,8 +1435,8 @@ function covar_mtx(returns::AbstractMatrix, opt::CovOpt = CovOpt(;))
 end
 
 """
-```julia
-mean_vec(returns::AbstractMatrix; opt::MuOpt = MuOpt(;))
+```
+mean_vec(returns::AbstractMatrix, opt::MuOpt = MuOpt(;))
 ```
 
 Compute the expected returns vector for a returns series.
@@ -1416,7 +1467,7 @@ function mean_vec(returns::AbstractMatrix, opt::MuOpt = MuOpt(;))
 end
 
 """
-```julia
+```
 cokurt_mtx
 ```
 """
@@ -1446,8 +1497,7 @@ end
 
 """
 ```
-cor_dist_mtx(
-    returns::AbstractMatrix;    alpha_tail::Real = 0.05,    bins_info::Union{Symbol, Integer} = :KN,    cor_method::Symbol = :Pearson,    cor_args::Tuple = (),    cor_func::Function = cor,    cor_kwargs::NamedTuple = (;),    custom_cor::Union{AbstractMatrix, Nothing} = nothing,    dist_args::Tuple = (),    dist_func::Function = x -> sqrt.(clamp!((1 .- x) / 2, 0, 1)),    dist_kwargs::NamedTuple = (;),    gs_threshold::Real = 0.5,    posdef_args::Tuple = (),    posdef_fix::Symbol = :Nearest,    posdef_func::Function = x -> x,    posdef_kwargs::NamedTuple = (;),    sigma::Union{AbstractMatrix, Nothing} = nothing,    std_args::Tuple = (),    std_func::Function = std,    std_kwargs::NamedTuple = (;),    uplo::Symbol = :L)
+cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
 ```
 """
 function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
@@ -1587,8 +1637,8 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
 end
 
 """
-```julia
-covar_mtx_mean_vec(returns::AbstractMatrix; cov_opt::CovOpt = CovOpt(;),
+```
+covar_mtx_mean_vec(returns::AbstractMatrix, cov_opt::CovOpt = CovOpt(;),
                    mu_opt::MuOpt = MuOpt(;))
 ```
 
@@ -1630,7 +1680,7 @@ function covar_mtx_mean_vec(returns::AbstractMatrix; cov_opt::CovOpt = CovOpt(;)
 end
 
 """
-```julia
+```
 asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true, calc_mu::Bool = true,
                   calc_kurt::Bool = true, calc_cor::Bool = true,
                   cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
@@ -1639,7 +1689,7 @@ asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true, calc_mu::
 
 Compute the asset statistics for a given `portfolio` in-place. See [`covar_mtx`](@ref), [`mean_vec`](@ref), [`cokurt_mtx`](@ref), [`cor_dist_mtx`](@ref).
 
-Depending on the conditions modifies:
+Depending on the conditions, modifies:
 
   - `portfolio.mu`
   - `portfolio.cov`
@@ -1692,10 +1742,10 @@ function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
         mu_method = mu_opt.method
         if mu_method == :CAPM
             mkt_ret = mu_opt.mkt_ret
-            if isnothing(mkt_ret)
-                returns = hcat(returns, mean(returns; dims = 2))
+            returns = if isnothing(mkt_ret)
+                hcat(returns, mean(returns; dims = 2))
             else
-                returns = hcat(returns, mkt_ret)
+                hcat(returns, mkt_ret)
             end
         end
 
@@ -1748,8 +1798,8 @@ function commutation_matrix(x::AbstractMatrix)
 end
 
 """
-```julia
-gen_bootstrap(returns::AbstractMatrix; kind::Symbol = :Stationary, n_sim::Integer = 3_000,
+```
+gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary, n_sim::Integer = 3_000,
               block_size::Integer = 3, seed::Union{<:Integer, Nothing} = nothing,
               rng = Random.default_rng())
 ```
@@ -1789,11 +1839,8 @@ function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
 end
 
 """
-```julia
-wc_statistics!(portfolio; box = :Stationary, ellipse = :Stationary, calc_box = true,
-               calc_ellipse = true, q = 0.05, n_sim = 3_000, block_size = 3, dmu = 0.1,
-               dcov = 0.1, seed = nothing, rng = Random.default_rng(),
-               fix_cov_args::Tuple = (), fix_cov_kwargs::NamedTuple = (;))
+```
+wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
 ```
 
 Worst case optimisation statistics.
@@ -2195,8 +2242,8 @@ function pcr(x::DataFrame, y::Union{Vector, DataFrame}, opt::PCROpt = PCROpt(;))
 end
 
 """
-```julia
-loadings_matrix(x::DataFrame, y::DataFrame; opt::LoadingsOpt = LoadingsOpt(;))
+```
+loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
 ```
 """
 function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
@@ -2244,12 +2291,32 @@ function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = Loadings
 end
 
 """
-```julia
+```
 risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = FactorOpt(;),
              cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;))
 ```
 
-Estimates the expected returns vector and covariance matrix based on the risk factor model [FM1, FM2](@cite). See [`loadings_matrix`](@ref), and [`covar_mtx_mean_vec`](@ref).
+Estimates the expected returns vector and covariance matrix of the assets based on the risk factor model [FM1, FM2](@cite). See [`loadings_matrix`](@ref), [`covar_mtx_mean_vec`](@ref), and [`posdef_fix!`](@ref).
+
+```math
+\\begin{align*}
+\\mathbf{X}_{\\mathrm{FM}} &= \\mathbf{F} \\mathbf{B}^{\\intercal}\\\\
+\\bm{\\mu}_{\\mathrm{FM}} &= \\mathbf{B} \\bm{\\mu}_{F}\\\\
+\\bm{\\Sigma}_{\\mathrm{FM}} &= \\mathbf{B} \\mathbf{\\Sigma}_{F} \\mathbf{B}^{\\intercal} + \\mathbf{\\Sigma}_{\\epsilon}\\\\
+\\mathbf{\\Sigma}_{\\epsilon} &= \\begin{cases}\\mathrm{Diagonal}\\left(\\mathrm{var}\\left(\\mathbf{X} - \\mathbf{X}_{\\mathrm{FM}},\\, \\mathrm{dims} = 1\\right)\\right) &\\quad \\mathrm{if~ error = true}\\\\
+\\mathbf{0} &\\quad \\mathrm{if~ error = false}
+\\end{cases}
+\\end{align*}
+```
+
+Where:
+
+  - ``\\mathbf{X}_{\\mathrm{FM}}``: is the `T×Na` matrix of factor adjusted asset returns, where `T` is the number of returns observations, and `Na` the number of assets.
+  - ``\\mathbf{F}``: is the `T×Nf` matrix of factor returns, where `T` is the number of returns observations, and `Nf` the number of assets.
+  - ``\\mathbf{B}``: is the `Na×Nf` loadings matrix, where `Nf` is the number of assets.
+  - ``\\bm{\\mu}_{\\mathrm{FM}}``: is the `Na×1` adjusted expected returns vector of the assets, where `Na` is the number of assets.
+  - ``\\bm{\\mu}_{F}``: is the `Nf×1` expected returns vector of the factors, where `Nf` is the number of factors.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{FM}}``: is the `Na×Na` factor adjusted covariance matrix of the assets, where `Na` is the number of assets.
 """
 function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = FactorOpt(;),
                       cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;))
@@ -2260,12 +2327,12 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
     end
     namesB = names(B)
     old_posdef = nothing
-    if "const" ∈ namesB
-        x1 = [ones(nrow(y)) Matrix(x)]
+    x1 = if "const" ∈ namesB
         old_posdef = cov_opt.posdef.method
         cov_opt.posdef.method = :None
+        [ones(nrow(y)) Matrix(x)]
     else
-        x1 = Matrix(x)
+        Matrix(x)
     end
     B_mtx = Matrix(B[!, setdiff(namesB, ("tickers",))])
 
@@ -2319,7 +2386,7 @@ function _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, opt, cov_type)
 end
 
 """
-```julia
+```
 black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
                 w::AbstractVector; cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
                 bl_opt::BLOpt = BLOpt(;))
@@ -2401,7 +2468,7 @@ function black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::Abstract
 end
 
 """
-```julia
+```
 bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix, B::AbstractMatrix,
                          P_f::AbstractMatrix, Q_f::AbstractVector;
                          cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
@@ -2465,7 +2532,7 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
 end
 
 """
-```julia
+```
 augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
                           F::Union{AbstractMatrix, Nothing}   = nothing,
                           B::Union{AbstractMatrix, Nothing}   = nothing,
@@ -2583,14 +2650,14 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
 end
 
 """
-```julia
+```
 black_litterman_statistics!(portfolio::Portfolio, P::AbstractMatrix, Q::AbstractVector;
                             w::AbstractVector = Vector{Float64}(undef, 0),
                             cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
                             bl_opt::BLOpt = BLOpt(;))
 ```
 
-Estimates the Black Litterman statistics (see [`black_litterman`](@ref)) for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), and [`mean_vec`](@ref).
+Estimates the Black Litterman statistics for a given `portfolio` in-place. See [`black_litterman`](@ref), and [`covar_mtx_mean_vec`](@ref).
 
 Modifies:
 
@@ -2666,13 +2733,13 @@ function black_litterman_statistics!(portfolio::Portfolio, P::AbstractMatrix,
 end
 
 """
-```julia
+```
 factor_statistics!(portfolio::Portfolio; cov_f_opt::CovOpt = CovOpt(;),
                    mu_f_opt::MuOpt = MuOpt(;), cov_fm_opt::CovOpt = CovOpt(;),
                    mu_fm_opt::MuOpt = MuOpt(;), factor_opt::FactorOpt = FactorOpt(;))
 ```
 
-Compute the factor and factor adjusted statistics for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref), and [`risk_factors`](@ref).
+Compute the factor and factor adjusted statistics for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), and [`risk_factors`](@ref).
 
 Modifies:
 
@@ -2720,9 +2787,9 @@ function factor_statistics!(portfolio::Portfolio; cov_f_opt::CovOpt = CovOpt(;),
 end
 
 """
-```julia
-black_litterman_factor_satistics!(portfolio::Portfolio;
-                                  w::AbstractVector                   = Vector{Float64}(undef, 0),
+```
+black_litterman_factor_satistics!(portfolio::Portfolio,
+                                  w::AbstractVector                   = Vector{Float64}(undef, 0);
                                   B::Union{DataFrame, Nothing}        = nothing,
                                   P::Union{AbstractMatrix, Nothing}   = nothing,
                                   P_f::Union{AbstractMatrix, Nothing} = nothing,
@@ -2794,7 +2861,7 @@ function black_litterman_factor_satistics!(portfolio::Portfolio,
 end
 
 """
-```julia
+```
 _hierarchical_clustering
 ```
 """
@@ -2810,7 +2877,7 @@ function _hierarchical_clustering(returns::AbstractMatrix, cor_opt::CorOpt = Cor
 end
 
 """
-```julia
+```
 cluster_assets
 ```
 """
@@ -2829,7 +2896,7 @@ function cluster_assets(portfolio::HCPortfolio,
 end
 
 """
-```julia
+```
 cluster_assets!
 ```
 """
@@ -2849,7 +2916,7 @@ function cluster_assets!(portfolio::HCPortfolio,
 end
 
 """
-```julia
+```
 cluster_assets
 ```
 """
@@ -2868,7 +2935,7 @@ function cluster_assets(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
 end
 
 """
-```julia
+```
 cluster_assets
 ```
 """
@@ -2887,4 +2954,4 @@ export gerber0, gerber1, gerber2, sb0, sb1, gerbersb0, gerbersb1, mut_var_info_m
        black_litterman, augmented_black_litterman, bayesian_black_litterman,
        black_litterman_statistics!, factor_statistics!, black_litterman_factor_satistics!,
        nearest_cov, covar_mtx, mean_vec, cokurt_mtx, mu_estimator, cor_dist_mtx,
-       cluster_assets, coskew, scoskew
+       cluster_assets, coskew, scoskew, posdef_fix!
