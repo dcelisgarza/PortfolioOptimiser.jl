@@ -4,6 +4,11 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
+@safetestset "Asset Statistics" begin
+    include("AssetStatisticsTests1.jl")
+    include("AssetStatisticsTests2.jl")
+end
+
 @safetestset "OWA Weights" begin
     include("OWAWeightsTests.jl")
 end
@@ -66,11 +71,6 @@ end
 
 @safetestset "Misc" begin
     include("MiscTests.jl")
-end
-
-@safetestset "Asset Statistics" begin
-    include("AssetStatisticsTests1.jl")
-    include("AssetStatisticsTests2.jl")
 end
 
 @safetestset "Portfolio Traditional Optimisation Constraints" begin

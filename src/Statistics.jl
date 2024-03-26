@@ -1318,7 +1318,7 @@ end
 covar_mtx(returns::AbstractMatrix; opt::CovOpt = CovOpt(;))
 ```
 
-Compute the covariance matrix.
+Compute the covariance matrix. See [`gerber0`](@ref), [`gerber1`](@ref), [`gerber2`](@ref), [`sb0`](@ref), [`sb1`](@ref), [`gerbersb0`](@ref), [`gerbersb1`](@ref), [`_denoise_logo_mtx`](@ref), [`posdef_fix!`](@ref).
 
 # Inputs
 
@@ -1637,9 +1637,9 @@ asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true, calc_mu::
                   kurt_opt::KurtOpt = KurtOpt(;), cor_opt::CorOpt = CorOpt(;))
 ```
 
-Compute the asset statistics for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref), [`cokurt_mtx`](@ref), [`cor_dist_mtx`](@ref).
+Compute the asset statistics for a given `portfolio` in-place. See [`covar_mtx`](@ref), [`mean_vec`](@ref), [`cokurt_mtx`](@ref), [`cor_dist_mtx`](@ref).
 
-Depending on the conditions sets:
+Depending on the conditions modifies:
 
   - `portfolio.mu`
   - `portfolio.cov`
@@ -1647,6 +1647,7 @@ Depending on the conditions sets:
   - `portfolio.skurt`
   - `portfolio.cor`
   - `portfolio.dist`
+  - `mu_opt.method`
 
 # Inputs
 
@@ -1667,7 +1668,7 @@ Depending on the conditions sets:
 
       + `true`: compute and set the expected returns vector.
 
-          * `mu_opt.method ∈ (:JS, :BS, :BOP, :CAPM)`: require the covariance matrix, so it will be computed when this condition is met. The covariance matrix is only set when `calc_cov == true`.
+          * `mu_opt.method ∈ (:JS, :BS, :BOP, :CAPM)`: require the covariance matrix, so it will be computed and `mu_opt.sigma` will be set to the covariance matrix. `portfolio.cov` will only be modified when `calc_cov == true`.
   - `calc_kurt`:
 
       + `true`: compute and set the cokurtosis and semi cokurtosis matrices.
@@ -1707,6 +1708,7 @@ function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
 
         if mu_method == :CAPM
             sigma = sigma[1:(end - 1), 1:(end - 1)]
+            returns = returns[:, 1:(end - 1)]
         end
 
         portfolio.mu = mu
@@ -2246,6 +2248,8 @@ end
 risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = FactorOpt(;),
              cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;))
 ```
+
+Estimates the expected returns vector and covariance matrix based on the risk factor model [FM1, FM2](@cite). See [`loadings_matrix`](@ref), and [`covar_mtx_mean_vec`](@ref).
 """
 function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = FactorOpt(;),
                       cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;))
@@ -2586,9 +2590,9 @@ black_litterman_statistics!(portfolio::Portfolio, P::AbstractMatrix, Q::Abstract
                             bl_opt::BLOpt = BLOpt(;))
 ```
 
-Estimates the expected returns vector and covariance matrix based on the Black Litterman model (see [`black_litterman`](@ref)) for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), and [`mean_vec`](@ref).
+Estimates the Black Litterman statistics (see [`black_litterman`](@ref)) for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), and [`mean_vec`](@ref).
 
-Sets:
+Modifies:
 
   - `portfolio.bl_mu`
   - `portfolio.bl_cov`
@@ -2668,9 +2672,9 @@ factor_statistics!(portfolio::Portfolio; cov_f_opt::CovOpt = CovOpt(;),
                    mu_fm_opt::MuOpt = MuOpt(;), factor_opt::FactorOpt = FactorOpt(;))
 ```
 
-Compute the factor and factor adjusted expected returns vectors and covariance matrices for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref), and [`risk_factors`](@ref).
+Compute the factor and factor adjusted statistics for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref), and [`risk_factors`](@ref).
 
-Sets:
+Modifies:
 
   - `portfolio.f_cov`
   - `portfolio.f_mu`
