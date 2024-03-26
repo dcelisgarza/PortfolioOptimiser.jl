@@ -1639,6 +1639,15 @@ asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true, calc_mu::
 
 Compute the asset statistics for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), [`mean_vec`](@ref), [`cokurt_mtx`](@ref), [`cor_dist_mtx`](@ref).
 
+Depending on the conditions sets:
+
+  - `portfolio.mu`
+  - `portfolio.cov`
+  - `portfolio.kurt`
+  - `portfolio.skurt`
+  - `portfolio.cor`
+  - `portfolio.dist`
+
 # Inputs
 
   - `portfolio`: instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
@@ -1649,19 +1658,19 @@ Compute the asset statistics for a given `portfolio` in-place. See [`covar_mtx_m
 
       + `isa(portfolio, HCPortfolio)`:
 
-          * `true`: compute the correlation and distance matrices, setting `portfolio.cor` and `portfolio.dist`.
+          * `true`: compute and set the correlation and distance matrices.
 
   - `calc_cov`:
 
-      + `true`: compute the covariance matrix, setting `portfolio.cov`.
+      + `true`: compute and set the covariance matrix.
   - `calc_mu`:
 
-      + `true`: compute the expected returns matrix, setting `portfolio.mu`.
+      + `true`: compute and set the expected returns vector.
 
-          * `mu_opt.method ∈ (:JS, :BS, :BOP, :CAPM)`: use the covariance matrix. Therefore, the covariance matrix is computed whenever `calc_mu == true`, but `portfolio.cov` is only set when `calc_cov == true`.
+          * `mu_opt.method ∈ (:JS, :BS, :BOP, :CAPM)`: require the covariance matrix, so it will be computed when this condition is met. The covariance matrix is only set when `calc_cov == true`.
   - `calc_kurt`:
 
-      + `true`: compute the cokurtosis and semi cokurtosis matrices, setting `portfolio.kurt` and `portfolio.skurt`.
+      + `true`: compute and set the cokurtosis and semi cokurtosis matrices.
 
 ## Options
 
@@ -1677,14 +1686,37 @@ function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
                            cor_opt::CorOpt = CorOpt(;))
     returns = portfolio.returns
 
-    if calc_cov || calc_mu
-        sigma, mu = covar_mtx_mean_vec(returns; cov_opt = cov_opt, mu_opt = mu_opt)
-    end
-    if calc_cov
-        portfolio.cov = sigma
-    end
+    sigma = nothing
     if calc_mu
+        mu_method = mu_opt.method
+        if mu_method == :CAPM
+            mkt_ret = mu_opt.mkt_ret
+            if isnothing(mkt_ret)
+                returns = hcat(returns, mean(returns; dims = 2))
+            else
+                returns = hcat(returns, mkt_ret)
+            end
+        end
+
+        if mu_opt.method ∈ (:JS, :BS, :BOP, :CAPM)
+            sigma = covar_mtx(returns, cov_opt)
+            mu_opt.sigma = sigma
+        end
+
+        mu = mean_vec(returns, mu_opt)
+
+        if mu_method == :CAPM
+            sigma = sigma[1:(end - 1), 1:(end - 1)]
+        end
+
         portfolio.mu = mu
+    end
+
+    if calc_cov
+        if isnothing(sigma)
+            sigma = covar_mtx(returns, cov_opt)
+        end
+        portfolio.cov = sigma
     end
 
     if calc_kurt
@@ -2645,6 +2677,8 @@ Sets:
   - `portfolio.fm_mu`
   - `portfolio.fm_cov`
   - `portfolio.fm_returns`
+  - `portfolio.loadings`
+  - `portfolio.loadings_opt`
 
 # Inputs
 
