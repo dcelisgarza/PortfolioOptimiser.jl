@@ -869,11 +869,11 @@ Structure and keyword constructor for computing factor statistics.
 
 # Input
 
-  - `B`: loadings matrix in dataframe form. The number of rows must be equal to the number of asset and factor returns observations, `T`. Must have a few different columns.
+  - `B`: is the `T×(Nf+c)` loadings matrix in Dataframe form, where `T` is the number of returns observations, `Nf` the number of factors, and `c ∈ (0, 1, 2)` is the two optional columns. The Dataframe columns must be:
 
       + `tickers`: (optional) contains the list of tickers.
       + `const`: (optional) contains the regression constant.
-      + The other columns must be the names of the factors.
+      + The other columns are the names of the factors.
 
   - `loadings_opt`: options for computing the loadings matrix [`LoadingsOpt`](@ref).
   - `error`:
@@ -901,7 +901,7 @@ end
 @kwdef mutable struct BLOpt{T1 <: Real}
     method::Symbol = :B
     constant::Bool = true
-    diagonal::Bool = true
+    error::Bool = true
     eq::Bool = true
     delta::Union{Nothing, <:Real} = 1.0
     rf::T1 = 0.0
@@ -924,7 +924,7 @@ Structure and keyword constructor for computing Black-Litterman asset and factor
   - `constant`:
 
       + [`black_litterman_factor_satistics!`](@ref): indicates whether the loadings matrix contains a `"const"` column, automatically set inside the function.
-  - `diagonal`:
+  - `error`:
 
       + [`black_litterman_factor_satistics!`](@ref):
 
@@ -950,7 +950,7 @@ Structure and keyword constructor for computing Black-Litterman asset and factor
 
       + [`black_litterman_factor_satistics!`](@ref):
 
-          * `method == :B && diagonal == true`: generic function [`GenericFunction`](@ref) for the variance in the definition of ``\\mathbf{D}`` .
+          * `method == :B && error == true`: generic function [`GenericFunction`](@ref) for the variance in the definition of ``\\mathbf{D}`` .
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
   - `jlogo`:
@@ -960,7 +960,7 @@ Structure and keyword constructor for computing Black-Litterman asset and factor
 mutable struct BLOpt{T1 <: Real}
     method::Symbol
     constant::Bool
-    diagonal::Bool
+    error::Bool
     eq::Bool
     delta::Union{Nothing, <:Real}
     rf::T1
@@ -969,7 +969,7 @@ mutable struct BLOpt{T1 <: Real}
     posdef::PosdefFixOpt
     jlogo::Bool
 end
-function BLOpt(; method::Symbol = :B, constant::Bool = true, diagonal::Bool = true,
+function BLOpt(; method::Symbol = :B, constant::Bool = true, error::Bool = true,
                eq::Bool = true, delta::Real = 1.0, rf::Real = 0.0,
                var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
                                                               kwargs = (; dims = 1)),
@@ -977,8 +977,8 @@ function BLOpt(; method::Symbol = :B, constant::Bool = true, diagonal::Bool = tr
                jlogo::Bool = false)
     @smart_assert(method ∈ BLFMMethods)
 
-    return BLOpt{typeof(rf)}(method, constant, eq, diagonal, delta, rf, var_genfunc,
-                             denoise, posdef, jlogo)
+    return BLOpt{typeof(rf)}(method, constant, eq, error, delta, rf, var_genfunc, denoise,
+                             posdef, jlogo)
 end
 function Base.setproperty!(obj::BLOpt, sym::Symbol, val)
     if sym == :method

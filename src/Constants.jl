@@ -213,27 +213,28 @@ Estimates the expected returns vector and covariance matrix based on a modified 
 
 Where:
 
-  - ``\\bm{\\Pi}_{a}``: is the augmented equilibrium excess returns.
+  - ``\\bm{\\Pi}_{a}``: is the `Na×1` vector of augmented equilibrium excess returns, where `Na` is the number of assets.
+
   - ``\\delta``: is the risk aversion parameter.
-  - ``\\mathbf{\\Sigma}``: is the asset covariance matrix.
-  - ``\\mathbf{\\Sigma}_{F}``: is the factor covariance matrix.
-  - ``\\bm{w}``: is the vector of benchmark asset weights.
-  - ``\\mathbf{P}_{a}``: is the augmented views matrix. The zeros pad the matrix so all columns and rows are of equal length.
-  - ``\\mathbf{P}``: is the asset views matrix.
-  - ``\\mathbf{P}_{F}``: is the factor views matrix.
-  - ``\\bm{Q}_{a}``: is the augmented views returns vector.
-  - ``\\bm{Q}``: is the asset views returns vector.
-  - ``\\bm{Q}_{F}``: is the factor views returns vector.
-  - ``\\mathbf{\\Sigma}_{a}``: is the augmented covariance matrix.
-  - ``\\mathbf{B}``: is the loadings matrix.
-  - ``\\mathbf{\\Omega}_{a}``: is the covariance matrix of the errors of the augmented views.
-  - ``\\mathbf{\\Omega}``: is the covariance matrix of the errors of the asset views.
-  - ``\\mathbf{\\Omega}_{F}``: is the covariance matrix of the errors of the factor views.
-  - ``\\mathbf{M}_{a}``: is an intermediate covariance matrix.
-  - ``\\bm{\\Pi}_{\\mathbf{ABL}}``: is the equilibrium excess returns after being adjusted by the augmented views.
+  - ``\\mathbf{\\Sigma}``: is the `Na×Na` asset covariance matrix, where `Na` is the number of assets.
+  - ``\\mathbf{\\Sigma}_{F}``: is the `Nf×Nf` factor covariance matrix, where `Nf` is the number of factors.
+  - ``\\bm{w}``: is the `Na×1` vector of benchmark asset weights.
+  - ``\\mathbf{P}_{a}``: is the `(Nva+Nvf)×(Na+Nf)` augmented views matrix, where `Nva` is the number of views of the assets, `Nvf` the number of views of the factors, `Na` the number of assets, and `Nf` the number of factors. The zeros pad the matrix so all columns and rows are of equal length.
+  - ``\\mathbf{P}``: is the `Nva×Na` asset views matrix, where `Nva` is the number of views of the assets, and `Na` the number of assets.
+  - ``\\mathbf{P}_{F}``: is the `Nvf×Nf` factor views matrix, where `Nvf` is the number of views of the factors, and `Nf` the number of factors.
+  - ``\\bm{Q}_{a}``: is the `(Nva+Nvf)×1` augmented views returns vector, where `Nva` is the number of views of the assets, and `Nvf` the number of views of the factors.
+  - ``\\bm{Q}``: is the `Nva×1` asset views returns vector, where `Nva` is the number of views of the assets.
+  - ``\\bm{Q}_{F}``: is the `Nvf×1` factor views returns vector, where `Nvf` is the number of views of the factors.
+  - ``\\mathbf{\\Sigma}_{a}``: is the `(Na+Nf)×(Na+Nf)` augmented covariance matrix, where `Na` is the number of assets, and `Nf` the number of factors.
+  - ``\\mathbf{B}``: is the `Na×Nf` loadings matrix, where `Na` is the number of assets, `Nf` the number of factors.
+  - ``\\mathbf{\\Omega}_{a}``: is the `(Nva+Nvf)×(Nva+Nvf)` covariance matrix of the errors of the augmented views, where `Nva` is the number of asset views, and `Nvf` the number of factor views.
+  - ``\\mathbf{\\Omega}``: is the `Nva×Nva` covariance matrix of the errors of the asset views, where `Nva` is the number of asset views.
+  - ``\\mathbf{\\Omega}_{F}``: is the `Nvf×Nvf` covariance matrix of the errors of the factor views, where `Nvf` is the number of factor views.
+  - ``\\mathbf{M}_{a}``: is an `(Na+Nf)×(Na+Nf)` intermediate covariance matrix, where `Na` is the number of assets, and `Nf` the number of factors.
+  - ``\\bm{\\Pi}_{\\mathbf{ABL}}``: is the `Na×1` equilibrium excess returns vector after being adjusted by the augmented views, where `Na` is the number of assets.
   - ``T``: is the number of returns observations.
-  - ``\\bm{\\mu}_{\\mathbf{ABL}}``: is the vector of asset expected returns obtained via the Augmented Black Litterman model.
-  - ``\\mathbf{\\Sigma}_{\\mathrm{ABL}}``: is the asset covariance matrix obtained via the Augmented Black Litterman model.
+  - ``\\bm{\\mu}_{\\mathbf{ABL}}``: is the `Na×1` vector of asset expected returns obtained via the Augmented Black Litterman model, where `Na` is the number of assets.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{ABL}}``: is the `Na×Na` asset covariance matrix obtained via the Augmented Black Litterman model, where `Na` is the number of assets.
 
 # `:B`-- Bayesian Black-Litterman
 
@@ -241,9 +242,9 @@ Estimates the expected returns vector and covariance matrix based on a modified 
 
 ```math
 \\begin{align*}
-\\mathbf{\\Sigma} &= \\mathbf{B} \\mathbf{\\Sigma}_{F} \\mathbf{B}^{\\intercal} + \\mathbf{D} \\\\
-\\mathbf{D} &= \\begin{cases}\\mathrm{Diagonal}\\left(\\mathrm{var}\\left(\\mathbf{X} - \\mathbf{F} \\mathbf{B}^{\\intercal},\\, \\mathrm{dims} = 1\\right)\\right) &\\quad \\mathrm{if~ diagonal = true}\\\\
-\\mathbf{0} &\\quad \\mathrm{if~ diagonal = false}
+\\mathbf{\\Sigma} &= \\mathbf{B} \\mathbf{\\Sigma}_{F} \\mathbf{B}^{\\intercal} + \\mathbf{\\Sigma}_{\\epsilon} \\\\
+\\mathbf{\\Sigma}_{\\epsilon} &= \\begin{cases}\\mathrm{Diagonal}\\left(\\mathrm{var}\\left(\\mathbf{X} - \\mathbf{F} \\mathbf{B}^{\\intercal},\\, \\mathrm{dims} = 1\\right)\\right) &\\quad \\mathrm{if~ error = true}\\\\
+\\mathbf{0} &\\quad \\mathrm{if~ error = false}
 \\end{cases}\\\\
 \\overline{\\mathbf{\\Sigma}}_{F} &= \\left(\\mathbf{\\Sigma}_{F}^{-1} + \\mathbf{P}_{F}^{\\intercal} \\mathbf{\\Omega}_{F}^{-1} \\mathbf{P}_{F}\\right)^{-1}\\\\
 \\mathbf{\\Omega}_{F} &= \\tau \\mathrm{Diagonal}\\left(\\mathbf{P}_{F} \\mathbf{\\Sigma}_{F} \\mathbf{P}_{F}^{\\intercal}\\right)\\\\
@@ -258,24 +259,25 @@ Estimates the expected returns vector and covariance matrix based on a modified 
 
 Where:
 
-  - ``\\mathbf{\\Sigma}``: is the estimated asset covariance matrix computed using the factor model.
-  - ``\\mathbf{B}``: is the loadings matrix.
-  - ``\\mathbf{\\Sigma}_{F}``: is the covariance matrix of the factors.
-  - ``\\mathbf{D}``: is a diagonal matrix constructed from the variances of the errors between the asset and factor returns corrected by the loadings matrix i.e. the variance is taken for all ``T`` timestamps of ``N_{a}`` assets.
+  - ``\\mathbf{\\Sigma}``: is the `Na×Na` estimated asset covariance matrix computed using the factor model, where `Na` is the number of assets.
+  - ``\\mathbf{B}``: is the `Na×Nf` loadings matrix, where `Na` is the number of assets, `Nf` the number of factors.
+  - ``\\mathbf{\\Sigma}_{F}``: is the `Nf×Nf` factor covariance matrix, where `Nf` is the number of factors.
+  - ``\\bm{w}``: is the `Na×1` vector of benchmark asset weights.
+  - ``\\mathbf{\\Sigma}_{\\epsilon}``: is an `Na×Na` diagonal matrix constructed from the variances of the errors between the asset and factor returns corrected by the loadings matrix, where `Na` is the number of assets. The variance is taken over all `T` timestamps of `Na` assets.
   - ``\\mathbf{X}``: is the `T×Na` matrix of asset returns, where `T` is the number of returns observations and `Na` the number of assets.
   - ``\\mathbf{F}``: is the `T×Nf` matrix of factor returns, where `T` is the number of returns observations and `Nf` the number of factors.
-  - ``\\overline{\\mathbf{\\Sigma}}_{F}``: is the posterior covariance matrix of the factors after adjusting by the factor views.
-  - ``\\mathbf{P}_{F}``: is the factor views matrix.
-  - ``\\mathbf{\\Omega}_{F}``: is the covariance matrix of the errors of the factor views.
+  - ``\\overline{\\mathbf{\\Sigma}}_{F}``: is the `Nf×Nf` posterior covariance matrix of the factors after adjusting by the factor views, where `Nf` is the number of factors.
+  - ``\\mathbf{P}_{F}``: is the `Nvf×Nf` factor views matrix, where `Nvf` is the number of views of the factors, and `Nf` the number of factors.
+  - ``\\mathbf{\\Omega}_{F}``: is the `Nvf×Nvf` covariance matrix of the errors of the factor views, where `Nvf` is the number of factor views.
   - ``T``: is the number of returns observations.
-  - ``\\overline{\\bm{\\Pi}}_{F}``: is the posterior equilibrium excess returns of the factors after adjusting by the factor views.
-  - ``\\bm{\\Pi}_{F}``: is the equilibrium excess returns vector of the factors.
-  - ``\\bm{\\mu}_{F}``: is the expected returns vector of the factors.
+  - ``\\overline{\\bm{\\Pi}}_{F}``: is the `Nf×1` posterior equilibrium excess returns vector of the factors after adjusting by the factor views, where `Nf` is the number of factors.
+  - ``\\bm{\\Pi}_{F}``: is the `Nf×1` equilibrium excess returns vector of the factors, where `Nf` is the number of factors.
+  - ``\\bm{\\mu}_{F}``: is the `Nf×1` expected returns vector of the factors, where `Nf` is the number of factors.
   - ``r``: is the risk-free rate.
-  - ``\\bm{Q}_{F}``: is the factor views returns vector.
-  - ``\\mathbf{\\Sigma}_{\\mathrm{BF}}``: is an intermediate covariance matrix.
-  - ``\\mathbf{\\Sigma}_{\\mathrm{BLB}}``: is the posterior asset covariance matrix, aka the asset covariance matrix obtained via the Bayesian Black-Litterman model.
-  - ``\\bm{\\mu}_{\\mathrm{BLB}}``: is the posterior asset expected returns vector, aka the asset returns vector obtained via the Bayesian Black-Litterman model.
+  - ``\\bm{Q}_{F}``: is the `Nvf×1` factor views returns vector, where `Nvf` is the number of views of the factors.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{BF}}``: is an `Na×Nf` intermediate covariance matrix, where `Na` is the number of assets, and `Nf` the number of factors.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{BLB}}``: is the `Na×Na` posterior asset covariance matrix, aka the asset covariance matrix obtained via the Bayesian Black-Litterman model, where `Na` is the number of assets.
+  - ``\\bm{\\mu}_{\\mathrm{BLB}}``: is the `Na×1` posterior asset expected returns vector, aka the asset returns vector obtained via the Bayesian Black-Litterman model, where `Na` is the number of assets.
 """
 const BLFMMethods = (:A, :B)
 

@@ -2296,7 +2296,7 @@ risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = FactorOpt(;),
              cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;))
 ```
 
-Estimates the expected returns vector and covariance matrix of the assets based on the risk factor model [FM1, FM2](@cite). See [`loadings_matrix`](@ref), [`covar_mtx_mean_vec`](@ref), and [`posdef_fix!`](@ref).
+Estimates the returns matrix, expected returns vector, and covariance matrix of the assets based on the risk factor model [FM1, FM2](@cite). See [`loadings_matrix`](@ref), [`covar_mtx_mean_vec`](@ref), and [`posdef_fix!`](@ref).
 
 ```math
 \\begin{align*}
@@ -2313,10 +2313,33 @@ Where:
 
   - ``\\mathbf{X}_{\\mathrm{FM}}``: is the `T×Na` matrix of factor adjusted asset returns, where `T` is the number of returns observations, and `Na` the number of assets.
   - ``\\mathbf{F}``: is the `T×Nf` matrix of factor returns, where `T` is the number of returns observations, and `Nf` the number of assets.
-  - ``\\mathbf{B}``: is the `Na×Nf` loadings matrix, where `Nf` is the number of assets.
-  - ``\\bm{\\mu}_{\\mathrm{FM}}``: is the `Na×1` adjusted expected returns vector of the assets, where `Na` is the number of assets.
-  - ``\\bm{\\mu}_{F}``: is the `Nf×1` expected returns vector of the factors, where `Nf` is the number of factors.
-  - ``\\mathbf{\\Sigma}_{\\mathrm{FM}}``: is the `Na×Na` factor adjusted covariance matrix of the assets, where `Na` is the number of assets.
+  - ``\\mathbf{B}``: is the `Na×Nf` loadings matrix, where `Na` is the number of assets, and `Nf` the number of factors.
+  - ``\\bm{\\mu}_{\\mathrm{FM}}``: is the `Na×1` estimated expected asset returns vector computed using the factor model, where `Na` is the number of assets.
+  - ``\\bm{\\mu}_{F}``: is the `Nf×1` expected factor returns vector, where `Nf` is the number of factors.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{FM}}``: is the `Na×Na` estimated asset covariance matrix computed using the factor model, where `Na` is the number of assets.
+
+# Inputs
+
+  - `x`: is the `T×Nf` Dataframe of factor returns, where the column names are the factor names, `T` is the number of returns observations, and `Nf` the number of factors.
+  - `y`: is the `T×Na` Dataframe of asset returns, where the column names are the factor names, `T` is the number of returns observations, and `Nf` the number of assets.
+
+## Options
+
+  - `factor_opt`: instance of [`FactorOpt`](@ref), defines the parameters for computing the factors and loadings matrix.
+
+      + `isnothing(factor_opt.B)`: the loadings matris is computed internally using `factor_opt.loadings_opt`.
+
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the factor covariance matrix, as well as fixing non-positive definite matrices.
+
+      + If the loadings matrix contains the `const` column `cov_opt.posdef.method` is set to `:None` before computing the factor covariance matrix because the constant term makes it impossible to turn it into a positive definite matrix. `cov_opt.posdef.method` is then reset to its original value so it can be used to fix the estimated asset covariance matrix if needed.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected factor returns vector.
+
+# Outputs
+
+  - `mu`: is the `Na×1` estimated expected asset returns vector computed using the factor model, where `Na` is the number of assets.
+  - `sigma`: is the `Na×Na` estimated asset covariance matrix computed using the factor model, where `Na` is the number of assets.
+  - `returns`: is the `T×Na` matrix of factor adjusted asset returns, where `T` is the number of returns observations, and `Na` the number of assets.
+  - `B`: is the `(Na+c)×Nf` loadings matrix as a Dataframe, where `Na` is the number of assets, `Nf` the number of factors, and `c ∈ (0, 1, 2)` is the two optional columns as described in [`FactorOpt`](@ref).
 """
 function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = FactorOpt(;),
                       cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;))
@@ -2357,7 +2380,7 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
         cov_opt.posdef.method = old_posdef
     end
 
-    posdef_fix!(sigma, cov_opt.posdef; msg = "Factor Covariance ")
+    posdef_fix!(sigma, cov_opt.posdef; msg = "Factor Model Covariance ")
 
     return mu, sigma, returns, B
 end
@@ -2482,7 +2505,7 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
     sigma_f, f_mu = covar_mtx_mean_vec(F; cov_opt = cov_opt, mu_opt = mu_opt)
 
     constant = bl_opt.constant
-    diagonal = bl_opt.diagonal
+    error = bl_opt.error
     delta = bl_opt.delta
     rf = bl_opt.rf
 
@@ -2497,7 +2520,7 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
 
     sigma = B * sigma_f * transpose(B)
 
-    if diagonal
+    if error
         var_args = bl_opt.var_genfunc.args
         var_func = bl_opt.var_genfunc.func
         var_kwargs = bl_opt.var_genfunc.kwargs

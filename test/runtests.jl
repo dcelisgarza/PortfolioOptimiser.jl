@@ -4,6 +4,14 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
+@safetestset "BL Statistics" begin
+    include("BLStatisticsTests.jl")
+end
+
+@safetestset "Factor Statistics" begin
+    include("FactorStatisticsTests.jl")
+end
+
 @safetestset "Asset Statistics" begin
     include("AssetStatisticsTests1.jl")
     include("AssetStatisticsTests2.jl")
@@ -39,10 +47,6 @@ end
 
 @safetestset "Portfolio Classic WC Optimisation" begin
     include("PortfolioClassicWCTests.jl")
-end
-
-@safetestset "Factor Statistics" begin
-    include("FactorStatisticsTests.jl")
 end
 
 @safetestset "Portfolio Classic RP OWA Optimisation" begin
@@ -83,8 +87,4 @@ end
 
 @safetestset "Asset Allocation" begin
     include("AssetAllocationTests.jl")
-end
-
-@safetestset "BL Statistics" begin
-    include("BLStatisticsTests.jl")
 end
