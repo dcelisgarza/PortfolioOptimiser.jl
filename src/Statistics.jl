@@ -1705,15 +1705,10 @@ Depending on the conditions, modifies:
 
 ## Flags
 
-  - `calc_cor`:
-
-      + `isa(portfolio, HCPortfolio)`:
-
-          * `true`: compute and set the correlation and distance matrices.
-
   - `calc_cov`:
 
       + `true`: compute and set the covariance matrix.
+
   - `calc_mu`:
 
       + `true`: compute and set the expected returns vector.
@@ -1722,6 +1717,11 @@ Depending on the conditions, modifies:
   - `calc_kurt`:
 
       + `true`: compute and set the cokurtosis and semi cokurtosis matrices.
+  - `calc_cor`:
+
+      + `isa(portfolio, HCPortfolio)`:
+
+          * `true`: compute and set the correlation and distance matrices.
 
 ## Options
 
@@ -2456,8 +2456,8 @@ Where:
 
 ## Options
 
-  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the covariance matrix.
-  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected returns vector.
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the vanilla covariance matrix.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla expected returns vector.
   - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the Black Litterman model's statistics.
 
 # Outputs
@@ -2675,7 +2675,7 @@ end
 """
 ```
 black_litterman_statistics!(portfolio::Portfolio, P::AbstractMatrix, Q::AbstractVector;
-                            w::AbstractVector = Vector{Float64}(undef, 0),
+                            w::AbstractVector = portfolio.bl_bench_weights,
                             cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
                             bl_opt::BLOpt = BLOpt(;))
 ```
@@ -2686,6 +2686,11 @@ Modifies:
 
   - `portfolio.bl_mu`
   - `portfolio.bl_cov`
+  - `portfolio.bl_bench_weights`
+
+Depending on conditions, modifies:
+
+  - `bl_opt.delta`
 
 # Inputs
 
@@ -2695,21 +2700,16 @@ Modifies:
   - `Q`: `Nv×1` analyst's expected returns vector, where `Nv` is the number of views.
   - `w`: `Na×1` benchmark weights vector, sets `portfolio.bl_bench_weights`, where `Na` is the number of assets.
 
-      + `isempty(w)`:
-
-          * `isempty(portfolio.bl_bench_weights)`: every entry is in `portfolio.bl_bench_weights` is assumed to be equal to `1/Na`, `w` is set to be equal to `portfolio.bl_bench_weights`.
-          * `!isempty(portfolio.bl_bench_weights)`: `w` is set to be equal to `portfolio.bl_bench_weights`.
-
-      + `!isempty(w)`: `portfolio.bl_bench_weights` is set to be equal to `w`.
+      + `isempty(w)`: every entry is assumed to be `1/Na`.
 
 ## Options
 
-  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the covariance matrix.
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the vanilla covariance matrix.
 
-  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected returns vector.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla expected returns vector.
   - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the Black Litterman model's statistics.
 
-      + `isnothing(bl_opt.delta)`: modifies `bl_opt` by setting `bl_opt.delta` to:
+      + `isnothing(bl_opt.delta)`: sets `bl_opt.delta` to:
 
         ```math
         \\delta = \\dfrac{\\bm{\\mu} \\cdot \\bm{w} - r}{\\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}}\\,.
@@ -2729,19 +2729,14 @@ Modifies:
 """
 function black_litterman_statistics!(portfolio::Portfolio, P::AbstractMatrix,
                                      Q::AbstractVector,
-                                     w::AbstractVector = Vector{Float64}(undef, 0);
+                                     w::AbstractVector = portfolio.bl_bench_weights;
                                      cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
                                      bl_opt::BLOpt = BLOpt(;))
     returns = portfolio.returns
     if isempty(w)
-        if isempty(portfolio.bl_bench_weights)
-            portfolio.bl_bench_weights = fill(1 / size(portfolio.returns, 2),
-                                              size(portfolio.returns, 2))
-        end
-        w = portfolio.bl_bench_weights
-    else
-        portfolio.bl_bench_weights = w
+        w = fill(1 / size(portfolio.returns, 2), size(portfolio.returns, 2))
     end
+    portfolio.bl_bench_weights = w
 
     if isnothing(bl_opt.delta)
         bl_opt.delta = (dot(portfolio.mu, w) - bl_opt.rf) / dot(w, portfolio.cov, w)
@@ -2757,8 +2752,8 @@ end
 
 """
 ```
-factor_statistics!(portfolio::Portfolio; cov_f_opt::CovOpt = CovOpt(;),
-                   mu_f_opt::MuOpt = MuOpt(;), cov_fm_opt::CovOpt = CovOpt(;),
+factor_statistics!(portfolio::Portfolio; cov_opt::CovOpt = CovOpt(;),
+                   mu_opt::MuOpt = MuOpt(;), cov_fm_opt::CovOpt = CovOpt(;),
                    mu_fm_opt::MuOpt = MuOpt(;), factor_opt::FactorOpt = FactorOpt(;))
 ```
 
@@ -2780,29 +2775,25 @@ Modifies:
 
 ## Options
 
-  - `cov_f_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the factor covariance matrix.
-  - `mu_f_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the factor expected returns vector.
-  - `cov_fm_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the factor adjusted covariance matrix.
-  - `mu_fm_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the factor adjusted expected returns vector.
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the factor covariance matrix.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the factor expected returns vector.
   - `factor_opt`: instance of [`FactorOpt`](@ref), defines how the factor statistics are computed.
 """
-function factor_statistics!(portfolio::Portfolio; cov_f_opt::CovOpt = CovOpt(;),
-                            mu_f_opt::MuOpt = MuOpt(;), cov_fm_opt::CovOpt = CovOpt(;),
-                            mu_fm_opt::MuOpt = MuOpt(;),
-                            factor_opt::FactorOpt = FactorOpt(;))
+function factor_statistics!(portfolio::Portfolio; cov_opt::CovOpt = CovOpt(;),
+                            mu_opt::MuOpt = MuOpt(;), factor_opt::FactorOpt = FactorOpt(;))
     returns = portfolio.returns
     f_returns = portfolio.f_returns
 
-    portfolio.f_cov, portfolio.f_mu = covar_mtx_mean_vec(f_returns; cov_opt = cov_f_opt,
-                                                         mu_opt = mu_f_opt)
+    portfolio.f_cov, portfolio.f_mu = covar_mtx_mean_vec(f_returns; cov_opt = cov_opt,
+                                                         mu_opt = mu_opt)
 
     portfolio.fm_mu, portfolio.fm_cov, portfolio.fm_returns, portfolio.loadings = risk_factors(DataFrame(f_returns,
                                                                                                          portfolio.f_assets),
                                                                                                DataFrame(returns,
                                                                                                          portfolio.assets);
                                                                                                factor_opt = factor_opt,
-                                                                                               cov_opt = cov_fm_opt,
-                                                                                               mu_opt = mu_fm_opt)
+                                                                                               cov_opt = cov_opt,
+                                                                                               mu_opt = mu_opt)
 
     portfolio.loadings_opt = factor_opt.loadings_opt
 
@@ -2812,7 +2803,7 @@ end
 """
 ```
 black_litterman_factor_satistics!(portfolio::Portfolio,
-                                  w::AbstractVector                   = Vector{Float64}(undef, 0);
+                                  w::AbstractVector                   = portfolio.bl_bench_weights;
                                   B::Union{DataFrame, Nothing}        = nothing,
                                   P::Union{AbstractMatrix, Nothing}   = nothing,
                                   P_f::Union{AbstractMatrix, Nothing} = nothing,
@@ -2827,7 +2818,7 @@ black_litterman_factor_satistics!(portfolio::Portfolio,
 ```
 """
 function black_litterman_factor_satistics!(portfolio::Portfolio,
-                                           w::AbstractVector                   = Vector{Float64}(undef, 0);
+                                           w::AbstractVector                   = portfolio.bl_bench_weights;
                                            B::Union{DataFrame, Nothing}        = nothing,
                                            P::Union{AbstractMatrix, Nothing}   = nothing,
                                            P_f::Union{AbstractMatrix, Nothing} = nothing,
@@ -2843,14 +2834,9 @@ function black_litterman_factor_satistics!(portfolio::Portfolio,
     F = portfolio.f_returns
 
     if isempty(w)
-        if isempty(portfolio.bl_bench_weights)
-            portfolio.bl_bench_weights = fill(1 / size(portfolio.returns, 2),
-                                              size(portfolio.returns, 2))
-        end
-        w = portfolio.bl_bench_weights
-    else
-        portfolio.bl_bench_weights = w
+        w = fill(1 / size(portfolio.returns, 2), size(portfolio.returns, 2))
     end
+    portfolio.bl_bench_weights = w
 
     if isnothing(bl_opt.delta)
         bl_opt.delta = (dot(portfolio.mu, w) - bl_opt.rf) / dot(w, portfolio.cov, w)
