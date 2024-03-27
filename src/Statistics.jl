@@ -1962,6 +1962,30 @@ function wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
     return nothing
 end
 
+"""
+```
+forward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
+                   threshold::Real = 0.05)
+```
+
+Select the factors that best estimate the model based on forward regression.
+
+# Inputs
+
+  - `x`: is the `T×Nf` Dataframe of factor returns, where the column names are the factor names, `T` is the number of returns observations, and `Nf` the number of factors.
+
+  - `y`: is the `T×1` vector of returns for an asset.
+  - `criterion`: one of [`RegCriteria`](@ref) that decides what criterion to use when selecting the most significant factors.
+
+      + `criterion == :pval`: if no factor has a p-value lower than `threshold`, selects the factor with the lowest p-value.
+  - `threshold`:
+
+      + `criterion == :pval`: a factor is considered significant when its p-value is lower than `threshold`.
+
+# Outputs
+
+  - `features`: vector of significant factors.
+"""
 function forward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
                             threshold::Real = 0.05)
     @smart_assert(criterion ∈ RegCriteria)
@@ -2083,6 +2107,12 @@ function forward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
     return included
 end
 
+"""
+```
+backward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
+                    threshold::Real = 0.05)
+```
+"""
 function backward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
                              threshold::Real = 0.05)
     @smart_assert(criterion ∈ RegCriteria)
@@ -2199,6 +2229,11 @@ function backward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
     return included
 end
 
+"""
+```
+pcr(x::DataFrame, y::Union{Vector, DataFrame}, opt::PCROpt = PCROpt(;))
+```
+"""
 function pcr(x::DataFrame, y::Union{Vector, DataFrame}, opt::PCROpt = PCROpt(;))
     mean_genfunc = opt.mean_genfunc
     std_genfunc = opt.std_genfunc
@@ -2246,7 +2281,7 @@ end
 loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
 ```
 
-Estimate the loadings matrix using regression.
+Estimate the loadings matrix using regression. See [`forward_regression`](@ref), [`backward_regression`](@ref), and [`pcr`](@ref).
 
 # Inputs
 

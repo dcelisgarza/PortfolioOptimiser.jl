@@ -451,7 +451,7 @@ RegCriteria = (:pval, :aic, :aicc, :bic, :r2, :adjr2)
 
 Criteria for feature selection in regression functions.
 
-  - `:pval`: p-value feature selection.
+  - `:pval`: p-value feature selection, features with p-values lower than a threshold are considered to be significant.
 
   - The rest are methods applied to a fitted General Linear Model from [GLM.jl](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
 
