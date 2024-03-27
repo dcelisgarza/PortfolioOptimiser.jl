@@ -263,7 +263,7 @@ The tracking error constraint is defined as
 
 Where ``\\mathbf{X}_{i}`` is the `i'th` observation (row) of the returns matrix ``\\mathbf{X}``, ``\\bm{w}`` is the vector of optimal asset weights, ``b_{i}`` is the `i'th` observation of the benchmark returns vector, ``t`` the tracking error, and ``T`` is the number of returns observations.
 
-  - `bl_bench_weights`: `Na×1` vector of benchmark weights for Black Litterman models, where `Na` is the number of assets.
+  - `bl_bench_weights`: `Na×1` vector of benchmark weights for Black-Litterman models, where `Na` is the number of assets.
 
 ## Asset constraints
 

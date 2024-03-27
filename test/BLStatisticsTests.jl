@@ -9,7 +9,7 @@ prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "Vanilla Black Litterman" begin
+@testset "Vanilla Black-Litterman" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
@@ -1374,7 +1374,7 @@ l = 2.0
     @test isapprox(cov_mtx10, cov_mtx7)
 end
 
-@testset "Augmented Black Litterman" begin
+@testset "Augmented Black-Litterman" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
@@ -2802,7 +2802,7 @@ end
     @test isapprox(wb16, wb16t, rtol = 0.1)
 end
 
-@testset "Bayesian Black Litterman" begin
+@testset "Bayesian Black-Litterman" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
@@ -3408,7 +3408,7 @@ end
     @test !isapprox(wb1, wb3)
 end
 
-@testset "Bayesian Black Litterman Factor Statistics" begin
+@testset "Bayesian Black-Litterman Factor Statistics" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
@@ -3609,7 +3609,7 @@ end
     @test isapprox(cov7, cov8)
 end
 
-@testset "Augmented Black Litterman Factor Statistics" begin
+@testset "Augmented Black-Litterman Factor Statistics" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,

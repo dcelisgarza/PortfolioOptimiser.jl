@@ -233,8 +233,8 @@ Where:
   - ``\\mathbf{M}_{a}``: is an `(Na+Nf)×(Na+Nf)` intermediate covariance matrix, where `Na` is the number of assets, and `Nf` the number of factors.
   - ``\\bm{\\Pi}_{\\mathbf{ABL}}``: is the `Na×1` equilibrium excess returns vector after being adjusted by the augmented views, where `Na` is the number of assets.
   - ``T``: is the number of returns observations.
-  - ``\\bm{\\mu}_{\\mathbf{ABL}}``: is the `Na×1` vector of asset expected returns obtained via the Augmented Black Litterman model, where `Na` is the number of assets.
-  - ``\\mathbf{\\Sigma}_{\\mathrm{ABL}}``: is the `Na×Na` asset covariance matrix obtained via the Augmented Black Litterman model, where `Na` is the number of assets.
+  - ``\\bm{\\mu}_{\\mathbf{ABL}}``: is the `Na×1` vector of asset expected returns obtained via the Augmented Black-Litterman model, where `Na` is the number of assets.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{ABL}}``: is the `Na×Na` asset covariance matrix obtained via the Augmented Black-Litterman model, where `Na` is the number of assets.
 
 # `:B`-- Bayesian Black-Litterman
 

@@ -1334,13 +1334,13 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
         msg = "Semi Kurtosis "
         msg2 = ""
     elseif mtx_name == :bl_cov
-        msg = "Black Litterman Covariance "
+        msg = "Black-Litterman Covariance "
         msg2 = "\n\t Try some different asset views."
     elseif mtx_name == :a_bl_cov
-        msg = "Augmented Black Litterman Covariance "
+        msg = "Augmented Black-Litterman Covariance "
         msg2 = "\n\t Try a different combination of asset views, factor views, and/or loadings matrix."
     elseif mtx_name == :af_bl_cov
-        msg = "Augmented Black Litterman Covariance with no asset views "
+        msg = "Augmented Black-Litterman Covariance with no asset views "
         msg2 = "\n\t Try a different combination of factor views, and/or loadings matrix."
     end
 
@@ -2245,6 +2245,21 @@ end
 ```
 loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
 ```
+
+Estimate the loadings matrix using regression.
+
+# Inputs
+
+  - `x`: is the `T×Nf` Dataframe of factor returns, where the column names are the factor names, `T` is the number of returns observations, and `Nf` the number of factors.
+  - `y`: is the `T×Na` Dataframe of asset returns, where the column names are the factor names, `T` is the number of returns observations, and `Na` the number of assets.
+
+## Options
+
+  - `loadings_opt`: instance of [`LoadingsOpt`](@ref), defines the parameters for computing the loadings matrix.
+
+# Outputs
+
+  - `B`: is the `(Na+2)×Nf` loadings matrix as a Dataframe, where `Na` is the number of assets, `Nf` the number of factors. The two extra columns are the optional columns for `B` as described in [`FactorOpt`](@ref).
 """
 function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
     features = names(x)
@@ -2321,7 +2336,7 @@ Where:
 # Inputs
 
   - `x`: is the `T×Nf` Dataframe of factor returns, where the column names are the factor names, `T` is the number of returns observations, and `Nf` the number of factors.
-  - `y`: is the `T×Na` Dataframe of asset returns, where the column names are the factor names, `T` is the number of returns observations, and `Nf` the number of assets.
+  - `y`: is the `T×Na` Dataframe of asset returns, where the column names are the factor names, `T` is the number of returns observations, and `Na` the number of assets.
 
 ## Options
 
@@ -2336,6 +2351,8 @@ Where:
 
 # Outputs
 
+  - `f_mu`: is the `Nf×1` expected factor returns vector, where `Nf` is the number of factors.
+  - `f_cov`: is the `Nf×Nf` matrix of factor covariance matrix, where `Nf` is the number of factors.
   - `mu`: is the `Na×1` estimated expected asset returns vector computed using the factor model, where `Na` is the number of assets.
   - `sigma`: is the `Na×Na` estimated asset covariance matrix computed using the factor model, where `Na` is the number of assets.
   - `returns`: is the `T×Na` matrix of factor adjusted asset returns, where `T` is the number of returns observations, and `Na` the number of assets.
@@ -2350,7 +2367,8 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
     end
     namesB = names(B)
     old_posdef = nothing
-    x1 = if "const" ∈ namesB
+    flag = "const" ∈ namesB
+    x1 = if flag
         old_posdef = cov_opt.posdef.method
         cov_opt.posdef.method = :None
         [ones(nrow(y)) Matrix(x)]
@@ -2360,6 +2378,16 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
     B_mtx = Matrix(B[!, setdiff(namesB, ("tickers",))])
 
     f_cov, f_mu = covar_mtx_mean_vec(x1; cov_opt = cov_opt, mu_opt = mu_opt)
+
+    if !isnothing(old_posdef)
+        cov_opt.posdef.method = old_posdef
+    end
+
+    if flag
+        f_cov2 = f_cov[2:end, 2:end]
+        posdef_fix!(f_cov2, cov_opt.posdef; msg = "Factor Covariance ")
+        f_cov[2:end, 2:end] .= f_cov2
+    end
 
     returns = x1 * transpose(B_mtx)
     mu = B_mtx * f_mu
@@ -2376,13 +2404,13 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
         B_mtx * f_cov * transpose(B_mtx)
     end
 
-    if !isnothing(old_posdef)
-        cov_opt.posdef.method = old_posdef
-    end
-
     posdef_fix!(sigma, cov_opt.posdef; msg = "Factor Model Covariance ")
 
-    return mu, sigma, returns, B
+    f_cov, f_mu = if flag
+        f_cov[2:end, 2:end], f_mu[2:end]
+    end
+
+    return f_mu, f_cov, mu, sigma, returns, B
 end
 
 function _omega(P, tau_sigma)
@@ -2415,7 +2443,7 @@ black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
                 bl_opt::BLOpt = BLOpt(;))
 ```
 
-Estimates the expected returns vector and covariance matrix based on the Black Litterman model [BL1, BL2](@cite). See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), and [`mean_vec`](@ref).
+Estimates the expected returns vector and covariance matrix based on the Black-Litterman model [BL1, BL2](@cite). See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), and [`mean_vec`](@ref).
 
 ```math
 \\begin{align*}
@@ -2444,8 +2472,8 @@ Where:
   - ``\\mathbf{M}``: is an intermediate covariance matrix.
   - ``\\bm{\\Pi}_{\\mathbf{BL}}``: is the equilibrium excess returns after being adjusted by the views.
   - ``T``: is the number of returns observations.
-  - ``\\bm{\\mu}_{\\mathbf{BL}}``: is the vector of asset expected returns obtained via the Black Litterman model.
-  - ``\\mathbf{\\Sigma}_{\\mathrm{BL}}``: is the asset covariance matrix obtained via the Black Litterman model.
+  - ``\\bm{\\mu}_{\\mathbf{BL}}``: is the vector of asset expected returns obtained via the Black-Litterman model.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{BL}}``: is the asset covariance matrix obtained via the Black-Litterman model.
 
 # Inputs
 
@@ -2458,13 +2486,13 @@ Where:
 
   - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the vanilla covariance matrix.
   - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla expected returns vector.
-  - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the Black Litterman model's statistics.
+  - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the Black-Litterman model's statistics.
 
 # Outputs
 
-  - `mu`: `Na×1` Black Litterman adjusted expected returns vector, where `Na` is the number of assets.
-  - `cov_mtx`: `Na×Na` Black Litterman adjusted covariance matrix, where `Na` is the number of assets.
-  - `w`: `Na×1` Black Litterman adjusted asset weights vector, where `Na` is the number of assets.
+  - `mu`: `Na×1` Black-Litterman adjusted expected returns vector, where `Na` is the number of assets.
+  - `sigma`: `Na×Na` Black-Litterman adjusted covariance matrix, where `Na` is the number of assets.
+  - `w`: `Na×1` Black-Litterman adjusted asset weights vector, where `Na` is the number of assets.
 
 !!! note
 
@@ -2484,10 +2512,10 @@ function black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::Abstract
     Pi = _Pi(eq, delta, sigma, w, mu, rf)
 
     T, N = size(returns)
-    mu, cov_mtx, w, missing = _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N,
-                                        bl_opt, :bl_cov)
+    mu, sigma, w, missing = _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, bl_opt,
+                                      :bl_cov)
 
-    return mu, cov_mtx, w
+    return mu, sigma, w
 end
 
 """
@@ -2680,7 +2708,7 @@ black_litterman_statistics!(portfolio::Portfolio, P::AbstractMatrix, Q::Abstract
                             bl_opt::BLOpt = BLOpt(;))
 ```
 
-Estimates the Black Litterman statistics for a given `portfolio` in-place. See [`black_litterman`](@ref), and [`covar_mtx_mean_vec`](@ref).
+Estimates the Black-Litterman statistics for a given `portfolio` in-place. See [`black_litterman`](@ref), and [`covar_mtx_mean_vec`](@ref).
 
 Modifies:
 
@@ -2707,7 +2735,7 @@ Depending on conditions, modifies:
   - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the vanilla covariance matrix.
 
   - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla expected returns vector.
-  - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the Black Litterman model's statistics.
+  - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the Black-Litterman model's statistics.
 
       + `isnothing(bl_opt.delta)`: sets `bl_opt.delta` to:
 
@@ -2753,16 +2781,15 @@ end
 """
 ```
 factor_statistics!(portfolio::Portfolio; cov_opt::CovOpt = CovOpt(;),
-                   mu_opt::MuOpt = MuOpt(;), cov_fm_opt::CovOpt = CovOpt(;),
-                   mu_fm_opt::MuOpt = MuOpt(;), factor_opt::FactorOpt = FactorOpt(;))
+                   mu_opt::MuOpt = MuOpt(;), factor_opt::FactorOpt = FactorOpt(;))
 ```
 
 Compute the factor and factor adjusted statistics for a given `portfolio` in-place. See [`covar_mtx_mean_vec`](@ref), and [`risk_factors`](@ref).
 
 Modifies:
 
-  - `portfolio.f_cov`
   - `portfolio.f_mu`
+  - `portfolio.f_cov`
   - `portfolio.fm_mu`
   - `portfolio.fm_cov`
   - `portfolio.fm_returns`
@@ -2784,16 +2811,13 @@ function factor_statistics!(portfolio::Portfolio; cov_opt::CovOpt = CovOpt(;),
     returns = portfolio.returns
     f_returns = portfolio.f_returns
 
-    portfolio.f_cov, portfolio.f_mu = covar_mtx_mean_vec(f_returns; cov_opt = cov_opt,
-                                                         mu_opt = mu_opt)
-
-    portfolio.fm_mu, portfolio.fm_cov, portfolio.fm_returns, portfolio.loadings = risk_factors(DataFrame(f_returns,
-                                                                                                         portfolio.f_assets),
-                                                                                               DataFrame(returns,
-                                                                                                         portfolio.assets);
-                                                                                               factor_opt = factor_opt,
-                                                                                               cov_opt = cov_opt,
-                                                                                               mu_opt = mu_opt)
+    portfolio.f_mu, portfolio.f_cov, portfolio.fm_mu, portfolio.fm_cov, portfolio.fm_returns, portfolio.loadings = risk_factors(DataFrame(f_returns,
+                                                                                                                                          portfolio.f_assets),
+                                                                                                                                DataFrame(returns,
+                                                                                                                                          portfolio.assets);
+                                                                                                                                factor_opt = factor_opt,
+                                                                                                                                cov_opt = cov_opt,
+                                                                                                                                mu_opt = mu_opt)
 
     portfolio.loadings_opt = factor_opt.loadings_opt
 
