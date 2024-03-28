@@ -1029,7 +1029,7 @@ function dup_elim_sum_matrices(n::Int)
     return d, l, s
 end
 
-function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton())
+function nearest_cov(mtx::AbstractMatrix, method = NCM.Newton)
     etype = eltype(mtx)
     _mtx = clamp.(mtx, zero(etype), Inf)
     s = sqrt.(diag(_mtx))
@@ -1077,19 +1077,22 @@ function _optimize_psd_cov(model, solvers::AbstractDict)
 end
 
 function psd_cov(mtx::AbstractMatrix, solvers::AbstractDict)
-    s = sqrt.(diag(mtx))
-    _mtx = cov2cor(mtx)
+    etype = eltype(mtx)
+    _mtx = clamp.(mtx, zero(etype), Inf)
+    s = sqrt.(diag(_mtx))
+    corr = cov2cor(_mtx)
 
-    n = size(_mtx, 1)
-    q = -vec(_mtx)
-    r = 0.5 * vec(_mtx)' * vec(_mtx)
+    n = size(corr, 1)
+    v = vec(corr)
+    q = -v
+    r = 0.5 * dot(v, v)
 
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
 
     @variable(model, X[1:n, 1:n] ∈ PSDCone())
     x = vec(X)
-    @objective(model, Min, 0.5 * x' * x + q' * x + r)
+    @objective(model, Min, 0.5 * dot(x, x) + dot(q, x) + r)
     for i ∈ 1:n
         @constraint(model, X[i, i] == 1.0)
     end
@@ -1105,7 +1108,7 @@ function psd_cov(mtx::AbstractMatrix, solvers::AbstractDict)
 
     _mtx .= cor2cov(value.(X), s)
 
-    return _mtx
+    return any(.!isfinite.(_mtx)) ? mtx : _mtx
 end
 
 """
@@ -1964,7 +1967,7 @@ end
 
 """
 ```
-forward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
+forward_regression(x::DataFrame, y::AbstractVector, criterion::Symbol = :pval,
                    threshold::Real = 0.05)
 ```
 
@@ -1976,17 +1979,15 @@ Select the factors that best estimate the model based on forward regression.
 
   - `y`: is the `T×1` vector of returns for an asset.
   - `criterion`: one of [`RegCriteria`](@ref) that decides what criterion to use when selecting the most significant factors.
-
-      + `criterion == :pval`: if no factor has a p-value lower than `threshold`, selects the factor with the lowest p-value.
   - `threshold`:
 
-      + `criterion == :pval`: a factor is considered significant when its p-value is lower than `threshold`.
+      + `criterion == :pval`: a factor is considered significant if its p-value is lower than `threshold`. If no factor has a p-value lower than `threshold`, selects the factor with the lowest p-value.
 
 # Outputs
 
-  - `features`: vector of significant factors.
+  - `features`: is the `C×1` vector of significant factors, where `C` is the number of significant factors.
 """
-function forward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
+function forward_regression(x::DataFrame, y::AbstractVector, criterion::Symbol = :pval,
                             threshold::Real = 0.05)
     @smart_assert(criterion ∈ RegCriteria)
 
@@ -2109,11 +2110,27 @@ end
 
 """
 ```
-backward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
+backward_regression(x::DataFrame, y::AbstractVector, criterion::Symbol = :pval,
                     threshold::Real = 0.05)
 ```
+
+Select the factors that best estimate the model based on backward regression. This tends to be more robust than [`forward_regression`](@ref).
+
+# Inputs
+
+  - `x`: is the `T×N` Dataframe of factor returns, where the column names are the factor names, `T` is the number of returns observations, and `N` the number of factors.
+
+  - `y`: is the `T×1` vector of returns for an asset.
+  - `criterion`: one of [`RegCriteria`](@ref) that decides what criterion to use when selecting the most significant factors.
+  - `threshold`:
+
+      + `criterion == :pval`: a factor is considered significant if its p-value is lower than `threshold`. If no factor has a p-value lower than `threshold`, selects the factor with the lowest p-value.
+
+# Outputs
+
+  - `features`: is the `C×1` vector of significant factors, where `C` is the number of significant factors.
 """
-function backward_regression(x::DataFrame, y::Vector, criterion::Symbol = :pval,
+function backward_regression(x::DataFrame, y::AbstractVector, criterion::Symbol = :pval,
                              threshold::Real = 0.05)
     @smart_assert(criterion ∈ RegCriteria)
 
@@ -2231,10 +2248,22 @@ end
 
 """
 ```
-pcr(x::DataFrame, y::Union{Vector, DataFrame}, opt::PCROpt = PCROpt(;))
+mvr(x::DataFrame, y::AbstractVector, opt::MVROpt = MVROpt(;))
 ```
+
+Select the factors that best estimate the model based on multivariate regression. This tends to be more robust than [`backward_regression`](@ref).
+
+# Inputs
+
+  - `x`: is the `T×N` Dataframe of factor returns, where the column names are the factor names, `T` is the number of returns observations, and `N` the number of factors.
+  - `y`: is the `T×1` vector of returns for an asset.
+  - `opt`: instance of [`MVROpt`](@ref) for defining the regression and its parameters.
+
+# Outputs
+
+  - `features`: is the `C×1` vector of significant factors, where `C` is the number of significant factors.
 """
-function pcr(x::DataFrame, y::Union{Vector, DataFrame}, opt::PCROpt = PCROpt(;))
+function mvr(x::DataFrame, y::AbstractVector, opt::MVROpt = MVROpt(;))
     mean_genfunc = opt.mean_genfunc
     std_genfunc = opt.std_genfunc
     pca_s_genfunc = opt.pca_s_genfunc
@@ -2310,7 +2339,7 @@ function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = Loadings
     flag = method ∈ (:FReg, :BReg)
     criterion = opt.criterion
     threshold = opt.threshold
-    pcr_opt = opt.pcr_opt
+    mvr_opt = opt.mvr_opt
     for i ∈ 1:rows
         if flag
             included = if method == :FReg
@@ -2332,7 +2361,7 @@ function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = Loadings
             idx = [findfirst(x -> x == i, features) + 1 for i ∈ included]
             loadings[i, idx] .= params[2:end]
         else
-            beta = pcr(x, y[!, i], pcr_opt)
+            beta = mvr(x, y[!, i], mvr_opt)
             loadings[i, :] .= beta
         end
     end

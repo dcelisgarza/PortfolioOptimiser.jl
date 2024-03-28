@@ -15,16 +15,16 @@ l = 2.0
                                                                   :params => Dict("verbose" => false))))
     asset_statistics!(portfolio; calc_kurt = false)
 
-    pcr_opt = PCROpt(;)
-    loadings_opt = LoadingsOpt(; pcr_opt = pcr_opt)
+    mvr_opt = MVROpt(;)
+    loadings_opt = LoadingsOpt(; mvr_opt = mvr_opt)
     factor_opt = FactorOpt(; loadings_opt = loadings_opt)
     posdef = PosdefFixOpt(; method = :Nearest)
     cov_opt = CovOpt(; posdef = posdef)
 
     mu_opt = MuOpt(;)
 
-    loadings_opt.method = :PCR
-    pcr_opt.pca_genfunc.kwargs = (; pratio = 0.95)
+    loadings_opt.method = :MVR
+    mvr_opt.pca_genfunc.kwargs = (; pratio = 0.95)
     factor_statistics!(portfolio; cov_opt = cov_opt, mu_opt = mu_opt,
                        factor_opt = factor_opt)
     w1 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
@@ -78,24 +78,24 @@ end
 
     w = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, type = :Trad))
 
-    pcr_opt = PCROpt(;)
-    loadings_opt = LoadingsOpt(; pcr_opt = pcr_opt)
+    mvr_opt = MVROpt(;)
+    loadings_opt = LoadingsOpt(; mvr_opt = mvr_opt)
     factor_opt = FactorOpt(; loadings_opt = loadings_opt)
     posdef = PosdefFixOpt(; method = :Nearest)
     cov_opt = CovOpt(; posdef = posdef)
 
     mu_opt = MuOpt(;)
 
-    loadings_opt.method = :PCR
-    pcr_opt.pca_genfunc.kwargs = (; pratio = 0.99)
+    loadings_opt.method = :MVR
+    mvr_opt.pca_genfunc.kwargs = (; pratio = 0.99)
     frc1 = factor_risk_contribution(portfolio; loadings_opt = loadings_opt, rm = :SD,
                                     rf = rf)
 
-    pcr_opt.pca_genfunc.kwargs = (; pratio = 0.95)
+    mvr_opt.pca_genfunc.kwargs = (; pratio = 0.95)
     frc2 = factor_risk_contribution(portfolio; loadings_opt = loadings_opt, rm = :SD,
                                     rf = rf)
 
-    pcr_opt.pca_genfunc.kwargs = (; pratio = 0.9)
+    mvr_opt.pca_genfunc.kwargs = (; pratio = 0.9)
     frc3 = factor_risk_contribution(portfolio; loadings_opt = loadings_opt, rm = :SD,
                                     rf = rf)
 
@@ -212,7 +212,7 @@ end
     cov_fm11 = portfolio.fm_cov
     mu_fm11 = portfolio.fm_mu
 
-    loadings_opt.method = :PCR
+    loadings_opt.method = :MVR
     factor_opt = FactorOpt(; loadings_opt = loadings_opt)
     cov_opt = CovOpt(;)
     cov_fm_opt = CovOpt(;)
@@ -222,7 +222,7 @@ end
     cov_fm12 = portfolio.fm_cov
     mu_fm12 = portfolio.fm_mu
 
-    loadings_opt.method = :PCR
+    loadings_opt.method = :MVR
     loadings_opt.threshold = 1e-5
     factor_statistics!(portfolio; cov_opt = cov_opt, factor_opt = factor_opt)
     cov_f13 = portfolio.f_cov

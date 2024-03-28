@@ -1027,12 +1027,12 @@ function _calc_factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix,
 
     B = Matrix(B[!, setdiff(namesB, ("tickers", "const"))])
 
-    if loadings_opt.method == :PCR
-        pcr_opt = loadings_opt.pcr_opt
+    if loadings_opt.method == :MVR
+        mvr_opt = loadings_opt.mvr_opt
 
-        std_genfunc = pcr_opt.std_genfunc
-        pca_s_genfunc = pcr_opt.pca_s_genfunc
-        pca_genfunc = pcr_opt.pca_genfunc
+        std_genfunc = mvr_opt.std_genfunc
+        pca_s_genfunc = mvr_opt.pca_s_genfunc
+        pca_genfunc = mvr_opt.pca_genfunc
 
         X = transpose(factors)
 

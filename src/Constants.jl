@@ -451,7 +451,7 @@ RegCriteria = (:pval, :aic, :aicc, :bic, :r2, :adjr2)
 
 Criteria for feature selection in regression functions.
 
-  - `:pval`: p-value feature selection, features with p-values lower than a threshold are considered to be significant.
+  - `:pval`: select based on significant p-value.
 
   - The rest are methods applied to a fitted General Linear Model from [GLM.jl](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
 
@@ -462,16 +462,16 @@ const RegCriteria = (:pval, :aic, :aicc, :bic, :r2, :adjr2)
 
 """
 ```
-FSMethods = (:FReg, :BReg, :PCR)
+FSMethods = (:FReg, :BReg, :MVR)
 ```
 
 Methods for feature selection via regression when creating the loadings matrix.
 
   - `:FReg`: forward regression.
   - `:BReg`: backward regression.
-  - `:PCR`: Principal Component Regression using [PCA](https://juliastats.org/MultivariateStats.jl/stable/pca/).
+  - `:MVR`: Multivariate regression using [MultivariateStats.jl](https://juliastats.org/MultivariateStats.jl/stable/), works with [MultivariateStats.PCA](https://juliastats.org/MultivariateStats.jl/stable/pca/#Linear-Principal-Component-Analysis), [MultivariateStats.PPCA](https://juliastats.org/MultivariateStats.jl/stable/pca/#Probabilistic-Principal-Component-Analysis), [MultivariateStats.FactorAnalysis](https://juliastats.org/MultivariateStats.jl/stable/fa/).
 """
-const FSMethods = (:FReg, :BReg, :PCR)
+const FSMethods = (:FReg, :BReg, :MVR)
 
 """
 ```

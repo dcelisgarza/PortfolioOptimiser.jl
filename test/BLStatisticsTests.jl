@@ -3584,7 +3584,7 @@ end
 
     black_litterman_factor_satistics!(portfolio; P = P, P_f = P_f, Q = Q, Q_f = Q_f,
                                       bl_opt = bl_opt,
-                                      loadings_opt = LoadingsOpt(; method = :PCR))
+                                      loadings_opt = LoadingsOpt(; method = :MVR))
     mu0 = copy(portfolio.blfm_mu)
     cov0 = copy(portfolio.blfm_cov)
 
@@ -3619,7 +3619,7 @@ end
     mu5 = copy(portfolio.blfm_mu)
     cov5 = copy(portfolio.blfm_cov)
 
-    loadings_opt = LoadingsOpt(; method = :PCR)
+    loadings_opt = LoadingsOpt(; method = :MVR)
     B2 = Matrix(loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
                                 DataFrame(portfolio.returns, portfolio.assets),
                                 loadings_opt)[!, 2:end])

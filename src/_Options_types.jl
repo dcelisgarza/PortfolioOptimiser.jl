@@ -764,7 +764,7 @@ end
 
 """
 ```
-@kwdef mutable struct PCROpt
+@kwdef mutable struct MVROpt
     mean_genfunc::GenericFunction = GenericFunction(; func = StatsBase.mean,
                                                     kwargs = (; dims = 2))
     std_genfunc::GenericFunction = GenericFunction(; func = StatsBase.std,
@@ -777,22 +777,22 @@ end
 end
 ```
 
-Structure and keyword constructor for the `:PCR` method from [`FSMethods`](@ref).
+Structure and keyword constructor for the `:MVR` method from [`FSMethods`](@ref).
 
 # Inputs
 
   - `mean_genfunc`: generic function [`GenericFunction`](@ref) for computing the mean of the observations in the PCR function.
   - `std_genfunc`: generic function [`GenericFunction`](@ref) for computing the standard deviation of the observations in the PCR function.
-  - `pca_s_genfunc`: generic function [`GenericFunction`](@ref) for standardising the data to prepare it for PCA.
+  - `pca_s_genfunc`: generic function [`GenericFunction`](@ref) for standardising the data to prepare it for PCA according to [StatsBase.jl](https://juliastats.org/StatsBase.jl/stable/transformations/#StatsBase.standardize).
   - `pca_genfunc`: generic function [`GenericFunction`](@ref) for standardising fitting the data to a PCA model.
 """
-mutable struct PCROpt
+mutable struct MVROpt
     mean_genfunc::GenericFunction
     std_genfunc::GenericFunction
     pca_s_genfunc::GenericFunction
     pca_genfunc::GenericFunction
 end
-function PCROpt(;
+function MVROpt(;
                 mean_genfunc::GenericFunction = GenericFunction(; func = StatsBase.mean,
                                                                 kwargs = (; dims = 2)),
                 std_genfunc::GenericFunction = GenericFunction(; func = StatsBase.std,
@@ -804,7 +804,7 @@ function PCROpt(;
                 pca_genfunc::GenericFunction = GenericFunction(;
                                                                func = MultivariateStats.fit,
                                                                args = (MultivariateStats.PCA,)))
-    return PCROpt(mean_genfunc, std_genfunc, pca_s_genfunc, pca_genfunc)
+    return MVROpt(mean_genfunc, std_genfunc, pca_s_genfunc, pca_genfunc)
 end
 
 """
@@ -813,7 +813,7 @@ end
     method::Symbol = :FReg
     criterion::Symbol = :pval
     threshold::T1 = 0.05
-    pcr_opt::PCROpt = PCROpt(;)
+    mvr_opt::MVROpt = MVROpt(;)
 end
 ```
 
@@ -829,21 +829,21 @@ Structure and keyword constructor for computing the loadings matrix.
   - `threshold`:
 
       + `method ∈ (:FReg, :BReg) && criterion == :pval`: values greater than this are considered significant.
-  - `pcr_opt`:
+  - `mvr_opt`:
 
-      + `method == :PCR`: options for the method [`PCROpt`](@ref).
+      + `method == :MVR`: options for the method [`MVROpt`](@ref).
 """
 mutable struct LoadingsOpt{T1 <: Real}
     method::Symbol
     criterion::Symbol
     threshold::T1
-    pcr_opt::PCROpt
+    mvr_opt::MVROpt
 end
 function LoadingsOpt(; method::Symbol = :FReg, criterion::Symbol = :pval,
-                     threshold::Real = 0.05, pcr_opt::PCROpt = PCROpt(;))
+                     threshold::Real = 0.05, mvr_opt::MVROpt = MVROpt(;))
     @smart_assert(method ∈ FSMethods)
     @smart_assert(criterion ∈ RegCriteria)
-    return LoadingsOpt{typeof(threshold)}(method, criterion, threshold, pcr_opt)
+    return LoadingsOpt{typeof(threshold)}(method, criterion, threshold, mvr_opt)
 end
 function Base.setproperty!(obj::LoadingsOpt, sym::Symbol, val)
     if sym == :method
@@ -1279,5 +1279,5 @@ function Base.setproperty!(obj::AllocOpt, sym::Symbol, val)
 end
 
 export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
-       CorOpt, CorEstOpt, WCOpt, KurtOpt, KurtEstOpt, PCROpt, LoadingsOpt, FactorOpt, BLOpt,
+       CorOpt, CorEstOpt, WCOpt, KurtOpt, KurtEstOpt, MVROpt, LoadingsOpt, FactorOpt, BLOpt,
        ClusterOpt, OptimiseOpt, SBOpt, AllocOpt

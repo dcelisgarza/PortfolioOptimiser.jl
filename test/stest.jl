@@ -1,5 +1,5 @@
 using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, PortfolioOptimiser,
-      LinearAlgebra, PyCall
+      LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix
 
 prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
@@ -25,19 +25,48 @@ portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors,
                                                                               ))))
 asset_statistics!(portfolio; calc_kurt = false)
 
-pcr_opt = PCROpt(;)
-loadings_opt = LoadingsOpt(; pcr_opt = pcr_opt)
+mvr_opt = MVROpt(;)
+loadings_opt = LoadingsOpt(; mvr_opt = mvr_opt)
 factor_opt = FactorOpt(; loadings_opt = loadings_opt)
 posdef = PosdefFixOpt(; method = :Nearest)
-cov_f_opt = CovOpt(; posdef = posdef)
-cov_fm_opt = CovOpt(; posdef = posdef)
-mu_f_opt = MuOpt(;)
-mu_fm_opt = MuOpt(;)
+cov_opt = CovOpt(; posdef = posdef)
+mu_opt = MuOpt(;)
+loadings_opt.method = :MVR
+mvr_opt.pca_genfunc.kwargs = (; pratio = 0.9)
+factor_statistics!(portfolio; cov_opt = cov_opt, mu_opt = mu_opt, factor_opt = factor_opt)
+portfolio.loadings
 
-loadings_opt.method = :PCR
-pcr_opt.pca_genfunc.kwargs = (; pratio = 0.95)
-factor_statistics!(portfolio; cov_f_opt = cov_f_opt, mu_f_opt = mu_f_opt,
-                   cov_fm_opt = cov_fm_opt, mu_fm_opt = mu_fm_opt, factor_opt = factor_opt)
+mvr_opt = MVROpt(;)
+loadings_opt = LoadingsOpt(; mvr_opt = mvr_opt)
+factor_opt = FactorOpt(; loadings_opt = loadings_opt)
+posdef = PosdefFixOpt(; method = :Nearest)
+cov_opt = CovOpt(; posdef = posdef)
+mu_opt = MuOpt(;)
+loadings_opt.method = :MVR
+# mvr_opt.pca_genfunc.kwargs = (; pratio = 0.9)
+mvr_opt.pca_genfunc.args = (MultivariateStats.PCA,)
+factor_statistics!(portfolio; cov_opt = cov_opt, mu_opt = mu_opt, factor_opt = factor_opt)
+pca = copy(portfolio.loadings)
+
+mvr_opt.pca_genfunc.args = (MultivariateStats.FactorAnalysis,)
+factor_statistics!(portfolio; cov_opt = cov_opt, mu_opt = mu_opt, factor_opt = factor_opt)
+fca = copy(portfolio.loadings)
+
+mvr_opt.pca_genfunc.args = (MultivariateStats.PPCA,)
+factor_statistics!(portfolio; cov_opt = cov_opt, mu_opt = mu_opt, factor_opt = factor_opt)
+ppca = copy(portfolio.loadings)
+
+test = rand(10, 10)
+using NearestCorrelationMatrix
+Newton
+nearest_cor(test, Newton)
+wak = PortfolioOptimiser.nearest_cov(test)
+wak2 = PortfolioOptimiser.nearest_cov(test)
+wak3 = PortfolioOptimiser.nearest_cov(test,
+                                      JuMPAlgorithm(optimizer_with_attributes(Clarabel.Optimizer)))
+wak4 = PortfolioOptimiser.psd_cov(test,
+                                  Dict(:clarabel => Dict(:solver => Clarabel.Optimizer)))
+
 w1 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
 portfolio.f_risk_budget = 1:3
 w2 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
@@ -77,8 +106,8 @@ w4t = [-2.2577765287237592, 0.9178982669292839, 1.2033733533210704, -0.363317573
 @test isapprox(w4.weights, w4t; rtol = 1e-4)
 
 asset_statistics!(portfolio; calc_kurt = false)
-loadings_opt.method = :PCR
-loadings_opt.pcr_opt.pca_genfunc.kwargs = (; pratio = 0.95)
+loadings_opt.method = :MVR
+loadings_opt.mvr_opt.pca_genfunc.kwargs = (; pratio = 0.95)
 factor_statistics!(portfolio; cov_f_opt = cov_f_opt, cov_fm_opt = cov_fm_opt,
                    factor_opt = factor_opt)
 
