@@ -12,15 +12,17 @@ l = 2.0
     portfolio = Portfolio(; prices = prices)
     asset_statistics!(portfolio; calc_kurt = false)
 
-    simret1 = cov_returns(portfolio.cov; iters = 5, len = 100, seed = 123456789)
-    simret2 = cov_returns(portfolio.cov; iters = 2, len = 100, seed = 123456789)
+    simret1 = PortfolioOptimiser.cov_returns(portfolio.cov; iters = 5, len = 100,
+                                             seed = 123456789)
+    simret2 = PortfolioOptimiser.cov_returns(portfolio.cov; iters = 2, len = 100,
+                                             seed = 123456789)
 
-    sm1 = summation_matrix(1)
-    sm2 = summation_matrix(2)
-    sm3 = summation_matrix(3)
-    sm4 = summation_matrix(5)
-    sm5 = summation_matrix(7)
-    sm6 = summation_matrix(13)
+    sm1 = PortfolioOptimiser.summation_matrix(1)
+    sm2 = PortfolioOptimiser.summation_matrix(2)
+    sm3 = PortfolioOptimiser.summation_matrix(3)
+    sm4 = PortfolioOptimiser.summation_matrix(5)
+    sm5 = PortfolioOptimiser.summation_matrix(7)
+    sm6 = PortfolioOptimiser.summation_matrix(13)
 
     smt1 = sparse([1], [1], [1.0], 1, 1)
     smt2 = sparse([1, 2, 3], [1, 2, 4], [1.0, 2.0, 1.0], 3, 4)

@@ -69,25 +69,31 @@ l = 2.0
     bl_opt.eq
     bl_opt.delta
     bl_opt.rf
-    mu1, cov_mtx1, wb1 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
+    mu1, cov_mtx1, wb1 = PortfolioOptimiser.black_litterman(portfolio.returns, P, Q, w;
+                                                            bl_opt = bl_opt)
 
     bl_opt.delta = 0.25
-    mu2, cov_mtx2, wb2 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
+    mu2, cov_mtx2, wb2 = PortfolioOptimiser.black_litterman(portfolio.returns, P, Q, w;
+                                                            bl_opt = bl_opt)
 
     bl_opt.delta = 1
     bl_opt.rf = rf
-    mu3, cov_mtx3, wb3 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
+    mu3, cov_mtx3, wb3 = PortfolioOptimiser.black_litterman(portfolio.returns, P, Q, w;
+                                                            bl_opt = bl_opt)
 
     bl_opt = BLOpt(;)
     bl_opt.eq = false
-    mu4, cov_mtx4, wb4 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
+    mu4, cov_mtx4, wb4 = PortfolioOptimiser.black_litterman(portfolio.returns, P, Q, w;
+                                                            bl_opt = bl_opt)
 
     bl_opt.delta = 0.5
-    mu5, cov_mtx5, wb5 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
+    mu5, cov_mtx5, wb5 = PortfolioOptimiser.black_litterman(portfolio.returns, P, Q, w;
+                                                            bl_opt = bl_opt)
 
     bl_opt.delta = 1
     bl_opt.rf = rf
-    mu6, cov_mtx6, wb6 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
+    mu6, cov_mtx6, wb6 = PortfolioOptimiser.black_litterman(portfolio.returns, P, Q, w;
+                                                            bl_opt = bl_opt)
 
     asset_statistics!(portfolio)
     black_litterman_statistics!(portfolio, P, Q)
@@ -101,7 +107,8 @@ l = 2.0
     mu8 = copy(portfolio.bl_mu)
     cov_mtx8 = copy(portfolio.bl_cov)
 
-    mu9, cov_mtx9, wb9 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
+    mu9, cov_mtx9, wb9 = PortfolioOptimiser.black_litterman(portfolio.returns, P, Q, w;
+                                                            bl_opt = bl_opt)
 
     black_litterman_statistics!(portfolio, P, Q, w)
     mu10 = copy(portfolio.bl_mu)
@@ -1513,71 +1520,97 @@ end
 
     w = fill(1 / 20, 20)
     bl_opt = BLOpt(;)
-    mu0, cov0, wb0 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
-    mu1, cov1, wb1 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q,
-                                               bl_opt = bl_opt)
+    mu0, cov0, wb0 = PortfolioOptimiser.black_litterman(portfolio.returns, P, Q, w;
+                                                        bl_opt = bl_opt)
+    mu1, cov1, wb1 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                  P = P, Q = Q,
+                                                                  bl_opt = bl_opt)
     bl_opt.delta = 0.5
-    mu2, cov2, wb2 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
-    mu3, cov3, wb3 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q,
-                                               bl_opt = bl_opt)
+    mu2, cov2, wb2 = PortfolioOptimiser.black_litterman(portfolio.returns, P, Q, w;
+                                                        bl_opt = bl_opt)
+    mu3, cov3, wb3 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                  P = P, Q = Q,
+                                                                  bl_opt = bl_opt)
 
     bl_opt.rf = rf
-    mu4, cov4, wb4 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
-    mu5, cov5, wb5 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q,
-                                               bl_opt = bl_opt)
+    mu4, cov4, wb4 = PortfolioOptimiser.black_litterman(portfolio.returns, P, Q, w;
+                                                        bl_opt = bl_opt)
+    mu5, cov5, wb5 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                  P = P, Q = Q,
+                                                                  bl_opt = bl_opt)
 
     bl_opt.eq = false
-    mu6, cov6, wb6 = black_litterman(portfolio.returns, P, Q, w; bl_opt = bl_opt)
-    mu7, cov7, wb7 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q,
-                                               bl_opt = bl_opt)
+    mu6, cov6, wb6 = PortfolioOptimiser.black_litterman(portfolio.returns, P, Q, w;
+                                                        bl_opt = bl_opt)
+    mu7, cov7, wb7 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                  P = P, Q = Q,
+                                                                  bl_opt = bl_opt)
 
     bl_opt = BLOpt(;)
     B = Matrix(loadings[!, 2:end])
     F = portfolio.f_returns
 
-    mu8, cov8, wb8 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
-                                               P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
+    mu8, cov8, wb8 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                  B = B, F = F, P_f = P_f,
+                                                                  Q_f = Q_f,
+                                                                  bl_opt = bl_opt)
     bl_opt.constant = false
-    mu9, cov9, wb9 = augmented_black_litterman(portfolio.returns, w; B = B[:, 2:end], F = F,
-                                               P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
+    mu9, cov9, wb9 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                  B = B[:, 2:end], F = F,
+                                                                  P_f = P_f, Q_f = Q_f,
+                                                                  bl_opt = bl_opt)
 
     bl_opt = BLOpt(;)
     bl_opt.eq = false
     bl_opt.rf = rf
-    mu10, cov10, wb10 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
-                                                  P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
+    mu10, cov10, wb10 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                     B = B, F = F,
+                                                                     P_f = P_f, Q_f = Q_f,
+                                                                     bl_opt = bl_opt)
 
     bl_opt = BLOpt(;)
     bl_opt.delta = 0.5
-    mu11, cov11, wb11 = augmented_black_litterman(portfolio.returns, w; B = B, F = F,
-                                                  P_f = P_f, Q_f = Q_f, bl_opt = bl_opt)
+    mu11, cov11, wb11 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                     B = B, F = F,
+                                                                     P_f = P_f, Q_f = Q_f,
+                                                                     bl_opt = bl_opt)
 
     bl_opt = BLOpt(;)
-    mu12, cov12, wb12 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q, B = B,
-                                                  F = F, P_f = P_f, Q_f = Q_f,
-                                                  bl_opt = bl_opt)
+    mu12, cov12, wb12 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                     P = P, Q = Q, B = B,
+                                                                     F = F, P_f = P_f,
+                                                                     Q_f = Q_f,
+                                                                     bl_opt = bl_opt)
 
     bl_opt.delta = 0.5
-    mu13, cov13, wb13 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q, B = B,
-                                                  F = F, P_f = P_f, Q_f = Q_f,
-                                                  bl_opt = bl_opt)
+    mu13, cov13, wb13 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                     P = P, Q = Q, B = B,
+                                                                     F = F, P_f = P_f,
+                                                                     Q_f = Q_f,
+                                                                     bl_opt = bl_opt)
 
     bl_opt.rf = rf
-    mu14, cov14, wb14 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q, B = B,
-                                                  F = F, P_f = P_f, Q_f = Q_f,
-                                                  bl_opt = bl_opt)
+    mu14, cov14, wb14 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                     P = P, Q = Q, B = B,
+                                                                     F = F, P_f = P_f,
+                                                                     Q_f = Q_f,
+                                                                     bl_opt = bl_opt)
 
     bl_opt = BLOpt(;)
     bl_opt.eq = false
     bl_opt.rf = rf
-    mu15, cov15, wb15 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q, B = B,
-                                                  F = F, P_f = P_f, Q_f = Q_f,
-                                                  bl_opt = bl_opt)
+    mu15, cov15, wb15 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                     P = P, Q = Q, B = B,
+                                                                     F = F, P_f = P_f,
+                                                                     Q_f = Q_f,
+                                                                     bl_opt = bl_opt)
 
     bl_opt.delta = 0.5
-    mu16, cov16, wb16 = augmented_black_litterman(portfolio.returns, w; P = P, Q = Q, B = B,
-                                                  F = F, P_f = P_f, Q_f = Q_f,
-                                                  bl_opt = bl_opt)
+    mu16, cov16, wb16 = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                     P = P, Q = Q, B = B,
+                                                                     F = F, P_f = P_f,
+                                                                     Q_f = Q_f,
+                                                                     bl_opt = bl_opt)
 
     mu8t = [0.0007073769415757297, 0.0008351212584479732, 0.0009992993551373786,
             0.0009707547335709846, 0.0017124185648907243, -0.0005690225842507499,
@@ -2944,16 +2977,17 @@ end
     bl_opt = BLOpt(;)
     B = Matrix(loadings[!, 2:end])
     F = portfolio.f_returns
-    mu1, cov1, wb1 = bayesian_black_litterman(portfolio.returns, F, B, P_f, Q_f;
-                                              bl_opt = bl_opt)
+    mu1, cov1, wb1 = PortfolioOptimiser.bayesian_black_litterman(portfolio.returns, F, B,
+                                                                 P_f, Q_f; bl_opt = bl_opt)
     bl_opt.delta = 0.5
-    mu2, cov2, wb2 = bayesian_black_litterman(portfolio.returns, F, B, P_f, Q_f;
-                                              bl_opt = bl_opt)
+    mu2, cov2, wb2 = PortfolioOptimiser.bayesian_black_litterman(portfolio.returns, F, B,
+                                                                 P_f, Q_f; bl_opt = bl_opt)
 
     bl_opt = BLOpt(;)
     bl_opt.constant = false
-    mu3, cov3, wb3 = bayesian_black_litterman(portfolio.returns, F, B[:, 2:end], P_f, Q_f;
-                                              bl_opt = bl_opt)
+    mu3, cov3, wb3 = PortfolioOptimiser.bayesian_black_litterman(portfolio.returns, F,
+                                                                 B[:, 2:end], P_f, Q_f;
+                                                                 bl_opt = bl_opt)
 
     mu1t = [0.0005858416787453814, 0.0006842213258722165, 0.0007613403958798568,
             0.0009031779886716394, 0.001603965561333689, -0.00047809110718701506,
@@ -3559,9 +3593,12 @@ end
     mu1 = copy(portfolio.blfm_mu)
     cov1 = copy(portfolio.blfm_cov)
 
-    mu2, cov2, missing = bayesian_black_litterman(portfolio.returns, portfolio.f_returns,
-                                                  Matrix(loadings[!, 2:end]), P_f, Q_f;
-                                                  bl_opt = bl_opt)
+    mu2, cov2, missing = PortfolioOptimiser.bayesian_black_litterman(portfolio.returns,
+                                                                     portfolio.f_returns,
+                                                                     Matrix(loadings[!,
+                                                                                     2:end]),
+                                                                     P_f, Q_f;
+                                                                     bl_opt = bl_opt)
 
     asset_statistics!(portfolio)
     bl_opt.delta = nothing
@@ -3570,9 +3607,12 @@ end
     mu3 = copy(portfolio.blfm_mu)
     cov3 = copy(portfolio.blfm_cov)
 
-    mu4, cov4, missing = bayesian_black_litterman(portfolio.returns, portfolio.f_returns,
-                                                  Matrix(loadings[!, 2:end]), P_f, Q_f;
-                                                  bl_opt = bl_opt)
+    mu4, cov4, missing = PortfolioOptimiser.bayesian_black_litterman(portfolio.returns,
+                                                                     portfolio.f_returns,
+                                                                     Matrix(loadings[!,
+                                                                                     2:end]),
+                                                                     P_f, Q_f;
+                                                                     bl_opt = bl_opt)
 
     black_litterman_factor_satistics!(portfolio, Vector{Float64}(undef, 0); B = nothing,
                                       P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
@@ -3584,8 +3624,10 @@ end
                                 DataFrame(portfolio.returns, portfolio.assets),
                                 loadings_opt)[!, 2:end])
 
-    mu6, cov6, missing = bayesian_black_litterman(portfolio.returns, portfolio.f_returns,
-                                                  B2, P_f, Q_f; bl_opt = bl_opt)
+    mu6, cov6, missing = PortfolioOptimiser.bayesian_black_litterman(portfolio.returns,
+                                                                     portfolio.f_returns,
+                                                                     B2, P_f, Q_f;
+                                                                     bl_opt = bl_opt)
 
     black_litterman_factor_satistics!(portfolio, (1:20) / (sum(1:20)); B = loadings, P = P,
                                       P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
@@ -3760,15 +3802,16 @@ end
     mu1 = copy(portfolio.blfm_mu)
     cov1 = copy(portfolio.blfm_cov)
 
-    mu2, cov2, missing = augmented_black_litterman(portfolio.returns, w;
-                                                   #
-                                                   P = P, Q = Q,
-                                                   #
-                                                   F = portfolio.f_returns,
-                                                   B = Matrix(loadings[!, 2:end]),
-                                                   P_f = P_f, Q_f = Q_f,
-                                                   #
-                                                   bl_opt = bl_opt)
+    mu2, cov2, missing = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                      #
+                                                                      P = P, Q = Q,
+                                                                      #
+                                                                      F = portfolio.f_returns,
+                                                                      B = Matrix(loadings[!,
+                                                                                          2:end]),
+                                                                      P_f = P_f, Q_f = Q_f,
+                                                                      #
+                                                                      bl_opt = bl_opt)
 
     black_litterman_factor_satistics!(portfolio, w;
                                       #
@@ -3780,15 +3823,16 @@ end
     mu3 = copy(portfolio.blfm_mu)
     cov3 = copy(portfolio.blfm_cov)
 
-    mu4, cov4, missing = augmented_black_litterman(portfolio.returns, w;
-                                                   #
-                                                   #    P = P, Q = Q,
-                                                   #
-                                                   F = portfolio.f_returns,
-                                                   B = Matrix(loadings[!, 2:end]),
-                                                   P_f = P_f, Q_f = Q_f,
-                                                   #
-                                                   bl_opt = bl_opt)
+    mu4, cov4, missing = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                      #
+                                                                      #    P = P, Q = Q,
+                                                                      #
+                                                                      F = portfolio.f_returns,
+                                                                      B = Matrix(loadings[!,
+                                                                                          2:end]),
+                                                                      P_f = P_f, Q_f = Q_f,
+                                                                      #
+                                                                      bl_opt = bl_opt)
 
     black_litterman_factor_satistics!(portfolio, w;
                                       #
@@ -3800,15 +3844,15 @@ end
     mu5 = copy(portfolio.blfm_mu)
     cov5 = copy(portfolio.blfm_cov)
 
-    mu6, cov6, missing = augmented_black_litterman(portfolio.returns, w;
-                                                   #
-                                                   P = P, Q = Q,
-                                                   #
-                                                   #    F = portfolio.f_returns,
-                                                   #    B = Matrix(loadings[!, 2:end]), P_f = P_f,
-                                                   #    Q_f = Q_f,
-                                                   #
-                                                   bl_opt = bl_opt)
+    mu6, cov6, missing = PortfolioOptimiser.augmented_black_litterman(portfolio.returns, w;
+                                                                      #
+                                                                      P = P, Q = Q,
+                                                                      #
+                                                                      #    F = portfolio.f_returns,
+                                                                      #    B = Matrix(loadings[!, 2:end]), P_f = P_f,
+                                                                      #    Q_f = Q_f,
+                                                                      #
+                                                                      bl_opt = bl_opt)
 
     @test isapprox(mu1, mu2)
     @test isapprox(cov1, cov2)

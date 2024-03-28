@@ -1972,7 +1972,7 @@ Select the factors that best estimate the model based on forward regression.
 
 # Inputs
 
-  - `x`: is the `T×Nf` Dataframe of factor returns, where the column names are the factor names, `T` is the number of returns observations, and `Nf` the number of factors.
+  - `x`: is the `T×N` Dataframe of factor returns, where the column names are the factor names, `T` is the number of returns observations, and `N` the number of factors.
 
   - `y`: is the `T×1` vector of returns for an asset.
   - `criterion`: one of [`RegCriteria`](@ref) that decides what criterion to use when selecting the most significant factors.
@@ -2386,8 +2386,6 @@ Where:
 
 # Outputs
 
-  - `f_mu`: is the `Nf×1` expected factor returns vector, where `Nf` is the number of factors.
-  - `f_cov`: is the `Nf×Nf` matrix of factor covariance matrix, where `Nf` is the number of factors.
   - `mu`: is the `Na×1` estimated expected asset returns vector computed using the factor model, where `Na` is the number of assets.
   - `sigma`: is the `Na×Na` estimated asset covariance matrix computed using the factor model, where `Na` is the number of assets.
   - `returns`: is the `T×Na` matrix of factor adjusted asset returns, where `T` is the number of returns observations, and `Na` the number of assets.
@@ -2402,8 +2400,7 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
     end
     namesB = names(B)
     old_posdef = nothing
-    flag = "const" ∈ namesB
-    x1 = if flag
+    x1 = if "const" ∈ namesB
         old_posdef = cov_opt.posdef.method
         cov_opt.posdef.method = :None
         [ones(nrow(y)) Matrix(x)]
@@ -2416,9 +2413,6 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
 
     if !isnothing(old_posdef)
         cov_opt.posdef.method = old_posdef
-    end
-
-    if flag
         f_cov2 = f_cov[2:end, 2:end]
         posdef_fix!(f_cov2, cov_opt.posdef; msg = "Factor Covariance ")
         f_cov[2:end, 2:end] .= f_cov2
@@ -2441,11 +2435,7 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
 
     posdef_fix!(sigma, cov_opt.posdef; msg = "Factor Model Covariance ")
 
-    f_cov, f_mu = if flag
-        f_cov[2:end, 2:end], f_mu[2:end]
-    end
-
-    return f_mu, f_cov, mu, sigma, returns, B
+    return mu, sigma, returns, B
 end
 
 function _omega(P, tau_sigma)
@@ -2497,25 +2487,25 @@ Estimates the expected returns vector and covariance matrix based on the Black-L
 
 Where:
 
-  - ``\\bm{\\Pi}``: is the equilibrium excess returns.
+  - ``\\bm{\\Pi}``: is `N×1` the equilibrium excess returns, where `N` is the number of assets.
   - ``\\delta``: is the risk aversion parameter.
-  - ``\\mathbf{\\Sigma}``: is the asset covariance matrix.
-  - ``\\bm{w}``: is the vector of benchmark asset weights.
-  - ``\\mathbf{P}``: is the asset views matrix.
-  - ``\\bm{Q}``: is the asset views returns vector.
-  - ``\\mathbf{\\Omega}``: is the covariance matrix of the errors of the asset views.
-  - ``\\mathbf{M}``: is an intermediate covariance matrix.
-  - ``\\bm{\\Pi}_{\\mathbf{BL}}``: is the equilibrium excess returns after being adjusted by the views.
+  - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix, where `N` is the number of assets.
+  - ``\\bm{w}``: is the `N×1` vector of benchmark asset weights, where `N` is the number of assets.
+  - ``\\mathbf{P}``: is the `Nv×N` asset views matrix, where `Nv` is the number of asset views, and `N` the number of assets.
+  - ``\\bm{Q}``: is the `Nv×1` asset views returns vector, where `Nv` is the number of asset views.
+  - ``\\mathbf{\\Omega}``: is the `Nv×Nv` covariance matrix of the errors of the asset views, where `Nv` is the number of asset views.
+  - ``\\mathbf{M}``: is an `N×N` intermediate covariance matrix, where `N` is the number of assets, and `M` the number of assets.
+  - ``\\bm{\\Pi}_{\\mathbf{BL}}``: is the `N×1` equilibrium excess returns after being adjusted by the views, where `N` is the number of assets.
   - ``T``: is the number of returns observations.
-  - ``\\bm{\\mu}_{\\mathbf{BL}}``: is the vector of asset expected returns obtained via the Black-Litterman model.
-  - ``\\mathbf{\\Sigma}_{\\mathrm{BL}}``: is the asset covariance matrix obtained via the Black-Litterman model.
+  - ``\\bm{\\mu}_{\\mathbf{BL}}``: is the `N×1` vector of asset expected returns obtained via the Black-Litterman model, where `N` is the number of assets.
+  - ``\\mathbf{\\Sigma}_{\\mathrm{BL}}``: is the `N×N` asset covariance matrix obtained via the Black-Litterman model, where `N` is the number of assets.
 
 # Inputs
 
   - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` is the number of assets or factors.
-  - `P`: `Nv×Na` analyst's views matrix, can be relative or absolute, where `Nv` is the number of views, and `Na` the number of assets.
-  - `Q`: `Nv×1` analyst's expected returns vector, where `Nv` is the number of views.
-  - `w`: `Na×1` benchmark weights vector, where `Na` is the number of assets.
+  - `P`: `Nv×N` analyst's views matrix, can be relative or absolute, where `Nv` is the number of asset views, and `N` the number of assets.
+  - `Q`: `Nv×1` analyst's expected returns vector, where `Nv` is the number of asset views.
+  - `w`: `N×1` benchmark weights vector, where `N` is the number of assets.
 
 ## Options
 
@@ -2525,9 +2515,9 @@ Where:
 
 # Outputs
 
-  - `mu`: `Na×1` Black-Litterman adjusted expected returns vector, where `Na` is the number of assets.
-  - `sigma`: `Na×Na` Black-Litterman adjusted covariance matrix, where `Na` is the number of assets.
-  - `w`: `Na×1` Black-Litterman adjusted asset weights vector, where `Na` is the number of assets.
+  - `mu`: `N×1` Black-Litterman adjusted expected returns vector, where `N` is the number of assets.
+  - `sigma`: `N×N` Black-Litterman adjusted covariance matrix, where `N` is the number of assets.
+  - `w`: `N×1` Black-Litterman adjusted asset weights vector, where `N` is the number of assets.
 
 !!! note
 
@@ -2759,11 +2749,11 @@ Depending on conditions, modifies:
 
   - `portfolio`: instance of [`Portfolio`](@ref).
 
-  - `P`: `Nv×Na` analyst's views matrix, can be relative or absolute, where `Nv` is the number of views, and `Na` the number of assets.
+  - `P`: `Nv×N` analyst's views matrix, can be relative or absolute, where `Nv` is the number of views, and `N` the number of assets.
   - `Q`: `Nv×1` analyst's expected returns vector, where `Nv` is the number of views.
-  - `w`: `Na×1` benchmark weights vector, sets `portfolio.bl_bench_weights`, where `Na` is the number of assets.
+  - `w`: `N×1` benchmark weights vector, sets `portfolio.bl_bench_weights`, where `N` is the number of assets.
 
-      + `isempty(w)`: every entry is assumed to be `1/Na`.
+      + `isempty(w)`: every entry is assumed to be `1/N`.
 
 ## Options
 
@@ -2846,13 +2836,16 @@ function factor_statistics!(portfolio::Portfolio; cov_opt::CovOpt = CovOpt(;),
     returns = portfolio.returns
     f_returns = portfolio.f_returns
 
-    portfolio.f_mu, portfolio.f_cov, portfolio.fm_mu, portfolio.fm_cov, portfolio.fm_returns, portfolio.loadings = risk_factors(DataFrame(f_returns,
-                                                                                                                                          portfolio.f_assets),
-                                                                                                                                DataFrame(returns,
-                                                                                                                                          portfolio.assets);
-                                                                                                                                factor_opt = factor_opt,
-                                                                                                                                cov_opt = cov_opt,
-                                                                                                                                mu_opt = mu_opt)
+    portfolio.f_cov, portfolio.f_mu = covar_mtx_mean_vec(f_returns; cov_opt = cov_opt,
+                                                         mu_opt = mu_opt)
+
+    portfolio.fm_mu, portfolio.fm_cov, portfolio.fm_returns, portfolio.loadings = risk_factors(DataFrame(f_returns,
+                                                                                                         portfolio.f_assets),
+                                                                                               DataFrame(returns,
+                                                                                                         portfolio.assets);
+                                                                                               factor_opt = factor_opt,
+                                                                                               cov_opt = cov_opt,
+                                                                                               mu_opt = mu_opt)
 
     portfolio.loadings_opt = factor_opt.loadings_opt
 
@@ -3015,11 +3008,6 @@ function cluster_assets(portfolio::Portfolio; cor_opt::CorOpt = CorOpt(;),
     return cluster_assets(portfolio.returns; cor_opt = cor_opt, cluster_opt = cluster_opt)
 end
 
-export gerber0, gerber1, gerber2, sb0, sb1, gerbersb0, gerbersb1, mut_var_info_mtx,
-       cov_returns, block_vec_pq, duplication_matrix, elimination_matrix, summation_matrix,
-       dup_elim_sum_matrices, cokurt, scokurt, asset_statistics!, wc_statistics!,
-       forward_regression, backward_regression, pcr, loadings_matrix, risk_factors,
-       black_litterman, augmented_black_litterman, bayesian_black_litterman,
-       black_litterman_statistics!, factor_statistics!, black_litterman_factor_satistics!,
-       nearest_cov, covar_mtx, mean_vec, cokurt_mtx, mu_estimator, cor_dist_mtx,
-       cluster_assets, coskew, scoskew, posdef_fix!
+export asset_statistics!, wc_statistics!, loadings_matrix, black_litterman_statistics!,
+       factor_statistics!, black_litterman_factor_satistics!, cluster_assets,
+       cluster_assets!

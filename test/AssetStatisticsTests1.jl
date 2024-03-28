@@ -15,8 +15,8 @@ l = 2.0
                                                                                   "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio; calc_kurt = false)
 
-    cs = coskew(portfolio.returns, transpose(portfolio.mu))
-    scs = scoskew(portfolio.returns, transpose(portfolio.mu))
+    cs = PortfolioOptimiser.coskew(portfolio.returns, transpose(portfolio.mu))
+    scs = PortfolioOptimiser.scoskew(portfolio.returns, transpose(portfolio.mu))
 
     cst = reshape([4.6905257079387035e-6, 1.0710314107974349e-7, 1.0452008432613338e-6,
                    -1.0786699515498146e-8, 1.5843869456535446e-6, -3.1801684023670453e-7,
