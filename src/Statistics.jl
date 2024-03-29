@@ -2246,26 +2246,7 @@ function backward_regression(x::DataFrame, y::AbstractVector, criterion::Symbol 
     return included
 end
 
-"""
-```
-mvr(x::DataFrame, y::AbstractVector, opt::MVROpt = MVROpt(;))
-```
-
-Select the factors that best estimate the model based on multivariate regression. This tends to be more robust than [`backward_regression`](@ref).
-
-# Inputs
-
-  - `x`: is the `T×N` Dataframe of factor returns, where the column names are the factor names, `T` is the number of returns observations, and `N` the number of factors.
-  - `y`: is the `T×1` vector of returns for an asset.
-  - `opt`: instance of [`MVROpt`](@ref) for defining the regression and its parameters.
-
-# Outputs
-
-  - `features`: is the `C×1` vector of significant factors, where `C` is the number of significant factors.
-"""
-function mvr(x::DataFrame, y::AbstractVector, opt::MVROpt = MVROpt(;))
-    mean_genfunc = opt.mean_genfunc
-    std_genfunc = opt.std_genfunc
+function _prep_mvr(x::DataFrame, opt::MVROpt = MVROpt(;))
     pca_s_genfunc = opt.pca_s_genfunc
     pca_genfunc = opt.pca_genfunc
 
@@ -2283,8 +2264,16 @@ function mvr(x::DataFrame, y::AbstractVector, opt::MVROpt = MVROpt(;))
     model = pca_func(pca_args..., X_std; pca_kwargs...)
     Xp = transpose(predict(model, X_std))
     Vp = projection(model)
-
     x1 = [ones(N) Xp]
+
+    return X, x1, Vp
+end
+
+function _mvr(X::AbstractMatrix, x1::AbstractMatrix, Vp::AbstractMatrix, y::AbstractVector,
+              opt::MVROpt = MVROpt(;))
+    mean_genfunc = opt.mean_genfunc
+    std_genfunc = opt.std_genfunc
+
     fit_result = lm(x1, y)
     beta_pc = coef(fit_result)[2:end]
 
@@ -2305,12 +2294,82 @@ function mvr(x::DataFrame, y::AbstractVector, opt::MVROpt = MVROpt(;))
     return beta
 end
 
+function fb_regression(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
+    features = names(x)
+    rows = ncol(y)
+    cols = ncol(x) + 1
+
+    N = nrow(y)
+    ovec = ones(N)
+
+    loadings = zeros(rows, cols)
+
+    criterion = opt.criterion
+    threshold = opt.threshold
+
+    for i ∈ 1:rows
+        included = if method == :FReg
+            forward_regression(x, y[!, i], criterion, threshold)
+        else
+            backward_regression(x, y[!, i], criterion, threshold)
+        end
+
+        x1 = !isempty(included) ? [ovec Matrix(x[!, included])] : reshape(ovec, :, 1)
+
+        fit_result = lm(x1, y[!, i])
+
+        params = coef(fit_result)
+
+        loadings[i, 1] = params[1]
+        if isempty(included)
+            continue
+        end
+        idx = [findfirst(x -> x == i, features) + 1 for i ∈ included]
+        loadings[i, idx] .= params[2:end]
+    end
+
+    return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
+end
+
+"""
+```
+mvr(x::DataFrame, y::DataFrame, opt::MVROpt = MVROpt(;))
+```
+
+Select the factors that best estimate the model based on multivariate regression. This tends to be more robust than [`backward_regression`](@ref).
+
+# Inputs
+
+  - `x`: is the `T×N` Dataframe of factor returns, where the column names are the factor names, `T` is the number of returns observations, and `N` the number of factors.
+  - `y`: is the `T×N` Dataframe of asset returns.
+  - `opt`: instance of [`MVROpt`](@ref) for defining the regression and its parameters.
+
+# Outputs
+
+  - `B`: is the `(Na+2)×Nf` loadings matrix as a Dataframe, where `Na` is the number of assets, `Nf` the number of factors. The two extra columns are the optional columns for `B` as described in [`FactorOpt`](@ref).
+"""
+function mvr(x::DataFrame, y::DataFrame, opt::MVROpt = MVROpt(;))
+    features = names(x)
+    rows = ncol(y)
+    cols = ncol(x) + 1
+
+    loadings = zeros(rows, cols)
+
+    X, x1, Vp = _prep_mvr(x, opt)
+    for i ∈ 1:rows
+        beta = _mvr(X, x1, Vp, y[!, i], opt)
+        loadings[i, :] .= beta
+    end
+
+    return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
+end
+
 """
 ```
 loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
 ```
 
-Estimate the loadings matrix using regression. See [`forward_regression`](@ref), [`backward_regression`](@ref), and [`pcr`](@ref).
+Estimate the loadings matrix using regression. See [`forward_regression`](@ref), [`backward_regression`](@ref), and [`mvr`](@ref).
 
 # Inputs
 
@@ -2326,47 +2385,16 @@ Estimate the loadings matrix using regression. See [`forward_regression`](@ref),
   - `B`: is the `(Na+2)×Nf` loadings matrix as a Dataframe, where `Na` is the number of assets, `Nf` the number of factors. The two extra columns are the optional columns for `B` as described in [`FactorOpt`](@ref).
 """
 function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
-    features = names(x)
-    rows = ncol(y)
-    cols = ncol(x) + 1
-
-    N = nrow(y)
-    ovec = ones(N)
-
-    loadings = zeros(rows, cols)
-
     method = opt.method
     flag = method ∈ (:FReg, :BReg)
-    criterion = opt.criterion
-    threshold = opt.threshold
-    mvr_opt = opt.mvr_opt
-    for i ∈ 1:rows
-        if flag
-            included = if method == :FReg
-                forward_regression(x, y[!, i], criterion, threshold)
-            else
-                backward_regression(x, y[!, i], criterion, threshold)
-            end
 
-            x1 = !isempty(included) ? [ovec Matrix(x[!, included])] : reshape(ovec, :, 1)
-
-            fit_result = lm(x1, y[!, i])
-
-            params = coef(fit_result)
-
-            loadings[i, 1] = params[1]
-            if isempty(included)
-                continue
-            end
-            idx = [findfirst(x -> x == i, features) + 1 for i ∈ included]
-            loadings[i, idx] .= params[2:end]
-        else
-            beta = mvr(x, y[!, i], mvr_opt)
-            loadings[i, :] .= beta
-        end
+    loadings_matrix = if flag
+        fb_regression(x, y, opt)
+    else
+        mvr(x, y, opt.mvr_opt)
     end
 
-    return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
+    return loadings_matrix
 end
 
 """
