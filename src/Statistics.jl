@@ -2306,6 +2306,7 @@ function fb_regression(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOp
 
     criterion = opt.criterion
     threshold = opt.threshold
+    method = opt.method
 
     for i ∈ 1:rows
         included = if method == :FReg
@@ -2385,10 +2386,7 @@ Estimate the loadings matrix using regression. See [`forward_regression`](@ref),
   - `B`: is the `(Na+2)×Nf` loadings matrix as a Dataframe, where `Na` is the number of assets, `Nf` the number of factors. The two extra columns are the optional columns for `B` as described in [`FactorOpt`](@ref).
 """
 function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
-    method = opt.method
-    flag = method ∈ (:FReg, :BReg)
-
-    loadings_matrix = if flag
+    loadings_matrix = if opt.method ∈ (:FReg, :BReg)
         fb_regression(x, y, opt)
     else
         mvr(x, y, opt.mvr_opt)
