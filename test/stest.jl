@@ -42,12 +42,11 @@ factor_opt = FactorOpt(; loadings_opt = loadings_opt)
 posdef = PosdefFixOpt(; method = :Nearest)
 cov_opt = CovOpt(; posdef = posdef)
 mu_opt = MuOpt(;)
-loadings_opt.method = :FReg
+loadings_opt.method = :BReg
 # mvr_opt.pca_genfunc.kwargs = (; pratio = 0.9)
 # mvr_opt.pca_genfunc.args = (MultivariateStats.PCA,)
-factor_statistics!(portfolio; cov_opt = cov_opt, mu_opt = mu_opt,
-                         factor_opt = factor_opt)
-breg = copy(portfolio.loadings)
+factor_statistics!(portfolio; cov_opt = cov_opt, mu_opt = mu_opt, factor_opt = factor_opt)
+breg2 = copy(portfolio.loadings)
 
 mvr_opt.pca_genfunc.args = (MultivariateStats.FactorAnalysis,)
 factor_statistics!(portfolio; cov_opt = cov_opt, mu_opt = mu_opt, factor_opt = factor_opt)
