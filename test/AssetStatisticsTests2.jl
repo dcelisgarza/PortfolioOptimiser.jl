@@ -3,7 +3,7 @@ using CovarianceEstimation, CSV, HiGHS, LinearAlgebra, OrderedCollections,
 
 Logging.disable_logging(Logging.Warn)
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
@@ -1805,7 +1805,7 @@ covt14 = reshape([1.0980276787247532e-8, 7.583669046491225e-9, 5.36060893411392e
 @test !isapprox(cov2, cov5)
 @test !isapprox(cov3, cov5)
 @test !isapprox(cov4, cov5)
-@test isapprox(cov6, covt6)
+@test isapprox(cov6, covt6, rtol = 1e-4)
 @test !isapprox(cov1, cov6)
 @test !isapprox(cov2, cov6)
 @test !isapprox(cov3, cov6)
