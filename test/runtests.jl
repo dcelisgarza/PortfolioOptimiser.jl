@@ -4,31 +4,6 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-@safetestset "Asset Statistics" begin
-    include("AssetStatisticsTests1.jl")
-    include("AssetStatisticsTests2.jl")
-end
-
-@safetestset "OWA Weights" begin
-    include("OWAWeightsTests.jl")
-end
-
-@safetestset "Misc Statistics" begin
-    include("MiscStatisticsTests.jl")
-end
-
-@safetestset "DBHT Clustering" begin
-    include("DBHTClusteringTests.jl")
-end
-
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
-@safetestset "Portfolio Traditional Class Picking" begin
-    include("PortfolioTradClassPickingTests.jl")
-end
-
 @safetestset "Portfolio Classic RP Optimisation" begin
     include("PortfolioClassicRPTests.jl")
 end
@@ -87,4 +62,29 @@ end
 
 @safetestset "Factor Statistics" begin
     include("FactorStatisticsTests.jl")
+end
+
+@safetestset "Asset Statistics" begin
+    include("AssetStatisticsTests1.jl")
+    include("AssetStatisticsTests2.jl")
+end
+
+@safetestset "OWA Weights" begin
+    include("OWAWeightsTests.jl")
+end
+
+@safetestset "Misc Statistics" begin
+    include("MiscStatisticsTests.jl")
+end
+
+@safetestset "DBHT Clustering" begin
+    include("DBHTClusteringTests.jl")
+end
+
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
+end
+
+@safetestset "Portfolio Traditional Class Picking" begin
+    include("PortfolioTradClassPickingTests.jl")
 end
