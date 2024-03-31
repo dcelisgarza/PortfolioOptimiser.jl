@@ -718,7 +718,7 @@ function plot_clusters(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;)
     end
 
     # https://docs.juliaplots.org/latest/generated/statsplots/#Dendrogram-on-the-right-side
-    l = StatsPlots.grid(2, 2; heights = [0.2, 0.8, 0.2, 0.8], widths = [0.8, 0.2, 0.8, 0.2])
+    l = StatsPlots.grid(2, 2; heights = [0.2, 0.8], widths = [0.8, 0.2])
     plt = plot(dend1, plot(; ticks = nothing, border = :none, background_color = nothing),
                hmap, dend2; layout = l, kwargs...)
 
