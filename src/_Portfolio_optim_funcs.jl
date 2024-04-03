@@ -634,7 +634,9 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         max_num_assets_kurt = portfolio.max_num_assets_kurt
         @variable(model, t_kurt)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
-            N2 = 2 * N
+            factor = portfolio.max_num_assets_kurt_scale
+
+            N2 = factor * N
             @variable(model, x_kurt[1:N2])
             @constraint(model, [t_kurt; x_kurt] ∈ SecondOrderCone())
             A = block_vec_pq(kurtosis, N, N)
@@ -674,7 +676,9 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         max_num_assets_kurt = portfolio.max_num_assets_kurt
         @variable(model, t_skurt)
         if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
-            N2 = 2 * N
+            factor = portfolio.max_num_assets_kurt_scale
+
+            N2 = factor * N
             @variable(model, x_skurt[1:N2])
 
             @constraint(model, [t_skurt; x_skurt] ∈ SecondOrderCone())
