@@ -2449,7 +2449,7 @@ Where:
   - `mu`: is the `Na×1` estimated expected asset returns vector computed using the factor model, where `Na` is the number of assets.
   - `sigma`: is the `Na×Na` estimated asset covariance matrix computed using the factor model, where `Na` is the number of assets.
   - `returns`: is the `T×Na` matrix of factor adjusted asset returns, where `T` is the number of returns observations, and `Na` the number of assets.
-  - `B`: is the `(Na+c)×Nf` loadings matrix as a Dataframe, where `Na` is the number of assets, `Nf` the number of factors, and `c ∈ (0, 1, 2)` is the two optional columns as described in [`FactorOpt`](@ref).
+  - `B`: is the `(Na+c)×Nf` loadings matrix as a Dataframe, where `Na` is the number of assets, `Nf` the number of factors, and `c ∈ (0, 1, 2)` represents the two optional columns as described in [`FactorOpt`](@ref).
 """
 function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = FactorOpt(;),
                       cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;))
@@ -2593,8 +2593,8 @@ Where:
 # Inputs
 
   - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` is the number of assets or factors.
-  - `P`: `Nv×N` analyst's views matrix, can be relative or absolute, where `Nv` is the number of asset views, and `N` the number of assets.
-  - `Q`: `Nv×1` analyst's expected returns vector, where `Nv` is the number of asset views.
+  - `P`: `Nv×N` analyst's asset views matrix, can be relative or absolute, where `Nv` is the number of asset views, and `N` the number of assets.
+  - `Q`: `Nv×1` analyst's asset viewsd returns vector, where `Nv` is the number of asset views.
   - `w`: `N×1` benchmark weights vector, where `N` is the number of assets.
 
 ## Options
@@ -2611,7 +2611,7 @@ Where:
 
 !!! note
 
-    Note that both `bl_opt` and `mu_opt` have `rf` fields for the risk-free rate (see [`MuOpt`](@ref) and [`BLOpt`](@ref)). This gives users more granular control over the model.
+    Note that both `bl_opt`, and `mu_opt` have `rf` fields for the risk-free rate (see [`MuOpt`](@ref) and [`BLOpt`](@ref)). This gives users more granular control over the model.
 """
 function black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
                          w::AbstractVector; cov_opt::CovOpt = CovOpt(;),
@@ -2645,7 +2645,7 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
                                   B::AbstractMatrix, P_f::AbstractMatrix,
                                   Q_f::AbstractVector; cov_opt::CovOpt = CovOpt(;),
                                   mu_opt::MuOpt = MuOpt(;), bl_opt::BLOpt = BLOpt(;))
-    sigma_f, f_mu = covar_mtx_mean_vec(F; cov_opt = cov_opt, mu_opt = mu_opt)
+    f_sigma, f_mu = covar_mtx_mean_vec(F; cov_opt = cov_opt, mu_opt = mu_opt)
 
     constant = bl_opt.constant
     error = bl_opt.error
@@ -2661,7 +2661,7 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
 
     tau = 1 / size(returns, 1)
 
-    sigma = B * sigma_f * transpose(B)
+    sigma = B * f_sigma * transpose(B)
 
     if error
         var_args = bl_opt.var_genfunc.args
@@ -2672,10 +2672,10 @@ function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
         sigma .+= D
     end
 
-    omega_f = _omega(P_f, tau * sigma_f)
+    omega_f = _omega(P_f, tau * f_sigma)
 
     inv_sigma = sigma \ I
-    inv_sigma_f = sigma_f \ I
+    inv_sigma_f = f_sigma \ I
     inv_omega_f = omega_f \ I
     sigma_hat = (inv_sigma_f + transpose(P_f) * inv_omega_f * P_f) \ I
     Pi_hat = sigma_hat * (inv_sigma_f * f_mu + transpose(P_f) * inv_omega_f * Q_f)
@@ -2751,7 +2751,7 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
     end
 
     if all_factor_provided
-        sigma_f, f_mu = covar_mtx_mean_vec(F; cov_opt = f_cov_opt, mu_opt = f_mu_opt)
+        f_sigma, f_mu = covar_mtx_mean_vec(F; cov_opt = f_cov_opt, mu_opt = f_mu_opt)
     end
 
     constant = bl_opt.constant
@@ -2773,13 +2773,13 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
         omega_a = _omega(P_a, tau * sigma_a)
         Pi_a = _Pi(eq, delta, sigma_a, w, mu, rf)
     elseif !all_asset_provided && all_factor_provided
-        sigma_a = sigma_f
+        sigma_a = f_sigma
         P_a = P_f
         Q_a = Q_f
         omega_a = _omega(P_a, tau * sigma_a)
         Pi_a = _Pi(eq, delta, sigma_a * transpose(B), w, f_mu, rf)
     elseif all_asset_provided && all_factor_provided
-        sigma_a = hcat(vcat(sigma, sigma_f * transpose(B)), vcat(B * sigma_f, sigma_f))
+        sigma_a = hcat(vcat(sigma, f_sigma * transpose(B)), vcat(B * f_sigma, f_sigma))
 
         zeros_1 = zeros(size(P_f, 1), size(P, 2))
         zeros_2 = zeros(size(P, 1), size(P_f, 2))
@@ -2788,13 +2788,13 @@ function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
         Q_a = vcat(Q, Q_f)
 
         omega = _omega(P, tau * sigma)
-        omega_f = _omega(P_f, tau * sigma_f)
+        omega_f = _omega(P_f, tau * f_sigma)
 
         zeros_3 = zeros(size(omega, 1), size(omega_f, 1))
 
         omega_a = hcat(vcat(omega, transpose(zeros_3)), vcat(zeros_3, omega_f))
 
-        Pi_a = _Pi(eq, delta, vcat(sigma, sigma_f * transpose(B)), w, vcat(mu, f_mu), rf)
+        Pi_a = _Pi(eq, delta, vcat(sigma, f_sigma * transpose(B)), w, vcat(mu, f_mu), rf)
     end
 
     T, N = size(returns)
@@ -2868,7 +2868,7 @@ Depending on conditions, modifies:
 
 !!! note
 
-    Note that both `bl_opt` and `mu_opt` have `rf` fields for the risk-free rate (see [`MuOpt`](@ref) and [`BLOpt`](@ref)). This gives users more granular control over the model.
+    Note that both `bl_opt`, and `mu_opt` have `rf` fields for the risk-free rate (see [`MuOpt`](@ref) and [`BLOpt`](@ref)). This gives users more granular control over the model.
 """
 function black_litterman_statistics!(portfolio::Portfolio, P::AbstractMatrix,
                                      Q::AbstractVector,
@@ -2946,7 +2946,7 @@ end
 ```
 black_litterman_factor_statistics!(portfolio::Portfolio,
                                   w::AbstractVector                   = portfolio.bl_bench_weights;
-                                  B::Union{DataFrame, Nothing}        = nothing,
+                                  B::Union{DataFrame, Nothing}        = portfolio.loadings,
                                   P::Union{AbstractMatrix, Nothing}   = nothing,
                                   P_f::Union{AbstractMatrix, Nothing} = nothing,
                                   Q::Union{AbstractVector, Nothing}   = nothing,
@@ -2958,20 +2958,78 @@ black_litterman_factor_statistics!(portfolio::Portfolio,
                                   f_mu_opt::MuOpt                     = MuOpt(;),
                                   bl_opt::BLOpt                       = BLOpt(;))
 ```
+
+Estimates the factor Black-Litterman statistics in-place according to [`BLFMMethods`](@ref).
+
+Modifies:
+
+  - `portfolio.blfm_mu`
+  - `portfolio.blfm_cov`
+  - `portfolio.bl_bench_weights`
+  - `portfolio.loadings`
+  - `bl_opt.constant`
+
+Depending on conditions, modifies:
+
+  - `bl_opt.delta`
+  - `portfolio.loadings_opt`
+
+# Inputs
+
+  - `portfolio`: instance of [`Portfolio`](@ref).
+
+  - `w`: `N×1` benchmark weights vector, sets `portfolio.bl_bench_weights`, where `N` is the number of assets.
+
+      + `isempty(w)`: every entry is assumed to be `1/N`.
+  - `B`: is the `T×(Nf+c)` loadings matrix in Dataframe form, sets `portfolio.loadings` and `bl_opt.constant = "const" ∈ names(B)`, where `T` is the number of returns observations, `Nf` the number of factors, and `c ∈ (0, 1, 2)` represents the two optional columns as described in [`FactorOpt`](@ref).
+
+      + `(isnothing(B) || isempty(B)) && isempty(portfolio.loadings)`: internally computes the loadings matrix using [`loadings_matrix`](@ref) and sets `portfolio.loadings_opt = loadings_opt`.
+  - `P`: `Nva×Na` analyst's asset views matrix, can be relative or absolute, where `Nva` is the number of asset views, and `Na` the number of assets.
+  - `P_F`: `Nvf×Nf` analyst's factor views matrix, can be relative or absolute, where `Nvf` is the number of factor views, and `Nf` the number of factors.
+  - `Q`: `Nva×1` analyst's asset views returns vector, where `Nva` is the number of asset views.
+  - `Q_f`: `Nvf×1` analyst's factor views returns vector, where `Nvf` is the number of factor views.
+
+## Options
+
+  - `loadings_opt`: instance of [`LoadingsOpt`](@ref), defines the parameters for computing the loadings matrix.
+
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the vanilla asset covariance matrix.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla asset expected returns vector.
+  - `f_cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the vanilla factor covariance matrix.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla factor expected returns vector.
+  - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the factor Black-Litterman model's statistics.
+
+      + `isnothing(bl_opt.delta)`: sets `bl_opt.delta` to:
+
+        ```math
+        \\delta = \\dfrac{\\bm{\\mu} \\cdot \\bm{w} - r}{\\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}}\\,.
+        ```
+
+        Where:
+
+          * ``\\delta``: is `bl_opt.delta`.
+          * ``\\bm{\\mu}``: is `portfolio.mu`.
+          * ``\\bm{w}``: is `portfolio.bl_bench_weights`.
+          * ``r``: is `bl_opt.rf`.
+          * ``\\mathbf{\\Sigma}``: is `portfolio.cov`.
+
+!!! note
+
+    Note that both `bl_opt`, `f_mu_opt`, and `mu_opt` have `rf` fields for the risk-free rate (see [`MuOpt`](@ref) and [`BLOpt`](@ref)). This gives users more granular control over the model.
 """
 function black_litterman_factor_statistics!(portfolio::Portfolio,
-                                           w::AbstractVector                   = portfolio.bl_bench_weights;
-                                           B::Union{DataFrame, Nothing}        = nothing,
-                                           P::Union{AbstractMatrix, Nothing}   = nothing,
-                                           P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                           Q::Union{AbstractVector, Nothing}   = nothing,
-                                           Q_f::Union{AbstractVector, Nothing} = nothing,
-                                           loadings_opt::LoadingsOpt           = LoadingsOpt(;),
-                                           cov_opt::CovOpt                     = CovOpt(;),
-                                           mu_opt::MuOpt                       = MuOpt(;),
-                                           f_cov_opt::CovOpt                   = CovOpt(;),
-                                           f_mu_opt::MuOpt                     = MuOpt(;),
-                                           bl_opt::BLOpt                       = BLOpt(;))
+                                            w::AbstractVector                   = portfolio.bl_bench_weights;
+                                            B::Union{DataFrame, Nothing}        = portfolio.loadings,
+                                            P::Union{AbstractMatrix, Nothing}   = nothing,
+                                            P_f::Union{AbstractMatrix, Nothing} = nothing,
+                                            Q::Union{AbstractVector, Nothing}   = nothing,
+                                            Q_f::Union{AbstractVector, Nothing} = nothing,
+                                            loadings_opt::LoadingsOpt           = LoadingsOpt(;),
+                                            cov_opt::CovOpt                     = CovOpt(;),
+                                            mu_opt::MuOpt                       = MuOpt(;),
+                                            f_cov_opt::CovOpt                   = CovOpt(;),
+                                            f_mu_opt::MuOpt                     = MuOpt(;),
+                                            bl_opt::BLOpt                       = BLOpt(;))
     returns = portfolio.returns
     F = portfolio.f_returns
 
@@ -2984,16 +3042,18 @@ function black_litterman_factor_statistics!(portfolio::Portfolio,
         bl_opt.delta = (dot(portfolio.mu, w) - bl_opt.rf) / dot(w, portfolio.cov, w)
     end
 
-    if isnothing(B)
+    if isnothing(B) || isempty(B)
         if isempty(portfolio.loadings)
             portfolio.loadings = loadings_matrix(DataFrame(F, portfolio.f_assets),
                                                  DataFrame(returns, portfolio.assets),
                                                  loadings_opt)
+            portfolio.loadings_opt = loadings_opt
         end
         B = portfolio.loadings
     else
         portfolio.loadings = B
     end
+
     namesB = names(B)
     bl_opt.constant = "const" ∈ namesB
     B = Matrix(B[!, setdiff(namesB, ("tickers",))])
