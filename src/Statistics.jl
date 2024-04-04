@@ -2294,7 +2294,27 @@ function _mvr(X::AbstractMatrix, x1::AbstractMatrix, Vp::AbstractMatrix, y::Abst
     return beta
 end
 
-function fb_regression(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
+"""
+```
+stepwise_regression(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
+```
+
+Perform forward or backward stepwise regression. See [`forward_regression`](@ref), and [`backward_regression`](@ref).
+
+# Inputs
+
+  - `x`: is the `T×Nf` Dataframe of factor returns, where the column names are the factor names, `T` is the number of returns observations, and `Nf` the number of factors.
+  - `y`: is the `T×Na` Dataframe of asset returns, where the column names are the factor names, `T` is the number of returns observations, and `Na` the number of assets.
+
+## Options
+
+  - `loadings_opt`: instance of [`LoadingsOpt`](@ref), defines the parameters for computing the loadings matrix.
+
+# Outputs
+
+  - `B`: is the `(Na+2)×Nf` loadings matrix as a Dataframe, where `Na` is the number of assets, `Nf` the number of factors. The two extra columns are the optional columns for `B` as described in [`FactorOpt`](@ref).
+"""
+function stepwise_regression(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
     features = names(x)
     rows = ncol(y)
     cols = ncol(x) + 1
@@ -2334,7 +2354,7 @@ end
 
 """
 ```
-mvr(x::DataFrame, y::DataFrame, opt::MVROpt = MVROpt(;))
+mv_regression(x::DataFrame, y::DataFrame, opt::MVROpt = MVROpt(;))
 ```
 
 Select the factors that best estimate the model based on multivariate regression. This tends to be more robust than [`backward_regression`](@ref).
@@ -2349,7 +2369,7 @@ Select the factors that best estimate the model based on multivariate regression
 
   - `B`: is the `(Na+2)×Nf` loadings matrix as a Dataframe, where `Na` is the number of assets, `Nf` the number of factors. The two extra columns are the optional columns for `B` as described in [`FactorOpt`](@ref).
 """
-function mvr(x::DataFrame, y::DataFrame, opt::MVROpt = MVROpt(;))
+function mv_regression(x::DataFrame, y::DataFrame, opt::MVROpt = MVROpt(;))
     features = names(x)
     rows = ncol(y)
     cols = ncol(x) + 1
@@ -2370,7 +2390,7 @@ end
 loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
 ```
 
-Estimate the loadings matrix using regression. See [`forward_regression`](@ref), [`backward_regression`](@ref), and [`mvr`](@ref).
+Estimate the loadings matrix using regression. See [`stepwise_regression`](@ref), and [`mv_regression`](@ref).
 
 # Inputs
 
@@ -2387,9 +2407,9 @@ Estimate the loadings matrix using regression. See [`forward_regression`](@ref),
 """
 function loadings_matrix(x::DataFrame, y::DataFrame, opt::LoadingsOpt = LoadingsOpt(;))
     loadings_matrix = if opt.method ∈ (:FReg, :BReg)
-        fb_regression(x, y, opt)
+        stepwise_regression(x, y, opt)
     else
-        mvr(x, y, opt.mvr_opt)
+        mv_regression(x, y, opt.mvr_opt)
     end
 
     return loadings_matrix
@@ -2499,6 +2519,29 @@ end
 function _Pi(eq, delta, sigma, w, mu, rf)
     return eq ? delta * sigma * w : mu .- rf
 end
+
+"""
+```
+_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, opt, cov_type)
+```
+
+Internal function for computing the Black Litterman statistics as defined in [`black_litterman`](@ref). See [`_denoise_logo_mtx`](@ref).
+
+# Inputs
+
+  - `tau`: variable of the same name in the Black-Litterman model.
+  - `omega`: variable of the same name in the Black-Litterman model.
+  - `P`: variable of the same name in the Black-Litterman model.
+  - `Pi`: variable of the same name in the Black-Litterman model.
+  - `Q`: variable of the same name in the Black-Litterman model.
+  - `rf`: variable of the same name in the Black-Litterman model.
+  - `sigma`: variable of the same name in the Black-Litterman model.
+  - `delta`: variable of the same name in the Black-Litterman model.
+  - `T`: variable of the same name in the Black-Litterman model.
+  - `N`: variable of the same name in the Black-Litterman model.
+  - `opt`: any valid instance of `opt` for [`_denoise_logo_mtx`](@ref).
+  - `cov_type`: any valid value from [`DenoiseLoGoNames`](@ref).
+"""
 function _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, opt, cov_type)
     inv_tau_sigma = (tau * sigma) \ I
     inv_omega = omega \ I
@@ -2523,7 +2566,7 @@ black_litterman(returns::AbstractMatrix, P::AbstractMatrix, Q::AbstractVector,
                 bl_opt::BLOpt = BLOpt(;))
 ```
 
-Estimates the expected returns vector and covariance matrix based on the Black-Litterman model [BL1, BL2](@cite). See [`covar_mtx_mean_vec`](@ref), [`covar_mtx`](@ref), and [`mean_vec`](@ref).
+Estimates the expected returns vector and covariance matrix based on the Black-Litterman model [BL1, BL2](@cite). See [`covar_mtx_mean_vec`](@ref), and [`_mu_cov_w`](@ref).
 
 ```math
 \\begin{align*}
@@ -2788,7 +2831,7 @@ black_litterman_statistics!(portfolio::Portfolio, P::AbstractMatrix, Q::Abstract
                             bl_opt::BLOpt = BLOpt(;))
 ```
 
-Estimates the Black-Litterman statistics for a given `portfolio` in-place. See [`black_litterman`](@ref), and [`covar_mtx_mean_vec`](@ref).
+Estimates the Black-Litterman statistics for a given `portfolio` in-place. See [`black_litterman`](@ref).
 
 Modifies:
 

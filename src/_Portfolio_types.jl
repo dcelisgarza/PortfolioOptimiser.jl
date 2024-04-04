@@ -216,7 +216,7 @@ Some constraints define decision variables using scaling factors. The scaling fa
 
       + `iszero(max_num_assets_kurt)`: use the full kurtosis model.
       + `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
-  - `max_num_assets_kurt_scale`: the relaxed kurtosis model uses the largest `max_num_assets_kurt_scale * max_num_assets_kurt` eigenvalues to approximate the kurtosis matrix, `max_num_assets_kurt_scale ∈ [0, Na]`, where `Na` is the number of assets.
+  - `max_num_assets_kurt_scale`: the relaxed kurtosis model uses the largest `max_num_assets_kurt_scale * max_num_assets_kurt` eigenvalues to approximate the kurtosis matrix, `max_num_assets_kurt_scale ∈ [1, Na]`, where `Na` is the number of assets.
 
 ## Benchmark constraints
 
@@ -941,9 +941,7 @@ function Portfolio(;
     @smart_assert(b_sim > zero(b_sim))
     @smart_assert(zero(kappa) < kappa < one(kappa))
     @smart_assert(max_num_assets_kurt >= zero(max_num_assets_kurt))
-    @smart_assert(zero(max_num_assets_kurt_scale) <=
-                  min(max_num_assets_kurt_scale, size(returns, 2)) <=
-                  size(returns, 2))
+    max_num_assets_kurt_scale = clamp(max_num_assets_kurt_scale, 1, size(returns, 2))
     if isa(rebalance, AbstractVector) && !isempty(rebalance)
         @smart_assert(length(rebalance) == size(returns, 2) &&
                       all(rebalance .>= zero(rebalance)))
@@ -1192,7 +1190,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
     elseif sym == :max_num_assets_kurt
         @smart_assert(val >= zero(val))
     elseif sym == :max_num_assets_kurt_scale
-        @smart_assert(zero(val) <= min(val, size(obj.returns, 2)) <= size(obj.returns, 2))
+        val = clamp(val, 1, size(obj.returns, 2))
     elseif sym ∈ (:rebalance, :turnover)
         if isa(val, AbstractVector) && !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 2) && all(val .>= zero(val)))
@@ -1562,7 +1560,7 @@ Some of these require external information from the arguments of functions that 
 
           * `iszero(max_num_assets_kurt)`: use the full kurtosis model.
           * `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
-  - `max_num_assets_kurt_scale`: the relaxed kurtosis model uses the largest `max_num_assets_kurt_scale * max_num_assets_kurt` eigenvalues to approximate the kurtosis matrix, `max_num_assets_kurt_scale ∈ [0, Na]`, where `Na` is the number of assets.
+  - `max_num_assets_kurt_scale`: the relaxed kurtosis model uses the largest `max_num_assets_kurt_scale * max_num_assets_kurt` eigenvalues to approximate the kurtosis matrix, `max_num_assets_kurt_scale ∈ [1, Na]`, where `Na` is the number of assets.
 
 ##. OWA parameters
 
@@ -1830,9 +1828,7 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     @smart_assert(zero(kappa) < kappa < one(kappa))
     @smart_assert(zero(alpha_tail) < alpha_tail < one(alpha_tail))
     @smart_assert(max_num_assets_kurt >= zero(max_num_assets_kurt))
-    @smart_assert(zero(max_num_assets_kurt_scale) <=
-                  min(max_num_assets_kurt_scale, size(returns, 2)) <=
-                  size(returns, 2))
+    max_num_assets_kurt_scale = clamp(max_num_assets_kurt_scale, 1, size(returns, 2))
     if !isempty(owa_w)
         @smart_assert(length(owa_w) == size(returns, 1))
     end
@@ -1930,7 +1926,7 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
     elseif sym == :max_num_assets_kurt
         @smart_assert(val >= zero(val))
     elseif sym == :max_num_assets_kurt_scale
-        @smart_assert(zero(val) <= min(val, size(obj.returns, 2)) <= size(obj.returns, 2))
+        val = clamp(val, 1, size(obj.returns, 2))
     elseif sym == :owa_w
         if !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 1))

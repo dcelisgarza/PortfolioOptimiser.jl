@@ -467,8 +467,8 @@ FSMethods = (:FReg, :BReg, :MVR)
 
 Methods for feature selection via regression when creating the loadings matrix.
 
-  - `:FReg`: forward regression.
-  - `:BReg`: backward regression.
+  - `:FReg`: forward stepwise regression.
+  - `:BReg`: backward stepwise regression.
   - `:MVR`: Multivariate regression using [MultivariateStats.jl](https://juliastats.org/MultivariateStats.jl/stable/), works with [MultivariateStats.PCA](https://juliastats.org/MultivariateStats.jl/stable/pca/#Linear-Principal-Component-Analysis), [MultivariateStats.PPCA](https://juliastats.org/MultivariateStats.jl/stable/pca/#Probabilistic-Principal-Component-Analysis), [MultivariateStats.FactorAnalysis](https://juliastats.org/MultivariateStats.jl/stable/fa/).
 """
 const FSMethods = (:FReg, :BReg, :MVR)
