@@ -2978,12 +2978,12 @@ Depending on conditions, modifies:
 
   - `portfolio`: instance of [`Portfolio`](@ref).
 
-  - `w`: `N×1` benchmark weights vector, sets `portfolio.bl_bench_weights`, where `N` is the number of assets.
+  - `w`: `Na×1` benchmark weights vector, sets `portfolio.bl_bench_weights`, where `Na` is the number of assets.
 
-      + `isempty(w)`: every entry is assumed to be `1/N`.
+      + `isempty(w)`: every entry is assumed to be `1/Na`.
   - `B`: is the `T×(Nf+c)` loadings matrix in Dataframe form, sets `portfolio.loadings` and `bl_opt.constant = "const" ∈ names(B)`, where `T` is the number of returns observations, `Nf` the number of factors, and `c ∈ (0, 1, 2)` represents the two optional columns as described in [`FactorOpt`](@ref).
 
-      + `(isnothing(B) || isempty(B)) && isempty(portfolio.loadings)`: internally computes the loadings matrix using [`loadings_matrix`](@ref) and sets `portfolio.loadings_opt = loadings_opt`.
+      + `(isnothing(B) || isempty(B)) && isempty(portfolio.loadings)`: internally computes `B` using [`loadings_matrix`](@ref) and sets `portfolio.loadings_opt = loadings_opt`.
   - `P`: `Nva×Na` analyst's asset views matrix, can be relative or absolute, where `Nva` is the number of asset views, and `Na` the number of assets.
   - `P_F`: `Nvf×Nf` analyst's factor views matrix, can be relative or absolute, where `Nvf` is the number of factor views, and `Nf` the number of factors.
   - `Q`: `Nva×1` analyst's asset views returns vector, where `Nva` is the number of asset views.
