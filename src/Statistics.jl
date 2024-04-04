@@ -2944,7 +2944,7 @@ end
 
 """
 ```
-black_litterman_factor_satistics!(portfolio::Portfolio,
+black_litterman_factor_statistics!(portfolio::Portfolio,
                                   w::AbstractVector                   = portfolio.bl_bench_weights;
                                   B::Union{DataFrame, Nothing}        = nothing,
                                   P::Union{AbstractMatrix, Nothing}   = nothing,
@@ -2959,7 +2959,7 @@ black_litterman_factor_satistics!(portfolio::Portfolio,
                                   bl_opt::BLOpt                       = BLOpt(;))
 ```
 """
-function black_litterman_factor_satistics!(portfolio::Portfolio,
+function black_litterman_factor_statistics!(portfolio::Portfolio,
                                            w::AbstractVector                   = portfolio.bl_bench_weights;
                                            B::Union{DataFrame, Nothing}        = nothing,
                                            P::Union{AbstractMatrix, Nothing}   = nothing,
@@ -3099,5 +3099,5 @@ function cluster_assets(portfolio::Portfolio; cor_opt::CorOpt = CorOpt(;),
 end
 
 export asset_statistics!, wc_statistics!, loadings_matrix, black_litterman_statistics!,
-       factor_statistics!, black_litterman_factor_satistics!, cluster_assets,
+       factor_statistics!, black_litterman_factor_statistics!, cluster_assets,
        cluster_assets!

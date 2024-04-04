@@ -3586,14 +3586,14 @@ end
     B = Matrix(loadings[!, 2:end])
     bl_opt = BLOpt(;)
 
-    black_litterman_factor_satistics!(portfolio; P = P, P_f = P_f, Q = Q, Q_f = Q_f,
-                                      bl_opt = bl_opt,
-                                      loadings_opt = LoadingsOpt(; method = :MVR))
+    black_litterman_factor_statistics!(portfolio; P = P, P_f = P_f, Q = Q, Q_f = Q_f,
+                                       bl_opt = bl_opt,
+                                       loadings_opt = LoadingsOpt(; method = :MVR))
     mu0 = copy(portfolio.blfm_mu)
     cov0 = copy(portfolio.blfm_cov)
 
-    black_litterman_factor_satistics!(portfolio, Vector{Float64}(undef, 0); B = loadings,
-                                      P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
+    black_litterman_factor_statistics!(portfolio, Vector{Float64}(undef, 0); B = loadings,
+                                       P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
     mu1 = copy(portfolio.blfm_mu)
     cov1 = copy(portfolio.blfm_cov)
 
@@ -3606,8 +3606,8 @@ end
 
     asset_statistics!(portfolio)
     bl_opt.delta = nothing
-    black_litterman_factor_satistics!(portfolio, Vector{Float64}(undef, 0); B = loadings,
-                                      P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
+    black_litterman_factor_statistics!(portfolio, Vector{Float64}(undef, 0); B = loadings,
+                                       P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
     mu3 = copy(portfolio.blfm_mu)
     cov3 = copy(portfolio.blfm_cov)
 
@@ -3618,8 +3618,8 @@ end
                                                                      P_f, Q_f;
                                                                      bl_opt = bl_opt)
 
-    black_litterman_factor_satistics!(portfolio, Vector{Float64}(undef, 0); B = nothing,
-                                      P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
+    black_litterman_factor_statistics!(portfolio, Vector{Float64}(undef, 0); B = nothing,
+                                       P = P, P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
     mu5 = copy(portfolio.blfm_mu)
     cov5 = copy(portfolio.blfm_cov)
 
@@ -3633,13 +3633,13 @@ end
                                                                      B2, P_f, Q_f;
                                                                      bl_opt = bl_opt)
 
-    black_litterman_factor_satistics!(portfolio, (1:20) / (sum(1:20)); B = loadings, P = P,
-                                      P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
+    black_litterman_factor_statistics!(portfolio, (1:20) / (sum(1:20)); B = loadings, P = P,
+                                       P_f = P_f, Q = Q, Q_f = Q_f, bl_opt = bl_opt)
     mu7 = copy(portfolio.blfm_mu)
     cov7 = copy(portfolio.blfm_cov)
 
-    black_litterman_factor_satistics!(portfolio; B = loadings, P = P, P_f = P_f, Q = Q,
-                                      Q_f = Q_f, bl_opt = bl_opt)
+    black_litterman_factor_statistics!(portfolio; B = loadings, P = P, P_f = P_f, Q = Q,
+                                       Q_f = Q_f, bl_opt = bl_opt)
     mu8 = copy(portfolio.blfm_mu)
     cov8 = copy(portfolio.blfm_cov)
 
@@ -3801,8 +3801,8 @@ end
 
     w = fill(1 / 20, 20)
 
-    black_litterman_factor_satistics!(portfolio, w; B = loadings, P = P, P_f = P_f, Q = Q,
-                                      Q_f = Q_f, bl_opt = bl_opt)
+    black_litterman_factor_statistics!(portfolio, w; B = loadings, P = P, P_f = P_f, Q = Q,
+                                       Q_f = Q_f, bl_opt = bl_opt)
     mu1 = copy(portfolio.blfm_mu)
     cov1 = copy(portfolio.blfm_cov)
 
@@ -3817,13 +3817,13 @@ end
                                                                       #
                                                                       bl_opt = bl_opt)
 
-    black_litterman_factor_satistics!(portfolio, w;
-                                      #
-                                      #   P = P, Q = Q,
-                                      #
-                                      B = loadings, P_f = P_f, Q_f = Q_f,
-                                      #
-                                      bl_opt = bl_opt)
+    black_litterman_factor_statistics!(portfolio, w;
+                                       #
+                                       #   P = P, Q = Q,
+                                       #
+                                       B = loadings, P_f = P_f, Q_f = Q_f,
+                                       #
+                                       bl_opt = bl_opt)
     mu3 = copy(portfolio.blfm_mu)
     cov3 = copy(portfolio.blfm_cov)
 
@@ -3838,13 +3838,13 @@ end
                                                                       #
                                                                       bl_opt = bl_opt)
 
-    black_litterman_factor_satistics!(portfolio, w;
-                                      #
-                                      P = P, Q = Q,
-                                      #
-                                      #   B = loadings, P_f = P_f, Q_f = Q_f,
-                                      #
-                                      bl_opt = bl_opt)
+    black_litterman_factor_statistics!(portfolio, w;
+                                       #
+                                       P = P, Q = Q,
+                                       #
+                                       #   B = loadings, P_f = P_f, Q_f = Q_f,
+                                       #
+                                       bl_opt = bl_opt)
     mu5 = copy(portfolio.blfm_mu)
     cov5 = copy(portfolio.blfm_cov)
 

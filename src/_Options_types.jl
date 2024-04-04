@@ -919,21 +919,21 @@ Structure and keyword constructor for computing Black-Litterman asset and factor
 
   - `method`: one of [`BLFMMethods`](@ref).
 
-      + [`black_litterman_factor_satistics!`](@ref): `method` for choosing what Black-Litterman Factor model to use.
+      + [`black_litterman_factor_statistics!`](@ref): `method` for choosing what Black-Litterman Factor model to use.
 
   - `constant`:
 
-      + [`black_litterman_factor_satistics!`](@ref): indicates whether the loadings matrix contains a `"const"` column, automatically set inside the function.
+      + [`black_litterman_factor_statistics!`](@ref): indicates whether the loadings matrix contains a `"const"` column, automatically set inside the function.
   - `error`:
 
-      + [`black_litterman_factor_satistics!`](@ref):
+      + [`black_litterman_factor_statistics!`](@ref):
 
           * `method == :B`: flag used in the definition of ``\\mathbf{D}``.
   - `eq`:
 
       + [`black_litterman_statistics!`](@ref): flag used in the definition of ``\\bm{\\Pi}``.
 
-      + [`black_litterman_factor_satistics!`](@ref):
+      + [`black_litterman_factor_statistics!`](@ref):
 
           * `method == :A`: flag used in the definition of ``\\bm{\\Pi}_{a}``.
   - `delta`:
@@ -942,13 +942,13 @@ Structure and keyword constructor for computing Black-Litterman asset and factor
 
           * [`black_litterman_statistics!`](@ref): value of ``\\delta`` in the definition of ``\\bm{\\Pi}``.
 
-          * [`black_litterman_factor_satistics!`](@ref):
+          * [`black_litterman_factor_statistics!`](@ref):
 
               - `method == :A`: value of ``\\delta`` in the definition of ``\\bm{\\Pi}_{a}``.
   - `rf`: risk-free rate.
   - `var_genfunc`:
 
-      + [`black_litterman_factor_satistics!`](@ref):
+      + [`black_litterman_factor_statistics!`](@ref):
 
           * `method == :B && error == true`: generic function [`GenericFunction`](@ref) for the variance in the definition of ``\\mathbf{D}`` .
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
