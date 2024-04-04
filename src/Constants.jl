@@ -1080,4 +1080,11 @@ Methods for computing the weights used to combine L-moments higher than 2 [OWAL]
 """
 const OWAMethods = (:CRRA, :E, :SS, :SD)
 
+"""
+```
+DenoiseLoGoNames = (:cov, :cor, :kurt, :skurt, :bl_cov, :a_bl_cov, :af_bl_cov)
+```
+
+Symbol for deciding the custom part of the warning when a matrix could not be made positive definite; and/or the error message when the original matrix was singular when trying to compute the J-LoGo covariance.
+"""
 const DenoiseLoGoNames = (:cov, :cor, :kurt, :skurt, :bl_cov, :a_bl_cov, :af_bl_cov)

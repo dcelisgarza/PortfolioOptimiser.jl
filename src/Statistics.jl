@@ -75,21 +75,6 @@ mut_var_info_mtx(x::AbstractMatrix{<:Real}, bins_info::Union{Symbol, <:Integer} 
 ```
 
 Compute the mutual information and variation of information matrices.
-
-# Inputs
-
-  - `x`: `T×N` array containing the returns series of the assets. `T` is the number of observations and `N` the number of assets.
-
-  - `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics. Can take on an integer value or the following values:
-
-      + An integer value explicitly defines the number of bins.
-
-      + A choice of optimal bin width selection algorithms from [`BinMethods`](@ref).
-
-          * `:KN`: Knuth's choice.
-          * `:FD`: Freedman-Diaconis' choice.
-          * `:SC`: Schotts' choice.
-          * `:HGR`: Hacine-Gharbi and Ravier's choice.
 """
 function mut_var_info_mtx(x::AbstractMatrix{<:Real},
                           bins_info::Union{Symbol, <:Integer} = :KN, normed::Bool = true)
@@ -2541,6 +2526,13 @@ Internal function for computing the Black Litterman statistics as defined in [`b
   - `N`: variable of the same name in the Black-Litterman model.
   - `opt`: any valid instance of `opt` for [`_denoise_logo_mtx`](@ref).
   - `cov_type`: any valid value from [`DenoiseLoGoNames`](@ref).
+
+# Outputs
+
+  - `mu`: asset expected returns vector obtained via the Black-Litterman model.
+  - `cov_mtx`: asset covariance matrix obtained via the Black-Litterman model.
+  - `w`: asset weights obtained via the Black-Litterman model.
+  - `Pi_`: equilibrium excess returns after being adjusted by the views.
 """
 function _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, opt, cov_type)
     inv_tau_sigma = (tau * sigma) \ I
