@@ -1812,6 +1812,8 @@ Simulate returns series using bootstrapping with [arch](https://github.com/basht
 # Inputs
 
   - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` the number of assets.
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the covariance matrices of the bootstrapping simulations, as well as fixing non-positive definite matrices.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the expected returns vectors of the bootstrapping simulations.
   - `kind`: bootstrapping method from [`BootstrapMethods`](@ref).
   - `n_sim`: number of simulations.
   - `block_size`: average block size to use.

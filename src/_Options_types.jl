@@ -704,8 +704,8 @@ Structure and keyword constructor for computing worst case statistics.
 
       + `box ∈ (:Stationary, :Circular, :Moving)`: average block size used by the bootstrapping method.
       + `ellipse ∈ (:Stationary, :Circular, :Moving)`: average block size used by the bootstrapping method.
-  - `mu_opt`: options for computing the expected returns vector [`MuOpt`](@ref).
-  - `cov_opt`: options for computing the covariance matrix [`MuOpt`](@ref).
+  - `mu_opt`: options for computing the expected returns vectors [`MuOpt`](@ref).
+  - `cov_opt`: options for computing the covariance matrices [`MuOpt`](@ref).
 """
 mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <: Integer}
     calc_box::Bool
