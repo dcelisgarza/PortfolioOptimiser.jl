@@ -2426,6 +2426,7 @@ Where:
   - ``\\mathbf{B}``: is the `Na×Nf` loadings matrix, where `Na` is the number of assets, and `Nf` the number of factors.
   - ``\\bm{\\mu}_{\\mathrm{FM}}``: is the `Na×1` estimated expected asset returns vector computed using the factor model, where `Na` is the number of assets.
   - ``\\bm{\\mu}_{F}``: is the `Nf×1` expected factor returns vector, where `Nf` is the number of factors.
+  - ``\\mathbf{\\Sigma}_{\\epsilon}``: is an `Na×Na` diagonal matrix constructed from the variances of the errors between the asset and estimated asset returns using the factor model, where `Na` is the number of assets. The variance is taken over all `T` timestamps of `Na` assets.
   - ``\\mathbf{\\Sigma}_{\\mathrm{FM}}``: is the `Na×Na` estimated asset covariance matrix computed using the factor model, where `Na` is the number of assets.
 
 # Inputs
@@ -2640,6 +2641,32 @@ bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix, B::Abstract
                          cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
                          bl_opt::BLOpt = BLOpt(;))
 ```
+
+Estimates the Bayesian Black-Litterman statistics according to [`BLFMMethods`](@ref).
+
+# Inputs
+
+  - `returns`: `T×Na` matrix of asset returns, where `T` is the number of returns observations, and `Na` the number of assets.
+  - `F`: `T×Nf` matrix of factor returns, where `T` is the number of returns observations, and `Nf` the number of factors.
+  - `B`: is the `T×(Nf+c)` loadings matrix, where `T` is the number of returns observations, `Nf` the number of factors, and `c ∈ (0, 1)` represents the optional column for the constant term as described in [`FactorOpt`](@ref).
+  - `P_F`: `Nvf×Nf` analyst's factor views matrix, can be relative or absolute, where `Nvf` is the number of factor views, and `Nf` the number of factors.
+  - `Q_f`: `Nvf×1` analyst's factor views returns vector, where `Nvf` is the number of factor views.
+
+## Options
+
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the vanilla factor covariance matrix.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla factor expected returns vector.
+  - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the factor Black-Litterman model's statistics.
+
+# Outputs
+
+  - `mu_b`: estimated asset expected returns vector via the Bayesian Black-Litterman model.
+  - `cov_mtx_b`: estimated asset covariance via the Bayesian Black-Litterman model.
+  - `w_b`: estimated benchmark weights via the Bayesian Black-Litterman model.
+
+!!! note
+
+    Note that both `bl_opt`, and `mu_opt` have `rf` fields for the risk-free rate (see [`MuOpt`](@ref) and [`BLOpt`](@ref)). This gives users more granular control over the model.
 """
 function bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix,
                                   B::AbstractMatrix, P_f::AbstractMatrix,
@@ -2712,6 +2739,45 @@ augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
                           f_mu_opt::MuOpt                     = MuOpt(;),
                           bl_opt::BLOpt                       = BLOpt(;))
 ```
+
+Estimates the Augmented Black-Litterman statistics to [`BLFMMethods`](@ref).
+
+# Inputs
+
+  - `returns`: `T×Na` matrix of asset returns, where `T` is the number of returns observations, and `Na` the number of assets.
+  - `w`: `Na×1` benchmark weights vector, where `Na` is the number of assets.
+  - `F`: `T×Nf` matrix of factor returns, where `T` is the number of returns observations, and `Nf` the number of factors.
+  - `B`: is the `T×(Nf+c)` loadings matrix, where `T` is the number of returns observations, `Nf` the number of factors, and `c ∈ (0, 1)` represents the optional column for the constant term as described in [`FactorOpt`](@ref).
+  - `P`: `Nva×Na` analyst's asset views matrix, can be relative or absolute, where `Nva` is the number of asset views, and `Na` the number of assets.
+  - `P_F`: `Nvf×Nf` analyst's factor views matrix, can be relative or absolute, where `Nvf` is the number of factor views, and `Nf` the number of factors.
+  - `Q`: `Nva×1` analyst's asset views returns vector, where `Nva` is the number of asset views.
+  - `Q_f`: `Nvf×1` analyst's factor views returns vector, where `Nvf` is the number of factor views.
+
+The model can be adjusted depending on which views matrices and views expected returns vectors are provided.
+
+  - If any of `P` or `Q` are provided, both must be provided.
+  - If any of `P_f` or `Q_f` are provided, both must be provided, as well as both `B` and `F` must be provided.
+  - If both `P` and `Q` are provided, but `P_f` and `Q_f` are not, the augmented model reduces to the traditional Black-Litterman model in [`black_litterman`](@ref). In other words, all augmented variables defined in [`BLFMMethods`](@ref) only include the asset statistics.
+  - If `P_f` and `Q_f` are provided, but `P` and `Q` are not, the augmneted model computes its statistics based on the factor model only. In other words, all augmented variables defined in [`BLFMMethods`](@ref) only include the estimated asset statistics using the factor model.
+  - If `P`, `Q`, `P_f` and `Q_f` are all provided, the full augmented model as defined in [`BLFMMethods`](@ref) is used.
+
+## Options
+
+  - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the vanilla asset covariance matrix.
+  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla asset expected returns vector.
+  - `f_cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the vanilla factor covariance matrix.
+  - `f_mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla factor expected returns vector.
+  - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the factor Black-Litterman model's statistics.
+
+# Outputs
+
+  - `mu_a`: estimated asset expected returns vector via the Augmented Black-Litterman model.
+  - `cov_mtx_a`: estimated asset covariance via the Augmented Black-Litterman model.
+  - `w_a`: estimated benchmark weights via the Augmented Black-Litterman model.
+
+!!! note
+
+    Note that both `bl_opt`, `f_mu_opt`, and `mu_opt` have `rf` fields for the risk-free rate (see [`MuOpt`](@ref) and [`BLOpt`](@ref)). This gives users more granular control over the model.
 """
 function augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
                                    F::Union{AbstractMatrix, Nothing}   = nothing,
@@ -2959,7 +3025,7 @@ black_litterman_factor_statistics!(portfolio::Portfolio,
                                   bl_opt::BLOpt                       = BLOpt(;))
 ```
 
-Estimates the factor Black-Litterman statistics in-place according to [`BLFMMethods`](@ref).
+Estimates the factor Black-Litterman statistics in-place according to [`BLFMMethods`](@ref). See [`augmented_black_litterman`](@ref), [`bayesian_black_litterman`](@ref).
 
 Modifies:
 
@@ -2996,7 +3062,7 @@ Depending on conditions, modifies:
   - `cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the vanilla asset covariance matrix.
   - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla asset expected returns vector.
   - `f_cov_opt`: instance of [`CovOpt`](@ref), defines the parameters for computing the vanilla factor covariance matrix.
-  - `mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla factor expected returns vector.
+  - `f_mu_opt`: instance of [`MuOpt`](@ref), defines the parameters for computing the vanilla factor expected returns vector.
   - `bl_opt`: instance of [`BLOpt`](@ref), defines the parameters for computing the factor Black-Litterman model's statistics.
 
       + `isnothing(bl_opt.delta)`: sets `bl_opt.delta` to:

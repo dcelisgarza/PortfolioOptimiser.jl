@@ -263,7 +263,7 @@ Where:
   - ``\\mathbf{B}``: is the `Na×Nf` loadings matrix, where `Na` is the number of assets, `Nf` the number of factors.
   - ``\\mathbf{\\Sigma}_{F}``: is the `Nf×Nf` factor covariance matrix, where `Nf` is the number of factors.
   - ``\\bm{w}``: is the `Na×1` vector of benchmark asset weights.
-  - ``\\mathbf{\\Sigma}_{\\epsilon}``: is an `Na×Na` diagonal matrix constructed from the variances of the errors between the asset and factor returns corrected by the loadings matrix, where `Na` is the number of assets. The variance is taken over all `T` timestamps of `Na` assets.
+  - ``\\mathbf{\\Sigma}_{\\epsilon}``: is an `Na×Na` diagonal matrix constructed from the variances of the errors between the asset and estimated asset returns using the factor model, where `Na` is the number of assets. The variance is taken over all `T` timestamps of `Na` assets.
   - ``\\mathbf{X}``: is the `T×Na` matrix of asset returns, where `T` is the number of returns observations and `Na` the number of assets.
   - ``\\mathbf{F}``: is the `T×Nf` matrix of factor returns, where `T` is the number of returns observations and `Nf` the number of factors.
   - ``\\overline{\\mathbf{\\Sigma}}_{F}``: is the `Nf×Nf` posterior covariance matrix of the factors after adjusting by the factor views, where `Nf` is the number of factors.
