@@ -4,12 +4,12 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-@safetestset "WC Statistics" begin
-    include("WCStatisticsTests.jl")
-end
-
 @safetestset "Portfolio Classic WC Optimisation" begin
     include("PortfolioClassicWCTests.jl")
+end
+
+@safetestset "WC Statistics" begin
+    include("WCStatisticsTests.jl")
 end
 
 @safetestset "Misc" begin
