@@ -8,6 +8,10 @@ end
     include("WCStatisticsTests.jl")
 end
 
+@safetestset "Portfolio Classic WC Optimisation" begin
+    include("PortfolioClassicWCTests.jl")
+end
+
 @safetestset "Misc" begin
     include("MiscTests.jl")
 end
@@ -63,10 +67,6 @@ end
 
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
-end
-
-@safetestset "Portfolio Classic WC Optimisation" begin
-    include("PortfolioClassicWCTests.jl")
 end
 
 @safetestset "Portfolio Classic RP OWA Optimisation" begin

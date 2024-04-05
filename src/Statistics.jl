@@ -1802,8 +1802,9 @@ end
 
 """
 ```
-gen_bootstrap(returns::AbstractMatrix, method::Symbol = :Stationary, n_sim::Integer = 3_000,
-              block_size::Integer = 3, seed::Union{<:Integer, Nothing} = nothing)
+gen_bootstrap(returns::AbstractMatrix, cov_opt::CovOpt, mu_opt::MuOpt,
+              method::Symbol = :Stationary, n_sim::Integer = 3_000, block_size::Integer = 3,
+              seed::Union{<:Integer, Nothing} = nothing)
 ```
 
 Simulate returns series using bootstrapping with [arch](https://github.com/bashtage/arch/?tab=readme-ov-file).
@@ -1816,9 +1817,9 @@ Simulate returns series using bootstrapping with [arch](https://github.com/basht
   - `block_size`: average block size to use.
   - `seed`: random number generator seed for bootstrapping.
 """
-function gen_bootstrap(returns::AbstractMatrix, method::Symbol = :Stationary,
-                       n_sim::Integer = 3_000, block_size::Integer = 3,
-                       seed::Union{<:Integer, Nothing} = nothing)
+function gen_bootstrap(returns::AbstractMatrix, cov_opt::CovOpt, mu_opt::MuOpt,
+                       method::Symbol = :Stationary, n_sim::Integer = 3_000,
+                       block_size::Integer = 3, seed::Union{<:Integer, Nothing} = nothing)
     @smart_assert(method ∈ BootstrapMethods)
 
     mus = Vector{Vector{eltype(returns)}}(undef, 0)
@@ -1837,8 +1838,11 @@ function gen_bootstrap(returns::AbstractMatrix, method::Symbol = :Stationary,
     gen = bootstrap_func(block_size, returns; seed = seed)
     for data ∈ gen.bootstrap(n_sim)
         A = data[1][1]
-        push!(mus, vec(mean(A; dims = 1)))
-        push!(covs, cov(A))
+        sigma, mu = covar_mtx_mean_vec(A; cov_opt = cov_opt, mu_opt = mu_opt)
+        push!(mus, mu)
+        push!(covs, sigma)
+        # push!(mus, vec(mean(A; dims = 1)))
+        # push!(covs, cov(A))
     end
 
     return mus, covs
@@ -1891,6 +1895,11 @@ Depending on conditions, modifies:
 function wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
     calc_box = opt.calc_box
     calc_ellipse = opt.calc_ellipse
+
+    if !(calc_box || calc_ellipse)
+        return nothing
+    end
+
     diagonal = opt.diagonal
     box = opt.box
     ellipse = opt.ellipse
@@ -1903,19 +1912,21 @@ function wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
     seed = opt.seed
     n_sim = opt.n_sim
     block_size = opt.block_size
-    posdef = opt.posdef
-
-    @smart_assert(calc_box || calc_ellipse)
+    mu_opt = opt.mu_opt
+    cov_opt = opt.cov_opt
+    posdef = cov_opt.posdef
 
     returns = portfolio.returns
     T, N = size(returns)
 
-    mu = vec(mean(returns; dims = 1))
-    sigma = cov(returns)
+    sigma, mu = covar_mtx_mean_vec(returns; cov_opt = cov_opt, mu_opt = mu_opt)
+    # mu = vec(mean(returns; dims = 1))
+    # sigma = cov(returns)
 
     if calc_box
         if box == :Stationary || box == :Circular || box == :Moving
-            mus, covs = gen_bootstrap(returns, box, n_sim, block_size, seed)
+            mus, covs = gen_bootstrap(returns, cov_opt, mu_opt, box, n_sim, block_size,
+                                      seed)
 
             mu_s = vec_of_vecs_to_mtx(mus)
             mu_l = [quantile(mu_s[:, i], q / 2) for i ∈ 1:N]
@@ -1951,13 +1962,16 @@ function wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
 
     if calc_ellipse
         if ellipse == :Stationary || ellipse == :Circular || ellipse == :Moving
-            mus, covs = gen_bootstrap(returns, ellipse, n_sim, block_size, seed)
+            mus, covs = gen_bootstrap(returns, cov_opt, mu_opt, ellipse, n_sim, block_size,
+                                      seed)
 
             A_mu = vec_of_vecs_to_mtx([mu_s .- mu for mu_s ∈ mus])
-            cov_mu = cov(A_mu)
+            cov_mu = covar_mtx(A_mu, cov_opt)
+            # cov_mu = cov(A_mu)
 
             A_sigma = vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma) for cov_s ∈ covs])
-            cov_sigma = cov(A_sigma)
+            cov_sigma = covar_mtx(A_sigma, cov_opt)
+            # cov_sigma = cov(A_sigma)
         elseif ellipse == :Normal
             Random.seed!(rng, seed)
 

@@ -703,10 +703,9 @@ Structure and keyword constructor for computing worst case statistics.
   - `block_size`:
 
       + `box ∈ (:Stationary, :Circular, :Moving)`: average block size used by the bootstrapping method.
-  - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
-
       + `ellipse ∈ (:Stationary, :Circular, :Moving)`: average block size used by the bootstrapping method.
-  - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
+  - `mu_opt`: options for computing the expected returns vector [`MuOpt`](@ref).
+  - `cov_opt`: options for computing the covariance matrix [`MuOpt`](@ref).
 """
 mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <: Integer}
     calc_box::Bool
@@ -723,7 +722,8 @@ mutable struct WCOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4, T5 <: Integer, T6 <
     seed::Union{<:Integer, Nothing}
     n_sim::T5
     block_size::T6
-    posdef::PosdefFixOpt
+    mu_opt::MuOpt
+    cov_opt::CovOpt
 end
 function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true, diagonal::Bool = false,
                box::Symbol = :Stationary, ellipse::Symbol = :Stationary,
@@ -731,7 +731,8 @@ function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true, diagonal::Boo
                k_sigma_method::Union{Symbol, <:Real} = :Normal, dcov::Real = 0.1,
                dmu::Real = 0.1, q::Real = 0.05, rng = Random.default_rng(),
                seed::Union{<:Integer, Nothing} = nothing, n_sim::Integer = 3_000,
-               block_size::Integer = 3, posdef::PosdefFixOpt = PosdefFixOpt(;))
+               block_size::Integer = 3, mu_opt::MuOpt = MuOpt(;),
+               cov_opt::CovOpt = CovOpt(;))
     @smart_assert(box ∈ BoxMethods)
     @smart_assert(ellipse ∈ EllipseMethods)
     if isa(k_mu_method, Symbol)
@@ -745,7 +746,7 @@ function WCOpt(; calc_box::Bool = true, calc_ellipse::Bool = true, diagonal::Boo
     return WCOpt{typeof(dcov), typeof(dmu), typeof(q), typeof(rng), typeof(n_sim),
                  typeof(block_size)}(calc_box, calc_ellipse, diagonal, box, ellipse,
                                      k_mu_method, k_sigma_method, dcov, dmu, q, rng, seed,
-                                     n_sim, block_size, posdef)
+                                     n_sim, block_size, mu_opt, cov_opt)
 end
 function Base.setproperty!(obj::WCOpt, sym::Symbol, val)
     if sym == :box
