@@ -1841,8 +1841,6 @@ function gen_bootstrap(returns::AbstractMatrix, cov_opt::CovOpt, mu_opt::MuOpt,
         sigma, mu = covar_mtx_mean_vec(A; cov_opt = cov_opt, mu_opt = mu_opt)
         push!(mus, mu)
         push!(covs, sigma)
-        # push!(mus, vec(mean(A; dims = 1)))
-        # push!(covs, cov(A))
     end
 
     return mus, covs
@@ -1920,8 +1918,6 @@ function wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
     T, N = size(returns)
 
     sigma, mu = covar_mtx_mean_vec(returns; cov_opt = cov_opt, mu_opt = mu_opt)
-    # mu = vec(mean(returns; dims = 1))
-    # sigma = cov(returns)
 
     if calc_box
         if box == :Stationary || box == :Circular || box == :Moving
@@ -1967,11 +1963,9 @@ function wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
 
             A_mu = vec_of_vecs_to_mtx([mu_s .- mu for mu_s ∈ mus])
             cov_mu = covar_mtx(A_mu, cov_opt)
-            # cov_mu = cov(A_mu)
 
             A_sigma = vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma) for cov_s ∈ covs])
             cov_sigma = covar_mtx(A_sigma, cov_opt)
-            # cov_sigma = cov(A_sigma)
         elseif ellipse == :Normal
             Random.seed!(rng, seed)
 
