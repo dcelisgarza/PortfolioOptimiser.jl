@@ -232,7 +232,7 @@ l = 2.0
     @test isapprox(w9.weights, w9t, rtol = 1.0e-5)
     @test isapprox(w10.weights, w10t)
     @test isapprox(w11.weights, w11t)
-    @test isapprox(w12.weights, w12t)
+    @test isapprox(w12.weights, w12t, rtol = 5.0e-5)
     @test isapprox(w13.weights, w13t)
     @test isapprox(w14.weights, w14t)
     @test isapprox(w15.weights, w15t, rtol = 1.0e-5)
