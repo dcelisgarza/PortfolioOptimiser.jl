@@ -396,13 +396,13 @@ Only relevant for certain combinations of [`PortClasses`](@ref) and [`ClassHist`
 
 Only relevant when `type == :WC`.
 
-  - `cov_l`: `Na×Na` worst case lower bound for the asset covariance matrix, where `Na` is the number of assets.
-  - `cov_u`: `Na×Na` worst case upper bound for the asset covariance matrix, where `Na` is the number of assets.
-  - `cov_mu`: `Na×Na` matrix of the estimation errors of the asset expected returns vector for elliptical sets in worst case optimisation, where `Na` is the number of assets.
-  - `cov_sigma`: `Na×Na` matrix of the estimation errors of the asset covariance matrix, where `Na` is the number of assets.
-  - `d_mu`: `Na×1` absolute deviation of the worst case upper and lower asset expected returns vectors, where `Na` is the number of assets.
-  - `k_mu`: distance parameter of the elliptical uncertainty in the asset expected returns vector for the worst case optimisation.
-  - `k_sigma`: distance parameter of the elliptical uncertainty in the asset covariance matrix for the worst case optimisation.
+  - `cov_l`: (box set) `Na×Na` worst case lower bound for the asset covariance matrix, where `Na` is the number of assets.
+  - `cov_u`: (box set) `Na×Na` worst case upper bound for the asset covariance matrix, where `Na` is the number of assets.
+  - `cov_mu`: (elliptical set) `Na×Na` matrix of the estimation errors of the asset expected returns vector set, where `Na` is the number of assets.
+  - `cov_sigma`: (elliptical set) `Na×Na` matrix of the estimation errors of the asset covariance matrix set, where `Na` is the number of assets.
+  - `d_mu`: (box set) `Na×1` absolute deviation of the worst case upper and lower asset expected returns vectors, where `Na` is the number of assets.
+  - `k_mu`: (elliptical set) distance parameter of the uncertainty in the asset expected returns vector for the worst case optimisation.
+  - `k_sigma`: (elliptical set) distance parameter of the uncertainty in the asset covariance matrix for the worst case optimisation.
 
 ## Optimal portfolios
 

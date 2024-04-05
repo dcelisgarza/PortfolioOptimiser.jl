@@ -676,9 +676,9 @@ Structure and keyword constructor for computing worst case statistics.
 
 # Inputs
 
-  - `calc_box`: whether to compute box sets.
+  - `calc_box`: whether to compute and set box sets.
 
-  - `calc_ellipse`: whether to compute elliptical sets.
+  - `calc_ellipse`: whether to compute and set elliptical sets.
   - `diagonal`: whether to consider only the diagonal of the covariance matrices of estimation errors [WC3](@cite).
   - `box`: method from [`BoxMethods`](@ref) for computing box sets.
   - `ellipse`: method from [`EllipseMethods`](@ref) for computing elliptical sets.

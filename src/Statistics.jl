@@ -1677,7 +1677,7 @@ asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true, calc_mu::
 
 Compute the asset statistics for a given `portfolio` in-place. See [`covar_mtx`](@ref), [`mean_vec`](@ref), [`cokurt_mtx`](@ref), [`cor_dist_mtx`](@ref).
 
-Depending on the conditions, modifies:
+Depending on conditions, modifies:
 
   - `portfolio.mu`
   - `portfolio.cov`
@@ -1775,6 +1775,21 @@ function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
     return nothing
 end
 
+"""
+```
+commutation_matrix(x::AbstractMatrix)
+```
+
+Generates the [commutation matrix](https://en.wikipedia.org/wiki/Commutation_matrix) for `x`.
+
+# Inputs
+
+  - `x`: matrix.
+
+# Outputs
+
+  - `y`: commutation matrix.
+"""
 function commutation_matrix(x::AbstractMatrix)
     m, n = size(x)
     mn = m * n
@@ -1787,28 +1802,35 @@ end
 
 """
 ```
-gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary, n_sim::Integer = 3_000,
-              block_size::Integer = 3, seed::Union{<:Integer, Nothing} = nothing,
-              rng = Random.default_rng())
+gen_bootstrap(returns::AbstractMatrix, method::Symbol = :Stationary, n_sim::Integer = 3_000,
+              block_size::Integer = 3, seed::Union{<:Integer, Nothing} = nothing)
 ```
+
+Simulate returns series using bootstrapping with [arch](https://github.com/bashtage/arch/?tab=readme-ov-file).
+
+# Inputs
+
+  - `returns`: `T×N` matrix of returns, where `T` is the number of returns observations, and `N` the number of assets.
+  - `kind`: bootstrapping method from [`BootstrapMethods`](@ref).
+  - `n_sim`: number of simulations.
+  - `block_size`: average block size to use.
+  - `seed`: random number generator seed for bootstrapping.
 """
-function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
+function gen_bootstrap(returns::AbstractMatrix, method::Symbol = :Stationary,
                        n_sim::Integer = 3_000, block_size::Integer = 3,
-                       seed::Union{<:Integer, Nothing} = nothing,
-                       rng = Random.default_rng())
-    @smart_assert(kind ∈ BootstrapMethods)
-    Random.seed!(rng, seed)
+                       seed::Union{<:Integer, Nothing} = nothing)
+    @smart_assert(method ∈ BootstrapMethods)
 
     mus = Vector{Vector{eltype(returns)}}(undef, 0)
     sizehint!(mus, n_sim)
     covs = Vector{Matrix{eltype(returns)}}(undef, 0)
     sizehint!(covs, n_sim)
 
-    bootstrap_func = if kind == :Stationary
+    bootstrap_func = if method == :Stationary
         pyimport("arch.bootstrap").StationaryBootstrap
-    elseif kind == :Circular
+    elseif method == :Circular
         pyimport("arch.bootstrap").CircularBlockBootstrap
-    elseif kind == :Moving
+    elseif method == :Moving
         pyimport("arch.bootstrap").MovingBlockBootstrap
     end
 
@@ -1822,6 +1844,21 @@ function gen_bootstrap(returns::AbstractMatrix, kind::Symbol = :Stationary,
     return mus, covs
 end
 
+"""
+```
+vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
+```
+
+Turns a vector of arrays into a matrix.
+
+# Inputs
+
+  - `x`: vector of arrays.
+
+# Outputs
+
+  - `y`: matrix.
+"""
 function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
     return vcat(transpose.(x)...)
 end
@@ -1831,7 +1868,25 @@ end
 wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
 ```
 
-Worst case optimisation statistics.
+Compute worst case statistics for a given `portfolio` in-place. See [`gen_bootstrap`](@ref), [`vec_of_vecs_to_mtx`](@ref), [`posdef_fix!`](@ref), and [`commutation_matrix`](@ref).
+
+Depending on conditions, modifies:
+
+  - `portfolio.cov_l`
+  - `portfolio.cov_u`
+  - `portfolio.d_mu`
+  - `portfolio.cov_mu`
+  - `portfolio.cov_sigma`
+  - `portfolio.k_mu`
+  - `portfolio.k_sigma`
+
+# Inputs
+
+  - `portfolio`: instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+
+## Options
+
+  - `opt`: instance of [`WCOpt`](@ref), defines the parameters for computing the worst case statistics.
 """
 function wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
     calc_box = opt.calc_box
@@ -1860,7 +1915,7 @@ function wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
 
     if calc_box
         if box == :Stationary || box == :Circular || box == :Moving
-            mus, covs = gen_bootstrap(returns, box, n_sim, block_size, seed, rng)
+            mus, covs = gen_bootstrap(returns, box, n_sim, block_size, seed)
 
             mu_s = vec_of_vecs_to_mtx(mus)
             mu_l = [quantile(mu_s[:, i], q / 2) for i ∈ 1:N]
@@ -1896,7 +1951,7 @@ function wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
 
     if calc_ellipse
         if ellipse == :Stationary || ellipse == :Circular || ellipse == :Moving
-            mus, covs = gen_bootstrap(returns, ellipse, n_sim, block_size, seed, rng)
+            mus, covs = gen_bootstrap(returns, ellipse, n_sim, block_size, seed)
 
             A_mu = vec_of_vecs_to_mtx([mu_s .- mu for mu_s ∈ mus])
             cov_mu = cov(A_mu)
@@ -1904,6 +1959,8 @@ function wc_statistics!(portfolio::Portfolio, opt::WCOpt = WCOpt(;))
             A_sigma = vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma) for cov_s ∈ covs])
             cov_sigma = cov(A_sigma)
         elseif ellipse == :Normal
+            Random.seed!(rng, seed)
+
             A_mu = transpose(rand(MvNormal(mu, sigma), n_sim))
             if !calc_box || calc_box && box != :Normal
                 cov_mu = sigma / T
@@ -2499,9 +2556,20 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_opt::FactorOpt = Factor
     return mu, sigma, returns, B
 end
 
+"""
+```
+_omega(P, tau_sigma)
+```
+"""
 function _omega(P, tau_sigma)
     return Diagonal(P * tau_sigma * transpose(P))
 end
+
+"""
+```
+_Pi(eq, delta, sigma, w, mu, rf)
+```
+"""
 function _Pi(eq, delta, sigma, w, mu, rf)
     return eq ? delta * sigma * w : mu .- rf
 end
@@ -2642,7 +2710,7 @@ bayesian_black_litterman(returns::AbstractMatrix, F::AbstractMatrix, B::Abstract
                          bl_opt::BLOpt = BLOpt(;))
 ```
 
-Estimates the Bayesian Black-Litterman statistics according to [`BLFMMethods`](@ref).
+Estimates the Bayesian Black-Litterman statistics according to [`BLFMMethods`](@ref). See [`covar_mtx_mean_vec`](@ref), and [`_omega`](@ref).
 
 # Inputs
 
@@ -2740,7 +2808,7 @@ augmented_black_litterman(returns::AbstractMatrix, w::AbstractVector;
                           bl_opt::BLOpt                       = BLOpt(;))
 ```
 
-Estimates the Augmented Black-Litterman statistics to [`BLFMMethods`](@ref).
+Estimates the Augmented Black-Litterman statistics to [`BLFMMethods`](@ref). See [`covar_mtx_mean_vec`](@ref), [`_omega`](@ref), [`_Pi`](@ref), [`_mu_cov_w`](@ref), and [`_denoise_logo_mtx`](@ref).
 
 # Inputs
 
