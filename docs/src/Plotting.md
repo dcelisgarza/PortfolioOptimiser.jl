@@ -3,17 +3,17 @@
 ## Public
 
 ```@autodocs
-Modules = [PortfolioOptimiser]
+Modules = [Base.get_extension(PortfolioOptimiser, :PortfolioOptimiserPlotExt)]
 Public = true
 Private = false
-Pages = ["Plotting.jl"]
+Pages = ["PortfolioOptimiserPlotExt.jl"]
 ```
 
 ## Private
 
 ```@autodocs
-Modules = [PortfolioOptimiser]
+Modules = [Base.get_extension(PortfolioOptimiser, :PortfolioOptimiserPlotExt)]
 Public = false
 Private = true
-Pages = ["Plotting.jl"]
+Pages = ["PortfolioOptimiserPlotExt.jl"]
 ```

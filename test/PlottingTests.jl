@@ -1,4 +1,5 @@
-using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, LinearAlgebra
+using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, LinearAlgebra,
+      StatsPlots, GraphRecipes
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
@@ -30,13 +31,15 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
                                                                                "max_step_fraction" => 0.75))),)
     asset_statistics!(hcportfolio; calc_kurt = false)
     plt12 = plot_clusters(hcportfolio;
-                          cluster_opt = ClusterOpt(; max_k = 10, linkage = :DBHT,
-                                                   branchorder = :r, dbht_method = :Unique))
+                          cluster_opt = ClusterOpt(; linkage = :DBHT, branchorder = :r,
+                                                   dbht_method = :Unique))
     plt13 = plot_dendrogram(hcportfolio;
-                            cluster_opt = ClusterOpt(; max_k = 10, linkage = :DBHT,
+                            cluster_opt = ClusterOpt(; linkage = :DBHT,
                                                      branchorder = :optimal,
                                                      dbht_method = :Unique))
-    optimise!(hcportfolio; type = :HERC)
+    optimise!(hcportfolio; type = :HERC,
+              cluster_opt = ClusterOpt(; linkage = :DBHT, branchorder = :optimal,
+                                       dbht_method = :Unique))
     plt14 = plot_clusters(hcportfolio; cluster = false)
     plt15 = plot_clusters(hcportfolio.assets, hcportfolio.returns)
     plt16 = plot_clusters(hcportfolio.assets, hcportfolio.returns; linkage = :DBHT)

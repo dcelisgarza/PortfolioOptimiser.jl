@@ -11,7 +11,6 @@ Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
-GraphRecipes = "bd48cda9-67a9-57be-86fa-5b3c104eda73"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -25,8 +24,14 @@ SmartAsserts = "56560af0-ab70-43fe-a531-155d81972b00"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
+
+[weakdeps]
+GraphRecipes = "bd48cda9-67a9-57be-86fa-5b3c104eda73"
+StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
+
+[extensions]
+PortfolioOptimiserPlotExt = ["StatsPlots", "GraphRecipes"]
 
 [compat]
 julia = "1.10"
@@ -45,4 +50,18 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [targets]
-test = ["CSV", "Clarabel", "CovarianceEstimation", "HiGHS", "GLPK", "Logging", "OrderedCollections", "Pajarito", "SafeTestsets", "Test", "TimeSeries"]
+test = [
+    "CSV",
+    "Clarabel",
+    "CovarianceEstimation",
+    "HiGHS",
+    "GLPK",
+    "Logging",
+    "OrderedCollections",
+    "Pajarito",
+    "SafeTestsets",
+    "Test",
+    "TimeSeries",
+    "GraphRecipes",
+    "StatsPlots",
+]

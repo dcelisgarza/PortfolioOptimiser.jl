@@ -2,7 +2,7 @@
 
 julia_version = "1.10.2"
 manifest_format = "2.0"
-project_hash = "d4a4ddec23828049705284996a113599f16ec42e"
+project_hash = "390326ae1c3a9e1c7617c8cdc1e85ab396e448b3"
 
 [[deps.AMD]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse_jll"]
@@ -47,9 +47,9 @@ version = "1.1.1"
 
 [[deps.ArnoldiMethod]]
 deps = ["LinearAlgebra", "Random", "StaticArrays"]
-git-tree-sha1 = "62e51b39331de8911e4a7ff6f5aaf38a5f4cc0ae"
+git-tree-sha1 = "d57bd3762d308bded22c3b82d033bff85f6195c6"
 uuid = "ec485272-7323-5ecc-a04f-4719b315124d"
-version = "0.2.0"
+version = "0.4.0"
 
 [[deps.Arpack]]
 deps = ["Arpack_jll", "Libdl", "LinearAlgebra", "Logging"]
@@ -646,9 +646,9 @@ version = "1.3.14+0"
 
 [[deps.Graphs]]
 deps = ["ArnoldiMethod", "Compat", "DataStructures", "Distributed", "Inflate", "LinearAlgebra", "Random", "SharedArrays", "SimpleTraits", "SparseArrays", "Statistics"]
-git-tree-sha1 = "899050ace26649433ef1af25bc17a815b3db52b7"
+git-tree-sha1 = "3863330da5466410782f2bffc64f3d505a6a8334"
 uuid = "86223c79-3864-5bf0-83f7-82e725a168b6"
-version = "1.9.0"
+version = "1.10.0"
 
 [[deps.Grisu]]
 git-tree-sha1 = "53bb909d1151e57e2484c3d1b53e19552b887fb2"
@@ -1248,10 +1248,14 @@ uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
 version = "1.4.3"
 
 [[deps.PortfolioOptimiser]]
-deps = ["AverageShiftedHistograms", "Clustering", "DataFrames", "Dates", "Distances", "Distributions", "GLM", "GraphRecipes", "Graphs", "JuMP", "LinearAlgebra", "MultivariateStats", "NearestCorrelationMatrix", "Optim", "PyCall", "Random", "SimpleWeightedGraphs", "SmartAsserts", "SparseArrays", "Statistics", "StatsBase", "StatsPlots", "TimeSeries"]
+deps = ["AverageShiftedHistograms", "Clustering", "DataFrames", "Dates", "Distances", "Distributions", "GLM", "Graphs", "JuMP", "LinearAlgebra", "MultivariateStats", "NearestCorrelationMatrix", "Optim", "PyCall", "Random", "SimpleWeightedGraphs", "SmartAsserts", "SparseArrays", "Statistics", "StatsBase", "TimeSeries"]
 path = ".."
 uuid = "748726ae-2fc6-4ae6-b81c-5fed3516a822"
 version = "0.1.0"
+weakdeps = ["GraphRecipes", "StatsPlots"]
+
+    [deps.PortfolioOptimiser.extensions]
+    PortfolioOptimiserPlotExt = ["StatsPlots", "GraphRecipes"]
 
 [[deps.PositiveFactorizations]]
 deps = ["LinearAlgebra"]

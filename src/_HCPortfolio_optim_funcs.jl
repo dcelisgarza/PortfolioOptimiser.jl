@@ -79,11 +79,11 @@ function _opt_w(portfolio, assets, returns, imu, icov, opt;
 end
 
 """
-```julia
-_two_diff_gap_stat(dist, clustering; max_k = ceil(Int, sqrt(size(dist, 1))))
+```
+_two_diff_gap_stat(dist, clustering, max_k = 0)
 ```
 """
-function _two_diff_gap_stat(dist, clustering, max_k = ceil(Int, sqrt(size(dist, 1))))
+function _two_diff_gap_stat(dist, clustering, max_k = 0)
     N = size(dist, 1)
     cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]
 
@@ -172,10 +172,7 @@ _hierarchical_clustering
 ```
 """
 function _hierarchical_clustering(portfolio::HCPortfolio,
-                                  cluster_opt::ClusterOpt = ClusterOpt(;
-                                                                       max_k = ceil(Int,
-                                                                                    sqrt(size(portfolio.dist,
-                                                                                              1)))))
+                                  cluster_opt::ClusterOpt = ClusterOpt(;))
     dist = portfolio.dist
 
     clustering, k = _hcluster_choice(dist, cluster_opt)
@@ -733,15 +730,7 @@ optimise!
 function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD,
                    rm_o::Symbol = rm, rf::Real = 0.0, rf_o::Real = rf,
                    nco_opt::OptimiseOpt = OptimiseOpt(;), nco_opt_o::OptimiseOpt = nco_opt,
-                   cluster::Bool = true,
-                   cluster_opt::ClusterOpt = ClusterOpt(; k = if cluster
-                                                            0
-                                                        else
-                                                            portfolio.k
-                                                        end,
-                                                        max_k = ceil(Int,
-                                                                     sqrt(size(portfolio.returns,
-                                                                               2)))),
+                   cluster::Bool = true, cluster_opt::ClusterOpt = ClusterOpt(;),
                    asset_stat_kwargs::NamedTuple = (; calc_mu = false, calc_cov = false,
                                                     calc_kurt = if type != :NCO &&
                                                                    rm ∈ (:Kurt, :SKurt) ||

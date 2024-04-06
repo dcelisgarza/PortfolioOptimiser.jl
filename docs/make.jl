@@ -1,4 +1,5 @@
-using Documenter, DocumenterTools, DocumenterCitations, Literate, PortfolioOptimiser
+using Documenter, DocumenterTools, DocumenterCitations, Literate, PortfolioOptimiser,
+      StatsPlots, GraphRecipes
 
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
 fix_math_md(content) = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
@@ -26,7 +27,10 @@ for file ∈ code_files
                       postprocess = postprocess, documenter = true, credit = true)
 end
 
-makedocs(; modules = [PortfolioOptimiser], authors = "Daniel Celis Garza",
+makedocs(;
+         modules = [PortfolioOptimiser,
+                    Base.get_extension(PortfolioOptimiser, :PortfolioOptimiserPlotExt)],
+         authors = "Daniel Celis Garza",
          repo = "https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/{commit}{path}#{line}",
          sitename = "PortfolioOptimiser.jl",
          format = Documenter.HTML(; prettyurls = get(ENV, "CI", "false") == "true",

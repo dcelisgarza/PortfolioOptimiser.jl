@@ -3221,10 +3221,7 @@ _hierarchical_clustering
 ```
 """
 function _hierarchical_clustering(returns::AbstractMatrix, cor_opt::CorOpt = CorOpt(;),
-                                  cluster_opt::ClusterOpt = ClusterOpt(;
-                                                                       max_k = ceil(Int,
-                                                                                    sqrt(size(returns,
-                                                                                              2)))))
+                                  cluster_opt::ClusterOpt = ClusterOpt(;))
     corr, dist = cor_dist_mtx(returns, cor_opt)
     clustering, k = _hcluster_choice(dist, cluster_opt)
 
@@ -3236,11 +3233,7 @@ end
 cluster_assets
 ```
 """
-function cluster_assets(portfolio::HCPortfolio,
-                        opt::ClusterOpt = ClusterOpt(; k = portfolio.k,
-                                                     max_k = ceil(Int,
-                                                                  sqrt(size(portfolio.dist,
-                                                                            1)))))
+function cluster_assets(portfolio::HCPortfolio, opt::ClusterOpt = ClusterOpt(;))
     clustering, tk = _hierarchical_clustering(portfolio, opt)
 
     k = iszero(opt.k) ? tk : opt.k
@@ -3255,11 +3248,7 @@ end
 cluster_assets!
 ```
 """
-function cluster_assets!(portfolio::HCPortfolio,
-                         opt::ClusterOpt = ClusterOpt(; k = portfolio.k,
-                                                      max_k = ceil(Int,
-                                                                   sqrt(size(portfolio.dist,
-                                                                             1)))))
+function cluster_assets!(portfolio::HCPortfolio, opt::ClusterOpt = ClusterOpt(;))
     clustering, tk = _hierarchical_clustering(portfolio, opt)
 
     k = iszero(opt.k) ? tk : opt.k
@@ -3276,10 +3265,7 @@ cluster_assets
 ```
 """
 function cluster_assets(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
-                        cluster_opt::ClusterOpt = ClusterOpt(;
-                                                             max_k = ceil(Int,
-                                                                          sqrt(size(returns,
-                                                                                    2)))))
+                        cluster_opt::ClusterOpt = ClusterOpt(;))
     clustering, tk, corr, dist = _hierarchical_clustering(returns, cor_opt, cluster_opt)
 
     k = iszero(cluster_opt.k) ? tk : cluster_opt.k
@@ -3295,10 +3281,7 @@ cluster_assets
 ```
 """
 function cluster_assets(portfolio::Portfolio; cor_opt::CorOpt = CorOpt(;),
-                        cluster_opt::ClusterOpt = ClusterOpt(;
-                                                             max_k = ceil(Int,
-                                                                          sqrt(size(portfolio.returns,
-                                                                                    2)))))
+                        cluster_opt::ClusterOpt = ClusterOpt(;))
     return cluster_assets(portfolio.returns; cor_opt = cor_opt, cluster_opt = cluster_opt)
 end
 

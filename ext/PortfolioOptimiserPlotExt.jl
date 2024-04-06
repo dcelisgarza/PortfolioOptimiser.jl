@@ -1,4 +1,20 @@
-function plot_returns(timestamps, assets, returns, weights; per_asset = false, kwargs...)
+module PortfolioOptimiserPlotExt
+
+using PortfolioOptimiser, GraphRecipes, StatsPlots, SmartAsserts, Statistics,
+      MultivariateStats, Distributions, Clustering, Graphs, SimpleWeightedGraphs,
+      LinearAlgebra
+
+using PortfolioOptimiser: AbstractPortfolio, RiskMeasureNames, RiskMeasures, LinkageMethods,
+                          cor_dist_mtx, _two_diff_gap_stat
+
+const PO = PortfolioOptimiser
+
+"""
+```
+plot_returns(timestamps, assets, returns, weights; per_asset = false, kwargs...)
+```
+"""
+function PO.plot_returns(timestamps, assets, returns, weights; per_asset = false, kwargs...)
     if per_asset
         ret = returns .* transpose(weights)
         ret = vcat(zeros(1, length(weights)), ret)
@@ -27,13 +43,14 @@ function plot_returns(timestamps, assets, returns, weights; per_asset = false, k
 
     return plot(timestamps, ret; kwargs...)
 end
-function plot_returns(portfolio, type = isa(portfolio, HCPortfolio) ? :HRP : :Trad;
-                      per_asset = false, kwargs...)
-    return plot_returns(portfolio.timestamps, portfolio.assets, portfolio.returns,
-                        portfolio.optimal[type].weights; per_asset = per_asset, kwargs...)
+function PO.plot_returns(portfolio, type = isa(portfolio, HCPortfolio) ? :HRP : :Trad;
+                         per_asset = false, kwargs...)
+    return PO.plot_returns(portfolio.timestamps, portfolio.assets, portfolio.returns,
+                           portfolio.optimal[type].weights; per_asset = per_asset,
+                           kwargs...)
 end
 
-function plot_bar(assets, data; kwargs...)
+function PO.plot_bar(assets, data; kwargs...)
     if !haskey(kwargs, :ylabel)
         kwargs = (kwargs..., ylabel = "Percentage Composition")
     end
@@ -53,25 +70,27 @@ function plot_bar(assets, data; kwargs...)
 
     return bar(assets, data * 100; kwargs...)
 end
-function plot_bar(portfolio::AbstractPortfolio,
-                  type = isa(portfolio, HCPortfolio) ? :HRP : :Trad, kwargs...)
-    return plot_bar(portfolio.assets, portfolio.optimal[type].weights, kwargs...)
+function PO.plot_bar(portfolio::AbstractPortfolio,
+                     type = isa(portfolio, HCPortfolio) ? :HRP : :Trad, kwargs...)
+    return PO.plot_bar(portfolio.assets, portfolio.optimal[type].weights, kwargs...)
 end
 
-function plot_risk_contribution(
-                                # RC args
-                                assets::AbstractVector, w::AbstractVector,
-                                returns::AbstractMatrix; rm::Symbol = :SD, rf::Real = 0.0,
-                                sigma::AbstractMatrix = Matrix{eltype(returns)}(undef, 0,
-                                                                                0),
-                                alpha_i::Real = 0.0001, alpha::Real = 0.05,
-                                a_sim::Int = 100, beta_i::Real = alpha_i,
-                                beta::Real = alpha, b_sim::Integer = a_sim, di::Real = 1e-6,
-                                kappa::Real = 0.3,
-                                owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                                solvers::Union{<:AbstractDict, Nothing} = nothing,                                # Plot args
-                                percentage::Bool = false, erc_line::Bool = true,
-                                t_factor = 252, kwargs_bar = (;), kwargs_line = (;))
+function PO.plot_risk_contribution(
+                                   # RC args
+                                   assets::AbstractVector, w::AbstractVector,
+                                   returns::AbstractMatrix; rm::Symbol = :SD,
+                                   rf::Real = 0.0,
+                                   sigma::AbstractMatrix = Matrix{eltype(returns)}(undef, 0,
+                                                                                   0),
+                                   alpha_i::Real = 0.0001, alpha::Real = 0.05,
+                                   a_sim::Int = 100, beta_i::Real = alpha_i,
+                                   beta::Real = alpha, b_sim::Integer = a_sim,
+                                   di::Real = 1e-6, kappa::Real = 0.3,
+                                   owa_w::AbstractVector{<:Real} = Vector{Float64}(undef,
+                                                                                   0),
+                                   solvers::Union{<:AbstractDict, Nothing} = nothing,                                # Plot args
+                                   percentage::Bool = false, erc_line::Bool = true,
+                                   t_factor = 252, kwargs_bar = (;), kwargs_line = (;))
     rc = risk_contribution(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
                            alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
                            b_sim = b_sim, di = di, kappa = kappa, owa_w = owa_w,
@@ -142,35 +161,38 @@ function plot_risk_contribution(
 
     return plt
 end
-function plot_risk_contribution(portfolio; di::Real = 1e-6,
-                                type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
-                                rm::Symbol = :SD, rf::Real = 0.0,
-                                owa_w::AbstractVector{<:Real} = if isa(portfolio,
-                                                                       Portfolio)
-                                    portfolio.owa_w
-                                else
-                                    Vector{Float64}(undef, 0)
-                                end, percentage::Bool = false, erc_line::Bool = true,
-                                t_factor = 252, kwargs_bar = (;), kwargs_line = (;))
-    return plot_risk_contribution(
-                                  # RC args
-                                  portfolio.assets, portfolio.optimal[type].weights,
-                                  portfolio.returns; rm = rm, rf = rf,
-                                  sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
-                                  alpha = portfolio.alpha, a_sim = portfolio.a_sim,
-                                  beta_i = portfolio.beta_i, beta = portfolio.beta,
-                                  b_sim = portfolio.b_sim, di = di, kappa = portfolio.kappa,
-                                  owa_w = owa_w, solvers = portfolio.solvers,                                  # Plot args
-                                  percentage = percentage, erc_line = erc_line,
-                                  t_factor = t_factor, kwargs_bar = kwargs_bar,
-                                  kwargs_line = kwargs_line)
+function PO.plot_risk_contribution(portfolio; di::Real = 1e-6,
+                                   type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                                   rm::Symbol = :SD, rf::Real = 0.0,
+                                   owa_w::AbstractVector{<:Real} = if isa(portfolio,
+                                                                          Portfolio)
+                                       portfolio.owa_w
+                                   else
+                                       Vector{Float64}(undef, 0)
+                                   end, percentage::Bool = false, erc_line::Bool = true,
+                                   t_factor = 252, kwargs_bar = (;), kwargs_line = (;))
+    return PO.plot_risk_contribution(
+                                     # RC args
+                                     portfolio.assets, portfolio.optimal[type].weights,
+                                     portfolio.returns; rm = rm, rf = rf,
+                                     sigma = portfolio.cov, alpha_i = portfolio.alpha_i,
+                                     alpha = portfolio.alpha, a_sim = portfolio.a_sim,
+                                     beta_i = portfolio.beta_i, beta = portfolio.beta,
+                                     b_sim = portfolio.b_sim, di = di,
+                                     kappa = portfolio.kappa, owa_w = owa_w,
+                                     solvers = portfolio.solvers,                                  # Plot args
+                                     percentage = percentage, erc_line = erc_line,
+                                     t_factor = t_factor, kwargs_bar = kwargs_bar,
+                                     kwargs_line = kwargs_line)
 end
 
-function plot_frontier(frontier; alpha::Real = 0.05, beta::Real = alpha, kappa::Real = 0.3,
-                       returns::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                       t_factor = 252, kelly::Bool = false,
-                       mu::AbstractVector = Vector{Float64}(undef, 0), rf::Real = 0.0,
-                       rm::Symbol = :SD, theme = :Spectral, kwargs_f = (;), kwargs_s = (;))
+function PO.plot_frontier(frontier; alpha::Real = 0.05, beta::Real = alpha,
+                          kappa::Real = 0.3,
+                          returns::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                          t_factor = 252, kelly::Bool = false,
+                          mu::AbstractVector = Vector{Float64}(undef, 0), rf::Real = 0.0,
+                          rm::Symbol = :SD, theme = :Spectral, kwargs_f = (;),
+                          kwargs_s = (;))
     @smart_assert(rm ∈ RiskMeasures)
 
     if isinf(beta)
@@ -258,24 +280,24 @@ function plot_frontier(frontier; alpha::Real = 0.05, beta::Real = alpha, kappa::
 
     return plt
 end
-function plot_frontier(portfolio::AbstractPortfolio; rm::Symbol = :SD, near_opt = false,
-                       rf::Real = 0.0, kelly::Bool = false, t_factor = 252,
-                       theme = :Spectral, kwargs_f = (;), kwargs_s = (;))
+function PO.plot_frontier(portfolio::AbstractPortfolio; rm::Symbol = :SD, near_opt = false,
+                          rf::Real = 0.0, kelly::Bool = false, t_factor = 252,
+                          theme = :Spectral, kwargs_f = (;), kwargs_s = (;))
     key = if near_opt
         Symbol("Near_" * string(rm))
     else
         rm
     end
-    return plot_frontier(portfolio.frontier[key]; alpha = portfolio.alpha,
-                         beta = portfolio.beta, kappa = portfolio.kappa, mu = portfolio.mu,
-                         returns = portfolio.returns, t_factor = t_factor, kelly = kelly,
-                         rf = rf, rm = rm, theme = theme, kwargs_f = kwargs_f,
-                         kwargs_s = kwargs_s)
+    return PO.plot_frontier(portfolio.frontier[key]; alpha = portfolio.alpha,
+                            beta = portfolio.beta, kappa = portfolio.kappa,
+                            mu = portfolio.mu, returns = portfolio.returns,
+                            t_factor = t_factor, kelly = kelly, rf = rf, rm = rm,
+                            theme = theme, kwargs_f = kwargs_f, kwargs_s = kwargs_s)
 end
 
-function plot_frontier_area(frontier; alpha::Real = 0.05, beta::Real = alpha,
-                            kappa::Real = 0.3, rm = :SD, t_factor = 252, kwargs_a = (;),
-                            kwargs_l = (;), show_sharpe = true)
+function PO.plot_frontier_area(frontier; alpha::Real = 0.05, beta::Real = alpha,
+                               kappa::Real = 0.3, rm = :SD, t_factor = 252, kwargs_a = (;),
+                               kwargs_l = (;), show_sharpe = true)
     risks = copy(frontier[:risk])
     assets = reshape(frontier[:weights][!, "tickers"], 1, :)
     weights = transpose(Matrix(frontier[:weights][!, 2:end]))
@@ -350,24 +372,25 @@ function plot_frontier_area(frontier; alpha::Real = 0.05, beta::Real = alpha,
 
     return plt
 end
-function plot_frontier_area(portfolio::AbstractPortfolio; rm = :SD, near_opt::Bool = false,
-                            t_factor = 252, kwargs_a = (;), kwargs_l = (;),
-                            show_sharpe = true)
+function PO.plot_frontier_area(portfolio::AbstractPortfolio; rm = :SD,
+                               near_opt::Bool = false, t_factor = 252, kwargs_a = (;),
+                               kwargs_l = (;), show_sharpe = true)
     key = if near_opt
         Symbol("Near_" * string(rm))
     else
         rm
     end
-    return plot_frontier_area(portfolio.frontier[key]; alpha = portfolio.alpha,
-                              beta = portfolio.beta, kappa = portfolio.kappa, rm = rm,
-                              t_factor = t_factor, kwargs_a = kwargs_a, kwargs_l = kwargs_l,
-                              show_sharpe = show_sharpe)
+    return PO.plot_frontier_area(portfolio.frontier[key]; alpha = portfolio.alpha,
+                                 beta = portfolio.beta, kappa = portfolio.kappa, rm = rm,
+                                 t_factor = t_factor, kwargs_a = kwargs_a,
+                                 kwargs_l = kwargs_l, show_sharpe = show_sharpe)
 end
 
-function plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
-                       returns::AbstractMatrix; alpha::Real = 0.05, kappa::Real = 0.3,
-                       solvers::Union{<:AbstractDict, Nothing} = nothing, theme = :Dark2_5,
-                       kwargs_ret = (;), kwargs_dd = (;), kwargs_risks = (;), kwargs = (;))
+function PO.plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
+                          returns::AbstractMatrix; alpha::Real = 0.05, kappa::Real = 0.3,
+                          solvers::Union{<:AbstractDict, Nothing} = nothing,
+                          theme = :Dark2_5, kwargs_ret = (;), kwargs_dd = (;),
+                          kwargs_risks = (;), kwargs = (;))
     ret = returns * w
 
     prices = copy(ret)
@@ -455,22 +478,22 @@ function plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
 
     return full_plt
 end
-function plot_drawdown(portfolio::AbstractPortfolio;
-                       type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
-                       theme = :Dark2_5, kwargs_ret = (;), kwargs_dd = (;),
-                       kwargs_risks = (;), kwargs = (;))
-    return plot_drawdown(portfolio.timestamps, portfolio.optimal[type].weights,
-                         portfolio.returns; alpha = portfolio.alpha,
-                         kappa = portfolio.kappa, solvers = portfolio.solvers,
-                         theme = theme, kwargs_ret = kwargs_ret, kwargs_dd = kwargs_dd,
-                         kwargs_risks = kwargs_risks, kwargs = kwargs)
+function PO.plot_drawdown(portfolio::AbstractPortfolio;
+                          type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                          theme = :Dark2_5, kwargs_ret = (;), kwargs_dd = (;),
+                          kwargs_risks = (;), kwargs = (;))
+    return PO.plot_drawdown(portfolio.timestamps, portfolio.optimal[type].weights,
+                            portfolio.returns; alpha = portfolio.alpha,
+                            kappa = portfolio.kappa, solvers = portfolio.solvers,
+                            theme = theme, kwargs_ret = kwargs_ret, kwargs_dd = kwargs_dd,
+                            kwargs_risks = kwargs_risks, kwargs = kwargs)
 end
 
-function plot_hist(w::AbstractVector, returns::AbstractMatrix; alpha_i::Real = 0.0001,
-                   alpha::Real = 0.05, a_sim::Int = 100, kappa::Real = 0.3,
-                   solvers::Union{<:AbstractDict, Nothing} = nothing,
-                   points::Integer = ceil(Int, 4 * sqrt(size(returns, 1))),
-                   theme = :Paired_10, kwargs_h = (;), kwargs_risks = (;))
+function PO.plot_hist(w::AbstractVector, returns::AbstractMatrix; alpha_i::Real = 0.0001,
+                      alpha::Real = 0.05, a_sim::Int = 100, kappa::Real = 0.3,
+                      solvers::Union{<:AbstractDict, Nothing} = nothing,
+                      points::Integer = ceil(Int, 4 * sqrt(size(returns, 1))),
+                      theme = :Paired_10, kwargs_h = (;), kwargs_risks = (;))
     ret = returns * w * 100
 
     mu = mean(ret)
@@ -530,21 +553,21 @@ function plot_hist(w::AbstractVector, returns::AbstractMatrix; alpha_i::Real = 0
 
     return plt
 end
-function plot_hist(portfolio::AbstractPortfolio;
-                   type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
-                   points::Integer = ceil(Int, 4 * sqrt(size(portfolio.returns, 1))),
-                   theme = :Paired_10, kwargs_h = (;), kwargs_risks = (;))
-    return plot_hist(portfolio.optimal[type].weights, portfolio.returns;
-                     alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
-                     a_sim = portfolio.a_sim, kappa = portfolio.kappa,
-                     solvers = portfolio.solvers, theme = theme, points = points,
-                     kwargs_h = kwargs_h, kwargs_risks = kwargs_risks)
+function PO.plot_hist(portfolio::AbstractPortfolio;
+                      type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                      points::Integer = ceil(Int, 4 * sqrt(size(portfolio.returns, 1))),
+                      theme = :Paired_10, kwargs_h = (;), kwargs_risks = (;))
+    return PO.plot_hist(portfolio.optimal[type].weights, portfolio.returns;
+                        alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
+                        a_sim = portfolio.a_sim, kappa = portfolio.kappa,
+                        solvers = portfolio.solvers, theme = theme, points = points,
+                        kwargs_h = kwargs_h, kwargs_risks = kwargs_risks)
 end
 
-function plot_range(w::AbstractVector, returns::AbstractMatrix; alpha_i::Real = 0.0001,
-                    alpha::Real = 0.05, a_sim::Int = 100, beta_i::Real = alpha_i,
-                    beta::Real = alpha, b_sim::Integer = a_sim, theme = :Set1_5,
-                    kwargs_h = (;), kwargs_risks = (;))
+function PO.plot_range(w::AbstractVector, returns::AbstractMatrix; alpha_i::Real = 0.0001,
+                       alpha::Real = 0.05, a_sim::Int = 100, beta_i::Real = alpha_i,
+                       beta::Real = alpha, b_sim::Integer = a_sim, theme = :Set1_5,
+                       kwargs_h = (;), kwargs_risks = (;))
     if isinf(beta)
         beta = alpha
     end
@@ -591,35 +614,26 @@ function plot_range(w::AbstractVector, returns::AbstractMatrix; alpha_i::Real = 
     return plt
 end
 
-function plot_range(portfolio::AbstractPortfolio;
-                    type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
-                    theme = :Set1_5, kwargs_h = (;), kwargs_risks = (;))
-    return plot_range(portfolio.optimal[type].weights, portfolio.returns;
-                      alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
-                      a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
-                      beta = portfolio.beta, b_sim = portfolio.b_sim, theme = theme,
-                      kwargs_h = kwargs_h, kwargs_risks = kwargs_risks)
+function PO.plot_range(portfolio::AbstractPortfolio;
+                       type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                       theme = :Set1_5, kwargs_h = (;), kwargs_risks = (;))
+    return PO.plot_range(portfolio.optimal[type].weights, portfolio.returns;
+                         alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
+                         a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
+                         beta = portfolio.beta, b_sim = portfolio.b_sim, theme = theme,
+                         kwargs_h = kwargs_h, kwargs_risks = kwargs_risks)
 end
 
 """
-```julia
+```
 plot_clusters()
 ```
 """
-function plot_clusters(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
-                       cluster_opt::ClusterOpt = ClusterOpt(;
-                                                            k = if isa(portfolio,
-                                                                       HCPortfolio)
-                                                                portfolio.k
-                                                            else
-                                                                0
-                                                            end,
-                                                            max_k = ceil(Int,
-                                                                         sqrt(size(portfolio.returns,
-                                                                                   2)))),
-                       cluster = true, show_clusters = true, theme_d = :Spectral,
-                       theme_h = :Spectral, theme_h_kwargs = (;), kwargs_d1 = (;),
-                       kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;), kwargs = (;))
+function PO.plot_clusters(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
+                          cluster_opt::ClusterOpt = ClusterOpt(;), cluster = true,
+                          show_clusters = true, theme_d = :Spectral, theme_h = :Spectral,
+                          theme_h_kwargs = (;), kwargs_d1 = (;), kwargs_d2 = (;),
+                          kwargs_h = (;), kwargs_l = (;), kwargs = (;))
     assets = portfolio.assets
     N = length(assets)
 
@@ -725,13 +739,13 @@ function plot_clusters(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;)
     return plt
 end
 
-function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
-                       cor_opt::CorOpt = CorOpt(;), linkage = :single,
-                       max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
-                       k = 0, dbht_method = :Unique, show_clusters = true,
-                       theme_d = :Spectral, theme_h = :Spectral, theme_h_kwargs = (;),
-                       kwargs_d1 = (;), kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;),
-                       kwargs = (;), cluster_func = x -> 2 .- (x .^ 2) / 2)
+function PO.plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
+                          cor_opt::CorOpt = CorOpt(;), linkage = :single,
+                          max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
+                          k = 0, dbht_method = :Unique, show_clusters = true,
+                          theme_d = :Spectral, theme_h = :Spectral, theme_h_kwargs = (;),
+                          kwargs_d1 = (;), kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;),
+                          kwargs = (;), cluster_func = x -> 2 .- (x .^ 2) / 2)
     @smart_assert(linkage ∈ LinkageMethods)
 
     N = length(assets)
@@ -839,23 +853,23 @@ function plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
 end
 
 """
-```julia
+```
 plot_dendrogram
 ```
 """
-function plot_dendrogram(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
-                         cluster_opt = opt::ClusterOpt = ClusterOpt(;
-                                                                    k = if isa(portfolio,
-                                                                               HCPortfolio)
-                                                                        portfolio.k
-                                                                    else
-                                                                        0
-                                                                    end,
-                                                                    max_k = ceil(Int,
-                                                                                 sqrt(size(portfolio.returns,
-                                                                                           2)))),
-                         show_clusters = true, cluster = true, theme = :Spectral,
-                         kwargs = (;))
+function PO.plot_dendrogram(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
+                            cluster_opt = opt::ClusterOpt = ClusterOpt(;
+                                                                       k = if isa(portfolio,
+                                                                                  HCPortfolio)
+                                                                           portfolio.k
+                                                                       else
+                                                                           0
+                                                                       end,
+                                                                       max_k = ceil(Int,
+                                                                                    sqrt(size(portfolio.returns,
+                                                                                              2)))),
+                            show_clusters = true, cluster = true, theme = :Spectral,
+                            kwargs = (;))
     assets = portfolio.assets
     N = length(assets)
 
@@ -924,20 +938,22 @@ end
 plot_network
 ```
 """
-function plot_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
-                      cluster_opt = opt::ClusterOpt = ClusterOpt(;
-                                                                 k = if isa(portfolio,
-                                                                            HCPortfolio)
-                                                                     portfolio.k
-                                                                 else
-                                                                     0
-                                                                 end,
-                                                                 max_k = ceil(Int,
-                                                                              sqrt(size(portfolio.returns,
-                                                                                        2)))),
-                      tree::GenericFunction = GenericFunction(; func = Graphs.kruskal_mst),
-                      allocation = false, type = isa(portfolio, HCPortfolio) ? :HRP : :Trad,
-                      theme = :Spectral, kwargs::NamedTuple = (;))
+function PO.plot_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
+                         cluster_opt = opt::ClusterOpt = ClusterOpt(;
+                                                                    k = if isa(portfolio,
+                                                                               HCPortfolio)
+                                                                        portfolio.k
+                                                                    else
+                                                                        0
+                                                                    end,
+                                                                    max_k = ceil(Int,
+                                                                                 sqrt(size(portfolio.returns,
+                                                                                           2)))),
+                         tree::GenericFunction = GenericFunction(;
+                                                                 func = Graphs.kruskal_mst),
+                         allocation = false,
+                         type = isa(portfolio, HCPortfolio) ? :HRP : :Trad,
+                         theme = :Spectral, kwargs::NamedTuple = (;))
     returns = portfolio.returns
     corr, dist = cor_dist_mtx(returns, cor_opt)
     N = size(corr, 2)
@@ -1011,22 +1027,22 @@ end
 plot_cluster_network
 ```
 """
-function plot_cluster_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
-                              cluster_opt = opt::ClusterOpt = ClusterOpt(;
-                                                                         k = if isa(portfolio,
-                                                                                    HCPortfolio)
-                                                                             portfolio.k
-                                                                         else
-                                                                             0
-                                                                         end,
-                                                                         max_k = ceil(Int,
-                                                                                      sqrt(size(portfolio.returns,
-                                                                                                2)))),
-                              tree::GenericFunction = GenericFunction(;
-                                                                      func = Graphs.kruskal_mst),
-                              allocation = false,
-                              type = isa(portfolio, HCPortfolio) ? :HRP : :Trad,
-                              theme = :Spectral, kwargs::NamedTuple = (;))
+function PO.plot_cluster_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
+                                 cluster_opt = opt::ClusterOpt = ClusterOpt(;
+                                                                            k = if isa(portfolio,
+                                                                                       HCPortfolio)
+                                                                                portfolio.k
+                                                                            else
+                                                                                0
+                                                                            end,
+                                                                            max_k = ceil(Int,
+                                                                                         sqrt(size(portfolio.returns,
+                                                                                                   2)))),
+                                 tree::GenericFunction = GenericFunction(;
+                                                                         func = Graphs.kruskal_mst),
+                                 allocation = false,
+                                 type = isa(portfolio, HCPortfolio) ? :HRP : :Trad,
+                                 theme = :Spectral, kwargs::NamedTuple = (;))
     returns = portfolio.returns
     corr, dist = cor_dist_mtx(returns, cor_opt)
     N = size(corr, 2)
@@ -1103,6 +1119,4 @@ function plot_cluster_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = Co
     return graphplot(G; kwargs...)
 end
 
-export plot_returns, plot_bar, plot_risk_contribution, plot_frontier_area, plot_drawdown,
-       plot_hist, plot_range, plot_frontier, plot_clusters, plot_dendrogram, plot_network,
-       plot_network, plot_cluster_network
+end
