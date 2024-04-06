@@ -1040,9 +1040,11 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
 
   - `S`: `N×N` non-negative similarity matrix, examples include:
 
-      + ``\\mathbf{S} = \\mathbf{C} + 1``: where ``\\mathbf{C}`` is a correlation matrix.
-      + ``\\mathbf{S} = 2 - \\dfrac{1}{2}\\mathbf{D}^{\\circ 2}``: where ``\\circ`` denotes elementwise squaring, and ``\\mathbf{D}`` is the dissimilarity matrix `D`.
-      + ``\\mathbf{S} = \\exp \\circ (-\\mathbf{D})``: where ``\\circ`` denotes elementwise exponentiation, and ``\\mathbf{D}`` is the dissimilarity matrix `D`.
+      + ``\\mathbf{S} = \\mathbf{C} + \\min \\lvert \\mathbf{C} \\rvert``.
+      + ``\\mathbf{S} = \\max \\left(\\mathbf{D}^{\\circ 2}\\right) - \\mathbf{D}^{\\circ 2}``.
+      + ``\\mathbf{S} = \\exp \\circ (-\\mathbf{D})``.
+
+    Where ``\\mathbf{C}`` is the correlation matrix, ``\\mathbf{D}`` the dissimilarity matrix `D`, and ``\\circ`` the Hadamard (elementwise) operator.
   - `branchorder`: is a parameter for ordering the final dendrogram's branches. The choices are defined by [`BranchOrderTypes`](@ref).
   - `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethods`](@ref).
 

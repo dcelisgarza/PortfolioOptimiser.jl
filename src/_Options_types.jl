@@ -1070,10 +1070,6 @@ end
 function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
                     dbht_method::Symbol = :Unique, max_k::Integer = 0, k::Integer = 0,
                     genfunc::GenericFunction = GenericFunction(;
-                                                               #    func = (corr, dist) -> 2 .-
-                                                               #                           (dist .^
-                                                               #                            2) /
-                                                               #                           2
                                                                func = (corr, dist) -> exp.(-dist)))
     @smart_assert(linkage ∈ LinkageMethods)
     @smart_assert(branchorder ∈ BranchOrderTypes)
