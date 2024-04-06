@@ -462,7 +462,7 @@ end
 """
 ```
 @kwdef mutable struct DistOpt
-    dist::Distances.PreMetric = Distances.Euclidean()
+    method::Distances.PreMetric = Distances.Euclidean()
     args::Tuple = ()
 end
 ```
@@ -471,15 +471,15 @@ Structure and keyword constructor for storing parameters for the :Distance metho
 
 # Inputs
 
-  - `metric`: metric from [Distances.jl](https://github.com/JuliaStats/Distances.jl).
+  - `method`: distance type from [Distances.jl](https://github.com/JuliaStats/Distances.jl).
   - `args`: args for the pairwise distance calculation.
 """
 mutable struct DistOpt
-    dist::Distances.PreMetric
+    method::Distances.PreMetric
     args::Tuple
 end
-function DistOpt(; dist::Distances.PreMetric = Distances.Euclidean(), args::Tuple = ())
-    return DistOpt(dist, args)
+function DistOpt(; method::Distances.PreMetric = Distances.Euclidean(), args::Tuple = ())
+    return DistOpt(method, args)
 end
 
 """

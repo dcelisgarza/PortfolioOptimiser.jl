@@ -138,11 +138,11 @@ function cordistance(v1::AbstractVector, v2::AbstractVector, opt::DistOpt = Dist
 
     N2 = N^2
 
-    dist = opt.dist
+    method = opt.method
     args = opt.args
 
-    a = pairwise(dist, v1, args...)
-    b = pairwise(dist, v2, args...)
+    a = pairwise(method, v1, args...)
+    b = pairwise(method, v2, args...)
     A = a .- mean(a; dims = 1) .- mean(a; dims = 2) .+ mean(a)
     B = b .- mean(b; dims = 1) .- mean(b; dims = 2) .+ mean(b)
 
@@ -1518,23 +1518,23 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
         end
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :Spearman
         corr = corspearman(returns)
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :Kendall
         corr = corkendall(returns)
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method ∈ (:Abs_Pearson, :Abs_Semi_Pearson)
         estimation = opt.estimation
         estimator = estimation.estimator
@@ -1560,79 +1560,79 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
         end
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :Abs_Spearman
         corr = abs.(corspearman(returns))
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :Abs_Kendall
         corr = abs.(corkendall(returns))
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :Gerber0
         corr = gerber0(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :Gerber1
         corr = gerber1(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :Gerber2
         corr = gerber2(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :SB0
         corr = sb0(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :SB1
         corr = sb1(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :Gerber_SB0
         corr = gerbersb0(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :Gerber_SB1
         corr = gerbersb1(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :Distance
         corr = cordistance(returns, opt.dist)
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
-        metric = opt.dist.metric
+        dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = pairwise(metric, 1 .- corr, dargs...)
+        dist = pairwise(dist_method, 1 .- corr, dargs...)
     elseif method == :Mutual_Info
         corr, dist = mut_var_info_mtx(returns, opt.estimation.bins_info)
     elseif method == :Tail
