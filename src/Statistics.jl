@@ -197,12 +197,16 @@ function _gerber0_norm(x, mean_vec, std_vec, threshold)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     @inbounds for j ∈ 1:N
+        muj = mean_vec[j]
+        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = 0
             pos = 0
+            mui = mean_vec[i]
+            sigmai = std_vec[i]
             for k ∈ 1:T
-                xi = (x[k, i] - mean_vec[i]) / std_vec[i]
-                xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                xi = (x[k, i] - mui) / sigmai
+                xj = (x[k, j] - muj) / sigmaj
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
@@ -230,14 +234,16 @@ function _gerber0(x, std_vec, threshold)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     @inbounds for j ∈ 1:N
+        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = 0
             pos = 0
+            sigmai = std_vec[i]
             for k ∈ 1:T
                 xi = x[k, i]
                 xj = x[k, j]
-                ti = threshold * std_vec[i]
-                tj = threshold * std_vec[j]
+                ti = threshold * sigmai
+                tj = threshold * sigmaj
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
                     pos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
@@ -291,13 +297,17 @@ function _gerber1_norm(x, mean_vec, std_vec, threshold)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
+        muj = mean_vec[j]
+        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = 0
             pos = 0
             nn = 0
+            mui = mean_vec[i]
+            sigmai = std_vec[i]
             for k ∈ 1:T
-                xi = (x[k, i] - mean_vec[i]) / std_vec[i]
-                xj = (x[k, j] - mean_vec[j]) / std_vec[j]
+                xi = (x[k, i] - mui) / sigmai
+                xj = (x[k, j] - muj) / sigmaj
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
@@ -326,15 +336,17 @@ function _gerber1(x, std_vec, threshold)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
+        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = 0
             pos = 0
             nn = 0
+            sigmai = std_vec[i]
             for k ∈ 1:T
                 xi = x[k, i]
                 xj = x[k, j]
-                ti = threshold * std_vec[i]
-                tj = threshold * std_vec[j]
+                ti = threshold * sigmai
+                tj = threshold * sigmaj
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
                     pos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
@@ -485,14 +497,16 @@ function _sb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
+        muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
+            mui = mean_vec[i]
             sigmai = std_vec[i]
             for k ∈ 1:T
-                xi = (x[k, i] - mean_vec[i]) / sigmai
-                xj = (x[k, j] - mean_vec[j]) / sigmaj
+                xi = (x[k, i] - mui) / sigmai
+                xj = (x[k, j] - muj) / sigmaj
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
@@ -522,13 +536,13 @@ function _sb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     @inbounds for j ∈ 1:N
-        sigmaj = std_vec[j]
         muj = mean_vec[j]
+        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
-            sigmai = std_vec[i]
             mui = mean_vec[i]
+            sigmai = std_vec[i]
             for k ∈ 1:T
                 xi = x[k, i]
                 xj = x[k, j]
@@ -595,15 +609,17 @@ function _sb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     @inbounds for j ∈ 1:N
+        muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
-            neg = 0
-            pos = 0
-            nn = 0
+            neg = zero(eltype(x))
+            pos = zero(eltype(x))
+            nn = zero(eltype(x))
+            mui = mean_vec[i]
             sigmai = std_vec[i]
             for k ∈ 1:T
-                xi = (x[k, i] - mean_vec[i]) / sigmai
-                xj = (x[k, j] - mean_vec[j]) / sigmaj
+                xi = (x[k, i] - mui) / sigmai
+                xj = (x[k, j] - muj) / sigmaj
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
@@ -635,14 +651,14 @@ function _sb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
-        sigmaj = std_vec[j]
         muj = mean_vec[j]
+        sigmaj = std_vec[j]
         for i ∈ 1:j
-            neg = 0
-            pos = 0
-            nn = 0
-            sigmai = std_vec[i]
+            neg = zero(eltype(x))
+            pos = zero(eltype(x))
+            nn = zero(eltype(x))
             mui = mean_vec[i]
+            sigmai = std_vec[i]
             for k ∈ 1:T
                 xi = x[k, i]
                 xj = x[k, j]
@@ -711,16 +727,18 @@ function _gerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     @inbounds for j ∈ 1:N
+        muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
             cneg = 0
             cpos = 0
+            mui = mean_vec[i]
             sigmai = std_vec[i]
             for k ∈ 1:T
-                xi = (x[k, i] - mean_vec[i]) / sigmai
-                xj = (x[k, j] - mean_vec[j]) / sigmaj
+                xi = (x[k, i] - mui) / sigmai
+                xj = (x[k, j] - muj) / sigmaj
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
@@ -754,15 +772,15 @@ function _gerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     @inbounds for j ∈ 1:N
-        sigmaj = std_vec[j]
         muj = mean_vec[j]
+        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
             cneg = 0
             cpos = 0
-            sigmai = std_vec[i]
             mui = mean_vec[i]
+            sigmai = std_vec[i]
             for k ∈ 1:T
                 xi = x[k, i]
                 xj = x[k, j]
@@ -832,6 +850,7 @@ function _gerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
+        muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
@@ -840,10 +859,11 @@ function _gerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
             cneg = 0
             cpos = 0
             cnn = 0
+            mui = mean_vec[i]
             sigmai = std_vec[i]
             for k ∈ 1:T
-                xi = (x[k, i] - mean_vec[i]) / sigmai
-                xj = (x[k, j] - mean_vec[j]) / sigmaj
+                xi = (x[k, i] - mui) / sigmai
+                xj = (x[k, j] - muj) / sigmaj
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
@@ -881,8 +901,8 @@ function _gerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
-        sigmaj = std_vec[j]
         muj = mean_vec[j]
+        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
@@ -890,8 +910,8 @@ function _gerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
             cneg = 0
             cpos = 0
             cnn = 0
-            sigmai = std_vec[i]
             mui = mean_vec[i]
+            sigmai = std_vec[i]
             for k ∈ 1:T
                 xi = x[k, i]
                 xj = x[k, j]
