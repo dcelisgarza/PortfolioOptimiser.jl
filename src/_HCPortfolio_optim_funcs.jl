@@ -138,10 +138,10 @@ end
 
 """
 ```julia
-_hcluster_choice(dist, cluster_opt::ClusterOpt)
+_hcluster_choice(corr, dist, cluster_opt::ClusterOpt)
 ```
 """
-function _hcluster_choice(dist, cluster_opt::ClusterOpt)
+function _hcluster_choice(corr, dist, cluster_opt::ClusterOpt)
     linkage = cluster_opt.linkage
     branchorder = cluster_opt.branchorder
     max_k = cluster_opt.max_k
@@ -151,7 +151,7 @@ function _hcluster_choice(dist, cluster_opt::ClusterOpt)
         func = cluster_opt.genfunc.func
         args = cluster_opt.genfunc.args
         kwargs = cluster_opt.genfunc.kwargs
-        corr = func(dist, args...; kwargs...)
+        corr = func(corr, dist, args...; kwargs...)
 
         missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
                                                                                  branchorder = branchorder,
@@ -173,9 +173,10 @@ _hierarchical_clustering
 """
 function _hierarchical_clustering(portfolio::HCPortfolio,
                                   cluster_opt::ClusterOpt = ClusterOpt(;))
+    corr = portfolio.cor
     dist = portfolio.dist
 
-    clustering, k = _hcluster_choice(dist, cluster_opt)
+    clustering, k = _hcluster_choice(corr, dist, cluster_opt)
 
     return clustering, k
 end

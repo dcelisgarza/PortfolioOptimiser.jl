@@ -461,6 +461,29 @@ end
 
 """
 ```
+@kwdef mutable struct DistOpt
+    dist::Distances.PreMetric = Distances.Euclidean()
+    args::Tuple = ()
+end
+```
+
+Structure and keyword constructor for storing parameters for the :Distance method from [`CorMethods`](@ref). This is part of [`CorOpt`](@ref), and as such some of these are only relevant when its `method` field has a specific value.
+
+# Inputs
+
+  - `metric`: metric from [Distances.jl](https://github.com/JuliaStats/Distances.jl).
+  - `args`: args for the pairwise distance calculation.
+"""
+mutable struct DistOpt
+    dist::Distances.PreMetric
+    args::Tuple
+end
+function DistOpt(; dist::Distances.PreMetric = Distances.Euclidean(), args::Tuple = ())
+    return DistOpt(dist, args)
+end
+
+"""
+```
 @kwdef mutable struct CorEstOpt{T1 <: Real, T2 <: AbstractMatrix{<:Real},
                                 T3 <: AbstractMatrix{<:Real}, T4 <: AbstractMatrix{<:Real}}
     estimator::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
@@ -594,6 +617,7 @@ end
     estimation::CorEstOpt = CorEstOpt(;)
     gerber::GerberOpt = GerberOpt(;)
     sb::SBOpt = SBOpt(;)
+    dist::DistOpt = DistOpt(;)
     denoise::DenoiseOpt = DenoiseOpt(;)
     posdef::PosdefFixOpt = PosdefFixOpt(;)
     jlogo::Bool = false
@@ -610,6 +634,7 @@ Structure and keyword constructor for computing covariance matrices.
   - `estimation`: covariance estimation options [`CorEstOpt`](@ref).
   - `gerber`: Gerber covariance options [`GerberOpt`](@ref).
   - `sb`: options for Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
+  - `dist`: options for computing the `:Distance` correlation matrix [`DistOpt`](@ref).
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
   - `jlogo`:
@@ -626,6 +651,8 @@ mutable struct CorOpt
     gerber::GerberOpt
     # SB
     sb::SBOpt
+    # Dist
+    dist::DistOpt
     # Denoise
     denoise::DenoiseOpt
     # Posdef fix
@@ -637,11 +664,12 @@ mutable struct CorOpt
 end
 function CorOpt(; method::Symbol = :Pearson, estimation::CorEstOpt = CorEstOpt(;),
                 gerber::GerberOpt = GerberOpt(;), sb::SBOpt = SBOpt(;),
-                denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
-                jlogo::Bool = false, uplo::Symbol = :U)
+                dist::DistOpt = DistOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
+                posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,
+                uplo::Symbol = :U)
     @smart_assert(method ∈ CorMethods)
 
-    return CorOpt(method, estimation, gerber, sb, denoise, posdef, jlogo, uplo)
+    return CorOpt(method, estimation, gerber, sb, dist, denoise, posdef, jlogo, uplo)
 end
 function Base.setproperty!(obj::CorOpt, sym::Symbol, val)
     if sym == :method
@@ -1009,7 +1037,7 @@ end
     dbht_method::Symbol = :Unique
     max_k::T1 = 0
     k::T2 = 0
-    genfunc::GenericFunction = GenericFunction(; func = x -> 2 .- (x .^ 2) / 2)
+    genfunc::GenericFunction = GenericFunction(; func = (corr, dist) -> 2 .- (dist .^ 2) / 2)
 end
 ```
 
@@ -1027,7 +1055,7 @@ Structure and keyword constructor for clustering options.
   - `k`: number of clusters to cut the sample into.
 
       + `iszero(k)`: computed by [`_two_diff_gap_stat`](@ref) using the dendrogram heights.
-  - `genfunc`:
+  - `genfunc`: note that `corr` and `dist` correspond to `portfolio.cor`, `portfolio.dist`. This is useful when defining custom functions, the first argument has to be the correlation matrix and the second the distance matrix.
 
       + `method == :DBHT`: function for computing a non-negative distance matrix from the correlation matrix when as per [`DBHTs`](@ref).
 """
@@ -1042,7 +1070,10 @@ end
 function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
                     dbht_method::Symbol = :Unique, max_k::Integer = 0, k::Integer = 0,
                     genfunc::GenericFunction = GenericFunction(;
-                                                               func = x -> 2 .- (x .^ 2) / 2))
+                                                               func = (corr, dist) -> 2 .-
+                                                                                      (dist .^
+                                                                                       2) /
+                                                                                      2))
     @smart_assert(linkage ∈ LinkageMethods)
     @smart_assert(branchorder ∈ BranchOrderTypes)
     @smart_assert(dbht_method ∈ DBHTRootMethods)

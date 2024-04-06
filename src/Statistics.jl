@@ -132,14 +132,17 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
     return Matrix(Symmetric(mut_mtx, :U)), Matrix(Symmetric(var_mtx, :U))
 end
 
-function cordistance(v1::AbstractVector, v2::AbstractVector)
+function cordistance(v1::AbstractVector, v2::AbstractVector, opt::DistOpt = DistOpt(;))
     N = length(v1)
     @smart_assert(N == length(v2) && N > 1)
 
     N2 = N^2
 
-    a = pairwise(Euclidean(), v1)
-    b = pairwise(Euclidean(), v2)
+    dist = opt.dist
+    args = opt.args
+
+    a = pairwise(dist, v1, args...)
+    b = pairwise(dist, v2, args...)
     A = a .- mean(a; dims = 1) .- mean(a; dims = 2) .+ mean(a)
     B = b .- mean(b; dims = 1) .- mean(b; dims = 2) .+ mean(b)
 
@@ -152,14 +155,14 @@ function cordistance(v1::AbstractVector, v2::AbstractVector)
     return val
 end
 
-function cordistance(x::AbstractMatrix)
+function cordistance(x::AbstractMatrix, opt::DistOpt = DistOpt(;))
     N = size(x, 2)
 
     mtx = Matrix{eltype(x)}(undef, N, N)
     for j ∈ 1:N
         xj = x[:, j]
         for i ∈ 1:j
-            mtx[i, j] = cordistance(x[:, i], xj)
+            mtx[i, j] = cordistance(x[:, i], xj, opt)
         end
     end
 
@@ -1585,7 +1588,7 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
     elseif method == :Distance
-        corr = cordistance(returns)
+        corr = cordistance(returns, opt.dist)
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
         dist = sqrt.(clamp!(1 .- corr, 0, 1))
     elseif method == :Mutual_Info
@@ -3223,7 +3226,7 @@ _hierarchical_clustering
 function _hierarchical_clustering(returns::AbstractMatrix, cor_opt::CorOpt = CorOpt(;),
                                   cluster_opt::ClusterOpt = ClusterOpt(;))
     corr, dist = cor_dist_mtx(returns, cor_opt)
-    clustering, k = _hcluster_choice(dist, cluster_opt)
+    clustering, k = _hcluster_choice(corr, dist, cluster_opt)
 
     return clustering, k, corr, dist
 end
