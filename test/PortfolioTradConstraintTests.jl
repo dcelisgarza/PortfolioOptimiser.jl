@@ -1,6 +1,14 @@
 using CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra, OrderedCollections,
       Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries, GLPK
 
+import Distances: pairwise, UnionMetric
+
+struct POCorDist <: Distances.UnionMetric end
+function Distances.pairwise(::POCorDist, i, mtx)
+    return sqrt.(clamp!((1 .- mtx) / 2, 0, 1))
+end
+dbht_d(corr, dist) = 2 .- (dist .^ 2) / 2
+
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
@@ -640,10 +648,14 @@ end
     rm = :SD
     obj = :Min_Risk
     opt = OptimiseOpt(; obj = obj, rm = rm, l = l, rf = rf)
-    CV = centrality_vector(portfolio, CorOpt(;))
-    B_1 = connection_matrix(portfolio, CorOpt(;); method = :MST, steps = 1)
-    L_A = cluster_matrix(portfolio; cor_opt = CorOpt(;),
-                         cluster_opt = ClusterOpt(; linkage = :ward))
+    CV = centrality_vector(portfolio, CorOpt(; dist = DistOpt(; method = POCorDist())))
+    B_1 = connection_matrix(portfolio, CorOpt(; dist = DistOpt(; method = POCorDist()));
+                            method = :MST, steps = 1)
+    L_A = cluster_matrix(portfolio;
+                         cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                         cluster_opt = ClusterOpt(; linkage = :ward,
+                                                  genfunc = GenericFunction(;
+                                                                            func = dbht_d)))
 
     w1 = optimise!(portfolio, opt)
 

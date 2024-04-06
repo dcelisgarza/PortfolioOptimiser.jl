@@ -1322,4 +1322,4 @@ end
 
 export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
        CorOpt, CorEstOpt, WCOpt, KurtOpt, KurtEstOpt, MVROpt, LoadingsOpt, FactorOpt, BLOpt,
-       ClusterOpt, OptimiseOpt, SBOpt, AllocOpt
+       ClusterOpt, OptimiseOpt, SBOpt, AllocOpt, DistOpt
