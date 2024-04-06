@@ -213,7 +213,7 @@ function _gerber0_norm(x, mean_vec, std_vec, threshold)
             end
             den = (pos + neg)
             mtx[i, j] = if !iszero(den)
-                clamp((pos - neg) / den, -one(eltype(x)), one(eltype(x)))
+                (pos - neg) / den
             else
                 zero(eltype(x))
             end
@@ -246,7 +246,7 @@ function _gerber0(x, std_vec, threshold)
             end
             den = (pos + neg)
             mtx[i, j] = if !iszero(den)
-                clamp((pos - neg) / den, -one(eltype(x)), one(eltype(x)))
+                (pos - neg) / den
             else
                 zero(eltype(x))
             end
@@ -310,7 +310,7 @@ function _gerber1_norm(x, mean_vec, std_vec, threshold)
             end
             den = (T - nn)
             mtx[i, j] = if !iszero(den)
-                clamp((pos - neg) / den, -one(eltype(x)), one(eltype(x)))
+                (pos - neg) / den
             else
                 zero(eltype(x))
             end
@@ -345,7 +345,7 @@ function _gerber1(x, std_vec, threshold)
             end
             den = (T - nn)
             mtx[i, j] = if !iszero(den)
-                clamp((pos - neg) / den, -one(eltype(x)), one(eltype(x)))
+                (pos - neg) / den
             else
                 zero(eltype(x))
             end
@@ -485,27 +485,27 @@ function _sb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
-        sigmaj = !iszero(std_vec[j]) ? std_vec[j] : eps(eltype(x))
+        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
-            sigmai = !iszero(std_vec[i]) ? std_vec[i] : eps(eltype(x))
+            sigmai = std_vec[i]
             for k ∈ 1:T
                 xi = (x[k, i] - mean_vec[i]) / sigmai
                 xj = (x[k, j] - mean_vec[j]) / sigmaj
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += _sb_delta(xi, xj, zero(threshold), zero(threshold),
+                    pos += _sb_delta(xi, xj, zero(eltype(x)), zero(eltype(x)),
                                      one(eltype(x)), one(eltype(x)), c1, c2, c3, n)
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += _sb_delta(xi, xj, zero(threshold), zero(threshold),
+                    neg += _sb_delta(xi, xj, zero(eltype(x)), zero(eltype(x)),
                                      one(eltype(x)), one(eltype(x)), c1, c2, c3, n)
                 end
             end
             den = (pos + neg)
             mtx[i, j] = if !iszero(den)
-                clamp((pos - neg) / den, -one(eltype(x)), one(eltype(x)))
+                (pos - neg) / den
             else
                 zero(eltype(x))
             end
@@ -522,12 +522,12 @@ function _sb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     @inbounds for j ∈ 1:N
-        sigmaj = !iszero(std_vec[j]) ? std_vec[j] : eps(eltype(x))
+        sigmaj = std_vec[j]
         muj = mean_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
-            sigmai = !iszero(std_vec[i]) ? std_vec[i] : eps(eltype(x))
+            sigmai = std_vec[i]
             mui = mean_vec[i]
             for k ∈ 1:T
                 xi = x[k, i]
@@ -542,7 +542,7 @@ function _sb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
             end
             den = (pos + neg)
             mtx[i, j] = if !iszero(den)
-                clamp((pos - neg) / den, -one(eltype(x)), one(eltype(x)))
+                (pos - neg) / den
             else
                 zero(eltype(x))
             end
@@ -595,31 +595,31 @@ function _sb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     @inbounds for j ∈ 1:N
-        sigmaj = !iszero(std_vec[j]) ? std_vec[j] : eps(eltype(x))
+        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = 0
             pos = 0
             nn = 0
-            sigmai = !iszero(std_vec[i]) ? std_vec[i] : eps(eltype(x))
+            sigmai = std_vec[i]
             for k ∈ 1:T
                 xi = (x[k, i] - mean_vec[i]) / sigmai
                 xj = (x[k, j] - mean_vec[j]) / sigmaj
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += _sb_delta(xi, xj, zero(threshold), zero(threshold),
+                    pos += _sb_delta(xi, xj, zero(eltype(x)), zero(eltype(x)),
                                      one(eltype(x)), one(eltype(x)), c1, c2, c3, n)
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += _sb_delta(xi, xj, zero(threshold), zero(threshold),
+                    neg += _sb_delta(xi, xj, zero(eltype(x)), zero(eltype(x)),
                                      one(eltype(x)), one(eltype(x)), c1, c2, c3, n)
                 elseif abs(xi) < ti && abs(xj) < tj
-                    nn += _sb_delta(xi, xj, zero(threshold), zero(threshold),
+                    nn += _sb_delta(xi, xj, zero(eltype(x)), zero(eltype(x)),
                                     one(eltype(x)), one(eltype(x)), c1, c2, c3, n)
                 end
             end
             den = (pos + neg + nn)
             mtx[i, j] = if !iszero(den)
-                clamp((pos - neg) / den, -one(eltype(x)), one(eltype(x)))
+                (pos - neg) / den
             else
                 zero(eltype(x))
             end
@@ -635,13 +635,13 @@ function _sb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
-        sigmaj = !iszero(std_vec[j]) ? std_vec[j] : eps(eltype(x))
+        sigmaj = std_vec[j]
         muj = mean_vec[j]
         for i ∈ 1:j
             neg = 0
             pos = 0
             nn = 0
-            sigmai = !iszero(std_vec[i]) ? std_vec[i] : eps(eltype(x))
+            sigmai = std_vec[i]
             mui = mean_vec[i]
             for k ∈ 1:T
                 xi = x[k, i]
@@ -658,7 +658,7 @@ function _sb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
             end
             den = (pos + neg + nn)
             mtx[i, j] = if !iszero(den)
-                clamp((pos - neg) / den, -one(eltype(x)), one(eltype(x)))
+                (pos - neg) / den
             else
                 zero(eltype(x))
             end
@@ -711,24 +711,24 @@ function _gerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     @inbounds for j ∈ 1:N
-        sigmaj = !iszero(std_vec[j]) ? std_vec[j] : eps(eltype(x))
+        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
             cneg = 0
             cpos = 0
-            sigmai = !iszero(std_vec[i]) ? std_vec[i] : eps(eltype(x))
+            sigmai = std_vec[i]
             for k ∈ 1:T
                 xi = (x[k, i] - mean_vec[i]) / sigmai
                 xj = (x[k, j] - mean_vec[j]) / sigmaj
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += _sb_delta(xi, xj, zero(threshold), zero(threshold),
+                    pos += _sb_delta(xi, xj, zero(eltype(x)), zero(eltype(x)),
                                      one(eltype(x)), one(eltype(x)), c1, c2, c3, n)
                     cpos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += _sb_delta(xi, xj, zero(threshold), zero(threshold),
+                    neg += _sb_delta(xi, xj, zero(eltype(x)), zero(eltype(x)),
                                      one(eltype(x)), one(eltype(x)), c1, c2, c3, n)
                     cneg += 1
                 end
@@ -737,7 +737,7 @@ function _gerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
             tneg = neg * cneg
             den = (tpos + tneg)
             mtx[i, j] = if !iszero(den)
-                clamp((tpos - tneg) / den, -one(eltype(x)), one(eltype(x)))
+                (tpos - tneg) / den
             else
                 zero(eltype(x))
             end
@@ -754,14 +754,14 @@ function _gerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
     @inbounds for j ∈ 1:N
-        sigmaj = !iszero(std_vec[j]) ? std_vec[j] : eps(eltype(x))
+        sigmaj = std_vec[j]
         muj = mean_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
             cneg = 0
             cpos = 0
-            sigmai = !iszero(std_vec[i]) ? std_vec[i] : eps(eltype(x))
+            sigmai = std_vec[i]
             mui = mean_vec[i]
             for k ∈ 1:T
                 xi = x[k, i]
@@ -780,7 +780,7 @@ function _gerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
             tneg = neg * cneg
             den = (tpos + tneg)
             mtx[i, j] = if !iszero(den)
-                clamp((tpos - tneg) / den, -one(eltype(x)), one(eltype(x)))
+                (tpos - tneg) / den
             else
                 zero(eltype(x))
             end
@@ -832,7 +832,7 @@ function _gerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
-        sigmaj = !iszero(std_vec[j]) ? std_vec[j] : eps(eltype(x))
+        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
             pos = zero(eltype(x))
@@ -840,22 +840,22 @@ function _gerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
             cneg = 0
             cpos = 0
             cnn = 0
-            sigmai = !iszero(std_vec[i]) ? std_vec[i] : eps(eltype(x))
+            sigmai = std_vec[i]
             for k ∈ 1:T
                 xi = (x[k, i] - mean_vec[i]) / sigmai
                 xj = (x[k, j] - mean_vec[j]) / sigmaj
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += _sb_delta(xi, xj, zero(threshold), zero(threshold),
+                    pos += _sb_delta(xi, xj, zero(eltype(x)), zero(eltype(x)),
                                      one(eltype(x)), one(eltype(x)), c1, c2, c3, n)
                     cpos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += _sb_delta(xi, xj, zero(threshold), zero(threshold),
+                    neg += _sb_delta(xi, xj, zero(eltype(x)), zero(eltype(x)),
                                      one(eltype(x)), one(eltype(x)), c1, c2, c3, n)
                     cneg += 1
                 elseif abs(xi) < ti && abs(xj) < tj
-                    nn += _sb_delta(xi, xj, zero(threshold), zero(threshold),
+                    nn += _sb_delta(xi, xj, zero(eltype(x)), zero(eltype(x)),
                                     one(eltype(x)), one(eltype(x)), c1, c2, c3, n)
                     cnn += 1
                 end
@@ -865,7 +865,7 @@ function _gerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
             tnn = nn * cnn
             den = (tpos + tneg + tnn)
             mtx[i, j] = if !iszero(den)
-                clamp((tpos - tneg) / den, -one(eltype(x)), one(eltype(x)))
+                (tpos - tneg) / den
             else
                 zero(eltype(x))
             end
@@ -881,7 +881,7 @@ function _gerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     T, N = size(x)
     mtx = Matrix{eltype(x)}(undef, N, N)
     @inbounds for j ∈ 1:N
-        sigmaj = !iszero(std_vec[j]) ? std_vec[j] : eps(eltype(x))
+        sigmaj = std_vec[j]
         muj = mean_vec[j]
         for i ∈ 1:j
             neg = zero(eltype(x))
@@ -890,7 +890,7 @@ function _gerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
             cneg = 0
             cpos = 0
             cnn = 0
-            sigmai = !iszero(std_vec[i]) ? std_vec[i] : eps(eltype(x))
+            sigmai = std_vec[i]
             mui = mean_vec[i]
             for k ∈ 1:T
                 xi = x[k, i]
@@ -913,7 +913,7 @@ function _gerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
             tnn = nn * cnn
             den = (tpos + tneg + tnn)
             mtx[i, j] = if !iszero(den)
-                clamp((tpos - tneg) / den, -one(eltype(x)), one(eltype(x)))
+                (tpos - tneg) / den
             else
                 zero(eltype(x))
             end
