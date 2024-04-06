@@ -593,33 +593,32 @@ function turnover_constraints(constraints::DataFrame, asset_sets::DataFrame)
     return turnover
 end
 
-function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
-                           method::Symbol = :MST, steps::Integer = 1,
-                           tree::GenericFunction = GenericFunction(;
-                                                                   func = Graphs.kruskal_mst),
-                           tmfg_func::GenericFunction = GenericFunction(;
-                                                                        func = (corr, dist) -> exp.(-dist)))
-    @smart_assert(method ∈ GraphMethods)
+function connection_matrix(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
+                           network_opt::NetworkOpt = NetworkOpt(;))
+    corr, dist = cor_dist_mtx(returns, cor_opt)
 
-    corr, dist = cor_dist_mtx(returns, opt)
+    method = network_opt.method
     A = if method == :TMFG
-        func = tmfg_func.func
-        args = tmfg_func.args
-        kwargs = tmfg_func.kwargs
+        tmfg_genfunc = network_opt.tmfg_genfunc
+        func = tmfg_genfunc.func
+        args = tmfg_genfunc.args
+        kwargs = tmfg_genfunc.kwargs
         corr = func(corr, dist, args...; kwargs...)
 
         Rpm = PMFG_T2s(corr)[1]
         adjacency_matrix(SimpleGraph(Rpm))
     else
-        func = tree.func
-        args = tree.args
-        kwargs = tree.kwargs
+        tree_genfunc = network_opt.tree_genfunc
+        func = tree_genfunc.func
+        args = tree_genfunc.args
+        kwargs = tree_genfunc.kwargs
         G = SimpleWeightedGraph(dist)
         adjacency_matrix(SimpleGraph(G[func(G, args...; kwargs...)]))
     end
 
     A_p = similar(Matrix(A))
     fill!(A_p, zero(eltype(A_p)))
+    steps = network_opt.steps
     for i ∈ 0:steps
         A_p .+= A^i
     end
@@ -629,34 +628,31 @@ function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
     return A_p
 end
 
-function connection_matrix(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
-                           method::Symbol = :MST, steps::Integer = 1)
-    return connection_matrix(portfolio.returns, opt; method = method, steps = steps)
+function connection_matrix(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
+                           network_opt::NetworkOpt = NetworkOpt(;))
+    return connection_matrix(portfolio.returns; cor_opt = cor_opt,
+                             network_opt = network_opt)
 end
 
-function centrality_vector(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
-                           centrality::GenericFunction = GenericFunction(;
-                                                                         func = Graphs.degree_centrality),
-                           method::Symbol = :MST, steps::Integer = 1)
-    @smart_assert(method ∈ GraphMethods)
-
-    Adj = connection_matrix(returns, opt; method = method, steps = steps)
+function centrality_vector(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
+                           network_opt::NetworkOpt = NetworkOpt(;))
+    Adj = connection_matrix(returns; cor_opt = cor_opt, network_opt = network_opt)
     G = SimpleGraph(Adj)
 
-    func = centrality.func
-    args = centrality.args
-    kwargs = centrality.kwargs
+    cent_genfunc = network_opt.cent_genfunc
+
+    func = cent_genfunc.func
+    args = cent_genfunc.args
+    kwargs = cent_genfunc.kwargs
     V_c = func(G, args...; kwargs...)
 
     return V_c
 end
 
-function centrality_vector(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
-                           centrality::GenericFunction = GenericFunction(;
-                                                                         func = Graphs.degree_centrality),
-                           method::Symbol = :MST, steps::Integer = 1)
-    return centrality_vector(portfolio.returns, opt; centrality = centrality,
-                             method = method, steps = steps)
+function centrality_vector(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
+                           network_opt::NetworkOpt = NetworkOpt(;))
+    return centrality_vector(portfolio.returns; cor_opt = cor_opt,
+                             network_opt = network_opt)
 end
 
 """
@@ -665,10 +661,7 @@ cluster_matrix
 ```
 """
 function cluster_matrix(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
-                        cluster_opt::ClusterOpt = ClusterOpt(;
-                                                             max_k = ceil(Int,
-                                                                          sqrt(size(returns,
-                                                                                    2)))))
+                        cluster_opt::ClusterOpt = ClusterOpt(;))
     clusters, missing, missing = cluster_assets(returns; cor_opt = cor_opt,
                                                 cluster_opt = cluster_opt)
 
@@ -693,10 +686,7 @@ cluster_matrix
 ```
 """
 function cluster_matrix(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
-                        cluster_opt::ClusterOpt = ClusterOpt(;
-                                                             max_k = ceil(Int,
-                                                                          sqrt(size(portfolio.returns,
-                                                                                    2)))))
+                        cluster_opt::ClusterOpt = ClusterOpt(;))
     return cluster_matrix(portfolio.returns; cor_opt = cor_opt, cluster_opt = cluster_opt)
 end
 
@@ -708,19 +698,20 @@ function _con_rel(A::AbstractMatrix, w::AbstractVector)
     return C_a
 end
 
-function connected_assets(returns::AbstractMatrix, w::AbstractVector,
-                          opt::CorOpt = CorOpt(;); method::Symbol = :MST,
-                          steps::Integer = 1)
-    A_c = connection_matrix(returns, opt; method = method, steps = steps)
+function connected_assets(returns::AbstractMatrix, w::AbstractVector;
+                          cor_opt::CorOpt = CorOpt(;),
+                          network_opt::NetworkOpt = NetworkOpt(;))
+    A_c = connection_matrix(returns; cor_opt = cor_opt, network_opt = network_opt)
     C_a = _con_rel(A_c, w)
     return C_a
 end
 
-function connected_assets(portfolio::AbstractPortfolio, opt::CorOpt = CorOpt(;);
+function connected_assets(portfolio::AbstractPortfolio;
                           type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
-                          method::Symbol = :MST, steps::Integer = 1)
-    return connected_assets(portfolio.returns, portfolio.optimal[type].weights, opt;
-                            method = method, steps = steps)
+                          cor_opt::CorOpt = CorOpt(;),
+                          network_opt::NetworkOpt = NetworkOpt(;))
+    return connected_assets(portfolio.returns, portfolio.optimal[type].weights;
+                            cor_opt = cor_opt, network_opt = network_opt)
 end
 
 """
@@ -730,10 +721,7 @@ related_assets
 """
 function related_assets(returns::AbstractMatrix, w::AbstractVector;
                         cor_opt::CorOpt = CorOpt(;),
-                        cluster_opt::ClusterOpt = ClusterOpt(;
-                                                             max_k = ceil(Int,
-                                                                          sqrt(size(returns,
-                                                                                    2)))))
+                        cluster_opt::ClusterOpt = ClusterOpt(;))
     A_c = cluster_matrix(returns; cor_opt = cor_opt, cluster_opt = cluster_opt)
     R_a = _con_rel(A_c, w)
     return R_a
@@ -744,12 +732,10 @@ end
 related_assets
 ```
 """
-function related_assets(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
-                        cluster_opt::ClusterOpt = ClusterOpt(;
-                                                             max_k = ceil(Int,
-                                                                          sqrt(size(portfolio.returns,
-                                                                                    2)))),
-                        type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP)
+function related_assets(portfolio::AbstractPortfolio;
+                        type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                        cor_opt::CorOpt = CorOpt(;),
+                        cluster_opt::ClusterOpt = ClusterOpt(;))
     return related_assets(portfolio.returns, portfolio.optimal[type].weights;
                           cor_opt = cor_opt, cluster_opt = cluster_opt)
 end

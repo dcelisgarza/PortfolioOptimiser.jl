@@ -1065,6 +1065,16 @@ These risk measures are not available with `:NCO` optimisations.
 const HCRiskMeasures = (RiskMeasures..., :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r,
                         :ADD_r, :CDaR_r, :UCI_r, :EDaR_r, :RDaR_r)
 
+"""
+```
+GraphMethods = (:MST, :TMFG)
+```
+
+Methods for computing connected assets.
+
+  - `MST`: use [`Graphs.jl`](https://juliagraphs.org/Graphs.jl/dev/algorithms/spanningtrees/#Spanning-trees) spanning trees.
+  - `TMFG`: use [`PMFG_T2s`](@ref).
+"""
 const GraphMethods = (:MST, :TMFG)
 
 """

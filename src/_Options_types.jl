@@ -1278,7 +1278,7 @@ end
 end
 ```
 
-Structure and keyword constructor for storing the options to optimising the discrete allocation of portfolios.
+Structure and keyword constructor for storing the options for optimising the discrete allocation of portfolios.
 
 # Inputs
 
@@ -1320,6 +1320,58 @@ function Base.setproperty!(obj::AllocOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
+@kwdef mutable struct NetworkOpt{T1 <: Integer}
+    method::Symbol = :MST
+    steps::T1 = 1
+    cent_genfunc::GenericFunction = GenericFunction(; func = Graphs.degree_centrality)
+    tree_genfunc::GenericFunction = GenericFunction(; func = Graphs.kruskal_mst)
+    tmfg_genfunc::GenericFunction = GenericFunction(; func = (corr, dist) -> exp.(-dist))
+end
+```
+
+Structure and keyword constructor for storing the options for network constraint functions.
+
+# Inputs
+
+  - `method`: method from [`GraphMethods`](@ref) for the generation of the adjacency matrix and spanning tree.
+
+  - `steps`: number of steps to take along the adjacency matrix for considering assets to be connected.
+  - `cent_genfunc`: [`GenericFunction`](@ref) for computing a graph's centrality measures using [`Graphs.jl`](https://juliagraphs.org/Graphs.jl/dev/algorithms/centrality/#Centrality-measures).
+  - `tree_genfunc`:
+
+      + `method == :MST`: [`GenericFunction`](@ref) for generating spanning trees using [`Graphs.jl`](https://juliagraphs.org/Graphs.jl/dev/algorithms/spanningtrees/#Spanning-trees).
+  - `tmfg_genfunc`:
+
+      + `method == :TMFG`: [`GenericFunction`](@ref) for generating spanning trees using [`PMFG_T2s`](@ref).
+"""
+mutable struct NetworkOpt{T1 <: Integer}
+    method::Symbol
+    steps::T1
+    cent_genfunc::GenericFunction
+    tree_genfunc::GenericFunction
+    tmfg_genfunc::GenericFunction
+end
+function NetworkOpt(; method::Symbol = :MST, steps::Integer = 1,
+                    cent_genfunc::GenericFunction = GenericFunction(;
+                                                                    func = Graphs.degree_centrality),
+                    tree_genfunc::GenericFunction = GenericFunction(;
+                                                                    func = Graphs.kruskal_mst),
+                    tmfg_genfunc::GenericFunction = GenericFunction(;
+                                                                    func = (corr, dist) -> exp.(-dist)))
+    @smart_assert(method ∈ GraphMethods)
+
+    return NetworkOpt{typeof(steps)}(method, steps, cent_genfunc, tree_genfunc,
+                                     tmfg_genfunc)
+end
+function Base.setproperty!(obj::NetworkOpt, sym::Symbol, val)
+    if sym == :method
+        @smart_assert(val ∈ GraphMethods)
+    end
+    return setfield!(obj, sym, val)
+end
+
 export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
        CorOpt, CorEstOpt, WCOpt, KurtOpt, KurtEstOpt, MVROpt, LoadingsOpt, FactorOpt, BLOpt,
-       ClusterOpt, OptimiseOpt, SBOpt, AllocOpt, DistOpt
+       ClusterOpt, OptimiseOpt, SBOpt, AllocOpt, DistOpt, NetworkOpt
