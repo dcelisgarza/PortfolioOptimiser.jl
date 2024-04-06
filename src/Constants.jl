@@ -480,26 +480,27 @@ CorMethods = (:Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2, :SB0,
               :Distance, :Mutual_Info, :Tail, :Cov_to_Cor, :Custom_Func, :Custom_Val)
 ```
 
-Methods for estimating the correlation ``\\mathbf{C}``, and distance matrices ``\\mathbf{D}``.
+Methods for estimating the correlation ``\\mathbf{C}``, and distance matrices ``\\mathbf{D}``. Unless otherwise stated, the distance matrix is computed by `reshape(pairwise(method, 1, corr, args...), size(corr))` from [Distances.jl](https://github.com/JuliaStats/Distances.jl), where `method` and `args` are the values of the eponymous fields of [`DistOpt`](@ref), and `corr` is the correlation matrix.
 
-  - `:Pearson`: Pearson correlation, ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:Spearman`: Spearman correlation, ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:Kendall`: Kendall correlation, ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:Gerber0`: Gerber statistic 0 [Gerber](@cite), ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:Gerber1`: Gerber statistic 1 [Gerber](@cite), ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:Gerber2`: Gerber statistic 2 [Gerber](@cite), ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:SB0`: Smyth-Broby modification of the Gerber statistic 0 [SB](@cite), ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:SB1`: Smyth-Broby modification of the Gerber statistic 1 [SB](@cite), ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:Gerber_SB0`: Smyth-Broby modification of the Gerber statistic 0 that scales the contributions of significant co-movements by the vanilla Gerber count, as described in the conclusion of [SB](@cite), ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:Gerber_SB1`: Smyth-Broby modification of the Gerber statistic 1 that scales the contributions of significant co-movements by the vanilla Gerber count, as described in the conclusion of [SB](@cite), ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:Abs_Pearson`: absolute value of the Pearson correlation, ``\\mathbf{D}_{i,\\,j} = \\sqrt{1 - \\left\\lvert\\mathbf{C}_{i,\\,j}\\right\\rvert}``.
-  - `:Abs_Spearman`: absolute value of the Spearman correlation, ``\\mathbf{D}_{i,\\,j} = \\sqrt{1 - \\left\\lvert\\mathbf{C}_{i,\\,j}\\right\\rvert}``.
-  - `:Abs_Kendall`: absolute value of the Kendall correlation, ``\\mathbf{D}_{i,\\,j} = \\sqrt{1 - \\left\\lvert\\mathbf{C}_{i,\\,j}\\right\\rvert}``.
-  - `:Distance`: distance correlation matrix, ``\\mathbf{D}_{i,\\,j} = \\sqrt{1 - \\mathbf{C}_{i,\\,j}}``
-  - `:Mutual_Info`: mutual information matrix, ``\\mathbf{D}`` is the variation of information matrix.
-  - `:Tail`: lower tail dependence index matrix, ``\\mathbf{D}_{i,\\,j} = -\\log\\left(\\mathbf{C}_{i,\\,j}\\right)``
-  - `:Cov_to_Cor`: the covariance matrix is converted to a correlation matrix, the distance matrix is computed by a distance function which defaults to ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``.
-  - `:Custom_Func`: user-provided custom functions for the correlation and distance matrices. They default to the Pearson correlation and ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1- \\mathbf{C}_{i,\\,j} \\right)}``, respectively.
+  - `:Pearson`: Pearson correlation.
+
+  - `:Spearman`: Spearman correlation.
+  - `:Kendall`: Kendall correlation.
+  - `:Gerber0`: Gerber statistic 0 [Gerber](@cite).
+  - `:Gerber1`: Gerber statistic 1 [Gerber](@cite).
+  - `:Gerber2`: Gerber statistic 2 [Gerber](@cite).
+  - `:SB0`: Smyth-Broby modification of the Gerber statistic 0 [SB](@cite).
+  - `:SB1`: Smyth-Broby modification of the Gerber statistic 1 [SB](@cite).
+  - `:Gerber_SB0`: Smyth-Broby modification of the Gerber statistic 0 that scales the contributions of significant co-movements by the vanilla Gerber count, as described in the conclusion of [SB](@cite).
+  - `:Gerber_SB1`: Smyth-Broby modification of the Gerber statistic 1 that scales the contributions of significant co-movements by the vanilla Gerber count, as described in the conclusion of [SB](@cite).
+  - `:Abs_Pearson`: absolute value of the Pearson correlation.
+  - `:Abs_Spearman`: absolute value of the Spearman correlation.
+  - `:Abs_Kendall`: absolute value of the Kendall correlation.
+  - `:Distance`: distance correlation matrix.
+  - `:Mutual_Info`: [mutual information matrix](https://juliastats.org/Clustering.jl/dev/validate.html#Mutual-information), ``\\mathbf{D}`` is the [variation of information matrix](https://juliastats.org/Clustering.jl/dev/validate.html#Variation-of-Information).
+  - `:Tail`: lower tail dependence index matrix, ``\\mathbf{D}_{i,\\,j} = -\\log\\left(\\mathbf{C}_{i,\\,j}\\right)``.
+  - `:Cov_to_Cor`: the covariance matrix is converted to a correlation matrix.
+  - `:Custom_Func`: user-provided custom functions for the correlation and distance matrices. They default to the Pearson correlation and ``\\mathbf{D}_{i,\\,j} = \\sqrt{\\dfrac{1}{2} \\left(1 - \\mathbf{C}_{i,\\,j}\\right)}``.
   - `:Custom_Val`: user-provided custom values for the correlation and distance matrices.
 """
 const CorMethods = (:Pearson, :Semi_Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1,
