@@ -393,6 +393,8 @@ function gerber1(x::AbstractMatrix, opt::GerberOpt = GerberOpt(;))
         _gerber1(x, std_vec, threshold)
     end
 
+    posdef_fix!(mtx, opt.posdef; msg = "Gerber1 Correlation ", cov_flag = false)
+
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
 
@@ -467,6 +469,8 @@ function gerber2(x::AbstractMatrix, opt::GerberOpt = GerberOpt(;))
     else
         _gerber2(x, std_vec, threshold)
     end
+
+    posdef_fix!(mtx, opt.posdef; msg = "Gerber2 Correlation ", cov_flag = false)
 
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
@@ -841,7 +845,7 @@ function gerbersb0(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;),
         _gerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     end
 
-    posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber SB0 Correlation ", cov_flag = false)
+    posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber_SB0 Correlation ", cov_flag = false)
 
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
@@ -976,7 +980,7 @@ function gerbersb1(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;),
         _gerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
     end
 
-    posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber SB1 Correlation ", cov_flag = false)
+    posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber_SB1 Correlation ", cov_flag = false)
 
     return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
 end
