@@ -598,10 +598,11 @@ function connection_matrix(returns::AbstractMatrix, opt::CorOpt = CorOpt(;);
                            tree::GenericFunction = GenericFunction(;
                                                                    func = Graphs.kruskal_mst),
                            tmfg_func::GenericFunction = GenericFunction(;
-                                                                        func = (corr, dist) -> 2 .-
-                                                                                               (dist .^
-                                                                                                2) /
-                                                                                               2))
+                                                                        #    func = (corr, dist) -> 2 .-
+                                                                        #                           (dist .^
+                                                                        #                            2) /
+                                                                        #                           2
+                                                                        func = (corr, dist) -> exp.(-dist)))
     @smart_assert(method ∈ GraphMethods)
 
     corr, dist = cor_dist_mtx(returns, opt)

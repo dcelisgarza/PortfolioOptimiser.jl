@@ -64,12 +64,12 @@ test = rand(10, 10)
 using NearestCorrelationMatrix
 Newton
 nearest_cor(test, Newton)
-wak = PortfolioOptimiser.nearest_cov(test)
-wak2 = PortfolioOptimiser.nearest_cov(test)
-wak3 = PortfolioOptimiser.nearest_cov(test,
-                                      JuMPAlgorithm(optimizer_with_attributes(Clarabel.Optimizer)))
-wak4 = PortfolioOptimiser.psd_cov(test,
-                                  Dict(:clarabel => Dict(:solver => Clarabel.Optimizer)))
+wak = PortfolioOptimiser.posdef_nearest(test)
+wak2 = PortfolioOptimiser.posdef_nearest(test)
+wak3 = PortfolioOptimiser.posdef_nearest(test,
+                                         JuMPAlgorithm(optimizer_with_attributes(Clarabel.Optimizer)))
+wak4 = PortfolioOptimiser.posdef_psd(test,
+                                     Dict(:clarabel => Dict(:solver => Clarabel.Optimizer)))
 
 w1 = optimise!(portfolio, OptimiseOpt(; type = :RP, class = :FC))
 portfolio.f_risk_budget = 1:3
