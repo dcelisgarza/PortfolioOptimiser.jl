@@ -4,22 +4,6 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
-@safetestset "Efficient Frontier" begin
-    include("PortfolioEfficientFrontierTests.jl")
-end
-
-@safetestset "Asset Allocation" begin
-    include("AssetAllocationTests.jl")
-end
-
 @safetestset "BL Statistics" begin
     include("BLStatisticsTests.jl")
 end
@@ -87,4 +71,20 @@ end
 
 @safetestset "Portfolio Traditional Optimisation Constraints" begin
     include("PortfolioTradConstraintTests.jl")
+end
+
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
+@safetestset "Efficient Frontier" begin
+    include("PortfolioEfficientFrontierTests.jl")
+end
+
+@safetestset "Asset Allocation" begin
+    include("AssetAllocationTests.jl")
 end

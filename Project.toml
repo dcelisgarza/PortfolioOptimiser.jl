@@ -1,7 +1,7 @@
 name = "PortfolioOptimiser"
 uuid = "748726ae-2fc6-4ae6-b81c-5fed3516a822"
 authors = ["Daniel Celis Garza"]
-version = "0.1.0"
+version = "0.0.0"
 
 [deps]
 AverageShiftedHistograms = "77b51b56-6f8f-5c3a-9cb4-d71f9594ea6e"
