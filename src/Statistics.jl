@@ -1218,7 +1218,7 @@ function posdef_fix!(mtx::AbstractMatrix, opt::PosdefFixOpt = PosdefFixOpt(;);
     elseif method == :SDP
         posdef_psd(mtx, solvers; cov_flag = cov_flag)
     elseif method == :Custom_Func
-        func(mtx, args...; cov_flag = cov_flag, kwargs...)
+        func(mtx, args...; kwargs...)
     end
 
     if !isposdef(_mtx)
