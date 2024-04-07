@@ -4,10 +4,6 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-@safetestset "BL Statistics" begin
-    include("BLStatisticsTests.jl")
-end
-
 @safetestset "Factor Statistics" begin
     include("FactorStatisticsTests.jl")
 end
@@ -87,4 +83,8 @@ end
 
 @safetestset "Asset Allocation" begin
     include("AssetAllocationTests.jl")
+end
+
+@safetestset "BL Statistics" begin
+    include("BLStatisticsTests.jl")
 end
