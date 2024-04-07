@@ -4,10 +4,6 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-@safetestset "Portfolio Traditional Optimisation Constraints" begin
-    include("PortfolioTradConstraintTests.jl")
-end
-
 @safetestset "Constraint Functions" begin
     include("ConstraintTests.jl")
 end
@@ -87,4 +83,8 @@ end
 
 @safetestset "Misc" begin
     include("MiscTests.jl")
+end
+
+@safetestset "Portfolio Traditional Optimisation Constraints" begin
+    include("PortfolioTradConstraintTests.jl")
 end

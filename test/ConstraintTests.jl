@@ -1,76 +1,19 @@
 using CSV, DataFrames, LinearAlgebra, PortfolioOptimiser, Statistics, StatsBase, Test,
-      TimeSeries, Clarabel, Graphs
+      TimeSeries, Clarabel, Graphs, Distances
+
+import Distances: pairwise, UnionMetric
+
+struct POCorDist <: Distances.UnionMetric end
+function Distances.pairwise(::POCorDist, i, mtx)
+    return sqrt.(clamp!((1 .- mtx) / 2, 0, 1))
+end
+dbht_d(corr, dist) = 2 .- (dist .^ 2) / 2
 
 prices_assets = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
-
-@testset "Cluster matrix" begin
-    portfolio = Portfolio(; prices = prices_assets)
-
-    A = cluster_matrix(portfolio; cluster_opt = ClusterOpt(; linkage = :DBHT))
-
-    At = reshape([0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0,
-                  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
-                  0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1,
-                  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
-                  1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                  0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1,
-                  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
-                  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1,
-                  0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-                  0], (20, 20))
-
-    @test isapprox(A, At)
-end
-
-@testset "Connected and related assets" begin
-    portfolio = Portfolio(; prices = prices_assets,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-    w = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk))
-
-    C1 = connected_assets(portfolio; method = :MST, steps = 1)
-    C2 = connected_assets(portfolio; method = :MST, steps = 2)
-    C5 = connected_assets(portfolio; method = :MST, steps = 5)
-    C10 = connected_assets(portfolio; method = :MST, steps = 10)
-    D1 = connected_assets(portfolio; method = :TMFG, steps = 1)
-    D2 = connected_assets(portfolio; method = :TMFG, steps = 2)
-    D5 = connected_assets(portfolio; method = :TMFG, steps = 5)
-    D10 = connected_assets(portfolio; method = :TMFG, steps = 10)
-    R1 = related_assets(portfolio; cluster_opt = ClusterOpt(; linkage = :DBHT))
-
-    C1t = 0.15341826288065186
-    C2t = 0.26913944576606574
-    C5t = 0.8136084159385014
-    C10t = 0.8276674312142532
-    D1t = 0.20865448347802387
-    D2t = 0.7938552161072493
-    D5t = 0.8276674312142532
-    D10t = 0.8276674312142532
-    R1t = 0.285952759008733
-
-    @test isapprox(C1, C1t, rtol = 0.0001)
-    @test isapprox(C2, C2t, rtol = 0.0001)
-    @test isapprox(C5, C5t, rtol = 1.0e-5)
-    @test isapprox(C10, C10t, rtol = 1.0e-5)
-    @test isapprox(D1, D1t, rtol = 0.0001)
-    @test isapprox(D2, D2t, rtol = 0.0001)
-    @test isapprox(D5, D5t, rtol = 1.0e-5)
-    @test isapprox(D10, D10t, rtol = 1.0e-5)
-    @test isapprox(R1, R1t, rtol = 0.0001)
-end
 
 @testset "Asset constraints" begin
     portfolio = Portfolio(; prices = prices_assets)
@@ -864,18 +807,153 @@ end
     @test isapprox(w4[6] / w4[1], 2)
 end
 
+@testset "Cluster matrix" begin
+    portfolio = Portfolio(; prices = prices_assets)
+
+    A = cluster_matrix(portfolio;
+                       cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                       cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                                genfunc = GenericFunction(; func = dbht_d)))
+
+    At = reshape([0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0,
+                  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+                  0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1,
+                  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+                  1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                  0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1,
+                  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1,
+                  0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                  0], (20, 20))
+
+    @test isapprox(A, At)
+end
+
+@testset "Connected and related assets" begin
+    portfolio = Portfolio(; prices = prices_assets,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+    w = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk))
+
+    C1 = connected_assets(portfolio;
+                          cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                          network_opt = NetworkOpt(; method = :MST, steps = 1,
+                                                   tmfg_genfunc = GenericFunction(;
+                                                                                  func = dbht_d)))
+    C2 = connected_assets(portfolio;
+                          cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                          network_opt = NetworkOpt(; method = :MST, steps = 2,
+                                                   tmfg_genfunc = GenericFunction(;
+                                                                                  func = dbht_d)))
+    C5 = connected_assets(portfolio;
+                          cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                          network_opt = NetworkOpt(; method = :MST, steps = 5,
+                                                   tmfg_genfunc = GenericFunction(;
+                                                                                  func = dbht_d)))
+    C10 = connected_assets(portfolio;
+                           cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                           network_opt = NetworkOpt(; method = :MST, steps = 10,
+                                                    tmfg_genfunc = GenericFunction(;
+                                                                                   func = dbht_d)))
+    D1 = connected_assets(portfolio;
+                          cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                          network_opt = NetworkOpt(; method = :TMFG, steps = 1,
+                                                   tmfg_genfunc = GenericFunction(;
+                                                                                  func = dbht_d)))
+    D2 = connected_assets(portfolio;
+                          cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                          network_opt = NetworkOpt(; method = :TMFG, steps = 2,
+                                                   tmfg_genfunc = GenericFunction(;
+                                                                                  func = dbht_d)))
+    D5 = connected_assets(portfolio;
+                          cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                          network_opt = NetworkOpt(; method = :TMFG, steps = 5,
+                                                   tmfg_genfunc = GenericFunction(;
+                                                                                  func = dbht_d)))
+    D10 = connected_assets(portfolio;
+                           cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                           network_opt = NetworkOpt(; method = :TMFG, steps = 10,
+                                                    tmfg_genfunc = GenericFunction(;
+                                                                                   func = dbht_d)))
+    R1 = related_assets(portfolio;
+                        cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                        cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                                 genfunc = GenericFunction(; func = dbht_d)))
+
+    C1t = 0.15341826288065186
+    C2t = 0.26913944576606574
+    C5t = 0.8136084159385014
+    C10t = 0.8276674312142532
+    D1t = 0.20865448347802387
+    D2t = 0.7938552161072493
+    D5t = 0.8276674312142532
+    D10t = 0.8276674312142532
+    R1t = 0.285952759008733
+
+    @test isapprox(C1, C1t, rtol = 0.0001)
+    @test isapprox(C2, C2t, rtol = 0.0001)
+    @test isapprox(C5, C5t, rtol = 1.0e-5)
+    @test isapprox(C10, C10t, rtol = 1.0e-5)
+    @test isapprox(D1, D1t, rtol = 0.0001)
+    @test isapprox(D2, D2t, rtol = 0.0001)
+    @test isapprox(D5, D5t, rtol = 1.0e-5)
+    @test isapprox(D10, D10t, rtol = 1.0e-5)
+    @test isapprox(R1, R1t, rtol = 0.0001)
+end
+
 @testset "Connection matrix" begin
     portfolio = Portfolio(; prices = prices_assets)
 
-    A1 = connection_matrix(portfolio, CorOpt(;); method = :MST, steps = 1)
-    A2 = connection_matrix(portfolio, CorOpt(;); method = :MST, steps = 2)
-    A5 = connection_matrix(portfolio, CorOpt(;); method = :MST, steps = 5)
-    A10 = connection_matrix(portfolio, CorOpt(;); method = :MST, steps = 10)
+    A1 = connection_matrix(portfolio;
+                           cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                           network_opt = NetworkOpt(; method = :MST, steps = 1,
+                                                    tmfg_genfunc = GenericFunction(;
+                                                                                   func = dbht_d)))
+    A2 = connection_matrix(portfolio;
+                           cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                           network_opt = NetworkOpt(; method = :MST, steps = 2,
+                                                    tmfg_genfunc = GenericFunction(;
+                                                                                   func = dbht_d)))
+    A5 = connection_matrix(portfolio;
+                           cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                           network_opt = NetworkOpt(; method = :MST, steps = 5,
+                                                    tmfg_genfunc = GenericFunction(;
+                                                                                   func = dbht_d)))
+    A10 = connection_matrix(portfolio;
+                            cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                            network_opt = NetworkOpt(; method = :MST, steps = 10,
+                                                     tmfg_genfunc = GenericFunction(;
+                                                                                    func = dbht_d)))
 
-    B1 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 1)
-    B2 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 2)
-    B5 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 5)
-    B10 = connection_matrix(portfolio, CorOpt(;); method = :TMFG, steps = 10)
+    B1 = connection_matrix(portfolio;
+                           cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                           network_opt = NetworkOpt(; method = :TMFG, steps = 1,
+                                                    tmfg_genfunc = GenericFunction(;
+                                                                                   func = dbht_d)))
+    B2 = connection_matrix(portfolio;
+                           cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                           network_opt = NetworkOpt(; method = :TMFG, steps = 2,
+                                                    tmfg_genfunc = GenericFunction(;
+                                                                                   func = dbht_d)))
+    B5 = connection_matrix(portfolio;
+                           cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                           network_opt = NetworkOpt(; method = :TMFG, steps = 5,
+                                                    tmfg_genfunc = GenericFunction(;
+                                                                                   func = dbht_d)))
+    B10 = connection_matrix(portfolio;
+                            cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                            network_opt = NetworkOpt(; method = :TMFG, steps = 10,
+                                                     tmfg_genfunc = GenericFunction(;
+                                                                                    func = dbht_d)))
 
     A1t = reshape([0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
@@ -1029,9 +1107,25 @@ end
     portfolio = Portfolio(; prices = prices_assets)
 
     centrality = GenericFunction(; func = Graphs.degree_centrality,
-                                 kwargs = (normalize = false,))
-    A = centrality_vector(portfolio; method = :MST, steps = 1, centrality = centrality)
-    B = centrality_vector(portfolio; method = :TMFG, steps = 1, centrality = centrality)
+                                 kwargs = (; normalize = false))
+    A = centrality_vector(portfolio;
+                          cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                          network_opt = NetworkOpt(; method = :MST, steps = 1,
+                                                   cent_genfunc = GenericFunction(;
+                                                                                  func = Graphs.degree_centrality,
+                                                                                  kwargs = (;
+                                                                                            normalize = false)),
+                                                   tmfg_genfunc = GenericFunction(;
+                                                                                  func = dbht_d)))
+    B = centrality_vector(portfolio;
+                          cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())),
+                          network_opt = NetworkOpt(; method = :TMFG, steps = 1,
+                                                   cent_genfunc = GenericFunction(;
+                                                                                  func = Graphs.degree_centrality,
+                                                                                  kwargs = (;
+                                                                                            normalize = false)),
+                                                   tmfg_genfunc = GenericFunction(;
+                                                                                  func = dbht_d)))
 
     At = [4.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 3.0, 1.0, 2.0,
           5.0, 1.0, 7.0, 1.0]
