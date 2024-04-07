@@ -8,6 +8,14 @@ end
     include("PortfolioTradConstraintTests.jl")
 end
 
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
 @safetestset "Efficient Frontier" begin
     include("PortfolioEfficientFrontierTests.jl")
 end
@@ -41,10 +49,6 @@ end
     include("DBHTClusteringTests.jl")
 end
 
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
 @safetestset "Portfolio Traditional Class Picking" begin
     include("PortfolioTradClassPickingTests.jl")
 end
@@ -71,10 +75,6 @@ end
 
 @safetestset "Portfolio Classic Traditional OWA Optimisation" begin
     include("PortfolioClassicTradOWATests.jl")
-end
-
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
 end
 
 @safetestset "Portfolio Classic WC Optimisation" begin
