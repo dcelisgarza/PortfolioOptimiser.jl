@@ -1,5 +1,11 @@
 using CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, OrderedCollections,
-      PortfolioOptimiser, Statistics, Test, TimeSeries, Clustering
+      PortfolioOptimiser, Statistics, Test, TimeSeries, Clustering, Distances
+
+struct POCorDist <: Distances.UnionMetric end
+function Distances.pairwise(::POCorDist, i, mtx)
+    return sqrt.(clamp!((1 .- mtx) / 2, 0, 1))
+end
+dbht_d(corr, dist) = 2 .- (dist .^ 2) / 2
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
@@ -27,7 +33,8 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio; calc_kurt = false)
+    asset_statistics!(portfolio; calc_kurt = false,
+                      cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -96,6 +103,7 @@ end
     @test all(w1.weights .<= w_max)
     @test all(abs.(w2.weights .- w_min) .>= -eps() * N)
     @test all(w2.weights .<= w_max)
+    println(w2.weights)
     @test all(w3.weights .>= w_min)
     @test !all(w3.weights .<= w_max)
 
@@ -116,7 +124,8 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio; calc_kurt = false)
+    asset_statistics!(portfolio; calc_kurt = false,
+                      cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     cluster_opt = ClusterOpt(; linkage = :ward)
     portfolio.w_min = -0.2
@@ -214,7 +223,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
@@ -269,7 +278,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
@@ -299,7 +308,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
@@ -352,7 +361,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
@@ -405,7 +414,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
@@ -458,7 +467,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
@@ -511,7 +520,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
@@ -564,7 +573,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
@@ -617,7 +626,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
@@ -670,7 +679,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
@@ -723,7 +732,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
@@ -776,9 +785,9 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
-    cluster_opt = ClusterOpt(; linkage = :DBHT,
+    cluster_opt = ClusterOpt(; linkage = :DBHT, genfunc = GenericFunction(; func = dbht_d),
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :SD, rf = rf, cluster_opt = cluster_opt)
@@ -921,9 +930,9 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
-    cluster_opt = ClusterOpt(; linkage = :DBHT,
+    cluster_opt = ClusterOpt(; linkage = :DBHT, genfunc = GenericFunction(; func = dbht_d),
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :MAD, rf = rf, cluster_opt = cluster_opt)
@@ -1066,10 +1075,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :SSD, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :SSD, rf = rf, cluster = false)
@@ -1211,10 +1221,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :FLPM, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :FLPM, rf = rf, cluster = false)
@@ -1356,10 +1367,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :SLPM, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :SLPM, rf = rf, cluster = false)
@@ -1501,10 +1513,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :WR, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :WR, rf = rf, cluster = false)
@@ -1646,10 +1659,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :CVaR, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :CVaR, rf = rf, cluster = false)
@@ -1791,10 +1805,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :EVaR, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :EVaR, rf = rf, cluster = false)
@@ -1939,6 +1954,7 @@ end
 
     w1 = optimise!(portfolio; type = :HRP, rm = :RVaR, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :RVaR, rf = rf, cluster = false)
@@ -2080,10 +2096,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :MDD, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :MDD, rf = rf, cluster = false)
@@ -2225,10 +2242,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :ADD, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :ADD, rf = rf, cluster = false)
@@ -2368,10 +2386,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :CDaR, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :CDaR, rf = rf, cluster = false)
@@ -2513,10 +2532,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :UCI, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :UCI, rf = rf, cluster = false)
@@ -2658,10 +2678,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :EDaR, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :EDaR, rf = rf, cluster = false)
@@ -2803,10 +2824,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :RDaR, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :RDaR, rf = rf, cluster = false)
@@ -2948,10 +2970,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :Kurt, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :Kurt, rf = rf, cluster = false)
@@ -3094,7 +3117,7 @@ end
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))),
                             max_num_assets_kurt = 1)
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w3 = optimise!(portfolio; type = :NCO,
                    nco_opt = OptimiseOpt(; rm = :Kurt, obj = :Min_Risk, rf = rf, l = l),
@@ -3178,10 +3201,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :SKurt, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :SKurt, rf = rf, cluster = false)
@@ -3324,7 +3348,7 @@ end
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))),
                             max_num_assets_kurt = 1)
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w3 = optimise!(portfolio; type = :NCO,
                    nco_opt = OptimiseOpt(; rm = :SKurt, obj = :Min_Risk, rf = rf, l = l),
@@ -3408,7 +3432,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :NCO,
                    nco_opt = OptimiseOpt(; rm = :SD, l = l, obj = :Sharpe, kelly = :Exact,
@@ -3417,6 +3441,7 @@ end
                                            kelly = :None, rf = rf),
                    cluster_opt = ClusterOpt(; dbht_method = :Equal, branchorder = :default,
                                             linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :NCO,
@@ -3615,10 +3640,11 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HERC, rm_o = :SD, rm = :CDaR, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                            genfunc = GenericFunction(; func = dbht_d),
                                             max_k = ceil(Int,
                                                          sqrt(size(portfolio.returns, 2)))))
     w2 = optimise!(portfolio; type = :HERC, rm = :SD, rm_o = :CDaR, rf = rf,
