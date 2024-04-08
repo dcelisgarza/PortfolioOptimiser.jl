@@ -103,7 +103,6 @@ end
     @test all(w1.weights .<= w_max)
     @test all(abs.(w2.weights .- w_min) .>= -eps() * N)
     @test all(w2.weights .<= w_max)
-    println(w2.weights)
     @test all(w3.weights .>= w_min)
     @test !all(w3.weights .<= w_max)
 
