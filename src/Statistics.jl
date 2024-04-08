@@ -1519,6 +1519,14 @@ function covar_mtx(returns::AbstractMatrix, opt::CovOpt = CovOpt(;))
     return mtx
 end
 
+import StatsBase.cov, StatsBase.cor
+
+abstract type SimpleFullSemiCov <: StatsBase.CovarianceEstimator end
+
+function StatsBase.cov(ce::StatsBase.CovarianceEstimator, X::AbstractMatrix,
+                       w::Union{AbstractWeights, Nothing} = nothing; mean = nothing,
+                       dims::Int = 1) end
+
 """
 ```
 mean_vec(returns::AbstractMatrix, opt::MuOpt = MuOpt(;))
