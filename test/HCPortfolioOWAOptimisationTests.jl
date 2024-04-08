@@ -1,5 +1,10 @@
 using CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
-      Statistics, Test, TimeSeries, Logging
+      Statistics, Test, TimeSeries, Logging, Distances
+
+struct POCorDist <: Distances.UnionMetric end
+function Distances.pairwise(::POCorDist, i, mtx)
+    return sqrt.(clamp!((1 .- mtx) / 2, 0, 1))
+end
 
 Logging.disable_logging(Logging.Warn)
 
@@ -13,7 +18,7 @@ l = 2.0
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :GMD, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :ward,
@@ -251,7 +256,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :RG, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :ward,
@@ -397,7 +402,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :RCVaR, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :ward,
@@ -544,7 +549,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :TG, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :ward,
@@ -682,7 +687,7 @@ end
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
                                                                                     "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
+    asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = POCorDist())))
 
     w1 = optimise!(portfolio; type = :HRP, rm = :RTG, rf = rf,
                    cluster_opt = ClusterOpt(; linkage = :ward,
