@@ -1519,48 +1519,6 @@ function covar_mtx(returns::AbstractMatrix, opt::CovOpt = CovOpt(;))
     return mtx
 end
 
-import StatsBase: cov, cor
-
-abstract type FullSemiCov <: StatsBase.CovarianceEstimator end
-
-@kwdef mutable struct FullCov <: StatsBase.CovarianceEstimator
-    ce::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-end
-@kwdef mutable struct SemiCov <: StatsBase.CovarianceEstimator
-    ce::CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    target::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
-end
-
-function StatsBase.cov(ce::FullCov, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; mean = nothing,
-                       dims::Int = 1)
-    return if isnothing(w)
-        StatsBase.cov(ce.ce, X; mean = mean, dims = dims)
-    else
-        StatsBase.cov(ce.ce, X, w; mean = mean, dims = dims)
-    end
-end
-function StatsBase.cov(ce::SemiCov, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; mean = nothing,
-                       dims::Int = 1)
-    X = if isa(ce.target, Real)
-        min.(X .- ce.target, zero(eltype(X)))
-    else
-        min.(X .- transpose(ce.target), zero(eltype(X)))
-    end
-
-    mean = zero(eltype(X))
-
-    return if isnothing(w)
-        StatsBase.cov(ce.ce, X; mean = mean, dims = dims)
-    else
-        StatsBase.cov(ce.ce, X, w; mean = mean, dims = dims)
-    end
-end
-export FullCov, SemiCov
-
-# https://en.wikipedia.org/wiki/Sample_mean_and_covariance#Weighted_samples
-
 """
 ```
 mean_vec(returns::AbstractMatrix, opt::MuOpt = MuOpt(;))
