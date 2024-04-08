@@ -1403,7 +1403,7 @@ _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
 """
 function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
                            opt::Union{CovOpt, CorOpt, KurtOpt, BLOpt},
-                           mtx_name::Symbol = :cov)
+                           mtx_name::Symbol = :cov, cov_flag = true)
     @smart_assert(mtx_name ∈ DenoiseLoGoNames)
 
     if mtx_name == :cov
@@ -1431,7 +1431,7 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
 
     mtx = denoise_cov(mtx, T / N, opt.denoise)
 
-    posdef_fix!(mtx, opt.posdef; msg = msg)
+    posdef_fix!(mtx, opt.posdef; msg = msg, cov_flag = cov_flag)
 
     if opt.jlogo
         try
@@ -1443,7 +1443,7 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
             throw(ErrorException("$msg matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set opt.posdef.method = $(opt.posdef.method), to a different method from $PosdefFixMethods.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.$(msg2)"))
         end
 
-        posdef_fix!(mtx, opt.posdef; msg = "J-LoGo $msg ")
+        posdef_fix!(mtx, opt.posdef; msg = "J-LoGo $msg ", cov_flag = cov_flag)
     end
 
     return mtx
@@ -1610,21 +1610,21 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
         catch
             StatsBase.cov2cor(Matrix(StatsBase.cov(estimator, returns, args...; kwargs...)))
         end
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :Spearman
         corr = corspearman(returns)
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :Kendall
         corr = corkendall(returns)
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
@@ -1652,77 +1652,77 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
             abs.(StatsBase.cov2cor(Matrix(StatsBase.cov(estimator, returns, args...;
                                                         kwargs...))))
         end
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :Abs_Spearman
         corr = abs.(corspearman(returns))
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :Abs_Kendall
         corr = abs.(corkendall(returns))
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :Gerber0
         corr = gerber0(returns, opt.gerber)[1]
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :Gerber1
         corr = gerber1(returns, opt.gerber)[1]
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :Gerber2
         corr = gerber2(returns, opt.gerber)[1]
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :SB0
         corr = sb0(returns, opt.gerber, opt.sb)[1]
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :SB1
         corr = sb1(returns, opt.gerber, opt.sb)[1]
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :Gerber_SB0
         corr = gerbersb0(returns, opt.gerber, opt.sb)[1]
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :Gerber_SB1
         corr = gerbersb1(returns, opt.gerber, opt.sb)[1]
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
     elseif method == :Distance
         corr = cordistance(returns, opt.dist)
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
@@ -1731,7 +1731,7 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
         corr, dist = mut_var_info_mtx(returns, opt.estimation.bins_info)
     elseif method == :Tail
         corr = ltdi_mtx(returns, opt.estimation.alpha)
-        corr = _denoise_logo_mtx(T, N, corr, opt, :cor)
+        corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         dist = -log.(corr)
     elseif method == :Cov_to_Cor
         estimation = opt.estimation
@@ -2728,7 +2728,7 @@ end
 
 """
 ```
-_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, opt, cov_type)
+_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, opt, cov_type, cov_flag = true)
 ```
 
 Internal function for computing the Black Litterman statistics as defined in [`black_litterman`](@ref). See [`_denoise_logo_mtx`](@ref).
@@ -2747,6 +2747,7 @@ Internal function for computing the Black Litterman statistics as defined in [`b
   - `N`: variable of the same name in the Black-Litterman model.
   - `opt`: any valid instance of `opt` for [`_denoise_logo_mtx`](@ref).
   - `cov_type`: any valid value from [`DenoiseLoGoNames`](@ref).
+  - `cov_flag`: whether the matrix is a covariance matrix or not.
 
 # Outputs
 
