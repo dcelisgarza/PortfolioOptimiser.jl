@@ -4,6 +4,7 @@ abstract type PO_CovarianceEstimator <: StatsBase.CovarianceEstimator end
 abstract type PO_StdDevEstimator <: StatsBase.CovarianceEstimator end
 abstract type PO_MeanEstimator end
 abstract type PO_PosdefFix <: NCM.NCMAlgorithm end
+abstract type PO_DistanceEstimator end
 abstract type PO_MatrixDenoiser end
 
 struct SimpleMean <: PO_MeanEstimator end
@@ -799,7 +800,7 @@ abstract type PO_JLoGO end
 end
 struct NoJLoGo <: PO_JLoGO end
 
-@kwdef mutable struct CovType
+@kwdef mutable struct CovType <: PO_CovarianceEstimator
     absolute::Bool = false
     ce::PO_CovarianceEstimator = FullCov()
     denoiser::PO_MatrixDenoiser = NoDenoiser()
@@ -808,7 +809,7 @@ struct NoJLoGo <: PO_JLoGO end
     w::Union{AbstractWeights, Nothing} = nothing
 end
 
-@kwdef mutable struct DistType
+@kwdef mutable struct DistType <: PO_DistanceEstimator
     metric::Distances.UnionMetric = Distances.Euclidean()
     args::Tuple = ()
     kwargs::NamedTuple = (;)
