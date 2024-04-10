@@ -71,16 +71,13 @@ end
 """
 ```
 mut_var_info_mtx(x::AbstractMatrix{<:Real}, bins_info::Union{Symbol, <:Integer} = :KN,
-                 normed::Bool = true)
+                 normalise::Bool = true)
 ```
 
 Compute the mutual information and variation of information matrices.
 """
 function mut_var_info_mtx(x::AbstractMatrix{<:Real},
-                          bins_info::Union{Symbol, <:Integer} = :KN, normed::Bool = true)
-    @smart_assert(bins_info ∈ BinMethods ||
-                  isa(bins_info, Int) && bins_info > zero(bins_info))
-
+                          bins_info::Union{Symbol, <:Integer} = :KN, normalise::Bool = true)
     bin_width_func = if bins_info == :KN
         pyimport("astropy.stats").knuth_bin_width
     elseif bins_info == :FD
@@ -111,7 +108,7 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
 
             mut_ixy = mutualinfo(hxy)
             var_ixy = ex + ey - 2 * mut_ixy
-            if normed
+            if normalise
                 vxy = ex + ey - mut_ixy
                 var_ixy = var_ixy / vxy
                 mut_ixy /= min(ex, ey)
@@ -129,7 +126,100 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
         end
     end
 
-    return Matrix(Symmetric(mut_mtx, :U)), Matrix(Symmetric(var_mtx, :U))
+    return Symmetric(mut_mtx, :U), Symmetric(var_mtx, :U)
+end
+
+function mutual_info_mtx(x::AbstractMatrix{<:Real},
+                         bins_info::Union{Symbol, <:Integer} = :KN, normalise::Bool = true)
+    bin_width_func = if bins_info == :KN
+        pyimport("astropy.stats").knuth_bin_width
+    elseif bins_info == :FD
+        pyimport("astropy.stats").freedman_bin_width
+    elseif bins_info == :SC
+        pyimport("astropy.stats").scott_bin_width
+    end
+
+    T, N = size(x)
+    xtype = eltype(x)
+    mut_mtx = Matrix{xtype}(undef, N, N)
+
+    for j ∈ 1:N
+        xj = x[:, j]
+        for i ∈ 1:j
+            xi = x[:, i]
+            bins = if bins_info == :HGR
+                corr = cor(xj, xi)
+                corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
+            elseif isa(bins_info, Int)
+                bins_info
+            else
+                _calc_num_bins(xj, xi, j, i, bin_width_func)
+            end
+
+            ex, ey, hxy = _calc_hist_data(xj, xi, bins)
+
+            mut_ixy = mutualinfo(hxy)
+            if normalise
+                mut_ixy /= min(ex, ey)
+            end
+
+            if abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < zero(xtype)
+                mut_ixy = zero(xtype)
+            end
+
+            mut_mtx[i, j] = mut_ixy
+        end
+    end
+
+    return Symmetric(mut_mtx, :U)
+end
+
+function variation_info_mtx(x::AbstractMatrix{<:Real},
+                            bins_info::Union{Symbol, <:Integer} = :KN,
+                            normalise::Bool = true)
+    bin_width_func = if bins_info == :KN
+        pyimport("astropy.stats").knuth_bin_width
+    elseif bins_info == :FD
+        pyimport("astropy.stats").freedman_bin_width
+    elseif bins_info == :SC
+        pyimport("astropy.stats").scott_bin_width
+    end
+
+    T, N = size(x)
+    xtype = eltype(x)
+    var_mtx = Matrix{xtype}(undef, N, N)
+
+    for j ∈ 1:N
+        xj = x[:, j]
+        for i ∈ 1:j
+            xi = x[:, i]
+            bins = if bins_info == :HGR
+                corr = cor(xj, xi)
+                corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
+            elseif isa(bins_info, Int)
+                bins_info
+            else
+                _calc_num_bins(xj, xi, j, i, bin_width_func)
+            end
+
+            ex, ey, hxy = _calc_hist_data(xj, xi, bins)
+
+            mut_ixy = mutualinfo(hxy)
+            var_ixy = ex + ey - 2 * mut_ixy
+            if normalise
+                vxy = ex + ey - mut_ixy
+                var_ixy = var_ixy / vxy
+            end
+
+            if abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < zero(xtype)
+                var_ixy = zero(xtype)
+            end
+
+            var_mtx[i, j] = var_ixy
+        end
+    end
+
+    return Symmetric(var_mtx, :U)
 end
 
 function cordistance(v1::AbstractVector, v2::AbstractVector, opt::DistOpt = DistOpt(;))
@@ -166,16 +256,15 @@ function cordistance(x::AbstractMatrix, opt::DistOpt = DistOpt(;))
         end
     end
 
-    return Matrix(Symmetric(mtx, :U))
+    return Symmetric(mtx, :U)
 end
 
 function ltdi_mtx(x, alpha = 0.05)
-    @smart_assert(zero(alpha) < alpha < one(alpha))
     T, N = size(x)
     k = ceil(Int, T * alpha)
     mtx = Matrix{eltype(x)}(undef, N, N)
 
-    if k > 0
+    @inbounds if k > 0
         for j ∈ 1:N
             xj = x[:, j]
             v = sort(xj)[k]
@@ -184,12 +273,12 @@ function ltdi_mtx(x, alpha = 0.05)
                 xi = x[:, i]
                 u = sort(xi)[k]
                 ltd = sum(xi .<= u .&& maskj) / k
-                mtx[i, j] = clamp(ltd, 0, 1)
+                mtx[i, j] = clamp(ltd, zero(eltype(x)), one(eltype(x)))
             end
         end
     end
 
-    return Matrix(Symmetric(mtx, :U))
+    return Symmetric(mtx, :U)
 end
 
 function _gerber0_norm(x, mean_vec, std_vec, threshold)
@@ -224,7 +313,7 @@ function _gerber0_norm(x, mean_vec, std_vec, threshold)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -259,7 +348,7 @@ function _gerber0(x, std_vec, threshold)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -290,7 +379,7 @@ function gerber0(x::AbstractMatrix, opt::GerberOpt = GerberOpt(;))
 
     posdef_fix!(mtx, opt.posdef; msg = "Gerber0 Correlation ", cov_flag = false)
 
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+    return mtx, Symmetric(mtx .* (std_vec * transpose(std_vec)), :U)
 end
 
 function _gerber1_norm(x, mean_vec, std_vec, threshold)
@@ -327,7 +416,7 @@ function _gerber1_norm(x, mean_vec, std_vec, threshold)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -364,7 +453,7 @@ function _gerber1(x, std_vec, threshold)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -395,7 +484,7 @@ function gerber1(x::AbstractMatrix, opt::GerberOpt = GerberOpt(;))
 
     posdef_fix!(mtx, opt.posdef; msg = "Gerber1 Correlation ", cov_flag = false)
 
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+    return mtx, Symmetric(mtx .* (std_vec * transpose(std_vec)), :U)
 end
 
 function _gerber2_norm(x, mean_vec, std_vec, threshold)
@@ -472,7 +561,7 @@ function gerber2(x::AbstractMatrix, opt::GerberOpt = GerberOpt(;))
 
     posdef_fix!(mtx, opt.posdef; msg = "Gerber2 Correlation ", cov_flag = false)
 
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+    return mtx, Symmetric(mtx .* (std_vec * transpose(std_vec)), :U)
 end
 
 function _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
@@ -530,7 +619,7 @@ function _sb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -567,7 +656,7 @@ function _sb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -605,7 +694,7 @@ function sb0(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;),
 
     posdef_fix!(mtx, gerberopt.posdef; msg = "SB0 Correlation ", cov_flag = false)
 
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+    return mtx, Symmetric(mtx .* (std_vec * transpose(std_vec)), :U)
 end
 
 function _sb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
@@ -646,7 +735,7 @@ function _sb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -685,7 +774,7 @@ function _sb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -723,7 +812,7 @@ function sb1(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;),
 
     posdef_fix!(mtx, gerberopt.posdef; msg = "SB1 Correlation ", cov_flag = false)
 
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+    return mtx, Symmetric(mtx .* (std_vec * transpose(std_vec)), :U)
 end
 
 function _gerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
@@ -766,7 +855,7 @@ function _gerbersb0_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -809,7 +898,7 @@ function _gerbersb0(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -847,7 +936,7 @@ function gerbersb0(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;),
 
     posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber_SB0 Correlation ", cov_flag = false)
 
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+    return mtx, Symmetric(mtx .* (std_vec * transpose(std_vec)), :U)
 end
 
 function _gerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
@@ -896,7 +985,7 @@ function _gerbersb1_norm(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -944,7 +1033,7 @@ function _gerbersb1(x, mean_vec, std_vec, threshold, c1, c2, c3, n)
         end
     end
 
-    mtx .= Matrix(Symmetric(mtx, :U))
+    mtx .= Symmetric(mtx, :U)
 
     return mtx
 end
@@ -982,7 +1071,7 @@ function gerbersb1(x::AbstractMatrix, gerberopt::GerberOpt = GerberOpt(;),
 
     posdef_fix!(mtx, gerberopt.posdef; msg = "Gerber_SB1 Correlation ", cov_flag = false)
 
-    return mtx, Matrix(Symmetric(mtx .* (std_vec * transpose(std_vec)), :U))
+    return mtx, Symmetric(mtx .* (std_vec * transpose(std_vec)), :U)
 end
 
 function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,

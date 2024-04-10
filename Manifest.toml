@@ -539,9 +539,9 @@ version = "1.0.2"
 
 [[deps.NearestCorrelationMatrix]]
 deps = ["CommonSolve", "LinearAlgebra", "PrecompileTools", "Tullio", "UnPack"]
-git-tree-sha1 = "99e6c80a8d60c0669c2d22f6d20aea0b4fd04e18"
+git-tree-sha1 = "94d3e6758bcef05aa4e7620364f5491fbdc49c9a"
 uuid = "59ddf330-608c-4938-8bc9-a4ee97bbbea6"
-version = "1.0.0"
+version = "1.0.1"
 weakdeps = ["JuMP"]
 
     [deps.NearestCorrelationMatrix.extensions]

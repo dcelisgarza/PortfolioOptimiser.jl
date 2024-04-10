@@ -186,6 +186,8 @@ mutable struct SBOpt{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: Real}
 end
 function SBOpt(; c1::Real = 0.5, c2::Real = 0.5, c3::Real = 4, n::Real = 2)
     @smart_assert(zero(c1) < c1 <= one(c1))
+    @smart_assert(zero(c2) < c2 <= one(c2))
+    @smart_assert(c3 > c2)
 
     return SBOpt{typeof(c1), typeof(c2), typeof(c3), typeof(n)}(c1, c2, c3, n)
 end
@@ -193,7 +195,7 @@ function Base.setproperty!(obj::SBOpt, sym::Symbol, val)
     if sym ∈ (:c1, :c2)
         @smart_assert(zero(val) < val <= one(val))
     elseif sym == :c3
-        @smart_assert(val >= obj.c2)
+        @smart_assert(val > obj.c2)
     end
     return setfield!(obj, sym, val)
 end

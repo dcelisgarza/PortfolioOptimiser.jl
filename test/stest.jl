@@ -1,7 +1,87 @@
 using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, PortfolioOptimiser,
-      LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix, StatsBase
+      LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix, StatsBase,
+      AverageShiftedHistograms, Distances, Aqua
 
-test = randn(100, 100)
+test = rand(1000, 300)
+T, N = size(test)
+
+X = cov(test)
+
+ce = CovType(; ce = SemiCov())
+de = DistType()
+@time begin
+    c1 = cor(ce, X)
+    d1 = dist(de, c1)
+end
+
+@time c2, d2 = PortfolioOptimiser.cor_dist_mtx(X, CorOpt(; method = :Semi_Pearson))
+
+@test isapprox(c1, c2)
+@test isapprox(d1, d2)
+
+function jlogo2(X)
+    corr = cov2cor(X)
+    dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
+    separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
+    return J_LoGo(X, separators, cliques) \ I
+end
+
+struct ClampDist <: Distances.PreMetric end
+function Distances.pairwise(::ClampDist, i, X)
+    return sqrt.(clamp!((1 .- X) / 2, zero(eltype(X)), one(eltype(X))))
+end
+
+ce = CovType(; ce = Gerber_SB1())
+@time c1 = StatsBase.cov(ce, X)
+@time c2 = PortfolioOptimiser.covar_mtx(X, CovOpt(; method = :Gerber_SB1))
+@test isapprox(c1, c2)
+
+ce = JLoGoCov(; metric = ClampDist(),
+              func = (corr, dist, args...; kwargs...) -> 1 .- dist .^ 2)
+@allocations c1 = jlogo2(X)
+@allocations c2 = PortfolioOptimiser.jlogo(ce, X, true)
+
+@test isapprox(c1, c2)
+
+@time dc1 = denoise_cov(cov2cor(X), T / N, DenoiseOpt(; method = :None))
+@time dc2 = PortfolioOptimiser.denoise(NoDenoiser(), cov2cor(X), T / N, false)
+
+isapprox(dc1, dc2)
+
+ce = MutualInfoCov()
+@time c1, d1 = PortfolioOptimiser.mut_var_info_mtx(test)
+@time c2 = PortfolioOptimiser.mutual_info_mtx(test)
+@time d2 = PortfolioOptimiser.variation_info_mtx(test)
+
+@time c3 = cor(MutualInfoCov(), test)
+@time d3 = pairwise(VariationInfo(), 1, test)
+
+@test isapprox(c1, c2)
+@test isapprox(c1, c3)
+@test isapprox(d1, d2)
+@test isapprox(d1, d3)
+
+test = DenoiseOpt()
+
+test.kernel
+typeof(AverageShiftedHistograms.Kernels)
+
+cv = cov(test)
+cr = similar(cv)
+StatsBase.cov2cor!(cv, sqrt.(diag(cv)))
+
+@time cor1, cov1 = PortfolioOptimiser.gerbersb0(test, GerberOpt(; normalise = false))
+@time cov2 = cov(Gerber_SB0(; normalise = false), test)
+@time cor2 = cor(Gerber_SB0(; normalise = false), test)
+@test isapprox(cov1, cov2)
+@test isapprox(cor1, cor2)
+
+@test isapprox(cor(Cov2Cor(), cov2), cor2)
+
+@time c1 = PortfolioOptimiser.ltdi_mtx(test, 0.05)
+ltdi = LTDI()
+@time c2 = cov(ltdi, test)
+isapprox(c1, c2)
 
 @time cc1, cv1 = PortfolioOptimiser.gerber0(test, GerberOpt(; normalise = true))
 @time cc2, cv2 = cov(Gerber0(; normalise = true), test)
