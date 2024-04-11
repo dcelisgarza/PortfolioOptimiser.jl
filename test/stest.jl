@@ -3,16 +3,17 @@ using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, Portfolio
       AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes, BenchmarkTools
 
 X = randn(200, 20)
-a, b, c, d = 1, 2, 3, 4
 
-bins = 5#PortfolioOptimiser.HGR()
-normalise = true
-a, b = PortfolioOptimiser.mut_var_info_mtx(X, bins, normalise)
-display(@benchmark PortfolioOptimiser.mut_var_info_mtx2($X, $bins, $normalise) setup = ())
+a, b = 1, 2
+ce = PortfolioOptimiser.CorDistance()
+a = PortfolioOptimiser.cordistance(ce, X)
+display(@benchmark PortfolioOptimiser.cordistance($X, $bins, $normalise) setup = ())
 
-bins = 5#:HGR
-c, d = PortfolioOptimiser.mut_var_info_mtx(X, bins, normalise)
-display(@benchmark PortfolioOptimiser.mut_var_info_mtx($X, $bins, $normalise) setup = ())
+ce = PortfolioOptimiser.DistcorOpt()
+
+b = PortfolioOptimiser.cordistance(X, ce)
+
+display(@benchmark PortfolioOptimiser.cordistance($X, $bins, $normalise) setup = ())
 
 @test isapprox(a, c)
 @test isapprox(b, d)

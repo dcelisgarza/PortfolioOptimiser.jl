@@ -4,7 +4,6 @@ struct FD <: AbstractBins end
 struct SC <: AbstractBins end
 const AstroBins = Union{KN, FD, SC}
 struct HGR <: AbstractBins end
-
 function _bin_width_func(::KN)
     return pyimport("astropy.stats").knuth_bin_width
 end
@@ -17,7 +16,6 @@ end
 function _bin_width_func(::Union{HGR, <:Integer})
     return nothing
 end
-
 function calc_num_bins(::AstroBins, xj, xi, j::Integer, i, bin_width_func, T = nothing)
     k1 = (maximum(xj) - minimum(xj)) / bin_width_func(xj)
     return round(Int, if j != i
@@ -27,7 +25,6 @@ function calc_num_bins(::AstroBins, xj, xi, j::Integer, i, bin_width_func, T = n
                      k1
                  end)
 end
-
 function calc_num_bins(::HGR, xj, xi, j, i, bin_width_func, N)
     corr = cor(xj, xi)
     return round(Int, if isone(corr)
@@ -37,11 +34,9 @@ function calc_num_bins(::HGR, xj, xi, j, i, bin_width_func, N)
                      sqrt(1 + sqrt(1 + 24 * N / (1 - corr^2))) / sqrt(2)
                  end)
 end
-
 function calc_num_bins(bins::Integer, xj, xi, j, i, bin_width_func, N)
     return bins
 end
-
 function calc_hist_data(xj::AbstractVector, xi::AbstractVector, bins::Integer)
     xjl = minimum(xj) - eps(eltype(xj))
     xjh = maximum(xj) + eps(eltype(xj))
@@ -64,7 +59,6 @@ function calc_hist_data(xj::AbstractVector, xi::AbstractVector, bins::Integer)
 
     return ex, ey, hxy
 end
-
 function mutualinfo(A::AbstractMatrix)
     p_i = vec(sum(A; dims = 2))
     p_j = vec(sum(A; dims = 1))
@@ -88,7 +82,6 @@ function mutualinfo(A::AbstractMatrix)
 
     return sum(mi)
 end
-
 function mut_var_info_mtx(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} = KN(),
                           normalise::Bool = true)
     T, N = size(X)
@@ -128,3 +121,51 @@ function mut_var_info_mtx(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integ
 end
 
 ### Tested
+@kwdef mutable struct CorDistance <: StatsBase.CovarianceEstimator
+    metric::Distances.UnionMetric = Distances.Euclidean()
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+
+function cordistance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
+    N = length(v1)
+    @smart_assert(N == length(v2) && N > 1)
+
+    N2 = N^2
+
+    a = pairwise(ce.metric, v1, ce.args...; ce.kwargs...)
+    b = pairwise(ce.metric, v2, ce.args...; ce.kwargs...)
+    A = a .- mean(a; dims = 1) .- mean(a; dims = 2) .+ mean(a)
+    B = b .- mean(b; dims = 1) .- mean(b; dims = 2) .+ mean(b)
+
+    dcov2_xx = sum(A .* A) / N2
+    dcov2_xy = sum(A .* B) / N2
+    dcov2_yy = sum(B .* B) / N2
+
+    val = sqrt(dcov2_xy) / sqrt(sqrt(dcov2_xx) * sqrt(dcov2_yy))
+
+    return val
+end
+
+function cordistance(ce::CorDistance, X::AbstractMatrix)
+    N = size(X, 2)
+
+    rho = Matrix{eltype(X)}(undef, N, N)
+    for j ∈ eachindex(axes(X, 2))
+        xj = X[:, j]
+        for i ∈ 1:j
+            rho[i, j] = cordistance(ce, X[:, i], xj)
+        end
+    end
+
+    return Symmetric(rho, :U)
+end
+
+function StatsBase.cov(ce::CorDistance, X::AbstractMatrix, args...; kwargs...)
+    return cordistance(ce::CorDistance, X::AbstractMatrix)
+end
+
+################################################################
+
+abstract type CorMetric <: Distances.UnionMetric end
+struct MLPDistance <: CorMetric end
