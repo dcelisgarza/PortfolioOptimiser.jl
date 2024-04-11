@@ -323,6 +323,21 @@ function Distances.pairwise(ce::ClampDist, X::AbstractMatrix, args...; kwargs...
                  end)
 end
 
+"""
+```julia
+@kwdef mutable struct ClampDist <: Distances.UnionMetric
+    absolute::Bool = false
+    metric::Distances.UnionMetric = Distances.Euclidean()
+end
+```
+
+Structure and keyword constructor that defines the distance the distance metric from a correlation matrix for the purposes of hierarchical clustering.
+
+# Inputs
+
+  - `absolute`: whether the correlation matrix is absolute.
+  - `metric`: `Distances.UnionMetric` from [`Distances.jl`](https://github.com/JuliaStats/Distances.jl) for computing the distances of the distance matrix.
+"""
 @kwdef mutable struct AugClampDist <: Distances.UnionMetric
     absolute::Bool = false
     metric::Distances.UnionMetric = Distances.Euclidean()
@@ -333,7 +348,7 @@ end
 Distances.pairwise(ce::AugClampDist, X::AbstractMatrix, args...; kwargs...)
 ```
 
-Defines the distance matrix from a correlation matrix as:
+Defines the distance of distances matrix from a correlation matrix as:
 
 ```math
 \\begin{align}

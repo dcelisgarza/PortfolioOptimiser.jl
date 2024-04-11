@@ -1441,9 +1441,6 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
         try
             corr = cov_flag ? cov2cor(mtx) : mtx
 
-            # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-            # separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
-
             distance = jlogo.dist
             dist_method = distance.method
             dargs = distance.args
@@ -1452,6 +1449,7 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
             if size(dist, 1) != size(dist, 2)
                 dist = reshape(dist, size(corr))
             end
+
             genfunc = jlogo.genfunc
             func = genfunc.func
             args = genfunc.args
@@ -1649,7 +1647,6 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
             StatsBase.cov2cor(Matrix(StatsBase.cov(estimator, returns, args...; kwargs...)))
         end
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
-        # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dkwargs = opt.dist.kwargs
@@ -1660,7 +1657,6 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     elseif method == :Spearman
         corr = corspearman(returns)
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
-        # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dkwargs = opt.dist.kwargs
@@ -1671,7 +1667,6 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     elseif method == :Kendall
         corr = corkendall(returns)
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
-        # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dkwargs = opt.dist.kwargs
@@ -1736,7 +1731,6 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     elseif method == :Gerber0
         corr = gerber0(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
-        # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dkwargs = opt.dist.kwargs
@@ -1747,7 +1741,6 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     elseif method == :Gerber1
         corr = gerber1(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
-        # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dkwargs = opt.dist.kwargs
@@ -1758,7 +1751,6 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     elseif method == :Gerber2
         corr = gerber2(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
-        # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dkwargs = opt.dist.kwargs
@@ -1769,7 +1761,6 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     elseif method == :SB0
         corr = sb0(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
-        # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dkwargs = opt.dist.kwargs
@@ -1780,7 +1771,6 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     elseif method == :SB1
         corr = sb1(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
-        # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dkwargs = opt.dist.kwargs
@@ -1791,7 +1781,6 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     elseif method == :Gerber_SB0
         corr = gerbersb0(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
-        # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dkwargs = opt.dist.kwargs
@@ -1802,7 +1791,6 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     elseif method == :Gerber_SB1
         corr = gerbersb1(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
-        # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
         dkwargs = opt.dist.kwargs
