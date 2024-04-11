@@ -1,6 +1,25 @@
 using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, PortfolioOptimiser,
       LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix, StatsBase,
-      AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes
+      AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes, BenchmarkTools
+
+X = randn(200, 20)
+a, b, c, d = 1, 2, 3, 4
+
+bins = 5#PortfolioOptimiser.HGR()
+normalise = true
+a, b = PortfolioOptimiser.mut_var_info_mtx(X, bins, normalise)
+display(@benchmark PortfolioOptimiser.mut_var_info_mtx2($X, $bins, $normalise) setup = ())
+
+bins = 5#:HGR
+c, d = PortfolioOptimiser.mut_var_info_mtx(X, bins, normalise)
+display(@benchmark PortfolioOptimiser.mut_var_info_mtx($X, $bins, $normalise) setup = ())
+
+@test isapprox(a, c)
+@test isapprox(b, d)
+
+bins = PortfolioOptimiser.FD()
+bins = PortfolioOptimiser.SC()
+bins = PortfolioOptimiser.HGR()
 
 prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
