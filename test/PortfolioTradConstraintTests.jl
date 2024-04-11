@@ -4,7 +4,7 @@ using CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra, OrderedColl
 import Distances: pairwise, UnionMetric
 
 struct POCorDist <: Distances.UnionMetric end
-function Distances.pairwise(::POCorDist, i, mtx)
+function Distances.pairwise(::POCorDist, mtx, i)
     return sqrt.(clamp!((1 .- mtx) / 2, 0, 1))
 end
 dbht_d(corr, dist) = 2 .- (dist .^ 2) / 2

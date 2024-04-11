@@ -265,6 +265,71 @@ function Base.setproperty!(obj::DenoiseOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+@kwdef mutable struct ClampDist <: Distances.UnionMetric
+    absolute::Bool = false
+end
+function Distances.pairwise(ce::ClampDist, X::AbstractMatrix, args...; kwargs...)
+    return sqrt.(if !ce.absolute
+                     clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
+                 else
+                     clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
+                 end)
+end
+
+"""
+```
+@kwdef mutable struct DistOpt
+    method::Distances.UnionMetric = ClampDist(;)
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+```
+
+Structure and keyword constructor for storing parameters for the :Distance method from [`CorMethods`](@ref). This is part of [`CorOpt`](@ref), and as such some of these are only relevant when its `method` field has a specific value.
+
+# Inputs
+
+  - `method`: distance type from [Distances.jl](https://github.com/JuliaStats/Distances.jl).
+  - `args`: args for the pairwise distance calculation.
+"""
+mutable struct DistOpt
+    method::Distances.UnionMetric
+    args::Tuple
+    kwargs::NamedTuple
+end
+function DistOpt(; method::Distances.UnionMetric = ClampDist(;), args::Tuple = (),
+                 kwargs::NamedTuple = (;))
+    return DistOpt(method, args, kwargs)
+end
+
+"""
+```
+@kwdef mutable struct JlogoOpt
+    flag::Bool = false
+    dist::DistOpt = DistOpt(;)
+    genfunc::GenericFunction = GenericFunction(; func = (corr, dist) -> exp.(-dist))
+end
+```
+
+Structure and keyword constructor for computing the J-LoGo matrix, uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
+
+# Inputs
+
+  - `flag`: whether to compute the J-LoGo matrix.
+  - `dist`: instance of [`DistOpt`](@ref) for computing the distance matrix.
+  - `genfunc`: instance of [`GenericFunction`](@ref) for computing the non-negative distance matrix to be used in [`PMFG_T2s`](@ref).
+"""
+mutable struct JlogoOpt
+    flag::Bool
+    dist::DistOpt
+    genfunc::GenericFunction
+end
+function JlogoOpt(; flag::Bool = false, dist::DistOpt = DistOpt(;),
+                  genfunc::GenericFunction = GenericFunction(;
+                                                             func = (corr, dist) -> exp.(-dist)))
+    return JlogoOpt(flag, dist, genfunc)
+end
+
 """
 ```
 @kwdef mutable struct CovOpt
@@ -274,7 +339,7 @@ end
     sb::SBOpt = SBOpt(;)
     denoise::DenoiseOpt = DenoiseOpt(;)
     posdef::PosdefFixOpt = PosdefFixOpt(;)
-    jlogo::Bool = false
+    jlogo::JlogoOpt = JlogoOpt(;)
     uplo::Symbol = :U
 end
 ```
@@ -290,9 +355,7 @@ Structure and keyword constructor for computing covariance matrices.
   - `sb`: options for Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
-  - `jlogo`:
-
-      + `true`: uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the covariance from its relationship structure.
+  - `jlogo`: J-LoGo matrix options.
   - `uplo`: argument for [Symmetric](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.Symmetric) to ensure the covariance matrix is symmetric (to combat floating point arithmetic problems).
 """
 mutable struct CovOpt
@@ -309,14 +372,14 @@ mutable struct CovOpt
     # Posdef fix
     posdef::PosdefFixOpt
     # J-LoGo
-    jlogo::Bool
+    jlogo::JlogoOpt
     # Symmetric
     uplo::Symbol
 end
 function CovOpt(; method::Symbol = :Full, estimation::CovEstOpt = CovEstOpt(;),
                 gerber::GerberOpt = GerberOpt(;), sb::SBOpt = SBOpt(;),
                 denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
-                jlogo::Bool = false, uplo::Symbol = :U)
+                jlogo::JlogoOpt = JlogoOpt(;), uplo::Symbol = :U)
     @smart_assert(method ∈ CovMethods)
 
     return CovOpt(method, estimation, gerber, sb, denoise, posdef, jlogo, uplo)
@@ -429,7 +492,7 @@ end
     estimation::KurtEstOpt = KurtEstOpt(;)
     denoise::DenoiseOpt = DenoiseOpt(;)
     posdef::PosdefFixOpt = PosdefFixOpt(;)
-    jlogo::Bool = false
+    jlogo::JlogoOpt = JlogoOpt(;)
 end
 ```
 
@@ -441,9 +504,7 @@ Structure and keyword constructor for computing cokurtosis matrices.
 
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
-  - `jlogo`:
-
-      + `true`: uses [`PMFG_T2s`](@ref) and [`J_LoGo`](@ref) to estimate the cokurtosis from its relationship structure.
+  - `jlogo`: J-LoGo matrix options.
 """
 mutable struct KurtOpt
     # Estimation
@@ -453,35 +514,12 @@ mutable struct KurtOpt
     # Posdef fix
     posdef::PosdefFixOpt
     # J-LoGo
-    jlogo::Bool
+    jlogo::JlogoOpt
 end
 function KurtOpt(; estimation::KurtEstOpt = KurtEstOpt(;),
                  denoise::DenoiseOpt = DenoiseOpt(;),
-                 posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false)
+                 posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::JlogoOpt = JlogoOpt(;))
     return KurtOpt(estimation, denoise, posdef, jlogo)
-end
-
-"""
-```
-@kwdef mutable struct DistOpt
-    method::Distances.PreMetric = Distances.Euclidean()
-    args::Tuple = ()
-end
-```
-
-Structure and keyword constructor for storing parameters for the :Distance method from [`CorMethods`](@ref). This is part of [`CorOpt`](@ref), and as such some of these are only relevant when its `method` field has a specific value.
-
-# Inputs
-
-  - `method`: distance type from [Distances.jl](https://github.com/JuliaStats/Distances.jl).
-  - `args`: args for the pairwise distance calculation.
-"""
-mutable struct DistOpt
-    method::Distances.PreMetric
-    args::Tuple
-end
-function DistOpt(; method::Distances.PreMetric = Distances.Euclidean(), args::Tuple = ())
-    return DistOpt(method, args)
 end
 
 """
@@ -622,7 +660,7 @@ end
     dist::DistOpt = DistOpt(;)
     denoise::DenoiseOpt = DenoiseOpt(;)
     posdef::PosdefFixOpt = PosdefFixOpt(;)
-    jlogo::Bool = false
+    jlogo::JlogoOpt = JlogoOpt(;)
     uplo::Symbol = :U
 end
 ```
@@ -660,14 +698,14 @@ mutable struct CorOpt
     # Posdef fix
     posdef::PosdefFixOpt
     # J-LoGo
-    jlogo::Bool
+    jlogo::JlogoOpt
     # Symmetric
     uplo::Symbol
 end
 function CorOpt(; method::Symbol = :Pearson, estimation::CorEstOpt = CorEstOpt(;),
                 gerber::GerberOpt = GerberOpt(;), sb::SBOpt = SBOpt(;),
                 dist::DistOpt = DistOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
-                posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::Bool = false,
+                posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::JlogoOpt = JlogoOpt(;),
                 uplo::Symbol = :U)
     @smart_assert(method ∈ CorMethods)
 
@@ -953,7 +991,7 @@ end
                                                    kwargs = (; dims = 1))
     denoise::DenoiseOpt = DenoiseOpt(;)
     posdef::PosdefFixOpt = PosdefFixOpt(;)
-    jlogo::Bool = false
+    jlogo::JlogoOpt = JlogoOpt(;)
 end
 ```
 
@@ -1011,14 +1049,14 @@ mutable struct BLOpt{T1 <: Real}
     var_genfunc::GenericFunction
     denoise::DenoiseOpt
     posdef::PosdefFixOpt
-    jlogo::Bool
+    jlogo::JlogoOpt
 end
 function BLOpt(; method::Symbol = :B, constant::Bool = true, error::Bool = true,
                eq::Bool = true, delta::Real = 1.0, rf::Real = 0.0,
                var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
                                                               kwargs = (; dims = 1)),
                denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
-               jlogo::Bool = false)
+               jlogo::JlogoOpt = JlogoOpt(;))
     @smart_assert(method ∈ BLFMMethods)
 
     return BLOpt{typeof(rf)}(method, constant, eq, error, delta, rf, var_genfunc, denoise,

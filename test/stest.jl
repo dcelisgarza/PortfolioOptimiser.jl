@@ -2,8 +2,19 @@ using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, Portfolio
       LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix, StatsBase,
       AverageShiftedHistograms, Distances, Aqua
 
+Aqua.test_all(PortfolioOptimiser; ambiguities = false, deps_compat = false)
+
 test = rand(1000, 300)
 T, N = size(test)
+
+dims = 1
+corrected = true
+mu = nothing
+w = pweights(rand(T))
+# args = (1)
+std(test; corrected = corrected, mean = mu, dims = 1)
+
+mean(test, w; dims = dims)
 
 X = cov(test)
 
@@ -26,7 +37,7 @@ function jlogo2(X)
     return J_LoGo(X, separators, cliques) \ I
 end
 
-struct ClampDist <: Distances.PreMetric end
+struct ClampDist <: Distances.UnionMetric end
 function Distances.pairwise(::ClampDist, i, X)
     return sqrt.(clamp!((1 .- X) / 2, zero(eltype(X)), one(eltype(X))))
 end

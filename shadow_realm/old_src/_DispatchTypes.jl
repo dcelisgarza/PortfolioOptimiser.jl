@@ -4,10 +4,10 @@ abstract type PO_CovarianceEstimator <: StatsBase.CovarianceEstimator end
 abstract type PO_StdDevEstimator <: StatsBase.CovarianceEstimator end
 abstract type PO_MeanEstimator end
 abstract type PO_PosdefFix <: NCM.NCMAlgorithm end
-abstract type PO_MatrixDenoiser end
+abstract type MatrixDenoiser end
 
 struct SimpleMean <: PO_MeanEstimator end
-@kwdef mutable struct PO_SimpleStdDevEstimator <: PO_StdDevEstimator
+@kwdef mutable struct SimpleStdDevEstimator <: PO_StdDevEstimator
     corrected::Bool = true
 end
 @kwdef mutable struct PosdefPSD <: PO_PosdefFix
@@ -46,10 +46,14 @@ end
     target::Union{<:AbstractVector{<:Real}, <:Real} = 0.0
 end
 @kwdef mutable struct Kendall <: PO_CovarianceEstimator
-    se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(; corrected = true)
+    se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true)
+    std_args::Tuple = ()
+    std_kwargs::NamedTuple = (; dims = 1)
 end
 @kwdef struct Spearman <: PO_CovarianceEstimator
-    se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(; corrected = true)
+    se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true)
+    std_args::Tuple = ()
+    std_kwargs::NamedTuple = (; dims = 1)
 end
 
 mutable struct Gerber0 <: PO_CovarianceEstimator
@@ -58,14 +62,21 @@ mutable struct Gerber0 <: PO_CovarianceEstimator
     posdef::NCM.NCMAlgorithm
     normalise::Bool
     threshold::Real
+    std_args::Tuple
+    std_kwargs::NamedTuple
+    mean_args::Tuple
+    mean_kwargs::NamedTuple
 end
-function Gerber0(; se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(; corrected = true),
+function Gerber0(; se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true),
                  me::PO_MeanEstimator = SimpleMean(),
                  posdef::NCM.NCMAlgorithm = NCM.Newton(; tau = 1e-12),
-                 normalise::Bool = false, threshold::Real = 0.5)
+                 normalise::Bool = false, threshold::Real = 0.5, std_args::Tuple = (),
+                 std_kwargs::NamedTuple = (; dims = 1), mean_args::Tuple = (),
+                 mean_kwargs::NamedTuple = (; dims = 1))
     @smart_assert(zero(threshold) < threshold < one(threshold))
 
-    return Gerber0(se, me, posdef, normalise, threshold)
+    return Gerber0(se, me, posdef, normalise, threshold, std_args, std_kwargs, mean_args,
+                   mean_kwargs)
 end
 mutable struct Gerber1 <: PO_CovarianceEstimator
     se::PO_StdDevEstimator
@@ -73,14 +84,21 @@ mutable struct Gerber1 <: PO_CovarianceEstimator
     posdef::NCM.NCMAlgorithm
     normalise::Bool
     threshold::Real
+    std_args::Tuple
+    std_kwargs::NamedTuple
+    mean_args::Tuple
+    mean_kwargs::NamedTuple
 end
-function Gerber1(; se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(; corrected = true),
+function Gerber1(; se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true),
                  me::PO_MeanEstimator = SimpleMean(),
                  posdef::NCM.NCMAlgorithm = NCM.Newton(; tau = 1e-12),
-                 normalise::Bool = false, threshold::Real = 0.5)
+                 normalise::Bool = false, threshold::Real = 0.5, std_args::Tuple = (),
+                 std_kwargs::NamedTuple = (; dims = 1), mean_args::Tuple = (),
+                 mean_kwargs::NamedTuple = (; dims = 1))
     @smart_assert(zero(threshold) < threshold < one(threshold))
 
-    return Gerber1(se, me, posdef, normalise, threshold)
+    return Gerber1(se, me, posdef, normalise, threshold, std_args, std_kwargs, mean_args,
+                   mean_kwargs)
 end
 mutable struct Gerber2 <: PO_CovarianceEstimator
     se::PO_StdDevEstimator
@@ -88,14 +106,21 @@ mutable struct Gerber2 <: PO_CovarianceEstimator
     posdef::NCM.NCMAlgorithm
     normalise::Bool
     threshold::Real
+    std_args::Tuple
+    std_kwargs::NamedTuple
+    mean_args::Tuple
+    mean_kwargs::NamedTuple
 end
-function Gerber2(; se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(; corrected = true),
+function Gerber2(; se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true),
                  me::PO_MeanEstimator = SimpleMean(),
                  posdef::NCM.NCMAlgorithm = NCM.Newton(; tau = 1e-12),
-                 normalise::Bool = false, threshold::Real = 0.5)
+                 normalise::Bool = false, threshold::Real = 0.5, std_args::Tuple = (),
+                 std_kwargs::NamedTuple = (; dims = 1), mean_args::Tuple = (),
+                 mean_kwargs::NamedTuple = (; dims = 1))
     @smart_assert(zero(threshold) < threshold < one(threshold))
 
-    return Gerber2(se, me, posdef, normalise, threshold)
+    return Gerber2(se, me, posdef, normalise, threshold, std_args, std_kwargs, mean_args,
+                   mean_kwargs)
 end
 
 function Base.setproperty!(obj::Union{Gerber0, Gerber1, Gerber2}, sym::Symbol, val)
@@ -115,17 +140,24 @@ mutable struct SB0 <: PO_CovarianceEstimator
     c2::Real
     c3::Real
     n::Real
+    std_args::Tuple
+    std_kwargs::NamedTuple
+    mean_args::Tuple
+    mean_kwargs::NamedTuple
 end
-function SB0(; se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(; corrected = true),
+function SB0(; se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true),
              me::PO_MeanEstimator = SimpleMean(),
              posdef::NCM.NCMAlgorithm = NCM.Newton(; tau = 1e-12), normalise::Bool = false,
-             threshold::Real = 0.5, c1 = 0.5, c2 = 0.5, c3 = 4, n = 2)
+             threshold::Real = 0.5, c1 = 0.5, c2 = 0.5, c3 = 4, n = 2, std_args::Tuple = (),
+             std_kwargs::NamedTuple = (; dims = 1), mean_args::Tuple = (),
+             mean_kwargs::NamedTuple = (; dims = 1))
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
     @smart_assert(c3 > c2)
 
-    return SB0(se, me, posdef, normalise, threshold, c1, c2, c3, n)
+    return SB0(se, me, posdef, normalise, threshold, c1, c2, c3, n, std_args, std_kwargs,
+               mean_args, mean_kwargs)
 end
 
 mutable struct SB1 <: PO_CovarianceEstimator
@@ -138,17 +170,24 @@ mutable struct SB1 <: PO_CovarianceEstimator
     c2::Real
     c3::Real
     n::Real
+    std_args::Tuple
+    std_kwargs::NamedTuple
+    mean_args::Tuple
+    mean_kwargs::NamedTuple
 end
-function SB1(; se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(; corrected = true),
+function SB1(; se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true),
              me::PO_MeanEstimator = SimpleMean(),
              posdef::NCM.NCMAlgorithm = NCM.Newton(; tau = 1e-12), normalise::Bool = false,
-             threshold::Real = 0.5, c1 = 0.5, c2 = 0.5, c3 = 4, n = 2)
+             threshold::Real = 0.5, c1 = 0.5, c2 = 0.5, c3 = 4, n = 2, std_args::Tuple = (),
+             std_kwargs::NamedTuple = (; dims = 1), mean_args::Tuple = (),
+             mean_kwargs::NamedTuple = (; dims = 1))
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
     @smart_assert(c3 > c2)
 
-    return SB1(se, me, posdef, normalise, threshold, c1, c2, c3, n)
+    return SB1(se, me, posdef, normalise, threshold, c1, c2, c3, n, std_args, std_kwargs,
+               mean_args, mean_kwargs)
 end
 
 mutable struct Gerber_SB0 <: PO_CovarianceEstimator
@@ -161,18 +200,25 @@ mutable struct Gerber_SB0 <: PO_CovarianceEstimator
     c2::Real
     c3::Real
     n::Real
+    std_args::Tuple
+    std_kwargs::NamedTuple
+    mean_args::Tuple
+    mean_kwargs::NamedTuple
 end
-function Gerber_SB0(; se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(; corrected = true),
+function Gerber_SB0(; se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true),
                     me::PO_MeanEstimator = SimpleMean(),
                     posdef::NCM.NCMAlgorithm = NCM.Newton(; tau = 1e-12),
                     normalise::Bool = false, threshold::Real = 0.5, c1 = 0.5, c2 = 0.5,
-                    c3 = 4, n = 2)
+                    c3 = 4, n = 2, std_args::Tuple = (),
+                    std_kwargs::NamedTuple = (; dims = 1), mean_args::Tuple = (),
+                    mean_kwargs::NamedTuple = (; dims = 1))
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
     @smart_assert(c3 > c2)
 
-    return Gerber_SB0(se, me, posdef, normalise, threshold, c1, c2, c3, n)
+    return Gerber_SB0(se, me, posdef, normalise, threshold, c1, c2, c3, n, std_args,
+                      std_kwargs, mean_args, mean_kwargs)
 end
 
 mutable struct Gerber_SB1 <: PO_CovarianceEstimator
@@ -185,18 +231,25 @@ mutable struct Gerber_SB1 <: PO_CovarianceEstimator
     c2::Real
     c3::Real
     n::Real
+    std_args::Tuple
+    std_kwargs::NamedTuple
+    mean_args::Tuple
+    mean_kwargs::NamedTuple
 end
-function Gerber_SB1(; se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(; corrected = true),
+function Gerber_SB1(; se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true),
                     me::PO_MeanEstimator = SimpleMean(),
                     posdef::NCM.NCMAlgorithm = NCM.Newton(; tau = 1e-12),
                     normalise::Bool = false, threshold::Real = 0.5, c1 = 0.5, c2 = 0.5,
-                    c3 = 4, n = 2)
+                    c3 = 4, n = 2, std_args::Tuple = (),
+                    std_kwargs::NamedTuple = (; dims = 1), mean_args::Tuple = (),
+                    mean_kwargs::NamedTuple = (; dims = 1))
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
     @smart_assert(c3 > c2)
 
-    return Gerber_SB1(se, me, posdef, normalise, threshold, c1, c2, c3, n)
+    return Gerber_SB1(se, me, posdef, normalise, threshold, c1, c2, c3, n, std_args,
+                      std_kwargs, mean_args, mean_kwargs)
 end
 
 function Base.setproperty!(obj::Union{SB0, SB1, Gerber_SB0, Gerber_SB1}, sym::Symbol, val)
@@ -213,11 +266,14 @@ end
 mutable struct TailCov <: PO_CovarianceEstimator
     se::PO_StdDevEstimator
     alpha::Real
+    std_args::Tuple
+    std_kwargs::NamedTuple
 end
-function TailCov(; se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(; corrected = true),
-                 alpha::Real = 0.05)
+function TailCov(; se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true),
+                 alpha::Real = 0.05, std_args::Tuple = (),
+                 std_kwargs::NamedTuple = (; dims = 1))
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return TailCov(se, alpha)
+    return TailCov(se, alpha, std_args, std_kwargs)
 end
 function Base.setproperty!(obj::TailCov, sym::Symbol, val)
     if sym == :alpha
@@ -227,24 +283,27 @@ function Base.setproperty!(obj::TailCov, sym::Symbol, val)
 end
 
 @kwdef mutable struct DistanceCov <: PO_CovarianceEstimator
-    se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(; corrected = true)
+    se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true)
     metric::Distances.UnionMetric = Distances.Euclidean()
-    args::Tuple = ()
-    kwargs::NamedTuple = (;)
+    dist_args::Tuple = ()
+    dist_kwargs::NamedTuple = (;)
+    std_args::Tuple = ()
+    std_kwargs::NamedTuple = (; dims = 1)
 end
 
 mutable struct MutualInfoCov <: PO_CovarianceEstimator
     se::PO_StdDevEstimator
     normalise::Bool
     bins::Union{Symbol, <:Integer}
+    std_args::Tuple
+    std_kwargs::NamedTuple
 end
-function MutualInfoCov(;
-                       se::PO_StdDevEstimator = PO_SimpleStdDevEstimator(;
-                                                                         corrected = true),
-                       normalise::Bool = true, bins::Union{Symbol, <:Integer} = :KN)
+function MutualInfoCov(; se::PO_StdDevEstimator = SimpleStdDevEstimator(; corrected = true),
+                       normalise::Bool = true, bins::Union{Symbol, <:Integer} = :KN,
+                       std_args::Tuple = (), std_kwargs::NamedTuple = (; dims = 1))
     @smart_assert(bins ∈ BinMethods || isa(bins, Int) && bins > zero(bins))
 
-    return MutualInfoCov(se, normalise, bins)
+    return MutualInfoCov(se, normalise, bins, std_args, std_kwargs)
 end
 function Base.setproperty!(obj::MutualInfoCov, sym::Symbol, val)
     if sym == :bins_info
@@ -274,70 +333,44 @@ end
 
 struct Cov2Cor <: PO_CovarianceEstimator end
 
-function StatsBase.mean(::SimpleMean, X::AbstractArray,
-                        w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1)
-    return if isnothing(w)
-        StatsBase.mean(X; dims = dims)
-    else
-        StatsBase.mean(X, w; dims = dims)
-    end
+function StatsBase.mean(::SimpleMean, X::AbstractArray, args...; kwargs...)
+    return mean(X, args...; kwargs...)
 end
 
-function StatsBase.std(ce::PO_SimpleStdDevEstimator, X::AbstractArray,
-                       w::Union{AbstractWeights, Nothing} = nothing; mean = nothing,
-                       dims::Int = 1)
-    return if isnothing(w)
-        StatsBase.std(X; corrected = ce.corrected, mean = mean, dims = dims)
-    else
-        StatsBase.std(X .* w; corrected = ce.corrected, mean = mean, dims = dims)
-    end
+function StatsBase.std(ce::SimpleStdDevEstimator, X::AbstractArray, args...; kwargs...)
+    kwargs = (kwargs[setdiff(keys(kwargs, :corrected))]..., corrected = ce.corrected)
+    return std(X, args...; kwargs...)
 end
 
-function StatsBase.cov(ce::FullCov, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
-    return if isnothing(w)
-        StatsBase.cov(ce.ce, X; dims = dims, kwargs...)
-    else
-        StatsBase.cov(ce.ce, X, w; dims = dims, kwargs...)
-    end
+function StatsBase.cov(ce::FullCov, X::AbstractMatrix, args...; kwargs...)
+    return cov(ce.ce, X, args...; kwargs...)
 end
 
-function StatsBase.cov(ce::SemiCov, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cov(ce::SemiCov, X::AbstractMatrix, args...; kwargs...)
     X = if isa(ce.target, Real)
         min.(X .- ce.target, zero(eltype(X)))
     else
         min.(X .- transpose(ce.target), zero(eltype(X)))
     end
 
-    mean = zero(eltype(X))
+    kwargs = (kwargs[setdiff(keys(kwargs, :mean))]..., mean = zero(eltype(X)))
 
-    return if isnothing(w)
-        StatsBase.cov(ce.ce, X; mean = mean, dims = dims, kwargs...)
-    else
-        StatsBase.cov(ce.ce, X, w; mean = mean, dims = dims, kwargs...)
-    end
+    return StatsBase.cov(ce.ce, X, args...; kwargs...)
 end
 
-function StatsBase.cor(ce::Union{FullCov, SemiCov}, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
-    sigma = cov(ce, X, w; dims = dims, kwargs...)
-    return Symmetric(cov2cor(isa(sigma, Matrix) ? sigma : Matrix(sigma)))
+function StatsBase.cor(ce::Union{FullCov, SemiCov}, X::AbstractMatrix, args...; kwargs...)
+    sigma = cov(ce, X, args...; kwargs...)
+    return cov2cor(isa(sigma, Matrix) ? sigma : Matrix(sigma))
 end
 
-function StatsBase.cov(ce::Gerber0, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cov(ce::Gerber0, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims))
+    std_vec = vec(std(ce.se, X, ce.std_args...; ce.std_kwargs...))
 
     sigma = if normalise
-        mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+        mean_vec = vec(mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
         _gerber0_norm(X, mean_vec, std_vec, threshold)
     else
         _gerber0(X, std_vec, threshold)
@@ -345,19 +378,17 @@ function StatsBase.cov(ce::Gerber0, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "Gerber0 Covariance ")
 
-    return Symmetric(sigma .* (std_vec * transpose(std_vec)))
+    return sigma .* (std_vec * transpose(std_vec))
 end
 
-function StatsBase.cor(ce::Gerber0, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cor(ce::Gerber0, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
 
     sigma = if normalise
-        mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+        mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
         _gerber0_norm(X, mean_vec, std_vec, threshold)
     else
         _gerber0(X, std_vec, threshold)
@@ -365,19 +396,17 @@ function StatsBase.cor(ce::Gerber0, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "Gerber0 Correlation ")
 
-    return Symmetric(sigma)
+    return sigma
 end
 
-function StatsBase.cov(ce::Gerber1, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cov(ce::Gerber1, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
 
     sigma = if normalise
-        mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+        mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
         _gerber1_norm(X, mean_vec, std_vec, threshold)
     else
         _gerber1(X, std_vec, threshold)
@@ -385,19 +414,17 @@ function StatsBase.cov(ce::Gerber1, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "Gerber1 Correlation ")
 
-    return Symmetric(sigma .* (std_vec * transpose(std_vec)))
+    return sigma .* (std_vec * transpose(std_vec))
 end
 
-function StatsBase.cor(ce::Gerber1, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cor(ce::Gerber1, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
 
     sigma = if normalise
-        mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+        mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
         _gerber1_norm(X, mean_vec, std_vec, threshold)
     else
         _gerber1(X, std_vec, threshold)
@@ -405,19 +432,17 @@ function StatsBase.cor(ce::Gerber1, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "Gerber1 Correlation ")
 
-    return Symmetric(sigma)
+    return sigma
 end
 
-function StatsBase.cov(ce::Gerber2, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cov(ce::Gerber2, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
 
     sigma = if normalise
-        mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+        mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
         _gerber2_norm(X, mean_vec, std_vec, threshold)
     else
         _gerber2(X, std_vec, threshold)
@@ -425,19 +450,17 @@ function StatsBase.cov(ce::Gerber2, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "Gerber2 Correlation ")
 
-    return Symmetric(sigma .* (std_vec * transpose(std_vec)))
+    return sigma .* (std_vec * transpose(std_vec))
 end
 
-function StatsBase.cor(ce::Gerber2, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cor(ce::Gerber2, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
 
     sigma = if normalise
-        mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+        mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
         _gerber2_norm(X, mean_vec, std_vec, threshold)
     else
         _gerber2(X, std_vec, threshold)
@@ -445,12 +468,10 @@ function StatsBase.cor(ce::Gerber2, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "Gerber2 Correlation ")
 
-    return Symmetric(sigma)
+    return sigma
 end
 
-function StatsBase.cov(ce::SB0, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cov(ce::SB0, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
     c1 = ce.c1
@@ -458,8 +479,8 @@ function StatsBase.cov(ce::SB0, X::AbstractMatrix,
     c3 = ce.c3
     n = ce.n
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
-    mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
 
     sigma = if normalise
         _sb0_norm(X, mean_vec, std_vec, threshold, c1, c2, c3, n)
@@ -469,12 +490,10 @@ function StatsBase.cov(ce::SB0, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "SB0 Correlation ")
 
-    return Symmetric(sigma .* (std_vec * transpose(std_vec)))
+    return sigma .* (std_vec * transpose(std_vec))
 end
 
-function StatsBase.cor(ce::SB0, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cor(ce::SB0, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
     c1 = ce.c1
@@ -482,8 +501,8 @@ function StatsBase.cor(ce::SB0, X::AbstractMatrix,
     c3 = ce.c3
     n = ce.n
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
-    mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
 
     sigma = if normalise
         _sb0_norm(X, mean_vec, std_vec, threshold, c1, c2, c3, n)
@@ -493,12 +512,10 @@ function StatsBase.cor(ce::SB0, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "SB0 Correlation ")
 
-    return Symmetric(sigma)
+    return sigma
 end
 
-function StatsBase.cov(ce::SB1, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cov(ce::SB1, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
     c1 = ce.c1
@@ -506,8 +523,8 @@ function StatsBase.cov(ce::SB1, X::AbstractMatrix,
     c3 = ce.c3
     n = ce.n
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
-    mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
 
     sigma = if normalise
         _sb1_norm(X, mean_vec, std_vec, threshold, c1, c2, c3, n)
@@ -517,12 +534,10 @@ function StatsBase.cov(ce::SB1, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "SB1 Correlation ")
 
-    return Symmetric(sigma .* (std_vec * transpose(std_vec)))
+    return sigma .* (std_vec * transpose(std_vec))
 end
 
-function StatsBase.cor(ce::SB1, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cor(ce::SB1, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
     c1 = ce.c1
@@ -530,8 +545,8 @@ function StatsBase.cor(ce::SB1, X::AbstractMatrix,
     c3 = ce.c3
     n = ce.n
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
-    mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
 
     sigma = if normalise
         _sb1_norm(X, mean_vec, std_vec, threshold, c1, c2, c3, n)
@@ -541,12 +556,10 @@ function StatsBase.cor(ce::SB1, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "SB1 Correlation ")
 
-    return Symmetric(sigma)
+    return sigma
 end
 
-function StatsBase.cov(ce::Gerber_SB0, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cov(ce::Gerber_SB0, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
     c1 = ce.c1
@@ -554,8 +567,8 @@ function StatsBase.cov(ce::Gerber_SB0, X::AbstractMatrix,
     c3 = ce.c3
     n = ce.n
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
-    mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
 
     sigma = if normalise
         _gerbersb0_norm(X, mean_vec, std_vec, threshold, c1, c2, c3, n)
@@ -565,12 +578,10 @@ function StatsBase.cov(ce::Gerber_SB0, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "Gerber_SB0 Correlation ")
 
-    return Symmetric(sigma .* (std_vec * transpose(std_vec)))
+    return sigma .* (std_vec * transpose(std_vec))
 end
 
-function StatsBase.cor(ce::Gerber_SB0, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cor(ce::Gerber_SB0, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
     c1 = ce.c1
@@ -578,8 +589,8 @@ function StatsBase.cor(ce::Gerber_SB0, X::AbstractMatrix,
     c3 = ce.c3
     n = ce.n
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
-    mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
 
     sigma = if normalise
         _gerbersb0_norm(X, mean_vec, std_vec, threshold, c1, c2, c3, n)
@@ -589,12 +600,10 @@ function StatsBase.cor(ce::Gerber_SB0, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "Gerber_SB0 Correlation ")
 
-    return Symmetric(sigma)
+    return sigma
 end
 
-function StatsBase.cov(ce::Gerber_SB1, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cov(ce::Gerber_SB1, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
     c1 = ce.c1
@@ -602,8 +611,8 @@ function StatsBase.cov(ce::Gerber_SB1, X::AbstractMatrix,
     c3 = ce.c3
     n = ce.n
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
-    mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
 
     sigma = if normalise
         _gerbersb1_norm(X, mean_vec, std_vec, threshold, c1, c2, c3, n)
@@ -613,12 +622,10 @@ function StatsBase.cov(ce::Gerber_SB1, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "Gerber_SB1 Correlation ")
 
-    return Symmetric(sigma .* (std_vec * transpose(std_vec)))
+    return sigma .* (std_vec * transpose(std_vec))
 end
 
-function StatsBase.cor(ce::Gerber_SB1, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
+function StatsBase.cor(ce::Gerber_SB1, X::AbstractMatrix, args...; kwargs...)
     normalise = ce.normalise
     threshold = ce.threshold
     c1 = ce.c1
@@ -626,8 +633,8 @@ function StatsBase.cor(ce::Gerber_SB1, X::AbstractMatrix,
     c3 = ce.c3
     n = ce.n
 
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
-    mean_vec = vec(StatsBase.mean(ce.me, X, w; dims = dims))
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    mean_vec = vec(StatsBase.mean(ce.me, X, ce.mean_args...; ce.mean_kwargs...))
 
     sigma = if normalise
         _gerbersb1_norm(X, mean_vec, std_vec, threshold, c1, c2, c3, n)
@@ -637,30 +644,25 @@ function StatsBase.cor(ce::Gerber_SB1, X::AbstractMatrix,
 
     posdef_fix!(ce.posdef, sigma; cov_flag = false, msg = "Gerber_SB1 Correlation ")
 
-    return Symmetric(sigma)
+    return sigma
 end
 
 function StatsBase.cor(ce::Cov2Cor, X::AbstractMatrix, args...; kwargs...)
-    return Symmetric(cov2cor(isa(X, Matrix) ? X : Matrix(X)))
+    return cov2cor(X)
 end
 
-function StatsBase.cov(ce::Union{Kendall, Spearman}, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; kwargs...)
-    std_vec = vec(StatsBase.std(ce.se, X, w; kwargs...))
-
-    sigma = cor(ce, X, w; kwargs...)
-
-    return Symmetric(sigma .* (std_vec * transpose(std_vec)))
+function StatsBase.cov(ce::Union{Kendall, Spearman}, X::AbstractMatrix, args...; kwargs...)
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    sigma = cor(ce, X)
+    return sigma .* (std_vec * transpose(std_vec))
 end
 
-function StatsBase.cor(ce::Kendall, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; kwargs...)
-    return Symmetric(isnothing(w) ? corkendall(X) : corkendall(X .* w))
+function StatsBase.cor(ce::Kendall, X::AbstractMatrix, args...; kwargs...)
+    return corkendall(X)
 end
 
-function StatsBase.cor(ce::Spearman, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; kwargs...)
-    return Symmetric(isnothing(w) ? corspearman(X) : corspearman(X .* w))
+function StatsBase.cor(ce::Spearman, X::AbstractMatrix, args...; kwargs...)
+    return corspearman(X)
 end
 
 function cordistance(ce::DistanceCov, v1::AbstractVector, v2::AbstractVector)
@@ -669,8 +671,8 @@ function cordistance(ce::DistanceCov, v1::AbstractVector, v2::AbstractVector)
 
     N2 = N^2
 
-    a = pairwise(ce.metric, v1, ce.args...; ce.kwargs...)
-    b = pairwise(ce.metric, v2, ce.args...; ce.kwargs...)
+    a = pairwise(ce.metric, v1, ce.dist_args...; ce.dist_kwargs...)
+    b = pairwise(ce.metric, v2, ce.dist_args...; ce.dist_kwargs...)
     A = a .- mean(a; dims = 1) .- mean(a; dims = 2) .+ mean(a)
     B = b .- mean(b; dims = 1) .- mean(b; dims = 2) .+ mean(b)
 
@@ -693,59 +695,42 @@ function cordistance(ce::DistanceCov, X::AbstractMatrix)
         end
     end
 
-    return Symmetric(sigma, :U)
+    sigma .= Symmetric(sigma, :U)
+
+    return sigma
 end
 
-function StatsBase.cov(ce::DistanceCov, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
-
-    sigma = cor(ce, X, w; kwargs...)
-
-    return Symmetric(sigma .* (std_vec * transpose(std_vec)))
+function StatsBase.cov(ce::DistanceCov, X::AbstractMatrix, args...; kwargs...)
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    sigma = cor(ce, X)
+    return sigma .* (std_vec * transpose(std_vec))
 end
 
-function StatsBase.cor(ce::DistanceCov, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; kwargs...)
-    return isnothing(w) ? cordistance(ce, X; kwargs...) : cordistance(ce, X .* w; kwargs...)
+function StatsBase.cor(ce::DistanceCov, X::AbstractMatrix, args...; kwargs...)
+    return cordistance(ce, X)
 end
 
-function StatsBase.cov(ce::TailCov, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
-
-    sigma = cor(ce, X, w; kwargs...)
-
-    return Symmetric(sigma .* (std_vec * transpose(std_vec)))
+function StatsBase.cov(ce::TailCov, X::AbstractMatrix, args..., kwargs...)
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    sigma = cor(ce, X)
+    return sigma .* (std_vec * transpose(std_vec))
 end
 
-function StatsBase.cor(ce::TailCov, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; kwargs...)
-    return isnothing(w) ? ltdi_mtx(X, ce.alpha) : ltdi_mtx(X .* w, ce.alpha)
+function StatsBase.cor(ce::TailCov, X::AbstractMatrix, args...; kwargs...)
+    return ltdi_mtx(X, ce.alpha)
 end
 
-function StatsBase.cov(ce::MutualInfoCov, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; dims::Int = 1,
-                       kwargs...)
-    std_vec = vec(StatsBase.std(ce.se, X, w; dims = dims, kwargs...))
-
-    sigma = cor(ce, X, w; kwargs...)
-
-    return Symmetric(sigma .* (std_vec * transpose(std_vec)))
+function StatsBase.cov(ce::MutualInfoCov, X::AbstractMatrix, args...; kwargs...)
+    std_vec = vec(StatsBase.std(ce.se, X, ce.std_args...; ce.std_kwargs...))
+    sigma = cor(ce, X)
+    return sigma .* (std_vec * transpose(std_vec))
 end
 
-function StatsBase.cor(ce::MutualInfoCov, X::AbstractMatrix,
-                       w::Union{AbstractWeights, Nothing} = nothing; kwargs...)
-    return if isnothing(w)
-        mutual_info_mtx(X, ce.bins, ce.normalise)
-    else
-        mutual_info_mtx(X .* w, ce.bins, ce.normalise)
-    end
+function StatsBase.cor(ce::MutualInfoCov, X::AbstractMatrix, args...; kwargs...)
+    return mutual_info_mtx(X, ce.bins, ce.normalise)
 end
 
-mutable struct ShrinkDenoiser <: PO_MatrixDenoiser
+mutable struct ShrinkDenoiser <: MatrixDenoiser
     alpha::Real
     detone::Bool
     mkt_comp::Integer
@@ -768,7 +753,7 @@ function Base.setproperty!(obj::ShrinkDenoiser, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-@kwdef mutable struct FixedDenoiser <: PO_MatrixDenoiser
+@kwdef mutable struct FixedDenoiser <: MatrixDenoiser
     detone::Bool = false
     mkt_comp::Integer = 1
     kernel::Function = ASH.Kernels.gaussian
@@ -778,7 +763,7 @@ end
     kwargs::NamedTuple = (;)
 end
 
-@kwdef mutable struct SpectralDenoiser <: PO_MatrixDenoiser
+@kwdef mutable struct SpectralDenoiser <: MatrixDenoiser
     detone::Bool = false
     mkt_comp::Integer = 1
     kernel::Function = ASH.Kernels.gaussian
@@ -788,30 +773,51 @@ end
     kwargs::NamedTuple = (;)
 end
 
-struct NoDenoiser <: PO_MatrixDenoiser end
+struct NoDenoiser <: MatrixDenoiser end
 
-abstract type PO_JLoGO end
-@kwdef mutable struct JLoGoCov <: PO_JLoGO
-    metric::Distances.UnionMetric = Distances.Euclidean()
+struct CorDist <: Distances.UnionMetric end
+function pairwise(cd::CorDist, X::AbstractMatrix, args...; kwargs...)
+    return sqrt.(clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X))))
+end
+struct AbsCorDist <: Distances.UnionMetric end
+function pairwise(::AbsCorDist, X::AbstractMatrix, args...; kwargs...)
+    return sqrt.(clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X))))
+end
+
+@kwdef mutable struct DistType
+    metric::Distances.UnionMetric = CorDist()
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+
+abstract type JLoGO end
+@kwdef mutable struct JLoGoCov <: JLoGO
+    distance::DistType = DistType()
     func::Function = (corr, dist, args...; kwargs...) -> exp.(-dist)
     args::Tuple = ()
     kwargs::NamedTuple = (;)
 end
-struct NoJLoGo <: PO_JLoGO end
+struct NoJLoGoCov <: JLoGO end
 
-@kwdef mutable struct CovType
-    absolute::Bool = false
-    ce::PO_CovarianceEstimator = FullCov()
-    denoiser::PO_MatrixDenoiser = NoDenoiser()
-    posdef::NCM.NCMAlgorithm = NCM.Newton(; tau = 1e-12)
-    jlogo::PO_JLoGO = NoJLoGo()
-    w::Union{AbstractWeights, Nothing} = nothing
-end
-
-@kwdef mutable struct DistType
-    metric::Distances.UnionMetric = Distances.Euclidean()
+@kwdef mutable struct JLoGoCor <: JLoGO
+    func::Function = (corr, dist, args...; kwargs...) -> exp.(-dist)
     args::Tuple = ()
     kwargs::NamedTuple = (;)
+end
+struct NoJLoGoCor <: JLoGO end
+
+@kwdef mutable struct CovType
+    ce::PO_CovarianceEstimator = FullCov()
+    denoiser::MatrixDenoiser = NoDenoiser()
+    posdef::NCM.NCMAlgorithm = NCM.Newton(; tau = 1e-12)
+    jlogo::JLoGoCov = NoJLoGoCov()
+end
+
+@kwdef mutable struct CorType
+    ce::PO_CovarianceEstimator = FullCov()
+    denoiser::MatrixDenoiser = NoDenoiser()
+    posdef::NCM.NCMAlgorithm = NCM.Newton(; tau = 1e-12)
+    jlogo::JLoGoCor = NoJLoGoCor()
 end
 
 function denoise_cor(::FixedDenoiser, vals, vecs, num_factors)
@@ -844,7 +850,8 @@ function denoise_cor(denoiser::ShrinkDenoiser, vals, vecs, num_factors)
     return corr0 + alpha * corr1 + (1 - alpha) * Diagonal(corr1)
 end
 
-function denoise(denoiser::PO_MatrixDenoiser, X::AbstractMatrix, q::Real, cov_flag = true)
+function denoise(denoiser::MatrixDenoiser, X::AbstractMatrix, q::Real,
+                 cov_flag::Bool = true)
     if cov_flag
         corr = cov2cor(X)
         s = sqrt.(diag(X))
@@ -872,49 +879,47 @@ function denoise(denoiser::PO_MatrixDenoiser, X::AbstractMatrix, q::Real, cov_fl
         corr .-= _corr
     end
 
-    return Symmetric(cov_flag ? cor2cov(corr, s) : corr)
+    return cov_flag ? cor2cov(corr, s) : corr
 end
 
 function denoise(::NoDenoiser, X::AbstractMatrix, q::Real, cov_flag = true)
     return X
 end
 
-function StatsBase.cov(ce::CovType, X::AbstractMatrix)
-    sigma = !ce.absolute ? cov(ce.ce, X, ce.w) : abs.(cov(ce.ce, X, ce.w))
-
-    T, N = size(X)
-    sigma = denoise(ce.denoiser, sigma, T / N, true)
-    sigma = jlogo(ce.jlogo, sigma, true)
-
-    return Symmetric(sigma)
+function cor_dist(ce::DistType, X::AbstractMatrix)
+    return reshape(pairwise(ce.metric, X, one(eltype(X)), ce.args...; ce.kwargs...),
+                   size(X))
 end
 
-function StatsBase.cor(ce::CovType, X::AbstractMatrix)
-    sigma = !ce.absolute ? cor(ce.ce, X, ce.w) : abs.(cor(ce.ce, X, ce.w))
-
-    T, N = size(X)
-    sigma = denoise(ce.denoiser, sigma, T / N, false)
-    sigma = jlogo(ce.jlogo, sigma, false)
-
-    return Symmetric(sigma)
+function jlogo(ce::JLoGoCov, cov::AbstractMatrix)
+    corr = cov2cor(cov)
+    dist = cor_dist(ce.distance, corr)
+    X = ce.func(corr, dist, ce.args..., ; ce.kwargs...)
+    separators, cliques = PMFG_T2s(X, 4)[3:4]
+    return J_LoGo(corr, separators, cliques) \ I
+end
+function jlogo(ce::JLoGoCor, corr::AbstractMatrix, dist::AbstractMatrix)
+    X = ce.func(corr, dist, ce.args..., ; ce.kwargs...)
+    separators, cliques = PMFG_T2s(X, 4)[3:4]
+    return J_LoGo(corr, separators, cliques) \ I
+end
+function jlogo(::NoJLoGoCov, S, args...)
+    return S
 end
 
-function dist(ce::DistType, X::AbstractMatrix)
-    return Symmetric(reshape(pairwise(ce.metric, 1, X, ce.args...; ce.kwargs...), size(X)))
-end
+function asset_statistics2!(portfolio::AbstractPortfolio; cov_type::CovType = CovType())
+    returns = portfolio.returns
 
-function jlogo(ce::JLoGoCov, X::AbstractMatrix, cov_flag = true)
-    corr = cov_flag ? cov2cor(X) : X
-    dist = pairwise(ce.metric, one(eltype(corr)), corr)
-    S = ce.func(corr, dist, ce.args..., ; ce.kwargs...)
-    separators, cliques = PMFG_T2s(S, 4)[3:4]
-    return Symmetric(J_LoGo(X, separators, cliques) \ I)
-end
-function jlogo(::NoJLoGo, X, cov_flag = true)
-    return Symmetric(X)
+    sigma = cov(cov_type.ce, returns)
+    T, N = size(returns)
+    sigma = denoise(cov.denoiser, sigma, T / N)
+    posdef_fix!(cov_type.posdef, sigma; cov_flag = true, msg = "Portfolio Covariance ")
+    sigma = jlogo(cov_type.jlogo, sigma)
+
+    return sigma
 end
 
 export FullCov, SemiCov, SimpleMean, Gerber0, Gerber1, Gerber2, SB0, SB1, Gerber_SB0,
        Gerber_SB1, TailCov, Cov2Cor, DistanceCov, Kendall, Spearman, MutualInfoCov,
        VariationInfo, FixedDenoiser, SpectralDenoiser, ShrinkDenoiser, NoDenoiser, CovType,
-       JLoGoCov, DistType, dist
+       JLoGoCov, DistType, asset_statistics2!

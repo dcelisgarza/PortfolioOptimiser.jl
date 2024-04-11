@@ -78,12 +78,26 @@ Compute the mutual information and variation of information matrices.
 """
 function mut_var_info_mtx(x::AbstractMatrix{<:Real},
                           bins_info::Union{Symbol, <:Integer} = :KN, normalise::Bool = true)
-    bin_width_func = if bins_info == :KN
-        pyimport("astropy.stats").knuth_bin_width
+    calc_num_bins = if bins_info == :KN
+        (xj, xi, j, i, T) -> _calc_num_bins(xj, xi, j, i,
+                                            pyimport("astropy.stats").knuth_bin_width)
+
     elseif bins_info == :FD
-        pyimport("astropy.stats").freedman_bin_width
+        (xj, xi, j, i, T) -> _calc_num_bins(xj, xi, j, i,
+                                            pyimport("astropy.stats").freedman_bin_width)
+
     elseif bins_info == :SC
-        pyimport("astropy.stats").scott_bin_width
+        (xj, xi, j, i, T) -> _calc_num_bins(xj, xi, j, i,
+                                            pyimport("astropy.stats").scott_bin_width)
+
+    elseif bins_info == :HGR
+        function (xj, xi, j, i, T)
+            corr = cor(xj, xi)
+            bins = corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
+            return bins
+        end
+    else
+        (xj, xi, j, i, T) -> bins_info
     end
 
     T, N = size(x)
@@ -95,14 +109,7 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
         xj = x[:, j]
         for i ∈ 1:j
             xi = x[:, i]
-            bins = if bins_info == :HGR
-                corr = cor(xj, xi)
-                corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
-            elseif isa(bins_info, Int)
-                bins_info
-            else
-                _calc_num_bins(xj, xi, j, i, bin_width_func)
-            end
+            bins = calc_num_bins(xj, xi, j, i, T)
 
             ex, ey, hxy = _calc_hist_data(xj, xi, bins)
 
@@ -127,99 +134,6 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
     end
 
     return Symmetric(mut_mtx, :U), Symmetric(var_mtx, :U)
-end
-
-function mutual_info_mtx(x::AbstractMatrix{<:Real},
-                         bins_info::Union{Symbol, <:Integer} = :KN, normalise::Bool = true)
-    bin_width_func = if bins_info == :KN
-        pyimport("astropy.stats").knuth_bin_width
-    elseif bins_info == :FD
-        pyimport("astropy.stats").freedman_bin_width
-    elseif bins_info == :SC
-        pyimport("astropy.stats").scott_bin_width
-    end
-
-    T, N = size(x)
-    xtype = eltype(x)
-    mut_mtx = Matrix{xtype}(undef, N, N)
-
-    for j ∈ 1:N
-        xj = x[:, j]
-        for i ∈ 1:j
-            xi = x[:, i]
-            bins = if bins_info == :HGR
-                corr = cor(xj, xi)
-                corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
-            elseif isa(bins_info, Int)
-                bins_info
-            else
-                _calc_num_bins(xj, xi, j, i, bin_width_func)
-            end
-
-            ex, ey, hxy = _calc_hist_data(xj, xi, bins)
-
-            mut_ixy = mutualinfo(hxy)
-            if normalise
-                mut_ixy /= min(ex, ey)
-            end
-
-            if abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < zero(xtype)
-                mut_ixy = zero(xtype)
-            end
-
-            mut_mtx[i, j] = mut_ixy
-        end
-    end
-
-    return Symmetric(mut_mtx, :U)
-end
-
-function variation_info_mtx(x::AbstractMatrix{<:Real},
-                            bins_info::Union{Symbol, <:Integer} = :KN,
-                            normalise::Bool = true)
-    bin_width_func = if bins_info == :KN
-        pyimport("astropy.stats").knuth_bin_width
-    elseif bins_info == :FD
-        pyimport("astropy.stats").freedman_bin_width
-    elseif bins_info == :SC
-        pyimport("astropy.stats").scott_bin_width
-    end
-
-    T, N = size(x)
-    xtype = eltype(x)
-    var_mtx = Matrix{xtype}(undef, N, N)
-
-    for j ∈ 1:N
-        xj = x[:, j]
-        for i ∈ 1:j
-            xi = x[:, i]
-            bins = if bins_info == :HGR
-                corr = cor(xj, xi)
-                corr == 1 ? _calc_num_bins(T) : _calc_num_bins(T, corr)
-            elseif isa(bins_info, Int)
-                bins_info
-            else
-                _calc_num_bins(xj, xi, j, i, bin_width_func)
-            end
-
-            ex, ey, hxy = _calc_hist_data(xj, xi, bins)
-
-            mut_ixy = mutualinfo(hxy)
-            var_ixy = ex + ey - 2 * mut_ixy
-            if normalise
-                vxy = ex + ey - mut_ixy
-                var_ixy = var_ixy / vxy
-            end
-
-            if abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < zero(xtype)
-                var_ixy = zero(xtype)
-            end
-
-            var_mtx[i, j] = var_ixy
-        end
-    end
-
-    return Symmetric(var_mtx, :U)
 end
 
 function cordistance(v1::AbstractVector, v2::AbstractVector, opt::DistOpt = DistOpt(;))
@@ -1522,11 +1436,27 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
 
     posdef_fix!(mtx, opt.posdef; msg = msg, cov_flag = cov_flag)
 
-    if opt.jlogo
+    jlogo = opt.jlogo
+    if jlogo.flag
         try
-            corr = cov2cor(mtx)
-            dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
-            separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
+            corr = cov_flag ? cov2cor(mtx) : mtx
+
+            # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
+            # separators, cliques = PMFG_T2s(1 .- dist .^ 2, 4)[3:4]
+
+            distance = jlogo.dist
+            dist_method = distance.method
+            dargs = distance.args
+            dkwargs = distance.kwargs
+            dist = reshape(pairwise(dist_method, corr, one(eltype(corr)), dargs...;
+                                    dkwargs...), size(corr))
+            genfunc = jlogo.genfunc
+            func = genfunc.func
+            args = genfunc.args
+            kwargs = genfunc.kwargs
+            corr = func(corr, dist, args...; kwargs...)
+            separators, cliques = PMFG_T2s(corr, 4)[3:4]
+
             mtx .= J_LoGo(mtx, separators, cliques) \ I
         catch SingularException
             throw(ErrorException("$msg matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set opt.posdef.method = $(opt.posdef.method), to a different method from $PosdefFixMethods.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.$(msg2)"))
@@ -1677,6 +1607,23 @@ cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
 function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     method = opt.method
     T, N = size(returns)
+
+    if method ∈ (:Abs_Pearson, :Abs_Semi_Pearson, :Abs_Spearman, :Abs_Kendall)
+        if hasproperty(opt.dist.method, :absolute)
+            opt.dist.method.absolute = true
+        end
+        if hasproperty(opt.jlogo.dist.method, :absolute)
+            opt.jlogo.dist.method.absolute = true
+        end
+    else
+        if hasproperty(opt.dist.method, :absolute)
+            opt.dist.method.absolute = false
+        end
+        if hasproperty(opt.jlogo.dist.method, :absolute)
+            opt.jlogo.dist.method.absolute = false
+        end
+    end
+
     if method ∈ (:Pearson, :Semi_Pearson)
         estimation = opt.estimation
         estimator = estimation.estimator
@@ -1703,21 +1650,27 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Spearman
         corr = corspearman(returns)
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Kendall
         corr = corkendall(returns)
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method ∈ (:Abs_Pearson, :Abs_Semi_Pearson)
         estimation = opt.estimation
         estimator = estimation.estimator
@@ -1745,77 +1698,99 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Abs_Spearman
         corr = abs.(corspearman(returns))
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Abs_Kendall
         corr = abs.(corkendall(returns))
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Gerber0
         corr = gerber0(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Gerber1
         corr = gerber1(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Gerber2
         corr = gerber2(returns, opt.gerber)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :SB0
         corr = sb0(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :SB1
         corr = sb1(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Gerber_SB0
         corr = gerbersb0(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Gerber_SB1
         corr = gerbersb1(returns, opt.gerber, opt.sb)[1]
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!((1 .- corr) / 2, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Distance
         corr = cordistance(returns, opt.dist)
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         # dist = sqrt.(clamp!(1 .- corr, 0, 1))
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Mutual_Info
         corr, dist = mut_var_info_mtx(returns, opt.estimation.bins_info)
     elseif method == :Tail
@@ -1832,7 +1807,9 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
         # dist = dist_func(corr, dist_args...; dist_kwargs...)
         dist_method = opt.dist.method
         dargs = opt.dist.args
-        dist = reshape(pairwise(dist_method, 1, corr, dargs...), size(corr))
+        dkwargs = opt.dist.kwargs
+        dist = reshape(pairwise(dist_method, corr, one(eltype(returns)), dargs...;
+                                dkwargs...), size(corr))
     elseif method == :Custom_Func
         estimation = opt.estimation
         cor_func = estimation.cor_genfunc.func

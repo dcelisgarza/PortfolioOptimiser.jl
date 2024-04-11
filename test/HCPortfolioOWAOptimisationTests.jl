@@ -2,7 +2,7 @@ using CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimise
       Statistics, Test, TimeSeries, Logging, Distances
 
 struct POCorDist <: Distances.UnionMetric end
-function Distances.pairwise(::POCorDist, i, mtx)
+function Distances.pairwise(::POCorDist, mtx, i)
     return sqrt.(clamp!((1 .- mtx) / 2, 0, 1))
 end
 
