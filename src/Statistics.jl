@@ -136,7 +136,7 @@ function mut_var_info_mtx(x::AbstractMatrix{<:Real},
     return Symmetric(mut_mtx, :U), Symmetric(var_mtx, :U)
 end
 
-function cordistance(v1::AbstractVector, v2::AbstractVector, opt::DistOpt = DistOpt(;))
+function cordistance(v1::AbstractVector, v2::AbstractVector, opt::DistOpt = DistcorOpt(;))
     N = length(v1)
     @smart_assert(N == length(v2) && N > 1)
 
@@ -159,7 +159,7 @@ function cordistance(v1::AbstractVector, v2::AbstractVector, opt::DistOpt = Dist
     return val
 end
 
-function cordistance(x::AbstractMatrix, opt::DistOpt = DistOpt(;))
+function cordistance(x::AbstractMatrix, opt::DistOpt = DistcorOpt(;))
     N = size(x, 2)
 
     mtx = Matrix{eltype(x)}(undef, N, N)
