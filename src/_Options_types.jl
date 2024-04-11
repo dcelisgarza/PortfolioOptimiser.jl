@@ -400,7 +400,7 @@ end
 end
 ```
 
-Structure and keyword constructor for storing parameters for the :Distance method from [`CorMethods`](@ref). This is part of [`CorOpt`](@ref), and as such some of these are only relevant when its `method` field has a specific value.
+Structure and keyword constructor for storing parameters for computing the distance matrix from the correlation matrix.
 
 # Inputs
 
@@ -418,6 +418,23 @@ function DistOpt(; method::Distances.UnionMetric = ClampDist(;), args::Tuple = (
     return DistOpt(method, args, kwargs)
 end
 
+"""
+```
+@kwdef mutable struct DistcorOpt
+    method::Distances.UnionMetric = Distances.Euclidean()
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+```
+
+Structure and keyword constructor for storing parameters for the :Distance method from [`CorMethods`](@ref). This is part of [`CorOpt`](@ref), and as such some of these are only relevant when its `method` field has a specific value.
+
+# Inputs
+
+  - `method`: distance type from [Distances.jl](https://github.com/JuliaStats/Distances.jl).
+  - `args`: args for the pairwise distance calculation.
+  - `kwargs`: keyword arguments for the pairwise distance calculation.
+"""
 mutable struct DistcorOpt
     method::Distances.UnionMetric
     args::Tuple
