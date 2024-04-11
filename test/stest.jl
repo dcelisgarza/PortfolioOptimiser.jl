@@ -4,16 +4,15 @@ using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, Portfolio
 
 X = randn(200, 20)
 
-a, b = 1, 2
-ce = PortfolioOptimiser.CorDistance()
-a = PortfolioOptimiser.cordistance(ce, X)
-display(@benchmark PortfolioOptimiser.cordistance($X, $bins, $normalise) setup = ())
+a, b, c, d = 1, 2, 3, 4
+ce = PortfolioOptimiser.CorMutualInfo(; normalise = false)
+normalise = false
+b = PortfolioOptimiser.dist(ce, X)
+display(@benchmark PortfolioOptimiser.mut_var_info_mtx($X, $bins, $normalise) setup = ())
 
-ce = PortfolioOptimiser.DistcorOpt()
-
-b = PortfolioOptimiser.cordistance(X, ce)
-
-display(@benchmark PortfolioOptimiser.cordistance($X, $bins, $normalise) setup = ())
+bins = :HGR
+c, d = PortfolioOptimiser.mut_var_info_mtx(X, bins, normalise)
+display(@benchmark PortfolioOptimiser.mut_var_info_mtx($X, $bins, $normalise) setup = ())
 
 @test isapprox(a, c)
 @test isapprox(b, d)
