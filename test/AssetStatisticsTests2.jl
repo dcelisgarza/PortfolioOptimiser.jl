@@ -35,8 +35,8 @@ l = 2.0
     kurt1 = portfolio.kurt
     skurt1 = portfolio.skurt
 
-    cov_opt.jlogo.flag = true
-    cov_opt.jlogo.genfunc.func = (corr, dist) -> 1 .- dist .^ 2
+    kurt_opt.jlogo.flag = true
+    kurt_opt.jlogo.genfunc.func = (corr, dist) -> 1 .- dist .^ 2
     asset_statistics!(portfolio; kurt_opt = kurt_opt)
     kurt2 = portfolio.kurt
     skurt2 = portfolio.skurt
