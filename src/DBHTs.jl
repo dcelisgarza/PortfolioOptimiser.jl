@@ -1040,8 +1040,8 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
 
   - `S`: `N×N` non-negative similarity matrix, examples include:
 
-      + ``\\mathbf{S} = \\mathbf{C} + \\min \\lvert \\mathbf{C} \\rvert``.
-      + ``\\mathbf{S} = \\max \\left(\\mathbf{D}^{\\circ 2}\\right) - \\mathbf{D}^{\\circ 2}``.
+      + ``\\mathbf{S} = \\mathbf{C} + \\lceil \\min \\lvert \\mathbf{C} \\rvert \\rceil``.
+      + ``\\mathbf{S} = \\lceil\\max \\left(\\mathbf{D}^{\\circ 2}\\right)\\rceil - \\mathbf{D}^{\\circ 2}``.
       + ``\\mathbf{S} = \\exp \\circ (-\\mathbf{D})``.
 
     Where ``\\mathbf{C}`` is the correlation matrix, ``\\mathbf{D}`` the dissimilarity matrix `D`, and ``\\circ`` the Hadamard (elementwise) operator.

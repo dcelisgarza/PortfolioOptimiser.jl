@@ -480,10 +480,9 @@ CorMethods = (:Pearson, :Spearman, :Kendall, :Gerber0, :Gerber1, :Gerber2, :SB0,
               :Distance, :Mutual_Info, :Tail, :Cov_to_Cor, :Custom_Func, :Custom_Val)
 ```
 
-Methods for estimating the correlation ``\\mathbf{C}``, and distance matrices ``\\mathbf{D}``. Unless otherwise stated, the distance matrix is computed by `reshape(pairwise(method, 1, corr, args...), size(corr))` from [Distances.jl](https://github.com/JuliaStats/Distances.jl), where `method` and `args` are the values of the eponymous fields of [`DistOpt`](@ref), and `corr` is the correlation matrix.
+Methods for estimating the correlation ``\\mathbf{C}``, and distance matrices ``\\mathbf{D}``. Unless otherwise stated, the distance matrix is computed by `reshape(pairwise(method, corr, 1, args...; kwargs...), size(corr))` from [Distances.jl](https://github.com/JuliaStats/Distances.jl), where `method`, `args`, and `kwargs` are the values of the eponymous fields of [`DistOpt`](@ref), and `corr` is the correlation matrix.
 
   - `:Pearson`: Pearson correlation.
-
   - `:Spearman`: Spearman correlation.
   - `:Kendall`: Kendall correlation.
   - `:Gerber0`: Gerber statistic 0 [Gerber](@cite).

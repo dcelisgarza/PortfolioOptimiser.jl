@@ -265,9 +265,56 @@ function Base.setproperty!(obj::DenoiseOpt, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```julia
 @kwdef mutable struct ClampDist <: Distances.UnionMetric
     absolute::Bool = false
 end
+```
+
+Structure and keyword constructor that defines the distance metric from a correlation matrix for the purposes of hierarchical clustering.
+
+# Inputs
+
+  - `absolute`: whether the correlation matrix is absolute.
+"""
+@kwdef mutable struct ClampDist <: Distances.UnionMetric
+    absolute::Bool = false
+end
+
+"""
+```
+Distances.pairwise(ce::ClampDist, X::AbstractMatrix, args...; kwargs...)
+```
+
+Defines the distance matrix from a correlation matrix as:
+
+```math
+\\begin{align}
+\\mathbf{D} &= \\sqrt{
+        \\begin{cases}
+            \\dfrac{1}{2} \\left(\\mathbf{1} - \\mathbf{C}\\right) &\\quad \\mathrm{if~ absolute = false}\\\\
+            \\mathbf{1} - \\lvert\\mathbf{C}\\rvert &\\quad \\mathrm{if~ absolute = true}
+        \\end{cases}
+        }
+\\end{align}
+```
+
+Where:
+
+  - ``\\mathbf{D}``: is the `N×N` distance matrix.
+  - ``\\mathbf{C}``: is the `N×N` correlation matrix.
+  - absolute: is a flag whether the correlation is absolute.
+
+# Inputs
+
+  - `ce`: distance metric.
+  - `X`: `N×N` correlation matrix.
+
+# Outputs
+
+  - `D`: `N×N` distance matrix.
+"""
 function Distances.pairwise(ce::ClampDist, X::AbstractMatrix, args...; kwargs...)
     return sqrt.(if !ce.absolute
                      clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
@@ -275,10 +322,50 @@ function Distances.pairwise(ce::ClampDist, X::AbstractMatrix, args...; kwargs...
                      clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
                  end)
 end
+
 @kwdef mutable struct AugClampDist <: Distances.UnionMetric
     absolute::Bool = false
     metric::Distances.UnionMetric = Distances.Euclidean()
 end
+
+"""
+```
+Distances.pairwise(ce::AugClampDist, X::AbstractMatrix, args...; kwargs...)
+```
+
+Defines the distance matrix from a correlation matrix as:
+
+```math
+\\begin{align}
+\\mathbf{\\tilde{D}} &= \\sqrt{
+        \\begin{cases}
+            \\dfrac{1}{2} \\left(\\mathbf{1} - \\mathbf{C}\\right) &\\quad \\mathrm{if~ absolute = false}\\\\
+            \\mathbf{1} - \\lvert\\mathbf{C}\\rvert &\\quad \\mathrm{if~ absolute = true}
+        \\end{cases}
+        }\\\\
+\\mathbf{D} &= \\mathrm{pairwise}(m,\\, \\mathbf{\\tilde{D})
+\\end{align}
+```
+
+Where:
+
+  - ``\\mathbf{\\tilde{D}}``: is the `N×N` distance matrix.
+
+  - ``\\mathbf{C}``: is the `N×N` correlation matrix.
+  - ``\\mathrm{pairwise}``: is the pairwise function of [`Distances.jl`](https://github.com/JuliaStats/Distances.jl), with its output reshaped to the appropriate shape.
+  - ``m``: is a concrete type of `Distances.UnionMetric` from [`Distances.jl`](https://github.com/JuliaStats/Distances.jl).
+  - ``\\mathbf{D}``: is the `N×N` distance of distances matrix.
+  - absolute: is a flag whether the correlation is absolute.
+
+# Inputs
+
+  - `ce`: distance metric.
+  - `X`: `N×N` correlation matrix.
+
+# Outputs
+
+  - `D`: `N×N` distance of distances matrix.
+"""
 function Distances.pairwise(ce::AugClampDist, X::AbstractMatrix, args...; kwargs...)
     dist = sqrt.(if !ce.absolute
                      clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
@@ -286,7 +373,7 @@ function Distances.pairwise(ce::AugClampDist, X::AbstractMatrix, args...; kwargs
                      clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
                  end)
 
-    return pairwise(ce.metric, dist, args...; kwargs...)
+    return pairwise(ce.metric, dist; kwargs...)
 end
 
 """
@@ -304,6 +391,7 @@ Structure and keyword constructor for storing parameters for the :Distance metho
 
   - `method`: distance type from [Distances.jl](https://github.com/JuliaStats/Distances.jl).
   - `args`: args for the pairwise distance calculation.
+  - `kwargs`: keyword arguments for the pairwise distance calculation.
 """
 mutable struct DistOpt
     method::Distances.UnionMetric
@@ -315,12 +403,25 @@ function DistOpt(; method::Distances.UnionMetric = ClampDist(;), args::Tuple = (
     return DistOpt(method, args, kwargs)
 end
 
+mutable struct DistcorOpt
+    method::Distances.UnionMetric
+    args::Tuple
+    kwargs::NamedTuple
+end
+function DistcorOpt(; method::Distances.UnionMetric = Distances.Euclidean(),
+                    args::Tuple = (), kwargs::NamedTuple = (;))
+    return DistcorOpt(method, args, kwargs)
+end
+
 """
 ```
 @kwdef mutable struct JlogoOpt
     flag::Bool = false
     dist::DistOpt = DistOpt(;)
-    genfunc::GenericFunction = GenericFunction(; func = (corr, dist) -> exp.(-dist))
+    genfunc::GenericFunction = GenericFunction(;
+                                               func = (corr, dist, args...; kwargs...) -> ceil(maximum(dist)^2) .-
+                                                                                          dist .^
+                                                                                          2)
 end
 ```
 
@@ -339,7 +440,9 @@ mutable struct JlogoOpt
 end
 function JlogoOpt(; flag::Bool = false, dist::DistOpt = DistOpt(;),
                   genfunc::GenericFunction = GenericFunction(;
-                                                             func = (corr, dist) -> exp.(-dist)))
+                                                             func = (corr, dist, args...; kwargs...) -> ceil(maximum(dist)^2) .-
+                                                                                                        dist .^
+                                                                                                        2))
     return JlogoOpt(flag, dist, genfunc)
 end
 
@@ -670,6 +773,7 @@ end
     estimation::CorEstOpt = CorEstOpt(;)
     gerber::GerberOpt = GerberOpt(;)
     sb::SBOpt = SBOpt(;)
+    distcor::DistcorOpt = DistcorOpt(;)
     dist::DistOpt = DistOpt(;)
     denoise::DenoiseOpt = DenoiseOpt(;)
     posdef::PosdefFixOpt = PosdefFixOpt(;)
@@ -687,7 +791,8 @@ Structure and keyword constructor for computing covariance matrices.
   - `estimation`: covariance estimation options [`CorEstOpt`](@ref).
   - `gerber`: Gerber covariance options [`GerberOpt`](@ref).
   - `sb`: options for Smyth-Broby modifications of the Gerber statistic [`SBOpt`](@ref).
-  - `dist`: options for computing the `:Distance` correlation matrix [`DistOpt`](@ref).
+  - `distcor`: options for computing the `:Distance` correlation matrix [`DistcorOpt`](@ref).
+  - `dist`: options for computing the distance matrix from the correlation matrix [`DistOpt`](@ref).
   - `denoise`: denoising options [`DenoiseOpt`](@ref).
   - `posdef`: options for fixing non-positive definite matrices [`PosdefFixOpt`](@ref).
   - `jlogo`:
@@ -704,6 +809,8 @@ mutable struct CorOpt
     gerber::GerberOpt
     # SB
     sb::SBOpt
+    # Distance correlation
+    distcor::DistcorOpt
     # Dist
     dist::DistOpt
     # Denoise
@@ -717,12 +824,13 @@ mutable struct CorOpt
 end
 function CorOpt(; method::Symbol = :Pearson, estimation::CorEstOpt = CorEstOpt(;),
                 gerber::GerberOpt = GerberOpt(;), sb::SBOpt = SBOpt(;),
-                dist::DistOpt = DistOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
-                posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::JlogoOpt = JlogoOpt(;),
-                uplo::Symbol = :U)
+                distcor::DistcorOpt = DistcorOpt(;), dist::DistOpt = DistOpt(;),
+                denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
+                jlogo::JlogoOpt = JlogoOpt(;), uplo::Symbol = :U)
     @smart_assert(method ∈ CorMethods)
 
-    return CorOpt(method, estimation, gerber, sb, dist, denoise, posdef, jlogo, uplo)
+    return CorOpt(method, estimation, gerber, sb, distcor, dist, denoise, posdef, jlogo,
+                  uplo)
 end
 function Base.setproperty!(obj::CorOpt, sym::Symbol, val)
     if sym == :method
@@ -1090,7 +1198,10 @@ end
     dbht_method::Symbol = :Unique
     max_k::T1 = 0
     k::T2 = 0
-    genfunc::GenericFunction = GenericFunction(; func = (corr, dist) -> 2 .- (dist .^ 2) / 2)
+    genfunc::GenericFunction = GenericFunction(;
+                                               func = (corr, dist, args...; kwargs...) -> ceil(maximum(dist)^2) .-
+                                                                                          dist .^
+                                                                                          2)
 end
 ```
 
@@ -1108,9 +1219,9 @@ Structure and keyword constructor for clustering options.
   - `k`: number of clusters to cut the sample into.
 
       + `iszero(k)`: computed by [`_two_diff_gap_stat`](@ref) using the dendrogram heights.
-  - `genfunc`: note that `corr` and `dist` correspond to `portfolio.cor`, `portfolio.dist`. This is useful when defining custom functions, the first argument has to be the correlation matrix and the second the distance matrix.
+  - `genfunc`: note that `corr` and `dist` correspond to `portfolio.cor`, `portfolio.dist`. This is useful when defining custom distance functions, the first argument has to be the correlation matrix and the second the distance matrix.
 
-      + `method == :DBHT`: function for computing a non-negative distance matrix from the correlation matrix when as per [`DBHTs`](@ref).
+      + `method == :DBHT`: function for computing a non-negative distance matrix from the correlation matrix as per [`DBHTs`](@ref).
 """
 mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
     linkage::Symbol
@@ -1123,7 +1234,9 @@ end
 function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
                     dbht_method::Symbol = :Unique, max_k::Integer = 0, k::Integer = 0,
                     genfunc::GenericFunction = GenericFunction(;
-                                                               func = (corr, dist) -> exp.(-dist)))
+                                                               func = (corr, dist, args...; kwargs...) -> ceil(maximum(dist)^2) .-
+                                                                                                          dist .^
+                                                                                                          2))
     @smart_assert(linkage ∈ LinkageMethods)
     @smart_assert(branchorder ∈ BranchOrderTypes)
     @smart_assert(dbht_method ∈ DBHTRootMethods)
@@ -1380,7 +1493,10 @@ end
     steps::T1 = 1
     cent_genfunc::GenericFunction = GenericFunction(; func = Graphs.degree_centrality)
     tree_genfunc::GenericFunction = GenericFunction(; func = Graphs.kruskal_mst)
-    tmfg_genfunc::GenericFunction = GenericFunction(; func = (corr, dist) -> exp.(-dist))
+    tmfg_genfunc::GenericFunction = GenericFunction(;
+                                                    func = (corr, dist, args...; kwargs...) -> ceil(maximum(dist)^2) .-
+                                                                                               dist .^
+                                                                                               2)
 end
 ```
 
@@ -1412,7 +1528,9 @@ function NetworkOpt(; method::Symbol = :MST, steps::Integer = 1,
                     tree_genfunc::GenericFunction = GenericFunction(;
                                                                     func = Graphs.kruskal_mst),
                     tmfg_genfunc::GenericFunction = GenericFunction(;
-                                                                    func = (corr, dist) -> exp.(-dist)))
+                                                                    func = (corr, dist, args...; kwargs...) -> ceil(maximum(dist)^2) .-
+                                                                                                               dist .^
+                                                                                                               2))
     @smart_assert(method ∈ GraphMethods)
 
     return NetworkOpt{typeof(steps)}(method, steps, cent_genfunc, tree_genfunc,
@@ -1427,4 +1545,5 @@ end
 
 export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
        CorOpt, CorEstOpt, WCOpt, KurtOpt, KurtEstOpt, MVROpt, LoadingsOpt, FactorOpt, BLOpt,
-       ClusterOpt, OptimiseOpt, SBOpt, AllocOpt, DistOpt, NetworkOpt
+       ClusterOpt, OptimiseOpt, SBOpt, AllocOpt, DistOpt, NetworkOpt, ClampDist,
+       AugClampDist

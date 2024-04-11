@@ -1,6 +1,67 @@
 using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, PortfolioOptimiser,
       LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix, StatsBase,
-      AverageShiftedHistograms, Distances, Aqua
+      AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes
+
+prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
+
+rf = 1.0329^(1 / 252) - 1
+l = 2.0
+
+portfolio = HCPortfolio(; prices = prices_assets,
+                        solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                :params => Dict("verbose" => false
+                                                                                #   "max_step_fraction" => 0.75
+                                                                                #   "max_iter" => 400,
+                                                                                #   "max_iter"=>150,
+                                                                                #   "tol_gap_abs" => 1e-8,
+                                                                                #   "tol_gap_rel" => 1e-8,
+                                                                                #   "tol_feas" => 1e-8,
+                                                                                #   "tol_ktratio" => 1e-8,
+                                                                                #   "equilibrate_max_iter" => 30,
+                                                                                #   "reduced_tol_gap_abs" => 1e-6,
+                                                                                #   "reduced_tol_gap_rel" => 1e-5,
+                                                                                #   "reduced_tol_feas" => 1e-6,
+                                                                                #   "reduced_tol_ktratio" => 1e-6
+                                                                                ))))
+asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = AugClampDist())),
+                  calc_kurt = false)
+w1 = optimise!(portfolio; type = :NCO, cluster_opt = ClusterOpt(; linkage = :single))
+display(plot_clusters(portfolio; cluster = false))
+
+asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = AugClampDist())),
+                  calc_kurt = false)
+w1 = optimise!(portfolio; type = :NCO, cluster_opt = ClusterOpt(; linkage = :average))
+display(plot_clusters(portfolio; cluster = false))
+
+asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = AugClampDist())),
+                  calc_kurt = false)
+w1 = optimise!(portfolio; type = :NCO, cluster_opt = ClusterOpt(; linkage = :complete))
+display(plot_clusters(portfolio; cluster = false))
+
+asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = AugClampDist())),
+                  calc_kurt = false)
+w1 = optimise!(portfolio; type = :NCO, cluster_opt = ClusterOpt(; linkage = :ward))
+display(plot_clusters(portfolio; cluster = false))
+
+asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = AugClampDist())),
+                  calc_kurt = false)
+w1 = optimise!(portfolio; type = :NCO, cluster_opt = ClusterOpt(; linkage = :DBHT))
+display(plot_clusters(portfolio; cluster = false))
+
+asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = AugClampDist())),
+                  calc_kurt = false)
+w1 = optimise!(portfolio; type = :NCO,
+               cluster_opt = ClusterOpt(; linkage = :DBHT,
+                                        genfunc = GenericFunction(;
+                                                                  func = (corr, dist) -> ceil(maximum(dist)^2) .-
+                                                                                         dist .^
+                                                                                         2)))
+display(plot_clusters(portfolio; cluster = false))
+
+(corr, dist, args...; kwargs...) -> ceil(maximum(dist)^2) .- dist .^ 2
+
+####################################
 
 Aqua.test_all(PortfolioOptimiser; ambiguities = false, deps_compat = false)
 
