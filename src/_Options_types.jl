@@ -427,7 +427,7 @@ end
 end
 ```
 
-Structure and keyword constructor for storing parameters for the :Distance method from [`CorMethods`](@ref). This is part of [`CorOpt`](@ref), and as such some of these are only relevant when its `method` field has a specific value.
+Structure and keyword constructor for storing parameters for the `:Distance` method from [`CorMethods`](@ref).
 
 # Inputs
 
