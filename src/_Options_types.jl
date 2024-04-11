@@ -275,6 +275,19 @@ function Distances.pairwise(ce::ClampDist, X::AbstractMatrix, args...; kwargs...
                      clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
                  end)
 end
+@kwdef mutable struct AugClampDist <: Distances.UnionMetric
+    absolute::Bool = false
+    metric::Distances.UnionMetric = Distances.Euclidean()
+end
+function Distances.pairwise(ce::AugClampDist, X::AbstractMatrix, args...; kwargs...)
+    dist = sqrt.(if !ce.absolute
+                     clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
+                 else
+                     clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
+                 end)
+
+    return pairwise(ce.metric, dist, args...; kwargs...)
+end
 
 """
 ```
