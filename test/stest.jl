@@ -2,20 +2,24 @@ using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, Portfolio
       LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix, StatsBase,
       AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes, BenchmarkTools
 
-X = randn(200, 20)
+X = randn(100, 200)
 
+normalise = true
 a, b, c, d = 1, 2, 3, 4
-ce = PortfolioOptimiser.CorMutualInfo(; normalise = false)
-normalise = false
-b = PortfolioOptimiser.dist(ce, X)
-display(@benchmark PortfolioOptimiser.mut_var_info_mtx($X, $bins, $normalise) setup = ())
+ce = PortfolioOptimiser.CorGerberSB1(; normalise = normalise)
+a = cor(ce, X)
+b = cov(ce, X)
+display(@benchmark PortfolioOptimiser.cov($ce, $X) setup = ())
+
+opt = GerberOpt(; normalise = normalise)
+c, d = PortfolioOptimiser.gerbersb1(X, opt)
+display(@benchmark PortfolioOptimiser.gerbersb1($X, $opt) setup = ())
+@test isapprox(a, c)
+@test isapprox(b, d)
 
 bins = :HGR
 c, d = PortfolioOptimiser.mut_var_info_mtx(X, bins, normalise)
 display(@benchmark PortfolioOptimiser.mut_var_info_mtx($X, $bins, $normalise) setup = ())
-
-@test isapprox(a, c)
-@test isapprox(b, d)
 
 bins = PortfolioOptimiser.FD()
 bins = PortfolioOptimiser.SC()
