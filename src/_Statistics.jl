@@ -43,12 +43,70 @@ function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
 
     return nothing
 end
+abstract type DistanceMethod end
+@kwdef mutable struct DistanceMLP <: DistanceMethod
+    absolute::Bool = false
+end
+function dist(de::DistanceMLP, X::AbstractMatrix)
+    return sqrt.(if !de.absolute
+                     clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
+                 else
+                     clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
+                 end)
+end
+@kwdef mutable struct DistanceMLP2 <: DistanceMethod
+    absolute::Bool = false
+    distance::Distances.UnionMetric = Distances.Euclidean()
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+function dist(de::DistanceMLP2, X::AbstractMatrix)
+    _X = sqrt.(if !de.absolute
+                   clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
+               else
+                   clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
+               end)
+
+    return Distances.pairwise(de.distance, _X, de.args...; de.kwargs...)
+end
+struct DistanceLog <: DistanceMethod end
+function dist(::DistanceLog, X::AbstractMatrix)
+    return -log.(X)
+end
+abstract type DBHTSimilarity end
+struct DBHTExp <: DBHTSimilarity end
+function dbht_similarity(::DBHTExp, S, D)
+    return exp.(-D)
+end
+struct DBHTMaxDist <: DBHTSimilarity end
+function dbht_similarity(::DBHTMaxDist, S, D)
+    return ceil(maximum(D)^2) .- D .^ 2
+end
 abstract type AbstractBins end
 abstract type AstroBins <: AbstractBins end
 struct BinKnuth <: AstroBins end
 struct BinFreedman <: AstroBins end
 struct BinScott <: AstroBins end
 struct BinHGR <: AbstractBins end
+mutable struct DistanceVarInfo <: DistanceMethod
+    bins::Union{<:Integer, <:AbstractBins}
+    normalise::Bool
+end
+function DistanceVarInfo(; bins::Union{<:Integer, <:AbstractBins} = BinHGR(),
+                         normalise::Bool = true)
+    if isa(bins, Integer)
+        @smart_assert(bins > zero(bins))
+    end
+    return DistanceVarInfo(bins, normalise)
+end
+function Base.setproperty!(obj::DistanceVarInfo, sym::Symbol, val)
+    if sym == :bins
+        if isa(val, Integer)
+            @smart_assert(val > zero(val))
+        end
+    end
+    return setfield!(obj, sym, val)
+end
 mutable struct CorMutualInfo <: StatsBase.CovarianceEstimator
     bins::Union{<:Integer, <:AbstractBins}
     normalise::Bool
@@ -249,7 +307,7 @@ end
 function StatsBase.cor(ce::CorMutualInfo, X::AbstractMatrix, args...; kwargs...)
     return mutual_info(X, ce.bins, ce.normalise)
 end
-function dist(ce::CorMutualInfo, X::AbstractMatrix, args...; kwargs...)
+function dist(ce::DistanceVarInfo, X::AbstractMatrix)
     return variation_info(X, ce.bins, ce.normalise)
 end
 @kwdef mutable struct CorDistance <: StatsBase.CovarianceEstimator
@@ -263,8 +321,8 @@ function cor_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
 
     N2 = N^2
 
-    a = pairwise(ce.distance, v1, ce.args...; ce.kwargs...)
-    b = pairwise(ce.distance, v2, ce.args...; ce.kwargs...)
+    a = Distances.pairwise(ce.distance, v1, ce.args...; ce.kwargs...)
+    b = Distances.pairwise(ce.distance, v2, ce.args...; ce.kwargs...)
     A = a .- mean(a; dims = 1) .- mean(a; dims = 2) .+ mean(a)
     B = b .- mean(b; dims = 1) .- mean(b; dims = 2) .+ mean(b)
 
@@ -393,7 +451,7 @@ end
 function _cor_gerber_norm(ce::CorGerber0, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
 
     for j ∈ eachindex(axes(X, 2))
@@ -416,7 +474,7 @@ function _cor_gerber_norm(ce::CorGerber0, X::AbstractMatrix, mean_vec::AbstractV
                 end
             end
             den = (pos + neg)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (pos - neg) / den
             else
                 zero(eltype(X))
@@ -424,14 +482,14 @@ function _cor_gerber_norm(ce::CorGerber0, X::AbstractMatrix, mean_vec::AbstractV
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber(ce::CorGerber0, X::AbstractMatrix, std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
 
     for j ∈ eachindex(axes(X, 2))
@@ -452,7 +510,7 @@ function _cor_gerber(ce::CorGerber0, X::AbstractMatrix, std_vec::AbstractVector)
                 end
             end
             den = (pos + neg)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (pos - neg) / den
             else
                 zero(eltype(X))
@@ -460,15 +518,15 @@ function _cor_gerber(ce::CorGerber0, X::AbstractMatrix, std_vec::AbstractVector)
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber_norm(ce::CorGerber1, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
 
     for j ∈ eachindex(axes(X, 2))
@@ -494,7 +552,7 @@ function _cor_gerber_norm(ce::CorGerber1, X::AbstractMatrix, mean_vec::AbstractV
                 end
             end
             den = (T - nn)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (pos - neg) / den
             else
                 zero(eltype(X))
@@ -502,14 +560,14 @@ function _cor_gerber_norm(ce::CorGerber1, X::AbstractMatrix, mean_vec::AbstractV
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber(ce::CorGerber1, X::AbstractMatrix, std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
 
     for j ∈ eachindex(axes(X, 2))
@@ -533,7 +591,7 @@ function _cor_gerber(ce::CorGerber1, X::AbstractMatrix, std_vec::AbstractVector)
                 end
             end
             den = (T - nn)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (pos - neg) / den
             else
                 zero(eltype(X))
@@ -541,10 +599,10 @@ function _cor_gerber(ce::CorGerber1, X::AbstractMatrix, std_vec::AbstractVector)
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber_norm(ce::CorGerber2, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
@@ -569,10 +627,10 @@ function _cor_gerber_norm(ce::CorGerber2, X::AbstractMatrix, mean_vec::AbstractV
 
     h = sqrt.(diag(H))
 
-    sigma = H ./ (h * transpose(h))
-    posdef_fix!(ce.posdef, sigma)
+    rho = H ./ (h * transpose(h))
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber(ce::CorGerber2, X::AbstractMatrix, std_vec::AbstractVector)
     T, N = size(X)
@@ -596,10 +654,10 @@ function _cor_gerber(ce::CorGerber2, X::AbstractMatrix, std_vec::AbstractVector)
 
     h = sqrt.(diag(H))
 
-    sigma = H ./ (h * transpose(h))
-    posdef_fix!(ce.posdef, sigma)
+    rho = H ./ (h * transpose(h))
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
@@ -750,7 +808,7 @@ function _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
     end
 
     # Zone of indecision.
-    # Center returns at mu = 0 and sigma = 1.
+    # Center returns at mu = 0 and rho = 1.
     ri = abs((xi - mui) / sigmai)
     rj = abs((xj - muj) / sigmaj)
     # If the return is less than c2 standard deviations, or greater than c3 standard deviations, we can't make a call since it may be noise, or overall market forces.
@@ -767,7 +825,7 @@ end
 function _cor_gerber_norm(ce::CorSB0, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
     c1 = ce.c1
     c2 = ce.c2
@@ -796,7 +854,7 @@ function _cor_gerber_norm(ce::CorSB0, X::AbstractMatrix, mean_vec::AbstractVecto
                 end
             end
             den = (pos + neg)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (pos - neg) / den
             else
                 zero(eltype(X))
@@ -804,15 +862,15 @@ function _cor_gerber_norm(ce::CorSB0, X::AbstractMatrix, mean_vec::AbstractVecto
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber(ce::CorSB0, X::AbstractMatrix, mean_vec::AbstractVector,
                      std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
     c1 = ce.c1
     c2 = ce.c2
@@ -839,7 +897,7 @@ function _cor_gerber(ce::CorSB0, X::AbstractMatrix, mean_vec::AbstractVector,
                 end
             end
             den = (pos + neg)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (pos - neg) / den
             else
                 zero(eltype(X))
@@ -847,15 +905,15 @@ function _cor_gerber(ce::CorSB0, X::AbstractMatrix, mean_vec::AbstractVector,
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber_norm(ce::CorSB1, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
     c1 = ce.c1
     c2 = ce.c2
@@ -888,7 +946,7 @@ function _cor_gerber_norm(ce::CorSB1, X::AbstractMatrix, mean_vec::AbstractVecto
                 end
             end
             den = (pos + neg + nn)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (pos - neg) / den
             else
                 zero(eltype(X))
@@ -896,15 +954,15 @@ function _cor_gerber_norm(ce::CorSB1, X::AbstractMatrix, mean_vec::AbstractVecto
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber(ce::CorSB1, X::AbstractMatrix, mean_vec::AbstractVector,
                      std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
     c1 = ce.c1
     c2 = ce.c2
@@ -934,7 +992,7 @@ function _cor_gerber(ce::CorSB1, X::AbstractMatrix, mean_vec::AbstractVector,
                 end
             end
             den = (pos + neg + nn)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (pos - neg) / den
             else
                 zero(eltype(X))
@@ -942,15 +1000,15 @@ function _cor_gerber(ce::CorSB1, X::AbstractMatrix, mean_vec::AbstractVector,
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber_norm(ce::CorGerberSB0, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
     c1 = ce.c1
     c2 = ce.c2
@@ -985,7 +1043,7 @@ function _cor_gerber_norm(ce::CorGerberSB0, X::AbstractMatrix, mean_vec::Abstrac
             tpos = pos * cpos
             tneg = neg * cneg
             den = (tpos + tneg)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (tpos - tneg) / den
             else
                 zero(eltype(X))
@@ -993,15 +1051,15 @@ function _cor_gerber_norm(ce::CorGerberSB0, X::AbstractMatrix, mean_vec::Abstrac
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber(ce::CorGerberSB0, X::AbstractMatrix, mean_vec::AbstractVector,
                      std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
     c1 = ce.c1
     c2 = ce.c2
@@ -1034,7 +1092,7 @@ function _cor_gerber(ce::CorGerberSB0, X::AbstractMatrix, mean_vec::AbstractVect
             tpos = pos * cpos
             tneg = neg * cneg
             den = (tpos + tneg)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (tpos - tneg) / den
             else
                 zero(eltype(X))
@@ -1042,15 +1100,15 @@ function _cor_gerber(ce::CorGerberSB0, X::AbstractMatrix, mean_vec::AbstractVect
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber_norm(ce::CorGerberSB1, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
     c1 = ce.c1
     c2 = ce.c2
@@ -1092,7 +1150,7 @@ function _cor_gerber_norm(ce::CorGerberSB1, X::AbstractMatrix, mean_vec::Abstrac
             tneg = neg * cneg
             tnn = nn * cnn
             den = (tpos + tneg + tnn)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (tpos - tneg) / den
             else
                 zero(eltype(X))
@@ -1100,15 +1158,15 @@ function _cor_gerber_norm(ce::CorGerberSB1, X::AbstractMatrix, mean_vec::Abstrac
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _cor_gerber(ce::CorGerberSB1, X::AbstractMatrix, mean_vec::AbstractVector,
                      std_vec::AbstractVector)
     T, N = size(X)
-    sigma = Matrix{eltype(X)}(undef, N, N)
+    rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
     c1 = ce.c1
     c2 = ce.c2
@@ -1147,7 +1205,7 @@ function _cor_gerber(ce::CorGerberSB1, X::AbstractMatrix, mean_vec::AbstractVect
             tneg = neg * cneg
             tnn = nn * cnn
             den = (tpos + tneg + tnn)
-            sigma[i, j] = if !iszero(den)
+            rho[i, j] = if !iszero(den)
                 (tpos - tneg) / den
             else
                 zero(eltype(X))
@@ -1155,10 +1213,10 @@ function _cor_gerber(ce::CorGerberSB1, X::AbstractMatrix, mean_vec::AbstractVect
         end
     end
 
-    sigma .= Symmetric(sigma, :U)
-    posdef_fix!(ce.posdef, sigma)
+    rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
 
-    return sigma
+    return rho
 end
 function _gerber(ce::CorGerberBasic, X::AbstractMatrix, std_vec::AbstractVector)
     return if ce.normalise
@@ -1457,75 +1515,75 @@ mutable struct MeanJS{T1} <: MeanEstimator
     target::MeanTarget
     args::Tuple
     kwargs::NamedTuple
-    sigma::T1
+    rho::T1
 end
 function MeanJS(; target::MeanTarget = TargetGM(), args::Tuple = (),
                 kwargs::NamedTuple = (; dims = 1),
-                sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanJS{typeof(sigma)}(target, args, kwargs, sigma)
+                rho::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
+    return MeanJS{typeof(rho)}(target, args, kwargs, rho)
 end
 mutable struct MeanBS{T1} <: MeanEstimator
     target::MeanTarget
     args::Tuple
     kwargs::NamedTuple
-    sigma::T1
+    rho::T1
 end
 function MeanBS(; target::MeanTarget = TargetGM(), args::Tuple = (),
                 kwargs::NamedTuple = (; dims = 1),
-                sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanBS{typeof(sigma)}(target, args, kwargs, sigma)
+                rho::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
+    return MeanBS{typeof(rho)}(target, args, kwargs, rho)
 end
 mutable struct MeanBOP{T1} <: MeanEstimator
     target::MeanTarget
     args::Tuple
     kwargs::NamedTuple
-    sigma::T1
+    rho::T1
 end
 function MeanBOP(; target::MeanTarget = TargetGM(), args::Tuple = (),
                  kwargs::NamedTuple = (; dims = 1),
-                 sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanBOP{typeof(sigma)}(target, args, kwargs, sigma)
+                 rho::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
+    return MeanBOP{typeof(rho)}(target, args, kwargs, rho)
 end
-function target_mean(::TargetGM, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
+function target_mean(::TargetGM, mu::AbstractVector, rho::AbstractMatrix, inv_sigma,
                      T::Integer, N::Integer)
     return fill(mean(mu), N)
 end
-function target_mean(::TargetVW, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
+function target_mean(::TargetVW, mu::AbstractVector, rho::AbstractMatrix, inv_sigma,
                      T::Integer, N::Integer)
-    ones = range(one(eltype(sigma)); stop = one(eltype(sigma)), length = N)
+    ones = range(one(eltype(rho)); stop = one(eltype(rho)), length = N)
     if isnothing(inv_sigma)
-        inv_sigma = sigma \ I
+        inv_sigma = rho \ I
     end
     return fill(dot(ones, inv_sigma, mu) / dot(ones, inv_sigma, ones), N)
 end
-function target_mean(::TargetSE, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
+function target_mean(::TargetSE, mu::AbstractVector, rho::AbstractMatrix, inv_sigma,
                      T::Integer, N::Integer)
-    return fill(tr(sigma) / T, N)
+    return fill(tr(rho) / T, N)
 end
 function mu_estimator(me::MeanJS, X::AbstractMatrix)
     T, N = size(X)
     mu = vec(mean(X, me.args...; me.kwargs...))
-    sigma = me.sigma
-    b = target_mean(me.target, mu, sigma, nothing, T, N)
-    evals = eigvals(sigma)
+    rho = me.rho
+    b = target_mean(me.target, mu, rho, nothing, T, N)
+    evals = eigvals(rho)
     alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
     return (1 - alpha) * mu + alpha * b
 end
 function mu_estimator(me::MeanBS, X::AbstractMatrix)
     T, N = size(X)
     mu = vec(mean(X, me.args...; me.kwargs...))
-    sigma = me.sigma
-    inv_sigma = sigma \ I
-    b = target_mean(me.target, mu, sigma, inv_sigma, T, N)
+    rho = me.rho
+    inv_sigma = rho \ I
+    b = target_mean(me.target, mu, rho, inv_sigma, T, N)
     alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
     return (1 - alpha) * mu + alpha * b
 end
 function mu_estimator(me::MeanBOP, X::AbstractMatrix)
     T, N = size(X)
     mu = vec(mean(X, me.args...; me.kwargs...))
-    sigma = me.sigma
-    inv_sigma = sigma \ I
-    b = target_mean(me.target, mu, sigma, inv_sigma, T, N)
+    rho = me.rho
+    inv_sigma = rho \ I
+    b = target_mean(me.target, mu, rho, inv_sigma, T, N)
     alpha = (dot(mu, inv_sigma, mu) - N / (T - N)) * dot(b, inv_sigma, b) -
             dot(mu, inv_sigma, b)^2
     alpha /= dot(mu, inv_sigma, mu) * dot(b, inv_sigma, b) - dot(mu, inv_sigma, b)^2
@@ -1535,7 +1593,64 @@ end
 function StatsBase.mean(me::MeanEstimator, X::AbstractMatrix, args...; kwargs...)
     return mu_estimator(me, X)
 end
-# Tested move on to jlogo.
+@kwdef mutable struct DBHT
+    distance::DistanceMethod = DistanceMLP()
+    similarity::DBHTSimilarity = DBHTMaxDist()
+end
+abstract type AbstractJLoGo end
+struct NoJLoGo <: AbstractJLoGo end
+@kwdef mutable struct JLoGo <: AbstractJLoGo
+    DBHT::DBHT = DBHT(;)
+end
+function jlogo!(::NoJLoGo, args...) end
+function jlogo!(je::JLoGo, X::AbstractMatrix, D = nothing)
+    if isnothing(D)
+        s = diag(X)
+        iscov = any(.!isone.(s))
+        S = if iscov
+            s .= sqrt.(s)
+            StatsBase.cov2cor(X, s)
+        else
+            X
+        end
+        D = dist(je.DBHT.distance, S)
+    end
 
-abstract type CorMetric <: Distances.UnionMetric end
-struct MLPDistance <: CorMetric end
+    S = dbht_similarity(je.DBHT.similarity, S, D)
+
+    separators, cliques = PMFG_T2s(S, 4)[3:4]
+    X .= J_LoGo(X, separators, cliques) \ I
+
+    return nothing
+end
+#### This is untested
+@kwdef mutable struct CovType
+    ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
+    posdef::PosdefFix = PosdefNearest(;)
+    denoise::Denoise = NoDenoise(;)
+    jlogo::AbstractJLoGo = NoJLoGo()
+end
+function StatsBase.cov(ce::CovType, X::AbstractMatrix)
+    sigma = cov(ce.ce, X)
+    posdef_fix!(ce.posdef, sigma)
+    denoise!(ce.posdef, sigma, size(X, 1) / size(X, 2))
+    posdef_fix!(ce.posdef, sigma)
+    jlogo!(ce.jlogo, sigma)
+    if !isa(ce.jlogo, NoJLoGo)
+        posdef_fix!(ce.posdef, sigma)
+    end
+
+    return sigma
+end
+function StatsBase.cor(ce::CovType, X::AbstractMatrix)
+    rho = cor(ce.ce, X)
+    posdef_fix!(ce.posdef, rho)
+    denoise!(ce.posdef, rho, size(X, 1) / size(X, 2))
+    posdef_fix!(ce.posdef, rho)
+    jlogo!(ce.jlogo, rho)
+    if !isa(ce.jlogo, NoJLoGo)
+        posdef_fix!(ce.posdef, rho)
+    end
+
+    return rho
+end

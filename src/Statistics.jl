@@ -1441,7 +1441,6 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
     if jlogo.flag
         try
             corr = cov_flag ? cov2cor(mtx) : mtx
-
             distance = jlogo.dist
             dist_method = distance.method
             dargs = distance.args
@@ -1462,7 +1461,6 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
         catch SingularException
             throw(ErrorException("$msg matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set opt.posdef.method = $(opt.posdef.method), to a different method from $PosdefFixMethods.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.$(msg2)"))
         end
-
         posdef_fix!(mtx, opt.posdef; msg = "J-LoGo $msg ", cov_flag = cov_flag)
     end
 

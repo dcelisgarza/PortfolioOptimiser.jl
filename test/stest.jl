@@ -7,6 +7,17 @@ T, N = size(ret)
 q = T / N
 X = cov(ret)
 
+X1 = copy(X)
+X2 = copy(X)
+je = PortfolioOptimiser.JLoGo(; flag = true)
+posdef = PortfolioOptimiser.PosdefNearest()
+@allocated PortfolioOptimiser.jlogo!(je, posdef, X1)
+
+opt = CovOpt(; jlogo = JlogoOpt(; flag = true))
+@allocated PortfolioOptimiser._denoise_logo_mtx(0, 0, X2, opt, :cov, true)
+
+isapprox(X1, c2)
+
 me = PortfolioOptimiser.MeanBOP(; target = PortfolioOptimiser.TargetSE(), sigma = X)
 mu1 = mean(me, ret)
 display(@benchmark mean($me, $ret) setup = ())
