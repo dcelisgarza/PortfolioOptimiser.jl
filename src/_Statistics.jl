@@ -1,8 +1,8 @@
 abstract type AbstractBins end
-struct KN <: AbstractBins end
-struct FD <: AbstractBins end
-struct SC <: AbstractBins end
-const AstroBins = Union{KN, FD, SC}
+abstract type AstroBins <: AbstractBins end
+struct KN <: AstroBins end
+struct FD <: AstroBins end
+struct SC <: AstroBins end
 struct HGR <: AbstractBins end
 
 mutable struct CorMutualInfo <: StatsBase.CovarianceEstimator
@@ -329,7 +329,6 @@ function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
 
     return nothing
 end
-
 abstract type CorGerber <: StatsBase.CovarianceEstimator end
 abstract type CorGerberBasic <: CorGerber end
 abstract type CorSB <: CorGerber end
@@ -1249,7 +1248,7 @@ end
 function duplication_matrix(n::Int)
     cols = Int(n * (n + 1) / 2)
     rows = n * n
-    mtx = spzeros(rows, cols)
+    X = spzeros(rows, cols)
     for j ∈ 1:n
         for i ∈ j:n
             u = spzeros(1, cols)
@@ -1258,15 +1257,15 @@ function duplication_matrix(n::Int)
             T = spzeros(n, n)
             T[i, j] = 1
             T[j, i] = 1
-            mtx .+= vec(T) * u
+            X .+= vec(T) * u
         end
     end
-    return mtx
+    return X
 end
 function elimination_matrix(n::Int)
     rows = Int(n * (n + 1) / 2)
     cols = n * n
-    mtx = spzeros(rows, cols)
+    X = spzeros(rows, cols)
     for j ∈ 1:n
         ej = spzeros(1, n)
         ej[j] = 1
@@ -1276,10 +1275,10 @@ function elimination_matrix(n::Int)
             u[row] = 1
             ei = spzeros(1, n)
             ei[i] = 1
-            mtx .+= kron(u, kron(ej, ei))
+            X .+= kron(u, kron(ej, ei))
         end
     end
-    return mtx
+    return X
 end
 function summation_matrix(n::Int)
     d = duplication_matrix(n)
@@ -1321,7 +1320,129 @@ function find_max_eval(vals, q; kernel = ASH.Kernels.gaussian, m::Integer = 10,
     return e_max, x
 end
 =#
+abstract type Denoise end
+struct NoDenoise <: Denoise end
+function denoise!(::NoDenoise, X::AbstractMatrix, q::Real)
+    return nothing
+end
+mutable struct Fixed{T1, T2, T3, T4} <: Denoise
+    detone::Bool
+    mkt_comp::T1
+    kernel::T2
+    m::T3
+    n::T4
+    args::Tuple
+    kwargs::NamedTuple
+end
+function Fixed(; detone::Bool = false, mkt_comp::Integer = 1,
+               kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
+               n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
+    return Fixed{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone, mkt_comp,
+                                                                         kernel, m, n, args,
+                                                                         kwargs)
+end
+mutable struct Spectral{T1, T2, T3, T4} <: Denoise
+    detone::Bool
+    mkt_comp::T1
+    kernel::T2
+    m::T3
+    n::T4
+    args::Tuple
+    kwargs::NamedTuple
+end
+function Spectral(; detone::Bool = false, mkt_comp::Integer = 1,
+                  kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
+                  n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
+    return Spectral{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
+                                                                            mkt_comp,
+                                                                            kernel, m, n,
+                                                                            args, kwargs)
+end
+mutable struct Shrink{T1, T2, T3, T4, T5} <: Denoise
+    detone::Bool
+    alpha::T1
+    mkt_comp::T2
+    kernel::T3
+    m::T4
+    n::T5
+    args::Tuple
+    kwargs::NamedTuple
+end
+function Shrink(; alpha::Real = 0.0, detone::Bool = false, mkt_comp::Integer = 1,
+                kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
+                n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
+    @smart_assert(zero(alpha) <= alpha <= one(alpha))
+    return Shrink{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
+                                                                                         alpha,
+                                                                                         mkt_comp,
+                                                                                         kernel,
+                                                                                         m,
+                                                                                         n,
+                                                                                         args,
+                                                                                         kwargs)
+end
+function _denoise!(::Fixed, X::AbstractMatrix, vals::AbstractVector, vecs::AbstractMatrix,
+                   num_factors::Integer)
+    _vals = copy(vals)
+    _vals[1:num_factors] .= sum(_vals[1:num_factors]) / num_factors
+    X .= cov2cor(vecs * Diagonal(_vals) * transpose(vecs))
+    return nothing
+end
+function _denoise!(::Spectral, X::AbstractMatrix, vals::AbstractVector,
+                   vecs::AbstractMatrix, num_factors::Integer)
+    _vals = copy(vals)
+    _vals[1:num_factors] .= zero(eltype(X))
+    X .= cov2cor(vecs * Diagonal(_vals) * transpose(vecs))
+    return nothing
+end
+function _denoise!(ce::Shrink, X::AbstractMatrix, vals::AbstractVector,
+                   vecs::AbstractMatrix, num_factors::Integer)
+    # Small
+    vals_l = vals[1:num_factors]
+    vecs_l = vecs[:, 1:num_factors]
 
+    # Large
+    vals_r = vals[(num_factors + 1):end]
+    vecs_r = vecs[:, (num_factors + 1):end]
+
+    corr0 = vecs_r * Diagonal(vals_r) * transpose(vecs_r)
+    corr1 = vecs_l * Diagonal(vals_l) * transpose(vecs_l)
+
+    X .= corr0 + ce.alpha * corr1 + (one(ce.alpha) - ce.alpha) * Diagonal(corr1)
+    return nothing
+end
+function denoise!(ce::Denoise, X::AbstractMatrix, q::Real)
+    s = diag(X)
+    iscov = any(.!isone.(s))
+    if iscov
+        s .= sqrt.(s)
+        StatsBase.cov2cor!(X, s)
+    end
+
+    vals, vecs = eigen(X)
+
+    max_val, missing = find_max_eval(vals, q; kernel = ce.kernel, m = ce.m, n = ce.n,
+                                     args = ce.args, kwargs = ce.kwargs)
+
+    num_factors = findlast(vals .< max_val)
+
+    _denoise!(ce, X, vals, vecs, num_factors)
+
+    mkt_comp = ce.mkt_comp
+    if ce.detone
+        @smart_assert(one(size(X, 1)) <= mkt_comp <= size(X, 1))
+        mkt_comp -= 1
+        _vals = Diagonal(vals)[(end - mkt_comp):end, (end - mkt_comp):end]
+        _vecs = vecs[:, (end - mkt_comp):end]
+        X .-= _vecs * _vals * transpose(_vecs)
+    end
+
+    if iscov
+        StatsBase.cor2cov!(X, s)
+    end
+
+    return nothing
+end
 ### Tested. Move on to denoising.
 
 abstract type CorMetric <: Distances.UnionMetric end

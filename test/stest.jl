@@ -2,7 +2,21 @@ using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, Portfolio
       LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix, StatsBase,
       AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes, BenchmarkTools
 
-X = randn(100, 200)
+ret = randn(100, 200)
+T, N = size(ret)
+q = T / N
+X = cov(ret)
+
+X1 = copy(X)
+ce = PortfolioOptimiser.Shrink(; detone = true, alpha = 0.37, mkt_comp = 23)
+PortfolioOptimiser.denoise!(ce, X1, q)
+display(@benchmark PortfolioOptimiser.denoise!($ce, $X, $q) setup = ())
+
+opt = DenoiseOpt(; method = :Shrink, detone = true, alpha = 0.37, mkt_comp = 23)
+b = PortfolioOptimiser.denoise_cov(X, q, opt)
+display(@benchmark PortfolioOptimiser.denoise_cov($X, $q, $opt) setup = ())
+
+@test isapprox(X1, b)
 
 normalise = true
 a, b, c, d = 1, 2, 3, 4
