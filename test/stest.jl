@@ -7,16 +7,14 @@ T, N = size(ret)
 q = T / N
 X = cov(ret)
 
-X1 = copy(X)
-ce = PortfolioOptimiser.Shrink(; detone = true, alpha = 0.37, mkt_comp = 23)
-PortfolioOptimiser.denoise!(ce, X1, q)
-display(@benchmark PortfolioOptimiser.denoise!($ce, $X, $q) setup = ())
+me = PortfolioOptimiser.MeanBOP(; target = PortfolioOptimiser.TargetSE(), sigma = X)
+mu1 = mean(me, ret)
+display(@benchmark mean($me, $ret) setup = ())
 
-opt = DenoiseOpt(; method = :Shrink, detone = true, alpha = 0.37, mkt_comp = 23)
-b = PortfolioOptimiser.denoise_cov(X, q, opt)
-display(@benchmark PortfolioOptimiser.denoise_cov($X, $q, $opt) setup = ())
-
-@test isapprox(X1, b)
+opt = MuOpt(; method = :BOP, target = :SE, sigma = X)
+mu2 = PortfolioOptimiser.mu_estimator(ret, opt)
+display(@benchmark PortfolioOptimiser.mu_estimator($ret, $opt) setup = ())
+@test isapprox(mu1, mu2)
 
 normalise = true
 a, b, c, d = 1, 2, 3, 4

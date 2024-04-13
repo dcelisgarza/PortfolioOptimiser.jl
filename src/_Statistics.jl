@@ -1,15 +1,59 @@
+abstract type PosdefFix end
+@kwdef mutable struct PosdefNearest <: PosdefFix
+    method::NearestCorrelationMatrix.NCMAlgorithm = NearestCorrelationMatrix.Newton(;
+                                                                                    tau = 1e-12)
+end
+"""
+```
+_posdef_fix!(method::PosdefNearest, X::AbstractMatrix)
+```
+
+Overload this for other posdef fix methods.
+"""
+function _posdef_fix!(method::PosdefNearest, X::AbstractMatrix)
+    NCM.nearest_cor!(X, method)
+    return nothing
+end
+function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
+    if isposdef(X)
+        return nothing
+    end
+
+    s = diag(X)
+    iscov = any(.!isone.(s))
+    _X = if iscov
+        s .= sqrt.(s)
+        cov2cor(X, s)
+    else
+        X
+    end
+
+    _posdef_fix!(method, _X)
+
+    if !isposdef(_X)
+        @warn("Matrix could not be made positive definite.")
+        return nothing
+    end
+
+    if iscov
+        StatsBase.cor2cov!(_X, s)
+    end
+
+    X .= _X
+
+    return nothing
+end
 abstract type AbstractBins end
 abstract type AstroBins <: AbstractBins end
-struct KN <: AstroBins end
-struct FD <: AstroBins end
-struct SC <: AstroBins end
-struct HGR <: AbstractBins end
-
+struct BinKnuth <: AstroBins end
+struct BinFreedman <: AstroBins end
+struct BinScott <: AstroBins end
+struct BinHGR <: AbstractBins end
 mutable struct CorMutualInfo <: StatsBase.CovarianceEstimator
     bins::Union{<:Integer, <:AbstractBins}
     normalise::Bool
 end
-function CorMutualInfo(; bins::Union{<:Integer, <:AbstractBins} = HGR(),
+function CorMutualInfo(; bins::Union{<:Integer, <:AbstractBins} = BinHGR(),
                        normalise::Bool = true)
     if isa(bins, Integer)
         @smart_assert(bins > zero(bins))
@@ -24,16 +68,16 @@ function Base.setproperty!(obj::CorMutualInfo, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function _bin_width_func(::KN)
+function _bin_width_func(::BinKnuth)
     return pyimport("astropy.stats").knuth_bin_width
 end
-function _bin_width_func(::FD)
+function _bin_width_func(::BinFreedman)
     return pyimport("astropy.stats").freedman_bin_width
 end
-function _bin_width_func(::SC)
+function _bin_width_func(::BinScott)
     return pyimport("astropy.stats").scott_bin_width
 end
-function _bin_width_func(::Union{HGR, <:Integer})
+function _bin_width_func(::Union{BinHGR, <:Integer})
     return nothing
 end
 function calc_num_bins(::AstroBins, xj, xi, j::Integer, i, bin_width_func, T = nothing)
@@ -45,7 +89,7 @@ function calc_num_bins(::AstroBins, xj, xi, j::Integer, i, bin_width_func, T = n
                      k1
                  end)
 end
-function calc_num_bins(::HGR, xj, xi, j, i, bin_width_func, N)
+function calc_num_bins(::BinHGR, xj, xi, j, i, bin_width_func, N)
     corr = cor(xj, xi)
     return round(Int, if isone(corr)
                      z = cbrt(8 + 324 * N + 12 * sqrt(36 * N + 729 * N^2))
@@ -103,7 +147,7 @@ function _mutual_info(A::AbstractMatrix)
     return sum(mi)
 end
 function mutual_variation_info(X::AbstractMatrix,
-                               bins::Union{<:AbstractBins, <:Integer} = KN(),
+                               bins::Union{<:AbstractBins, <:Integer} = BinKnuth(),
                                normalise::Bool = true)
     T, N = size(X)
     mut_mtx = Matrix{eltype(X)}(undef, N, N)
@@ -140,7 +184,7 @@ function mutual_variation_info(X::AbstractMatrix,
 
     return Symmetric(mut_mtx, :U), Symmetric(var_mtx, :U)
 end
-function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} = KN(),
+function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} = BinKnuth(),
                      normalise::Bool = true)
     T, N = size(X)
     mut_mtx = Matrix{eltype(X)}(undef, N, N)
@@ -170,7 +214,8 @@ function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} =
 
     return Symmetric(mut_mtx, :U)
 end
-function variation_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} = KN(),
+function variation_info(X::AbstractMatrix,
+                        bins::Union{<:AbstractBins, <:Integer} = BinKnuth(),
                         normalise::Bool = true)
     T, N = size(X)
     var_mtx = Matrix{eltype(X)}(undef, N, N)
@@ -284,51 +329,6 @@ end
 function StatsBase.cor(ce::CorLowerTailDependence, X::AbstractMatrix, args...; kwargs...)
     return lower_tail_dependence(X, ce.alpha)
 end
-abstract type PosdefFix end
-@kwdef mutable struct Nearest <: PosdefFix
-    method::NearestCorrelationMatrix.NCMAlgorithm = NearestCorrelationMatrix.Newton(;
-                                                                                    tau = 1e-12)
-end
-"""
-```
-_posdef_fix!(method::Nearest, X::AbstractMatrix)
-```
-
-Overload this for other posdef fix methods.
-"""
-function _posdef_fix!(method::Nearest, X::AbstractMatrix)
-    NCM.nearest_cor!(X, method)
-    return nothing
-end
-function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
-    if isposdef(X)
-        return nothing
-    end
-
-    s = diag(X)
-    iscov = any(.!isone.(s))
-    _X = if iscov
-        s .= sqrt.(s)
-        cov2cor(X, s)
-    else
-        X
-    end
-
-    _posdef_fix!(method, _X)
-
-    if !isposdef(_X)
-        @warn("Matrix could not be made positive definite.")
-        return nothing
-    end
-
-    if iscov
-        StatsBase.cor2cov!(_X, s)
-    end
-
-    X .= _X
-
-    return nothing
-end
 abstract type CorGerber <: StatsBase.CovarianceEstimator end
 abstract type CorGerberBasic <: CorGerber end
 abstract type CorSB <: CorGerber end
@@ -344,7 +344,8 @@ mutable struct CorGerber0{T1 <: Real} <: CorGerberBasic
 end
 function CorGerber0(; normalise::Bool = false, threshold::Real = 0.5, mean_args::Tuple = (),
                     mean_kwargs::NamedTuple = (; dims = 1), std_args::Tuple = (),
-                    std_kwargs::NamedTuple = (; dims = 1), posdef::PosdefFix = Nearest(;))
+                    std_kwargs::NamedTuple = (; dims = 1),
+                    posdef::PosdefFix = PosdefNearest(;))
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CorGerber0{typeof(threshold)}(normalise, threshold, mean_args, mean_kwargs,
                                          std_args, std_kwargs, posdef)
@@ -360,7 +361,8 @@ mutable struct CorGerber1{T1 <: Real} <: CorGerberBasic
 end
 function CorGerber1(; normalise::Bool = false, threshold::Real = 0.5, mean_args::Tuple = (),
                     mean_kwargs::NamedTuple = (; dims = 1), std_args::Tuple = (),
-                    std_kwargs::NamedTuple = (; dims = 1), posdef::PosdefFix = Nearest(;))
+                    std_kwargs::NamedTuple = (; dims = 1),
+                    posdef::PosdefFix = PosdefNearest(;))
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CorGerber1{typeof(threshold)}(normalise, threshold, mean_args, mean_kwargs,
                                          std_args, std_kwargs, posdef)
@@ -376,7 +378,8 @@ mutable struct CorGerber2{T1 <: Real} <: CorGerberBasic
 end
 function CorGerber2(; normalise::Bool = false, threshold::Real = 0.5, mean_args::Tuple = (),
                     mean_kwargs::NamedTuple = (; dims = 1), std_args::Tuple = (),
-                    std_kwargs::NamedTuple = (; dims = 1), posdef::PosdefFix = Nearest(;))
+                    std_kwargs::NamedTuple = (; dims = 1),
+                    posdef::PosdefFix = PosdefNearest(;))
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CorGerber2{typeof(threshold)}(normalise, threshold, mean_args, mean_kwargs,
                                          std_args, std_kwargs, posdef)
@@ -614,7 +617,7 @@ end
 function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4, n::Real = 2, mean_args::Tuple = (),
                 mean_kwargs::NamedTuple = (; dims = 1), std_args::Tuple = (),
-                std_kwargs::NamedTuple = (; dims = 1), posdef::PosdefFix = Nearest(;))
+                std_kwargs::NamedTuple = (; dims = 1), posdef::PosdefFix = PosdefNearest(;))
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
@@ -645,7 +648,7 @@ end
 function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4, n::Real = 2, mean_args::Tuple = (),
                 mean_kwargs::NamedTuple = (; dims = 1), std_args::Tuple = (),
-                std_kwargs::NamedTuple = (; dims = 1), posdef::PosdefFix = Nearest(;))
+                std_kwargs::NamedTuple = (; dims = 1), posdef::PosdefFix = PosdefNearest(;))
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
@@ -676,7 +679,8 @@ end
 function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4, n::Real = 2, mean_args::Tuple = (),
                       mean_kwargs::NamedTuple = (; dims = 1), std_args::Tuple = (),
-                      std_kwargs::NamedTuple = (; dims = 1), posdef::PosdefFix = Nearest(;))
+                      std_kwargs::NamedTuple = (; dims = 1),
+                      posdef::PosdefFix = PosdefNearest(;))
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
@@ -709,7 +713,8 @@ end
 function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4, n::Real = 2, mean_args::Tuple = (),
                       mean_kwargs::NamedTuple = (; dims = 1), std_args::Tuple = (),
-                      std_kwargs::NamedTuple = (; dims = 1), posdef::PosdefFix = Nearest(;))
+                      std_kwargs::NamedTuple = (; dims = 1),
+                      posdef::PosdefFix = PosdefNearest(;))
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
@@ -1443,7 +1448,94 @@ function denoise!(ce::Denoise, X::AbstractMatrix, q::Real)
 
     return nothing
 end
-### Tested. Move on to denoising.
+abstract type MeanEstimator end
+abstract type MeanTarget end
+struct TargetGM <: MeanTarget end
+struct TargetVW <: MeanTarget end
+struct TargetSE <: MeanTarget end
+mutable struct MeanJS{T1} <: MeanEstimator
+    target::MeanTarget
+    args::Tuple
+    kwargs::NamedTuple
+    sigma::T1
+end
+function MeanJS(; target::MeanTarget = TargetGM(), args::Tuple = (),
+                kwargs::NamedTuple = (; dims = 1),
+                sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
+    return MeanJS{typeof(sigma)}(target, args, kwargs, sigma)
+end
+mutable struct MeanBS{T1} <: MeanEstimator
+    target::MeanTarget
+    args::Tuple
+    kwargs::NamedTuple
+    sigma::T1
+end
+function MeanBS(; target::MeanTarget = TargetGM(), args::Tuple = (),
+                kwargs::NamedTuple = (; dims = 1),
+                sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
+    return MeanBS{typeof(sigma)}(target, args, kwargs, sigma)
+end
+mutable struct MeanBOP{T1} <: MeanEstimator
+    target::MeanTarget
+    args::Tuple
+    kwargs::NamedTuple
+    sigma::T1
+end
+function MeanBOP(; target::MeanTarget = TargetGM(), args::Tuple = (),
+                 kwargs::NamedTuple = (; dims = 1),
+                 sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
+    return MeanBOP{typeof(sigma)}(target, args, kwargs, sigma)
+end
+function target_mean(::TargetGM, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
+                     T::Integer, N::Integer)
+    return fill(mean(mu), N)
+end
+function target_mean(::TargetVW, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
+                     T::Integer, N::Integer)
+    ones = range(one(eltype(sigma)); stop = one(eltype(sigma)), length = N)
+    if isnothing(inv_sigma)
+        inv_sigma = sigma \ I
+    end
+    return fill(dot(ones, inv_sigma, mu) / dot(ones, inv_sigma, ones), N)
+end
+function target_mean(::TargetSE, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
+                     T::Integer, N::Integer)
+    return fill(tr(sigma) / T, N)
+end
+function mu_estimator(me::MeanJS, X::AbstractMatrix)
+    T, N = size(X)
+    mu = vec(mean(X, me.args...; me.kwargs...))
+    sigma = me.sigma
+    b = target_mean(me.target, mu, sigma, nothing, T, N)
+    evals = eigvals(sigma)
+    alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
+    return (1 - alpha) * mu + alpha * b
+end
+function mu_estimator(me::MeanBS, X::AbstractMatrix)
+    T, N = size(X)
+    mu = vec(mean(X, me.args...; me.kwargs...))
+    sigma = me.sigma
+    inv_sigma = sigma \ I
+    b = target_mean(me.target, mu, sigma, inv_sigma, T, N)
+    alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
+    return (1 - alpha) * mu + alpha * b
+end
+function mu_estimator(me::MeanBOP, X::AbstractMatrix)
+    T, N = size(X)
+    mu = vec(mean(X, me.args...; me.kwargs...))
+    sigma = me.sigma
+    inv_sigma = sigma \ I
+    b = target_mean(me.target, mu, sigma, inv_sigma, T, N)
+    alpha = (dot(mu, inv_sigma, mu) - N / (T - N)) * dot(b, inv_sigma, b) -
+            dot(mu, inv_sigma, b)^2
+    alpha /= dot(mu, inv_sigma, mu) * dot(b, inv_sigma, b) - dot(mu, inv_sigma, b)^2
+    beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
+    return alpha * mu + beta * b
+end
+function StatsBase.mean(me::MeanEstimator, X::AbstractMatrix, args...; kwargs...)
+    return mu_estimator(me, X)
+end
+# Tested move on to jlogo.
 
 abstract type CorMetric <: Distances.UnionMetric end
 struct MLPDistance <: CorMetric end
