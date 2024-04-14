@@ -926,6 +926,16 @@ function SKurt(x::AbstractVector)
     return sqrt(sum(val[val .< 0] .^ 4) / T)
 end
 
+function Skew(x::AbstractVector)
+    return skewness(x)
+end
+
+function SSkew(x::AbstractVector)
+    mu = mean(x)
+    val = x .- mu
+    return skewness(val, zero(eltype(x)))
+end
+
 """
 ```julia
 GMD(x::AbstractVector)
@@ -1057,6 +1067,15 @@ end
 
 #     return dot(w, sort!(x))
 # end
+function DVar(x::AbstractVector)
+    T = length(x)
+    ovec = range(1; stop = 1, length = T)
+    Ct = I - 1 / T * ovec * transpose(ovec)
+    D = abs.(x * transpose(ovec) - ovec * transpose(x))
+    A = vec(Ct * D * Ct)
+
+    return dot(A, A)
+end
 
 """
 ```julia
@@ -1170,6 +1189,12 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
         T = size(returns, 1)
         w = isempty(owa_w) ? owa_gmd(T) : owa_w
         OWA(x, w)
+    elseif rm == :DVar
+        DVar(x)
+    elseif rm == :Skew
+        Skew(x)
+    elseif rm == :SSkew
+        SSkew(x)
     elseif rm == :Equal
         1 / length(w)
     end
@@ -1296,6 +1321,15 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
         w = isempty(owa_w) ? owa_gmd(T) : owa_w
         r1 = OWA(a1, w)
         r2 = OWA(a2, w)
+    elseif rm == :DVar
+        r1 = DVar(a1)
+        r2 = DVar(a2)
+    elseif rm == :Skew
+        r1 = Skew(a1) * 0.5
+        r2 = Skew(a2) * 0.5
+    elseif rm == :SSkew
+        r1 = SSkew(a1) * 0.5
+        r2 = SSkew(a2) * 0.5
     elseif rm == :Equal
         r1 = 1 / length(w1) + di
         r2 = 1 / length(w1) - di
@@ -1445,4 +1479,5 @@ end
 export Variance, SD, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR, RRM, RVaR, DaR_abs,
        MDD_abs, ADD_abs, CDaR_abs, UCI_abs, EDaR_abs, RDaR_abs, DaR_rel, MDD_rel, ADD_rel,
        CDaR_rel, UCI_rel, EDaR_rel, RDaR_rel, Kurt, SKurt, GMD, RG, RCVaR, TG, RTG, OWA,
-       calc_risk, risk_contribution, sharpe_ratio, factor_risk_contribution
+       DVar, Skew, SSkew, calc_risk, risk_contribution, sharpe_ratio,
+       factor_risk_contribution

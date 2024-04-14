@@ -1896,7 +1896,7 @@ end
 """
 ```
 asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true, calc_mu::Bool = true,
-                  calc_kurt::Bool = true, calc_cor::Bool = true,
+                  calc_kurt::Bool = true, calc_skew::Bool=true, calc_cor::Bool = true,
                   cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
                   kurt_opt::KurtOpt = KurtOpt(;), cor_opt::CorOpt = CorOpt(;))
 ```
@@ -1931,11 +1931,15 @@ Depending on conditions, modifies:
   - `calc_kurt`:
 
       + `true`: compute and set the cokurtosis and semi cokurtosis matrices.
-  - `calc_cor`:
+  - `calc_skew`:
 
-      + `isa(portfolio, HCPortfolio)`:
+      + `true`: compute and set the coskewness and semi coskewness matrices.
 
-          * `true`: compute and set the correlation and distance matrices.
+      + `calc_cor`:
+
+          * `isa(portfolio, HCPortfolio)`:
+
+              - `true`: compute and set the correlation and distance matrices.
 
 ## Options
 
@@ -1945,7 +1949,7 @@ Depending on conditions, modifies:
   - `cor_opt`: instance of [`CorOpt`](@ref), defines how the correlation and distance matrices are computed.
 """
 function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
-                           calc_mu::Bool = true, calc_kurt::Bool = true,
+                           calc_mu::Bool = true, calc_kurt::Bool = true, calc_skew = true,
                            calc_cor::Bool = true, cov_opt::CovOpt = CovOpt(;),
                            mu_opt::MuOpt = MuOpt(;), kurt_opt::KurtOpt = KurtOpt(;),
                            cor_opt::CorOpt = CorOpt(;))
@@ -1989,6 +1993,11 @@ function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
         portfolio.kurt, portfolio.skurt, portfolio.L_2, portfolio.S_2 = cokurt_mtx(returns,
                                                                                    portfolio.mu,
                                                                                    kurt_opt)
+    end
+
+    if calc_skew
+        portfolio.skew = coskew(returns, transpose(portfolio.mu))
+        portfolio.sskew = scoskew(returns, transpose(portfolio.mu))
     end
 
     # Type specific

@@ -741,6 +741,15 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                                                         true
                                                     else
                                                         false
+                                                    end,
+                                                    calc_skew = if type != :NCO &&
+                                                                   rm ∈ (:Skew, :SSkew) ||
+                                                                   type == :NCO &&
+                                                                   nco_opt.rm ∈
+                                                                   (:Skew, :SSkew)
+                                                        true
+                                                    else
+                                                        false
                                                     end),
                    asset_stat_kwargs_o::NamedTuple = (; calc_mu = false, calc_cov = false,
                                                       calc_kurt = if type != :NCO &&
@@ -749,6 +758,15 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                                                                      type == :NCO &&
                                                                      nco_opt_o.rm ∈
                                                                      (:Kurt, :SKurt)
+                                                          true
+                                                      else
+                                                          false
+                                                      end,
+                                                      calc_skew = if type != :NCO &&
+                                                                     rm ∈ (:Skew, :SSkew) ||
+                                                                     type == :NCO &&
+                                                                     nco_opt.rm ∈
+                                                                     (:Skew, :SSkew)
                                                           true
                                                       else
                                                           false

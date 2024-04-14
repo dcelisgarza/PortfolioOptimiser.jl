@@ -10,15 +10,16 @@ abstract type AbstractPortfolio end
 """
 ```
 mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
-                         msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, mnaks, rb, rbw, to,
-                         tobw, kte, te, rbi, bw, blbw, ami, bvi, rbv, frbv, nm, nsdp, np,
-                         ni, nis, amc, bvc, ler, ud, umad, usd, ucvar, urcvar, uevar, urvar,
-                         uwr, ur, uflpm, uslpm, umd, uad, ucdar, uuci, uedar, urdar, uk,
-                         usk, ugmd, utg, urtg, uowa, owap, wowa, tmu, tcov, tkurt, tskurt,
-                         tl2, ts2, tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf,
-                         tcovblf, tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz,
-                         tlim, tfront, tsolv, tf, toptpar, tmod, tlp, taopt, tasolv,
-                         taoptpar, taf, tamod} <: AbstractPortfolio
+                         msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, mnaks, skewf, sskewf,
+                         rb, rbw, to, tobw, kte, te, rbi, bw, blbw, ami, bvi, rbv, frbv, nm,
+                         nsdp, np, ni, nis, amc, bvc, ler, ud, umad, usd, ucvar, urcvar,
+                         uevar, urvar, uwr, ur, uflpm, uslpm, umd, uad, ucdar, uuci, uedar,
+                         urdar, uk, usk, ugmd, utg, urtg, uowa, udvar, uskew, usskew, owap,
+                         wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tsskew, tmuf,
+                         tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf, tcovl,
+                         tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz, tlim, tfront,
+                         tsolv, tf, toptpar, tmod, tlp, taopt, tasolv, taoptpar, taf,
+                         tamod} <: AbstractPortfolio
     assets::ast
     timestamps::dat
     returns::r
@@ -44,6 +45,8 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     kappa::k
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
+    skew_factor::skewf
+    sskew_factor::sskewf
     rebalance::rb
     rebalance_weights::rbw
     turnover::to
@@ -88,6 +91,9 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     tg_u::utg
     rtg_u::urtg
     owa_u::uowa
+    dvar_u::udvar
+    skew_u::uskew
+    sskew_u::usskew
     owa_p::owap
     owa_w::wowa
     mu::tmu
@@ -96,6 +102,8 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     skurt::tskurt
     L_2::tl2
     S_2::ts2
+    skew::tskew
+    sskew::tsskew
     f_mu::tmuf
     f_cov::tcovf
     fm_returns::trfm
@@ -217,6 +225,8 @@ Some constraints define decision variables using scaling factors. The scaling fa
       + `iszero(max_num_assets_kurt)`: use the full kurtosis model.
       + `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
   - `max_num_assets_kurt_scale`: the relaxed kurtosis model uses the largest `max_num_assets_kurt_scale * max_num_assets_kurt` eigenvalues to approximate the kurtosis matrix, `max_num_assets_kurt_scale ∈ [1, Na]`, where `Na` is the number of assets.
+  - `skew_factor`: factor for adding the multiple of the negative quadratic skewness to the risk function.
+  - `sskew_factor`: factor for adding the multiple of the negative quadratic semi skewness to the risk function.
 
 ## Benchmark constraints
 
@@ -436,15 +446,16 @@ Only relevant when `type == :WC`.
   - `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation.
 """
 mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
-                         msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, mnaks, rb, rbw, to,
-                         tobw, kte, te, rbi, bw, blbw, ami, bvi, rbv, frbv, nm, nsdp, np,
-                         ni, nis, amc, bvc, ler, ud, umad, usd, ucvar, urcvar, uevar, urvar,
-                         uwr, ur, uflpm, uslpm, umd, uad, ucdar, uuci, uedar, urdar, uk,
-                         usk, ugmd, utg, urtg, uowa, owap, wowa, tmu, tcov, tkurt, tskurt,
-                         tl2, ts2, tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf,
-                         tcovblf, tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz,
-                         tlim, tfront, tsolv, tf, toptpar, tmod, tlp, taopt, tasolv,
-                         taoptpar, taf, tamod} <: AbstractPortfolio
+                         msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, mnaks, skewf, sskewf,
+                         rb, rbw, to, tobw, kte, te, rbi, bw, blbw, ami, bvi, rbv, frbv, nm,
+                         nsdp, np, ni, nis, amc, bvc, ler, ud, umad, usd, ucvar, urcvar,
+                         uevar, urvar, uwr, ur, uflpm, uslpm, umd, uad, ucdar, uuci, uedar,
+                         urdar, uk, usk, ugmd, utg, urtg, uowa, udvar, uskew, usskew, owap,
+                         wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tsskew, tmuf,
+                         tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf, tcovl,
+                         tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz, tlim, tfront,
+                         tsolv, tf, toptpar, tmod, tlp, taopt, tasolv, taoptpar, taf,
+                         tamod} <: AbstractPortfolio
     assets::ast
     timestamps::dat
     returns::r
@@ -470,6 +481,8 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     kappa::k
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
+    skew_factor::skewf
+    sskew_factor::sskewf
     rebalance::rb
     rebalance_weights::rbw
     turnover::to
@@ -514,6 +527,9 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     tg_u::utg
     rtg_u::urtg
     owa_u::uowa
+    dvar_u::udvar
+    skew_u::uskew
+    sskew_u::usskew
     owa_p::owap
     owa_w::wowa
     mu::tmu
@@ -522,6 +538,8 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     skurt::tskurt
     L_2::tl2
     S_2::ts2
+    skew::tskew
+    sskew::tsskew
     f_mu::tmuf
     f_cov::tcovf
     fm_returns::trfm
@@ -556,116 +574,122 @@ end
 
 """
 ```
-Portfolio(;
-                   prices::TimeArray                                 = TimeArray(TimeType[], []),
-                   returns::DataFrame                                = DataFrame(),
-                   ret::AbstractMatrix{<:Real}                       = Matrix{Float64}(undef, 0, 0),
-                   timestamps::AbstractVector                        = Vector{Date}(undef, 0),
-                   assets::AbstractVector                            = Vector{String}(undef, 0),
-                   short::Bool                                       = false,
-                   short_u::Real                                     = 0.2,
-                   long_u::Real                                      = 1.0,
-                   num_assets_l::Integer                             = 0,
-                   num_assets_u::Integer                             = 0,
-                   num_assets_u_scale::Real                          = 100_000.0,
-                   f_prices::TimeArray                               = TimeArray(TimeType[], []),
-                   f_returns::DataFrame                              = DataFrame(),
-                   f_ret::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   f_timestamps::AbstractVector                      = Vector{Date}(undef, 0),
-                   f_assets::AbstractVector                          = Vector{String}(undef, 0),
-                   loadings::DataFrame                               = DataFrame(),
-                   loadings_opt::Union{LoadingsOpt, Nothing}         = nothing,
-                   msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
-                   lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
-                   alpha_i::Real                                     = 0.0001,
-                   alpha::Real                                       = 0.05,
-                   a_sim::Integer                                    = 100,
-                   beta_i::Real                                      = alpha_i,
-                   beta::Real                                        = alpha,
-                   b_sim::Integer                                    = a_sim,
-                   kappa::Real                                       = 0.3,
-                   max_num_assets_kurt::Integer                      = 0,
-                   max_num_assets_kurt_scale::Integer                = 2,
-                   rebalance::Union{Real, AbstractVector{<:Real}}    = Inf,
-                   rebalance_weights::AbstractVector{<:Real}         = Vector{Float64}(undef, 0),
-                   turnover::Union{Real, AbstractVector{<:Real}}     = Inf,
-                   turnover_weights::AbstractVector{<:Real}          = Vector{Float64}(undef, 0),
-                   kind_tracking_err::Symbol                         = :None,
-                   tracking_err::Real                                = Inf,
-                   tracking_err_returns::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
-                   tracking_err_weights::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
-                   bl_bench_weights::AbstractVector{<:Real}          = Vector{Float64}(undef, 0),
-                   a_mtx_ineq::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
-                   b_vec_ineq::AbstractVector{<:Real}                = Vector{Float64}(undef, 0),
-                   risk_budget::AbstractVector{<:Real}               = Vector{Float64}(undef, 0),
-                   f_risk_budget::AbstractVector{<:Real}             = Vector{Float64}(undef, 0),
-                   network_method::Symbol                            = :None,
-                   network_sdp::AbstractMatrix{<:Real}               = Matrix{Float64}(undef, 0, 0),
-                   network_penalty::Real                             = 0.05,
-                   network_ip::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
-                   network_ip_scale::Real                            = 100_000.0,
-                   a_vec_cent::AbstractVector{<:Real}                = Vector{Float64}(undef, 0),
-                   b_cent::Real                                      = Inf,
-                   mu_l::Real                                        = Inf,
-                   sd_u::Real                                        = Inf,
-                   mad_u::Real                                       = Inf,
-                   ssd_u::Real                                       = Inf,
-                   cvar_u::Real                                      = Inf,
-                   rcvar_u::Real                                     = Inf,
-                   evar_u::Real                                      = Inf,
-                   rvar_u::Real                                      = Inf,
-                   wr_u::Real                                        = Inf,
-                   rg_u::Real                                        = Inf,
-                   flpm_u::Real                                      = Inf,
-                   slpm_u::Real                                      = Inf,
-                   mdd_u::Real                                       = Inf,
-                   add_u::Real                                       = Inf,
-                   cdar_u::Real                                      = Inf,
-                   uci_u::Real                                       = Inf,
-                   edar_u::Real                                      = Inf,
-                   rdar_u::Real                                      = Inf,
-                   kurt_u::Real                                      = Inf,
-                   skurt_u::Real                                     = Inf,
-                   gmd_u::Real                                       = Inf,
-                   tg_u::Real                                        = Inf,
-                   rtg_u::Real                                       = Inf,
-                   owa_u::Real                                       = Inf,
-                   owa_p::AbstractVector{<:Real}                     = Float64[2, 3, 4, 10, 50],
-                   owa_w::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
-                   mu::AbstractVector                                = Vector{Float64}(undef, 0),
-                   cov::AbstractMatrix{<:Real}                       = Matrix{Float64}(undef, 0, 0),
-                   kurt::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
-                   skurt::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   f_mu::AbstractVector{<:Real}                      = Vector{Float64}(undef, 0),
-                   f_cov::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   fm_returns::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
-                   fm_mu::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
-                   fm_cov::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
-                   bl_mu::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
-                   bl_cov::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
-                   blfm_mu::AbstractVector{<:Real}                   = Vector{Float64}(undef, 0),
-                   blfm_cov::AbstractMatrix{<:Real}                  = Matrix{Float64}(undef, 0, 0),
-                   cov_l::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   cov_u::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
-                   cov_mu::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
-                   cov_sigma::AbstractMatrix{<:Real}                 = Matrix{Float64}(undef, 0, 0),
-                   d_mu::AbstractVector{<:Real}                      = Vector{Float64}(undef, 0),
-                   k_mu::Real                                        = Inf,
-                   k_sigma::Real                                     = Inf,
-                   optimal::AbstractDict                             = Dict(),
-                   z::AbstractDict                                   = Dict(),
-                   limits::AbstractDict                              = Dict(),
-                   frontier::AbstractDict                            = Dict(),
-                   solvers::Union{<:AbstractDict, NamedTuple}        = Dict(),
-                   opt_params::Union{<:AbstractDict, NamedTuple}     = Dict(),
-                   fail::AbstractDict                                = Dict(),
-                   model::JuMP.Model                                 = JuMP.Model(),
-                   latest_prices::AbstractVector{<:Real}             = Vector{Float64}(undef, 0),
-                   alloc_optimal::AbstractDict                       = Dict(),
-                   alloc_solvers::Union{<:AbstractDict, NamedTuple}  = Dict(),
-                   alloc_params::Union{<:AbstractDict, NamedTuple}   = Dict(),
-                   alloc_fail::AbstractDict                          = Dict(),
-                   alloc_model::JuMP.Model                           = JuMP.Model())
+Portfolio(; prices::TimeArray                                 = TimeArray(TimeType[], []),
+          returns::DataFrame                                = DataFrame(),
+          ret::AbstractMatrix{<:Real}                       = Matrix{Float64}(undef, 0, 0),
+          timestamps::AbstractVector                        = Vector{Date}(undef, 0),
+          assets::AbstractVector                            = Vector{String}(undef, 0),
+          short::Bool                                       = false,
+          short_u::Real                                     = 0.2,
+          long_u::Real                                      = 1.0,
+          num_assets_l::Integer                             = 0,
+          num_assets_u::Integer                             = 0,
+          num_assets_u_scale::Real                          = 100_000.0,
+          f_prices::TimeArray                               = TimeArray(TimeType[], []),
+          f_returns::DataFrame                              = DataFrame(),
+          f_ret::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
+          f_timestamps::AbstractVector                      = Vector{Date}(undef, 0),
+          f_assets::AbstractVector                          = Vector{String}(undef, 0),
+          loadings::DataFrame                               = DataFrame(),
+          loadings_opt::Union{LoadingsOpt, Nothing}         = nothing,
+          msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
+          lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
+          alpha_i::Real                                     = 0.0001,
+          alpha::Real                                       = 0.05,
+          a_sim::Integer                                    = 100,
+          beta_i::Real                                      = alpha_i,
+          beta::Real                                        = alpha,
+          b_sim::Integer                                    = a_sim,
+          kappa::Real                                       = 0.3,
+          max_num_assets_kurt::Integer                      = 0,
+          max_num_assets_kurt_scale::Integer                = 2,
+          skew_factor::Real                                 = Inf,
+          sskew_factor::Real                                = Inf,
+          rebalance::Union{Real, AbstractVector{<:Real}}    = Inf,
+          rebalance_weights::AbstractVector{<:Real}         = Vector{Float64}(undef, 0),
+          turnover::Union{Real, AbstractVector{<:Real}}     = Inf,
+          turnover_weights::AbstractVector{<:Real}          = Vector{Float64}(undef, 0),
+          kind_tracking_err::Symbol                         = :None,
+          tracking_err::Real                                = Inf,
+          tracking_err_returns::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
+          tracking_err_weights::AbstractVector{<:Real}      = Vector{Float64}(undef, 0),
+          bl_bench_weights::AbstractVector{<:Real}          = Vector{Float64}(undef, 0),
+          a_mtx_ineq::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
+          b_vec_ineq::AbstractVector{<:Real}                = Vector{Float64}(undef, 0),
+          risk_budget::AbstractVector{<:Real}               = Vector{Float64}(undef, 0),
+          f_risk_budget::AbstractVector{<:Real}             = Vector{Float64}(undef, 0),
+          network_method::Symbol                            = :None,
+          network_sdp::AbstractMatrix{<:Real}               = Matrix{Float64}(undef, 0, 0),
+          network_penalty::Real                             = 0.05,
+          network_ip::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
+          network_ip_scale::Real                            = 100_000.0,
+          a_vec_cent::AbstractVector{<:Real}                = Vector{Float64}(undef, 0),
+          b_cent::Real                                      = Inf,
+          mu_l::Real                                        = Inf,
+          sd_u::Real                                        = Inf,
+          mad_u::Real                                       = Inf,
+          ssd_u::Real                                       = Inf,
+          cvar_u::Real                                      = Inf,
+          rcvar_u::Real                                     = Inf,
+          evar_u::Real                                      = Inf,
+          rvar_u::Real                                      = Inf,
+          wr_u::Real                                        = Inf,
+          rg_u::Real                                        = Inf,
+          flpm_u::Real                                      = Inf,
+          slpm_u::Real                                      = Inf,
+          mdd_u::Real                                       = Inf,
+          add_u::Real                                       = Inf,
+          cdar_u::Real                                      = Inf,
+          uci_u::Real                                       = Inf,
+          edar_u::Real                                      = Inf,
+          rdar_u::Real                                      = Inf,
+          kurt_u::Real                                      = Inf,
+          skurt_u::Real                                     = Inf,
+          gmd_u::Real                                       = Inf,
+          tg_u::Real                                        = Inf,
+          rtg_u::Real                                       = Inf,
+          owa_u::Real                                       = Inf,
+          dvar_u::Real                                      = Inf,
+          skew_u::Real                                      = Inf,
+          sskew_u::Real                                     = Inf,
+          owa_p::AbstractVector{<:Real}                     = Float64[2, 3, 4, 10, 50],
+          owa_w::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
+          mu::AbstractVector                                = Vector{Float64}(undef, 0),
+          cov::AbstractMatrix{<:Real}                       = Matrix{Float64}(undef, 0, 0),
+          kurt::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
+          skurt::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
+          skew::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
+          sskew::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
+          f_mu::AbstractVector{<:Real}                      = Vector{Float64}(undef, 0),
+          f_cov::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
+          fm_returns::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
+          fm_mu::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
+          fm_cov::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
+          bl_mu::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
+          bl_cov::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
+          blfm_mu::AbstractVector{<:Real}                   = Vector{Float64}(undef, 0),
+          blfm_cov::AbstractMatrix{<:Real}                  = Matrix{Float64}(undef, 0, 0),
+          cov_l::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
+          cov_u::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
+          cov_mu::AbstractMatrix{<:Real}                    = Matrix{Float64}(undef, 0, 0),
+          cov_sigma::AbstractMatrix{<:Real}                 = Matrix{Float64}(undef, 0, 0),
+          d_mu::AbstractVector{<:Real}                      = Vector{Float64}(undef, 0),
+          k_mu::Real                                        = Inf,
+          k_sigma::Real                                     = Inf,
+          optimal::AbstractDict                             = Dict(),
+          z::AbstractDict                                   = Dict(),
+          limits::AbstractDict                              = Dict(),
+          frontier::AbstractDict                            = Dict(),
+          solvers::Union{<:AbstractDict, NamedTuple}        = Dict(),
+          opt_params::Union{<:AbstractDict, NamedTuple}     = Dict(),
+          fail::AbstractDict                                = Dict(),
+          model::JuMP.Model                                 = JuMP.Model(),
+          latest_prices::AbstractVector{<:Real}             = Vector{Float64}(undef, 0),
+          alloc_optimal::AbstractDict                       = Dict(),
+          alloc_solvers::Union{<:AbstractDict, NamedTuple}  = Dict(),
+          alloc_params::Union{<:AbstractDict, NamedTuple}   = Dict(),
+          alloc_fail::AbstractDict                          = Dict(),
+          alloc_model::JuMP.Model                           = JuMP.Model())
 ```
 
 Performs data validation and creates an instance of [`Portfolio`](@ref). Union datatypes remain union datatypes in the instance.
@@ -710,6 +734,8 @@ Performs data validation and creates an instance of [`Portfolio`](@ref). Union d
   - `kappa`: sets `kappa`.
   - `max_num_assets_kurt`: sets `max_num_assets_kurt`.
   - `max_num_assets_kurt_scale`: sets `max_num_assets_kurt_scale`.
+  - `skew_factor`: sets `skew_factor`.
+  - `sskew_factor` sets `sskew_factor`.
   - `rebalance`: sets `rebalance`.
   - `rebalance_weights`: sets `rebalance_weights`.
   - `turnover`: sets `turnover`.
@@ -754,12 +780,17 @@ Performs data validation and creates an instance of [`Portfolio`](@ref). Union d
   - `tg_u`: sets `tg_u`.
   - `rtg_u`: sets `rtg_u`.
   - `owa_u`: sets `owa_u`.
+  - `dvar_u`: sets `dvar_u`.
+  - `skew_u`: sets `skew_u`.
+  - `sskew_u`: sets `sskew_u`.
   - `owa_p`: sets `owa_p`.
   - `owa_w`: sets `owa_w`.
   - `mu`: sets `mu`.
   - `cov`: sets `cov`.
   - `kurt`: sets `kurt`.
   - `skurt`: sets `skurt`.
+  - `skew`: sets `skew`.
+  - `sskew`: sets `sskew`.
   - `f_mu`: sets `f_mu`.
   - `f_cov`: sets `f_cov`.
   - `fm_returns`: sets `fm_returns`.
@@ -825,6 +856,8 @@ function Portfolio(;
                    kappa::Real                                       = 0.3,
                    max_num_assets_kurt::Integer                      = 0,
                    max_num_assets_kurt_scale::Integer                = 2,
+                   skew_factor::Real                                 = Inf,
+                   sskew_factor::Real                                = Inf,
                    rebalance::Union{Real, AbstractVector{<:Real}}    = Inf,
                    rebalance_weights::AbstractVector{<:Real}         = Vector{Float64}(undef, 0),
                    turnover::Union{Real, AbstractVector{<:Real}}     = Inf,
@@ -869,12 +902,17 @@ function Portfolio(;
                    tg_u::Real                                        = Inf,
                    rtg_u::Real                                       = Inf,
                    owa_u::Real                                       = Inf,
+                   dvar_u::Real                                      = Inf,
+                   skew_u::Real                                      = Inf,
+                   sskew_u::Real                                     = Inf,
                    owa_p::AbstractVector{<:Real}                     = Float64[2, 3, 4, 10, 50],
                    owa_w::AbstractVector{<:Real}                     = Vector{Float64}(undef, 0),
                    mu::AbstractVector                                = Vector{Float64}(undef, 0),
                    cov::AbstractMatrix{<:Real}                       = Matrix{Float64}(undef, 0, 0),
                    kurt::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
                    skurt::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
+                   skew::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
+                   sskew::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
                    f_mu::AbstractVector{<:Real}                      = Vector{Float64}(undef, 0),
                    f_cov::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
                    fm_returns::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
@@ -1018,6 +1056,14 @@ function Portfolio(;
     if !isempty(skurt)
         @smart_assert(size(skurt, 1) == size(skurt, 2) == size(returns, 2)^2)
     end
+    if !isempty(skew)
+        @smart_assert(size(skew, 1) == size(returns, 2) &&
+                      size(skew, 2) == size(returns, 2)^2)
+    end
+    if !isempty(sskew)
+        @smart_assert(size(sskew, 1) == size(returns, 2) &&
+                      size(sskew, 2) == size(returns, 2)^2)
+    end
     if !isempty(f_mu)
         @smart_assert(length(f_mu) == size(f_returns, 2))
     end
@@ -1072,28 +1118,30 @@ function Portfolio(;
                      Union{<:Real, AbstractVector{<:Real}}, typeof(alpha_i), typeof(alpha),
                      typeof(a_sim), typeof(beta_i), typeof(beta), typeof(b_sim),
                      typeof(kappa), typeof(max_num_assets_kurt),
-                     typeof(max_num_assets_kurt_scale),
-                     Union{<:Real, AbstractVector{<:Real}}, typeof(rebalance_weights),
-                     Union{<:Real, AbstractVector{<:Real}}, typeof(turnover_weights),
-                     typeof(kind_tracking_err), typeof(tracking_err),
-                     typeof(tracking_err_returns), typeof(tracking_err_weights),
-                     typeof(bl_bench_weights), typeof(a_mtx_ineq), typeof(b_vec_ineq),
-                     typeof(risk_budget), typeof(f_risk_budget), typeof(network_method),
-                     typeof(network_sdp), typeof(network_penalty), typeof(network_ip),
-                     typeof(network_ip_scale), typeof(a_vec_cent), typeof(b_cent),
-                     typeof(mu_l), typeof(sd_u), typeof(mad_u), typeof(ssd_u),
-                     typeof(cvar_u), typeof(rcvar_u), typeof(evar_u), typeof(rvar_u),
-                     typeof(wr_u), typeof(rg_u), typeof(flpm_u), typeof(slpm_u),
-                     typeof(mdd_u), typeof(add_u), typeof(cdar_u), typeof(uci_u),
-                     typeof(edar_u), typeof(rdar_u), typeof(kurt_u), typeof(skurt_u),
-                     typeof(gmd_u), typeof(tg_u), typeof(rtg_u), typeof(owa_u),
-                     typeof(owa_p), typeof(owa_w), typeof(mu), typeof(cov), typeof(kurt),
-                     typeof(skurt), typeof(L_2), typeof(S_2), typeof(f_mu), typeof(f_cov),
-                     typeof(fm_returns), typeof(fm_mu), typeof(fm_cov), typeof(bl_mu),
-                     typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov), typeof(cov_l),
-                     typeof(cov_u), typeof(cov_mu), typeof(cov_sigma), typeof(d_mu),
-                     typeof(k_mu), typeof(k_sigma), typeof(optimal), typeof(z),
-                     typeof(limits), typeof(frontier), Union{<:AbstractDict, NamedTuple},
+                     typeof(max_num_assets_kurt_scale), typeof(skew_factor),
+                     typeof(sskew_factor), Union{<:Real, AbstractVector{<:Real}},
+                     typeof(rebalance_weights), Union{<:Real, AbstractVector{<:Real}},
+                     typeof(turnover_weights), typeof(kind_tracking_err),
+                     typeof(tracking_err), typeof(tracking_err_returns),
+                     typeof(tracking_err_weights), typeof(bl_bench_weights),
+                     typeof(a_mtx_ineq), typeof(b_vec_ineq), typeof(risk_budget),
+                     typeof(f_risk_budget), typeof(network_method), typeof(network_sdp),
+                     typeof(network_penalty), typeof(network_ip), typeof(network_ip_scale),
+                     typeof(a_vec_cent), typeof(b_cent), typeof(mu_l), typeof(sd_u),
+                     typeof(mad_u), typeof(ssd_u), typeof(cvar_u), typeof(rcvar_u),
+                     typeof(evar_u), typeof(rvar_u), typeof(wr_u), typeof(rg_u),
+                     typeof(flpm_u), typeof(slpm_u), typeof(mdd_u), typeof(add_u),
+                     typeof(cdar_u), typeof(uci_u), typeof(edar_u), typeof(rdar_u),
+                     typeof(kurt_u), typeof(skurt_u), typeof(gmd_u), typeof(tg_u),
+                     typeof(rtg_u), typeof(owa_u), typeof(dvar_u), typeof(skew_u),
+                     typeof(sskew_u), typeof(owa_p), typeof(owa_w), typeof(mu), typeof(cov),
+                     typeof(kurt), typeof(skurt), typeof(L_2), typeof(S_2), typeof(skew),
+                     typeof(sskew), typeof(f_mu), typeof(f_cov), typeof(fm_returns),
+                     typeof(fm_mu), typeof(fm_cov), typeof(bl_mu), typeof(bl_cov),
+                     typeof(blfm_mu), typeof(blfm_cov), typeof(cov_l), typeof(cov_u),
+                     typeof(cov_mu), typeof(cov_sigma), typeof(d_mu), typeof(k_mu),
+                     typeof(k_sigma), typeof(optimal), typeof(z), typeof(limits),
+                     typeof(frontier), Union{<:AbstractDict, NamedTuple},
                      Union{<:AbstractDict, NamedTuple}, typeof(fail), typeof(model),
                      typeof(latest_prices), typeof(alloc_optimal),
                      Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
@@ -1108,6 +1156,7 @@ function Portfolio(;
                                                               beta, b_sim, kappa,
                                                               max_num_assets_kurt,
                                                               max_num_assets_kurt_scale,
+                                                              skew_factor, sskew_factor,
                                                               rebalance, rebalance_weights,
                                                               turnover, turnover_weights,
                                                               kind_tracking_err,
@@ -1126,18 +1175,19 @@ function Portfolio(;
                                                               add_u, cdar_u, uci_u, edar_u,
                                                               rdar_u, kurt_u, skurt_u,
                                                               gmd_u, tg_u, rtg_u, owa_u,
+                                                              dvar_u, skew_u, sskew_u,
                                                               owa_p, owa_w, mu, cov, kurt,
-                                                              skurt, L_2, S_2, f_mu, f_cov,
-                                                              fm_returns, fm_mu, fm_cov,
-                                                              bl_mu, bl_cov, blfm_mu,
-                                                              blfm_cov, cov_l, cov_u,
-                                                              cov_mu, cov_sigma, d_mu, k_mu,
-                                                              k_sigma, optimal, z, limits,
-                                                              frontier, solvers, opt_params,
-                                                              fail, model, latest_prices,
-                                                              alloc_optimal, alloc_solvers,
-                                                              alloc_params, alloc_fail,
-                                                              alloc_model)
+                                                              skurt, L_2, S_2, skew, sskew,
+                                                              f_mu, f_cov, fm_returns,
+                                                              fm_mu, fm_cov, bl_mu, bl_cov,
+                                                              blfm_mu, blfm_cov, cov_l,
+                                                              cov_u, cov_mu, cov_sigma,
+                                                              d_mu, k_mu, k_sigma, optimal,
+                                                              z, limits, frontier, solvers,
+                                                              opt_params, fail, model,
+                                                              latest_prices, alloc_optimal,
+                                                              alloc_solvers, alloc_params,
+                                                              alloc_fail, alloc_model)
 end
 
 function Base.getproperty(obj::Portfolio, sym::Symbol)
@@ -1295,6 +1345,12 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2)^2)
         end
         val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym ∈ (:skew, :sskew)
+        if !isempty(val)
+            @smart_assert(size(val, 1) == size(obj.returns, 2) &&
+                          size(val, 2) == size(obj.returns, 2)^2)
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns)
         throw(ArgumentError("$sym is related to other fields and therefore cannot be manually changed without compromising correctness, please create a new instance of Portfolio instead"))
     elseif sym ∈ (:mu, :fm_mu, :bl_mu, :blfm_mu, :d_mu, :latest_prices)
@@ -1327,6 +1383,7 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.alpha), typeof(obj.a_sim), typeof(obj.beta_i),
                      typeof(obj.beta), typeof(obj.b_sim), typeof(obj.kappa),
                      typeof(obj.max_num_assets_kurt), typeof(obj.max_num_assets_kurt_scale),
+                     typeof(obj.skew_factor), typeof(obj.sskew_factor),
                      Union{<:Real, AbstractVector{<:Real}}, typeof(obj.rebalance_weights),
                      Union{<:Real, AbstractVector{<:Real}}, typeof(obj.turnover_weights),
                      typeof(obj.kind_tracking_err), typeof(obj.tracking_err),
@@ -1344,134 +1401,108 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.add_u), typeof(obj.cdar_u), typeof(obj.uci_u),
                      typeof(obj.edar_u), typeof(obj.rdar_u), typeof(obj.kurt_u),
                      typeof(obj.skurt_u), typeof(obj.gmd_u), typeof(obj.tg_u),
-                     typeof(obj.rtg_u), typeof(obj.owa_u), typeof(obj.owa_p),
+                     typeof(obj.rtg_u), typeof(obj.owa_u), typeof(obj.dvar_u),
+                     typeof(obj.skew_u), typeof(obj.sskew_u), typeof(obj.owa_p),
                      typeof(obj.owa_w), typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt),
-                     typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2), typeof(obj.f_mu),
-                     typeof(obj.f_cov), typeof(obj.fm_returns), typeof(obj.fm_mu),
-                     typeof(obj.fm_cov), typeof(obj.bl_mu), typeof(obj.bl_cov),
-                     typeof(obj.blfm_mu), typeof(obj.blfm_cov), typeof(obj.cov_l),
-                     typeof(obj.cov_u), typeof(obj.cov_mu), typeof(obj.cov_sigma),
-                     typeof(obj.d_mu), typeof(obj.k_mu), typeof(obj.k_sigma),
-                     typeof(obj.optimal), typeof(obj.z), typeof(obj.limits),
-                     typeof(obj.frontier), Union{<:AbstractDict, NamedTuple},
-                     Union{<:AbstractDict, NamedTuple}, typeof(obj.fail), typeof(obj.model),
-                     typeof(obj.latest_prices), typeof(obj.alloc_optimal),
+                     typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2), typeof(obj.skew),
+                     typeof(obj.sskew), typeof(obj.f_mu), typeof(obj.f_cov),
+                     typeof(obj.fm_returns), typeof(obj.fm_mu), typeof(obj.fm_cov),
+                     typeof(obj.bl_mu), typeof(obj.bl_cov), typeof(obj.blfm_mu),
+                     typeof(obj.blfm_cov), typeof(obj.cov_l), typeof(obj.cov_u),
+                     typeof(obj.cov_mu), typeof(obj.cov_sigma), typeof(obj.d_mu),
+                     typeof(obj.k_mu), typeof(obj.k_sigma), typeof(obj.optimal),
+                     typeof(obj.z), typeof(obj.limits), typeof(obj.frontier),
                      Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                     typeof(obj.alloc_fail), typeof(obj.alloc_model)}(deepcopy(obj.assets),
-                                                                      deepcopy(obj.timestamps),
-                                                                      deepcopy(obj.returns),
-                                                                      deepcopy(obj.short),
-                                                                      deepcopy(obj.short_u),
-                                                                      deepcopy(obj.long_u),
-                                                                      deepcopy(obj.num_assets_l),
-                                                                      deepcopy(obj.num_assets_u),
-                                                                      deepcopy(obj.num_assets_u_scale),
-                                                                      deepcopy(obj.f_assets),
-                                                                      deepcopy(obj.f_timestamps),
-                                                                      deepcopy(obj.f_returns),
-                                                                      deepcopy(obj.loadings),
-                                                                      deepcopy(obj.loadings_opt),
-                                                                      deepcopy(obj.msv_target),
-                                                                      deepcopy(obj.lpm_target),
-                                                                      deepcopy(obj.alpha_i),
-                                                                      deepcopy(obj.alpha),
-                                                                      deepcopy(obj.a_sim),
-                                                                      deepcopy(obj.beta_i),
-                                                                      deepcopy(obj.beta),
-                                                                      deepcopy(obj.b_sim),
-                                                                      deepcopy(obj.kappa),
-                                                                      deepcopy(obj.max_num_assets_kurt),
-                                                                      deepcopy(obj.max_num_assets_kurt_scale),
-                                                                      deepcopy(obj.rebalance),
-                                                                      deepcopy(obj.rebalance_weights),
-                                                                      deepcopy(obj.turnover),
-                                                                      deepcopy(obj.turnover_weights),
-                                                                      deepcopy(obj.kind_tracking_err),
-                                                                      deepcopy(obj.tracking_err),
-                                                                      deepcopy(obj.tracking_err_returns),
-                                                                      deepcopy(obj.tracking_err_weights),
-                                                                      deepcopy(obj.bl_bench_weights),
-                                                                      deepcopy(obj.a_mtx_ineq),
-                                                                      deepcopy(obj.b_vec_ineq),
-                                                                      deepcopy(obj.risk_budget),
-                                                                      deepcopy(obj.f_risk_budget),
-                                                                      deepcopy(obj.network_method),
-                                                                      deepcopy(obj.network_sdp),
-                                                                      deepcopy(obj.network_penalty),
-                                                                      deepcopy(obj.network_ip),
-                                                                      deepcopy(obj.network_ip_scale),
-                                                                      deepcopy(obj.a_vec_cent),
-                                                                      deepcopy(obj.b_cent),
-                                                                      deepcopy(obj.mu_l),
-                                                                      deepcopy(obj.sd_u),
-                                                                      deepcopy(obj.mad_u),
-                                                                      deepcopy(obj.ssd_u),
-                                                                      deepcopy(obj.cvar_u),
-                                                                      deepcopy(obj.rcvar_u),
-                                                                      deepcopy(obj.evar_u),
-                                                                      deepcopy(obj.rvar_u),
-                                                                      deepcopy(obj.wr_u),
-                                                                      deepcopy(obj.rg_u),
-                                                                      deepcopy(obj.flpm_u),
-                                                                      deepcopy(obj.slpm_u),
-                                                                      deepcopy(obj.mdd_u),
-                                                                      deepcopy(obj.add_u),
-                                                                      deepcopy(obj.cdar_u),
-                                                                      deepcopy(obj.uci_u),
-                                                                      deepcopy(obj.edar_u),
-                                                                      deepcopy(obj.rdar_u),
-                                                                      deepcopy(obj.kurt_u),
-                                                                      deepcopy(obj.skurt_u),
-                                                                      deepcopy(obj.gmd_u),
-                                                                      deepcopy(obj.tg_u),
-                                                                      deepcopy(obj.rtg_u),
-                                                                      deepcopy(obj.owa_u),
-                                                                      deepcopy(obj.owa_p),
-                                                                      deepcopy(obj.owa_w),
-                                                                      deepcopy(obj.mu),
-                                                                      deepcopy(obj.cov),
-                                                                      deepcopy(obj.kurt),
-                                                                      deepcopy(obj.skurt),
-                                                                      deepcopy(obj.L_2),
-                                                                      deepcopy(obj.S_2),
-                                                                      deepcopy(obj.f_mu),
-                                                                      deepcopy(obj.f_cov),
-                                                                      deepcopy(obj.fm_returns),
-                                                                      deepcopy(obj.fm_mu),
-                                                                      deepcopy(obj.fm_cov),
-                                                                      deepcopy(obj.bl_mu),
-                                                                      deepcopy(obj.bl_cov),
-                                                                      deepcopy(obj.blfm_mu),
-                                                                      deepcopy(obj.blfm_cov),
-                                                                      deepcopy(obj.cov_l),
-                                                                      deepcopy(obj.cov_u),
-                                                                      deepcopy(obj.cov_mu),
-                                                                      deepcopy(obj.cov_sigma),
-                                                                      deepcopy(obj.d_mu),
-                                                                      deepcopy(obj.k_mu),
-                                                                      deepcopy(obj.k_sigma),
-                                                                      deepcopy(obj.optimal),
-                                                                      deepcopy(obj.z),
-                                                                      deepcopy(obj.limits),
-                                                                      deepcopy(obj.frontier),
-                                                                      deepcopy(obj.solvers),
-                                                                      deepcopy(obj.opt_params),
-                                                                      deepcopy(obj.fail),
-                                                                      copy(obj.model),
-                                                                      deepcopy(obj.latest_prices),
-                                                                      deepcopy(obj.alloc_optimal),
-                                                                      deepcopy(obj.alloc_solvers),
-                                                                      deepcopy(obj.alloc_params),
-                                                                      deepcopy(obj.alloc_fail),
-                                                                      copy(obj.alloc_model))
+                     typeof(obj.fail), typeof(obj.model), typeof(obj.latest_prices),
+                     typeof(obj.alloc_optimal), Union{<:AbstractDict, NamedTuple},
+                     Union{<:AbstractDict, NamedTuple}, typeof(obj.alloc_fail),
+                     typeof(obj.alloc_model)}(deepcopy(obj.assets),
+                                              deepcopy(obj.timestamps),
+                                              deepcopy(obj.returns), deepcopy(obj.short),
+                                              deepcopy(obj.short_u), deepcopy(obj.long_u),
+                                              deepcopy(obj.num_assets_l),
+                                              deepcopy(obj.num_assets_u),
+                                              deepcopy(obj.num_assets_u_scale),
+                                              deepcopy(obj.f_assets),
+                                              deepcopy(obj.f_timestamps),
+                                              deepcopy(obj.f_returns),
+                                              deepcopy(obj.loadings),
+                                              deepcopy(obj.loadings_opt),
+                                              deepcopy(obj.msv_target),
+                                              deepcopy(obj.lpm_target),
+                                              deepcopy(obj.alpha_i), deepcopy(obj.alpha),
+                                              deepcopy(obj.a_sim), deepcopy(obj.beta_i),
+                                              deepcopy(obj.beta), deepcopy(obj.b_sim),
+                                              deepcopy(obj.kappa),
+                                              deepcopy(obj.max_num_assets_kurt),
+                                              deepcopy(obj.max_num_assets_kurt_scale),
+                                              deepcopy(obj.skew_factor),
+                                              deepcopy(obj.sskew_factor),
+                                              deepcopy(obj.rebalance),
+                                              deepcopy(obj.rebalance_weights),
+                                              deepcopy(obj.turnover),
+                                              deepcopy(obj.turnover_weights),
+                                              deepcopy(obj.kind_tracking_err),
+                                              deepcopy(obj.tracking_err),
+                                              deepcopy(obj.tracking_err_returns),
+                                              deepcopy(obj.tracking_err_weights),
+                                              deepcopy(obj.bl_bench_weights),
+                                              deepcopy(obj.a_mtx_ineq),
+                                              deepcopy(obj.b_vec_ineq),
+                                              deepcopy(obj.risk_budget),
+                                              deepcopy(obj.f_risk_budget),
+                                              deepcopy(obj.network_method),
+                                              deepcopy(obj.network_sdp),
+                                              deepcopy(obj.network_penalty),
+                                              deepcopy(obj.network_ip),
+                                              deepcopy(obj.network_ip_scale),
+                                              deepcopy(obj.a_vec_cent),
+                                              deepcopy(obj.b_cent), deepcopy(obj.mu_l),
+                                              deepcopy(obj.sd_u), deepcopy(obj.mad_u),
+                                              deepcopy(obj.ssd_u), deepcopy(obj.cvar_u),
+                                              deepcopy(obj.rcvar_u), deepcopy(obj.evar_u),
+                                              deepcopy(obj.rvar_u), deepcopy(obj.wr_u),
+                                              deepcopy(obj.rg_u), deepcopy(obj.flpm_u),
+                                              deepcopy(obj.slpm_u), deepcopy(obj.mdd_u),
+                                              deepcopy(obj.add_u), deepcopy(obj.cdar_u),
+                                              deepcopy(obj.uci_u), deepcopy(obj.edar_u),
+                                              deepcopy(obj.rdar_u), deepcopy(obj.kurt_u),
+                                              deepcopy(obj.skurt_u), deepcopy(obj.gmd_u),
+                                              deepcopy(obj.tg_u), deepcopy(obj.rtg_u),
+                                              deepcopy(obj.owa_u), deepcopy(obj.dvar_u),
+                                              deepcopy(obj.skew_u), deepcopy(obj.sskew_u),
+                                              deepcopy(obj.owa_p), deepcopy(obj.owa_w),
+                                              deepcopy(obj.mu), deepcopy(obj.cov),
+                                              deepcopy(obj.kurt), deepcopy(obj.skurt),
+                                              deepcopy(obj.L_2), deepcopy(obj.S_2),
+                                              deepcopy(obj.skew), deepcopy(obj.sskew),
+                                              deepcopy(obj.f_mu), deepcopy(obj.f_cov),
+                                              deepcopy(obj.fm_returns), deepcopy(obj.fm_mu),
+                                              deepcopy(obj.fm_cov), deepcopy(obj.bl_mu),
+                                              deepcopy(obj.bl_cov), deepcopy(obj.blfm_mu),
+                                              deepcopy(obj.blfm_cov), deepcopy(obj.cov_l),
+                                              deepcopy(obj.cov_u), deepcopy(obj.cov_mu),
+                                              deepcopy(obj.cov_sigma), deepcopy(obj.d_mu),
+                                              deepcopy(obj.k_mu), deepcopy(obj.k_sigma),
+                                              deepcopy(obj.optimal), deepcopy(obj.z),
+                                              deepcopy(obj.limits), deepcopy(obj.frontier),
+                                              deepcopy(obj.solvers),
+                                              deepcopy(obj.opt_params), deepcopy(obj.fail),
+                                              copy(obj.model), deepcopy(obj.latest_prices),
+                                              deepcopy(obj.alloc_optimal),
+                                              deepcopy(obj.alloc_solvers),
+                                              deepcopy(obj.alloc_params),
+                                              deepcopy(obj.alloc_fail),
+                                              copy(obj.alloc_model))
 end
 
 """
 ```
-mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnaks, owap,
-                           wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tbin, wmi, wma, ttco,
-                           tco, tdist, tcl, tk, topt, tsolv, toptpar, tf, tlp, taopt,
-                           tasolv, taoptpar, taf, tamod} <: AbstractPortfolio
+mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnaks, skewf,
+                           sskewf, owap, wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew,
+                           tsskew, tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv,
+                           toptpar, tf, tlp, taopt, tasolv, taoptpar, taf, tamod} <:
+               AbstractPortfolio
     assets::ast
     timestamps::dat
     returns::r
@@ -1485,6 +1516,8 @@ mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnak
     alpha_tail::ata
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
+    skew_factor::skewf
+    sskew_factor::sskewf
     owa_p::owap
     owa_w::wowa
     mu::tmu
@@ -1493,6 +1526,8 @@ mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnak
     skurt::tskurt
     L_2::tl2
     S_2::ts2
+    skew::tskew
+    sskew::tsskew
     bins_info::tbin
     w_min::wmi
     w_max::wma
@@ -1561,6 +1596,8 @@ Some of these require external information from the arguments of functions that 
           * `iszero(max_num_assets_kurt)`: use the full kurtosis model.
           * `!iszero(max_num_assets_kurt)`: if the number of assets surpases this value, use the relaxed kurtosis model.
   - `max_num_assets_kurt_scale`: the relaxed kurtosis model uses the largest `max_num_assets_kurt_scale * max_num_assets_kurt` eigenvalues to approximate the kurtosis matrix, `max_num_assets_kurt_scale ∈ [1, Na]`, where `Na` is the number of assets.
+  - `skew_factor`: factor for adding the multiple of the negative quadratic skewness to the risk function.
+  - `sskew_factor`: factor for adding the multiple of the negative quadratic semi skewness to the risk function.
 
 ##. OWA parameters
 
@@ -1631,10 +1668,11 @@ Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
   - `alloc_fail`: collection capable of storing key value pairs for storing failed optimisation attempts.
   - `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation.
 """
-mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnaks, owap,
-                           wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tbin, wmi, wma, ttco,
-                           tco, tdist, tcl, tk, topt, tsolv, toptpar, tf, tlp, taopt,
-                           tasolv, taoptpar, taf, tamod} <: AbstractPortfolio
+mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnaks, skewf,
+                           sskewf, owap, wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew,
+                           tsskew, tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv,
+                           toptpar, tf, tlp, taopt, tasolv, taoptpar, taf, tamod} <:
+               AbstractPortfolio
     assets::ast
     timestamps::dat
     returns::r
@@ -1648,6 +1686,8 @@ mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnak
     alpha_tail::ata
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
+    skew_factor::skewf
+    sskew_factor::sskewf
     owa_p::owap
     owa_w::wowa
     mu::tmu
@@ -1656,6 +1696,8 @@ mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnak
     skurt::tskurt
     L_2::tl2
     S_2::ts2
+    skew::tskew
+    sskew::tsskew
     bins_info::tbin
     w_min::wmi
     w_max::wma
@@ -1679,41 +1721,40 @@ end
 """
 ```
 HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
-                     returns::DataFrame = DataFrame(),
-                     ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-                     timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
-                     assets::AbstractVector = Vector{String}(undef, 0),
-                     alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
-                     beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
-                     kappa::Real = 0.3, alpha_tail::Real = 0.05,
-                     max_num_assets_kurt::Integer = 0,
-                     max_num_assets_kurt_scale::Integer = 2,
-                     owa_p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50],
-                     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                     mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                     cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-                     kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-                     skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-                     bins_info::Union{Symbol, <:Integer} = :KN,
-                     w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
-                     w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
-                     cor_method::Symbol = :Pearson,
-                     cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-                     dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-                     clusters::Clustering.Hclust = Hclust{Float64}(Matrix{Int64}(undef, 0,
-                                                                                 2),
-                                                                   Float64[], Int64[],
-                                                                   :nothing),
-                     k::Integer = 0, optimal::AbstractDict = Dict(),
-                     solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
-                     opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),
-                     fail::AbstractDict = Dict(),
-                     latest_prices::AbstractVector = Vector{Float64}(undef, 0),
-                     alloc_optimal::AbstractDict = Dict(),
-                     alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
-                     alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),
-                     alloc_fail::AbstractDict = Dict(),
-                     alloc_model::JuMP.Model = JuMP.Model())
+            returns::DataFrame = DataFrame(),
+            ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
+            assets::AbstractVector = Vector{String}(undef, 0), alpha_i::Real = 0.0001,
+            alpha::Real = 0.05, a_sim::Integer = 100, beta_i::Real = alpha_i,
+            beta::Real = alpha, b_sim::Integer = a_sim, kappa::Real = 0.3,
+            alpha_tail::Real = 0.05, max_num_assets_kurt::Integer = 0,
+            max_num_assets_kurt_scale::Integer = 2, skew_factor::Real = Inf,
+            sskew_factor::Real = Inf,
+            owa_p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50],
+            owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            skew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            bins_info::Union{Symbol, <:Integer} = :KN,
+            w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
+            w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
+            cor_method::Symbol = :Pearson,
+            cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            clusters::Clustering.Hclust = Hclust{Float64}(Matrix{Int64}(undef, 0, 2),
+                                                          Float64[], Int64[], :nothing),
+            k::Integer = 0, optimal::AbstractDict = Dict(),
+            solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
+            opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),
+            fail::AbstractDict = Dict(),
+            latest_prices::AbstractVector = Vector{Float64}(undef, 0),
+            alloc_optimal::AbstractDict = Dict(),
+            alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
+            alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),
+            alloc_fail::AbstractDict = Dict(), alloc_model::JuMP.Model = JuMP.Model())
 ```
 
 Performs data validation and creates an instance of [`HCPortfolio`](@ref). Union datatypes remain union datatypes in the instance.
@@ -1740,14 +1781,16 @@ Performs data validation and creates an instance of [`HCPortfolio`](@ref). Union
   - `alpha_tail`: sets `alpha_tail`.
   - `max_num_assets_kurt`: sets `max_num_assets_kurt`.
   - `max_num_assets_kurt_scale`: sets `max_num_assets_kurt_scale`.
+  - `skew_factor`: sets `skew_factor`.
+  - `sskew_factor`: sets `sskew_factor`.
   - `owa_p`: sets `owa_p`.
   - `owa_w`: sets `owa_w`.
   - `mu`: sets `mu`.
   - `cov`: sets `cov`.
   - `kurt`: sets `kurt`.
   - `skurt`: sets `skurt`.
-  - `L_2`: sets `L_2`.
-  - `S_2`: sets `S_2`.
+  - `skew`: sets `skew`.
+  - `sskew`: sets `sskew`.
   - `bins_info`: sets `bins_info`.
   - `w_min`: sets `w_min`.
   - `w_max`: sets `w_max`.
@@ -1780,13 +1823,16 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                      beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                      kappa::Real = 0.3, alpha_tail::Real = 0.05,
                      max_num_assets_kurt::Integer = 0,
-                     max_num_assets_kurt_scale::Integer = 2,
+                     max_num_assets_kurt_scale::Integer = 2, skew_factor::Real = Inf,
+                     sskew_factor::Real = Inf,
                      owa_p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50],
                      owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                      mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                      cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                     skew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                     sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      bins_info::Union{Symbol, <:Integer} = :KN,
                      w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
                      w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
@@ -1844,6 +1890,14 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     if !isempty(skurt)
         @smart_assert(size(skurt, 1) == size(skurt, 2) == size(returns, 2)^2)
     end
+    if !isempty(skew)
+        @smart_assert(size(skew, 1) == size(returns, 2) &&
+                      size(skew, 2) == size(returns, 2)^2)
+    end
+    if !isempty(sskew)
+        @smart_assert(size(sskew, 1) == size(returns, 2) &&
+                      size(sskew, 2) == size(returns, 2)^2)
+    end
     @smart_assert(bins_info ∈ BinMethods ||
                   (isa(bins_info, Int) && bins_info > zero(bins_info)))
     if isa(w_min, Real)
@@ -1879,9 +1933,10 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                        typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
                        typeof(b_sim), typeof(kappa), typeof(alpha_tail),
                        typeof(max_num_assets_kurt), typeof(max_num_assets_kurt_scale),
-                       typeof(owa_p), typeof(owa_w), typeof(mu), typeof(cov), typeof(kurt),
-                       typeof(skurt), typeof(L_2), typeof(S_2), Union{Symbol, <:Integer},
-                       Union{<:Real, AbstractVector{<:Real}},
+                       typeof(skew_factor), typeof(sskew_factor), typeof(owa_p),
+                       typeof(owa_w), typeof(mu), typeof(cov), typeof(kurt), typeof(skurt),
+                       typeof(L_2), typeof(S_2), typeof(skew), typeof(sskew),
+                       Union{Symbol, <:Integer}, Union{<:Real, AbstractVector{<:Real}},
                        Union{<:Real, AbstractVector{<:Real}}, typeof(cor_method),
                        typeof(cor), typeof(dist), typeof(clusters), typeof(k),
                        typeof(optimal), Union{<:AbstractDict, NamedTuple},
@@ -1894,12 +1949,13 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                                                                 alpha_tail,
                                                                 max_num_assets_kurt,
                                                                 max_num_assets_kurt_scale,
+                                                                skew_factor, sskew_factor,
                                                                 owa_p, owa_w, mu, cov, kurt,
-                                                                skurt, L_2, S_2, bins_info,
-                                                                w_min, w_max, cor_method,
-                                                                cor, dist, clusters, k,
-                                                                optimal, solvers,
-                                                                opt_params, fail,
+                                                                skurt, L_2, S_2, skew,
+                                                                sskew, bins_info, w_min,
+                                                                w_max, cor_method, cor,
+                                                                dist, clusters, k, optimal,
+                                                                solvers, opt_params, fail,
                                                                 latest_prices,
                                                                 alloc_optimal,
                                                                 alloc_solvers, alloc_params,
@@ -1984,6 +2040,12 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2)^2)
         end
         val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym ∈ (:skew, :sskew)
+        if !isempty(val)
+            @smart_assert(size(val, 1) == size(obj.returns, 2) &&
+                          size(val, 2) == size(obj.returns, 2)^2)
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym ∈ (:L_2, :S_2)
         if !isempty(val)
             N = size(obj.returns, 2)
@@ -2010,10 +2072,12 @@ function Base.deepcopy(obj::HCPortfolio)
                        typeof(obj.beta_i), typeof(obj.beta), typeof(obj.b_sim),
                        typeof(obj.kappa), typeof(obj.alpha_tail),
                        typeof(obj.max_num_assets_kurt),
-                       typeof(obj.max_num_assets_kurt_scale), typeof(obj.owa_p),
-                       typeof(obj.owa_w), typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt),
-                       typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2),
-                       Union{Symbol, <:Integer}, Union{<:Real, AbstractVector{<:Real}},
+                       typeof(obj.max_num_assets_kurt_scale), typeof(obj.skew_factor),
+                       typeof(obj.sskew_factor), typeof(obj.owa_p), typeof(obj.owa_w),
+                       typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt), typeof(obj.skurt),
+                       typeof(obj.L_2), typeof(obj.S_2), typeof(obj.skew),
+                       typeof(obj.sskew), Union{Symbol, <:Integer},
+                       Union{<:Real, AbstractVector{<:Real}},
                        Union{<:Real, AbstractVector{<:Real}}, typeof(obj.cor_method),
                        typeof(obj.cor), typeof(obj.dist), typeof(obj.clusters),
                        typeof(obj.k), typeof(obj.optimal),
@@ -2031,10 +2095,13 @@ function Base.deepcopy(obj::HCPortfolio)
                                                 deepcopy(obj.alpha_tail),
                                                 deepcopy(obj.max_num_assets_kurt),
                                                 deepcopy(obj.max_num_assets_kurt_scale),
+                                                deepcopy(obj.skew_factor),
+                                                deepcopy(obj.sskew_factor),
                                                 deepcopy(obj.owa_p), deepcopy(obj.owa_w),
                                                 deepcopy(obj.mu), deepcopy(obj.cov),
                                                 deepcopy(obj.kurt), deepcopy(obj.skurt),
                                                 deepcopy(obj.L_2), deepcopy(obj.S_2),
+                                                deepcopy(obj.skew), deepcopy(obj.sskew),
                                                 deepcopy(obj.bins_info),
                                                 deepcopy(obj.w_min), deepcopy(obj.w_max),
                                                 deepcopy(obj.cor_method), deepcopy(obj.cor),

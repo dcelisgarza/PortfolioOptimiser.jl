@@ -11,12 +11,15 @@ X1 = copy(X)
 X2 = copy(X)
 je = PortfolioOptimiser.JLoGo(; flag = true)
 posdef = PortfolioOptimiser.PosdefNearest()
-@allocated PortfolioOptimiser.jlogo!(je, posdef, X1)
+display(@allocated PortfolioOptimiser.jlogo!(je, posdef, X1))
 
 opt = CovOpt(; jlogo = JlogoOpt(; flag = true))
-@allocated PortfolioOptimiser._denoise_logo_mtx(0, 0, X2, opt, :cov, true)
+display(@allocated c = PortfolioOptimiser._denoise_logo_mtx(0, 0, X2, opt, :cov, true))
 
-isapprox(X1, c2)
+@test isapprox(X1, c)
+@test isapprox(X1, X2)
+
+isapprox(X, X1)
 
 me = PortfolioOptimiser.MeanBOP(; target = PortfolioOptimiser.TargetSE(), sigma = X)
 mu1 = mean(me, ret)
@@ -54,22 +57,48 @@ prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestam
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-portfolio = HCPortfolio(; prices = prices_assets,
-                        solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                :params => Dict("verbose" => false
-                                                                                #   "max_step_fraction" => 0.75
-                                                                                #   "max_iter" => 400,
-                                                                                #   "max_iter"=>150,
-                                                                                #   "tol_gap_abs" => 1e-8,
-                                                                                #   "tol_gap_rel" => 1e-8,
-                                                                                #   "tol_feas" => 1e-8,
-                                                                                #   "tol_ktratio" => 1e-8,
-                                                                                #   "equilibrate_max_iter" => 30,
-                                                                                #   "reduced_tol_gap_abs" => 1e-6,
-                                                                                #   "reduced_tol_gap_rel" => 1e-5,
-                                                                                #   "reduced_tol_feas" => 1e-6,
-                                                                                #   "reduced_tol_ktratio" => 1e-6
-                                                                                ))))
+portfolio = Portfolio(; prices = prices_assets,
+                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                              :params => Dict("verbose" => true
+                                                                              #   "max_step_fraction" => 0.65,
+                                                                              #   #   "max_iter" => 400,
+                                                                              #   #   "max_iter"=>150,
+                                                                              #   "tol_gap_abs" => 1e-8,
+                                                                              #   "tol_gap_rel" => 1e-8,
+                                                                              #   "tol_feas" => 1e-8,
+                                                                              #   "tol_ktratio" => 1e-8,
+                                                                              #   "equilibrate_max_iter" => 30,
+                                                                              #   "reduced_tol_gap_abs" => 1e-8,
+                                                                              #   "reduced_tol_gap_rel" => 1e-8,
+                                                                              #   "reduced_tol_feas" => 1e-8,
+                                                                              #   "reduced_tol_ktratio" => 1e-8
+
+                                                                              ))))
+@time asset_statistics!(portfolio; calc_kurt = false)
+
+w1 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Min_Risk))
+w2 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Min_Risk, sd_cone = false))
+w2 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Min_Risk))
+w3 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Min_Risk))
+
+w3 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Sharpe))
+w4 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Sharpe))
+
+r1 = dot(portfolio.mu, w1.weights) / dvar1
+dot(portfolio.mu, w2.weights) / dvar1
+
+w2 = optimise!(portfolio, OptimiseOpt(; rm = :DVar, obj = :Sharpe))
+dvar2 = DVar(portfolio.returns * w2.weights)
+r2 = dot(portfolio.mu, w2.weights) / dvar2
+
+w3 = optimise!(portfolio, OptimiseOpt(; rm = :DVar, obj = :Sharpe))
+dvar3 = DVar(portfolio.returns * w3.weights)
+r3 = dot(portfolio.mu, w3.weights) / dvar3
+
+w4 = optimise!(portfolio, OptimiseOpt(; rm = :DVar, obj = :Sharpe))
+dvar4 = DVar(portfolio.returns * w4.weights)
+r4 = dot(portfolio.mu, w4.weights) / dvar4
+
 asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = AugClampDist())),
                   calc_kurt = false)
 w1 = optimise!(portfolio; type = :NCO, cluster_opt = ClusterOpt(; linkage = :single))
