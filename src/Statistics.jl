@@ -1406,7 +1406,7 @@ _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
 ```
 """
 function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
-                           opt::Union{CovOpt, CorOpt, KurtOpt, BLOpt},
+                           opt::Union{CovOpt, CorOpt, KurtOpt, SkewOpt, BLOpt},
                            mtx_name::Symbol = :cov, cov_flag = true)
     @smart_assert(mtx_name ∈ DenoiseLoGoNames)
 
@@ -1421,6 +1421,12 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
         msg2 = ""
     elseif mtx_name == :skurt
         msg = "Semi Kurtosis "
+        msg2 = ""
+    elseif mtx_name == :skew
+        msg = "Skewness "
+        msg2 = ""
+    elseif mtx_name == :sskew
+        msg = "Semi Skewness "
         msg2 = ""
     elseif mtx_name == :bl_cov
         msg = "Black-Litterman Covariance "
@@ -1596,6 +1602,26 @@ function cokurt_mtx(returns::AbstractMatrix, mu::AbstractVector, opt::KurtOpt = 
     missing, L_2, S_2 = dup_elim_sum_matrices(N)
 
     return kurt, skurt, L_2, S_2
+end
+
+function coskew_mtx(returns::AbstractMatrix, mu::AbstractVector, opt::SkewOpt = SkewOpt(;))
+    custom_skew = opt.estimation.custom_skew
+    T, N = size(returns)
+    if isnothing(custom_skew)
+        skew = coskew(returns, transpose(mu))
+    else
+        skew = custom_skew
+    end
+
+    target_ret = opt.estimation.target_ret
+    custom_sskew = opt.estimation.custom_sskew
+    if isnothing(custom_sskew)
+        sskew = scoskew(returns, transpose(mu), target_ret)
+    else
+        sskew = custom_sskew
+    end
+
+    return skew, sskew
 end
 
 """
@@ -1952,7 +1978,7 @@ function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
                            calc_mu::Bool = true, calc_kurt::Bool = true, calc_skew = true,
                            calc_cor::Bool = true, cov_opt::CovOpt = CovOpt(;),
                            mu_opt::MuOpt = MuOpt(;), kurt_opt::KurtOpt = KurtOpt(;),
-                           cor_opt::CorOpt = CorOpt(;))
+                           skew_opt::SkewOpt = SkewOpt(;), cor_opt::CorOpt = CorOpt(;))
     returns = portfolio.returns
 
     sigma = nothing
@@ -1996,8 +2022,7 @@ function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
     end
 
     if calc_skew
-        portfolio.skew = coskew(returns, transpose(portfolio.mu))
-        portfolio.sskew = scoskew(returns, transpose(portfolio.mu))
+        portfolio.skew, portfolio.sskew = coskew_mtx(returns, mu, skew_opt)
     end
 
     # Type specific

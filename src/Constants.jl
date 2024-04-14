@@ -1108,4 +1108,5 @@ DenoiseLoGoNames = (:cov, :cor, :kurt, :skurt, :bl_cov, :a_bl_cov, :af_bl_cov)
 
 Symbol for deciding the custom part of the warning when a matrix could not be made positive definite; and/or the error message when the original matrix was singular when trying to compute the J-LoGo covariance.
 """
-const DenoiseLoGoNames = (:cov, :cor, :kurt, :skurt, :bl_cov, :a_bl_cov, :af_bl_cov)
+const DenoiseLoGoNames = (:cov, :cor, :kurt, :skurt, :skew, :sskew, :bl_cov, :a_bl_cov,
+                          :af_bl_cov)

@@ -705,7 +705,7 @@ function _skew_setup(portfolio, rm, N, obj, type, sd_cone)
             k = i * N
             vals, vecs = eigen(skew[:, j:k])
             vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
-            V .+= real(vecs * Diagonal(vals) * vecs)
+            V .-= real(vecs * Diagonal(vals) * transpose(vecs))
         end
 
         if sd_cone
@@ -749,7 +749,7 @@ function _skew_setup(portfolio, rm, N, obj, type, sd_cone)
         k = i * N
         vals, vecs = eigen(sskew[:, j:k])
         vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
-        V .+= real(vecs * Diagonal(vals) * vecs)
+        V .-= real(vecs * Diagonal(vals) * transpose(vecs))
     end
 
     if sd_cone

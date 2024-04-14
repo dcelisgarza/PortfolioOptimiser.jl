@@ -1,6 +1,7 @@
 using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, PortfolioOptimiser,
       LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix, StatsBase,
-      AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes, BenchmarkTools
+      AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes, BenchmarkTools,
+      COSMO
 
 ret = randn(100, 200)
 T, N = size(ret)
@@ -57,10 +58,10 @@ prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestam
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-portfolio = Portfolio(; prices = prices_assets,
+portfolio = Portfolio(; prices = prices_assets[(end - 200):end],
                       solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                               :params => Dict("verbose" => true
-                                                                              #   "max_step_fraction" => 0.65,
+                                                                              # "max_step_fraction" => 0.65,
                                                                               #   #   "max_iter" => 400,
                                                                               #   #   "max_iter"=>150,
                                                                               #   "tol_gap_abs" => 1e-8,
@@ -78,8 +79,9 @@ portfolio = Portfolio(; prices = prices_assets,
 
 w1 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Min_Risk))
 w2 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Min_Risk, sd_cone = false))
-w2 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Min_Risk))
-w3 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Min_Risk))
+
+w3 = optimise!(portfolio, OptimiseOpt(; rm = :SSkew, obj = :Min_Risk))
+w4 = optimise!(portfolio, OptimiseOpt(; rm = :SSkew, obj = :Min_Risk, sd_cone = false))
 
 w3 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Sharpe))
 w4 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Sharpe))
