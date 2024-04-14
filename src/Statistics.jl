@@ -1612,6 +1612,14 @@ function coskew_mtx(returns::AbstractMatrix, mu::AbstractVector, opt::SkewOpt = 
     else
         skew = custom_skew
     end
+    V = zeros(eltype(skew), N, N)
+    for i ∈ 1:N
+        j = (i - 1) * N + 1
+        k = i * N
+        vals, vecs = eigen(skew[:, j:k])
+        vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+        V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+    end
 
     target_ret = opt.estimation.target_ret
     custom_sskew = opt.estimation.custom_sskew
@@ -1620,8 +1628,16 @@ function coskew_mtx(returns::AbstractMatrix, mu::AbstractVector, opt::SkewOpt = 
     else
         sskew = custom_sskew
     end
+    SV = zeros(eltype(sskew), N, N)
+    for i ∈ 1:N
+        j = (i - 1) * N + 1
+        k = i * N
+        vals, vecs = eigen(sskew[:, j:k])
+        vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+        SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+    end
 
-    return skew, sskew
+    return skew, V, sskew, SV
 end
 
 """
@@ -2022,7 +2038,8 @@ function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
     end
 
     if calc_skew
-        portfolio.skew, portfolio.sskew = coskew_mtx(returns, mu, skew_opt)
+        portfolio.skew, portfolio.V, portfolio.sskew, portfolio.SV = coskew_mtx(returns, mu,
+                                                                                skew_opt)
     end
 
     # Type specific

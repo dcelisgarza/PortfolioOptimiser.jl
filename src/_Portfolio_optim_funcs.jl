@@ -698,20 +698,21 @@ function _skew_setup(portfolio, rm, N, obj, type, sd_cone)
     model = portfolio.model
 
     if rm == :Skew || isfinite(skew_u) || isfinite(skew_factor)
-        skew = portfolio.skew
-        V = zeros(eltype(skew), N, N)
-        for i ∈ 1:N
-            j = (i - 1) * N + 1
-            k = i * N
-            vals, vecs = eigen(skew[:, j:k])
-            vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
-            V .-= real(vecs * Diagonal(vals) * transpose(vecs))
-        end
+        # skew = portfolio.skew
+        # V = zeros(eltype(skew), N, N)
+        # for i ∈ 1:N
+        #     j = (i - 1) * N + 1
+        #     k = i * N
+        #     vals, vecs = eigen(skew[:, j:k])
+        #     vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+        #     V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+        # end
+        V = portfolio.V
 
         if sd_cone
-            V .= real(sqrt(V))
+            G = real(sqrt(V))
             @variable(model, t_skew)
-            @constraint(model, [t_skew; V * model[:w]] ∈ SecondOrderCone())
+            @constraint(model, [t_skew; G * model[:w]] ∈ SecondOrderCone())
             @expression(model, skew_risk, t_skew^2)
         else
             @expression(model, skew_risk, dot(model[:w], V, model[:w]))
@@ -742,23 +743,24 @@ function _skew_setup(portfolio, rm, N, obj, type, sd_cone)
         return nothing
     end
 
-    sskew = portfolio.sskew
-    V = zeros(eltype(sskew), N, N)
-    for i ∈ 1:N
-        j = (i - 1) * N + 1
-        k = i * N
-        vals, vecs = eigen(sskew[:, j:k])
-        vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
-        V .-= real(vecs * Diagonal(vals) * transpose(vecs))
-    end
+    # sskew = portfolio.sskew
+    # SV = zeros(eltype(sskew), N, N)
+    # for i ∈ 1:N
+    #     j = (i - 1) * N + 1
+    #     k = i * N
+    #     vals, vecs = eigen(sskew[:, j:k])
+    #     vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+    #     SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+    # end
+    SV = portfolio.SV
 
     if sd_cone
-        V .= real(sqrt(V))
+        G = real(sqrt(SV))
         @variable(model, t_sskew)
-        @constraint(model, [t_sskew; V * model[:w]] ∈ SecondOrderCone())
+        @constraint(model, [t_sskew; G * model[:w]] ∈ SecondOrderCone())
         @expression(model, sskew_risk, t_sskew^2)
     else
-        @expression(model, sskew_risk, dot(model[:w], V, model[:w]))
+        @expression(model, sskew_risk, dot(model[:w], SV, model[:w]))
     end
 
     if isfinite(sskew_u) && type == :Trad

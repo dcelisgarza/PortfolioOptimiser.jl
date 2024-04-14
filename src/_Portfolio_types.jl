@@ -15,7 +15,7 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
                          nsdp, np, ni, nis, amc, bvc, ler, ud, umad, usd, ucvar, urcvar,
                          uevar, urvar, uwr, ur, uflpm, uslpm, umd, uad, ucdar, uuci, uedar,
                          urdar, uk, usk, ugmd, utg, urtg, uowa, udvar, uskew, usskew, owap,
-                         wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tsskew, tmuf,
+                         wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv, tmuf,
                          tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf, tcovl,
                          tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz, tlim, tfront,
                          tsolv, tf, toptpar, tmod, tlp, taopt, tasolv, taoptpar, taf,
@@ -103,7 +103,9 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     L_2::tl2
     S_2::ts2
     skew::tskew
+    V::tv
     sskew::tsskew
+    SV::tsv
     f_mu::tmuf
     f_cov::tcovf
     fm_returns::trfm
@@ -451,11 +453,11 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
                          nsdp, np, ni, nis, amc, bvc, ler, ud, umad, usd, ucvar, urcvar,
                          uevar, urvar, uwr, ur, uflpm, uslpm, umd, uad, ucdar, uuci, uedar,
                          urdar, uk, usk, ugmd, utg, urtg, uowa, udvar, uskew, usskew, owap,
-                         wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tsskew, tmuf,
-                         tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf, tcovl,
-                         tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz, tlim, tfront,
-                         tsolv, tf, toptpar, tmod, tlp, taopt, tasolv, taoptpar, taf,
-                         tamod} <: AbstractPortfolio
+                         wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
+                         tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf,
+                         tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz, tlim,
+                         tfront, tsolv, tf, toptpar, tmod, tlp, taopt, tasolv, taoptpar,
+                         taf, tamod} <: AbstractPortfolio
     assets::ast
     timestamps::dat
     returns::r
@@ -539,7 +541,9 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     L_2::tl2
     S_2::ts2
     skew::tskew
+    V::tv
     sskew::tsskew
+    SV::tsv
     f_mu::tmuf
     f_cov::tcovf
     fm_returns::trfm
@@ -1109,6 +1113,8 @@ function Portfolio(;
 
     L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
+    V = Matrix{eltype(returns)}(undef, 0, 0)
+    SV = Matrix{eltype(returns)}(undef, 0, 0)
 
     return Portfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(short),
                      typeof(short_u), typeof(long_u), typeof(num_assets_l),
@@ -1136,12 +1142,12 @@ function Portfolio(;
                      typeof(rtg_u), typeof(owa_u), typeof(dvar_u), typeof(skew_u),
                      typeof(sskew_u), typeof(owa_p), typeof(owa_w), typeof(mu), typeof(cov),
                      typeof(kurt), typeof(skurt), typeof(L_2), typeof(S_2), typeof(skew),
-                     typeof(sskew), typeof(f_mu), typeof(f_cov), typeof(fm_returns),
-                     typeof(fm_mu), typeof(fm_cov), typeof(bl_mu), typeof(bl_cov),
-                     typeof(blfm_mu), typeof(blfm_cov), typeof(cov_l), typeof(cov_u),
-                     typeof(cov_mu), typeof(cov_sigma), typeof(d_mu), typeof(k_mu),
-                     typeof(k_sigma), typeof(optimal), typeof(z), typeof(limits),
-                     typeof(frontier), Union{<:AbstractDict, NamedTuple},
+                     typeof(V), typeof(sskew), typeof(SV), typeof(f_mu), typeof(f_cov),
+                     typeof(fm_returns), typeof(fm_mu), typeof(fm_cov), typeof(bl_mu),
+                     typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov), typeof(cov_l),
+                     typeof(cov_u), typeof(cov_mu), typeof(cov_sigma), typeof(d_mu),
+                     typeof(k_mu), typeof(k_sigma), typeof(optimal), typeof(z),
+                     typeof(limits), typeof(frontier), Union{<:AbstractDict, NamedTuple},
                      Union{<:AbstractDict, NamedTuple}, typeof(fail), typeof(model),
                      typeof(latest_prices), typeof(alloc_optimal),
                      Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
@@ -1177,17 +1183,18 @@ function Portfolio(;
                                                               gmd_u, tg_u, rtg_u, owa_u,
                                                               dvar_u, skew_u, sskew_u,
                                                               owa_p, owa_w, mu, cov, kurt,
-                                                              skurt, L_2, S_2, skew, sskew,
-                                                              f_mu, f_cov, fm_returns,
-                                                              fm_mu, fm_cov, bl_mu, bl_cov,
-                                                              blfm_mu, blfm_cov, cov_l,
-                                                              cov_u, cov_mu, cov_sigma,
-                                                              d_mu, k_mu, k_sigma, optimal,
-                                                              z, limits, frontier, solvers,
-                                                              opt_params, fail, model,
-                                                              latest_prices, alloc_optimal,
-                                                              alloc_solvers, alloc_params,
-                                                              alloc_fail, alloc_model)
+                                                              skurt, L_2, S_2, skew, V,
+                                                              sskew, SV, f_mu, f_cov,
+                                                              fm_returns, fm_mu, fm_cov,
+                                                              bl_mu, bl_cov, blfm_mu,
+                                                              blfm_cov, cov_l, cov_u,
+                                                              cov_mu, cov_sigma, d_mu, k_mu,
+                                                              k_sigma, optimal, z, limits,
+                                                              frontier, solvers, opt_params,
+                                                              fail, model, latest_prices,
+                                                              alloc_optimal, alloc_solvers,
+                                                              alloc_params, alloc_fail,
+                                                              alloc_model)
 end
 
 function Base.getproperty(obj::Portfolio, sym::Symbol)
@@ -1358,7 +1365,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             @smart_assert(length(val) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (:cov, :fm_cov, :bl_cov, :blfm_cov, :cov_l, :cov_u, :cov_mu)
+    elseif sym ∈ (:cov, :fm_cov, :bl_cov, :blfm_cov, :cov_l, :cov_u, :cov_mu, :V, :SV)
         if !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2))
         end
@@ -1405,103 +1412,141 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.skew_u), typeof(obj.sskew_u), typeof(obj.owa_p),
                      typeof(obj.owa_w), typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt),
                      typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2), typeof(obj.skew),
-                     typeof(obj.sskew), typeof(obj.f_mu), typeof(obj.f_cov),
-                     typeof(obj.fm_returns), typeof(obj.fm_mu), typeof(obj.fm_cov),
-                     typeof(obj.bl_mu), typeof(obj.bl_cov), typeof(obj.blfm_mu),
-                     typeof(obj.blfm_cov), typeof(obj.cov_l), typeof(obj.cov_u),
-                     typeof(obj.cov_mu), typeof(obj.cov_sigma), typeof(obj.d_mu),
-                     typeof(obj.k_mu), typeof(obj.k_sigma), typeof(obj.optimal),
-                     typeof(obj.z), typeof(obj.limits), typeof(obj.frontier),
+                     typeof(obj.V), typeof(obj.sskew), typeof(obj.SV), typeof(obj.f_mu),
+                     typeof(obj.f_cov), typeof(obj.fm_returns), typeof(obj.fm_mu),
+                     typeof(obj.fm_cov), typeof(obj.bl_mu), typeof(obj.bl_cov),
+                     typeof(obj.blfm_mu), typeof(obj.blfm_cov), typeof(obj.cov_l),
+                     typeof(obj.cov_u), typeof(obj.cov_mu), typeof(obj.cov_sigma),
+                     typeof(obj.d_mu), typeof(obj.k_mu), typeof(obj.k_sigma),
+                     typeof(obj.optimal), typeof(obj.z), typeof(obj.limits),
+                     typeof(obj.frontier), Union{<:AbstractDict, NamedTuple},
+                     Union{<:AbstractDict, NamedTuple}, typeof(obj.fail), typeof(obj.model),
+                     typeof(obj.latest_prices), typeof(obj.alloc_optimal),
                      Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                     typeof(obj.fail), typeof(obj.model), typeof(obj.latest_prices),
-                     typeof(obj.alloc_optimal), Union{<:AbstractDict, NamedTuple},
-                     Union{<:AbstractDict, NamedTuple}, typeof(obj.alloc_fail),
-                     typeof(obj.alloc_model)}(deepcopy(obj.assets),
-                                              deepcopy(obj.timestamps),
-                                              deepcopy(obj.returns), deepcopy(obj.short),
-                                              deepcopy(obj.short_u), deepcopy(obj.long_u),
-                                              deepcopy(obj.num_assets_l),
-                                              deepcopy(obj.num_assets_u),
-                                              deepcopy(obj.num_assets_u_scale),
-                                              deepcopy(obj.f_assets),
-                                              deepcopy(obj.f_timestamps),
-                                              deepcopy(obj.f_returns),
-                                              deepcopy(obj.loadings),
-                                              deepcopy(obj.loadings_opt),
-                                              deepcopy(obj.msv_target),
-                                              deepcopy(obj.lpm_target),
-                                              deepcopy(obj.alpha_i), deepcopy(obj.alpha),
-                                              deepcopy(obj.a_sim), deepcopy(obj.beta_i),
-                                              deepcopy(obj.beta), deepcopy(obj.b_sim),
-                                              deepcopy(obj.kappa),
-                                              deepcopy(obj.max_num_assets_kurt),
-                                              deepcopy(obj.max_num_assets_kurt_scale),
-                                              deepcopy(obj.skew_factor),
-                                              deepcopy(obj.sskew_factor),
-                                              deepcopy(obj.rebalance),
-                                              deepcopy(obj.rebalance_weights),
-                                              deepcopy(obj.turnover),
-                                              deepcopy(obj.turnover_weights),
-                                              deepcopy(obj.kind_tracking_err),
-                                              deepcopy(obj.tracking_err),
-                                              deepcopy(obj.tracking_err_returns),
-                                              deepcopy(obj.tracking_err_weights),
-                                              deepcopy(obj.bl_bench_weights),
-                                              deepcopy(obj.a_mtx_ineq),
-                                              deepcopy(obj.b_vec_ineq),
-                                              deepcopy(obj.risk_budget),
-                                              deepcopy(obj.f_risk_budget),
-                                              deepcopy(obj.network_method),
-                                              deepcopy(obj.network_sdp),
-                                              deepcopy(obj.network_penalty),
-                                              deepcopy(obj.network_ip),
-                                              deepcopy(obj.network_ip_scale),
-                                              deepcopy(obj.a_vec_cent),
-                                              deepcopy(obj.b_cent), deepcopy(obj.mu_l),
-                                              deepcopy(obj.sd_u), deepcopy(obj.mad_u),
-                                              deepcopy(obj.ssd_u), deepcopy(obj.cvar_u),
-                                              deepcopy(obj.rcvar_u), deepcopy(obj.evar_u),
-                                              deepcopy(obj.rvar_u), deepcopy(obj.wr_u),
-                                              deepcopy(obj.rg_u), deepcopy(obj.flpm_u),
-                                              deepcopy(obj.slpm_u), deepcopy(obj.mdd_u),
-                                              deepcopy(obj.add_u), deepcopy(obj.cdar_u),
-                                              deepcopy(obj.uci_u), deepcopy(obj.edar_u),
-                                              deepcopy(obj.rdar_u), deepcopy(obj.kurt_u),
-                                              deepcopy(obj.skurt_u), deepcopy(obj.gmd_u),
-                                              deepcopy(obj.tg_u), deepcopy(obj.rtg_u),
-                                              deepcopy(obj.owa_u), deepcopy(obj.dvar_u),
-                                              deepcopy(obj.skew_u), deepcopy(obj.sskew_u),
-                                              deepcopy(obj.owa_p), deepcopy(obj.owa_w),
-                                              deepcopy(obj.mu), deepcopy(obj.cov),
-                                              deepcopy(obj.kurt), deepcopy(obj.skurt),
-                                              deepcopy(obj.L_2), deepcopy(obj.S_2),
-                                              deepcopy(obj.skew), deepcopy(obj.sskew),
-                                              deepcopy(obj.f_mu), deepcopy(obj.f_cov),
-                                              deepcopy(obj.fm_returns), deepcopy(obj.fm_mu),
-                                              deepcopy(obj.fm_cov), deepcopy(obj.bl_mu),
-                                              deepcopy(obj.bl_cov), deepcopy(obj.blfm_mu),
-                                              deepcopy(obj.blfm_cov), deepcopy(obj.cov_l),
-                                              deepcopy(obj.cov_u), deepcopy(obj.cov_mu),
-                                              deepcopy(obj.cov_sigma), deepcopy(obj.d_mu),
-                                              deepcopy(obj.k_mu), deepcopy(obj.k_sigma),
-                                              deepcopy(obj.optimal), deepcopy(obj.z),
-                                              deepcopy(obj.limits), deepcopy(obj.frontier),
-                                              deepcopy(obj.solvers),
-                                              deepcopy(obj.opt_params), deepcopy(obj.fail),
-                                              copy(obj.model), deepcopy(obj.latest_prices),
-                                              deepcopy(obj.alloc_optimal),
-                                              deepcopy(obj.alloc_solvers),
-                                              deepcopy(obj.alloc_params),
-                                              deepcopy(obj.alloc_fail),
-                                              copy(obj.alloc_model))
+                     typeof(obj.alloc_fail), typeof(obj.alloc_model)}(deepcopy(obj.assets),
+                                                                      deepcopy(obj.timestamps),
+                                                                      deepcopy(obj.returns),
+                                                                      deepcopy(obj.short),
+                                                                      deepcopy(obj.short_u),
+                                                                      deepcopy(obj.long_u),
+                                                                      deepcopy(obj.num_assets_l),
+                                                                      deepcopy(obj.num_assets_u),
+                                                                      deepcopy(obj.num_assets_u_scale),
+                                                                      deepcopy(obj.f_assets),
+                                                                      deepcopy(obj.f_timestamps),
+                                                                      deepcopy(obj.f_returns),
+                                                                      deepcopy(obj.loadings),
+                                                                      deepcopy(obj.loadings_opt),
+                                                                      deepcopy(obj.msv_target),
+                                                                      deepcopy(obj.lpm_target),
+                                                                      deepcopy(obj.alpha_i),
+                                                                      deepcopy(obj.alpha),
+                                                                      deepcopy(obj.a_sim),
+                                                                      deepcopy(obj.beta_i),
+                                                                      deepcopy(obj.beta),
+                                                                      deepcopy(obj.b_sim),
+                                                                      deepcopy(obj.kappa),
+                                                                      deepcopy(obj.max_num_assets_kurt),
+                                                                      deepcopy(obj.max_num_assets_kurt_scale),
+                                                                      deepcopy(obj.skew_factor),
+                                                                      deepcopy(obj.sskew_factor),
+                                                                      deepcopy(obj.rebalance),
+                                                                      deepcopy(obj.rebalance_weights),
+                                                                      deepcopy(obj.turnover),
+                                                                      deepcopy(obj.turnover_weights),
+                                                                      deepcopy(obj.kind_tracking_err),
+                                                                      deepcopy(obj.tracking_err),
+                                                                      deepcopy(obj.tracking_err_returns),
+                                                                      deepcopy(obj.tracking_err_weights),
+                                                                      deepcopy(obj.bl_bench_weights),
+                                                                      deepcopy(obj.a_mtx_ineq),
+                                                                      deepcopy(obj.b_vec_ineq),
+                                                                      deepcopy(obj.risk_budget),
+                                                                      deepcopy(obj.f_risk_budget),
+                                                                      deepcopy(obj.network_method),
+                                                                      deepcopy(obj.network_sdp),
+                                                                      deepcopy(obj.network_penalty),
+                                                                      deepcopy(obj.network_ip),
+                                                                      deepcopy(obj.network_ip_scale),
+                                                                      deepcopy(obj.a_vec_cent),
+                                                                      deepcopy(obj.b_cent),
+                                                                      deepcopy(obj.mu_l),
+                                                                      deepcopy(obj.sd_u),
+                                                                      deepcopy(obj.mad_u),
+                                                                      deepcopy(obj.ssd_u),
+                                                                      deepcopy(obj.cvar_u),
+                                                                      deepcopy(obj.rcvar_u),
+                                                                      deepcopy(obj.evar_u),
+                                                                      deepcopy(obj.rvar_u),
+                                                                      deepcopy(obj.wr_u),
+                                                                      deepcopy(obj.rg_u),
+                                                                      deepcopy(obj.flpm_u),
+                                                                      deepcopy(obj.slpm_u),
+                                                                      deepcopy(obj.mdd_u),
+                                                                      deepcopy(obj.add_u),
+                                                                      deepcopy(obj.cdar_u),
+                                                                      deepcopy(obj.uci_u),
+                                                                      deepcopy(obj.edar_u),
+                                                                      deepcopy(obj.rdar_u),
+                                                                      deepcopy(obj.kurt_u),
+                                                                      deepcopy(obj.skurt_u),
+                                                                      deepcopy(obj.gmd_u),
+                                                                      deepcopy(obj.tg_u),
+                                                                      deepcopy(obj.rtg_u),
+                                                                      deepcopy(obj.owa_u),
+                                                                      deepcopy(obj.dvar_u),
+                                                                      deepcopy(obj.skew_u),
+                                                                      deepcopy(obj.sskew_u),
+                                                                      deepcopy(obj.owa_p),
+                                                                      deepcopy(obj.owa_w),
+                                                                      deepcopy(obj.mu),
+                                                                      deepcopy(obj.cov),
+                                                                      deepcopy(obj.kurt),
+                                                                      deepcopy(obj.skurt),
+                                                                      deepcopy(obj.L_2),
+                                                                      deepcopy(obj.S_2),
+                                                                      deepcopy(obj.skew),
+                                                                      deepcopy(obj.V),
+                                                                      deepcopy(obj.sskew),
+                                                                      deepcopy(obj.SV),
+                                                                      deepcopy(obj.f_mu),
+                                                                      deepcopy(obj.f_cov),
+                                                                      deepcopy(obj.fm_returns),
+                                                                      deepcopy(obj.fm_mu),
+                                                                      deepcopy(obj.fm_cov),
+                                                                      deepcopy(obj.bl_mu),
+                                                                      deepcopy(obj.bl_cov),
+                                                                      deepcopy(obj.blfm_mu),
+                                                                      deepcopy(obj.blfm_cov),
+                                                                      deepcopy(obj.cov_l),
+                                                                      deepcopy(obj.cov_u),
+                                                                      deepcopy(obj.cov_mu),
+                                                                      deepcopy(obj.cov_sigma),
+                                                                      deepcopy(obj.d_mu),
+                                                                      deepcopy(obj.k_mu),
+                                                                      deepcopy(obj.k_sigma),
+                                                                      deepcopy(obj.optimal),
+                                                                      deepcopy(obj.z),
+                                                                      deepcopy(obj.limits),
+                                                                      deepcopy(obj.frontier),
+                                                                      deepcopy(obj.solvers),
+                                                                      deepcopy(obj.opt_params),
+                                                                      deepcopy(obj.fail),
+                                                                      copy(obj.model),
+                                                                      deepcopy(obj.latest_prices),
+                                                                      deepcopy(obj.alloc_optimal),
+                                                                      deepcopy(obj.alloc_solvers),
+                                                                      deepcopy(obj.alloc_params),
+                                                                      deepcopy(obj.alloc_fail),
+                                                                      copy(obj.alloc_model))
 end
 
 """
 ```
 mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnaks, skewf,
                            sskewf, owap, wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew,
-                           tsskew, tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv,
-                           toptpar, tf, tlp, taopt, tasolv, taoptpar, taf, tamod} <:
+                           tv, tsskew, tsv,tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt,
+                           tsolv, toptpar, tf, tlp, taopt, tasolv, taoptpar, taf, tamod} <:
                AbstractPortfolio
     assets::ast
     timestamps::dat
@@ -1527,7 +1572,9 @@ mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnak
     L_2::tl2
     S_2::ts2
     skew::tskew
+    V::tv
     sskew::tsskew
+    SV::tsv
     bins_info::tbin
     w_min::wmi
     w_max::wma
@@ -1670,8 +1717,8 @@ Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
 """
 mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnaks, skewf,
                            sskewf, owap, wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew,
-                           tsskew, tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv,
-                           toptpar, tf, tlp, taopt, tasolv, taoptpar, taf, tamod} <:
+                           tv, tsskew, tsv, tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt,
+                           tsolv, toptpar, tf, tlp, taopt, tasolv, taoptpar, taf, tamod} <:
                AbstractPortfolio
     assets::ast
     timestamps::dat
@@ -1697,7 +1744,9 @@ mutable struct HCPortfolio{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnak
     L_2::tl2
     S_2::ts2
     skew::tskew
+    V::tv
     sskew::tsskew
+    SV::tsv
     bins_info::tbin
     w_min::wmi
     w_max::wma
@@ -1928,6 +1977,8 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
 
     L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
+    V = Matrix{eltype(returns)}(undef, 0, 0)
+    SV = Matrix{eltype(returns)}(undef, 0, 0)
 
     return HCPortfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(alpha_i),
                        typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
@@ -1935,8 +1986,9 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                        typeof(max_num_assets_kurt), typeof(max_num_assets_kurt_scale),
                        typeof(skew_factor), typeof(sskew_factor), typeof(owa_p),
                        typeof(owa_w), typeof(mu), typeof(cov), typeof(kurt), typeof(skurt),
-                       typeof(L_2), typeof(S_2), typeof(skew), typeof(sskew),
-                       Union{Symbol, <:Integer}, Union{<:Real, AbstractVector{<:Real}},
+                       typeof(L_2), typeof(S_2), typeof(skew), typeof(V), typeof(sskew),
+                       typeof(SV), Union{Symbol, <:Integer},
+                       Union{<:Real, AbstractVector{<:Real}},
                        Union{<:Real, AbstractVector{<:Real}}, typeof(cor_method),
                        typeof(cor), typeof(dist), typeof(clusters), typeof(k),
                        typeof(optimal), Union{<:AbstractDict, NamedTuple},
@@ -1951,8 +2003,8 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                                                                 max_num_assets_kurt_scale,
                                                                 skew_factor, sskew_factor,
                                                                 owa_p, owa_w, mu, cov, kurt,
-                                                                skurt, L_2, S_2, skew,
-                                                                sskew, bins_info, w_min,
+                                                                skurt, L_2, S_2, skew, V,
+                                                                sskew, SV, bins_info, w_min,
                                                                 w_max, cor_method, cor,
                                                                 dist, clusters, k, optimal,
                                                                 solvers, opt_params, fail,
@@ -2052,7 +2104,7 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             @smart_assert(size(val) == (Int(N * (N + 1) / 2), N^2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (:cov, :cor, :dist)
+    elseif sym ∈ (:cov, :cor, :dist, :V, :SV)
         if !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2))
         end
@@ -2075,8 +2127,8 @@ function Base.deepcopy(obj::HCPortfolio)
                        typeof(obj.max_num_assets_kurt_scale), typeof(obj.skew_factor),
                        typeof(obj.sskew_factor), typeof(obj.owa_p), typeof(obj.owa_w),
                        typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt), typeof(obj.skurt),
-                       typeof(obj.L_2), typeof(obj.S_2), typeof(obj.skew),
-                       typeof(obj.sskew), Union{Symbol, <:Integer},
+                       typeof(obj.L_2), typeof(obj.S_2), typeof(obj.skew), typeof(obj.V),
+                       typeof(obj.sskew), typeof(obj.SV), Union{Symbol, <:Integer},
                        Union{<:Real, AbstractVector{<:Real}},
                        Union{<:Real, AbstractVector{<:Real}}, typeof(obj.cor_method),
                        typeof(obj.cor), typeof(obj.dist), typeof(obj.clusters),
@@ -2101,7 +2153,8 @@ function Base.deepcopy(obj::HCPortfolio)
                                                 deepcopy(obj.mu), deepcopy(obj.cov),
                                                 deepcopy(obj.kurt), deepcopy(obj.skurt),
                                                 deepcopy(obj.L_2), deepcopy(obj.S_2),
-                                                deepcopy(obj.skew), deepcopy(obj.sskew),
+                                                deepcopy(obj.skew), deepcopy(obj.V),
+                                                deepcopy(obj.sskew), deepcopy(obj.SV),
                                                 deepcopy(obj.bins_info),
                                                 deepcopy(obj.w_min), deepcopy(obj.w_max),
                                                 deepcopy(obj.cor_method), deepcopy(obj.cor),
