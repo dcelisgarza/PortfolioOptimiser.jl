@@ -952,7 +952,10 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
                           CDaR_r = "Conditional Uncompounded Drawdown at Risk",
                           UCI_r = "Compounded Ulcer Index",
                           EDaR_r = "Entropic Compounded Drawdown at Risk",
-                          RDaR_r = "Relativistic Compounded Drawdown at Risk")
+                          RDaR_r = "Relativistic Compounded Drawdown at Risk",
+                          DVar = "Distance Variance",
+                          Skew = "Square Root Negative Skewness",
+                          SSkew = "Square Root Negative Semi Skewness")
 
 """
 ```

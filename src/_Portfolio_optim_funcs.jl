@@ -633,12 +633,12 @@ function _risk_setup(portfolio, type, rm, kelly, obj, rf, T, N, mu, returns, sig
     _owa_setup(portfolio, rm, T, returns, obj, type, owa_approx)
     _dvar_setup(portfolio, rm, T, returns, obj, type)
     _skew_setup(portfolio, rm, N, obj, type, sd_cone)
-    _add_skew_to_risk(portfolio)
+    _add_skew_to_risk(portfolio, rm)
 
     return nothing
 end
 
-function _add_skew_to_risk(portfolio)
+function _add_skew_to_risk(portfolio, rm)
     model = portfolio.model
     skew_factor = portfolio.skew_factor
     sskew_factor = portfolio.sskew_factor
@@ -647,12 +647,18 @@ function _add_skew_to_risk(portfolio)
         return nothing
     end
 
-    if isfinite(skew_factor)
-        add_to_expression!(model[:risk], skew_factor, model[:skew_risk])
+    if isfinite(skew_factor) && !iszero(skew_factor) && rm != :Skew
+        @expression(model, tmp, model[:risk] + skew_factor * model[:skew_risk])
+        unregister(model, :risk)
+        @expression(model, risk, tmp)
+        unregister(model, :tmp)
     end
 
-    if isfinite(sskew_factor)
-        add_to_expression!(model[:risk], sskew_factor, model[:sskew_risk])
+    if isfinite(sskew_factor) && !iszero(sskew_factor) && rm != :SSKew
+        @expression(model, tmp, model[:risk] + sskew_factor * model[:sskew_risk])
+        unregister(model, :risk)
+        @expression(model, risk, tmp)
+        unregister(model, :tmp)
     end
 
     return nothing
@@ -697,14 +703,14 @@ function _skew_setup(portfolio, rm, N, obj, type, sd_cone)
 
     model = portfolio.model
 
-    if rm == :Skew || isfinite(skew_u) || isfinite(skew_factor)
+    if rm == :Skew || isfinite(skew_u) || isfinite(skew_factor) && !iszero(skew_factor)
         # skew = portfolio.skew
         # V = zeros(eltype(skew), N, N)
         # for i ∈ 1:N
         #     j = (i - 1) * N + 1
         #     k = i * N
         #     vals, vecs = eigen(skew[:, j:k])
-        #     vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+        #     vals = clamp.(real(vals), -Inf, 0) .+ clamp.(imag(vals), -Inf, 0)im
         #     V .-= real(vecs * Diagonal(vals) * transpose(vecs))
         # end
         V = portfolio.V
@@ -739,7 +745,9 @@ function _skew_setup(portfolio, rm, N, obj, type, sd_cone)
         end
     end
 
-    if !(rm == :SSkew || isfinite(sskew_u) || isfinite(sskew_factor))
+    if !(rm == :SSkew ||
+         isfinite(sskew_u) ||
+         isfinite(sskew_factor) && !iszero(sskew_factor))
         return nothing
     end
 
@@ -749,7 +757,7 @@ function _skew_setup(portfolio, rm, N, obj, type, sd_cone)
     #     j = (i - 1) * N + 1
     #     k = i * N
     #     vals, vecs = eigen(sskew[:, j:k])
-    #     vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+    #     vals = clamp.(real(vals), -Inf, 0) .+ clamp.(imag(vals), -Inf, 0)im
     #     SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
     # end
     SV = portfolio.SV
@@ -807,12 +815,11 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             @constraint(model, [t_kurt; x_kurt] ∈ SecondOrderCone())
             A = block_vec_pq(kurtosis, N, N)
             vals_A, vecs_A = eigen(A)
-            vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
+            vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
             Bi = Vector{Matrix{eltype(kurtosis)}}(undef, N2)
             for i ∈ 1:N2
                 j = i - 1
-                B = reshape(real.(complex(sqrt(vals_A[end - j])) * vecs_A[:, end - j]), N,
-                            N)
+                B = reshape(real(complex(sqrt(vals_A[end - j])) * vecs_A[:, end - j]), N, N)
                 Bi[i] = B
             end
             @constraint(model, [i = 1:N2], x_kurt[i] == tr(Bi[i] * model[:W]))
@@ -854,11 +861,11 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
 
         A = block_vec_pq(skurtosis, N, N)
         vals_A, vecs_A = eigen(A)
-        vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
+        vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
         SBi = Vector{Matrix{eltype(skurtosis)}}(undef, N2)
         for i ∈ 1:N2
             j = i - 1
-            B = reshape(real.(sqrt(complex(vals_A[end - j])) * vecs_A[:, end - j]), N, N)
+            B = reshape(real(sqrt(complex(vals_A[end - j])) * vecs_A[:, end - j]), N, N)
             SBi[i] = B
         end
         @constraint(model, [i = 1:N2], x_skurt[i] == tr(SBi[i] * model[:W]))
@@ -2073,14 +2080,17 @@ function _near_optimal_centering(portfolio, class, mu, returns, sigma, w_opt, T,
     b_sim = portfolio.b_sim
     kappa = portfolio.kappa
     owa_w = portfolio.owa_w
+    V = portfolio.V
+    SV = portfolio.SV
     solvers = portfolio.solvers
 
     risk1, risk2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
-                            beta, a_sim, beta_i, b_sim, owa_w, 0)
+                            beta, a_sim, beta_i, b_sim, owa_w, V, SV, 0)
 
     risk3 = calc_risk(w3, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
                       alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
-                      b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers)
+                      b_sim = b_sim, kappa = kappa, owa_w = owa_w, V = V, SV = SV,
+                      solvers = solvers)
 
     if opt.kelly == :None
         ret1 = dot(mu, w1)
@@ -2298,13 +2308,15 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
     b_sim = portfolio.b_sim
     kappa = portfolio.kappa
     owa_w = portfolio.owa_w
+    V = portfolio.V
+    SV = portfolio.SV
     solvers = portfolio.solvers
 
     rm = opt.rm
     rf = opt.rf
 
     risk1, risk2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
-                            beta, a_sim, beta_i, b_sim, owa_w, 0)
+                            beta, a_sim, beta_i, b_sim, owa_w, V, SV, 0)
 
     mus = range(ret1; stop = ret2, length = points)
     risks = range(risk1; stop = risk2, length = points)
@@ -2345,8 +2357,8 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
         end
         rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
                        alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                       beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                       solvers = solvers)
+                       beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w, V = V,
+                       SV = SV, solvers = solvers)
 
         append!(frontier, w.weights)
         push!(srisk, rk)
@@ -2360,8 +2372,8 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
     if !isempty(w)
         rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
                        alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                       beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                       solvers = solvers)
+                       beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w, V = V,
+                       SV = SV, solvers = solvers)
         append!(frontier, w.weights)
         push!(srisk, rk)
         i += 1

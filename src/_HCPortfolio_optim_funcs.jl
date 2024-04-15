@@ -775,14 +775,15 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                        (; alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
                         a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
                         beta = portfolio.beta, b_sim = portfolio.b_sim,
-                        kappa = portfolio.kappa, owa_w = portfolio.owa_w,
-                        solvers = portfolio.solvers)
+                        kappa = portfolio.kappa, owa_w = portfolio.owa_w, V = portfolio.V,
+                        SV = portfolio.SV, solvers = portfolio.solvers)
                    else
                        (; alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
                         a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
                         beta = portfolio.beta, b_sim = portfolio.b_sim,
                         kappa = portfolio.kappa, owa_p = portfolio.owa_p,
-                        owa_w = portfolio.owa_w, solvers = portfolio.solvers,
+                        owa_w = portfolio.owa_w, V = portfolio.V, SV = portfolio.SV,
+                        solvers = portfolio.solvers,
                         max_num_assets_kurt = portfolio.max_num_assets_kurt)
                    end, portfolio_kwargs_o::NamedTuple = portfolio_kwargs,
                    max_iter::Integer = 100, save_opt_params::Bool = false)

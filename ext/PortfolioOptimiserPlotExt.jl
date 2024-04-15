@@ -88,13 +88,15 @@ function PO.plot_risk_contribution(
                                    di::Real = 1e-6, kappa::Real = 0.3,
                                    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef,
                                                                                    0),
+                                   V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                   SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                                    solvers::Union{<:AbstractDict, Nothing} = nothing,                                # Plot args
                                    percentage::Bool = false, erc_line::Bool = true,
                                    t_factor = 252, kwargs_bar = (;), kwargs_line = (;))
     rc = risk_contribution(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
                            alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
-                           b_sim = b_sim, di = di, kappa = kappa, owa_w = owa_w,
-                           solvers = solvers)
+                           b_sim = b_sim, di = di, kappa = kappa, owa_w = owa_w, V = V,
+                           SV = SV, solvers = solvers)
 
     DDs = (:DaR, :MDD, :ADD, :CDaR, :EDaR, :RDaR, :UCI, :DaR_r, :MDD_r, :ADD_r, :CDaR_r,
            :EDaR_r, :RDaR_r, :UCI_r)
@@ -148,9 +150,11 @@ function PO.plot_risk_contribution(
         else
             erc = calc_risk(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
                             alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
-                            b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers)
+                            b_sim = b_sim, kappa = kappa, owa_w = owa_w, V = V, SV = SV,
+                            solvers = solvers)
 
             erc /= length(rc)
+
             if rm ∉ DDs
                 erc *= sqrt(t_factor)
             end
@@ -180,6 +184,7 @@ function PO.plot_risk_contribution(portfolio; di::Real = 1e-6,
                                      beta_i = portfolio.beta_i, beta = portfolio.beta,
                                      b_sim = portfolio.b_sim, di = di,
                                      kappa = portfolio.kappa, owa_w = owa_w,
+                                     V = portfolio.V, SV = portfolio.SV,
                                      solvers = portfolio.solvers,                                  # Plot args
                                      percentage = percentage, erc_line = erc_line,
                                      t_factor = t_factor, kwargs_bar = kwargs_bar,
