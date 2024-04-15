@@ -663,7 +663,9 @@ Portfolio(; prices::TimeArray                                 = TimeArray(TimeTy
           kurt::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
           skurt::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
           skew::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
+          V::AbstractMatrix{<:Real}                         = Matrix{Float64}(undef, 0, 0),
           sskew::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
+          SV::AbstractMatrix{<:Real}                        = Matrix{Float64}(undef, 0, 0),
           f_mu::AbstractVector{<:Real}                      = Vector{Float64}(undef, 0),
           f_cov::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
           fm_returns::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
@@ -916,7 +918,9 @@ function Portfolio(;
                    kurt::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
                    skurt::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
                    skew::AbstractMatrix{<:Real}                      = Matrix{Float64}(undef, 0, 0),
+                   V::AbstractMatrix{<:Real}                         = Matrix{Float64}(undef, 0, 0),
                    sskew::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
+                   SV::AbstractMatrix{<:Real}                        = Matrix{Float64}(undef, 0, 0),
                    f_mu::AbstractVector{<:Real}                      = Vector{Float64}(undef, 0),
                    f_cov::AbstractMatrix{<:Real}                     = Matrix{Float64}(undef, 0, 0),
                    fm_returns::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
@@ -1064,9 +1068,15 @@ function Portfolio(;
         @smart_assert(size(skew, 1) == size(returns, 2) &&
                       size(skew, 2) == size(returns, 2)^2)
     end
+    if !isempty(V)
+        @smart_assert(size(V, 1) == size(V, 2) == size(returns, 2))
+    end
     if !isempty(sskew)
         @smart_assert(size(sskew, 1) == size(returns, 2) &&
                       size(sskew, 2) == size(returns, 2)^2)
+    end
+    if !isempty(SV)
+        @smart_assert(size(SV, 1) == size(SV, 2) == size(returns, 2))
     end
     if !isempty(f_mu)
         @smart_assert(length(f_mu) == size(f_returns, 2))
@@ -1113,8 +1123,6 @@ function Portfolio(;
 
     L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
-    V = Matrix{eltype(returns)}(undef, 0, 0)
-    SV = Matrix{eltype(returns)}(undef, 0, 0)
 
     return Portfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(short),
                      typeof(short_u), typeof(long_u), typeof(num_assets_l),
@@ -1786,7 +1794,9 @@ HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
             kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
             skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
             skew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            V = Matrix{eltype(returns)}(undef, 0, 0),
             sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            SV = Matrix{eltype(returns)}(undef, 0, 0),
             bins_info::Union{Symbol, <:Integer} = :KN,
             w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
             w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
@@ -1881,7 +1891,9 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                      kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      skew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                     V = Matrix{eltype(returns)}(undef, 0, 0),
                      sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                     SV = Matrix{eltype(returns)}(undef, 0, 0),
                      bins_info::Union{Symbol, <:Integer} = :KN,
                      w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
                      w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
@@ -1943,9 +1955,15 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
         @smart_assert(size(skew, 1) == size(returns, 2) &&
                       size(skew, 2) == size(returns, 2)^2)
     end
+    if !isempty(V)
+        @smart_assert(size(V, 1) == size(V, 2) == size(returns, 2))
+    end
     if !isempty(sskew)
         @smart_assert(size(sskew, 1) == size(returns, 2) &&
                       size(sskew, 2) == size(returns, 2)^2)
+    end
+    if !isempty(SV)
+        @smart_assert(size(SV, 1) == size(SV, 2) == size(returns, 2))
     end
     @smart_assert(bins_info ∈ BinMethods ||
                   (isa(bins_info, Int) && bins_info > zero(bins_info)))
@@ -1977,8 +1995,6 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
 
     L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
-    V = Matrix{eltype(returns)}(undef, 0, 0)
-    SV = Matrix{eltype(returns)}(undef, 0, 0)
 
     return HCPortfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(alpha_i),
                        typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
