@@ -704,15 +704,6 @@ function _skew_setup(portfolio, rm, N, obj, type, sd_cone)
     model = portfolio.model
 
     if rm == :Skew || isfinite(skew_u) || isfinite(skew_factor) && !iszero(skew_factor)
-        # skew = portfolio.skew
-        # V = zeros(eltype(skew), N, N)
-        # for i ∈ 1:N
-        #     j = (i - 1) * N + 1
-        #     k = i * N
-        #     vals, vecs = eigen(skew[:, j:k])
-        #     vals = clamp.(real(vals), -Inf, 0) .+ clamp.(imag(vals), -Inf, 0)im
-        #     V .-= real(vecs * Diagonal(vals) * transpose(vecs))
-        # end
         V = portfolio.V
 
         if sd_cone
@@ -751,15 +742,6 @@ function _skew_setup(portfolio, rm, N, obj, type, sd_cone)
         return nothing
     end
 
-    # sskew = portfolio.sskew
-    # SV = zeros(eltype(sskew), N, N)
-    # for i ∈ 1:N
-    #     j = (i - 1) * N + 1
-    #     k = i * N
-    #     vals, vecs = eigen(sskew[:, j:k])
-    #     vals = clamp.(real(vals), -Inf, 0) .+ clamp.(imag(vals), -Inf, 0)im
-    #     SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
-    # end
     SV = portfolio.SV
 
     if sd_cone
