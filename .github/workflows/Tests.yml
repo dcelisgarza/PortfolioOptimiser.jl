@@ -5,6 +5,7 @@ on:
       - main
       - release-*
       - dev
+      - multiple-dispatch
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:

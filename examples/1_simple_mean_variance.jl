@@ -73,7 +73,7 @@ pretty_table(DataFrame(; assets = portfolio.assets,
 
 # For some risk measures/constraints, we need to compute some statistical quantities. Since we're going to showcase a mean-variance optimisation, we need to estimate the asset mean returns and covariance. We can do this by calling [`asset_statistics!`](). This function also has myriad keyword options, but we'll stick to the basics.
 
-asset_statistics!(portfolio; calc_kurt = false)
+asset_statistics!(portfolio; calc_kurt = false, calc_skew = false)
 
 # We can then call [`optimise!`]() with default arguments, which optimises for the risk adjusted return ratio of the mean variance portfolio.
 

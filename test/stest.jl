@@ -1,29 +1,206 @@
 using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, PortfolioOptimiser,
       LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix, StatsBase,
-      AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes
+      AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes, BenchmarkTools,
+      COSMO
+
+ret = randn(100, 200)
+T, N = size(ret)
+q = T / N
+X = cov(ret)
+
+X1 = copy(X)
+X2 = copy(X)
+je = PortfolioOptimiser.JLoGo(; flag = true)
+posdef = PortfolioOptimiser.PosdefNearest()
+display(@allocated PortfolioOptimiser.jlogo!(je, posdef, X1))
+
+opt = CovOpt(; jlogo = JlogoOpt(; flag = true))
+display(@allocated c = PortfolioOptimiser._denoise_logo_mtx(0, 0, X2, opt, :cov, true))
+
+@test isapprox(X1, c)
+@test isapprox(X1, X2)
+
+isapprox(X, X1)
+
+me = PortfolioOptimiser.MeanBOP(; target = PortfolioOptimiser.TargetSE(), sigma = X)
+mu1 = mean(me, ret)
+display(@benchmark mean($me, $ret) setup = ())
+
+opt = MuOpt(; method = :BOP, target = :SE, sigma = X)
+mu2 = PortfolioOptimiser.mu_estimator(ret, opt)
+display(@benchmark PortfolioOptimiser.mu_estimator($ret, $opt) setup = ())
+@test isapprox(mu1, mu2)
+
+normalise = true
+a, b, c, d = 1, 2, 3, 4
+ce = PortfolioOptimiser.CorGerberSB1(; normalise = normalise)
+a = cor(ce, X)
+b = cov(ce, X)
+display(@benchmark PortfolioOptimiser.cov($ce, $X) setup = ())
+
+opt = GerberOpt(; normalise = normalise)
+c, d = PortfolioOptimiser.gerbersb1(X, opt)
+display(@benchmark PortfolioOptimiser.gerbersb1($X, $opt) setup = ())
+@test isapprox(a, c)
+@test isapprox(b, d)
+
+bins = :HGR
+c, d = PortfolioOptimiser.mut_var_info_mtx(X, bins, normalise)
+display(@benchmark PortfolioOptimiser.mut_var_info_mtx($X, $bins, $normalise) setup = ())
+
+bins = PortfolioOptimiser.FD()
+bins = PortfolioOptimiser.SC()
+bins = PortfolioOptimiser.HGR()
 
 prices_assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
+prices_assets[:AAPL, :GOOG, :BABA, :AMZN, :T, :BAC][(end - 50):end]
+portfolio = Portfolio(; prices = prices_assets[(end - 50):end],
+                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                              :params => Dict("verbose" => true
+                                                                              #   "max_step_fraction" => 0.65
+                                                                              #   #   "max_iter" => 400,
+                                                                              #   #   "max_iter"=>150,
+                                                                              #   "tol_gap_abs" => 1e-8,
+                                                                              #   "tol_gap_rel" => 1e-8,
+                                                                              #   "tol_feas" => 1e-8,
+                                                                              #   "tol_ktratio" => 1e-8,
+                                                                              #   "equilibrate_max_iter" => 30,
+                                                                              #   "reduced_tol_gap_abs" => 1e-8,
+                                                                              #   "reduced_tol_gap_rel" => 1e-8,
+                                                                              #   "reduced_tol_feas" => 1e-8,
+                                                                              #   "reduced_tol_ktratio" => 1e-8
 
-portfolio = HCPortfolio(; prices = prices_assets,
-                        solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                :params => Dict("verbose" => false
-                                                                                #   "max_step_fraction" => 0.75
-                                                                                #   "max_iter" => 400,
-                                                                                #   "max_iter"=>150,
-                                                                                #   "tol_gap_abs" => 1e-8,
-                                                                                #   "tol_gap_rel" => 1e-8,
-                                                                                #   "tol_feas" => 1e-8,
-                                                                                #   "tol_ktratio" => 1e-8,
-                                                                                #   "equilibrate_max_iter" => 30,
-                                                                                #   "reduced_tol_gap_abs" => 1e-6,
-                                                                                #   "reduced_tol_gap_rel" => 1e-5,
-                                                                                #   "reduced_tol_feas" => 1e-6,
-                                                                                #   "reduced_tol_ktratio" => 1e-6
-                                                                                ))))
+                                                                              ))))
+@time asset_statistics!(portfolio; calc_kurt = false)
+
+portfolio.skew_factor = Inf
+portfolio.skew_u = Inf
+
+portfolio.risk_budget = []
+w1 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :DVar, obj = :Min_Risk))
+plot_risk_contribution(portfolio; type = :Trad, rm = :DVar)
+dvar1 = calc_risk(portfolio; type = :Trad, rm = :DVar)
+value(portfolio.model[:risk])
+
+portfolio.dvar_u = dvar1
+w2 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :DVar, obj = :Max_Ret))
+plot_risk_contribution(portfolio; type = :Trad, rm = :DVar)
+dvar2 = calc_risk(portfolio; type = :Trad, rm = :DVar)
+value(portfolio.model[:risk])
+
+portfolio.dvar_u = Inf
+w3 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :DVar, obj = :Sharpe))
+plot_risk_contribution(portfolio; type = :Trad, rm = :DVar)
+dvar3 = calc_risk(portfolio; type = :Trad, rm = :DVar)
+
+portfolio.dvar_u = dvar3
+w4 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :DVar, obj = :Max_Ret))
+plot_risk_contribution(portfolio; type = :Trad, rm = :DVar)
+dvar4 = calc_risk(portfolio; type = :Trad, rm = :DVar)
+
+portfolio.dvar_u = Inf
+w5 = optimise!(portfolio, OptimiseOpt(; type = :RP, rm = :SSkew, obj = :Max_Ret))
+plot_risk_contribution(portfolio; type = :RP, rm = :SSkew, percentage = false)
+dvar5 = calc_risk(portfolio; type = :RP, rm = :SSkew)
+
+portfolio.dvar_u = dvar5
+w6 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :DVar, obj = :Max_Ret))
+plot_risk_contribution(portfolio; type = :Trad, rm = :DVar)
+dvar6 = calc_risk(portfolio; type = :Trad, rm = :DVar)
+
+DVar(portfolio.returns * w5.weights) / 20
+
+##################
+##################
+w3 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :DVar, obj = :Sharpe))
+plot_risk_contribution(portfolio; type = :Trad, rm = :DVar)
+dvar3 = calc_risk(portfolio; type = :Trad, rm = :DVar)
+value(portfolio.model[:risk] / portfolio.model[:k]^2)
+
+w4 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :DVar, obj = :Max_Ret))
+plot_risk_contribution(portfolio; type = :Trad, rm = :DVar)
+dvar4 = calc_risk(portfolio; type = :Trad, rm = :DVar)
+value(portfolio.model[:risk])
+
+########################################################################################
+########################################################################################
+
+w2 = optimise!(portfolio, OptimiseOpt(; type = :RP, rm = :DVar))
+plot_risk_contribution(portfolio; type = :RP, rm = :DVar)
+
+portfolio.risk_budget = 1:2:40
+w3 = optimise!(portfolio, OptimiseOpt(; type = :RP, rm = :DVar))
+plot_risk_contribution(portfolio; type = :RP, rm = :DVar)
+
+efficient_frontier!(portfolio, OptimiseOpt(; rm = :DVar); points = 7)
+plot_frontier(portfolio; rm = :DVar)
+
+efficient_frontier!(portfolio, OptimiseOpt(; rm = :Skew))
+plot_frontier(portfolio; rm = :Skew)
+
+efficient_frontier!(portfolio, OptimiseOpt(; rm = :SSkew))
+plot_frontier(portfolio; rm = :SSkew)
+
+portfolio.skew_factor = Inf
+efficient_frontier!(portfolio, OptimiseOpt(; rm = :SD))
+plot_frontier(portfolio; rm = :SD)
+portfolio.skew_factor = 3
+efficient_frontier!(portfolio, OptimiseOpt(; rm = :SD))
+plot_frontier(portfolio; rm = :SD)
+
+portfolio.skew_factor = Inf
+w1 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :Skew))
+portfolio.skew_factor = 64
+portfolio.sskew_factor = 2
+w2 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :CDaR))
+portfolio.skew_factor = Inf
+w3 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :CDaR))
+portfolio.skew_factor = 0
+w4 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :CDaR))
+
+portfolio.dvar_u = Inf
+w1 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :DVar, obj = :Min_Risk))
+dvar1 = calc_risk(portfolio; rm = :DVar)
+
+portfolio.dvar_u = dvar1
+w2 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :DVar, obj = :Max_Ret))
+display(hcat(w1, w2.weights; makeunique = true))
+
+skew1 = sqrt(transpose(w1.weights) * portfolio.V * w1.weights)
+
+portfolio.skew_u = skew1
+w2 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Max_Ret))
+skew2 = calc_risk(portfolio; rm = :Skew)
+
+portfolio.skew_factor = 8
+
+portfolio.skew_factor = Inf
+
+w3 = optimise!(portfolio, OptimiseOpt(; rm = :SSkew, obj = :Min_Risk))
+w4 = optimise!(portfolio, OptimiseOpt(; rm = :SSkew, obj = :Min_Risk, sd_cone = false))
+
+w3 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Sharpe))
+w4 = optimise!(portfolio, OptimiseOpt(; rm = :Skew, obj = :Sharpe))
+
+r1 = dot(portfolio.mu, w1.weights) / dvar1
+dot(portfolio.mu, w2.weights) / dvar1
+
+w2 = optimise!(portfolio, OptimiseOpt(; rm = :DVar, obj = :Sharpe))
+dvar2 = DVar(portfolio.returns * w2.weights)
+r2 = dot(portfolio.mu, w2.weights) / dvar2
+
+w3 = optimise!(portfolio, OptimiseOpt(; rm = :DVar, obj = :Sharpe))
+dvar3 = DVar(portfolio.returns * w3.weights)
+r3 = dot(portfolio.mu, w3.weights) / dvar3
+
+w4 = optimise!(portfolio, OptimiseOpt(; rm = :DVar, obj = :Sharpe))
+dvar4 = DVar(portfolio.returns * w4.weights)
+r4 = dot(portfolio.mu, w4.weights) / dvar4
+
 asset_statistics!(portfolio; cor_opt = CorOpt(; dist = DistOpt(; method = AugClampDist())),
                   calc_kurt = false)
 w1 = optimise!(portfolio; type = :NCO, cluster_opt = ClusterOpt(; linkage = :single))

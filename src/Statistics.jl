@@ -1406,7 +1406,7 @@ _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
 ```
 """
 function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
-                           opt::Union{CovOpt, CorOpt, KurtOpt, BLOpt},
+                           opt::Union{CovOpt, CorOpt, KurtOpt, SkewOpt, BLOpt},
                            mtx_name::Symbol = :cov, cov_flag = true)
     @smart_assert(mtx_name ∈ DenoiseLoGoNames)
 
@@ -1421,6 +1421,12 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
         msg2 = ""
     elseif mtx_name == :skurt
         msg = "Semi Kurtosis "
+        msg2 = ""
+    elseif mtx_name == :skew
+        msg = "Skewness "
+        msg2 = ""
+    elseif mtx_name == :sskew
+        msg = "Semi Skewness "
         msg2 = ""
     elseif mtx_name == :bl_cov
         msg = "Black-Litterman Covariance "
@@ -1441,7 +1447,6 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
     if jlogo.flag
         try
             corr = cov_flag ? cov2cor(mtx) : mtx
-
             distance = jlogo.dist
             dist_method = distance.method
             dargs = distance.args
@@ -1462,7 +1467,6 @@ function _denoise_logo_mtx(T::Integer, N::Integer, mtx::AbstractMatrix,
         catch SingularException
             throw(ErrorException("$msg matrix is singular = $(SingularException). Please try one or a combination of the following:\n\t* Set opt.posdef.method = $(opt.posdef.method), to a different method from $PosdefFixMethods.\n\t* Set denoise = true.\n\t* Try both approaches at the same time.$(msg2)"))
         end
-
         posdef_fix!(mtx, opt.posdef; msg = "J-LoGo $msg ", cov_flag = cov_flag)
     end
 
@@ -1598,6 +1602,42 @@ function cokurt_mtx(returns::AbstractMatrix, mu::AbstractVector, opt::KurtOpt = 
     missing, L_2, S_2 = dup_elim_sum_matrices(N)
 
     return kurt, skurt, L_2, S_2
+end
+
+function coskew_mtx(returns::AbstractMatrix, mu::AbstractVector, opt::SkewOpt = SkewOpt(;))
+    custom_skew = opt.estimation.custom_skew
+    T, N = size(returns)
+    if isnothing(custom_skew)
+        skew = coskew(returns, transpose(mu))
+    else
+        skew = custom_skew
+    end
+    V = zeros(eltype(skew), N, N)
+    for i ∈ 1:N
+        j = (i - 1) * N + 1
+        k = i * N
+        vals, vecs = eigen(skew[:, j:k])
+        vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+        V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+    end
+
+    target_ret = opt.estimation.target_ret
+    custom_sskew = opt.estimation.custom_sskew
+    if isnothing(custom_sskew)
+        sskew = scoskew(returns, transpose(mu), target_ret)
+    else
+        sskew = custom_sskew
+    end
+    SV = zeros(eltype(sskew), N, N)
+    for i ∈ 1:N
+        j = (i - 1) * N + 1
+        k = i * N
+        vals, vecs = eigen(sskew[:, j:k])
+        vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+        SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+    end
+
+    return skew, V, sskew, SV
 end
 
 """
@@ -1898,7 +1938,7 @@ end
 """
 ```
 asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true, calc_mu::Bool = true,
-                  calc_kurt::Bool = true, calc_cor::Bool = true,
+                  calc_kurt::Bool = true, calc_skew::Bool=true, calc_cor::Bool = true,
                   cov_opt::CovOpt = CovOpt(;), mu_opt::MuOpt = MuOpt(;),
                   kurt_opt::KurtOpt = KurtOpt(;), cor_opt::CorOpt = CorOpt(;))
 ```
@@ -1933,11 +1973,15 @@ Depending on conditions, modifies:
   - `calc_kurt`:
 
       + `true`: compute and set the cokurtosis and semi cokurtosis matrices.
-  - `calc_cor`:
+  - `calc_skew`:
 
-      + `isa(portfolio, HCPortfolio)`:
+      + `true`: compute and set the coskewness and semi coskewness matrices.
 
-          * `true`: compute and set the correlation and distance matrices.
+      + `calc_cor`:
+
+          * `isa(portfolio, HCPortfolio)`:
+
+              - `true`: compute and set the correlation and distance matrices.
 
 ## Options
 
@@ -1947,10 +1991,10 @@ Depending on conditions, modifies:
   - `cor_opt`: instance of [`CorOpt`](@ref), defines how the correlation and distance matrices are computed.
 """
 function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
-                           calc_mu::Bool = true, calc_kurt::Bool = true,
+                           calc_mu::Bool = true, calc_kurt::Bool = true, calc_skew = true,
                            calc_cor::Bool = true, cov_opt::CovOpt = CovOpt(;),
                            mu_opt::MuOpt = MuOpt(;), kurt_opt::KurtOpt = KurtOpt(;),
-                           cor_opt::CorOpt = CorOpt(;))
+                           skew_opt::SkewOpt = SkewOpt(;), cor_opt::CorOpt = CorOpt(;))
     returns = portfolio.returns
 
     sigma = nothing
@@ -1991,6 +2035,11 @@ function asset_statistics!(portfolio::AbstractPortfolio; calc_cov::Bool = true,
         portfolio.kurt, portfolio.skurt, portfolio.L_2, portfolio.S_2 = cokurt_mtx(returns,
                                                                                    portfolio.mu,
                                                                                    kurt_opt)
+    end
+
+    if calc_skew
+        portfolio.skew, portfolio.V, portfolio.sskew, portfolio.SV = coskew_mtx(returns, mu,
+                                                                                skew_opt)
     end
 
     # Type specific

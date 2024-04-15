@@ -952,12 +952,15 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
                           CDaR_r = "Conditional Uncompounded Drawdown at Risk",
                           UCI_r = "Compounded Ulcer Index",
                           EDaR_r = "Entropic Compounded Drawdown at Risk",
-                          RDaR_r = "Relativistic Compounded Drawdown at Risk")
+                          RDaR_r = "Relativistic Compounded Drawdown at Risk",
+                          DVar = "Distance Variance",
+                          Skew = "Square Root Negative Skewness",
+                          SSkew = "Square Root Negative Semi Skewness")
 
 """
 ```
 RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD, :CDaR,
-                :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG, :OWA)
+                :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG, :OWA. :DVar, :Skew)
 ```
 
 Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref).
@@ -989,17 +992,20 @@ Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref).
   - `:TG`: tail gini, [`TG`](@ref) [TG, OWA](@cite).
   - `:RTG`: range of tail gini, [`RTG`](@ref) [OWA](@cite).
   - `:OWA`: ordered weight array, used with generic OWA weights [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
+  - `:DVar`: distance variance, [`DVar`](@ref) [DVar](@cite).
+  - `:Skew`: quadratic negative skewness, [`Skew`](@ref) [Skew](@cite).
+  - `:SSkew`: quadratic negative semi skewness, [`Skew`](@ref) [Skew](@cite).
 """
 const RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
                       :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG,
-                      :RTG, :OWA)
+                      :RTG, :OWA, :DVar, :Skew, :SSkew)
 
 """
 ```
 HCRiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
                   :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG,
                   :OWA, :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r, :ADD_r, :CDaR_r,
-                  :UCI_r, :EDaR_r, :RDaR_r)
+                  :UCI_r, :EDaR_r, :RDaR_r, :DVar)
 ```
 
 Available risk measures for optimisations of [`HCPortfolio`](@ref).
@@ -1045,6 +1051,15 @@ These risk measures are available for all optimisation types.
   - `:TG`: tail gini, [`TG`](@ref) [TG, OWA](@cite).
   - `:RTG`: range of tail gini, [`RTG`](@ref) [OWA](@cite).
   - `:OWA`: ordered weight array, used with generic OWA weights [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
+  - `:DVar`: distance variance, [`DVar`](@ref) [DVar](@cite).
+  - `:Skew`:
+
+      + If `NCO`: quadratic negative skewness, [Skew](@cite).
+      + else: skewness.
+  - `:SSkew`:
+
+      + If `NCO`: quadratic negative semi skewness, [Skew](@cite).
+      + else: semi skewness.
 
 These risk measures are not available with `:NCO` optimisations.
 
@@ -1097,4 +1112,5 @@ DenoiseLoGoNames = (:cov, :cor, :kurt, :skurt, :bl_cov, :a_bl_cov, :af_bl_cov)
 
 Symbol for deciding the custom part of the warning when a matrix could not be made positive definite; and/or the error message when the original matrix was singular when trying to compute the J-LoGo covariance.
 """
-const DenoiseLoGoNames = (:cov, :cor, :kurt, :skurt, :bl_cov, :a_bl_cov, :af_bl_cov)
+const DenoiseLoGoNames = (:cov, :cor, :kurt, :skurt, :skew, :sskew, :bl_cov, :a_bl_cov,
+                          :af_bl_cov)

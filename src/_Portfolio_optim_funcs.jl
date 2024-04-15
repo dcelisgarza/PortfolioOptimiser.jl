@@ -581,9 +581,47 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     return nothing
 end
 
+function _dvar_setup(portfolio, rm, T, returns, obj, type)
+    dvar_u = portfolio.dvar_u
+
+    if !(rm == :DVar || isfinite(dvar_u))
+        return nothing
+    end
+
+    model = portfolio.model
+
+    ovec = range(1; stop = 1, length = T)
+    @variable(model, Dt[1:T, 1:T], Symmetric)
+    if !haskey(model, :hist_ret)
+        @expression(model, hist_ret, returns * model[:w])
+    end
+    @expression(model, Dx,
+                Symmetric(model[:hist_ret] * transpose(ovec) -
+                          ovec * transpose(model[:hist_ret])))
+    @constraint(model, [i = 1:T, j = i:T], Dt[i, j] >= -Dx[i, j])
+    @constraint(model, [i = 1:T, j = i:T], Dt[i, j] >= Dx[i, j])
+
+    dt = vec(Dt)
+    invT2 = 1 / T^2
+    @expression(model, dvar_risk, invT2 * (dot(dt, dt) + invT2 * dot(ovec, Dt, ovec)^2))
+
+    if isfinite(dvar_u) && type == :Trad
+        if obj == :Sharpe
+            @constraint(model, dvar_risk <= dvar_u * model[:k])
+        else
+            @constraint(model, dvar_risk <= dvar_u)
+        end
+    end
+
+    if rm == :DVar
+        @expression(model, risk, dvar_risk)
+    end
+
+    return nothing
+end
+
 function _risk_setup(portfolio, type, rm, kelly, obj, rf, T, N, mu, returns, sigma,
-                     kurtosis, skurtosis, network_method, sd_cone::Bool = true,
-                     owa_approx::Bool = true)
+                     kurtosis, skurtosis, network_method, sd_cone, owa_approx)
     _sdp_setup(portfolio, obj, rm, type, N)
     _mv_setup(portfolio, sigma, rm, kelly, obj, type, network_method, sd_cone)
     _mad_setup(portfolio, rm, T, returns, mu, obj, type)
@@ -593,6 +631,35 @@ function _risk_setup(portfolio, type, rm, kelly, obj, rf, T, N, mu, returns, sig
     _drawdown_setup(portfolio, rm, T, returns, obj, type)
     _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
     _owa_setup(portfolio, rm, T, returns, obj, type, owa_approx)
+    _dvar_setup(portfolio, rm, T, returns, obj, type)
+    _skew_setup(portfolio, rm, N, obj, type, sd_cone)
+    _add_skew_to_risk(portfolio, rm)
+
+    return nothing
+end
+
+function _add_skew_to_risk(portfolio, rm)
+    model = portfolio.model
+    skew_factor = portfolio.skew_factor
+    sskew_factor = portfolio.sskew_factor
+
+    if !(isfinite(skew_factor) || isfinite(sskew_factor))
+        return nothing
+    end
+
+    if isfinite(skew_factor) && !iszero(skew_factor) && rm != :Skew
+        @expression(model, tmp, model[:risk] + skew_factor * model[:skew_risk])
+        unregister(model, :risk)
+        @expression(model, risk, tmp)
+        unregister(model, :tmp)
+    end
+
+    if isfinite(sskew_factor) && !iszero(sskew_factor) && rm != :SSKew
+        @expression(model, tmp, model[:risk] + sskew_factor * model[:sskew_risk])
+        unregister(model, :risk)
+        @expression(model, risk, tmp)
+        unregister(model, :tmp)
+    end
 
     return nothing
 end
@@ -620,6 +687,95 @@ function block_vec_pq(A, p, q)
     return A_vec
 end
 
+function _skew_setup(portfolio, rm, N, obj, type, sd_cone)
+    skew_u = portfolio.skew_u
+    skew_factor = portfolio.skew_factor
+    sskew_u = portfolio.sskew_u
+    sskew_factor = portfolio.sskew_factor
+
+    if !(rm ∈ (:Skew, :SSkew) ||
+         isfinite(skew_u) ||
+         isfinite(sskew_u) ||
+         isfinite(skew_factor) ||
+         isfinite(sskew_factor))
+        return nothing
+    end
+
+    model = portfolio.model
+
+    if rm == :Skew || isfinite(skew_u) || isfinite(skew_factor) && !iszero(skew_factor)
+        V = portfolio.V
+
+        if sd_cone
+            G = real(sqrt(V))
+            @variable(model, t_skew)
+            @constraint(model, [t_skew; G * model[:w]] ∈ SecondOrderCone())
+            @expression(model, skew_risk, t_skew^2)
+        else
+            @expression(model, skew_risk, dot(model[:w], V, model[:w]))
+        end
+
+        if isfinite(skew_u) && type == :Trad
+            if obj == :Sharpe
+                if sd_cone
+                    @constraint(model, t_skew <= skew_u * model[:k])
+                else
+                    @constraint(model, skew_risk <= skew_u^2 * model[:k])
+                end
+            else
+                if sd_cone
+                    @constraint(model, t_skew <= skew_u)
+                else
+                    @constraint(model, skew_risk <= skew_u^2)
+                end
+            end
+        end
+
+        if rm == :Skew
+            @expression(model, risk, skew_risk)
+        end
+    end
+
+    if !(rm == :SSkew ||
+         isfinite(sskew_u) ||
+         isfinite(sskew_factor) && !iszero(sskew_factor))
+        return nothing
+    end
+
+    SV = portfolio.SV
+
+    if sd_cone
+        G = real(sqrt(SV))
+        @variable(model, t_sskew)
+        @constraint(model, [t_sskew; G * model[:w]] ∈ SecondOrderCone())
+        @expression(model, sskew_risk, t_sskew^2)
+    else
+        @expression(model, sskew_risk, dot(model[:w], SV, model[:w]))
+    end
+
+    if isfinite(sskew_u) && type == :Trad
+        if obj == :Sharpe
+            if sd_cone
+                @constraint(model, t_sskew <= sskew_u * model[:k])
+            else
+                @constraint(model, sskew_risk <= sskew_u^2 * model[:k])
+            end
+        else
+            if sd_cone
+                @constraint(model, t_sskew <= sskew_u)
+            else
+                @constraint(model, sskew_risk <= sskew_u^2)
+            end
+        end
+    end
+
+    if rm == :SSkew
+        @expression(model, risk, sskew_risk)
+    end
+
+    return nothing
+end
+
 function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
     kurt_u = portfolio.kurt_u
     skurt_u = portfolio.skurt_u
@@ -641,12 +797,11 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
             @constraint(model, [t_kurt; x_kurt] ∈ SecondOrderCone())
             A = block_vec_pq(kurtosis, N, N)
             vals_A, vecs_A = eigen(A)
-            vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
+            vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
             Bi = Vector{Matrix{eltype(kurtosis)}}(undef, N2)
             for i ∈ 1:N2
                 j = i - 1
-                B = reshape(real.(complex(sqrt(vals_A[end - j])) * vecs_A[:, end - j]), N,
-                            N)
+                B = reshape(real(complex(sqrt(vals_A[end - j])) * vecs_A[:, end - j]), N, N)
                 Bi[i] = B
             end
             @constraint(model, [i = 1:N2], x_kurt[i] == tr(Bi[i] * model[:W]))
@@ -672,48 +827,49 @@ function _kurtosis_setup(portfolio, kurtosis, skurtosis, rm, N, obj, type)
         end
     end
 
-    if rm == :SKurt || isfinite(skurt_u)
-        max_num_assets_kurt = portfolio.max_num_assets_kurt
-        @variable(model, t_skurt)
-        if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
-            factor = portfolio.max_num_assets_kurt_scale
+    if !(rm == :SKurt || isfinite(skurt_u))
+        return nothing
+    end
 
-            N2 = factor * N
-            @variable(model, x_skurt[1:N2])
+    max_num_assets_kurt = portfolio.max_num_assets_kurt
+    @variable(model, t_skurt)
+    if !iszero(max_num_assets_kurt) && N > max_num_assets_kurt
+        factor = portfolio.max_num_assets_kurt_scale
 
-            @constraint(model, [t_skurt; x_skurt] ∈ SecondOrderCone())
+        N2 = factor * N
+        @variable(model, x_skurt[1:N2])
 
-            A = block_vec_pq(skurtosis, N, N)
-            vals_A, vecs_A = eigen(A)
-            vals_A = clamp.(real.(vals_A), 0, Inf) .+ clamp.(imag.(vals_A), 0, Inf)im
-            SBi = Vector{Matrix{eltype(skurtosis)}}(undef, N2)
-            for i ∈ 1:N2
-                j = i - 1
-                B = reshape(real.(sqrt(complex(vals_A[end - j])) * vecs_A[:, end - j]), N,
-                            N)
-                SBi[i] = B
-            end
-            @constraint(model, [i = 1:N2], x_skurt[i] == tr(SBi[i] * model[:W]))
+        @constraint(model, [t_skurt; x_skurt] ∈ SecondOrderCone())
+
+        A = block_vec_pq(skurtosis, N, N)
+        vals_A, vecs_A = eigen(A)
+        vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
+        SBi = Vector{Matrix{eltype(skurtosis)}}(undef, N2)
+        for i ∈ 1:N2
+            j = i - 1
+            B = reshape(real(sqrt(complex(vals_A[end - j])) * vecs_A[:, end - j]), N, N)
+            SBi[i] = B
+        end
+        @constraint(model, [i = 1:N2], x_skurt[i] == tr(SBi[i] * model[:W]))
+    else
+        L_2 = portfolio.L_2
+        S_2 = portfolio.S_2
+        sqrt_sigma_4 = sqrt(S_2 * skurtosis * transpose(S_2))
+        @expression(model, zskurt, L_2 * vec(model[:W]))
+        @constraint(model, [t_skurt; sqrt_sigma_4 * zskurt] ∈ SecondOrderCone())
+    end
+    @expression(model, skurt_risk, t_skurt)
+
+    if isfinite(skurt_u) && type == :Trad
+        if obj == :Sharpe
+            @constraint(model, skurt_risk <= skurt_u * model[:k])
         else
-            L_2 = portfolio.L_2
-            S_2 = portfolio.S_2
-            sqrt_sigma_4 = sqrt(S_2 * skurtosis * transpose(S_2))
-            @expression(model, zskurt, L_2 * vec(model[:W]))
-            @constraint(model, [t_skurt; sqrt_sigma_4 * zskurt] ∈ SecondOrderCone())
+            @constraint(model, skurt_risk <= skurt_u)
         end
-        @expression(model, skurt_risk, t_skurt)
+    end
 
-        if isfinite(skurt_u) && type == :Trad
-            if obj == :Sharpe
-                @constraint(model, skurt_risk <= skurt_u * model[:k])
-            else
-                @constraint(model, skurt_risk <= skurt_u)
-            end
-        end
-
-        if rm == :SKurt
-            @expression(model, risk, skurt_risk)
-        end
+    if rm == :SKurt
+        @expression(model, risk, skurt_risk)
     end
 end
 
@@ -1906,14 +2062,17 @@ function _near_optimal_centering(portfolio, class, mu, returns, sigma, w_opt, T,
     b_sim = portfolio.b_sim
     kappa = portfolio.kappa
     owa_w = portfolio.owa_w
+    V = portfolio.V
+    SV = portfolio.SV
     solvers = portfolio.solvers
 
     risk1, risk2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
-                            beta, a_sim, beta_i, b_sim, owa_w, 0)
+                            beta, a_sim, beta_i, b_sim, owa_w, V, SV, 0)
 
     risk3 = calc_risk(w3, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
                       alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
-                      b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers)
+                      b_sim = b_sim, kappa = kappa, owa_w = owa_w, V = V, SV = SV,
+                      solvers = solvers)
 
     if opt.kelly == :None
         ret1 = dot(mu, w1)
@@ -2131,13 +2290,15 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
     b_sim = portfolio.b_sim
     kappa = portfolio.kappa
     owa_w = portfolio.owa_w
+    V = portfolio.V
+    SV = portfolio.SV
     solvers = portfolio.solvers
 
     rm = opt.rm
     rf = opt.rf
 
     risk1, risk2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
-                            beta, a_sim, beta_i, b_sim, owa_w, 0)
+                            beta, a_sim, beta_i, b_sim, owa_w, V, SV, 0)
 
     mus = range(ret1; stop = ret2, length = points)
     risks = range(risk1; stop = risk2, length = points)
@@ -2178,8 +2339,8 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
         end
         rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
                        alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                       beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                       solvers = solvers)
+                       beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w, V = V,
+                       SV = SV, solvers = solvers)
 
         append!(frontier, w.weights)
         push!(srisk, rk)
@@ -2193,8 +2354,8 @@ function efficient_frontier!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOp
     if !isempty(w)
         rk = calc_risk(w.weights, returns; rm = rm, rf = rf, sigma = sigma,
                        alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                       beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
-                       solvers = solvers)
+                       beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w, V = V,
+                       SV = SV, solvers = solvers)
         append!(frontier, w.weights)
         push!(srisk, rk)
         i += 1

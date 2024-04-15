@@ -927,6 +927,15 @@ function SKurt(x::AbstractVector)
 end
 
 """
+```
+Skew(w::AbstractVector, V::AbstractArray)
+```
+"""
+function Skew(w::AbstractVector, V::AbstractArray)
+    return sqrt(dot(w, V, w))
+end
+
+"""
 ```julia
 GMD(x::AbstractVector)
 ```
@@ -1059,6 +1068,19 @@ end
 # end
 
 """
+DVar(x::AbstractVector)
+"""
+function DVar(x::AbstractVector)
+    T = length(x)
+    invT = one(T) / T
+    invT2 = invT^2
+    ovec = range(1; stop = 1, length = T)
+    D = abs.(x * transpose(ovec) - ovec * transpose(x))
+    d = vec(D)
+    return invT2 * (dot(vec(d), vec(d)) + invT2 * dot(ovec, D, ovec)^2)
+end
+
+"""
 ```julia
 calc_risk(
     w::AbstractVector,    returns::AbstractMatrix;    rm::Symbol = :SD,    rf::Real = 0.0,    sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0),    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Int = 100,    beta_i::Real = alpha_i,    beta::Real = alpha,    b_sim::Integer = a_sim,    kappa::Real = 0.3,    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),    solvers::Union{<:AbstractDict, Nothing} = nothing)
@@ -1096,6 +1118,8 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
                    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                    kappa::Real = 0.3,
                    owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                   V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                   SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                    solvers::Union{<:AbstractDict, Nothing} = nothing)
     @smart_assert(rm ∈ HCRiskMeasures)
 
@@ -1170,6 +1194,12 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
         T = size(returns, 1)
         w = isempty(owa_w) ? owa_gmd(T) : owa_w
         OWA(x, w)
+    elseif rm == :DVar
+        DVar(x)
+    elseif rm == :Skew
+        Skew(w, V)
+    elseif rm == :SSkew
+        Skew(w, SV)
     elseif rm == :Equal
         1 / length(w)
     end
@@ -1185,11 +1215,11 @@ function calc_risk(portfolio::AbstractPortfolio;
                      alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                      beta_i = portfolio.beta_i, beta = portfolio.beta,
                      b_sim = portfolio.b_sim, kappa = portfolio.kappa, owa_w = owa_w,
-                     solvers = portfolio.solvers)
+                     V = portfolio.V, SV = portfolio.SV, solvers = portfolio.solvers)
 end
 
 function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i, beta,
-                  a_sim, beta_i, b_sim, owa_w, di)
+                  a_sim, beta_i, b_sim, owa_w, V, SV, di)
     a1 = returns * w1
     a2 = returns * w2
 
@@ -1296,6 +1326,15 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
         w = isempty(owa_w) ? owa_gmd(T) : owa_w
         r1 = OWA(a1, w)
         r2 = OWA(a2, w)
+    elseif rm == :DVar
+        r1 = DVar(a1) * 0.5
+        r2 = DVar(a2) * 0.5
+    elseif rm == :Skew
+        r1 = Skew(w1, V)
+        r2 = Skew(w2, V)
+    elseif rm == :SSkew
+        r1 = Skew(w1, SV)
+        r2 = Skew(w2, SV)
     elseif rm == :Equal
         r1 = 1 / length(w1) + di
         r2 = 1 / length(w1) - di
@@ -1310,6 +1349,8 @@ function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbo
                            beta_i::Real = alpha_i, beta::Real = alpha,
                            b_sim::Integer = a_sim, di::Real = 1e-6, kappa::Real = 0.3,
                            owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                           V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                           SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                            solvers::Union{<:AbstractDict, Nothing} = nothing,
                            marginal::Bool = false)
     ew = eltype(w)
@@ -1327,7 +1368,7 @@ function risk_contribution(w::AbstractVector, returns::AbstractMatrix; rm::Symbo
         w2[i] -= di
 
         r1, r2 = _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i,
-                          beta, a_sim, beta_i, b_sim, owa_w, di)
+                          beta, a_sim, beta_i, b_sim, owa_w, V, SV, di)
 
         rci = if !marginal
             (r1 - r2) / (2 * di) * w[i]
@@ -1350,8 +1391,8 @@ function risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
                              alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                              beta_i = portfolio.beta_i, beta = portfolio.beta,
                              b_sim = portfolio.b_sim, di = di, kappa = portfolio.kappa,
-                             owa_w = owa_w, solvers = portfolio.solvers,
-                             marginal = marginal)
+                             owa_w = owa_w, V = portfolio.V, SV = portfolio.SV,
+                             solvers = portfolio.solvers, marginal = marginal)
 end
 
 function factor_risk_contribution(w::AbstractVector, assets::AbstractVector,
@@ -1365,12 +1406,14 @@ function factor_risk_contribution(w::AbstractVector, assets::AbstractVector,
                                   beta::Real = alpha, b_sim::Integer = a_sim,
                                   di::Real = 1e-6, kappa::Real = 0.3,
                                   owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                                  V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                  SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                                   solvers::Union{<:AbstractDict, Nothing} = nothing)
     marginal_risk = risk_contribution(w, returns; rm = rm, rf = rf, sigma = sigma,
                                       alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
                                       beta_i = beta_i, beta = beta, b_sim = b_sim, di = di,
-                                      kappa = kappa, owa_w = owa_w, solvers = solvers,
-                                      marginal = true)
+                                      kappa = kappa, owa_w = owa_w, V = V, SV = SV,
+                                      solvers = solvers, marginal = true)
 
     if isempty(B)
         B = loadings_matrix(DataFrame(factors, f_assets), DataFrame(returns, assets),
@@ -1399,8 +1442,8 @@ function factor_risk_contribution(portfolio::AbstractPortfolio; di::Real = 1e-6,
                                     alpha = portfolio.alpha, a_sim = portfolio.a_sim,
                                     beta_i = portfolio.beta_i, beta = portfolio.beta,
                                     b_sim = portfolio.b_sim, di = di,
-                                    kappa = portfolio.kappa, owa_w = owa_w,
-                                    solvers = portfolio.solvers)
+                                    kappa = portfolio.kappa, owa_w = owa_w, V = portfolio.V,
+                                    SV = portfolio.SV, solvers = portfolio.solvers)
 end
 
 function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMatrix;
@@ -1416,6 +1459,8 @@ function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMa
                       b_sim::Integer                          = a_sim,
                       kappa::Real                             = 0.3,
                       owa_w                                   = Vector{Float64}(undef, 0),
+                      V::AbstractMatrix                       = Matrix{Float64}(undef, 0, 0),
+                      SV::AbstractMatrix                      = Matrix{Float64}(undef, 0, 0),
                       solvers::Union{<:AbstractDict, Nothing} = nothing)
     ret = if kelly
         1 / size(returns, 1) * sum(log.(1 .+ returns * w))
@@ -1425,7 +1470,8 @@ function sharpe_ratio(w::AbstractVector, mu::AbstractVector, returns::AbstractMa
 
     risk = calc_risk(w, returns; rm = rm, rf = rf, sigma = sigma, alpha_i = alpha_i,
                      alpha = alpha, a_sim = a_sim, beta_i = beta_i, beta = beta,
-                     b_sim = b_sim, kappa = kappa, owa_w = owa_w, solvers = solvers)
+                     b_sim = b_sim, kappa = kappa, owa_w = owa_w, V = V, SV = SV,
+                     solvers = solvers)
 
     return (ret - rf) / risk
 end
@@ -1445,4 +1491,4 @@ end
 export Variance, SD, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR, RRM, RVaR, DaR_abs,
        MDD_abs, ADD_abs, CDaR_abs, UCI_abs, EDaR_abs, RDaR_abs, DaR_rel, MDD_rel, ADD_rel,
        CDaR_rel, UCI_rel, EDaR_rel, RDaR_rel, Kurt, SKurt, GMD, RG, RCVaR, TG, RTG, OWA,
-       calc_risk, risk_contribution, sharpe_ratio, factor_risk_contribution
+       DVar, Skew, calc_risk, risk_contribution, sharpe_ratio, factor_risk_contribution

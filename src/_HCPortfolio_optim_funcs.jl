@@ -46,7 +46,7 @@ function _opt_w(portfolio, assets, returns, imu, icov, opt;
 
     port.mu = imu
     port.cov = icov
-    if opt.rm ∈ (:Kurt, :SKurt)
+    if opt.rm ∈ (:Kurt, :SKurt, :Skew, :SSKew)
         asset_statistics!(port; asset_stat_kwargs...)
     end
 
@@ -195,6 +195,33 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
     else
         Matrix{eltype(returns)}(undef, 0, 0)
     end
+    if rm == :SKew
+        skew = coskew(returns, transpose(portfolio.mu[cluster]))
+        N = length(cluster)
+        V = zeros(eltype(skew), N, N)
+        for i ∈ 1:N
+            j = (i - 1) * N + 1
+            k = i * N
+            vals, vecs = eigen(skew[:, j:k])
+            vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+            V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+        end
+        portfolio_kwargs = (portfolio_kwargs..., V = V)
+    end
+    if rm == :SSKew
+        sskew = scoskew(returns, transpose(portfolio.mu[cluster]))
+        N = length(cluster)
+        SV = zeros(eltype(sskew), N, N)
+        for i ∈ 1:N
+            j = (i - 1) * N + 1
+            k = i * N
+            vals, vecs = eigen(sskew[:, j:k])
+            vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+            SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+        end
+        portfolio_kwargs = (portfolio_kwargs..., SV = SV)
+    end
+
     cw = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf,
                      portfolio_kwargs = portfolio_kwargs)
 
@@ -437,6 +464,32 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
             covariance[cidx, cidx]
         else
             Matrix{eltype(returns)}(undef, 0, 0)
+        end
+        if rm == :SKew
+            skew = coskew(returns, transpose(portfolio.mu[cidx]))
+            N = length(cidx)
+            V = zeros(eltype(skew), N, N)
+            for i ∈ 1:N
+                j = (i - 1) * N + 1
+                k = i * N
+                vals, vecs = eigen(skew[:, j:k])
+                vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+                V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+            end
+            portfolio_kwargs = (portfolio_kwargs..., V = V)
+        end
+        if rm == :SSKew
+            sskew = scoskew(returns, transpose(portfolio.mu[cidx]))
+            N = length(cidx)
+            SV = zeros(eltype(sskew), N, N)
+            for i ∈ 1:N
+                j = (i - 1) * N + 1
+                k = i * N
+                vals, vecs = eigen(sskew[:, j:k])
+                vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+                SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+            end
+            portfolio_kwargs = (portfolio_kwargs..., SV = SV)
         end
         cweights = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf,
                                portfolio_kwargs = portfolio_kwargs)
@@ -741,18 +794,17 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                                                         true
                                                     else
                                                         false
+                                                    end,
+                                                    calc_skew = if type != :NCO &&
+                                                                   rm ∈ (:Skew, :SSkew) ||
+                                                                   type == :NCO &&
+                                                                   nco_opt.rm ∈
+                                                                   (:Skew, :SSkew)
+                                                        true
+                                                    else
+                                                        false
                                                     end),
-                   asset_stat_kwargs_o::NamedTuple = (; calc_mu = false, calc_cov = false,
-                                                      calc_kurt = if type != :NCO &&
-                                                                     rm_o ∈
-                                                                     (:Kurt, :SKurt) ||
-                                                                     type == :NCO &&
-                                                                     nco_opt_o.rm ∈
-                                                                     (:Kurt, :SKurt)
-                                                          true
-                                                      else
-                                                          false
-                                                      end),
+                   asset_stat_kwargs_o::NamedTuple = asset_stat_kwargs,
                    portfolio_kwargs::NamedTuple = if type != :NCO
                        (; alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
                         a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,

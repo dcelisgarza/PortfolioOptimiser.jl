@@ -670,6 +670,32 @@ function KurtOpt(; estimation::KurtEstOpt = KurtEstOpt(;),
     return KurtOpt(estimation, denoise, posdef, jlogo)
 end
 
+mutable struct SkewEstOpt
+    target_ret::Union{<:AbstractVector{<:Real}, <:Real}
+    custom_skew::Union{<:AbstractMatrix{<:Real}, Nothing}
+    custom_sskew::Union{<:AbstractMatrix{<:Real}, Nothing}
+end
+function SkewEstOpt(; target_ret::Union{<:AbstractVector{<:Real}, <:Real} = 0.0,
+                    custom_skew::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
+                    custom_sskew::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing)
+    return SkewEstOpt(target_ret, custom_skew, custom_sskew)
+end
+mutable struct SkewOpt
+    # Estimation
+    estimation::SkewEstOpt
+    # Denoise
+    denoise::DenoiseOpt
+    # Posdef fix
+    posdef::PosdefFixOpt
+    # J-LoGo
+    jlogo::JlogoOpt
+end
+function SkewOpt(; estimation::SkewEstOpt = SkewEstOpt(;),
+                 denoise::DenoiseOpt = DenoiseOpt(;),
+                 posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::JlogoOpt = JlogoOpt(;))
+    return SkewOpt(estimation, denoise, posdef, jlogo)
+end
+
 """
 ```
 @kwdef mutable struct CorEstOpt{T1 <: Real, T2 <: AbstractMatrix{<:Real},
@@ -1578,4 +1604,4 @@ end
 export CovOpt, CovEstOpt, GerberOpt, DenoiseOpt, PosdefFixOpt, GenericFunction, MuOpt,
        CorOpt, CorEstOpt, WCOpt, KurtOpt, KurtEstOpt, MVROpt, LoadingsOpt, FactorOpt, BLOpt,
        ClusterOpt, OptimiseOpt, SBOpt, AllocOpt, DistOpt, NetworkOpt, ClampDist,
-       AugClampDist
+       AugClampDist, JlogoOpt
