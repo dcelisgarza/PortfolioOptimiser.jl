@@ -1491,5 +1491,4 @@ end
 export Variance, SD, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR, RRM, RVaR, DaR_abs,
        MDD_abs, ADD_abs, CDaR_abs, UCI_abs, EDaR_abs, RDaR_abs, DaR_rel, MDD_rel, ADD_rel,
        CDaR_rel, UCI_rel, EDaR_rel, RDaR_rel, Kurt, SKurt, GMD, RG, RCVaR, TG, RTG, OWA,
-       DVar, Skew, SSkew, calc_risk, risk_contribution, sharpe_ratio,
-       factor_risk_contribution
+       DVar, Skew, calc_risk, risk_contribution, sharpe_ratio, factor_risk_contribution
