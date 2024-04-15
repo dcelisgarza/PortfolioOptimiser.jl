@@ -77,18 +77,25 @@ portfolio = Portfolio(; prices = prices_assets,
 @time asset_statistics!(portfolio)
 
 skew = portfolio.skew
-clusters = rand(1:20, 3)
+clusters = rand(1:20, 10)
 N = size(portfolio.returns, 2)
-idx = collect(Iterators.flatten([(((c - 1) * N + 1):(c * N))[clusters] for c ∈ clusters]))
+Nc = length(clusters)
+@time begin
+    idx = Int[]
+    sizehint!(idx, Nc^2)
+    for c ∈ clusters
+        append!(idx, (((c - 1) * N + 1):(c * N))[clusters])
+    end
+end
 skew[clusters, idx]
-skew2 = PortfolioOptimiser.coskew(portfolio.returns[:, clusters],
-                                  transpose(portfolio.mu[clusters]))
+@time skew2 = PortfolioOptimiser.coskew(portfolio.returns[:, clusters],
+                                        transpose(portfolio.mu[clusters]))
 isapprox(skew[clusters, idx], skew2)
 
 kurt = portfolio.kurt
 kurt[idx, idx]
-kurt2 = PortfolioOptimiser.cokurt(portfolio.returns[:, clusters],
-                                  transpose(portfolio.mu[clusters]))
+@time kurt2 = PortfolioOptimiser.cokurt(portfolio.returns[:, clusters],
+                                        transpose(portfolio.mu[clusters]))
 isapprox(kurt[idx, idx], kurt2)
 
 ##################
