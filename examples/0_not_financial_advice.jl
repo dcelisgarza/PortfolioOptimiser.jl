@@ -74,7 +74,7 @@ function get_best_tickers(tickers, x, rms, cor_opt, cluster_opt)
     for rm ∈ rms
         hp = HCPortfolio(; prices = prices[Symbol.(new_tickers)], solvers = solvers)
         asset_statistics!(hp; calc_mu = false, calc_cov = false, calc_kurt = false,
-                          cor_opt = cor_opt)
+                          calc_skew = false, cor_opt = cor_opt)
 
         w = optimise!(hp; type = :HERC, rm = rm, cluster_opt = cluster_opt).weights
 
