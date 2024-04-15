@@ -57,8 +57,7 @@ prices_factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestam
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
-prices_assets[:AAPL, :GOOG, :BABA, :AMZN, :T, :BAC][(end - 50):end]
-portfolio = Portfolio(; prices = prices_assets[(end - 50):end],
+portfolio = Portfolio(; prices = prices_assets,
                       solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                               :params => Dict("verbose" => true
                                                                               #   "max_step_fraction" => 0.65
@@ -75,8 +74,24 @@ portfolio = Portfolio(; prices = prices_assets[(end - 50):end],
                                                                               #   "reduced_tol_ktratio" => 1e-8
 
                                                                               ))))
-@time asset_statistics!(portfolio; calc_kurt = false)
+@time asset_statistics!(portfolio)
 
+skew = portfolio.skew
+clusters = rand(1:20, 3)
+N = size(portfolio.returns, 2)
+idx = collect(Iterators.flatten([(((c - 1) * N + 1):(c * N))[clusters] for c ∈ clusters]))
+skew[clusters, idx]
+skew2 = PortfolioOptimiser.coskew(portfolio.returns[:, clusters],
+                                  transpose(portfolio.mu[clusters]))
+isapprox(skew[clusters, idx], skew2)
+
+kurt = portfolio.kurt
+kurt[idx, idx]
+kurt2 = PortfolioOptimiser.cokurt(portfolio.returns[:, clusters],
+                                  transpose(portfolio.mu[clusters]))
+isapprox(kurt[idx, idx], kurt2)
+
+##################
 portfolio.skew_factor = Inf
 portfolio.skew_u = Inf
 

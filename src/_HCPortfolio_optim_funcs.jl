@@ -196,7 +196,7 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
         Matrix{eltype(returns)}(undef, 0, 0)
     end
     if rm == :SKew
-        skew = coskew(returns, transpose(portfolio.mu[cluster]))
+        skew = coskew(returns[:, cluster], transpose(portfolio.mu[cluster]))
         N = length(cluster)
         V = zeros(eltype(skew), N, N)
         for i ∈ 1:N
@@ -209,7 +209,7 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
         portfolio_kwargs = (portfolio_kwargs..., V = V)
     end
     if rm == :SSKew
-        sskew = scoskew(returns, transpose(portfolio.mu[cluster]))
+        sskew = scoskew(returns[:, cluster], transpose(portfolio.mu[cluster]))
         N = length(cluster)
         SV = zeros(eltype(sskew), N, N)
         for i ∈ 1:N
