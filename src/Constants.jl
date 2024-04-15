@@ -993,7 +993,8 @@ Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref).
   - `:RTG`: range of tail gini, [`RTG`](@ref) [OWA](@cite).
   - `:OWA`: ordered weight array, used with generic OWA weights [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
   - `:DVar`: distance variance, [`DVar`](@ref) [DVar](@cite).
-  - `:Skew`: quadratic negative skewness, [Skew](@cite).
+  - `:Skew`: quadratic negative skewness, [`Skew`](@ref) [Skew](@cite).
+  - `:SSkew`: quadratic negative semi skewness, [`Skew`](@ref) [Skew](@cite).
 """
 const RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
                       :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG,

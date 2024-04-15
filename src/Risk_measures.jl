@@ -926,12 +926,13 @@ function SKurt(x::AbstractVector)
     return sqrt(sum(val[val .< 0] .^ 4) / T)
 end
 
+"""
+```
+Skew(w::AbstractVector, V::AbstractArray)
+```
+"""
 function Skew(w::AbstractVector, V::AbstractArray)
     return sqrt(dot(w, V, w))
-end
-
-function SSkew(w::AbstractVector, SV::AbstractArray)
-    return sqrt(dot(w, SV, w))
 end
 
 """
@@ -1065,6 +1066,10 @@ end
 
 #     return dot(w, sort!(x))
 # end
+
+"""
+DVar(x::AbstractVector)
+"""
 function DVar(x::AbstractVector)
     T = length(x)
     invT = one(T) / T
@@ -1194,7 +1199,7 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
     elseif rm == :Skew
         Skew(w, V)
     elseif rm == :SSkew
-        SSkew(w, SV)
+        Skew(w, SV)
     elseif rm == :Equal
         1 / length(w)
     end
@@ -1328,8 +1333,8 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
         r1 = Skew(w1, V)
         r2 = Skew(w2, V)
     elseif rm == :SSkew
-        r1 = SSkew(w1, SV)
-        r2 = SSkew(w2, SV)
+        r1 = Skew(w1, SV)
+        r2 = Skew(w2, SV)
     elseif rm == :Equal
         r1 = 1 / length(w1) + di
         r2 = 1 / length(w1) - di
