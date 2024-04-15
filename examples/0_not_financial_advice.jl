@@ -110,7 +110,7 @@ hcportfolio = HCPortfolio(; prices = prices[tickers], solvers = solvers,
 # In order for the clustering to work, we need to compute the correlation and distance matrices, so we need to call `asset_statistics!`. We'll use the robust correlation method that we defined earlier. We'll be using kelly returns and drawdown risk measures so we won't need anything else for either portfolio.
 
 asset_statistics!(hcportfolio; calc_mu = false, calc_cov = false, calc_kurt = false,
-                  cor_opt = cor_opt);
+                  calc_skew = false, cor_opt = cor_opt);
 
 # Since we filtered the assets by minimising the risk measure, we can be more comfortable in using a different objective function. As such we'll maximise the risk-return (Sharpe) ratio using exact kelly returns, which have to be computed in accordance to the asset weights that are being optimised, which is why we didn't need to compute the mean return vector.
 
@@ -132,9 +132,10 @@ w2 = optimise!(hcportfolio; type = :NCO, nco_opt = opt, cluster_opt = cluster_op
 
 # Again we have a few things we can do here, we can either allocate each portfolio individually, or we can combine them in some way. We'll combine them into a single portfolio using the risk return ratio for `:RDaR`. For this need to compute the mean returns vector. The type of the mean return doesn't matter because we'll be using the same for both, and we'll be using a ratio to compute the linear combination coefficients.
 
-asset_statistics!(portfolio; calc_mu = true, calc_cov = false, calc_kurt = false)
+asset_statistics!(portfolio; calc_mu = true, calc_cov = false, calc_kurt = false,
+                  calc_skew = false)
 asset_statistics!(hcportfolio; calc_mu = true, calc_cov = false, calc_kurt = false,
-                  calc_cor = false);
+                  calc_skew = false, calc_cor = false);
 
 # We don't need to provide the portfolio type since it defaults to `:Trad` for `Portfolio` variables.
 
