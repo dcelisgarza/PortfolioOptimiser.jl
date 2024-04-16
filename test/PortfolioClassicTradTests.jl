@@ -73,6 +73,20 @@ l = 2.0
     opt.obj = :Sharpe
     w19 = optimise!(portfolio, opt)
     setproperty!(portfolio, rmf, Inf)
+    opt.sd_cone = false
+    opt.kelly = :None
+    opt.obj = :Min_Risk
+    w20 = optimise!(portfolio, opt)
+    risk20 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
+    opt.obj = :Sharpe
+    w21 = optimise!(portfolio, opt)
+    risk21 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
+    setproperty!(portfolio, rmf, 5)
+    w22 = optimise!(portfolio, opt)
+    risk22 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
+    opt.obj = :Max_Ret
+    setproperty!(portfolio, rmf, risk22)
+    w23 = optimise!(portfolio, opt)
 
     w1t = [7.177018027625965e-6, 0.17212244407623012, 1.6776693950871295e-6,
            1.3963993738400464e-6, 9.1359350316075e-6, 2.3408365225251785e-6,
@@ -185,6 +199,10 @@ l = 2.0
     @test isapprox(w14.weights, w17.weights, rtol = 6e-3)
     @test isapprox(w15.weights, w18.weights, rtol = 7e-3)
     @test isapprox(w19.weights, w1.weights, rtol = 8e-3)
+    @test isapprox(w20.weights, w1.weights, rtol = 0.002)
+    @test isapprox(w21.weights, w7.weights, rtol = 0.0000008)
+    @test isapprox(w22.weights, w7.weights, rtol = 1.0e-6)
+    @test isapprox(w23.weights, w22.weights, rtol = 2.0e-4)
 end
 
 @testset "$(:Classic), $(:Trad), $(:SSkew)" begin
@@ -252,6 +270,20 @@ end
     opt.obj = :Sharpe
     w19 = optimise!(portfolio, opt)
     setproperty!(portfolio, rmf, Inf)
+    opt.sd_cone = false
+    opt.kelly = :None
+    opt.obj = :Min_Risk
+    w20 = optimise!(portfolio, opt)
+    risk20 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
+    opt.obj = :Sharpe
+    w21 = optimise!(portfolio, opt)
+    risk21 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
+    setproperty!(portfolio, rmf, 5)
+    w22 = optimise!(portfolio, opt)
+    risk22 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
+    opt.obj = :Max_Ret
+    setproperty!(portfolio, rmf, risk22)
+    w23 = optimise!(portfolio, opt)
 
     w1t = [1.6044126474808694e-6, 6.387919740147824e-5, 1.414858054840168e-6,
            1.6813775168781085e-6, 2.0469710540271765e-6, 2.116339953996922e-6,
@@ -364,6 +396,10 @@ end
     @test isapprox(w14.weights, w17.weights, rtol = 4e-3)
     @test isapprox(w15.weights, w18.weights, rtol = 4e-3)
     @test isapprox(w19.weights, w1.weights, rtol = 6e-3)
+    @test isapprox(w20.weights, w1.weights, rtol = 0.005)
+    @test isapprox(w21.weights, w7.weights, rtol = 0.0000009)
+    @test isapprox(w22.weights, w7.weights, rtol = 9.0e-7)
+    @test isapprox(w23.weights, w22.weights, rtol = 2.0e-4)
 end
 
 @testset "$(:Classic), $(:Trad), $(:DVar)" begin
