@@ -8,6 +8,102 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Test adding skewness to another measure" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+
+    rm = :Skew
+    opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = rm,
+                      obj = :Min_Risk, kelly = :None)
+
+    w1 = optimise!(portfolio, opt)
+    portfolio.skew_factor = 0
+    w2 = optimise!(portfolio, opt)
+    portfolio.skew_factor = 8
+    w3 = optimise!(portfolio, opt)
+    opt.rm = :SD
+    portfolio.skew_factor = Inf
+    w4 = optimise!(portfolio, opt)
+    portfolio.skew_factor = 0
+    w5 = optimise!(portfolio, opt)
+    portfolio.skew_factor = 2
+    w6 = optimise!(portfolio, opt)
+    portfolio.skew_factor = 8
+    w7 = optimise!(portfolio, opt)
+    portfolio.skew_factor = Inf
+
+    portfolio.sskew_factor = Inf
+    opt.rm = :SSkew
+    w8 = optimise!(portfolio, opt)
+    portfolio.sskew_factor = 0
+    w9 = optimise!(portfolio, opt)
+    portfolio.sskew_factor = 8
+    w10 = optimise!(portfolio, opt)
+    opt.rm = :SD
+    portfolio.sskew_factor = Inf
+    w11 = optimise!(portfolio, opt)
+    portfolio.sskew_factor = 0
+    w12 = optimise!(portfolio, opt)
+    portfolio.sskew_factor = 2
+    w13 = optimise!(portfolio, opt)
+    portfolio.sskew_factor = 8
+    w14 = optimise!(portfolio, opt)
+
+    w6t = [0.0026354275749322443, 0.05520947741035115, 2.88292486305246e-7,
+           0.011217444462648793, 0.015540235791726633, 0.007294887210979084,
+           3.899501931693162e-8, 0.1384846686508059, 5.619219962894404e-8,
+           1.4264636900253708e-7, 0.2855982912592649, 8.550398887290524e-8,
+           4.0185944557342566e-8, 0.11727545683980922, 0.005180482430773081,
+           0.016745180622565338, 0.0077834334790627055, 0.20483183287545345,
+           7.577961384734552e-8, 0.1322024537960061]
+    w7t = [8.413927417714243e-7, 0.09222294098507178, 1.6168463788897735e-7,
+           2.0594000236277162e-7, 0.008523442957645658, 3.007500480370547e-7,
+           6.833538384822706e-8, 0.13619418248362034, 9.979458409901339e-8,
+           1.5596045505028015e-7, 0.26494454649109994, 3.4315324995498946e-6,
+           1.2825613036862424e-7, 0.0783181629157472, 0.02532294038010334,
+           0.01907855067328539, 0.012932625739071507, 0.21592581988533274,
+           1.422385714567375e-7, 0.14653125160396763]
+    w12t = [0.0078093616583851146, 0.030698578999046943, 0.010528316771324561,
+            0.027486806578381814, 0.012309038313357737, 0.03341430871186881,
+            1.1079055085166888e-7, 0.13985416268183082, 2.0809271230580642e-7,
+            6.32554715643476e-6, 0.28784123553791136, 1.268075347971748e-7,
+            8.867081236591187e-8, 0.12527141708492384, 3.264070667606171e-7,
+            0.015079837844627948, 1.5891383112101438e-5, 0.1931406057562605,
+            2.654124109083291e-7, 0.11654298695072397]
+    w13t = [1.384008546759806e-6, 0.0316494420628888, 1.4466615477601905e-6,
+            0.015775935372681668, 0.010442899482149982, 0.009851951563574745,
+            1.6845564712725654e-7, 0.1404230153792723, 2.93065068940981e-7,
+            5.00892434748868e-7, 0.32532989744017604, 3.1063572739077716e-7,
+            1.7332147477485165e-7, 0.1184225153788876, 1.25268476291211e-6,
+            0.014302557449595256, 2.0736860865331673e-6, 0.2083923849842472,
+            3.9292677008851197e-7, 0.12540140454845938]
+
+    @test isapprox(w1.weights, w2.weights)
+    @test isapprox(w1.weights, w3.weights)
+    @test isapprox(w4.weights, w5.weights)
+    @test isapprox(w6.weights, w6t)
+    @test !isapprox(w6.weights, w1.weights)
+    @test !isapprox(w6.weights, w4.weights)
+    @test isapprox(w7.weights, w7t)
+    @test !isapprox(w7.weights, w1.weights)
+    @test !isapprox(w7.weights, w4.weights)
+    @test !isapprox(w7.weights, w6.weights)
+    @test isapprox(w8.weights, w9.weights)
+    @test isapprox(w8.weights, w10.weights)
+    @test isapprox(w11.weights, w12.weights)
+    @test isapprox(w12.weights, w12t)
+    @test !isapprox(w12.weights, w8.weights)
+    @test !isapprox(w12.weights, w10.weights)
+    @test isapprox(w13.weights, w13t)
+    @test !isapprox(w13.weights, w8.weights)
+    @test !isapprox(w13.weights, w10.weights)
+    @test !isapprox(w13.weights, w12.weights)
+    @test !isapprox(w6.weights, w12.weights)
+    @test !isapprox(w7.weights, w13.weights)
+end
+
 @testset "$(:Classic), $(:Trad), $(:Skew)" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,

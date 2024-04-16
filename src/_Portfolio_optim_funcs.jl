@@ -654,7 +654,7 @@ function _add_skew_to_risk(portfolio, rm)
         unregister(model, :tmp)
     end
 
-    if isfinite(sskew_factor) && !iszero(sskew_factor) && rm != :SSKew
+    if isfinite(sskew_factor) && !iszero(sskew_factor) && rm != :SSkew
         @expression(model, tmp, model[:risk] + sskew_factor * model[:sskew_risk])
         unregister(model, :risk)
         @expression(model, risk, tmp)
