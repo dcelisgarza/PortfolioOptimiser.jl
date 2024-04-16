@@ -366,7 +366,7 @@ end
     @test isapprox(w19.weights, w1.weights, rtol = 8e-3)
 end
 
-@testset "" begin
+@testset "$(:Classic), $(:Trad), $(:DVar)" begin
     assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
     rf = 1.0329^(1 / 252) - 1
