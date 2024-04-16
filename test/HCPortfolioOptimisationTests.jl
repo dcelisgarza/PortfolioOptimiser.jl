@@ -306,8 +306,6 @@ end
     w7 = optimise!(portfolio; type = :NCO,
                    nco_opt = OptimiseOpt(; rm = rm, obj = :Equal, rf = rf, l = l),
                    cluster = false)
-    plot_risk_contribution(portfolio; type = :NCO, rm = rm)
-    plot_clusters(portfolio; cluster = false)
     w8 = optimise!(portfolio; type = :NCO,
                    nco_opt = OptimiseOpt(; rm = rm, obj = :Min_Risk, rf = rf, l = l),
                    nco_opt_o = OptimiseOpt(; rm = rm, obj = :Sharpe, rf = rf, l = l),
