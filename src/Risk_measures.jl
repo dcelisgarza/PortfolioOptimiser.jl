@@ -1485,7 +1485,8 @@ function sharpe_ratio(portfolio::AbstractPortfolio;
                         alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
                         a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
                         beta = portfolio.beta, b_sim = portfolio.b_sim,
-                        kappa = portfolio.kappa, owa_w = owa_w, solvers = portfolio.solvers)
+                        kappa = portfolio.kappa, owa_w = owa_w, V = portfolio.V,
+                        SV = portfolio.SV, solvers = portfolio.solvers)
 end
 
 export Variance, SD, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR, RRM, RVaR, DaR_abs,

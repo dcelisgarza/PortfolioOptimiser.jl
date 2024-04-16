@@ -59,7 +59,7 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 portfolio = Portfolio(; prices = prices_assets,
                       solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                              :params => Dict("verbose" => true
+                                                              :params => Dict("verbose" => false
                                                                               #   "max_step_fraction" => 0.65
                                                                               #   #   "max_iter" => 400,
                                                                               #   #   "max_iter"=>150,
@@ -74,45 +74,195 @@ portfolio = Portfolio(; prices = prices_assets,
                                                                               #   "reduced_tol_ktratio" => 1e-8
 
                                                                               ))))
-@time asset_statistics!(portfolio)
+asset_statistics!(portfolio)
+# :SKew
+# :SSKew
+# :DVar
 
-skew = portfolio.skew
-V = portfolio.V
-sskew = portfolio.sskew
-SV = portfolio.SV
-kurt = portfolio.kurt
-skurt = portfolio.skurt
-clusters = rand(1:20, 10)
-N = size(portfolio.returns, 2)
-Nc = length(clusters)
+rm = :SSkew
+opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = rm,
+                  obj = :Min_Risk, kelly = :None)
 
-idx = Int[]
-sizehint!(idx, Nc^2)
-for c ∈ clusters
-    append!(idx, (((c - 1) * N + 1):(c * N))[clusters])
-end
+w1 = optimise!(portfolio, opt)
+risk1 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
+opt.kelly = :Approx
+w2 = optimise!(portfolio, opt)
+opt.kelly = :Exact
+w3 = optimise!(portfolio, opt)
+opt.obj = :Utility
+opt.kelly = :None
+w4 = optimise!(portfolio, opt)
+opt.kelly = :Approx
+w5 = optimise!(portfolio, opt)
+opt.kelly = :Exact
+w6 = optimise!(portfolio, opt)
+opt.obj = :Sharpe
+opt.kelly = :None
+w7 = optimise!(portfolio, opt)
+risk7 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
+ret7 = dot(portfolio.mu, w7.weights)
+opt.kelly = :Approx
+w8 = optimise!(portfolio, opt)
+risk8 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
+ret8 = dot(portfolio.mu, w8.weights)
+opt.kelly = :Exact
+w9 = optimise!(portfolio, opt)
+risk9 = calc_risk(portfolio; type = :Trad, rm = rm, rf = rf)
+ret9 = dot(portfolio.mu, w9.weights)
+opt.obj = :Max_Ret
+opt.kelly = :None
+w10 = optimise!(portfolio, opt)
+opt.kelly = :Approx
+w11 = optimise!(portfolio, opt)
+opt.kelly = :Exact
+w12 = optimise!(portfolio, opt)
+setproperty!(portfolio, :mu_l, ret7)
+opt.obj = :Min_Risk
+opt.kelly = :None
+w13 = optimise!(portfolio, opt)
+setproperty!(portfolio, :mu_l, ret8)
+w14 = optimise!(portfolio, opt)
+setproperty!(portfolio, :mu_l, ret9)
+w15 = optimise!(portfolio, opt)
+setproperty!(portfolio, :mu_l, Inf)
+rmf = Symbol(lowercase(string(rm)) * "_u")
+setproperty!(portfolio, rmf, risk7)
+opt.obj = :Max_Ret
+opt.kelly = :None
+w16 = optimise!(portfolio, opt)
+setproperty!(portfolio, rmf, risk8)
+w17 = optimise!(portfolio, opt)
+setproperty!(portfolio, rmf, risk9)
+w18 = optimise!(portfolio, opt)
+setproperty!(portfolio, rmf, risk1)
+opt.obj = :Sharpe
+w19 = optimise!(portfolio, opt)
+setproperty!(portfolio, rmf, Inf)
 
-skew[clusters, idx]
-@time skew2, V2, sskew2, SV2 = PortfolioOptimiser.coskew_mtx(portfolio.returns[:, clusters],
-                                                             portfolio.mu[clusters])
-@test isapprox(skew[clusters, idx], skew2)
-@test isapprox(sskew[clusters, idx], sskew2)
+println("w1t = $(w1.weights)")
+println("w2t = $(w2.weights)")
+println("w3t = $(w3.weights)")
+println("w4t = $(w4.weights)")
+println("w5t = $(w5.weights)")
+println("w6t = $(w6.weights)")
+println("w7t = $(w7.weights)")
+println("w8t = $(w8.weights)")
+println("w9t = $(w9.weights)")
+println("w10t = $(w10.weights)")
+println("w11t = $(w11.weights)")
+println("w12t = $(w12.weights)")
 
-V = zeros(eltype(skew), Nc, Nc)
-for i ∈ 1:Nc
-    j = (i - 1) * Nc + 1
-    k = i * Nc
-    vals, vecs = eigen(skew[clusters, idx][:, j:k])
-    vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
-    V .-= real(vecs * Diagonal(vals) * transpose(vecs))
-end
-isapprox(V, V2)
+w1t = [1.6044126474808694e-6, 6.387919740147824e-5, 1.414858054840168e-6,
+       1.6813775168781085e-6, 2.0469710540271765e-6, 2.116339953996922e-6,
+       5.874226424834042e-7, 0.12812799249943374, 1.0974501778662702e-6,
+       1.7086142924218442e-6, 0.4997282356314232, 1.3273919118913505e-6,
+       9.728050097433342e-7, 0.026495764704323903, 0.00015023141200918842,
+       0.013458959792367066, 2.946452848774722e-6, 0.21129032992645078,
+       1.5467266618233742e-6, 0.12066555601381827]
+w2t = [1.6741408439788703e-6, 5.4181619830474946e-5, 1.4772206315003974e-6,
+       1.7971431052953999e-6, 2.6482468158924754e-6, 2.246087598334583e-6,
+       5.917923438339016e-7, 0.12812195127012185, 1.1231990478506012e-6,
+       1.7619259095515968e-6, 0.4996871899259452, 1.5623277400739484e-6,
+       9.939378327706881e-7, 0.026506706873806737, 0.00016017104781535386,
+       0.01342123105488912, 3.830684541612858e-6, 0.21131359319071602, 1.588305210829121e-6,
+       0.12071368000525379]
+w3t = [9.112967407024484e-8, 2.4284652557869215e-6, 8.159064709668178e-8,
+       1.1181858109975545e-7, 2.6663481590850287e-7, 1.7003046143834034e-7,
+       3.159882605610237e-8, 0.12809183981977293, 5.851550821538698e-8, 9.74327693873567e-8,
+       0.49967137044020066, 1.9733654127513186e-7, 8.948653620120993e-8,
+       0.026607801299592827, 5.951230209656851e-6, 0.013510867564644547,
+       3.9524058040306547e-7, 0.21131359797294272, 8.142442397451755e-8,
+       0.12079447096801577]
+w4t = [7.052084116651649e-11, 1.1011456306472704e-10, 2.1349200076014008e-10,
+       1.5432621008187172e-10, 0.8964274785082526, 1.739778466305075e-10,
+       0.10357251888949207, 3.345459809184482e-11, 1.2749228017926342e-10,
+       1.3909874692879892e-11, 4.59595184139058e-11, 1.589986592408071e-10,
+       2.1698240512924053e-10, 1.0784688621030566e-10, 2.1379411467057645e-10,
+       4.6422703030242035e-10, 2.6128939335401695e-10, 1.9650064748911383e-11,
+       1.5795421790524158e-10, 5.826476193012757e-11]
+w5t = [4.03951510116872e-11, 6.56162536985027e-11, 1.0181240275254102e-10,
+       7.787365194556045e-11, 0.8832591266867846, 4.5587652947206215e-11,
+       0.11674087205513205, 1.0713501752351081e-11, 7.651053985807375e-11,
+       1.5882559822214765e-11, 4.861705899662827e-12, 4.362777191010949e-11,
+       6.282059377511313e-11, 2.1620509050839107e-11, 6.211225286087416e-11,
+       3.305784345455929e-10, 1.414471943424064e-10, 1.5975960718954705e-11,
+       9.638055375788389e-11, 4.4266689812649654e-11]
+w6t = [1.5811311060775533e-9, 1.9187489530488656e-9, 2.3737110193614567e-9,
+       2.072788553699979e-9, 0.886376590169756, 5.364744856000569e-10, 0.11362337985191061,
+       1.2353120458872547e-9, 2.079805228313373e-9, 1.3122687984673233e-9,
+       1.1673486922757801e-9, 5.645804291400642e-10, 3.228190976064559e-10,
+       8.348336683389837e-10, 3.319787180535584e-10, 5.435061631443339e-9,
+       2.9131005505429675e-9, 1.2988360236514801e-9, 2.3385785703096787e-9,
+       1.6609558545100205e-9]
+w7t = [1.9208950784660518e-10, 3.2176497330463307e-10, 2.4046864614545796e-10,
+       1.8337883326718426e-10, 0.8086229923872494, 7.988007958328952e-11,
+       0.0043547547791044595, 3.386058392712632e-10, 1.9622464070952902e-10,
+       1.6355298824641334e-10, 3.1940809699051557e-10, 7.012901224488476e-11,
+       4.874296829843509e-11, 1.3641899280890118e-10, 5.2647081948336176e-11,
+       0.18702224906335355, 5.376052134706978e-10, 2.9754670175260314e-10,
+       3.153043649354607e-10, 2.765246466590213e-10]
+w8t = [1.5640157344076053e-8, 3.582061272235252e-8, 2.0967647646182747e-8,
+       1.434265151901145e-8, 0.7615402768341621, 5.8799811509887846e-9, 0.01795493375117831,
+       6.82072789192539e-8, 1.7161833781871267e-8, 1.3937346954368635e-8,
+       5.331381082832199e-8, 4.989596015087121e-9, 3.52895190702238e-9,
+       1.1379989369077216e-8, 3.725672571225845e-9, 0.22050422976420622,
+       1.7751905872404807e-7, 4.198766806450605e-8, 4.217111232106812e-8,
+       2.907708355516215e-8]
+w9t = [5.553592439719559e-8, 1.1663023650724744e-7, 7.633484799626114e-8,
+       5.326938535959939e-8, 0.7729653491506971, 2.083948647969848e-8, 0.020610259502484927,
+       1.520542775416144e-7, 6.471991580131279e-8, 4.987187222564725e-8,
+       1.2708076393696777e-7, 1.8038849954898925e-8, 1.2669331427630937e-8,
+       3.910989923638194e-8, 1.3355344444324209e-8, 0.2064228749643929,
+       3.6443089845109477e-7, 1.1604485798825767e-7, 1.4158630547059004e-7,
+       9.481022777802042e-8]
+w10t = [4.3422955344620045e-9, 4.482608372372868e-9, 5.2151136335546805e-9,
+        4.997973799097022e-9, 1.479369787463968e-7, 2.2326679314415314e-9,
+        0.999999785026607, 3.327627412942966e-9, 4.59970993047624e-9, 3.582706666614823e-9,
+        3.263665683434885e-9, 2.3305636210161792e-9, 1.7153315191007083e-9,
+        2.77851132735056e-9, 1.7865323395456848e-9, 4.945270403094947e-9,
+        5.191706124856787e-9, 3.4811228279287047e-9, 4.650003219981197e-9,
+        4.113003750877124e-9]
+w11t = [5.619586642787703e-12, 8.276729930516474e-12, 1.4303142954340837e-11,
+        1.1318044807100396e-11, 0.8503236954639315, 7.1381171385102224e-12,
+        0.14967630438138319, 4.2876945553380653e-13, 1.0193743602633687e-11,
+        1.732551494667518e-12, 4.5941464265574075e-14, 6.44661322933117e-12,
+        9.08817518586835e-12, 3.5643431740902176e-12, 8.77780354909866e-12,
+        3.082287714886444e-11, 1.7759280864727746e-11, 1.3797700206848313e-12,
+        1.2160188596177151e-11, 5.629568200254058e-12]
+w12t = [1.4913543300318003e-10, 1.6699242865726496e-10, 2.07522285731361e-10,
+        1.871090607872307e-10, 0.8533951274589937, 6.55647304423056e-11,
+        0.14660486995341881, 1.1367885040236333e-10, 1.808379346386064e-10,
+        1.2297986365358102e-10, 1.0923688096630237e-10, 6.801869384941162e-11,
+        4.844089767435111e-11, 8.72246410303023e-11, 4.9229146078698996e-11,
+        3.381458846828161e-10, 2.3238337104439516e-10, 1.196872652847151e-10,
+        1.9357080965121847e-10, 1.4782934867899478e-10]
 
-@time kurt2, skurt2, L_2, S_2 = PortfolioOptimiser.cokurt_mtx(portfolio.returns[:,
-                                                                                clusters],
-                                                              portfolio.mu[clusters])
-@test isapprox(kurt[idx, idx], kurt2)
-@test isapprox(skurt[idx, idx], skurt2)
+@test isapprox(w1.weights, w1t)
+@test isapprox(w2.weights, w2t)
+@test isapprox(w3.weights, w3t)
+@test isapprox(w2.weights, w3.weights, rtol = 5e-4)
+@test isapprox(w4.weights, w4t)
+@test isapprox(w5.weights, w5t)
+@test isapprox(w6.weights, w6t)
+@test isapprox(w5.weights, w6.weights, rtol = 5e-3)
+@test isapprox(w7.weights, w7t)
+@test isapprox(w8.weights, w8t)
+@test isapprox(w9.weights, w9t)
+@test isapprox(w8.weights, w9.weights, rtol = 3e-2)
+@test isapprox(w10.weights, w10t)
+@test isapprox(w11.weights, w11t)
+@test isapprox(w12.weights, w12t)
+@test isapprox(w11.weights, w12.weights, rtol = 6e-3)
+@test isapprox(w13.weights, w7.weights, rtol = 7e-4)
+@test isapprox(w14.weights, w8.weights, rtol = 4e-2)
+@test isapprox(w15.weights, w9.weights, rtol = 4e-2)
+@test isapprox(w16.weights, w7.weights, rtol = 4e-5)
+@test isapprox(w17.weights, w8.weights, rtol = 4e-2)
+@test isapprox(w18.weights, w9.weights, rtol = 4e-2)
+@test isapprox(w13.weights, w16.weights, rtol = 8e-4)
+@test isapprox(w14.weights, w17.weights, rtol = 4e-3)
+@test isapprox(w15.weights, w18.weights, rtol = 4e-3)
+@test isapprox(w19.weights, w1.weights, rtol = 6e-3)
 
 ##################
 portfolio.skew_factor = Inf
@@ -820,20 +970,7 @@ lrc2, hrc2 = extrema(rc2)
 for rtol ∈
     [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 1e-2, 1e-1, 2.5e-1, 5e-1,
      1e0]
-    a1, a2 = [3.5231149124516024e-9, 0.13968049714554842, 0.06864917026613944,
-              0.0916435270956175, 0.1941761525025078, 9.289060359835379e-17,
-              0.037602412536222, 0.08831489903626148, 1.1382874727175016e-15,
-              2.6193402629947552e-8, 1.5314935309760717e-8, 1.0105364646520988e-16,
-              2.4427988768871966e-16, 2.2856517165425115e-16, 5.351920200768704e-17,
-              1.0771336730926371e-8, 0.24211921739567008, 0.11620888241657644,
-              1.9100609590696612e-8, 0.021605166702055836],
-             [3.5235313037544633e-9, 0.13968049714572486, 0.06864917032501697,
-              0.09164352710177702, 0.1941761526042709, 9.28905966595001e-17,
-              0.037602412527191424, 0.08831489917767826, 1.138287388065542e-15,
-              2.6193401535198235e-8, 1.5314934663760045e-8, 1.0105363891957816e-16,
-              2.442785257037521e-16, 2.2856515462968445e-16, 5.3519197995688067e-17,
-              1.07713362810882e-8, 0.2421192174115078, 0.11620888251451723,
-              1.910060878501064e-8, 0.021605166288501187]
+    a1, a2 = w13.weights, w7.weights
     if isapprox(a1, a2; rtol = rtol)
         println(", rtol = $(rtol)")
         break
