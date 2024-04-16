@@ -41,13 +41,39 @@ function _opt_w(portfolio, assets, returns, imu, icov, opt;
                                                 kappa = portfolio.kappa,
                                                 owa_w = portfolio.owa_w,
                                                 solvers = portfolio.solvers,
-                                                max_num_assets_kurt = portfolio.max_num_assets_kurt))
+                                                max_num_assets_kurt = portfolio.max_num_assets_kurt),
+                V = nothing, SV = nothing, kurt = nothing, skurt = nothing)
     port = Portfolio(; assets = assets, ret = returns, portfolio_kwargs...)
 
     port.mu = imu
     port.cov = icov
-    if opt.rm ∈ (:Kurt, :SKurt, :Skew, :SSKew)
-        asset_statistics!(port; asset_stat_kwargs...)
+
+    if opt.rm == :Kurt
+        if isnothing(kurt)
+            asset_statistics!(port; asset_stat_kwargs...)
+        else
+            port.kurt = kurt
+            missing, port.L_2, port.S_2 = dup_elim_sum_matrices(length(assets))
+        end
+    elseif opt.rm == :SKurt
+        if isnothing(skurt)
+            asset_statistics!(port; asset_stat_kwargs...)
+        else
+            port.skurt = skurt
+            missing, port.L_2, port.S_2 = dup_elim_sum_matrices(length(assets))
+        end
+    elseif opt.rm == :Skew
+        if isnothing(V)
+            asset_statistics!(port; asset_stat_kwargs...)
+        else
+            port.V = V
+        end
+    elseif opt.rm == :SSkew
+        if isnothing(SV)
+            asset_statistics!(port; asset_stat_kwargs...)
+        else
+            port.SV = SV
+        end
     end
 
     type1 = opt.type
@@ -195,31 +221,37 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
     else
         Matrix{eltype(returns)}(undef, 0, 0)
     end
-    if rm == :SKew
-        skew = coskew(returns[:, cluster], transpose(portfolio.mu[cluster]))
-        N = length(cluster)
-        V = zeros(eltype(skew), N, N)
-        for i ∈ 1:N
-            j = (i - 1) * N + 1
-            k = i * N
-            vals, vecs = eigen(skew[:, j:k])
-            vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
-            V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+    if rm ∈ (:SKew, :SSKew)
+        idx = Int[]
+        N = size(returns, 2)
+        Nc = length(cluster)
+        sizehint!(idx, Nc^2)
+        for c ∈ cluster
+            append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
         end
-        portfolio_kwargs = (portfolio_kwargs..., V = V)
-    end
-    if rm == :SSKew
-        sskew = scoskew(returns[:, cluster], transpose(portfolio.mu[cluster]))
-        N = length(cluster)
-        SV = zeros(eltype(sskew), N, N)
-        for i ∈ 1:N
-            j = (i - 1) * N + 1
-            k = i * N
-            vals, vecs = eigen(sskew[:, j:k])
-            vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
-            SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+        if rm == :Skew
+            skew = portfolio.skew[cluster, idx]
+            V = zeros(eltype(skew), Nc, Nc)
+            for i ∈ 1:Nc
+                j = (i - 1) * Nc + 1
+                k = i * Nc
+                vals, vecs = eigen(skew[:, j:k])
+                vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+                V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+            end
+            portfolio_kwargs = (setdiff(portfolio_kwargs, (:V,))..., V = V)
+        elseif rm == :SSkew
+            sskew = portfolio.sskew[cluster, idx]
+            SV = zeros(eltype(sskew), Nc, Nc)
+            for i ∈ 1:Nc
+                j = (i - 1) * Nc + 1
+                k = i * Nc
+                vals, vecs = eigen(sskew[:, j:k])
+                vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+                SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+            end
+            portfolio_kwargs = (setdiff(portfolio_kwargs, (:SV,))..., SV = SV)
         end
-        portfolio_kwargs = (portfolio_kwargs..., SV = SV)
     end
 
     cw = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf,
@@ -465,31 +497,39 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
         else
             Matrix{eltype(returns)}(undef, 0, 0)
         end
-        if rm == :SKew
-            skew = coskew(returns, transpose(portfolio.mu[cidx]))
-            N = length(cidx)
-            V = zeros(eltype(skew), N, N)
-            for i ∈ 1:N
-                j = (i - 1) * N + 1
-                k = i * N
-                vals, vecs = eigen(skew[:, j:k])
-                vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
-                V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+        if rm ∈ (:SKew, :SSKew)
+            idx = Int[]
+            N = size(returns, 2)
+            cluster = findall(cidx)
+            Nc = length(cluster)
+            sizehint!(idx, Nc^2)
+            for c ∈ cluster
+                append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
             end
-            portfolio_kwargs = (portfolio_kwargs..., V = V)
-        end
-        if rm == :SSKew
-            sskew = scoskew(returns, transpose(portfolio.mu[cidx]))
-            N = length(cidx)
-            SV = zeros(eltype(sskew), N, N)
-            for i ∈ 1:N
-                j = (i - 1) * N + 1
-                k = i * N
-                vals, vecs = eigen(sskew[:, j:k])
-                vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
-                SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+            if rm == :Skew
+                skew = portfolio.skew[cluster, idx]
+                V = zeros(eltype(skew), Nc, Nc)
+                for i ∈ 1:Nc
+                    j = (i - 1) * Nc + 1
+                    k = i * Nc
+                    vals, vecs = eigen(skew[:, j:k])
+                    vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+                    V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+                end
+                portfolio_kwargs = (setdiff(portfolio_kwargs, (:V,))..., V = V)
             end
-            portfolio_kwargs = (portfolio_kwargs..., SV = SV)
+            if rm == :SSkew
+                sskew = portfolio.sskew[cluster, idx]
+                SV = zeros(eltype(sskew), Nc, Nc)
+                for i ∈ 1:Nc
+                    j = (i - 1) * Nc + 1
+                    k = i * Nc
+                    vals, vecs = eigen(sskew[:, j:k])
+                    vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+                    SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+                end
+                portfolio_kwargs = (setdiff(portfolio_kwargs, (:SV,))..., SV = SV)
+            end
         end
         cweights = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf,
                                portfolio_kwargs = portfolio_kwargs)
@@ -524,20 +564,60 @@ function _intra_weights(portfolio, opt;
     intra_weights = zeros(eltype(covariance), size(portfolio.returns, 2), k)
     cfails = Dict{Int, Dict}()
 
+    V = nothing
+    SV = nothing
+    kurt = nothing
+    skurt = nothing
     for i ∈ 1:k
-        idx = clustering_idx .== i
-        cmu = !isempty(mu) ? mu[idx] : Vector{eltype(returns)}(undef, 0)
+        cidx = clustering_idx .== i
+        cmu = !isempty(mu) ? mu[cidx] : Vector{eltype(returns)}(undef, 0)
         ccov = if !isempty(covariance)
-            covariance[idx, idx]
+            covariance[cidx, cidx]
         else
             Matrix{eltype(returns)}(undef, 0, 0)
         end
-        cret = returns[:, idx]
-        cassets = portfolio.assets[idx]
+        cret = returns[:, cidx]
+        cassets = portfolio.assets[cidx]
+        if rm ∈ (:Kurt, :SKurt, :SKew, :SSKew)
+            idx = Int[]
+            N = size(returns, 2)
+            cluster = findall(cidx)
+            Nc = length(cluster)
+            sizehint!(idx, Nc^2)
+            for c ∈ cluster
+                append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
+            end
+            if rm == :Kurt
+                kurt = portfolio.kurt[idx, idx]
+            elseif rm == :SKurt
+                skurt = portfolio.skurt[idx, idx]
+            elseif rm == :Skew
+                skew = portfolio.skew[cluster, idx]
+                V = zeros(eltype(skew), Nc, Nc)
+                for i ∈ 1:Nc
+                    j = (i - 1) * Nc + 1
+                    k = i * Nc
+                    vals, vecs = eigen(skew[:, j:k])
+                    vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+                    V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+                end
+            elseif rm == :SSkew
+                sskew = portfolio.sskew[cluster, idx]
+                SV = zeros(eltype(sskew), Nc, Nc)
+                for i ∈ 1:Nc
+                    j = (i - 1) * Nc + 1
+                    k = i * Nc
+                    vals, vecs = eigen(sskew[:, j:k])
+                    vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+                    SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+                end
+            end
+        end
         weights, cfail, success = _opt_w(portfolio, cassets, cret, cmu, ccov, opt;
                                          asset_stat_kwargs = asset_stat_kwargs,
-                                         portfolio_kwargs = portfolio_kwargs)
-        intra_weights[idx, i] .= weights
+                                         portfolio_kwargs = portfolio_kwargs, V = V,
+                                         SV = SV, kurt = kurt, skurt = skurt)
+        intra_weights[cidx, i] .= weights
         if !success
             cfails[i] = cfail
         end

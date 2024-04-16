@@ -77,26 +77,42 @@ portfolio = Portfolio(; prices = prices_assets,
 @time asset_statistics!(portfolio)
 
 skew = portfolio.skew
+V = portfolio.V
+sskew = portfolio.sskew
+SV = portfolio.SV
+kurt = portfolio.kurt
+skurt = portfolio.skurt
 clusters = rand(1:20, 10)
 N = size(portfolio.returns, 2)
 Nc = length(clusters)
-@time begin
-    idx = Int[]
-    sizehint!(idx, Nc^2)
-    for c ∈ clusters
-        append!(idx, (((c - 1) * N + 1):(c * N))[clusters])
-    end
-end
-skew[clusters, idx]
-@time skew2 = PortfolioOptimiser.coskew(portfolio.returns[:, clusters],
-                                        transpose(portfolio.mu[clusters]))
-isapprox(skew[clusters, idx], skew2)
 
-kurt = portfolio.kurt
-kurt[idx, idx]
-@time kurt2 = PortfolioOptimiser.cokurt(portfolio.returns[:, clusters],
-                                        transpose(portfolio.mu[clusters]))
-isapprox(kurt[idx, idx], kurt2)
+idx = Int[]
+sizehint!(idx, Nc^2)
+for c ∈ clusters
+    append!(idx, (((c - 1) * N + 1):(c * N))[clusters])
+end
+
+skew[clusters, idx]
+@time skew2, V2, sskew2, SV2 = PortfolioOptimiser.coskew_mtx(portfolio.returns[:, clusters],
+                                                             portfolio.mu[clusters])
+@test isapprox(skew[clusters, idx], skew2)
+@test isapprox(sskew[clusters, idx], sskew2)
+
+V = zeros(eltype(skew), Nc, Nc)
+for i ∈ 1:Nc
+    j = (i - 1) * Nc + 1
+    k = i * Nc
+    vals, vecs = eigen(skew[clusters, idx][:, j:k])
+    vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+    V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+end
+isapprox(V, V2)
+
+@time kurt2, skurt2, L_2, S_2 = PortfolioOptimiser.cokurt_mtx(portfolio.returns[:,
+                                                                                clusters],
+                                                              portfolio.mu[clusters])
+@test isapprox(kurt[idx, idx], kurt2)
+@test isapprox(skurt[idx, idx], skurt2)
 
 ##################
 portfolio.skew_factor = Inf
@@ -804,20 +820,20 @@ lrc2, hrc2 = extrema(rc2)
 for rtol ∈
     [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 1e-2, 1e-1, 2.5e-1, 5e-1,
      1e0]
-    a1, a2 = [0.002053809289790945, 8.295180251958725e-8, 0.007795951608426504,
-              0.060935174778332116, 2.9267934831713466e-8, 0.07844311047774502,
-              8.646889604846801e-9, 0.1088603835066715, 9.305831401685865e-8,
-              6.13437493954626e-8, 0.2577211220726601, 0.019735213421749154,
-              3.997289351907197e-9, 0.10113280336054016, 0.00020290583030764823,
-              1.818591515596432e-8, 9.575177652963963e-8, 0.20022307113954807,
-              0.03137921783140518, 0.1315168434791522],
-             [0.0020538089950505375, 8.295179811976934e-8, 0.007795951880502392,
-              0.060935174818880104, 2.9266750653280933e-8, 0.07844311049923124,
-              8.646889146210331e-9, 0.10886038348364989, 9.30610234600973e-8,
-              6.134374631754735e-8, 0.2577211221019369, 0.019735213445093838,
-              3.997289090649795e-9, 0.1011328033124083, 0.00020290581517230338,
-              1.8185914228557167e-8, 9.575177145090074e-8, 0.20022307113274748,
-              0.03137921782586492, 0.13151684348427975]
+    a1, a2 = [3.5231149124516024e-9, 0.13968049714554842, 0.06864917026613944,
+              0.0916435270956175, 0.1941761525025078, 9.289060359835379e-17,
+              0.037602412536222, 0.08831489903626148, 1.1382874727175016e-15,
+              2.6193402629947552e-8, 1.5314935309760717e-8, 1.0105364646520988e-16,
+              2.4427988768871966e-16, 2.2856517165425115e-16, 5.351920200768704e-17,
+              1.0771336730926371e-8, 0.24211921739567008, 0.11620888241657644,
+              1.9100609590696612e-8, 0.021605166702055836],
+             [3.5235313037544633e-9, 0.13968049714572486, 0.06864917032501697,
+              0.09164352710177702, 0.1941761526042709, 9.28905966595001e-17,
+              0.037602412527191424, 0.08831489917767826, 1.138287388065542e-15,
+              2.6193401535198235e-8, 1.5314934663760045e-8, 1.0105363891957816e-16,
+              2.442785257037521e-16, 2.2856515462968445e-16, 5.3519197995688067e-17,
+              1.07713362810882e-8, 0.2421192174115078, 0.11620888251451723,
+              1.910060878501064e-8, 0.021605166288501187]
     if isapprox(a1, a2; rtol = rtol)
         println(", rtol = $(rtol)")
         break
