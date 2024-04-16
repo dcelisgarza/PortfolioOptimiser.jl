@@ -367,7 +367,7 @@ end
 end
 
 @testset "$(:Classic), $(:Trad), $(:DVar)" begin
-    portfolio = Portfolio(; prices = prices_assets[(end - 50):end],
+    portfolio = Portfolio(; prices = prices[(end - 50):end],
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => true,
                                                                                   "max_step_fraction" => 0.75))))

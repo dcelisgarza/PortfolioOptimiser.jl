@@ -221,7 +221,7 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
     else
         Matrix{eltype(returns)}(undef, 0, 0)
     end
-    if rm ∈ (:SKew, :SSKew)
+    if rm ∈ (:Skew, :SSkew)
         idx = Int[]
         N = size(returns, 2)
         Nc = length(cluster)
@@ -239,7 +239,11 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
                 vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
                 V .-= real(vecs * Diagonal(vals) * transpose(vecs))
             end
-            portfolio_kwargs = (setdiff(portfolio_kwargs, (:V,))..., V = V)
+            if all(iszero.(diag(V)))
+                V .= V + eps(eltype(skew)) * I
+            end
+            ks = setdiff(keys(portfolio_kwargs), (:V,))
+            portfolio_kwargs = (portfolio_kwargs[ks]..., V = V)
         elseif rm == :SSkew
             sskew = portfolio.sskew[cluster, idx]
             SV = zeros(eltype(sskew), Nc, Nc)
@@ -250,7 +254,11 @@ function _cluster_risk(portfolio, returns, covariance, cluster; rm = :SD, rf = 0
                 vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
                 SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
             end
-            portfolio_kwargs = (setdiff(portfolio_kwargs, (:SV,))..., SV = SV)
+            if all(iszero.(diag(SV)))
+                SV .= SV + eps(eltype(skew)) * I
+            end
+            ks = setdiff(keys(portfolio_kwargs), (:SV,))
+            portfolio_kwargs = (portfolio_kwargs[ks]..., SV = SV)
         end
     end
 
@@ -497,7 +505,7 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
         else
             Matrix{eltype(returns)}(undef, 0, 0)
         end
-        if rm ∈ (:SKew, :SSKew)
+        if rm ∈ (:Skew, :SSkew)
             idx = Int[]
             N = size(returns, 2)
             cluster = findall(cidx)
@@ -516,7 +524,11 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
                     vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
                     V .-= real(vecs * Diagonal(vals) * transpose(vecs))
                 end
-                portfolio_kwargs = (setdiff(portfolio_kwargs, (:V,))..., V = V)
+                if all(iszero.(diag(V)))
+                    V .= V + eps(eltype(skew)) * I
+                end
+                ks = setdiff(keys(portfolio_kwargs), (:V,))
+                portfolio_kwargs = (portfolio_kwargs[ks]..., V = V)
             end
             if rm == :SSkew
                 sskew = portfolio.sskew[cluster, idx]
@@ -528,7 +540,11 @@ function _hierarchical_recursive_bisection(portfolio; rm = :SD, rm_o = rm, rf = 
                     vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
                     SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
                 end
-                portfolio_kwargs = (setdiff(portfolio_kwargs, (:SV,))..., SV = SV)
+                if all(iszero.(diag(SV)))
+                    SV .= SV + eps(eltype(skew)) * I
+                end
+                ks = setdiff(keys(portfolio_kwargs), (:SV,))
+                portfolio_kwargs = (portfolio_kwargs[ks]..., SV = SV)
             end
         end
         cweights = _naive_risk(portfolio, cret, ccov; rm = rm, rf = rf,
@@ -578,7 +594,7 @@ function _intra_weights(portfolio, opt;
         end
         cret = returns[:, cidx]
         cassets = portfolio.assets[cidx]
-        if rm ∈ (:Kurt, :SKurt, :SKew, :SSKew)
+        if rm ∈ (:Kurt, :SKurt, :Skew, :SSkew)
             idx = Int[]
             N = size(returns, 2)
             cluster = findall(cidx)
@@ -601,6 +617,9 @@ function _intra_weights(portfolio, opt;
                     vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
                     V .-= real(vecs * Diagonal(vals) * transpose(vecs))
                 end
+                if all(iszero.(diag(V)))
+                    V .= V + eps(eltype(skew)) * I
+                end
             elseif rm == :SSkew
                 sskew = portfolio.sskew[cluster, idx]
                 SV = zeros(eltype(sskew), Nc, Nc)
@@ -610,6 +629,9 @@ function _intra_weights(portfolio, opt;
                     vals, vecs = eigen(sskew[:, j:k])
                     vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
                     SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+                end
+                if all(iszero.(diag(SV)))
+                    SV .= SV + eps(eltype(skew)) * I
                 end
             end
         end

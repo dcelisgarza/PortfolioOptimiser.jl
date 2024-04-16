@@ -12,6 +12,10 @@ end
     include("PortfolioClassicTradTests.jl")
 end
 
+@safetestset "HCPortfolio Optimisation" begin
+    include("HCPortfolioOptimisationTests.jl")
+end
+
 @safetestset "Asset Statistics" begin
     include("AssetStatisticsTests2.jl")
     include("AssetStatisticsTests1.jl")
@@ -71,10 +75,6 @@ end
 
 @safetestset "HCPortfolio OWA Optimisation" begin
     include("HCPortfolioOWAOptimisationTests.jl")
-end
-
-@safetestset "HCPortfolio Optimisation" begin
-    include("HCPortfolioOptimisationTests.jl")
 end
 
 @safetestset "Portfolio Classic Traditional OWA Optimisation" begin

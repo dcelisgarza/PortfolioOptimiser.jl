@@ -12,7 +12,8 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "$(:HRP), $(:HERC), $(:NCO), $(:SD)" begin end
+@testset "$(:HRP), $(:HERC), $(:NCO), $(:Skew)" begin
+end
 
 @testset "Cluster assets" begin
     hcportfolio = HCPortfolio(; prices = prices)
