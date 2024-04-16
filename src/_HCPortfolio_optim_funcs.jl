@@ -887,7 +887,16 @@ function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD
                    rm_o::Symbol = rm, rf::Real = 0.0, rf_o::Real = rf,
                    nco_opt::OptimiseOpt = OptimiseOpt(;), nco_opt_o::OptimiseOpt = nco_opt,
                    cluster::Bool = true, cluster_opt::ClusterOpt = ClusterOpt(;),
-                   asset_stat_kwargs::NamedTuple = (; calc_mu = false, calc_cov = false,
+                   asset_stat_kwargs::NamedTuple = (;
+                                                    calc_mu = if type != :NCO &&
+                                                                 rm ∈ (:Skew, :SSkew) ||
+                                                                 type == :NCO &&
+                                                                 nco_opt.rm ∈
+                                                                 (:Skew, :SSkew)
+                                                        true
+                                                    else
+                                                        false
+                                                    end, calc_cov = false,
                                                     calc_kurt = if type != :NCO &&
                                                                    rm ∈ (:Kurt, :SKurt) ||
                                                                    type == :NCO &&
