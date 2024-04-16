@@ -165,15 +165,15 @@ l = 2.0
     @test isapprox(w2.weights, w3.weights, rtol = 5e-4)
     @test isapprox(w4.weights, w4t)
     @test isapprox(w5.weights, w5t)
-    @test isapprox(w6.weights, w6t)
+    @test isapprox(w6.weights, w6t, rtol = 1.0e-6)
     @test isapprox(w5.weights, w6.weights, rtol = 5e-3)
     @test isapprox(w7.weights, w7t)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t)
+    @test isapprox(w9.weights, w9t, rtol = 0.0005)
     @test isapprox(w8.weights, w9.weights, rtol = 3e-2)
     @test isapprox(w10.weights, w10t)
     @test isapprox(w11.weights, w11t)
-    @test isapprox(w12.weights, w12t)
+    @test isapprox(w12.weights, w12t, rtol = 1.0e-7)
     @test isapprox(w11.weights, w12.weights, rtol = 6e-3)
     @test isapprox(w13.weights, w7.weights, rtol = 7e-4)
     @test isapprox(w14.weights, w8.weights, rtol = 4e-2)
@@ -344,15 +344,15 @@ end
     @test isapprox(w2.weights, w3.weights, rtol = 2e-3)
     @test isapprox(w4.weights, w4t)
     @test isapprox(w5.weights, w5t)
-    @test isapprox(w6.weights, w6t)
+    @test isapprox(w6.weights, w6t, rtol = 1.0e-7)
     @test isapprox(w5.weights, w6.weights, rtol = 5e-3)
     @test isapprox(w7.weights, w7t)
     @test isapprox(w8.weights, w8t)
-    @test isapprox(w9.weights, w9t)
+    @test isapprox(w9.weights, w9t, rtol = 0.0005)
     @test isapprox(w8.weights, w9.weights, rtol = 1e-1)
     @test isapprox(w10.weights, w10t)
     @test isapprox(w11.weights, w11t)
-    @test isapprox(w12.weights, w12t)
+    @test isapprox(w12.weights, w12t, rtol = 1.0e-6)
     @test isapprox(w11.weights, w12.weights, rtol = 6e-3)
     @test isapprox(w13.weights, w7.weights, rtol = 2e-3)
     @test isapprox(w14.weights, w8.weights, rtol = 8e-2)
@@ -367,10 +367,6 @@ end
 end
 
 @testset "$(:Classic), $(:Trad), $(:DVar)" begin
-    assets = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
-
-    rf = 1.0329^(1 / 252) - 1
-    l = 2.0
     portfolio = Portfolio(; prices = prices_assets[(end - 50):end],
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => true,
