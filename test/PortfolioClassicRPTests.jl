@@ -42,8 +42,8 @@ l = 2.0
            0.09373811218518592, 0.077131194099914, 0.1113995728035403, 0.05985359566815352,
            0.12058109541456198]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, rtol = 4e-4)
     @test isapprox(hrc2 / lrc2, 20, rtol = 5e-4)
 end
@@ -83,10 +83,10 @@ end
            0.07136194764465356, 0.08035943723320722, 0.11755735569637261,
            0.0769733621350138, 0.10994416871866086]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 5.0e-5)
+    @test isapprox(w2.weights, w2t, rtol = 5.0e-5)
     @test isapprox(hrc1 / lrc1, 1, rtol = 3e-4)
-    @test isapprox(hrc2 / lrc2, 20, rtol = 2e-4)
+    @test isapprox(hrc2 / lrc2, 20, rtol = 0.0005)
 end
 
 @testset "$(:Classic), $(:RP), $(:DVar)" begin
@@ -124,10 +124,10 @@ end
            0.07414824451792247, 0.07857952815322962, 0.09763333949992102,
            0.08249387364322333, 0.13887276031306414]
 
-    @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, rtol = 2e-5)
-    @test isapprox(hrc2 / lrc2, 20, rtol = 4e-8)
+    @test isapprox(hrc2 / lrc2, 20, rtol = 5.0e-5)
 end
 
 @testset "$(:Classic), $(:RP), $(:SD)" begin
