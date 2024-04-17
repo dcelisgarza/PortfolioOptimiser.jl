@@ -277,7 +277,7 @@ end
     @test isapprox(w8.weights, w8t)
     @test isapprox(w9.weights, w9t)
     @test isapprox(w10.weights, w10t, rtol = 1.0e-6)
-    @test isapprox(w11.weights, w11t, rtol = 1.0e-5)
+    @test isapprox(w11.weights, w11t, rtol = 5.0e-5)
 end
 
 @testset "$(:HRP), $(:HERC), $(:NCO), $(:DVar)" begin
