@@ -584,6 +584,7 @@ function _intra_weights(portfolio, opt;
     SV = nothing
     kurt = nothing
     skurt = nothing
+    rm = opt.rm
     for i ∈ 1:k
         cidx = clustering_idx .== i
         cmu = !isempty(mu) ? mu[cidx] : Vector{eltype(returns)}(undef, 0)
