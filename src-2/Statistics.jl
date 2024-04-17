@@ -1,3 +1,5 @@
+# # Auxiliary Functions
+# ## Fix matrices that should be positive definite.
 abstract type PosdefFix end
 @kwdef mutable struct PosdefNearest <: PosdefFix
     method::NearestCorrelationMatrix.NCMAlgorithm = NearestCorrelationMatrix.Newton(;
@@ -43,16 +45,30 @@ function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
 
     return nothing
 end
+
+# # DBHT Similarity Matrices
+abstract type DBHTSimilarity end
+struct DBHTExp <: DBHTSimilarity end
+function dbht_similarity(::DBHTExp, S, D, args...; kwargs...)
+    return exp.(-D)
+end
+struct DBHTMaxDist <: DBHTSimilarity end
+function dbht_similarity(::DBHTMaxDist, S, D, args...; kwargs...)
+    return ceil(maximum(D)^2) .- D .^ 2
+end
+
+# # Distance matrices
 abstract type DistanceMethod end
 @kwdef mutable struct DistanceMLP <: DistanceMethod
     absolute::Bool = false
 end
 function dist(de::DistanceMLP, X::AbstractMatrix)
-    return sqrt.(if !de.absolute
-                     clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
-                 else
-                     clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
-                 end)
+    return Symmetric(sqrt.(if !de.absolute
+                               clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)),
+                                      one(eltype(X)))
+                           else
+                               clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
+                           end))
 end
 @kwdef mutable struct DistanceMLP2 <: DistanceMethod
     absolute::Bool = false
@@ -73,15 +89,50 @@ struct DistanceLog <: DistanceMethod end
 function dist(::DistanceLog, X::AbstractMatrix)
     return -log.(X)
 end
-abstract type DBHTSimilarity end
-struct DBHTExp <: DBHTSimilarity end
-function dbht_similarity(::DBHTExp, S, D)
-    return exp.(-D)
+
+# # Correlation Matrices
+abstract type CorPearson <: StatsBase.CovarianceEstimator end
+@kwdef mutable struct CovFull <: CorPearson
+    ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
+    absolute::Bool = false
 end
-struct DBHTMaxDist <: DBHTSimilarity end
-function dbht_similarity(::DBHTMaxDist, S, D)
-    return ceil(maximum(D)^2) .- D .^ 2
+function StatsBase.cov(ce::CovFull, X::AbstractMatrix, args...; kwargs...)
+    return Symmetric(cov(ce.ce, X, args...; kwargs...))
 end
+@kwdef mutable struct CovSemi <: CorPearson
+    ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
+    target::Union{Real, AbstractVector{<:Real}} = 0.0
+    absolute::Bool = false
+end
+function StatsBase.cov(ce::CovSemi, X::AbstractMatrix, args...; kwargs...)
+    target = ce.target
+    X = if isa(target, Real)
+        min.(X .- target, zero(eltype(X)))
+    else
+        min.(X .- transpose(target), zero(eltype(X)))
+    end
+    return Symmetric(cov(ce.ce, X, args...; mean = zero(eltype(X))))
+end
+function StatsBase.cor(ce::CorPearson, X::AbstractMatrix, args...; kwargs...)
+    sigma = cov(ce, X, args...; kwargs...)
+    return cov2cor(Matrix(!ce.absolute ? sigma : abs.(sigma)))
+end
+@kwdef mutable struct CorSpearman <: StatsBase.CovarianceEstimator
+    absolute::Bool = false
+end
+function StatsBase.cor(ce::CorSpearman, X::AbstractMatrix, args...; kwargs...)
+    rho = corspearman(X)
+    return cov2cor(Matrix(!ce.absolute ? rho : abs.(rho)))
+end
+@kwdef mutable struct CorKendall <: StatsBase.CovarianceEstimator
+    absolute::Bool = false
+end
+function StatsBase.cor(ce::CorKendall, X::AbstractMatrix, args...; kwargs...)
+    rho = corkendall(X)
+    return cov2cor(Matrix(!ce.absolute ? rho : abs.(rho)))
+end
+
+# ## Mutual and variation of information matrices.
 abstract type AbstractBins end
 abstract type AstroBins <: AbstractBins end
 struct BinKnuth <: AstroBins end
@@ -307,9 +358,16 @@ end
 function StatsBase.cor(ce::CorMutualInfo, X::AbstractMatrix, args...; kwargs...)
     return mutual_info(X, ce.bins, ce.normalise)
 end
+function StatsBase.cov(ce::CorMutualInfo, X::AbstractMatrix, args...; kwargs...)
+    std_vec = vec(std(X; dims = 1))
+    return Symmetric(mutual_info(X, ce.bins, ce.normalise) .*
+                     (std_vec * transpose(std_vec)))
+end
 function dist(ce::DistanceVarInfo, X::AbstractMatrix)
     return variation_info(X, ce.bins, ce.normalise)
 end
+
+# ## Distance correlation.
 @kwdef mutable struct CorDistance <: StatsBase.CovarianceEstimator
     distance::Distances.UnionMetric = Distances.Euclidean()
     args::Tuple = ()
@@ -350,6 +408,12 @@ end
 function StatsBase.cor(ce::CorDistance, X::AbstractMatrix, args...; kwargs...)
     return cor_distance(ce::CorDistance, X::AbstractMatrix)
 end
+function StatsBase.cov(ce::CorDistance, X::AbstractMatrix, args...; kwargs...)
+    std_vec = vec(std(X; dims = 1))
+    return Symmetric(cor_distance(ce, X) .* (std_vec * transpose(std_vec)))
+end
+
+# ## Lower tail correlation.
 mutable struct CorLowerTailDependence <: StatsBase.CovarianceEstimator
     alpha::Real
 end
@@ -387,6 +451,12 @@ end
 function StatsBase.cor(ce::CorLowerTailDependence, X::AbstractMatrix, args...; kwargs...)
     return lower_tail_dependence(X, ce.alpha)
 end
+function StatsBase.cov(ce::CorLowerTailDependence, X::AbstractMatrix, args...; kwargs...)
+    std_vec = vec(std(X; dims = 1))
+    return lower_tail_dependence(X, ce.alpha) .* (std_vec * transpose(std_vec))
+end
+
+# ## Gerber covariances
 abstract type CorGerber <: StatsBase.CovarianceEstimator end
 abstract type CorGerberBasic <: CorGerber end
 abstract type CorSB <: CorGerber end
@@ -1474,7 +1544,7 @@ function _denoise!(ce::Shrink, X::AbstractMatrix, vals::AbstractVector,
     X .= corr0 + ce.alpha * corr1 + (one(ce.alpha) - ce.alpha) * Diagonal(corr1)
     return nothing
 end
-function denoise!(ce::Denoise, X::AbstractMatrix, q::Real)
+function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
     s = diag(X)
     iscov = any(.!isone.(s))
     if iscov
@@ -1503,6 +1573,8 @@ function denoise!(ce::Denoise, X::AbstractMatrix, q::Real)
     if iscov
         StatsBase.cor2cov!(X, s)
     end
+
+    posdef_fix!(posdef, X)
 
     return nothing
 end
@@ -1603,7 +1675,7 @@ struct NoJLoGo <: AbstractJLoGo end
     DBHT::DBHT = DBHT(;)
 end
 function jlogo!(::NoJLoGo, args...) end
-function jlogo!(je::JLoGo, X::AbstractMatrix, D = nothing)
+function jlogo!(je::JLoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
     if isnothing(D)
         s = diag(X)
         iscov = any(.!isone.(s))
@@ -1631,26 +1703,22 @@ end
     jlogo::AbstractJLoGo = NoJLoGo()
 end
 function StatsBase.cov(ce::CovType, X::AbstractMatrix)
-    sigma = cov(ce.ce, X)
+    sigma = Matrix(cov(ce.ce, X))
     posdef_fix!(ce.posdef, sigma)
-    denoise!(ce.posdef, sigma, size(X, 1) / size(X, 2))
-    posdef_fix!(ce.posdef, sigma)
-    jlogo!(ce.jlogo, sigma)
-    if !isa(ce.jlogo, NoJLoGo)
-        posdef_fix!(ce.posdef, sigma)
-    end
+    denoise!(ce.denoise, ce.posdef, sigma, size(X, 1) / size(X, 2))
+    jlogo!(ce.jlogo, ce.posdef, sigma)
 
     return sigma
 end
 function StatsBase.cor(ce::CovType, X::AbstractMatrix)
-    rho = cor(ce.ce, X)
+    rho = Matrix(cor(ce.ce, X))
     posdef_fix!(ce.posdef, rho)
-    denoise!(ce.posdef, rho, size(X, 1) / size(X, 2))
-    posdef_fix!(ce.posdef, rho)
-    jlogo!(ce.jlogo, rho)
-    if !isa(ce.jlogo, NoJLoGo)
-        posdef_fix!(ce.posdef, rho)
-    end
+    denoise!(ce.denoise, ce.posdef, rho, size(X, 1) / size(X, 2))
+    jlogo!(ce.jlogo, ce.posdef, rho)
 
     return rho
 end
+
+export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance,
+       CorLowerTailDependence, CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1,
+       CorGerberSB0, CorGerberSB1, DistanceMLP, dist

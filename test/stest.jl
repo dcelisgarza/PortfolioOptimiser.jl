@@ -1,9 +1,43 @@
 using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, PortfolioOptimiser,
       LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix, StatsBase,
       AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes, BenchmarkTools,
-      COSMO
+      COSMO, Statistics, CovarianceEstimation
 
 ret = randn(100, 200)
+
+ce = LinearShrinkage(ConstantCorrelation())
+opt = CorOpt(; estimation = CorEstOpt(; estimator = ce), method = :Semi_Pearson)
+
+de = DistanceMLP()
+@time c1, d1 = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+@time begin
+    c2 = cor(CovSemi(; ce = ce), ret)
+    d2 = dist(de, c2)
+end
+@test isapprox(c1, c2)
+@test isapprox(d1, d2)
+
+# CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance,
+# CorLowerTailDependence, CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0,
+# CorGerberSB1
+
+function StatsBase.std(ce::CovarianceEstimator, X::AbstractMatrix, args...; dims::Int = 1,
+                       kwargs...)
+    val = Vector{eltype(ret)}(undef, size(X, dims))
+    for i ∈ axes(X, dims)
+        val[i] = std(ce, X[:, i])
+    end
+    return val
+end
+
+std(LinearShrinkage(ConstantCorrelation()), ret)
+cov(LinearShrinkage(ConstantCorrelation()), ret[:, 1])
+
+std.(SimpleCovariance(; corrected = true), ret)
+
+@time f(ret)
+@time test2 = std(ret; dims = 1)
+
 T, N = size(ret)
 q = T / N
 X = cov(ret)
