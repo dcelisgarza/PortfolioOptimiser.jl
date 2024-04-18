@@ -3,16 +3,24 @@ using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, Portfolio
       AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes, BenchmarkTools,
       COSMO, Statistics, CovarianceEstimation
 
-ret = randn(100, 200)
+ret = randn(200, 201)
+c0 = cov(ret)
+w = eweights(size(ret, 1), 0.05; scale = true)
 
-ce = LinearShrinkage(ConstantCorrelation())
-opt = CorOpt(; estimation = CorEstOpt(; estimator = ce), method = :Semi_Pearson)
+ce = SimpleCovariance(; corrected = false)
+normalise = true
+opt = CorOpt(;
+             estimation = CorEstOpt(; estimator = ce,
+                                    cor_genfunc = GenericFunction(; args = (w,))),
+             method = :Gerber0, gerber = GerberOpt(; normalise = normalise))
 
-de = DistanceMLP()
+absolute = false
+de = DistanceMLP(; absolute = absolute)
+ct = CovType(; ce = CorGerber0(; normalise = normalise))
 @time c1, d1 = PortfolioOptimiser.cor_dist_mtx(ret, opt)
 @time begin
-    c2 = cor(CovSemi(; ce = ce), ret)
-    d2 = dist(de, c2)
+    c2 = cor(ct, ret)
+    d2 = dist(de, c2, ret)
 end
 @test isapprox(c1, c2)
 @test isapprox(d1, d2)

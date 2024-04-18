@@ -1840,7 +1840,7 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
             dist = reshape(dist, size(corr))
         end
     elseif method == :Distance
-        corr = cordistance(returns, opt.distcor)
+        corr = Matrix(cordistance(returns, opt.distcor))
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         dist_method = opt.dist.method
         dargs = opt.dist.args
@@ -1852,7 +1852,7 @@ function cor_dist_mtx(returns::AbstractMatrix, opt::CorOpt = CorOpt(;))
     elseif method == :Mutual_Info
         corr, dist = mut_var_info_mtx(returns, opt.estimation.bins_info)
     elseif method == :Tail
-        corr = ltdi_mtx(returns, opt.estimation.alpha)
+        corr = Matrix(ltdi_mtx(returns, opt.estimation.alpha))
         corr = _denoise_logo_mtx(T, N, corr, opt, :cor, true)
         dist = -log.(corr)
     elseif method == :Cov_to_Cor
