@@ -98,20 +98,16 @@ abstract type CorPearson <: StatsBase.CovarianceEstimator end
 @kwdef mutable struct CovFull <: CorPearson
     absolute::Bool = false
     ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    w::Union{AbstractWeights, Nothing} = nothing
+    args::Tuple = ()
 end
 function StatsBase.cov(ce::CovFull, X::AbstractMatrix, args...; kwargs...)
-    return Symmetric(if isnothing(ce.w)
-                         cov(ce.ce, X; kwargs...)
-                     else
-                         cov(ce.ce, X, ce.w; kwargs...)
-                     end)
+    return Symmetric(cov(ce.ce, X, ce.args...; kwargs...))
 end
 @kwdef mutable struct CovSemi <: CorPearson
     absolute::Bool = false
     ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
     target::Union{Real, AbstractVector{<:Real}} = 0.0
-    w::Union{AbstractWeights, Nothing} = nothing
+    args::Tuple = ()
 end
 function StatsBase.cov(ce::CovSemi, X::AbstractMatrix, args...; kwargs...)
     target = ce.target
@@ -120,11 +116,7 @@ function StatsBase.cov(ce::CovSemi, X::AbstractMatrix, args...; kwargs...)
     else
         min.(X .- transpose(target), zero(eltype(X)))
     end
-    return Symmetric(if isnothing(ce.w)
-                         cov(ce.ce, X; mean = zero(eltype(X)))
-                     else
-                         cov(ce.ce, X, ce.w; mean = zero(eltype(X)))
-                     end)
+    return Symmetric(cov(ce.ce, X, ce.args...; mean = zero(eltype(X))))
 end
 function StatsBase.cor(ce::CorPearson, X::AbstractMatrix, args...; kwargs...)
     sigma = cov(ce, X; kwargs...)
