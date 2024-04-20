@@ -24,6 +24,12 @@ ct = CovType(; ce = CorGerber0(; normalise = normalise))
 end
 @test isapprox(c1, c2)
 @test isapprox(d1, d2)
+@code_llvm cor(ct, ret)
+
+w = eweights(size(ret, 1), 0.05)
+me = PortfolioOptimiser.SimpleMean2(; w = w)
+@time m = mean(me, ret)
+@time m2 = vec(mean(ret, w; dims = 1))
 
 # CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance,
 # CorLowerTailDependence, CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0,

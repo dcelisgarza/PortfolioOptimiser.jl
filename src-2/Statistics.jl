@@ -376,8 +376,10 @@ end
 # ## Distance correlation.
 @kwdef mutable struct CorDistance <: StatsBase.CovarianceEstimator
     distance::Distances.UnionMetric = Distances.Euclidean()
-    args::Tuple = ()
-    kwargs::NamedTuple = (;)
+    dist_args::Tuple = ()
+    dist_kwargs::NamedTuple = (;)
+    mean_args1::Tuple = ()
+    mean_args2::Tuple = ()
 end
 function cor_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
     N = length(v1)
@@ -385,10 +387,12 @@ function cor_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
 
     N2 = N^2
 
-    a = Distances.pairwise(ce.distance, v1, ce.args...; ce.kwargs...)
-    b = Distances.pairwise(ce.distance, v2, ce.args...; ce.kwargs...)
-    A = a .- mean(a; dims = 1) .- mean(a; dims = 2) .+ mean(a)
-    B = b .- mean(b; dims = 1) .- mean(b; dims = 2) .+ mean(b)
+    a = Distances.pairwise(ce.distance, v1, ce.dist_args...; ce.dist_kwargs...)
+    b = Distances.pairwise(ce.distance, v2, ce.dist_args...; ce.dist_kwargs...)
+    B = b .- mean(b, ce.mean_args1...; dims = 1) .- mean(b, ce.mean_args2...; dims = 2) .+
+        mean(b)
+    A = a .- mean(a, ce.mean_args1...; dims = 1) .- mean(a, ce.mean_args2...; dims = 2) .+
+        mean(a)
 
     dcov2_xx = sum(A .* A) / N2
     dcov2_xy = sum(A .* B) / N2
@@ -1461,7 +1465,7 @@ end
 =#
 abstract type Denoise end
 struct NoDenoise <: Denoise end
-function denoise!(::NoDenoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
+function denoise!(::NoDenoise, X::AbstractMatrix, q::Real)
     return nothing
 end
 mutable struct Fixed{T1, T2, T3, T4} <: Denoise
@@ -1550,7 +1554,7 @@ function _denoise!(ce::Shrink, X::AbstractMatrix, vals::AbstractVector,
     X .= corr0 + ce.alpha * corr1 + (one(ce.alpha) - ce.alpha) * Diagonal(corr1)
     return nothing
 end
-function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
+function denoise!(ce::Denoise, X::AbstractMatrix, q::Real)
     s = diag(X)
     iscov = any(.!isone.(s))
     if iscov
@@ -1580,8 +1584,6 @@ function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
         StatsBase.cor2cov!(X, s)
     end
 
-    posdef_fix!(posdef, X)
-
     return nothing
 end
 abstract type MeanEstimator end
@@ -1589,79 +1591,86 @@ abstract type MeanTarget end
 struct TargetGM <: MeanTarget end
 struct TargetVW <: MeanTarget end
 struct TargetSE <: MeanTarget end
+@kwdef mutable struct SimpleMean <: MeanEstimator
+    args::Tuple = ()
+    kwargs::NamedTuple = (; dims = 1)
+end
+function StatsBase.mean(me::SimpleMean, X::AbstractMatrix)
+    return vec(mean(X, me.args...; me.kwargs...))
+end
 mutable struct MeanJS{T1} <: MeanEstimator
     target::MeanTarget
     args::Tuple
     kwargs::NamedTuple
-    rho::T1
+    sigma::T1
 end
 function MeanJS(; target::MeanTarget = TargetGM(), args::Tuple = (),
                 kwargs::NamedTuple = (; dims = 1),
-                rho::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanJS{typeof(rho)}(target, args, kwargs, rho)
+                sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
+    return MeanJS{typeof(sigma)}(target, args, kwargs, sigma)
 end
 mutable struct MeanBS{T1} <: MeanEstimator
     target::MeanTarget
     args::Tuple
     kwargs::NamedTuple
-    rho::T1
+    sigma::T1
 end
 function MeanBS(; target::MeanTarget = TargetGM(), args::Tuple = (),
                 kwargs::NamedTuple = (; dims = 1),
-                rho::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanBS{typeof(rho)}(target, args, kwargs, rho)
+                sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
+    return MeanBS{typeof(sigma)}(target, args, kwargs, sigma)
 end
 mutable struct MeanBOP{T1} <: MeanEstimator
     target::MeanTarget
     args::Tuple
     kwargs::NamedTuple
-    rho::T1
+    sigma::T1
 end
 function MeanBOP(; target::MeanTarget = TargetGM(), args::Tuple = (),
                  kwargs::NamedTuple = (; dims = 1),
-                 rho::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanBOP{typeof(rho)}(target, args, kwargs, rho)
+                 sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
+    return MeanBOP{typeof(sigma)}(target, args, kwargs, sigma)
 end
-function target_mean(::TargetGM, mu::AbstractVector, rho::AbstractMatrix, inv_sigma,
+function target_mean(::TargetGM, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
                      T::Integer, N::Integer)
     return fill(mean(mu), N)
 end
-function target_mean(::TargetVW, mu::AbstractVector, rho::AbstractMatrix, inv_sigma,
+function target_mean(::TargetVW, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
                      T::Integer, N::Integer)
-    ones = range(one(eltype(rho)); stop = one(eltype(rho)), length = N)
+    ones = range(one(eltype(sigma)); stop = one(eltype(sigma)), length = N)
     if isnothing(inv_sigma)
-        inv_sigma = rho \ I
+        inv_sigma = sigma \ I
     end
     return fill(dot(ones, inv_sigma, mu) / dot(ones, inv_sigma, ones), N)
 end
-function target_mean(::TargetSE, mu::AbstractVector, rho::AbstractMatrix, inv_sigma,
+function target_mean(::TargetSE, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
                      T::Integer, N::Integer)
-    return fill(tr(rho) / T, N)
+    return fill(tr(sigma) / T, N)
 end
-function mu_estimator(me::MeanJS, X::AbstractMatrix)
+function StatsBase.mean(me::MeanJS, X::AbstractMatrix)
     T, N = size(X)
     mu = vec(mean(X, me.args...; me.kwargs...))
-    rho = me.rho
-    b = target_mean(me.target, mu, rho, nothing, T, N)
-    evals = eigvals(rho)
+    sigma = me.sigma
+    b = target_mean(me.target, mu, sigma, nothing, T, N)
+    evals = eigvals(sigma)
     alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
     return (1 - alpha) * mu + alpha * b
 end
-function mu_estimator(me::MeanBS, X::AbstractMatrix)
+function StatsBase.mean(me::MeanBS, X::AbstractMatrix)
     T, N = size(X)
     mu = vec(mean(X, me.args...; me.kwargs...))
-    rho = me.rho
-    inv_sigma = rho \ I
-    b = target_mean(me.target, mu, rho, inv_sigma, T, N)
+    sigma = me.sigma
+    inv_sigma = sigma \ I
+    b = target_mean(me.target, mu, sigma, inv_sigma, T, N)
     alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
     return (1 - alpha) * mu + alpha * b
 end
-function mu_estimator(me::MeanBOP, X::AbstractMatrix)
+function StatsBase.mean(me::MeanBOP, X::AbstractMatrix)
     T, N = size(X)
     mu = vec(mean(X, me.args...; me.kwargs...))
-    rho = me.rho
-    inv_sigma = rho \ I
-    b = target_mean(me.target, mu, rho, inv_sigma, T, N)
+    sigma = me.sigma
+    inv_sigma = sigma \ I
+    b = target_mean(me.target, mu, sigma, inv_sigma, T, N)
     alpha = (dot(mu, inv_sigma, mu) - N / (T - N)) * dot(b, inv_sigma, b) -
             dot(mu, inv_sigma, b)^2
     alpha /= dot(mu, inv_sigma, mu) * dot(b, inv_sigma, b) - dot(mu, inv_sigma, b)^2
@@ -1669,7 +1678,7 @@ function mu_estimator(me::MeanBOP, X::AbstractMatrix)
     return alpha * mu + beta * b
 end
 function StatsBase.mean(me::MeanEstimator, X::AbstractMatrix, args...; kwargs...)
-    return mu_estimator(me, X)
+    return mean(me, X)
 end
 @kwdef mutable struct DBHT
     distance::DistanceMethod = DistanceMLP()
@@ -1705,22 +1714,34 @@ end
 @kwdef mutable struct CovType
     ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
     posdef::PosdefFix = PosdefNearest(;)
-    denoise::Denoise = NoDenoise(;)
+    denoise::Denoise = NoDenoise()
     jlogo::AbstractJLoGo = NoJLoGo()
 end
 function StatsBase.cov(ce::CovType, X::AbstractMatrix)
     sigma = Matrix(cov(ce.ce, X))
     posdef_fix!(ce.posdef, sigma)
-    denoise!(ce.denoise, ce.posdef, sigma, size(X, 1) / size(X, 2))
+    denoise!(ce.denoise, sigma, size(X, 1) / size(X, 2))
+    if !isa(ce.denoise, NoDenoise())
+        posdef_fix!(ce.posdef, sigma)
+    end
     jlogo!(ce.jlogo, ce.posdef, sigma)
+    if !isa(ce.jlogo, NoJLoGo())
+        posdef_fix!(ce.posdef, sigma)
+    end
 
     return sigma
 end
 function StatsBase.cor(ce::CovType, X::AbstractMatrix)
     rho = Matrix(cor(ce.ce, X))
     posdef_fix!(ce.posdef, rho)
-    denoise!(ce.denoise, ce.posdef, rho, size(X, 1) / size(X, 2))
-    jlogo!(ce.jlogo, ce.posdef, rho)
+    denoise!(ce.denoise, rho, size(X, 1) / size(X, 2))
+    if !isa(ce.denoise, NoDenoise)
+        posdef_fix!(ce.posdef, rho)
+    end
+    jlogo!(ce.jlogo, rho)
+    if !isa(ce.jlogo, NoJLoGo)
+        posdef_fix!(ce.posdef, rho)
+    end
 
     return rho
 end
@@ -1728,4 +1749,5 @@ end
 export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
        CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
        DistanceMLP, dist, CovType, DistanceVarInfo, BinKnuth, BinFreedman, BinScott, BinHGR,
-       DistanceLog, DistanceMLP2
+       DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW, TargetSE,
+       SimpleMean, MeanJS, MeanBS, MeanBOP
