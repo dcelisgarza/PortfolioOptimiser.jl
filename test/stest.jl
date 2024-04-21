@@ -4,14 +4,120 @@ using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, Portfolio
       COSMO, Statistics, CovarianceEstimation
 
 ret = randn(200, 201)
-c0 = cov(ret)
+@time c0 = cov(ret)
 w = eweights(size(ret, 1), 0.05; scale = true)
+normalise = false
+absolute = false
 
-ce = SimpleCovariance(; corrected = false)
-normalise = true
-opt = CorOpt(;
-             estimation = CorEstOpt(; estimator = ce,
+ce0 = StatsBase.SimpleCovariance(; corrected = true)
+ce1 = CovFull(; absolute = absolute, ce = ce0, w = nothing)
+ce2 = CovOpt(;
+             estimation = CovEstOpt(; estimator = ce0,
+                                    genfunc = GenericFunction(; args = ())), method = :Full,
+             gerber = GerberOpt(; normalise = normalise))
+ce3 = CorOpt(;
+             estimation = CorEstOpt(; estimator = ce0,
+                                    cor_genfunc = GenericFunction(; args = ())),
+             method = :Pearson, gerber = GerberOpt(; normalise = normalise))
+de = DistanceMLP(; absolute = absolute)
+
+ce = CovType(; ce = ce1)
+@time c1 = cov(ce, ret)
+@time c2 = PortfolioOptimiser.covar_mtx(ret, ce2)
+@time begin
+    c3 = cor(ce, ret)
+    d1 = dist(de, c3, ret)
+end
+@time c4, d2 = PortfolioOptimiser.cor_dist_mtx(ret, ce3)
+
+@test isapprox(c1, c2)
+@test isapprox(c3, c4)
+@test isapprox(d1, d2)
+
+ce0 = StatsBase.SimpleCovariance(; corrected = false)
+ce1 = CovFull(; absolute = absolute, ce = ce0, w = w)
+ce2 = CovOpt(;
+             estimation = CovEstOpt(; estimator = ce0,
+                                    genfunc = GenericFunction(; args = (w,))),
+             method = :Full, gerber = GerberOpt(; normalise = normalise))
+ce3 = CorOpt(;
+             estimation = CorEstOpt(; estimator = ce0,
                                     cor_genfunc = GenericFunction(; args = (w,))),
+             method = :Pearson, gerber = GerberOpt(; normalise = normalise))
+de = DistanceMLP(; absolute = absolute)
+
+ce = CovType(; ce = ce1)
+@time c1 = cov(ce, ret)
+@time c2 = PortfolioOptimiser.covar_mtx(ret, ce2)
+@time begin
+    c3 = cor(ce, ret)
+    d1 = dist(de, c3, ret)
+end
+@time c4, d2 = PortfolioOptimiser.cor_dist_mtx(ret, ce3)
+
+@test isapprox(c1, c2)
+@test isapprox(c3, c4)
+@test isapprox(d1, d2)
+
+#########
+absolute = true
+
+ce0 = StatsBase.SimpleCovariance(; corrected = true)
+ce1 = CovFull(; absolute = absolute, ce = ce0, w = nothing)
+ce2 = CovOpt(;
+             estimation = CovEstOpt(; estimator = ce0,
+                                    genfunc = GenericFunction(; args = ())), method = :Full,
+             gerber = GerberOpt(; normalise = normalise))
+ce3 = CorOpt(;
+             estimation = CorEstOpt(; estimator = ce0,
+                                    cor_genfunc = GenericFunction(; args = ())),
+             method = :Abs_Pearson, gerber = GerberOpt(; normalise = normalise))
+de = DistanceMLP(; absolute = absolute)
+
+ce = CovType(; ce = ce1)
+@time c1 = cov(ce, ret)
+@time c2 = PortfolioOptimiser.covar_mtx(ret, ce2)
+@time begin
+    c3 = cor(ce, ret)
+    d1 = dist(de, c3, ret)
+end
+@time c4, d2 = PortfolioOptimiser.cor_dist_mtx(ret, ce3)
+
+@test isapprox(c1, c2)
+@test isapprox(c3, c4)
+@test isapprox(d1, d2)
+
+ce0 = StatsBase.SimpleCovariance(; corrected = false)
+ce1 = CovFull(; absolute = absolute, ce = ce0, w = w)
+ce2 = CovOpt(;
+             estimation = CovEstOpt(; estimator = ce0,
+                                    genfunc = GenericFunction(; args = (w,))),
+             method = :Full, gerber = GerberOpt(; normalise = normalise))
+ce3 = CorOpt(;
+             estimation = CorEstOpt(; estimator = ce0,
+                                    cor_genfunc = GenericFunction(; args = (w,))),
+             method = :Abs_Pearson, gerber = GerberOpt(; normalise = normalise))
+de = DistanceMLP(; absolute = absolute)
+
+ce = CovType(; ce = ce1)
+@time c1 = cov(ce, ret)
+@time c2 = PortfolioOptimiser.covar_mtx(ret, ce2)
+@time begin
+    c3 = cor(ce, ret)
+    d1 = dist(de, c3, ret)
+end
+@time c4, d2 = PortfolioOptimiser.cor_dist_mtx(ret, ce3)
+
+@test isapprox(c1, c2)
+@test isapprox(c3, c4)
+@test isapprox(d1, d2)
+
+######################
+######################
+ce = SimpleCovariance(; corrected = false)
+opt = CorOpt(;
+             estimation = CorEstOpt(; estimator = ce0,
+                                    cor_genfunc = GenericFunction(; args = ())),
              method = :Gerber0, gerber = GerberOpt(; normalise = normalise))
 
 absolute = false
