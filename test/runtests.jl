@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Stats V2 tests" begin
+    include("StatsTestV2.jl")
+end
+
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
 end

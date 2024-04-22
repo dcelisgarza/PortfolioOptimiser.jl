@@ -957,14 +957,16 @@ function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
     @smart_assert(c3 > c2)
-    return CorSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
-                                                                                    threshold,
-                                                                                    c1, c2,
-                                                                                    c3, n,
-                                                                                    ve,
-                                                                                    std_w,
-                                                                                    mean_w,
-                                                                                    posdef)
+    return CorGerberSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
+                                                                                          threshold,
+                                                                                          c1,
+                                                                                          c2,
+                                                                                          c3,
+                                                                                          n,
+                                                                                          ve,
+                                                                                          std_w,
+                                                                                          mean_w,
+                                                                                          posdef)
 end
 mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
@@ -988,14 +990,16 @@ function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
     @smart_assert(c3 > c2)
-    return CorSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
-                                                                                    threshold,
-                                                                                    c1, c2,
-                                                                                    c3, n,
-                                                                                    ve,
-                                                                                    std_w,
-                                                                                    mean_w,
-                                                                                    posdef)
+    return CorGerberSB1{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
+                                                                                          threshold,
+                                                                                          c1,
+                                                                                          c2,
+                                                                                          c3,
+                                                                                          n,
+                                                                                          ve,
+                                                                                          std_w,
+                                                                                          mean_w,
+                                                                                          posdef)
 end
 function Base.setproperty!(obj::CorSB, sym::Symbol, val)
     if sym == :threshold
@@ -1839,7 +1843,9 @@ struct NoJLoGo <: AbstractJLoGo end
 @kwdef mutable struct JLoGo <: AbstractJLoGo
     DBHT::DBHT = DBHT(;)
 end
-function jlogo!(::NoJLoGo, args...) end
+function jlogo!(::NoJLoGo, ::PosdefFix, ::AbstractMatrix, D = nothing)
+    return nothing
+end
 function jlogo!(je::JLoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
     if isnothing(D)
         s = diag(X)
@@ -1898,4 +1904,4 @@ export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, Co
        CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
        DistanceMLP, dist, CovType, DistanceVarInfo, BinKnuth, BinFreedman, BinScott, BinHGR,
        DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW, TargetSE,
-       SimpleMean, MeanJS, MeanBS, MeanBOP
+       SimpleMean, MeanJS, MeanBS, MeanBOP, SimpleVariance
