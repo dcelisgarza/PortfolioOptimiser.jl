@@ -81,8 +81,9 @@ end
     ret = portfolio.returns
 
     w = eweights(size(ret, 1), 1 / size(ret, 1); scale = true)
+    c0 = StatsBase.SimpleCovariance(; corrected = false)
 
-    cv0 = cov(ret, w)
+    cv0 = cov(c0, ret, w)
     mu0 = vec(mean(ret, w; dims = 1))
 
     me1 = SimpleMean(; w = w)
@@ -280,4 +281,163 @@ end
     cv14 = cov(c14, ret)
     cv14_1 = PortfolioOptimiser.covar_mtx(ret, c14_1)
     @test isapprox(cv14, cv14_1)
+end
+
+@testset "Covariance Matrix Weighted" begin
+    portfolio = Portfolio(; prices = prices)
+    ret = portfolio.returns
+
+    rf = 0.0329 / 252
+    w = eweights(size(ret, 1), 1 / size(ret, 1); scale = true)
+    c0 = StatsBase.SimpleCovariance(; corrected = false)
+    ve = SimpleVariance(; corrected = false)
+    cv0 = cov(c0, ret, w)
+
+    f(x, ve, w; dims = 1) = std(x, w, dims; corrected = ve.corrected)
+    f(ret, ve, w; dims = 1)
+
+    c1 = CovFull(; ce = c0, w = w)
+    c1_1 = CovOpt(; method = :Full, estimation = CovEstOpt(; estimator = c0))
+    c1_1.estimation.genfunc.args = (w,)
+    c2 = CovSemi(; ce = c0, target = rf, w = w)
+    c2_1 = CovOpt(; method = :Semi,
+                  estimation = CovEstOpt(; estimator = c0, target_ret = rf))
+    c2_1.estimation.genfunc.args = (w,)
+    normalise = false
+    c3 = CorGerber0(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c3_1 = CovOpt(; method = :Gerber0, gerber = GerberOpt(; normalise = normalise))
+    c3_1.gerber.mean_func.args = (w,)
+    c3_1.gerber.std_func.func = f
+    c3_1.gerber.std_func.args = (ve, w)
+    c4 = CorGerber1(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c4_1 = CovOpt(; method = :Gerber1, gerber = GerberOpt(; normalise = normalise))
+    c4_1.gerber.mean_func.args = (w,)
+    c4_1.gerber.std_func.func = f
+    c4_1.gerber.std_func.args = (ve, w)
+    c5 = CorGerber2(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c5_1 = CovOpt(; method = :Gerber2, gerber = GerberOpt(; normalise = normalise))
+    c5_1.gerber.mean_func.args = (w,)
+    c5_1.gerber.std_func.func = f
+    c5_1.gerber.std_func.args = (ve, w)
+    c6 = CorSB0(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c6_1 = CovOpt(; method = :SB0, gerber = GerberOpt(; normalise = normalise))
+    c6_1.gerber.mean_func.args = (w,)
+    c6_1.gerber.std_func.func = f
+    c6_1.gerber.std_func.args = (ve, w)
+    c7 = CorSB1(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c7_1 = CovOpt(; method = :SB1, gerber = GerberOpt(; normalise = normalise))
+    c7_1.gerber.mean_func.args = (w,)
+    c7_1.gerber.std_func.func = f
+    c7_1.gerber.std_func.args = (ve, w)
+    c8 = CorGerberSB0(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c8_1 = CovOpt(; method = :Gerber_SB0, gerber = GerberOpt(; normalise = normalise))
+    c8_1.gerber.mean_func.args = (w,)
+    c8_1.gerber.std_func.func = f
+    c8_1.gerber.std_func.args = (ve, w)
+    c9 = CorGerberSB1(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c9_1 = CovOpt(; method = :Gerber_SB1, gerber = GerberOpt(; normalise = normalise))
+    c9_1.gerber.mean_func.args = (w,)
+    c9_1.gerber.std_func.func = f
+    c9_1.gerber.std_func.args = (ve, w)
+    normalise = true
+    c10 = CorGerber0(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c10_1 = CovOpt(; method = :Gerber0, gerber = GerberOpt(; normalise = normalise))
+    c10_1.gerber.mean_func.args = (w,)
+    c10_1.gerber.std_func.func = f
+    c10_1.gerber.std_func.args = (ve, w)
+    c11 = CorGerber1(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c11_1 = CovOpt(; method = :Gerber1, gerber = GerberOpt(; normalise = normalise))
+    c11_1.gerber.mean_func.args = (w,)
+    c11_1.gerber.std_func.func = f
+    c11_1.gerber.std_func.args = (ve, w)
+    c12 = CorGerber2(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c12_1 = CovOpt(; method = :Gerber2, gerber = GerberOpt(; normalise = normalise))
+    c12_1.gerber.mean_func.args = (w,)
+    c12_1.gerber.std_func.func = f
+    c12_1.gerber.std_func.args = (ve, w)
+    c13 = CorSB0(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c13_1 = CovOpt(; method = :SB0, gerber = GerberOpt(; normalise = normalise))
+    c13_1.gerber.mean_func.args = (w,)
+    c13_1.gerber.std_func.func = f
+    c13_1.gerber.std_func.args = (ve, w)
+    c14 = CorSB1(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c14_1 = CovOpt(; method = :SB1, gerber = GerberOpt(; normalise = normalise))
+    c14_1.gerber.mean_func.args = (w,)
+    c14_1.gerber.std_func.func = f
+    c14_1.gerber.std_func.args = (ve, w)
+    c15 = CorGerberSB0(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c15_1 = CovOpt(; method = :Gerber_SB0, gerber = GerberOpt(; normalise = normalise))
+    c15_1.gerber.mean_func.args = (w,)
+    c15_1.gerber.std_func.func = f
+    c15_1.gerber.std_func.args = (ve, w)
+    c16 = CorGerberSB1(; normalise = normalise, mean_w = w, ve = ve, std_w = w)
+    c16_1 = CovOpt(; method = :Gerber_SB1, gerber = GerberOpt(; normalise = normalise))
+    c16_1.gerber.mean_func.args = (w,)
+    c16_1.gerber.std_func.func = f
+    c16_1.gerber.std_func.args = (ve, w)
+
+    cv1 = cov(c1, ret)
+    cv1_1 = PortfolioOptimiser.covar_mtx(ret, c1_1)
+    @test isapprox(cv1, cv0)
+    @test isapprox(cv1, cv1_1)
+
+    cv2 = cov(c2, ret)
+    cv2_1 = PortfolioOptimiser.covar_mtx(ret, c2_1)
+    @test isapprox(cv2, cv2_1)
+
+    cv3 = cov(c3, ret)
+    cv3_1 = PortfolioOptimiser.covar_mtx(ret, c3_1)
+    @test isapprox(cv3, cv3_1)
+
+    cv4 = cov(c4, ret)
+    cv4_1 = PortfolioOptimiser.covar_mtx(ret, c4_1)
+    @test isapprox(cv4, cv4_1)
+
+    cv5 = cov(c5, ret)
+    cv5_1 = PortfolioOptimiser.covar_mtx(ret, c5_1)
+    @test isapprox(cv5, cv5_1)
+
+    cv6 = cov(c6, ret)
+    cv6_1 = PortfolioOptimiser.covar_mtx(ret, c6_1)
+    @test isapprox(cv6, cv6_1)
+
+    cv7 = cov(c7, ret)
+    cv7_1 = PortfolioOptimiser.covar_mtx(ret, c7_1)
+    @test isapprox(cv7, cv7_1)
+
+    cv8 = cov(c8, ret)
+    cv8_1 = PortfolioOptimiser.covar_mtx(ret, c8_1)
+    @test isapprox(cv8, cv8_1)
+
+    cv9 = cov(c9, ret)
+    cv9_1 = PortfolioOptimiser.covar_mtx(ret, c9_1)
+    @test isapprox(cv9, cv9_1)
+
+    cv10 = cov(c10, ret)
+    cv10_1 = PortfolioOptimiser.covar_mtx(ret, c10_1)
+    @test isapprox(cv10, cv10_1)
+
+    cv11 = cov(c11, ret)
+    cv11_1 = PortfolioOptimiser.covar_mtx(ret, c11_1)
+    @test isapprox(cv11, cv11_1)
+
+    cv12 = cov(c12, ret)
+    cv12_1 = PortfolioOptimiser.covar_mtx(ret, c12_1)
+    @test isapprox(cv12, cv12_1)
+
+    cv13 = cov(c13, ret)
+    cv13_1 = PortfolioOptimiser.covar_mtx(ret, c13_1)
+    @test isapprox(cv13, cv13_1)
+
+    cv14 = cov(c14, ret)
+    cv14_1 = PortfolioOptimiser.covar_mtx(ret, c14_1)
+    @test isapprox(cv14, cv14_1)
+
+    cv15 = cov(c15, ret)
+    cv15_1 = PortfolioOptimiser.covar_mtx(ret, c15_1)
+    @test isapprox(cv15, cv15_1)
+
+    cv16 = cov(c16, ret)
+    cv16_1 = PortfolioOptimiser.covar_mtx(ret, c16_1)
+    @test isapprox(cv16, cv16_1)
 end

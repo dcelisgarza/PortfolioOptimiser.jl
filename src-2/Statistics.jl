@@ -101,7 +101,7 @@ function StatsBase.std(ve::SimpleVariance, X::AbstractMatrix; dims::Int = 1, mea
 end
 function StatsBase.std(ve::SimpleVariance, X::AbstractMatrix, w::AbstractWeights;
                        dims::Int = 1, mean = nothing)
-    return std(X, w; dims = dims, corrected = ve.corrected, mean = mean)
+    return std(X, w, dims; corrected = ve.corrected, mean = mean)
 end
 
 # # Correlation Matrices
