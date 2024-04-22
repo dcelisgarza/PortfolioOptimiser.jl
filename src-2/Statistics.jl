@@ -49,11 +49,11 @@ end
 # # DBHT Similarity Matrices
 abstract type DBHTSimilarity end
 struct DBHTExp <: DBHTSimilarity end
-function dbht_similarity(::DBHTExp, S, D, args...; kwargs...)
+function dbht_similarity(::DBHTExp, S, D)
     return exp.(-D)
 end
 struct DBHTMaxDist <: DBHTSimilarity end
-function dbht_similarity(::DBHTMaxDist, S, D, args...; kwargs...)
+function dbht_similarity(::DBHTMaxDist, S, D)
     return ceil(maximum(D)^2) .- D .^ 2
 end
 
@@ -62,7 +62,7 @@ abstract type DistanceMethod end
 @kwdef mutable struct DistanceMLP <: DistanceMethod
     absolute::Bool = false
 end
-function _dist(de::DistanceMLP, X::AbstractMatrix, args...)
+function _dist(de::DistanceMLP, X::AbstractMatrix)
     return Symmetric(sqrt.(if !de.absolute
                                clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)),
                                       one(eltype(X)))
@@ -76,7 +76,7 @@ end
     args::Tuple = ()
     kwargs::NamedTuple = (;)
 end
-function _dist(de::DistanceMLP2, X::AbstractMatrix, args...)
+function _dist(de::DistanceMLP2, X::AbstractMatrix)
     _X = sqrt.(if !de.absolute
                    clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
                else
@@ -86,7 +86,7 @@ function _dist(de::DistanceMLP2, X::AbstractMatrix, args...)
     return Distances.pairwise(de.distance, _X, de.args...; de.kwargs...)
 end
 struct DistanceLog <: DistanceMethod end
-function _dist(::DistanceLog, X::AbstractMatrix, args...)
+function _dist(::DistanceLog, X::AbstractMatrix)
     return -log.(X)
 end
 function dist(de::DistanceMethod, X, Y)
@@ -1746,44 +1746,40 @@ struct TargetGM <: MeanTarget end
 struct TargetVW <: MeanTarget end
 struct TargetSE <: MeanTarget end
 @kwdef mutable struct SimpleMean <: MeanEstimator
-    args::Tuple = ()
-    kwargs::NamedTuple = (; dims = 1)
+    w::Union{<:AbstractWeights, Nothing} = nothing
 end
-function StatsBase.mean(me::SimpleMean, X::AbstractMatrix)
-    return vec(mean(X, me.args...; me.kwargs...))
+function StatsBase.mean(me::SimpleMean, X::AbstractMatrix; dims::Int = 1)
+    return vec(isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims))
 end
 mutable struct MeanJS{T1} <: MeanEstimator
     target::MeanTarget
-    args::Tuple
-    kwargs::NamedTuple
+    w::Union{<:AbstractWeights, Nothing}
     sigma::T1
 end
-function MeanJS(; target::MeanTarget = TargetGM(), args::Tuple = (),
-                kwargs::NamedTuple = (; dims = 1),
+function MeanJS(; target::MeanTarget = TargetGM(),
+                w::Union{<:AbstractWeights, Nothing} = nothing,
                 sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanJS{typeof(sigma)}(target, args, kwargs, sigma)
+    return MeanJS{typeof(sigma)}(target, w, sigma)
 end
 mutable struct MeanBS{T1} <: MeanEstimator
     target::MeanTarget
-    args::Tuple
-    kwargs::NamedTuple
+    w::Union{<:AbstractWeights, Nothing}
     sigma::T1
 end
-function MeanBS(; target::MeanTarget = TargetGM(), args::Tuple = (),
-                kwargs::NamedTuple = (; dims = 1),
+function MeanBS(; target::MeanTarget = TargetGM(),
+                w::Union{<:AbstractWeights, Nothing} = nothing,
                 sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanBS{typeof(sigma)}(target, args, kwargs, sigma)
+    return MeanBS{typeof(sigma)}(target, w, sigma)
 end
 mutable struct MeanBOP{T1} <: MeanEstimator
     target::MeanTarget
-    args::Tuple
-    kwargs::NamedTuple
+    w::Union{<:AbstractWeights, Nothing}
     sigma::T1
 end
-function MeanBOP(; target::MeanTarget = TargetGM(), args::Tuple = (),
-                 kwargs::NamedTuple = (; dims = 1),
+function MeanBOP(; target::MeanTarget = TargetGM(),
+                 w::Union{<:AbstractWeights, Nothing} = nothing,
                  sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanBOP{typeof(sigma)}(target, args, kwargs, sigma)
+    return MeanBOP{typeof(sigma)}(target, w, sigma)
 end
 function target_mean(::TargetGM, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
                      T::Integer, N::Integer)
@@ -1801,27 +1797,30 @@ function target_mean(::TargetSE, mu::AbstractVector, sigma::AbstractMatrix, inv_
                      T::Integer, N::Integer)
     return fill(tr(sigma) / T, N)
 end
-function StatsBase.mean(me::MeanJS, X::AbstractMatrix)
-    T, N = size(X)
-    mu = vec(mean(X, me.args...; me.kwargs...))
+function StatsBase.mean(me::MeanJS, X::AbstractMatrix; dims::Int = 1)
+    @smart_assert(dims ∈ (1, 2))
+    T, N = dims == 1 ? size(X) : size(transpose(X))
+    mu = vec(isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims))
     sigma = me.sigma
     b = target_mean(me.target, mu, sigma, nothing, T, N)
     evals = eigvals(sigma)
     alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
     return (1 - alpha) * mu + alpha * b
 end
-function StatsBase.mean(me::MeanBS, X::AbstractMatrix)
-    T, N = size(X)
-    mu = vec(mean(X, me.args...; me.kwargs...))
+function StatsBase.mean(me::MeanBS, X::AbstractMatrix; dims::Int = 1)
+    @smart_assert(dims ∈ (1, 2))
+    T, N = dims == 1 ? size(X) : size(transpose(X))
+    mu = vec(isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims))
     sigma = me.sigma
     inv_sigma = sigma \ I
     b = target_mean(me.target, mu, sigma, inv_sigma, T, N)
     alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
     return (1 - alpha) * mu + alpha * b
 end
-function StatsBase.mean(me::MeanBOP, X::AbstractMatrix)
-    T, N = size(X)
-    mu = vec(mean(X, me.args...; me.kwargs...))
+function StatsBase.mean(me::MeanBOP, X::AbstractMatrix; dims::Int = 1)
+    @smart_assert(dims ∈ (1, 2))
+    T, N = dims == 1 ? size(X) : size(transpose(X))
+    mu = vec(isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims))
     sigma = me.sigma
     inv_sigma = sigma \ I
     b = target_mean(me.target, mu, sigma, inv_sigma, T, N)
@@ -1830,9 +1829,6 @@ function StatsBase.mean(me::MeanBOP, X::AbstractMatrix)
     alpha /= dot(mu, inv_sigma, mu) * dot(b, inv_sigma, b) - dot(mu, inv_sigma, b)^2
     beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
     return alpha * mu + beta * b
-end
-function StatsBase.mean(me::MeanEstimator, X::AbstractMatrix, args...; kwargs...)
-    return mean(me, X)
 end
 @kwdef mutable struct DBHT
     distance::DistanceMethod = DistanceMLP()
