@@ -2089,12 +2089,16 @@ function _near_optimal_centering(portfolio, class, mu, returns, sigma, w_opt, T,
     e1 = ret3 - c1
     e2 = risk3 + c2
 
+    # Make the model from scratch. Make dev_risk = dev, skew_risk = t_skew, and sskew_risk = t_sskew. Rather than their original squared form.
+    # Remake the return and risk expressions. 
+    # The only constraints for this model should be the ones here since we are going from the original portfolio weights.
+    # The starting weights are already the result of all the constraints. Take them out. Maybe we should split this into its own optimise function.
     model = portfolio.model
 
     set_start_value.(model[:w], w3)
 
-    @constraint(model, model[:ret] >= e1)
-    @constraint(model, model[:risk] <= e2)
+    # @constraint(model, model[:ret] >= e1)
+    # @constraint(model, model[:risk] <= e2)
     @variable(model, log_ret)
     @constraint(model, [-log_ret, 1, model[:ret] - e1] ∈ MOI.ExponentialCone())
     @variable(model, log_risk)

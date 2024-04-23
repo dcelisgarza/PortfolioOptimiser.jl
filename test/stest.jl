@@ -210,10 +210,132 @@ prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
+using ECOS, SCS
 portfolio = Portfolio(; prices = prices,
-                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                              :params => Dict("verbose" => false))))
+                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer
+                                                              #   :params => Dict("max_step_fraction"=>0.75,"verbose" => true)
+                                                              )))
 asset_statistics!(portfolio)
+
+opt = OptimiseOpt(; rm = :SD, obj = :Min_Risk)
+w1_1 = optimise!(portfolio, opt)
+sd1 = calc_risk(portfolio; rm = :SD)
+r1 = dot(portfolio.mu, w1.weights)
+
+opt = OptimiseOpt(; rm = :SD, obj = :Max_Ret)
+w2_1 = optimise!(portfolio, opt)
+sd2 = calc_risk(portfolio; rm = :SD)
+r2 = dot(portfolio.mu, w2.weights)
+
+opt = OptimiseOpt(; rm = :SD, obj = :Sharpe)
+w0_1 = optimise!(portfolio, opt)
+sd0_1 = calc_risk(portfolio; rm = :SD)
+r0_1 = dot(portfolio.mu, w2.weights)
+
+opt = OptimiseOpt(; rm = :SD, obj = :Utility)
+w4_1 = optimise!(portfolio, opt)
+sd4 = calc_risk(portfolio; rm = :SD)
+r4 = dot(portfolio.mu, w2.weights)
+
+opt = OptimiseOpt(; rm = :SD, obj = :Min_Risk)
+w1 = optimise!(portfolio, opt)
+sd1 = calc_risk(portfolio; rm = :SD)
+r1 = dot(portfolio.mu, w1.weights)
+
+opt = OptimiseOpt(; rm = :SD, obj = :Max_Ret)
+w2 = optimise!(portfolio, opt)
+sd2 = calc_risk(portfolio; rm = :SD)
+r2 = dot(portfolio.mu, w2.weights)
+
+opt = OptimiseOpt(; rm = :SD, obj = :Sharpe)
+w0 = optimise!(portfolio, opt)
+sd0 = calc_risk(portfolio; rm = :SD)
+r0 = dot(portfolio.mu, w2.weights)
+
+opt = OptimiseOpt(; rm = :SD, obj = :Utility)
+w4 = optimise!(portfolio, opt)
+sd4 = calc_risk(portfolio; rm = :SD)
+r4 = dot(portfolio.mu, w2.weights)
+
+dx = (sd2 - sd1) / 20
+dy = (r2 - r1) / 20
+
+N = length(portfolio.mu)
+
+risk1 = (sd0 + dx)
+ret1 = dot(portfolio.mu, w0.weights) - dy
+model = JuMP.Model(Clarabel.Optimizer)
+@variable(model, w[1:N])
+@constraint(model, sum(w) == 1)
+@expression(model, ret, dot(portfolio.mu, w))
+G = sqrt(portfolio.cov)
+@variable(model, dev)
+@constraint(model, [dev; G * model[:w]] ∈ SecondOrderCone())
+@expression(model, risk, dev^2)
+@variable(model, log_ret)
+@constraint(model, [log_ret, 1, ret - ret1] ∈ MOI.ExponentialCone())
+@variable(model, log_risk)
+@constraint(model, [log_risk, 1, risk1 - risk] ∈ MOI.ExponentialCone())
+@variable(model, log_w[1:N])
+@constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] ∈ MOI.ExponentialCone())
+@variable(model, log_omw[1:N])
+@constraint(model, [i = 1:N], [log_omw[i], 1, 1 - w[i]] ∈ MOI.ExponentialCone())
+@expression(model, near_opt_risk, -log_ret - log_risk - sum(log_w) - sum(log_omw))
+@objective(model, Min, near_opt_risk)
+JuMP.optimize!(model)
+
+using BlockDiagonals, SparseArrays
+
+function square_coskewness(M3)
+    N = size(M3, 1)
+    S3 = zeros(N^2, N^2)
+    for i ∈ 1:N
+        j = (i - 1) * N + 1
+        k = i * N
+        S3[j:k, j:k] .= M3[:, j:k]
+    end
+    return S3
+end
+
+function extract_block_diag(M3)
+    N = ceil(Int, sqrt(size(M3, 1)))
+    Si = Vector{typeof(M3)}(undef, N)
+    for i ∈ 1:N
+        j = (i - 1) * N + 1
+        k = i * N
+        Si[i] = M3[j:k, j:k]
+    end
+    return Si
+end
+
+S3 = square_coskewness(portfolio.skew)
+vals, vecs = eigen(S3)
+vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+S32 = real(vecs * Diagonal(vals) * transpose(vecs))
+Si = extract_block_diag(S32)
+Vi = -sum(Si)
+
+isapprox(portfolio.V, Vi)
+
+S3 = square_coskewness(portfolio.sskew)
+vals, vecs = eigen(S3)
+vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+S32 = real(vecs * Diagonal(vals) * transpose(vecs))
+Si = extract_block_diag(S32)
+Vi = -sum(Si)
+
+isapprox(portfolio.SV, Vi)
+
+##############################
+############################
+
+vals, vecs = eigen(skew[:, j:k])
+vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+
+w1 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :Skew, obj = :Min_Risk))
+w2 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :DVar, obj = :Min_Risk))
+w3 = optimise!(portfolio, OptimiseOpt(; type = :Trad, rm = :DVar, obj = :Min_Risk))
 
 rm = :Skew
 opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = rm,
