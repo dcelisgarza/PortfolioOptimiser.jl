@@ -6,7 +6,7 @@
 Modules = [PortfolioOptimiser]
 Public = true
 Private = false
-Pages = ["Statistics.jl"]
+Pages = ["Statistics.jl","Statistics_v2.jl"]
 ```
 
 ## Private
@@ -15,5 +15,5 @@ Pages = ["Statistics.jl"]
 Modules = [PortfolioOptimiser]
 Public = false
 Private = true
-Pages = ["Statistics.jl"]
+Pages = ["Statistics.jl","Statistics_v2.jl"]
 ```

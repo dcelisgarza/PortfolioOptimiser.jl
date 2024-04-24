@@ -210,12 +210,29 @@ prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
-using ECOS, SCS
-portfolio = Portfolio(; prices = prices,
-                      solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer
-                                                              #   :params => Dict("max_step_fraction"=>0.75,"verbose" => true)
-                                                              )))
+using MarketData, TimeSeries
+
+tickers = ["JCI", "TGT", "CMCSA", "CPB", "MO", "APA", "MMC", "JPM", "ZION", "PSA", "BAX",
+           "BMY", "LUV", "PCAR", "TXT", "TMO", "DE", "MSFT", "HPQ", "SEE", "VZ", "CNP",
+           "NI", "T", "BA"]
+sort!(tickers)
+data = yahoo(Symbol(tickers[1]),
+             YahooOpt(; period1 = DateTime("2018-01-01"), period2 = DateTime("2021-12-30")))[:AdjClose]
+TimeSeries.rename!(data, :AdjClose => Symbol(tickers[1]))
+for ticker ∈ tickers[2:end]
+    data = merge(data,
+                 yahoo(Symbol(ticker),
+                       YahooOpt(; period1 = DateTime("2018-01-01"),
+                                period2 = DateTime("2021-12-30")))[:AdjClose])
+    TimeSeries.rename!(data, :AdjClose => Symbol(ticker))
+end
+
+portfolio = Portfolio(; prices = data,
+                      solvers = OrderedDict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
+                                                              :params => Dict("max_step_fraction" => 0.75,
+                                                                              "verbose" => true))))
 asset_statistics!(portfolio)
+w1 = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk, rm = :DVar))
 
 opt = OptimiseOpt(; rm = :SD, obj = :Min_Risk)
 w1_1 = optimise!(portfolio, opt)

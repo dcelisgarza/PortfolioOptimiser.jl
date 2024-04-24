@@ -441,3 +441,40 @@ end
     cv16_1 = PortfolioOptimiser.covar_mtx(ret, c16_1)
     @test isapprox(cv16, cv16_1)
 end
+
+@testset "Distance Cov and Cor" begin
+    portfolio = Portfolio(; prices = prices)
+    ret = portfolio.returns
+    c0 = CorDistance()
+    cor0 = cor(c0, ret)
+    cov0 = cov(c0, ret)
+    @test isapprox(cor0, cov2cor(Matrix(cov0)))
+
+    opt = CorOpt(; method = :Distance)
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+end
+
+@testset "CorLTD" begin
+    portfolio = Portfolio(; prices = prices)
+    ret = portfolio.returns
+    c0 = CorLTD()
+    cor0 = cor(c0, ret)
+    cov0 = cov(c0, ret)
+    @test isapprox(cov2cor(Matrix(cov0)), cor0)
+    opt = CorOpt(; method = :Tail)
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+end
+
+@testset "CorMutualInfo" begin
+    portfolio = Portfolio(; prices = prices)
+    ret = portfolio.returns
+    c0 = CorMutualInfo()
+    cor0 = cor(c0, ret)
+    cov0 = cov(c0, ret)
+    @test isapprox(cov2cor(Matrix(cov0)), cor0)
+    opt = CorOpt(; method = :Mutual_Info, estimation = CorEstOpt(; bins_info = :HGR))
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+end

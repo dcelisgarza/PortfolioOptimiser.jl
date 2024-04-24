@@ -473,8 +473,6 @@ end
     mean_w1::Union{<:AbstractWeights, Nothing} = nothing
     mean_w2::Union{<:AbstractWeights, Nothing} = nothing
     mean_w3::Union{<:AbstractWeights, Nothing} = nothing
-    ve::StatsBase.CovarianceEstimator = SimpleVariance(;)
-    std_w::Union{<:AbstractWeights, Nothing} = nothing
 end
 function cor_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
     N = length(v1)
@@ -532,17 +530,59 @@ function StatsBase.cor(ce::CorDistance, X::AbstractMatrix; dims::Int = 1)
     end
     return cor_distance(ce::CorDistance, X::AbstractMatrix)
 end
+function cov_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
+    N = length(v1)
+    @smart_assert(N == length(v2) && N > 1)
+
+    N2 = N^2
+
+    a = Distances.pairwise(ce.distance, v1, ce.dist_args...; ce.dist_kwargs...)
+    b = Distances.pairwise(ce.distance, v2, ce.dist_args...; ce.dist_kwargs...)
+
+    mu_a1, mu_b1 = if isnothing(ce.mean_w1)
+        mean(a; dims = 1), mean(b; dims = 1)
+    else
+        mean(a, ce.mean_w1; dims = 1), mean(b, ce.mean_w1; dims = 1)
+    end
+    mu_a2, mu_b2 = if isnothing(ce.mean_w2)
+        mean(a; dims = 2), mean(b; dims = 2)
+    else
+        mean(a, ce.mean_w2; dims = 2), mean(b, ce.mean_w2; dims = 2)
+    end
+    mu_a3, mu_b3 = if isnothing(ce.mean_w3)
+        mean(a), mean(b)
+    else
+        mean(a, ce.mean_w3), mean(b, ce.mean_w3)
+    end
+
+    A = a .- mu_a1 .- mu_a2 .+ mu_a3
+    B = b .- mu_b1 .- mu_b2 .+ mu_b3
+
+    dcov2_xy = sum(A .* B) / N2
+
+    val = sqrt(dcov2_xy)
+
+    return val
+end
+function cov_distance(ce::CorDistance, X::AbstractMatrix)
+    N = size(X, 2)
+
+    rho = Matrix{eltype(X)}(undef, N, N)
+    for j ∈ eachindex(axes(X, 2))
+        xj = X[:, j]
+        for i ∈ 1:j
+            rho[i, j] = cov_distance(ce, X[:, i], xj)
+        end
+    end
+
+    return Symmetric(rho, :U)
+end
 function StatsBase.cov(ce::CorDistance, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (0, 1))
     if dims == 2
         X = transpose(X)
     end
-    std_vec = vec(if isnothing(ce.std_w)
-                      std(ce.ve, X; dims = 1)
-                  else
-                      std(ce.ve, X, ce.std_w; dims = 1)
-                  end)
-    return Symmetric(cor_distance(ce, X) .* (std_vec * transpose(std_vec)))
+    return Symmetric(cov_distance(ce, X))
 end
 
 # ## Lower tail correlation.
