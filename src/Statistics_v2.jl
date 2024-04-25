@@ -92,6 +92,7 @@ end
 function dist(de::DistanceMethod, X, Y)
     return _dist(de, X, Y)
 end
+struct DistanceDefault <: DistanceMethod end
 
 @kwdef mutable struct SimpleVariance <: StatsBase.CovarianceEstimator
     corrected = true
@@ -1896,7 +1897,7 @@ function jlogo!(je::JLoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
         else
             X
         end
-        D = _dist(je.DBHT.distance, S)
+        D = dist(je.DBHT.distance, S, nothing)
     end
 
     S = dbht_similarity(je.DBHT.similarity, S, D)
@@ -1940,8 +1941,66 @@ function StatsBase.cor(ce::CovType, X::AbstractMatrix; dims::Int = 1)
     return Symmetric(rho)
 end
 
+function asset_statistics2!(portfolio::AbstractPortfolio;
+                            cov_type::Union{Nothing, CovType} = CovType(),
+                            mu_type::Union{Nothing, MeanEstimator} = SimpleMean(),
+                            cor_type::Union{Nothing, CovType} = CovType(),
+                            dist_type::Union{Nothing, DistanceMethod} = DistanceDefault())
+    returns = portfolio.returns
+
+    if !isnothing(cov_type) || !isnothing(mu_type) && hasproperty(mu_type, :sigma)
+        sigma = cov(cov_type, returns)
+    end
+    if !isnothing(mu_type)
+        if hasproperty(mu_type, :sigma)
+            mu_type.sigma = sigma
+        end
+        mu = mean(mu_type, returns)
+    end
+
+    if !isnothing(cov_type)
+        portfolio.cov = sigma
+    end
+    if !isnothing(mu_type)
+        portfolio.mu = mu
+    end
+
+    if isa(portfolio, HCPortfolio)
+        if !isnothing(cor_type) || !isnothing(dist_type)
+            rho = cor(cor_type, returns)
+        end
+
+        if !isnothing(dist_type)
+            if isa(dist_type, DistanceDefault)
+                dist_type = if isa(cor_type.ce, CorMutualInfo)
+                    DistanceVarInfo(; bins = cor_type.ce.bins,
+                                    normalise = cor_type.ce.normalise)
+                elseif isa(cov_type.ce, CorLTD)
+                    DistanceLog()
+                else
+                    DistanceMLP()
+                end
+            end
+
+            if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
+                dist_type.absolute = cor_type.ce.absolute
+            end
+            D = dist(dist_type, rho, returns)
+        end
+
+        if !isnothing(cor_type)
+            portfolio.cor = rho
+        end
+        if !isnothing(dist_type)
+            portfolio.dist = D
+        end
+    end
+
+    return nothing
+end
+
 export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
        CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
        DistanceMLP, dist, CovType, DistanceVarInfo, BinKnuth, BinFreedman, BinScott, BinHGR,
        DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW, TargetSE,
-       SimpleMean, MeanJS, MeanBS, MeanBOP, SimpleVariance
+       SimpleMean, MeanJS, MeanBS, MeanBOP, SimpleVariance, asset_statistics2!
