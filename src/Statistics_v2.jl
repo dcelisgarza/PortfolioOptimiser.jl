@@ -1925,7 +1925,7 @@ function StatsBase.cov(ce::CovType, X::AbstractMatrix; dims::Int = 1)
     denoise!(ce.denoise, ce.posdef, sigma, size(X, 1) / size(X, 2))
     jlogo!(ce.jlogo, ce.posdef, sigma)
 
-    return sigma
+    return Symmetric(sigma)
 end
 function StatsBase.cor(ce::CovType, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (1, 2))
@@ -1937,7 +1937,7 @@ function StatsBase.cor(ce::CovType, X::AbstractMatrix; dims::Int = 1)
     denoise!(ce.denoise, ce.posdef, rho, size(X, 1) / size(X, 2))
     jlogo!(ce.jlogo, ce.posdef, rho)
 
-    return rho
+    return Symmetric(rho)
 end
 
 export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,

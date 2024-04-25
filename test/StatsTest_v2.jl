@@ -446,10 +446,10 @@ end
     portfolio = Portfolio(; prices = prices)
     ret = portfolio.returns
     c0 = CorDistance()
-    cor0 = cor(c0, ret)
-    cov0 = cov(c0, ret)
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    cov0 = cov(c1, ret)
     @test isapprox(cor0, cov2cor(Matrix(cov0)))
-
     opt = CorOpt(; method = :Distance)
     cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
     @test isapprox(cor0, cor1)
@@ -459,8 +459,9 @@ end
     portfolio = Portfolio(; prices = prices)
     ret = portfolio.returns
     c0 = CorLTD()
-    cor0 = cor(c0, ret)
-    cov0 = cov(c0, ret)
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    cov0 = cov(c1, ret)
     @test isapprox(cov2cor(Matrix(cov0)), cor0)
     opt = CorOpt(; method = :Tail)
     cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
@@ -471,10 +472,129 @@ end
     portfolio = Portfolio(; prices = prices)
     ret = portfolio.returns
     c0 = CorMutualInfo()
-    cor0 = cor(c0, ret)
-    cov0 = cov(c0, ret)
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    cov0 = cov(c1, ret)
     @test isapprox(cov2cor(Matrix(cov0)), cor0)
     opt = CorOpt(; method = :Mutual_Info, estimation = CorEstOpt(; bins_info = :HGR))
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+end
+
+@testset "CorKendall" begin
+    portfolio = Portfolio(; prices = prices)
+    ret = portfolio.returns
+    c0 = CorKendall()
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Kendall)
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+
+    c0 = CorKendall(; absolute = true)
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Abs_Kendall)
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+end
+
+@testset "CorSpearman" begin
+    portfolio = Portfolio(; prices = prices)
+    ret = portfolio.returns
+    c0 = CorSpearman()
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Spearman)
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+
+    c0 = CorSpearman(; absolute = true)
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Abs_Spearman)
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+end
+
+@testset "CorFull" begin
+    portfolio = Portfolio(; prices = prices)
+    ret = portfolio.returns
+    c0 = CovFull()
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Pearson)
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+
+    c0 = CovFull(; absolute = true)
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Abs_Pearson)
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+end
+
+@testset "CorSemi" begin
+    portfolio = Portfolio(; prices = prices)
+    ret = portfolio.returns
+    c0 = CovSemi()
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Semi_Pearson)
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+
+    c0 = CovSemi(; absolute = true)
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Abs_Semi_Pearson)
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+end
+
+@testset "Shrinkage Full Cor and Cov" begin
+    portfolio = Portfolio(; prices = prices)
+    ret = portfolio.returns
+    c0 = CovFull(; ce = AnalyticalNonlinearShrinkage())
+    c1 = CovType(; ce = c0)
+    cov0 = cov(c1, ret)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Pearson)
+    opt.estimation.estimator = AnalyticalNonlinearShrinkage()
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    opt = CovOpt(; method = :Full)
+    opt.estimation.estimator = AnalyticalNonlinearShrinkage()
+    cov1 = PortfolioOptimiser.covar_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+    @test isapprox(cov0, cov1)
+
+    c0 = CovFull(; ce = AnalyticalNonlinearShrinkage(), absolute = true)
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Abs_Pearson)
+    opt.estimation.estimator = AnalyticalNonlinearShrinkage()
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+end
+
+@testset "Shrinkage Semi Cor and Cov" begin
+    portfolio = Portfolio(; prices = prices)
+    ret = portfolio.returns
+    c0 = CovSemi(; ce = AnalyticalNonlinearShrinkage())
+    c1 = CovType(; ce = c0)
+    cov0 = cov(c1, ret)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Semi_Pearson)
+    opt.estimation.estimator = AnalyticalNonlinearShrinkage()
+    cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
+    @test isapprox(cor0, cor1)
+
+    c0 = CovSemi(; ce = AnalyticalNonlinearShrinkage(), absolute = true)
+    c1 = CovType(; ce = c0)
+    cor0 = cor(c1, ret)
+    opt = CorOpt(; method = :Abs_Semi_Pearson)
+    opt.estimation.estimator = AnalyticalNonlinearShrinkage()
     cor1, dist = PortfolioOptimiser.cor_dist_mtx(ret, opt)
     @test isapprox(cor0, cor1)
 end

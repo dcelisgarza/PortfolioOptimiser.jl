@@ -17,8 +17,8 @@ end
 # end
 
 # @safetestset "Asset Statistics" begin
-#     include("AssetStatisticsTests2.jl")
-#     include("AssetStatisticsTests1.jl")
+# include("AssetStatisticsTests1.jl")
+# include("AssetStatisticsTests2.jl")
 # end
 
 # @safetestset "Misc" begin
