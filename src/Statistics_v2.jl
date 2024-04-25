@@ -62,7 +62,7 @@ abstract type DistanceMethod end
 @kwdef mutable struct DistanceMLP <: DistanceMethod
     absolute::Bool = false
 end
-function _dist(de::DistanceMLP, X::AbstractMatrix)
+function _dist(de::DistanceMLP, X::AbstractMatrix, ::Any)
     return Symmetric(sqrt.(if !de.absolute
                                clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)),
                                       one(eltype(X)))
@@ -76,17 +76,17 @@ end
     args::Tuple = ()
     kwargs::NamedTuple = (;)
 end
-function _dist(de::DistanceMLP2, X::AbstractMatrix)
+function _dist(de::DistanceMLP2, X::AbstractMatrix, ::Any)
     _X = sqrt.(if !de.absolute
                    clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
                else
                    clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
                end)
 
-    return Distances.pairwise(de.distance, _X, de.args...; de.kwargs...)
+    return Distances.pairwise(de.distance, _X, de.::Any; de.kwargs...)
 end
 struct DistanceLog <: DistanceMethod end
-function _dist(::DistanceLog, X::AbstractMatrix)
+function _dist(::DistanceLog, X::AbstractMatrix, ::Any)
     return -log.(X)
 end
 function dist(de::DistanceMethod, X, Y)
@@ -379,7 +379,7 @@ function mutual_variation_info(X::AbstractMatrix,
 
     return Symmetric(mut_mtx, :U), Symmetric(var_mtx, :U)
 end
-function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} = BinKnuth(),
+function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} = BinHGR(),
                      normalise::Bool = true)
     T, N = size(X)
     mut_mtx = Matrix{eltype(X)}(undef, N, N)
@@ -410,7 +410,7 @@ function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} =
     return Symmetric(mut_mtx, :U)
 end
 function variation_info(X::AbstractMatrix,
-                        bins::Union{<:AbstractBins, <:Integer} = BinKnuth(),
+                        bins::Union{<:AbstractBins, <:Integer} = BinHGR(),
                         normalise::Bool = true)
     T, N = size(X)
     var_mtx = Matrix{eltype(X)}(undef, N, N)
