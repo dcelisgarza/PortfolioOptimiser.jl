@@ -1,6 +1,7 @@
 # # Auxiliary Functions
 # ## Fix matrices that should be positive definite.
 abstract type PosdefFix end
+struct NoPosdef <: PosdefFix end
 @kwdef mutable struct PosdefNearest <: PosdefFix
     method::NearestCorrelationMatrix.NCMAlgorithm = NearestCorrelationMatrix.Newton(;
                                                                                     tau = 1e-12)
@@ -14,6 +15,9 @@ Overload this for other posdef fix methods.
 """
 function _posdef_fix!(method::PosdefNearest, X::AbstractMatrix)
     NCM.nearest_cor!(X, method)
+    return nothing
+end
+function posdef_fix!(::NoPosdef, ::AbstractMatrix)
     return nothing
 end
 function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
@@ -1665,7 +1669,7 @@ struct NoDenoise <: Denoise end
 function denoise!(::NoDenoise, ::PosdefFix, X::AbstractMatrix, q::Real)
     return nothing
 end
-mutable struct Fixed{T1, T2, T3, T4} <: Denoise
+mutable struct DenoiseFixed{T1, T2, T3, T4} <: Denoise
     detone::Bool
     mkt_comp::T1
     kernel::T2
@@ -1674,14 +1678,16 @@ mutable struct Fixed{T1, T2, T3, T4} <: Denoise
     args::Tuple
     kwargs::NamedTuple
 end
-function Fixed(; detone::Bool = false, mkt_comp::Integer = 1,
-               kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
-               n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
-    return Fixed{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone, mkt_comp,
-                                                                         kernel, m, n, args,
-                                                                         kwargs)
+function DenoiseFixed(; detone::Bool = false, mkt_comp::Integer = 1,
+                      kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
+                      n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
+    return DenoiseFixed{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
+                                                                                mkt_comp,
+                                                                                kernel, m,
+                                                                                n, args,
+                                                                                kwargs)
 end
-mutable struct Spectral{T1, T2, T3, T4} <: Denoise
+mutable struct DenoiseSpectral{T1, T2, T3, T4} <: Denoise
     detone::Bool
     mkt_comp::T1
     kernel::T2
@@ -1690,15 +1696,18 @@ mutable struct Spectral{T1, T2, T3, T4} <: Denoise
     args::Tuple
     kwargs::NamedTuple
 end
-function Spectral(; detone::Bool = false, mkt_comp::Integer = 1,
-                  kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
-                  n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
-    return Spectral{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
-                                                                            mkt_comp,
-                                                                            kernel, m, n,
-                                                                            args, kwargs)
+function DenoiseSpectral(; detone::Bool = false, mkt_comp::Integer = 1,
+                         kernel = AverageShiftedHistograms.Kernels.gaussian,
+                         m::Integer = 10, n::Integer = 1000, args::Tuple = (),
+                         kwargs::NamedTuple = (;))
+    return DenoiseSpectral{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
+                                                                                   mkt_comp,
+                                                                                   kernel,
+                                                                                   m, n,
+                                                                                   args,
+                                                                                   kwargs)
 end
-mutable struct Shrink{T1, T2, T3, T4, T5} <: Denoise
+mutable struct DenoiseShrink{T1, T2, T3, T4, T5} <: Denoise
     detone::Bool
     alpha::T1
     mkt_comp::T2
@@ -1708,34 +1717,28 @@ mutable struct Shrink{T1, T2, T3, T4, T5} <: Denoise
     args::Tuple
     kwargs::NamedTuple
 end
-function Shrink(; alpha::Real = 0.0, detone::Bool = false, mkt_comp::Integer = 1,
-                kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
-                n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
+function DenoiseShrink(; alpha::Real = 0.0, detone::Bool = false, mkt_comp::Integer = 1,
+                       kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
+                       n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
     @smart_assert(zero(alpha) <= alpha <= one(alpha))
-    return Shrink{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
-                                                                                         alpha,
-                                                                                         mkt_comp,
-                                                                                         kernel,
-                                                                                         m,
-                                                                                         n,
-                                                                                         args,
-                                                                                         kwargs)
+    return DenoiseShrink{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m),
+                         typeof(n)}(detone, alpha, mkt_comp, kernel, m, n, args, kwargs)
 end
-function _denoise!(::Fixed, X::AbstractMatrix, vals::AbstractVector, vecs::AbstractMatrix,
-                   num_factors::Integer)
+function _denoise!(::DenoiseFixed, X::AbstractMatrix, vals::AbstractVector,
+                   vecs::AbstractMatrix, num_factors::Integer)
     _vals = copy(vals)
     _vals[1:num_factors] .= sum(_vals[1:num_factors]) / num_factors
     X .= cov2cor(vecs * Diagonal(_vals) * transpose(vecs))
     return nothing
 end
-function _denoise!(::Spectral, X::AbstractMatrix, vals::AbstractVector,
+function _denoise!(::DenoiseSpectral, X::AbstractMatrix, vals::AbstractVector,
                    vecs::AbstractMatrix, num_factors::Integer)
     _vals = copy(vals)
     _vals[1:num_factors] .= zero(eltype(X))
     X .= cov2cor(vecs * Diagonal(_vals) * transpose(vecs))
     return nothing
 end
-function _denoise!(ce::Shrink, X::AbstractMatrix, vals::AbstractVector,
+function _denoise!(ce::DenoiseShrink, X::AbstractMatrix, vals::AbstractVector,
                    vecs::AbstractMatrix, num_factors::Integer)
     # Small
     vals_l = vals[1:num_factors]
@@ -1909,7 +1912,103 @@ function jlogo!(je::JLoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
 
     return nothing
 end
-#### This is untested
+abstract type KurtEstimator end
+@kwdef mutable struct KurtFull <: KurtEstimator
+    posdef::PosdefFix = PosdefNearest(;)
+    denoise::Denoise = NoDenoise()
+    jlogo::AbstractJLoGo = NoJLoGo()
+end
+@kwdef mutable struct KurtSemi <: KurtEstimator
+    target::Union{Real, AbstractVector{<:Real}} = 0.0
+    posdef::PosdefFix = PosdefNearest(;)
+    denoise::Denoise = NoDenoise()
+    jlogo::AbstractJLoGo = NoJLoGo()
+end
+function cokurt(ke::KurtFull, X::AbstractMatrix, mu::AbstractVector)
+    T, N = size(X)
+    y = X .- transpose(mu)
+    o = transpose(range(; start = one(eltype(y)), stop = one(eltype(y)), length = N))
+    z = kron(o, y) .* kron(y, o)
+    cokurt = transpose(z) * z / T
+
+    posdef_fix!(ke.posdef, cokurt)
+    denoise!(ke.denoise, ke.posdef, cokurt, T / N)
+    jlogo!(ke.jlogo, ke.posdef, cokurt)
+
+    return cokurt
+end
+function cokurt(ke::KurtSemi, X::AbstractMatrix, mu::AbstractVector)
+    T, N = size(X)
+    y = X .- transpose(mu)
+    y .= min.(y, ke.target)
+    o = transpose(range(; start = one(eltype(y)), stop = one(eltype(y)), length = N))
+    z = kron(o, y) .* kron(y, o)
+    scokurt = transpose(z) * z / T
+
+    posdef_fix!(ke.posdef, scokurt)
+    denoise!(ke.denoise, ke.posdef, scokurt, T / N)
+    jlogo!(ke.jlogo, ke.posdef, scokurt)
+
+    return scokurt
+end
+abstract type SkewEstimator end
+@kwdef mutable struct SkewFull <: SkewEstimator
+    posdef::PosdefFix = PosdefNearest(;)
+    denoise::Denoise = NoDenoise()
+    jlogo::AbstractJLoGo = NoJLoGo()
+end
+@kwdef mutable struct SkewSemi <: SkewEstimator
+    target::Union{Real, AbstractVector{<:Real}} = 0.0
+    posdef::PosdefFix = PosdefNearest(;)
+    denoise::Denoise = NoDenoise()
+    jlogo::AbstractJLoGo = NoJLoGo()
+end
+function coskew(se::SkewFull, X::AbstractMatrix, mu::AbstractVector)
+    T, N = size(X)
+    y = X .- transpose(mu)
+    o = transpose(range(; start = one(eltype(y)), stop = one(eltype(y)), length = N))
+    z = kron(o, y) .* kron(y, o)
+    coskew = transpose(X) * z / T
+
+    V = zeros(eltype(y), N, N)
+    for i ∈ 1:N
+        j = (i - 1) * N + 1
+        k = i * N
+        coskew_jk = coskew[:, j:k]
+        vals, vecs = eigen(coskew_jk)
+        vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+        V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+        # denoise!(se.denoise, se.posdef, -real(vecs * Diagonal(vals) * transpose(vecs)),
+        #          T / N)
+        # jlogo!(se.jlogo, se.posdef, -real(vecs * Diagonal(vals) * transpose(vecs)))
+    end
+
+    return coskew, V
+end
+function coskew(se::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
+    T, N = size(X)
+    y = X .- transpose(mu)
+    y .= min.(y, se.target)
+    o = transpose(range(; start = one(eltype(y)), stop = one(eltype(y)), length = N))
+    z = kron(o, y) .* kron(y, o)
+    scoskew = transpose(X) * z / T
+
+    SV = zeros(eltype(y), N, N)
+    for i ∈ 1:N
+        j = (i - 1) * N + 1
+        k = i * N
+        scoskew_jk = scoskew[:, j:k]
+        vals, vecs = eigen(scoskew_jk)
+        vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+        SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
+        # denoise!(se.denoise, NoPosdef(), -real(vecs * Diagonal(vals) * transpose(vecs)),
+        #          T / N)
+        # jlogo!(se.jlogo, NoPosdef(), -real(vecs * Diagonal(vals) * transpose(vecs)))
+    end
+
+    return scoskew, SV
+end
+
 @kwdef mutable struct CovType
     ce::PortfolioOptimiserCovCor = CovFull(;)
     posdef::PosdefFix = PosdefNearest(;)
@@ -1942,32 +2041,57 @@ function StatsBase.cor(ce::CovType, X::AbstractMatrix; dims::Int = 1)
 end
 
 function asset_statistics2!(portfolio::AbstractPortfolio;
-                            cov_type::Union{Nothing, CovType} = CovType(),
-                            mu_type::Union{Nothing, MeanEstimator} = SimpleMean(),
-                            cor_type::Union{Nothing, CovType} = CovType(),
+                            cov_type::Union{Nothing, CovType} = CovType(;),
+                            mu_type::Union{Nothing, MeanEstimator} = SimpleMean(;),
+                            kurt_type::Union{Nothing, KurtFull} = KurtFull(;),
+                            skurt_type::Union{Nothing, KurtSemi} = KurtSemi(;),
+                            skew_type::Union{Nothing, SkewFull} = SkewFull(;),
+                            sskew_type::Union{Nothing, SkewSemi} = SkewSemi(;),
+                            cor_type::Union{Nothing, CovType} = CovType(;),
                             dist_type::Union{Nothing, DistanceMethod} = DistanceDefault())
     returns = portfolio.returns
 
     if !isnothing(cov_type) || !isnothing(mu_type) && hasproperty(mu_type, :sigma)
         sigma = cov(cov_type, returns)
+        if !isnothing(cov_type)
+            portfolio.cov = sigma
+        end
     end
-    if !isnothing(mu_type)
+    if !isnothing(mu_type) ||
+       !isnothing(kurt_type) ||
+       !isnothing(skurt_type) ||
+       !isnothing(skew_type) ||
+       !isnothing(sskew_type)
         if hasproperty(mu_type, :sigma)
             mu_type.sigma = sigma
         end
         mu = mean(mu_type, returns)
+        if !isnothing(mu_type)
+            portfolio.mu = mu
+        end
     end
-
-    if !isnothing(cov_type)
-        portfolio.cov = sigma
+    if !isnothing(kurt_type) || !isnothing(skurt_type)
+        if !isnothing(kurt_type)
+            portfolio.kurt = cokurt(kurt_type, returns, mu)
+        end
+        if !isnothing(skurt_type)
+            portfolio.skurt = cokurt(skurt_type, returns, mu)
+        end
+        portfolio.L_2, portfolio.S_2 = dup_elim_sum_matrices(size(returns, 2))[2:3]
     end
-    if !isnothing(mu_type)
-        portfolio.mu = mu
+    if !isnothing(skew_type)
+        portfolio.skew, portfolio.V = coskew(skew_type, returns, mu)
+    end
+    if !isnothing(sskew_type)
+        portfolio.sskew, portfolio.SV = coskew(sskew_type, returns, mu)
     end
 
     if isa(portfolio, HCPortfolio)
         if !isnothing(cor_type) || !isnothing(dist_type)
             rho = cor(cor_type, returns)
+            if !isnothing(cor_type)
+                portfolio.cor = rho
+            end
         end
 
         if !isnothing(dist_type)
@@ -1985,14 +2109,7 @@ function asset_statistics2!(portfolio::AbstractPortfolio;
             if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
                 dist_type.absolute = cor_type.ce.absolute
             end
-            D = dist(dist_type, rho, returns)
-        end
-
-        if !isnothing(cor_type)
-            portfolio.cor = rho
-        end
-        if !isnothing(dist_type)
-            portfolio.dist = D
+            portfolio.dist = dist(dist_type, rho, returns)
         end
     end
 
@@ -2003,4 +2120,5 @@ export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, Co
        CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
        DistanceMLP, dist, CovType, DistanceVarInfo, BinKnuth, BinFreedman, BinScott, BinHGR,
        DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW, TargetSE,
-       SimpleMean, MeanJS, MeanBS, MeanBOP, SimpleVariance, asset_statistics2!
+       SimpleMean, MeanJS, MeanBS, MeanBOP, SimpleVariance, asset_statistics2!, JLoGo,
+       SkewFull, SkewSemi, KurtFull, KurtSemi, DenoiseFixed, DenoiseSpectral, DenoiseShrink
