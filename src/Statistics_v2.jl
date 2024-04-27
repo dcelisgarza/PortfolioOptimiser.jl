@@ -2048,8 +2048,9 @@ function asset_statistics2!(portfolio::AbstractPortfolio; cov_type::CovType = Co
                             set_skew::Bool = true, sskew_type::SkewSemi = SkewSemi(;),
                             set_sskew::Bool = true, cor_type::CovType = CovType(;),
                             set_cor::Bool = true,
-                            dist_type::DistanceMethod = DistanceDefault())
-    set_dist::Bool = true, returns = portfolio.returns
+                            dist_type::DistanceMethod = DistanceDefault(),
+                            set_dist::Bool = true)
+    returns = portfolio.returns
 
     if set_cov || set_mu && hasproperty(mu_type, :sigma)
         sigma = cov(cov_type, returns)
