@@ -644,24 +644,21 @@ end
     @test isapprox(dist0, dist1)
 end
 
-# using CSV, TimeSeries, StatsBase, Statistics, CovarianceEstimation, LinearAlgebra, Test,
-#       PortfolioOptimiser
-# prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+@testset "New asset stats" begin
+    portfolio1 = HCPortfolio(; prices = prices)
+    @time asset_statistics!(portfolio1)
 
-# portfolio1 = HCPortfolio(; prices = prices)
-# @time asset_statistics!(portfolio1)
+    portfolio2 = HCPortfolio(; prices = prices)
+    @time asset_statistics2!(portfolio2)
 
-# portfolio2 = HCPortfolio(; prices = prices)
-# @time asset_statistics2!(portfolio2,
-#                          skew_type = SkewFull(; denoise = DenoiseFixed(), jlogo = JLoGo()))
-
-# @test isapprox(portfolio1.mu, portfolio2.mu)
-# @test isapprox(portfolio1.cov, portfolio2.cov)
-# @test isapprox(portfolio1.cor, portfolio2.cor)
-# @test isapprox(portfolio1.dist, portfolio2.dist)
-# @test isapprox(portfolio1.skew, portfolio2.skew)
-# @test isapprox(portfolio1.sskew, portfolio2.sskew)
-# @test isapprox(portfolio1.kurt, portfolio2.kurt)
-# @test isapprox(portfolio1.skurt, portfolio2.skurt)
-# @test isapprox(portfolio1.L_2, portfolio2.L_2)
-# @test isapprox(portfolio1.S_2, portfolio2.S_2)
+    @test isapprox(portfolio1.mu, portfolio2.mu)
+    @test isapprox(portfolio1.cov, portfolio2.cov)
+    @test isapprox(portfolio1.cor, portfolio2.cor)
+    @test isapprox(portfolio1.dist, portfolio2.dist)
+    @test isapprox(portfolio1.skew, portfolio2.skew)
+    @test isapprox(portfolio1.sskew, portfolio2.sskew)
+    @test isapprox(portfolio1.kurt, portfolio2.kurt)
+    @test isapprox(portfolio1.skurt, portfolio2.skurt)
+    @test isapprox(portfolio1.L_2, portfolio2.L_2)
+    @test isapprox(portfolio1.S_2, portfolio2.S_2)
+end

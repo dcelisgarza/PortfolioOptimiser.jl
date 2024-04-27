@@ -1952,16 +1952,16 @@ function cokurt(ke::KurtSemi, X::AbstractMatrix, mu::AbstractVector)
     return scokurt
 end
 abstract type SkewEstimator end
-@kwdef mutable struct SkewFull <: SkewEstimator
-    posdef::PosdefFix = PosdefNearest(;)
-    denoise::Denoise = NoDenoise()
-    jlogo::AbstractJLoGo = NoJLoGo()
+struct SkewFull <: SkewEstimator
+    # posdef::PosdefFix = PosdefNearest(;)
+    # denoise::Denoise = NoDenoise()
+    # jlogo::AbstractJLoGo = NoJLoGo()
 end
 @kwdef mutable struct SkewSemi <: SkewEstimator
     target::Union{Real, AbstractVector{<:Real}} = 0.0
-    posdef::PosdefFix = PosdefNearest(;)
-    denoise::Denoise = NoDenoise()
-    jlogo::AbstractJLoGo = NoJLoGo()
+    # posdef::PosdefFix = PosdefNearest(;)
+    # denoise::Denoise = NoDenoise()
+    # jlogo::AbstractJLoGo = NoJLoGo()
 end
 function coskew(se::SkewFull, X::AbstractMatrix, mu::AbstractVector)
     T, N = size(X)
@@ -2040,61 +2040,57 @@ function StatsBase.cor(ce::CovType, X::AbstractMatrix; dims::Int = 1)
     return Symmetric(rho)
 end
 
-function asset_statistics2!(portfolio::AbstractPortfolio;
-                            cov_type::Union{Nothing, CovType} = CovType(;),
-                            mu_type::Union{Nothing, MeanEstimator} = SimpleMean(;),
-                            kurt_type::Union{Nothing, KurtFull} = KurtFull(;),
-                            skurt_type::Union{Nothing, KurtSemi} = KurtSemi(;),
-                            skew_type::Union{Nothing, SkewFull} = SkewFull(;),
-                            sskew_type::Union{Nothing, SkewSemi} = SkewSemi(;),
-                            cor_type::Union{Nothing, CovType} = CovType(;),
-                            dist_type::Union{Nothing, DistanceMethod} = DistanceDefault())
-    returns = portfolio.returns
+function asset_statistics2!(portfolio::AbstractPortfolio; cov_type::CovType = CovType(;),
+                            set_cov::Bool = true, mu_type::MeanEstimator = SimpleMean(;),
+                            set_mu::Bool = true, kurt_type::KurtFull = KurtFull(;),
+                            set_kurt::Bool = true, skurt_type::KurtSemi = KurtSemi(;),
+                            set_skurt::Bool = true, skew_type::SkewFull = SkewFull(;),
+                            set_skew::Bool = true, sskew_type::SkewSemi = SkewSemi(;),
+                            set_sskew::Bool = true, cor_type::CovType = CovType(;),
+                            set_cor::Bool = true,
+                            dist_type::DistanceMethod = DistanceDefault())
+    set_dist::Bool = true, returns = portfolio.returns
 
-    if !isnothing(cov_type) || !isnothing(mu_type) && hasproperty(mu_type, :sigma)
+    if set_cov || set_mu && hasproperty(mu_type, :sigma)
         sigma = cov(cov_type, returns)
-        if !isnothing(cov_type)
+        if set_cov
             portfolio.cov = sigma
         end
     end
-    if !isnothing(mu_type) ||
-       !isnothing(kurt_type) ||
-       !isnothing(skurt_type) ||
-       !isnothing(skew_type) ||
-       !isnothing(sskew_type)
+    if set_mu || set_kurt || set_skurt || set_skew || set_sskew
         if hasproperty(mu_type, :sigma)
             mu_type.sigma = sigma
         end
         mu = mean(mu_type, returns)
-        if !isnothing(mu_type)
+        if set_mu
             portfolio.mu = mu
         end
     end
-    if !isnothing(kurt_type) || !isnothing(skurt_type)
-        if !isnothing(kurt_type)
+    if set_kurt || set_skurt
+        if set_kurt
             portfolio.kurt = cokurt(kurt_type, returns, mu)
         end
-        if !isnothing(skurt_type)
+        if set_skurt
             portfolio.skurt = cokurt(skurt_type, returns, mu)
         end
         portfolio.L_2, portfolio.S_2 = dup_elim_sum_matrices(size(returns, 2))[2:3]
     end
-    if !isnothing(skew_type)
+    if set_skew
         portfolio.skew, portfolio.V = coskew(skew_type, returns, mu)
     end
-    if !isnothing(sskew_type)
+    if set_sskew
         portfolio.sskew, portfolio.SV = coskew(sskew_type, returns, mu)
     end
 
     if isa(portfolio, HCPortfolio)
-        if !isnothing(cor_type) || !isnothing(dist_type)
+        if set_cor || set_dist
             rho = cor(cor_type, returns)
-            if !isnothing(cor_type)
+            if set_cor
                 portfolio.cor = rho
             end
         end
 
-        if !isnothing(dist_type)
+        if set_dist
             if isa(dist_type, DistanceDefault)
                 dist_type = if isa(cor_type.ce, CorMutualInfo)
                     DistanceVarInfo(; bins = cor_type.ce.bins,
