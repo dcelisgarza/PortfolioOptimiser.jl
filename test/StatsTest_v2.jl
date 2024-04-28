@@ -4,10 +4,7 @@ using CSV, TimeSeries, StatsBase, Statistics, CovarianceEstimation, LinearAlgebr
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 @testset "Coskew and Semi Coskew" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices)
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false)
 
     cst = reshape([4.6905257079387035e-6, 1.0710314107974349e-7, 1.0452008432613338e-6,
