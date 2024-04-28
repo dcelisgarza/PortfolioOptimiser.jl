@@ -8,17 +8,17 @@ end
     include("EntrRelRMs.jl")
 end
 
+@safetestset "Asset Statistics" begin
+    include("AssetStatisticsTests1.jl")
+    include("AssetStatisticsTests2.jl")
+end
+
 @safetestset "Portfolio Classic Traditional Optimisation" begin
     include("PortfolioClassicTradTests.jl")
 end
 
 @safetestset "HCPortfolio Optimisation" begin
     include("HCPortfolioOptimisationTests.jl")
-end
-
-@safetestset "Asset Statistics" begin
-    include("AssetStatisticsTests1.jl")
-    include("AssetStatisticsTests2.jl")
 end
 
 @safetestset "Misc" begin

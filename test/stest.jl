@@ -133,7 +133,7 @@ end
 @code_llvm cor(ct, ret)
 
 w = eweights(size(ret, 1), 0.05)
-me = PortfolioOptimiser.SimpleMean2(; w = w)
+me = PortfolioOptimiser.MeanSimple2(; w = w)
 @time m = mean(me, ret)
 @time m2 = vec(mean(ret, w; dims = 1))
 
