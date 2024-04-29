@@ -383,7 +383,7 @@ const MuTargets = (:GM, :VW, :SE)
 """
 ```
 CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB0,
-              :Gerber_SB1, :Custom_Func, :Custom_Val)
+              :Gerber_SB1, :Custom_Func, :Custom_Val, :Distance)
 ```
 
 Methods for estimating covariance matrices.
@@ -401,7 +401,7 @@ Methods for estimating covariance matrices.
   - `:Custom_Val`: user-provided custom value.
 """
 const CovMethods = (:Full, :Semi, :Gerber0, :Gerber1, :Gerber2, :SB0, :SB1, :Gerber_SB0,
-                    :Gerber_SB1, :Custom_Func, :Custom_Val)
+                    :Gerber_SB1, :Custom_Func, :Custom_Val, :Distance)
 
 """
 ```

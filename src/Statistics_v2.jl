@@ -511,9 +511,7 @@ function cor_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
     dcov2_xy = sum(A .* B) / N2
     dcov2_yy = sum(B .* B) / N2
 
-    val = sqrt(dcov2_xy) / sqrt(sqrt(dcov2_xx) * sqrt(dcov2_yy))
-
-    return val
+    return sqrt(dcov2_xy) / sqrt(sqrt(dcov2_xx) * sqrt(dcov2_yy))
 end
 function cor_distance(ce::CorDistance, X::AbstractMatrix)
     N = size(X, 2)
@@ -565,9 +563,7 @@ function cov_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
 
     dcov2_xy = sum(A .* B) / N2
 
-    val = sqrt(dcov2_xy)
-
-    return val
+    return sqrt(dcov2_xy)
 end
 function cov_distance(ce::CorDistance, X::AbstractMatrix)
     N = size(X, 2)
@@ -2040,14 +2036,14 @@ function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     return Symmetric(rho)
 end
 
-function asset_statistics2!(portfolio::AbstractPortfolio; cov_type::PortCovCor = PortCovCor(;),
-                            set_cov::Bool = true, mu_type::MeanEstimator = MeanSimple(;),
-                            set_mu::Bool = true, kurt_type::KurtFull = KurtFull(;),
-                            set_kurt::Bool = true, skurt_type::KurtSemi = KurtSemi(;),
-                            set_skurt::Bool = true, skew_type::SkewFull = SkewFull(;),
-                            set_skew::Bool = true, sskew_type::SkewSemi = SkewSemi(;),
-                            set_sskew::Bool = true, cor_type::PortCovCor = PortCovCor(;),
-                            set_cor::Bool = true,
+function asset_statistics2!(portfolio::AbstractPortfolio;
+                            cov_type::PortCovCor = PortCovCor(;), set_cov::Bool = true,
+                            mu_type::MeanEstimator = MeanSimple(;), set_mu::Bool = true,
+                            kurt_type::KurtFull = KurtFull(;), set_kurt::Bool = true,
+                            skurt_type::KurtSemi = KurtSemi(;), set_skurt::Bool = true,
+                            skew_type::SkewFull = SkewFull(;), set_skew::Bool = true,
+                            sskew_type::SkewSemi = SkewSemi(;), set_sskew::Bool = true,
+                            cor_type::PortCovCor = PortCovCor(;), set_cor::Bool = true,
                             dist_type::DistanceMethod = DistanceDefault(),
                             set_dist::Bool = true)
     returns = portfolio.returns
@@ -2096,7 +2092,7 @@ function asset_statistics2!(portfolio::AbstractPortfolio; cov_type::PortCovCor =
                 dist_type = if isa(cor_type.ce, CorMutualInfo)
                     DistanceVarInfo(; bins = cor_type.ce.bins,
                                     normalise = cor_type.ce.normalise)
-                elseif isa(cov_type.ce, CorLTD)
+                elseif isa(cor_type.ce, CorLTD)
                     DistanceLog()
                 else
                     DistanceMLP()
@@ -2115,7 +2111,8 @@ end
 
 export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
        CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
-       DistanceMLP, dist, PortCovCor, DistanceVarInfo, BinKnuth, BinFreedman, BinScott, BinHGR,
-       DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW, TargetSE,
-       MeanSimple, MeanJS, MeanBS, MeanBOP, SimpleVariance, asset_statistics2!, JLoGo,
-       SkewFull, SkewSemi, KurtFull, KurtSemi, DenoiseFixed, DenoiseSpectral, DenoiseShrink
+       DistanceMLP, dist, PortCovCor, DistanceVarInfo, BinKnuth, BinFreedman, BinScott,
+       BinHGR, DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW,
+       TargetSE, MeanSimple, MeanJS, MeanBS, MeanBOP, SimpleVariance, asset_statistics2!,
+       JLoGo, SkewFull, SkewSemi, KurtFull, KurtSemi, DenoiseFixed, DenoiseSpectral,
+       DenoiseShrink

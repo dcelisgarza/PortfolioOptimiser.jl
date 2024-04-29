@@ -155,9 +155,7 @@ function cordistance(v1::AbstractVector, v2::AbstractVector,
     dcov2_xy = sum(A .* B) / N2
     dcov2_yy = sum(B .* B) / N2
 
-    val = sqrt(dcov2_xy) / sqrt(sqrt(dcov2_xx) * sqrt(dcov2_yy))
-
-    return val
+    return sqrt(dcov2_xy) / sqrt(sqrt(dcov2_xx) * sqrt(dcov2_yy))
 end
 
 function cordistance(x::AbstractMatrix, opt::DistcorOpt = DistcorOpt(;))
@@ -168,6 +166,40 @@ function cordistance(x::AbstractMatrix, opt::DistcorOpt = DistcorOpt(;))
         xj = x[:, j]
         for i ∈ 1:j
             mtx[i, j] = cordistance(x[:, i], xj, opt)
+        end
+    end
+
+    return Symmetric(mtx, :U)
+end
+
+function covdistance(v1::AbstractVector, v2::AbstractVector,
+                     opt::DistcorOpt = DistcorOpt(;))
+    N = length(v1)
+    @smart_assert(N == length(v2) && N > 1)
+
+    N2 = N^2
+
+    method = opt.method
+    args = opt.args
+
+    a = pairwise(method, v1, args...)
+    b = pairwise(method, v2, args...)
+    A = a .- mean(a; dims = 1) .- mean(a; dims = 2) .+ mean(a)
+    B = b .- mean(b; dims = 1) .- mean(b; dims = 2) .+ mean(b)
+
+    dcov2_xy = sum(A .* B) / N2
+
+    return sqrt(dcov2_xy)
+end
+
+function covdistance(x::AbstractMatrix, opt::DistcorOpt = DistcorOpt(;))
+    N = size(x, 2)
+
+    mtx = Matrix{eltype(x)}(undef, N, N)
+    for j ∈ 1:N
+        xj = x[:, j]
+        for i ∈ 1:j
+            mtx[i, j] = covdistance(x[:, i], xj, opt)
         end
     end
 
@@ -1526,6 +1558,8 @@ function covar_mtx(returns::AbstractMatrix, opt::CovOpt = CovOpt(;))
         gerbersb0(returns, opt.gerber, opt.sb)[2]
     elseif method == :Gerber_SB1
         gerbersb1(returns, opt.gerber, opt.sb)[2]
+    elseif method == :Distance
+        Matrix(covdistance(returns, opt.distcor))
     elseif method == :Custom_Func
         estimation = opt.estimation
         func = estimation.genfunc.func

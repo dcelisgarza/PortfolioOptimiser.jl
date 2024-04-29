@@ -485,6 +485,7 @@ end
     estimation::CovEstOpt = CovEstOpt(;)
     gerber::GerberOpt = GerberOpt(;)
     sb::SBOpt = SBOpt(;)
+    distcor::DistcorOpt = DistcorOpt(;)
     denoise::DenoiseOpt = DenoiseOpt(;)
     posdef::PosdefFixOpt = PosdefFixOpt(;)
     jlogo::JlogoOpt = JlogoOpt(;)
@@ -515,6 +516,8 @@ mutable struct CovOpt
     gerber::GerberOpt
     # SB
     sb::SBOpt
+    # Distance
+    distcor::DistcorOpt
     # Denoise
     denoise::DenoiseOpt
     # Posdef fix
@@ -526,11 +529,12 @@ mutable struct CovOpt
 end
 function CovOpt(; method::Symbol = :Full, estimation::CovEstOpt = CovEstOpt(;),
                 gerber::GerberOpt = GerberOpt(;), sb::SBOpt = SBOpt(;),
-                denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
-                jlogo::JlogoOpt = JlogoOpt(;), uplo::Symbol = :U)
+                distcor::DistcorOpt = DistcorOpt(;), denoise::DenoiseOpt = DenoiseOpt(;),
+                posdef::PosdefFixOpt = PosdefFixOpt(;), jlogo::JlogoOpt = JlogoOpt(;),
+                uplo::Symbol = :U)
     @smart_assert(method ∈ CovMethods)
 
-    return CovOpt(method, estimation, gerber, sb, denoise, posdef, jlogo, uplo)
+    return CovOpt(method, estimation, gerber, sb, distcor, denoise, posdef, jlogo, uplo)
 end
 function Base.setproperty!(obj::CovOpt, sym::Symbol, val)
     if sym == :method
