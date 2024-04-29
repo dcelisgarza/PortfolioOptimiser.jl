@@ -21,7 +21,7 @@ ce3 = CorOpt(;
              method = :Pearson, gerber = GerberOpt(; normalise = normalise))
 de = DistanceMLP(; absolute = absolute)
 
-ce = CovType(; ce = ce1)
+ce = PortCovCor(; ce = ce1)
 @time c1 = cov(ce, ret)
 @time c2 = PortfolioOptimiser.covar_mtx(ret, ce2)
 @time begin
@@ -46,7 +46,7 @@ ce3 = CorOpt(;
              method = :Pearson, gerber = GerberOpt(; normalise = normalise))
 de = DistanceMLP(; absolute = absolute)
 
-ce = CovType(; ce = ce1)
+ce = PortCovCor(; ce = ce1)
 @time c1 = cov(ce, ret)
 @time c2 = PortfolioOptimiser.covar_mtx(ret, ce2)
 @time begin
@@ -74,7 +74,7 @@ ce3 = CorOpt(;
              method = :Abs_Pearson, gerber = GerberOpt(; normalise = normalise))
 de = DistanceMLP(; absolute = absolute)
 
-ce = CovType(; ce = ce1)
+ce = PortCovCor(; ce = ce1)
 @time c1 = cov(ce, ret)
 @time c2 = PortfolioOptimiser.covar_mtx(ret, ce2)
 @time begin
@@ -99,7 +99,7 @@ ce3 = CorOpt(;
              method = :Abs_Pearson, gerber = GerberOpt(; normalise = normalise))
 de = DistanceMLP(; absolute = absolute)
 
-ce = CovType(; ce = ce1)
+ce = PortCovCor(; ce = ce1)
 @time c1 = cov(ce, ret)
 @time c2 = PortfolioOptimiser.covar_mtx(ret, ce2)
 @time begin
@@ -122,7 +122,7 @@ opt = CorOpt(;
 
 absolute = false
 de = DistanceMLP(; absolute = absolute)
-ct = CovType(; ce = CorGerber0(; normalise = normalise))
+ct = PortCovCor(; ce = CorGerber0(; normalise = normalise))
 @time c1, d1 = PortfolioOptimiser.cor_dist_mtx(ret, opt)
 @time begin
     c2 = cor(ct, ret)
@@ -634,7 +634,7 @@ mean(test, w; dims = dims)
 
 X = cov(test)
 
-ce = CovType(; ce = SemiCov())
+ce = PortCovCor(; ce = SemiCov())
 de = DistType()
 @time begin
     c1 = cor(ce, X)
@@ -658,7 +658,7 @@ function Distances.pairwise(::ClampDist, i, X)
     return sqrt.(clamp!((1 .- X) / 2, zero(eltype(X)), one(eltype(X))))
 end
 
-ce = CovType(; ce = Gerber_SB1())
+ce = PortCovCor(; ce = Gerber_SB1())
 @time c1 = StatsBase.cov(ce, X)
 @time c2 = PortfolioOptimiser.covar_mtx(X, CovOpt(; method = :Gerber_SB1))
 @test isapprox(c1, c2)

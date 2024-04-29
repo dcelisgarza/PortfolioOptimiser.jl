@@ -2009,13 +2009,13 @@ function coskew(se::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
     return scoskew, SV
 end
 
-@kwdef mutable struct CovType
-    ce::PortfolioOptimiserCovCor = CovFull(;)
+@kwdef mutable struct PortCovCor <: PortfolioOptimiserCovCor
+    ce::CovarianceEstimator = CovFull(;)
     posdef::PosdefFix = PosdefNearest(;)
     denoise::Denoise = NoDenoise()
     jlogo::AbstractJLoGo = NoJLoGo()
 end
-function StatsBase.cov(ce::CovType, X::AbstractMatrix; dims::Int = 1)
+function StatsBase.cov(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
@@ -2027,7 +2027,7 @@ function StatsBase.cov(ce::CovType, X::AbstractMatrix; dims::Int = 1)
 
     return Symmetric(sigma)
 end
-function StatsBase.cor(ce::CovType, X::AbstractMatrix; dims::Int = 1)
+function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
@@ -2040,13 +2040,13 @@ function StatsBase.cor(ce::CovType, X::AbstractMatrix; dims::Int = 1)
     return Symmetric(rho)
 end
 
-function asset_statistics2!(portfolio::AbstractPortfolio; cov_type::CovType = CovType(;),
+function asset_statistics2!(portfolio::AbstractPortfolio; cov_type::PortCovCor = PortCovCor(;),
                             set_cov::Bool = true, mu_type::MeanEstimator = MeanSimple(;),
                             set_mu::Bool = true, kurt_type::KurtFull = KurtFull(;),
                             set_kurt::Bool = true, skurt_type::KurtSemi = KurtSemi(;),
                             set_skurt::Bool = true, skew_type::SkewFull = SkewFull(;),
                             set_skew::Bool = true, sskew_type::SkewSemi = SkewSemi(;),
-                            set_sskew::Bool = true, cor_type::CovType = CovType(;),
+                            set_sskew::Bool = true, cor_type::PortCovCor = PortCovCor(;),
                             set_cor::Bool = true,
                             dist_type::DistanceMethod = DistanceDefault(),
                             set_dist::Bool = true)
@@ -2115,7 +2115,7 @@ end
 
 export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
        CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
-       DistanceMLP, dist, CovType, DistanceVarInfo, BinKnuth, BinFreedman, BinScott, BinHGR,
+       DistanceMLP, dist, PortCovCor, DistanceVarInfo, BinKnuth, BinFreedman, BinScott, BinHGR,
        DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW, TargetSE,
        MeanSimple, MeanJS, MeanBS, MeanBOP, SimpleVariance, asset_statistics2!, JLoGo,
        SkewFull, SkewSemi, KurtFull, KurtSemi, DenoiseFixed, DenoiseSpectral, DenoiseShrink
