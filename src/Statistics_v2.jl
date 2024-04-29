@@ -112,6 +112,7 @@ end
 # # Correlation Matrices
 abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
 abstract type CorPearson <: PortfolioOptimiserCovCor end
+abstract type CorRank <: PortfolioOptimiserCovCor end
 @kwdef mutable struct CovFull <: CorPearson
     absolute::Bool = false
     ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
@@ -192,10 +193,7 @@ function StatsBase.cor(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
                     end)
     return !ce.absolute ? rho : abs.(rho)
 end
-function StatsBase.cor(ce::CorPearson, X; dims::Int = 1)
-    return cor(ce, X; dims = dims)
-end
-@kwdef mutable struct CorSpearman <: PortfolioOptimiserCovCor
+@kwdef mutable struct CorSpearman <: CorRank
     absolute::Bool = false
 end
 function StatsBase.cor(ce::CorSpearman, X::AbstractMatrix; dims::Int = 1)
@@ -206,7 +204,7 @@ function StatsBase.cor(ce::CorSpearman, X::AbstractMatrix; dims::Int = 1)
     rho = corspearman(X)
     return Symmetric(cov2cor(Matrix(!ce.absolute ? rho : abs.(rho))))
 end
-@kwdef mutable struct CorKendall <: PortfolioOptimiserCovCor
+@kwdef mutable struct CorKendall <: CorRank
     absolute::Bool = false
 end
 function StatsBase.cor(ce::CorKendall, X::AbstractMatrix; dims::Int = 1)
