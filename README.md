@@ -8,5 +8,4 @@
 | CI | [![Tests](https://github.com/dcelisgarza/PortfolioOptimiser.jl/actions/workflows/Tests.yml/badge.svg)](https://github.com/dcelisgarza/PortfolioOptimiser.jl/actions/workflows/Tests.yml) [![Documentation](https://github.com/dcelisgarza/PortfolioOptimiser.jl/actions/workflows/Documentation.yml/badge.svg)](https://github.com/dcelisgarza/PortfolioOptimiser.jl/actions/workflows/Documentation.yml) [![Aqua](https://github.com/dcelisgarza/PortfolioOptimiser.jl/actions/workflows/Aqua.yml/badge.svg)](https://github.com/dcelisgarza/PortfolioOptimiser.jl/actions/workflows/Aqua.yml)|
 | Coverage | [![Codecov](https://codecov.io/gh/dcelisgarza/PortfolioOptimiser.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/dcelisgarza/PortfolioOptimiser.jl) [![Coveralls](https://coveralls.io/repos/github/dcelisgarza/PortfolioOptimiser.jl/badge.svg?branch=main)](https://coveralls.io/github/dcelisgarza/PortfolioOptimiser.jl?branch=main) |
 
-
 Work in progress.

@@ -965,7 +965,7 @@ function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
     @smart_assert(c3 > c2)
-    return CorSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
+    return CorSB1{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                     threshold,
                                                                                     c1, c2,
                                                                                     c3, n,
