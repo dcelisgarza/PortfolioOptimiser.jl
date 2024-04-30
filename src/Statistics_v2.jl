@@ -368,12 +368,15 @@ function mutual_variation_info(X::AbstractMatrix,
                 mut_ixy /= min(ex, ey)
             end
 
-            if abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < zero(eltype(X))
-                mut_ixy = zero(eltype(X))
-            end
-            if abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < zero(eltype(X))
-                var_ixy = zero(eltype(X))
-            end
+            # if abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < zero(eltype(X))
+            #     mut_ixy = zero(eltype(X))
+            # end
+            # if abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < zero(eltype(X))
+            #     var_ixy = zero(eltype(X))
+            # end
+
+            mut_ixy = clamp(mut_ixy, zero(eltype(X)), Inf)
+            var_ixy = clamp(var_ixy, zero(eltype(X)), Inf)
 
             mut_mtx[i, j] = mut_ixy
             var_mtx[i, j] = var_ixy
@@ -402,9 +405,10 @@ function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} =
                 mut_ixy /= min(ex, ey)
             end
 
-            if abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < zero(eltype(X))
-                mut_ixy = zero(eltype(X))
-            end
+            # if abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < zero(eltype(X))
+            #     mut_ixy = zero(eltype(X))
+            # end
+            mut_ixy = clamp(mut_ixy, zero(eltype(X)), Inf)
 
             mut_mtx[i, j] = mut_ixy
         end
@@ -434,9 +438,10 @@ function variation_info(X::AbstractMatrix,
                 var_ixy = var_ixy / vxy
             end
 
-            if abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < zero(eltype(X))
-                var_ixy = zero(eltype(X))
-            end
+            # if abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < zero(eltype(X))
+            #     var_ixy = zero(eltype(X))
+            # end
+            var_ixy = clamp(var_ixy, zero(eltype(X)), Inf)
 
             var_mtx[i, j] = var_ixy
         end
