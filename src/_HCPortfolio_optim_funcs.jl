@@ -117,26 +117,20 @@ function _std_silhouette_score(dist, clustering, max_k = 0)
         max_k = ceil(Int, sqrt(size(dist, 1)))
     end
 
-    c1 = min(N, max_k)
+    c1 = min(N, max_k) - 1
     W_list = Vector{eltype(dist)}(undef, c1)
 
-    for i ∈ 2:c1
-        lvl = cluster_lvls[i]
+    for i ∈ 1:c1
+        lvl = cluster_lvls[i + 1]
         sl = silhouettes(lvl, dist)
         msl = mean(sl)
         W_list[i] = msl / std(sl; mean = msl)
     end
 
     limit_k = floor(Int, min(max_k, sqrt(N)))
-    gaps = fill(-Inf, length(W_list))
+    W_list = W_list[1:limit_k]
 
-    if length(W_list) > 2
-        gaps[3:end] .= W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)]
-    end
-
-    gaps = gaps[1:limit_k]
-
-    k = all(isinf.(gaps)) ? length(gaps) : k = argmax(gaps) + 1
+    k = all(.!isfinite.(W_list)) ? length(W_list) : k = argmax(W_list) + 1
 
     return k
 end
