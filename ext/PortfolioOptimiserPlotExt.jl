@@ -5,7 +5,8 @@ using PortfolioOptimiser, GraphRecipes, StatsPlots, SmartAsserts, Statistics,
       LinearAlgebra
 
 using PortfolioOptimiser: AbstractPortfolio, RiskMeasureNames, RiskMeasures, LinkageMethods,
-                          cor_dist_mtx, _two_diff_gap_stat
+                          kClusterMethods, cor_dist_mtx, _two_diff_gap_stat,
+                          _std_silhouette_score
 
 const PO = PortfolioOptimiser
 
@@ -746,12 +747,14 @@ end
 
 function PO.plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
                           cor_opt::CorOpt = CorOpt(;), linkage = :single,
-                          max_k = ceil(Int, sqrt(size(returns, 2))), branchorder = :optimal,
-                          k = 0, dbht_method = :Unique, show_clusters = true,
-                          theme_d = :Spectral, theme_h = :Spectral, theme_h_kwargs = (;),
-                          kwargs_d1 = (;), kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;),
-                          kwargs = (;), cluster_func = x -> 2 .- (x .^ 2) / 2)
+                          k_method = :Two_Diff, max_k = ceil(Int, sqrt(size(returns, 2))),
+                          branchorder = :optimal, k = 0, dbht_method = :Unique,
+                          show_clusters = true, theme_d = :Spectral, theme_h = :Spectral,
+                          theme_h_kwargs = (;), kwargs_d1 = (;), kwargs_d2 = (;),
+                          kwargs_h = (;), kwargs_l = (;), kwargs = (;),
+                          cluster_func = x -> 2 .- (x .^ 2) / 2)
     @smart_assert(linkage ∈ LinkageMethods)
+    @smart_assert(k_method ∈ kClusterMethods)
 
     N = length(assets)
     cor_method = cor_opt.method
@@ -767,9 +770,15 @@ function PO.plot_clusters(assets::AbstractVector, returns::AbstractMatrix;
                             branchorder = branchorder == :default ? :r : branchorder)
     end
 
-    tk = _two_diff_gap_stat(dist, clustering, max_k)
-
-    k = iszero(k) ? tk : k
+    k = if iszero(k)
+        if k_method == :Two_Diff
+            _two_diff_gap_stat(dist, clustering, max_k)
+        else
+            _std_silhouette_score(dist, clustering, max_k)
+        end
+    else
+        k
+    end
 
     clustering_idx = cutree(clustering; k = k)
 
@@ -990,7 +999,15 @@ function PO.plot_network(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(
 
     tk = cluster_opt.k
     max_k = cluster_opt.max_k
-    k = iszero(tk) ? _two_diff_gap_stat(dist, clustering, max_k) : tk
+    k = if iszero(tk)
+        if cluster_opt.k_method == :Two_Diff
+            _two_diff_gap_stat(dist, clustering, max_k)
+        else
+            _std_silhouette_score(dist, clustering, max_k)
+        end
+    else
+        tk
+    end
     clustering_idx = cutree(clustering; k = k)
 
     colours = palette(theme, k)
@@ -1076,7 +1093,15 @@ function PO.plot_cluster_network(portfolio::AbstractPortfolio; cor_opt::CorOpt =
 
     tk = cluster_opt.k
     max_k = cluster_opt.max_k
-    k = iszero(tk) ? _two_diff_gap_stat(dist, clustering, max_k) : tk
+    k = if iszero(tk)
+        if cluster_opt.k_method == :Two_Diff
+            _two_diff_gap_stat(dist, clustering, max_k)
+        else
+            _std_silhouette_score(dist, clustering, max_k)
+        end
+    else
+        tk
+    end
     clustering_idx = cutree(clustering; k = k)
 
     G = Vector{Int}(undef, 0)

@@ -1258,6 +1258,7 @@ end
     linkage::Symbol = :single
     branchorder::Symbol = :optimal
     dbht_method::Symbol = :Unique
+    k_method::Symbol = :Two_Diff
     max_k::T1 = 0
     k::T2 = 0
     genfunc::GenericFunction = GenericFunction(;
@@ -1275,12 +1276,13 @@ Structure and keyword constructor for clustering options.
 
   - `branchorder`: branch order for ordering leaves and branches from [hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
   - `dbht_method`: root finding method from [`DBHTRootMethods`](@ref).
+  - `k_method`: method for finding optimal number of clusters from [`kClusterMethods`](@ref).
   - `max_k`: maximum number of clusters to cut the sample into.
 
-      + `iszero(max_k)`: computes the value in [`_two_diff_gap_stat`](@ref) as ``k_{\\mathrm{max}} = \\left\\lceil \\sqrt{N} \\right\\rceil`` where ``N`` is the number of assets.
+      + `iszero(max_k)`: the value is taken as ``k_{\\mathrm{max}} = \\left\\lceil \\sqrt{N} \\right\\rceil`` where ``N`` is the number of assets.
   - `k`: number of clusters to cut the sample into.
 
-      + `iszero(k)`: computed by [`_two_diff_gap_stat`](@ref) using the dendrogram heights.
+      + `iszero(k)`: computed by [`_two_diff_gap_stat`](@ref) or [`_std_silhouette_score`](@ref) accroding to `k_method`.
   - `genfunc`: note that `corr` and `dist` correspond to `portfolio.cor`, `portfolio.dist`. This is useful when defining custom distance functions, the first argument has to be the correlation matrix and the second the distance matrix.
 
       + `method == :DBHT`: function for computing a non-negative distance matrix from the correlation matrix as per [`DBHTs`](@ref).
@@ -1289,12 +1291,14 @@ mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
     linkage::Symbol
     branchorder::Symbol
     dbht_method::Symbol
+    k_method::Symbol
     max_k::T1
     k::T2
     genfunc::GenericFunction
 end
 function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
-                    dbht_method::Symbol = :Unique, max_k::Integer = 0, k::Integer = 0,
+                    dbht_method::Symbol = :Unique, k_method::Symbol = :Two_Diff,
+                    max_k::Integer = 0, k::Integer = 0,
                     genfunc::GenericFunction = GenericFunction(;
                                                                func = (corr, dist, args...; kwargs...) -> ceil(maximum(dist)^2) .-
                                                                                                           dist .^
@@ -1302,9 +1306,10 @@ function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
     @smart_assert(linkage ∈ LinkageMethods)
     @smart_assert(branchorder ∈ BranchOrderTypes)
     @smart_assert(dbht_method ∈ DBHTRootMethods)
+    @smart_assert(k_method ∈ kClusterMethods)
 
-    return ClusterOpt{typeof(max_k), typeof(k)}(linkage, branchorder, dbht_method, max_k, k,
-                                                genfunc)
+    return ClusterOpt{typeof(max_k), typeof(k)}(linkage, branchorder, dbht_method, k_method,
+                                                max_k, k, genfunc)
 end
 function Base.setproperty!(obj::ClusterOpt, sym::Symbol, val)
     if sym == :linkage
@@ -1313,6 +1318,8 @@ function Base.setproperty!(obj::ClusterOpt, sym::Symbol, val)
         @smart_assert(val ∈ BranchOrderTypes)
     elseif sym == :dbht_method
         @smart_assert(val ∈ DBHTRootMethods)
+    elseif sym == :k_method
+        @smart_assert(val ∈ kClusterMethods)
     end
     return setfield!(obj, sym, val)
 end

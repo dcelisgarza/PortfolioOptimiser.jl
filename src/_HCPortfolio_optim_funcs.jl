@@ -106,6 +106,43 @@ end
 
 """
 ```
+_std_silhouette_score(dist, clustering, max_k = 0)
+```
+"""
+function _std_silhouette_score(dist, clustering, max_k = 0)
+    N = size(dist, 1)
+    cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]
+
+    if iszero(max_k)
+        max_k = ceil(Int, sqrt(size(dist, 1)))
+    end
+
+    c1 = min(N, max_k)
+    W_list = Vector{eltype(dist)}(undef, c1)
+
+    for i ∈ 2:c1
+        lvl = cluster_lvls[i]
+        sl = silhouettes(lvl, dist)
+        msl = mean(sl)
+        W_list[i] = msl / std(sl; mean = msl)
+    end
+
+    limit_k = floor(Int, min(max_k, sqrt(N)))
+    gaps = fill(-Inf, length(W_list))
+
+    if length(W_list) > 2
+        gaps[3:end] .= W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)]
+    end
+
+    gaps = gaps[1:limit_k]
+
+    k = all(isinf.(gaps)) ? length(gaps) : k = argmax(gaps) + 1
+
+    return k
+end
+
+"""
+```
 _two_diff_gap_stat(dist, clustering, max_k = 0)
 ```
 """
@@ -187,7 +224,11 @@ function _hcluster_choice(corr, dist, cluster_opt::ClusterOpt)
                             branchorder = branchorder == :default ? :r : branchorder)
     end
 
-    k = _two_diff_gap_stat(dist, clustering, max_k)
+    k = if cluster_opt.k_method == :Two_Diff
+        _two_diff_gap_stat(dist, clustering, max_k)
+    else
+        _std_silhouette_score(dist, clustering, max_k)
+    end
 
     return clustering, k
 end

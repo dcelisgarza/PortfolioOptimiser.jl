@@ -418,6 +418,18 @@ const kMethods = (:Normal, :General)
 
 """
 ```
+kClusterMethods = (:Two_Diff, :Std_Sil)
+```
+
+Methods for computing the optimum number of clusters.
+
+  - `:Two_Diff`: uses the two gap difference statistic.
+  - `:Std_Sil`: uses the standardised silhouette scores.
+"""
+const kClusterMethods = (:Two_Diff, :Std_Sil)
+
+"""
+```
 PosdefFixMethods = (:None, :Nearest, :SDP, :Custom_Func)
 ```
 
