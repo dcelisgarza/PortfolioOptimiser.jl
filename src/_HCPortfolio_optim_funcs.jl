@@ -127,7 +127,7 @@ function _std_silhouette_score(dist, clustering, max_k = 0)
         W_list[i] = msl / std(sl; mean = msl)
     end
 
-    limit_k = floor(Int, min(max_k, sqrt(N)))
+    limit_k = floor(Int, min(max_k, sqrt(N), c1))
     W_list = W_list[1:limit_k]
 
     k = all(.!isfinite.(W_list)) ? length(W_list) : k = argmax(W_list) + 1
