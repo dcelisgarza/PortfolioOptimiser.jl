@@ -251,7 +251,7 @@ mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
 end
 function CorMutualInfo(; bins::Union{<:Integer, <:AbstractBins} = BinHGR(),
                        normalise::Bool = true,
-                       ve::StatsBase.CovarianceEstimator = SimpleVariance(;),
+                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                        std_w::Union{<:AbstractWeights, Nothing} = nothing)
     if isa(bins, Integer)
         @smart_assert(bins > zero(bins))
@@ -592,7 +592,7 @@ mutable struct CorLTD <: PortfolioOptimiserCovCor
     ve::StatsBase.CovarianceEstimator
     std_w::Union{<:AbstractWeights, Nothing}
 end
-function CorLTD(; alpha::Real = 0.05, ve::StatsBase.CovarianceEstimator = SimpleVariance(;),
+function CorLTD(; alpha::Real = 0.05, ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return CorLTD(alpha, ve, std_w)
@@ -658,10 +658,10 @@ mutable struct CorGerber0{T1 <: Real} <: CorGerberBasic
     posdef::PosdefFix
 end
 function CorGerber0(; normalise::Bool = false, threshold::Real = 0.5,
-                    ve::StatsBase.CovarianceEstimator = SimpleVariance(;),
+                    ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                     std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    posdef::PosdefFix = PosdefNearest(;))
+                    posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CorGerber0{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
@@ -674,10 +674,10 @@ mutable struct CorGerber1{T1 <: Real} <: CorGerberBasic
     posdef::PosdefFix
 end
 function CorGerber1(; normalise::Bool = false, threshold::Real = 0.5,
-                    ve::StatsBase.CovarianceEstimator = SimpleVariance(;),
+                    ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                     std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    posdef::PosdefFix = PosdefNearest(;))
+                    posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CorGerber1{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
@@ -690,10 +690,10 @@ mutable struct CorGerber2{T1 <: Real} <: CorGerberBasic
     posdef::PosdefFix
 end
 function CorGerber2(; normalise::Bool = false, threshold::Real = 0.5,
-                    ve::StatsBase.CovarianceEstimator = SimpleVariance(;),
+                    ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                     std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    posdef::PosdefFix = PosdefNearest(;))
+                    posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CorGerber2{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
@@ -928,10 +928,10 @@ mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
 end
 function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4, n::Real = 2,
-                ve::StatsBase.CovarianceEstimator = SimpleVariance(;),
+                ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing,
                 mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                posdef::PosdefFix = PosdefNearest(;))
+                posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
@@ -959,10 +959,10 @@ mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
 end
 function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4, n::Real = 2,
-                ve::StatsBase.CovarianceEstimator = SimpleVariance(;),
+                ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing,
                 mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                posdef::PosdefFix = PosdefNearest(;))
+                posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
@@ -990,10 +990,10 @@ mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
 end
 function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4, n::Real = 2,
-                      ve::StatsBase.CovarianceEstimator = SimpleVariance(;),
+                      ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                       std_w::Union{<:AbstractWeights, Nothing} = nothing,
                       mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                      posdef::PosdefFix = PosdefNearest(;))
+                      posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
@@ -1023,10 +1023,10 @@ mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
 end
 function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4, n::Real = 2,
-                      ve::StatsBase.CovarianceEstimator = SimpleVariance(;),
+                      ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                       std_w::Union{<:AbstractWeights, Nothing} = nothing,
                       mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                      posdef::PosdefFix = PosdefNearest(;))
+                      posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2))
@@ -1649,7 +1649,7 @@ function errPDF(x, vals; kernel = ASH.Kernels.gaussian, m = 10, n = 1000, q = 10
     return sse
 end
 function find_max_eval(vals, q; kernel = ASH.Kernels.gaussian, m::Integer = 10,
-                       n::Integer = 1000, args = (), kwargs = (;))
+                       n::Integer = 1000, args = (), kwargs = ())
     res = Optim.optimize(x -> errPDF(x, vals; kernel = kernel, m = m, n = n, q = q), 0.0,
                          1.0, args...; kwargs...)
 
@@ -1881,7 +1881,7 @@ end
 abstract type AbstractJLoGo end
 struct NoJLoGo <: AbstractJLoGo end
 @kwdef mutable struct JLoGo <: AbstractJLoGo
-    DBHT::DBHT = DBHT(;)
+    DBHT::DBHT = DBHT()
 end
 function jlogo!(::NoJLoGo, ::PosdefFix, ::AbstractMatrix, D = nothing)
     return nothing
@@ -1910,13 +1910,13 @@ function jlogo!(je::JLoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
 end
 abstract type KurtEstimator end
 @kwdef mutable struct KurtFull <: KurtEstimator
-    posdef::PosdefFix = PosdefNearest(;)
+    posdef::PosdefFix = PosdefNearest()
     denoise::Denoise = NoDenoise()
     jlogo::AbstractJLoGo = NoJLoGo()
 end
 @kwdef mutable struct KurtSemi <: KurtEstimator
     target::Union{Real, AbstractVector{<:Real}} = 0.0
-    posdef::PosdefFix = PosdefNearest(;)
+    posdef::PosdefFix = PosdefNearest()
     denoise::Denoise = NoDenoise()
     jlogo::AbstractJLoGo = NoJLoGo()
 end
@@ -1949,13 +1949,13 @@ function cokurt(ke::KurtSemi, X::AbstractMatrix, mu::AbstractVector)
 end
 abstract type SkewEstimator end
 struct SkewFull <: SkewEstimator
-    # posdef::PosdefFix = PosdefNearest(;)
+    # posdef::PosdefFix = PosdefNearest()
     # denoise::Denoise = NoDenoise()
     # jlogo::AbstractJLoGo = NoJLoGo()
 end
 @kwdef mutable struct SkewSemi <: SkewEstimator
     target::Union{Real, AbstractVector{<:Real}} = 0.0
-    # posdef::PosdefFix = PosdefNearest(;)
+    # posdef::PosdefFix = PosdefNearest()
     # denoise::Denoise = NoDenoise()
     # jlogo::AbstractJLoGo = NoJLoGo()
 end
@@ -2006,8 +2006,8 @@ function coskew(se::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
 end
 
 @kwdef mutable struct PortCovCor <: PortfolioOptimiserCovCor
-    ce::CovarianceEstimator = CovFull(;)
-    posdef::PosdefFix = PosdefNearest(;)
+    ce::CovarianceEstimator = CovFull()
+    posdef::PosdefFix = PosdefNearest()
     denoise::Denoise = NoDenoise()
     jlogo::AbstractJLoGo = NoJLoGo()
 end
@@ -2037,13 +2037,13 @@ function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
 end
 
 function asset_statistics2!(portfolio::AbstractPortfolio;
-                            cov_type::PortCovCor = PortCovCor(;), set_cov::Bool = true,
-                            mu_type::MeanEstimator = MeanSimple(;), set_mu::Bool = true,
-                            kurt_type::KurtFull = KurtFull(;), set_kurt::Bool = true,
-                            skurt_type::KurtSemi = KurtSemi(;), set_skurt::Bool = true,
-                            skew_type::SkewFull = SkewFull(;), set_skew::Bool = true,
-                            sskew_type::SkewSemi = SkewSemi(;), set_sskew::Bool = true,
-                            cor_type::PortCovCor = PortCovCor(;), set_cor::Bool = true,
+                            cov_type::PortCovCor = PortCovCor(), set_cov::Bool = true,
+                            mu_type::MeanEstimator = MeanSimple(), set_mu::Bool = true,
+                            kurt_type::KurtFull = KurtFull(), set_kurt::Bool = true,
+                            skurt_type::KurtSemi = KurtSemi(), set_skurt::Bool = true,
+                            skew_type::SkewFull = SkewFull(), set_skew::Bool = true,
+                            sskew_type::SkewSemi = SkewSemi(), set_sskew::Bool = true,
+                            cor_type::PortCovCor = PortCovCor(), set_cor::Bool = true,
                             dist_type::DistanceMethod = DistanceDefault(),
                             set_dist::Bool = true)
     returns = portfolio.returns
@@ -2115,4 +2115,4 @@ export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, Co
        BinHGR, DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW,
        TargetSE, MeanSimple, MeanJS, MeanBS, MeanBOP, SimpleVariance, asset_statistics2!,
        JLoGo, SkewFull, SkewSemi, KurtFull, KurtSemi, DenoiseFixed, DenoiseSpectral,
-       DenoiseShrink, NoPosdef
+       DenoiseShrink, NoPosdef, NoJLoGo
