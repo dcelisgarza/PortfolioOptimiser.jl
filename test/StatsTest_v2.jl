@@ -11325,8 +11325,8 @@ end
         asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                            set_skew = false, set_sskew = false, set_cov = false,
                            cor_type = c1)
-    catch
         flag = true
+    catch
     end
     if flag
         cort = reshape([1.0000000000000002, 0.24820016723310842, 0.2516032815971011,
