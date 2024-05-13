@@ -278,7 +278,8 @@ end
 function _bin_width_func(::Union{BinHGR, <:Integer})
     return nothing
 end
-function calc_num_bins(::AstroBins, xj, xi, j::Integer, i, bin_width_func, T = nothing)
+function calc_num_bins(::AstroBins, xj::AbstractVector, xi::AbstractVector, j::Integer,
+                       i::Integer, bin_width_func, ::Any)
     k1 = (maximum(xj) - minimum(xj)) / bin_width_func(xj)
     return round(Int, if j != i
                      k2 = (maximum(xi) - minimum(xi)) / bin_width_func(xi)
@@ -287,16 +288,17 @@ function calc_num_bins(::AstroBins, xj, xi, j::Integer, i, bin_width_func, T = n
                      k1
                  end)
 end
-function calc_num_bins(::BinHGR, xj, xi, j, i, bin_width_func, N)
+function calc_num_bins(::BinHGR, xj::AbstractVector, xi::AbstractVector, j::Integer,
+                       i::Integer, ::Any, T::Integer)
     corr = cor(xj, xi)
     return round(Int, if isone(corr)
-                     z = cbrt(8 + 324 * N + 12 * sqrt(36 * N + 729 * N^2))
+                     z = cbrt(8 + 324 * T + 12 * sqrt(36 * T + 729 * T^2))
                      z / 6 + 2 / (3 * z) + 1 / 3
                  else
-                     sqrt(1 + sqrt(1 + 24 * N / (1 - corr^2))) / sqrt(2)
+                     sqrt(1 + sqrt(1 + 24 * T / (1 - corr^2))) / sqrt(2)
                  end)
 end
-function calc_num_bins(bins::Integer, xj, xi, j, i, bin_width_func, N)
+function calc_num_bins(bins::Integer, args...)
     return bins
 end
 function calc_hist_data(xj::AbstractVector, xi::AbstractVector, bins::Integer)
@@ -344,6 +346,7 @@ function _mutual_info(A::AbstractMatrix)
 
     return sum(mi)
 end
+#=
 function mutual_variation_info(X::AbstractMatrix,
                                bins::Union{<:AbstractBins, <:Integer} = BinKnuth(),
                                normalise::Bool = true)
@@ -385,6 +388,7 @@ function mutual_variation_info(X::AbstractMatrix,
 
     return Symmetric(mut_mtx, :U), Symmetric(var_mtx, :U)
 end
+=#
 function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} = BinHGR(),
                      normalise::Bool = true)
     T, N = size(X)
@@ -401,13 +405,9 @@ function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} =
 
             mut_ixy = _mutual_info(hxy)
             if normalise
-                vxy = ex + ey - mut_ixy
                 mut_ixy /= min(ex, ey)
             end
 
-            # if abs(mut_ixy) < eps(typeof(mut_ixy)) || mut_ixy < zero(eltype(X))
-            #     mut_ixy = zero(eltype(X))
-            # end
             mut_ixy = clamp(mut_ixy, zero(eltype(X)), Inf)
 
             mut_mtx[i, j] = mut_ixy
@@ -438,9 +438,6 @@ function variation_info(X::AbstractMatrix,
                 var_ixy = var_ixy / vxy
             end
 
-            # if abs(var_ixy) < eps(typeof(var_ixy)) || var_ixy < zero(eltype(X))
-            #     var_ixy = zero(eltype(X))
-            # end
             var_ixy = clamp(var_ixy, zero(eltype(X)), Inf)
 
             var_mtx[i, j] = var_ixy
@@ -2118,4 +2115,4 @@ export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, Co
        BinHGR, DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW,
        TargetSE, MeanSimple, MeanJS, MeanBS, MeanBOP, SimpleVariance, asset_statistics2!,
        JLoGo, SkewFull, SkewSemi, KurtFull, KurtSemi, DenoiseFixed, DenoiseSpectral,
-       DenoiseShrink
+       DenoiseShrink, NoPosdef
