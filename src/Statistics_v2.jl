@@ -1545,46 +1545,6 @@ function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
     C = cholesky(x)
     return a * C.U
 end
-function cokurt(x::AbstractMatrix, mu::AbstractArray)
-    T, N = size(x)
-    y = x .- mu
-    ex = eltype(y)
-    o = transpose(range(; start = one(ex), stop = one(ex), length = N))
-    z = kron(o, y) .* kron(y, o)
-    cokurt = transpose(z) * z / T
-    return cokurt
-end
-function scokurt(x::AbstractMatrix, mu::AbstractArray,
-                 target_ret::Union{Real, <:AbstractVector{<:Real}} = 0.0)
-    T, N = size(x)
-    y = x .- mu
-    y .= min.(y, target_ret)
-    ex = eltype(y)
-    o = transpose(range(; start = one(ex), stop = one(ex), length = N))
-    z = kron(o, y) .* kron(y, o)
-    scokurt = transpose(z) * z / T
-    return scokurt
-end
-function coskew(x::AbstractMatrix, mu::AbstractArray)
-    T, N = size(x)
-    y = x .- mu
-    ex = eltype(y)
-    o = transpose(range(; start = one(ex), stop = one(ex), length = N))
-    z = kron(o, y) .* kron(y, o)
-    coskew = transpose(x) * z / T
-    return coskew
-end
-function scoskew(x::AbstractMatrix, mu::AbstractArray,
-                 target_ret::Union{Real, <:AbstractVector{<:Real}} = 0.0)
-    T, N = size(x)
-    y = x .- mu
-    y .= min.(y, target_ret)
-    ex = eltype(y)
-    o = transpose(range(; start = one(ex), stop = one(ex), length = N))
-    z = kron(o, y) .* kron(y, o)
-    scoskew = transpose(x) * z / T
-    return scoskew
-end
 function duplication_matrix(n::Int)
     cols = Int(n * (n + 1) / 2)
     rows = n * n
@@ -2037,13 +1997,15 @@ function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
 end
 
 function asset_statistics2!(portfolio::AbstractPortfolio;
-                            cov_type::PortCovCor = PortCovCor(), set_cov::Bool = true,
-                            mu_type::MeanEstimator = MeanSimple(), set_mu::Bool = true,
-                            kurt_type::KurtFull = KurtFull(), set_kurt::Bool = true,
-                            skurt_type::KurtSemi = KurtSemi(), set_skurt::Bool = true,
-                            skew_type::SkewFull = SkewFull(), set_skew::Bool = true,
-                            sskew_type::SkewSemi = SkewSemi(), set_sskew::Bool = true,
-                            cor_type::PortCovCor = PortCovCor(), set_cor::Bool = true,
+                            cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                            set_cov::Bool = true, mu_type::MeanEstimator = MeanSimple(),
+                            set_mu::Bool = true, kurt_type::KurtFull = KurtFull(),
+                            set_kurt::Bool = true, skurt_type::KurtSemi = KurtSemi(),
+                            set_skurt::Bool = true, skew_type::SkewFull = SkewFull(),
+                            set_skew::Bool = true, sskew_type::SkewSemi = SkewSemi(),
+                            set_sskew::Bool = true,
+                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                            set_cor::Bool = true,
                             dist_type::DistanceMethod = DistanceDefault(),
                             set_dist::Bool = true)
     returns = portfolio.returns
@@ -2107,6 +2069,181 @@ function asset_statistics2!(portfolio::AbstractPortfolio;
     end
 
     return nothing
+end
+
+#=
+"""
+```
+commutation_matrix(x::AbstractMatrix)
+```
+
+Generates the [commutation matrix](https://en.wikipedia.org/wiki/Commutation_matrix) for `x`.
+
+# Inputs
+
+  - `x`: matrix.
+
+# Outputs
+
+  - `y`: commutation matrix.
+"""
+function commutation_matrix(x::AbstractMatrix)
+    m, n = size(x)
+    mn = m * n
+    row = 1:mn
+    col = vec(transpose(reshape(row, m, n)))
+    data = range(; start = 1, stop = 1, length = mn)
+    com = sparse(row, col, data, mn, mn)
+    return com
+end
+
+"""
+```
+vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
+```
+
+Turns a vector of arrays into a matrix.
+
+# Inputs
+
+  - `x`: vector of arrays.
+
+# Outputs
+
+  - `y`: matrix.
+"""
+function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
+    return vcat(transpose.(x)...)
+end
+=#
+
+abstract type WorstCaseMethod end
+abstract type WorstCaseArchMethod <: WorstCaseMethod end
+struct StationaryBootstrap <: WorstCaseArchMethod end
+struct CircularBootstrap <: WorstCaseArchMethod end
+struct MovingBootstrap <: WorstCaseArchMethod end
+@kwdef mutable struct WorstCaseArch <: WorstCaseMethod
+    bootstrap::WorstCaseArchMethod = StationaryBootstrap()
+    n_sim::Integer = 3_000
+    block_size::Integer = 3
+    q::Real = 0.05
+    seed::Union{<:Integer, Nothing} = nothing
+end
+@kwdef struct WorstCaseNormal <: WorstCaseMethod
+    n_sim::Integer = 3_000
+    q::Real = 0.05
+    rng::AbstractRNG = Random.default_rng()
+    seed::Union{<:Integer, Nothing} = nothing
+end
+struct WorstCaseDelta <: WorstCaseMethod end
+
+abstract type WorstCaseSet end
+struct WorstCaseBox <: WorstCaseSet end
+struct WorstCaseEllipse <: WorstCaseSet end
+
+function _bootstrap_func(::StationaryBootstrap)
+    return pyimport("arch.bootstrap").StationaryBootstrap
+end
+function _bootstrap_func(::CircularBootstrap)
+    return pyimport("arch.bootstrap").CircularBlockBootstrap
+end
+function _bootstrap_func(::MovingBootstrap)
+    return pyimport("arch.bootstrap").MovingBlockBootstrap
+end
+
+function gen_bootstrap(method::WorstCaseArch, cov_type::PortfolioOptimiserCovCor,
+                       mu_type::MeanEstimator, X::AbstractMatrix)
+    covs = Vector{Matrix{eltype(X)}}(undef, 0)
+    sizehint!(covs, method.n_sim)
+    mus = Vector{Vector{eltype(X)}}(undef, 0)
+    sizehint!(mus, method.n_sim)
+
+    bootstrap_func = _bootstrap_func(method.bootstrap)
+    gen = bootstrap_func(method.block_size, X; seed = method.seed)
+    for data ∈ gen.bootstrap(method.n_sim)
+        A = data[1][1]
+        sigma = cov(cov_type, A)
+        push!(covs, sigma)
+        if hasproperty(mu_type, :sigma)
+            mu_type.sigma = sigma
+        end
+        mu = mean(mu_type, A)
+        push!(mus, mu)
+    end
+
+    return covs, mus
+end
+
+function calc_sets(::WorstCaseBox, method::WorstCaseArch,
+                   cov_type::PortfolioOptimiserCovCor, mu_type::MeanEstimator,
+                   X::AbstractMatrix, ::Any)
+    q = method.q
+    N = size(X, 2)
+
+    covs, mus = gen_bootstrap(method, cov_type, mu_type, X)
+
+    cov_s = vec_of_vecs_to_mtx(vec.(covs))
+    cov_l = reshape([quantile(cov_s[:, i], q / 2) for i ∈ 1:(N * N)], N, N)
+    cov_u = reshape([quantile(cov_s[:, i], 1 - q / 2) for i ∈ 1:(N * N)], N, N)
+
+    mu_s = vec_of_vecs_to_mtx(mus)
+    mu_l = [quantile(mu_s[:, i], q / 2) for i ∈ 1:N]
+    mu_u = [quantile(mu_s[:, i], 1 - q / 2) for i ∈ 1:N]
+    d_mu = (mu_u - mu_l) / 2
+
+    return cov_l, cov_u, d_mu, nothing, nothing
+end
+
+function calc_sets(::WorstCaseEllipse, method::WorstCaseArch,
+                   cov_type::PortfolioOptimiserCovCor, mu_type::MeanEstimator,
+                   X::AbstractMatrix, sigma::AbstractMatrix, mu::AbstractVector, ::Any,
+                   ::Any)
+    covs, mus = gen_bootstrap(method, cov_type, mu_type, X)
+
+    A_sigma = vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma) for cov_s ∈ covs])
+    cov_sigma = cov(cov_type, A_sigma)
+
+    A_mu = vec_of_vecs_to_mtx([mu_s .- mu for mu_s ∈ mus])
+    cov_mu = cov(cov_type, A_mu)
+
+    return cov_sigma, cov_mu, A_sigma, A_mu
+end
+
+function calc_sets(::WorstCaseBox, method::WorstCaseNormal, ::Any, ::Any, X::AbstractMatrix,
+                   sigma::AbstractMatrix)
+    Random.seed!(method.rng, method.seed)
+    q = method.q
+    T, N = size(X)
+
+    cov_mu = sigma / T
+
+    covs = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, cov_mu), method.n_sim)))
+    cov_l = reshape([quantile(covs[:, i], q / 2) for i ∈ 1:(N * N)], N, N)
+    cov_u = reshape([quantile(covs[:, i], 1 - q / 2) for i ∈ 1:(N * N)], N, N)
+
+    d_mu = cquantile(Normal(), q / 2) * sqrt.(diag(cov_mu))
+
+    return cov_l, cov_u, d_mu, covs, cov_mu
+end
+
+function calc_sets(::WorstCaseEllipse, method::WorstCaseNormal,
+                   cov_type::PortfolioOptimiserCovCor, mu_type::MeanEstimator,
+                   X::AbstractMatrix, sigma::AbstractMatrix, mu::AbstractVector,
+                   covs::Union{AbstractMatrix, Nothing},
+                   cov_sigma::Union{AbstractMatrix, Nothing})
+    Random.seed!(method.rng, method.seed)
+    T = size(X, 1)
+
+    A_mu = transpose(rand(MvNormal(mu, sigma), method.n_sim))
+    if isnothing(covs) || isnothing(cov_sigma)
+        cov_mu = sigma / T
+        covs = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, cov_mu), method.n_sim)))
+    end
+    A_sigma = covs .- transpose(vec(sigma))
+
+    K = commutation_matrix(sigma)
+    cov_sigma = T * (I + K) * kron(cov_mu, cov_mu)
+    return cov_sigma, cov_mu, A_sigma, A_mu
 end
 
 export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
