@@ -50,7 +50,7 @@ function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
     return nothing
 end
 
-# # DBHT Similarity Matrices
+# ## DBHT Similarity Matrices
 abstract type DBHTSimilarity end
 struct DBHTExp <: DBHTSimilarity end
 function dbht_similarity(::DBHTExp, S, D)
@@ -61,7 +61,7 @@ function dbht_similarity(::DBHTMaxDist, S, D)
     return ceil(maximum(D)^2) .- D .^ 2
 end
 
-# # Distance matrices
+# ## Distance matrices
 abstract type DistanceMethod end
 @kwdef mutable struct DistanceMLP <: DistanceMethod
     absolute::Bool = false
@@ -87,7 +87,7 @@ function _dist(de::DistanceMLP2, X::AbstractMatrix, ::Any)
                    clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
                end)
 
-    return Distances.pairwise(de.distance, _X, de.::Any; de.kwargs...)
+    return Distances.pairwise(de.distance, _X, de.args...; de.kwargs...)
 end
 struct DistanceLog <: DistanceMethod end
 function _dist(::DistanceLog, X::AbstractMatrix, ::Any)
@@ -2115,4 +2115,4 @@ export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, Co
        BinHGR, DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW,
        TargetSE, MeanSimple, MeanJS, MeanBS, MeanBOP, SimpleVariance, asset_statistics2!,
        JLoGo, SkewFull, SkewSemi, KurtFull, KurtSemi, DenoiseFixed, DenoiseSpectral,
-       DenoiseShrink, NoPosdef, NoJLoGo
+       DenoiseShrink, NoPosdef, NoJLoGo, DBHTExp, DBHT

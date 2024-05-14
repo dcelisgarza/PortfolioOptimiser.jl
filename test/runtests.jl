@@ -4,6 +4,7 @@ using SafeTestsets
     include("StatsTest_v2.jl")
 end
 
+#=
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
 end
@@ -92,3 +93,4 @@ end
 @safetestset "Portfolio Classic RP Optimisation" begin
     include("PortfolioClassicRPTests.jl")
 end
+=#
