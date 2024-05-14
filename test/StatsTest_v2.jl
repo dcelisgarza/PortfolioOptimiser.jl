@@ -22323,18 +22323,150 @@ end
 end
 
 @testset "setproperty! tests" begin
-    @test_throws AssertionError DistanceVarInfo(; bins = 0)
     ce = DistanceVarInfo()
+    @test_throws AssertionError DistanceVarInfo(; bins = 0)
     @test_throws AssertionError ce.bins = 0
     ce.bins = 7
     @test ce.bins == 7
 
-    @test_throws AssertionError CorMutualInfo(; bins = 0)
     ce = CorMutualInfo()
+    @test_throws AssertionError CorMutualInfo(; bins = 0)
     @test_throws AssertionError ce.bins = 0
     ce.bins = 5
     @test ce.bins == 5
+
+    ce = CorLTD()
+    @test_throws AssertionError CorLTD(alpha = -1)
+    @test_throws AssertionError CorLTD(alpha = 2)
+    @test_throws AssertionError ce.alpha = -1
+    @test_throws AssertionError ce.alpha = 2
+    ce.alpha = 0.5
+    @test ce.alpha == 0.5
+
+    ce = CorGerber0()
+    @test_throws AssertionError CorGerber0(threshold = 0)
+    @test_throws AssertionError CorGerber0(threshold = 1)
+    @test_throws AssertionError ce.threshold = -1
+    @test_throws AssertionError ce.threshold = 2
+    ce.threshold = 0.35
+    @test ce.threshold == 0.35
+
+    ce = CorGerber1()
+    @test_throws AssertionError CorGerber1(threshold = 0)
+    @test_throws AssertionError CorGerber1(threshold = 1)
+    @test_throws AssertionError ce.threshold = -1
+    @test_throws AssertionError ce.threshold = 2
+    ce.threshold = 0.25
+    @test ce.threshold == 0.25
+
+    ce = CorGerber2()
+    @test_throws AssertionError CorGerber2(threshold = 0)
+    @test_throws AssertionError CorGerber2(threshold = 1)
+    @test_throws AssertionError ce.threshold = -1
+    @test_throws AssertionError ce.threshold = 2
+    ce.threshold = 0.75
+    @test ce.threshold == 0.75
+
+    ce = CorSB0()
+    @test_throws AssertionError CorSB0(threshold = 0)
+    @test_throws AssertionError CorSB0(threshold = 1)
+    @test_throws AssertionError ce.threshold = -1
+    @test_throws AssertionError ce.threshold = 2
+    ce.threshold = 0.25
+    @test ce.threshold == 0.25
+
+    ce = CorSB0()
+    @test_throws AssertionError CorSB0(c1 = 0)
+    @test_throws AssertionError CorSB0(c1 = 2)
+    @test_throws AssertionError ce.c1 = 0
+    @test_throws AssertionError ce.c1 = 2
+    ce.c1 = 0.25
+    @test ce.c1 == 0.25
+
+    ce = CorSB0()
+    @test_throws AssertionError CorSB0(c3 = 0.5)
+    @test_throws AssertionError ce.c3 = ce.c2
+    @test_throws AssertionError ce.c3 = 0.25
+    ce.c3 = 0.6
+    @test_throws AssertionError ce.c2 = 0.6
+    @test ce.c3 == 0.6
+
+    ce = CorSB1()
+    @test_throws AssertionError CorSB1(threshold = 0)
+    @test_throws AssertionError CorSB1(threshold = 1)
+    @test_throws AssertionError ce.threshold = -1
+    @test_throws AssertionError ce.threshold = 2
+    ce.threshold = 0.25
+    @test ce.threshold == 0.25
+
+    ce = CorSB1()
+    @test_throws AssertionError CorSB1(c1 = 0)
+    @test_throws AssertionError CorSB1(c1 = 2)
+    @test_throws AssertionError ce.c1 = 0
+    @test_throws AssertionError ce.c1 = 2
+    ce.c1 = 0.25
+    @test ce.c1 == 0.25
+
+    ce = CorSB1()
+    @test_throws AssertionError CorSB1(c3 = 0.5)
+    @test_throws AssertionError ce.c3 = ce.c2
+    @test_throws AssertionError ce.c3 = 0.25
+    ce.c3 = 0.6
+    @test_throws AssertionError ce.c2 = 0.6
+    @test ce.c3 == 0.6
+
+    ce = CorGerberSB0()
+    @test_throws AssertionError CorGerberSB0(threshold = 0)
+    @test_throws AssertionError CorGerberSB0(threshold = 1)
+    @test_throws AssertionError ce.threshold = -1
+    @test_throws AssertionError ce.threshold = 2
+    ce.threshold = 0.25
+    @test ce.threshold == 0.25
+
+    ce = CorGerberSB0()
+    @test_throws AssertionError CorGerberSB0(c1 = 0)
+    @test_throws AssertionError CorGerberSB0(c1 = 2)
+    @test_throws AssertionError ce.c1 = 0
+    @test_throws AssertionError ce.c1 = 2
+    ce.c1 = 0.25
+    @test ce.c1 == 0.25
+
+    ce = CorGerberSB0()
+    @test_throws AssertionError CorGerberSB0(c3 = 0.5)
+    @test_throws AssertionError ce.c3 = ce.c2
+    @test_throws AssertionError ce.c3 = 0.25
+    ce.c3 = 0.6
+    @test_throws AssertionError ce.c2 = 0.6
+    @test ce.c3 == 0.6
+
+    ce = CorGerberSB1()
+    @test_throws AssertionError CorGerberSB1(threshold = 0)
+    @test_throws AssertionError CorGerberSB1(threshold = 1)
+    @test_throws AssertionError ce.threshold = -1
+    @test_throws AssertionError ce.threshold = 2
+    ce.threshold = 0.25
+    @test ce.threshold == 0.25
+
+    ce = CorGerberSB1()
+    @test_throws AssertionError CorGerberSB1(c1 = 0)
+    @test_throws AssertionError CorGerberSB1(c1 = 2)
+    @test_throws AssertionError ce.c1 = 0
+    @test_throws AssertionError ce.c1 = 2
+    ce.c1 = 0.25
+    @test ce.c1 == 0.25
+
+    ce = CorGerberSB1()
+    @test_throws AssertionError CorGerberSB1(c3 = 0.5)
+    @test_throws AssertionError ce.c3 = ce.c2
+    @test_throws AssertionError ce.c3 = 0.25
+    ce.c3 = 0.6
+    @test_throws AssertionError ce.c2 = 0.6
+    @test ce.c3 == 0.6
 end
+
+
+
+print(1)
 
 # portfolio = HCPortfolio(; prices = prices)
 

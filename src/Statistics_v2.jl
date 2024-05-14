@@ -927,7 +927,7 @@ mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
     posdef::PosdefFix
 end
 function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
-                c2::Real = 0.5, c3::Real = 4, n::Real = 2,
+                c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing,
                 mean_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -958,7 +958,7 @@ mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
     posdef::PosdefFix
 end
 function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
-                c2::Real = 0.5, c3::Real = 4, n::Real = 2,
+                c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing,
                 mean_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -989,7 +989,7 @@ mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
     posdef::PosdefFix
 end
 function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
-                      c2::Real = 0.5, c3::Real = 4, n::Real = 2,
+                      c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                       std_w::Union{<:AbstractWeights, Nothing} = nothing,
                       mean_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -1022,7 +1022,7 @@ mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
     posdef::PosdefFix
 end
 function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
-                      c2::Real = 0.5, c3::Real = 4, n::Real = 2,
+                      c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                       std_w::Union{<:AbstractWeights, Nothing} = nothing,
                       mean_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -1046,7 +1046,7 @@ function Base.setproperty!(obj::CorSB, sym::Symbol, val)
     if sym == :threshold
         @smart_assert(zero(val) < val < one(val))
     elseif sym ∈ (:c1, :c2)
-        @smart_assert(zero(val) < val <= one(val))
+        @smart_assert(zero(val) < val <= one(val) && val < obj.c3)
     elseif sym == :c3
         @smart_assert(val > obj.c2)
     end
