@@ -1,7 +1,8 @@
 using SafeTestsets
 
 @safetestset "Stats V2 tests" begin
-    include("StatsTest_v2.jl")
+    include("StatsTest_v2_1.jl")
+    include("StatsTest_v2_2.jl")
 end
 
 #=
