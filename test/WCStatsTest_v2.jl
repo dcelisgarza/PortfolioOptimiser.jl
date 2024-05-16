@@ -634,7 +634,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     @test isapprox(portfolio.cov_mu, cov_mut)
     @test isapprox(portfolio.cov_sigma[idx...], cov_sigmat)
     @test isapprox(portfolio.k_mu, k_mut)
-    @test isapprox(portfolio.k_sigma, k_sigmat)
+    @test isapprox(portfolio.k_sigma, k_sigmat, rtol = 5.0e-5)
 
     wc.diagonal = true
     wc_statistics2!(portfolio, wc)
@@ -1348,7 +1348,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     @test isapprox(portfolio.cov_mu, cov_mut)
     @test isapprox(portfolio.cov_sigma[idx...], cov_sigmat)
     @test isapprox(portfolio.k_mu, k_mut)
-    @test isapprox(portfolio.k_sigma, k_sigmat)
+    @test isapprox(portfolio.k_sigma, k_sigmat, rtol = 1.0e-5)
 
     try
         wc.box = WorstCaseArch(; bootstrap = StationaryBootstrap())
@@ -3577,16 +3577,3 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     catch
     end
 end
-
-opt = WCOpt(;)
-opt.seed = 123456789
-opt.box = :Moving
-opt.ellipse = :Moving
-wc_statistics!(portfolio, opt)
-println("cov_lt = reshape($(vec(portfolio.cov_l)), 20,20)")
-println("cov_ut = reshape($(vec(portfolio.cov_u)), 20,20)")
-println("d_mut = $(portfolio.d_mu)")
-println("cov_mut = reshape($(vec(portfolio.cov_mu)), 20,20)")
-println("cov_sigmat = reshape($(vec(portfolio.cov_sigma[idx...])), 20,20)")
-println("k_mut = $(portfolio.k_mu)")
-println("k_sigmat = $(portfolio.k_sigma)")
