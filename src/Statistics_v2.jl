@@ -2129,13 +2129,19 @@ struct MovingBootstrap <: WorstCaseArchMethod end
     q::Real = 0.05
     seed::Union{<:Integer, Nothing} = nothing
 end
-@kwdef struct WorstCaseNormal <: WorstCaseMethod
+@kwdef mutable struct WorstCaseNormal <: WorstCaseMethod
     n_sim::Integer = 3_000
     q::Real = 0.05
     rng::AbstractRNG = Random.default_rng()
     seed::Union{<:Integer, Nothing} = nothing
 end
-struct WorstCaseDelta <: WorstCaseMethod end
+@kwdef mutable struct WorstCaseDelta <: WorstCaseMethod
+    dcov::Real = 0.1
+    dmu::Real = 0.1
+end
+abstract type WorstCaseKMethod end
+struct WorstCaseKNormal <: WorstCaseKMethod end
+struct WorstCaseKGeneral <: WorstCaseKMethod end
 
 abstract type WorstCaseSet end
 struct WorstCaseBox <: WorstCaseSet end
@@ -2176,7 +2182,7 @@ end
 
 function calc_sets(::WorstCaseBox, method::WorstCaseArch,
                    cov_type::PortfolioOptimiserCovCor, mu_type::MeanEstimator,
-                   X::AbstractMatrix, ::Any)
+                   X::AbstractMatrix, ::Any, ::Any)
     q = method.q
     N = size(X, 2)
 
@@ -2201,16 +2207,16 @@ function calc_sets(::WorstCaseEllipse, method::WorstCaseArch,
     covs, mus = gen_bootstrap(method, cov_type, mu_type, X)
 
     A_sigma = vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma) for cov_s ∈ covs])
-    cov_sigma = cov(cov_type, A_sigma)
+    cov_sigma = Matrix(cov(cov_type, A_sigma))
 
     A_mu = vec_of_vecs_to_mtx([mu_s .- mu for mu_s ∈ mus])
-    cov_mu = cov(cov_type, A_mu)
+    cov_mu = Matrix(cov(cov_type, A_mu))
 
     return cov_sigma, cov_mu, A_sigma, A_mu
 end
 
 function calc_sets(::WorstCaseBox, method::WorstCaseNormal, ::Any, ::Any, X::AbstractMatrix,
-                   sigma::AbstractMatrix)
+                   sigma::AbstractMatrix, ::Any)
     Random.seed!(method.rng, method.seed)
     q = method.q
     T, N = size(X)
@@ -2230,12 +2236,12 @@ function calc_sets(::WorstCaseEllipse, method::WorstCaseNormal,
                    cov_type::PortfolioOptimiserCovCor, mu_type::MeanEstimator,
                    X::AbstractMatrix, sigma::AbstractMatrix, mu::AbstractVector,
                    covs::Union{AbstractMatrix, Nothing},
-                   cov_sigma::Union{AbstractMatrix, Nothing})
+                   cov_mu::Union{AbstractMatrix, Nothing})
     Random.seed!(method.rng, method.seed)
     T = size(X, 1)
 
     A_mu = transpose(rand(MvNormal(mu, sigma), method.n_sim))
-    if isnothing(covs) || isnothing(cov_sigma)
+    if isnothing(covs) || isnothing(cov_mu)
         cov_mu = sigma / T
         covs = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, cov_mu), method.n_sim)))
     end
@@ -2246,10 +2252,95 @@ function calc_sets(::WorstCaseEllipse, method::WorstCaseNormal,
     return cov_sigma, cov_mu, A_sigma, A_mu
 end
 
+function calc_sets(::WorstCaseBox, method::WorstCaseDelta, ::Any, ::Any, X::AbstractMatrix,
+                   sigma::AbstractMatrix, mu::AbstractVector)
+    d_mu = method.dmu * abs.(mu)
+    cov_l = sigma - method.dcov * abs.(sigma)
+    cov_u = sigma + method.dcov * abs.(sigma)
+
+    return cov_l, cov_u, d_mu, nothing, nothing
+end
+
+function calc_k(::WorstCaseKNormal, q::Real, X::AbstractMatrix, cov_X::AbstractMatrix)
+    k_mus = diag(X * (cov_X \ I) * transpose(X))
+    return sqrt(quantile(k_mus, 1 - q))
+end
+
+function calc_k(::WorstCaseKGeneral, q::Real, args...)
+    return sqrt((1 - q) / q)
+end
+
+function calc_k(method::Real, args...)
+    return method
+end
+
+@kwdef mutable struct WCType
+    cov_type::PortfolioOptimiserCovCor = PortCovCor()
+    mu_type::MeanEstimator = MeanSimple()
+    box::WorstCaseMethod = WorstCaseNormal()
+    ellipse::WorstCaseMethod = WorstCaseNormal()
+    k_sigma::Union{<:Real, WorstCaseKMethod} = WorstCaseKNormal()
+    k_mu::Union{<:Real, WorstCaseKMethod} = WorstCaseKNormal()
+    posdef::PosdefFix = PosdefNearest()
+    diagonal::Bool = false
+end
+
+function wc_statistics2!(portfolio::Portfolio, wc::WCType = WCType(); set_box::Bool = true,
+                         set_ellipse::Bool = true)
+    returns = portfolio.returns
+    cov_type = wc.cov_type
+    mu_type = wc.mu_type
+    posdef = wc.posdef
+
+    sigma = Matrix(cov(cov_type, returns))
+    if hasproperty(mu_type, :sigma)
+        mu_type.sigma = sigma
+    end
+    mu = mean(mu_type, returns)
+
+    covs = nothing
+    cov_mu = nothing
+    if set_box
+        cov_l, cov_u, d_mu, covs, cov_mu = calc_sets(WorstCaseBox(), wc.box, wc.cov_type,
+                                                     wc.mu_type, returns, sigma, mu)
+        posdef_fix!(posdef, cov_l)
+        posdef_fix!(posdef, cov_u)
+
+        portfolio.cov_l = cov_l
+        portfolio.cov_u = cov_u
+        portfolio.d_mu = d_mu
+    end
+
+    if set_ellipse
+        cov_sigma, cov_mu, A_sigma, A_mu = calc_sets(WorstCaseEllipse(), wc.ellipse,
+                                                     wc.cov_type, wc.mu_type, returns,
+                                                     sigma, mu, covs, cov_mu)
+        posdef_fix!(posdef, cov_sigma)
+        posdef_fix!(posdef, cov_mu)
+
+        if wc.diagonal
+            cov_mu .= Diagonal(cov_mu)
+            cov_sigma .= Diagonal(cov_sigma)
+        end
+
+        k_sigma = calc_k(wc.k_sigma, wc.ellipse.q, A_sigma, cov_sigma)
+        k_mu = calc_k(wc.k_mu, wc.ellipse.q, A_mu, cov_mu)
+
+        portfolio.cov_mu = cov_mu
+        portfolio.cov_sigma = cov_sigma
+        portfolio.k_mu = k_mu
+        portfolio.k_sigma = k_sigma
+    end
+
+    return nothing
+end
+
 export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
        CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
        DistanceMLP, dist, PortCovCor, DistanceVarInfo, BinKnuth, BinFreedman, BinScott,
        BinHGR, DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW,
        TargetSE, MeanSimple, MeanJS, MeanBS, MeanBOP, SimpleVariance, asset_statistics2!,
        JLoGo, SkewFull, SkewSemi, KurtFull, KurtSemi, DenoiseFixed, DenoiseSpectral,
-       DenoiseShrink, NoPosdef, NoJLoGo, DBHTExp, DBHT
+       DenoiseShrink, NoPosdef, NoJLoGo, DBHTExp, DBHT, wc_statistics2!, WCType,
+       WorstCaseArch, WorstCaseNormal, WorstCaseDelta, WorstCaseKNormal, WorstCaseKGeneral,
+       StationaryBootstrap, CircularBootstrap, MovingBootstrap
