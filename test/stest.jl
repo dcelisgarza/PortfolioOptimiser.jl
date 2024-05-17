@@ -1,7 +1,10 @@
 using CSV, Clarabel, DataFrames, OrderedCollections, Test, TimeSeries, PortfolioOptimiser,
       LinearAlgebra, PyCall, MultivariateStats, JuMP, NearestCorrelationMatrix, StatsBase,
       AverageShiftedHistograms, Distances, Aqua, StatsPlots, GraphRecipes, BenchmarkTools,
-      COSMO, Statistics, CovarianceEstimation
+      Statistics, CovarianceEstimation
+
+using PortfolioOptimiser
+MultiVarReg()
 
 ret = randn(200, 201)
 @time c0 = cov(ret)

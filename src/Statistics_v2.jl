@@ -2335,6 +2335,180 @@ function wc_statistics2!(portfolio::Portfolio, wc::WCType = WCType(); set_box::B
     return nothing
 end
 
+abstract type FeatureSelection end
+abstract type RegressionCriteria end
+mutable struct PVal{T1 <: Real} <: RegressionCriteria
+    threshold::T1
+end
+function PVal(threshold::Real = 0.05)
+    @smart_assert(zero(threshold) < threshold < one(threshold))
+    return PVal{typeof(threshold)}(threshold)
+end
+function setproperty!(obj::PVal, sym::Symbol, val)
+    if sym == :threshold
+        @smart_assert(zero(val) < val < one(val))
+    end
+    return setfield!(obj, sym, val)
+end
+abstract type MinValRegressionCriteria <: RegressionCriteria end
+abstract type MaxValRegressionCriteria <: RegressionCriteria end
+struct AIC <: MinValRegressionCriteria end
+struct AICC <: MinValRegressionCriteria end
+struct BIC <: MinValRegressionCriteria end
+struct R2 <: MaxValRegressionCriteria end
+struct AdjR2 <: MaxValRegressionCriteria end
+@kwdef mutable struct ForwardReg{T1 <: RegressionCriteria} <: FeatureSelection
+    criterion::T1 = PVal()
+end
+@kwdef mutable struct BackwardReg{T1 <: RegressionCriteria} <: FeatureSelection
+    criterion::T1 = PVal()
+end
+abstract type DimensionReductionTarget end
+struct PCATarget <: DimensionReductionTarget end
+@kwdef mutable struct DimensionReductionReg <: FeatureSelection
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    std_w::Union{<:AbstractWeights, Nothing} = nothing
+    mean_w::Union{<:AbstractWeights, Nothing} = nothing
+    pcr::DimensionReductionTarget = PCATarget()
+end
+function get_dimension_reduction_type(::PCATarget)
+    return MultivariateStats.PCA
+end
+function regression(method::ForwardReg{PVal{T}}, x::DataFrame, y::AbstractVector) where {T}
+    included = String[]
+    ovec = ones(length(y))
+    namesx = names(x)
+
+    threshold = method.criterion.threshold
+    pvals = Float64[]
+    val = 0.0
+    while val <= threshold
+        excluded = setdiff(namesx, included)
+        best_pval = Inf
+        new_feature = ""
+
+        for i ∈ excluded
+            factors = [included; i]
+            x1 = [ovec Matrix(x[!, factors])]
+            fit_result = lm(x1, y)
+            new_pvals = coeftable(fit_result).cols[4][2:end]
+
+            idx = findfirst(x -> x == i, factors)
+            test_pval = new_pvals[idx]
+            if best_pval > test_pval && maximum(new_pvals) <= threshold
+                best_pval = test_pval
+                new_feature = i
+                pvals = copy(new_pvals)
+            end
+        end
+
+        isempty(new_feature) ? break : push!(included, new_feature)
+        if !isempty(pvals)
+            val = maximum(pvals)
+        end
+    end
+
+    if isempty(included)
+        excluded = setdiff(namesx, included)
+        best_pval = Inf
+        new_feature = ""
+
+        for i ∈ excluded
+            factors = [included; i]
+            x1 = [ovec Matrix(x[!, factors])]
+            fit_result = lm(x1, y)
+            new_pvals = coeftable(fit_result).cols[4][2:end]
+
+            idx = findfirst(x -> x == i, factors)
+            test_pval = new_pvals[idx]
+            if best_pval > test_pval
+                best_pval = test_pval
+                new_feature = i
+                pvals = copy(new_pvals)
+            end
+        end
+
+        @warn("No asset with p-value lower than threshold. Best we can do is $new_feature, with p-value $best_pval.")
+
+        push!(included, new_feature)
+    end
+
+    return included
+end
+
+function _criterion_func_and_threshold(::AIC)
+    return GLM.aic, Inf
+end
+function _criterion_func_and_threshold(::AICC)
+    return GLM.aicc, Inf
+end
+function _criterion_func_and_threshold(::BIC)
+    return GLM.bic, Inf
+end
+function _criterion_func_and_threshold(::R2)
+    return GLM.r2, -Inf
+end
+function _criterion_func_and_threshold(::AdjR2)
+    return GLM.adjr2, -Inf
+end
+function _get_reg_incl_excl!(::MinValRegressionCriteria, value, excluded, included,
+                             threshold)
+    val, key = findmin(value)
+    idx = findfirst(x -> x == key, excluded)
+    if val < threshold
+        push!(included, popat!(excluded, idx))
+        threshold = val
+    end
+    return threshold
+end
+function _get_reg_incl_excl!(::MaxValRegressionCriteria, value, excluded, included,
+                             threshold)
+    val, key = findmax(value)
+    idx = findfirst(x -> x == key, excluded)
+    if val > threshold
+        push!(included, popat!(excluded, idx))
+        threshold = val
+    end
+end
+function regression(method::ForwardReg{<:Union{MinValRegressionCriteria,
+                                               MaxValRegressionCriteria}}, x::DataFrame,
+                    y::AbstractVector)
+    included = String[]
+    ovec = ones(length(y))
+    namesx = names(x)
+
+    criterion_func, threshold = _criterion_func_and_threshold(method.criterion)
+
+    excluded = namesx
+    for _ ∈ eachindex(y)
+        ni = length(excluded)
+        value = Dict()
+
+        for i ∈ excluded
+            factors = copy(included)
+            push!(factors, i)
+
+            x1 = [ovec Matrix(x[!, factors])]
+            fit_result = lm(x1, y)
+
+            value[i] = criterion_func(fit_result)
+        end
+
+        if isempty(value)
+            break
+        end
+
+        threshold = _get_reg_incl_excl!(method.criterion, value, excluded, included,
+                                        threshold)
+
+        if ni == length(excluded)
+            break
+        end
+    end
+
+    return included
+end
+
 export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
        CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
        DistanceMLP, dist, PortCovCor, DistanceVarInfo, BinKnuth, BinFreedman, BinScott,
