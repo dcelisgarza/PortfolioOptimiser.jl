@@ -2335,12 +2335,13 @@ function wc_statistics2!(portfolio::Portfolio, wc::WCType = WCType(); set_box::B
     return nothing
 end
 
-abstract type FeatureSelection end
+abstract type RegressionType end
+abstract type StepwiseRegression <: RegressionType end
 abstract type RegressionCriteria end
 mutable struct PVal{T1 <: Real} <: RegressionCriteria
     threshold::T1
 end
-function PVal(threshold::Real = 0.05)
+function PVal(; threshold::Real = 0.05)
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return PVal{typeof(threshold)}(threshold)
 end
@@ -2357,29 +2358,82 @@ struct AICC <: MinValRegressionCriteria end
 struct BIC <: MinValRegressionCriteria end
 struct R2 <: MaxValRegressionCriteria end
 struct AdjR2 <: MaxValRegressionCriteria end
-@kwdef mutable struct ForwardReg{T1 <: RegressionCriteria} <: FeatureSelection
+@kwdef mutable struct ForwardReg{T1 <: RegressionCriteria} <: StepwiseRegression
     criterion::T1 = PVal()
 end
-@kwdef mutable struct BackwardReg{T1 <: RegressionCriteria} <: FeatureSelection
+@kwdef mutable struct BackwardReg{T1 <: RegressionCriteria} <: StepwiseRegression
     criterion::T1 = PVal()
 end
 abstract type DimensionReductionTarget end
 struct PCATarget <: DimensionReductionTarget end
-@kwdef mutable struct DimensionReductionReg <: FeatureSelection
+@kwdef mutable struct DimensionReductionReg <: RegressionType
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
     std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
     pcr::DimensionReductionTarget = PCATarget()
+    pcr_kwargs::NamedTuple = (;)
 end
 function get_dimension_reduction_type(::PCATarget)
     return MultivariateStats.PCA
 end
-function regression(method::ForwardReg{PVal{T}}, x::DataFrame, y::AbstractVector) where {T}
-    included = String[]
+function prep_dim_red_reg(method::DimensionReductionReg, x::DataFrame)
+    N = nrow(x)
+    X = transpose(Matrix(x))
+
+    X_std = StatsBase.standardize(StatsBase.ZScoreTransform, X; dims = 2)
+
+    model = MultivariateStats.fit(get_dimension_reduction_type(method.pcr), X_std;
+                                  method.pcr_kwargs...)
+    Xp = transpose(predict(model, X_std))
+    Vp = projection(model)
+    x1 = [ones(N) Xp]
+
+    return X, x1, Vp
+end
+function _regression(method::DimensionReductionReg, X::AbstractMatrix, x1::AbstractMatrix,
+                     Vp::AbstractMatrix, y::AbstractVector)
+    avg = if isnothing(method.mean_w)
+        vec(mean(X; dims = 2))
+    else
+        vec(mean(X, method.mean_w; dims = 2))
+    end
+    sdev = if isnothing(method.std_w)
+        vec(std(method.ve, X; dims = 2))
+    else
+        vec(std(method.ve, X, method.std_w; dims = 2))
+    end
+
+    fit_result = lm(x1, y)
+    beta_pc = coef(fit_result)[2:end]
+
+    beta = Vp * beta_pc ./ sdev
+    beta0 = mean(y) - dot(beta, avg)
+    pushfirst!(beta, beta0)
+
+    return beta
+end
+function regression(method::DimensionReductionReg, x::DataFrame, y::DataFrame)
+    features = names(x)
+    rows = ncol(y)
+    cols = ncol(x) + 1
+
+    loadings = zeros(rows, cols)
+
+    X, x1, Vp = prep_dim_red_reg(method, x)
+    for i ∈ 1:rows
+        beta = _regression(method, X, x1, Vp, y[!, i])
+        loadings[i, :] .= beta
+    end
+
+    return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
+end
+function _regression(method::ForwardReg{PVal{T}}, x::DataFrame, y::AbstractVector) where {T}
     ovec = ones(length(y))
     namesx = names(x)
 
     threshold = method.criterion.threshold
+
+    included = String[]
     pvals = Float64[]
     val = 0.0
     while val <= threshold
@@ -2435,24 +2489,95 @@ function regression(method::ForwardReg{PVal{T}}, x::DataFrame, y::AbstractVector
 
     return included
 end
+function _regression(method::BackwardReg{PVal{T}}, x::DataFrame,
+                     y::AbstractVector) where {T}
+    ovec = ones(length(y))
+    fit_result = lm([ovec Matrix(x)], y)
 
-function _criterion_func_and_threshold(::AIC)
-    return GLM.aic, Inf
+    included = names(x)
+    namesx = names(x)
+
+    threshold = method.criterion.threshold
+
+    excluded = String[]
+    pvals = coeftable(fit_result).cols[4][2:end]
+    val = maximum(pvals)
+
+    while val > threshold
+        factors = setdiff(namesx, excluded)
+        included = factors
+
+        if isempty(factors)
+            break
+        end
+
+        x1 = [ovec Matrix(x[!, factors])]
+        fit_result = lm(x1, y)
+        pvals = coeftable(fit_result).cols[4][2:end]
+
+        val, idx2 = findmax(pvals)
+        push!(excluded, factors[idx2])
+    end
+
+    if isempty(included)
+        excluded = setdiff(namesx, included)
+        best_pval = Inf
+        new_feature = ""
+        pvals = Float64[]
+
+        for i ∈ excluded
+            factors = [included; i]
+            x1 = [ovec Matrix(x[!, factors])]
+            fit_result = lm(x1, y)
+            new_pvals = coeftable(fit_result).cols[4][2:end]
+
+            idx = findfirst(x -> x == i, factors)
+            test_pval = new_pvals[idx]
+
+            if best_pval > test_pval
+                best_pval = test_pval
+                new_feature = i
+                pvals = copy(new_pvals)
+            end
+        end
+
+        push!(included, new_feature)
+    end
+
+    return included
 end
-function _criterion_func_and_threshold(::AICC)
-    return GLM.aicc, Inf
+function _regression_criterion_func(::AIC)
+    return GLM.aic
 end
-function _criterion_func_and_threshold(::BIC)
-    return GLM.bic, Inf
+function _regression_criterion_func(::AICC)
+    return GLM.aicc
 end
-function _criterion_func_and_threshold(::R2)
-    return GLM.r2, -Inf
+function _regression_criterion_func(::BIC)
+    return GLM.bic
 end
-function _criterion_func_and_threshold(::AdjR2)
-    return GLM.adjr2, -Inf
+function _regression_criterion_func(::R2)
+    return GLM.r2
 end
-function _get_reg_incl_excl!(::MinValRegressionCriteria, value, excluded, included,
-                             threshold)
+function _regression_criterion_func(::AdjR2)
+    return GLM.adjr2
+end
+function _regression_threshold(::AIC)
+    return Inf
+end
+function _regression_threshold(::AICC)
+    return Inf
+end
+function _regression_threshold(::BIC)
+    return Inf
+end
+function _regression_threshold(::R2)
+    return -Inf
+end
+function _regression_threshold(::AdjR2)
+    return -Inf
+end
+function _get_forward_reg_incl_excl!(::MinValRegressionCriteria, value, excluded, included,
+                                     threshold)
     val, key = findmin(value)
     idx = findfirst(x -> x == key, excluded)
     if val < threshold
@@ -2461,24 +2586,26 @@ function _get_reg_incl_excl!(::MinValRegressionCriteria, value, excluded, includ
     end
     return threshold
 end
-function _get_reg_incl_excl!(::MaxValRegressionCriteria, value, excluded, included,
-                             threshold)
+function _get_forward_reg_incl_excl!(::MaxValRegressionCriteria, value, excluded, included,
+                                     threshold)
     val, key = findmax(value)
     idx = findfirst(x -> x == key, excluded)
     if val > threshold
         push!(included, popat!(excluded, idx))
         threshold = val
     end
+    return threshold
 end
-function regression(method::ForwardReg{<:Union{MinValRegressionCriteria,
-                                               MaxValRegressionCriteria}}, x::DataFrame,
-                    y::AbstractVector)
-    included = String[]
+function _regression(method::ForwardReg{<:Union{MinValRegressionCriteria,
+                                                MaxValRegressionCriteria}}, x::DataFrame,
+                     y::AbstractVector)
     ovec = ones(length(y))
     namesx = names(x)
 
-    criterion_func, threshold = _criterion_func_and_threshold(method.criterion)
+    criterion_func = _regression_criterion_func(method.criterion)
+    threshold = _regression_threshold(method.criterion)
 
+    included = String[]
     excluded = namesx
     for _ ∈ eachindex(y)
         ni = length(excluded)
@@ -2498,8 +2625,8 @@ function regression(method::ForwardReg{<:Union{MinValRegressionCriteria,
             break
         end
 
-        threshold = _get_reg_incl_excl!(method.criterion, value, excluded, included,
-                                        threshold)
+        threshold = _get_forward_reg_incl_excl!(method.criterion, value, excluded, included,
+                                                threshold)
 
         if ni == length(excluded)
             break
@@ -2507,6 +2634,97 @@ function regression(method::ForwardReg{<:Union{MinValRegressionCriteria,
     end
 
     return included
+end
+function _get_backward_reg_incl!(::MinValRegressionCriteria, value, included, threshold)
+    val, idx = findmin(value)
+    if val < threshold
+        i = findfirst(x -> x == idx, included)
+        popat!(included, i)
+        threshold = val
+    end
+    return threshold
+end
+function _get_backward_reg_incl!(::MaxValRegressionCriteria, value, included, threshold)
+    val, idx = findmax(value)
+    if val > threshold
+        i = findfirst(x -> x == idx, included)
+        popat!(included, i)
+        threshold = val
+    end
+    return threshold
+end
+function _regression(method::BackwardReg{<:Union{MinValRegressionCriteria,
+                                                 MaxValRegressionCriteria}}, x::DataFrame,
+                     y::AbstractVector)
+    ovec = ones(length(y))
+    fit_result = lm([ovec Matrix(x)], y)
+
+    included = names(x)
+
+    threshold = method.criterion.threshold
+
+    criterion_func = _regression_criterion_func(method.criterion)
+    threshold = criterion_func(fit_result)
+
+    for _ ∈ eachindex(y)
+        ni = length(included)
+        value = Dict()
+        for (i, factor) ∈ pairs(included)
+            factors = copy(included)
+            popat!(factors, i)
+            if !isempty(factors)
+                x1 = [ovec Matrix(x[!, factors])]
+            else
+                x1 = reshape(ovec, :, 1)
+            end
+            fit_result = lm(x1, y)
+            value[factor] = criterion_func(fit_result)
+        end
+
+        if isempty(value)
+            break
+        end
+
+        threshold = _get_backward_reg_incl!(method.criterion, value, included, threshold)
+
+        if ni == length(included)
+            break
+        end
+    end
+
+    return included
+end
+function regression(method::StepwiseRegression, x::DataFrame, y::DataFrame)
+    features = names(x)
+    rows = ncol(y)
+    cols = ncol(x) + 1
+
+    N = nrow(y)
+    ovec = ones(N)
+
+    loadings = zeros(rows, cols)
+
+    for i ∈ 1:rows
+        included = _regression(method, x, y[!, i])
+
+        x1 = !isempty(included) ? [ovec Matrix(x[!, included])] : reshape(ovec, :, 1)
+
+        fit_result = lm(x1, y[!, i])
+
+        params = coef(fit_result)
+
+        loadings[i, 1] = params[1]
+        if isempty(included)
+            continue
+        end
+        idx = [findfirst(x -> x == i, features) + 1 for i ∈ included]
+        loadings[i, idx] .= params[2:end]
+    end
+
+    return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
+end
+function loadings_matrix(x::DataFrame, y::DataFrame, method::RegressionType = ForwardReg())
+    return regression(method, x, y)
 end
 
 export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
