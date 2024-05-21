@@ -2731,4 +2731,4 @@ export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, Co
        DenoiseShrink, NoPosdef, NoJLoGo, DBHTExp, DBHT, wc_statistics2!, WCType,
        WorstCaseArch, WorstCaseNormal, WorstCaseDelta, WorstCaseKNormal, WorstCaseKGeneral,
        StationaryBootstrap, CircularBootstrap, MovingBootstrap, loadings_matrix2, AIC, AICC,
-       BIC, R2, AdjR2, ForwardReg, BackwardReg, DimensionReductionReg, PCATarget
+       BIC, R2, AdjR2, ForwardReg, BackwardReg, DimensionReductionReg, PCATarget, PVal

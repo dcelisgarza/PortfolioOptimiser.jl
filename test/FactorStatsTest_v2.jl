@@ -11,6 +11,12 @@ l = 2.0
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
     nms = ["tickers", "const", "MTUM", "QUAL", "VLUE", "SIZE", "USMV"]
 
+    pval = PVal()
+    @test_throws AssertionError pval.threshold = 1
+    @test_throws AssertionError pval.threshold = 0
+    pval.threshold = 0.5
+    @test pval.threshold == 0.5
+
     opt = ForwardReg()
     loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
                                 DataFrame(portfolio.returns, portfolio.assets), opt)
@@ -198,7 +204,6 @@ l = 2.0
                  -0.26636451915360293, -0.4748967098697935, 0.0]
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
-    ################################################################
     opt = BackwardReg()
     @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
                                       DataFrame(portfolio.returns, portfolio.assets), opt)
