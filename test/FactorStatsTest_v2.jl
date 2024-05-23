@@ -44,8 +44,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = AIC()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006682666783877028, 0.0008125085541546204, 0.0009938539577313578,
@@ -72,8 +72,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = AICC()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006682666783877028, 0.0008125085541546204, 0.0009938539577313578,
@@ -100,8 +100,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = BIC()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006682666783877028, 0.0008125085541546204, 0.0009938539577313578,
@@ -126,8 +126,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = R2()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006605270346146956, 0.0007774242176882836, 0.0009370531829272047,
@@ -173,8 +173,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = AdjR2()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006578842498376756, 0.0008125085541546204, 0.0009544324464201135,
@@ -205,8 +205,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt = BackwardReg()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006682666783877028, 0.0008125085541546204, 0.0009938539577313578,
@@ -233,8 +233,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = AIC()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.000709977675346524, 0.0007746382686595056, 0.000975348480044519,
@@ -263,8 +263,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = AICC()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.000709977675346524, 0.0007746382686595056, 0.000975348480044519,
@@ -293,8 +293,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = BIC()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.000709977675346524, 0.0007746382686595056, 0.000975348480044519,
@@ -315,8 +315,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = R2()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006605270346146956, 0.0007774242176882835, 0.0009370531829272047,
@@ -362,8 +362,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = AdjR2()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006578842498376756, 0.0007841952298179896, 0.0009544324464201135,
@@ -397,8 +397,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt = DimensionReductionReg()
-    @time loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                      DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                                DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006662517554895613, 0.0007849399521007353, 0.0009459643095974261,

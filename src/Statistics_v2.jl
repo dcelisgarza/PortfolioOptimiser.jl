@@ -2721,6 +2721,68 @@ end
 function loadings_matrix2(x::DataFrame, y::DataFrame, method::RegressionType = ForwardReg())
     return regression(method, x, y)
 end
+@kwdef mutable struct FactorType
+    error::Bool = true
+    B::Union{Nothing, DataFrame} = nothing
+    method::RegressionType = ForwardReg()
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    var_w::Union{<:AbstractWeights, Nothing} = nothing
+end
+function risk_factors2(x::DataFrame, y::DataFrame; factor_type::FactorType = FactorType(),
+                       cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                       mu_type::MeanEstimator = MeanSimple())
+    B = factor_type.B
+
+    if isnothing(B)
+        B = loadings_matrix(x, y, factor_type.method)
+    end
+    namesB = names(B)
+    old_posdef = nothing
+    x1 = if "const" ∈ namesB
+        if haskey(cov_type, :posdef) && !isa(cov_type.posdef, NoPosdef)
+            old_posdef = cov_type.posdef
+            cov_type.posdef = NoPosdef()
+        end
+        [ones(nrow(y)) Matrix(x)]
+    else
+        Matrix(x)
+    end
+    B_mtx = Matrix(B[!, setdiff(namesB, ("tickers",))])
+
+    f_cov = Matrix(cov(cov_type, x1))
+    if hasproperty(mu_type, :sigma)
+        mu_type.sigma = f_cov
+    end
+    f_mu = mean(mu_type, x1)
+
+    if !isnothing(old_posdef)
+        cov_type.posdef = old_posdef
+        f_cov2 = f_cov[2:end, 2:end]
+        posdef_fix!(cov_type.posdef, f_cov2)
+        f_cov[2:end, 2:end] .= f_cov2
+    end
+
+    returns = x1 * transpose(B_mtx)
+    mu = B_mtx * f_mu
+
+    sigma = if factor_type.error
+        e = Matrix(y) - returns
+        S_e = diagm(vec(vec(if isnothing(factor_type.var_w)
+                                var(factor_type.ve, e; dims = 1)
+                            else
+                                var(factor_type.ve, e, factor_type.var_w; dims = 1)
+                            end)))
+        B_mtx * f_cov * transpose(B_mtx) + S_e
+    else
+        B_mtx * f_cov * transpose(B_mtx)
+    end
+
+    if haskey(cov_type, :posdef)
+        posdef_fix!(cov_type.posdef, sigma)
+    end
+
+    return mu, sigma, returns, B
+end
 
 export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
        CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
@@ -2731,4 +2793,5 @@ export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, Co
        DenoiseShrink, NoPosdef, NoJLoGo, DBHTExp, DBHT, wc_statistics2!, WCType,
        WorstCaseArch, WorstCaseNormal, WorstCaseDelta, WorstCaseKNormal, WorstCaseKGeneral,
        StationaryBootstrap, CircularBootstrap, MovingBootstrap, loadings_matrix2, AIC, AICC,
-       BIC, R2, AdjR2, ForwardReg, BackwardReg, DimensionReductionReg, PCATarget, PVal
+       BIC, R2, AdjR2, ForwardReg, BackwardReg, DimensionReductionReg, PCATarget, PVal,
+       FactorType, risk_factors2
