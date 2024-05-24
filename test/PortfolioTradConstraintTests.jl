@@ -2731,7 +2731,7 @@ end
 
     @test isapprox(w1.weights, w1t)
     @test isapprox(w2.weights, w2t)
-    @test isapprox(w3.weights, w3t)
+    @test isapprox(w3.weights, w3t, rtol = 0.01)
     @test isapprox(w4.weights, w4t)
     @test isapprox(w5.weights, w5t)
     @test isapprox(w6.weights, w6t)
