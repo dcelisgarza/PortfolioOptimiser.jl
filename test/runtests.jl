@@ -1,5 +1,25 @@
 using SafeTestsets
 
+@safetestset "HCPortfolio OWA Optimisation" begin
+    include("HCPortfolioOWAOptimisationTests.jl")
+end
+
+@safetestset "Portfolio Classic Traditional OWA Optimisation" begin
+    include("PortfolioClassicTradOWATests.jl")
+end
+
+@safetestset "Portfolio Classic WC Optimisation" begin
+    include("PortfolioClassicWCTests.jl")
+end
+
+@safetestset "WC Statistics" begin
+    include("WCStatisticsTests.jl")
+end
+
+@safetestset "Portfolio Classic RP Optimisation" begin
+    include("PortfolioClassicRPTests.jl")
+end
+
 @safetestset "Stats V2 tests" begin
     include("StatsTest_v2_1.jl")
     include("StatsTest_v2_2.jl")
@@ -80,24 +100,4 @@ end
 
 @safetestset "Portfolio Classic RP OWA Optimisation" begin
     include("PortfolioClassicRPOWATests.jl")
-end
-
-@safetestset "HCPortfolio OWA Optimisation" begin
-    include("HCPortfolioOWAOptimisationTests.jl")
-end
-
-@safetestset "Portfolio Classic Traditional OWA Optimisation" begin
-    include("PortfolioClassicTradOWATests.jl")
-end
-
-@safetestset "Portfolio Classic WC Optimisation" begin
-    include("PortfolioClassicWCTests.jl")
-end
-
-@safetestset "WC Statistics" begin
-    include("WCStatisticsTests.jl")
-end
-
-@safetestset "Portfolio Classic RP Optimisation" begin
-    include("PortfolioClassicRPTests.jl")
 end
