@@ -1,5 +1,3 @@
-# # Auxiliary Functions
-# ## Fix matrices that should be positive definite.
 abstract type PosdefFix end
 struct NoPosdef <: PosdefFix end
 @kwdef mutable struct PosdefNearest <: PosdefFix
@@ -49,8 +47,6 @@ function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
 
     return nothing
 end
-
-# ## DBHT Similarity Matrices
 abstract type DBHTSimilarity end
 struct DBHTExp <: DBHTSimilarity end
 function dbht_similarity(::DBHTExp, S, D)
@@ -60,8 +56,6 @@ struct DBHTMaxDist <: DBHTSimilarity end
 function dbht_similarity(::DBHTMaxDist, S, D)
     return ceil(maximum(D)^2) .- D .^ 2
 end
-
-# ## Distance matrices
 abstract type DistanceMethod end
 @kwdef mutable struct DistanceMLP <: DistanceMethod
     absolute::Bool = false
@@ -97,7 +91,6 @@ function dist(de::DistanceMethod, X, Y)
     return _dist(de, X, Y)
 end
 struct DistanceDefault <: DistanceMethod end
-
 @kwdef mutable struct SimpleVariance <: StatsBase.CovarianceEstimator
     corrected = true
 end
@@ -115,7 +108,6 @@ function StatsBase.var(ve::SimpleVariance, X::AbstractMatrix, w::AbstractWeights
                        dims::Int = 1, mean = nothing)
     return var(X, w, dims; corrected = ve.corrected, mean = mean)
 end
-
 # # Correlation Matrices
 abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
 abstract type CorPearson <: PortfolioOptimiserCovCor end
@@ -222,15 +214,12 @@ function StatsBase.cor(ce::CorKendall, X::AbstractMatrix; dims::Int = 1)
     rho = corkendall(X)
     return Symmetric(cov2cor(Matrix(!ce.absolute ? rho : abs.(rho))))
 end
-
-# ## Mutual and variation of information matrices.
 abstract type AbstractBins end
 abstract type AstroBins <: AbstractBins end
 struct BinKnuth <: AstroBins end
 struct BinFreedman <: AstroBins end
 struct BinScott <: AstroBins end
 struct BinHGR <: AbstractBins end
-
 mutable struct DistanceVarInfo <: DistanceMethod
     bins::Union{<:Integer, <:AbstractBins}
     normalise::Bool
@@ -476,8 +465,6 @@ end
 function _dist(ce::DistanceVarInfo, ::Any, Y::AbstractMatrix)
     return variation_info(Y, ce.bins, ce.normalise)
 end
-
-# ## Distance correlation.
 @kwdef mutable struct CorDistance <: PortfolioOptimiserCovCor
     distance::Distances.UnionMetric = Distances.Euclidean()
     dist_args::Tuple = ()
@@ -592,8 +579,6 @@ function StatsBase.cov(ce::CorDistance, X::AbstractMatrix; dims::Int = 1)
     end
     return Symmetric(cov_distance(ce, X))
 end
-
-# ## Lower tail correlation.
 mutable struct CorLTD <: PortfolioOptimiserCovCor
     alpha::Real
     ve::StatsBase.CovarianceEstimator
@@ -650,8 +635,6 @@ function StatsBase.cov(ce::CorLTD, X::AbstractMatrix; dims::Int = 1)
                   end)
     return lower_tail_dependence(X, ce.alpha) .* (std_vec * transpose(std_vec))
 end
-
-# ## Gerber covariances
 abstract type CorGerber <: PortfolioOptimiserCovCor end
 abstract type CorGerberBasic <: CorGerber end
 abstract type CorSB <: CorGerber end
@@ -1971,7 +1954,6 @@ function coskew(se::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
 
     return scoskew, SV
 end
-
 @kwdef mutable struct PortCovCor <: PortfolioOptimiserCovCor
     ce::CovarianceEstimator = CovFull()
     posdef::PosdefFix = PosdefNearest()
@@ -2002,7 +1984,6 @@ function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
 
     return Symmetric(rho)
 end
-
 #=
 """
 ```
@@ -2048,7 +2029,6 @@ function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
     return vcat(transpose.(x)...)
 end
 =#
-
 abstract type WorstCaseMethod end
 abstract type WorstCaseArchMethod <: WorstCaseMethod end
 struct StationaryBootstrap <: WorstCaseArchMethod end
@@ -2074,11 +2054,9 @@ end
 abstract type WorstCaseKMethod end
 struct WorstCaseKNormal <: WorstCaseKMethod end
 struct WorstCaseKGeneral <: WorstCaseKMethod end
-
 abstract type WorstCaseSet end
 struct WorstCaseBox <: WorstCaseSet end
 struct WorstCaseEllipse <: WorstCaseSet end
-
 function _bootstrap_func(::StationaryBootstrap)
     return pyimport("arch.bootstrap").StationaryBootstrap
 end
@@ -2116,7 +2094,6 @@ function gen_bootstrap(method::WorstCaseArch, cov_type::PortfolioOptimiserCovCor
 
     return covs, mus
 end
-
 function calc_sets(::WorstCaseBox, method::WorstCaseArch,
                    cov_type::PortfolioOptimiserCovCor, mu_type::MeanEstimator,
                    X::AbstractMatrix, ::Any, ::Any)
@@ -2136,7 +2113,6 @@ function calc_sets(::WorstCaseBox, method::WorstCaseArch,
 
     return cov_l, cov_u, d_mu, nothing, nothing
 end
-
 function calc_sets(::WorstCaseEllipse, method::WorstCaseArch,
                    cov_type::PortfolioOptimiserCovCor, mu_type::MeanEstimator,
                    X::AbstractMatrix, sigma::AbstractMatrix, mu::AbstractVector, ::Any,
@@ -2151,7 +2127,6 @@ function calc_sets(::WorstCaseEllipse, method::WorstCaseArch,
 
     return cov_sigma, cov_mu, A_sigma, A_mu
 end
-
 function calc_sets(::WorstCaseBox, method::WorstCaseNormal, ::Any, ::Any, X::AbstractMatrix,
                    sigma::AbstractMatrix, ::Any)
     Random.seed!(method.rng, method.seed)
@@ -2168,7 +2143,6 @@ function calc_sets(::WorstCaseBox, method::WorstCaseNormal, ::Any, ::Any, X::Abs
 
     return cov_l, cov_u, d_mu, covs, cov_mu
 end
-
 function calc_sets(::WorstCaseEllipse, method::WorstCaseNormal,
                    cov_type::PortfolioOptimiserCovCor, mu_type::MeanEstimator,
                    X::AbstractMatrix, sigma::AbstractMatrix, mu::AbstractVector,
@@ -2188,7 +2162,6 @@ function calc_sets(::WorstCaseEllipse, method::WorstCaseNormal,
     cov_sigma = T * (I + K) * kron(cov_mu, cov_mu)
     return cov_sigma, cov_mu, A_sigma, A_mu
 end
-
 function calc_sets(::WorstCaseBox, method::WorstCaseDelta, ::Any, ::Any, X::AbstractMatrix,
                    sigma::AbstractMatrix, mu::AbstractVector)
     d_mu = method.dmu * abs.(mu)
@@ -2197,20 +2170,16 @@ function calc_sets(::WorstCaseBox, method::WorstCaseDelta, ::Any, ::Any, X::Abst
 
     return cov_l, cov_u, d_mu, nothing, nothing
 end
-
 function calc_k(::WorstCaseKNormal, q::Real, X::AbstractMatrix, cov_X::AbstractMatrix)
     k_mus = diag(X * (cov_X \ I) * transpose(X))
     return sqrt(quantile(k_mus, 1 - q))
 end
-
 function calc_k(::WorstCaseKGeneral, q::Real, args...)
     return sqrt((1 - q) / q)
 end
-
 function calc_k(method::Real, args...)
     return method
 end
-
 @kwdef mutable struct WCType
     cov_type::PortfolioOptimiserCovCor = PortCovCor()
     mu_type::MeanEstimator = MeanSimple()
@@ -2221,7 +2190,6 @@ end
     posdef::PosdefFix = PosdefNearest()
     diagonal::Bool = false
 end
-
 abstract type RegressionType end
 abstract type StepwiseRegression <: RegressionType end
 abstract type RegressionCriteria end

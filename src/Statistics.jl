@@ -1395,16 +1395,18 @@ function mu_estimator(returns::AbstractMatrix, opt::MuOpt = MuOpt(;))
         T, N = size(returns)
         mu = vec(func(returns, args...; kwargs...))
 
+        if target == :VW || method ∈ (:BS, :BOP)
+            inv_sigma = sigma \ I
+        end
+
         evals = eigvals(sigma)
         ones = range(1; stop = 1, length = N)
 
         b = if target == :GM
             fill(mean(mu), N)
         elseif target == :VW
-            inv_sigma = sigma \ I
             fill(dot(ones, inv_sigma, mu) / dot(ones, inv_sigma, ones), N)
         else
-            inv_sigma = sigma \ I
             fill(tr(sigma) / T, N)
         end
 
