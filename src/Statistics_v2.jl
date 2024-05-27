@@ -81,11 +81,7 @@ function wc_statistics2!(portfolio::Portfolio, wc::WCType = WCType(); set_box::B
     mu_type = wc.mu_type
     posdef = wc.posdef
 
-    sigma = Matrix(cov(cov_type, returns))
-    if hasproperty(mu_type, :sigma)
-        mu_type.sigma = sigma
-    end
-    mu = mean(mu_type, returns)
+    sigma, mu = _sigma_mu(returns, cov_type, mu_type)
 
     covs = nothing
     cov_mu = nothing
@@ -130,11 +126,7 @@ function factor_statistics2!(portfolio::Portfolio; factor_type::FactorType = Fac
     returns = portfolio.returns
     f_returns = portfolio.f_returns
 
-    portfolio.f_cov = Matrix(cov(cov_type, f_returns))
-    if hasproperty(mu_type, :sigma)
-        mu_type.sigma = portfolio.f_cov
-    end
-    portfolio.f_mu = mean(mu_type, f_returns)
+    portfolio.f_cov, portfolio.f_mu = _sigma_mu(f_returns, cov_type, mu_type)
 
     portfolio.fm_mu, portfolio.fm_cov, portfolio.fm_returns, portfolio.loadings = risk_factors2(DataFrame(f_returns,
                                                                                                           portfolio.f_assets),

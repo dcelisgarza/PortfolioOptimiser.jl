@@ -2088,7 +2088,16 @@ end
 function _bootstrap_func(::MovingBootstrap)
     return pyimport("arch.bootstrap").MovingBlockBootstrap
 end
+function _sigma_mu(X::AbstractArray, cov_type::PortfolioOptimiserCovCor,
+                   mu_type::MeanEstimator)
+    sigma = Matrix(cov(cov_type, X))
+    if hasproperty(mu_type, :sigma)
+        mu_type.sigma = sigma
+    end
+    mu = mean(mu_type, X)
 
+    return sigma, mu
+end
 function gen_bootstrap(method::WorstCaseArch, cov_type::PortfolioOptimiserCovCor,
                        mu_type::MeanEstimator, X::AbstractMatrix)
     covs = Vector{Matrix{eltype(X)}}(undef, 0)
@@ -2100,12 +2109,8 @@ function gen_bootstrap(method::WorstCaseArch, cov_type::PortfolioOptimiserCovCor
     gen = bootstrap_func(method.block_size, X; seed = method.seed)
     for data ∈ gen.bootstrap(method.n_sim)
         A = data[1][1]
-        sigma = cov(cov_type, A)
+        sigma, mu = _sigma_mu(A, cov_type, mu_type)
         push!(covs, sigma)
-        if hasproperty(mu_type, :sigma)
-            mu_type.sigma = sigma
-        end
-        mu = mean(mu_type, A)
         push!(mus, mu)
     end
 
@@ -2631,11 +2636,7 @@ function risk_factors2(x::DataFrame, y::DataFrame; factor_type::FactorType = Fac
     end
     B_mtx = Matrix(B[!, setdiff(namesB, ("tickers",))])
 
-    f_cov = Matrix(cov(cov_type, x1))
-    if hasproperty(mu_type, :sigma)
-        mu_type.sigma = f_cov
-    end
-    f_mu = mean(mu_type, x1)
+    f_cov, f_mu = _sigma_mu(x1, cov_type, mu_type)
 
     if !isnothing(old_posdef)
         cov_type.posdef = old_posdef
