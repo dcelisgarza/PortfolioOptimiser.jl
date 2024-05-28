@@ -144,7 +144,7 @@ end
 @kwdef mutable struct CovSemi <: CorPearson
     absolute::Bool = false
     ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    target::Union{Real, AbstractVector{<:Real}} = 0.0
+    target::Union{<:Real, AbstractVector{<:Real}} = 0.0
     w::Union{<:AbstractWeights, Nothing} = nothing
 end
 function StatsBase.cov(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
@@ -1865,7 +1865,7 @@ abstract type KurtEstimator end
     jlogo::AbstractJLoGo = NoJLoGo()
 end
 @kwdef mutable struct KurtSemi <: KurtEstimator
-    target::Union{Real, AbstractVector{<:Real}} = 0.0
+    target::Union{<:Real, AbstractVector{<:Real}} = 0.0
     posdef::PosdefFix = PosdefNearest()
     denoise::Denoise = NoDenoise()
     jlogo::AbstractJLoGo = NoJLoGo()
@@ -1904,7 +1904,7 @@ struct SkewFull <: SkewEstimator
     # jlogo::AbstractJLoGo = NoJLoGo()
 end
 @kwdef mutable struct SkewSemi <: SkewEstimator
-    target::Union{Real, AbstractVector{<:Real}} = 0.0
+    target::Union{<:Real, AbstractVector{<:Real}} = 0.0
     # posdef::PosdefFix = PosdefNearest()
     # denoise::Denoise = NoDenoise()
     # jlogo::AbstractJLoGo = NoJLoGo()
@@ -2618,11 +2618,11 @@ function risk_factors2(x::DataFrame, y::DataFrame; factor_type::FactorType = Fac
 
     sigma = if factor_type.error
         e = Matrix(y) - returns
-        S_e = diagm(vec(vec(if isnothing(factor_type.var_w)
-                                var(factor_type.ve, e; dims = 1)
-                            else
-                                var(factor_type.ve, e, factor_type.var_w; dims = 1)
-                            end)))
+        S_e = diagm(vec(if isnothing(factor_type.var_w)
+                            var(factor_type.ve, e; dims = 1)
+                        else
+                            var(factor_type.ve, e, factor_type.var_w; dims = 1)
+                        end))
         B_mtx * f_cov * transpose(B_mtx) + S_e
     else
         B_mtx * f_cov * transpose(B_mtx)
@@ -2633,4 +2633,198 @@ function risk_factors2(x::DataFrame, y::DataFrame; factor_type::FactorType = Fac
     end
 
     return mu, sigma, returns, B
+end
+#=
+"""
+```
+_omega(P, tau_sigma)
+```
+"""
+function _omega(P, tau_sigma)
+    return Diagonal(P * tau_sigma * transpose(P))
+end
+"""
+```
+_Pi(eq, delta, sigma, w, mu, rf)
+```
+"""
+function _Pi(eq, delta, sigma, w, mu, rf)
+    return eq ? delta * sigma * w : mu .- rf
+end
+=#
+"""
+```
+_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, opt, cov_type, cov_flag = true)
+```
+
+Internal function for computing the Black Litterman statistics as defined in [`black_litterman`](@ref). See [`_denoise_logo_mtx`](@ref).
+
+# Inputs
+
+  - `tau`: variable of the same name in the Black-Litterman model.
+  - `omega`: variable of the same name in the Black-Litterman model.
+  - `P`: variable of the same name in the Black-Litterman model.
+  - `Pi`: variable of the same name in the Black-Litterman model.
+  - `Q`: variable of the same name in the Black-Litterman model.
+  - `rf`: variable of the same name in the Black-Litterman model.
+  - `sigma`: variable of the same name in the Black-Litterman model.
+  - `delta`: variable of the same name in the Black-Litterman model.
+  - `T`: variable of the same name in the Black-Litterman model.
+  - `N`: variable of the same name in the Black-Litterman model.
+  - `opt`: any valid instance of `opt` for [`_denoise_logo_mtx`](@ref).
+  - `cov_type`: any valid value from [`DenoiseLoGoNames`](@ref).
+  - `cov_flag`: whether the matrix is a covariance matrix or not.
+
+# Outputs
+
+  - `mu`: asset expected returns vector obtained via the Black-Litterman model.
+  - `cov_mtx`: asset covariance matrix obtained via the Black-Litterman model.
+  - `w`: asset weights obtained via the Black-Litterman model.
+  - `Pi_`: equilibrium excess returns after being adjusted by the views.
+"""
+function _bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, bl)
+    inv_tau_sigma = (tau * sigma) \ I
+    inv_omega = omega \ I
+    Pi_ = ((inv_tau_sigma + transpose(P) * inv_omega * P) \ I) *
+          (inv_tau_sigma * Pi + transpose(P) * inv_omega * Q)
+    M = (inv_tau_sigma + transpose(P) * inv_omega * P) \ I
+
+    mu = Pi_ .+ rf
+    sigma = sigma + M
+
+    posdef_fix!(bl.posdef, sigma)
+    denoise!(bl.denoise, bl.posdef, sigma, T / N)
+    jlogo!(bl.jlogo, bl.posdef, sigma)
+
+    w = ((delta * sigma) \ I) * Pi_
+
+    return mu, sigma, w, Pi_
+end
+abstract type BlackLitterman end
+@kwdef mutable struct BLType{T1 <: Real} <: BlackLitterman
+    eq::Bool = true
+    delta::Union{<:Real, Nothing} = 1.0
+    rf::T1 = 0.0
+    posdef::PosdefFix = PosdefNearest()
+    denoise::Denoise = NoDenoise()
+    jlogo::AbstractJLoGo = NoJLoGo()
+end
+function black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
+                         Q::AbstractVector, w::AbstractVector;
+                         cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                         mu_type::MeanEstimator = MeanSimple())
+    sigma, mu = _sigma_mu(X, cov_type, mu_type)
+
+    T, N = size(X)
+
+    tau = 1 / T
+    omega = _omega(P, tau * sigma)
+    Pi = _Pi(bl.eq, bl.delta, sigma, w, mu, bl.rf)
+
+    mu, sigma, w, missing = _bl_mu_cov_w(tau, omega, P, Pi, Q, bl.rf, sigma, bl.delta, T, N,
+                                         bl)
+
+    return mu, sigma, w
+end
+@kwdef mutable struct BBLType{T1 <: Real} <: BlackLitterman
+    constant::Bool = true
+    error::Bool = true
+    delta::Union{<:Real, Nothing} = 1.0
+    rf::T1 = 0.0
+    ve::StatsBase.CovarianceEstimator
+    var_w::Union{<:AbstractWeights, Nothing}
+end
+function black_litterman(bl::BBLType, X::AbstractMatrix, F::AbstractMatrix,
+                         B::AbstractMatrix, P_f::AbstractMatrix, Q_f::AbstractVector;
+                         cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                         mu_type::MeanEstimator = MeanSimple())
+    f_sigma, f_mu = _sigma_mu(F, cov_type, mu_type)
+
+    f_mu .-= bl.rf
+
+    if bl.constant
+        alpha = B[:, 1]
+        B = B[:, 2:end]
+    end
+
+    T, N = size(X)
+    tau = 1 / T
+
+    sigma = B * f_sigma * transpose(B)
+
+    if bl.error
+        D = X - F * transpose(B)
+        D = Diagonal(vec(if isnothing(bl.var_w)
+                             var(bl.ve, D; dims = 1)
+                         else
+                             var(bl.ve, D, bl.var_w; dims = 1)
+                         end))
+        sigma .+= D
+    end
+
+    omega_f = _omega(P_f, tau * f_sigma)
+
+    inv_sigma = sigma \ I
+    inv_sigma_f = f_sigma \ I
+    inv_omega_f = omega_f \ I
+    sigma_hat = (inv_sigma_f + transpose(P_f) * inv_omega_f * P_f) \ I
+    Pi_hat = sigma_hat * (inv_sigma_f * f_mu + transpose(P_f) * inv_omega_f * Q_f)
+    inv_sigma_hat = sigma_hat \ I
+    iish_b_is_b = (inv_sigma_hat + transpose(B) * inv_sigma * B) \ I
+    is_b_iish_b_is_b = inv_sigma * B * iish_b_is_b
+
+    sigma_bbl = (inv_sigma - is_b_iish_b_is_b * transpose(B) * inv_sigma) \ I
+
+    Pi_bbl = sigma_bbl * is_b_iish_b_is_b * inv_sigma_hat * Pi_hat
+
+    mu = Pi_bbl .+ bl.rf
+
+    if bl.constant
+        mu .+= alpha
+    end
+
+    w = ((bl.delta * sigma_bbl) \ I) * mu
+
+    return mu, sigma_bbl, w
+end
+@kwdef mutable struct ABLType <: BlackLitterman end
+function black_litterman(bl::ABLType, X::AbstractMatrix, w::AbstractVector;
+                         F::Union{AbstractMatrix, Nothing}    = nothing,
+                         B::Union{AbstractMatrix, Nothing}    = nothing,
+                         P::Union{AbstractMatrix, Nothing}    = nothing,
+                         P_f::Union{AbstractMatrix, Nothing}  = nothing,
+                         Q::Union{AbstractVector, Nothing}    = nothing,
+                         Q_f::Union{AbstractVector, Nothing}  = nothing,
+                         cov_type::PortfolioOptimiserCovCor   = PortCovCor(;),
+                         mu_type::MeanEstimator               = MeanSimple(;),
+                         f_cov_type::PortfolioOptimiserCovCor = PortCovCor(;),
+                         f_mu_type::MeanEstimator             = MeanSimple(;))
+    asset_tuple = (!isnothing(P), !isnothing(Q))
+    any_asset_provided = any(asset_tuple)
+    all_asset_provided = all(asset_tuple)
+    @smart_assert(any_asset_provided == all_asset_provided,
+                  "If any of P or Q is provided, then both must be provided.")
+
+    factor_tuple = (!isnothing(P_f), !isnothing(Q_f))
+    any_factor_provided = any(factor_tuple)
+    all_factor_provided = all(factor_tuple)
+    @smart_assert(any_factor_provided == all_factor_provided,
+                  "If any of P_f or Q_f is provided, then both must be provided.")
+
+    if all_factor_provided
+        @smart_assert(!isnothing(B) && !isnothing(F),
+                      "If P_f and Q_f are provided, then B and F must be provided.")
+    end
+
+    if !all_asset_provided && !all_factor_provided
+        throw(AssertionError("Please provide either:\n- P and Q,\n- B, F, P_f and Q_f, or\n- P, Q, B, F, P_f and Q_f."))
+    end
+
+    if all_asset_provided
+        sigma, mu = _sigma_mu(X, cov_type, mu_type)
+    end
+
+    if all_factor_provided
+        f_sigma, f_mu = _sigma_mu(F, f_cov_type, f_mu_type)
+    end
 end
