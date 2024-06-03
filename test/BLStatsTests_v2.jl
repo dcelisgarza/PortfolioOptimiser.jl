@@ -841,8 +841,6 @@ end
     @test isapprox(blfm_mut, portfolio.blfm_mu)
     @test isapprox(blfm_covt, portfolio.blfm_cov)
 
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
-
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],
@@ -1154,8 +1152,6 @@ end
                          2.2475334056273972e-7, 3.699156804304098e-7], (20, 20))
     @test isapprox(blfm_mut, portfolio.blfm_mu)
     @test isapprox(blfm_covt, portfolio.blfm_cov)
-
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
