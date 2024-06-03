@@ -1,5 +1,5 @@
-using CovarianceEstimation, CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections,
-      PortfolioOptimiser, Statistics, StatsBase, Test, TimeSeries, Logging, DataFrames
+using CSV, TimeSeries, DataFrames, StatsBase, Statistics, CovarianceEstimation,
+      LinearAlgebra, Test, PortfolioOptimiser
 
 prices_assets = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
@@ -1022,26 +1022,3 @@ end
     @test isapprox(cov_fmt, portfolio.fm_cov)
     @test isapprox(mu_fmt, portfolio.fm_mu)
 end
-
-# # error::Bool = true
-# # B::Union{Nothing, DataFrame} = nothing
-# # method::RegressionType = ForwardReg()
-# # ve::StatsBase.CovarianceEstimator = SimpleVariance()
-# # var_w::Union{<:AbstractWeights, Nothing} = nothing
-
-# loadings_opt = LoadingsOpt(;)
-# factor_opt = FactorOpt(; loadings_opt = loadings_opt)
-
-# # factor_opt.error = false
-# mu_opt = MuOpt(; method = :JS)
-# @time factor_statistics!(portfolio; factor_opt = factor_opt, mu_opt = mu_opt)
-# cov_f1 = portfolio.f_cov
-# mu_f1 = portfolio.f_mu
-# cov_fm1 = portfolio.fm_cov
-# mu_fm1 = portfolio.fm_mu
-
-# println("cov_ft = reshape($(vec(cov_f1)), (5,5))")
-# println("mu_ft = $mu_f1")
-# println("cov_fmt = reshape($(vec(cov_fm1)), (20,20))")
-# println("mu_fmt = $mu_fm1")
-# println("loadingst = reshape($(vec(Matrix(portfolio.loadings[!,2:end]))), (20,6))")

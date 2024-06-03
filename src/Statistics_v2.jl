@@ -141,14 +141,81 @@ function factor_statistics2!(portfolio::Portfolio; factor_type::FactorType = Fac
     return nothing
 end
 
-export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
-       CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
-       DistanceMLP, dist, PortCovCor, DistanceVarInfo, BinKnuth, BinFreedman, BinScott,
-       BinHGR, DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW,
-       TargetSE, MeanSimple, MeanJS, MeanBS, MeanBOP, SimpleVariance, asset_statistics2!,
-       JLoGo, SkewFull, SkewSemi, KurtFull, KurtSemi, DenoiseFixed, DenoiseSpectral,
-       DenoiseShrink, NoPosdef, NoJLoGo, DBHTExp, DBHT, wc_statistics2!, WCType,
-       WorstCaseArch, WorstCaseNormal, WorstCaseDelta, WorstCaseKNormal, WorstCaseKGeneral,
-       StationaryBootstrap, CircularBootstrap, MovingBootstrap, loadings_matrix2, AIC, AICC,
-       BIC, R2, AdjR2, ForwardReg, BackwardReg, DimensionReductionReg, PCATarget, PVal,
-       FactorType, risk_factors2, factor_statistics2!
+function black_litterman_statistics2!(portfolio::Portfolio; P::AbstractMatrix,
+                                      Q::AbstractVector,
+                                      w::AbstractVector = portfolio.bl_bench_weights,
+                                      cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                                      mu_type::MeanEstimator = MeanSimple(),
+                                      bl_type::BLType = BLType())
+    if isempty(w)
+        w = fill(1 / size(portfolio.returns, 2), size(portfolio.returns, 2))
+    end
+    portfolio.bl_bench_weights = w
+
+    if isnothing(bl_type.delta)
+        bl_type.delta = (dot(portfolio.mu, w) - bl_type.rf) / dot(w, portfolio.cov, w)
+    end
+
+    portfolio.bl_mu, portfolio.bl_cov, missing = black_litterman(bl_type, portfolio.returns,
+                                                                 P, Q, w;
+                                                                 cov_type = cov_type,
+                                                                 mu_type = mu_type)
+
+    return nothing
+end
+
+function black_litterman_factor_statistics2!(portfolio::Portfolio;
+                                             w::AbstractVector = portfolio.bl_bench_weights,
+                                             B::Union{DataFrame, Nothing} = portfolio.loadings,
+                                             P::Union{AbstractMatrix, Nothing} = nothing,
+                                             P_f::Union{AbstractMatrix, Nothing} = nothing,
+                                             Q::Union{AbstractVector, Nothing} = nothing,
+                                             Q_f::Union{AbstractVector, Nothing} = nothing,
+                                             factor_type::FactorType = FactorType(),
+                                             cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                                             mu_type::MeanEstimator = MeanSimple(),
+                                             f_cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                                             f_mu_type::MeanEstimator = MeanSimple(),
+                                             bl_type::BlackLittermanFactor = BBLType())
+    if isempty(w)
+        w = fill(1 / size(portfolio.returns, 2), size(portfolio.returns, 2))
+    end
+    portfolio.bl_bench_weights = w
+
+    if isnothing(bl_type.delta)
+        bl_type.delta = (dot(portfolio.mu, w) - bl_type.rf) / dot(w, portfolio.cov, w)
+    end
+
+    if isnothing(B) || isempty(B)
+        if isempty(portfolio.loadings)
+            portfolio.loadings = regression(factor_type.method,
+                                            DataFrame(portfolio.f_returns,
+                                                      portfolio.f_assets),
+                                            DataFrame(portfolio.returns, portfolio.assets))
+            portfolio.loadings_opt = factor_type.method
+        end
+        B = portfolio.loadings
+    else
+        portfolio.loadings = B
+    end
+
+    namesB = names(B)
+    bl_type.constant = "const" ∈ namesB
+    B = Matrix(B[!, setdiff(namesB, ("tickers",))])
+
+    portfolio.blfm_mu, portfolio.blfm_cov, missing = black_litterman(bl_type,
+                                                                     portfolio.returns;
+                                                                     w = w,
+                                                                     F = portfolio.f_returns,
+                                                                     B = B, P = P,
+                                                                     P_f = P_f, Q = Q,
+                                                                     Q_f = Q_f,
+                                                                     cov_type = cov_type,
+                                                                     mu_type = mu_type,
+                                                                     f_cov_type = f_cov_type,
+                                                                     f_mu_type = f_mu_type)
+    return nothing
+end
+
+export asset_statistics2!, wc_statistics2!, factor_statistics2!,
+       black_litterman_statistics2!, black_litterman_factor_statistics2!

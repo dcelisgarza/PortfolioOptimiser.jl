@@ -2682,7 +2682,7 @@ Internal function for computing the Black Litterman statistics as defined in [`b
   - `w`: asset weights obtained via the Black-Litterman model.
   - `Pi_`: equilibrium excess returns after being adjusted by the views.
 """
-function _bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, bl)
+function _bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, posdef, denoise, jlogo)
     inv_tau_sigma = (tau * sigma) \ I
     inv_omega = omega \ I
     Pi_ = ((inv_tau_sigma + transpose(P) * inv_omega * P) \ I) *
@@ -2692,15 +2692,16 @@ function _bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, bl)
     mu = Pi_ .+ rf
     sigma = sigma + M
 
-    posdef_fix!(bl.posdef, sigma)
-    denoise!(bl.denoise, bl.posdef, sigma, T / N)
-    jlogo!(bl.jlogo, bl.posdef, sigma)
+    posdef_fix!(posdef, sigma)
+    denoise!(denoise, posdef, sigma, T / N)
+    jlogo!(jlogo, posdef, sigma)
 
     w = ((delta * sigma) \ I) * Pi_
 
     return mu, sigma, w, Pi_
 end
 abstract type BlackLitterman end
+abstract type BlackLittermanFactor <: BlackLitterman end
 @kwdef mutable struct BLType{T1 <: Real} <: BlackLitterman
     eq::Bool = true
     delta::Union{<:Real, Nothing} = 1.0
@@ -2722,22 +2723,22 @@ function black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
     Pi = _Pi(bl.eq, bl.delta, sigma, w, mu, bl.rf)
 
     mu, sigma, w, missing = _bl_mu_cov_w(tau, omega, P, Pi, Q, bl.rf, sigma, bl.delta, T, N,
-                                         bl)
+                                         bl.posdef, bl.denoise, bl.jlogo)
 
     return mu, sigma, w
 end
-@kwdef mutable struct BBLType{T1 <: Real} <: BlackLitterman
+@kwdef mutable struct BBLType{T1 <: Real} <: BlackLittermanFactor
     constant::Bool = true
     error::Bool = true
     delta::Union{<:Real, Nothing} = 1.0
     rf::T1 = 0.0
-    ve::StatsBase.CovarianceEstimator
-    var_w::Union{<:AbstractWeights, Nothing}
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    var_w::Union{<:AbstractWeights, Nothing} = nothing
 end
-function black_litterman(bl::BBLType, X::AbstractMatrix, F::AbstractMatrix,
-                         B::AbstractMatrix, P_f::AbstractMatrix, Q_f::AbstractVector;
+function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
+                         B::AbstractMatrix, P_f::AbstractMatrix, Q_f::AbstractVector,
                          cov_type::PortfolioOptimiserCovCor = PortCovCor(),
-                         mu_type::MeanEstimator = MeanSimple())
+                         mu_type::MeanEstimator = MeanSimple(), kwargs...)
     f_sigma, f_mu = _sigma_mu(F, cov_type, mu_type)
 
     f_mu .-= bl.rf
@@ -2747,8 +2748,7 @@ function black_litterman(bl::BBLType, X::AbstractMatrix, F::AbstractMatrix,
         B = B[:, 2:end]
     end
 
-    T, N = size(X)
-    tau = 1 / T
+    tau = 1 / size(X, 1)
 
     sigma = B * f_sigma * transpose(B)
 
@@ -2787,8 +2787,16 @@ function black_litterman(bl::BBLType, X::AbstractMatrix, F::AbstractMatrix,
 
     return mu, sigma_bbl, w
 end
-@kwdef mutable struct ABLType <: BlackLitterman end
-function black_litterman(bl::ABLType, X::AbstractMatrix, w::AbstractVector;
+@kwdef mutable struct ABLType{T1 <: Real} <: BlackLittermanFactor
+    constant::Bool = true
+    eq::Bool = true
+    delta::Union{<:Real, Nothing} = 1.0
+    rf::T1 = 0.0
+    posdef::PosdefFix = PosdefNearest()
+    denoise::Denoise = NoDenoise()
+    jlogo::AbstractJLoGo = NoJLoGo()
+end
+function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
                          F::Union{AbstractMatrix, Nothing}    = nothing,
                          B::Union{AbstractMatrix, Nothing}    = nothing,
                          P::Union{AbstractMatrix, Nothing}    = nothing,
@@ -2827,4 +2835,76 @@ function black_litterman(bl::ABLType, X::AbstractMatrix, w::AbstractVector;
     if all_factor_provided
         f_sigma, f_mu = _sigma_mu(F, f_cov_type, f_mu_type)
     end
+
+    if all_factor_provided && bl.constant
+        alpha = B[:, 1]
+        B = B[:, 2:end]
+    end
+
+    T, N = size(X)
+
+    tau = 1 / T
+
+    if all_asset_provided && !all_factor_provided
+        sigma_a = sigma
+        P_a = P
+        Q_a = Q
+        omega_a = _omega(P_a, tau * sigma_a)
+        Pi_a = _Pi(bl.eq, bl.delta, sigma_a, w, mu, bl.rf)
+    elseif !all_asset_provided && all_factor_provided
+        sigma_a = f_sigma
+        P_a = P_f
+        Q_a = Q_f
+        omega_a = _omega(P_a, tau * sigma_a)
+        Pi_a = _Pi(bl.eq, bl.delta, sigma_a * transpose(B), w, f_mu, bl.rf)
+    elseif all_asset_provided && all_factor_provided
+        sigma_a = hcat(vcat(sigma, f_sigma * transpose(B)), vcat(B * f_sigma, f_sigma))
+
+        zeros_1 = zeros(size(P_f, 1), size(P, 2))
+        zeros_2 = zeros(size(P, 1), size(P_f, 2))
+
+        P_a = hcat(vcat(P, zeros_1), vcat(zeros_2, P_f))
+        Q_a = vcat(Q, Q_f)
+
+        omega = _omega(P, tau * sigma)
+        omega_f = _omega(P_f, tau * f_sigma)
+
+        zeros_3 = zeros(size(omega, 1), size(omega_f, 1))
+
+        omega_a = hcat(vcat(omega, transpose(zeros_3)), vcat(zeros_3, omega_f))
+
+        Pi_a = _Pi(bl.eq, bl.delta, vcat(sigma, f_sigma * transpose(B)), w, vcat(mu, f_mu),
+                   bl.rf)
+    end
+
+    mu_a, sigma_a, w_a, Pi_a_ = _bl_mu_cov_w(tau, omega_a, P_a, Pi_a, Q_a, bl.rf, sigma_a,
+                                             bl.delta, T, N, bl.posdef, bl.denoise,
+                                             bl.jlogo)
+
+    if !all_asset_provided && all_factor_provided
+        mu_a = B * mu_a
+        sigma_a = B * sigma_a * transpose(B)
+        posdef_fix!(bl.posdef, sigma_a)
+        denoise!(bl.denoise, bl.posdef, sigma_a, T / N)
+        jlogo!(bl.jlogo, bl.posdef, sigma_a)
+        w_a = ((bl.delta * sigma_a) \ I) * B * Pi_a_
+    end
+
+    if all_factor_provided && bl.constant
+        mu_a = mu_a[1:N] .+ alpha
+    end
+
+    return mu_a[1:N], sigma_a[1:N, 1:N], w_a[1:N]
 end
+
+export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
+       CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
+       DistanceMLP, dist, PortCovCor, DistanceVarInfo, BinKnuth, BinFreedman, BinScott,
+       BinHGR, DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW,
+       TargetSE, MeanSimple, MeanJS, MeanBS, MeanBOP, SimpleVariance, JLoGo, SkewFull,
+       SkewSemi, KurtFull, KurtSemi, DenoiseFixed, DenoiseSpectral, DenoiseShrink, NoPosdef,
+       NoJLoGo, DBHTExp, DBHT, WCType, WorstCaseArch, WorstCaseNormal, WorstCaseDelta,
+       WorstCaseKNormal, WorstCaseKGeneral, StationaryBootstrap, CircularBootstrap,
+       MovingBootstrap, loadings_matrix2, AIC, AICC, BIC, R2, AdjR2, ForwardReg,
+       BackwardReg, DimensionReductionReg, PCATarget, PVal, FactorType, risk_factors2,
+       BLType, ABLType, BBLType

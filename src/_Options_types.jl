@@ -1235,7 +1235,7 @@ mutable struct BLOpt{T1 <: Real}
     jlogo::JlogoOpt
 end
 function BLOpt(; method::Symbol = :B, constant::Bool = true, error::Bool = true,
-               eq::Bool = true, delta::Real = 1.0, rf::Real = 0.0,
+               eq::Bool = true, delta::Union{Nothing, <:Real} = 1.0, rf::Real = 0.0,
                var_genfunc::GenericFunction = GenericFunction(; func = StatsBase.var,
                                                               kwargs = (; dims = 1)),
                denoise::DenoiseOpt = DenoiseOpt(;), posdef::PosdefFixOpt = PosdefFixOpt(;),
