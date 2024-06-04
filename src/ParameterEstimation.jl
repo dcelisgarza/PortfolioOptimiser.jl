@@ -2010,6 +2010,8 @@ function _get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimis
         else
             DistanceMLP()
         end
+    else
+        dist_type
     end
 end
 #=
