@@ -53,16 +53,7 @@ function asset_statistics2!(portfolio::AbstractPortfolio;
         end
 
         if set_dist
-            if isa(dist_type, DistanceDefault)
-                dist_type = if isa(cor_type.ce, CorMutualInfo)
-                    DistanceVarInfo(; bins = cor_type.ce.bins,
-                                    normalise = cor_type.ce.normalise)
-                elseif isa(cor_type.ce, CorLTD)
-                    DistanceLog()
-                else
-                    DistanceMLP()
-                end
-            end
+            dist_type = _get_default_dist(dist_type, cor_type)
 
             if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
                 dist_type.absolute = cor_type.ce.absolute

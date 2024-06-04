@@ -1,5 +1,5 @@
-using CSV, TimeSeries, DataFrames, StatsBase, Statistics, CovarianceEstimation,
-      LinearAlgebra, Test, PortfolioOptimiser
+using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test,
+      PortfolioOptimiser
 
 prices_assets = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)

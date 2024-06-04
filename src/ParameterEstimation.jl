@@ -1824,9 +1824,26 @@ function StatsBase.mean(me::MeanBOP, X::AbstractMatrix; dims::Int = 1)
     beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
     return alpha * mu + beta * b
 end
-@kwdef mutable struct DBHT
-    distance::DistanceMethod = DistanceMLP()
-    similarity::DBHTSimilarity = DBHTMaxDist()
+abstract type HClusteringAlgorithm end
+@kwdef mutable struct HAClustering <: HClusteringAlgorithm
+    linkage::Symbol = :ward
+end
+mutable struct DBHT <: HClusteringAlgorithm
+    distance::DistanceMethod
+    similarity::DBHTSimilarity
+    root_method::Symbol
+end
+function DBHT(; distance::DistanceMethod = DistanceMLP(),
+              similarity::DBHTSimilarity = DBHTMaxDist(), root_method::Symbol = :Unique)
+    @smart_assert(root_method ∈ DBHTRootMethods)
+
+    return DBHT(distance, similarity, root_method)
+end
+function Base.setproperty!(obj::DBHT, sym::Symbol, val)
+    if sym == :root_method
+        @smart_assert(val ∈ DBHTRootMethods)
+    end
+    return setfield!(obj, sym, val)
 end
 abstract type AbstractJLoGo end
 struct NoJLoGo <: AbstractJLoGo end
@@ -1983,6 +2000,17 @@ function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     jlogo!(ce.jlogo, ce.posdef, rho)
 
     return Symmetric(rho)
+end
+function _get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimiserCovCor)
+    return if isa(dist_type, DistanceDefault)
+        if isa(cor_type.ce, CorMutualInfo)
+            DistanceVarInfo(; bins = cor_type.ce.bins, normalise = cor_type.ce.normalise)
+        elseif isa(cor_type.ce, CorLTD)
+            DistanceLog()
+        else
+            DistanceMLP()
+        end
+    end
 end
 #=
 """
@@ -2907,4 +2935,4 @@ export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, Co
        WorstCaseKNormal, WorstCaseKGeneral, StationaryBootstrap, CircularBootstrap,
        MovingBootstrap, loadings_matrix2, AIC, AICC, BIC, R2, AdjR2, ForwardReg,
        BackwardReg, DimensionReductionReg, PCATarget, PVal, FactorType, risk_factors2,
-       BLType, ABLType, BBLType
+       BLType, ABLType, BBLType, HAClustering
