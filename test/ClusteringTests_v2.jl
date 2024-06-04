@@ -1,6 +1,6 @@
 using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
