@@ -155,9 +155,9 @@ end
 
     ca = HAClustering()
     ct = HClustOpt()
-    idx, clustering, k, S, D = cluster_assets2(ca, portfolio; cluster_type = ct)
+    idx, clustering, k, S, D = cluster_assets2(ca, portfolio; hclust_opt = ct)
 
-    idx, clustering, k, S, D = cluster_assets2(ca, portfolio; cluster_type = ct)
+    idx, clustering, k, S, D = cluster_assets2(ca, portfolio; hclust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2, 2, 1]
     mergest = [-3 -1; 1 -5; -19 -9; -17 -2; -20 4; 5 2; 6 -4; -14 -6; -11 8; -10 3; 9 -18;
@@ -181,7 +181,7 @@ end
     @test isequal(k, kt)
 
     ca = DBHT()
-    idx, clustering, k, S, D = cluster_assets2(ca, portfolio; cluster_type = ct)
+    idx, clustering, k, S, D = cluster_assets2(ca, portfolio; hclust_opt = ct)
 
     idxt = [1, 2, 1, 1, 1, 3, 2, 1, 3, 4, 3, 3, 4, 3, 3, 4, 2, 1, 3, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;

@@ -1824,11 +1824,11 @@ function StatsBase.mean(me::MeanBOP, X::AbstractMatrix; dims::Int = 1)
     beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
     return alpha * mu + beta * b
 end
-abstract type HClusteringAlgorithm end
-@kwdef mutable struct HAClustering <: HClusteringAlgorithm
+abstract type HClustAlg end
+@kwdef mutable struct HAClustering <: HClustAlg
     linkage::Symbol = :ward
 end
-mutable struct DBHT <: HClusteringAlgorithm
+mutable struct DBHT <: HClustAlg
     distance::DistanceMethod
     similarity::DBHTSimilarity
     root_method::Symbol
