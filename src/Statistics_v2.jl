@@ -54,10 +54,6 @@ function asset_statistics2!(portfolio::AbstractPortfolio;
 
         if set_dist
             dist_type = _get_default_dist(dist_type, cor_type)
-
-            if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
-                dist_type.absolute = cor_type.ce.absolute
-            end
             portfolio.dist = dist(dist_type, rho, returns)
         end
     end

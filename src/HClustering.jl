@@ -138,7 +138,15 @@ function cluster_assets2(ca::HClustAlg, portfolio::HCPortfolio,
 
     return idx, clustering, k
 end
+function cluster_assets2!(ca::HClustAlg, portfolio::HCPortfolio,
+                          hclust_opt::HClustOpt = HClustOpt())
+    clustering, k = hcluster(ca, portfolio, hclust_opt)
 
+    portfolio.clusters = clustering
+    portfolio.k = k
+
+    return nothing
+end
 function hcluster(ca::HAClustering, X::AbstractMatrix;
                   cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                   dist_type::DistanceMethod = DistanceDefault(),
@@ -188,4 +196,4 @@ function cluster_assets2(ca::HClustAlg, portfolio::Portfolio;
     return idx, clustering, k, rho, D
 end
 
-export TwoDiff, StdSilhouette, hcluster, cluster_assets2, HClustOpt
+export TwoDiff, StdSilhouette, hcluster, cluster_assets2, HClustOpt, cluster_assets2!

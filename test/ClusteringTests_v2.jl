@@ -12,6 +12,8 @@ l = 2.0
 
     ca = DBHT()
     ct = HClustOpt()
+    cluster_assets2!(ca, portfolio, ct)
+
     idx, clustering, k = cluster_assets2(ca, portfolio, ct)
 
     idxt = [1, 2, 1, 1, 1, 3, 2, 1, 3, 4, 3, 3, 4, 3, 3, 4, 2, 1, 3, 1]
@@ -32,6 +34,12 @@ l = 2.0
     @test isapprox(clustering.order, ordert)
     @test isequal(clustering.order, ordert)
     @test isequal(k, kt)
+
+    @test isapprox(portfolio.clusters.merges, mergest)
+    @test isapprox(portfolio.clusters.heights, heightst)
+    @test isapprox(portfolio.clusters.order, ordert)
+    @test isequal(portfolio.clusters.order, ordert)
+    @test isequal(portfolio.k, kt)
 
     ct = HClustOpt(; k = 6)
     idx, clustering, k = cluster_assets2(ca, portfolio, ct)

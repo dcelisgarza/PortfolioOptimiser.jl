@@ -15,6 +15,7 @@ include("Statistics_v2.jl")
 include("HClustering.jl")
 include("Risk_measures.jl")
 include("Constraints.jl")
+include("NetworkConstraints.jl")
 include("ExtDefinitions.jl")
 
 end

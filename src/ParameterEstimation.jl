@@ -2002,17 +2002,21 @@ function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     return Symmetric(rho)
 end
 function _get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimiserCovCor)
-    return if isa(dist_type, DistanceDefault)
-        if isa(cor_type.ce, CorMutualInfo)
+    if isa(dist_type, DistanceDefault)
+        dist_type = if isa(cor_type.ce, CorMutualInfo)
             DistanceVarInfo(; bins = cor_type.ce.bins, normalise = cor_type.ce.normalise)
         elseif isa(cor_type.ce, CorLTD)
             DistanceLog()
         else
             DistanceMLP()
         end
-    else
-        dist_type
     end
+
+    if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
+        dist_type.absolute = cor_type.ce.absolute
+    end
+
+    return dist_type
 end
 #=
 """
