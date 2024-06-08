@@ -1710,8 +1710,8 @@ function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
 
     vals, vecs = eigen(X)
 
-    max_val, missing = find_max_eval(vals, q; kernel = ce.kernel, m = ce.m, n = ce.n,
-                                     args = ce.args, kwargs = ce.kwargs)
+    max_val = find_max_eval(vals, q; kernel = ce.kernel, m = ce.m, n = ce.n, args = ce.args,
+                            kwargs = ce.kwargs)[1]
 
     num_factors = findlast(vals .< max_val)
 
@@ -2254,16 +2254,17 @@ end
     criterion::RegressionCriteria = PVal()
 end
 abstract type DimensionReductionTarget end
-struct PCATarget <: DimensionReductionTarget end
+@kwdef mutable struct PCATarget <: DimensionReductionTarget
+    kwargs::NamedTuple = (;)
+end
 @kwdef mutable struct DimensionReductionReg <: RegressionType
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
     std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
     pcr::DimensionReductionTarget = PCATarget()
-    pcr_kwargs::NamedTuple = (;)
 end
-function get_dimension_reduction_type(::PCATarget)
-    return MultivariateStats.PCA
+function fit(method::PCATarget, X::AbstractMatrix)
+    return MultivariateStats.fit(MultivariateStats.PCA, X; method.kwargs...)
 end
 function prep_dim_red_reg(method::DimensionReductionReg, x::DataFrame)
     N = nrow(x)
@@ -2271,8 +2272,7 @@ function prep_dim_red_reg(method::DimensionReductionReg, x::DataFrame)
 
     X_std = StatsBase.standardize(StatsBase.ZScoreTransform, X; dims = 2)
 
-    model = MultivariateStats.fit(get_dimension_reduction_type(method.pcr), X_std;
-                                  method.pcr_kwargs...)
+    model = fit(method.pcr, X_std)
     Xp = transpose(predict(model, X_std))
     Vp = projection(model)
     x1 = [ones(N) Xp]
@@ -2756,8 +2756,8 @@ function black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
     omega = _omega(P, tau * sigma)
     Pi = _Pi(bl.eq, bl.delta, sigma, w, mu, bl.rf)
 
-    mu, sigma, w, missing = _bl_mu_cov_w(tau, omega, P, Pi, Q, bl.rf, sigma, bl.delta, T, N,
-                                         bl.posdef, bl.denoise, bl.jlogo)
+    mu, sigma, w = _bl_mu_cov_w(tau, omega, P, Pi, Q, bl.rf, sigma, bl.delta, T, N,
+                                bl.posdef, bl.denoise, bl.jlogo)[1:3]
 
     return mu, sigma, w
 end

@@ -110,29 +110,27 @@ function calc_k(hclust_opt::HClustOpt, dist::AbstractMatrix, clustering)
 
     return _calc_k(hclust_opt.k_method, dist, clustering, hclust_opt.max_k)
 end
-function hcluster(ca::HAClustering, portfolio::HCPortfolio,
-                  hclust_opt::HClustOpt = HClustOpt())
+function _hcluster(ca::HAClustering, portfolio::HCPortfolio,
+                   hclust_opt::HClustOpt = HClustOpt())
     clustering = hclust(portfolio.dist; linkage = ca.linkage,
                         branchorder = hclust_opt.branchorder)
     k = calc_k(hclust_opt, portfolio.dist, clustering)
 
     return clustering, k
 end
-function hcluster(ca::DBHT, portfolio::HCPortfolio, hclust_opt::HClustOpt = HClustOpt())
+function _hcluster(ca::DBHT, portfolio::HCPortfolio, hclust_opt::HClustOpt = HClustOpt())
     S = portfolio.cor
     D = portfolio.dist
     S = dbht_similarity(ca.similarity, S, D)
 
-    missing, missing, missing, missing, missing, missing, clustering = DBHTs(D, S;
-                                                                             branchorder = hclust_opt.branchorder,
-                                                                             method = ca.root_method)
+    clustering = DBHTs(D, S; branchorder = hclust_opt.branchorder, method = ca.root_method)[end]
     k = calc_k(hclust_opt, D, clustering)
 
     return clustering, k
 end
-function cluster_assets2(ca::HClustAlg, portfolio::HCPortfolio,
+function cluster_assets2(portfolio::HCPortfolio; hclust_algo::HClustAlg = HAClustering(),
                          hclust_opt::HClustOpt = HClustOpt())
-    clustering, k = hcluster(ca, portfolio, hclust_opt)
+    clustering, k = _hcluster(hclust_algo, portfolio, hclust_opt)
 
     idx = cutree(clustering; k = k)
 
@@ -140,34 +138,34 @@ function cluster_assets2(ca::HClustAlg, portfolio::HCPortfolio,
 end
 function cluster_assets2!(ca::HClustAlg, portfolio::HCPortfolio,
                           hclust_opt::HClustOpt = HClustOpt())
-    clustering, k = hcluster(ca, portfolio, hclust_opt)
+    clustering, k = _hcluster(ca, portfolio, hclust_opt)
 
     portfolio.clusters = clustering
     portfolio.k = k
 
     return nothing
 end
-function hcluster(ca::HAClustering, X::AbstractMatrix;
-                  cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                  dist_type::DistanceMethod = DistanceDefault(),
-                  hclust_opt::HClustOpt = HClustOpt())
+function _hcluster(ca::HAClustering, X::AbstractMatrix,
+                   cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                   dist_type::DistanceMethod = DistanceDefault(),
+                   hclust_opt::HClustOpt = HClustOpt())
     dist_type = _get_default_dist(dist_type, cor_type)
     if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
         dist_type.absolute = cor_type.ce.absolute
     end
 
-    rho = cor(cor_type, X)
-    D = dist(dist_type, rho, X)
+    S = cor(cor_type, X)
+    D = dist(dist_type, S, X)
 
     clustering = hclust(D; linkage = ca.linkage, branchorder = hclust_opt.branchorder)
     k = calc_k(hclust_opt, D, clustering)
 
-    return clustering, k, rho, D
+    return clustering, k, S, D
 end
-function hcluster(ca::DBHT, X::AbstractMatrix;
-                  cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                  dist_type::DistanceMethod = DistanceDefault(),
-                  hclust_opt::HClustOpt = HClustOpt())
+function _hcluster(ca::DBHT, X::AbstractMatrix,
+                   cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                   dist_type::DistanceMethod = DistanceDefault(),
+                   hclust_opt::HClustOpt = HClustOpt())
     dist_type = _get_default_dist(dist_type, cor_type)
     if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
         dist_type.absolute = cor_type.ce.absolute
@@ -177,23 +175,30 @@ function hcluster(ca::DBHT, X::AbstractMatrix;
     D = dist(dist_type, S, X)
     S = dbht_similarity(ca.similarity, S, D)
 
-    missing, missing, missing, missing, missing, missing, clustering = DBHTs(D, S;
-                                                                             branchorder = hclust_opt.branchorder,
-                                                                             method = ca.root_method)
+    clustering = DBHTs(D, S; branchorder = hclust_opt.branchorder, method = ca.root_method)[end]
     k = calc_k(hclust_opt, D, clustering)
 
     return clustering, k, S, D
 end
-function cluster_assets2(ca::HClustAlg, portfolio::Portfolio;
+
+function cluster_assets2(X::AbstractMatrix;
                          cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                          dist_type::DistanceMethod = DistanceDefault(),
+                         hclust_algo::HClustAlg = HAClustering(),
                          hclust_opt::HClustOpt = HClustOpt())
-    clustering, k, rho, D = hcluster(ca, portfolio.returns; cor_type = cor_type,
-                                     dist_type = dist_type, hclust_opt = hclust_opt)
+    clustering, k, S, D = _hcluster(hclust_algo, X, cor_type, dist_type, hclust_opt)
 
     idx = cutree(clustering; k = k)
 
-    return idx, clustering, k, rho, D
+    return idx, clustering, k, S, D
+end
+function cluster_assets2(portfolio::Portfolio;
+                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                         dist_type::DistanceMethod = DistanceDefault(),
+                         hclust_algo::HClustAlg = HAClustering(),
+                         hclust_opt::HClustOpt = HClustOpt())
+    return cluster_assets2(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
+                           hclust_algo = hclust_algo, hclust_opt = hclust_opt)
 end
 
-export TwoDiff, StdSilhouette, hcluster, cluster_assets2, HClustOpt, cluster_assets2!
+export TwoDiff, StdSilhouette, _hcluster, cluster_assets2, HClustOpt, cluster_assets2!

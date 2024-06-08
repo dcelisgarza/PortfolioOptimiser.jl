@@ -87,3 +87,80 @@ function centrality_vector2(portfolio::AbstractPortfolio;
     return centrality_vector2(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
                               network_type = network_type)
 end
+function cluster_matrix2(X::AbstractMatrix;
+                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                         dist_type::DistanceMethod = DistanceDefault(),
+                         hclust_algo::HClustAlg = HAClustering(),
+                         hclust_opt::HClustOpt = HClustOpt())
+    clusters = cluster_assets2(X; cor_type = cor_type, dist_type = dist_type,
+                               hclust_algo = hclust_algo, hclust_opt = hclust_opt)[1]
+
+    N = size(X, 2)
+    A_c = Vector{Int}(undef, 0)
+    for i ∈ unique(clusters)
+        idx = clusters .== i
+        tmp = zeros(Int, N)
+        tmp[idx] .= 1
+        append!(A_c, tmp)
+    end
+
+    A_c = reshape(A_c, N, :)
+    A_c = A_c * transpose(A_c) - I
+
+    return A_c
+end
+function cluster_matrix2(portfolio::AbstractPortfolio;
+                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                         dist_type::DistanceMethod = DistanceDefault(),
+                         hclust_algo::HClustAlg = HAClustering(),
+                         hclust_opt::HClustOpt = HClustOpt())
+    return cluster_matrix2(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
+                           hclust_algo = hclust_algo, hclust_opt = hclust_opt)
+end
+#=
+function _con_rel(A::AbstractMatrix, w::AbstractVector)
+    ovec = range(; start = 1, stop = 1, length = size(A, 1))
+    aw = abs.(w * transpose(w))
+    C_a = transpose(ovec) * (A .* aw) * ovec
+    C_a /= transpose(ovec) * aw * ovec
+    return C_a
+end
+=#
+function connected_assets2(returns::AbstractMatrix, w::AbstractVector;
+                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                           dist_type::DistanceMethod = DistanceDefault(),
+                           network_type::NetworkType = MST())
+    A_c = connection_matrix2(returns; cor_type = cor_type, dist_type = dist_type,
+                             network_type = network_type)
+    C_a = _con_rel(A_c, w)
+    return C_a
+end
+function connected_assets2(portfolio::AbstractPortfolio;
+                           type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                           dist_type::DistanceMethod = DistanceDefault(),
+                           network_type::NetworkType = MST())
+    return connected_assets2(portfolio.returns, portfolio.optimal[type].weights;
+                             cor_type = cor_type, dist_type = dist_type,
+                             network_type = network_type)
+end
+function related_assets2(returns::AbstractMatrix, w::AbstractVector;
+                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                         dist_type::DistanceMethod = DistanceDefault(),
+                         hclust_algo::HClustAlg = HAClustering(),
+                         hclust_opt::HClustOpt = HClustOpt())
+    A_c = cluster_matrix2(returns; cor_type = cor_type, dist_type = dist_type,
+                          hclust_algo = hclust_algo, hclust_opt = hclust_opt)
+    R_a = _con_rel(A_c, w)
+    return R_a
+end
+function related_assets2(portfolio::AbstractPortfolio;
+                         type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                         dist_type::DistanceMethod = DistanceDefault(),
+                         hclust_algo::HClustAlg = HAClustering(),
+                         hclust_opt::HClustOpt = HClustOpt())
+    return related_assets2(portfolio.returns, portfolio.optimal[type].weights;
+                           cor_type = cor_type, dist_type = dist_type,
+                           hclust_algo = hclust_algo, hclust_opt = hclust_opt)
+end
