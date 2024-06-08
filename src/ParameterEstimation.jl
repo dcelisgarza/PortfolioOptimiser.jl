@@ -2263,7 +2263,7 @@ end
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
     pcr::DimensionReductionTarget = PCATarget()
 end
-function fit(method::PCATarget, X::AbstractMatrix)
+function MultivariateStats.fit(method::PCATarget, X::AbstractMatrix)
     return MultivariateStats.fit(MultivariateStats.PCA, X; method.kwargs...)
 end
 function prep_dim_red_reg(method::DimensionReductionReg, x::DataFrame)
