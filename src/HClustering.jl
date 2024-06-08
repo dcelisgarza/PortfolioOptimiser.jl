@@ -198,7 +198,7 @@ function cluster_assets2(portfolio::Portfolio;
                          hclust_alg::HClustAlg = HAClustering(),
                          hclust_opt::HClustOpt = HClustOpt())
     return cluster_assets2(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
-                           hclust_algo = hclust_algo, hclust_opt = hclust_opt)
+                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
 
 export TwoDiff, StdSilhouette, _hcluster, cluster_assets2, HClustOpt, cluster_assets2!
