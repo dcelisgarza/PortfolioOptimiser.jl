@@ -3,8 +3,8 @@ abstract type CentralityType end
     args::Tuple = ()
     kwargs::NamedTuple = (;)
 end
-function _cent_func(::DegreeCentrality)
-    return Graphs.degree_centrality
+function calc_centrality(method::DegreeCentrality, G)
+    return Graphs.degree_centrality(G, method.args...; method.kwargs...)
 end
 abstract type NetworkType end
 @kwdef mutable struct TMFG{T1 <: Integer} <: NetworkType
@@ -18,7 +18,7 @@ abstract type TreeType end
     kwargs::NamedTuple = (;)
 end
 @kwdef mutable struct MST{T1 <: Integer} <: NetworkType
-    tree::TreeType
+    tree::TreeType = KruskalTree()
     steps::T1 = 1
     centrality::CentralityType = DegreeCentrality()
 end
@@ -76,9 +76,8 @@ function centrality_vector2(X::AbstractMatrix;
     Adj = connection_matrix2(X; cor_type = cor_type, dist_type = dist_type,
                              network_type = network_type)
     G = SimpleGraph(Adj)
-    cent_func = _cent_func(network_type.centrality)
 
-    return cent_func(G, network_type.centrality.args...; network_type.centrality.kwargs...)
+    return calc_centrality(network_type.centrality, G)
 end
 function centrality_vector2(portfolio::AbstractPortfolio;
                             cor_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -90,10 +89,10 @@ end
 function cluster_matrix2(X::AbstractMatrix;
                          cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                          dist_type::DistanceMethod = DistanceDefault(),
-                         hclust_algo::HClustAlg = HAClustering(),
+                         hclust_alg::HClustAlg = HAClustering(),
                          hclust_opt::HClustOpt = HClustOpt())
     clusters = cluster_assets2(X; cor_type = cor_type, dist_type = dist_type,
-                               hclust_algo = hclust_algo, hclust_opt = hclust_opt)[1]
+                               hclust_alg = hclust_alg, hclust_opt = hclust_opt)[1]
 
     N = size(X, 2)
     A_c = Vector{Int}(undef, 0)
@@ -112,10 +111,10 @@ end
 function cluster_matrix2(portfolio::AbstractPortfolio;
                          cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                          dist_type::DistanceMethod = DistanceDefault(),
-                         hclust_algo::HClustAlg = HAClustering(),
+                         hclust_alg::HClustAlg = HAClustering(),
                          hclust_opt::HClustOpt = HClustOpt())
     return cluster_matrix2(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
-                           hclust_algo = hclust_algo, hclust_opt = hclust_opt)
+                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
 #=
 function _con_rel(A::AbstractMatrix, w::AbstractVector)
@@ -147,10 +146,10 @@ end
 function related_assets2(returns::AbstractMatrix, w::AbstractVector;
                          cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                          dist_type::DistanceMethod = DistanceDefault(),
-                         hclust_algo::HClustAlg = HAClustering(),
+                         hclust_alg::HClustAlg = HAClustering(),
                          hclust_opt::HClustOpt = HClustOpt())
     A_c = cluster_matrix2(returns; cor_type = cor_type, dist_type = dist_type,
-                          hclust_algo = hclust_algo, hclust_opt = hclust_opt)
+                          hclust_alg = hclust_alg, hclust_opt = hclust_opt)
     R_a = _con_rel(A_c, w)
     return R_a
 end
@@ -158,9 +157,11 @@ function related_assets2(portfolio::AbstractPortfolio;
                          type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                          cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                          dist_type::DistanceMethod = DistanceDefault(),
-                         hclust_algo::HClustAlg = HAClustering(),
+                         hclust_alg::HClustAlg = HAClustering(),
                          hclust_opt::HClustOpt = HClustOpt())
     return related_assets2(portfolio.returns, portfolio.optimal[type].weights;
                            cor_type = cor_type, dist_type = dist_type,
-                           hclust_algo = hclust_algo, hclust_opt = hclust_opt)
+                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
+export DegreeCentrality, TMFG, KruskalTree, MST, connection_matrix2, centrality_vector2,
+       cluster_matrix2, connected_assets2, related_assets2

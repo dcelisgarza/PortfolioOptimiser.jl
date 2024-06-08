@@ -4,6 +4,10 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
+@safetestset "Network constraint tests" begin
+    include("NetworkConstraintTests.jl")
+end
+
 @safetestset "Clustering tests V2" begin
     include("ClusteringTests_v2.jl")
 end

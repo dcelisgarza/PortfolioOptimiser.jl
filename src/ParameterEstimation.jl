@@ -2941,4 +2941,4 @@ export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, Co
        WorstCaseKNormal, WorstCaseKGeneral, StationaryBootstrap, CircularBootstrap,
        MovingBootstrap, loadings_matrix2, AIC, AICC, BIC, R2, AdjR2, ForwardReg,
        BackwardReg, DimensionReductionReg, PCATarget, PVal, FactorType, risk_factors2,
-       BLType, ABLType, BBLType, HAClustering
+       BLType, ABLType, BBLType, HAClustering, DistanceDefault
