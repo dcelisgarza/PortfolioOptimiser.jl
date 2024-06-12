@@ -341,6 +341,16 @@ git-tree-sha1 = "23163d55f885173722d1e4cf0f6110cdbaf7e272"
 uuid = "b552c78f-8df3-52c6-915a-8e097449b14b"
 version = "1.15.1"
 
+[[deps.DispatchDoctor]]
+deps = ["MacroTools", "Preferences", "TestItems"]
+git-tree-sha1 = "ac16550f9edcecdff854d6514e8bcd718427922c"
+uuid = "8d63f2c5-f18a-4cf2-ba9d-b3f60fc568c8"
+version = "0.4.7"
+weakdeps = ["ChainRulesCore"]
+
+    [deps.DispatchDoctor.extensions]
+    DispatchDoctorChainRulesCoreExt = "ChainRulesCore"
+
 [[deps.Distances]]
 deps = ["LinearAlgebra", "Statistics", "StatsAPI"]
 git-tree-sha1 = "66c4c81f259586e8f002eacebc177e1fb06363b0"
@@ -437,9 +447,9 @@ uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
 version = "0.1.10"
 
 [[deps.Extents]]
-git-tree-sha1 = "2140cd04483da90b2da7f99b2add0750504fc39c"
+git-tree-sha1 = "94997910aca72897524d2237c41eb852153b0f65"
 uuid = "411431e0-e8b7-467b-b5e0-f676ba4f2910"
-version = "0.1.2"
+version = "0.1.3"
 
 [[deps.FFMPEG]]
 deps = ["FFMPEG_jll"]
@@ -1067,9 +1077,9 @@ version = "0.10.3"
 
 [[deps.MutableArithmetics]]
 deps = ["LinearAlgebra", "SparseArrays", "Test"]
-git-tree-sha1 = "a3589efe0005fc4718775d8641b2de9060d23f73"
+git-tree-sha1 = "898c56fbf8bf71afb0c02146ef26f3a454e88873"
 uuid = "d8a4904e-b15c-11e9-3269-09a3773c0cb0"
-version = "1.4.4"
+version = "1.4.5"
 
 [[deps.NLSolversBase]]
 deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
@@ -1284,7 +1294,7 @@ uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
 version = "1.4.3"
 
 [[deps.PortfolioOptimiser]]
-deps = ["AverageShiftedHistograms", "Clustering", "DataFrames", "Dates", "Distances", "Distributions", "GLM", "Graphs", "JuMP", "LinearAlgebra", "MultivariateStats", "NearestCorrelationMatrix", "Optim", "PyCall", "Random", "SimpleWeightedGraphs", "SmartAsserts", "SparseArrays", "Statistics", "StatsBase", "TimeSeries"]
+deps = ["AverageShiftedHistograms", "Clustering", "DataFrames", "Dates", "DispatchDoctor", "Distances", "Distributions", "GLM", "Graphs", "JuMP", "LinearAlgebra", "MultivariateStats", "NearestCorrelationMatrix", "Optim", "PyCall", "Random", "SimpleWeightedGraphs", "SmartAsserts", "SparseArrays", "Statistics", "StatsBase", "TimeSeries"]
 path = ".."
 uuid = "748726ae-2fc6-4ae6-b81c-5fed3516a822"
 version = "0.0.0"
@@ -1665,6 +1675,11 @@ version = "0.1.1"
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
+[[deps.TestItems]]
+git-tree-sha1 = "8621ba2637b49748e2dc43ba3d84340be2938022"
+uuid = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
+version = "0.1.1"
+
 [[deps.TimeSeries]]
 deps = ["Dates", "DelimitedFiles", "DocStringExtensions", "IteratorInterfaceExtensions", "PrettyTables", "RecipesBase", "Reexport", "Statistics", "TableTraits", "Tables"]
 git-tree-sha1 = "b0915b2d6032bab5d8c9424a37bc621500a67df9"
@@ -1983,9 +1998,9 @@ version = "1.5.0+0"
 
 [[deps.YAML]]
 deps = ["Base64", "Dates", "Printf", "StringEncodings"]
-git-tree-sha1 = "669a78c59a307fa3ebc0a0bffd7ae83bd2184361"
+git-tree-sha1 = "80c3218f29cbc47111ac87e7be5e69cc05c6dd36"
 uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
-version = "0.4.10"
+version = "0.4.11"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]

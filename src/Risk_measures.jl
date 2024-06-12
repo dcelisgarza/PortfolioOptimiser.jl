@@ -53,8 +53,8 @@ Compute the Mean Absolute Deviation.
 
   - `x`: vector of portfolio returns.
 """
-function MAD(x::AbstractVector)
-    mu = mean(x)
+function MAD(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
+    mu = isnothing(w) ? mean(x) : mean(x, w)
     return mean(abs.(x .- mu))
 end
 """
@@ -72,11 +72,12 @@ Compute the mean Semi-Standard Deviation.
 
   - `x`: vector of portfolio returns.
 """
-function SSD(x::AbstractVector)
+function SSD(x::AbstractVector, target::Real = 0.0,
+             w::Union{AbstractWeights, Nothing} = nothing)
     T = length(x)
-    mu = mean(x)
+    mu = isnothing(w) ? mean(x) : mean(x, w)
     val = mu .- x
-    return sqrt(sum(val[val .>= 0] .^ 2) / (T - 1))
+    return sqrt(sum(val[val .>= target] .^ 2) / (T - 1))
 end
 
 """
@@ -95,10 +96,10 @@ Compute the First Lower Partial Moment (Omega ratio).
   - `x`: vector of portfolio returns.
   - `r`: minimum return target.
 """
-function FLPM(x::AbstractVector, min_ret::Real = 0.0)
+function FLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
-    val = min_ret .- x
-    return sum(val[val .>= 0]) / T
+    val = target .- x
+    return sum(val[val .>= zero(target)]) / T
 end
 
 """
@@ -115,9 +116,9 @@ Compute the Second Lower Partial Moment (Sortino Ratio).
 - `r`: minimum return target.
 ```
 """
-function SLPM(x::AbstractVector, min_ret::Real = 0.0)
+function SLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
-    val = min_ret .- x
+    val = target .- x
     return sqrt(sum(val[val .>= 0] .^ 2) / (T - 1))
 end
 
@@ -897,9 +898,9 @@ Compute the square root kurtosis.
 
   - `x`: vector of portfolio returns.
 """
-function Kurt(x::AbstractVector)
+function Kurt(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
     T = length(x)
-    mu = mean(x)
+    mu = isnothing(w) ? mean(x) : mean(x, w)
     val = x .- mu
     return sqrt(sum(val .^ 4) / T)
 end
@@ -919,9 +920,9 @@ Compute the square root semi-kurtosis.
 
   - `x`: vector of portfolio returns.
 """
-function SKurt(x::AbstractVector)
+function SKurt(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
     T = length(x)
-    mu = mean(x)
+    mu = isnothing(w) ? mean(x) : mean(x, w)
     val = x .- mu
     return sqrt(sum(val[val .< 0] .^ 4) / T)
 end
