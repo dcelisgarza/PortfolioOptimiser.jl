@@ -62,7 +62,7 @@ function connection_matrix2(X::AbstractMatrix;
 
     return A_p
 end
-function connection_matrix2(portfolio::AbstractPortfolio;
+function connection_matrix2(portfolio::AbstractPortfolio2;
                             cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                             dist_type::DistanceMethod = DistanceDefault(),
                             network_type::NetworkType = MST())
@@ -79,7 +79,7 @@ function centrality_vector2(X::AbstractMatrix;
 
     return calc_centrality(network_type.centrality, G)
 end
-function centrality_vector2(portfolio::AbstractPortfolio;
+function centrality_vector2(portfolio::AbstractPortfolio2;
                             cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                             dist_type::DistanceMethod = DistanceDefault(),
                             network_type::NetworkType = MST())
@@ -108,7 +108,7 @@ function cluster_matrix2(X::AbstractMatrix;
 
     return A_c
 end
-function cluster_matrix2(portfolio::AbstractPortfolio;
+function cluster_matrix2(portfolio::AbstractPortfolio2;
                          cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                          dist_type::DistanceMethod = DistanceDefault(),
                          hclust_alg::HClustAlg = HAClustering(),
@@ -134,8 +134,8 @@ function connected_assets2(returns::AbstractMatrix, w::AbstractVector;
     C_a = _con_rel(A_c, w)
     return C_a
 end
-function connected_assets2(portfolio::AbstractPortfolio;
-                           type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+function connected_assets2(portfolio::AbstractPortfolio2;
+                           type::Symbol = isa(portfolio, Portfolio2) ? :Trad : :HRP,
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                            dist_type::DistanceMethod = DistanceDefault(),
                            network_type::NetworkType = MST())
@@ -153,8 +153,8 @@ function related_assets2(returns::AbstractMatrix, w::AbstractVector;
     R_a = _con_rel(A_c, w)
     return R_a
 end
-function related_assets2(portfolio::AbstractPortfolio;
-                         type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+function related_assets2(portfolio::AbstractPortfolio2;
+                         type::Symbol = isa(portfolio, Portfolio2) ? :Trad : :HRP,
                          cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                          dist_type::DistanceMethod = DistanceDefault(),
                          hclust_alg::HClustAlg = HAClustering(),

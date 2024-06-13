@@ -5,23 +5,22 @@ using AverageShiftedHistograms, Clustering, DataFrames, Dates, Distances, Distri
       StatsBase, TimeSeries, DispatchDoctor
 
 include("Constants.jl")
-
-include("ParameterEstimation.jl")
-
 include("Types.jl")
 include("DBHTs.jl")
 include("OWA.jl")
 include("Portfolio.jl")
 include("Statistics.jl")
-
-include("Statistics_v2.jl")
-
 include("Risk_measures.jl")
 include("Constraints.jl")
 include("ExtDefinitions.jl")
 
+# Version 2.0
+include("ParameterEstimation.jl")
+include("Types_v2.jl")
+include("Portfolio_v2.jl")
+include("Statistics_v2.jl")
 include("HClustering.jl")
 include("NetworkConstraints.jl")
-include("Risk_measures2.jl")
+include("Risk_measures_v2.jl")
 
 end

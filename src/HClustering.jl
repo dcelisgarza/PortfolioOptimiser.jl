@@ -110,7 +110,7 @@ function calc_k(hclust_opt::HClustOpt, dist::AbstractMatrix, clustering)
 
     return _calc_k(hclust_opt.k_method, dist, clustering, hclust_opt.max_k)
 end
-function _hcluster(ca::HAClustering, portfolio::HCPortfolio,
+function _hcluster(ca::HAClustering, portfolio::HCPortfolio2,
                    hclust_opt::HClustOpt = HClustOpt())
     clustering = hclust(portfolio.dist; linkage = ca.linkage,
                         branchorder = hclust_opt.branchorder)
@@ -118,7 +118,7 @@ function _hcluster(ca::HAClustering, portfolio::HCPortfolio,
 
     return clustering, k
 end
-function _hcluster(ca::DBHT, portfolio::HCPortfolio, hclust_opt::HClustOpt = HClustOpt())
+function _hcluster(ca::DBHT, portfolio::HCPortfolio2, hclust_opt::HClustOpt = HClustOpt())
     S = portfolio.cor
     D = portfolio.dist
     S = dbht_similarity(ca.similarity, S, D)
@@ -128,7 +128,7 @@ function _hcluster(ca::DBHT, portfolio::HCPortfolio, hclust_opt::HClustOpt = HCl
 
     return clustering, k
 end
-function cluster_assets2(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAClustering(),
+function cluster_assets2(portfolio::HCPortfolio2; hclust_alg::HClustAlg = HAClustering(),
                          hclust_opt::HClustOpt = HClustOpt())
     clustering, k = _hcluster(hclust_alg, portfolio, hclust_opt)
 
@@ -136,7 +136,7 @@ function cluster_assets2(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAClust
 
     return idx, clustering, k
 end
-function cluster_assets2!(ca::HClustAlg, portfolio::HCPortfolio,
+function cluster_assets2!(ca::HClustAlg, portfolio::HCPortfolio2,
                           hclust_opt::HClustOpt = HClustOpt())
     clustering, k = _hcluster(ca, portfolio, hclust_opt)
 
@@ -192,7 +192,7 @@ function cluster_assets2(X::AbstractMatrix;
 
     return idx, clustering, k, S, D
 end
-function cluster_assets2(portfolio::Portfolio;
+function cluster_assets2(portfolio::Portfolio2;
                          cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                          dist_type::DistanceMethod = DistanceDefault(),
                          hclust_alg::HClustAlg = HAClustering(),

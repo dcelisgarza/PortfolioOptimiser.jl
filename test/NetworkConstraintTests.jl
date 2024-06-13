@@ -7,7 +7,7 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Cluster and connection matrices" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = Portfolio2(; prices = prices)
     hclust_alg = DBHT()
     A = cluster_matrix2(portfolio; hclust_alg = hclust_alg)
     At = reshape([0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0,
@@ -199,7 +199,7 @@ l = 2.0
 end
 
 @testset "Centrality Vector" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = Portfolio2(; prices = prices)
 
     network_type = MST(; steps = 1,
                        centrality = DegreeCentrality(; kwargs = (; normalize = false)))
@@ -217,10 +217,10 @@ end
 end
 
 @testset "Connected and related assets" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = Portfolio2(; prices = prices,
+                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                            :params => Dict("verbose" => false,
+                                                                            "max_step_fraction" => 0.75))))
     asset_statistics2!(portfolio)
     w = optimise!(portfolio, OptimiseOpt(; obj = :Min_Risk))
 

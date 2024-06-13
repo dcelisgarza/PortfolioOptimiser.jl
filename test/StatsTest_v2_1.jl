@@ -4,7 +4,7 @@ using CSV, TimeSeries, StatsBase, Statistics, CovarianceEstimation, LinearAlgebr
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 @testset "Coskew and Semi Coskew" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = Portfolio2(; prices = prices)
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                        set_mu = false)
 
@@ -5619,7 +5619,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 end
 
 @testset "Mean Estimation" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = Portfolio2(; prices = prices)
 
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                        set_skew = false, set_sskew = false, mu_type = MeanSimple())
@@ -5739,7 +5739,7 @@ end
 end
 
 @testset "Mean Estimation Weighted" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = Portfolio2(; prices = prices)
     w = eweights(size(portfolio.returns, 1), 1 / size(portfolio.returns, 1); scale = true)
 
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
@@ -5860,7 +5860,7 @@ end
 end
 
 @testset "Covariance Estimation" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = Portfolio2(; prices = prices)
     rf = 0.0329 / 252
     c0 = StatsBase.SimpleCovariance(; corrected = true)
     c1 = PortCovCor(; ce = CovFull(; ce = c0))
@@ -7957,7 +7957,7 @@ end
 end
 
 @testset "Covariance Estimation Weighted" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = Portfolio2(; prices = prices)
     rf = 0.0329 / 252
     w = eweights(size(portfolio.returns, 1), 1 / size(portfolio.returns, 1); scale = true)
     c0 = StatsBase.SimpleCovariance(; corrected = false)
@@ -10135,7 +10135,7 @@ end
                     0.0001504967210740102], (20, 20))
     @test isapprox(portfolio.cov, covt)
 
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = HCPortfolio2(; prices = prices)
 
     c1 = PortCovCor(; ce = CorMutualInfo())
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,

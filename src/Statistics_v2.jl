@@ -1,5 +1,5 @@
 
-function asset_statistics2!(portfolio::AbstractPortfolio;
+function asset_statistics2!(portfolio::AbstractPortfolio2;
                             cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                             set_cov::Bool = true, mu_type::MeanEstimator = MeanSimple(),
                             set_mu::Bool = true, kurt_type::KurtFull = KurtFull(),
@@ -44,7 +44,7 @@ function asset_statistics2!(portfolio::AbstractPortfolio;
         portfolio.sskew, portfolio.SV = coskew(sskew_type, returns, mu)
     end
 
-    if isa(portfolio, HCPortfolio)
+    if isa(portfolio, HCPortfolio2)
         if set_cor || set_dist
             rho = cor(cor_type, returns)
             if set_cor
@@ -61,7 +61,7 @@ function asset_statistics2!(portfolio::AbstractPortfolio;
     return nothing
 end
 
-function wc_statistics2!(portfolio::Portfolio, wc::WCType = WCType(); set_box::Bool = true,
+function wc_statistics2!(portfolio::Portfolio2, wc::WCType = WCType(); set_box::Bool = true,
                          set_ellipse::Bool = true)
     returns = portfolio.returns
     cov_type = wc.cov_type
@@ -107,7 +107,7 @@ function wc_statistics2!(portfolio::Portfolio, wc::WCType = WCType(); set_box::B
     return nothing
 end
 
-function factor_statistics2!(portfolio::Portfolio; factor_type::FactorType = FactorType(),
+function factor_statistics2!(portfolio::Portfolio2; factor_type::FactorType = FactorType(),
                              cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                              mu_type::MeanEstimator = MeanSimple())
     returns = portfolio.returns
@@ -128,7 +128,7 @@ function factor_statistics2!(portfolio::Portfolio; factor_type::FactorType = Fac
     return nothing
 end
 
-function black_litterman_statistics2!(portfolio::Portfolio; P::AbstractMatrix,
+function black_litterman_statistics2!(portfolio::Portfolio2; P::AbstractMatrix,
                                       Q::AbstractVector,
                                       w::AbstractVector = portfolio.bl_bench_weights,
                                       cov_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -151,7 +151,7 @@ function black_litterman_statistics2!(portfolio::Portfolio; P::AbstractMatrix,
     return nothing
 end
 
-function black_litterman_factor_statistics2!(portfolio::Portfolio;
+function black_litterman_factor_statistics2!(portfolio::Portfolio2;
                                              w::AbstractVector = portfolio.bl_bench_weights,
                                              B::Union{DataFrame, Nothing} = portfolio.loadings,
                                              P::Union{AbstractMatrix, Nothing} = nothing,

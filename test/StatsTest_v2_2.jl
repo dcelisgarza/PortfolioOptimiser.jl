@@ -4,7 +4,7 @@ using CSV, TimeSeries, StatsBase, Statistics, CovarianceEstimation, LinearAlgebr
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 @testset "Correlation and Distance Estimation Unweighted" begin
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = HCPortfolio2(; prices = prices)
 
     c1 = PortCovCor(; ce = CorDistance())
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
@@ -8263,7 +8263,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 end
 
 @testset "Shrunken Cov and Cor Unweighted" begin
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = HCPortfolio2(; prices = prices)
     c1 = PortCovCor(; ce = CovFull(; ce = AnalyticalNonlinearShrinkage()))
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                        set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
@@ -9576,7 +9576,7 @@ end
 end
 
 @testset "NoPosdef" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = Portfolio2(; prices = prices)
     c1 = PortCovCor(; ce = CorGerber0(; posdef = NoPosdef()), posdef = NoPosdef())
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                        set_skew = false, set_sskew = false, set_cov = true, cov_type = c1)
@@ -9586,7 +9586,7 @@ end
 @testset "Kurt and SKurt" begin
     cols = [:FB, :BBY, :AMD, :AMZN]
     N2 = length(cols)^2
-    portfolio = Portfolio(; prices = prices[cols])
+    portfolio = Portfolio2(; prices = prices[cols])
 
     k1 = KurtFull(;)
     sk1 = KurtSemi(;)
@@ -9772,7 +9772,7 @@ end
 end
 
 @testset "Denoise" begin
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = HCPortfolio2(; prices = prices)
 
     c1 = PortCovCor(; denoise = DenoiseFixed())
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
@@ -11382,7 +11382,7 @@ end
 end
 
 @testset "JLoGo" begin
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = HCPortfolio2(; prices = prices)
 
     c1 = PortCovCor(; jlogo = JLoGo())
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,

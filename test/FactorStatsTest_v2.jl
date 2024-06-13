@@ -8,7 +8,7 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Loadings Matrix" begin
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
     nms = ["tickers", "const", "MTUM", "QUAL", "VLUE", "SIZE", "USMV"]
 
     pval = PVal()
@@ -445,7 +445,7 @@ l = 2.0
 end
 
 @testset "Factor statistics" begin
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
     nms = ["tickers", "const", "MTUM", "QUAL", "VLUE", "SIZE", "USMV"]
 
     factor_type = FactorType()
@@ -829,7 +829,7 @@ end
     @test isapprox(cov_fmt, portfolio.fm_cov)
     @test isapprox(mu_fmt, portfolio.fm_mu)
 
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
     factor_type = FactorType()
     mu_type = MeanJS()
     @time factor_statistics2!(portfolio; factor_type = factor_type, mu_type = mu_type)

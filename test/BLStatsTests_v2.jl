@@ -8,7 +8,7 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Black Litterman" begin
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -215,7 +215,7 @@ l = 2.0
 end
 
 @testset "Bayesian Black Litterman" begin
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -538,7 +538,7 @@ end
 end
 
 @testset "Augmented Black Litterman" begin
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,

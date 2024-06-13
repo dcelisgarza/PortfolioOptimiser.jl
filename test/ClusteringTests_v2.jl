@@ -5,8 +5,8 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "HC Portfolio Asset Clustering" begin
-    portfolio = HCPortfolio(; prices = prices)
+@testset "HC Portfolio2 Asset Clustering" begin
+    portfolio = HCPortfolio2(; prices = prices)
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                        set_mu = false)
 
@@ -85,7 +85,7 @@ l = 2.0
     @test isequal(clustering.order, ordert)
     @test isequal(k, kt)
 
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = HCPortfolio2(; prices = prices)
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                        set_mu = false)
 
@@ -156,8 +156,8 @@ l = 2.0
     @test isequal(k, kt)
 end
 
-@testset "HC Portfolio Asset Clustering" begin
-    portfolio = Portfolio(; prices = prices)
+@testset "HC Portfolio2 Asset Clustering" begin
+    portfolio = Portfolio2(; prices = prices)
     asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                        set_mu = false)
 
