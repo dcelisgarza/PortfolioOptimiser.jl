@@ -1083,13 +1083,14 @@ end
 =#
 abstract type RiskMeasure end
 abstract type TradRiskMeasure <: RiskMeasure end
+abstract type HCRiskMeasure <: RiskMeasure end
 
 struct SD2 <: TradRiskMeasure end
 function calc_risk(::SD2, w::AbstractVector; sigma::AbstractMatrix, kwargs...)
     return SD(w, sigma)
 end
 
-struct Variance2 <: RiskMeasure end
+struct Variance2 <: HCRiskMeasure end
 function calc_risk(::Variance2, w::AbstractVector; sigma::AbstractMatrix, kwargs...)
     return Variance(w, sigma)
 end
@@ -1128,12 +1129,12 @@ function calc_risk(::WR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return WR(X * w)
 end
 
-mutable struct VaR2{T1} <: RiskMeasure
+mutable struct VaR2{T1} <: HCRiskMeasure
     alpha::T1
 end
 function VaR2(; alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return VaR2{typeof{alpha}}(alpha)
+    return VaR2{typeof(alpha)}(alpha)
 end
 function Base.setproperty!(obj::VaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1150,7 +1151,7 @@ mutable struct CVaR2{T1} <: TradRiskMeasure
 end
 function CVaR2(; alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return CVaR2{typeof{alpha}}(alpha)
+    return CVaR2{typeof(alpha)}(alpha)
 end
 function Base.setproperty!(obj::CVaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1168,7 +1169,7 @@ mutable struct EVaR2{T1} <: TradRiskMeasure
 end
 function EVaR2(; alpha::Real = 0.05, solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return EVaR2{typeof{alpha}}(alpha, solvers)
+    return EVaR2{typeof(alpha)}(alpha, solvers)
 end
 function Base.setproperty!(obj::EVaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1189,7 +1190,7 @@ function RVaR2(; alpha::Real = 0.05, kappa = 0.3,
                solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
-    return RVaR2{typeof{alpha}}(alpha, kappa, solvers)
+    return RVaR2{typeof(alpha), typeof(kappa)}(alpha, kappa, solvers)
 end
 function Base.setproperty!(obj::RVaR2, sym::Symbol, val)
     if sym ∈ (:alpha, :kappa)
@@ -1201,12 +1202,12 @@ function calc_risk(rvar::RVaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return RVaR(X * w, rvar.solvers, rvar.alpha, rvar.kappa)
 end
 
-mutable struct DaR2{T1} <: RiskMeasure
+mutable struct DaR2{T1} <: HCRiskMeasure
     alpha::T1
 end
 function DaR2(; alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return DaR2{typeof{alpha}}(alpha)
+    return DaR2{typeof(alpha)}(alpha)
 end
 function Base.setproperty!(obj::DaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1233,7 +1234,7 @@ mutable struct CDaR2{T1} <: TradRiskMeasure
 end
 function CDaR2(; alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return CDaR2{typeof{alpha}}(alpha)
+    return CDaR2{typeof(alpha)}(alpha)
 end
 function Base.setproperty!(obj::CDaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1256,7 +1257,7 @@ mutable struct EDaR2{T1} <: TradRiskMeasure
 end
 function EDaR2(; alpha::Real = 0.05, solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return EDaR2{typeof{alpha}}(alpha, solvers)
+    return EDaR2{typeof(alpha)}(alpha, solvers)
 end
 function Base.setproperty!(obj::EDaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1277,7 +1278,7 @@ function RDaR2(; alpha::Real = 0.05, kappa = 0.3,
                solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
-    return RDaR2{typeof{alpha}}(alpha, kappa, solvers)
+    return RDaR2{typeof(alpha), typeof(kappa)}(alpha, kappa, solvers)
 end
 function Base.setproperty!(obj::RDaR2, sym::Symbol, val)
     if sym ∈ (:alpha, :kappa)
@@ -1289,12 +1290,12 @@ function calc_risk(rdar::RDaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return RDaR_abs(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
 end
 
-mutable struct DaR_r2{T1} <: RiskMeasure
+mutable struct DaR_r2{T1} <: HCRiskMeasure
     alpha::T1
 end
 function DaR_r2(; alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return DaR_r2{typeof{alpha}}(alpha)
+    return DaR_r2{typeof(alpha)}(alpha)
 end
 function Base.setproperty!(obj::DaR_r2, sym::Symbol, val)
     if sym == :alpha
@@ -1306,12 +1307,12 @@ function calc_risk(dar::DaR_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return DaR_rel(X * w, dar.alpha)
 end
 
-struct MDD_r2 <: RiskMeasure end
+struct MDD_r2 <: HCRiskMeasure end
 function calc_risk(::MDD_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return MDD_rel(X * w)
 end
 
-struct ADD_r2 <: RiskMeasure end
+struct ADD_r2 <: HCRiskMeasure end
 function calc_risk(::ADD_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return ADD_rel(X * w)
 end
@@ -1321,7 +1322,7 @@ mutable struct CDaR_r2{T1} <: TradRiskMeasure
 end
 function CDaR_r2(; alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return CDaR_r2{typeof{alpha}}(alpha)
+    return CDaR_r2{typeof(alpha)}(alpha)
 end
 function Base.setproperty!(obj::CDaR_r2, sym::Symbol, val)
     if sym == :alpha
@@ -1333,7 +1334,7 @@ function calc_risk(cdar::CDaR_r2, w::AbstractVector; X::AbstractMatrix, kwargs..
     return CDaR_rel(X * w, cdar.alpha)
 end
 
-struct UCI_r2 <: RiskMeasure end
+struct UCI_r2 <: HCRiskMeasure end
 function calc_risk(::UCI_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return UCI_rel(X * w)
 end
@@ -1344,7 +1345,7 @@ mutable struct EDaR_r2{T1} <: TradRiskMeasure
 end
 function EDaR_r2(; alpha::Real = 0.05, solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return EDaR_r2{typeof{alpha}}(alpha, solvers)
+    return EDaR_r2{typeof(alpha)}(alpha, solvers)
 end
 function Base.setproperty!(obj::EDaR_r2, sym::Symbol, val)
     if sym == :alpha
@@ -1365,7 +1366,7 @@ function RDaR_r2(; alpha::Real = 0.05, kappa = 0.3,
                  solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
-    return RDaR_r2{typeof{alpha}}(alpha, kappa, solvers)
+    return RDaR_r2{typeof(alpha), typeof(kappa)}(alpha, kappa, solvers)
 end
 function Base.setproperty!(obj::RDaR_r2, sym::Symbol, val)
     if sym ∈ (:alpha, :kappa)
@@ -1408,7 +1409,7 @@ end
 function RCVaR2(; alpha::Real = 0.05, beta::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(beta) < beta < one(beta))
-    return RCVaR2{typeof{alpha}, typeof(beta)}(alpha, beta)
+    return RCVaR2{typeof(alpha), typeof(beta)}(alpha, beta)
 end
 function Base.setproperty!(obj::RCVaR2, sym::Symbol, val)
     if sym ∈ (:alpha, :beta)
@@ -1425,10 +1426,10 @@ mutable struct TG2{T1, T2, T3} <: TradRiskMeasure
     alpha::T2
     a_sim::T3
 end
-function TG2(; alpha_i = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100)
+function TG2(; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100)
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
-    return RCVaR2{typeof{alpha_i}, typeof(alpha), typeof(a_sim)}(alpha_i, alpha, a_sim)
+    return TG2{typeof(alpha_i), typeof(alpha), typeof(a_sim)}(alpha_i, alpha, a_sim)
 end
 function Base.setproperty!(obj::TG2, sym::Symbol, val)
     if sym == :alpha_i
@@ -1458,8 +1459,8 @@ function RTG2(; alpha_i = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100, beta
     @smart_assert(a_sim > zero(a_sim))
     @smart_assert(zero(beta) < beta_i < beta < one(beta))
     @smart_assert(b_sim > zero(b_sim))
-    return RCVaR2{typeof{alpha_i}, typeof(alpha), typeof(a_sim), typeof{beta_i},
-                  typeof(beta), typeof(b_sim)}(alpha_i, alpha, a_sim, beta_i, beta, b_sim)
+    return RTG2{typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
+                typeof(b_sim)}(alpha_i, alpha, a_sim, beta_i, beta, b_sim)
 end
 function Base.setproperty!(obj::RTG2, sym::Symbol, val)
     if sym == :alpha_i
@@ -1504,7 +1505,23 @@ function calc_risk(::SSkew2, w::AbstractVector; SV::AbstractMatrix, kwargs...)
     return Skew(w, SV)
 end
 
-struct Equal2 <: RiskMeasure end
+struct Equal2 <: HCRiskMeasure end
 function calc_risk(::Equal2, w::AbstractVector; kwargs...)
     return 1 / length(w)
 end
+
+function calc_risk(portfolio::AbstractPortfolio2;
+                   type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                   rm::RiskMeasure = SD2())
+    if hasproperty(rm, :solvers) && isempty(rm.solvers)
+        rm.solvers = portfolio.solvers
+    end
+    return calc_risk(rm, portfolio.optimal[type].weights; X = portfolio.returns,
+                     sigma = portfolio.cov, V = portfolio.V, SV = portfolio.SV,
+                     solvers = portfolio.solvers)
+end
+
+export SD2, Variance2, MAD2, SSD2, FLPM2, SLPM2, WR2, VaR2, CVaR2, EVaR2, RVaR2, DaR2, MDD2,
+       ADD2, CDaR2, UCI2, EDaR2, RDaR2, DaR_r2, MDD_r2, ADD_r2, CDaR_r2, UCI_r2, EDaR_r2,
+       RDaR_r2, Kurt2, SKurt2, GMD2, RG2, RCVaR2, TG2, RTG2, OWA2, DVar2, Skew2, SSkew2,
+       Equal2
