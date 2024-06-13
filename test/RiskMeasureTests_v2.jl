@@ -1,7 +1,7 @@
 using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 @testset "Risk measures v2" begin
     portfolio = Portfolio2(; prices = prices,
