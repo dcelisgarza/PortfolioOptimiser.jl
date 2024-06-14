@@ -1510,18 +1510,14 @@ function calc_risk(::Equal2, w::AbstractVector; kwargs...)
     return 1 / length(w)
 end
 
-function calc_risk(portfolio::AbstractPortfolio2;
-                   type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
-                   rm::RiskMeasure = SD2())
-    if hasproperty(rm, :solvers) && isempty(rm.solvers)
-        rm.solvers = portfolio.solvers
-    end
-    return calc_risk(rm, portfolio.optimal[type].weights; X = portfolio.returns,
-                     sigma = portfolio.cov, V = portfolio.V, SV = portfolio.SV,
-                     solvers = portfolio.solvers)
+@kwdef mutable struct PortRM{T1 <: Real, T2 <: Real}
+    flag::Bool = true
+    upper::T1 = Inf
+    scale::T2 = 1.0
+    rm::TradRiskMeasure = SD2()
 end
 
 export SD2, Variance2, MAD2, SSD2, FLPM2, SLPM2, WR2, VaR2, CVaR2, EVaR2, RVaR2, DaR2, MDD2,
        ADD2, CDaR2, UCI2, EDaR2, RDaR2, DaR_r2, MDD_r2, ADD_r2, CDaR_r2, UCI_r2, EDaR_r2,
        RDaR_r2, Kurt2, SKurt2, GMD2, RG2, RCVaR2, TG2, RTG2, OWA2, DVar2, Skew2, SSkew2,
-       Equal2
+       Equal2, PortRM
