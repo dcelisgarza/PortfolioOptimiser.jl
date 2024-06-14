@@ -1146,12 +1146,15 @@ function calc_risk(var::VaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return VaR(X * w, var.alpha)
 end
 
-mutable struct CVaR2{T1} <: TradRiskMeasure
+mutable struct CVaR2{T1, T2, T3} <: TradRiskMeasure
+    flag::Bool
     alpha::T1
+    scale::T2
+    ub::T3
 end
-function CVaR2(; alpha::Real = 0.05)
+function CVaR2(; flag::Bool = true, alpha::Real = 0.05, scale::Real = 1.0, ub::Real = Inf)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return CVaR2{typeof(alpha)}(alpha)
+    return CVaR2{typeof(alpha), typeof(scale), typeof(ub)}(flag, alpha, scale, ub)
 end
 function Base.setproperty!(obj::CVaR2, sym::Symbol, val)
     if sym == :alpha

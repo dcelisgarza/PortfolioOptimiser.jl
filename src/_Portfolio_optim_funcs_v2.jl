@@ -4,15 +4,26 @@ struct Util <: ObjectiveFunction end
 struct SR <: ObjectiveFunction end
 struct MaxRet <: ObjectiveFunction end
 
-function set_upper_bound(::SR, model, rm_risk, ub, type)
-    if isfinite(ub) && type == :Trad
+abstract type PortType end
+struct Trad2 <: PortType end
+
+function set_upper_bound(::Any, ::Any, model, rm_risk, ub)
+    return nothing
+end
+
+function set_upper_bound(::SR, ::Trad2, model, rm_risk, ub)
+    if isfinite(ub)
         @constraint(model, rm_risk <= ub * model[:k])
     end
+
+    return nothing
 end
-function set_upper_bound(::ObjectiveFunction, model, rm_risk, ub, type)
-    if isfinite(ub) && type == :Trad
+function set_upper_bound(::ObjectiveFunction, ::Trad2, model, rm_risk, ub)
+    if isfinite(ub)
         @constraint(model, rm_risk <= ub)
     end
+
+    return nothing
 end
 function setup_risk(model, rm_risk, scale, flag::Bool)
     if flag
@@ -25,10 +36,12 @@ function setup_risk(model, rm_risk, scale, flag::Bool)
             unregister(model, :tmp)
         end
     end
+
+    return nothing
 end
 
-function setup_rm(port::Portfolio2, rm::CVaR2, flag::Bool, ub::Real, scale::Real,
-                  type::Symbol, obj::ObjectiveFunction, count::Integer, idx::Integer)
+function setup_rm(port::Portfolio2, rm::CVaR2, type::PortType, obj::ObjectiveFunction,
+                  count::Integer, idx::Integer)
     model = port.model
     if !haskey(model, :X)
         @expression(model, X, port.returns * model[:w])
@@ -42,8 +55,8 @@ function setup_rm(port::Portfolio2, rm::CVaR2, flag::Bool, ub::Real, scale::Real
         @constraint(model, z_var .>= -model[:X] .- var)
         @expression(model, cvar_risk, var + sum(z_var) * iat)
 
-        set_upper_bound(obj, model, cvar_risk, ub, type)
-        setup_risk(model, cvar_risk, scale, flag)
+        set_upper_bound(obj, type, model, cvar_risk, rm.ub)
+        setup_risk(model, cvar_risk, rm.scale, rm.flag)
     else
         if idx == 1
             @variable(model, var[1:count])
@@ -56,14 +69,14 @@ function setup_rm(port::Portfolio2, rm::CVaR2, flag::Bool, ub::Real, scale::Real
                     model[:cvar_risk][idx] ==
                     model[:var][idx] + sum(model[:z_var][1:T, idx]) * iat)
 
-        set_upper_bound(obj, model, model[:cvar_risk][idx], ub, type)
-        setup_risk(model, model[:cvar_risk][idx], scale, flag)
+        set_upper_bound(obj, type, model, model[:cvar_risk][idx], rm.ub)
+        setup_risk(model, model[:cvar_risk][idx], rm.scale, rm.flag)
     end
 
     return nothing
 end
 
-export setup_rm, MinRisk, Util, SR, MaxRet
+export setup_rm, MinRisk, Util, SR, MaxRet, Trad2
 
 function optimise2!(port::Portfolio2; rm::Union{Vector{TradRiskMeasure}, TradRiskMeasure},
                     str_names::Bool = false, save_params::Bool = false) end
