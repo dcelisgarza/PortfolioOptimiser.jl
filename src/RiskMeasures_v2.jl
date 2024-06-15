@@ -1316,7 +1316,7 @@ mutable struct RDaR2{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     kappa::T2
     solvers::Union{<:AbstractDict, NamedTuple}
 end
-function RDaR2(; settings, alpha::Real = 0.05, kappa = 0.3,
+function RDaR2(; settings = RiskMeasureSettings(), alpha::Real = 0.05, kappa = 0.3,
                solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
