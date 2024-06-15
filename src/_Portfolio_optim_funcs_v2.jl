@@ -6,23 +6,23 @@ struct MaxRet <: ObjectiveFunction end
 
 abstract type PortType end
 struct Trad2 <: PortType end
+struct RP2 <: PortType end
+struct RRP2 <: PortType end
+struct WC2 <: PortType end
 
 function set_upper_bound(::Any, ::Any, model, rm_risk, ub)
     return nothing
 end
-
 function set_upper_bound(::SR, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk <= ub * model[:k])
     end
-
     return nothing
 end
 function set_upper_bound(::ObjectiveFunction, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk <= ub)
     end
-
     return nothing
 end
 function setup_risk(model, rm_risk, scale, flag::Bool)
@@ -36,12 +36,81 @@ function setup_risk(model, rm_risk, scale, flag::Bool)
             unregister(model, :tmp)
         end
     end
+    return nothing
+end
+
+function _sd_risk(::SDP2, ::Union{Trad2, WC2}, model, sigma, count::Integer, idx::Integer)
+    if isone(count)
+        @expression(model, sd_risk, tr(sigma * model[:W]))
+    else
+        if isone(idx)
+            @variable(model, sd_risk[1:count])
+        end
+        @constraint(model, model[:sd_risk][idx] == tr(sigma * model[:W]))
+    end
+    return nothing
+end
+function _sd_risk(::Any, ::Any, model, sigma, count::Integer, idx::Integer)
+    G = sqrt(sigma)
+    if isone(count)
+        @variable(model, sd_risk)
+        @constraint(model, [sd_risk; G * model[:w]] ∈ SecondOrderCone())
+    else
+        if isone(idx)
+            @variable(model, sd_risk[1:count])
+        end
+        @constraint(model, [model[:sd_risk][idx]; G * model[:w]] ∈ SecondOrderCone())
+    end
+    return nothing
+end
+function set_upper_bound(::SDP2, ::SR, ::Trad2, model, rm_risk, ub)
+    if isfinite(ub)
+        @constraint(model, rm_risk <= ub^2 * model[:k])
+    end
+    return nothing
+end
+function set_upper_bound(::SDP2, ::ObjectiveFunction, ::Trad2, model, rm_risk, ub)
+    if isfinite(ub)
+        @constraint(model, rm_risk <= ub^2)
+    end
+    return nothing
+end
+function set_upper_bound(::Any, ::SR, ::Trad2, model, rm_risk, ub)
+    if isfinite(ub)
+        @constraint(model, rm_risk <= ub * model[:k])
+    end
+    return nothing
+end
+function set_upper_bound(::Any, ::ObjectiveFunction, ::Trad2, model, rm_risk, ub)
+    if isfinite(ub)
+        @constraint(model, rm_risk <= ub)
+    end
+    return nothing
+end
+function set_upper_bound(::Any, ::Any, ::Any, model, rm_risk, ub)
+    return nothing
+end
+
+function setup_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2},
+                  obj::ObjectiveFunction, count::Integer, idx::Integer)
+    model = port.model
+    if isnothing(rm.sigma)
+        rm.sigma = port.cov
+    end
+
+    _sd_risk(port.network_method, type, model, rm.sigma, count, idx)
+    set_upper_bound(port.network_method, obj, type, model, model[:sd_risk], rm.settings.ub)
+    if isone(count)
+        setup_risk(model, model[:sd_risk], rm.settings.scale, rm.settings.flag)
+    else
+        setup_risk(model, model[:sd_risk][idx], rm.settings.scale, rm.settings.flag)
+    end
 
     return nothing
 end
 
-function setup_rm(port::Portfolio2, rm::CVaR2, type::PortType, obj::ObjectiveFunction,
-                  count::Integer, idx::Integer)
+function setup_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
+                  obj::ObjectiveFunction, count::Integer, idx::Integer)
     model = port.model
     if !haskey(model, :X)
         @expression(model, X, port.returns * model[:w])
@@ -49,28 +118,78 @@ function setup_rm(port::Portfolio2, rm::CVaR2, type::PortType, obj::ObjectiveFun
     T = size(port.returns, 1)
     iat = inv(rm.alpha * T)
 
-    if count == 1
+    if isone(count)
         @variable(model, var)
         @variable(model, z_var[1:T] .>= 0)
-        @constraint(model, z_var .>= -model[:X] .- var)
         @expression(model, cvar_risk, var + sum(z_var) * iat)
 
-        set_upper_bound(obj, type, model, cvar_risk, rm.ub)
-        setup_risk(model, cvar_risk, rm.scale, rm.flag)
+        @constraint(model, z_var .>= -model[:X] .- var)
+
+        set_upper_bound(obj, type, model, cvar_risk, rm.settings.ub)
+        setup_risk(model, cvar_risk, rm.settings.scale, rm.settings.flag)
     else
-        if idx == 1
+        if isone(idx)
             @variable(model, var[1:count])
             @variable(model, z_var[1:T, 1:count] .>= 0)
             @variable(model, cvar_risk[1:count])
         end
 
-        @constraint(model, model[:z_var][1:T, idx] .>= -model[:X] .- model[:var][idx])
         @constraint(model,
                     model[:cvar_risk][idx] ==
                     model[:var][idx] + sum(model[:z_var][1:T, idx]) * iat)
+        @constraint(model, model[:z_var][1:T, idx] .>= -model[:X] .- model[:var][idx])
 
-        set_upper_bound(obj, type, model, model[:cvar_risk][idx], rm.ub)
-        setup_risk(model, model[:cvar_risk][idx], rm.scale, rm.flag)
+        set_upper_bound(obj, type, model, model[:cvar_risk][idx], rm.settings.ub)
+        setup_risk(model, model[:cvar_risk][idx], rm.settings.scale, rm.settings.flag)
+    end
+
+    return nothing
+end
+
+function setup_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
+                  obj::ObjectiveFunction, count::Integer, idx::Integer)
+    model = port.model
+    if !haskey(model, :X)
+        @expression(model, X, port.returns * model[:w])
+    end
+
+    T = size(port.returns, 1)
+    iat = inv(rm.alpha * T)
+
+    if isone(count)
+        @variable(model, cdar[1:(T + 1)])
+        @variable(model, dar)
+        @variable(model, z_cdar[1:T] .>= 0)
+        @expression(model, cdar_risk, dar + sum(z_cdar) * iat)
+
+        @constraint(model, cdar[2:end] .>= cdar[1:(end - 1)] .- model[:X])
+        @constraint(model, cdar[2:end] .>= 0)
+        @constraint(model, cdar[1] == 0)
+        @constraint(model, z_cdar .>= cdar[2:end] .- dar)
+
+        set_upper_bound(obj, type, model, cdar_risk, rm.settings.ub)
+        setup_risk(model, cdar_risk, rm.settings.scale, rm.settings.flag)
+    else
+        if isone(idx)
+            @variable(model, cdar[1:(T + 1), 1:count])
+            @variable(model, dar[1:count])
+            @variable(model, z_cdar[1:T, 1:count] .>= 0)
+            @variable(model, cdar_risk[1:count])
+        end
+
+        @constraint(model,
+                    model[:cdar_risk][idx] ==
+                    model[:dar][idx] + sum(model[:z_cdar][:][idx]) * iat)
+        @constraint(model,
+                    model[:cdar][2:end, idx] .>=
+                    model[:cdar][1:(end - 1), idx] .- model[:X])
+        @constraint(model, model[:cdar][2:end, idx] .>= 0)
+        @constraint(model, model[:cdar][1, idx] == 0)
+        @constraint(model,
+                    model[:z_cdar][:][idx] .>= model[:cdar][2:end, idx] .- model[:dar][idx])
+
+        set_upper_bound(obj, type, model, model[:cdar_risk][idx], rm.settings.ub)
+        setup_risk(model, model[:cdar_risk][idx], rm.settings.scale, rm.settings.flag)
     end
 
     return nothing

@@ -26,19 +26,39 @@ prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date
 portfolio = Portfolio2(; prices = prices,
                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                         :params => Dict("verbose" => false))))
+asset_statistics2!(portfolio)
 @variable(portfolio.model, w[1:length(portfolio.assets)])
 @constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
 @constraint(portfolio.model, portfolio.model[:w] .>= 0)
 
-setup_rm(portfolio, CVaR2(), true, Inf, 1, :Trad, MinRisk(), 3, 1)
-setup_rm(portfolio, CVaR2(; alpha = 0.3), true, Inf, 1, :Trad, MinRisk(), 3, 2)
-setup_rm(portfolio, CVaR2(; alpha = 0.1), true, 0.3, 1, :Trad, MinRisk(), 3, 3)
+setup_rm(portfolio, SD2(), Trad2(), MinRisk(), 1, 1)
+
+setup_rm(portfolio, SD2(), Trad2(), MinRisk(), 3, 1)
+setup_rm(portfolio, SD2(), Trad2(), MinRisk(), 3, 2)
+setup_rm(portfolio, SD2(; settings = RiskMeasureSettings(; scale = 0.1)), Trad2(),
+         MinRisk(), 3, 3)
+
+setup_rm(portfolio, CVaR2(), Trad2(), MinRisk(), 3, 1)
+setup_rm(portfolio, CVaR2(; alpha = 0.3), Trad2(), MinRisk(), 3, 2)
+setup_rm(portfolio, CVaR2(; alpha = 0.1, settings = RiskMeasureSettings(; scale = 0.1)),
+         Trad2(), MinRisk(), 3, 3)
+
+setup_rm(portfolio, CDaR2(), Trad2(), MinRisk(), 1, 1)
+setup_rm(portfolio, CDaR2(; alpha = 0.02), Trad2(), MinRisk(), 2, 2)
+setup_rm(portfolio,
+         CDaR2(; alpha = 0.1,
+               settings = RiskMeasureSettings(; flag = false, ub = 55, scale = 0.1)),
+         Trad2(), MinRisk(), 3, 3)
 
 @objective(portfolio.model, Min, portfolio.model[:risk])
 set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
 JuMP.optimize!(portfolio.model)
 
 ws = [portfolio.assets value.(portfolio.model[:w])]
+ws2 = [portfolio.assets value.(portfolio.model[:w])]
+ws3 = [portfolio.assets value.(portfolio.model[:w])]
+ws4 = [portfolio.assets value.(portfolio.model[:w])]
+ws5 = [portfolio.assets value.(portfolio.model[:w])]
 
 portfolio = Portfolio2(; prices = prices,
                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -47,9 +67,9 @@ portfolio = Portfolio2(; prices = prices,
 @constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
 @constraint(portfolio.model, portfolio.model[:w] .>= 0)
 
-setup_rm(portfolio, CVaR2(), true, Inf, 1, :Trad, MinRisk(), 1, 1)
-# setup_rm(portfolio, CVaR2(; alpha = 0.3), true, Inf, 1, :Trad, MinRisk(), 3, 2)
-# setup_rm(portfolio, CVaR2(; alpha = 0.1), true, 0.3, 8, :Trad, MinRisk(), 3, 3)
+setup_rm(portfolio, CVaR2(), Trad2(), MinRisk(), 1, 1)
+# setup_rm(portfolio, CVaR2(; alpha = 0.3), true, Inf, 1, Trad2(), MinRisk(), 3, 2)
+# setup_rm(portfolio, CVaR2(; alpha = 0.1), true, 0.3, 8, Trad2(), MinRisk(), 3, 3)
 
 @objective(portfolio.model, Min, portfolio.model[:risk])
 set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
@@ -64,9 +84,9 @@ portfolio = Portfolio2(; prices = prices,
 @constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
 @constraint(portfolio.model, portfolio.model[:w] .>= 0)
 
-# setup_rm(portfolio, CVaR2(), true, Inf, 1, :Trad, MinRisk(), 1, 1)
-setup_rm(portfolio, CVaR2(; alpha = 0.3), true, Inf, 1, :Trad, MinRisk(), 1, 1)
-# setup_rm(portfolio, CVaR2(; alpha = 0.1), true, 0.3, 8, :Trad, MinRisk(), 3, 3)
+# setup_rm(portfolio, CVaR2(),  Trad2(), MinRisk(), 1, 1)
+setup_rm(portfolio, CVaR2(; alpha = 0.3), Trad2(), MinRisk(), 1, 1)
+# setup_rm(portfolio, CVaR2(; alpha = 0.1),  Trad2(), MinRisk(), 3, 3)
 
 @objective(portfolio.model, Min, portfolio.model[:risk])
 set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
@@ -81,9 +101,9 @@ portfolio = Portfolio2(; prices = prices,
 @constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
 @constraint(portfolio.model, portfolio.model[:w] .>= 0)
 
-# setup_rm(portfolio, CVaR2(), true, Inf, 1, :Trad, MinRisk(), 1, 1)
-# setup_rm(portfolio, CVaR2(; alpha = 0.3), true, Inf, 1, :Trad, MinRisk(), 1, 1)
-setup_rm(portfolio, CVaR2(; alpha = 0.1), true, 0.3, 1, :Trad, MinRisk(), 1, 1)
+# setup_rm(portfolio, CVaR2(),  Trad2(), MinRisk(), 1, 1)
+# setup_rm(portfolio, CVaR2(; alpha = 0.3),  Trad2(), MinRisk(), 1, 1)
+setup_rm(portfolio, CVaR2(; alpha = 0.1), Trad2(), MinRisk(), 1, 1)
 
 @objective(portfolio.model, Min, portfolio.model[:risk])
 set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])

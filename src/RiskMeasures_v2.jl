@@ -1085,9 +1085,31 @@ abstract type RiskMeasure end
 abstract type TradRiskMeasure <: RiskMeasure end
 abstract type HCRiskMeasure <: RiskMeasure end
 
-struct SD2 <: TradRiskMeasure end
-function calc_risk(::SD2, w::AbstractVector; sigma::AbstractMatrix, kwargs...)
-    return SD(w, sigma)
+@kwdef mutable struct RiskMeasureSettings{T1 <: Real, T2 <: Real}
+    flag::Bool = true
+    scale::T1 = 1.0
+    ub::T2 = Inf
+end
+
+mutable struct SD2{T1 <: Union{AbstractMatrix, Nothing}} <: TradRiskMeasure
+    settings::RiskMeasureSettings
+    sigma::T1
+end
+function SD2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
+             sigma::Union{<:AbstractMatrix, Nothing} = nothing)
+    if !isnothing(sigma)
+        @smart_assert(size(sigma, 1) == size(sigma, 2))
+    end
+    return SD2{Union{<:AbstractMatrix, Nothing}}(settings, sigma)
+end
+function Base.setproperty!(obj::SD2, sym::Symbol, val)
+    if sym == :sigma
+        @smart_assert(size(val, 1) == size(val, 2))
+    end
+    return setfield!(obj, sym, val)
+end
+function calc_risk(sd::SD2, w::AbstractVector; kwargs...)
+    return SD(w, sd.sigma)
 end
 
 struct Variance2 <: HCRiskMeasure end
@@ -1096,21 +1118,24 @@ function calc_risk(::Variance2, w::AbstractVector; sigma::AbstractMatrix, kwargs
 end
 
 @kwdef mutable struct MAD2 <: TradRiskMeasure
-    w::Union{AbstractWeights, Nothing} = nothing
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+    w::Union{<:AbstractWeights, Nothing} = nothing
 end
 function calc_risk(mad::MAD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return MAD(X * w, mad.w)
 end
 
 @kwdef mutable struct SSD2{T1 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
     target::T1 = 0.0
-    w::Union{AbstractWeights, Nothing} = nothing
+    w::Union{<:AbstractWeights, Nothing} = nothing
 end
 function calc_risk(ssd::SSD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return SSD(X * w, ssd.target, ssd.w)
 end
 
 @kwdef mutable struct FLPM2{T1 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
     target::T1 = 0.0
 end
 function calc_risk(flpm::FLPM2, w::AbstractVector; X::AbstractMatrix, kwargs...)
@@ -1118,18 +1143,21 @@ function calc_risk(flpm::FLPM2, w::AbstractVector; X::AbstractMatrix, kwargs...)
 end
 
 @kwdef mutable struct SLPM2{T1 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
     target::T1 = 0.0
 end
 function calc_risk(slpm::SLPM2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return SLPM(X * w, slpm.target)
 end
 
-struct WR2 <: TradRiskMeasure end
+@kwdef struct WR2 <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+end
 function calc_risk(::WR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return WR(X * w)
 end
 
-mutable struct VaR2{T1} <: HCRiskMeasure
+mutable struct VaR2{T1 <: Real} <: HCRiskMeasure
     alpha::T1
 end
 function VaR2(; alpha::Real = 0.05)
@@ -1146,15 +1174,13 @@ function calc_risk(var::VaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return VaR(X * w, var.alpha)
 end
 
-mutable struct CVaR2{T1, T2, T3} <: TradRiskMeasure
-    flag::Bool
+mutable struct CVaR2{T1 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha::T1
-    scale::T2
-    ub::T3
 end
-function CVaR2(; flag::Bool = true, alpha::Real = 0.05, scale::Real = 1.0, ub::Real = Inf)
+function CVaR2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return CVaR2{typeof(alpha), typeof(scale), typeof(ub)}(flag, alpha, scale, ub)
+    return CVaR2{typeof(alpha)}(settings, alpha)
 end
 function Base.setproperty!(obj::CVaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1166,13 +1192,15 @@ function calc_risk(cvar::CVaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return CVaR(X * w, cvar.alpha)
 end
 
-mutable struct EVaR2{T1} <: TradRiskMeasure
+mutable struct EVaR2{T1 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha::T1
     solvers::Union{<:AbstractDict, NamedTuple}
 end
-function EVaR2(; alpha::Real = 0.05, solvers::Union{<:AbstractDict, NamedTuple} = Dict())
+function EVaR2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
+               solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return EVaR2{typeof(alpha)}(alpha, solvers)
+    return EVaR2{typeof(alpha)}(settings, alpha, solvers)
 end
 function Base.setproperty!(obj::EVaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1184,16 +1212,17 @@ function calc_risk(evar::EVaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return EVaR(X * w, evar.solvers, evar.alpha)
 end
 
-mutable struct RVaR2{T1, T2} <: TradRiskMeasure
+mutable struct RVaR2{T1 <: Real, T2 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
     solvers::Union{<:AbstractDict, NamedTuple}
 end
-function RVaR2(; alpha::Real = 0.05, kappa = 0.3,
-               solvers::Union{<:AbstractDict, NamedTuple} = Dict())
+function RVaR2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
+               kappa = 0.3, solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
-    return RVaR2{typeof(alpha), typeof(kappa)}(alpha, kappa, solvers)
+    return RVaR2{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
 end
 function Base.setproperty!(obj::RVaR2, sym::Symbol, val)
     if sym ∈ (:alpha, :kappa)
@@ -1205,7 +1234,7 @@ function calc_risk(rvar::RVaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return RVaR(X * w, rvar.solvers, rvar.alpha, rvar.kappa)
 end
 
-mutable struct DaR2{T1} <: HCRiskMeasure
+mutable struct DaR2{T1 <: Real} <: HCRiskMeasure
     alpha::T1
 end
 function DaR2(; alpha::Real = 0.05)
@@ -1222,22 +1251,27 @@ function calc_risk(dar::DaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return DaR_abs(X * w, dar.alpha)
 end
 
-struct MDD2 <: TradRiskMeasure end
+@kwdef struct MDD2 <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+end
 function calc_risk(::MDD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return MDD_abs(X * w)
 end
 
-struct ADD2 <: TradRiskMeasure end
+@kwdef struct ADD2 <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+end
 function calc_risk(::ADD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return ADD_abs(X * w)
 end
 
-mutable struct CDaR2{T1} <: TradRiskMeasure
+mutable struct CDaR2{T1 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha::T1
 end
-function CDaR2(; alpha::Real = 0.05)
+function CDaR2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return CDaR2{typeof(alpha)}(alpha)
+    return CDaR2{typeof(alpha)}(settings, alpha)
 end
 function Base.setproperty!(obj::CDaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1249,18 +1283,22 @@ function calc_risk(cdar::CDaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return CDaR_abs(X * w, cdar.alpha)
 end
 
-struct UCI2 <: TradRiskMeasure end
+@kwdef struct UCI2 <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+end
 function calc_risk(::UCI2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return UCI_abs(X * w)
 end
 
-mutable struct EDaR2{T1} <: TradRiskMeasure
+mutable struct EDaR2{T1 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha::T1
     solvers::Union{<:AbstractDict, NamedTuple}
 end
-function EDaR2(; alpha::Real = 0.05, solvers::Union{<:AbstractDict, NamedTuple} = Dict())
+function EDaR2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
+               solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return EDaR2{typeof(alpha)}(alpha, solvers)
+    return EDaR2{typeof(alpha)}(settings, alpha, solvers)
 end
 function Base.setproperty!(obj::EDaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1272,16 +1310,17 @@ function calc_risk(edar::EDaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return EDaR_abs(X * w, edar.solvers, edar.alpha)
 end
 
-mutable struct RDaR2{T1, T2} <: TradRiskMeasure
+mutable struct RDaR2{T1 <: Real, T2 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
     solvers::Union{<:AbstractDict, NamedTuple}
 end
-function RDaR2(; alpha::Real = 0.05, kappa = 0.3,
+function RDaR2(; settings, alpha::Real = 0.05, kappa = 0.3,
                solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
-    return RDaR2{typeof(alpha), typeof(kappa)}(alpha, kappa, solvers)
+    return RDaR2{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
 end
 function Base.setproperty!(obj::RDaR2, sym::Symbol, val)
     if sym ∈ (:alpha, :kappa)
@@ -1293,7 +1332,7 @@ function calc_risk(rdar::RDaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return RDaR_abs(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
 end
 
-mutable struct DaR_r2{T1} <: HCRiskMeasure
+mutable struct DaR_r2{T1 <: Real} <: HCRiskMeasure
     alpha::T1
 end
 function DaR_r2(; alpha::Real = 0.05)
@@ -1320,12 +1359,14 @@ function calc_risk(::ADD_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return ADD_rel(X * w)
 end
 
-mutable struct CDaR_r2{T1} <: TradRiskMeasure
+mutable struct CDaR_r2{T1 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha::T1
 end
-function CDaR_r2(; alpha::Real = 0.05)
+function CDaR_r2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
+                 alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return CDaR_r2{typeof(alpha)}(alpha)
+    return CDaR_r2{typeof(alpha)}(settings, alpha)
 end
 function Base.setproperty!(obj::CDaR_r2, sym::Symbol, val)
     if sym == :alpha
@@ -1342,13 +1383,15 @@ function calc_risk(::UCI_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return UCI_rel(X * w)
 end
 
-mutable struct EDaR_r2{T1} <: TradRiskMeasure
+mutable struct EDaR_r2{T1 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha::T1
     solvers::Union{<:AbstractDict, NamedTuple}
 end
-function EDaR_r2(; alpha::Real = 0.05, solvers::Union{<:AbstractDict, NamedTuple} = Dict())
+function EDaR_r2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
+                 alpha::Real = 0.05, solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return EDaR_r2{typeof(alpha)}(alpha, solvers)
+    return EDaR_r2{typeof(alpha)}(settings, alpha, solvers)
 end
 function Base.setproperty!(obj::EDaR_r2, sym::Symbol, val)
     if sym == :alpha
@@ -1360,16 +1403,18 @@ function calc_risk(edar::EDaR_r2, w::AbstractVector; X::AbstractMatrix, kwargs..
     return EDaR_rel(X * w, edar.solvers, edar.alpha)
 end
 
-mutable struct RDaR_r2{T1, T2} <: TradRiskMeasure
+mutable struct RDaR_r2{T1 <: Real, T2 <: Real} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
     solvers::Union{<:AbstractDict, NamedTuple}
 end
-function RDaR_r2(; alpha::Real = 0.05, kappa = 0.3,
+function RDaR_r2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
+                 alpha::Real = 0.05, kappa = 0.3,
                  solvers::Union{<:AbstractDict, NamedTuple} = Dict())
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
-    return RDaR_r2{typeof(alpha), typeof(kappa)}(alpha, kappa, solvers)
+    return RDaR_r2{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
 end
 function Base.setproperty!(obj::RDaR_r2, sym::Symbol, val)
     if sym ∈ (:alpha, :kappa)
@@ -1382,37 +1427,45 @@ function calc_risk(rdar::RDaR_r2, w::AbstractVector; X::AbstractMatrix, kwargs..
 end
 
 @kwdef mutable struct Kurt2 <: TradRiskMeasure
-    w::Union{AbstractWeights, Nothing} = nothing
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+    w::Union{<:AbstractWeights, Nothing} = nothing
 end
 function calc_risk(kt::Kurt2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return Kurt(X * w, kt.w)
 end
 
 @kwdef mutable struct SKurt2 <: TradRiskMeasure
-    w::Union{AbstractWeights, Nothing} = nothing
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+    w::Union{<:AbstractWeights, Nothing} = nothing
 end
 function calc_risk(skt::SKurt2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return SKurt(X * w, skt.w)
 end
 
-struct GMD2 <: TradRiskMeasure end
+@kwdef struct GMD2 <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+end
 function calc_risk(::GMD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return GMD(X * w)
 end
 
-struct RG2 <: TradRiskMeasure end
+@kwdef struct RG2 <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+end
 function calc_risk(::RG2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return RG(X * w)
 end
 
 mutable struct RCVaR2{T1, T2} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha::Real
     beta::Real
 end
-function RCVaR2(; alpha::Real = 0.05, beta::Real = 0.05)
+function RCVaR2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
+                beta::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(beta) < beta < one(beta))
-    return RCVaR2{typeof(alpha), typeof(beta)}(alpha, beta)
+    return RCVaR2{typeof(alpha), typeof(beta)}(settings, alpha, beta)
 end
 function Base.setproperty!(obj::RCVaR2, sym::Symbol, val)
     if sym ∈ (:alpha, :beta)
@@ -1425,14 +1478,17 @@ function calc_risk(rcvar::RCVaR2, w::AbstractVector; X::AbstractMatrix, kwargs..
 end
 
 mutable struct TG2{T1, T2, T3} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha_i::T1
     alpha::T2
     a_sim::T3
 end
-function TG2(; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100)
+function TG2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
+             alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100)
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
-    return TG2{typeof(alpha_i), typeof(alpha), typeof(a_sim)}(alpha_i, alpha, a_sim)
+    return TG2{typeof(alpha_i), typeof(alpha), typeof(a_sim)}(settings, alpha_i, alpha,
+                                                              a_sim)
 end
 function Base.setproperty!(obj::TG2, sym::Symbol, val)
     if sym == :alpha_i
@@ -1449,6 +1505,7 @@ function calc_risk(tg::TG2, w::AbstractVector; X::AbstractMatrix, kwargs...)
 end
 
 mutable struct RTG2{T1, T2, T3, T4, T5, T6} <: TradRiskMeasure
+    settings::RiskMeasureSettings
     alpha_i::T1
     alpha::T2
     a_sim::T3
@@ -1456,14 +1513,15 @@ mutable struct RTG2{T1, T2, T3, T4, T5, T6} <: TradRiskMeasure
     beta::T5
     b_sim::T6
 end
-function RTG2(; alpha_i = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100, beta_i = 0.0001,
-              beta::Real = 0.05, b_sim::Integer = 100)
+function RTG2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha_i = 0.0001,
+              alpha::Real = 0.05, a_sim::Integer = 100, beta_i = 0.0001, beta::Real = 0.05,
+              b_sim::Integer = 100)
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
     @smart_assert(zero(beta) < beta_i < beta < one(beta))
     @smart_assert(b_sim > zero(b_sim))
     return RTG2{typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
-                typeof(b_sim)}(alpha_i, alpha, a_sim, beta_i, beta, b_sim)
+                typeof(b_sim)}(settings, alpha_i, alpha, a_sim, beta_i, beta, b_sim)
 end
 function Base.setproperty!(obj::RTG2, sym::Symbol, val)
     if sym == :alpha_i
@@ -1487,23 +1545,30 @@ function calc_risk(rtg::RTG2, w::AbstractVector; X::AbstractMatrix, kwargs...)
 end
 
 @kwdef mutable struct OWA2 <: TradRiskMeasure
-    w::Union{AbstractVector, Nothing} = nothing
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+    w::Union{<:AbstractVector, Nothing} = nothing
 end
 function calc_risk(owa::OWA2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return OWA(X * w, isnothing(owa.w) ? owa_gmd(size(X, 1)) : owa.w)
 end
 
-struct DVar2 <: TradRiskMeasure end
+@kwdef struct DVar2 <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+end
 function calc_risk(::DVar2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return DVar(X * w)
 end
 
-struct Skew2 <: TradRiskMeasure end
+@kwdef struct Skew2 <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+end
 function calc_risk(::Skew2, w::AbstractVector; V::AbstractMatrix, kwargs...)
     return Skew(w, V)
 end
 
-struct SSkew2 <: TradRiskMeasure end
+@kwdef struct SSkew2 <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+end
 function calc_risk(::SSkew2, w::AbstractVector; SV::AbstractMatrix, kwargs...)
     return Skew(w, SV)
 end
@@ -1513,14 +1578,7 @@ function calc_risk(::Equal2, w::AbstractVector; kwargs...)
     return 1 / length(w)
 end
 
-@kwdef mutable struct PortRM{T1 <: Real, T2 <: Real}
-    flag::Bool = true
-    upper::T1 = Inf
-    scale::T2 = 1.0
-    rm::TradRiskMeasure = SD2()
-end
-
 export SD2, Variance2, MAD2, SSD2, FLPM2, SLPM2, WR2, VaR2, CVaR2, EVaR2, RVaR2, DaR2, MDD2,
        ADD2, CDaR2, UCI2, EDaR2, RDaR2, DaR_r2, MDD_r2, ADD_r2, CDaR_r2, UCI_r2, EDaR_r2,
        RDaR_r2, Kurt2, SKurt2, GMD2, RG2, RCVaR2, TG2, RTG2, OWA2, DVar2, Skew2, SSkew2,
-       Equal2, PortRM
+       Equal2, RiskMeasureSettings

@@ -1,3 +1,8 @@
+abstract type NetworkMethods2 end
+struct NoNetwork <: NetworkMethods2 end
+struct SDP2 <: NetworkMethods2 end
+struct IP2 <: NetworkMethods2 end
+
 """
 ```
 AbstractPortfolio2
