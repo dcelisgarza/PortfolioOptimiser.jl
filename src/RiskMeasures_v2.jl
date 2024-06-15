@@ -1112,9 +1112,24 @@ function calc_risk(sd::SD2, w::AbstractVector; kwargs...)
     return SD(w, sd.sigma)
 end
 
-struct Variance2 <: HCRiskMeasure end
-function calc_risk(::Variance2, w::AbstractVector; sigma::AbstractMatrix, kwargs...)
-    return Variance(w, sigma)
+mutable struct Variance2{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
+    sigma::T1
+end
+function Variance2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
+                   sigma::Union{<:AbstractMatrix, Nothing} = nothing)
+    if !isnothing(sigma)
+        @smart_assert(size(sigma, 1) == size(sigma, 2))
+    end
+    return Variance2{Union{<:AbstractMatrix, Nothing}}(settings, sigma)
+end
+function Base.setproperty!(obj::Variance2, sym::Symbol, val)
+    if sym == :sigma
+        @smart_assert(size(val, 1) == size(val, 2))
+    end
+    return setfield!(obj, sym, val)
+end
+function calc_risk(variance::Variance2, w::AbstractVector; kwargs...)
+    return Variance(w, variance.sigma)
 end
 
 @kwdef mutable struct MAD2 <: TradRiskMeasure
@@ -1195,10 +1210,10 @@ end
 mutable struct EVaR2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
-    solvers::Union{<:AbstractDict, NamedTuple}
+    solvers::Union{<:AbstractDict, NamedTuple, Nothing}
 end
 function EVaR2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
-               solvers::Union{<:AbstractDict, NamedTuple} = Dict())
+               solvers::Union{<:AbstractDict, NamedTuple, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return EVaR2{typeof(alpha)}(settings, alpha, solvers)
 end
@@ -1216,10 +1231,10 @@ mutable struct RVaR2{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
-    solvers::Union{<:AbstractDict, NamedTuple}
+    solvers::Union{<:AbstractDict, NamedTuple, Nothing}
 end
 function RVaR2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
-               kappa = 0.3, solvers::Union{<:AbstractDict, NamedTuple} = Dict())
+               kappa = 0.3, solvers::Union{<:AbstractDict, NamedTuple, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
     return RVaR2{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
@@ -1293,10 +1308,10 @@ end
 mutable struct EDaR2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
-    solvers::Union{<:AbstractDict, NamedTuple}
+    solvers::Union{<:AbstractDict, NamedTuple, Nothing}
 end
 function EDaR2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
-               solvers::Union{<:AbstractDict, NamedTuple} = Dict())
+               solvers::Union{<:AbstractDict, NamedTuple, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return EDaR2{typeof(alpha)}(settings, alpha, solvers)
 end
@@ -1314,10 +1329,10 @@ mutable struct RDaR2{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
-    solvers::Union{<:AbstractDict, NamedTuple}
+    solvers::Union{<:AbstractDict, NamedTuple, Nothing}
 end
 function RDaR2(; settings = RiskMeasureSettings(), alpha::Real = 0.05, kappa = 0.3,
-               solvers::Union{<:AbstractDict, NamedTuple} = Dict())
+               solvers::Union{<:AbstractDict, NamedTuple, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
     return RDaR2{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
@@ -1386,10 +1401,11 @@ end
 mutable struct EDaR_r2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
-    solvers::Union{<:AbstractDict, NamedTuple}
+    solvers::Union{<:AbstractDict, NamedTuple, Nothing}
 end
 function EDaR_r2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
-                 alpha::Real = 0.05, solvers::Union{<:AbstractDict, NamedTuple} = Dict())
+                 alpha::Real = 0.05,
+                 solvers::Union{<:AbstractDict, NamedTuple, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return EDaR_r2{typeof(alpha)}(settings, alpha, solvers)
 end
@@ -1407,11 +1423,11 @@ mutable struct RDaR_r2{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
-    solvers::Union{<:AbstractDict, NamedTuple}
+    solvers::Union{<:AbstractDict, NamedTuple, Nothing}
 end
 function RDaR_r2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
                  alpha::Real = 0.05, kappa = 0.3,
-                 solvers::Union{<:AbstractDict, NamedTuple} = Dict())
+                 solvers::Union{<:AbstractDict, NamedTuple, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
     return RDaR_r2{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)

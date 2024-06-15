@@ -94,7 +94,7 @@ end
 function setup_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2},
                   obj::ObjectiveFunction, count::Integer, idx::Integer)
     model = port.model
-    if isnothing(rm.sigma)
+    if (isnothing(rm.sigma) || isempty(rm.sigma))
         rm.sigma = port.cov
     end
 
@@ -179,14 +179,14 @@ function setup_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
 
         @constraint(model,
                     model[:cdar_risk][idx] ==
-                    model[:dar][idx] + sum(model[:z_cdar][:][idx]) * iat)
+                    model[:dar][idx] + sum(model[:z_cdar][:, idx]) * iat)
         @constraint(model,
                     model[:cdar][2:end, idx] .>=
                     model[:cdar][1:(end - 1), idx] .- model[:X])
         @constraint(model, model[:cdar][2:end, idx] .>= 0)
         @constraint(model, model[:cdar][1, idx] == 0)
         @constraint(model,
-                    model[:z_cdar][:][idx] .>= model[:cdar][2:end, idx] .- model[:dar][idx])
+                    model[:z_cdar][:, idx] .>= model[:cdar][2:end, idx] .- model[:dar][idx])
 
         set_upper_bound(obj, type, model, model[:cdar_risk][idx], rm.settings.ub)
         setup_risk(model, model[:cdar_risk][idx], rm.settings.scale, rm.settings.flag)
