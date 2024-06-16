@@ -43,11 +43,11 @@ setup_rm(portfolio, CVaR2(; alpha = 0.3), Trad2(), MinRisk(), 3, 2)
 setup_rm(portfolio, CVaR2(; alpha = 0.1, settings = RiskMeasureSettings(; scale = 0.1)),
          Trad2(), MinRisk(), 3, 3)
 
-setup_rm(portfolio, CDaR2(), Trad2(), MinRisk(), 1, 1)
-setup_rm(portfolio, CDaR2(; alpha = 0.02), Trad2(), MinRisk(), 2, 2)
+setup_rm(portfolio, CDaR2(), Trad2(), MinRisk(), 3, 1)
+setup_rm(portfolio, CDaR2(; alpha = 0.3), Trad2(), MinRisk(), 3, 2)
 setup_rm(portfolio,
          CDaR2(; alpha = 0.1,
-               settings = RiskMeasureSettings(; flag = false, ub = 55, scale = 0.1)),
+               settings = RiskMeasureSettings(; flag = false, ub = 0.3, scale = 0.1)),
          Trad2(), MinRisk(), 3, 3)
 
 @objective(portfolio.model, Min, portfolio.model[:risk])
@@ -59,6 +59,8 @@ ws2 = [portfolio.assets value.(portfolio.model[:w])]
 ws3 = [portfolio.assets value.(portfolio.model[:w])]
 ws4 = [portfolio.assets value.(portfolio.model[:w])]
 ws5 = [portfolio.assets value.(portfolio.model[:w])]
+ws6 = [portfolio.assets value.(portfolio.model[:w])]
+ws7 = [portfolio.assets value.(portfolio.model[:w])]
 
 portfolio = Portfolio2(; prices = prices,
                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,

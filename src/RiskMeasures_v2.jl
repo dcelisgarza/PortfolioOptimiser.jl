@@ -1115,12 +1115,11 @@ end
 mutable struct Variance2{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
     sigma::T1
 end
-function Variance2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
-                   sigma::Union{<:AbstractMatrix, Nothing} = nothing)
+function Variance2(; sigma::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    return Variance2{Union{<:AbstractMatrix, Nothing}}(settings, sigma)
+    return Variance2{Union{<:AbstractMatrix, Nothing}}(sigma)
 end
 function Base.setproperty!(obj::Variance2, sym::Symbol, val)
     if sym == :sigma
