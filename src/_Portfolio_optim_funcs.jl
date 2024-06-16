@@ -1482,7 +1482,7 @@ end
 function _setup_weights(portfolio, obj, N)
     num_assets_u = portfolio.num_assets_u
     scale_nau = portfolio.num_assets_u_scale
-    scale_nau = portfolio.network_ip_scale
+    scale_nip = portfolio.network_ip_scale
     short = portfolio.short
     short_u = portfolio.short_u
     long_u = portfolio.long_u
@@ -1508,6 +1508,7 @@ function _setup_weights(portfolio, obj, N)
         else
             @variable(model, tnau_bin2[1:N], binary = true)
         end
+        @constraint(model, unique(network_ip + I; dims = 1) * tnau_bin2 .<= 1)
     end
 
     # Weight constraints.
@@ -1522,9 +1523,9 @@ function _setup_weights(portfolio, obj, N)
 
         if haskey(model, :tnau_bin2)
             @constraint(model, tnau_bin_sharpe2 .<= model[:k])
-            @constraint(model, tnau_bin_sharpe2 .<= scale_nau * tnau_bin2)
+            @constraint(model, tnau_bin_sharpe2 .<= scale_nip * tnau_bin2)
             @constraint(model,
-                        tnau_bin_sharpe2 .>= model[:k] .- scale_nau * (1 .- tnau_bin2))
+                        tnau_bin_sharpe2 .>= model[:k] .- scale_nip * (1 .- tnau_bin2))
             @constraint(model, model[:w] .<= long_u * tnau_bin_sharpe2)
         end
 
@@ -1533,9 +1534,9 @@ function _setup_weights(portfolio, obj, N)
             @constraint(model, sum(tnau_bin) <= num_assets_u)
         end
 
-        if network_method == :IP
-            @constraint(model, unique(network_ip + I; dims = 1) * tnau_bin2 .<= 1)
-        end
+        # if network_method == :IP
+        #     @constraint(model, unique(network_ip + I; dims = 1) * tnau_bin2 .<= 1)
+        # end
 
         if short == false
             @constraint(model, model[:w] .<= long_u * model[:k])
@@ -1575,9 +1576,9 @@ function _setup_weights(portfolio, obj, N)
             @constraint(model, sum(tnau_bin) <= num_assets_u)
         end
 
-        if network_method == :IP
-            @constraint(model, unique(network_ip + I; dims = 1) * tnau_bin2 .<= 1)
-        end
+        # if network_method == :IP
+        #     @constraint(model, unique(network_ip + I; dims = 1) * tnau_bin2 .<= 1)
+        # end
 
         if short == false
             @constraint(model, model[:w] .<= long_u)
