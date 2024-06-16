@@ -125,16 +125,6 @@ function ntwk_constraint(::IP2, port, type::Union{Trad2, WC2}, obj)
 
     return nothing
 end
-function ntwk_constraint(::IP2, port, type::Union{Trad2, WC2}, ::Any)
-    N = size(port.returns, 2)
-    model = port.model
-
-    @variable(model, tnau_bin2[1:N], binary = true)
-    @constraint(model, unique(port.network_ip + I; dims = 1) * tnau_bin2 .<= 1)
-    # Long and short
-
-    return nothing
-end
 function ntwk_constraint(::SDP2, port, type::Union{Trad2, WC2}, obj)
     _sdp(port, type, obj)
     @constraint(port.model, port.network_sdp .* port.model[:W] .== 0)

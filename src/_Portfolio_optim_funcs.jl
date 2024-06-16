@@ -1534,10 +1534,6 @@ function _setup_weights(portfolio, obj, N)
             @constraint(model, sum(tnau_bin) <= num_assets_u)
         end
 
-        # if network_method == :IP
-        #     @constraint(model, unique(network_ip + I; dims = 1) * tnau_bin2 .<= 1)
-        # end
-
         if short == false
             @constraint(model, model[:w] .<= long_u * model[:k])
             @constraint(model, model[:w] .>= 0)
@@ -1575,10 +1571,6 @@ function _setup_weights(portfolio, obj, N)
         if num_assets_u > 0
             @constraint(model, sum(tnau_bin) <= num_assets_u)
         end
-
-        # if network_method == :IP
-        #     @constraint(model, unique(network_ip + I; dims = 1) * tnau_bin2 .<= 1)
-        # end
 
         if short == false
             @constraint(model, model[:w] .<= long_u)
