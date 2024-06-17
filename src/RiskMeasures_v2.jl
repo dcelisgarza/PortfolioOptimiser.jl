@@ -1138,6 +1138,7 @@ end
 @kwdef mutable struct MAD2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
     w::Union{<:AbstractWeights, Nothing} = nothing
+    mu::Union{<:AbstractVector, Nothing} = nothing
 end
 function calc_risk(mad::MAD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return MAD(X * w, mad.w)
@@ -1147,6 +1148,7 @@ end
     settings::RiskMeasureSettings = RiskMeasureSettings()
     target::T1 = 0.0
     w::Union{<:AbstractWeights, Nothing} = nothing
+    mu::Union{<:AbstractVector, Nothing} = nothing
 end
 function calc_risk(ssd::SSD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return SSD(X * w, ssd.target, ssd.w)

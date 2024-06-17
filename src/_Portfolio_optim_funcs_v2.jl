@@ -237,14 +237,16 @@ function _sd_risk(::Any, ::Any, model, sigma, count::Integer, idx::Integer)
     return nothing
 end
 function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction,
-                count::Integer, idx::Integer, kelly_approx_idx::AbstractVector{<:Integer})
+                count::Integer, idx::Integer; sigma::AbstractMatrix{<:Real},
+                kelly_approx_idx::AbstractVector{<:Integer})
     model = port.model
     if (isnothing(rm.sigma) || isempty(rm.sigma))
-        rm.sigma = port.cov
         push!(kelly_approx_idx, isone(count) ? 0 : idx)
+    else
+        sigma = rm.sigma
     end
 
-    _sd_risk(port.network_method, type, model, rm.sigma, count, idx)
+    _sd_risk(port.network_method, type, model, sigma, count, idx)
     _set_rm_risk_upper_bound(port.network_method, obj, type, model, model[:sd_risk],
                              rm.settings.ub)
     if isone(count)
@@ -256,20 +258,155 @@ function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::Objecti
 
     return nothing
 end
-function set_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction, count::Integer, idx::Integer, args...)
+function set_rm(port::Portfolio2, rm::MAD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction,
+                count::Integer, idx::Integer; mu::AbstractVector{<:Real},
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    if !haskey(model, :X)
-        @expression(model, X, port.returns * model[:w])
+    T = size(returns, 1)
+    if !(isnothing(rm.mu) || isempty(rm.mu))
+        mu = rm.mu
     end
-    T = size(port.returns, 1)
+    abs_dev = returns .- transpose(mu)
+
+    if isone(count)
+        @variable(model, mad[1:T] >= 0)
+        @expression(model, mad_risk, sum(mad) / T)
+        @constraint(model, abs_dev * model[:w] .>= -mad)
+        _set_rm_risk_upper_bound(obj, type, model, mad_risk, rm.settings.ub)
+        _set_risk_expression(model, mad_risk, rm.settings.scale, rm.settings.flag)
+    else
+        if isone(idx)
+            @variable(model, mad[1:T, 1:count] >= 0)
+            @variable(model, mad_risk[1:count])
+        end
+        @constraint(model, model[:mad_risk][idx] == sum(model[:mad][idx]) / T)
+        @constraint(model, abs_dev * model[:w] .>= -model[:mad][idx])
+        _set_rm_risk_upper_bound(obj, type, model, model[:mad_risk][idx], rm.settings.ub)
+        _set_risk_expression(model, model[:mad_risk][idx], rm.settings.scale,
+                             rm.settings.flag)
+    end
+    return nothing
+end
+function set_rm(port::Portfolio2, rm::SSD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction,
+                count::Integer, idx::Integer; mu::AbstractVector{<:Real},
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    T = size(returns, 1)
+    if !(isnothing(rm.mu) || isempty(rm.mu))
+        mu = rm.mu
+    end
+    abs_dev = returns .- transpose(mu)
+
+    if isone(count)
+        @variable(model, ssd[1:T] >= 0)
+        @variable(model, sdev)
+        @expression(model, sdev_risk, sdev / sqrt(T - 1))
+        @constraint(model, abs_dev * model[:w] .>= -ssd)
+        @constraint(model, [sdev; ssd] ∈ SecondOrderCone())
+        _set_rm_risk_upper_bound(obj, type, model, sdev_risk, rm.settings.ub)
+        _set_risk_expression(model, sdev_risk, rm.settings.scale, rm.settings.flag)
+    else
+        if isone(idx)
+            @variable(model, ssd[1:T, 1:count] >= 0)
+            @variable(model, sdev[1:count])
+            @variable(model, sdev_risk[1:count])
+        end
+        @constraint(model, model[:sdev_risk][idx] == model[:sdev][idx] / sqrt(T - 1))
+        @constraint(model, abs_dev * model[:w] .>= -model[:ssd][idx])
+        @constraint(model, [model[:sdev][idx]; model[:ssd][idx]] ∈ SecondOrderCone())
+        _set_rm_risk_upper_bound(obj, type, model, model[:sdev_risk][idx], rm.settings.ub)
+        _set_risk_expression(model, model[:sdev_risk][idx], rm.settings.scale,
+                             rm.settings.flag)
+    end
+    return nothing
+end
+function _lpm_risk(::RP2, ::Any, model, lpm, target)
+    @constraint(model, lpm .>= target * model[:k] .- model[:X])
+    return nothing
+end
+function _lpm_risk(::Trad2, ::SR, model, lpm, target)
+    @constraint(model, lpm .>= target * model[:k] .- model[:X])
+    return nothing
+end
+function _lpm_risk(::Any, ::Any, model, lpm, target)
+    @constraint(model, lpm .>= target .- model[:X])
+    return nothing
+end
+function set_rm(port::Portfolio2, rm::FLPM2, type::Union{Trad2, RP2},
+                obj::ObjectiveFunction, count::Integer, idx::Integer;
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    T = size(returns, 1)
+
+    if !haskey(model, :X)
+        @expression(model, X, returns * model[:w])
+    end
+
+    if isone(count)
+        @variable(model, flpm[1:T] .>= 0)
+        @expression(model, flpm_risk, sum(flpm) / T)
+        _lpm_risk(type, obj, model, flpm, rm.target)
+        _set_rm_risk_upper_bound(obj, type, model, flpm_risk, rm.settings.ub)
+        _set_risk_expression(model, flpm_risk, rm.settings.scale, rm.settings.flag)
+    else
+        if isone(idx)
+            @variable(model, flpm[1:T, 1:count] .>= 0)
+            @variable(model, flpm_risk[1:count])
+        end
+        @constraint(model, model[:flpm_risk][idx], sum(model[:flpm][idx]) / T)
+        _lpm_risk(type, obj, model, model[:flpm][idx], rm.target)
+        _set_rm_risk_upper_bound(obj, type, model, model[:flpm_risk][idx], rm.settings.ub)
+        _set_risk_expression(model, model[:flpm_risk][idx], rm.settings.scale,
+                             rm.settings.flag)
+    end
+end
+function set_rm(port::Portfolio2, rm::SLPM2, type::Union{Trad2, RP2},
+                obj::ObjectiveFunction, count::Integer, idx::Integer;
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    T = size(returns, 1)
+
+    if !haskey(model, :X)
+        @expression(model, X, returns * model[:w])
+    end
+
+    if isone(count)
+        @variable(model, slpm[1:T] .>= 0)
+        @variable(model, tslpm)
+        @expression(model, slpm_risk, tslpm / sqrt(T - 1))
+        @constraint(model, [tslpm; slpm] ∈ SecondOrderCone())
+        _lpm_risk(type, obj, model, slpm, rm.target)
+        _set_rm_risk_upper_bound(obj, type, model, slpm_risk, rm.settings.ub)
+        _set_risk_expression(model, slpm_risk, rm.settings.scale, rm.settings.flag)
+    else
+        if isone(idx)
+            @variable(model, slpm[1:T, 1:count] .>= 0)
+            @variable(model, tslpm[1:count])
+            @variable(model, slpm_risk[1:count])
+        end
+        @constraint(model, model[:slpm_risk][idx] == model[:tslpm][idx] / sqrt(T - 1))
+        @constraint(model, [model[:tslpm][idx]; model[:slpm][idx]] ∈ SecondOrderCone())
+        _lpm_risk(type, obj, model, model[:slpm][idx], rm.target)
+        _set_rm_risk_upper_bound(obj, type, model, model[:slpm_risk][idx], rm.settings.ub)
+        _set_risk_expression(model, model[:slpm_risk][idx], rm.settings.scale,
+                             rm.settings.flag)
+    end
+end
+function set_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
+                obj::ObjectiveFunction, count::Integer, idx::Integer;
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    T = size(returns, 1)
     iat = inv(rm.alpha * T)
+
+    if !haskey(model, :X)
+        @expression(model, X, returns * model[:w])
+    end
 
     if isone(count)
         @variable(model, var)
         @variable(model, z_var[1:T] .>= 0)
         @expression(model, cvar_risk, var + sum(z_var) * iat)
-
         @constraint(model, z_var .>= -model[:X] .- var)
 
         _set_rm_risk_upper_bound(obj, type, model, cvar_risk, rm.settings.ub)
@@ -295,13 +432,14 @@ function set_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
 end
 
 function set_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction, count::Integer, idx::Integer, args...)
+                obj::ObjectiveFunction, count::Integer, idx::Integer;
+                returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
-    T = size(port.returns, 1)
+    T = size(returns, 1)
     iat = inv(rm.alpha * T)
 
     if !haskey(model, :X)
-        @expression(model, X, port.returns * model[:w])
+        @expression(model, X, returns * model[:w])
     end
     if !haskey(model, :dd)
         @variable(model, dd[1:(T + 1)])
