@@ -1500,6 +1500,7 @@ function _setup_weights(portfolio, obj, N)
         else
             @variable(model, tnau_bin[1:N], binary = true)
         end
+        @constraint(model, sum(tnau_bin) <= num_assets_u)
     end
     if network_method == :IP
         if obj == :Sharpe
@@ -1527,11 +1528,6 @@ function _setup_weights(portfolio, obj, N)
             @constraint(model,
                         tnau_bin_sharpe2 .>= model[:k] .- scale_nip * (1 .- tnau_bin2))
             @constraint(model, model[:w] .<= long_u * tnau_bin_sharpe2)
-        end
-
-        # Maximum number of assets constraints.
-        if num_assets_u > 0
-            @constraint(model, sum(tnau_bin) <= num_assets_u)
         end
 
         if short == false
@@ -1565,11 +1561,6 @@ function _setup_weights(portfolio, obj, N)
 
         if haskey(model, :tnau_bin2)
             @constraint(model, model[:w] .<= long_u * tnau_bin2)
-        end
-
-        # Maximum number of assets constraints.
-        if num_assets_u > 0
-            @constraint(model, sum(tnau_bin) <= num_assets_u)
         end
 
         if short == false

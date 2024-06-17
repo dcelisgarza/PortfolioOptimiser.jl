@@ -1,15 +1,3 @@
-abstract type ObjectiveFunction end
-struct MinRisk <: ObjectiveFunction end
-struct Util <: ObjectiveFunction end
-struct SR <: ObjectiveFunction end
-struct MaxRet <: ObjectiveFunction end
-
-abstract type PortType end
-struct Trad2 <: PortType end
-struct RP2 <: PortType end
-struct RRP2 <: PortType end
-struct WC2 <: PortType end
-
 # sharpe ratio k
 function _sr_k(::SR, model)
     @variable(model, k >= 0)
@@ -19,45 +7,45 @@ function _sr_k(::Any, ::Any)
     return nothing
 end
 # Risk upper bounds
-function _set_upper_bound(::SR, ::Trad2, model, rm_risk, ub)
+function _set_rm_risk_upper_bound(::SR, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk <= ub * model[:k])
     end
     return nothing
 end
-function _set_upper_bound(::ObjectiveFunction, ::Trad2, model, rm_risk, ub)
+function _set_rm_risk_upper_bound(::ObjectiveFunction, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk <= ub)
     end
     return nothing
 end
 # SD risk upper bound (special case)
-function _set_upper_bound(::SDP2, ::SR, ::Trad2, model, rm_risk, ub)
+function _set_rm_risk_upper_bound(::SDP2, ::SR, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk <= ub^2 * model[:k])
     end
     return nothing
 end
-function _set_upper_bound(::SDP2, ::ObjectiveFunction, ::Trad2, model, rm_risk, ub)
+function _set_rm_risk_upper_bound(::SDP2, ::ObjectiveFunction, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk <= ub^2)
     end
     return nothing
 end
-function _set_upper_bound(::Any, ::SR, ::Trad2, model, rm_risk, ub)
+function _set_rm_risk_upper_bound(::Any, ::SR, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk <= ub * model[:k])
     end
     return nothing
 end
-function _set_upper_bound(::Any, ::ObjectiveFunction, ::Trad2, model, rm_risk, ub)
+function _set_rm_risk_upper_bound(::Any, ::ObjectiveFunction, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk <= ub)
     end
     return nothing
 end
 # Risk expression
-function _setup_risk(model, rm_risk, scale, flag::Bool)
+function _set_risk_expression(model, rm_risk, scale, flag::Bool)
     if flag
         if !haskey(model, :risk)
             @expression(model, risk, scale * rm_risk)
@@ -91,52 +79,140 @@ function _sdp(port, type::Union{Trad2, RP2, WC2}, obj)
     end
     return nothing
 end
-function ntwk_constraint(::Any, ::Any, ::Any, ::Any)
-    return nothing
-end
-function _ip_ntwk_constraint(::SR, model, scale, short, long_u, short_u)
-    # Sharpe ratio
-    @variable(model, tnau_bin_sharpe2[1:N] >= 0)
-    @constraint(model, tnau_bin_sharpe2 .<= model[:k])
-    @constraint(model, tnau_bin_sharpe2 .<= scale * model[:tnau_bin2])
-    @constraint(model, tnau_bin_sharpe2 .>= model[:k] .- scale * (1 .- model[:tnau_bin2]))
-    # Long and short
-    @constraint(model, model[:w] .<= long_u * tnau_bin_sharpe2)
-    if short
-        @constraint(model, model[:w] .>= -short_u * tnau_bin_sharpe2)
+
+function _num_assets_weight_constraints(::SR, port)
+    if port.num_assets_u > 0
+        N = size(port.returns, 2)
+        model = port.model
+
+        @variable(model, tnau_bin[1:N], binary = true)
+        @constraint(model, sum(tnau_bin) <= port.num_assets_u)
+        # Sharpe ratio
+        @variable(model, tnau_bin_sharpe[1:N] .>= 0)
+        @constraint(model, tnau_bin_sharpe .<= model[:k])
+        @constraint(model, tnau_bin_sharpe .<= port.num_assets_u_scale * model[:tnau_bin])
+        @constraint(model,
+                    tnau_bin_sharpe .>=
+                    model[:k] .- port.num_assets_u_scale * (1 .- model[:tnau_bin]))
+        # Long and short
+        @constraint(model, model[:w] .<= port.long_u * tnau_bin_sharpe)
+        if port.short
+            @constraint(model, model[:w] .>= -port.short_u * tnau_bin_sharpe)
+        end
     end
     return nothing
 end
-function _ip_ntwk_constraint(::Any, model, ::Any, short, long_u, short_u)
-    @constraint(model, model[:w] .<= long_u * model[:tnau_bin2])
-    if short
-        @constraint(model, model[:w] .>= -short_u * model[:tnau_bin2])
+function _num_assets_weight_constraints(::Any, port)
+    if port.num_assets_u > 0
+        N = size(port.returns, 2)
+        model = port.model
+
+        @variable(model, tnau_bin[1:N], binary = true)
+        @constraint(model, sum(tnau_bin) <= port.num_assets_u)
+        # Long and short
+        @constraint(model, model[:w] .<= port.long_u * tnau_bin)
+        if port.short
+            @constraint(model, model[:w] .>= -port.short_u * tnau_bin)
+        end
     end
     return nothing
 end
-function ntwk_constraint(::IP2, port, type::Union{Trad2, WC2}, obj)
+function _weight_constraints(::SR, port)
+    N = size(port.returns, 2)
+    model = port.model
+    @constraint(model, sum(model[:w]) == port.sum_short_long * model[:k])
+    if !port.short
+        @constraint(model, model[:w] .<= port.long_u * model[:k])
+        @constraint(model, model[:w] .>= 0)
+    else
+        @variable(model, tw_ulong[1:N] .>= 0)
+        @variable(model, tw_ushort[1:N] .>= 0)
+
+        @constraint(model, sum(tw_ulong) <= long_u * model[:k])
+        @constraint(model, sum(tw_ushort) <= short_u * model[:k])
+
+        @constraint(model, model[:w] .<= tw_ulong)
+        @constraint(model, model[:w] .>= -tw_ushort)
+    end
+    return nothing
+end
+function _weight_constraints(::Any, port)
+    N = size(port.returns, 2)
+    model = port.model
+    @constraint(model, sum(model[:w]) == port.sum_short_long)
+    if !port.short
+        @constraint(model, model[:w] .<= port.long_u)
+        @constraint(model, model[:w] .>= 0)
+    else
+        @variable(model, tw_ulong[1:N] .>= 0)
+        @variable(model, tw_ushort[1:N] .>= 0)
+
+        @constraint(model, sum(tw_ulong) <= long_u)
+        @constraint(model, sum(tw_ushort) <= short_u)
+
+        @constraint(model, model[:w] .<= tw_ulong)
+        @constraint(model, model[:w] .>= -tw_ushort)
+    end
+    return nothing
+end
+function weight_constraints(port, type::Union{Trad2, WC2}, obj)
+    _num_assets_weight_constraints(obj, port)
+    _weight_constraints(obj, port)
+    return nothing
+end
+function _ntwk_constraints(::NoNtwk, args...)
+    return nothing
+end
+end
+function _ntwk_constraints(::IP2, port, type::Union{Trad2, WC2}, ::SR)
     N = size(port.returns, 2)
     model = port.model
 
-    @variable(model, tnau_bin2[1:N], binary = true)
-    @constraint(model, unique(port.network_ip + I; dims = 1) * tnau_bin2 .<= 1)
-    _ip_ntwk_constraint(obj, model, port.network_ip_scale, port.short, port.long_u,
-                        port.short_u)
+    @variable(model, tip_bin2[1:N], binary = true)
+    @constraint(model, unique(port.network_ip + I; dims = 1) * tip_bin2 .<= 1)
+    # Sharpe ratio
+    @variable(model, tip_bin_sharpe2[1:N] .>= 0)
+    @constraint(model, tip_bin_sharpe2 .<= model[:k])
+    @constraint(model, tip_bin_sharpe2 .<= port.network_ip_scale * tip_bin2)
+    @constraint(model,
+                tip_bin_sharpe2 .>= model[:k] .- port.network_ip_scale * (1 .- tip_bin2))
+    # Long and short
+    @constraint(model, model[:w] .<= port.long_u * tip_bin_sharpe2)
+    if port.short
+        @constraint(model, model[:w] .>= -port.short_u * tip_bin_sharpe2)
+    end
+    return nothing
+end
+function _ntwk_constraints(::IP2, port, type::Union{Trad2, WC2}, ::Any)
+    N = size(port.returns, 2)
+    model = port.model
 
+    @variable(model, tip_bin2[1:N], binary = true)
+    @constraint(model, unique(port.network_ip + I; dims = 1) * tip_bin2 .<= 1)
+    # Long and short
+    @constraint(model, model[:w] .<= port.long_u * model[:tip_bin2])
+    if port.short
+        @constraint(model, model[:w] .>= -port.short_u * model[:tip_bin2])
+    end
     return nothing
 end
-function ntwk_constraint(::SDP2, port, type::Union{Trad2, WC2}, obj)
-    _sdp(port, type, obj)
-    @constraint(port.model, port.network_sdp .* port.model[:W] .== 0)
-    return nothing
-end
-function ntwk_penalty(::SDP2, port, ::Trad2)
+function _ntwk_penalty(port, ::Trad2)
     if !haskey(port.model, :sd_risk)
         @expression(port.model, ntwk_penalty, port.network_penalty * tr(port.model[:W]))
     end
     return nothing
 end
-function ntwk_penalty(::Any, ::Any, ::Any)
+function _ntwk_penalty(::Any, ::Any)
+    return nothing
+end
+function _ntwk_constraints(::SDP2, port, type::Union{Trad2, WC2}, obj)
+    _sdp(port, type, obj)
+    @constraint(port.model, port.network_sdp .* port.model[:W] .== 0)
+    _ntwk_penalty(port, type)
+    return nothing
+end
+function ntwk_constraints(port, type::Union{Trad2, WC2}, obj)
+    _ntwk_constraints(port.network_method, port, type, obj)
     return nothing
 end
 function _sd_risk(::SDP2, ::Union{Trad2, WC2}, model, sigma, count::Integer, idx::Integer)
@@ -163,26 +239,27 @@ function _sd_risk(::Any, ::Any, model, sigma, count::Integer, idx::Integer)
     end
     return nothing
 end
-function setup_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2},
-                  obj::ObjectiveFunction, count::Integer, idx::Integer)
+function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction,
+                count::Integer, idx::Integer)
     model = port.model
     if (isnothing(rm.sigma) || isempty(rm.sigma))
         rm.sigma = port.cov
     end
 
     _sd_risk(port.network_method, type, model, rm.sigma, count, idx)
-    _set_upper_bound(port.network_method, obj, type, model, model[:sd_risk], rm.settings.ub)
+    _set_rm_risk_upper_bound(port.network_method, obj, type, model, model[:sd_risk],
+                             rm.settings.ub)
     if isone(count)
-        _setup_risk(model, model[:sd_risk], rm.settings.scale, rm.settings.flag)
+        _set_risk_expression(model, model[:sd_risk], rm.settings.scale, rm.settings.flag)
     else
-        _setup_risk(model, model[:sd_risk][idx], rm.settings.scale, rm.settings.flag)
+        _set_risk_expression(model, model[:sd_risk][idx], rm.settings.scale,
+                             rm.settings.flag)
     end
 
     return nothing
 end
-
-function setup_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
-                  obj::ObjectiveFunction, count::Integer, idx::Integer)
+function set_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
+                obj::ObjectiveFunction, count::Integer, idx::Integer)
     model = port.model
     if !haskey(model, :X)
         @expression(model, X, port.returns * model[:w])
@@ -197,8 +274,8 @@ function setup_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
 
         @constraint(model, z_var .>= -model[:X] .- var)
 
-        _set_upper_bound(obj, type, model, cvar_risk, rm.settings.ub)
-        _setup_risk(model, cvar_risk, rm.settings.scale, rm.settings.flag)
+        _set_rm_risk_upper_bound(obj, type, model, cvar_risk, rm.settings.ub)
+        _set_risk_expression(model, cvar_risk, rm.settings.scale, rm.settings.flag)
     else
         if isone(idx)
             @variable(model, var[1:count])
@@ -211,15 +288,16 @@ function setup_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
                     model[:var][idx] + sum(model[:z_var][1:T, idx]) * iat)
         @constraint(model, model[:z_var][1:T, idx] .>= -model[:X] .- model[:var][idx])
 
-        _set_upper_bound(obj, type, model, model[:cvar_risk][idx], rm.settings.ub)
-        _setup_risk(model, model[:cvar_risk][idx], rm.settings.scale, rm.settings.flag)
+        _set_rm_risk_upper_bound(obj, type, model, model[:cvar_risk][idx], rm.settings.ub)
+        _set_risk_expression(model, model[:cvar_risk][idx], rm.settings.scale,
+                             rm.settings.flag)
     end
 
     return nothing
 end
 
-function setup_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
-                  obj::ObjectiveFunction, count::Integer, idx::Integer)
+function set_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
+                obj::ObjectiveFunction, count::Integer, idx::Integer)
     model = port.model
     if !haskey(model, :X)
         @expression(model, X, port.returns * model[:w])
@@ -239,8 +317,8 @@ function setup_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
         @constraint(model, cdar[1] == 0)
         @constraint(model, z_cdar .>= cdar[2:end] .- dar)
 
-        _set_upper_bound(obj, type, model, cdar_risk, rm.settings.ub)
-        _setup_risk(model, cdar_risk, rm.settings.scale, rm.settings.flag)
+        _set_rm_risk_upper_bound(obj, type, model, cdar_risk, rm.settings.ub)
+        _set_risk_expression(model, cdar_risk, rm.settings.scale, rm.settings.flag)
     else
         if isone(idx)
             @variable(model, cdar[1:(T + 1), 1:count])
@@ -260,14 +338,15 @@ function setup_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
         @constraint(model,
                     model[:z_cdar][:, idx] .>= model[:cdar][2:end, idx] .- model[:dar][idx])
 
-        _set_upper_bound(obj, type, model, model[:cdar_risk][idx], rm.settings.ub)
-        _setup_risk(model, model[:cdar_risk][idx], rm.settings.scale, rm.settings.flag)
+        _set_rm_risk_upper_bound(obj, type, model, model[:cdar_risk][idx], rm.settings.ub)
+        _set_risk_expression(model, model[:cdar_risk][idx], rm.settings.scale,
+                             rm.settings.flag)
     end
 
     return nothing
 end
 
-export setup_rm, MinRisk, Util, SR, MaxRet, Trad2
+export set_rm, MinRisk, Util, SR, MaxRet, Trad2
 
 function optimise2!(port::Portfolio2; rm::Union{Vector{TradRiskMeasure}, TradRiskMeasure},
                     str_names::Bool = false, save_params::Bool = false) end

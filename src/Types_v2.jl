@@ -1,7 +1,19 @@
 abstract type NetworkMethods2 end
-struct NoNetwork <: NetworkMethods2 end
+struct NoNtwk <: NetworkMethods2 end
 struct SDP2 <: NetworkMethods2 end
 struct IP2 <: NetworkMethods2 end
+
+abstract type ObjectiveFunction end
+struct MinRisk <: ObjectiveFunction end
+struct Util <: ObjectiveFunction end
+struct SR <: ObjectiveFunction end
+struct MaxRet <: ObjectiveFunction end
+
+abstract type PortType end
+struct Trad2 <: PortType end
+struct RP2 <: PortType end
+struct RRP2 <: PortType end
+struct WC2 <: PortType end
 
 """
 ```
