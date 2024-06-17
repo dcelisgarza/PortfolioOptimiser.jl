@@ -58,7 +58,6 @@ function _set_risk_expression(model, rm_risk, scale, flag::Bool)
     end
     return nothing
 end
-
 function _sdp_m2(::Union{Trad2, WC2}, ::SR, model)
     @expression(model, M2, vcat(model[:w], model[:k]))
     return nothing
@@ -79,7 +78,6 @@ function _sdp(port, type::Union{Trad2, RP2, WC2}, obj)
     end
     return nothing
 end
-
 function _num_assets_weight_constraints(::SR, port)
     if port.num_assets_u > 0
         N = size(port.returns, 2)
@@ -163,7 +161,6 @@ end
 function _ntwk_constraints(::NoNtwk, args...)
     return nothing
 end
-end
 function _ntwk_constraints(::IP2, port, type::Union{Trad2, WC2}, ::SR)
     N = size(port.returns, 2)
     model = port.model
@@ -240,10 +237,11 @@ function _sd_risk(::Any, ::Any, model, sigma, count::Integer, idx::Integer)
     return nothing
 end
 function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction,
-                count::Integer, idx::Integer)
+                count::Integer, idx::Integer, kelly_approx_idx::AbstractVector{<:Integer})
     model = port.model
     if (isnothing(rm.sigma) || isempty(rm.sigma))
         rm.sigma = port.cov
+        push!(kelly_approx_idx, isone(count) ? 0 : idx)
     end
 
     _sd_risk(port.network_method, type, model, rm.sigma, count, idx)
@@ -259,7 +257,7 @@ function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::Objecti
     return nothing
 end
 function set_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction, count::Integer, idx::Integer)
+                obj::ObjectiveFunction, count::Integer, idx::Integer, args...)
     model = port.model
     if !haskey(model, :X)
         @expression(model, X, port.returns * model[:w])
@@ -297,46 +295,39 @@ function set_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
 end
 
 function set_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction, count::Integer, idx::Integer)
+                obj::ObjectiveFunction, count::Integer, idx::Integer, args...)
     model = port.model
-    if !haskey(model, :X)
-        @expression(model, X, port.returns * model[:w])
-    end
-
     T = size(port.returns, 1)
     iat = inv(rm.alpha * T)
 
+    if !haskey(model, :X)
+        @expression(model, X, port.returns * model[:w])
+    end
+    if !haskey(model, :dd)
+        @variable(model, dd[1:(T + 1)])
+        @constraint(model, dd[2:end] .>= dd[1:(end - 1)] .- model[:X])
+        @constraint(model, dd[2:end] .>= 0)
+        @constraint(model, dd[1] == 0)
+    end
+
     if isone(count)
-        @variable(model, cdar[1:(T + 1)])
         @variable(model, dar)
         @variable(model, z_cdar[1:T] .>= 0)
         @expression(model, cdar_risk, dar + sum(z_cdar) * iat)
-
-        @constraint(model, cdar[2:end] .>= cdar[1:(end - 1)] .- model[:X])
-        @constraint(model, cdar[2:end] .>= 0)
-        @constraint(model, cdar[1] == 0)
-        @constraint(model, z_cdar .>= cdar[2:end] .- dar)
+        @constraint(model, z_cdar .>= dd[2:end] .- dar)
 
         _set_rm_risk_upper_bound(obj, type, model, cdar_risk, rm.settings.ub)
         _set_risk_expression(model, cdar_risk, rm.settings.scale, rm.settings.flag)
     else
         if isone(idx)
-            @variable(model, cdar[1:(T + 1), 1:count])
             @variable(model, dar[1:count])
             @variable(model, z_cdar[1:T, 1:count] .>= 0)
             @variable(model, cdar_risk[1:count])
         end
-
         @constraint(model,
                     model[:cdar_risk][idx] ==
                     model[:dar][idx] + sum(model[:z_cdar][:, idx]) * iat)
-        @constraint(model,
-                    model[:cdar][2:end, idx] .>=
-                    model[:cdar][1:(end - 1), idx] .- model[:X])
-        @constraint(model, model[:cdar][2:end, idx] .>= 0)
-        @constraint(model, model[:cdar][1, idx] == 0)
-        @constraint(model,
-                    model[:z_cdar][:, idx] .>= model[:cdar][2:end, idx] .- model[:dar][idx])
+        @constraint(model, model[:z_cdar][:, idx] .>= model[:dd][2:end] .- model[:dar][idx])
 
         _set_rm_risk_upper_bound(obj, type, model, model[:cdar_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:cdar_risk][idx], rm.settings.scale,

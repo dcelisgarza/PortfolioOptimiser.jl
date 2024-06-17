@@ -16,6 +16,7 @@ rms2 = sortperm(string.(typeof.(rms)))
 end
 
 a = CVaR2()
+size(a)
 b = CVaR2(; alpha = BigFloat(0.5))
 
 a isa CVaR2

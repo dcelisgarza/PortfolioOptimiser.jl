@@ -1085,6 +1085,10 @@ abstract type RiskMeasure end
 abstract type TradRiskMeasure <: RiskMeasure end
 abstract type HCRiskMeasure <: RiskMeasure end
 
+function Base.length(::RiskMeasure)
+    return 1
+end
+
 @kwdef mutable struct RiskMeasureSettings{T1 <: Real, T2 <: Real}
     flag::Bool = true
     scale::T1 = 1.0
