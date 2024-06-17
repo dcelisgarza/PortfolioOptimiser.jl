@@ -353,7 +353,7 @@ function set_rm(port::Portfolio2, rm::FLPM2, type::Union{Trad2, RP2},
             @variable(model, flpm[1:T, 1:count] .>= 0)
             @variable(model, flpm_risk[1:count])
         end
-        @constraint(model, model[:flpm_risk][idx], sum(model[:flpm][idx]) / T)
+        @constraint(model, model[:flpm_risk][idx] == sum(model[:flpm][idx]) / T)
         _lpm_risk(type, obj, model, model[:flpm][idx], rm.target)
         _set_rm_risk_upper_bound(obj, type, model, model[:flpm_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:flpm_risk][idx], rm.settings.scale,
