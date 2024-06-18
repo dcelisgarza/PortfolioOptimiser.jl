@@ -15,6 +15,23 @@ rms2 = sortperm(string.(typeof.(rms)))
     rms2 = setdiff(rms2, rms2[idx])
 end
 
+Base.iterate(obj::CVaR2) = obj
+rm = (CVaR2(),)
+
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+portfolio = Portfolio2(; prices = prices,
+                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                        :params => Dict("verbose" => false))))
+asset_statistics2!(portfolio)
+optimise2!(portfolio)
+for rv ∈ rm
+    #     count = length(rv)
+    println(rv)
+    #     for (i, r) ∈ enumerate(rv)
+    #         println(i)
+    #     end
+end
+
 a = CVaR2()
 size(a)
 b = CVaR2(; alpha = BigFloat(0.5))

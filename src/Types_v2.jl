@@ -5,8 +5,12 @@ struct IP2 <: NetworkMethods2 end
 
 abstract type ObjectiveFunction end
 struct MinRisk <: ObjectiveFunction end
-struct Util <: ObjectiveFunction end
-struct SR <: ObjectiveFunction end
+@kwdef mutable struct Util{T1 <: Real} <: ObjectiveFunction
+    l::T1 = 2.0
+end
+@kwdef mutable struct SR{T1<:Real} <: ObjectiveFunction 
+rf::T1=0.0
+end
 struct MaxRet <: ObjectiveFunction end
 
 abstract type PortType end
@@ -14,6 +18,19 @@ struct Trad2 <: PortType end
 struct RP2 <: PortType end
 struct RRP2 <: PortType end
 struct WC2 <: PortType end
+
+abstract type RetType end
+struct NoKelly <: RetType end
+struct AKelly <: RetType end
+struct EKelly <: RetType end
+
+abstract type PortClass end
+struct Classic2 <: PortClass end
+
+abstract type TrackingErr end
+struct NoTracking <: TrackingErr end
+struct TrackWeight <: TrackingErr end
+struct TrackRet <: TrackingErr end
 
 """
 ```
