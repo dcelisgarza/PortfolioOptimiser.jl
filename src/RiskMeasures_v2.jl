@@ -1450,6 +1450,7 @@ end
 @kwdef mutable struct Kurt2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
     w::Union{<:AbstractWeights, Nothing} = nothing
+    kt::Union{<:AbstractMatrix, Nothing} = nothing
 end
 function calc_risk(kt::Kurt2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return Kurt(X * w, kt.w)
@@ -1458,13 +1459,18 @@ end
 @kwdef mutable struct SKurt2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
     w::Union{<:AbstractWeights, Nothing} = nothing
+    kt::Union{<:AbstractMatrix, Nothing} = nothing
 end
 function calc_risk(skt::SKurt2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return SKurt(X * w, skt.w)
 end
-
-@kwdef struct GMD2 <: TradRiskMeasure
+@kwdef mutable struct OWASettings{T1}
+    approx::Bool = true
+    p::T1 = Float64[2, 3, 4, 10, 50]
+end
+@kwdef struct GMD2{T1} <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
+    owa::OWASettings = OWASettings()
 end
 function calc_risk(::GMD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return GMD(X * w)
@@ -1500,15 +1506,17 @@ end
 
 mutable struct TG2{T1, T2, T3} <: TradRiskMeasure
     settings::RiskMeasureSettings
+    owa::OWASettings
     alpha_i::T1
     alpha::T2
     a_sim::T3
 end
 function TG2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
-             alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100)
+             owa::OWASettings = OWASettings(), alpha_i::Real = 0.0001, alpha::Real = 0.05,
+             a_sim::Integer = 100)
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
-    return TG2{typeof(alpha_i), typeof(alpha), typeof(a_sim)}(settings, alpha_i, alpha,
+    return TG2{typeof(alpha_i), typeof(alpha), typeof(a_sim)}(settings, owa, alpha_i, alpha,
                                                               a_sim)
 end
 function Base.setproperty!(obj::TG2, sym::Symbol, val)
@@ -1527,6 +1535,7 @@ end
 
 mutable struct RTG2{T1, T2, T3, T4, T5, T6} <: TradRiskMeasure
     settings::RiskMeasureSettings
+    owa::OWASettings
     alpha_i::T1
     alpha::T2
     a_sim::T3
@@ -1534,15 +1543,16 @@ mutable struct RTG2{T1, T2, T3, T4, T5, T6} <: TradRiskMeasure
     beta::T5
     b_sim::T6
 end
-function RTG2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha_i = 0.0001,
-              alpha::Real = 0.05, a_sim::Integer = 100, beta_i = 0.0001, beta::Real = 0.05,
+function RTG2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
+              owa::OWASettings = OWASettings(), alpha_i = 0.0001, alpha::Real = 0.05,
+              a_sim::Integer = 100, beta_i = 0.0001, beta::Real = 0.05,
               b_sim::Integer = 100)
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
     @smart_assert(zero(beta) < beta_i < beta < one(beta))
     @smart_assert(b_sim > zero(b_sim))
     return RTG2{typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
-                typeof(b_sim)}(settings, alpha_i, alpha, a_sim, beta_i, beta, b_sim)
+                typeof(b_sim)}(settings, owa, alpha_i, alpha, a_sim, beta_i, beta, b_sim)
 end
 function Base.setproperty!(obj::RTG2, sym::Symbol, val)
     if sym == :alpha_i
@@ -1567,6 +1577,7 @@ end
 
 @kwdef mutable struct OWA2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
+    owa::OWASettings = OWASettings()
     w::Union{<:AbstractVector, Nothing} = nothing
 end
 function calc_risk(owa::OWA2, w::AbstractVector; X::AbstractMatrix, kwargs...)

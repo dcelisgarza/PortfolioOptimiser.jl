@@ -467,9 +467,9 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
 
         if isfinite(add_u) && type == :Trad
             if obj == :Sharpe
-                @constraint(model, add_risk .<= add_u * model[:k])
+                @constraint(model, add_risk <= add_u * model[:k])
             else
-                @constraint(model, add_risk .<= add_u)
+                @constraint(model, add_risk <= add_u)
             end
         end
 

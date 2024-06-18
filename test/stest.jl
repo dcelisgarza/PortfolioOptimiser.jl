@@ -28,41 +28,73 @@ portfolio = Portfolio2(; prices = prices,
                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                         :params => Dict("verbose" => false))))
 asset_statistics2!(portfolio)
+
+portfolio.model = JuMP.Model()
 @variable(portfolio.model, w[1:length(portfolio.assets)])
 @constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
 @constraint(portfolio.model, portfolio.model[:w] .>= 0)
-
-setup_rm(portfolio, SD2(), Trad2(), MinRisk(), 1, 1)
-
-setup_rm(portfolio, SD2(), Trad2(), MinRisk(), 3, 1)
-setup_rm(portfolio, SD2(), Trad2(), MinRisk(), 3, 2)
-setup_rm(portfolio, SD2(; settings = RiskMeasureSettings(; scale = 0.1)), Trad2(),
-         MinRisk(), 3, 3)
-
-setup_rm(portfolio, CVaR2(), Trad2(), MinRisk(), 3, 1)
-setup_rm(portfolio, CVaR2(; alpha = 0.3), Trad2(), MinRisk(), 3, 2)
-setup_rm(portfolio, CVaR2(; alpha = 0.1, settings = RiskMeasureSettings(; scale = 0.1)),
-         Trad2(), MinRisk(), 3, 3)
-
-setup_rm(portfolio, CDaR2(), Trad2(), MinRisk(), 3, 1)
-setup_rm(portfolio, CDaR2(; alpha = 0.3), Trad2(), MinRisk(), 3, 2)
-setup_rm(portfolio,
-         CDaR2(; alpha = 0.1,
-               settings = RiskMeasureSettings(; flag = false, ub = 0.3, scale = 0.1)),
-         Trad2(), MinRisk(), 3, 3)
-
+set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 1, 1; mu = portfolio.mu,
+       returns = portfolio.returns)
+set_rm(portfolio, MAD2(; settings = RiskMeasureSettings(; scale = 2)), Trad2(), MinRisk(),
+       1, 1; mu = portfolio.mu, returns = portfolio.returns)
 @objective(portfolio.model, Min, portfolio.model[:risk])
 set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
 JuMP.optimize!(portfolio.model)
+w1 = value.(portfolio.model[:w])
 
-ws = [portfolio.assets value.(portfolio.model[:w])]
-ws2 = [portfolio.assets value.(portfolio.model[:w])]
-ws3 = [portfolio.assets value.(portfolio.model[:w])]
-ws4 = [portfolio.assets value.(portfolio.model[:w])]
-ws5 = [portfolio.assets value.(portfolio.model[:w])]
-ws6 = [portfolio.assets value.(portfolio.model[:w])]
-ws7 = [portfolio.assets value.(portfolio.model[:w])]
+portfolio.model = JuMP.Model()
+@variable(portfolio.model, w[1:length(portfolio.assets)])
+@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
+@constraint(portfolio.model, portfolio.model[:w] .>= 0)
+set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 1, 1; mu = portfolio.mu,
+       returns = portfolio.returns)
+set_rm(portfolio, MAD2(; settings = RiskMeasureSettings(; scale = 2)), Trad2(), MinRisk(),
+       1, 1; mu = portfolio.mu, returns = portfolio.returns)
+@objective(portfolio.model, Min, portfolio.model[:risk])
+set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
+JuMP.optimize!(portfolio.model)
+w2 = value.(portfolio.model[:w])
 
+using Random
+mu2 = shuffle(portfolio.mu)
+
+portfolio.model = JuMP.Model()
+@variable(portfolio.model, w[1:length(portfolio.assets)])
+@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
+@constraint(portfolio.model, portfolio.model[:w] .>= 0)
+set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 1, 1; mu = portfolio.mu,
+       returns = portfolio.returns)
+set_rm(portfolio, MAD2(), Trad2(), MinRisk(), 1, 1; mu = mu2, returns = portfolio.returns)
+@objective(portfolio.model, Min, portfolio.model[:risk])
+set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
+JuMP.optimize!(portfolio.model)
+w3 = value.(portfolio.model[:w])
+
+portfolio.model = JuMP.Model()
+@variable(portfolio.model, w[1:length(portfolio.assets)])
+@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
+@constraint(portfolio.model, portfolio.model[:w] .>= 0)
+set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 1, 1; mu = portfolio.mu,
+       returns = portfolio.returns)
+set_rm(portfolio, MAD2(), Trad2(), MinRisk(), 1, 1; mu = mu2, returns = portfolio.returns)
+@objective(portfolio.model, Min, portfolio.model[:risk])
+set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
+JuMP.optimize!(portfolio.model)
+w4 = value.(portfolio.model[:w])
+
+portfolio.model = JuMP.Model()
+@variable(portfolio.model, w[1:length(portfolio.assets)])
+@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
+@constraint(portfolio.model, portfolio.model[:w] .>= 0)
+set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 2, 1; mu = portfolio.mu,
+       returns = portfolio.returns)
+set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 2, 2; mu = mu2, returns = portfolio.returns)
+@objective(portfolio.model, Min, portfolio.model[:risk])
+set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
+JuMP.optimize!(portfolio.model)
+w5 = value.(portfolio.model[:w])
+
+SD2[SD2()]
 portfolio = Portfolio2(; prices = prices,
                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                         :params => Dict("verbose" => false))))
