@@ -1085,16 +1085,11 @@ abstract type RiskMeasure end
 abstract type TradRiskMeasure <: RiskMeasure end
 abstract type HCRiskMeasure <: RiskMeasure end
 
-function Base.length(::RiskMeasure)
-    return 1
-end
-
 @kwdef mutable struct RiskMeasureSettings{T1 <: Real, T2 <: Real}
     flag::Bool = true
     scale::T1 = 1.0
     ub::T2 = Inf
 end
-
 mutable struct SD2{T1 <: Union{AbstractMatrix, Nothing}} <: TradRiskMeasure
     settings::RiskMeasureSettings
     sigma::T1
@@ -1468,7 +1463,7 @@ end
     approx::Bool = true
     p::T1 = Float64[2, 3, 4, 10, 50]
 end
-@kwdef struct GMD2{T1} <: TradRiskMeasure
+@kwdef struct GMD2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
     owa::OWASettings = OWASettings()
 end
@@ -1485,8 +1480,8 @@ end
 
 mutable struct RCVaR2{T1, T2} <: TradRiskMeasure
     settings::RiskMeasureSettings
-    alpha::Real
-    beta::Real
+    alpha::T1
+    beta::T2
 end
 function RCVaR2(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
                 beta::Real = 0.05)

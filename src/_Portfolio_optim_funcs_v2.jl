@@ -972,7 +972,7 @@ function set_rm(port::Portfolio2, rm::Kurt2, type::Union{Trad2, RP2},
             L_2 = port.L_2
             S_2 = port.S_2
             sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
-            @expression(model, model[:zkurt][idx], L_2 * vec(model[:W]))
+            @constraint(model, model[:zkurt][idx] == L_2 * vec(model[:W]))
             @constraint(model,
                         [model[:kurt_risk][idx]; sqrt_sigma_4 * model[:zkurt][idx]] ∈
                         SecondOrderCone())
@@ -1047,7 +1047,7 @@ function set_rm(port::Portfolio2, rm::SKurt2, type::Union{Trad2, RP2},
             L_2 = port.L_2
             S_2 = port.S_2
             sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
-            @expression(model, model[:zskurt][idx], L_2 * vec(model[:W]))
+            @constraint(model, model[:zskurt][idx] == L_2 * vec(model[:W]))
             @constraint(model,
                         [model[:skurt_risk][idx]; sqrt_sigma_4 * model[:zskurt][idx]] ∈
                         SecondOrderCone())
@@ -1544,13 +1544,13 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
     return nothing
 end
 
-export set_rm, MinRisk, Util, SR, MaxRet, Trad2
+function optimise2!(port::Portfolio2;
+                    rm::Union{AbstractVector{<:TradRiskMeasure}, <:TradRiskMeasure} = SD2(),
+                    type::PortType = Trad2(), obj::ObjectiveFunction = MinRisk(),
+                    str_names::Bool = false, save_params::Bool = false)
+    mu, sigma, returns = port.mu, port.cov, port.returns
 
-function optimise2!(port::Portfolio2; rm::Union{Vector{TradRiskMeasure}, TradRiskMeasure},
-                    type::PortType, obj::ObjectiveFunction, str_names::Bool = false,
-                    save_params::Bool = false)
-    mu, sigma, returns = port.mu, port.sigma, port.returns
-
+    N = size(returns, 2)
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
@@ -1558,8 +1558,14 @@ function optimise2!(port::Portfolio2; rm::Union{Vector{TradRiskMeasure}, TradRis
     set_sr_k(obj, model)
 
     kelly_approx_idx = Int[]
+    if !isa(rm, AbstractVector)
+        rm = (rm,)
+    end
     for rv ∈ rm
         count = length(rv)
+        if !isa(rv, AbstractVector)
+            rv = (rv,)
+        end
         for (i, r) ∈ enumerate(rv)
             set_rm(port, r, type, obj, count, i; mu = mu, sigma = sigma, returns = returns,
                    kelly_approx_idx = kelly_approx_idx)
@@ -1570,6 +1576,7 @@ function optimise2!(port::Portfolio2; rm::Union{Vector{TradRiskMeasure}, TradRis
     ntwk_constraints(port, type, obj)
     return nothing
 end
+export set_rm, MinRisk, Util, SR, MaxRet, Trad2, optimise2!
 
 """
 ```julia
