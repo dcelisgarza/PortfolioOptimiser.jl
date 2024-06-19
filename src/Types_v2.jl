@@ -1,7 +1,15 @@
 abstract type NetworkMethods2 end
 struct NoNtwk <: NetworkMethods2 end
-struct SDP2 <: NetworkMethods2 end
-struct IP2 <: NetworkMethods2 end
+@kwdef mutable struct SDP2{T1 <: AbstractMatrix{<:Real}, T2 <: Real} <: NetworkMethods2
+    A::T1 = AbstractMatrix{Float64}(undef, 0, 0)
+    penalty::T2 = 0.05
+end
+@kwdef mutable struct IP2{T1 <: AbstractMatrix{<:Real}, T2 <: Real, T3 <: Real} <:
+                      NetworkMethods2
+    A::T1 = AbstractMatrix{Float64}(undef, 0, 0)
+    penalty::T2 = 0.05
+    scale::T3 = 100_000.0
+end
 
 abstract type ObjectiveFunction end
 struct MinRisk <: ObjectiveFunction end
@@ -35,6 +43,27 @@ struct EKelly <: RetType end
 abstract type PortClass end
 struct Classic2 <: PortClass end
 struct FC2 <: PortClass end
+mutable struct FM2{T1 <: Integer} <: PortClass
+    type::T1
+end
+function FM2(; type::Integer = 1)
+    @smart_assert(type ∈ (1, 2))
+    return FM2{typeof(type)}(type)
+end
+mutable struct BL2{T1 <: Integer} <: PortClass
+    type::T1
+end
+function BL2(; type::Integer = 1)
+    @smart_assert(type ∈ (1, 2))
+    return BL2{typeof(type)}(type)
+end
+mutable struct BLFM2{T1 <: Integer} <: PortClass
+    type::T1
+end
+function BLFM2(; type::Integer = 1)
+    @smart_assert(type ∈ (1, 2))
+    return BLFM2{typeof(type)}(type)
+end
 
 abstract type TrackingErr end
 struct NoTracking <: TrackingErr end
@@ -104,10 +133,6 @@ mutable struct Portfolio2{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tr
     risk_budget::rbv
     f_risk_budget::frbv
     network_method::nm
-    network_sdp::nsdp
-    network_penalty::np
-    network_ip::ni
-    network_ip_scale::nis
     a_vec_cent::amc
     b_cent::bvc
     mu_l::ler
@@ -493,14 +518,14 @@ Only relevant when `type == :WC`.
 mutable struct Portfolio2{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
                           msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, mnaks, skewf, sskewf,
                           rb, rbw, to, tobw, kte, te, rbi, bw, blbw, ami, bvi, rbv, frbv,
-                          nm, nsdp, np, ni, nis, amc, bvc, ler, ud, umad, usd, ucvar,
-                          urcvar, uevar, urvar, uwr, ur, uflpm, uslpm, umd, uad, ucdar,
-                          uuci, uedar, urdar, uk, usk, ugmd, utg, urtg, uowa, udvar, uskew,
-                          usskew, owap, wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv,
-                          tsskew, tsv, tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl,
-                          tmublf, tcovblf, tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks,
-                          topt, tz, tlim, tfront, tsolv, tf, toptpar, tmod, tlp, taopt,
-                          tasolv, taoptpar, taf, tamod} <: AbstractPortfolio2
+                          nm, amc, bvc, ler, ud, umad, usd, ucvar, urcvar, uevar, urvar,
+                          uwr, ur, uflpm, uslpm, umd, uad, ucdar, uuci, uedar, urdar, uk,
+                          usk, ugmd, utg, urtg, uowa, udvar, uskew, usskew, owap, wowa, tmu,
+                          tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv, tmuf,
+                          tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf, tcovl,
+                          tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz, tlim, tfront,
+                          tsolv, tf, toptpar, tmod, tlp, taopt, tasolv, taoptpar, taf,
+                          tamod} <: AbstractPortfolio2
     assets::ast
     timestamps::dat
     returns::r
@@ -542,10 +567,6 @@ mutable struct Portfolio2{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tr
     risk_budget::rbv
     f_risk_budget::frbv
     network_method::nm
-    network_sdp::nsdp
-    network_penalty::np
-    network_ip::ni
-    network_ip_scale::nis
     a_vec_cent::amc
     b_cent::bvc
     mu_l::ler
@@ -666,10 +687,6 @@ Portfolio2(; prices::TimeArray                                 = TimeArray(TimeT
           risk_budget::AbstractVector{<:Real}               = Vector{Float64}(undef, 0),
           f_risk_budget::AbstractVector{<:Real}             = Vector{Float64}(undef, 0),
           network_method::Symbol                            = :None,
-          network_sdp::AbstractMatrix{<:Real}               = Matrix{Float64}(undef, 0, 0),
-          network_penalty::Real                             = 0.05,
-          network_ip::AbstractMatrix{<:Real}                = Matrix{Float64}(undef, 0, 0),
-          network_ip_scale::Real                            = 100_000.0,
           a_vec_cent::AbstractVector{<:Real}                = Vector{Float64}(undef, 0),
           b_cent::Real                                      = Inf,
           mu_l::Real                                        = Inf,
@@ -799,10 +816,6 @@ Performs data validation and creates an instance of [`Portfolio2`](@ref). Union 
   - `risk_budget`: sets `risk_budget`.
   - `f_risk_budget`: sets `f_risk_budget`.
   - `network_method`: sets `network_method`.
-  - `network_sdp`: sets `network_sdp`.
-  - `network_penalty`: sets `network_penalty`.
-  - `network_ip`: sets `network_ip`.
-  - `network_ip_scale`: sets `network_ip_scale`.
   - `a_vec_cent`: sets `a_vec_cent`.
   - `b_cent`: sets `b_cent`.
   - `mu_l`: sets `mu_l`.
@@ -911,10 +924,6 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                     risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                     f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                     network_method::NetworkMethods2 = NoNtwk(),
-                    network_sdp::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-                    network_penalty::Real = 0.05,
-                    network_ip::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-                    network_ip_scale::Real = 100_000.0,
                     a_vec_cent::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                     b_cent::Real = Inf, mu_l::Real = Inf, sd_u::Real = Inf,
                     mad_u::Real = Inf, ssd_u::Real = Inf, cvar_u::Real = Inf,
@@ -1027,11 +1036,8 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
     if !isempty(bl_bench_weights)
         @smart_assert(length(bl_bench_weights) == size(returns, 2))
     end
-    if !isempty(network_sdp)
-        @smart_assert(size(network_sdp) == (size(returns, 2), size(returns, 2)))
-    end
-    if !isempty(network_ip)
-        @smart_assert(size(network_ip) == (size(returns, 2), size(returns, 2)))
+    if !isa(network_method, NoNtwk) && !isempty(network_method.A)
+        @smart_assert(size(network_method.A) == (size(returns, 2), size(returns, 2)))
     end
     if !isempty(a_vec_cent)
         @smart_assert(size(a_vec_cent, 1) == size(returns, 2))
@@ -1149,71 +1155,51 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                       typeof(tracking_err_returns), typeof(tracking_err_weights),
                       typeof(bl_bench_weights), typeof(a_mtx_ineq), typeof(b_vec_ineq),
                       typeof(risk_budget), typeof(f_risk_budget), NetworkMethods2,
-                      typeof(network_sdp), typeof(network_penalty), typeof(network_ip),
-                      typeof(network_ip_scale), typeof(a_vec_cent), typeof(b_cent),
-                      typeof(mu_l), typeof(sd_u), typeof(mad_u), typeof(ssd_u),
-                      typeof(cvar_u), typeof(rcvar_u), typeof(evar_u), typeof(rvar_u),
-                      typeof(wr_u), typeof(rg_u), typeof(flpm_u), typeof(slpm_u),
-                      typeof(mdd_u), typeof(add_u), typeof(cdar_u), typeof(uci_u),
-                      typeof(edar_u), typeof(rdar_u), typeof(kurt_u), typeof(skurt_u),
-                      typeof(gmd_u), typeof(tg_u), typeof(rtg_u), typeof(owa_u),
-                      typeof(dvar_u), typeof(skew_u), typeof(sskew_u), typeof(owa_p),
-                      typeof(owa_w), typeof(mu), typeof(cov), typeof(kurt), typeof(skurt),
-                      typeof(L_2), typeof(S_2), typeof(skew), typeof(V), typeof(sskew),
-                      typeof(SV), typeof(f_mu), typeof(f_cov), typeof(fm_returns),
-                      typeof(fm_mu), typeof(fm_cov), typeof(bl_mu), typeof(bl_cov),
-                      typeof(blfm_mu), typeof(blfm_cov), typeof(cov_l), typeof(cov_u),
-                      typeof(cov_mu), typeof(cov_sigma), typeof(d_mu), typeof(k_mu),
-                      typeof(k_sigma), typeof(optimal), typeof(z), typeof(limits),
-                      typeof(frontier), Union{<:AbstractDict, NamedTuple},
-                      Union{<:AbstractDict, NamedTuple}, typeof(fail), typeof(model),
-                      typeof(latest_prices), typeof(alloc_optimal),
+                      typeof(a_vec_cent), typeof(b_cent), typeof(mu_l), typeof(sd_u),
+                      typeof(mad_u), typeof(ssd_u), typeof(cvar_u), typeof(rcvar_u),
+                      typeof(evar_u), typeof(rvar_u), typeof(wr_u), typeof(rg_u),
+                      typeof(flpm_u), typeof(slpm_u), typeof(mdd_u), typeof(add_u),
+                      typeof(cdar_u), typeof(uci_u), typeof(edar_u), typeof(rdar_u),
+                      typeof(kurt_u), typeof(skurt_u), typeof(gmd_u), typeof(tg_u),
+                      typeof(rtg_u), typeof(owa_u), typeof(dvar_u), typeof(skew_u),
+                      typeof(sskew_u), typeof(owa_p), typeof(owa_w), typeof(mu),
+                      typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2), typeof(S_2),
+                      typeof(skew), typeof(V), typeof(sskew), typeof(SV), typeof(f_mu),
+                      typeof(f_cov), typeof(fm_returns), typeof(fm_mu), typeof(fm_cov),
+                      typeof(bl_mu), typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov),
+                      typeof(cov_l), typeof(cov_u), typeof(cov_mu), typeof(cov_sigma),
+                      typeof(d_mu), typeof(k_mu), typeof(k_sigma), typeof(optimal),
+                      typeof(z), typeof(limits), typeof(frontier),
                       Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                      typeof(alloc_fail), typeof(alloc_model)}(assets, timestamps, returns,
-                                                               short, short_u, long_u,
-                                                               num_assets_l, num_assets_u,
-                                                               num_assets_u_scale, f_assets,
-                                                               f_timestamps, f_returns,
-                                                               loadings, loadings_opt,
-                                                               msv_target, lpm_target,
-                                                               alpha_i, alpha, a_sim,
-                                                               beta_i, beta, b_sim, kappa,
-                                                               max_num_assets_kurt,
-                                                               max_num_assets_kurt_scale,
-                                                               skew_factor, sskew_factor,
-                                                               rebalance, rebalance_weights,
-                                                               turnover, turnover_weights,
-                                                               kind_tracking_err,
-                                                               tracking_err,
-                                                               tracking_err_returns,
-                                                               tracking_err_weights,
-                                                               bl_bench_weights, a_mtx_ineq,
-                                                               b_vec_ineq, risk_budget,
-                                                               f_risk_budget,
-                                                               network_method, network_sdp,
-                                                               network_penalty, network_ip,
-                                                               network_ip_scale, a_vec_cent,
-                                                               b_cent, mu_l, sd_u, mad_u,
-                                                               ssd_u, cvar_u, rcvar_u,
-                                                               evar_u, rvar_u, wr_u, rg_u,
-                                                               flpm_u, slpm_u, mdd_u, add_u,
-                                                               cdar_u, uci_u, edar_u,
-                                                               rdar_u, kurt_u, skurt_u,
-                                                               gmd_u, tg_u, rtg_u, owa_u,
-                                                               dvar_u, skew_u, sskew_u,
-                                                               owa_p, owa_w, mu, cov, kurt,
-                                                               skurt, L_2, S_2, skew, V,
-                                                               sskew, SV, f_mu, f_cov,
-                                                               fm_returns, fm_mu, fm_cov,
-                                                               bl_mu, bl_cov, blfm_mu,
-                                                               blfm_cov, cov_l, cov_u,
-                                                               cov_mu, cov_sigma, d_mu,
-                                                               k_mu, k_sigma, optimal, z,
-                                                               limits, frontier, solvers,
-                                                               opt_params, fail, model,
-                                                               latest_prices, alloc_optimal,
-                                                               alloc_solvers, alloc_params,
-                                                               alloc_fail, alloc_model)
+                      typeof(fail), typeof(model), typeof(latest_prices),
+                      typeof(alloc_optimal), Union{<:AbstractDict, NamedTuple},
+                      Union{<:AbstractDict, NamedTuple}, typeof(alloc_fail),
+                      typeof(alloc_model)}(assets, timestamps, returns, short, short_u,
+                                           long_u, num_assets_l, num_assets_u,
+                                           num_assets_u_scale, f_assets, f_timestamps,
+                                           f_returns, loadings, loadings_opt, msv_target,
+                                           lpm_target, alpha_i, alpha, a_sim, beta_i, beta,
+                                           b_sim, kappa, max_num_assets_kurt,
+                                           max_num_assets_kurt_scale, skew_factor,
+                                           sskew_factor, rebalance, rebalance_weights,
+                                           turnover, turnover_weights, kind_tracking_err,
+                                           tracking_err, tracking_err_returns,
+                                           tracking_err_weights, bl_bench_weights,
+                                           a_mtx_ineq, b_vec_ineq, risk_budget,
+                                           f_risk_budget, network_method, a_vec_cent,
+                                           b_cent, mu_l, sd_u, mad_u, ssd_u, cvar_u,
+                                           rcvar_u, evar_u, rvar_u, wr_u, rg_u, flpm_u,
+                                           slpm_u, mdd_u, add_u, cdar_u, uci_u, edar_u,
+                                           rdar_u, kurt_u, skurt_u, gmd_u, tg_u, rtg_u,
+                                           owa_u, dvar_u, skew_u, sskew_u, owa_p, owa_w, mu,
+                                           cov, kurt, skurt, L_2, S_2, skew, V, sskew, SV,
+                                           f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_mu,
+                                           bl_cov, blfm_mu, blfm_cov, cov_l, cov_u, cov_mu,
+                                           cov_sigma, d_mu, k_mu, k_sigma, optimal, z,
+                                           limits, frontier, solvers, opt_params, fail,
+                                           model, latest_prices, alloc_optimal,
+                                           alloc_solvers, alloc_params, alloc_fail,
+                                           alloc_model)
 end
 
 function Base.getproperty(obj::Portfolio2, sym::Symbol)
@@ -1296,14 +1282,9 @@ function Base.setproperty!(obj::Portfolio2, sym::Symbol, val)
             @smart_assert(size(val, 2) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym == :network_sdp
-        if !isempty(val)
-            @smart_assert(size(val) == (size(obj.returns, 2), size(obj.returns, 2)))
-        end
-        val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym == :network_ip
-        if !isempty(val)
-            @smart_assert(size(val) == (size(obj.returns, 2), size(obj.returns, 2)))
+    elseif sym == :network_method
+        if !isa(val, NoNtwk) && !isempty(val.A)
+            @smart_assert(size(val.A) == (size(obj.returns, 2), size(obj.returns, 2)))
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :a_vec_cent
@@ -1414,9 +1395,7 @@ function Base.deepcopy(obj::Portfolio2)
                       typeof(obj.tracking_err_returns), typeof(obj.tracking_err_weights),
                       typeof(obj.bl_bench_weights), typeof(obj.a_mtx_ineq),
                       typeof(obj.b_vec_ineq), typeof(obj.risk_budget),
-                      typeof(obj.f_risk_budget), NetworkMethods2, typeof(obj.network_sdp),
-                      typeof(obj.network_penalty), typeof(obj.network_ip),
-                      typeof(obj.network_ip_scale), typeof(obj.a_vec_cent),
+                      typeof(obj.f_risk_budget), NetworkMethods2, typeof(obj.a_vec_cent),
                       typeof(obj.b_cent), typeof(obj.mu_l), typeof(obj.sd_u),
                       typeof(obj.mad_u), typeof(obj.ssd_u), typeof(obj.cvar_u),
                       typeof(obj.rcvar_u), typeof(obj.evar_u), typeof(obj.rvar_u),
@@ -1477,10 +1456,6 @@ function Base.deepcopy(obj::Portfolio2)
                                                deepcopy(obj.risk_budget),
                                                deepcopy(obj.f_risk_budget),
                                                deepcopy(obj.network_method),
-                                               deepcopy(obj.network_sdp),
-                                               deepcopy(obj.network_penalty),
-                                               deepcopy(obj.network_ip),
-                                               deepcopy(obj.network_ip_scale),
                                                deepcopy(obj.a_vec_cent),
                                                deepcopy(obj.b_cent), deepcopy(obj.mu_l),
                                                deepcopy(obj.sd_u), deepcopy(obj.mad_u),

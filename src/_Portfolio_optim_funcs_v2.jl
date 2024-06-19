@@ -1,3 +1,41 @@
+function mu_sigma_returns_class(port, ::Union{Classic2, FC2})
+    return port.mu, port.cov, port.returns
+end
+function mu_sigma_returns_class(port, class::FM2)
+    mu = port.fm_mu
+    if class.type == 1
+        sigma = port.fm_cov
+        returns = port.fm_returns
+    else
+        sigma = port.cov
+        returns = port.returns
+    end
+    return mu, sigma, returns
+end
+function mu_sigma_returns_class(port, class::BL2)
+    mu = port.bl_mu
+    returns = port.returns
+    if class.type == 1
+        sigma = port.bl_cov
+    else
+        sigma = port.cov
+    end
+    return mu, sigma, returns
+end
+function mu_sigma_returns_class(port, class::BLFM2)
+    mu = port.blfm_mu
+    if class.type == 1
+        sigma = port.blfm_cov
+        returns = port.fm_returns
+    elseif class.type == 2
+        sigma = port.cov
+        returns = port.returns
+    else
+        sigma = port.fm_cov
+        returns = port.fm_returns
+    end
+    return mu, sigma, returns
+end
 # sharpe ratio k
 function set_sr_k(::SR, model)
     @variable(model, k >= 0)
@@ -171,21 +209,20 @@ function weight_constraints(port, ::Any)
     end
     return nothing
 end
-function _network_constraints(::NoNtwk, args...)
+function network_constraints(::Any, ::NoNtwk, args...)
     return nothing
 end
-function _network_constraints(::IP2, port, ::SR, type::Union{Trad2, WC2})
+function network_constraints(port, network::IP2, ::SR, type::Union{Trad2, WC2})
     N = size(port.returns, 2)
     model = port.model
 
     @variable(model, tip_bin2[1:N], binary = true)
-    @constraint(model, unique(port.network_ip + I; dims = 1) * tip_bin2 .<= 1)
+    @constraint(model, unique(network.A + I; dims = 1) * tip_bin2 .<= 1)
     # Sharpe ratio
     @variable(model, tip_bin_sharpe2[1:N] .>= 0)
     @constraint(model, tip_bin_sharpe2 .<= model[:k])
-    @constraint(model, tip_bin_sharpe2 .<= port.network_ip_scale * tip_bin2)
-    @constraint(model,
-                tip_bin_sharpe2 .>= model[:k] .- port.network_ip_scale * (1 .- tip_bin2))
+    @constraint(model, tip_bin_sharpe2 .<= network.scale * tip_bin2)
+    @constraint(model, tip_bin_sharpe2 .>= model[:k] .- network.scale * (1 .- tip_bin2))
     # Long and short
     @constraint(model, model[:w] .<= port.long_u * tip_bin_sharpe2)
     if port.short
@@ -193,12 +230,12 @@ function _network_constraints(::IP2, port, ::SR, type::Union{Trad2, WC2})
     end
     return nothing
 end
-function _network_constraints(::IP2, port, ::Any, type::Union{Trad2, WC2})
+function network_constraints(port, network::IP2, ::Any, type::Union{Trad2, WC2})
     N = size(port.returns, 2)
     model = port.model
 
     @variable(model, tip_bin2[1:N], binary = true)
-    @constraint(model, unique(port.network_ip + I; dims = 1) * tip_bin2 .<= 1)
+    @constraint(model, unique(network.A + I; dims = 1) * tip_bin2 .<= 1)
     # Long and short
     @constraint(model, model[:w] .<= port.long_u * model[:tip_bin2])
     if port.short
@@ -206,23 +243,18 @@ function _network_constraints(::IP2, port, ::Any, type::Union{Trad2, WC2})
     end
     return nothing
 end
-function _network_penalty(port, ::Trad2)
-    if !haskey(port.model, :sd_risk)
-        @expression(port.model, network_penalty, port.network_penalty * tr(port.model[:W]))
+function network_constraints(port, network::SDP2, obj, ::Trad2)
+    _sdp(port, obj)
+    @constraint(port.model, network.A .* port.model[:W] .== 0)
+    if !haskey(port.model, :sd_risk) && hasproperty(port.network_method, :penalty)
+        @expression(port.model, network_penalty,
+                    port.network_method.penalty * tr(port.model[:W]))
     end
     return nothing
 end
-function _network_penalty(::Any, ::Any)
-    return nothing
-end
-function _network_constraints(::SDP2, port, obj, type::Union{Trad2, WC2})
+function network_constraints(port, network::SDP2, obj, ::WC2)
     _sdp(port, obj)
-    @constraint(port.model, port.network_sdp .* port.model[:W] .== 0)
-    _network_penalty(port, type)
-    return nothing
-end
-function network_constraints(port, obj, type::Union{Trad2, WC2})
-    _network_constraints(port.network_method, port, obj, type)
+    @constraint(port.model, network.A .* port.model[:W] .== 0)
     return nothing
 end
 function _centrality_constraints(::SR, model, A, B)
@@ -1854,36 +1886,44 @@ function rebalance_constraints(port, obj)
     end
     return nothing
 end
-function _objective(::SR, ::Trad2, ::Classic2, ::Union{AKelly, EKelly}, model, args...)
-    @objective(model, Max, model[:ret] - args[1] - args[2])
+function _objective(::SR, ::Trad2, ::Classic2, ::Union{AKelly, EKelly}, model, p)
+    @objective(model, Max, model[:ret] - p)
     return nothing
 end
-function _objective(::SR, ::WC2, ::Any, ::Union{AKelly, EKelly}, model, args...)
-    @objective(model, Max, model[:ret] - args[1] - args[2])
+function _objective(::SR, ::WC2, ::Any, ::Union{AKelly, EKelly}, model, p)
+    @objective(model, Max, model[:ret] - p)
     return nothing
 end
-function _objective(::Union{SR, MinRisk}, ::Any, ::Any, ::Any, model, args...)
-    @objective(model, Min, model[:risk] + args[1] + args[2])
+function _objective(::Union{SR, MinRisk}, ::Any, ::Any, ::Any, model, p)
+    @objective(model, Min, model[:risk] + p)
     return nothing
 end
-function _objective(obj::Util, ::Any, ::Any, ::Any, model, args...)
-    @objective(model, Max, model[:ret] - obj.l * model[:risk] - args[1] - args[2])
+function _objective(obj::Util, ::Any, ::Any, ::Any, model, p)
+    @objective(model, Max, model[:ret] - obj.l * model[:risk] - p)
     return nothing
 end
-function _objective(obj::MaxRet, ::Any, ::Any, ::Any, model, args...)
-    @objective(model, Max, model[:ret] - args[1] - args[2])
+function _objective(obj::MaxRet, ::Any, ::Any, ::Any, model, p)
+    @objective(model, Max, model[:ret] - p)
     return nothing
 end
-function objective_function(port, obj, type, class, kelly)
+function objective_function(port, obj, type::Trad2, class, kelly)
     npf = zero(eltype(port.returns))
-    if isa(type, Trad2) && haskey(port.model, :network_penalty)
+    if haskey(port.model, :network_penalty)
         npf = port.model[:network_penalty]
     end
     rbf = zero(eltype(port.returns))
     if haskey(port.model, :sum_t_rebal)
         npf = port.model[:sum_t_rebal]
     end
-    _objective(obj, type, class, kelly, port.model, npf, rbf)
+    _objective(obj, type, class, kelly, port.model, npf + rbf)
+    return nothing
+end
+function objective_function(port, obj, type::Any, class, kelly)
+    rbf = zero(eltype(port.returns))
+    if haskey(port.model, :sum_t_rebal)
+        npf = port.model[:sum_t_rebal]
+    end
+    _objective(obj, type, class, kelly, port.model, rbf)
     return nothing
 end
 function _cleanup_weights(port, ::SR, ::Union{Trad2, WC2}, ::Any)
@@ -1992,32 +2032,73 @@ function convex_optimisation(port, obj, type, class)
         port.optimal[Symbol(type)] = DataFrame(; tickers = port.assets, weights = weights)
     end
 end
-function optimise2!(port::Portfolio2;
-                    rm::Union{AbstractVector{<:TradRiskMeasure}, <:TradRiskMeasure} = SD2(),
-                    type::PortType = Trad2(), obj::ObjectiveFunction = MinRisk(),
-                    kelly::RetType = NoKelly(), class::PortClass = Classic2(),
-                    str_names::Bool = false, save_params::Bool = false)
-    mu, sigma, returns = port.mu, port.cov, port.returns
+function _optimise!(::Trad2, port::Portfolio2, rm::Union{AbstractVector, <:TradRiskMeasure},
+                    obj::ObjectiveFunction, kelly::RetType, class::PortClass,
+                    w_ini::AbstractVector, str_names::Bool, save_params::Bool)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
 
-    N = size(returns, 2)
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
-    @variable(model, w[1:N])
+    @variable(model, w[1:size(returns, 2)])
+
+    if !isempty(w_ini)
+        @smart_assert(length(w_ini) == length(w))
+        set_start_value.(w, w_ini)
+    end
 
     set_sr_k(obj, model)
-    kelly_approx_idx = risk_constraints(port, obj, type, rm, mu, sigma, returns)
-    return_constraints(port, obj, kelly, type, class, mu, sigma, returns, kelly_approx_idx)
+    kelly_approx_idx = risk_constraints(port, obj, Trad2(), rm, mu, sigma, returns)
+    return_constraints(port, obj, kelly, Trad2(), class, mu, sigma, returns,
+                       kelly_approx_idx)
     linear_constraints(port, obj)
     centrality_constraints(port, obj)
     weight_constraints(port, obj)
     num_assets_constraints(port, obj)
-    network_constraints(port, obj, type)
+    network_constraints(port, port.network_method, obj, Trad2())
     tracking_err_constraints(port.tracking_err, port, returns, obj)
     turnover_constraints(port, obj)
     rebalance_constraints(port, obj)
-    objective_function(port, obj, type, class, kelly)
-    return convex_optimisation(port, obj, type, class)
+    objective_function(port, obj, Trad2(), class, kelly)
+    return convex_optimisation(port, obj, Trad2(), class)
+end
+function _optimise!(::WC2, port::Portfolio2, rm::Union{AbstractVector, <:TradRiskMeasure},
+                    obj::ObjectiveFunction, kelly::RetType, class::PortClass,
+                    w_ini::AbstractVector, str_names::Bool, save_params::Bool)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+
+    port.model = JuMP.Model()
+    model = port.model
+    set_string_names_on_creation(model, str_names)
+    @variable(model, w[1:size(returns, 2)])
+
+    if !isempty(w_ini)
+        @smart_assert(length(w_ini) == length(w))
+        set_start_value.(w, w_ini)
+    end
+
+    set_sr_k(obj, model)
+    # ! Gotta check these.
+    # kelly_approx_idx = risk_constraints(port, obj, Trad2(), rm, mu, sigma, returns)
+    # return_constraints(port, obj, kelly, Trad2(), class, mu, sigma, returns,
+    #                    kelly_approx_idx)
+    linear_constraints(port, obj)
+    centrality_constraints(port, obj)
+    weight_constraints(port, obj)
+    num_assets_constraints(port, obj)
+    network_constraints(port, obj, WC2())
+    tracking_err_constraints(port.tracking_err, port, returns, obj)
+    turnover_constraints(port, obj)
+    rebalance_constraints(port, obj)
+    objective_function(port, obj, WC2(), class, kelly)
+    return convex_optimisation(port, obj, WC2(), class)
+end
+function optimise2!(port::Portfolio2; rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
+                    type::PortType = Trad2(), obj::ObjectiveFunction = MinRisk(),
+                    kelly::RetType = NoKelly(), class::PortClass = Classic2(),
+                    w_ini::AbstractVector = Vector{Float64}(undef, 0),
+                    str_names::Bool = false, save_params::Bool = false)
+    return _optimise!(type, port, rm, obj, kelly, class, w_ini, str_names, save_params)
 end
 export set_rm, MinRisk, Util, SR, MaxRet, Trad2, optimise2!
 

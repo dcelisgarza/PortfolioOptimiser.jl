@@ -4,14 +4,19 @@ portfolio = Portfolio2(; prices = prices,
                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                         :params => Dict("verbose" => false))))
 asset_statistics2!(portfolio)
-@time w1 = optimise2!(portfolio; rm = CDaR2(), obj = SR())
+@time w1 = optimise2!(portfolio; rm = Skew2(; settings = RiskMeasureSettings(; ub = r1)),
+                      obj = MaxRet())
 
+r1 = calc_risk(portfolio2; rm = :Skew)
+
+deepcopy(portfolio)
 String(SR())
 portfolio2 = Portfolio(; prices = prices,
                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                         :params => Dict("verbose" => false))))
 asset_statistics!(portfolio2)
-@time w2 = optimise!(portfolio2, OptimiseOpt(; obj = :Sharpe, rm = :CDaR))
+portfolio2.skew_u = r1
+@time w2 = optimise!(portfolio2, OptimiseOpt(; obj = :Max_Ret, rm = :Skew))
 
 a = CVaR2()
 size(a)

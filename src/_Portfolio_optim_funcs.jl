@@ -1743,7 +1743,6 @@ function _setup_trad_wc_constraints(portfolio, obj, T, N, type, class, kelly, l,
     _setup_turnover(portfolio, N, obj)
     _setup_rebalance(portfolio, N, obj)
     _setup_trad_wc_objective_function(portfolio, type, obj, class, kelly, l)
-
     return nothing
 end
 
@@ -1972,11 +1971,7 @@ function _p_save_opt_params(portfolio, opt, string_names, save_opt_params)
 end
 
 function _setup_model_class(portfolio, class, hist)
-    mu, sigma, returns = (Vector{eltype(portfolio.mu)}(undef, 0),
-                          Matrix{eltype(portfolio.cov)}(undef, 0, 0),
-                          Matrix{eltype(portfolio.returns)}(undef, 0, 0))
-
-    if class != :Classic
+    if class ∉ (:Classic, :FC)
         @smart_assert(hist ∈ ClassHist)
     end
 
@@ -2131,8 +2126,6 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
     w_ini = opt.w_ini
     w_min = opt.w_min
     w_max = opt.w_max
-
-    @smart_assert(obj ∈ ObjFuncs)
 
     if near_opt
         w_min = opt.w_min
