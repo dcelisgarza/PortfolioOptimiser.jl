@@ -8,8 +8,8 @@ struct MinRisk <: ObjectiveFunction end
 @kwdef mutable struct Util{T1 <: Real} <: ObjectiveFunction
     l::T1 = 2.0
 end
-@kwdef mutable struct SR{T1<:Real} <: ObjectiveFunction 
-rf::T1=0.0
+@kwdef mutable struct SR{T1 <: Real} <: ObjectiveFunction
+    rf::T1 = 0.0
 end
 struct MaxRet <: ObjectiveFunction end
 
@@ -18,6 +18,14 @@ struct Trad2 <: PortType end
 struct RP2 <: PortType end
 struct RRP2 <: PortType end
 struct WC2 <: PortType end
+Base.String(::Trad2) = "Trad2"
+Base.Symbol(::Trad2) = :Trad2
+Base.String(::RP2) = "RP2"
+Base.Symbol(::RP2) = :RP2
+Base.String(::RRP2) = "RRP2"
+Base.Symbol(::RRP2) = :RRP2
+Base.String(::WC2) = "WC2"
+Base.Symbol(::WC2) = :WC2
 
 abstract type RetType end
 struct NoKelly <: RetType end
@@ -26,6 +34,7 @@ struct EKelly <: RetType end
 
 abstract type PortClass end
 struct Classic2 <: PortClass end
+struct FC2 <: PortClass end
 
 abstract type TrackingErr end
 struct NoTracking <: TrackingErr end
@@ -879,7 +888,7 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                     f_timestamps::AbstractVector = Vector{Date}(undef, 0),
                     f_assets::AbstractVector = Vector{String}(undef, 0),
                     loadings::DataFrame = DataFrame(),
-                    loadings_opt::Union{LoadingsOpt, <:RegressionType, Nothing} = nothing,
+                    loadings_opt::Union{<:LoadingsOpt, <:RegressionType, Nothing} = nothing,
                     msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
                     lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
                     alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
@@ -887,11 +896,11 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                     kappa::Real = 0.3, max_num_assets_kurt::Integer = 0,
                     max_num_assets_kurt_scale::Integer = 2, skew_factor::Real = Inf,
                     sskew_factor::Real = Inf,
-                    rebalance::Union{Real, AbstractVector{<:Real}} = Inf,
+                    rebalance::Union{<:Real, <:AbstractVector{<:Real}} = Inf,
                     rebalance_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                    turnover::Union{Real, AbstractVector{<:Real}} = Inf,
+                    turnover::Union{<:Real, <:AbstractVector{<:Real}} = Inf,
                     turnover_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                    kind_tracking_err::Symbol = :None, tracking_err::Real = Inf,
+                    kind_tracking_err::TrackingErr = NoTracking(), tracking_err::Real = Inf,
                     tracking_err_returns::AbstractVector{<:Real} = Vector{Float64}(undef,
                                                                                    0),
                     tracking_err_weights::AbstractVector{<:Real} = Vector{Float64}(undef,
@@ -901,7 +910,7 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                     b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                     risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                     f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                    network_method::Symbol = :None,
+                    network_method::NetworkMethods2 = NoNtwk(),
                     network_sdp::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                     network_penalty::Real = 0.05,
                     network_ip::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -1008,7 +1017,6 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
     if !isempty(turnover_weights)
         @smart_assert(length(turnover_weights) == size(returns, 2))
     end
-    @smart_assert(kind_tracking_err ∈ TrackingErrKinds)
     @smart_assert(tracking_err >= zero(tracking_err))
     if !isempty(tracking_err_returns)
         @smart_assert(length(tracking_err_returns) == size(returns, 1))
@@ -1019,7 +1027,6 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
     if !isempty(bl_bench_weights)
         @smart_assert(length(bl_bench_weights) == size(returns, 2))
     end
-    @smart_assert(network_method ∈ NetworkMethods)
     if !isempty(network_sdp)
         @smart_assert(size(network_sdp) == (size(returns, 2), size(returns, 2)))
     end
@@ -1130,66 +1137,83 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                       typeof(short_u), typeof(long_u), typeof(num_assets_l),
                       typeof(num_assets_u), typeof(num_assets_u_scale), typeof(f_assets),
                       typeof(f_timestamps), typeof(f_returns), typeof(loadings),
-                      Union{LoadingsOpt, <:RegressionType, Nothing},
-                      Union{<:Real, AbstractVector{<:Real}},
-                      Union{<:Real, AbstractVector{<:Real}}, typeof(alpha_i), typeof(alpha),
-                      typeof(a_sim), typeof(beta_i), typeof(beta), typeof(b_sim),
-                      typeof(kappa), typeof(max_num_assets_kurt),
+                      Union{<:LoadingsOpt, <:RegressionType, Nothing},
+                      Union{<:Real, <:AbstractVector{<:Real}},
+                      Union{<:Real, <:AbstractVector{<:Real}}, typeof(alpha_i),
+                      typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
+                      typeof(b_sim), typeof(kappa), typeof(max_num_assets_kurt),
                       typeof(max_num_assets_kurt_scale), typeof(skew_factor),
-                      typeof(sskew_factor), Union{<:Real, AbstractVector{<:Real}},
-                      typeof(rebalance_weights), Union{<:Real, AbstractVector{<:Real}},
-                      typeof(turnover_weights), typeof(kind_tracking_err),
-                      typeof(tracking_err), typeof(tracking_err_returns),
-                      typeof(tracking_err_weights), typeof(bl_bench_weights),
-                      typeof(a_mtx_ineq), typeof(b_vec_ineq), typeof(risk_budget),
-                      typeof(f_risk_budget), typeof(network_method), typeof(network_sdp),
-                      typeof(network_penalty), typeof(network_ip), typeof(network_ip_scale),
-                      typeof(a_vec_cent), typeof(b_cent), typeof(mu_l), typeof(sd_u),
-                      typeof(mad_u), typeof(ssd_u), typeof(cvar_u), typeof(rcvar_u),
-                      typeof(evar_u), typeof(rvar_u), typeof(wr_u), typeof(rg_u),
-                      typeof(flpm_u), typeof(slpm_u), typeof(mdd_u), typeof(add_u),
-                      typeof(cdar_u), typeof(uci_u), typeof(edar_u), typeof(rdar_u),
-                      typeof(kurt_u), typeof(skurt_u), typeof(gmd_u), typeof(tg_u),
-                      typeof(rtg_u), typeof(owa_u), typeof(dvar_u), typeof(skew_u),
-                      typeof(sskew_u), typeof(owa_p), typeof(owa_w), typeof(mu),
-                      typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2), typeof(S_2),
-                      typeof(skew), typeof(V), typeof(sskew), typeof(SV), typeof(f_mu),
-                      typeof(f_cov), typeof(fm_returns), typeof(fm_mu), typeof(fm_cov),
-                      typeof(bl_mu), typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov),
-                      typeof(cov_l), typeof(cov_u), typeof(cov_mu), typeof(cov_sigma),
-                      typeof(d_mu), typeof(k_mu), typeof(k_sigma), typeof(optimal),
-                      typeof(z), typeof(limits), typeof(frontier),
+                      typeof(sskew_factor), Union{<:Real, <:AbstractVector{<:Real}},
+                      typeof(rebalance_weights), Union{<:Real, <:AbstractVector{<:Real}},
+                      typeof(turnover_weights), TrackingErr, typeof(tracking_err),
+                      typeof(tracking_err_returns), typeof(tracking_err_weights),
+                      typeof(bl_bench_weights), typeof(a_mtx_ineq), typeof(b_vec_ineq),
+                      typeof(risk_budget), typeof(f_risk_budget), NetworkMethods2,
+                      typeof(network_sdp), typeof(network_penalty), typeof(network_ip),
+                      typeof(network_ip_scale), typeof(a_vec_cent), typeof(b_cent),
+                      typeof(mu_l), typeof(sd_u), typeof(mad_u), typeof(ssd_u),
+                      typeof(cvar_u), typeof(rcvar_u), typeof(evar_u), typeof(rvar_u),
+                      typeof(wr_u), typeof(rg_u), typeof(flpm_u), typeof(slpm_u),
+                      typeof(mdd_u), typeof(add_u), typeof(cdar_u), typeof(uci_u),
+                      typeof(edar_u), typeof(rdar_u), typeof(kurt_u), typeof(skurt_u),
+                      typeof(gmd_u), typeof(tg_u), typeof(rtg_u), typeof(owa_u),
+                      typeof(dvar_u), typeof(skew_u), typeof(sskew_u), typeof(owa_p),
+                      typeof(owa_w), typeof(mu), typeof(cov), typeof(kurt), typeof(skurt),
+                      typeof(L_2), typeof(S_2), typeof(skew), typeof(V), typeof(sskew),
+                      typeof(SV), typeof(f_mu), typeof(f_cov), typeof(fm_returns),
+                      typeof(fm_mu), typeof(fm_cov), typeof(bl_mu), typeof(bl_cov),
+                      typeof(blfm_mu), typeof(blfm_cov), typeof(cov_l), typeof(cov_u),
+                      typeof(cov_mu), typeof(cov_sigma), typeof(d_mu), typeof(k_mu),
+                      typeof(k_sigma), typeof(optimal), typeof(z), typeof(limits),
+                      typeof(frontier), Union{<:AbstractDict, NamedTuple},
+                      Union{<:AbstractDict, NamedTuple}, typeof(fail), typeof(model),
+                      typeof(latest_prices), typeof(alloc_optimal),
                       Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                      typeof(fail), typeof(model), typeof(latest_prices),
-                      typeof(alloc_optimal), Union{<:AbstractDict, NamedTuple},
-                      Union{<:AbstractDict, NamedTuple}, typeof(alloc_fail),
-                      typeof(alloc_model)}(assets, timestamps, returns, short, short_u,
-                                           long_u, num_assets_l, num_assets_u,
-                                           num_assets_u_scale, f_assets, f_timestamps,
-                                           f_returns, loadings, loadings_opt, msv_target,
-                                           lpm_target, alpha_i, alpha, a_sim, beta_i, beta,
-                                           b_sim, kappa, max_num_assets_kurt,
-                                           max_num_assets_kurt_scale, skew_factor,
-                                           sskew_factor, rebalance, rebalance_weights,
-                                           turnover, turnover_weights, kind_tracking_err,
-                                           tracking_err, tracking_err_returns,
-                                           tracking_err_weights, bl_bench_weights,
-                                           a_mtx_ineq, b_vec_ineq, risk_budget,
-                                           f_risk_budget, network_method, network_sdp,
-                                           network_penalty, network_ip, network_ip_scale,
-                                           a_vec_cent, b_cent, mu_l, sd_u, mad_u, ssd_u,
-                                           cvar_u, rcvar_u, evar_u, rvar_u, wr_u, rg_u,
-                                           flpm_u, slpm_u, mdd_u, add_u, cdar_u, uci_u,
-                                           edar_u, rdar_u, kurt_u, skurt_u, gmd_u, tg_u,
-                                           rtg_u, owa_u, dvar_u, skew_u, sskew_u, owa_p,
-                                           owa_w, mu, cov, kurt, skurt, L_2, S_2, skew, V,
-                                           sskew, SV, f_mu, f_cov, fm_returns, fm_mu,
-                                           fm_cov, bl_mu, bl_cov, blfm_mu, blfm_cov, cov_l,
-                                           cov_u, cov_mu, cov_sigma, d_mu, k_mu, k_sigma,
-                                           optimal, z, limits, frontier, solvers,
-                                           opt_params, fail, model, latest_prices,
-                                           alloc_optimal, alloc_solvers, alloc_params,
-                                           alloc_fail, alloc_model)
+                      typeof(alloc_fail), typeof(alloc_model)}(assets, timestamps, returns,
+                                                               short, short_u, long_u,
+                                                               num_assets_l, num_assets_u,
+                                                               num_assets_u_scale, f_assets,
+                                                               f_timestamps, f_returns,
+                                                               loadings, loadings_opt,
+                                                               msv_target, lpm_target,
+                                                               alpha_i, alpha, a_sim,
+                                                               beta_i, beta, b_sim, kappa,
+                                                               max_num_assets_kurt,
+                                                               max_num_assets_kurt_scale,
+                                                               skew_factor, sskew_factor,
+                                                               rebalance, rebalance_weights,
+                                                               turnover, turnover_weights,
+                                                               kind_tracking_err,
+                                                               tracking_err,
+                                                               tracking_err_returns,
+                                                               tracking_err_weights,
+                                                               bl_bench_weights, a_mtx_ineq,
+                                                               b_vec_ineq, risk_budget,
+                                                               f_risk_budget,
+                                                               network_method, network_sdp,
+                                                               network_penalty, network_ip,
+                                                               network_ip_scale, a_vec_cent,
+                                                               b_cent, mu_l, sd_u, mad_u,
+                                                               ssd_u, cvar_u, rcvar_u,
+                                                               evar_u, rvar_u, wr_u, rg_u,
+                                                               flpm_u, slpm_u, mdd_u, add_u,
+                                                               cdar_u, uci_u, edar_u,
+                                                               rdar_u, kurt_u, skurt_u,
+                                                               gmd_u, tg_u, rtg_u, owa_u,
+                                                               dvar_u, skew_u, sskew_u,
+                                                               owa_p, owa_w, mu, cov, kurt,
+                                                               skurt, L_2, S_2, skew, V,
+                                                               sskew, SV, f_mu, f_cov,
+                                                               fm_returns, fm_mu, fm_cov,
+                                                               bl_mu, bl_cov, blfm_mu,
+                                                               blfm_cov, cov_l, cov_u,
+                                                               cov_mu, cov_sigma, d_mu,
+                                                               k_mu, k_sigma, optimal, z,
+                                                               limits, frontier, solvers,
+                                                               opt_params, fail, model,
+                                                               latest_prices, alloc_optimal,
+                                                               alloc_solvers, alloc_params,
+                                                               alloc_fail, alloc_model)
 end
 
 function Base.getproperty(obj::Portfolio2, sym::Symbol)
@@ -1254,8 +1278,6 @@ function Base.setproperty!(obj::Portfolio2, sym::Symbol, val)
             @smart_assert(length(val) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym == :kind_tracking_err
-        @smart_assert(val ∈ TrackingErrKinds)
     elseif sym == :tracking_err
         @smart_assert(val >= zero(val))
         val = convert(typeof(getfield(obj, sym)), val)
@@ -1274,8 +1296,6 @@ function Base.setproperty!(obj::Portfolio2, sym::Symbol, val)
             @smart_assert(size(val, 2) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym == :network_method
-        @smart_assert(val ∈ NetworkMethods)
     elseif sym == :network_sdp
         if !isempty(val)
             @smart_assert(size(val) == (size(obj.returns, 2), size(obj.returns, 2)))
@@ -1380,21 +1400,21 @@ function Base.deepcopy(obj::Portfolio2)
                       typeof(obj.num_assets_l), typeof(obj.num_assets_u),
                       typeof(obj.num_assets_u_scale), typeof(obj.f_assets),
                       typeof(obj.f_timestamps), typeof(obj.f_returns), typeof(obj.loadings),
-                      Union{LoadingsOpt, <:RegressionType, Nothing},
-                      Union{<:Real, AbstractVector{<:Real}},
-                      Union{<:Real, AbstractVector{<:Real}}, typeof(obj.alpha_i),
+                      Union{<:LoadingsOpt, <:RegressionType, Nothing},
+                      Union{<:Real, <:AbstractVector{<:Real}},
+                      Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.alpha_i),
                       typeof(obj.alpha), typeof(obj.a_sim), typeof(obj.beta_i),
                       typeof(obj.beta), typeof(obj.b_sim), typeof(obj.kappa),
                       typeof(obj.max_num_assets_kurt),
                       typeof(obj.max_num_assets_kurt_scale), typeof(obj.skew_factor),
-                      typeof(obj.sskew_factor), Union{<:Real, AbstractVector{<:Real}},
-                      typeof(obj.rebalance_weights), Union{<:Real, AbstractVector{<:Real}},
-                      typeof(obj.turnover_weights), typeof(obj.kind_tracking_err),
-                      typeof(obj.tracking_err), typeof(obj.tracking_err_returns),
-                      typeof(obj.tracking_err_weights), typeof(obj.bl_bench_weights),
-                      typeof(obj.a_mtx_ineq), typeof(obj.b_vec_ineq),
-                      typeof(obj.risk_budget), typeof(obj.f_risk_budget),
-                      typeof(obj.network_method), typeof(obj.network_sdp),
+                      typeof(obj.sskew_factor), Union{<:Real, <:AbstractVector{<:Real}},
+                      typeof(obj.rebalance_weights),
+                      Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.turnover_weights),
+                      TrackingErr, typeof(obj.tracking_err),
+                      typeof(obj.tracking_err_returns), typeof(obj.tracking_err_weights),
+                      typeof(obj.bl_bench_weights), typeof(obj.a_mtx_ineq),
+                      typeof(obj.b_vec_ineq), typeof(obj.risk_budget),
+                      typeof(obj.f_risk_budget), NetworkMethods2, typeof(obj.network_sdp),
                       typeof(obj.network_penalty), typeof(obj.network_ip),
                       typeof(obj.network_ip_scale), typeof(obj.a_vec_cent),
                       typeof(obj.b_cent), typeof(obj.mu_l), typeof(obj.sd_u),
@@ -1849,8 +1869,8 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                       sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                       SV = Matrix{eltype(returns)}(undef, 0, 0),
                       bins_info::Union{Symbol, <:Integer} = :KN,
-                      w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
-                      w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
+                      w_min::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+                      w_max::Union{<:Real, <:AbstractVector{<:Real}} = 1.0,
                       cor_method::Symbol = :Pearson,
                       cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                       dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -1958,8 +1978,8 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                         typeof(owa_w), typeof(mu), typeof(cov), typeof(kurt), typeof(skurt),
                         typeof(L_2), typeof(S_2), typeof(skew), typeof(V), typeof(sskew),
                         typeof(SV), Union{Symbol, <:Integer},
-                        Union{<:Real, AbstractVector{<:Real}},
-                        Union{<:Real, AbstractVector{<:Real}}, typeof(cor_method),
+                        Union{<:Real, <:AbstractVector{<:Real}},
+                        Union{<:Real, <:AbstractVector{<:Real}}, typeof(cor_method),
                         typeof(cor), typeof(dist), typeof(clusters), typeof(k),
                         typeof(optimal), Union{<:AbstractDict, NamedTuple},
                         Union{<:AbstractDict, NamedTuple}, typeof(fail),
@@ -2093,8 +2113,8 @@ function Base.deepcopy(obj::HCPortfolio2)
                         typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt),
                         typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2),
                         typeof(obj.skew), typeof(obj.V), typeof(obj.sskew), typeof(obj.SV),
-                        Union{Symbol, <:Integer}, Union{<:Real, AbstractVector{<:Real}},
-                        Union{<:Real, AbstractVector{<:Real}}, typeof(obj.cor_method),
+                        Union{Symbol, <:Integer}, Union{<:Real, <:AbstractVector{<:Real}},
+                        Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.cor_method),
                         typeof(obj.cor), typeof(obj.dist), typeof(obj.clusters),
                         typeof(obj.k), typeof(obj.optimal),
                         Union{<:AbstractDict, NamedTuple},

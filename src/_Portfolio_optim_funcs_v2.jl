@@ -96,7 +96,7 @@ function _sdp(port, obj)
     end
     return nothing
 end
-function num_assets_weight_constraints(port, ::SR)
+function num_assets_constraints(port, ::SR)
     if port.num_assets_u > 0
         N = size(port.returns, 2)
         model = port.model
@@ -118,7 +118,7 @@ function num_assets_weight_constraints(port, ::SR)
     end
     return nothing
 end
-function num_assets_weight_constraints(port, ::Any)
+function num_assets_constraints(port, ::Any)
     if port.num_assets_u > 0
         N = size(port.returns, 2)
         model = port.model
@@ -1567,6 +1567,23 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
     end
     return nothing
 end
+function risk_constraints(port, obj, type::Union{Trad2, RP2}, rm, mu, sigma, returns)
+    kelly_approx_idx = Int[]
+    if !isa(rm, AbstractVector)
+        rm = (rm,)
+    end
+    for rv ∈ rm
+        if !isa(rv, AbstractVector)
+            rv = (rv,)
+        end
+        count = length(rv)
+        for (i, r) ∈ enumerate(rv)
+            set_rm(port, r, type, obj, count, i; mu = mu, sigma = sigma, returns = returns,
+                   kelly_approx_idx = kelly_approx_idx)
+        end
+    end
+    return kelly_approx_idx
+end
 function _return_bounds(::Any, model, mu_l::Real)
     if isfinite(mu_l)
         @constraint(model, _ret >= mu_l)
@@ -1770,6 +1787,9 @@ function _tracking_err_constraints(::SR, model, returns, tracking_err, benchmark
     @constraint(model, t_track_err <= tracking_err * model[:k] * sqrt(T - 1))
     return nothing
 end
+function tracking_err_constraints(::Any, args...)
+    return nothing
+end
 function tracking_err_constraints(::TrackWeight, port, returns, obj)
     if !(isempty(isempty(port.tracking_err_weights)) || isinf(port.tracking_err))
         _tracking_err_constraints(obj, port.model, returns, port.tracking_err,
@@ -1863,8 +1883,114 @@ function objective_function(port, obj, type, class, kelly)
     if haskey(port.model, :sum_t_rebal)
         npf = port.model[:sum_t_rebal]
     end
-    _sr_objective(obj, type, class, kelly, port.model, npf, rbf)
+    _objective(obj, type, class, kelly, port.model, npf, rbf)
     return nothing
+end
+function _cleanup_weights(port, ::SR, ::Union{Trad2, WC2}, ::Any)
+    val_k = value(port.model[:k])
+    val_k = val_k > 0 ? val_k : 1
+    weights = value.(port.model[:w]) / val_k
+    short = port.short
+    sum_short_long = port.sum_short_long
+    if short == false
+        sum_w = sum(abs.(weights))
+        sum_w = sum_w > eps() ? sum_w : 1
+        weights .= abs.(weights) / sum_w * sum_short_long
+    end
+    return weights
+end
+function _cleanup_weights(port, ::Any, ::Union{Trad2, WC2}, ::Any)
+    weights = value.(port.model[:w])
+    short = port.short
+    sum_short_long = port.sum_short_long
+    if short == false
+        sum_w = sum(abs.(weights))
+        sum_w = sum_w > eps() ? sum_w : 1
+        weights .= abs.(weights) / sum_w * sum_short_long
+    end
+    return weights
+end
+function _cleanup_weights(port, ::Any, ::RP2, ::FC2)
+    weights = value.(port.model[:w])
+    sum_w = value(port.model[:k])
+    sum_w = sum_w > eps() ? sum_w : 1
+    weights .= weights / sum_w
+    return weights
+end
+function _cleanup_weights(port, ::Any, ::RP2, ::Any)
+    weights = value.(port.model[:w])
+    sum_w = sum(abs.(weights))
+    sum_w = sum_w > eps() ? sum_w : 1
+    weights .= abs.(weights) / sum_w
+    return weights
+end
+function _cleanup_weights(port, ::Any, ::RRP2, ::Any)
+    weights = value.(port.model[:w])
+    sum_w = sum(abs.(weights))
+    sum_w = sum_w > eps() ? sum_w : 1
+    weights .= abs.(weights) / sum_w
+    return weights
+end
+function convex_optimisation(port, obj, type, class)
+    solvers = port.solvers
+    model = port.model
+
+    term_status = termination_status(model)
+    solvers_tried = Dict()
+
+    fail = true
+    strtype = "_" * String(type)
+    for (key, val) ∈ solvers
+        key = Symbol(String(key) * strtype)
+
+        if haskey(val, :solver)
+            set_optimizer(model, val[:solver])
+        end
+
+        if haskey(val, :params)
+            for (attribute, value) ∈ val[:params]
+                set_attribute(model, attribute, value)
+            end
+        end
+
+        try
+            JuMP.optimize!(model)
+        catch jump_error
+            push!(solvers_tried, key => Dict(:jump_error => jump_error))
+            continue
+        end
+
+        term_status = termination_status(model)
+        all_finite_weights = all(isfinite.(value.(model[:w])))
+        all_non_zero_weights = !all(isapprox.(abs.(value.(model[:w])),
+                                              zero(eltype(port.returns))))
+
+        if term_status ∈ ValidTermination && all_finite_weights && all_non_zero_weights
+            fail = false
+            break
+        end
+
+        weights = _cleanup_weights(port, obj, type, class)
+
+        push!(solvers_tried,
+              key => Dict(:objective_val => objective_value(model),
+                          :term_status => term_status,
+                          :params => haskey(val, :params) ? val[:params] : missing,
+                          :finite_weights => all_finite_weights,
+                          :nonzero_weights => all_non_zero_weights,
+                          :portfolio => DataFrame(; tickers = port.assets,
+                                                  weights = weights)))
+    end
+
+    return if fail
+        @warn("Model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
+        port.fail = solvers_tried
+        port.optimal[Symbol(type)] = DataFrame()
+    else
+        isempty(solvers_tried) ? port.fail = Dict() : port.fail = solvers_tried
+        weights = _cleanup_weights(port, obj, type, class)
+        port.optimal[Symbol(type)] = DataFrame(; tickers = port.assets, weights = weights)
+    end
 end
 function optimise2!(port::Portfolio2;
                     rm::Union{AbstractVector{<:TradRiskMeasure}, <:TradRiskMeasure} = SD2(),
@@ -1878,35 +2004,20 @@ function optimise2!(port::Portfolio2;
     model = port.model
     set_string_names_on_creation(model, str_names)
     @variable(model, w[1:N])
+
     set_sr_k(obj, model)
-
-    kelly_approx_idx = Int[]
-    if !isa(rm, AbstractVector)
-        rm = (rm,)
-    end
-    for rv ∈ rm
-        if !isa(rv, AbstractVector)
-            rv = (rv,)
-        end
-        count = length(rv)
-        for (i, r) ∈ enumerate(rv)
-            set_rm(port, r, type, obj, count, i; mu = mu, sigma = sigma, returns = returns,
-                   kelly_approx_idx = kelly_approx_idx)
-        end
-    end
-
+    kelly_approx_idx = risk_constraints(port, obj, type, rm, mu, sigma, returns)
     return_constraints(port, obj, kelly, type, class, mu, sigma, returns, kelly_approx_idx)
     linear_constraints(port, obj)
     centrality_constraints(port, obj)
     weight_constraints(port, obj)
-    num_assets_weight_constraints(port, obj)
+    num_assets_constraints(port, obj)
     network_constraints(port, obj, type)
     tracking_err_constraints(port.tracking_err, port, returns, obj)
     turnover_constraints(port, obj)
     rebalance_constraints(port, obj)
     objective_function(port, obj, type, class, kelly)
-
-    return nothing
+    return convex_optimisation(port, obj, type, class)
 end
 export set_rm, MinRisk, Util, SR, MaxRet, Trad2, optimise2!
 

@@ -1,36 +1,17 @@
 using CSV, TimeSeries, JuMP, Test, Clarabel, StatsBase, PortfolioOptimiser
-
-rms = [SD2(), MAD2(), SSD2(), FLPM2(), SLPM2(), WR2(), CVaR2(), EVaR2(), RVaR2(), MDD2(),
-       ADD2(), CDaR2(), UCI2(), EDaR2(), RDaR2(), Kurt2(), SKurt2(), GMD2(), RG2(),
-       RCVaR2(), TG2(), RTG2(), OWA2(), DVar2(), Skew2(), SSkew2(), Variance2(), Equal2(),
-       VaR2(), DaR2(), DaR_r2(), MDD_r2(), ADD_r2(), CDaR_r2(), UCI_r2(), EDaR_r2(),
-       RDaR_r2(), CVaR2(; alpha = BigFloat(0.1))]
-
-rms = Dict(1 => [CVaR2(), CVaR2(; alpha = 0.1)], 2 => CDaR2())
-
-rms2 = sortperm(string.(typeof.(rms)))
-@time for rm ∈ rms2
-    idx = findall(x -> typeof(x) == typeof(rm), rms2)
-    # println(rms2[idx])
-    rms2 = setdiff(rms2, rms2[idx])
-end
-
-Base.iterate(obj::CVaR2) = obj
-rm = (CVaR2(),)
-
 prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 portfolio = Portfolio2(; prices = prices,
                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                         :params => Dict("verbose" => false))))
 asset_statistics2!(portfolio)
-optimise2!(portfolio)
-for rv ∈ rm
-    #     count = length(rv)
-    println(rv)
-    #     for (i, r) ∈ enumerate(rv)
-    #         println(i)
-    #     end
-end
+@time w1 = optimise2!(portfolio; rm = CDaR2(), obj = SR())
+
+String(SR())
+portfolio2 = Portfolio(; prices = prices,
+                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                        :params => Dict("verbose" => false))))
+asset_statistics!(portfolio2)
+@time w2 = optimise!(portfolio2, OptimiseOpt(; obj = :Sharpe, rm = :CDaR))
 
 a = CVaR2()
 size(a)
