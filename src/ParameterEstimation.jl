@@ -2088,9 +2088,6 @@ end
 abstract type WorstCaseKMethod end
 struct WorstCaseKNormal <: WorstCaseKMethod end
 struct WorstCaseKGeneral <: WorstCaseKMethod end
-abstract type WorstCaseSet end
-struct WorstCaseBox <: WorstCaseSet end
-struct WorstCaseEllipse <: WorstCaseSet end
 function _bootstrap_func(::StationaryBootstrap)
     return pyimport("arch.bootstrap").StationaryBootstrap
 end
@@ -2128,9 +2125,8 @@ function gen_bootstrap(method::WorstCaseArch, cov_type::PortfolioOptimiserCovCor
 
     return covs, mus
 end
-function calc_sets(::WorstCaseBox, method::WorstCaseArch,
-                   cov_type::PortfolioOptimiserCovCor, mu_type::MeanEstimator,
-                   X::AbstractMatrix, ::Any, ::Any)
+function calc_sets(::WCBox, method::WorstCaseArch, cov_type::PortfolioOptimiserCovCor,
+                   mu_type::MeanEstimator, X::AbstractMatrix, ::Any, ::Any)
     q = method.q
     N = size(X, 2)
 
@@ -2147,10 +2143,9 @@ function calc_sets(::WorstCaseBox, method::WorstCaseArch,
 
     return cov_l, cov_u, d_mu, nothing, nothing
 end
-function calc_sets(::WorstCaseEllipse, method::WorstCaseArch,
-                   cov_type::PortfolioOptimiserCovCor, mu_type::MeanEstimator,
-                   X::AbstractMatrix, sigma::AbstractMatrix, mu::AbstractVector, ::Any,
-                   ::Any)
+function calc_sets(::WCEllipse, method::WorstCaseArch, cov_type::PortfolioOptimiserCovCor,
+                   mu_type::MeanEstimator, X::AbstractMatrix, sigma::AbstractMatrix,
+                   mu::AbstractVector, ::Any, ::Any)
     covs, mus = gen_bootstrap(method, cov_type, mu_type, X)
 
     A_sigma = vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma) for cov_s ∈ covs])
@@ -2161,7 +2156,7 @@ function calc_sets(::WorstCaseEllipse, method::WorstCaseArch,
 
     return cov_sigma, cov_mu, A_sigma, A_mu
 end
-function calc_sets(::WorstCaseBox, method::WorstCaseNormal, ::Any, ::Any, X::AbstractMatrix,
+function calc_sets(::WCBox, method::WorstCaseNormal, ::Any, ::Any, X::AbstractMatrix,
                    sigma::AbstractMatrix, ::Any)
     Random.seed!(method.rng, method.seed)
     q = method.q
@@ -2177,10 +2172,9 @@ function calc_sets(::WorstCaseBox, method::WorstCaseNormal, ::Any, ::Any, X::Abs
 
     return cov_l, cov_u, d_mu, covs, cov_mu
 end
-function calc_sets(::WorstCaseEllipse, method::WorstCaseNormal,
-                   cov_type::PortfolioOptimiserCovCor, mu_type::MeanEstimator,
-                   X::AbstractMatrix, sigma::AbstractMatrix, mu::AbstractVector,
-                   covs::Union{AbstractMatrix, Nothing},
+function calc_sets(::WCEllipse, method::WorstCaseNormal, cov_type::PortfolioOptimiserCovCor,
+                   mu_type::MeanEstimator, X::AbstractMatrix, sigma::AbstractMatrix,
+                   mu::AbstractVector, covs::Union{AbstractMatrix, Nothing},
                    cov_mu::Union{AbstractMatrix, Nothing})
     Random.seed!(method.rng, method.seed)
     T = size(X, 1)
@@ -2196,7 +2190,7 @@ function calc_sets(::WorstCaseEllipse, method::WorstCaseNormal,
     cov_sigma = T * (I + K) * kron(cov_mu, cov_mu)
     return cov_sigma, cov_mu, A_sigma, A_mu
 end
-function calc_sets(::WorstCaseBox, method::WorstCaseDelta, ::Any, ::Any, X::AbstractMatrix,
+function calc_sets(::WCBox, method::WorstCaseDelta, ::Any, ::Any, X::AbstractMatrix,
                    sigma::AbstractMatrix, mu::AbstractVector)
     d_mu = method.dmu * abs.(mu)
     cov_l = sigma - method.dcov * abs.(sigma)

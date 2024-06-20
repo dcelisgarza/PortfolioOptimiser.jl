@@ -73,7 +73,7 @@ function wc_statistics2!(portfolio::Portfolio2, wc::WCType = WCType(); set_box::
     covs = nothing
     cov_mu = nothing
     if set_box
-        cov_l, cov_u, d_mu, covs, cov_mu = calc_sets(WorstCaseBox(), wc.box, wc.cov_type,
+        cov_l, cov_u, d_mu, covs, cov_mu = calc_sets(WCBox(), wc.box, wc.cov_type,
                                                      wc.mu_type, returns, sigma, mu)
         posdef_fix!(posdef, cov_l)
         posdef_fix!(posdef, cov_u)
@@ -84,9 +84,9 @@ function wc_statistics2!(portfolio::Portfolio2, wc::WCType = WCType(); set_box::
     end
 
     if set_ellipse
-        cov_sigma, cov_mu, A_sigma, A_mu = calc_sets(WorstCaseEllipse(), wc.ellipse,
-                                                     wc.cov_type, wc.mu_type, returns,
-                                                     sigma, mu, covs, cov_mu)
+        cov_sigma, cov_mu, A_sigma, A_mu = calc_sets(WCEllipse(), wc.ellipse, wc.cov_type,
+                                                     wc.mu_type, returns, sigma, mu, covs,
+                                                     cov_mu)
         posdef_fix!(posdef, cov_sigma)
         posdef_fix!(posdef, cov_mu)
 

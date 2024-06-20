@@ -21,11 +21,18 @@ end
 end
 struct MaxRet <: ObjectiveFunction end
 
+abstract type WorstCaseSet end
+struct WCBox <: WorstCaseSet end
+struct WCEllipse <: WorstCaseSet end
+struct NoWC <: WorstCaseSet end
 abstract type PortType end
 struct Trad2 <: PortType end
 struct RP2 <: PortType end
 struct RRP2 <: PortType end
-struct WC2 <: PortType end
+@kwdef mutable struct WC2 <: PortType
+    mu::WorstCaseSet = WCBox()
+    cov::WorstCaseSet = WCBox()
+end
 Base.String(::Trad2) = "Trad2"
 Base.Symbol(::Trad2) = :Trad2
 Base.String(::RP2) = "RP2"
