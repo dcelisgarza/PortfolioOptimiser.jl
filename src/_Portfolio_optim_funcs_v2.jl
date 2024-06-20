@@ -2078,6 +2078,96 @@ function _optimise!(type::WC2, port::Portfolio2,
     objective_function(port, obj, type, nothing, nothing)
     return convex_optimisation(port, obj, type, nothing)
 end
+function _rebuild_B(B::DataFrame, ::Any, ::Any)
+    return Matrix(B[!, setdiff(names(B), ("tickers", "const"))])
+end
+function _rebuild_B(B::DataFrame, factors::AbstractMatrix,
+                    regression::DimensionReductionReg)
+    X = transpose(factors)
+    X_std = StatsBase.standardize(StatsBase.ZScoreTransform, X; dims = 2)
+    model = fit(method.pcr, X_std)
+    Vp = projection(model)
+    sdev = if isnothing(method.std_w)
+        vec(std(method.ve, X; dims = 2))
+    else
+        vec(std(method.ve, X, method.std_w; dims = 2))
+    end
+    return transpose(pinv(Vp) * transpose(B .* transpose(sdev)))
+end
+function _factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix,
+                           regression::RegressionType)
+    B = _rebuild_B(B, regression, factors)
+    b1 = pinv(transpose(B))
+    b2 = pinv(transpose(nullspace(transpose(B))))
+    b3 = pinv(transpose(b2))
+    return b1, b2, b3, B
+end
+function _rp_class_constraints(::Any, port)
+    model = port.model
+    if isempty(port.risk_budget)
+        port.risk_budget = ()
+    elseif !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
+        port.risk_budget ./= sum(port.risk_budget)
+    end
+    rb = port.risk_budget
+    N = length(rb)
+    @variable(model, log_w[1:N])
+    @constraint(model, dot(rb, log_w) >= 1)
+    @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] ∈ MOI.ExponentialCone())
+    @constraint(model, model[:w] .>= 0)
+    return nothing
+end
+function _rp_class_constraints(::FC2, port)
+    b1, b2, missing, missing = _factors_b1_b2_b3(port.loadings, port.f_returns,
+                                                 port.loadings_opt)
+    N_f = size(b1, 2)
+
+    rb = port.f_risk_budget
+    if isempty(rb) || length(rb) != N_f
+        rb = port.f_risk_budget = fill(1 / N_f, N_f)
+    elseif !isapprox(sum(port.f_risk_budget), one(eltype(port.returns)))
+        port.f_risk_budget ./= sum(port.f_risk_budget)
+    end
+
+    @variable(model, w1[1:N_f])
+    @variable(model, w2[1:(N - N_f)])
+    delete(model, model[:w])
+    unregister(model, :w)
+    @expression(model, w, b1 * w1 + b2 * w2)
+    @variable(model, log_w[1:N_f])
+    @constraint(model, dot(rb, log_w) >= 1)
+    @constraint(model, [i = 1:N_f], [log_w[i], 1, model[:w1][i]] ∈ MOI.ExponentialCone())
+    return nothing
+end
+function rp_constraints(port, class)
+    model = port.model
+    @variable(model, k)
+    _rp_class_constraints(class, port)
+    @constraint(model, sum(model[:w]) == model[:k])
+    return nothing
+end
+function _optimise!(type::RP2, port::Portfolio2,
+                    rm::Union{AbstractVector, <:TradRiskMeasure}, ::Any, ::Any,
+                    class::Union{Classic2, FM2, FC2}, w_ini::AbstractVector,
+                    str_names::Bool, save_params::Bool)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+
+    port.model = JuMP.Model()
+    model = port.model
+    set_string_names_on_creation(model, str_names)
+    @variable(model, w[1:size(returns, 2)])
+
+    if !isempty(w_ini)
+        @smart_assert(length(w_ini) == length(w))
+        set_start_value.(w, w_ini)
+    end
+
+    rp_constraints(port, class)
+    risk_constraints(port, nothing, RP2(), rm, mu, sigma, returns)
+    set_returns(nothing, NoKelly(), nothing, port.model, port.mu_l; mu = mu,)
+    objective_function(port, MinRisk(), RP2(), class, nothing)
+    return convex_optimisation(port, nothing, RP2(), class)
+end
 function optimise2!(port::Portfolio2; rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
                     type::PortType = Trad2(), obj::ObjectiveFunction = MinRisk(),
                     kelly::RetType = NoKelly(), class::PortClass = Classic2(),
