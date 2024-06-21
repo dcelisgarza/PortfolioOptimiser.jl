@@ -1,9 +1,3 @@
-abstract type PosdefFix end
-struct NoPosdef <: PosdefFix end
-@kwdef mutable struct PosdefNearest <: PosdefFix
-    method::NearestCorrelationMatrix.NCMAlgorithm = NearestCorrelationMatrix.Newton(;
-                                                                                    tau = 1e-12)
-end
 """
 ```
 _posdef_fix!(method::PosdefNearest, X::AbstractMatrix)
@@ -47,18 +41,11 @@ function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
 
     return nothing
 end
-abstract type DBHTSimilarity end
-struct DBHTExp <: DBHTSimilarity end
 function dbht_similarity(::DBHTExp, S, D)
     return exp.(-D)
 end
-struct DBHTMaxDist <: DBHTSimilarity end
 function dbht_similarity(::DBHTMaxDist, S, D)
     return ceil(maximum(D)^2) .- D .^ 2
-end
-abstract type DistanceMethod end
-@kwdef mutable struct DistanceMLP <: DistanceMethod
-    absolute::Bool = false
 end
 function _dist(de::DistanceMLP, X::AbstractMatrix, ::Any)
     return Symmetric(sqrt.(if !de.absolute
@@ -67,12 +54,6 @@ function _dist(de::DistanceMLP, X::AbstractMatrix, ::Any)
                            else
                                clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
                            end))
-end
-@kwdef mutable struct DistanceMLP2 <: DistanceMethod
-    absolute::Bool = false
-    distance::Distances.UnionMetric = Distances.Euclidean()
-    args::Tuple = ()
-    kwargs::NamedTuple = (;)
 end
 function _dist(de::DistanceMLP2, X::AbstractMatrix, ::Any)
     _X = sqrt.(if !de.absolute
@@ -83,16 +64,11 @@ function _dist(de::DistanceMLP2, X::AbstractMatrix, ::Any)
 
     return Distances.pairwise(de.distance, _X, de.args...; de.kwargs...)
 end
-struct DistanceLog <: DistanceMethod end
 function _dist(::DistanceLog, X::AbstractMatrix, ::Any)
     return -log.(X)
 end
 function dist(de::DistanceMethod, X, Y)
     return _dist(de, X, Y)
-end
-struct DistanceDefault <: DistanceMethod end
-@kwdef mutable struct SimpleVariance <: StatsBase.CovarianceEstimator
-    corrected = true
 end
 function StatsBase.std(ve::SimpleVariance, X::AbstractMatrix; dims::Int = 1, mean = nothing)
     return std(X; dims = dims, corrected = ve.corrected, mean = mean)
@@ -109,14 +85,6 @@ function StatsBase.var(ve::SimpleVariance, X::AbstractMatrix, w::AbstractWeights
     return var(X, w, dims; corrected = ve.corrected, mean = mean)
 end
 # # Correlation Matrices
-abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
-abstract type CorPearson <: PortfolioOptimiserCovCor end
-abstract type CorRank <: PortfolioOptimiserCovCor end
-@kwdef mutable struct CovFull <: CorPearson
-    absolute::Bool = false
-    ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    w::Union{<:AbstractWeights, Nothing} = nothing
-end
 function StatsBase.cov(ce::CovFull, X::AbstractMatrix; dims::Int = 1)
     return Symmetric(if isnothing(ce.w)
                          cov(ce.ce, X; dims = dims)
@@ -140,12 +108,6 @@ function StatsBase.cor(ce::CovFull, X::AbstractMatrix; dims::Int = 1)
                     end)
 
     return !ce.absolute ? rho : abs.(rho)
-end
-@kwdef mutable struct CovSemi <: CorPearson
-    absolute::Bool = false
-    ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    target::Union{<:Real, AbstractVector{<:Real}} = 0.0
-    w::Union{<:AbstractWeights, Nothing} = nothing
 end
 function StatsBase.cov(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (0, 1))
@@ -192,9 +154,6 @@ function StatsBase.cor(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
                     end)
     return !ce.absolute ? rho : abs.(rho)
 end
-@kwdef mutable struct CorSpearman <: CorRank
-    absolute::Bool = false
-end
 function StatsBase.cor(ce::CorSpearman, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (0, 1))
     if dims == 2
@@ -203,9 +162,6 @@ function StatsBase.cor(ce::CorSpearman, X::AbstractMatrix; dims::Int = 1)
     rho = corspearman(X)
     return Symmetric(cov2cor(Matrix(!ce.absolute ? rho : abs.(rho))))
 end
-@kwdef mutable struct CorKendall <: CorRank
-    absolute::Bool = false
-end
 function StatsBase.cor(ce::CorKendall, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (0, 1))
     if dims == 2
@@ -213,16 +169,6 @@ function StatsBase.cor(ce::CorKendall, X::AbstractMatrix; dims::Int = 1)
     end
     rho = corkendall(X)
     return Symmetric(cov2cor(Matrix(!ce.absolute ? rho : abs.(rho))))
-end
-abstract type AbstractBins end
-abstract type AstroBins <: AbstractBins end
-struct BinKnuth <: AstroBins end
-struct BinFreedman <: AstroBins end
-struct BinScott <: AstroBins end
-struct BinHGR <: AbstractBins end
-mutable struct DistanceVarInfo <: DistanceMethod
-    bins::Union{<:Integer, <:AbstractBins}
-    normalise::Bool
 end
 function DistanceVarInfo(; bins::Union{<:Integer, <:AbstractBins} = BinHGR(),
                          normalise::Bool = true)
@@ -238,12 +184,6 @@ function Base.setproperty!(obj::DistanceVarInfo, sym::Symbol, val)
         end
     end
     return setfield!(obj, sym, val)
-end
-mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
-    bins::Union{<:Integer, <:AbstractBins}
-    normalise::Bool
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
 end
 function CorMutualInfo(; bins::Union{<:Integer, <:AbstractBins} = BinHGR(),
                        normalise::Bool = true,
@@ -465,14 +405,6 @@ end
 function _dist(ce::DistanceVarInfo, ::Any, Y::AbstractMatrix)
     return variation_info(Y, ce.bins, ce.normalise)
 end
-@kwdef mutable struct CorDistance <: PortfolioOptimiserCovCor
-    distance::Distances.UnionMetric = Distances.Euclidean()
-    dist_args::Tuple = ()
-    dist_kwargs::NamedTuple = (;)
-    mean_w1::Union{<:AbstractWeights, Nothing} = nothing
-    mean_w2::Union{<:AbstractWeights, Nothing} = nothing
-    mean_w3::Union{<:AbstractWeights, Nothing} = nothing
-end
 function cor_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
     N = length(v1)
     @smart_assert(N == length(v2) && N > 1)
@@ -579,11 +511,6 @@ function StatsBase.cov(ce::CorDistance, X::AbstractMatrix; dims::Int = 1)
     end
     return Symmetric(cov_distance(ce, X))
 end
-mutable struct CorLTD <: PortfolioOptimiserCovCor
-    alpha::Real
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-end
 function CorLTD(; alpha::Real = 0.05, ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
@@ -635,18 +562,6 @@ function StatsBase.cov(ce::CorLTD, X::AbstractMatrix; dims::Int = 1)
                   end)
     return lower_tail_dependence(X, ce.alpha) .* (std_vec * transpose(std_vec))
 end
-abstract type CorGerber <: PortfolioOptimiserCovCor end
-abstract type CorGerberBasic <: CorGerber end
-abstract type CorSB <: CorGerber end
-abstract type CorGerberSB <: CorGerber end
-mutable struct CorGerber0{T1 <: Real} <: CorGerberBasic
-    normalise::Bool
-    threshold::T1
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
-end
 function CorGerber0(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                     std_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -655,14 +570,6 @@ function CorGerber0(; normalise::Bool = false, threshold::Real = 0.5,
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CorGerber0{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
-mutable struct CorGerber1{T1 <: Real} <: CorGerberBasic
-    normalise::Bool
-    threshold::T1
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
-end
 function CorGerber1(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                     std_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -670,14 +577,6 @@ function CorGerber1(; normalise::Bool = false, threshold::Real = 0.5,
                     posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CorGerber1{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
-end
-mutable struct CorGerber2{T1 <: Real} <: CorGerberBasic
-    normalise::Bool
-    threshold::T1
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
 end
 function CorGerber2(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
@@ -904,18 +803,6 @@ function _cor_gerber(ce::CorGerber2, X::AbstractMatrix, std_vec::AbstractVector)
 
     return rho
 end
-mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
-    normalise::Bool
-    threshold::T1
-    c1::T2
-    c2::T3
-    c3::T4
-    n::T5
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
-end
 function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
@@ -935,18 +822,6 @@ function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
                                                                                     mean_w,
                                                                                     posdef)
 end
-mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
-    normalise::Bool
-    threshold::T1
-    c1::T2
-    c2::T3
-    c3::T4
-    n::T5
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
-end
 function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
@@ -965,18 +840,6 @@ function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
                                                                                     std_w,
                                                                                     mean_w,
                                                                                     posdef)
-end
-mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
-    normalise::Bool
-    threshold::T1
-    c1::T2
-    c2::T3
-    c3::T4
-    n::T5
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
 end
 function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
@@ -998,18 +861,6 @@ function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
                                                                                           std_w,
                                                                                           mean_w,
                                                                                           posdef)
-end
-mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
-    normalise::Bool
-    threshold::T1
-    c1::T2
-    c2::T3
-    c3::T4
-    n::T5
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
 end
 function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
@@ -1610,19 +1461,8 @@ function find_max_eval(vals, q; kernel = ASH.Kernels.gaussian, m::Integer = 10,
     return e_max, x
 end
 =#
-abstract type Denoise end
-struct NoDenoise <: Denoise end
 function denoise!(::NoDenoise, ::PosdefFix, X::AbstractMatrix, q::Real)
     return nothing
-end
-mutable struct DenoiseFixed{T1, T2, T3, T4} <: Denoise
-    detone::Bool
-    mkt_comp::T1
-    kernel::T2
-    m::T3
-    n::T4
-    args::Tuple
-    kwargs::NamedTuple
 end
 function DenoiseFixed(; detone::Bool = false, mkt_comp::Integer = 1,
                       kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
@@ -1632,15 +1472,6 @@ function DenoiseFixed(; detone::Bool = false, mkt_comp::Integer = 1,
                                                                                 kernel, m,
                                                                                 n, args,
                                                                                 kwargs)
-end
-mutable struct DenoiseSpectral{T1, T2, T3, T4} <: Denoise
-    detone::Bool
-    mkt_comp::T1
-    kernel::T2
-    m::T3
-    n::T4
-    args::Tuple
-    kwargs::NamedTuple
 end
 function DenoiseSpectral(; detone::Bool = false, mkt_comp::Integer = 1,
                          kernel = AverageShiftedHistograms.Kernels.gaussian,
@@ -1652,16 +1483,6 @@ function DenoiseSpectral(; detone::Bool = false, mkt_comp::Integer = 1,
                                                                                    m, n,
                                                                                    args,
                                                                                    kwargs)
-end
-mutable struct DenoiseShrink{T1, T2, T3, T4, T5} <: Denoise
-    detone::Bool
-    alpha::T1
-    mkt_comp::T2
-    kernel::T3
-    m::T4
-    n::T5
-    args::Tuple
-    kwargs::NamedTuple
 end
 function DenoiseShrink(; alpha::Real = 0.0, detone::Bool = false, mkt_comp::Integer = 1,
                        kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
@@ -1734,41 +1555,18 @@ function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
 
     return nothing
 end
-abstract type MeanEstimator end
-abstract type MeanTarget end
-struct TargetGM <: MeanTarget end
-struct TargetVW <: MeanTarget end
-struct TargetSE <: MeanTarget end
-@kwdef mutable struct MeanSimple <: MeanEstimator
-    w::Union{<:AbstractWeights, Nothing} = nothing
-end
 function StatsBase.mean(me::MeanSimple, X::AbstractMatrix; dims::Int = 1)
     return vec(isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims))
-end
-mutable struct MeanJS{T1} <: MeanEstimator
-    target::MeanTarget
-    w::Union{<:AbstractWeights, Nothing}
-    sigma::T1
 end
 function MeanJS(; target::MeanTarget = TargetGM(),
                 w::Union{<:AbstractWeights, Nothing} = nothing,
                 sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
     return MeanJS{typeof(sigma)}(target, w, sigma)
 end
-mutable struct MeanBS{T1} <: MeanEstimator
-    target::MeanTarget
-    w::Union{<:AbstractWeights, Nothing}
-    sigma::T1
-end
 function MeanBS(; target::MeanTarget = TargetGM(),
                 w::Union{<:AbstractWeights, Nothing} = nothing,
                 sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
     return MeanBS{typeof(sigma)}(target, w, sigma)
-end
-mutable struct MeanBOP{T1} <: MeanEstimator
-    target::MeanTarget
-    w::Union{<:AbstractWeights, Nothing}
-    sigma::T1
 end
 function MeanBOP(; target::MeanTarget = TargetGM(),
                  w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -1824,15 +1622,6 @@ function StatsBase.mean(me::MeanBOP, X::AbstractMatrix; dims::Int = 1)
     beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
     return alpha * mu + beta * b
 end
-abstract type HClustAlg end
-@kwdef mutable struct HAClustering <: HClustAlg
-    linkage::Symbol = :ward
-end
-mutable struct DBHT <: HClustAlg
-    distance::DistanceMethod
-    similarity::DBHTSimilarity
-    root_method::Symbol
-end
 function DBHT(; distance::DistanceMethod = DistanceMLP(),
               similarity::DBHTSimilarity = DBHTMaxDist(), root_method::Symbol = :Unique)
     @smart_assert(root_method ∈ DBHTRootMethods)
@@ -1844,11 +1633,6 @@ function Base.setproperty!(obj::DBHT, sym::Symbol, val)
         @smart_assert(val ∈ DBHTRootMethods)
     end
     return setfield!(obj, sym, val)
-end
-abstract type AbstractJLoGo end
-struct NoJLoGo <: AbstractJLoGo end
-@kwdef mutable struct JLoGo <: AbstractJLoGo
-    DBHT::DBHT = DBHT()
 end
 function jlogo!(::NoJLoGo, ::PosdefFix, ::AbstractMatrix, D = nothing)
     return nothing
@@ -1874,18 +1658,6 @@ function jlogo!(je::JLoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
     posdef_fix!(posdef, X)
 
     return nothing
-end
-abstract type KurtEstimator end
-@kwdef mutable struct KurtFull <: KurtEstimator
-    posdef::PosdefFix = PosdefNearest()
-    denoise::Denoise = NoDenoise()
-    jlogo::AbstractJLoGo = NoJLoGo()
-end
-@kwdef mutable struct KurtSemi <: KurtEstimator
-    target::Union{<:Real, AbstractVector{<:Real}} = 0.0
-    posdef::PosdefFix = PosdefNearest()
-    denoise::Denoise = NoDenoise()
-    jlogo::AbstractJLoGo = NoJLoGo()
 end
 function cokurt(ke::KurtFull, X::AbstractMatrix, mu::AbstractVector)
     T, N = size(X)
@@ -1913,18 +1685,6 @@ function cokurt(ke::KurtSemi, X::AbstractMatrix, mu::AbstractVector)
     jlogo!(ke.jlogo, ke.posdef, scokurt)
 
     return scokurt
-end
-abstract type SkewEstimator end
-struct SkewFull <: SkewEstimator
-    # posdef::PosdefFix = PosdefNearest()
-    # denoise::Denoise = NoDenoise()
-    # jlogo::AbstractJLoGo = NoJLoGo()
-end
-@kwdef mutable struct SkewSemi <: SkewEstimator
-    target::Union{<:Real, AbstractVector{<:Real}} = 0.0
-    # posdef::PosdefFix = PosdefNearest()
-    # denoise::Denoise = NoDenoise()
-    # jlogo::AbstractJLoGo = NoJLoGo()
 end
 function coskew(se::SkewFull, X::AbstractMatrix, mu::AbstractVector)
     T, N = size(X)
@@ -1970,12 +1730,6 @@ function coskew(se::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
     end
 
     return scoskew, SV
-end
-@kwdef mutable struct PortCovCor <: PortfolioOptimiserCovCor
-    ce::CovarianceEstimator = CovFull()
-    posdef::PosdefFix = PosdefNearest()
-    denoise::Denoise = NoDenoise()
-    jlogo::AbstractJLoGo = NoJLoGo()
 end
 function StatsBase.cov(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (1, 2))
@@ -2063,31 +1817,6 @@ function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
     return vcat(transpose.(x)...)
 end
 =#
-abstract type WorstCaseMethod end
-abstract type WorstCaseArchMethod <: WorstCaseMethod end
-struct StationaryBootstrap <: WorstCaseArchMethod end
-struct CircularBootstrap <: WorstCaseArchMethod end
-struct MovingBootstrap <: WorstCaseArchMethod end
-@kwdef mutable struct WorstCaseArch <: WorstCaseMethod
-    bootstrap::WorstCaseArchMethod = StationaryBootstrap()
-    n_sim::Integer = 3_000
-    block_size::Integer = 3
-    q::Real = 0.05
-    seed::Union{<:Integer, Nothing} = nothing
-end
-@kwdef mutable struct WorstCaseNormal <: WorstCaseMethod
-    n_sim::Integer = 3_000
-    q::Real = 0.05
-    rng::AbstractRNG = Random.default_rng()
-    seed::Union{<:Integer, Nothing} = nothing
-end
-@kwdef mutable struct WorstCaseDelta <: WorstCaseMethod
-    dcov::Real = 0.1
-    dmu::Real = 0.1
-end
-abstract type WorstCaseKMethod end
-struct WorstCaseKNormal <: WorstCaseKMethod end
-struct WorstCaseKGeneral <: WorstCaseKMethod end
 function _bootstrap_func(::StationaryBootstrap)
     return pyimport("arch.bootstrap").StationaryBootstrap
 end
@@ -2208,22 +1937,6 @@ end
 function calc_k(method::Real, args...)
     return method
 end
-@kwdef mutable struct WCType
-    cov_type::PortfolioOptimiserCovCor = PortCovCor()
-    mu_type::MeanEstimator = MeanSimple()
-    box::WorstCaseMethod = WorstCaseNormal()
-    ellipse::WorstCaseMethod = WorstCaseNormal()
-    k_sigma::Union{<:Real, WorstCaseKMethod} = WorstCaseKNormal()
-    k_mu::Union{<:Real, WorstCaseKMethod} = WorstCaseKNormal()
-    posdef::PosdefFix = PosdefNearest()
-    diagonal::Bool = false
-end
-abstract type RegressionType end
-abstract type StepwiseRegression <: RegressionType end
-abstract type RegressionCriteria end
-mutable struct PVal{T1 <: Real} <: RegressionCriteria
-    threshold::T1
-end
 function PVal(; threshold::Real = 0.05)
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return PVal{typeof(threshold)}(threshold)
@@ -2233,29 +1946,6 @@ function Base.setproperty!(obj::PVal, sym::Symbol, val)
         @smart_assert(zero(val) < val < one(val))
     end
     return setfield!(obj, sym, val)
-end
-abstract type MinValRegressionCriteria <: RegressionCriteria end
-abstract type MaxValRegressionCriteria <: RegressionCriteria end
-struct AIC <: MinValRegressionCriteria end
-struct AICC <: MinValRegressionCriteria end
-struct BIC <: MinValRegressionCriteria end
-struct R2 <: MaxValRegressionCriteria end
-struct AdjR2 <: MaxValRegressionCriteria end
-@kwdef mutable struct ForwardReg <: StepwiseRegression
-    criterion::RegressionCriteria = PVal()
-end
-@kwdef mutable struct BackwardReg <: StepwiseRegression
-    criterion::RegressionCriteria = PVal()
-end
-abstract type DimensionReductionTarget end
-@kwdef mutable struct PCATarget <: DimensionReductionTarget
-    kwargs::NamedTuple = (;)
-end
-@kwdef mutable struct DimensionReductionReg <: RegressionType
-    ve::StatsBase.CovarianceEstimator = SimpleVariance()
-    std_w::Union{<:AbstractWeights, Nothing} = nothing
-    mean_w::Union{<:AbstractWeights, Nothing} = nothing
-    pcr::DimensionReductionTarget = PCATarget()
 end
 function MultivariateStats.fit(method::PCATarget, X::AbstractMatrix)
     return MultivariateStats.fit(MultivariateStats.PCA, X; method.kwargs...)
@@ -2604,13 +2294,6 @@ end
 function loadings_matrix2(x::DataFrame, y::DataFrame, method::RegressionType = ForwardReg())
     return regression(method, x, y)
 end
-@kwdef mutable struct FactorType
-    error::Bool = true
-    B::Union{Nothing, DataFrame} = nothing
-    method::RegressionType = ForwardReg()
-    ve::StatsBase.CovarianceEstimator = SimpleVariance()
-    var_w::Union{<:AbstractWeights, Nothing} = nothing
-end
 function risk_factors2(x::DataFrame, y::DataFrame; factor_type::FactorType = FactorType(),
                        cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                        mu_type::MeanEstimator = MeanSimple())
@@ -2728,16 +2411,6 @@ function _bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, posdef, deno
 
     return mu, sigma, w, Pi_
 end
-abstract type BlackLitterman end
-abstract type BlackLittermanFactor <: BlackLitterman end
-@kwdef mutable struct BLType{T1 <: Real} <: BlackLitterman
-    eq::Bool = true
-    delta::Union{<:Real, Nothing} = 1.0
-    rf::T1 = 0.0
-    posdef::PosdefFix = PosdefNearest()
-    denoise::Denoise = NoDenoise()
-    jlogo::AbstractJLoGo = NoJLoGo()
-end
 function black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
                          Q::AbstractVector, w::AbstractVector;
                          cov_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -2754,14 +2427,6 @@ function black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
                                 bl.posdef, bl.denoise, bl.jlogo)[1:3]
 
     return mu, sigma, w
-end
-@kwdef mutable struct BBLType{T1 <: Real} <: BlackLittermanFactor
-    constant::Bool = true
-    error::Bool = true
-    delta::Union{<:Real, Nothing} = 1.0
-    rf::T1 = 0.0
-    ve::StatsBase.CovarianceEstimator = SimpleVariance()
-    var_w::Union{<:AbstractWeights, Nothing} = nothing
 end
 function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
                          B::AbstractMatrix, P_f::AbstractMatrix, Q_f::AbstractVector,
@@ -2814,15 +2479,6 @@ function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
     w = ((bl.delta * sigma_bbl) \ I) * mu
 
     return mu, sigma_bbl, w
-end
-@kwdef mutable struct ABLType{T1 <: Real} <: BlackLittermanFactor
-    constant::Bool = true
-    eq::Bool = true
-    delta::Union{<:Real, Nothing} = 1.0
-    rf::T1 = 0.0
-    posdef::PosdefFix = PosdefNearest()
-    denoise::Denoise = NoDenoise()
-    jlogo::AbstractJLoGo = NoJLoGo()
 end
 function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
                          F::Union{AbstractMatrix, Nothing}    = nothing,

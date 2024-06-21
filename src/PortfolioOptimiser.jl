@@ -15,9 +15,9 @@ include("Constraints.jl")
 include("ExtDefinitions.jl")
 
 # Version 2.0
+include("Types_v2.jl")
 include("ParameterEstimation.jl")
 include("RiskMeasures_v2.jl")
-include("Types_v2.jl")
 include("Optimisation.jl")
 include("Statistics_v2.jl")
 include("HClustering.jl")

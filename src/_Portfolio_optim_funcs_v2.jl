@@ -2168,6 +2168,32 @@ function _optimise!(type::RP2, port::Portfolio2,
     objective_function(port, MinRisk(), RP2(), class, nothing)
     return convex_optimisation(port, nothing, RP2(), class)
 end
+function _optimise!(type::RRP2, port::Portfolio2, ::Any, ::Any, ::Any, class::Any,
+                    w_ini::AbstractVector, str_names::Bool, save_params::Bool)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+
+    port.model = JuMP.Model()
+    model = port.model
+    set_string_names_on_creation(model, str_names)
+    @variable(model, w[1:size(returns, 2)])
+    @variable(model, k)
+
+    if !isempty(w_ini)
+        @smart_assert(length(w_ini) == length(w))
+        set_start_value.(w, w_ini)
+    end
+    if isempty(port.risk_budget)
+        port.risk_budget = ()
+    elseif !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
+        port.risk_budget ./= sum(port.risk_budget)
+    end
+
+    # rp_constraints(port, class)
+    # risk_constraints(port, nothing, type, rm, mu, sigma, returns)
+    # set_returns(nothing, NoKelly(), nothing, port.model, port.mu_l; mu = mu,)
+    # objective_function(port, MinRisk(), type, class, nothing)
+    # return convex_optimisation(port, nothing, type, class)
+end
 function optimise2!(port::Portfolio2; rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
                     type::PortType = Trad2(), obj::ObjectiveFunction = MinRisk(),
                     kelly::RetType = NoKelly(), class::PortClass = Classic2(),
