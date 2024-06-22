@@ -8,7 +8,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                             :params => Dict("verbose" => false))))
     asset_statistics2!(portfolio)
-    optimise!(portfolio)
+    optimise2!(portfolio; obj = :SR())
 
     risks = [0.012732818438689692, 0.009054428305486948, 0.008974573704221727,
              0.003858879045730223, 0.008278637116930432, 0.04767699262536566,
@@ -30,6 +30,6 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
            EDaR_r2(), RDaR_r2()]
 
     for (risk, rm) ∈ zip(risks, rms)
-        @test isapprox(risk, calc_risk(portfolio; type = :Trad, rm = rm), rtol = 1e-7)
+        @test isapprox(risk, calc_risk(portfolio; type = :Trad2, rm = rm), rtol = 1e-7)
     end
 end
