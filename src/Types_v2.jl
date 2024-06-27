@@ -28,7 +28,15 @@ struct NoWC <: WorstCaseSet end
 abstract type PortType end
 struct Trad2 <: PortType end
 struct RP2 <: PortType end
-struct RRP2 <: PortType end
+abstract type RRPVersion end
+struct NoRRP <: RRPVersion end
+struct RegRRP <: RRPVersion end
+@kwdef mutable struct RegPenRRP{T1 <: Real} <: RRPVersion
+    penalty::T1 = 1.0
+end
+@kwdef mutable struct RRP2 <: PortType
+    version::RRPVersion = NoRRP()
+end
 @kwdef mutable struct WC2 <: PortType
     mu::WorstCaseSet = WCBox()
     cov::WorstCaseSet = WCBox()

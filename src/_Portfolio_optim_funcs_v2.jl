@@ -1,3 +1,11 @@
+function initial_w(port, w_ini)
+    @variable(port.model, w[1:size(port.returns, 2)])
+    if !isempty(w_ini)
+        @smart_assert(length(w_ini) == length(w))
+        set_start_value.(w, w_ini)
+    end
+    return nothing
+end
 function mu_sigma_returns_class(port, ::Union{Classic2, FC2})
     return port.mu, port.cov, port.returns
 end
@@ -79,7 +87,7 @@ function _set_sd_risk_upper_bound(::SDP2, ::ObjectiveFunction, ::Trad2, model, u
     end
     return nothing
 end
-function _set_sd_risk_upper_bound(::Any, ::SR, ::Trad2, model, ub, count, idx)
+function _set_sd_risk_upper_bound(::Any, ::SR, ::Union{Trad2, RRP2}, model, ub, count, idx)
     if isfinite(ub)
         if isone(count)
             @constraint(model, model[:dev] .<= ub * model[:k])
@@ -89,8 +97,8 @@ function _set_sd_risk_upper_bound(::Any, ::SR, ::Trad2, model, ub, count, idx)
     end
     return nothing
 end
-function _set_sd_risk_upper_bound(::Any, ::ObjectiveFunction, ::Trad2, model, ub, count,
-                                  idx)
+function _set_sd_risk_upper_bound(::Any, ::ObjectiveFunction, ::Union{Trad2, RRP2}, model,
+                                  ub, count, idx)
     if isfinite(ub)
         if isone(count)
             @constraint(model, model[:dev] .<= ub)
@@ -315,9 +323,9 @@ function _sd_risk(::Any, ::Any, model, sigma, count::Integer, idx::Integer)
 end
 function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction,
                 count::Integer, idx::Integer; sigma::AbstractMatrix{<:Real},
-                kelly_approx_idx::AbstractVector{<:Integer}, kwargs...)
+                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
-    if (isnothing(rm.sigma) || isempty(rm.sigma))
+    if (isnothing(rm.sigma) || isempty(rm.sigma)) && !isnothing(kelly_approx_idx)
         push!(kelly_approx_idx, isone(count) ? 0 : idx)
     else
         sigma = rm.sigma
@@ -1599,8 +1607,8 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
     end
     return nothing
 end
-function risk_constraints(port, obj, type::Union{Trad2, RP2}, rm, mu, sigma, returns)
-    kelly_approx_idx = Int[]
+function risk_constraints(port, obj, type::Union{Trad2, RP2}, rm, mu, sigma, returns,
+                          kelly_approx_idx = nothing)
     if !isa(rm, AbstractVector)
         rm = (rm,)
     end
@@ -1614,7 +1622,7 @@ function risk_constraints(port, obj, type::Union{Trad2, RP2}, rm, mu, sigma, ret
                    kelly_approx_idx = kelly_approx_idx)
         end
     end
-    return kelly_approx_idx
+    return nothing
 end
 function _return_bounds(::Any, model, mu_l::Real)
     if isfinite(mu_l)
@@ -1970,15 +1978,10 @@ function _optimise!(::Trad2, port::Portfolio2, rm::Union{AbstractVector, <:TradR
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
-    @variable(model, w[1:size(returns, 2)])
-
-    if !isempty(w_ini)
-        @smart_assert(length(w_ini) == length(w))
-        set_start_value.(w, w_ini)
-    end
-
+    initial_w(port, w_ini)
     set_sr_k(obj, model)
-    kelly_approx_idx = risk_constraints(port, obj, Trad2(), rm, mu, sigma, returns)
+    kelly_approx_idx = Int[]
+    risk_constraints(port, obj, Trad2(), rm, mu, sigma, returns, kelly_approx_idx)
     return_constraints(port, obj, kelly, Trad2(), class, mu, sigma, returns,
                        kelly_approx_idx)
     linear_constraints(port, obj)
@@ -2058,13 +2061,7 @@ function _optimise!(type::WC2, port::Portfolio2,
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
-    @variable(model, w[1:size(returns, 2)])
-
-    if !isempty(w_ini)
-        @smart_assert(length(w_ini) == length(w))
-        set_start_value.(w, w_ini)
-    end
-
+    initial_w(port, w_ini)
     set_sr_k(obj, model)
     wc_constraints(port, obj, type)
     linear_constraints(port, obj)
@@ -2155,44 +2152,79 @@ function _optimise!(type::RP2, port::Portfolio2,
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
-    @variable(model, w[1:size(returns, 2)])
-
-    if !isempty(w_ini)
-        @smart_assert(length(w_ini) == length(w))
-        set_start_value.(w, w_ini)
-    end
-
+    initial_w(port, w_ini)
     rp_constraints(port, class)
     risk_constraints(port, nothing, RP2(), rm, mu, sigma, returns)
-    set_returns(nothing, NoKelly(), nothing, port.model, port.mu_l; mu = mu,)
+    set_returns(nothing, NoKelly(), nothing, port.model, port.mu_l; mu = mu)
+    linear_constraints(port, MinRisk())
     objective_function(port, MinRisk(), RP2(), class, nothing)
     return convex_optimisation(port, nothing, RP2(), class)
 end
-function _optimise!(type::RRP2, port::Portfolio2, ::Any, ::Any, ::Any, class::Any,
-                    w_ini::AbstractVector, str_names::Bool, save_params::Bool)
-    mu, sigma, returns = mu_sigma_returns_class(port, class)
-
-    port.model = JuMP.Model()
+function _rrp_ver_constraints(::NoRRP, model, G)
+    @constraint(model, [model[:psi]; G * model[:w]] ∈ SecondOrderCone())
+    return nothing
+end
+function _rrp_ver_constraints(::RegRRP, model, G)
+    @variable(model, rho)
+    @constraint(model, [2 * model[:psi]; 2 * G * model[:w]; -2 * rho] ∈ SecondOrderCone())
+    @constraint(model, [rho; G * model[:w]] ∈ SecondOrderCone())
+    return nothing
+end
+function _rrp_ver_constraints(version::RegPenRRP, model, G)
+    @variable(model, rho)
+    @constraint(model, [2 * model[:psi]; 2 * G * model[:w]; -2 * rho] ∈ SecondOrderCone())
+    theta = Diagonal(sqrt.(diag(sigma)))
+    @constraint(model, [rho; sqrt(version.penalty) * theta * model[:w]] ∈ SecondOrderCone())
+    return nothing
+end
+function _rrp_constraints(type::RRP2, port, sigma)
     model = port.model
-    set_string_names_on_creation(model, str_names)
-    @variable(model, w[1:size(returns, 2)])
-    @variable(model, k)
 
-    if !isempty(w_ini)
-        @smart_assert(length(w_ini) == length(w))
-        set_start_value.(w, w_ini)
-    end
+    @variable(model, psi)
+    @variable(model, gamma >= 0)
+    @variable(model, zeta[1:N] .>= 0)
+    @expression(model, risk, psi - gamma)
+    # RRP constraints.
+    @constraint(model, zeta .== sigma * model[:w])
+    @constraint(model, sum(model[:w]) == 1)
+    @constraint(model, model[:w] >= 0)
+    @constraint(model, [i = 1:N],
+                [model[:w][i] + zeta[i]
+                 2 * gamma * sqrt(port.risk_budget[i])
+                 model[:w][i] - zeta[i]] ∈ SecondOrderCone())
+    _rrp_ver_constraints(type.version, model, sqrt(sigma))
+
+    return nothing
+end
+function rrp_constraints(type::RRP2, port, sigma)
+    model = port.model
+    @variable(model, k)
     if isempty(port.risk_budget)
         port.risk_budget = ()
     elseif !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
         port.risk_budget ./= sum(port.risk_budget)
     end
 
-    # rp_constraints(port, class)
-    # risk_constraints(port, nothing, type, rm, mu, sigma, returns)
-    # set_returns(nothing, NoKelly(), nothing, port.model, port.mu_l; mu = mu,)
-    # objective_function(port, MinRisk(), type, class, nothing)
-    # return convex_optimisation(port, nothing, type, class)
+    _sd_risk(nothing, type, model, sigma, 1, 1)
+    _set_sd_risk_upper_bound(nothing, MinRisk(), type, model, rm.settings.ub, 1, 1)
+    _rrp_constraints(type, port, sigma)
+    return nothing
+end
+function _optimise!(type::RRP2, port::Portfolio2, ::Any, ::Any, ::Any,
+                    class::class::Union{Classic2, FM2}, w_ini::AbstractVector,
+                    str_names::Bool, save_params::Bool)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+
+    port.model = JuMP.Model()
+    model = port.model
+    set_string_names_on_creation(model, str_names)
+    initial_w(port, w_ini)
+
+    rrp_constraints(type, port, sigma)
+    set_returns(nothing, NoKelly(), nothing, port.model, port.mu_l; mu = mu)
+    linear_constraints(port, MinRisk())
+    objective_function(port, MinRisk(), type, class, nothing)
+    return convex_optimisation(port, nothing, type, class)
 end
 function optimise2!(port::Portfolio2; rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
                     type::PortType = Trad2(), obj::ObjectiveFunction = MinRisk(),
