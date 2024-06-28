@@ -2211,7 +2211,7 @@ function rrp_constraints(type::RRP2, port, sigma)
     return nothing
 end
 function _optimise!(type::RRP2, port::Portfolio2, ::Any, ::Any, ::Any,
-                    class::class::Union{Classic2, FM2}, w_ini::AbstractVector,
+                    class::Union{Classic2, FM2}, w_ini::AbstractVector,
                     str_names::Bool, save_params::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
 
