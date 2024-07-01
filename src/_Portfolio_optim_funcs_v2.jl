@@ -53,19 +53,25 @@ function set_sr_k(::Any, ::Any)
     return nothing
 end
 # Risk upper bounds
+function _set_rm_risk_upper_bound(args...)
+    return nothing
+end
 function _set_rm_risk_upper_bound(::SR, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk .<= ub * model[:k])
     end
     return nothing
 end
-function _set_rm_risk_upper_bound(::ObjectiveFunction, ::Trad2, model, rm_risk, ub)
+function _set_rm_risk_upper_bound(::Any, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk .<= ub)
     end
     return nothing
 end
 # SD risk upper bound (special case)
+function _set_sd_risk_upper_bound(args...)
+    return nothing
+end
 function _set_sd_risk_upper_bound(::SDP2, ::SR, ::Trad2, model, ub, count, idx)
     if isfinite(ub)
         if isone(count)
@@ -76,8 +82,7 @@ function _set_sd_risk_upper_bound(::SDP2, ::SR, ::Trad2, model, ub, count, idx)
     end
     return nothing
 end
-function _set_sd_risk_upper_bound(::SDP2, ::ObjectiveFunction, ::Trad2, model, ub, count,
-                                  idx)
+function _set_sd_risk_upper_bound(::SDP2, ::Any, ::Trad2, model, ub, count, idx)
     if isfinite(ub)
         if isone(count)
             @constraint(model, model[:sd_risk] .<= ub^2)
@@ -87,7 +92,7 @@ function _set_sd_risk_upper_bound(::SDP2, ::ObjectiveFunction, ::Trad2, model, u
     end
     return nothing
 end
-function _set_sd_risk_upper_bound(::Any, ::SR, ::Union{Trad2, RRP2}, model, ub, count, idx)
+function _set_sd_risk_upper_bound(::Any, ::SR, ::Trad2, model, ub, count, idx)
     if isfinite(ub)
         if isone(count)
             @constraint(model, model[:dev] .<= ub * model[:k])
@@ -97,8 +102,7 @@ function _set_sd_risk_upper_bound(::Any, ::SR, ::Union{Trad2, RRP2}, model, ub, 
     end
     return nothing
 end
-function _set_sd_risk_upper_bound(::Any, ::ObjectiveFunction, ::Union{Trad2, RRP2}, model,
-                                  ub, count, idx)
+function _set_sd_risk_upper_bound(::Any, ::Any, ::Trad2, model, ub, count, idx)
     if isfinite(ub)
         if isone(count)
             @constraint(model, model[:dev] .<= ub)
@@ -217,10 +221,10 @@ function weight_constraints(port, ::Any)
     end
     return nothing
 end
-function network_constraints(::Any, ::NoNtwk, args...)
+function network_constraints(args...)
     return nothing
 end
-function network_constraints(port, network::IP2, ::SR, type::Union{Trad2, WC2})
+function network_constraints(port, network::IP2, ::SR, ::Any)
     N = size(port.returns, 2)
     model = port.model
 
@@ -238,7 +242,7 @@ function network_constraints(port, network::IP2, ::SR, type::Union{Trad2, WC2})
     end
     return nothing
 end
-function network_constraints(port, network::IP2, ::Any, type::Union{Trad2, WC2})
+function network_constraints(port, network::IP2, ::Any, ::Any)
     N = size(port.returns, 2)
     model = port.model
 
@@ -280,7 +284,7 @@ function centrality_constraints(port, obj)
     end
     return nothing
 end
-function _linear_constraints(::Union{SR, RRP2}, model, A, B)
+function _linear_constraints(::Union{SR, RP2}, model, A, B)
     @constraint(model, A * model[:w] .- B * model[:k] .>= 0)
     return nothing
 end
@@ -294,7 +298,7 @@ function linear_constraints(port, obj_type)
     end
     return nothing
 end
-function _sd_risk(::SDP2, ::Union{Trad2, WC2}, model, sigma, count::Integer, idx::Integer)
+function _sd_risk(::SDP2, model, sigma, count::Integer, idx::Integer)
     if isone(count)
         @expression(model, sd_risk, tr(sigma * model[:W]))
     else
@@ -305,7 +309,7 @@ function _sd_risk(::SDP2, ::Union{Trad2, WC2}, model, sigma, count::Integer, idx
     end
     return nothing
 end
-function _sd_risk(::Any, ::Any, model, sigma, count::Integer, idx::Integer)
+function _sd_risk(::Any, model, sigma, count::Integer, idx::Integer)
     G = sqrt(sigma)
     if isone(count)
         @variable(model, dev)
@@ -324,14 +328,14 @@ end
 function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction,
                 count::Integer, idx::Integer; sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
-    model = port.model
-    if (isnothing(rm.sigma) || isempty(rm.sigma)) && !isnothing(kelly_approx_idx)
+    if !isnothing(kelly_approx_idx) && (isnothing(rm.sigma) || isempty(rm.sigma))
         push!(kelly_approx_idx, isone(count) ? 0 : idx)
     else
         sigma = rm.sigma
     end
+    model = port.model
 
-    _sd_risk(port.network_method, type, model, sigma, count, idx)
+    _sd_risk(port.network_method, model, sigma, count, idx)
     _set_sd_risk_upper_bound(port.network_method, obj, type, model, rm.settings.ub, count,
                              idx)
     if isone(count)
@@ -1636,16 +1640,14 @@ function _return_bounds(::SR, model, mu_l::Real)
     end
     return nothing
 end
-function set_returns(obj::Any, ::NoKelly, ::Any, model, mu_l::Real; mu::AbstractVector,
-                     kwargs...)
+function set_returns(obj::Any, ::NoKelly, model, mu_l::Real; mu::AbstractVector, kwargs...)
     if !isempty(mu)
         @expression(model, ret, dot(mu, model[:w]))
         _return_bounds(obj, model, mu_l)
     end
     return nothing
 end
-function set_returns(obj::SR, ::NoKelly, ::Trad2, model, mu_l::Real; mu::AbstractVector,
-                     kwargs...)
+function set_returns(obj::SR, ::NoKelly, model, mu_l::Real; mu::AbstractVector, kwargs...)
     if !isempty(mu)
         @expression(model, ret, dot(mu, model[:w]))
         @constraint(model, ret - obj.rf * model[:k] == 1)
@@ -1653,12 +1655,12 @@ function set_returns(obj::SR, ::NoKelly, ::Trad2, model, mu_l::Real; mu::Abstrac
     end
     return nothing
 end
-function set_returns(obj::Any, ::AKelly, type::Any, model, mu_l::Real; mu::AbstractVector,
-                     kelly_approx_idx::AbstractVector, network_method::NetworkMethods2,
-                     sigma::AbstractMatrix, kwargs...)
+function set_returns(obj::Any, ::AKelly, model, mu_l::Real; mu::AbstractVector,
+                     kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing},
+                     network_method::NetworkMethods2, sigma::AbstractMatrix, kwargs...)
     if !isempty(mu)
-        if isempty(kelly_approx_idx)
-            _sd_risk(network_method, type, model, sigma, 1, 1)
+        if isnothing(kelly_approx_idx) || isempty(kelly_approx_idx)
+            _sd_risk(network_method, model, sigma, 1, 1)
             @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:sd_risk])
         else
             if iszero(kelly_approx_idx[1])
@@ -1672,21 +1674,21 @@ function set_returns(obj::Any, ::AKelly, type::Any, model, mu_l::Real; mu::Abstr
     end
     return nothing
 end
-function set_returns(obj::SR, ::AKelly, type::Trad2, model, mu_l::Real; mu::AbstractVector,
-                     kelly_approx_idx::AbstractVector, network_method::NetworkMethods2,
-                     sigma::AbstractMatrix, kwargs...)
+function set_returns(obj::SR, ::AKelly, model, mu_l::Real; mu::AbstractVector,
+                     kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing},
+                     network_method::NetworkMethods2, sigma::AbstractMatrix, kwargs...)
     if !isempty(mu)
         @variable(model, tapprox_kelly)
         @constraint(model, model[:risk] <= 1)
         @expression(model, ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
         if isempty(kelly_approx_idx)
-            _sd_risk(network_method, type, model, sigma, 1, 1)
+            _sd_risk(network_method, model, sigma, 1, 1)
             @constraint(model,
                         [model[:k] + tapprox_kelly
                          2 * model[:dev]
                          model[:k] - tapprox_kelly] ∈ SecondOrderCone())
         else
-            if iszero(kelly_approx_idx[1])
+            if isnothing(kelly_approx_idx) || iszero(kelly_approx_idx[1])
                 @constraint(model,
                             [model[:k] + tapprox_kelly
                              2 * model[:dev]
@@ -1702,8 +1704,8 @@ function set_returns(obj::SR, ::AKelly, type::Trad2, model, mu_l::Real; mu::Abst
     end
     return nothing
 end
-function set_returns(obj::Any, ::EKelly, type::Any, model, mu_l::Real;
-                     returns::AbstractMatrix, kwargs...)
+function set_returns(obj::Any, ::EKelly, model, mu_l::Real; returns::AbstractMatrix,
+                     kwargs...)
     if !isempty(mu)
         @variable(model, texact_kelly[1:T])
         @expression(model, ret, sum(texact_kelly) / T)
@@ -1713,8 +1715,8 @@ function set_returns(obj::Any, ::EKelly, type::Any, model, mu_l::Real;
     end
     return nothing
 end
-function set_returns(obj::SR, ::EKelly, type::Trad2, model, mu_l::Real;
-                     returns::AbstractMatrix, kwargs...)
+function set_returns(obj::SR, ::EKelly, model, mu_l::Real; returns::AbstractMatrix,
+                     kwargs...)
     if !isempty(mu)
         @variable(model, texact_kelly[1:T])
         @expression(model, ret, sum(texact_kelly) / T - obj.rf * model[:k])
@@ -1726,16 +1728,15 @@ function set_returns(obj::SR, ::EKelly, type::Trad2, model, mu_l::Real;
     end
     return nothing
 end
-function return_constraints(port, obj, kelly, type::Trad2, class::Classic2, mu, sigma,
-                            returns, kelly_approx_idx)
-    set_returns(obj, kelly, type, port.model, port.mu_l; mu = mu, sigma = sigma,
+function return_constraints(port, obj, kelly, class::Classic2, mu, sigma, returns,
+                            kelly_approx_idx)
+    set_returns(obj, kelly, port.model, port.mu_l; mu = mu, sigma = sigma,
                 returns = returns, kelly_approx_idx = kelly_approx_idx,
                 network_method = port.network_method)
     return nothing
 end
-function return_constraints(port, obj, ::Any, type::Trad2, ::Any, mu, sigma, returns,
-                            kelly_approx_idx)
-    set_returns(obj, NoKelly(), type, port.model, port.mu_l; mu = mu, sigma = sigma,
+function return_constraints(port, obj, ::Any, ::Any, mu, sigma, returns, kelly_approx_idx)
+    set_returns(obj, NoKelly(), port.model, port.mu_l; mu = mu, sigma = sigma,
                 returns = returns, kelly_approx_idx = kelly_approx_idx,
                 network_method = port.network_method)
     return nothing
@@ -1757,7 +1758,7 @@ function _tracking_err_constraints(::SR, model, returns, tracking_err, benchmark
     @constraint(model, t_track_err <= tracking_err * model[:k] * sqrt(T - 1))
     return nothing
 end
-function tracking_err_constraints(::Any, args...)
+function tracking_err_constraints(args...)
     return nothing
 end
 function tracking_err_constraints(::TrackWeight, port, returns, obj)
@@ -1824,27 +1825,23 @@ function rebalance_constraints(port, obj)
     end
     return nothing
 end
-function _objective(::SR, ::Trad2, ::Classic2, ::Union{AKelly, EKelly}, model, p)
+function _objective(::SR, ::Classic2, ::Union{AKelly, EKelly}, model, p)
     @objective(model, Max, model[:ret] - p)
     return nothing
 end
-function _objective(::Union{SR, MinRisk}, ::Any, ::Any, ::Any, model, p)
+function _objective(::Union{SR, MinRisk}, ::Any, ::Any, model, p)
     @objective(model, Min, model[:risk] + p)
     return nothing
 end
-function _objective(obj::SR, ::WC2, ::Any, ::Any, model, p)
-    @objective(model, Max, model[:ret] - obj.rf * model[:k] - p)
-    return nothing
-end
-function _objective(obj::Util, ::Any, ::Any, ::Any, model, p)
+function _objective(obj::Util, ::Any, ::Any, model, p)
     @objective(model, Max, model[:ret] - obj.l * model[:risk] - p)
     return nothing
 end
-function _objective(obj::MaxRet, ::Any, ::Any, ::Any, model, p)
+function _objective(obj::MaxRet, ::Any, ::Any, model, p)
     @objective(model, Max, model[:ret] - p)
     return nothing
 end
-function objective_function(port, obj, type::Trad2, class, kelly)
+function objective_function(port, obj, ::Trad2, class, kelly)
     npf = zero(eltype(port.returns))
     if haskey(port.model, :network_penalty)
         npf = port.model[:network_penalty]
@@ -1853,15 +1850,15 @@ function objective_function(port, obj, type::Trad2, class, kelly)
     if haskey(port.model, :sum_t_rebal)
         npf = port.model[:sum_t_rebal]
     end
-    _objective(obj, type, class, kelly, port.model, npf + rbf)
+    _objective(obj, class, kelly, port.model, npf + rbf)
     return nothing
 end
-function objective_function(port, obj, type::Any, class, kelly)
+function objective_function(port, obj, ::Any, class, kelly)
     rbf = zero(eltype(port.returns))
     if haskey(port.model, :sum_t_rebal)
         npf = port.model[:sum_t_rebal]
     end
-    _objective(obj, type, class, kelly, port.model, rbf)
+    _objective(obj, class, kelly, port.model, rbf)
     return nothing
 end
 function _cleanup_weights(port, ::SR, ::Union{Trad2, WC2}, ::Any)
@@ -1972,18 +1969,15 @@ function convex_optimisation(port, obj, type, class)
 end
 function _optimise!(::Trad2, port::Portfolio2, rm::Union{AbstractVector, <:TradRiskMeasure},
                     obj::ObjectiveFunction, kelly::RetType, class::PortClass,
-                    w_ini::AbstractVector, str_names::Bool, save_params::Bool)
+                    w_ini::AbstractVector, str_names::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
-
-    port.model = JuMP.Model()
-    model = port.model
+    model = port.model = JuMP.Model()
     set_string_names_on_creation(model, str_names)
     initial_w(port, w_ini)
     set_sr_k(obj, model)
     kelly_approx_idx = Int[]
     risk_constraints(port, obj, Trad2(), rm, mu, sigma, returns, kelly_approx_idx)
-    return_constraints(port, obj, kelly, Trad2(), class, mu, sigma, returns,
-                       kelly_approx_idx)
+    return_constraints(port, obj, kelly, class, mu, sigma, returns, kelly_approx_idx)
     linear_constraints(port, obj)
     centrality_constraints(port, obj)
     weight_constraints(port, obj)
@@ -2039,7 +2033,7 @@ function _wc_risk_constraints(::WCEllipse, port, obj)
     return nothing
 end
 function _wc_risk_constraints(::NoWC, port)
-    _sd_risk(port.network_method, WC2(), port.model, port.cov, 1, 1)
+    _sd_risk(port.network_method, port.model, port.cov, 1, 1)
     return nothing
 end
 function _wc_sharpe_constraints(obj::SR, port)
@@ -2211,8 +2205,8 @@ function rrp_constraints(type::RRP2, port, sigma)
     return nothing
 end
 function _optimise!(type::RRP2, port::Portfolio2, ::Any, ::Any, ::Any,
-                    class::Union{Classic2, FM2}, w_ini::AbstractVector,
-                    str_names::Bool, save_params::Bool)
+                    class::Union{Classic2, FM2}, w_ini::AbstractVector, str_names::Bool,
+                    save_params::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
 
     port.model = JuMP.Model()
@@ -2230,8 +2224,8 @@ function optimise2!(port::Portfolio2; rm::Union{AbstractVector, <:TradRiskMeasur
                     type::PortType = Trad2(), obj::ObjectiveFunction = MinRisk(),
                     kelly::RetType = NoKelly(), class::PortClass = Classic2(),
                     w_ini::AbstractVector = Vector{Float64}(undef, 0),
-                    str_names::Bool = false, save_params::Bool = false)
-    return _optimise!(type, port, rm, obj, kelly, class, w_ini, str_names, save_params)
+                    str_names::Bool = false)
+    return _optimise!(type, port, rm, obj, kelly, class, w_ini, str_names)
 end
 export set_rm, MinRisk, Util, SR, MaxRet, Trad2, optimise2!
 

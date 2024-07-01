@@ -195,3 +195,10 @@ end
 r = collect(range(; start = 9.5, stop = 10, length = 2))
 f(r, 1)
 display(r * 10)
+
+# %%
+
+f(w, h, l) = w * h * l
+
+alex = 2 * f(32, 56, 7) + 3 * f(56, 32, 13)
+trotten = 3 * f(15.6, 47, 40)
