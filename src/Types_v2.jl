@@ -2491,4 +2491,5 @@ function Base.deepcopy(obj::HCPortfolio2)
                                                  copy(obj.alloc_model))
 end
 
-export Portfolio2, HCPortfolio2
+export Portfolio2, HCPortfolio2, NoKelly, AKelly, EKelly, MinRisk, Util, SR, MaxRet, Trad2,
+       RP2, NoRRP, RegRRP, RegPenRRP, RRP2, WC2

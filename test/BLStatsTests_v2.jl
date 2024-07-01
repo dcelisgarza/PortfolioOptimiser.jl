@@ -62,7 +62,6 @@ l = 2.0
                                                 "Pward", ""])
 
     P, Q = asset_views(views_assets, asset_sets)
-    w = fill(1 / 20, 20)
 
     bl_type = BLType(; delta = nothing)
     asset_statistics2!(portfolio)

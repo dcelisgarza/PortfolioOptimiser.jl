@@ -1630,13 +1630,13 @@ function risk_constraints(port, obj, type::Union{Trad2, RP2}, rm, mu, sigma, ret
 end
 function _return_bounds(::Any, model, mu_l::Real)
     if isfinite(mu_l)
-        @constraint(model, ret >= mu_l)
+        @constraint(model, model[:ret] >= mu_l)
     end
     return nothing
 end
 function _return_bounds(::SR, model, mu_l::Real)
     if isfinite(mu_l)
-        @constraint(model, ret >= mu_l * model[:k])
+        @constraint(model, model[:ret] >= mu_l * model[:k])
     end
     return nothing
 end
@@ -1660,7 +1660,9 @@ function set_returns(obj::Any, ::AKelly, model, mu_l::Real; mu::AbstractVector,
                      network_method::NetworkMethods2, sigma::AbstractMatrix, kwargs...)
     if !isempty(mu)
         if isnothing(kelly_approx_idx) || isempty(kelly_approx_idx)
-            _sd_risk(network_method, model, sigma, 1, 1)
+            if !haskey(model, :sd_risk)
+                _sd_risk(network_method, model, sigma, 1, 1)
+            end
             @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:sd_risk])
         else
             if iszero(kelly_approx_idx[1])
@@ -1682,7 +1684,9 @@ function set_returns(obj::SR, ::AKelly, model, mu_l::Real; mu::AbstractVector,
         @constraint(model, model[:risk] <= 1)
         @expression(model, ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
         if isempty(kelly_approx_idx)
-            _sd_risk(network_method, model, sigma, 1, 1)
+            if !haskey(model, :sd_risk)
+                _sd_risk(network_method, model, sigma, 1, 1)
+            end
             @constraint(model,
                         [model[:k] + tapprox_kelly
                          2 * model[:dev]
@@ -1704,9 +1708,10 @@ function set_returns(obj::SR, ::AKelly, model, mu_l::Real; mu::AbstractVector,
     end
     return nothing
 end
-function set_returns(obj::Any, ::EKelly, model, mu_l::Real; returns::AbstractMatrix,
-                     kwargs...)
+function set_returns(obj::Any, ::EKelly, model, mu_l::Real; mu::AbstractVector,
+                     returns::AbstractMatrix, kwargs...)
     if !isempty(mu)
+        T = size(returns, 1)
         @variable(model, texact_kelly[1:T])
         @expression(model, ret, sum(texact_kelly) / T)
         @expression(model, kret, 1 .+ returns * model[:w])
@@ -1715,9 +1720,10 @@ function set_returns(obj::Any, ::EKelly, model, mu_l::Real; returns::AbstractMat
     end
     return nothing
 end
-function set_returns(obj::SR, ::EKelly, model, mu_l::Real; returns::AbstractMatrix,
-                     kwargs...)
+function set_returns(obj::SR, ::EKelly, model, mu_l::Real; mu::AbstractVector,
+                     returns::AbstractMatrix, kwargs...)
     if !isempty(mu)
+        T = size(returns, 1)
         @variable(model, texact_kelly[1:T])
         @expression(model, ret, sum(texact_kelly) / T - obj.rf * model[:k])
         @expression(model, kret, model[:k] .+ returns * model[:w])
@@ -2227,7 +2233,7 @@ function optimise2!(port::Portfolio2; rm::Union{AbstractVector, <:TradRiskMeasur
                     str_names::Bool = false)
     return _optimise!(type, port, rm, obj, kelly, class, w_ini, str_names)
 end
-export set_rm, MinRisk, Util, SR, MaxRet, Trad2, optimise2!
+export optimise2!
 
 """
 ```julia
