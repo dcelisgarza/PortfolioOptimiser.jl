@@ -53,9 +53,6 @@ function set_sr_k(::Any, ::Any)
     return nothing
 end
 # Risk upper bounds
-function _set_rm_risk_upper_bound(args...)
-    return nothing
-end
 function _set_rm_risk_upper_bound(::SR, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk .<= ub * model[:k])
