@@ -53,6 +53,9 @@ function set_sr_k(::Any, ::Any)
     return nothing
 end
 # Risk upper bounds
+function _set_rm_risk_upper_bound(args...)
+    return nothing
+end
 function _set_rm_risk_upper_bound(::SR, ::Trad2, model, rm_risk, ub)
     if isfinite(ub)
         @constraint(model, rm_risk .<= ub * model[:k])
@@ -763,7 +766,7 @@ function set_rm(port::Portfolio2, rm::UCI2, type::Union{Trad2, RP2}, obj::Object
 
     @variable(model, uci)
     @expression(model, uci_risk, uci / sqrt(T))
-    @constraint(model, [uci; dd[2:end]] ∈ SecondOrderCone())
+    @constraint(model, [uci; model[:dd][2:end]] ∈ SecondOrderCone())
     _set_rm_risk_upper_bound(obj, type, model, uci_risk, rm.settings.ub)
     _set_risk_expression(model, uci_risk, rm.settings.scale, rm.settings.flag)
     return nothing
@@ -789,7 +792,7 @@ function set_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
         @variable(model, dar)
         @variable(model, z_cdar[1:T] .>= 0)
         @expression(model, cdar_risk, dar + sum(z_cdar) * iat)
-        @constraint(model, z_cdar .>= dd[2:end] .- dar)
+        @constraint(model, z_cdar .>= model[:dd][2:end] .- dar)
         _set_rm_risk_upper_bound(obj, type, model, cdar_risk, rm.settings.ub)
         _set_risk_expression(model, cdar_risk, rm.settings.scale, rm.settings.flag)
     else
