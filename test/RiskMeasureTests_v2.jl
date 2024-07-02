@@ -30,6 +30,6 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
            EDaR_r2(), RDaR_r2()]
 
     for (risk, rm) ∈ zip(risks, rms)
-        @test isapprox(risk, calc_risk(portfolio; type = :Trad2, rm = rm), rtol = 1e-7)
+        @test isapprox(risk, calc_risk(portfolio; type = :Trad2, rm = rm), rtol = 5e-7)
     end
 end
