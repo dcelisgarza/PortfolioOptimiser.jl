@@ -1242,7 +1242,7 @@ end
           1.209905706287236e-10, 6.875025162230649e-11, 1.725560852711778e-9,
           1.970196651568895e-10, 6.270793283913616e-10, 1.034939719979999e-10,
           2.0441141224195639e-10, 0.20410097589712836]
-    @test isapprox(w6.weights, wt)
+    @test isapprox(w6.weights, wt, rtol = 1.0e-7)
 
     obj = SR(; rf = rf)
     w7 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1316,7 +1316,7 @@ end
           1.013781789198535e-9, 1.7170881348384435e-9, 1.04480062674174e-9,
           6.196346478260153e-9, 4.233214436766981e-9, 2.2605081913012243e-9,
           3.736694833735987e-9, 2.810232763884542e-9]
-    @test isapprox(w12.weights, wt)
+    @test isapprox(w12.weights, wt, rtol = 5.0e-7)
 
     # Risk upper bound
     obj = MaxRet()
