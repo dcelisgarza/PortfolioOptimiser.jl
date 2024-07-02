@@ -3031,3 +3031,21 @@ end
     @test dot(portfolio.mu, w20.weights) >= ret4 ||
           abs(dot(portfolio.mu, w20.weights) - ret4) < 1e-10
 end
+#=
+################
+port = Portfolio(; prices = prices,
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :params => Dict("verbose" => false))))
+asset_statistics!(port)
+
+r = :UCI
+opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = r, obj = :Min_Risk,
+                  kelly = :None)
+opt.obj = :Max_Ret
+opt.kelly = :Exact
+@time _w = optimise!(port, opt)
+println("wt = $(_w.weights)")
+println("riskt = $(calc_risk(port; type = :Trad, rm = r, rf = rf))")
+println("rett = $(dot(port.mu, _w.weights))")
+################
+=#
