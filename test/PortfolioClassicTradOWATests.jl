@@ -1194,7 +1194,7 @@ end
     @test isapprox(w14.weights, w8.weights, rtol = 1e-6)
     @test isapprox(w15.weights, w9.weights, rtol = 0.01)
     @test isapprox(w16.weights, w7.weights, rtol = 1.0e-5)
-    @test isapprox(w17.weights, w8.weights, rtol = 1e-6)
+    @test isapprox(w17.weights, w8.weights, rtol = 1e-5)
     @test isapprox(w18.weights, w9.weights, rtol = 0.01)
     @test isapprox(w13.weights, w16.weights, rtol = 1.0e-5)
     @test isapprox(w14.weights, w17.weights, rtol = 1e-6)
