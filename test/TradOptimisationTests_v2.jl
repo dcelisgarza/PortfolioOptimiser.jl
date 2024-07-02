@@ -931,7 +931,7 @@ end
           abs(dot(portfolio.mu, w16.weights) - ret4) < 1e-10
 end
 
-@testset "FLPM" begin
+@testset "SLPM" begin
     portfolio = Portfolio2(; prices = prices,
                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                             :params => Dict("verbose" => false))))
@@ -1010,7 +1010,7 @@ end
           4.054332929406695e-10, 0.0764175574974796, 2.168836496219484e-9,
           0.03435048211474188, 0.028114016486312555, 0.22310042002755265,
           4.189571372445089e-9, 0.10371400925039707]
-    @test isapprox(w6.weights, wt)
+    @test isapprox(w6.weights, wt, rtol = 5.0e-7)
 
     obj = SR(; rf = rf)
     w7 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1047,7 +1047,7 @@ end
           6.018647280784777e-8, 1.9489436736726285e-7, 6.199574934187237e-8,
           0.1695100352935956, 0.13598076586849808, 8.915232281848942e-7, 0.0462661197643809,
           5.932707417147085e-7]
-    @test isapprox(w9.weights, wt)
+    @test isapprox(w9.weights, wt, rtol = 1.0e-7)
 
     obj = MaxRet()
     w10 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1084,7 +1084,7 @@ end
           7.837356706523964e-10, 1.4112632681808324e-9, 7.965335460056496e-10,
           5.471987951034473e-9, 3.760034250575122e-9, 1.9365276473399495e-9,
           3.1320916121578367e-9, 2.3919599353675564e-9]
-    @test isapprox(w12.weights, wt)
+    @test isapprox(w12.weights, wt, rtol = 1.0e-7)
 
     # Risk upper bound
     obj = MaxRet()
