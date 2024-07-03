@@ -856,6 +856,7 @@ function set_rm(port::Portfolio2, rm::EDaR2, type::Union{Trad2, RP2},
         _set_risk_expression(model, model[:edar_risk][idx], rm.settings.scale,
                              rm.settings.flag)
     end
+
     return nothing
 end
 function set_rm(port::Portfolio2, rm::RDaR2, type::Union{Trad2, RP2},
@@ -882,51 +883,51 @@ function set_rm(port::Portfolio2, rm::RDaR2, type::Union{Trad2, RP2},
         @constraint(model, dd[1] == 0)
     end
 
-    if isone(count)
-        @variable(model, t_rdar)
-        @variable(model, z_rdar >= 0)
-        @variable(model, omega_rdar[1:T])
-        @variable(model, psi_rdar[1:T])
-        @variable(model, theta_rdar[1:T])
-        @variable(model, epsilon_rdar[1:T])
-        @expression(model, rdar_risk, t_rdar + lnk * z_rdar + sum(psi_rdar .+ theta_rdar))
-        @constraint(model, [i = 1:T],
-                    [z_rdar * opk * ik2, psi_rdar[i] * opk * ik, epsilon_rdar[i]] ∈
-                    MOI.PowerCone(iopk))
-        @constraint(model, [i = 1:T],
-                    [omega_rdar[i] * iomk, theta_rdar[i] * ik, -z_rdar * ik2] ∈
-                    MOI.PowerCone(omk))
-        @constraint(model, model[:dd][2:end] .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0)
-        _set_rm_risk_upper_bound(obj, type, model, rdar_risk, rm.settings.ub)
-        _set_risk_expression(model, rdar_risk, rm.settings.scale, rm.settings.flag)
-    else
-        if isone(idx)
-            @variable(model, t_rdar[1:count])
-            @variable(model, z_rdar[1:count] >= 0)
-            @variable(model, omega_rdar[1:T, 1:count])
-            @variable(model, psi_rdar[1:T, 1:count])
-            @variable(model, theta_rdar[1:T, 1:count])
-            @variable(model, epsilon_rdar[1:T, 1:count])
-            @variable(model, rdar_risk[1:count])
-        end
-        @constraint(model,
-                    model[:rdar_risk][idx] ==
-                    model[:t_rdar][idx] +
-                    lnk * model[:z_rdar][idx] +
-                    sum(model[:psi_rdar][:, idx] .+ model[:theta_rdar][:, idx]))
-        @constraint(model, [i = 1:T],
-                    [model[:z_rdar][idx] * opk * ik2, model[:psi_rdar][i, idx] * opk * ik,
-                     model[:epsilon_rdar][i, idx]] ∈ MOI.PowerCone(iopk))
-        @constraint(model, [i = 1:T],
-                    [model[:omega_rdar][i, idx] * iomk, model[:theta_rdar][i, idx] * ik,
-                     -model[:z_rdar][idx] * ik2] ∈ MOI.PowerCone(omk))
-        @constraint(model,
-                    model[:dd][2:end] .- model[:t_rdar][idx] .+
-                    model[:epsilon_rdar][:, idx] .+ model[:omega_rdar][:, idx] .<= 0)
-        _set_rm_risk_upper_bound(obj, type, model, model[:rdar_risk][idx], rm.settings.ub)
-        _set_risk_expression(model, model[:rdar_risk][idx], rm.settings.scale,
-                             rm.settings.flag)
-    end
+    # if isone(count)
+    @variable(model, t_rdar)
+    @variable(model, z_rdar >= 0)
+    @variable(model, omega_rdar[1:T])
+    @variable(model, psi_rdar[1:T])
+    @variable(model, theta_rdar[1:T])
+    @variable(model, epsilon_rdar[1:T])
+    @expression(model, rdar_risk, t_rdar + lnk * z_rdar + sum(psi_rdar .+ theta_rdar))
+    @constraint(model, [i = 1:T],
+                [z_rdar * opk * ik2, psi_rdar[i] * opk * ik, epsilon_rdar[i]] ∈
+                MOI.PowerCone(iopk))
+    @constraint(model, [i = 1:T],
+                [omega_rdar[i] * iomk, theta_rdar[i] * ik, -z_rdar * ik2] ∈
+                MOI.PowerCone(omk))
+    @constraint(model, model[:dd][2:end] .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0)
+    _set_rm_risk_upper_bound(obj, type, model, rdar_risk, rm.settings.ub)
+    _set_risk_expression(model, rdar_risk, rm.settings.scale, rm.settings.flag)
+    # else
+    #     if isone(idx)
+    #         @variable(model, t_rdar[1:count])
+    #         @variable(model, z_rdar[1:count] >= 0)
+    #         @variable(model, omega_rdar[1:T, 1:count])
+    #         @variable(model, psi_rdar[1:T, 1:count])
+    #         @variable(model, theta_rdar[1:T, 1:count])
+    #         @variable(model, epsilon_rdar[1:T, 1:count])
+    #         @variable(model, rdar_risk[1:count])
+    #     end
+    #     @constraint(model,
+    #                 model[:rdar_risk][idx] ==
+    #                 model[:t_rdar][idx] +
+    #                 lnk * model[:z_rdar][idx] +
+    #                 sum(model[:psi_rdar][:, idx] .+ model[:theta_rdar][:, idx]))
+    #     @constraint(model, [i = 1:T],
+    #                 [model[:z_rdar][idx] * opk * ik2, model[:psi_rdar][i, idx] * opk * ik,
+    #                  model[:epsilon_rdar][i, idx]] ∈ MOI.PowerCone(iopk))
+    #     @constraint(model, [i = 1:T],
+    #                 [model[:omega_rdar][i, idx] * iomk, model[:theta_rdar][i, idx] * ik,
+    #                  -model[:z_rdar][idx] * ik2] ∈ MOI.PowerCone(omk))
+    #     @constraint(model,
+    #                 model[:dd][2:end] .- model[:t_rdar][idx] .+
+    #                 model[:epsilon_rdar][:, idx] .+ model[:omega_rdar][:, idx] .<= 0)
+    #     _set_rm_risk_upper_bound(obj, type, model, model[:rdar_risk][idx], rm.settings.ub)
+    #     _set_risk_expression(model, model[:rdar_risk][idx], rm.settings.scale,
+    #                          rm.settings.flag)
+    # end
     return nothing
 end
 function set_rm(port::Portfolio2, rm::DVar2, type::Union{Trad2, RP2},

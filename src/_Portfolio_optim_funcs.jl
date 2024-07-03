@@ -436,10 +436,10 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
 
     model = portfolio.model
 
-    @variable(model, dd[1:(T + 1)])
     if !haskey(model, :hist_ret)
         @expression(model, hist_ret, returns * model[:w])
     end
+    @variable(model, dd[1:(T + 1)])
     @constraint(model, dd[2:end] .>= dd[1:(end - 1)] .- model[:hist_ret])
     @constraint(model, dd[2:end] .>= 0)
     @constraint(model, dd[1] == 0)
@@ -557,6 +557,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     @variable(model, psi_rdar[1:T])
     @variable(model, theta_rdar[1:T])
     @variable(model, epsilon_rdar[1:T])
+    @expression(model, rdar_risk, t_rdar + ln_k * z_rdar + sum(psi_rdar .+ theta_rdar))
     @constraint(model, [i = 1:T],
                 [z_rdar * opk * invk2, psi_rdar[i] * opk * invk, epsilon_rdar[i]] ∈
                 MOI.PowerCone(invopk))
@@ -564,8 +565,6 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
                 [omega_rdar[i] * invomk, theta_rdar[i] * invk, -z_rdar * invk2] ∈
                 MOI.PowerCone(omk))
     @constraint(model, dd[2:end] .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0)
-    @expression(model, rdar_risk, t_rdar + ln_k * z_rdar + sum(psi_rdar .+ theta_rdar))
-
     if isfinite(rdar_u) && type == :Trad
         if obj == :Sharpe
             @constraint(model, rdar_risk <= rdar_u * model[:k])
