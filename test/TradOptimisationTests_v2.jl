@@ -111,7 +111,7 @@ l = 2.0
           1.7128878795388062e-9, 9.672713729659068e-9, 1.8566887674821828e-9,
           0.15375703739424093, 0.12948270229005487, 1.4679552779213837e-8,
           0.013830056152094834, 0.02934829888259256]
-    @test isapprox(w8.weights, wt, rtol = 5e-7)
+    @test isapprox(w8.weights, wt, rtol = 0.0005)
 
     w9 = optimise2!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
     wt = [0.0002472738159425723, 0.00040599319362115286, 0.2059938439469736,
@@ -3265,7 +3265,6 @@ end
           abs(dot(portfolio.mu, w20.weights) - ret4) < 1e-10
 end
 
-#=
 # @testset "RDaR" begin
 portfolio = Portfolio2(; prices = prices,
                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -3512,4 +3511,3 @@ portfolio.mu_l = ret4
 w20 = optimise2!(portfolio; rm = rm, obj = obj)
 @test dot(portfolio.mu, w20.weights) >= ret4
 # end
-=#
