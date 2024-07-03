@@ -940,14 +940,16 @@ function set_rm(port::Portfolio2, rm::Kurt2, type::Union{Trad2, RP2},
         rm.kt
     end
     nmax = port.max_num_assets_kurt
-    f = port.max_num_assets_kurt_scale
+    if !iszero(nmax) && N > nmax
+        f = port.max_num_assets_kurt_scale
+        Nf = f * N
+    end
 
     _sdp(port, obj)
 
     if isone(count)
         @variable(model, kurt_risk)
         if !iszero(nmax) && N > nmax
-            Nf = f * nmax
             @variable(model, x_kurt[1:Nf])
             @constraint(model, [kurt_risk; x_kurt] ∈ SecondOrderCone())
             A = block_vec_pq(kt, N, N)
@@ -1017,14 +1019,16 @@ function set_rm(port::Portfolio2, rm::SKurt2, type::Union{Trad2, RP2},
         rm.kt
     end
     nmax = port.max_num_assets_kurt
-    f = port.max_num_assets_kurt_scale
+    if !iszero(nmax) && N > nmax
+        f = port.max_num_assets_kurt_scale
+        Nf = f * N
+    end
 
     _sdp(port, obj)
 
     if isone(count)
         @variable(model, skurt_risk)
         if !iszero(nmax) && N > nmax
-            Nf = f * nmax
             @variable(model, x_skurt[1:Nf])
             @constraint(model, [skurt_risk; x_skurt] ∈ SecondOrderCone())
             A = block_vec_pq(kt, N, N)
