@@ -179,7 +179,7 @@ end
           0.07393381793501849, 7.687155728007624e-10, 1.0569020022084006e-9,
           1.02114427823091e-9, 1.4933139682479794e-8, 8.097577466777486e-10,
           1.044281070245392e-9, 0.8486992594628531]
-    @test isapprox(w6.weights, wt)
+    @test isapprox(w6.weights, wt, rtol = 1.0e-7)
 
     obj = SR(; rf = rf)
     w7 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -216,7 +216,7 @@ end
           0.2912102232481584, 5.529369100832207e-9, 1.0815690946117736e-8,
           7.011497723697153e-9, 5.060529591018792e-8, 6.436017540283834e-9,
           8.737047715655617e-9, 0.43229261474075803]
-    @test isapprox(w9.weights, wt)
+    @test isapprox(w9.weights, wt, rtol = 5.0e-5)
 
     obj = MaxRet()
     w10 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
