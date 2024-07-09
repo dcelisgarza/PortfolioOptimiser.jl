@@ -3,7 +3,7 @@ using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
-@testset "Risk measures v2" begin
+@testset "Risk measures" begin
     portfolio = Portfolio2(; prices = prices,
                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                             :params => Dict("verbose" => false))))
