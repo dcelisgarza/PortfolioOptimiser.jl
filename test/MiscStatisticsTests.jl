@@ -1,5 +1,5 @@
-using CovarianceEstimation, CSV, HiGHS, LinearAlgebra, OrderedCollections,
-      PortfolioOptimiser, SparseArrays, Statistics, StatsBase, Test, TimeSeries, Logging
+using CovarianceEstimation, CSV, LinearAlgebra, PortfolioOptimiser, SparseArrays,
+      Statistics, StatsBase, Test, TimeSeries, Logging
 
 Logging.disable_logging(Logging.Warn)
 

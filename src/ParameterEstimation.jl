@@ -1386,56 +1386,6 @@ function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
     C = cholesky(x)
     return a * C.U
 end
-function duplication_matrix(n::Int)
-    cols = Int(n * (n + 1) / 2)
-    rows = n * n
-    X = spzeros(rows, cols)
-    for j ∈ 1:n
-        for i ∈ j:n
-            u = spzeros(1, cols)
-            col = Int((j - 1) * n + i - (j * (j - 1)) / 2)
-            u[col] = 1
-            T = spzeros(n, n)
-            T[i, j] = 1
-            T[j, i] = 1
-            X .+= vec(T) * u
-        end
-    end
-    return X
-end
-function elimination_matrix(n::Int)
-    rows = Int(n * (n + 1) / 2)
-    cols = n * n
-    X = spzeros(rows, cols)
-    for j ∈ 1:n
-        ej = spzeros(1, n)
-        ej[j] = 1
-        for i ∈ j:n
-            u = spzeros(rows)
-            row = Int((j - 1) * n + i - (j * (j - 1)) / 2)
-            u[row] = 1
-            ei = spzeros(1, n)
-            ei[i] = 1
-            X .+= kron(u, kron(ej, ei))
-        end
-    end
-    return X
-end
-function summation_matrix(n::Int)
-    d = duplication_matrix(n)
-    l = elimination_matrix(n)
-
-    s = transpose(d) * d * l
-
-    return s
-end
-function dup_elim_sum_matrices(n::Int)
-    d = duplication_matrix(n)
-    l = elimination_matrix(n)
-    s = transpose(d) * d * l
-
-    return d, l, s
-end
 function errPDF(x, vals; kernel = ASH.Kernels.gaussian, m = 10, n = 1000, q = 1000)
     e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
     rg = range(e_min, e_max; length = n)
@@ -1461,6 +1411,157 @@ function find_max_eval(vals, q; kernel = ASH.Kernels.gaussian, m::Integer = 10,
     return e_max, x
 end
 =#
+
+function duplication_matrix(n::Int)
+    # cols = Int(n * (n + 1) / 2)
+    # rows = n * n
+    # X = spzeros(rows, cols)
+    # for j ∈ 1:n
+    #     for i ∈ j:n
+    #         u = spzeros(1, cols)
+    #         col = Int((j - 1) * n + i - (j * (j - 1)) / 2)
+    #         u[col] = 1
+    #         T = spzeros(n, n)
+    #         T[i, j] = 1
+    #         T[j, i] = 1
+    #         X .+= vec(T) * u
+    #     end
+    # end
+    # return X
+
+    m   = Int(n * (n + 1) / 2)
+    nsq = n^2
+    v   = zeros(Int, nsq)
+    r   = 1
+    a   = 1
+    for i ∈ 1:n
+        b = i
+        for j ∈ 0:(i - 2)
+            v[r] = b
+            b    += n - j - 1
+            r    += 1
+        end
+
+        for j ∈ 0:(n - i)
+            v[r] = a + j
+            r    += 1
+        end
+        a += n - i + 1
+    end
+
+    return sparse(1:nsq, v, 1, nsq, m)
+end
+function elimination_matrix(n::Int)
+    # rows = Int(n * (n + 1) / 2)
+    # cols = n * n
+    # X = spzeros(rows, cols)
+    # for j ∈ 1:n
+    #     ej = spzeros(1, n)
+    #     ej[j] = 1
+    #     for i ∈ j:n
+    #         u = spzeros(rows)
+    #         row = Int((j - 1) * n + i - (j * (j - 1)) / 2)
+    #         u[row] = 1
+    #         ei = spzeros(1, n)
+    #         ei[i] = 1
+    #         X .+= kron(u, kron(ej, ei))
+    #     end
+    # end
+    # return X
+
+    m   = Int(n * (n + 1) / 2)
+    nsq = n^2
+    v   = zeros(Int, m)
+    r   = 1
+    a   = 1
+    b   = 0
+    for i ∈ 1:n
+        for j ∈ 0:(n - i)
+            v[r] = a + j + b
+            r += 1
+        end
+        a += n - i + 1
+        b += i
+    end
+
+    return sparse(1:m, v, 1, m, nsq)
+end
+
+function summation_matrix(n::Int)
+    # d = duplication_matrix(n)
+    # l = elimination_matrix(n)
+    # s = transpose(d) * d * l
+    # return s
+
+    m   = Int(n * (n + 1) / 2)
+    nsq = n^2
+    v   = zeros(Int, nsq)
+    v2  = zeros(Int, m)
+    r1  = 1
+    r2  = 1
+    a   = 1
+    b2  = 0
+    for i ∈ 1:n
+        b1 = i
+        for j ∈ 0:(i - 2)
+            v[r1] = b1
+            b1    += n - j - 1
+            r1    += 1
+        end
+
+        for j ∈ 0:(n - i)
+            v[r1] = a + j
+            v2[r2] = a + j + b2
+            r1 += 1
+            r2 += 1
+        end
+        a += n - i + 1
+        b2 += i
+    end
+
+    d = sparse(1:nsq, v, 1, nsq, m)
+    l = sparse(1:m, v2, 1, m, nsq)
+    s = transpose(d) * d * l
+
+    return s
+end
+function dup_elim_sum_matrices(n::Int)
+    # d = duplication_matrix(n)
+    # l = elimination_matrix(n)
+    # s = transpose(d) * d * l
+
+    m   = Int(n * (n + 1) / 2)
+    nsq = n^2
+    v   = zeros(Int, nsq)
+    v2  = zeros(Int, m)
+    r1  = 1
+    r2  = 1
+    a   = 1
+    b2  = 0
+    for i ∈ 1:n
+        b1 = i
+        for j ∈ 0:(i - 2)
+            v[r1] = b1
+            b1    += n - j - 1
+            r1    += 1
+        end
+
+        for j ∈ 0:(n - i)
+            v[r1] = a + j
+            v2[r2] = a + j + b2
+            r1 += 1
+            r2 += 1
+        end
+        a += n - i + 1
+        b2 += i
+    end
+
+    d = sparse(1:nsq, v, 1, nsq, m)
+    l = sparse(1:m, v2, 1, m, nsq)
+    s = transpose(d) * d * l
+
+    return d, l, s
+end
 function denoise!(::NoDenoise, ::PosdefFix, X::AbstractMatrix, q::Real)
     return nothing
 end

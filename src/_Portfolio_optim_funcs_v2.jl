@@ -1,5 +1,7 @@
 function initial_w(port, w_ini)
-    @variable(port.model, w[1:size(port.returns, 2)])
+    if !haskey(port.model, :w)
+        @variable(port.model, w[1:size(port.returns, 2)])
+    end
     if !isempty(w_ini)
         @smart_assert(length(w_ini) == length(w))
         set_start_value.(w, w_ini)
@@ -2040,12 +2042,12 @@ function _rebuild_B(B::DataFrame, factors::AbstractMatrix,
                     regression::DimensionReductionReg)
     X = transpose(factors)
     X_std = StatsBase.standardize(StatsBase.ZScoreTransform, X; dims = 2)
-    model = fit(method.pcr, X_std)
+    model = fit(regression.pcr, X_std)
     Vp = projection(model)
-    sdev = if isnothing(method.std_w)
-        vec(std(method.ve, X; dims = 2))
+    sdev = if isnothing(regression.std_w)
+        vec(std(regression.ve, X; dims = 2))
     else
-        vec(std(method.ve, X, method.std_w; dims = 2))
+        vec(std(regression.ve, X, regression.std_w; dims = 2))
     end
     return transpose(pinv(Vp) * transpose(B .* transpose(sdev)))
 end
@@ -2066,10 +2068,11 @@ function _rp_class_constraints(::Any, port)
     end
     rb = port.risk_budget
     N = length(rb)
+    @variable(model, w[1:N])
     @variable(model, log_w[1:N])
     @constraint(model, dot(rb, log_w) >= 1)
-    @constraint(model, [i = 1:N], [log_w[i], 1, model[:w][i]] ∈ MOI.ExponentialCone())
-    @constraint(model, model[:w] .>= 0)
+    @constraint(model, [i = 1:N], [log_w[i], 1, w[i]] ∈ MOI.ExponentialCone())
+    @constraint(model, w .>= 0)
     return nothing
 end
 function _rp_class_constraints(::FC2, port)
@@ -2085,10 +2088,9 @@ function _rp_class_constraints(::FC2, port)
     end
 
     @variable(model, w1[1:N_f])
-    @variable(model, w2[1:(N - N_f)])
-    delete(model, model[:w])
-    unregister(model, :w)
-    @expression(model, w, b1 * w1 + b2 * w2)
+    # @variable(model, w2[1:(N - N_f)])
+    # @expression(model, w, b1 * w1 + b2 * w2)
+    @expression(model, w, b1 * w1)
     @variable(model, log_w[1:N_f])
     @constraint(model, dot(rb, log_w) >= 1)
     @constraint(model, [i = 1:N_f], [log_w[i], 1, model[:w1][i]] ∈ MOI.ExponentialCone())
@@ -2110,8 +2112,8 @@ function _optimise!(type::RP2, port::Portfolio2,
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
-    initial_w(port, w_ini)
     rp_constraints(port, class)
+    initial_w(port, w_ini)
     risk_constraints(port, nothing, RP2(), rm, mu, sigma, returns)
     set_returns(nothing, NoKelly(), nothing, port.model, port.mu_l; mu = mu)
     linear_constraints(port, MinRisk())
@@ -2177,7 +2179,6 @@ function _optimise!(type::RRP2, port::Portfolio2, ::Any, ::Any, ::Any,
     model = port.model
     set_string_names_on_creation(model, str_names)
     initial_w(port, w_ini)
-
     rrp_constraints(type, port, sigma)
     set_returns(nothing, NoKelly(), nothing, port.model, port.mu_l; mu = mu)
     linear_constraints(port, MinRisk())

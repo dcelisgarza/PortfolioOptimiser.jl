@@ -1,4 +1,16 @@
 using CSV, TimeSeries, JuMP, Test, Clarabel, StatsBase, PortfolioOptimiser
+
+@time d1 = PortfolioOptimiser.duplication_matrix(5)
+
+@time e1 = PortfolioOptimiser.elimination_matrix(5)
+d, s, l, d1, s1, l1 = PortfolioOptimiser.summation_matrix(50)
+@test isequal(d, d1)
+@test isequal(l, l1)
+@test isequal(s, s1)
+
+d2, e2 = PortfolioOptimiser.summation_matrix(5)
+@test isequal(s1, s2)
+
 prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 portfolio = Portfolio2(; prices = prices,
                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,

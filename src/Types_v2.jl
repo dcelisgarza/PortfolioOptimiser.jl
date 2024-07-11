@@ -395,6 +395,9 @@ end
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
     pcr::DimensionReductionTarget = PCATarget()
 end
+function MultivariateStats.fit(target::PCATarget, X::AbstractMatrix)
+    return MultivariateStats.fit(MultivariateStats.PCA, X; target.kwargs...)
+end
 @kwdef mutable struct FactorType
     error::Bool = true
     B::Union{Nothing, DataFrame} = nothing
