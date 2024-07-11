@@ -248,9 +248,9 @@ version = "1.15.1"
 
 [[deps.DispatchDoctor]]
 deps = ["MacroTools", "Preferences"]
-git-tree-sha1 = "a91aea1730626655e759e036a491b87b78de92e9"
+git-tree-sha1 = "32d236e685d028f5bc808aae0634b58aac5128f0"
 uuid = "8d63f2c5-f18a-4cf2-ba9d-b3f60fc568c8"
-version = "0.4.9"
+version = "0.4.10"
 
     [deps.DispatchDoctor.extensions]
     DispatchDoctorChainRulesCoreExt = "ChainRulesCore"

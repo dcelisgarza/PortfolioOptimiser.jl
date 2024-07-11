@@ -343,9 +343,9 @@ version = "1.15.1"
 
 [[deps.DispatchDoctor]]
 deps = ["MacroTools", "Preferences"]
-git-tree-sha1 = "a91aea1730626655e759e036a491b87b78de92e9"
+git-tree-sha1 = "32d236e685d028f5bc808aae0634b58aac5128f0"
 uuid = "8d63f2c5-f18a-4cf2-ba9d-b3f60fc568c8"
-version = "0.4.9"
+version = "0.4.10"
 weakdeps = ["ChainRulesCore"]
 
     [deps.DispatchDoctor.extensions]
@@ -692,10 +692,10 @@ uuid = "34c5aeac-e683-54a6-a0e9-6e0fdc586c50"
 version = "0.4.3"
 
 [[deps.HSL_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "653875e1750a6b1700f73c7814ff777f56aca624"
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "6a7d6bbdbd0029ab369240414a1faff417ad80ef"
 uuid = "017b0a0e-03f4-516a-9b91-836bbd1904dd"
-version = "2.0.0+0"
+version = "3.0.0+0"
 
 [[deps.HTTP]]
 deps = ["Base64", "CodecZlib", "ConcurrentUtilities", "Dates", "ExceptionUnwrapping", "Logging", "LoggingExtras", "MbedTLS", "NetworkOptions", "OpenSSL", "Random", "SimpleBufferStream", "Sockets", "URIs", "UUIDs"]
