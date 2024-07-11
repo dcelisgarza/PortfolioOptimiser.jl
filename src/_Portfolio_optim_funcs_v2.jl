@@ -2075,10 +2075,19 @@ function _rp_class_constraints(::Any, port)
     @constraint(model, w .>= 0)
     return nothing
 end
-function _rp_class_constraints(::FC2, port)
-    b1, b2, missing, missing = _factors_b1_b2_b3(port.loadings, port.f_returns,
-                                                 port.loadings_opt)
-    N_f = size(b1, 2)
+function _rp_class_constraints(class::FC2, port)
+    if class.nullflag
+        b1, b2 = _factors_b1_b2_b3(port.loadings, port.f_returns, port.loadings_opt)[1:2]
+        N_f = size(b1, 2)
+        @variable(model, w1[1:N_f])
+        @variable(model, w2[1:(N - N_f)])
+        @expression(model, w, b1 * w1 + b2 * w2)
+    else
+        b1 = _factors_b1_b2_b3(port.loadings, port.f_returns, port.loadings_opt)[1]
+        N_f = size(b1, 2)
+        @variable(model, w1[1:N_f])
+        @expression(model, w, b1 * w1)
+    end
 
     rb = port.f_risk_budget
     if isempty(rb) || length(rb) != N_f
@@ -2087,10 +2096,6 @@ function _rp_class_constraints(::FC2, port)
         port.f_risk_budget ./= sum(port.f_risk_budget)
     end
 
-    @variable(model, w1[1:N_f])
-    # @variable(model, w2[1:(N - N_f)])
-    # @expression(model, w, b1 * w1 + b2 * w2)
-    @expression(model, w, b1 * w1)
     @variable(model, log_w[1:N_f])
     @constraint(model, dot(rb, log_w) >= 1)
     @constraint(model, [i = 1:N_f], [log_w[i], 1, model[:w1][i]] ∈ MOI.ExponentialCone())

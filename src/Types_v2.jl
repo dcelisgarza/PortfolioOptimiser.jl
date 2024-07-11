@@ -57,7 +57,9 @@ struct EKelly <: RetType end
 
 abstract type PortClass end
 struct Classic2 <: PortClass end
-struct FC2 <: PortClass end
+@kwdef mutable struct FC2 <: PortClass
+    nullflag::Bool = true
+end
 mutable struct FM2{T1 <: Integer} <: PortClass
     type::T1
 end
@@ -394,9 +396,6 @@ end
     std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
     pcr::DimensionReductionTarget = PCATarget()
-end
-function MultivariateStats.fit(target::PCATarget, X::AbstractMatrix)
-    return MultivariateStats.fit(MultivariateStats.PCA, X; target.kwargs...)
 end
 @kwdef mutable struct FactorType
     error::Bool = true

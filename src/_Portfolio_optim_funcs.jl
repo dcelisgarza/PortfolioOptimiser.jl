@@ -1253,11 +1253,10 @@ function _rp_setup(portfolio, N, class)
         end
 
         @variable(model, w1[1:N_f])
-        # @variable(model, w2[1:(N - N_f)])
+        @variable(model, w2[1:(N - N_f)])
         delete(model, model[:w])
         unregister(model, :w)
-        # @expression(model, w, b1 * w1 + b2 * w2)
-        @expression(model, w, b1 * w1)
+        @expression(model, w, b1 * w1 + b2 * w2)
         @variable(model, log_w[1:N_f])
         @constraint(model, dot(rb, log_w) >= 1)
         @constraint(model, [i = 1:N_f],
