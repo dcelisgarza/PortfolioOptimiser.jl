@@ -1221,7 +1221,7 @@ function _calc_factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix,
     return b1, b2, b3, B
 end
 
-function _rp_setup(portfolio, N, class)
+function _rp_setup(portfolio, N, class, nullflag)
     model = portfolio.model
 
     model = portfolio.model
@@ -1253,10 +1253,14 @@ function _rp_setup(portfolio, N, class)
         end
 
         @variable(model, w1[1:N_f])
-        @variable(model, w2[1:(N - N_f)])
         delete(model, model[:w])
         unregister(model, :w)
-        @expression(model, w, b1 * w1 + b2 * w2)
+        if nullflag
+            @variable(model, w2[1:(N - N_f)])
+            @expression(model, w, b1 * w1 + b2 * w2)
+        else
+            @expression(model, w, b1 * w1)
+        end
         @variable(model, log_w[1:N_f])
         @constraint(model, dot(rb, log_w) >= 1)
         @constraint(model, [i = 1:N_f],
@@ -2111,6 +2115,7 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
     obj = opt.obj
     kelly = opt.kelly
     class = opt.class
+    nullflag = opt.nullflag
     rrp_ver = opt.rrp_ver
     u_cov = opt.u_cov
     u_mu = opt.u_mu
@@ -2160,7 +2165,7 @@ function optimise!(portfolio::Portfolio, opt::OptimiseOpt = OptimiseOpt(;);
         _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
         _setup_trad_wc_constraints(portfolio, obj, T, N, :Trad, class, kelly, l, returns)
     elseif type == :RP
-        _rp_setup(portfolio, N, class)
+        _rp_setup(portfolio, N, class, nullflag)
         _risk_setup(portfolio, :RP, rm, kelly, obj, rf, T, N, mu, returns, sigma, kurtosis,
                     skurtosis, network_method, sd_cone, owa_approx)
         _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)

@@ -1417,6 +1417,7 @@ mutable struct OptimiseOpt{T1 <: Integer, T2 <: Real, T3 <: Real, T4 <: Real, T5
     obj::Symbol
     kelly::Symbol
     class::Symbol
+    nullflag::Bool
     rrp_ver::Symbol
     u_cov::Symbol
     u_mu::Symbol
@@ -1433,7 +1434,7 @@ mutable struct OptimiseOpt{T1 <: Integer, T2 <: Real, T3 <: Real, T4 <: Real, T5
     w_max::AbstractVector
 end
 function OptimiseOpt(; type::Symbol = :Trad, rm::Symbol = :SD, obj::Symbol = :Sharpe,
-                     kelly::Symbol = :None, class::Symbol = :Classic,
+                     kelly::Symbol = :None, class::Symbol = :Classic, nullflag::Bool = true,
                      rrp_ver::Symbol = :None, u_cov::Symbol = :Box, u_mu::Symbol = :Box,
                      sd_cone::Bool = true, owa_approx::Bool = true, near_opt::Bool = false,
                      hist::Integer = 1, rf::Real = 0.0, l::Real = 2.0,
@@ -1458,6 +1459,7 @@ function OptimiseOpt(; type::Symbol = :Trad, rm::Symbol = :SD, obj::Symbol = :Sh
                                                                                             obj,
                                                                                             kelly,
                                                                                             class,
+                                                                                            nullflag,
                                                                                             rrp_ver,
                                                                                             u_cov,
                                                                                             u_mu,
