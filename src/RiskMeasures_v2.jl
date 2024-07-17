@@ -791,16 +791,20 @@ abstract type HCRiskMeasure <: RiskMeasure end
     scale::T1 = 1.0
     ub::T2 = Inf
 end
+abstract type SDFormulation end
+struct QuadSD <: SDFormulation end
+struct SOCSD <: SDFormulation end
 mutable struct SD2{T1 <: Union{AbstractMatrix, Nothing}} <: TradRiskMeasure
     settings::RiskMeasureSettings
+    formulation::SDFormulation
     sigma::T1
 end
-function SD2(; settings::RiskMeasureSettings = RiskMeasureSettings(),
+function SD2(; settings::RiskMeasureSettings = RiskMeasureSettings(), formulation = SOCSD(),
              sigma::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    return SD2{Union{<:AbstractMatrix, Nothing}}(settings, sigma)
+    return SD2{Union{<:AbstractMatrix, Nothing}}(settings, formulation, sigma)
 end
 function Base.setproperty!(obj::SD2, sym::Symbol, val)
     if sym == :sigma
