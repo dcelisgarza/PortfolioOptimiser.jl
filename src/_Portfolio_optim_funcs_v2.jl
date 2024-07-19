@@ -1630,13 +1630,13 @@ function set_returns(obj::SR, ::NoKelly, model, mu_l::Real; mu::AbstractVector, 
     end
     return nothing
 end
-function set_returns(obj::Any, ::AKelly, model, mu_l::Real; mu::AbstractVector,
+function set_returns(obj::Any, kelly::AKelly, model, mu_l::Real; mu::AbstractVector,
                      kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing},
                      network_method::NetworkMethods2, sigma::AbstractMatrix, kwargs...)
     if !isempty(mu)
         if isnothing(kelly_approx_idx) || isempty(kelly_approx_idx)
             if !haskey(model, :sd_risk)
-                _sd_risk(network_method, SOCSD(), model, sigma, 1, 1)
+                _sd_risk(network_method, kelly.formulation, model, sigma, 1, 1)
             end
             @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:sd_risk])
         else
@@ -1651,7 +1651,7 @@ function set_returns(obj::Any, ::AKelly, model, mu_l::Real; mu::AbstractVector,
     end
     return nothing
 end
-function set_returns(obj::SR, ::AKelly, model, mu_l::Real; mu::AbstractVector,
+function set_returns(obj::SR, kelly::AKelly, model, mu_l::Real; mu::AbstractVector,
                      kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing},
                      network_method::NetworkMethods2, sigma::AbstractMatrix, kwargs...)
     if !isempty(mu)
@@ -1660,7 +1660,12 @@ function set_returns(obj::SR, ::AKelly, model, mu_l::Real; mu::AbstractVector,
         @expression(model, ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
         if isempty(kelly_approx_idx)
             if !haskey(model, :sd_risk)
-                _sd_risk(network_method, SOCSD(), model, sigma, 1, 1)
+                _sd_risk(network_method, kelly.formulation, model, sigma, 1, 1)
+                if !haskey(model, :dev)
+                    G = sqrt(sigma)
+                    @variable(model, dev)
+                    @constraint(model, [dev; G * model[:w]] ∈ SecondOrderCone())
+                end
             end
             @constraint(model,
                         [model[:k] + tapprox_kelly

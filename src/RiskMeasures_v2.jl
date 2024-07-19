@@ -791,9 +791,6 @@ abstract type HCRiskMeasure <: RiskMeasure end
     scale::T1 = 1.0
     ub::T2 = Inf
 end
-abstract type SDFormulation end
-struct QuadSD <: SDFormulation end
-struct SOCSD <: SDFormulation end
 mutable struct SD2{T1 <: Union{AbstractMatrix, Nothing}} <: TradRiskMeasure
     settings::RiskMeasureSettings
     formulation::SDFormulation

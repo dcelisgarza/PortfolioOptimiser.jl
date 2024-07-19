@@ -50,9 +50,15 @@ Base.Symbol(::RRP2) = :RRP2
 Base.String(::WC2) = "WC2"
 Base.Symbol(::WC2) = :WC2
 
+abstract type SDFormulation end
+struct QuadSD <: SDFormulation end
+struct SOCSD <: SDFormulation end
+
 abstract type RetType end
 struct NoKelly <: RetType end
-struct AKelly <: RetType end
+@kwdef mutable struct AKelly <: RetType
+    formulation::SDFormulation = SOCSD()
+end
 struct EKelly <: RetType end
 
 abstract type PortClass end
