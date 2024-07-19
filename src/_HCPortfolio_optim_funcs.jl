@@ -180,9 +180,9 @@ function _two_diff_gap_stat(dist, clustering, max_k = 0)
     end
 
     limit_k = floor(Int, min(max_k, sqrt(N)))
-    gaps = fill(-Inf, length(W_list))
+    gaps = fill(-Inf, c1)
 
-    if length(W_list) > 2
+    if c1 > 2
         gaps[3:end] .= W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)]
     end
 

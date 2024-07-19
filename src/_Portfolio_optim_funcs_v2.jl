@@ -328,17 +328,47 @@ function _sd_risk(::Any, ::SOCSD, model, sigma, count::Integer, idx::Integer)
     return nothing
 end
 function _sd_risk(::Any, ::QuadSD, model, sigma, count::Integer, idx::Integer)
+    G = sqrt(sigma)
     if isone(count)
         @variable(model, dev)
         @expression(model, sd_risk, dot(model[:w], sigma, model[:w]))
-        @constraint(model, [dev; sd_risk] ∈ SecondOrderCone())
+        @constraint(model, [dev; G * model[:w]] ∈ SecondOrderCone())
     else
         if isone(idx)
             @variable(model, dev[1:count])
             @variable(model, sd_risk[1:count])
         end
         @constraint(model, model[:sd_risk][idx] == dot(model[:w], sigma, model[:w]))
-        @constraint(model, [model[:dev][idx]; model[:sd_risk][idx]] ∈ SecondOrderCone())
+        @constraint(model, [model[:dev][idx]; G * model[:w]] ∈ SecondOrderCone())
+    end
+    return nothing
+end
+function _sd_risk(::Any, ::SimpleSD, model, sigma, count::Integer, idx::Integer)
+    G = sqrt(sigma)
+    if isone(count)
+        @variable(model, dev)
+        @expression(model, sd_risk, dev)
+        @constraint(model, [dev; G * model[:w]] ∈ SecondOrderCone())
+    else
+        if isone(idx)
+            @variable(model, dev[1:count])
+            @variable(model, sd_risk[1:count])
+        end
+        @constraint(model, model[:sd_risk][idx] == model[:dev][idx])
+        @constraint(model, [model[:dev][idx]; G * model[:w]] ∈ SecondOrderCone())
+    end
+    return nothing
+end
+function _dev_setup(args...)
+    return nothing
+end
+function _dev_setup(::SDP2, model, idx::Union{Nothing, Integer} = nothing)
+    if isnothing(idx)
+        @variable(model, dev)
+        @constraint(model, [model[:sd_risk], 1, dev] in MOI.PowerCone(0.5))
+    else
+        @variable(model, dev)
+        @constraint(model, [model[:sd_risk][idx], 1, dev] in MOI.PowerCone(0.5))
     end
     return nothing
 end
@@ -346,7 +376,9 @@ function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::Objecti
                 count::Integer, idx::Integer; sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     if !isnothing(kelly_approx_idx) && (isnothing(rm.sigma) || isempty(rm.sigma))
-        push!(kelly_approx_idx, isone(count) ? 0 : idx)
+        if isempty(kelly_approx_idx)
+            push!(kelly_approx_idx, isone(count) ? 0 : idx)
+        end
     else
         sigma = rm.sigma
     end
@@ -1631,7 +1663,7 @@ function set_returns(obj::SR, ::NoKelly, model, mu_l::Real; mu::AbstractVector, 
     return nothing
 end
 function set_returns(obj::Any, kelly::AKelly, model, mu_l::Real; mu::AbstractVector,
-                     kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing},
+                     kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing} = nothing,
                      network_method::NetworkMethods2, sigma::AbstractMatrix, kwargs...)
     if !isempty(mu)
         if isnothing(kelly_approx_idx) || isempty(kelly_approx_idx)
@@ -1652,27 +1684,29 @@ function set_returns(obj::Any, kelly::AKelly, model, mu_l::Real; mu::AbstractVec
     return nothing
 end
 function set_returns(obj::SR, kelly::AKelly, model, mu_l::Real; mu::AbstractVector,
-                     kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing},
+                     kelly_approx_idx::AbstractVector{<:Integer},
                      network_method::NetworkMethods2, sigma::AbstractMatrix, kwargs...)
     if !isempty(mu)
         @variable(model, tapprox_kelly)
         @constraint(model, model[:risk] <= 1)
         @expression(model, ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
-        if isempty(kelly_approx_idx)
+        if isempty(kelly_approx_idx) || iszero(kelly_approx_idx[1])
             if !haskey(model, :sd_risk)
                 _sd_risk(network_method, kelly.formulation, model, sigma, 1, 1)
-                if !haskey(model, :dev)
-                    G = sqrt(sigma)
-                    @variable(model, dev)
-                    @constraint(model, [dev; G * model[:w]] ∈ SecondOrderCone())
-                end
             end
+            _dev_setup(network_method, model)
             @constraint(model,
                         [model[:k] + tapprox_kelly
                          2 * model[:dev]
                          model[:k] - tapprox_kelly] ∈ SecondOrderCone())
         else
-            if isnothing(kelly_approx_idx) || iszero(kelly_approx_idx[1])
+            if !haskey(model, :sd_risk)
+                _sd_risk(network_method, kelly.formulation, model, sigma, 1, 1)
+                _dev_setup(network_method, model)
+            else
+                _dev_setup(network_method, model, kelly_approx_idx[1])
+            end
+            if isa(model[:dev], AbstractVector)
                 @constraint(model,
                             [model[:k] + tapprox_kelly
                              2 * model[:dev]
@@ -1723,8 +1757,7 @@ function return_constraints(port, obj, kelly, class::Classic2, mu, sigma, return
 end
 function return_constraints(port, obj, ::Any, ::Any, mu, sigma, returns, kelly_approx_idx)
     set_returns(obj, NoKelly(), port.model, port.mu_l; mu = mu, sigma = sigma,
-                returns = returns, kelly_approx_idx = kelly_approx_idx,
-                network_method = port.network_method)
+                returns = returns, network_method = port.network_method)
     return nothing
 end
 function setup_tracking_err_constraints(::NoTracking, args...)
@@ -2140,7 +2173,7 @@ function _optimise!(type::RP2, port::Portfolio2,
     rp_constraints(port, class)
     initial_w(port, w_ini)
     risk_constraints(port, nothing, RP2(), rm, mu, sigma, returns)
-    set_returns(nothing, NoKelly(), nothing, port.model, port.mu_l; mu = mu)
+    set_returns(nothing, NoKelly(), port.model, port.mu_l; mu = mu)
     linear_constraints(port, MinRisk())
     objective_function(port, MinRisk(), RP2(), class, nothing)
     return convex_optimisation(port, nothing, RP2(), class)
