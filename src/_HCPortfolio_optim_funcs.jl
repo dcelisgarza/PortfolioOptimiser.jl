@@ -117,20 +117,17 @@ function _std_silhouette_score(dist, clustering, max_k = 0)
         max_k = ceil(Int, sqrt(size(dist, 1)))
     end
 
-    c1 = min(N, max_k) - 1
+    c1 = min(N, max_k)
     W_list = Vector{eltype(dist)}(undef, c1)
-
-    for i ∈ 1:c1
-        lvl = cluster_lvls[i + 1]
+    W_list[1] = -Inf
+    for i ∈ 2:c1
+        lvl = cluster_lvls[i]
         sl = silhouettes(lvl, dist)
         msl = mean(sl)
         W_list[i] = msl / std(sl; mean = msl)
     end
 
-    limit_k = floor(Int, min(max_k, sqrt(N), c1))
-    W_list = W_list[1:limit_k]
-
-    k = all(.!isfinite.(W_list)) ? length(W_list) : k = argmax(W_list) + 1
+    k = all(.!isfinite.(W_list)) ? length(W_list) : k = argmax(W_list)
 
     return k
 end
@@ -154,41 +151,34 @@ function _two_diff_gap_stat(dist, clustering, max_k = 0)
     for i ∈ 1:c1
         lvl = cluster_lvls[i]
         c2 = maximum(unique(lvl))
-        mean_dist = 0.0
+        D_list = Vector{eltype(dist)}(undef, c2)
         for j ∈ 1:c2
             cluster = findall(lvl .== j)
             cluster_dist = dist[cluster, cluster]
             if isempty(cluster_dist)
                 continue
             end
-
-            val = 0.0
-            counter = 0
             M = size(cluster_dist, 1)
+            C_list = Vector{eltype(dist)}(undef, Int(M * (M - 1) / 2))
+            k = 1
             for col ∈ 1:M
                 for row ∈ (col + 1):M
-                    val += cluster_dist[row, col]
-                    counter += 1
+                    C_list[k] = cluster_dist[row, col]
+                    k += 1
                 end
             end
-            if counter == 0
-                continue
-            end
-            mean_dist += val / counter
+            D_list[j] = k == 1 ? zero(eltype(dist)) : std(C_list; corrected = false)
         end
-        W_list[i] = mean_dist
+        W_list[i] = sum(D_list)
     end
 
-    limit_k = floor(Int, min(max_k, sqrt(N)))
     gaps = fill(-Inf, c1)
 
     if c1 > 2
-        gaps[3:end] .= W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)]
+        gaps[1:(end - 2)] .= W_list[1:(end - 2)] .+ W_list[3:end] .- 2 * W_list[2:(end - 1)]
     end
 
-    gaps = gaps[1:limit_k]
-
-    k = all(isinf.(gaps)) ? length(gaps) : k = argmax(gaps) + 1
+    k = all(isinf.(gaps)) ? length(gaps) : k = argmax(gaps)
 
     return k
 end
