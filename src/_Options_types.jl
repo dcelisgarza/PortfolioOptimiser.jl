@@ -1294,11 +1294,12 @@ mutable struct ClusterOpt{T1 <: Integer, T2 <: Integer}
     k_method::Symbol
     max_k::T1
     k::T2
+    metric::Union{Distances.SemiMetric, Nothing}
     genfunc::GenericFunction
 end
 function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
                     dbht_method::Symbol = :Unique, k_method::Symbol = :Two_Diff,
-                    max_k::Integer = 0, k::Integer = 0,
+                    max_k::Integer = 0, k::Integer = 0, metric = nothing,
                     genfunc::GenericFunction = GenericFunction(;
                                                                func = (corr, dist, args...; kwargs...) -> ceil(maximum(dist)^2) .-
                                                                                                           dist .^
@@ -1309,7 +1310,7 @@ function ClusterOpt(; linkage::Symbol = :single, branchorder::Symbol = :optimal,
     @smart_assert(k_method ∈ kClusterMethods)
 
     return ClusterOpt{typeof(max_k), typeof(k)}(linkage, branchorder, dbht_method, k_method,
-                                                max_k, k, genfunc)
+                                                max_k, k, metric, genfunc)
 end
 function Base.setproperty!(obj::ClusterOpt, sym::Symbol, val)
     if sym == :linkage

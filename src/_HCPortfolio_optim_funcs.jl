@@ -109,7 +109,7 @@ end
 _std_silhouette_score(dist, clustering, max_k = 0)
 ```
 """
-function _std_silhouette_score(dist, clustering, max_k = 0)
+function _std_silhouette_score(dist, clustering, max_k = 0, metric = nothing)
     N = size(dist, 1)
     cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]
 
@@ -122,7 +122,7 @@ function _std_silhouette_score(dist, clustering, max_k = 0)
     W_list[1] = -Inf
     for i ∈ 2:c1
         lvl = cluster_lvls[i]
-        sl = silhouettes(lvl, dist)
+        sl = silhouettes(lvl, dist; metric = metric)
         msl = mean(sl)
         W_list[i] = msl / std(sl; mean = msl)
     end
@@ -211,7 +211,7 @@ function _hcluster_choice(corr, dist, cluster_opt::ClusterOpt)
     k = if cluster_opt.k_method == :Two_Diff
         _two_diff_gap_stat(dist, clustering, max_k)
     else
-        _std_silhouette_score(dist, clustering, max_k)
+        _std_silhouette_score(dist, clustering, max_k, cluster_opt.metric)
     end
 
     return clustering, k
