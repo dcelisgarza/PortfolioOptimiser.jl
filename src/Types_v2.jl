@@ -438,6 +438,17 @@ end
     denoise::Denoise = NoDenoise()
     jlogo::AbstractJLoGo = NoJLoGo()
 end
+abstract type NumClusterMethod end
+struct TwoDiff <: NumClusterMethod end
+@kwdef mutable struct StdSilhouette <: NumClusterMethod
+    metric::Union{Distances.SemiMetric, Nothing} = nothing
+end
+@kwdef mutable struct HClustOpt{T1 <: Integer, T2 <: Integer}
+    branchorder::Symbol = :optimal
+    k_method::NumClusterMethod = TwoDiff()
+    k::T1 = 0
+    max_k::T2 = 0
+end
 """
 ```
 AbstractPortfolio2
