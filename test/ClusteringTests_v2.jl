@@ -16,7 +16,7 @@ l = 2.0
 
     idx, clustering, k = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
 
-    idxt = [1, 2, 1, 1, 1, 3, 2, 1, 3, 4, 3, 3, 4, 3, 3, 4, 2, 1, 3, 1]
+    idxt = [1, 1, 1, 1, 1, 2, 1, 1, 2, 3, 2, 2, 3, 2, 2, 3, 1, 1, 2, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;
                -3 -20; -9 3; 10 11; 2 1; 13 4; 12 14; 6 15; 8 16; 17 18]
     heightst = [0.05263157894736842, 0.05555555555555555, 0.058823529411764705, 0.0625,
@@ -26,7 +26,7 @@ l = 2.0
                 0.5, 1.0]
     ordert = [7, 17, 2, 4, 1, 5, 3, 20, 18, 8, 13, 16, 10, 9, 19, 12, 11, 6, 14, 15]
     linkaget = :DBHT
-    kt = 4
+    kt = 3
 
     @test isapprox(idx, idxt)
     @test isapprox(clustering.merges, mergest)
@@ -167,7 +167,7 @@ end
 
     idx, clustering, k, S, D = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
 
-    idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2, 2, 1]
+    idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 3, 3, 2, 3, 3, 1, 2, 2, 1]
     mergest = [-3 -1; 1 -5; -19 -9; -17 -2; -20 4; 5 2; 6 -4; -14 -6; -11 8; -10 3; 9 -18;
                -13 -16; 12 -12; 11 -8; -7 -15; 10 14; 15 13; 17 16; 7 18]
     heightst = [0.444008719373704, 0.4749395689083809, 0.2342763563575649,
@@ -179,7 +179,7 @@ end
                 0.8789050122642453]
     ordert = [20, 17, 2, 3, 1, 5, 4, 7, 15, 13, 16, 12, 10, 19, 9, 11, 14, 6, 18, 8]
     linkaget = :ward
-    kt = 4
+    kt = 3
 
     @test isapprox(idx, idxt)
     @test isapprox(clustering.merges, mergest)
@@ -191,7 +191,7 @@ end
     ca = DBHT()
     idx, clustering, k, S, D = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
 
-    idxt = [1, 2, 1, 1, 1, 3, 2, 1, 3, 4, 3, 3, 4, 3, 3, 4, 2, 1, 3, 1]
+    idxt = [1, 1, 1, 1, 1, 2, 1, 1, 2, 3, 2, 2, 3, 2, 2, 3, 1, 1, 2, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;
                -3 -20; -9 3; 10 11; 2 1; 13 4; 12 14; 6 15; 8 16; 17 18]
     heightst = [0.05263157894736842, 0.05555555555555555, 0.058823529411764705, 0.0625,
@@ -201,7 +201,7 @@ end
                 0.5, 1.0]
     ordert = [7, 17, 2, 4, 1, 5, 3, 20, 18, 8, 13, 16, 10, 9, 19, 12, 11, 6, 14, 15]
     linkaget = :DBHT
-    kt = 4
+    kt = 3
 
     @test isapprox(idx, idxt)
     @test isapprox(clustering.merges, mergest)
