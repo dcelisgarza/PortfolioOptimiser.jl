@@ -8,39 +8,6 @@ end
     include("HCPortfolioOptimisationTests.jl")
 end
 
-@safetestset "Trad optimisation" begin
-    include("TradOptimisationTests_v2.jl")
-end
-
-@safetestset "Risk measure tests V2" begin
-    include("RiskMeasureTests_v2.jl")
-end
-
-@safetestset "Network constraint tests" begin
-    include("NetworkConstraintTests.jl")
-end
-
-@safetestset "Clustering tests V2" begin
-    include("ClusteringTests_v2.jl")
-end
-
-@safetestset "BL Stats V2 tests" begin
-    include("BLStatsTests_v2.jl")
-end
-
-@safetestset "Stats V2 tests" begin
-    include("StatsTest_v2_1.jl")
-    include("StatsTest_v2_2.jl")
-end
-
-@safetestset "WC Stats V2 tests" begin
-    include("WCStatsTest_v2.jl")
-end
-
-@safetestset "Factor Stats V2 tests" begin
-    include("FactorStatsTest_v2.jl")
-end
-
 @safetestset "Asset Statistics" begin
     include("AssetStatisticsTests1.jl")
     include("AssetStatisticsTests2.jl")
@@ -120,4 +87,37 @@ end
 
 @safetestset "Portfolio Classic RP Optimisation" begin
     include("PortfolioClassicRPTests.jl")
+end
+
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests_v2.jl")
+end
+
+@safetestset "Risk measure tests V2" begin
+    include("RiskMeasureTests_v2.jl")
+end
+
+@safetestset "Network constraint tests" begin
+    include("NetworkConstraintTests.jl")
+end
+
+@safetestset "Clustering tests V2" begin
+    include("ClusteringTests_v2.jl")
+end
+
+@safetestset "BL Stats V2 tests" begin
+    include("BLStatsTests_v2.jl")
+end
+
+@safetestset "Stats V2 tests" begin
+    include("StatsTest_v2_1.jl")
+    include("StatsTest_v2_2.jl")
+end
+
+@safetestset "WC Stats V2 tests" begin
+    include("WCStatsTest_v2.jl")
+end
+
+@safetestset "Factor Stats V2 tests" begin
+    include("FactorStatsTest_v2.jl")
 end
