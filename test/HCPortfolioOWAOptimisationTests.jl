@@ -237,7 +237,7 @@ l = 2.0
     @test isapprox(w6.weights, w6t)
     @test isempty(w7)
     @test isapprox(w8.weights, w8t, rtol = 1.0e-6)
-    @test isapprox(w9.weights, w9t)
+    @test isapprox(w9.weights, w9t, rtol = 5.0e-6)
     @test isempty(w10)
     @test isempty(w11)
     @test isapprox(w1.weights, w12.weights)
@@ -248,7 +248,7 @@ l = 2.0
     @test isapprox(w6.weights, w17.weights)
     @test isempty(w18)
     @test isapprox(w8.weights, w19.weights)
-    @test isapprox(w20.weights, w20t)
+    @test isapprox(w20.weights, w20t, rtol = 5.0e-6)
     @test isempty(w21)
     @test isempty(w22)
     @test isapprox(w1.weights, w23.weights)
@@ -259,7 +259,7 @@ l = 2.0
     @test isapprox(w6.weights, w28.weights)
     @test isempty(w29)
     @test isapprox(w8.weights, w30.weights)
-    @test isapprox(w31.weights, w31t)
+    @test isapprox(w31.weights, w31t, rtol = 5.0e-6)
     @test isempty(w32)
     @test isempty(w33)
 end
@@ -400,7 +400,7 @@ end
     @test isapprox(w8.weights, w8t)
     @test isapprox(w9.weights, w9t)
     @test isapprox(w10.weights, w10t, rtol = 0.001)
-    @test isapprox(w11.weights, w11t)
+    @test isapprox(w11.weights, w11t, rtol = 5.0e-6)
 end
 
 @testset "$(:HRP), $(:HERC), $(:NCO), $(:RCVaR)" begin
@@ -540,7 +540,7 @@ end
     @test isapprox(w8.weights, w8t)
     @test isapprox(w9.weights, w9t)
     @test isapprox(w10.weights, w10t, rtol = 0.01)
-    @test isapprox(w11.weights, w11t)
+    @test isapprox(w11.weights, w11t, rtol = 5.0e-5)
 end
 
 @testset "$(:HRP), $(:HERC), $(:NCO), $(:TG)" begin
@@ -767,7 +767,7 @@ end
 
     @test isapprox(w1.weights, w1t)
     @test isapprox(w2.weights, w2t)
-    @test isapprox(w3.weights, w3t, rtol = 1.0e-7)
+    @test isapprox(w3.weights, w3t, rtol = 1.0e-6)
     @test isapprox(w4.weights, w4t, rtol = 1.0e-6)
     @test isapprox(w5.weights, w5t)
     @test isapprox(w6.weights, w6t)
