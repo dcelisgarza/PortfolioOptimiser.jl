@@ -120,10 +120,7 @@ function _set_risk_expression(model, rm_risk, scale, flag::Bool)
         if !haskey(model, :risk)
             @expression(model, risk, scale * rm_risk)
         else
-            @expression(model, tmp, model[:risk] + scale * rm_risk)
-            unregister(model, :risk)
-            @expression(model, risk, tmp)
-            unregister(model, :tmp)
+            add_to_expression!(model[:risk], scale, rm_risk)
         end
     end
     return nothing
