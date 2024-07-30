@@ -317,9 +317,9 @@ function _sd_risk(::Any, ::SOCSD, model, sigma, count::Integer, idx::Integer)
     else
         if isone(idx)
             @variable(model, dev[1:count])
-            @variable(model, sd_risk[1:count])
+            @expression(model, sd_risk[i = 1:count], zero(QuadExpr))
         end
-        @constraint(model, model[:sd_risk][idx] == model[:dev][idx]^2)
+        add_to_expression!(model[:sd_risk][idx], model[:dev][idx], model[:dev][idx])
         @constraint(model, [model[:dev][idx]; G * model[:w]] ∈ SecondOrderCone())
     end
     return nothing
@@ -333,9 +333,9 @@ function _sd_risk(::Any, ::QuadSD, model, sigma, count::Integer, idx::Integer)
     else
         if isone(idx)
             @variable(model, dev[1:count])
-            @variable(model, sd_risk[1:count])
+            @expression(model, sd_risk[i = 1:count], zero(QuadExpr))
         end
-        @constraint(model, model[:sd_risk][idx] == dot(model[:w], sigma, model[:w]))
+        add_to_expression!(model[:sd_risk][idx], 1, dot(model[:w], sigma, model[:w]))
         @constraint(model, [model[:dev][idx]; G * model[:w]] ∈ SecondOrderCone())
     end
     return nothing
@@ -349,9 +349,9 @@ function _sd_risk(::Any, ::SimpleSD, model, sigma, count::Integer, idx::Integer)
     else
         if isone(idx)
             @variable(model, dev[1:count])
-            @variable(model, sd_risk[1:count])
+            @expression(model, sd_risk[i = 1:count], zero(QuadExpr))
         end
-        @constraint(model, model[:sd_risk][idx] == model[:dev][idx])
+        add_to_expression!(model[:sd_risk][idx], 1, model[:dev][idx])
         @constraint(model, [model[:dev][idx]; G * model[:w]] ∈ SecondOrderCone())
     end
     return nothing
@@ -553,7 +553,7 @@ function set_rm(port::Portfolio2, rm::RG2, type::Union{Trad2, RP2}, obj::Objecti
     model = port.model
     _wr_setup(model, returns)
     @variable(model, br)
-    @expression(model, rg_risk, wr_risk - br)
+    @expression(model, rg_risk, model[:wr_risk] - br)
     @constraint(model, -model[:X] .>= br)
     _set_rm_risk_upper_bound(obj, type, model, rg_risk, rm.settings.ub)
     _set_risk_expression(model, rg_risk, rm.settings.scale, rm.settings.flag)
@@ -966,9 +966,11 @@ function set_rm(port::Portfolio2, rm::Kurt2, type::Union{Trad2, RP2},
             vals_A, vecs_A = eigen(A)
             vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
             Bi = Vector{Matrix{eltype(kt)}}(undef, Nf)
+            N_eig = length(vals_A)
             for i ∈ 1:Nf
                 j = i - 1
-                B = reshape(real(complex(sqrt(vals_A[end - j])) * vecs_A[:, end - j]), N, N)
+                B = reshape(real(complex(sqrt(vals_A[end - j])) *
+                                 view(vecs_A, :, N_eig - j)), N, N)
                 Bi[i] = B
             end
             @constraint(model, [i = 1:Nf], x_kurt[i] == tr(Bi[i] * model[:W]))
@@ -987,20 +989,22 @@ function set_rm(port::Portfolio2, rm::Kurt2, type::Union{Trad2, RP2},
             if !iszero(nmax) && N > nmax
                 @variable(model, x_kurt[1:Nf, 1:count])
             else
-                @variable(model, zkurt[1:count])
+                @variable(model, zkurt[1:size(port.L_2, 1), 1:count])
             end
         end
         if !iszero(nmax) && N > nmax
             @constraint(model,
-                        [model[:kurt_risk][idx]; model[:x_kurt][:, idx]] ∈
+                        [model[:kurt_risk][idx]; view(model[:x_kurt], :, idx)] ∈
                         SecondOrderCone())
             A = block_vec_pq(kt, N, N)
             vals_A, vecs_A = eigen(A)
             vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
             Bi = Vector{Matrix{eltype(kt)}}(undef, Nf)
+            N_eig = length(vals_A)
             for i ∈ 1:Nf
                 j = i - 1
-                B = reshape(real(complex(sqrt(vals_A[end - j])) * vecs_A[:, end - j]), N, N)
+                B = reshape(real(complex(sqrt(vals_A[end - j])) *
+                                 view(vecs_A, :, N_eig - j)), N, N)
                 Bi[i] = B
             end
             @constraint(model, [i = 1:Nf], model[:x_kurt][i, idx] == tr(Bi[i] * model[:W]))
@@ -1008,10 +1012,10 @@ function set_rm(port::Portfolio2, rm::Kurt2, type::Union{Trad2, RP2},
             L_2 = port.L_2
             S_2 = port.S_2
             sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
-            @constraint(model, model[:zkurt][idx] == L_2 * vec(model[:W]))
+            @constraint(model, view(model[:zkurt], :, idx) .== L_2 * vec(model[:W]))
             @constraint(model,
-                        [model[:kurt_risk][idx]; sqrt_sigma_4 * model[:zkurt][idx]] ∈
-                        SecondOrderCone())
+                        [model[:kurt_risk][idx];
+                         sqrt_sigma_4 * view(model[:zkurt], :, idx)] ∈ SecondOrderCone())
         end
         _set_rm_risk_upper_bound(obj, type, model, model[:kurt_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:kurt_risk][idx], rm.settings.scale,
@@ -1045,9 +1049,11 @@ function set_rm(port::Portfolio2, rm::SKurt2, type::Union{Trad2, RP2},
             vals_A, vecs_A = eigen(A)
             vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
             Bi = Vector{Matrix{eltype(kt)}}(undef, Nf)
+            N_eig = length(vals_A)
             for i ∈ 1:Nf
                 j = i - 1
-                B = reshape(real(complex(sqrt(vals_A[end - j])) * vecs_A[:, end - j]), N, N)
+                B = reshape(real(complex(sqrt(vals_A[end - j])) *
+                                 view(vecs_A, :, N_eig - j)), N, N)
                 Bi[i] = B
             end
             @constraint(model, [i = 1:Nf], x_skurt[i] == tr(Bi[i] * model[:W]))
@@ -1066,20 +1072,22 @@ function set_rm(port::Portfolio2, rm::SKurt2, type::Union{Trad2, RP2},
             if !iszero(nmax) && N > nmax
                 @variable(model, x_skurt[1:Nf, 1:count])
             else
-                @variable(model, zskurt[1:count])
+                @variable(model, zskurt[1:size(port.L_2, 1), 1:count])
             end
         end
         if !iszero(nmax) && N > nmax
             @constraint(model,
-                        [model[:skurt_risk][idx]; model[:x_skurt][:, idx]] ∈
+                        [model[:skurt_risk][idx]; view(model[:x_skurt], :, idx)] ∈
                         SecondOrderCone())
             A = block_vec_pq(kt, N, N)
             vals_A, vecs_A = eigen(A)
             vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
             Bi = Vector{Matrix{eltype(kt)}}(undef, Nf)
+            N_eig = length(vals_A)
             for i ∈ 1:Nf
                 j = i - 1
-                B = reshape(real(complex(sqrt(vals_A[end - j])) * vecs_A[:, end - j]), N, N)
+                B = reshape(real(complex(sqrt(vals_A[end - j])) *
+                                 view(vecs_A, :, N_eig - j)), N, N)
                 Bi[i] = B
             end
             @constraint(model, [i = 1:Nf], model[:x_skurt][i, idx] == tr(Bi[i] * model[:W]))
@@ -1087,10 +1095,10 @@ function set_rm(port::Portfolio2, rm::SKurt2, type::Union{Trad2, RP2},
             L_2 = port.L_2
             S_2 = port.S_2
             sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
-            @constraint(model, model[:zskurt][idx] == L_2 * vec(model[:W]))
+            @constraint(model, view(model[:zskurt], :, idx) .== L_2 * vec(model[:W]))
             @constraint(model,
-                        [model[:skurt_risk][idx]; sqrt_sigma_4 * model[:zskurt][idx]] ∈
-                        SecondOrderCone())
+                        [model[:skurt_risk][idx];
+                         sqrt_sigma_4 * view(model[:zskurt], :, idx)] ∈ SecondOrderCone())
         end
         _set_rm_risk_upper_bound(obj, type, model, model[:skurt_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:skurt_risk][idx], rm.settings.scale,
@@ -1233,6 +1241,11 @@ function set_rm(port::Portfolio2, rm::TG2, type::Union{Trad2, RP2}, obj::Objecti
         end
         if !rm.owa.approx
             ovec = range(1; stop = 1, length = T)
+            if !haskey(model, :tga)
+                _owa_setup(model, T)
+                @variable(model, tga[1:T, 1:count])
+                @variable(model, tgb[1:T, 1:count])
+            end
             @constraint(model,
                         model[:tg_risk][idx] ==
                         sum(view(model[:tga], :, idx) .+ view(model[:tgb], :, idx)))
@@ -1249,6 +1262,17 @@ function set_rm(port::Portfolio2, rm::TG2, type::Union{Trad2, RP2}, obj::Objecti
             tg_l = minimum(tg_w)
             tg_h = maximum(tg_w)
             tg_d = [norm(tg_w, p) for p ∈ owa_p]
+
+            if !haskey(model, :tg_t)
+                M = length(rm.owa.p)
+                @variable(model, tg_t[1:count])
+                @variable(model, tg_nu[1:T, 1:count] .>= 0)
+                @variable(model, tg_eta[1:T, 1:count] .>= 0)
+                @variable(model, tg_epsilon[1:T, 1:M, 1:count])
+                @variable(model, tg_psi[1:T, 1:M, 1:count])
+                @variable(model, tg_z[1:M, 1:count])
+                @variable(model, tg_y[1:M, 1:count] .>= 0)
+            end
 
             @constraint(model,
                         model[:tg_risk][idx] ==
@@ -1388,6 +1412,11 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
         end
         if !rm.owa.approx
             ovec = range(1; stop = 1, length = T)
+            if !haskey(model, :rtga)
+                _owa_setup(model, T)
+                @variable(model, rtga[1:T, 1:count])
+                @variable(model, rtgb[1:T, 1:count])
+            end
             @constraint(model,
                         model[:rtg_risk][idx] ==
                         sum(view(model[:rtga], :, idx) .+ view(model[:rtgb], :, idx)))
@@ -1405,6 +1434,26 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
             rltg_l = minimum(rltg_w)
             rltg_h = maximum(rltg_w)
             rltg_d = [norm(rltg_w, p) for p ∈ owa_p]
+
+            if !haskey(model, :rltg_t)
+                M = length(rm.owa.p)
+                @variable(model, rltg_t[1:count])
+                @variable(model, rltg_nu[1:T, 1:count] .>= 0)
+                @variable(model, rltg_eta[1:T, 1:count] .>= 0)
+                @variable(model, rltg_epsilon[1:T, 1:M, 1:count])
+                @variable(model, rltg_psi[1:T, 1:M, 1:count])
+                @variable(model, rltg_z[1:M, 1:count])
+                @variable(model, rltg_y[1:M, 1:count] .>= 0)
+                @variable(model, rltg_risk[1:count])
+                @variable(model, rhtg_t[1:count])
+                @variable(model, rhtg_nu[1:T, 1:count] .>= 0)
+                @variable(model, rhtg_eta[1:T, 1:count] .>= 0)
+                @variable(model, rhtg_epsilon[1:T, 1:M, 1:count])
+                @variable(model, rhtg_psi[1:T, 1:M, 1:count])
+                @variable(model, rhtg_z[1:M, 1:count])
+                @variable(model, rhtg_y[1:M, 1:count] .>= 0)
+                @variable(model, rhtg_risk[1:count])
+            end
 
             @constraint(model,
                         model[:rltg_risk][idx] ==
@@ -1508,7 +1557,7 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
         _set_risk_expression(model, owa_risk, rm.settings.scale, rm.settings.flag)
     else
         if isone(idx)
-            @expression(model, owa_risk[1:count])
+            @variable(model, owa_risk[1:count])
             if !rm.owa.approx
                 _owa_setup(model, T)
                 @variable(model, owa_a[1:T, 1:count])
@@ -1526,6 +1575,11 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
         end
         if !rm.owa.approx
             ovec = range(1; stop = 1, length = T)
+            if !haskey(model, :owa_a)
+                _owa_setup(model, T)
+                @variable(model, owa_a[1:T, 1:count])
+                @variable(model, owa_b[1:T, 1:count])
+            end
             @constraint(model,
                         model[:owa_risk][idx] ==
                         sum(view(model[:owa_a], :, idx) .+ view(model[:owa_b], :, idx)))
@@ -1543,6 +1597,17 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
             owa_l = minimum(owa_w)
             owa_h = maximum(owa_w)
             owa_d = [norm(owa_w, p) for p ∈ owa_p]
+
+            if !haskey(model, :owa_t)
+                M = length(rm.owa.p)
+                @variable(model, owa_t[1:count])
+                @variable(model, owa_nu[1:T, 1:count] .>= 0)
+                @variable(model, owa_eta[1:T, 1:count] .>= 0)
+                @variable(model, owa_epsilon[1:T, 1:M, 1:count])
+                @variable(model, owa_psi[1:T, 1:M, 1:count])
+                @variable(model, owa_z[1:M, 1:count])
+                @variable(model, owa_y[1:M, 1:count] .>= 0)
+            end
 
             @constraint(model,
                         model[:owa_risk][idx] ==
