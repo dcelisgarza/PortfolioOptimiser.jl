@@ -993,7 +993,7 @@ function set_rm(port::Portfolio2, rm::Kurt2, type::Union{Trad2, RP2},
             if !iszero(nmax) && N > nmax
                 @variable(model, x_kurt[1:Nf, 1:count])
             else
-                @variable(model, zkurt[1:size(port.L_2, 1), 1:count])
+                @expression(model, zkurt[1:size(port.L_2, 1), 1:count], zero(AffExpr))
             end
         end
         if !iszero(nmax) && N > nmax
@@ -1016,7 +1016,7 @@ function set_rm(port::Portfolio2, rm::Kurt2, type::Union{Trad2, RP2},
             L_2 = port.L_2
             S_2 = port.S_2
             sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
-            @constraint(model, view(model[:zkurt], :, idx) .== L_2 * vec(model[:W]))
+            add_to_expression!.(view(model[:zkurt], :, idx), L_2 * vec(model[:W]))
             @constraint(model,
                         [model[:kurt_risk][idx];
                          sqrt_sigma_4 * view(model[:zkurt], :, idx)] ∈ SecondOrderCone())
@@ -1076,7 +1076,7 @@ function set_rm(port::Portfolio2, rm::SKurt2, type::Union{Trad2, RP2},
             if !iszero(nmax) && N > nmax
                 @variable(model, x_skurt[1:Nf, 1:count])
             else
-                @variable(model, zskurt[1:size(port.L_2, 1), 1:count])
+                @expression(model, zskurt[1:size(port.L_2, 1), 1:count], zero(AffExpr))
             end
         end
         if !iszero(nmax) && N > nmax
@@ -1099,7 +1099,8 @@ function set_rm(port::Portfolio2, rm::SKurt2, type::Union{Trad2, RP2},
             L_2 = port.L_2
             S_2 = port.S_2
             sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
-            @constraint(model, view(model[:zskurt], :, idx) .== L_2 * vec(model[:W]))
+            add_to_expression!.(view(model[:zskurt], :, idx), L_2 * vec(model[:W]))
+
             @constraint(model,
                         [model[:skurt_risk][idx];
                          sqrt_sigma_4 * view(model[:zskurt], :, idx)] ∈ SecondOrderCone())
@@ -1227,7 +1228,7 @@ function set_rm(port::Portfolio2, rm::TG2, type::Union{Trad2, RP2}, obj::Objecti
         _set_risk_expression(model, tg_risk, rm.settings.scale, rm.settings.flag)
     else
         if isone(idx)
-            @variable(model, tg_risk[1:count])
+            @expression(model, tg_risk[1:count], zero(AffExpr))
             if !rm.owa.approx
                 _owa_setup(model, T)
                 @variable(model, tga[1:T, 1:count])
@@ -1250,9 +1251,8 @@ function set_rm(port::Portfolio2, rm::TG2, type::Union{Trad2, RP2}, obj::Objecti
                 @variable(model, tga[1:T, 1:count])
                 @variable(model, tgb[1:T, 1:count])
             end
-            @constraint(model,
-                        model[:tg_risk][idx] ==
-                        sum(view(model[:tga], :, idx) .+ view(model[:tgb], :, idx)))
+            add_to_expression!(model[:tg_risk][idx],
+                               sum(view(model[:tga], :, idx) .+ view(model[:tgb], :, idx)))
             tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
             @constraint(model,
                         model[:owa] * transpose(tg_w) .<=
@@ -1277,12 +1277,12 @@ function set_rm(port::Portfolio2, rm::TG2, type::Union{Trad2, RP2}, obj::Objecti
                 @variable(model, tg_z[1:M, 1:count])
                 @variable(model, tg_y[1:M, 1:count] .>= 0)
             end
-
-            @constraint(model,
-                        model[:tg_risk][idx] ==
-                        tg_s * model[:tg_t][idx] - tg_l * sum(view(model[:tg_nu], :, idx)) +
-                        tg_h * sum(view(model[:tg_eta], :, idx)) +
-                        dot(tg_d, view(model[:tg_y], :, idx)))
+            add_to_expression!(model[:tg_risk][idx], tg_s, model[:tg_t][idx])
+            add_to_expression!(model[:tg_risk][idx], -tg_l,
+                               sum(view(model[:tg_nu], :, idx)))
+            add_to_expression!(model[:tg_risk][idx], tg_h,
+                               sum(view(model[:tg_eta], :, idx)))
+            add_to_expression!(model[:tg_risk][idx], dot(tg_d, view(model[:tg_y], :, idx)))
             @constraint(model,
                         model[:X] .+ model[:tg_t][idx] .- view(model[:tg_nu], :, idx) .+
                         view(model[:tg_eta], :, idx) .-
@@ -1389,7 +1389,7 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
         _set_risk_expression(model, rtg_risk, rm.settings.scale, rm.settings.flag)
     else
         if isone(idx)
-            @variable(model, rtg_risk[1:count])
+            @expression(model, rtg_risk[1:count], zero(AffExpr))
             if !rm.owa.approx
                 _owa_setup(model, T)
                 @variable(model, rtga[1:T, 1:count])
@@ -1403,7 +1403,7 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
                 @variable(model, rltg_psi[1:T, 1:M, 1:count])
                 @variable(model, rltg_z[1:M, 1:count])
                 @variable(model, rltg_y[1:M, 1:count] .>= 0)
-                @variable(model, rltg_risk[1:count])
+                @expression(model, rltg_risk[1:count], zero(AffExpr))
                 @variable(model, rhtg_t[1:count])
                 @variable(model, rhtg_nu[1:T, 1:count] .>= 0)
                 @variable(model, rhtg_eta[1:T, 1:count] .>= 0)
@@ -1411,7 +1411,7 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
                 @variable(model, rhtg_psi[1:T, 1:M, 1:count])
                 @variable(model, rhtg_z[1:M, 1:count])
                 @variable(model, rhtg_y[1:M, 1:count] .>= 0)
-                @variable(model, rhtg_risk[1:count])
+                @expression(model, rhtg_risk[1:count], zero(AffExpr))
             end
         end
         if !rm.owa.approx
@@ -1421,9 +1421,9 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
                 @variable(model, rtga[1:T, 1:count])
                 @variable(model, rtgb[1:T, 1:count])
             end
-            @constraint(model,
-                        model[:rtg_risk][idx] ==
-                        sum(view(model[:rtga], :, idx) .+ view(model[:rtgb], :, idx)))
+            add_to_expression!(model[:rtg_risk][idx],
+                               sum(view(model[:rtga], :, idx) .+ view(model[:rtgb], :, idx)))
+
             rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
                             beta_i = beta_i, beta = beta, b_sim = b_sim)
             @constraint(model,
@@ -1448,7 +1448,7 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
                 @variable(model, rltg_psi[1:T, 1:M, 1:count])
                 @variable(model, rltg_z[1:M, 1:count])
                 @variable(model, rltg_y[1:M, 1:count] .>= 0)
-                @variable(model, rltg_risk[1:count])
+                @expression(model, rltg_risk[1:count], zero(AffExpr))
                 @variable(model, rhtg_t[1:count])
                 @variable(model, rhtg_nu[1:T, 1:count] .>= 0)
                 @variable(model, rhtg_eta[1:T, 1:count] .>= 0)
@@ -1456,15 +1456,16 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
                 @variable(model, rhtg_psi[1:T, 1:M, 1:count])
                 @variable(model, rhtg_z[1:M, 1:count])
                 @variable(model, rhtg_y[1:M, 1:count] .>= 0)
-                @variable(model, rhtg_risk[1:count])
+                @expression(model, rhtg_risk[1:count], zero(AffExpr))
             end
 
-            @constraint(model,
-                        model[:rltg_risk][idx] ==
-                        rltg_s * model[:rltg_t][idx] -
-                        rltg_l * sum(view(model[:rltg_nu], :, idx)) +
-                        rltg_h * sum(view(model[:rltg_eta], :, idx)) +
-                        dot(rltg_d, view(model[:rltg_y], :, idx)))
+            add_to_expression!(model[:rltg_risk][idx], rltg_s, model[:rltg_t][idx])
+            add_to_expression!(model[:rltg_risk][idx], -rltg_l,
+                               sum(view(model[:rltg_nu], :, idx)))
+            add_to_expression!(model[:rltg_risk][idx], rltg_h,
+                               sum(view(model[:rltg_eta], :, idx)))
+            add_to_expression!(model[:rltg_risk][idx],
+                               dot(rltg_d, view(model[:rltg_y], :, idx)))
             @constraint(model,
                         model[:X] .+ model[:rltg_t][idx] .- view(model[:rltg_nu], :, idx) .+
                         view(model[:rltg_eta], :, idx) .-
@@ -1476,22 +1477,20 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
                         [-model[:rltg_z][i, idx] * owa_p[i],
                          model[:rltg_psi][j, i, idx] * owa_p[i] / (owa_p[i] - 1),
                          model[:rltg_epsilon][j, i, idx]] ∈ MOI.PowerCone(1 / owa_p[i]))
-
             rhtg_w = -owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim)
             rhtg_s = sum(rhtg_w)
             rhtg_l = minimum(rhtg_w)
             rhtg_h = maximum(rhtg_w)
             rhtg_d = [norm(rhtg_w, p) for p ∈ owa_p]
-
-            @constraint(model,
-                        model[:rhtg_risk][idx] ==
-                        rhtg_s * model[:rhtg_t][idx] -
-                        rhtg_l * sum(view(model[:rhtg_nu], :, idx)) +
-                        rhtg_h * sum(view(model[:rhtg_eta], :, idx)) +
-                        dot(rhtg_d, view(model[:rhtg_y], :, idx)))
-            @constraint(model,
-                        model[:rtg_risk][idx] ==
-                        model[:rltg_risk][idx] + model[:rhtg_risk][idx])
+            add_to_expression!(model[:rhtg_risk][idx], rhtg_s, model[:rhtg_t][idx])
+            add_to_expression!(model[:rhtg_risk][idx], -rhtg_l,
+                               sum(view(model[:rhtg_nu], :, idx)))
+            add_to_expression!(model[:rhtg_risk][idx], rhtg_h,
+                               sum(view(model[:rhtg_eta], :, idx)))
+            add_to_expression!(model[:rhtg_risk][idx],
+                               dot(rhtg_d, view(model[:rhtg_y], :, idx)))
+            add_to_expression!(model[:rtg_risk][idx], model[:rltg_risk][idx])
+            add_to_expression!(model[:rtg_risk][idx], model[:rhtg_risk][idx])
             @constraint(model,
                         -model[:X] .+ model[:rhtg_t][idx] .-
                         view(model[:rhtg_nu], :, idx) .+ view(model[:rhtg_eta], :, idx) .-
@@ -1531,6 +1530,9 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
                         model[:owa] * transpose(owa_w) .<=
                         ovec * transpose(owa_a) + owa_b * transpose(ovec))
         else
+            owa_p = rm.owa.p
+            M = length(owa_p)
+
             @variable(model, owa_t)
             @variable(model, owa_nu[1:T] .>= 0)
             @variable(model, owa_eta[1:T] .>= 0)
@@ -1561,7 +1563,7 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
         _set_risk_expression(model, owa_risk, rm.settings.scale, rm.settings.flag)
     else
         if isone(idx)
-            @variable(model, owa_risk[1:count])
+            @expression(model, owa_risk[1:count], zero(AffExpr))
             if !rm.owa.approx
                 _owa_setup(model, T)
                 @variable(model, owa_a[1:T, 1:count])
@@ -1584,9 +1586,10 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
                 @variable(model, owa_a[1:T, 1:count])
                 @variable(model, owa_b[1:T, 1:count])
             end
-            @constraint(model,
-                        model[:owa_risk][idx] ==
-                        sum(view(model[:owa_a], :, idx) .+ view(model[:owa_b], :, idx)))
+
+            add_to_expression!(model[:owa_risk][idx],
+                               sum(view(model[:owa_a], :, idx) .+
+                                   view(model[:owa_b], :, idx)))
             owa_w = (isnothing(rm.w) || isempty(rm.w)) ? owa_gmd(T) : rm.w
             @constraint(model,
                         model[:owa] * transpose(owa_w) .<=
@@ -1613,12 +1616,14 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
                 @variable(model, owa_y[1:M, 1:count] .>= 0)
             end
 
-            @constraint(model,
-                        model[:owa_risk][idx] ==
-                        owa_s * model[:owa_t][idx] -
-                        owa_l * sum(view(model[:owa_nu], :, idx)) +
-                        owa_h * sum(view(model[:owa_eta], :, idx)) +
-                        dot(owa_d, view(model[:owa_y], :, idx)))
+            add_to_expression!(model[:owa_risk][idx], owa_s, model[:owa_t][idx])
+            add_to_expression!(model[:owa_risk][idx], -owa_l,
+                               sum(view(model[:owa_nu], :, idx)))
+            add_to_expression!(model[:owa_risk][idx], owa_h,
+                               sum(view(model[:owa_eta], :, idx)))
+            add_to_expression!(model[:owa_risk][idx],
+                               dot(owa_d, view(model[:owa_y], :, idx)))
+
             @constraint(model,
                         model[:X] .+ model[:owa_t][idx] .- view(model[:owa_nu], :, idx) .+
                         view(model[:owa_eta], :, idx) .-
@@ -1649,10 +1654,8 @@ function set_rm(port::Portfolio2, rm::DVar2, type::Union{Trad2, RP2},
 
     ovec = range(1; stop = 1, length = T)
     @variable(model, Dt[1:T, 1:T], Symmetric)
-    @expression(model, Dx,
-                Symmetric(model[:X] * transpose(ovec) - ovec * transpose(model[:X])))
-    @constraint(model, [i = 1:T, j = i:T], Dt[i, j] >= -Dx[i, j])
-    @constraint(model, [i = 1:T, j = i:T], Dt[i, j] >= Dx[i, j])
+    @expression(model, Dx, model[:X] * transpose(ovec) - ovec * transpose(model[:X]))
+    @constraint(model, [i = 1:T, j = i:T], [Dt[i, j]; Dx[i, j]] in MOI.NormOneCone(2))
     dt = vec(Dt)
     iT2 = inv(T^2)
     @expression(model, dvar_risk, iT2 * (dot(dt, dt) + iT2 * dot(ovec, Dt, ovec)^2))
