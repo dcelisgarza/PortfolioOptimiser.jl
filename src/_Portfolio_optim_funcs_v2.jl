@@ -324,7 +324,7 @@ function _sd_risk(::Any, ::SOCSD, model, sigma, count::Integer, idx::Integer)
     else
         if isone(idx)
             @variable(model, dev[1:count])
-            @expression(model, sd_risk[i = 1:count], zero(QuadExpr))
+            @expression(model, sd_risk[1:count], zero(QuadExpr))
         end
         add_to_expression!(model[:sd_risk][idx], model[:dev][idx], model[:dev][idx])
         @constraint(model, [model[:dev][idx]; G * model[:w]] ∈ SecondOrderCone())
@@ -340,9 +340,9 @@ function _sd_risk(::Any, ::QuadSD, model, sigma, count::Integer, idx::Integer)
     else
         if isone(idx)
             @variable(model, dev[1:count])
-            @expression(model, sd_risk[i = 1:count], zero(QuadExpr))
+            @expression(model, sd_risk[1:count], zero(QuadExpr))
         end
-        add_to_expression!(model[:sd_risk][idx], 1, dot(model[:w], sigma, model[:w]))
+        add_to_expression!(model[:sd_risk][idx], dot(model[:w], sigma, model[:w]))
         @constraint(model, [model[:dev][idx]; G * model[:w]] ∈ SecondOrderCone())
     end
     return nothing
@@ -356,9 +356,9 @@ function _sd_risk(::Any, ::SimpleSD, model, sigma, count::Integer, idx::Integer)
     else
         if isone(idx)
             @variable(model, dev[1:count])
-            @expression(model, sd_risk[i = 1:count], zero(QuadExpr))
+            @expression(model, sd_risk[1:count], zero(QuadExpr))
         end
-        add_to_expression!(model[:sd_risk][idx], 1, model[:dev][idx])
+        add_to_expression!(model[:sd_risk][idx], model[:dev][idx])
         @constraint(model, [model[:dev][idx]; G * model[:w]] ∈ SecondOrderCone())
     end
     return nothing
@@ -418,9 +418,9 @@ function set_rm(port::Portfolio2, rm::MAD2, type::Union{Trad2, RP2}, obj::Object
     else
         if isone(idx)
             @variable(model, mad[1:T, 1:count] >= 0)
-            @variable(model, mad_risk[1:count])
+            @expression(model, mad_risk[1:count], zero(AffExpr))
         end
-        @constraint(model, model[:mad_risk][idx] == sum(model[:mad][idx]) / T)
+        add_to_expression!(model[:mad_risk][idx], inv(T), sum(model[:mad][idx]))
         @constraint(model, abs_dev * model[:w] .>= -model[:mad][idx])
         _set_rm_risk_upper_bound(obj, type, model, model[:mad_risk][idx],
                                  0.5 * rm.settings.ub)
@@ -451,9 +451,9 @@ function set_rm(port::Portfolio2, rm::SSD2, type::Union{Trad2, RP2}, obj::Object
         if isone(idx)
             @variable(model, ssd[1:T, 1:count] >= 0)
             @variable(model, sdev[1:count])
-            @variable(model, sdev_risk[1:count])
+            @expression(model, sdev_risk[1:count], zero(AffExpr))
         end
-        @constraint(model, model[:sdev_risk][idx] == model[:sdev][idx] / sqrt(T - 1))
+        add_to_expression!(model[:sdev_risk][idx], inv(sqrt(T - 1)), model[:sdev][idx])
         @constraint(model, abs_dev * model[:w] .>= -model[:ssd][idx])
         @constraint(model, [model[:sdev][idx]; model[:ssd][idx]] ∈ SecondOrderCone())
         _set_rm_risk_upper_bound(obj, type, model, model[:sdev_risk][idx], rm.settings.ub)
@@ -493,9 +493,9 @@ function set_rm(port::Portfolio2, rm::FLPM2, type::Union{Trad2, RP2},
     else
         if isone(idx)
             @variable(model, flpm[1:T, 1:count] .>= 0)
-            @variable(model, flpm_risk[1:count])
+            @expression(model, flpm_risk[1:count], zero(AffExpr))
         end
-        @constraint(model, model[:flpm_risk][idx] == sum(model[:flpm][idx]) / T)
+        add_to_expression!(model[:flpm_risk][idx], inv(T), sum(model[:flpm][idx]))
         _lpm_risk(type, obj, model, model[:flpm][idx], rm.target)
         _set_rm_risk_upper_bound(obj, type, model, model[:flpm_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:flpm_risk][idx], rm.settings.scale,
@@ -525,9 +525,9 @@ function set_rm(port::Portfolio2, rm::SLPM2, type::Union{Trad2, RP2},
         if isone(idx)
             @variable(model, slpm[1:T, 1:count] .>= 0)
             @variable(model, tslpm[1:count])
-            @variable(model, slpm_risk[1:count])
+            @expression(model, slpm_risk[1:count], zero(AffExpr))
         end
-        @constraint(model, model[:slpm_risk][idx] == model[:tslpm][idx] / sqrt(T - 1))
+        add_to_expression!(model[:slpm_risk][idx], inv(sqrt(T - 1)), model[:tslpm][idx])
         @constraint(model,
                     [model[:tslpm][idx]; view(model[:slpm], :, idx)] ∈ SecondOrderCone())
         _lpm_risk(type, obj, model, view(model[:slpm], :, idx), rm.target)
@@ -588,11 +588,10 @@ function set_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
         if isone(idx)
             @variable(model, var[1:count])
             @variable(model, z_var[1:T, 1:count] .>= 0)
-            @variable(model, cvar_risk[1:count])
+            @expression(model, cvar_risk[1:count], zero(AffExpr))
         end
-        @constraint(model,
-                    model[:cvar_risk][idx] ==
-                    model[:var][idx] + sum(view(model[:z_var], :, idx)) * iat)
+        add_to_expression!(model[:cvar_risk][idx], model[:var][idx])
+        add_to_expression!(model[:cvar_risk][idx], iat, sum(view(model[:z_var], :, idx)))
         @constraint(model, view(model[:z_var], :, idx) .>= -model[:X] .- model[:var][idx])
         _set_rm_risk_upper_bound(obj, type, model, model[:cvar_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:cvar_risk][idx], rm.settings.scale,
@@ -628,25 +627,24 @@ function set_rm(port::Portfolio2, rm::RCVaR2, type::Union{Trad2, RP2},
         if isone(idx)
             @variable(model, var_l[1:count])
             @variable(model, z_var_l[1:T, 1:count] .>= 0)
-            @variable(model, cvar_risk_l[1:count])
+            @expression(model, cvar_risk_l[1:count], zero(AffExpr))
             @variable(model, var_h[1:count])
             @variable(model, z_var_h[1:T, 1:count] .<= 0)
-            @variable(model, cvar_risk_h[1:count])
-            @variable(model, rcvar_risk[1:count])
+            @expression(model, cvar_risk_h[1:count], zero(AffExpr))
+            @expression(model, rcvar_risk[1:count], zero(AffExpr))
         end
-        @constraint(model,
-                    model[:cvar_risk_l][idx] ==
-                    model[:var_l][idx] + sum(view(model[:z_var_l], :, idx)) * iat)
+        add_to_expression!(model[:cvar_risk_l][idx], model[:var_l][idx])
+        add_to_expression!(model[:cvar_risk_l][idx], iat,
+                           sum(view(model[:z_var_l], :, idx)))
         @constraint(model,
                     view(model[:z_var_l], :, idx) .>= -model[:X] .- model[:var_l][idx])
-        @constraint(model,
-                    model[:cvar_risk_h][idx] ==
-                    model[:var_h][idx] + sum(view(model[:z_var_h], :, idx)) * ibt)
+        add_to_expression!(model[:cvar_risk_h][idx], model[:var_h][idx])
+        add_to_expression!(model[:cvar_risk_h][idx], ibt,
+                           sum(view(model[:z_var_h], :, idx)))
         @constraint(model,
                     view(model[:z_var_h], :, idx) .<= -model[:X] .- model[:var_h][idx])
-        @constraint(model,
-                    model[:rcvar_risk][idx] ==
-                    model[:cvar_risk_l][idx] - model[:cvar_risk_h][idx])
+        add_to_expression!(model[:rcvar_risk][idx], model[:cvar_risk_l][idx])
+        add_to_expression!(model[:rcvar_risk][idx], -1, model[:cvar_risk_h][idx])
         _set_rm_risk_upper_bound(obj, type, model, model[:rcvar_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:rcvar_risk][idx], rm.settings.scale,
                              rm.settings.flag)
@@ -679,11 +677,11 @@ function set_rm(port::Portfolio2, rm::EVaR2, type::Union{Trad2, RP2},
             @variable(model, t_evar[1:count])
             @variable(model, z_evar[1:count] >= 0)
             @variable(model, u_evar[1:T, 1:count])
-            @variable(model, evar_risk[1:count])
+            @expression(model, evar_risk[1:count], zero(AffExpr))
         end
-        @constraint(model,
-                    model[:evar_risk][idx] ==
-                    model[:t_evar][idx] - model[:z_evar][idx] * log(at))
+        add_to_expression!(model[:evar_risk][idx], model[:t_evar][idx])
+        add_to_expression!(model[:evar_risk][idx], -log(at), model[:z_evar][idx])
+
         @constraint(model, sum(view(model[:u_evar], :, idx)) <= model[:z_evar][idx])
         @constraint(model, [i = 1:T],
                     [-model[:X][i] - model[:t_evar][idx], model[:z_evar][idx],
@@ -737,13 +735,14 @@ function set_rm(port::Portfolio2, rm::RVaR2, type::Union{Trad2, RP2},
             @variable(model, psi_rvar[1:T, 1:count])
             @variable(model, theta_rvar[1:T, 1:count])
             @variable(model, epsilon_rvar[1:T, 1:count])
-            @variable(model, rvar_risk[1:count])
+            @expression(model, rvar_risk[1:count], zero(AffExpr))
         end
-        @constraint(model,
-                    model[:rvar_risk][idx] ==
-                    model[:t_rvar][idx] +
-                    lnk * model[:z_rvar][idx] +
-                    sum(view(model[:psi_rvar], :, idx) .+ view(model[:theta_rvar], :, idx)))
+        add_to_expression!(model[:rvar_risk][idx], model[:t_rvar][idx])
+        add_to_expression!(model[:rvar_risk][idx], lnk, model[:z_rvar][idx])
+        add_to_expression!(model[:rvar_risk][idx],
+                           sum(view(model[:psi_rvar], :, idx) .+
+                               view(model[:theta_rvar], :, idx)))
+
         @constraint(model, [i = 1:T],
                     [model[:z_rvar][idx] * opk * ik2, model[:psi_rvar][i, idx] * opk * ik,
                      model[:epsilon_rvar][i, idx]] ∈ MOI.PowerCone(iopk))
@@ -829,11 +828,10 @@ function set_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
         if isone(idx)
             @variable(model, dar[1:count])
             @variable(model, z_cdar[1:T, 1:count] .>= 0)
-            @variable(model, cdar_risk[1:count])
+            @expression(model, cdar_risk[1:count], zero(AffExpr))
         end
-        @constraint(model,
-                    model[:cdar_risk][idx] ==
-                    model[:dar][idx] + sum(view(model[:z_cdar], :, idx)) * iat)
+        add_to_expression!(model[:cdar_risk][idx], model[:dar][idx])
+        add_to_expression!(model[:cdar_risk][idx], iat, sum(view(model[:z_cdar], :, idx)))
         @constraint(model,
                     view(model[:z_cdar], :, idx) .>=
                     view(model[:dd], 2:(T + 1)) .- model[:dar][idx])
@@ -866,11 +864,10 @@ function set_rm(port::Portfolio2, rm::EDaR2, type::Union{Trad2, RP2},
             @variable(model, t_edar[1:count])
             @variable(model, z_edar[1:count] >= 0)
             @variable(model, u_edar[1:T, 1:count])
-            @variable(model, edar_risk[1:count])
+            @expression(model, edar_risk[1:count], zero(AffExpr))
         end
-        @constraint(model,
-                    model[:edar_risk][idx] ==
-                    model[:t_edar][idx] - model[:z_edar][idx] * log(at))
+        add_to_expression!(model[:edar_risk][idx], model[:t_edar][idx])
+        add_to_expression!(model[:edar_risk][idx], -log(at), model[:z_edar][idx])
         @constraint(model, sum(view(model[:u_edar], :, idx)) <= model[:z_edar][idx])
         @constraint(model, [i = 1:T],
                     [model[:dd][i + 1] - model[:t_edar][idx], model[:z_edar][idx],
@@ -924,13 +921,13 @@ function set_rm(port::Portfolio2, rm::RDaR2, type::Union{Trad2, RP2},
             @variable(model, psi_rdar[1:T, 1:count])
             @variable(model, theta_rdar[1:T, 1:count])
             @variable(model, epsilon_rdar[1:T, 1:count])
-            @variable(model, rdar_risk[1:count])
+            @expression(model, rdar_risk[1:count], zero(AffExpr))
         end
-        @constraint(model,
-                    model[:rdar_risk][idx] ==
-                    model[:t_rdar][idx] +
-                    lnk * model[:z_rdar][idx] +
-                    sum(view(model[:psi_rdar], :, idx) .+ view(model[:theta_rdar], :, idx)))
+        add_to_expression!(model[:rdar_risk][idx], model[:t_rdar][idx])
+        add_to_expression!(model[:rdar_risk][idx], lnk, model[:z_rdar][idx])
+        add_to_expression!(model[:rdar_risk][idx],
+                           sum(view(model[:psi_rdar], :, idx) .+
+                               view(model[:theta_rdar], :, idx)))
         @constraint(model, [i = 1:T],
                     [model[:z_rdar][idx] * opk * ik2, model[:psi_rdar][i, idx] * opk * ik,
                      model[:epsilon_rdar][i, idx]] ∈ MOI.PowerCone(iopk))
