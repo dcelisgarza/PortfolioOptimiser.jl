@@ -51,14 +51,15 @@ Base.String(::WC2) = "WC2"
 Base.Symbol(::WC2) = :WC2
 
 abstract type SDFormulation end
-struct QuadSD <: SDFormulation end
-struct SOCSD <: SDFormulation end
+abstract type SDSquaredFormulation <: SDFormulation end
+struct QuadSD <: SDSquaredFormulation end
+struct SOCSD <: SDSquaredFormulation end
 struct SimpleSD <: SDFormulation end
 
 abstract type RetType end
 struct NoKelly <: RetType end
 @kwdef mutable struct AKelly <: RetType
-    formulation::SDFormulation = SOCSD()
+    formulation::SDSquaredFormulation = SOCSD()
 end
 struct EKelly <: RetType end
 
