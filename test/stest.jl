@@ -1,166 +1,174 @@
-using CSV, TimeSeries, JuMP, Test, Clarabel, StatsBase, PortfolioOptimiser
-
-@time d1 = PortfolioOptimiser.duplication_matrix(5)
-
-@time e1 = PortfolioOptimiser.elimination_matrix(5)
-d, s, l, d1, s1, l1 = PortfolioOptimiser.summation_matrix(50)
-@test isequal(d, d1)
-@test isequal(l, l1)
-@test isequal(s, s1)
-
-d2, e2 = PortfolioOptimiser.summation_matrix(5)
-@test isequal(s1, s2)
+using CSV, TimeSeries, JuMP, Test, Clarabel, StatsBase, PyCall, DataFrames,
+      PortfolioOptimiser, Clustering
 
 prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
-portfolio = Portfolio2(; prices = prices,
-                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                        :params => Dict("verbose" => false))))
-asset_statistics2!(portfolio)
-@time w1 = optimise2!(portfolio; rm = Skew2(; settings = RiskMeasureSettings(; ub = r1)),
-                      obj = MaxRet())
+portfolio = HCPortfolio(; prices = prices,
+                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                         :params => Dict("verbose" => false))))
+asset_statistics!(portfolio; calc_kurt = false)
 
-r1 = calc_risk(portfolio2; rm = :Skew)
+clustering_idx, clustering, k = cluster_assets(portfolio,
+                                               ClusterOpt(; k_method = :Std_Sil,
+                                                          linkage = :single))
+# idx = sortperm(portfolio.assets[clustering.order])
+# df = DataFrame([portfolio.assets[clustering.order][idx] clustering_idx[idx]],
+#                [:Assets, :Cluster])
+ret = randn(30000, 2000)
+corr = cor(ret)
+dist = ((1 .- corr) ./ 2) .^ 2
 
-deepcopy(portfolio)
-String(SR())
-portfolio2 = Portfolio(; prices = prices,
-                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                        :params => Dict("verbose" => false))))
-asset_statistics!(portfolio2)
-portfolio2.skew_u = r1
-@time w2 = optimise!(portfolio2, OptimiseOpt(; obj = :Max_Ret, rm = :Skew))
+hclust_opt = HClustOpt()
+hclust_opt.k_method
+clusteringt = hclust(dist; linkage = :ward, branchorder = hclust_opt.branchorder)
+kt = PortfolioOptimiser.calc_k(hclust_opt, dist, clusteringt)
+idxt = cutree(clusteringt; k = kt)
 
-a = CVaR2()
-size(a)
-b = CVaR2(; alpha = BigFloat(0.5))
+hclust_opt.k_method = StdSilhouette()
+clusterings = hclust(dist; linkage = :ward, branchorder = hclust_opt.branchorder)
+ks = PortfolioOptimiser.calc_k(hclust_opt, dist, clusterings)
+idxs = cutree(clusterings; k = ks)
 
-a isa CVaR2
-b isa CVaR2
-typeof(a) == typeof(b)
+py"""
+import numpy as np
+import pandas as pd
+import riskfolio as rp
+import scipy.cluster.hierarchy as hr
+from scipy.spatial.distance import squareform
+from sklearn.metrics import silhouette_samples
+"""
 
-prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
-portfolio = Portfolio2(; prices = prices,
-                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                        :params => Dict("verbose" => false))))
-asset_statistics2!(portfolio)
+py"""
+def two_diff_gap_stat(dist, clustering, max_k=10):
+    flag = False
+    # Check if linkage matrix is monotonic
+    if hr.is_monotonic(clustering):
+        flag = True
+    # cluster levels over from 1 to N-1 clusters
+    cluster_lvls = pd.DataFrame(hr.cut_tree(clustering), index=dist.columns)
+    level_k = cluster_lvls.columns.tolist()
+    cluster_lvls = cluster_lvls.iloc[:, ::-1]  # reverse order to start with 1 cluster
+    cluster_lvls.columns = level_k
+    # Fix for nonmonotonic linkage matrices
+    if flag is False:
+        for i in cluster_lvls.columns:
+            unique_vals, indices = np.unique(cluster_lvls[i], return_inverse=True)
+            cluster_lvls[i] = indices
+    cluster_lvls = cluster_lvls.T.drop_duplicates().T
+    level_k = cluster_lvls.columns.tolist()
+    cluster_k = cluster_lvls.nunique(axis=0).tolist()
+    W_list = []
+    n = dist.shape[0]
 
-portfolio.model = JuMP.Model()
-@variable(portfolio.model, w[1:length(portfolio.assets)])
-@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
-@constraint(portfolio.model, portfolio.model[:w] .>= 0)
-set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 1, 1; mu = portfolio.mu,
-       returns = portfolio.returns)
-set_rm(portfolio, MAD2(; settings = RiskMeasureSettings(; scale = 2)), Trad2(), MinRisk(),
-       1, 1; mu = portfolio.mu, returns = portfolio.returns)
-@objective(portfolio.model, Min, portfolio.model[:risk])
-set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
-JuMP.optimize!(portfolio.model)
-w1 = value.(portfolio.model[:w])
 
-portfolio.model = JuMP.Model()
-@variable(portfolio.model, w[1:length(portfolio.assets)])
-@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
-@constraint(portfolio.model, portfolio.model[:w] .>= 0)
-set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 1, 1; mu = portfolio.mu,
-       returns = portfolio.returns)
-set_rm(portfolio, MAD2(; settings = RiskMeasureSettings(; scale = 2)), Trad2(), MinRisk(),
-       1, 1; mu = portfolio.mu, returns = portfolio.returns)
-@objective(portfolio.model, Min, portfolio.model[:risk])
-set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
-JuMP.optimize!(portfolio.model)
-w2 = value.(portfolio.model[:w])
+    # get within-cluster dissimilarity for each k
+    for k in cluster_k:
+        if k == 1:
+            W_list.append(-np.inf)
+        elif k > min(max_k, np.sqrt(n)) + 2:
+            break
+        else:
+            level = cluster_lvls[level_k[cluster_k.index(k)]]  # get k clusters
+            D_list = []  # within-cluster distance list
 
-using Random
-mu2 = shuffle(portfolio.mu)
+            for i in range(np.max(level.unique()) + 1):
+                cluster = level.loc[level == i]
+                # Based on correlation distance
+                cluster_dist = dist.loc[cluster.index, cluster.index]  # get distance
+                cluster_pdist = squareform(cluster_dist, checks=False)
+                if cluster_pdist.shape[0] != 0:
+                    D = np.nan_to_num(cluster_pdist.std())
+                    D_list.append(D)  # append to list
 
-portfolio.model = JuMP.Model()
-@variable(portfolio.model, w[1:length(portfolio.assets)])
-@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
-@constraint(portfolio.model, portfolio.model[:w] .>= 0)
-set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 1, 1; mu = portfolio.mu,
-       returns = portfolio.returns)
-set_rm(portfolio, MAD2(), Trad2(), MinRisk(), 1, 1; mu = mu2, returns = portfolio.returns)
-@objective(portfolio.model, Min, portfolio.model[:risk])
-set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
-JuMP.optimize!(portfolio.model)
-w3 = value.(portfolio.model[:w])
+            W_k = np.sum(D_list)
+            W_list.append(W_k)
+    W_list = pd.Series(W_list)
+    gaps = W_list.shift(-2) + W_list - 2 * W_list.shift(-1)
+    k_index = int(gaps.idxmax())
+    k = cluster_k[k_index]
+    node_k = level_k[k_index]
 
-portfolio.model = JuMP.Model()
-@variable(portfolio.model, w[1:length(portfolio.assets)])
-@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
-@constraint(portfolio.model, portfolio.model[:w] .>= 0)
-set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 1, 1; mu = portfolio.mu,
-       returns = portfolio.returns)
-set_rm(portfolio, MAD2(), Trad2(), MinRisk(), 1, 1; mu = mu2, returns = portfolio.returns)
-@objective(portfolio.model, Min, portfolio.model[:risk])
-set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
-JuMP.optimize!(portfolio.model)
-w4 = value.(portfolio.model[:w])
 
-portfolio.model = JuMP.Model()
-@variable(portfolio.model, w[1:length(portfolio.assets)])
-@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
-@constraint(portfolio.model, portfolio.model[:w] .>= 0)
-set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 2, 1; mu = portfolio.mu,
-       returns = portfolio.returns)
-set_rm(portfolio, SSD2(), Trad2(), MinRisk(), 2, 2; mu = mu2, returns = portfolio.returns)
-@objective(portfolio.model, Min, portfolio.model[:risk])
-set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
-JuMP.optimize!(portfolio.model)
-w5 = value.(portfolio.model[:w])
+    if flag:
+        clustering_inds = cluster_lvls[node_k].tolist()
+    else:
+        clustering_inds = hr.fcluster(clustering, k, criterion="maxclust")
+        j = len(np.unique(clustering_inds))
+        while k != j:
+            j += 1
+            clustering_inds = hr.fcluster(clustering, j, criterion="maxclust")
+            k = len(np.unique(clustering_inds))
+        unique_vals, indices = np.unique(clustering_inds, return_inverse=True)
+        clustering_inds = indices
 
-SD2[SD2()]
-portfolio = Portfolio2(; prices = prices,
-                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                        :params => Dict("verbose" => false))))
-@variable(portfolio.model, w[1:length(portfolio.assets)])
-@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
-@constraint(portfolio.model, portfolio.model[:w] .>= 0)
+    return k, clustering_inds
 
-setup_rm(portfolio, CVaR2(), Trad2(), MinRisk(), 1, 1)
-# setup_rm(portfolio, CVaR2(; alpha = 0.3), true, Inf, 1, Trad2(), MinRisk(), 3, 2)
-# setup_rm(portfolio, CVaR2(; alpha = 0.1), true, 0.3, 8, Trad2(), MinRisk(), 3, 3)
+def std_silhouette_score(dist, clustering, max_k=10):
+    flag = False
+    # Check if linkage matrix is monotonic
+    if hr.is_monotonic(clustering):
+        flag = True
+    # cluster levels over from 1 to N-1 clusters
+    cluster_lvls = pd.DataFrame(hr.cut_tree(clustering), index=dist.columns)
+    level_k = cluster_lvls.columns.tolist()
+    cluster_lvls = cluster_lvls.iloc[:, ::-1]  # reverse order to start with 1 cluster
+    cluster_lvls.columns = level_k
+    # Fix for nonmonotonic linkage matrices
+    if flag is False:
+        for i in cluster_lvls.columns:
+            unique_vals, indices = np.unique(cluster_lvls[i], return_inverse=True)
+            cluster_lvls[i] = indices
+    cluster_lvls = cluster_lvls.T.drop_duplicates().T
+    level_k = cluster_lvls.columns.tolist()
+    cluster_k = cluster_lvls.nunique(axis=0).tolist()
+    scores_list = []
+    n = dist.shape[0]
+    # print(f"level_k = {level_k}, cluster_k = {cluster_k}")
 
-@objective(portfolio.model, Min, portfolio.model[:risk])
-set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
-JuMP.optimize!(portfolio.model)
+    # get within-cluster dissimilarity for each k
+    for k in cluster_k:
+        if k == 1:
+            scores_list.append(-np.inf)
+        elif k > min(max_k, np.sqrt(n)):
+            break
+        else:
+            level = cluster_lvls[level_k[cluster_k.index(k)]]  # get k clusters
+            b = silhouette_samples(dist, level, metric="precomputed")
+            scores_list.append(b.mean() / b.std())
 
-ws2 = [portfolio.assets value.(portfolio.model[:w])]
+    scores_list = pd.Series(scores_list)
+    k_index = int(scores_list.idxmax())
+    k = cluster_k[k_index]
+    node_k = level_k[k_index]
+    if flag:
+        clustering_inds = cluster_lvls[node_k].tolist()
+    else:
+        clustering_inds = hr.fcluster(clustering, k, criterion="maxclust")
+        j = len(np.unique(clustering_inds))
+        while k != j:
+            j += 1
+            clustering_inds = hr.fcluster(clustering, j, criterion="maxclust")
+            k = len(np.unique(clustering_inds))
+        unique_vals, indices = np.unique(clustering_inds, return_inverse=True)
+        clustering_inds = indices
 
-portfolio = Portfolio2(; prices = prices,
-                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                        :params => Dict("verbose" => false))))
-@variable(portfolio.model, w[1:length(portfolio.assets)])
-@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
-@constraint(portfolio.model, portfolio.model[:w] .>= 0)
+    return k, clustering_inds
+"""
+py"""
+dist = pd.DataFrame($(dist))
+leaf_order=True
+linkage="ward"
+max_k=1000
+"""
 
-# setup_rm(portfolio, CVaR2(),  Trad2(), MinRisk(), 1, 1)
-setup_rm(portfolio, CVaR2(; alpha = 0.3), Trad2(), MinRisk(), 1, 1)
-# setup_rm(portfolio, CVaR2(; alpha = 0.1),  Trad2(), MinRisk(), 3, 3)
+py"""
+p_dist = squareform(dist, checks=False)
+clustering = hr.linkage(p_dist, method=linkage, optimal_ordering=leaf_order)
+kt, clusterst = two_diff_gap_stat(dist, clustering, max_k)
+ks, clusterss = std_silhouette_score(dist, clustering, max_k)
+"""
 
-@objective(portfolio.model, Min, portfolio.model[:risk])
-set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
-JuMP.optimize!(portfolio.model)
-
-ws3 = [portfolio.assets value.(portfolio.model[:w])]
-
-portfolio = Portfolio2(; prices = prices,
-                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                        :params => Dict("verbose" => false))))
-@variable(portfolio.model, w[1:length(portfolio.assets)])
-@constraint(portfolio.model, sum(portfolio.model[:w]) == 1)
-@constraint(portfolio.model, portfolio.model[:w] .>= 0)
-
-# setup_rm(portfolio, CVaR2(),  Trad2(), MinRisk(), 1, 1)
-# setup_rm(portfolio, CVaR2(; alpha = 0.3),  Trad2(), MinRisk(), 1, 1)
-setup_rm(portfolio, CVaR2(; alpha = 0.1), Trad2(), MinRisk(), 1, 1)
-
-@objective(portfolio.model, Min, portfolio.model[:risk])
-set_optimizer(portfolio.model, portfolio.solvers[:Clarabel][:solver])
-JuMP.optimize!(portfolio.model)
-
-ws4 = [portfolio.assets value.(portfolio.model[:w])]
-
+isequal(py"clusterst", idxt .- 1)
+isequal(py"clusterss", idxs .- 1)
 ################################################################
 
 #######################################
@@ -168,22 +176,22 @@ ws4 = [portfolio.assets value.(portfolio.model[:w])]
 for rtol ∈
     [1e-10, 5e-10, 1e-9, 5e-9, 1e-8, 5e-8, 1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4,
      1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 2.5e-1, 5e-1, 1e0]
-    a1, a2 = [0.0, 0.0, 0.0, 0.0, 0.8164978318513347, -0.0, 0.15350216814866524, 0.0, 0.0,
-              0.0, 0.0, -0.0, -0.08567579658117885, 0.0, -0.2343242034188211, 0.0, 0.0, 0.0,
-              0.0, 0.0],
-             [-0.0, 0.0, 0.0, 0.0, 0.8161543315080357, -0.0, 0.1538456684919643, 0.0, 0.0,
-              0.0, 5.551115123125783e-17, -0.0, -0.08569345071551868, -0.0,
-              -0.23430654928448133, 0.0, 0.0, 0.0, 0.0, 0.0]
+    a1, a2 = w5.weights, w6.weights
     if isapprox(a1, a2; rtol = rtol)
         println(", rtol = $(rtol)")
         break
     end
 end
 
-cov_optn = CovOpt(; method = :SB1, gerber = GerberOpt(; normalise = true))
-asset_statistics!(portfolio; calc_kurt = false, cov_opt = cov_optn)
-mu15n = portfolio.mu
-cov15n = portfolio.cov
+str = "println(\""
+for i ∈ 1:11
+    if i ∈ (7, 10, 11)
+        continue
+    end
+    str *= "w$(i)t = \$(w$(i).weights)\\n"
+end
+str *= "\")"
+println(str)
 
 println("covt15n = reshape($(vec(cov15n)), $(size(cov15n)))")
 
@@ -209,8 +217,9 @@ function f(rpe, warm)
     return rpew, repsw
 end
 
-r = collect(range(; start = 9.5, stop = 10, length = 2))
-f(r, 1)
+r = collect(range(; start = 8.5, stop = 10, length = 2))
+p, reps = f(r, 1)
+display([p reps])
 display(r * 10)
 
 # %%
