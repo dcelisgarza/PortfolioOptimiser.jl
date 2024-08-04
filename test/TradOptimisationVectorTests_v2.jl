@@ -113,46 +113,6 @@ l = 2.0
     @test isapprox(r4, riskt)
     @test isapprox(ret4, rett)
 
-    rm = [[SD2(; formulation = QuadSD()), SD2(; formulation = SimpleSD())]]
-    w9 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
-    r9 = calc_risk(portfolio; type = :Trad2, rm = rm[1][1])
-    ret9 = dot(portfolio.mu, w9.weights)
-    wt = [0.007880024993803471, 0.03069715970077981, 0.010506316128987503,
-          0.027491209570591545, 0.012285931087288456, 0.03341338952912436,
-          7.598476262379018e-9, 0.13984935908109208, 1.390559757879338e-8,
-          3.9788368331534336e-7, 0.28782740688266556, 8.693025434887618e-9,
-          6.317718226870099e-9, 0.12528014529233403, 2.2283390396918905e-8,
-          0.01508412915677593, 1.0132673276690782e-6, 0.19313003507359347,
-          1.7638155638061054e-8, 0.1165534059155893]
-    riskt = 0.007704591179178414
-    rett = 0.0003482414668032645
-    @test isapprox(w9.weights, wt0, rtol = 5.0e-4)
-    @test isapprox(r9, riskt0, rtol = 5.0e-7)
-    @test isapprox(ret9, rett0, rtol = 1.0e-4)
-    @test isapprox(w9.weights, wt)
-    @test isapprox(r9, riskt)
-    @test isapprox(ret9, rett)
-
-    rm = [[SD2(; formulation = SimpleSD()), SD2(; formulation = QuadSD())]]
-    w10 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
-    r10 = calc_risk(portfolio; type = :Trad2, rm = rm[1][1])
-    ret10 = dot(portfolio.mu, w10.weights)
-    wt = [0.00788002499379505, 0.030697159700781393, 0.010506316128987525,
-          0.02749120957059247, 0.012285931087289991, 0.0334133895291245,
-          7.59847626776494e-9, 0.13984935908109256, 1.390559758887827e-8,
-          3.9788368367743396e-7, 0.2878274068826678, 8.69302544109695e-9,
-          6.317718231315523e-9, 0.12528014529233325, 2.2283390411837418e-8,
-          0.015084129156775265, 1.013267328639817e-6, 0.19313003507359447,
-          1.7638155650901756e-8, 0.11655340591558987]
-    riskt = 0.0077045911791784145
-    rett = 0.0003482414668032652
-    @test isapprox(w10.weights, wt0, rtol = 0.0005)
-    @test isapprox(r10, riskt0, rtol = 5.0e-7)
-    @test isapprox(ret10, rett0, rtol = 0.0001)
-    @test isapprox(w10.weights, wt)
-    @test isapprox(r10, riskt)
-    @test isapprox(ret10, rett)
-
     # Risk upper bound
     obj = MaxRet()
     rm = SD2(; settings = RiskMeasureSettings(; scale = 2.0))
@@ -183,7 +143,6 @@ l = 2.0
 
     # Ret lower bound
     obj = MinRisk()
-
     rm = SD2(; settings = RiskMeasureSettings(; scale = 2.0))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
@@ -205,6 +164,57 @@ l = 2.0
     portfolio.mu_l = ret2
     w8 = optimise2!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w8.weights) >= ret2
+
+    obj = MinRisk()
+    wt0 = [0.0078093616583851146, 0.030698578999046943, 0.010528316771324561,
+           0.027486806578381814, 0.012309038313357737, 0.03341430871186881,
+           1.1079055085166888e-7, 0.13985416268183082, 2.0809271230580642e-7,
+           6.32554715643476e-6, 0.28784123553791136, 1.268075347971748e-7,
+           8.867081236591187e-8, 0.12527141708492384, 3.264070667606171e-7,
+           0.015079837844627948, 1.5891383112101438e-5, 0.1931406057562605,
+           2.654124109083291e-7, 0.11654298695072397]
+    riskt0 = 0.007704593409157056
+    rett0 = 0.0003482663810696356
+
+    rm = [[SD2(; formulation = QuadSD()), SD2(; formulation = SimpleSD())]]
+    w9 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
+    r9 = calc_risk(portfolio; type = :Trad2, rm = rm[1][1])
+    ret9 = dot(portfolio.mu, w9.weights)
+    wt = [0.007893411266173175, 0.03069787875733664, 0.010517467279741203,
+          0.02749153027861106, 0.012315934864436422, 0.033357226892062115,
+          1.5186481591738784e-8, 0.13984281248182642, 2.6392792428112547e-8,
+          4.3321340905586297e-7, 0.28782917621099047, 1.622410061275207e-8,
+          1.2780832333541773e-8, 0.1252610993835163, 6.694587666856286e-8,
+          0.015097144456616973, 6.797374193485821e-7, 0.1931368287482932,
+          3.321982647315455e-8, 0.11655820567965758]
+    riskt = 0.007704591319283172
+    rett = 0.0003483682842520989
+    @test isapprox(w9.weights, wt0, rtol = 5.0e-4)
+    @test isapprox(r9, riskt0, rtol = 5.0e-7)
+    @test isapprox(ret9, rett0, rtol = 5.0e-4)
+    @test isapprox(w9.weights, wt)
+    @test isapprox(r9, riskt)
+    @test isapprox(ret9, rett)
+
+    rm = [[SD2(; formulation = SimpleSD()), SD2(; formulation = QuadSD())]]
+    w10 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
+    r10 = calc_risk(portfolio; type = :Trad2, rm = rm[1][1])
+    ret10 = dot(portfolio.mu, w10.weights)
+    wt = [0.007893411258991168, 0.030697878760864626, 0.010517467283966332,
+          0.027491530280761234, 0.01231593487986923, 0.033357226869771425,
+          1.5186461875055205e-8, 0.13984281247966734, 2.6392759414051237e-8,
+          4.332127216826158e-7, 0.2878291762142109, 1.6224079654211018e-8,
+          1.278081655504334e-8, 0.12526109937507104, 6.694578390760774e-8,
+          0.015097144461265135, 6.797363006658334e-7, 0.1931368287542989,
+          3.32197849377567e-8, 0.11655820568255393]
+    riskt = 0.007704591319282906
+    rett = 0.0003483682843049291
+    @test isapprox(w10.weights, wt0, rtol = 0.0005)
+    @test isapprox(r10, riskt0, rtol = 5.0e-7)
+    @test isapprox(ret10, rett0, rtol = 0.0005)
+    @test isapprox(w10.weights, wt)
+    @test isapprox(r10, riskt)
+    @test isapprox(ret10, rett)
 end
 
 @testset "Add Skew and SSkew to SD" begin
