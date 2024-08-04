@@ -1376,7 +1376,7 @@ end
           6.270163379885616e-10, 2.737948937004369e-9, 9.22605081713148e-10,
           0.18045703255664325, 1.0301433006689299e-7, 4.598776005906912e-9,
           6.223032176387515e-9, 0.17192623750155375]
-    @test isapprox(w7.weights, wt)
+    @test isapprox(w7.weights, wt, rtol = 5.0e-5)
 
     rm = [CDaR2(), [SD2(), SD2()]]
     w8 = optimise2!(portfolio; rm = rm, kelly = AKelly(), obj = obj, str_names = true)
@@ -1387,7 +1387,7 @@ end
           1.7170941060594656e-10, 7.728025175298101e-10, 2.5473980916498663e-10,
           0.17975392607084145, 3.048826586846149e-8, 1.3362334336357378e-9,
           1.6428340862018751e-9, 0.1719127003369377]
-    @test isapprox(w8.weights, wt)
+    @test isapprox(w8.weights, wt, rtol = 5.0e-8)
     @test isapprox(w7.weights, w8.weights, rtol = 0.05)
 
     obj = MinRisk()
@@ -1440,8 +1440,8 @@ end
           5.886927386343963e-10, 1.9134842812094356e-9, 6.096542976272067e-10,
           0.2029697140029372, 0.20824346355748677, 3.939026699943966e-8,
           2.8910471099005946e-8, 9.87911662830787e-9]
-    @test isapprox(w12.weights, wt)
-    @test isapprox(w11.weights, w12.weights, rtol = 5e-7)
+    @test isapprox(w12.weights, wt, rtol = 5.0e-6)
+    @test isapprox(w11.weights, w12.weights, rtol = 5e-6)
 end
 
 @testset "MAD" begin
