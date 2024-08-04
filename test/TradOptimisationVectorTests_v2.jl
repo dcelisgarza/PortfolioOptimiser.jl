@@ -113,6 +113,46 @@ l = 2.0
     @test isapprox(r4, riskt)
     @test isapprox(ret4, rett)
 
+    rm = [[SD2(; formulation = QuadSD()), SD2(; formulation = SimpleSD())]]
+    w9 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
+    r9 = calc_risk(portfolio; type = :Trad2, rm = rm[1][1])
+    ret9 = dot(portfolio.mu, w9.weights)
+    wt = [0.007880024993803471, 0.03069715970077981, 0.010506316128987503,
+          0.027491209570591545, 0.012285931087288456, 0.03341338952912436,
+          7.598476262379018e-9, 0.13984935908109208, 1.390559757879338e-8,
+          3.9788368331534336e-7, 0.28782740688266556, 8.693025434887618e-9,
+          6.317718226870099e-9, 0.12528014529233403, 2.2283390396918905e-8,
+          0.01508412915677593, 1.0132673276690782e-6, 0.19313003507359347,
+          1.7638155638061054e-8, 0.1165534059155893]
+    riskt = 0.007704591179178414
+    rett = 0.0003482414668032645
+    @test isapprox(w9.weights, wt0, rtol = 5.0e-4)
+    @test isapprox(r9, riskt0, rtol = 5.0e-7)
+    @test isapprox(ret9, rett0, rtol = 1.0e-4)
+    @test isapprox(w9.weights, wt)
+    @test isapprox(r9, riskt)
+    @test isapprox(ret9, rett)
+
+    rm = [[SD2(; formulation = SimpleSD()), SD2(; formulation = QuadSD())]]
+    w10 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
+    r10 = calc_risk(portfolio; type = :Trad2, rm = rm[1][1])
+    ret10 = dot(portfolio.mu, w10.weights)
+    wt = [0.00788002499379505, 0.030697159700781393, 0.010506316128987525,
+          0.02749120957059247, 0.012285931087289991, 0.0334133895291245,
+          7.59847626776494e-9, 0.13984935908109256, 1.390559758887827e-8,
+          3.9788368367743396e-7, 0.2878274068826678, 8.69302544109695e-9,
+          6.317718231315523e-9, 0.12528014529233325, 2.2283390411837418e-8,
+          0.015084129156775265, 1.013267328639817e-6, 0.19313003507359447,
+          1.7638155650901756e-8, 0.11655340591558987]
+    riskt = 0.0077045911791784145
+    rett = 0.0003482414668032652
+    @test isapprox(w10.weights, wt0, rtol = 0.0005)
+    @test isapprox(r10, riskt0, rtol = 5.0e-7)
+    @test isapprox(ret10, rett0, rtol = 0.0001)
+    @test isapprox(w10.weights, wt)
+    @test isapprox(r10, riskt)
+    @test isapprox(ret10, rett)
+
     # Risk upper bound
     obj = MaxRet()
     rm = SD2(; settings = RiskMeasureSettings(; scale = 2.0))
