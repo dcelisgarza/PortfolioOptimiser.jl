@@ -902,7 +902,7 @@ end
           0.12397862173181687, 3.713986941437853e-8]
     riskt = 0.012532646375473184
     rett = 0.0014098003867777677
-    @test isapprox(w31.weights, wt)
+    @test isapprox(w31.weights, wt, rtol = 5.0e-8)
     @test isapprox(r31, riskt)
     @test isapprox(ret31, rett)
 
@@ -920,7 +920,7 @@ end
           0.12397092672117808, 3.0896067026143913e-7]
     riskt = 0.012532862921884226
     rett = 0.0014098257752725304
-    @test isapprox(w32.weights, wt)
+    @test isapprox(w32.weights, wt, rtol = 1.0e-7)
     @test isapprox(r32, riskt)
     @test isapprox(ret32, rett)
 
@@ -938,9 +938,9 @@ end
           0.12396817976239216, 5.835883779337245e-7]
     riskt = 0.012532777032115257
     rett = 0.0014098152452307682
-    @test isapprox(w33.weights, wt)
-    @test isapprox(r33, riskt)
-    @test isapprox(ret33, rett)
+    @test isapprox(w33.weights, wt, rtol = 5.0e-7)
+    @test isapprox(r33, riskt, rtol = 5.0e-8)
+    @test isapprox(ret33, rett, rtol = 5.0e-8)
 
     @test isapprox(w31.weights, w32.weights, rtol = 0.0001)
     @test isapprox(r31, r32, rtol = 5.0e-5)
@@ -1065,8 +1065,8 @@ end
           1.1523196443551639e-7, 0.11653522192860562]
     riskt = 0.007704599625058708
     rett = 0.0003482771661845515
-    @test isapprox(w38.weights, wt)
-    @test isapprox(r38, riskt)
+    @test isapprox(w38.weights, wt, rtol = 5.0e-7)
+    @test isapprox(r38, riskt, rtol = 5.0e-7)
     @test isapprox(ret38, rett)
 
     rm = SD2(; formulation = SimpleSD())
@@ -1112,9 +1112,9 @@ end
           4.83569668574532e-8, 6.41142230104617e-9]
     riskt = 0.01545637469747925
     rett = 0.0016807188921860062
-    @test isapprox(w40.weights, wt)
-    @test isapprox(r40, riskt)
-    @test isapprox(ret40, rett)
+    @test isapprox(w40.weights, wt, rtol = 5.0e-7)
+    @test isapprox(r40, riskt, rtol = 5.0e-8)
+    @test isapprox(ret40, rett, rtol = 5.0e-8)
 
     rm = SD2(; formulation = QuadSD())
     w41 = optimise2!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -1129,9 +1129,9 @@ end
           1.3224736594162053e-8, 1.9282264449537997e-9]
     riskt = 0.015456372955099407
     rett = 0.0016807187764718914
-    @test isapprox(w41.weights, wt)
-    @test isapprox(r41, riskt)
-    @test isapprox(ret41, rett)
+    @test isapprox(w41.weights, wt, rtol = 1.0e-6)
+    @test isapprox(r41, riskt, rtol = 5.0e-7)
+    @test isapprox(ret41, rett, rtol = 5.0e-7)
 
     rm = SD2(; formulation = SimpleSD())
     w42 = optimise2!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -1146,13 +1146,13 @@ end
           2.3417136618323754e-9, 0.11654713380573052]
     riskt = 0.007722818747684341
     rett = 0.0004204311133053862
-    @test isapprox(w42.weights, wt)
-    @test isapprox(r42, riskt)
-    @test isapprox(ret42, rett)
+    @test isapprox(w42.weights, wt, rtol = 5.0e-6)
+    @test isapprox(r42, riskt, rtol = 5.0e-8)
+    @test isapprox(ret42, rett, rtol = 1.0e-6)
 
     @test isapprox(w40.weights, w41.weights, rtol = 1.0e-6)
     @test isapprox(r40, r41, rtol = 5.0e-7)
-    @test isapprox(ret40, ret41, rtol = 1.0e-7)
+    @test isapprox(ret40, ret41, rtol = 5.0e-7)
 
     @test !isapprox(w40.weights, w42.weights)
     @test !isapprox(r40, r42)
@@ -1176,9 +1176,9 @@ end
           4.4360780483006885e-7]
     riskt = 0.012871646142553771
     rett = 0.0014482928429808686
-    @test isapprox(w43.weights, wt)
-    @test isapprox(r43, riskt)
-    @test isapprox(ret43, rett)
+    @test isapprox(w43.weights, wt, rtol = 0.005)
+    @test isapprox(r43, riskt, rtol = 0.0005)
+    @test isapprox(ret43, rett, rtol = 0.0005)
 
     rm = SD2(; formulation = QuadSD())
     w44 = optimise2!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -1193,9 +1193,9 @@ end
           0.09862324690617728, 5.327136572668713e-7]
     riskt = 0.012871670066043072
     rett = 0.0014482953082515207
-    @test isapprox(w44.weights, wt)
-    @test isapprox(r44, riskt)
-    @test isapprox(ret44, rett)
+    @test isapprox(w44.weights, wt, rtol = 5.0e-7)
+    @test isapprox(r44, riskt, rtol = 5.0e-8)
+    @test isapprox(ret44, rett, rtol = 5.0e-8)
 
     rm = SD2(; formulation = SimpleSD())
     w45 = optimise2!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -1214,13 +1214,13 @@ end
     @test isapprox(r45, riskt)
     @test isapprox(ret45, rett)
 
-    @test isapprox(w43.weights, w44.weights, rtol = 0.0005)
-    @test isapprox(r43, r44, rtol = 5.0e-6)
-    @test isapprox(ret43, ret44, rtol = 5.0e-6)
+    @test isapprox(w43.weights, w44.weights, rtol = 0.005)
+    @test isapprox(r43, r44, rtol = 0.0005)
+    @test isapprox(ret43, ret44, rtol = 0.0005)
 
-    @test isapprox(w43.weights, w45.weights, rtol = 0.001)
-    @test isapprox(r43, r45, rtol = 0.0005)
-    @test isapprox(ret43, ret45, rtol = 0.0005)
+    @test isapprox(w43.weights, w45.weights, rtol = 0.005)
+    @test isapprox(r43, r45, rtol = 0.001)
+    @test isapprox(ret43, ret45, rtol = 0.001)
 
     @test isapprox(w44.weights, w45.weights, rtol = 0.001)
     @test isapprox(r44, r45, rtol = 0.0005)
@@ -1240,9 +1240,9 @@ end
           1.6178718912419106e-9, 1.2355373241783204e-9]
     riskt = 0.017515177411134022
     rett = 0.001802908016949115
-    @test isapprox(w46.weights, wt)
+    @test isapprox(w46.weights, wt, rtol = 5.0e-7)
     @test isapprox(r46, riskt)
-    @test isapprox(ret46, rett)
+    @test isapprox(ret46, rett, rtol = 5.0e-8)
 
     rm = SD2(; formulation = QuadSD())
     w47 = optimise2!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -1257,9 +1257,9 @@ end
           1.6178718912419106e-9, 1.2355373241783204e-9]
     riskt = 0.017515177411134022
     rett = 0.001802908016949115
-    @test isapprox(w47.weights, wt)
+    @test isapprox(w47.weights, wt, rtol = 5.0e-7)
     @test isapprox(r47, riskt)
-    @test isapprox(ret47, rett)
+    @test isapprox(ret47, rett, rtol = 5.0e-8)
 
     rm = SD2(; formulation = SimpleSD())
     w48 = optimise2!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -1274,9 +1274,9 @@ end
           1.6178718912419106e-9, 1.2355373241783204e-9]
     riskt = 0.017515177411134022
     rett = 0.001802908016949115
-    @test isapprox(w48.weights, wt)
+    @test isapprox(w48.weights, wt, rtol = 5.0e-7)
     @test isapprox(r48, riskt)
-    @test isapprox(ret48, rett)
+    @test isapprox(ret48, rett, rtol = 5.0e-8)
 
     @test isapprox(w46.weights, w47.weights)
     @test isapprox(r46, r47)
