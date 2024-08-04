@@ -1735,18 +1735,16 @@ function set_returns(obj::Any, kelly::AKelly, model, mu_l::Real; mu::AbstractVec
                      kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing} = nothing,
                      network_method::NetworkMethods2, sigma::AbstractMatrix, kwargs...)
     if !isempty(mu)
-        if isnothing(kelly_approx_idx) || isempty(kelly_approx_idx)
+        if isnothing(kelly_approx_idx) ||
+           isempty(kelly_approx_idx) ||
+           iszero(kelly_approx_idx[1])
             if !haskey(model, :sd_risk)
                 _sd_risk(network_method, kelly.formulation, model, sigma, 1, 1)
             end
             @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:sd_risk])
         else
-            if iszero(kelly_approx_idx[1])
-                @expression(model, ret, dot(mu, model[:w]) - 0.5 * model[:sd_risk])
-            else
-                @expression(model, ret,
-                            dot(mu, model[:w]) - 0.5 * model[:sd_risk][kelly_approx_idx[1]])
-            end
+            @expression(model, ret,
+                        dot(mu, model[:w]) - 0.5 * model[:sd_risk][kelly_approx_idx[1]])
         end
         _return_bounds(obj, model, mu_l)
     end
@@ -1759,7 +1757,9 @@ function set_returns(obj::SR, kelly::AKelly, model, mu_l::Real; mu::AbstractVect
         @variable(model, tapprox_kelly)
         @constraint(model, model[:risk] <= 1)
         @expression(model, ret, dot(mu, model[:w]) - 0.5 * tapprox_kelly)
-        if isempty(kelly_approx_idx) || iszero(kelly_approx_idx[1])
+        if isnothing(kelly_approx_idx) ||
+           isempty(kelly_approx_idx) ||
+           iszero(kelly_approx_idx[1])
             if !haskey(model, :sd_risk)
                 _sd_risk(network_method, kelly.formulation, model, sigma, 1, 1)
             end
@@ -1769,23 +1769,11 @@ function set_returns(obj::SR, kelly::AKelly, model, mu_l::Real; mu::AbstractVect
                          2 * model[:dev]
                          model[:k] - tapprox_kelly] ∈ SecondOrderCone())
         else
-            if !haskey(model, :sd_risk)
-                _sd_risk(network_method, kelly.formulation, model, sigma, 1, 1)
-                _dev_setup(network_method, model)
-            else
-                _dev_setup(network_method, model, kelly_approx_idx[1])
-            end
-            if isa(model[:dev], AbstractVector)
-                @constraint(model,
-                            [model[:k] + tapprox_kelly
-                             2 * model[:dev]
-                             model[:k] - tapprox_kelly] ∈ SecondOrderCone())
-            else
-                @constraint(model,
-                            [model[:k] + tapprox_kelly
-                             2 * model[:dev][kelly_approx_idx[1]]
-                             model[:k] - tapprox_kelly] ∈ SecondOrderCone())
-            end
+            _dev_setup(network_method, model, kelly_approx_idx[1])
+            @constraint(model,
+                        [model[:k] + tapprox_kelly
+                         2 * model[:dev][kelly_approx_idx[1]]
+                         model[:k] - tapprox_kelly] ∈ SecondOrderCone())
         end
         _return_bounds(obj, model, mu_l)
     end
