@@ -153,7 +153,7 @@ l = 2.0
     rm = [[SD2(), SD2()]]
     portfolio.mu_l = ret2
     w6 = optimise2!(portfolio; rm = rm, obj = obj)
-    @test dot(portfolio.mu, w14.weights) >= ret2
+    @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = SR(; rf = rf)
     rm = SD2(; settings = RiskMeasureSettings(; scale = 2.0))
