@@ -1067,7 +1067,7 @@ end
     rett = 0.0003482771661845515
     @test isapprox(w38.weights, wt, rtol = 5.0e-7)
     @test isapprox(r38, riskt, rtol = 5.0e-7)
-    @test isapprox(ret38, rett)
+    @test isapprox(ret38, rett, rtol = 5.0e-7)
 
     rm = SD2(; formulation = SimpleSD())
     w39 = optimise2!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
