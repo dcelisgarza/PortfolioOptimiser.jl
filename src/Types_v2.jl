@@ -898,14 +898,17 @@ Only relevant when `type == :WC`.
 mutable struct Portfolio2{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
                           msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, mnaks, skewf, sskewf,
                           rb, rbw, to, tobw, kte, te, rbi, bw, blbw, ami, bvi, rbv, frbv,
-                          nm, amc, bvc, ler, ud, umad, usd, ucvar, urcvar, uevar, urvar,
-                          uwr, ur, uflpm, uslpm, umd, uad, ucdar, uuci, uedar, urdar, uk,
-                          usk, ugmd, utg, urtg, uowa, udvar, uskew, usskew, owap, wowa, tmu,
-                          tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv, tmuf,
-                          tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf, tcovl,
-                          tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz, tlim, tfront,
-                          tsolv, tf, toptpar, tmod, tlp, taopt, tasolv, taoptpar, taf,
-                          tamod} <: AbstractPortfolio2
+                          nm, amc, bvc, ler,
+                          ######
+                          #   ud, umad, usd, ucvar, urcvar, uevar, urvar,
+                          #   uwr, ur, uflpm, uslpm, umd, uad, ucdar, uuci, uedar, urdar, uk,
+                          #   usk, ugmd, utg, urtg, uowa, udvar, uskew, usskew, 
+                          #####
+                          owap, wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew,
+                          tsv, tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf,
+                          tcovblf, tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz,
+                          tlim, tfront, tsolv, tf, toptpar, tmod, tlp, taopt, tasolv,
+                          taoptpar, taf, tamod} <: AbstractPortfolio2
     assets::ast
     timestamps::dat
     returns::r
@@ -950,32 +953,32 @@ mutable struct Portfolio2{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tr
     a_vec_cent::amc
     b_cent::bvc
     mu_l::ler
-    sd_u::ud
-    mad_u::umad
-    ssd_u::usd
-    cvar_u::ucvar
-    rcvar_u::urcvar
-    evar_u::uevar
-    rvar_u::urvar
-    wr_u::uwr
-    rg_u::ur
-    flpm_u::uflpm
-    slpm_u::uslpm
-    mdd_u::umd
-    add_u::uad
-    cdar_u::ucdar
-    uci_u::uuci
-    edar_u::uedar
-    rdar_u::urdar
-    kurt_u::uk
-    skurt_u::usk
-    gmd_u::ugmd
-    tg_u::utg
-    rtg_u::urtg
-    owa_u::uowa
-    dvar_u::udvar
-    skew_u::uskew
-    sskew_u::usskew
+    # sd_u::ud
+    # mad_u::umad
+    # ssd_u::usd
+    # cvar_u::ucvar
+    # rcvar_u::urcvar
+    # evar_u::uevar
+    # rvar_u::urvar
+    # wr_u::uwr
+    # rg_u::ur
+    # flpm_u::uflpm
+    # slpm_u::uslpm
+    # mdd_u::umd
+    # add_u::uad
+    # cdar_u::ucdar
+    # uci_u::uuci
+    # edar_u::uedar
+    # rdar_u::urdar
+    # kurt_u::uk
+    # skurt_u::usk
+    # gmd_u::ugmd
+    # tg_u::utg
+    # rtg_u::urtg
+    # owa_u::uowa
+    # dvar_u::udvar
+    # skew_u::uskew
+    # sskew_u::usskew
     owa_p::owap
     owa_w::wowa
     mu::tmu
@@ -1305,16 +1308,19 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                     f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                     network_method::NetworkMethods2 = NoNtwk(),
                     a_vec_cent::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                    b_cent::Real = Inf, mu_l::Real = Inf, sd_u::Real = Inf,
-                    mad_u::Real = Inf, ssd_u::Real = Inf, cvar_u::Real = Inf,
-                    rcvar_u::Real = Inf, evar_u::Real = Inf, rvar_u::Real = Inf,
-                    wr_u::Real = Inf, rg_u::Real = Inf, flpm_u::Real = Inf,
-                    slpm_u::Real = Inf, mdd_u::Real = Inf, add_u::Real = Inf,
-                    cdar_u::Real = Inf, uci_u::Real = Inf, edar_u::Real = Inf,
-                    rdar_u::Real = Inf, kurt_u::Real = Inf, skurt_u::Real = Inf,
-                    gmd_u::Real = Inf, tg_u::Real = Inf, rtg_u::Real = Inf,
-                    owa_u::Real = Inf, dvar_u::Real = Inf, skew_u::Real = Inf,
-                    sskew_u::Real = Inf,
+                    b_cent::Real = Inf, mu_l::Real = Inf,
+                    ########
+                    # sd_u::Real = Inf,
+                    # mad_u::Real = Inf, ssd_u::Real = Inf, cvar_u::Real = Inf,
+                    # rcvar_u::Real = Inf, evar_u::Real = Inf, rvar_u::Real = Inf,
+                    # wr_u::Real = Inf, rg_u::Real = Inf, flpm_u::Real = Inf,
+                    # slpm_u::Real = Inf, mdd_u::Real = Inf, add_u::Real = Inf,
+                    # cdar_u::Real = Inf, uci_u::Real = Inf, edar_u::Real = Inf,
+                    # rdar_u::Real = Inf, kurt_u::Real = Inf, skurt_u::Real = Inf,
+                    # gmd_u::Real = Inf, tg_u::Real = Inf, rtg_u::Real = Inf,
+                    # owa_u::Real = Inf, dvar_u::Real = Inf, skew_u::Real = Inf,
+                    # sskew_u::Real = Inf,
+                    ########
                     owa_p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50],
                     owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                     mu::AbstractVector = Vector{Float64}(undef, 0),
@@ -1535,51 +1541,73 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                       typeof(tracking_err_returns), typeof(tracking_err_weights),
                       typeof(bl_bench_weights), typeof(a_mtx_ineq), typeof(b_vec_ineq),
                       typeof(risk_budget), typeof(f_risk_budget), NetworkMethods2,
-                      typeof(a_vec_cent), typeof(b_cent), typeof(mu_l), typeof(sd_u),
-                      typeof(mad_u), typeof(ssd_u), typeof(cvar_u), typeof(rcvar_u),
-                      typeof(evar_u), typeof(rvar_u), typeof(wr_u), typeof(rg_u),
-                      typeof(flpm_u), typeof(slpm_u), typeof(mdd_u), typeof(add_u),
-                      typeof(cdar_u), typeof(uci_u), typeof(edar_u), typeof(rdar_u),
-                      typeof(kurt_u), typeof(skurt_u), typeof(gmd_u), typeof(tg_u),
-                      typeof(rtg_u), typeof(owa_u), typeof(dvar_u), typeof(skew_u),
-                      typeof(sskew_u), typeof(owa_p), typeof(owa_w), typeof(mu),
-                      typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2), typeof(S_2),
-                      typeof(skew), typeof(V), typeof(sskew), typeof(SV), typeof(f_mu),
-                      typeof(f_cov), typeof(fm_returns), typeof(fm_mu), typeof(fm_cov),
-                      typeof(bl_mu), typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov),
-                      typeof(cov_l), typeof(cov_u), typeof(cov_mu), typeof(cov_sigma),
-                      typeof(d_mu), typeof(k_mu), typeof(k_sigma), typeof(optimal),
-                      typeof(z), typeof(limits), typeof(frontier),
+                      typeof(a_vec_cent), typeof(b_cent), typeof(mu_l),
+                      #######
+                      #   typeof(sd_u), typeof(mad_u), typeof(ssd_u), typeof(cvar_u),
+                      #   typeof(rcvar_u), typeof(evar_u), typeof(rvar_u), typeof(wr_u),
+                      #   typeof(rg_u), typeof(flpm_u), typeof(slpm_u), typeof(mdd_u),
+                      #   typeof(add_u), typeof(cdar_u), typeof(uci_u), typeof(edar_u),
+                      #   typeof(rdar_u), typeof(kurt_u), typeof(skurt_u), typeof(gmd_u),
+                      #   typeof(tg_u), typeof(rtg_u), typeof(owa_u), typeof(dvar_u),
+                      #   typeof(skew_u), typeof(sskew_u),
+                      #######
+                      typeof(owa_p), typeof(owa_w), typeof(mu), typeof(cov), typeof(kurt),
+                      typeof(skurt), typeof(L_2), typeof(S_2), typeof(skew), typeof(V),
+                      typeof(sskew), typeof(SV), typeof(f_mu), typeof(f_cov),
+                      typeof(fm_returns), typeof(fm_mu), typeof(fm_cov), typeof(bl_mu),
+                      typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov), typeof(cov_l),
+                      typeof(cov_u), typeof(cov_mu), typeof(cov_sigma), typeof(d_mu),
+                      typeof(k_mu), typeof(k_sigma), typeof(optimal), typeof(z),
+                      typeof(limits), typeof(frontier), Union{<:AbstractDict, NamedTuple},
+                      Union{<:AbstractDict, NamedTuple}, typeof(fail), typeof(model),
+                      typeof(latest_prices), typeof(alloc_optimal),
                       Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                      typeof(fail), typeof(model), typeof(latest_prices),
-                      typeof(alloc_optimal), Union{<:AbstractDict, NamedTuple},
-                      Union{<:AbstractDict, NamedTuple}, typeof(alloc_fail),
-                      typeof(alloc_model)}(assets, timestamps, returns, short, short_u,
-                                           long_u, num_assets_l, num_assets_u,
-                                           num_assets_u_scale, f_assets, f_timestamps,
-                                           f_returns, loadings, loadings_opt, msv_target,
-                                           lpm_target, alpha_i, alpha, a_sim, beta_i, beta,
-                                           b_sim, kappa, max_num_assets_kurt,
-                                           max_num_assets_kurt_scale, skew_factor,
-                                           sskew_factor, rebalance, rebalance_weights,
-                                           turnover, turnover_weights, kind_tracking_err,
-                                           tracking_err, tracking_err_returns,
-                                           tracking_err_weights, bl_bench_weights,
-                                           a_mtx_ineq, b_vec_ineq, risk_budget,
-                                           f_risk_budget, network_method, a_vec_cent,
-                                           b_cent, mu_l, sd_u, mad_u, ssd_u, cvar_u,
-                                           rcvar_u, evar_u, rvar_u, wr_u, rg_u, flpm_u,
-                                           slpm_u, mdd_u, add_u, cdar_u, uci_u, edar_u,
-                                           rdar_u, kurt_u, skurt_u, gmd_u, tg_u, rtg_u,
-                                           owa_u, dvar_u, skew_u, sskew_u, owa_p, owa_w, mu,
-                                           cov, kurt, skurt, L_2, S_2, skew, V, sskew, SV,
-                                           f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_mu,
-                                           bl_cov, blfm_mu, blfm_cov, cov_l, cov_u, cov_mu,
-                                           cov_sigma, d_mu, k_mu, k_sigma, optimal, z,
-                                           limits, frontier, solvers, opt_params, fail,
-                                           model, latest_prices, alloc_optimal,
-                                           alloc_solvers, alloc_params, alloc_fail,
-                                           alloc_model)
+                      typeof(alloc_fail), typeof(alloc_model)}(assets, timestamps, returns,
+                                                               short, short_u, long_u,
+                                                               num_assets_l, num_assets_u,
+                                                               num_assets_u_scale, f_assets,
+                                                               f_timestamps, f_returns,
+                                                               loadings, loadings_opt,
+                                                               msv_target, lpm_target,
+                                                               alpha_i, alpha, a_sim,
+                                                               beta_i, beta, b_sim, kappa,
+                                                               max_num_assets_kurt,
+                                                               max_num_assets_kurt_scale,
+                                                               skew_factor, sskew_factor,
+                                                               rebalance, rebalance_weights,
+                                                               turnover, turnover_weights,
+                                                               kind_tracking_err,
+                                                               tracking_err,
+                                                               tracking_err_returns,
+                                                               tracking_err_weights,
+                                                               bl_bench_weights, a_mtx_ineq,
+                                                               b_vec_ineq, risk_budget,
+                                                               f_risk_budget,
+                                                               network_method, a_vec_cent,
+                                                               b_cent, mu_l,
+                                                               ######
+                                                               #    sd_u, mad_u, ssd_u, cvar_u,
+                                                               #    rcvar_u, evar_u, rvar_u,
+                                                               #    wr_u, rg_u, flpm_u, slpm_u,
+                                                               #    mdd_u, add_u, cdar_u, uci_u,
+                                                               #    edar_u, rdar_u, kurt_u,
+                                                               #    skurt_u, gmd_u, tg_u, rtg_u,
+                                                               #    owa_u, dvar_u, skew_u,
+                                                               #    sskew_u,
+                                                               ######
+                                                               owa_p, owa_w, mu, cov, kurt,
+                                                               skurt, L_2, S_2, skew, V,
+                                                               sskew, SV, f_mu, f_cov,
+                                                               fm_returns, fm_mu, fm_cov,
+                                                               bl_mu, bl_cov, blfm_mu,
+                                                               blfm_cov, cov_l, cov_u,
+                                                               cov_mu, cov_sigma, d_mu,
+                                                               k_mu, k_sigma, optimal, z,
+                                                               limits, frontier, solvers,
+                                                               opt_params, fail, model,
+                                                               latest_prices, alloc_optimal,
+                                                               alloc_solvers, alloc_params,
+                                                               alloc_fail, alloc_model)
 end
 
 function Base.getproperty(obj::Portfolio2, sym::Symbol)
@@ -1776,28 +1804,30 @@ function Base.deepcopy(obj::Portfolio2)
                       typeof(obj.bl_bench_weights), typeof(obj.a_mtx_ineq),
                       typeof(obj.b_vec_ineq), typeof(obj.risk_budget),
                       typeof(obj.f_risk_budget), NetworkMethods2, typeof(obj.a_vec_cent),
-                      typeof(obj.b_cent), typeof(obj.mu_l), typeof(obj.sd_u),
-                      typeof(obj.mad_u), typeof(obj.ssd_u), typeof(obj.cvar_u),
-                      typeof(obj.rcvar_u), typeof(obj.evar_u), typeof(obj.rvar_u),
-                      typeof(obj.wr_u), typeof(obj.rg_u), typeof(obj.flpm_u),
-                      typeof(obj.slpm_u), typeof(obj.mdd_u), typeof(obj.add_u),
-                      typeof(obj.cdar_u), typeof(obj.uci_u), typeof(obj.edar_u),
-                      typeof(obj.rdar_u), typeof(obj.kurt_u), typeof(obj.skurt_u),
-                      typeof(obj.gmd_u), typeof(obj.tg_u), typeof(obj.rtg_u),
-                      typeof(obj.owa_u), typeof(obj.dvar_u), typeof(obj.skew_u),
-                      typeof(obj.sskew_u), typeof(obj.owa_p), typeof(obj.owa_w),
-                      typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt), typeof(obj.skurt),
-                      typeof(obj.L_2), typeof(obj.S_2), typeof(obj.skew), typeof(obj.V),
-                      typeof(obj.sskew), typeof(obj.SV), typeof(obj.f_mu),
-                      typeof(obj.f_cov), typeof(obj.fm_returns), typeof(obj.fm_mu),
-                      typeof(obj.fm_cov), typeof(obj.bl_mu), typeof(obj.bl_cov),
-                      typeof(obj.blfm_mu), typeof(obj.blfm_cov), typeof(obj.cov_l),
-                      typeof(obj.cov_u), typeof(obj.cov_mu), typeof(obj.cov_sigma),
-                      typeof(obj.d_mu), typeof(obj.k_mu), typeof(obj.k_sigma),
-                      typeof(obj.optimal), typeof(obj.z), typeof(obj.limits),
-                      typeof(obj.frontier), Union{<:AbstractDict, NamedTuple},
-                      Union{<:AbstractDict, NamedTuple}, typeof(obj.fail),
-                      typeof(obj.model), typeof(obj.latest_prices),
+                      typeof(obj.b_cent), typeof(obj.mu_l),
+                      ######
+                      #   typeof(obj.sd_u), typeof(obj.mad_u), typeof(obj.ssd_u),
+                      #   typeof(obj.cvar_u), typeof(obj.rcvar_u), typeof(obj.evar_u),
+                      #   typeof(obj.rvar_u), typeof(obj.wr_u), typeof(obj.rg_u),
+                      #   typeof(obj.flpm_u), typeof(obj.slpm_u), typeof(obj.mdd_u),
+                      #   typeof(obj.add_u), typeof(obj.cdar_u), typeof(obj.uci_u),
+                      #   typeof(obj.edar_u), typeof(obj.rdar_u), typeof(obj.kurt_u),
+                      #   typeof(obj.skurt_u), typeof(obj.gmd_u), typeof(obj.tg_u),
+                      #   typeof(obj.rtg_u), typeof(obj.owa_u), typeof(obj.dvar_u),
+                      #   typeof(obj.skew_u), typeof(obj.sskew_u),
+                      ######
+                      typeof(obj.owa_p), typeof(obj.owa_w), typeof(obj.mu), typeof(obj.cov),
+                      typeof(obj.kurt), typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2),
+                      typeof(obj.skew), typeof(obj.V), typeof(obj.sskew), typeof(obj.SV),
+                      typeof(obj.f_mu), typeof(obj.f_cov), typeof(obj.fm_returns),
+                      typeof(obj.fm_mu), typeof(obj.fm_cov), typeof(obj.bl_mu),
+                      typeof(obj.bl_cov), typeof(obj.blfm_mu), typeof(obj.blfm_cov),
+                      typeof(obj.cov_l), typeof(obj.cov_u), typeof(obj.cov_mu),
+                      typeof(obj.cov_sigma), typeof(obj.d_mu), typeof(obj.k_mu),
+                      typeof(obj.k_sigma), typeof(obj.optimal), typeof(obj.z),
+                      typeof(obj.limits), typeof(obj.frontier),
+                      Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
+                      typeof(obj.fail), typeof(obj.model), typeof(obj.latest_prices),
                       typeof(obj.alloc_optimal), Union{<:AbstractDict, NamedTuple},
                       Union{<:AbstractDict, NamedTuple}, typeof(obj.alloc_fail),
                       typeof(obj.alloc_model)}(deepcopy(obj.assets),
@@ -1838,19 +1868,21 @@ function Base.deepcopy(obj::Portfolio2)
                                                deepcopy(obj.network_method),
                                                deepcopy(obj.a_vec_cent),
                                                deepcopy(obj.b_cent), deepcopy(obj.mu_l),
-                                               deepcopy(obj.sd_u), deepcopy(obj.mad_u),
-                                               deepcopy(obj.ssd_u), deepcopy(obj.cvar_u),
-                                               deepcopy(obj.rcvar_u), deepcopy(obj.evar_u),
-                                               deepcopy(obj.rvar_u), deepcopy(obj.wr_u),
-                                               deepcopy(obj.rg_u), deepcopy(obj.flpm_u),
-                                               deepcopy(obj.slpm_u), deepcopy(obj.mdd_u),
-                                               deepcopy(obj.add_u), deepcopy(obj.cdar_u),
-                                               deepcopy(obj.uci_u), deepcopy(obj.edar_u),
-                                               deepcopy(obj.rdar_u), deepcopy(obj.kurt_u),
-                                               deepcopy(obj.skurt_u), deepcopy(obj.gmd_u),
-                                               deepcopy(obj.tg_u), deepcopy(obj.rtg_u),
-                                               deepcopy(obj.owa_u), deepcopy(obj.dvar_u),
-                                               deepcopy(obj.skew_u), deepcopy(obj.sskew_u),
+                                               #########
+                                               #    deepcopy(obj.sd_u), deepcopy(obj.mad_u),
+                                               #    deepcopy(obj.ssd_u), deepcopy(obj.cvar_u),
+                                               #    deepcopy(obj.rcvar_u), deepcopy(obj.evar_u),
+                                               #    deepcopy(obj.rvar_u), deepcopy(obj.wr_u),
+                                               #    deepcopy(obj.rg_u), deepcopy(obj.flpm_u),
+                                               #    deepcopy(obj.slpm_u), deepcopy(obj.mdd_u),
+                                               #    deepcopy(obj.add_u), deepcopy(obj.cdar_u),
+                                               #    deepcopy(obj.uci_u), deepcopy(obj.edar_u),
+                                               #    deepcopy(obj.rdar_u), deepcopy(obj.kurt_u),
+                                               #    deepcopy(obj.skurt_u), deepcopy(obj.gmd_u),
+                                               #    deepcopy(obj.tg_u), deepcopy(obj.rtg_u),
+                                               #    deepcopy(obj.owa_u), deepcopy(obj.dvar_u),
+                                               #    deepcopy(obj.skew_u), deepcopy(obj.sskew_u),
+                                               ##########
                                                deepcopy(obj.owa_p), deepcopy(obj.owa_w),
                                                deepcopy(obj.mu), deepcopy(obj.cov),
                                                deepcopy(obj.kurt), deepcopy(obj.skurt),

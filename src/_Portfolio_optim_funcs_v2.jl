@@ -420,8 +420,8 @@ function set_rm(port::Portfolio2, rm::MAD2, type::Union{Trad2, RP2}, obj::Object
             @variable(model, mad[1:T, 1:count] >= 0)
             @expression(model, mad_risk[1:count], zero(AffExpr))
         end
-        add_to_expression!(model[:mad_risk][idx], inv(T), sum(model[:mad][:, idx]))
-        @constraint(model, abs_dev * model[:w] .>= -model[:mad][:, idx])
+        add_to_expression!(model[:mad_risk][idx], inv(T), sum(view(model[:mad], :, idx)))
+        @constraint(model, abs_dev * model[:w] .>= -view(model[:mad], :, idx))
         _set_rm_risk_upper_bound(obj, type, model, model[:mad_risk][idx],
                                  0.5 * rm.settings.ub)
         _set_risk_expression(model, model[:mad_risk][idx], rm.settings.scale,
@@ -454,8 +454,9 @@ function set_rm(port::Portfolio2, rm::SSD2, type::Union{Trad2, RP2}, obj::Object
             @expression(model, sdev_risk[1:count], zero(AffExpr))
         end
         add_to_expression!(model[:sdev_risk][idx], inv(sqrt(T - 1)), model[:sdev][idx])
-        @constraint(model, abs_dev * model[:w] .>= -model[:ssd][idx])
-        @constraint(model, [model[:sdev][idx]; model[:ssd][idx]] ∈ SecondOrderCone())
+        @constraint(model, abs_dev * model[:w] .>= -view(model[:ssd], :, idx))
+        @constraint(model,
+                    [model[:sdev][idx]; view(model[:ssd], :, idx)] ∈ SecondOrderCone())
         _set_rm_risk_upper_bound(obj, type, model, model[:sdev_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:sdev_risk][idx], rm.settings.scale,
                              rm.settings.flag)
@@ -495,8 +496,8 @@ function set_rm(port::Portfolio2, rm::FLPM2, type::Union{Trad2, RP2},
             @variable(model, flpm[1:T, 1:count] .>= 0)
             @expression(model, flpm_risk[1:count], zero(AffExpr))
         end
-        add_to_expression!(model[:flpm_risk][idx], inv(T), sum(model[:flpm][idx]))
-        _lpm_risk(type, obj, model, model[:flpm][idx], rm.target)
+        add_to_expression!(model[:flpm_risk][idx], inv(T), sum(view(model[:flpm], :, idx)))
+        _lpm_risk(type, obj, model, view(model[:flpm], :, idx), rm.target)
         _set_rm_risk_upper_bound(obj, type, model, model[:flpm_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:flpm_risk][idx], rm.settings.scale,
                              rm.settings.flag)

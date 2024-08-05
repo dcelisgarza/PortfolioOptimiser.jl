@@ -8,7 +8,7 @@ end
     include("TradOptimisationVectorTests_v2.jl")
 end
 
-@safetestset "Trad optimisation" begin
+@safetestset "Trad optimisation v2" begin
     include("TradOptimisationTests_v2.jl")
 end
 
