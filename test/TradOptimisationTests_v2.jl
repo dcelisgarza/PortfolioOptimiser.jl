@@ -187,7 +187,6 @@ l = 2.0
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -1626,7 +1625,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -1858,7 +1856,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -2090,7 +2087,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -2322,7 +2318,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -2554,7 +2549,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -2787,7 +2781,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2 ||
           abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r2) < 1e-10
 
@@ -3023,7 +3016,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -3256,7 +3248,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -3486,7 +3477,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2 ||
           abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r2) < 1e-9
 
@@ -3720,7 +3710,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -3954,7 +3943,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2 ||
           abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r2) < 5e-9
 
@@ -4189,7 +4177,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2 ||
           abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r2) < 5e-8
 
@@ -4425,7 +4412,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -4658,7 +4644,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -4891,7 +4876,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -5125,7 +5109,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -5355,7 +5338,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -5585,7 +5567,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -5816,7 +5797,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3
@@ -6047,7 +6027,6 @@ end
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    calc_risk(portfolio; type = :Trad2, rm = rm)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2
 
     rm.settings.ub = r3

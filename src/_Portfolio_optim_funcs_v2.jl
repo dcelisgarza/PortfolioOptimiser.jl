@@ -420,8 +420,8 @@ function set_rm(port::Portfolio2, rm::MAD2, type::Union{Trad2, RP2}, obj::Object
             @variable(model, mad[1:T, 1:count] >= 0)
             @expression(model, mad_risk[1:count], zero(AffExpr))
         end
-        add_to_expression!(model[:mad_risk][idx], inv(T), sum(model[:mad][idx]))
-        @constraint(model, abs_dev * model[:w] .>= -model[:mad][idx])
+        add_to_expression!(model[:mad_risk][idx], inv(T), sum(model[:mad][:, idx]))
+        @constraint(model, abs_dev * model[:w] .>= -model[:mad][:, idx])
         _set_rm_risk_upper_bound(obj, type, model, model[:mad_risk][idx],
                                  0.5 * rm.settings.ub)
         _set_risk_expression(model, model[:mad_risk][idx], rm.settings.scale,
