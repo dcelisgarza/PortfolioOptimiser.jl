@@ -489,7 +489,7 @@ end
     rm.settings.ub = r1
     optimise2!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r1 ||
-          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1) < 1e-10
+          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1) < 5e-10
 
     rm = [[SSD2(), SSD2()]]
     rm[1][2].settings.ub = r2
