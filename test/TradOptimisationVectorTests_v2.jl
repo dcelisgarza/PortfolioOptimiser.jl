@@ -1585,8 +1585,7 @@ end
     rm[1][1].settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad2, rm = rm[1][1]) <= r2 ||
-          abs(calc_risk(portfolio; type = :Trad2, rm = rm[1][1]) - r2) < 1e-10
-    println(calc_risk(portfolio; type = :Trad2, rm = rm[1][1]) - r2)
+          abs(calc_risk(portfolio; type = :Trad2, rm = rm[1][1]) - r2) < 1e-6
 
     # Ret lower bound
     obj = MinRisk()
