@@ -1656,8 +1656,6 @@ end
     @test isapprox(ret9, rett)
 end
 
-
-
 @testset "Add Skew and SSkew to SD" begin
     portfolio = Portfolio2(; prices = prices,
                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
