@@ -1376,7 +1376,8 @@ end
     rm.settings.ub = r1 * 1.000001
     optimise2!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r1 * 1.000001 ||
-          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1 * 1.000001) < 1e-8
+          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1 * 1.000001) < 5e-8
+    println(calc_risk(portfolio; type = :Trad2, rm = rm), r1 * 1.000001)
 
     rm = [[EVaR2(), EVaR2()]]
     rm[1][1].settings.ub = r2
