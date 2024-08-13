@@ -12,6 +12,10 @@ end
     include("TradOptimisationTests_v2.jl")
 end
 
+@safetestset "Plotting v2" begin
+    include("PlottingTests_v2.jl")
+end
+
 @safetestset "Risk measure tests V2" begin
     include("RiskMeasureTests_v2.jl")
 end
@@ -122,6 +126,6 @@ end
     include("PortfolioClassicRPTests.jl")
 end
 
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
+# @safetestset "Plotting" begin
+#     include("PlottingTests.jl")
+# end
