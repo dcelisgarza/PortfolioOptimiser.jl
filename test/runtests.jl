@@ -126,6 +126,6 @@ end
     include("PortfolioClassicRPTests.jl")
 end
 
-# @safetestset "Plotting" begin
-#     include("PlottingTests.jl")
-# end
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end

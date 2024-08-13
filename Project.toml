@@ -52,4 +52,6 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [targets]
-test = ["CSV", "Clarabel", "CovarianceEstimation", "HiGHS", "GLPK", "Logging", "OrderedCollections", "Pajarito", "SafeTestsets", "Test", "TimeSeries", "Makie"]
+test = ["CSV", "Clarabel", "CovarianceEstimation", "HiGHS", "GLPK", "Logging",
+        "OrderedCollections", "Pajarito", "SafeTestsets", "Test", "TimeSeries", "Makie",
+        "StatsPlots", "GraphRecipes"]
