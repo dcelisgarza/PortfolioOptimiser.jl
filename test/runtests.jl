@@ -66,10 +66,6 @@ end
     include("ConstraintTests.jl")
 end
 
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
 @safetestset "Efficient Frontier" begin
     include("PortfolioEfficientFrontierTests.jl")
 end
@@ -124,4 +120,8 @@ end
 
 @safetestset "Portfolio Classic RP Optimisation" begin
     include("PortfolioClassicRPTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
 end
