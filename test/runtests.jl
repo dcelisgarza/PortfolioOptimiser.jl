@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Plotting v2" begin
+    include("PlottingTests_v2.jl")
+end
+
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
 end
@@ -10,10 +14,6 @@ end
 
 @safetestset "Trad optimisation v2" begin
     include("TradOptimisationTests_v2.jl")
-end
-
-@safetestset "Plotting v2" begin
-    include("PlottingTests_v2.jl")
 end
 
 @safetestset "Risk measure tests V2" begin
