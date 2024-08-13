@@ -2,7 +2,7 @@ module PortfolioOptimiser
 using AverageShiftedHistograms, Clustering, DataFrames, Dates, Distances, Distributions,
       GLM, JuMP, LinearAlgebra, MultivariateStats, NearestCorrelationMatrix, Optim, Graphs,
       SimpleWeightedGraphs, PyCall, Random, SmartAsserts, SparseArrays, Statistics,
-      StatsBase, TimeSeries, DispatchDoctor
+      StatsBase, TimeSeries
 
 include("Constants.jl")
 include("Types.jl")

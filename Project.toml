@@ -8,7 +8,6 @@ AverageShiftedHistograms = "77b51b56-6f8f-5c3a-9cb4-d71f9594ea6e"
 Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-DispatchDoctor = "8d63f2c5-f18a-4cf2-ba9d-b3f60fc568c8"
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
@@ -51,4 +50,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [targets]
-test = ["CSV", "Clarabel", "CovarianceEstimation", "HiGHS", "GLPK", "Logging", "OrderedCollections", "Pajarito", "SafeTestsets", "Test", "TimeSeries", "GraphRecipes", "StatsPlots"]
+test = ["CSV", "Clarabel", "CovarianceEstimation", "HiGHS", "GLPK", "Logging", "OrderedCollections", "Pajarito", "SafeTestsets", "Test", "TimeSeries"]
