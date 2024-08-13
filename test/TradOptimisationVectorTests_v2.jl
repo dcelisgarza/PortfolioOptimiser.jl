@@ -1376,6 +1376,7 @@ end
     optimise2!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r1 ||
           abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1) < 1e-10
+    println(calc_risk(portfolio; type = :Trad2, rm = rm) - r1)
 
     rm = [[RCVaR2(), RCVaR2()]]
     rm[1][1].settings.ub = r2
