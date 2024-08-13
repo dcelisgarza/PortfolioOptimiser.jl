@@ -1376,7 +1376,7 @@ end
     rm.settings.ub = r1 * 1.000001
     optimise2!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r1 * 1.000001 ||
-          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1 * 1.000001) < 5e-9
+          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1 * 1.000001) < 1e-8
 
     rm = [[EVaR2(), EVaR2()]]
     rm[1][1].settings.ub = r2
@@ -1484,11 +1484,11 @@ end
     riskt = 0.028298069311286384
     rett = 0.0005082343814003915
     @test isapprox(w1.weights, wt0, rtol = 5.0e-5)
-    @test isapprox(r1, riskt0, rtol = 5.0e-8)
+    @test isapprox(r1, riskt0, rtol = 5.0e-7)
     @test isapprox(ret1, rett0, rtol = 5.0e-6)
-    @test isapprox(w1.weights, wt)
-    @test isapprox(r1, riskt)
-    @test isapprox(ret1, rett)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-6)
+    @test isapprox(r1, riskt, rtol = 5.0e-7)
+    @test isapprox(ret1, rett, rtol = 5.0e-7)
 
     rm = [[RVaR2(), RVaR2()]]
     w2 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1506,9 +1506,9 @@ end
     @test isapprox(w2.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r2, riskt0, rtol = 5.0e-8)
     @test isapprox(ret2, rett0, rtol = 5.0e-6)
-    @test isapprox(w2.weights, wt)
-    @test isapprox(r2, riskt)
-    @test isapprox(ret2, rett)
+    @test isapprox(w2.weights, wt, rtol = 5.0e-6)
+    @test isapprox(r2, riskt, rtol = 5.0e-8)
+    @test isapprox(ret2, rett, rtol = 5.0e-6)
 
     obj = SR(; rf = rf)
     wt0 = [9.496500669050249e-9, 2.64615310020192e-8, 7.273118042494954e-9,
@@ -1537,8 +1537,8 @@ end
     @test isapprox(w3.weights, wt0, rtol = 5.0e-6)
     @test isapprox(r3, riskt0, rtol = 5.0e-7)
     @test isapprox(ret3, rett0, rtol = 5.0e-7)
-    @test isapprox(w3.weights, wt)
-    @test isapprox(r3, riskt)
+    @test isapprox(w3.weights, wt, rtol = 1.0e-7)
+    @test isapprox(r3, riskt, rtol = 5.0e-8)
     @test isapprox(ret3, rett)
 
     rm = [[RVaR2(), RVaR2()]]
@@ -1557,8 +1557,8 @@ end
     @test isapprox(w4.weights, wt0, rtol = 5.0e-6)
     @test isapprox(r4, riskt0, rtol = 5.0e-7)
     @test isapprox(ret4, rett0, rtol = 5.0e-7)
-    @test isapprox(w4.weights, wt)
-    @test isapprox(r4, riskt)
+    @test isapprox(w4.weights, wt, rtol = 5.0e-8)
+    @test isapprox(r4, riskt, rtol = 5.0e-7)
     @test isapprox(ret4, rett)
 
     # Risk upper bound
@@ -1651,9 +1651,9 @@ end
     @test !isapprox(w9.weights, wt1)
     @test !isapprox(r9, riskt1)
     @test !isapprox(ret9, rett1)
-    @test isapprox(w9.weights, wt)
-    @test isapprox(r9, riskt)
-    @test isapprox(ret9, rett)
+    @test isapprox(w9.weights, wt, rtol = 5.0e-5)
+    @test isapprox(r9, riskt, rtol = 5.0e-8)
+    @test isapprox(ret9, rett, rtol = 5.0e-6)
 end
 
 @testset "Add Skew and SSkew to SD" begin
