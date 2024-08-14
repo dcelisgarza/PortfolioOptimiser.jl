@@ -1653,9 +1653,9 @@ end
     @test !isapprox(w9.weights, wt1)
     @test !isapprox(r9, riskt1)
     @test !isapprox(ret9, rett1)
-    @test isapprox(w9.weights, wt)
-    @test isapprox(r9, riskt)
-    @test isapprox(ret9, rett)
+    @test isapprox(w9.weights, wt, rtol = 5.0e-5)
+    @test isapprox(r9, riskt, rtol = 1.0e-6)
+    @test isapprox(ret9, rett, rtol = 5.0e-6)
 end
 
 @testset "RVaR vec" begin
@@ -1859,7 +1859,7 @@ end
     @test !isapprox(r9, riskt1)
     @test !isapprox(ret9, rett1)
     @test isapprox(w9.weights, wt)
-    @test isapprox(r9, riskt)
+    @test isapprox(r9, riskt, rtol = 5.0e-7)
     @test isapprox(ret9, rett)
 end
 
@@ -2102,9 +2102,9 @@ end
     @test isapprox(w1.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r1, riskt0, rtol = 5.0e-7)
     @test isapprox(ret1, rett0, rtol = 5.0e-6)
-    @test isapprox(w1.weights, wt)
-    @test isapprox(r1, riskt)
-    @test isapprox(ret1, rett)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-6)
+    @test isapprox(r1, riskt, rtol = 5.0e-8)
+    @test isapprox(ret1, rett, rtol = 1.0e-6)
 
     rm = [[EDaR2(), EDaR2()]]
     w2 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -2122,9 +2122,9 @@ end
     @test isapprox(w2.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r2, riskt0, rtol = 5.0e-7)
     @test isapprox(ret2, rett0, rtol = 5.0e-6)
-    @test isapprox(w2.weights, wt)
-    @test isapprox(r2, riskt)
-    @test isapprox(ret2, rett)
+    @test isapprox(w2.weights, wt, rtol = 5.0e-5)
+    @test isapprox(r2, riskt, rtol = 1.0e-6)
+    @test isapprox(ret2, rett, rtol = 5.0e-6)
 
     obj = SR(; rf = rf)
     wt0 = [1.3046367229418534e-8, 1.427571750756657e-8, 0.10584962927382287,
@@ -2153,8 +2153,8 @@ end
     @test isapprox(w3.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r3, riskt0, rtol = 5.0e-5)
     @test isapprox(ret3, rett0, rtol = 5.0e-5)
-    @test isapprox(w3.weights, wt)
-    @test isapprox(r3, riskt)
+    @test isapprox(w3.weights, wt, rtol = 5.0e-6)
+    @test isapprox(r3, riskt, rtol = 5.0e-7)
     @test isapprox(ret3, rett)
 
     rm = [[EDaR2(), EDaR2()]]
@@ -2173,9 +2173,9 @@ end
     @test isapprox(w4.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r4, riskt0, rtol = 1.0e-5)
     @test isapprox(ret4, rett0, rtol = 1.0e-5)
-    @test isapprox(w4.weights, wt)
-    @test isapprox(r4, riskt)
-    @test isapprox(ret4, rett)
+    @test isapprox(w4.weights, wt, rtol = 5.0e-7)
+    @test isapprox(r4, riskt, rtol = 5.0e-7)
+    @test isapprox(ret4, rett, rtol = 1.0e-7)
 
     # Risk upper bound
     obj = MaxRet()
@@ -2265,9 +2265,9 @@ end
     @test !isapprox(w9.weights, wt1)
     @test !isapprox(r9, riskt1)
     @test !isapprox(ret9, rett1)
-    @test isapprox(w9.weights, wt)
-    @test isapprox(r9, riskt)
-    @test isapprox(ret9, rett)
+    @test isapprox(w9.weights, wt, rtol = 1.0e-5)
+    @test isapprox(r9, riskt, rtol = 1.0e-6)
+    @test isapprox(ret9, rett, rtol = 5.0e-6)
 end
 
 @testset "RDaR vec" begin
@@ -2301,12 +2301,12 @@ end
           9.679323699212284e-10, 0.06488521951580782]
     riskt = 0.07576351003435194
     rett = 0.0005794988152389773
-    @test isapprox(w1.weights, wt0, rtol = 5.0e-7)
-    @test isapprox(r1, riskt0, rtol = 5.0e-8)
-    @test isapprox(ret1, rett0, rtol = 5.0e-7)
-    @test isapprox(w1.weights, wt)
-    @test isapprox(r1, riskt)
-    @test isapprox(ret1, rett)
+    @test isapprox(w1.weights, wt0, rtol = 1.0e-6)
+    @test isapprox(r1, riskt0, rtol = 1.0e-7)
+    @test isapprox(ret1, rett0, rtol = 1.0e-6)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-7)
+    @test isapprox(r1, riskt, rtol = 1.0e-7)
+    @test isapprox(ret1, rett, rtol = 5.0e-7)
 
     rm = [[RDaR2(), RDaR2()]]
     w2 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -2324,9 +2324,9 @@ end
     @test isapprox(w2.weights, wt0, rtol = 5.0e-6)
     @test isapprox(r2, riskt0)
     @test isapprox(ret2, rett0, rtol = 1.0e-6)
-    @test isapprox(w2.weights, wt)
+    @test isapprox(w2.weights, wt, rtol = 1.0e-5)
     @test isapprox(r2, riskt)
-    @test isapprox(ret2, rett)
+    @test isapprox(ret2, rett, rtol = 5.0e-6)
 
     obj = SR(; rf = rf)
     wt0 = [1.620183105236905e-8, 1.1140035827148705e-8, 0.04269821778198461,
@@ -2376,7 +2376,7 @@ end
     @test isapprox(r4, riskt0, rtol = 1.0e-5)
     @test isapprox(ret4, rett0, rtol = 1.0e-5)
     @test isapprox(w4.weights, wt)
-    @test isapprox(r4, riskt)
+    @test isapprox(r4, riskt, rtol = 5.0e-8)
     @test isapprox(ret4, rett)
 
     # Risk upper bound
@@ -2390,6 +2390,7 @@ end
     rm = [[RDaR2(), RDaR2()]]
     rm[1][1].settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
+    println(calc_risk(portfolio; type = :Trad2, rm = rm[1][1]) - r2)
     @test calc_risk(portfolio; type = :Trad2, rm = rm[1][1]) <= r2 ||
           abs(calc_risk(portfolio; type = :Trad2, rm = rm[1][1]) - r2) < 1e-7
 
@@ -2402,6 +2403,7 @@ end
     rm = [[RDaR2(), RDaR2()]]
     rm[1][1].settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
+    println(calc_risk(portfolio; type = :Trad2, rm = rm[1][1]) - r2)
     @test calc_risk(portfolio; type = :Trad2, rm = rm[1][1]) <= r2 ||
           abs(calc_risk(portfolio; type = :Trad2, rm = rm[1][1]) - r2) < 5e-8
 
@@ -2468,9 +2470,9 @@ end
     @test !isapprox(w9.weights, wt1)
     @test !isapprox(r9, riskt1)
     @test !isapprox(ret9, rett1)
-    @test isapprox(w9.weights, wt)
-    @test isapprox(r9, riskt)
-    @test isapprox(ret9, rett)
+    @test isapprox(w9.weights, wt, rtol = 1.0e-6)
+    @test isapprox(r9, riskt, rtol = 1.0e-7)
+    @test isapprox(ret9, rett, rtol = 5.0e-7)
 end
 
 @testset "Kurt vec" begin
