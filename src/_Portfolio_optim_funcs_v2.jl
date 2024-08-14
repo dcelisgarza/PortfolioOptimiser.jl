@@ -281,7 +281,6 @@ function _centrality_constraints(::SR, model, A, B)
 end
 function _centrality_constraints(::Any, model, A, B)
     @constraint(model, dot(A, model[:w]) - B == 0)
-
     return nothing
 end
 function centrality_constraints(port, obj)
@@ -877,7 +876,6 @@ function set_rm(port::Portfolio2, rm::EDaR2, type::Union{Trad2, RP2},
         _set_risk_expression(model, model[:edar_risk][idx], rm.settings.scale,
                              rm.settings.flag)
     end
-
     return nothing
 end
 function set_rm(port::Portfolio2, rm::RDaR2, type::Union{Trad2, RP2},
@@ -2236,17 +2234,19 @@ function _optimise!(type::RP2, port::Portfolio2,
     objective_function(port, MinRisk(), RP2(), class, nothing)
     return convex_optimisation(port, nothing, RP2(), class)
 end
-function _rrp_ver_constraints(::NoRRP, model, G)
+function _rrp_ver_constraints(::NoRRP, model, sigma)
+    G = sqrt(sigma)
     @constraint(model, [model[:psi]; G * model[:w]] ∈ SecondOrderCone())
     return nothing
 end
-function _rrp_ver_constraints(::RegRRP, model, G)
+function _rrp_ver_constraints(::RegRRP, model, sigma)
+    G = sqrt(sigma)
     @variable(model, rho)
     @constraint(model, [2 * model[:psi]; 2 * G * model[:w]; -2 * rho] ∈ SecondOrderCone())
     @constraint(model, [rho; G * model[:w]] ∈ SecondOrderCone())
     return nothing
 end
-function _rrp_ver_constraints(version::RegPenRRP, model, G)
+function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
     @variable(model, rho)
     @constraint(model, [2 * model[:psi]; 2 * G * model[:w]; -2 * rho] ∈ SecondOrderCone())
     theta = Diagonal(sqrt.(diag(sigma)))
@@ -2268,8 +2268,7 @@ function _rrp_constraints(type::RRP2, port, sigma)
                 [model[:w][i] + zeta[i]
                  2 * gamma * sqrt(port.risk_budget[i])
                  model[:w][i] - zeta[i]] ∈ SecondOrderCone())
-    _rrp_ver_constraints(type.version, model, sqrt(sigma))
-
+    _rrp_ver_constraints(type.version, model, sigma)
     return nothing
 end
 function rrp_constraints(type::RRP2, port, sigma)
