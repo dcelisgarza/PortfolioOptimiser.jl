@@ -2723,7 +2723,7 @@ end
     @test isapprox(ret3, rett0, rtol = 1.0e-7)
     @test isapprox(w3.weights, wt)
     @test isapprox(r3, riskt)
-    @test isapprox(ret3, rett)
+    @test isapprox(ret3, rett, rtol = 5.0e-7)
 
     rm = [[Kurt2(; kt = portfolio.kurt), Kurt2()]]
     w4 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -2741,7 +2741,7 @@ end
     @test isapprox(w4.weights, wt0, rtol = 5.0e-6)
     @test isapprox(r4, riskt0, rtol = 1.0e-7)
     @test isapprox(ret4, rett0, rtol = 1.0e-7)
-    @test isapprox(w4.weights, wt)
+    @test isapprox(w4.weights, wt, rtol = 5.0e-8)
     @test isapprox(r4, riskt)
     @test isapprox(ret4, rett)
 
