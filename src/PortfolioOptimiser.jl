@@ -23,5 +23,6 @@ include("Statistics_v2.jl")
 include("HClustering.jl")
 include("NetworkConstraints.jl")
 include("PortfolioRisk.jl")
+include("MakieExtensionDefinitions.jl")
 
 end

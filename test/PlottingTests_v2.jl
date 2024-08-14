@@ -13,5 +13,6 @@ rm = SD2()
 obj = MinRisk()
 w1 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
 
-plot_returns2(portfolio; per_asset = true)
+pr = plot_returns2(portfolio; per_asset = true)
+pb = plot_bar2(portfolio)
 # end

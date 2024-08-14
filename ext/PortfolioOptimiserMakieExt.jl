@@ -2,6 +2,7 @@ module PortfolioOptimiserMakieExt
 using PortfolioOptimiser, Makie, SmartAsserts, Statistics, MultivariateStats, Distributions,
       Clustering, Graphs, SimpleWeightedGraphs, LinearAlgebra
 
+import PortfolioOptimiser: AbstractPortfolio2
 const PO = PortfolioOptimiser
 
 """
@@ -9,8 +10,7 @@ const PO = PortfolioOptimiser
 plot_returns(timestamps, assets, returns, weights; per_asset = false, kwargs...)
 ```
 """
-function PO.plot_returns2(timestamps, assets, returns, weights; per_asset = false,
-                          kwargs...)
+function PO.plot_returns2(timestamps, assets, returns, weights; per_asset = false)
     f = Figure()
     if per_asset
         ax = Axis(f[1, 1]; xlabel = "Date", ylabel = "Asset Cummulative Returns")
@@ -31,16 +31,26 @@ function PO.plot_returns2(timestamps, assets, returns, weights; per_asset = fals
         popfirst!(ret)
         lines!(ax, timestamps, ret; label = "Portfolio")
     end
-
     axislegend(; position = :lt, merge = true)
-
     return f
 end
-function PO.plot_returns2(portfolio, type = isa(portfolio, HCPortfolio2) ? :HRP2 : :Trad2;
-                          per_asset = false, kwargs...)
+function PO.plot_returns2(portfolio::AbstractPortfolio2,
+                          type = isa(portfolio, HCPortfolio2) ? :HRP2 : :Trad2;
+                          per_asset = false)
     return PO.plot_returns2(portfolio.timestamps, portfolio.assets, portfolio.returns,
-                            portfolio.optimal[type].weights; per_asset = per_asset,
-                            kwargs...)
+                            portfolio.optimal[type].weights; per_asset = per_asset)
+end
+
+function PO.plot_bar2(assets, weights)
+    f = Figure()
+    ax = Axis(f[1, 1]; xticks = (1:length(assets), assets),
+              ylabel = "Portfolio Composition, %", xticklabelrotation = pi / 2)
+    barplot!(ax, weights * 100)
+    return f
+end
+function PO.plot_bar2(portfolio::AbstractPortfolio2,
+                      type = isa(portfolio, HCPortfolio) ? :HRP2 : :Trad2, kwargs...)
+    return PO.plot_bar2(portfolio.assets, portfolio.optimal[type].weights, kwargs...)
 end
 
 end
