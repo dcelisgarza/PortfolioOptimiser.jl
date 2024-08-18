@@ -1,108 +1,182 @@
-#=
 """
 ```julia
-Variance(w::AbstractVector, Σ::AbstractMatrix)
-```Compute the Variance. Square of [`SD`](@ref).```math
-\\mathrm{Variance}(\\bm{w},\\, \\mathbf{\\Sigma}) = \\bm{w}^\\intercal \\, \\mathbf{\\Sigma}\\, \\bm{w}\\,.
-```# Inputs  - `w`: vector of asset weights.
+_Variance(w::AbstractVector, Σ::AbstractMatrix)
+```
+
+Compute the _Variance. Square of [`_SD`](@ref).
+
+```math
+\\mathrm{_Variance}(\\bm{w},\\, \\mathbf{\\Sigma}) = \\bm{w}^\\intercal \\, \\mathbf{\\Sigma}\\, \\bm{w}\\,.
+```
+
+# Inputs
+
+  - `w`: vector of asset weights.
   - `Σ`: covariance matrix of asset returns.
 """
-function Variance(w::AbstractVector, cov::AbstractMatrix)
+function _Variance(w::AbstractVector, cov::AbstractMatrix)
     return dot(w, cov, w)
-end"""
+end
+
+"""
 ```julia
-SD(w::AbstractVector, Σ::AbstractMatrix)
-```Compute the Standard Deviation. Square root of [`Variance`](@ref).```math
-\\mathrm{SD}(\\bm{w},\\, \\mathbf{\\Sigma}) = \\left[\\bm{w}^\\intercal \\, \\mathbf{\\Sigma} \\, \\bm{w}\\right]^{1/2}\\,.
-```# Inputs  - `w`: vector of asset weights.
+_SD(w::AbstractVector, Σ::AbstractMatrix)
+```
+
+Compute the Standard Deviation. Square root of [`_Variance`](@ref).
+
+```math
+\\mathrm{_SD}(\\bm{w},\\, \\mathbf{\\Sigma}) = \\left[\\bm{w}^\\intercal \\, \\mathbf{\\Sigma} \\, \\bm{w}\\right]^{1/2}\\,.
+```
+
+# Inputs
+
+  - `w`: vector of asset weights.
   - `Σ`: covariance matrix of asset returns.
 """
-function SD(w::AbstractVector, cov::AbstractMatrix)
-    return sqrt(Variance(w, cov))
-end"""
-```julia
-MAD(x::AbstractVector)
-```Compute the Mean Absolute Deviation.```math
-\\mathrm{MAD}(\\bm{x}) = \\dfrac{1}{T} \\sum\\limits_{t=1}^T \\left\\lvert x_t - \\mathbb{E}(\\bm{x}) \\right\\rvert\\,.
-```# Inputs  - `x`: vector of portfolio returns.
+function _SD(w::AbstractVector, cov::AbstractMatrix)
+    return sqrt(_Variance(w, cov))
+end
+
 """
-function MAD(x::AbstractVector)
-    mu = mean(x)
+```julia
+_MAD(x::AbstractVector)
+```
+
+Compute the Mean Absolute Deviation.
+
+```math
+\\mathrm{_MAD}(\\bm{x}) = \\dfrac{1}{T} \\sum\\limits_{t=1}^T \\left\\lvert x_t - \\mathbb{E}(\\bm{x}) \\right\\rvert\\,.
+```
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+"""
+function _MAD(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
+    mu = isnothing(w) ? mean(x) : mean(x, w)
     return mean(abs.(x .- mu))
 end
 """
 ```julia
-SSD(x::AbstractVector)
-```Compute the mean Semi-Standard Deviation.```math
-\\mathrm{SSD}(\\bm{x}) = \\left[\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(\\bm{x}_{t} - \\mathbb{E}(\\bm{x}),\\, 0\\right)^{2}\\right]^{1/2}\\,.
-```# Inputs  - `x`: vector of portfolio returns.
+_SSD(x::AbstractVector)
+```
+
+Compute the mean Semi-Standard Deviation.
+
+```math
+\\mathrm{_SSD}(\\bm{x}) = \\left[\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(\\bm{x}_{t} - \\mathbb{E}(\\bm{x}),\\, 0\\right)^{2}\\right]^{1/2}\\,.
+```
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
 """
-function SSD(x::AbstractVector)
+function _SSD(x::AbstractVector, target::Real = 0.0,
+              w::Union{AbstractWeights, Nothing} = nothing)
     T = length(x)
-    mu = mean(x)
+    mu = isnothing(w) ? mean(x) : mean(x, w)
     val = mu .- x
-    return sqrt(sum(val[val .>= 0] .^ 2) / (T - 1))
-end"""
+    return sqrt(sum(val[val .>= target] .^ 2) / (T - 1))
+end
+
+"""
 ```julia
-FLPM(x::AbstractVector; r::Real = 0.0)
-```Compute the First Lower Partial Moment (Omega ratio).```math
-\\mathrm{FLPM}(\\bm{x},\\, r) = \\dfrac{1}{T}  \\sum\\limits_{t=1}^{T}\\max\\left(r - \\bm{x}_{t},\\, 0\\right)\\,.
-```# Inputs  - `x`: vector of portfolio returns.
+_FLPM(x::AbstractVector; r::Real = 0.0)
+```
+
+Compute the First Lower Partial Moment (Omega ratio).
+
+```math
+\\mathrm{_FLPM}(\\bm{x},\\, r) = \\dfrac{1}{T}  \\sum\\limits_{t=1}^{T}\\max\\left(r - \\bm{x}_{t},\\, 0\\right)\\,.
+```
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
   - `r`: minimum return target.
 """
-function FLPM(x::AbstractVector, min_ret::Real = 0.0)
+function _FLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
-    val = min_ret .- x
-    return sum(val[val .>= 0]) / T
-end"""
+    val = target .- x
+    return sum(val[val .>= zero(target)]) / T
+end
+
+"""
 ```julia
-SLPM(x::AbstractVector; r::Real = 0.0)
-```Compute the Second Lower Partial Moment (Sortino Ratio).```math
-\\mathrm{SLPM}(\\bm{x},\\, r) = \\left[\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\max\\left(r - \\bm{x}_{t},\\, 0\\right)^{2}\\right]^{1/2}\\,```
+_SLPM(x::AbstractVector; r::Real = 0.0)
+```
+
+Compute the Second Lower Partial Moment (Sortino Ratio).
+
+```math
+\\mathrm{_SLPM}(\\bm{x},\\, r) = \\left[\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\max\\left(r - \\bm{x}_{t},\\, 0\\right)^{2}\\right]^{1/2}\\,```
 # Inputs
 - `x`: vector of portfolio returns.
 - `r`: minimum return target.
 ```
 """
-function SLPM(x::AbstractVector, min_ret::Real = 0.0)
+function _SLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
-    val = min_ret .- x
+    val = target .- x
     return sqrt(sum(val[val .>= 0] .^ 2) / (T - 1))
-end"""
-```julia
-WR(x::AbstractVector)
-```Compute the Worst Realisation or Worst Case Scenario.```math
-\\mathrm{WR}(\\bm{x}) = -\\min(\\bm{x})\\,.
-```# Inputs  - `x`: vector of portfolio returns.
+end
+
 """
-function WR(x::AbstractVector)
-    return -minimum(x)
-end"""
 ```julia
-VaR(x::AbstractVector; alpha::Real = 0.05)
-```Compute the Value at Risk, used in [`CVaR`](@ref).```math
-\\mathrm{VaR}(\\bm{x},\\, \\alpha) = -\\underset{t \\in (0,\\, T)}{\\inf} \\left\\{ x_{t} \\in \\mathbb{R} : F_{\\bm{x}}(x_{t}) > \\alpha \\right\\}\\,,```
+_WR(x::AbstractVector)
+```
+
+Compute the Worst Realisation or Worst Case Scenario.
+
+```math
+\\mathrm{_WR}(\\bm{x}) = -\\min(\\bm{x})\\,.
+```
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+"""
+function _WR(x::AbstractVector)
+    return -minimum(x)
+end
+
+"""
+```julia
+_VaR(x::AbstractVector; alpha::Real = 0.05)
+```
+
+Compute the Value at Risk, used in [`_CVaR`](@ref).
+
+```math
+\\mathrm{_VaR}(\\bm{x},\\, \\alpha) = -\\underset{t \\in (0,\\, T)}{\\inf} \\left\\{ x_{t} \\in \\mathbb{R} : F_{\\bm{x}}(x_{t}) > \\alpha \\right\\}\\,,```
 # Inputs
 - `x`: vector of portfolio returns.
 - `alpha`: significance level, alpha in (0, 1).
 ```
 """
-function VaR(x::AbstractVector, alpha::Real = 0.05)
+function _VaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
     idx = ceil(Int, alpha * length(x))
     return -x[idx]
-end"""
+end
+
+"""
 ```
-CVaR(x::AbstractVector, alpha::Real = 0.05)
-```Compute the Conditional Value at Risk.```math
-\\mathrm{CVaR}(\\bm{x},\\, \\alpha) = \\mathrm{VaR}(\\bm{x},\\, \\alpha) - \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\min\\left( x_t + \\mathrm{VaR}(\\bm{x},\\, \\alpha),\\, 0\\right)\\,,```
-where ``\\mathrm{VaR}(\\bm{x},\\, \\alpha)`` is the value at risk as defined in [`VaR`](@ref).
+_CVaR(x::AbstractVector, alpha::Real = 0.05)
+```
+
+Compute the Conditional Value at Risk.
+
+```math
+\\mathrm{_CVaR}(\\bm{x},\\, \\alpha) = \\mathrm{_VaR}(\\bm{x},\\, \\alpha) - \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\min\\left( x_t + \\mathrm{_VaR}(\\bm{x},\\, \\alpha),\\, 0\\right)\\,,```
+where ``\\mathrm{_VaR}(\\bm{x},\\, \\alpha)`` is the value at risk as defined in [`_VaR`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 - `alpha`: significance level, alpha in (0, 1).
 ```
 """
-function CVaR(x::AbstractVector, alpha::Real = 0.05)
+function _CVaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
     idx = ceil(Int, alpha * length(x))
     var = -x[idx]
@@ -111,12 +185,19 @@ function CVaR(x::AbstractVector, alpha::Real = 0.05)
         sum_var += x[i] + var
     end
     return var - sum_var / (alpha * length(x))
-endfunction _optimize_rm(model, solvers::AbstractDict)
+end
+
+#=
+function _optimize_rm(model, solvers::AbstractDict)
     term_status = termination_status(model)
-    solvers_tried = Dict()    for (key, val) ∈ solvers
+    solvers_tried = Dict()
+
+    for (key, val) ∈ solvers
         if haskey(val, :solver)
             set_optimizer(model, val[:solver])
-        end        if haskey(val, :params)
+        end
+
+        if haskey(val, :params)
             for (attribute, value) ∈ val[:params]
                 set_attribute(model, attribute, value)
             end
@@ -126,14 +207,24 @@ endfunction _optimize_rm(model, solvers::AbstractDict)
         catch jump_error
             push!(solvers_tried, key => Dict(:jump_error => jump_error))
             continue
-        end        term_status = termination_status(model)        if term_status ∈ ValidTermination
+        end
+
+        term_status = termination_status(model)
+
+        if term_status ∈ ValidTermination
             break
-        end        push!(solvers_tried,
+        end
+
+        push!(solvers_tried,
               key => Dict(:objective_val => objective_value(model),
                           :term_status => term_status,
                           :params => haskey(val, :params) ? val[:params] : missing))
-    end    return solvers_tried
-end"""
+    end
+
+    return solvers_tried
+end
+
+"""
 ```julia
 ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
 ```
@@ -148,7 +239,7 @@ where ``M_{\\bm{x}}\\left(z^{-1}\\right)`` is the moment generating function of 
 ```julia
 ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
 ```
-Compute the Entropic Risk Measure by minimising the function with respect to `z`. Used in [`EVaR`](@ref), [`EDaR_abs`](@ref) and [`EDaR_rel`](@ref).
+Compute the Entropic Risk Measure by minimising the function with respect to `z`. Used in [`_EVaR`](@ref), [`_EDaR`](@ref) and [`_EDaR_r`](@ref).
 ```math
 \\mathrm{ERM} = \\begin{cases}
 \\underset{z,\\, t,\\, u}{\\min} & t + z \\ln(\\dfrac{1}{\\alpha T})\\\\
@@ -159,7 +250,9 @@ where ``\\mathcal{K}_{\\exp}`` is the exponential cone.
 # Inputs
 - `x`: vector.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
-- `alpha`: significance level, alpha in (0, 1)."""
+- `alpha`: significance level, alpha in (0, 1).
+
+"""
 function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     val = mean(exp.(-x / z))
@@ -167,8 +260,12 @@ function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
     return val
 end
 function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
-    @smart_assert(zero(alpha) < alpha < one(alpha))    model = JuMP.Model()
-    set_string_names_on_creation(model, false)    T = length(x)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
+
+    model = JuMP.Model()
+    set_string_names_on_creation(model, false)
+
+    T = length(x)
     at = alpha * T
     @variable(model, t)
     @variable(model, z >= 0)
@@ -176,28 +273,42 @@ function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     @constraint(model, sum(u) <= z)
     @constraint(model, [i = 1:T], [-x[i] - t, z, u[i]] ∈ MOI.ExponentialCone())
     @expression(model, risk, t - z * log(at))
-    @objective(model, Min, risk)    solvers_tried = _optimize_rm(model, solvers)
-    term_status = termination_status(model)    if term_status ∉ ValidTermination
+    @objective(model, Min, risk)
+
+    solvers_tried = _optimize_rm(model, solvers)
+    term_status = termination_status(model)
+
+    if term_status ∉ ValidTermination
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.ERM))"
         @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         return NaN
-    end    obj_val = objective_value(model)    return obj_val
-end"""
+    end
+
+    obj_val = objective_value(model)
+
+    return obj_val
+end
+=#
+
+"""
 ```julia
-EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
+_EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
 ```
 Compute the Entropic Value at Risk.
 ```math
-\\mathrm{EVaR}(\\bm{x},\\alpha) = \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)\\right\\}\\,,```
+\\mathrm{_EVaR}(\\bm{x},\\alpha) = \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)\\right\\}\\,,```
 where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
 - `alpha`: significance level, alpha in (0, 1).
 """
-function EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
+function _EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     return ERM(x, solvers, alpha)
-end"""
+end
+
+#=
+"""
 ```julia
 RRM(
     x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    κ::Real = 0.3)
@@ -222,7 +333,11 @@ $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
              kappa::Real = 0.3)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    @smart_assert(zero(kappa) < kappa < one(kappa))    T = length(x)    at = alpha * T
+    @smart_assert(zero(kappa) < kappa < one(kappa))
+
+    T = length(x)
+
+    at = alpha * T
     invat = 1 / at
     ln_k = (invat^kappa - invat^(-kappa)) / (2 * kappa)
     invk2 = 1 / (2 * kappa)
@@ -230,8 +345,12 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
     omk = 1 - kappa
     invk = 1 / kappa
     invopk = 1 / opk
-    invomk = 1 / omk    model = JuMP.Model()
-    set_string_names_on_creation(model, false)    @variable(model, t)
+    invomk = 1 / omk
+
+    model = JuMP.Model()
+    set_string_names_on_creation(model, false)
+
+    @variable(model, t)
     @variable(model, z >= 0)
     @variable(model, omega[1:T])
     @variable(model, psi[1:T])
@@ -243,10 +362,16 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                 [omega[i] * invomk, theta[i] * invk, -z * invk2] ∈ MOI.PowerCone(omk))
     @constraint(model, -x .- t .+ epsilon .+ omega .<= 0)
     @expression(model, risk, t + ln_k * z + sum(psi .+ theta))
-    @objective(model, Min, risk)    solvers_tried = _optimize_rm(model, solvers)
-    term_status = termination_status(model)    if term_status ∉ ValidTermination
+    @objective(model, Min, risk)
+
+    solvers_tried = _optimize_rm(model, solvers)
+    term_status = termination_status(model)
+
+    if term_status ∉ ValidTermination
         model = JuMP.Model()
-        set_string_names_on_creation(model, false)        @variable(model, z[1:T])
+        set_string_names_on_creation(model, false)
+
+        @variable(model, z[1:T])
         @variable(model, nu[1:T])
         @variable(model, tau[1:T])
         @constraint(model, sum(z) == 1)
@@ -254,22 +379,31 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
         @constraint(model, [i = 1:T], [nu[i], 1, z[i]] ∈ MOI.PowerCone(invopk))
         @constraint(model, [i = 1:T], [z[i], 1, tau[i]] ∈ MOI.PowerCone(omk))
         @expression(model, risk, -transpose(z) * x)
-        @objective(model, Max, risk)        solvers_tried = _optimize_rm(model, solvers)
+        @objective(model, Max, risk)
+
+        solvers_tried = _optimize_rm(model, solvers)
         term_status = termination_status(model)
-    end    if term_status ∉ ValidTermination
+    end
+
+    if term_status ∉ ValidTermination
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.RRM))"
         @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         return NaN
-    end    obj_val = objective_value(model)    return obj_val
+    end
+
+    obj_val = objective_value(model)
+
+    return obj_val
 end
+=#
 """
 ```julia
-RVaR(
+_RVaR(
     x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    κ::Real = 0.3)
 ```
 Compute the Relativistic Value at Risk.
 ```math
-\\mathrm{RVaR}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa)\\,,```
+\\mathrm{_RVaR}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa)\\,,```
 where ``\\mathrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
@@ -277,21 +411,31 @@ $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 - `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
-function RVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
-              kappa::Real = 0.3)
+function _RVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
+               kappa::Real = 0.3)
     return RRM(x, solvers, alpha, kappa)
-end"""
+end
+
+"""
 ```julia
-DaR_abs(x::AbstractArray; alpha::Real = 0.05)
-```Compute the Drawdown at Risk of uncompounded cumulative returns.```math
+_DaR(x::AbstractArray; alpha::Real = 0.05)
+```
+
+Compute the Drawdown at Risk of uncompounded cumulative returns.
+
+```math
 \\begin{align*}
 \\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{a}}(\\bm{x},\\, j) \\in \\mathbb{R} : F_{\\mathrm{DD}}\\left(\\mathrm{DD_{a}}(\\bm{x},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
 \\mathrm{DD_{a}}(\\bm{x},\\, j) &= \\underset{t \\in (0,\\, j)}{\\max}\\left( \\sum\\limits_{i=0}^{t} x_{i} \\right) - \\sum\\limits_{i=0}^{j} x_{i}
 \\end{align*}\\,.
-```# Inputs  - `x`: vector of portfolio returns.
+```
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
   - `alpha`: significance level, alpha in (0, 1).
 """
-function DaR_abs(x::AbstractArray, alpha::Real = 0.05)
+function _DaR(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
     pushfirst!(x, 1)
     cs = cumsum(x)
@@ -307,17 +451,23 @@ function DaR_abs(x::AbstractArray, alpha::Real = 0.05)
     sort!(dd)
     idx = ceil(Int, alpha * T)
     return -dd[idx]
-end"""
+end
+
+"""
 ```julia
-MDD_abs(x::AbstractVector)
-```Compute the Maximum Drawdown of uncompounded cumulative returns.```math
+_MDD(x::AbstractVector)
+```
+
+Compute the Maximum Drawdown of uncompounded cumulative returns.
+
+```math
 \\mathrm{MDD_{a}}(\\bm{x}) = \\underset{j \\in (0,\\, T)}{\\max} \\mathrm{DD_{a}}(\\bm{x},\\, j)\\,,```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 ```
 """
-function MDD_abs(x::AbstractVector)
+function _MDD(x::AbstractVector)
     pushfirst!(x, 1)
     cs = cumsum(x)
     val = 0.0
@@ -330,18 +480,26 @@ function MDD_abs(x::AbstractVector)
         if dd > val
             val = dd
         end
-    end    return val
-end"""
+    end
+
+    return val
+end
+
+"""
 ```julia
-ADD_abs(x::AbstractVector)
-```Compute the Average Drawdown of uncompounded cumulative returns.```math
+_ADD(x::AbstractVector)
+```
+
+Compute the Average Drawdown of uncompounded cumulative returns.
+
+```math
 \\mathrm{ADD_{a}}(\\bm{x}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{x},\\, j)\\,,```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 ```
 """
-function ADD_abs(x::AbstractVector)
+function _ADD(x::AbstractVector)
     T = length(x)
     pushfirst!(x, 1)
     cs = cumsum(x)
@@ -355,19 +513,27 @@ function ADD_abs(x::AbstractVector)
         if dd > 0
             val += dd
         end
-    end    return val / T
-end"""
+    end
+
+    return val / T
+end
+
+"""
 ```julia
-CDaR_abs(x::AbstractVector; alpha::Real = 0.05)
-```Compute the Conditional Drawdown at Risk of uncompounded cumulative returns.```math
+_CDaR(x::AbstractVector; alpha::Real = 0.05)
+```
+
+Compute the Conditional Drawdown at Risk of uncompounded cumulative returns.
+
+```math
 \\mathrm{CDaR_{a}}(\\bm{x},\\, \\alpha) = \\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{a}}(\\bm{x},\\, j) - \\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha),\\, 0 \\right] \\,,```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref), and ``\\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref), and ``\\mathrm{DaR_{a}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 - `alpha`: significance level, alpha in (0, 1).
 ```
 """
-function CDaR_abs(x::AbstractVector, alpha::Real = 0.05)
+function _CDaR(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
     pushfirst!(x, 1)
     cs = cumsum(x)
@@ -388,17 +554,23 @@ function CDaR_abs(x::AbstractVector, alpha::Real = 0.05)
         sum_var += dd[i] + var
     end
     return var - sum_var / (alpha * T)
-end"""
+end
+
+"""
 ```julia
-UCI_abs(x::AbstractVector)
-```Compute the Ulcer Index of uncompounded cumulative returns.```math
+_UCI(x::AbstractVector)
+```
+
+Compute the Ulcer Index of uncompounded cumulative returns.
+
+```math
 \\mathrm{UCI_{a}}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{x},\\, j)^{2}\\right]^{1/2}\\,,```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 ```
 """
-function UCI_abs(x::AbstractVector)
+function _UCI(x::AbstractVector)
     T = length(x)
     pushfirst!(x, 1)
     cs = cumsum(x)
@@ -412,10 +584,14 @@ function UCI_abs(x::AbstractVector)
         if dd > 0
             val += dd^2
         end
-    end    return sqrt(val / T)
-end"""
+    end
+
+    return sqrt(val / T)
+end
+
+"""
 ```julia
-EDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
+_EDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
 ```
 Compute the Entropic Drawdown at Risk of uncompounded cumulative returns.
 ```math
@@ -423,13 +599,13 @@ Compute the Entropic Drawdown at Risk of uncompounded cumulative returns.
 \\mathrm{EDaR_{a}}(\\bm{x},\\alpha) &= \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\mathrm{DD_{a}}(\\bm{x}),\\, z, \\,\\alpha)\\right\\}\\\\
 \\mathrm{DD_{a}}(\\bm{x}) &= \\left\\{j \\in (0,\\, T) : \\mathrm{DD_{a}}(\\bm{x},\\, j) \\right\\}\\,,\\end{align*}
 ```
-where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` the drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` the drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
 - `alpha`: significance level, alpha in (0, 1).
 """
-function EDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
+function _EDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     pushfirst!(x, 1)
     cs = cumsum(x)
     peak = -Inf
@@ -442,23 +618,25 @@ function EDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     end
     popfirst!(dd)
     return ERM(dd, solvers, alpha)
-end"""
+end
+
+"""
 ```julia
-RDaR_abs(
+_RDaR(
     x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    kappa::Real = 0.3)
 ```
 Compute the Relativistic Drawdown at Risk of uncompounded cumulative returns.
 ```math
 \\mathrm{RDaR_{a}}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)\\,,```
-where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the relativistic risk measure as defined in [`RRM`](@ref), and ``\\mathrm{DD_{a}}(\\bm{x})`` the drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
+where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the relativistic risk measure as defined in [`RRM`](@ref), and ``\\mathrm{DD_{a}}(\\bm{x})`` the drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 - `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
-function RDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
-                  kappa::Real = 0.3)
+function _RDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
+               kappa::Real = 0.3)
     pushfirst!(x, 1)
     cs = cumsum(x)
     peak = -Inf
@@ -471,18 +649,28 @@ function RDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
     end
     popfirst!(dd)
     return RRM(dd, solvers, alpha, kappa)
-end"""
+end
+
+"""
 ```julia
-DaR_rel(x::AbstractArray; alpha::Real = 0.05)
-```Compute the Drawdown at Risk of compounded cumulative returns.```math
+_DaR_r(x::AbstractArray; alpha::Real = 0.05)
+```
+
+Compute the Drawdown at Risk of compounded cumulative returns.
+
+```math
 \\begin{align*}
 \\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{r}}(\\bm{x},\\, j) \\in \\mathbb{R} : F_{\\mathrm{DD}}\\left(\\mathrm{DD_{r}}(\\bm{x},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
 \\mathrm{DD_{r}}(\\bm{x},\\, j) &= \\underset{t \\in (0,\\, j)}{\\max}\\left( \\prod\\limits_{i=0}^{t} \\left(1+x_{i}\\right) \\right) - \\prod\\limits_{i=0}^{j} \\left(1+x_{i}\\right) 
 \\end{align*}\\,.
-```# Inputs  - `x`: vector of portfolio returns.
+```
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
   - `alpha`: significance level, alpha in (0, 1).
 """
-function DaR_rel(x::AbstractArray, alpha::Real = 0.05)
+function _DaR_r(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
@@ -498,17 +686,23 @@ function DaR_rel(x::AbstractArray, alpha::Real = 0.05)
     sort!(dd)
     idx = ceil(Int, alpha * T)
     return -dd[idx]
-end"""
+end
+
+"""
 ```julia
-MDD_rel(x::AbstractVector)
-```Compute the Maximum Drawdown of compounded cumulative returns.```math
+_MDD_r(x::AbstractVector)
+```
+
+Compute the Maximum Drawdown of compounded cumulative returns.
+
+```math
 \\mathrm{MDD_{r}}(\\bm{x}) = \\underset{j \\in (0,\\, T)}{\\max} \\mathrm{DD_{r}}(\\bm{x},\\, j)\\,,```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 ```
 """
-function MDD_rel(x::AbstractVector)
+function _MDD_r(x::AbstractVector)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     val = 0.0
@@ -521,18 +715,26 @@ function MDD_rel(x::AbstractVector)
         if dd > val
             val = dd
         end
-    end    return val
-end"""
+    end
+
+    return val
+end
+
+"""
 ```julia
-ADD_rel(x::AbstractVector)
-```Compute the Average Drawdown of compounded cumulative returns.```math
+_ADD_r(x::AbstractVector)
+```
+
+Compute the Average Drawdown of compounded cumulative returns.
+
+```math
 \\mathrm{ADD_{r}}(\\bm{r}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{x},\\, j)\\,,```
-where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{DD_{a}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 ```
 """
-function ADD_rel(x::AbstractVector)
+function _ADD_r(x::AbstractVector)
     T = length(x)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
@@ -546,19 +748,27 @@ function ADD_rel(x::AbstractVector)
         if dd > 0
             val += dd
         end
-    end    return val / T
-end"""
+    end
+
+    return val / T
+end
+
+"""
 ```julia
-CDaR_rel(x::AbstractVector; alpha::Real = 0.05)
-```Compute the Conditional Drawdown at Risk of compounded cumulative returns.```math
+_CDaR_r(x::AbstractVector; alpha::Real = 0.05)
+```
+
+Compute the Conditional Drawdown at Risk of compounded cumulative returns.
+
+```math
 \\mathrm{CDaR_{r}}(\\bm{x},\\, \\alpha) = \\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{r}}(\\bm{x},\\, j) - \\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha),\\, 0 \\right] \\,,```
-where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref), and ``\\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref), and ``\\mathrm{DaR_{r}}(\\bm{x},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 - `alpha`: significance level, alpha in (0, 1).
 ```
 """
-function CDaR_rel(x::AbstractVector, alpha::Real = 0.05)
+function _CDaR_r(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
@@ -579,17 +789,23 @@ function CDaR_rel(x::AbstractVector, alpha::Real = 0.05)
         sum_var += dd[i] + var
     end
     return var - sum_var / (alpha * T)
-end"""
+end
+
+"""
 ```julia
-UCI_rel(x::AbstractVector)
-```Compute the Ulcer Index of compounded cumulative returns.```math
+_UCI_r(x::AbstractVector)
+```
+
+Compute the Ulcer Index of compounded cumulative returns.
+
+```math
 \\mathrm{UCI_{r}}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{x},\\, j)^{2}\\right]^{1/2}\\,,```
-where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 ```
 """
-function UCI_rel(x::AbstractVector)
+function _UCI_r(x::AbstractVector)
     T = length(x)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
@@ -603,10 +819,14 @@ function UCI_rel(x::AbstractVector)
         if dd > 0
             val += dd^2
         end
-    end    return sqrt(val / T)
-end"""
+    end
+
+    return sqrt(val / T)
+end
+
+"""
 ```julia
-EDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
+_EDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
 ```
 Compute the Entropic Drawdown at Risk of compounded cumulative returns.
 ```math
@@ -614,14 +834,14 @@ Compute the Entropic Drawdown at Risk of compounded cumulative returns.
 \\mathrm{EDaR_{r}}(\\bm{x},\\alpha) &= \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\mathrm{DD_{r}}(\\bm{x}),\\, z, \\,\\alpha)\\right\\}\\\\
 \\mathrm{DD_{r}}(\\bm{x}) &= \\left\\{j \\in (0,\\, T) : \\mathrm{DD_{r}}(\\bm{x},\\, j) \\right\\}\\,,\\end{align*}
 ```
-where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` the drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{ERM}(\\bm{x},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{r}}(\\bm{x},\\, j)`` the drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.ExponentialCone`"))
 - `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
-function EDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
+function _EDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
@@ -634,23 +854,25 @@ function EDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     end
     popfirst!(dd)
     return ERM(dd, solvers, alpha)
-end"""
+end
+
+"""
 ```julia
-RDaR_rel(
+_RDaR_r(
     x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    kappa::Real = 0.3)
 ```
 Compute the Relativistic Drawdown at Risk of compounded cumulative returns.
 ```math
 \\mathrm{RDaR_{r}}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)\\,,```
-where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, and ``\\mathrm{DD_{r}}(\\bm{x})`` the drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
+where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, and ``\\mathrm{DD_{r}}(\\bm{x})`` the drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
 $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 - `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
-function RDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
-                  kappa::Real = 0.3)
+function _RDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
+                 kappa::Real = 0.3)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
@@ -663,117 +885,202 @@ function RDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
     end
     popfirst!(dd)
     return RRM(dd, solvers, alpha, kappa)
-end"""
+end
+
+"""
 ```julia
-Kurt(x::AbstractVector)
-```Compute the square root kurtosis.```math
-\\mathrm{Kurt}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\left( x_{t} - \\mathbb{E}(\\bm{x}) \\right)^{4} \\right]^{1/2}\\,.
-```# Inputs  - `x`: vector of portfolio returns.
+_Kurt(x::AbstractVector)
+```
+
+Compute the square root kurtosis.
+
+```math
+\\mathrm{_Kurt}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\left( x_{t} - \\mathbb{E}(\\bm{x}) \\right)^{4} \\right]^{1/2}\\,.
+```
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
 """
-function Kurt(x::AbstractVector)
+function _Kurt(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing;
+               scale::Bool = false)
     T = length(x)
-    mu = mean(x)
+    mu = isnothing(w) ? mean(x) : mean(x, w)
     val = x .- mu
-    return sqrt(sum(val .^ 4) / T)
-end"""
+    kurt = sqrt(sum(val .^ 4) / T)
+    return !scale ? kurt : kurt / 2
+end
+
+"""
 ```julia
-SKurt(x::AbstractVector)
-```Compute the square root semi-kurtosis.```math
-\\mathrm{SKurt}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\min\\left( x_{t} - \\mathbb{E}(\\bm{x}),\\, 0 \\right)^{4} \\right]^{1/2}\\,.
-```# Inputs  - `x`: vector of portfolio returns.
+_SKurt(x::AbstractVector)
+```
+
+Compute the square root semi-kurtosis.
+
+```math
+\\mathrm{_SKurt}(\\bm{x}) = \\left[\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\min\\left( x_{t} - \\mathbb{E}(\\bm{x}),\\, 0 \\right)^{4} \\right]^{1/2}\\,.
+```
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
 """
-function SKurt(x::AbstractVector)
+function _SKurt(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing;
+                scale::Bool = false)
     T = length(x)
-    mu = mean(x)
+    mu = isnothing(w) ? mean(x) : mean(x, w)
     val = x .- mu
-    return sqrt(sum(val[val .< 0] .^ 4) / T)
-end"""
+    skurt = sqrt(sum(val[val .< 0] .^ 4) / T)
+    return !scale ? skurt : skurt / 2
+end
+
+"""
 ```
-Skew(w::AbstractVector, V::AbstractArray)
+_Skew(w::AbstractVector, V::AbstractArray)
 ```
 """
-function Skew(w::AbstractVector, V::AbstractArray)
+function _Skew(w::AbstractVector, V::AbstractArray)
     return sqrt(dot(w, V, w))
-end"""
-```julia
-GMD(x::AbstractVector)
-```Compute the Gini Mean Difference.# Inputs  - `x`: vector of portfolio returns.
+end
+
 """
-function GMD(x::AbstractVector)
+```julia
+_GMD(x::AbstractVector)
+```
+
+Compute the Gini Mean Difference.
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+"""
+function _GMD(x::AbstractVector)
     T = length(x)
     w = owa_gmd(T)
     return dot(w, sort!(x))
-end"""
-```julia
-RG(x::AbstractVector)
-```Compute the Range.# Inputs  - `x`: vector of portfolio returns.
+end
+
 """
-function RG(x::AbstractVector)
+```julia
+_RG(x::AbstractVector)
+```
+
+Compute the Range.
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+"""
+function _RG(x::AbstractVector)
     T = length(x)
     w = owa_rg(T)
     return dot(w, sort!(x))
-end"""
-```julia
-RCVaR(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
-```Compute the CVaR Range.# Inputs  - `x`: vector of portfolio returns.
-  - `alpha`: significance level of CVaR losses, `alpha in (0, 1)`.
-  - `beta`: significance level of CVaR gains, `beta in (0, 1)`.
+end
+
 """
-function RCVaR(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
+```julia
+_RCVaR(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
+```
+
+Compute the _CVaR Range.
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+  - `alpha`: significance level of _CVaR losses, `alpha in (0, 1)`.
+  - `beta`: significance level of _CVaR gains, `beta in (0, 1)`.
+"""
+function _RCVaR(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
     T = length(x)
     w = owa_rcvar(T; alpha = alpha, beta = beta)
     return dot(w, sort!(x))
-end"""
+end
+
+"""
 ```julia
-TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100)
-```Compute the Tail Gini.# Inputs  - `x`: vector of portfolio returns.
-  - `alpha_i`: start value of the significance level of CVaR losses, `0 <alpha_i < alpha < 1`.
-  - `alpha`: end value of the significance level of CVaR losses, `alpha in (0, 1)`.
+_TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100)
+```
+
+Compute the Tail Gini.
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+  - `alpha_i`: start value of the significance level of _CVaR losses, `0 <alpha_i < alpha < 1`.
+  - `alpha`: end value of the significance level of _CVaR losses, `alpha in (0, 1)`.
   - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
 """
-function TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100)
+function _TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
+             a_sim::Int = 100)
     T = length(x)
     w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
     return dot(w, sort!(x))
-end"""
+end
+
+"""
 ```julia
-RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Real = 100,
-    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim)
-```Compute the Tail Gini Range.# Inputs  - `x`: vector of portfolio returns.
-  - `alpha_i`: start value of the significance level of CVaR losses, `0 <alpha_i < alpha < 1`.
-  - `alpha`: end value of the significance level of CVaR losses, `alpha in (0, 1)`.
+_RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Real = 100,
+     beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim)
+```
+
+Compute the Tail Gini Range.
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+  - `alpha_i`: start value of the significance level of _CVaR losses, `0 <alpha_i < alpha < 1`.
+  - `alpha`: end value of the significance level of _CVaR losses, `alpha in (0, 1)`.
   - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
-  - `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
-  - `beta`: end value of the significance level of CVaR gains, `beta in (0, 1)`.
+  - `beta_i`: start value of the significance level of _CVaR gains, `0 < beta_i < beta < 1`.
+  - `beta`: end value of the significance level of _CVaR gains, `beta in (0, 1)`.
   - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 """
-function RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
-             a_sim::Real = 100, beta_i::Real = alpha_i, beta::Real = alpha,
-             b_sim::Integer = a_sim)
+function _RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
+              a_sim::Real = 100, beta_i::Real = alpha_i, beta::Real = alpha,
+              b_sim::Integer = a_sim)
     T = length(x)
     w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                 beta = beta, b_sim = b_sim)
     return dot(w, sort!(x))
-end"""
+end
+
+"""
 ```julia
-OWA(x::AbstractVector, w::AbstractVector)
-```Compute the Ordered Weight Array risk measure.# Inputs  - `w`: vector of asset weights.
+_OWA(x::AbstractVector, w::AbstractVector)
+```
+
+Compute the Ordered Weight Array risk measure.
+
+# Inputs
+
+  - `w`: vector of asset weights.
   - `x`: vector of portfolio returns.
 """
-function OWA(x::AbstractVector, w::AbstractVector)
+function _OWA(x::AbstractVector, w::AbstractVector)
     return dot(w, sort!(x))
-end# function L_moment(x::AbstractVector, k = 2)
+end
+
+# function L_moment(x::AbstractVector, k = 2)
 #     T = length(x)
-#     w = owa_l_moment(T, k)#     return dot(w, sort!(x))
-# end# function L_Moment_CRM(
+#     w = owa_l_moment(T, k)
+
+#     return dot(w, sort!(x))
+# end
+
+# function L_Moment_CRM(
 #     x::AbstractVector;#     k = 2,#     method = :SD,#     g = 0.5,#     max_phi = 0.5,#     solvers = Dict(),# )
 #     T = length(x)
 #     w = owa_l_moment_crm(
-#         T;#         k = k,#         method = method,#         g = g,#         max_phi = max_phi,#         solvers = solvers,#     )#     return dot(w, sort!(x))
-# end"""
-DVar(x::AbstractVector)
+#         T;#         k = k,#         method = method,#         g = g,#         max_phi = max_phi,#         solvers = solvers,#     )
+
+#     return dot(w, sort!(x))
+# end
+
 """
-function DVar(x::AbstractVector)
+_DVar(x::AbstractVector)
+"""
+function _DVar(x::AbstractVector)
     T = length(x)
     invT = one(T) / T
     invT2 = invT^2
@@ -782,7 +1089,7 @@ function DVar(x::AbstractVector)
     d = vec(D)
     return invT2 * (dot(vec(d), vec(d)) + invT2 * dot(ovec, D, ovec)^2)
 end
-=#
+
 abstract type RiskMeasure end
 abstract type TradRiskMeasure <: RiskMeasure end
 abstract type HCRiskMeasure <: RiskMeasure end
@@ -810,7 +1117,7 @@ function Base.setproperty!(obj::SD2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(sd::SD2, w::AbstractVector; kwargs...)
-    return SD(w, sd.sigma)
+    return _SD(w, sd.sigma)
 end
 mutable struct Variance2{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
     sigma::T1
@@ -828,7 +1135,7 @@ function Base.setproperty!(obj::Variance2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(variance::Variance2, w::AbstractVector; kwargs...)
-    return Variance(w, variance.sigma)
+    return _Variance(w, variance.sigma)
 end
 @kwdef mutable struct MAD2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
@@ -836,7 +1143,7 @@ end
     mu::Union{<:AbstractVector, Nothing} = nothing
 end
 function calc_risk(mad::MAD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return MAD(X * w, mad.w)
+    return _MAD(X * w, mad.w)
 end
 @kwdef mutable struct SSD2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
@@ -845,27 +1152,27 @@ end
     mu::Union{<:AbstractVector, Nothing} = nothing
 end
 function calc_risk(ssd::SSD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return SSD(X * w, ssd.target, ssd.w)
+    return _SSD(X * w, ssd.target, ssd.w)
 end
 @kwdef mutable struct FLPM2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
     target::T1 = 0.0
 end
 function calc_risk(flpm::FLPM2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return FLPM(X * w, flpm.target)
+    return _FLPM(X * w, flpm.target)
 end
 @kwdef mutable struct SLPM2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
     target::T1 = 0.0
 end
 function calc_risk(slpm::SLPM2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return SLPM(X * w, slpm.target)
+    return _SLPM(X * w, slpm.target)
 end
 @kwdef struct WR2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 function calc_risk(::WR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return WR(X * w)
+    return _WR(X * w)
 end
 mutable struct VaR2{T1 <: Real} <: HCRiskMeasure
     alpha::T1
@@ -881,7 +1188,7 @@ function Base.setproperty!(obj::VaR2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(var::VaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return VaR(X * w, var.alpha)
+    return _VaR(X * w, var.alpha)
 end
 mutable struct CVaR2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -898,7 +1205,7 @@ function Base.setproperty!(obj::CVaR2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(cvar::CVaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return CVaR(X * w, cvar.alpha)
+    return _CVaR(X * w, cvar.alpha)
 end
 mutable struct EVaR2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -919,7 +1226,7 @@ end
 Base.Symbol(::EVaR2) = :EVaR
 Base.String(::EVaR2) = "EVaR"
 function calc_risk(evar::EVaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return EVaR(X * w, evar.solvers, evar.alpha)
+    return _EVaR(X * w, evar.solvers, evar.alpha)
 end
 mutable struct RVaR2{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -942,7 +1249,7 @@ end
 Base.Symbol(::RVaR2) = :RVaR
 Base.String(::RVaR2) = "RVaR"
 function calc_risk(rvar::RVaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return RVaR(X * w, rvar.solvers, rvar.alpha, rvar.kappa)
+    return _RVaR(X * w, rvar.solvers, rvar.alpha, rvar.kappa)
 end
 mutable struct DaR2{T1 <: Real} <: HCRiskMeasure
     alpha::T1
@@ -958,19 +1265,19 @@ function Base.setproperty!(obj::DaR2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(dar::DaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return DaR_abs(X * w, dar.alpha)
+    return _DaR(X * w, dar.alpha)
 end
 @kwdef struct MDD2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 function calc_risk(::MDD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return MDD_abs(X * w)
+    return _MDD(X * w)
 end
 @kwdef struct ADD2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 function calc_risk(::ADD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return ADD_abs(X * w)
+    return _ADD(X * w)
 end
 mutable struct CDaR2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -987,13 +1294,13 @@ function Base.setproperty!(obj::CDaR2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(cdar::CDaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return CDaR_abs(X * w, cdar.alpha)
+    return _CDaR(X * w, cdar.alpha)
 end
 @kwdef struct UCI2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 function calc_risk(::UCI2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return UCI_abs(X * w)
+    return _UCI(X * w)
 end
 mutable struct EDaR2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -1014,7 +1321,7 @@ end
 Base.Symbol(::EDaR2) = :EDaR
 Base.String(::EDaR2) = "EDaR"
 function calc_risk(edar::EDaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return EDaR_abs(X * w, edar.solvers, edar.alpha)
+    return _EDaR(X * w, edar.solvers, edar.alpha)
 end
 mutable struct RDaR2{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -1037,7 +1344,7 @@ end
 Base.Symbol(::RDaR2) = :RDaR
 Base.String(::RDaR2) = "RDaR"
 function calc_risk(rdar::RDaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return RDaR_abs(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
+    return _RDaR(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
 end
 mutable struct DaR_r2{T1 <: Real} <: HCRiskMeasure
     alpha::T1
@@ -1053,15 +1360,15 @@ function Base.setproperty!(obj::DaR_r2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(dar::DaR_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return DaR_rel(X * w, dar.alpha)
+    return _DaR_r(X * w, dar.alpha)
 end
 struct MDD_r2 <: HCRiskMeasure end
 function calc_risk(::MDD_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return MDD_rel(X * w)
+    return _MDD_r(X * w)
 end
 struct ADD_r2 <: HCRiskMeasure end
 function calc_risk(::ADD_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return ADD_rel(X * w)
+    return _ADD_r(X * w)
 end
 mutable struct CDaR_r2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -1079,11 +1386,11 @@ function Base.setproperty!(obj::CDaR_r2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(cdar::CDaR_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return CDaR_rel(X * w, cdar.alpha)
+    return _CDaR_r(X * w, cdar.alpha)
 end
 struct UCI_r2 <: HCRiskMeasure end
 function calc_risk(::UCI_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return UCI_rel(X * w)
+    return _UCI_r(X * w)
 end
 mutable struct EDaR_r2{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -1103,7 +1410,7 @@ function Base.setproperty!(obj::EDaR_r2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(edar::EDaR_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return EDaR_rel(X * w, edar.solvers, edar.alpha)
+    return _EDaR_r(X * w, edar.solvers, edar.alpha)
 end
 mutable struct RDaR_r2{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -1125,7 +1432,7 @@ function Base.setproperty!(obj::RDaR_r2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(rdar::RDaR_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return RDaR_rel(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
+    return _RDaR_r(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
 end
 @kwdef mutable struct Kurt2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
@@ -1133,7 +1440,7 @@ end
     kt::Union{<:AbstractMatrix, Nothing} = nothing
 end
 function calc_risk(kt::Kurt2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return Kurt(X * w, kt.w)
+    return _Kurt(X * w, kt.w)
 end
 @kwdef mutable struct SKurt2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
@@ -1141,7 +1448,7 @@ end
     kt::Union{<:AbstractMatrix, Nothing} = nothing
 end
 function calc_risk(skt::SKurt2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return SKurt(X * w, skt.w)
+    return _SKurt(X * w, skt.w)
 end
 @kwdef mutable struct OWASettings{T1}
     approx::Bool = true
@@ -1152,13 +1459,13 @@ end
     owa::OWASettings = OWASettings()
 end
 function calc_risk(::GMD2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return GMD(X * w)
+    return _GMD(X * w)
 end
 @kwdef struct RG2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 function calc_risk(::RG2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return RG(X * w)
+    return _RG(X * w)
 end
 mutable struct RCVaR2{T1, T2} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -1178,7 +1485,7 @@ function Base.setproperty!(obj::RCVaR2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(rcvar::RCVaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return RCVaR(X * w; alpha = rcvar.alpha, beta = rcvar.beta)
+    return _RCVaR(X * w; alpha = rcvar.alpha, beta = rcvar.beta)
 end
 mutable struct TG2{T1, T2, T3} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -1206,7 +1513,7 @@ function Base.setproperty!(obj::TG2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(tg::TG2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return TG(X * w; alpha_i = tg.alpha_i, alpha = tg.alpha, a_sim = tg.a_sim)
+    return _TG(X * w; alpha_i = tg.alpha_i, alpha = tg.alpha, a_sim = tg.a_sim)
 end
 mutable struct RTG2{T1, T2, T3, T4, T5, T6} <: TradRiskMeasure
     settings::RiskMeasureSettings
@@ -1246,8 +1553,8 @@ function Base.setproperty!(obj::RTG2, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function calc_risk(rtg::RTG2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return RTG(X * w; alpha_i = rtg.alpha_i, alpha = rtg.alpha, a_sim = rtg.a_sim,
-               beta_i = rtg.beta_i, beta = rtg.beta, b_sim = rtg.b_sim)
+    return _RTG(X * w; alpha_i = rtg.alpha_i, alpha = rtg.alpha, a_sim = rtg.a_sim,
+                beta_i = rtg.beta_i, beta = rtg.beta, b_sim = rtg.b_sim)
 end
 @kwdef mutable struct OWA2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
@@ -1255,31 +1562,73 @@ end
     w::Union{<:AbstractVector, Nothing} = nothing
 end
 function calc_risk(owa::OWA2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return OWA(X * w, isnothing(owa.w) ? owa_gmd(size(X, 1)) : owa.w)
+    return _OWA(X * w, isnothing(owa.w) ? owa_gmd(size(X, 1)) : owa.w)
 end
 @kwdef struct DVar2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 function calc_risk(::DVar2, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return DVar(X * w)
+    return _DVar(X * w)
 end
 @kwdef struct Skew2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 function calc_risk(::Skew2, w::AbstractVector; V::AbstractMatrix, kwargs...)
-    return Skew(w, V)
+    return _Skew(w, V)
 end
 @kwdef struct SSkew2 <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 function calc_risk(::SSkew2, w::AbstractVector; SV::AbstractMatrix, kwargs...)
-    return Skew(w, SV)
+    return _Skew(w, SV)
 end
 struct Equal2 <: HCRiskMeasure end
-function calc_risk(::Equal2, w::AbstractVector; kwargs...)
-    return 1 / length(w)
+function calc_risk(::Equal2, w::AbstractVector; delta::Real = 0, kwargs...)
+    return 1 / length(w) + delta
 end
+function calc_risk_bounds(rm::RiskMeasure, w1::AbstractVector, w2::AbstractVector;
+                          X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                          V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                          SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                          delta::Real = 1e-6, scale::Bool = false, kwargs...)
+    r1 = calc_risk(rm, w1; X = X, V = V, SV = SV, delta = delta, scale = scale, kwargs...)
+    r2 = calc_risk(rm, w2; X = X, V = V, SV = SV, delta = -delta, scale = scale, kwargs...)
+    return r1, r2
+end
+function calc_risk_contribution(rm::RiskMeasure, w::AbstractVector;
+                                X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                delta::Real = 1e-6, marginal::Bool = false, kwargs...)
+    N = length(w)
+    ew = eltype(w)
+    rc = Vector{ew}(undef, N)
+    w1 = Vector{ew}(undef, N)
+    w2 = Vector{ew}(undef, N)
+
+    for i ∈ eachindex(w)
+        w1 .= zero(ew)
+        w1 .= w
+        w1[i] += delta
+
+        w2 .= zero(ew)
+        w2 .= w
+        w2[i] -= delta
+
+        r1, r2 = calc_risk_bounds(rm, w1, w2; X = X, V = V, SV = SV, delta = delta,
+                                  scale = true, kwargs...)
+
+        rci = if !marginal
+            (r1 - r2) / (2 * delta) * w[i]
+        else
+            (r1 - r2) / (2 * delta)
+        end
+        rc[i] = rci
+    end
+    return rc
+end
+
 export SD2, Variance2, MAD2, SSD2, FLPM2, SLPM2, WR2, VaR2, CVaR2, EVaR2, RVaR2, DaR2, MDD2,
        ADD2, CDaR2, UCI2, EDaR2, RDaR2, DaR_r2, MDD_r2, ADD_r2, CDaR_r2, UCI_r2, EDaR_r2,
        RDaR_r2, Kurt2, SKurt2, GMD2, RG2, RCVaR2, TG2, RTG2, OWA2, DVar2, Skew2, SSkew2,
-       Equal2, RiskMeasureSettings, OWASettings
+       Equal2, RiskMeasureSettings, OWASettings, calc_risk_bounds, calc_risk_contribution
