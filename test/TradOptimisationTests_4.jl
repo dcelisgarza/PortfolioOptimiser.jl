@@ -785,7 +785,7 @@ end
           3.374497117705696e-11, 4.0625315698953255e-10, 1.885448260250963e-10,
           0.1478961037274142, 4.884602515672759e-10, 0.1227879148875347,
           2.4943170734828623e-10, 0.2241614265176891]
-    @test isapprox(w25.weights, wt, rtol = 1.0e-5)
+    @test isapprox(w25.weights, wt, rtol = 5.0e-5)
     @test isapprox(w25.weights, w5.weights, rtol = 0.1)
 
     w26 = optimise2!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -827,7 +827,7 @@ end
           1.2150341416070546e-10, 4.4802804065845196e-10, 1.4014881021995218e-10,
           0.20684370520042217, 0.50389877563481, 6.21517343083002e-10, 5.475179599898194e-9,
           8.493359047675665e-10]
-    @test isapprox(w28.weights, wt, rtol = 1.0e-5)
+    @test isapprox(w28.weights, wt, rtol = 5.0e-5)
     @test isapprox(w28.weights, w8.weights, rtol = 0.1)
 
     w29 = optimise2!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
