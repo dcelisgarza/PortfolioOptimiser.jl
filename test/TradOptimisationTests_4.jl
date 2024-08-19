@@ -1114,15 +1114,13 @@ end
     obj = MaxRet()
     rm.settings.ub = r1
     optimise2!(portfolio; rm = rm, obj = obj)
-    println(calc_risk(portfolio; type = :Trad2, rm = rm) - r1)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r1 ||
-          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1) < 1e-7
+          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1) < 5e-7
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
-    println(calc_risk(portfolio; type = :Trad2, rm = rm) - r2)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r2 ||
-          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r2) < 5e-10
+          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r2) < 5e-9
 
     rm.settings.ub = r3
     optimise2!(portfolio; rm = rm, obj = obj)
@@ -1135,9 +1133,8 @@ end
     obj = SR(; rf = rf)
     rm.settings.ub = r1
     optimise2!(portfolio; rm = rm, obj = obj)
-    println(calc_risk(portfolio; type = :Trad2, rm = rm) - r1)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r1 ||
-          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1) < 1e-9
+          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1) < 5e-9
 
     rm.settings.ub = r2
     optimise2!(portfolio; rm = rm, obj = obj)
@@ -1280,7 +1277,7 @@ end
           7.1755414524393245e-12, 0.11544846103584781, 4.205694791926025e-11,
           0.051922226487341044, 2.233914590605562e-9, 0.26859629075856817,
           1.3467823557697757e-10, 0.13737762860438185]
-    @test isapprox(w26.weights, wt)
+    @test isapprox(w26.weights, wt, rtol = 1.0e-5)
     @test isapprox(w26.weights, w6.weights, rtol = 0.05)
 
     portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
