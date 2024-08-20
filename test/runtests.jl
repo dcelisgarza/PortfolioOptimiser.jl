@@ -4,6 +4,10 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
+@safetestset "Efficient frontier v2" begin
+    include("EfficientFrontierTests_v2.jl")
+end
+
 @safetestset "Trad optimisation v2" begin
     include("TradOptimisationTests_v2.jl")
 end

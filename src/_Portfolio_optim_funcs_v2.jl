@@ -2310,140 +2310,174 @@ function optimise2!(port::Portfolio2; rm::Union{AbstractVector, <:TradRiskMeasur
 end
 export optimise2!
 
-"""
-```julia
-optimise!(portfolio::Portfolio2; class::Symbol = :Classic, hist::Integer = 1,
-          kelly::Symbol = :None, l::Real = 2.0, obj::Symbol = :Sharpe, rf::Real = 0.0,
-          rm::Symbol = :SD, rrp_penalty::Real = 1.0, rrp_ver::Symbol = :None,
-          save_opt_params::Bool = true, string_names::Bool = false, type::Symbol = :Trad,
-          u_cov::Symbol = :Box, u_mu::Symbol = :Box)
-```
-"""
-function optimise!(portfolio::Portfolio2, opt::OptimiseOpt = OptimiseOpt(;);
-                   string_names::Bool = false, save_opt_params::Bool = false)
-    type = opt.type
-    rm = opt.rm
-    obj = opt.obj
-    kelly = opt.kelly
-    class = opt.class
-    rrp_ver = opt.rrp_ver
-    u_cov = opt.u_cov
-    u_mu = opt.u_mu
-    sd_cone = opt.sd_cone
-    owa_approx = opt.owa_approx
-    near_opt = opt.near_opt
-    hist = opt.hist
-    rf = opt.rf
-    l = opt.l
-    rrp_penalty = opt.rrp_penalty
-    w_ini = opt.w_ini
-    w_min = opt.w_min
-    w_max = opt.w_max
-
-    @smart_assert(obj ∈ ObjFuncs)
-
-    if near_opt
-        w_min = opt.w_min
-        if !isempty(w_min)
-            @smart_assert(length(w_min) == size(portfolio.returns, 2))
-        end
-        w_max = opt.w_max
-        if !isempty(w_max)
-            @smart_assert(length(w_max) == size(portfolio.returns, 2))
-        end
-    end
-    _p_save_opt_params(portfolio, opt, string_names, save_opt_params)
-
-    mu, sigma, returns = _setup_model_class(portfolio, class, hist)
-    T, N = size(returns)
-    kurtosis = portfolio.kurt
-    skurtosis = portfolio.skurt
-    network_method = portfolio.network_method
-
-    portfolio.model = JuMP.Model()
-    model = portfolio.model
-    set_string_names_on_creation(model, string_names)
-    @variable(model, w[1:N])
-
-    if !isempty(w_ini)
-        @smart_assert(length(w_ini) == size(portfolio.returns, 2))
-        set_start_value.(w, w_ini)
-    end
-
-    if type == :Trad
-        _setup_sharpe_k(model, obj)
-        _risk_setup(portfolio, :Trad, rm, kelly, obj, rf, T, N, mu, returns, sigma,
-                    kurtosis, skurtosis, network_method, sd_cone, owa_approx)
-        _setup_trad_return(portfolio, class, kelly, obj, T, rf, returns, mu)
-        _setup_trad_wc_constraints(portfolio, obj, T, N, :Trad, class, kelly, l, returns)
-    elseif type == :RP
-        _rp_setup(portfolio, N, class)
-        _risk_setup(portfolio, :RP, rm, kelly, obj, rf, T, N, mu, returns, sigma, kurtosis,
-                    skurtosis, network_method, sd_cone, owa_approx)
-        _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
-    elseif type == :RRP
-        _setup_risk_budget(portfolio)
-        _mv_setup(portfolio, sigma, rm, kelly, obj, :RRP, network_method, sd_cone)
-        _rrp_setup(portfolio, sigma, N, rrp_ver, rrp_penalty)
-        _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
+function get_rm_string(rm::Union{AbstractVector, <:TradRiskMeasure})
+    rmstr = ""
+    if !isa(rm, AbstractVector)
+        rstr = string(rm)
+        rstr = rstr[1:(findfirst('{', rstr) - 1)]
+        rmstr *= rstr
     else
-        _setup_sharpe_k(model, obj)
-        _wc_setup(portfolio, kelly, obj, T, N, rf, mu, sigma, u_mu, u_cov, network_method,
-                  sd_cone)
-        _setup_trad_wc_constraints(portfolio, obj, T, N, :WC, class, kelly, l, returns)
+        for (i, r) ∈ enumerate(rm)
+            if !isa(r, AbstractVector)
+                rstr = string(r)
+                rstr = rstr[1:(findfirst('{', rstr) - 1)]
+                rmstr *= rstr
+            else
+                for (j, ri) ∈ enumerate(r)
+                    ristr = string(r)
+                    ristr = ristr[1:(findfirst('{', ristr) - 1)]
+                    rmstr *= ristr
+                    if j != length(r)
+                        rmstr *= '_'
+                    end
+                end
+            end
+            if i != length(rm)
+                rmstr *= '_'
+            end
+        end
     end
-
-    _setup_linear_constraints(portfolio, obj, type)
-
-    term_status, solvers_tried = _optimise_portfolio(portfolio, class, type, obj)
-    retval = _handle_errors_and_finalise(portfolio, class, term_status, returns, N,
-                                         solvers_tried, type, rm, obj)
-
-    if near_opt && type ∈ (:Trad, :WC)
-        retval = _near_optimal_centering(portfolio, class, mu, returns, sigma, retval, T, N,
-                                         opt)
-    end
-
-    return retval
+    return rmstr
 end
 
-"""
-```julia
-frontier_limits!(portfolio::Portfolio2; class::Symbol = :Classic, hist::Integer = 1,
-                 kelly::Symbol = :None, rf::Real = 0.0, rm::Symbol = :SD,
-                 save_model::Bool = false)
-```
-"""
-function frontier_limits!(portfolio::Portfolio2, opt::OptimiseOpt = OptimiseOpt(;);
+function frontier_limits!(port::Portfolio2;
+                          rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
+                          kelly::RetType = NoKelly(), class::PortClass = Classic2(),
+                          w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
+                          w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
                           save_model::Bool = false)
-    obj1 = opt.obj
-    near_opt1 = opt.near_opt
-    opt.near_opt = false
-    optimal1 = deepcopy(portfolio.optimal)
-    fail1 = deepcopy(portfolio.fail)
+    optimal1 = deepcopy(port.optimal)
+    fail1 = deepcopy(port.fail)
     if save_model
-        model1 = copy(portfolio.model)
+        model1 = copy(port.model)
     end
 
-    opt.obj = :Min_Risk
-    w_min = optimise!(portfolio, opt)
-
-    opt.obj = :Max_Ret
-    w_max = optimise!(portfolio, opt)
+    w_min = optimise2!(port; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
+                       w_ini = w_min_ini)
+    w_max = optimise2!(port; rm = rm, obj = MaxRet(), kelly = kelly, class = class,
+                       w_ini = w_max_ini)
 
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
-    portfolio.limits[opt.rm] = limits
 
-    opt.obj = obj1
-    opt.near_opt = near_opt1
-    portfolio.optimal = optimal1
-    portfolio.fail = fail1
+    rmstr = get_rm_string(rm)
+
+    port.limits[rmstr] = limits
+
+    port.optimal = optimal1
+    port.fail = fail1
     if save_model
-        portfolio.model = model1
+        port.model = model1
     end
 
-    return portfolio.limits[opt.rm]
+    return port.limits[rmstr]
+end
+
+function efficient_frontier!(port::Portfolio2;
+                             rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
+                             kelly::RetType = NoKelly(), class::PortClass = Classic2(),
+                             w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
+                             w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
+                             save_model::Bool = false, points::Integer = 20, rf::Real = 0.0)
+    optimal1 = deepcopy(port.optimal)
+    fail1 = deepcopy(port.fail)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+
+    fl = frontier_limits!(port; rm = rm, kelly = kelly, class = class,
+                          w_min_ini = w_min_ini, w_max_ini = w_max_ini,
+                          save_model = save_model)
+    w1 = fl.w_min
+    w2 = fl.w_max
+
+    if isa(kelly, NoKelly)
+        ret1 = dot(mu, w1)
+        ret2 = dot(mu, w2)
+    else
+        ret1 = sum(log.(one(eltype(mu)) .+ returns * w1)) / size(returns, 1)
+        ret2 = sum(log.(one(eltype(mu)) .+ returns * w2)) / size(returns, 1)
+    end
+
+    rmi = if !isa(rm, AbstractVector)
+        rm
+    else
+        if !isa(rm[1], AbstractVector)
+            rm[1]
+        else
+            rm[1][1]
+        end
+    end
+    rmi.settings.ub = Inf
+
+    set_rm_properties(rmi, port.solvers, sigma)
+    risk1, risk2 = calc_risk_bounds(rmi, w1, w2; X = returns, V = port.V, SV = port.SV,
+                                    delta = 0)
+
+    mus = range(ret1; stop = ret2, length = points)
+    risks = range(risk1; stop = risk2, length = points)
+
+    frontier = Vector{typeof(risk1)}(undef, 0)
+    srisk = Vector{typeof(risk1)}(undef, 0)
+    w_ini = Vector{typeof(risk1)}(undef, 0)
+
+    i = 0
+    for (j, (r, m)) ∈ enumerate(zip(risks, mus))
+        if i == 0
+            w = optimise2!(port; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
+                           w_ini = w_min_ini)
+        else
+            if !isempty(w)
+                w_ini = w.weights
+            end
+            if j != length(risks)
+                rmi.settings.ub = r
+            else
+                rmi.settings.ub = Inf
+            end
+            w = optimise2!(port; rm = rm, obj = MaxRet(), kelly = kelly, class = class,
+                           w_ini = w_ini)
+            # Fallback in case :Max_Ret with maximum risk bounds fails.
+            if isempty(w)
+                rmi.settings.ub = Inf
+                port.mu_l = m
+                w = optimise2!(port; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
+                               w_ini = w_ini)
+                port.mu_l = Inf
+            end
+        end
+        if isempty(w)
+            continue
+        end
+
+        rk = calc_risk(port; X = returns, type = :Trad2, rm = rmi)
+
+        append!(frontier, w.weights)
+        push!(srisk, rk)
+        i += 1
+    end
+    rmi.settings.ub = Inf
+
+    w = optimise2!(port; rm = rm, obj = SR(; rf = rf), kelly = kelly, class = class,
+                   w_ini = w_min_ini)
+    sharpe = false
+    if !isempty(w)
+        rk = calc_risk(port; X = returns, type = :Trad2, rm = rmi)
+        append!(frontier, w.weights)
+        push!(srisk, rk)
+        i += 1
+        sharpe = true
+    end
+
+    rmstr = get_rm_string(rm)
+
+    port.frontier[rmstr] = Dict(:weights => hcat(DataFrame(; tickers = port.assets),
+                                                 DataFrame(reshape(frontier, length(w1), :),
+                                                           string.(range(1, i)))),
+                                :points => points, :risk => srisk, :sharpe => sharpe)
+
+    port.optimal = optimal1
+    port.fail = fail1
+
+    return port.frontier[rmstr]
 end
 
 """
