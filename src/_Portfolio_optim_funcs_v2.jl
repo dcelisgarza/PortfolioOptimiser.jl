@@ -2337,7 +2337,7 @@ function get_rm_string(rm::Union{AbstractVector, <:TradRiskMeasure})
             end
         end
     end
-    return rmstr
+    return Symbol(rmstr)
 end
 
 function frontier_limits!(port::Portfolio2;
@@ -2479,3 +2479,5 @@ function efficient_frontier!(port::Portfolio2;
 
     return port.frontier[rmstr]
 end
+
+export get_rm_string

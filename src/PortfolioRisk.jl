@@ -24,3 +24,5 @@ function calc_risk_contribution(portfolio::AbstractPortfolio2; X = portfolio.ret
                                   V = portfolio.V, SV = portfolio.SV, delta = delta,
                                   marginal = marginal)
 end
+
+export set_rm_properties

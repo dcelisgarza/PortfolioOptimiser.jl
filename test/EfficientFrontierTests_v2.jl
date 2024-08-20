@@ -71,32 +71,4 @@ l = 2.0
                   5.015125347530657e-10, 0.1432677879703678, 0.19649629723668446,
                   6.666401644796081e-9, 0.07852685909966116, 7.057315080480989e-9], 20, :)
     @test isapprox(Matrix(limits[:weights][!, 2:end]), wt)
-
-    # portfolio2 = Portfolio(; prices = prices,
-    #                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-    #                                                         :params => Dict("verbose" => false,
-    #                                                                         "max_step_fraction" => 0.75))))
-    # asset_statistics!(portfolio2)
-    # returns = portfolio2.returns
-    # sigma = portfolio2.cov
-    # alpha_i = portfolio2.alpha_i
-    # alpha = portfolio2.alpha
-    # a_sim = portfolio2.a_sim
-    # beta_i = portfolio2.beta_i
-    # beta = portfolio2.beta
-    # b_sim = portfolio2.b_sim
-    # kappa = portfolio2.kappa
-    # owa_w = portfolio2.owa_w
-    # solvers = portfolio2.solvers
-
-    # rm = :SD
-    # opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
-    #                   rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm, obj = :Min_Risk,
-    #                   kelly = :None)
-    # w1 = optimise!(portfolio2, opt)
-    # opt.obj = :Max_Ret
-    # w2 = optimise!(portfolio2, opt)
-    # opt.obj = :Sharpe
-    # w3 = optimise!(portfolio2, opt)
-    # fw1 = efficient_frontier!(portfolio2, opt; points = 5)
 end

@@ -34,11 +34,11 @@ function PO.plot_returns2(timestamps, assets, returns, weights; per_asset = fals
     axislegend(; position = :lt, merge = true)
     return f
 end
-function PO.plot_returns2(portfolio::AbstractPortfolio2,
-                          type = isa(portfolio, HCPortfolio2) ? :HRP2 : :Trad2;
+function PO.plot_returns2(port::AbstractPortfolio2,
+                          type = isa(port, HCPortfolio2) ? :HRP2 : :Trad2;
                           per_asset = false)
-    return PO.plot_returns2(portfolio.timestamps, portfolio.assets, portfolio.returns,
-                            portfolio.optimal[type].weights; per_asset = per_asset)
+    return PO.plot_returns2(port.timestamps, port.assets, port.returns,
+                            port.optimal[type].weights; per_asset = per_asset)
 end
 
 function PO.plot_bar2(assets, weights)
@@ -48,9 +48,9 @@ function PO.plot_bar2(assets, weights)
     barplot!(ax, weights * 100)
     return f
 end
-function PO.plot_bar2(portfolio::AbstractPortfolio2,
-                      type = isa(portfolio, HCPortfolio) ? :HRP2 : :Trad2; kwargs...)
-    return PO.plot_bar2(portfolio.assets, portfolio.optimal[type].weights, kwargs...)
+function PO.plot_bar2(port::AbstractPortfolio2,
+                      type = isa(port, HCPortfolio) ? :HRP2 : :Trad2; kwargs...)
+    return PO.plot_bar2(port.assets, port.optimal[type].weights, kwargs...)
 end
 
 function PO.plot_risk_contribution2(assets::AbstractVector, w::AbstractVector,
@@ -90,28 +90,6 @@ function PO.plot_risk_contribution2(assets::AbstractVector, w::AbstractVector,
         title *= ", κ = $(round(rm.kappa, digits=2))"
     end
 
-    # if !haskey(kwargs_bar, :title)
-    #     kwargs_bar = (kwargs_bar..., title = title)
-    # end
-    # if !haskey(kwargs_bar, :ylabel)
-    #     kwargs_bar = (kwargs_bar..., ylabel = ylabel)
-    # end
-    # if !haskey(kwargs_bar, :xlabel)
-    #     kwargs_bar = (kwargs_bar..., xlabel = "Assets")
-    # end
-    # if !haskey(kwargs_bar, :xticks)
-    #     kwargs_bar = (kwargs_bar...,
-    #                   xticks = (range(0.5; step = 1, length = length(assets)), assets))
-    # end
-    # if !haskey(kwargs_bar, :xrotation)
-    #     kwargs_bar = (kwargs_bar..., xrotation = 90)
-    # end
-    # if !haskey(kwargs_bar, :legend)
-    #     kwargs_bar = (kwargs_bar..., legend = false)
-    # end
-
-    # plt = bar(assets, rc; kwargs_bar...)
-
     f = Figure()
     ax = Axis(f[1, 1]; xticks = (1:length(assets), assets), title = title, ylabel = ylabel,
               xticklabelrotation = pi / 2)
@@ -135,22 +113,80 @@ function PO.plot_risk_contribution2(assets::AbstractVector, w::AbstractVector,
 
     return f
 end
-function PO.plot_risk_contribution2(portfolio::AbstractPortfolio2,
-                                    type = isa(portfolio, HCPortfolio) ? :HRP2 : :Trad2;
-                                    rm::RiskMeasure = SD2(), percentage::Bool = false,
-                                    erc_line::Bool = true, t_factor = 252,
-                                    delta::Real = 1e-6, marginal::Bool = false, kwargs...)
-    if hasproperty(rm, :solvers) && (isnothing(rm.solvers) || isempty(rm.solvers))
-        rm.solvers = portfolio.solvers
-    end
-    if hasproperty(rm, :sigma) && (isnothing(rm.sigma) || isempty(rm.sigma))
-        rm.sigma = portfolio.cov
-    end
-    return PO.plot_risk_contribution2(portfolio.assets, portfolio.optimal[type].weights,
-                                      portfolio.returns; rm = rm, V = portfolio.V,
-                                      SV = portfolio.SV, percentage = percentage,
+function PO.plot_risk_contribution2(port::AbstractPortfolio2,
+                                    type = isa(port, HCPortfolio) ? :HRP2 : :Trad2;
+                                    X = port.returns, rm::RiskMeasure = SD2(),
+                                    percentage::Bool = false, erc_line::Bool = true,
+                                    t_factor = 252, delta::Real = 1e-6,
+                                    marginal::Bool = false, kwargs...)
+    set_rm_properties(rm, port.solvers, port.cov)
+    return PO.plot_risk_contribution2(port.assets, port.optimal[type].weights, X; rm = rm,
+                                      V = port.V, SV = port.SV, percentage = percentage,
                                       erc_line = erc_line, t_factor = t_factor,
                                       delta = delta, marginal = marginal, kwargs...)
+end
+
+function PO.plot_frontier2(frontier; X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                           mu::AbstractVector = Vector{Float64}(undef, 0), rf::Real = 0.0,
+                           rm::RiskMeasure = SD2(), kelly::RetType = NoKelly(),
+                           t_factor = 252, theme = :Spectral)
+    risks = copy(frontier[:risk])
+    weights = Matrix(frontier[:weights][!, 2:end])
+
+    if isa(kelly, NoKelly)
+        ylabel = "Expected Arithmetic Return"
+        rets = transpose(weights) * mu
+    else
+        ylabel = "Expected Kelly Return"
+        rets = 1 / size(X, 1) * vec(sum(log.(1 .+ X * weights); dims = 1))
+    end
+
+    rets .*= t_factor
+
+    if !any(typeof(rm) .<: (MDD2, ADD2, CDaR2, EDaR2, RDaR2, UCI2))
+        risks .*= sqrt(t_factor)
+    end
+
+    ratios = (rets .- rf) ./ risks
+    N = length(ratios)
+
+    title = "$(get_rm_string(rm))"
+    if any(typeof(rm) .<: (CVaR2, TG2, EVaR2, RVaR2, RCVaR2, RTG2, CDaR2, EDaR2, RDaR2))
+        title *= " α = $(round(rm.alpha*100, digits=2))%"
+    end
+    if any(typeof(rm) .<: (RCVaR2, RTG2))
+        title *= ", β = $(round(rm.beta*100, digits=2))%"
+    end
+    if any(typeof(rm) .<: (RVaR2, RDaR2))
+        title *= ", κ = $(round(rm.kappa, digits=2))"
+    end
+
+    f = Figure()
+    ax = Axis(f[1, 1]; title = title, ylabel = ylabel, xlabel = "Expected Risk")
+    Colorbar(f[1, 2]; label = "Risk Adjusted Return Ratio", limits = extrema(ratios),
+             colormap = theme)
+
+    if frontier[:sharpe]
+        scatter!(ax, risks[1:(end - 1)], rets[1:(end - 1)]; color = ratios[1:(N - 1)],
+                 colormap = theme, marker = :circle, markersize = 15)
+        scatter!(ax, risks[end], rets[end]; color = cgrad(theme)[ratios[N]],
+                 marker = :star5, markersize = 15, label = "Max Risk Adjusted Return Ratio")
+    else
+        scatter(ax, risks[1:end], rets[1:end]; color = ratios, colormap = theme)
+    end
+    axislegend(ax; position = :rb)
+
+    return f
+end
+function PO.plot_frontier2(port::AbstractPortfolio2, key = nothing;
+                           X::AbstractMatrix = port.returns, mu::AbstractVector = port.mu,
+                           rm::RiskMeasure = SD2(), rf::Real = 0.0,
+                           kelly::RetType = NoKelly(), t_factor = 252, theme = :Spectral)
+    if isnothing(key)
+        key = get_rm_string(rm)
+    end
+    return PO.plot_frontier2(port.frontier[key]; X = X, mu = mu, rf = rf, rm = rm,
+                             kelly = kelly, t_factor = t_factor, theme = theme)
 end
 
 end

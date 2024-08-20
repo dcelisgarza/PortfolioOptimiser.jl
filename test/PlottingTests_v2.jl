@@ -10,7 +10,7 @@ portfolio = Portfolio2(; prices = prices,
                                                         :params => Dict("verbose" => false,
                                                                         "max_step_fraction" => 0.75))))
 asset_statistics2!(portfolio)
-rm = CDaR2()
+rm = SD2()
 obj = MinRisk()
 w1 = optimise2!(portfolio; type = RP2(), rm = rm, kelly = AKelly(), obj = obj)
 
@@ -18,6 +18,10 @@ prp = plot_returns2(portfolio, :RP2)
 pra = plot_returns2(portfolio, :RP2; per_asset = true)
 pb = plot_bar2(portfolio, :RP2)
 prc = plot_risk_contribution2(portfolio, :RP2; rm = rm, percentage = true)
+fw = efficient_frontier!(portfolio; kelly = NoKelly(), rm = rm, points = 5)
+pf = plot_frontier2(portfolio; kelly = NoKelly(), rm = rm)
+fw = efficient_frontier!(portfolio; kelly = EKelly(), rm = rm, points = 5)
+pf = plot_frontier2(portfolio; kelly = EKelly(), rm = rm)
 # end
 
 # using GraphRecipes, StatsPlots
