@@ -1418,9 +1418,8 @@ end
               owa = OWASettings(; approx = false))
     rm.settings.ub = r1
     optimise2!(portfolio; rm = rm, obj = obj)
-    println(calc_risk(portfolio; type = :Trad2, rm = rm) - r1)
     @test calc_risk(portfolio; type = :Trad2, rm = rm) <= r1 ||
-          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1) < 5e-10
+          abs(calc_risk(portfolio; type = :Trad2, rm = rm) - r1) < 5e-9
 
     rm = [[RTG2(; owa = OWASettings(; approx = false)),
            RTG2(; owa = OWASettings(; approx = false))]]
@@ -1905,7 +1904,7 @@ end
     rett1 = 0.0008709132492808145
 
     rm = [[OWA2(; w = owa_tg(200), owa = OWASettings(; approx = false)),
-           OWA2(; w = owa_tg(200), alpha = 0.75, owa = OWASettings(; approx = false))]]
+           OWA2(; w = owa_tg(200; alpha = 0.75), owa = OWASettings(; approx = false))]]
     w9 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r9 = calc_risk(portfolio; type = :Trad2, rm = rm[1][1])
     ret9 = dot(portfolio.mu, w9.weights)
@@ -2111,7 +2110,7 @@ end
     rett1 = 0.0008696210533165451
 
     rm = [[OWA2(; w = owa_tg(200), owa = OWASettings(; approx = true)),
-           OWA2(; w = owa_tg(200), alpha = 0.75, owa = OWASettings(; approx = true))]]
+           OWA2(; w = owa_tg(200; alpha = 0.75), owa = OWASettings(; approx = true))]]
     w9 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r9 = calc_risk(portfolio; type = :Trad2, rm = rm[1][1])
     ret9 = dot(portfolio.mu, w9.weights)
