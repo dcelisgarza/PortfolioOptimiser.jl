@@ -378,11 +378,13 @@ end
 function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction,
                 count::Integer, idx::Integer; sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
-    if !isnothing(kelly_approx_idx) && (isnothing(rm.sigma) || isempty(rm.sigma))
+    use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
+    if !isnothing(kelly_approx_idx) && use_portfolio_sigma
         if isempty(kelly_approx_idx)
             push!(kelly_approx_idx, isone(count) ? 0 : idx)
         end
-    else
+    end
+    if !use_portfolio_sigma
         sigma = rm.sigma
     end
     model = port.model
@@ -2126,7 +2128,7 @@ function wc_constraints(port, obj, type)
 end
 function _optimise!(type::WC2, port::Portfolio2,
                     rm::Union{AbstractVector, <:TradRiskMeasure}, obj::ObjectiveFunction,
-                    ::Any, ::Any, w_ini::AbstractVector, str_names::Bool, save_params::Bool)
+                    ::Any, ::Any, w_ini::AbstractVector, str_names::Bool)
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
@@ -2220,7 +2222,7 @@ end
 function _optimise!(type::RP2, port::Portfolio2,
                     rm::Union{AbstractVector, <:TradRiskMeasure}, ::Any, ::Any,
                     class::Union{Classic2, FM2, FC2}, w_ini::AbstractVector,
-                    str_names::Bool, save_params::Bool)
+                    str_names::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
 
     port.model = JuMP.Model()
@@ -2228,7 +2230,7 @@ function _optimise!(type::RP2, port::Portfolio2,
     set_string_names_on_creation(model, str_names)
     rp_constraints(port, class)
     initial_w(port, w_ini)
-    risk_constraints(port, nothing, RP2(), rm, mu, sigma, returns)
+    risk_constraints(port, MinRisk(), RP2(), rm, mu, sigma, returns)
     set_returns(nothing, NoKelly(), port.model, port.mu_l; mu = mu)
     linear_constraints(port, MinRisk())
     objective_function(port, MinRisk(), RP2(), class, nothing)
@@ -2286,8 +2288,7 @@ function rrp_constraints(type::RRP2, port, sigma)
     return nothing
 end
 function _optimise!(type::RRP2, port::Portfolio2, ::Any, ::Any, ::Any,
-                    class::Union{Classic2, FM2}, w_ini::AbstractVector, str_names::Bool,
-                    save_params::Bool)
+                    class::Union{Classic2, FM2}, w_ini::AbstractVector, str_names::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
 
     port.model = JuMP.Model()
