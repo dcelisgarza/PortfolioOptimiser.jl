@@ -1,5 +1,5 @@
-using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
-      PortfolioOptimiser
+using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, GLPK,
+      Pajarito, JuMP, Clarabel, PortfolioOptimiser
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
@@ -204,4 +204,52 @@ end
 
     @test_throws AssertionError portfolio.tracking_err_returns = 1:(T - 1)
     @test_throws AssertionError portfolio.tracking_err_returns = 1:(T + 1)
+end
+
+@testset "Min and max number of effective assets" begin
+    portfolio = Portfolio2(; prices = prices,
+                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                            :params => Dict("verbose" => false,
+                                                                            "max_step_fraction" => 0.75))))
+    asset_statistics2!(portfolio)
+
+    w1 = optimise2!(portfolio; obj = MinRisk())
+    portfolio.num_assets_l = 12
+    w2 = optimise2!(portfolio; obj = MinRisk())
+    @test count(w2.weights .>= 2e-2) >= 12
+    @test count(w2.weights .>= 2e-2) > count(w1.weights .>= 2e-2)
+    @test !isapprox(w1.weights, w2.weights)
+
+    portfolio.num_assets_l = 0
+    w3 = optimise2!(portfolio; obj = SR(; rf = rf))
+    portfolio.num_assets_l = 8
+    w4 = optimise2!(portfolio; obj = SR(; rf = rf))
+    @test count(w4.weights .>= 2e-2) >= 8
+    @test count(w4.weights .>= 2e-2) > count(w3.weights .>= 2e-2)
+    @test !isapprox(w3.weights, w4.weights)
+
+    portfolio = Portfolio2(; prices = prices,
+                           solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                              "verbose" => false,
+                                                                                              "oa_solver" => optimizer_with_attributes(GLPK.Optimizer,
+                                                                                                                                       MOI.Silent() => true),
+                                                                                              "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                          "verbose" => false,
+                                                                                                                                          "max_step_fraction" => 0.75)))))
+    asset_statistics2!(portfolio)
+
+    w5 = optimise2!(portfolio; obj = MinRisk())
+    portfolio.num_assets_u = 5
+    w6 = optimise2!(portfolio; obj = MinRisk())
+    @test count(w6.weights .>= 2e-2) <= 5
+    @test count(w6.weights .>= 2e-2) < count(w5.weights .>= 2e-2)
+    @test !isapprox(w5.weights, w6.weights)
+
+    portfolio.num_assets_u = 0
+    w7 = optimise2!(portfolio; obj = SR(; rf = rf))
+    portfolio.num_assets_u = 3
+    w8 = optimise2!(portfolio; obj = SR(; rf = rf))
+    @test count(w8.weights .>= 2e-2) <= 3
+    @test count(w8.weights .>= 2e-2) < count(w7.weights .>= 2e-2)
+    @test !isapprox(w7.weights, w8.weights)
 end

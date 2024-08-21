@@ -172,6 +172,13 @@ function num_assets_constraints(port, ::SR)
             @constraint(model, model[:w] .>= -port.short_u * tnau_bin_sharpe)
         end
     end
+    if port.num_assets_l > 0
+        N = size(port.returns, 2)
+        model = port.model
+        @variable(model, tnal >= 0)
+        @constraint(model, [tnal; model[:w]] ∈ SecondOrderCone())
+        @constraint(model, tnal * sqrt(port.num_assets_l) <= model[:k])
+    end
     return nothing
 end
 function num_assets_constraints(port, ::Any)
@@ -186,6 +193,13 @@ function num_assets_constraints(port, ::Any)
         if port.short
             @constraint(model, model[:w] .>= -port.short_u * tnau_bin)
         end
+    end
+    if port.num_assets_l > 0
+        N = size(port.returns, 2)
+        model = port.model
+        @variable(model, tnal >= 0)
+        @constraint(model, [tnal; model[:w]] ∈ SecondOrderCone())
+        @constraint(model, tnal * sqrt(port.num_assets_l) <= 1)
     end
     return nothing
 end
