@@ -244,7 +244,7 @@ end
 function network_constraints(args...)
     return nothing
 end
-function network_constraints(port, network::IP2, ::SR, ::Any)
+function network_constraints(network::IP2, port, ::SR, ::Any)
     N = size(port.returns, 2)
     model = port.model
 
@@ -262,7 +262,7 @@ function network_constraints(port, network::IP2, ::SR, ::Any)
     end
     return nothing
 end
-function network_constraints(port, network::IP2, ::Any, ::Any)
+function network_constraints(network::IP2, port, ::Any, ::Any)
     N = size(port.returns, 2)
     model = port.model
 
@@ -275,7 +275,7 @@ function network_constraints(port, network::IP2, ::Any, ::Any)
     end
     return nothing
 end
-function network_constraints(port, network::SDP2, obj, ::Trad2)
+function network_constraints(network::SDP2, port, obj, ::Trad2)
     _sdp(port, obj)
     @constraint(port.model, network.A .* port.model[:W] .== 0)
     if !haskey(port.model, :sd_risk) && hasproperty(port.network_method, :penalty)
@@ -284,7 +284,7 @@ function network_constraints(port, network::SDP2, obj, ::Trad2)
     end
     return nothing
 end
-function network_constraints(port, network::SDP2, obj, ::WC2)
+function network_constraints(network::SDP2, port, obj, ::WC2)
     _sdp(port, obj)
     @constraint(port.model, network.A .* port.model[:W] .== 0)
     return nothing
@@ -2087,7 +2087,7 @@ function _optimise!(::Trad2, port::Portfolio2, rm::Union{AbstractVector, <:TradR
     centrality_constraints(port, obj)
     weight_constraints(port, obj)
     num_assets_constraints(port, obj)
-    network_constraints(port, port.network_method, obj, Trad2())
+    network_constraints(port.network_method, port, obj, Trad2())
     tracking_err_constraints(port.tracking_err, port, returns, obj)
     turnover_constraints(port.turnover, port, obj)
     rebalance_constraints(port.rebalance, port, obj)
@@ -2171,7 +2171,7 @@ function _optimise!(type::WC2, port::Portfolio2,
     centrality_constraints(port, obj)
     weight_constraints(port, obj)
     num_assets_constraints(port, obj)
-    network_constraints(port, port.network_method, obj, type)
+    network_constraints(port.network_method, port, obj, type)
     tracking_err_constraints(port.tracking_err, port, port.returns, obj)
     turnover_constraints(port.turnover, port, obj)
     rebalance_constraints(port.rebalance, port, obj)
