@@ -102,6 +102,266 @@ solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Opti
     @test r1 < r17 < r4
 end
 
+@testset "Turnover" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    rm = :SD
+    opt = OptimiseOpt(; rm = rm, l = l, rf = rf)
+    opt.obj = :Sharpe
+    w1 = optimise!(portfolio, opt)
+    to1 = 0.05
+    tow1 = copy(w1.weights)
+    portfolio.turnover = to1
+    portfolio.turnover_weights = tow1
+
+    opt.obj = :Min_Risk
+    w2 = optimise!(portfolio, opt)
+
+    portfolio.turnover = Inf
+    opt.obj = :Min_Risk
+    w3 = optimise!(portfolio, opt)
+    to2 = 0.031
+    tow2 = copy(w3.weights)
+    portfolio.turnover = to2
+    portfolio.turnover_weights = tow2
+
+    opt.obj = :Sharpe
+    w4 = optimise!(portfolio, opt)
+
+    portfolio.turnover = Inf
+    opt.obj = :Sharpe
+    w5 = optimise!(portfolio, opt)
+    to3 = range(; start = 0.001, stop = 0.003, length = 20)
+    tow3 = copy(w5.weights)
+    portfolio.turnover = to3
+    portfolio.turnover_weights = tow3
+
+    opt.obj = :Min_Risk
+    w6 = optimise!(portfolio, opt)
+
+    portfolio.turnover = Inf
+    opt.obj = :Min_Risk
+    w7 = optimise!(portfolio, opt)
+    to4 = [fill(0.01, 5); fill(0.03, 5); fill(0.07, 5); fill(0.04, 5)]
+    tow4 = copy(w7.weights)
+    portfolio.turnover = to4
+    portfolio.turnover_weights = tow4
+
+    opt.obj = :Sharpe
+    w8 = optimise!(portfolio, opt)
+
+    @test all(abs.(w2.weights - tow1) .<= to1)
+    @test all(abs.(w4.weights - tow2) .<= to2)
+    @test all(abs.(w6.weights - tow3) .<= to3)
+    @test all(abs.(w8.weights - tow4) .<= to4)
+end
+
+@testset "Tracking Error" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    T = size(portfolio.returns, 1)
+    rm = :SD
+
+    opt = OptimiseOpt(; rm = rm, l = l, rf = rf)
+
+    opt.obj = :Sharpe
+    w1 = optimise!(portfolio, opt)
+    portfolio.kind_tracking_err = :Weights
+    te1 = 0.0005
+    tw1 = copy(w1.weights)
+    portfolio.tracking_err = te1
+    portfolio.tracking_err_weights = tw1
+
+    opt.obj = :Min_Risk
+    w2 = optimise!(portfolio, opt)
+
+    portfolio.tracking_err = Inf
+    opt.obj = :Min_Risk
+    w3 = optimise!(portfolio, opt)
+    portfolio.kind_tracking_err = :Weights
+    te2 = 0.0003
+    tw2 = copy(w3.weights)
+    portfolio.tracking_err = te2
+    portfolio.tracking_err_weights = tw2
+
+    opt.obj = :Sharpe
+    w4 = optimise!(portfolio, opt)
+
+    portfolio.tracking_err = Inf
+    opt.obj = :Sharpe
+    w5 = optimise!(portfolio, opt)
+    portfolio.kind_tracking_err = :Returns
+    te3 = 0.007
+    tw3 = vec(mean(portfolio.returns; dims = 2))
+    portfolio.tracking_err = te3
+    portfolio.tracking_err_returns = tw3
+
+    opt.obj = :Min_Risk
+    w6 = optimise!(portfolio, opt)
+
+    portfolio.tracking_err = Inf
+    opt.obj = :Min_Risk
+    w7 = optimise!(portfolio, opt)
+    portfolio.kind_tracking_err = :Returns
+    te4 = 0.0024
+    tw4 = vec(mean(portfolio.returns; dims = 2))
+    portfolio.tracking_err = te4
+    portfolio.tracking_err_returns = tw4
+
+    opt.obj = :Sharpe
+    w8 = optimise!(portfolio, opt)
+
+    @test norm(portfolio.returns * (w2.weights - tw1), 2) / sqrt(T - 1) <= te1
+    @test norm(portfolio.returns * (w4.weights - tw2), 2) / sqrt(T - 1) <= te2
+
+    @test norm(portfolio.returns * w6.weights - tw3, 2) / sqrt(T - 1) <= te3
+    @test norm(portfolio.returns * w8.weights - tw4, 2) / sqrt(T - 1) <= te4
+end
+
+@testset "Minimum Number of Effective Assets" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    rm = :SD
+    opt = OptimiseOpt(; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+
+    w1 = optimise!(portfolio, opt)
+    portfolio.num_assets_l = 8
+    w2 = optimise!(portfolio, opt)
+
+    portfolio.num_assets_l = 0
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    portfolio.num_assets_l = 6
+    w4 = optimise!(portfolio, opt)
+
+    @test count(w2.weights .>= 2e-2) >= 8
+    @test count(w2.weights .>= 2e-2) >= count(w1.weights .>= 2e-2)
+
+    @test count(w4.weights .>= 2e-2) >= 6
+    @test count(w4.weights .>= 2e-2) >= count(w3.weights .>= 2e-2)
+end
+
+@testset "Max Number of Assets" begin
+    portfolio = Portfolio(; prices = prices, solvers = solvers)
+    asset_statistics!(portfolio; calc_kurt = false)
+
+    rm = :SSD
+    opt = OptimiseOpt(; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    w1 = optimise!(portfolio, opt)
+    portfolio.num_assets_u = 5
+    w2 = optimise!(portfolio, opt)
+    sort!(w1, :weights; rev = true)
+    sort!(w2, :weights; rev = true)
+
+    portfolio.num_assets_u = 0
+    opt.obj = :Sharpe
+    w3 = optimise!(portfolio, opt)
+    portfolio.num_assets_u = 4
+    w4 = optimise!(portfolio, opt)
+    sort!(w3, :weights; rev = true)
+    sort!(w4, :weights; rev = true)
+
+    portfolio = Portfolio(; prices = prices, solvers = solvers, short = true)
+    asset_statistics!(portfolio; calc_kurt = false)
+
+    rm = :CVaR
+    opt.obj = :Min_Risk
+    opt.rm = rm
+    w5 = optimise!(portfolio, opt)
+    portfolio.num_assets_u = 7
+    w6 = optimise!(portfolio, opt)
+    sort!(w5, :weights; rev = true)
+    sort!(w6, :weights; rev = true)
+
+    portfolio.num_assets_u = 0
+    opt.obj = :Sharpe
+    w7 = optimise!(portfolio, opt)
+    portfolio.num_assets_u = 5
+    w8 = optimise!(portfolio, opt)
+    sort!(w7, :weights; rev = true)
+    sort!(w8, :weights; rev = true)
+
+    @test isempty(setdiff(w1.tickers[1:5], w2.tickers[1:5]))
+    @test isempty(setdiff(w3.tickers[1:4], w4.tickers[1:4]))
+
+    @test isempty(setdiff(w5.tickers[1:6], w6.tickers[1:6]))
+    @test isempty(setdiff(w5.tickers[end], w6.tickers[end]))
+
+    @test isempty(setdiff(w7.tickers[1:3], w8.tickers[1:3]))
+    @test isempty(setdiff(w7.tickers[(end - 1):end], w8.tickers[(end - 1):end]))
+end
+
+@testset "Linear Constraints" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                  :params => Dict("verbose" => false,
+                                                                                  "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    asset_sets = DataFrame("Asset" => portfolio.assets,
+                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                                       3, 1],
+                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
+                                        4, 2, 1],
+                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                                       2, 1],
+                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
+                                        2, 2, 1],
+                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
+                                        3, 4, 1],
+                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
+                                        4, 2, 2])
+    constraints = DataFrame(:Enabled => [true, true, true, true, true],
+                            :Type => ["Each Asset in Subset", "Each Asset in Subset",
+                                      "Asset", "Subset", "Asset"],
+                            :Set => ["G2DBHT", "G2DBHT", "", "G2ward", ""],
+                            :Position => [2, 3, "AAPL", 2, "MA"],
+                            :Sign => [">=", "<=", ">=", "<=", ">="],
+                            :Weight => [0.03, 0.2, 0.032, "", ""],
+                            :Relative_Type => ["", "", "", "Asset", "Subset"],
+                            :Relative_Set => ["", "", "", "", "G2ward"],
+                            :Relative_Position => ["", "", "", "MA", 3],
+                            :Factor => ["", "", "", 2.2, 5])
+
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_mtx_ineq = A
+    portfolio.b_vec_ineq = B
+
+    rm = :SD
+
+    opt = OptimiseOpt(; obj = :Min_Risk, rm = rm, l = l, rf = rf)
+    w1 = optimise!(portfolio, opt)
+
+    @test all(w1.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
+    @test all(w1.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
+    @test all(w1.weights[w1.tickers .== "AAPL"] .>= 0.032)
+    @test sum(w1.weights[asset_sets.G2ward .== 2]) <=
+          w1.weights[w1.tickers .== "MA"][1] * 2.2
+    @test w1.weights[w1.tickers .== "MA"][1] * 5 >= sum(w1.weights[asset_sets.G2ward .== 3])
+
+    opt.obj = :Sharpe
+    w2 = optimise!(portfolio, opt)
+
+    @test all(w2.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
+    @test all(w2.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
+    @test all(w2.weights[w2.tickers .== "AAPL"] .>= 0.032)
+    @test sum(w2.weights[asset_sets.G2ward .== 2]) <=
+          w2.weights[w2.tickers .== "MA"][1] * 2.2
+    @test w2.weights[w2.tickers .== "MA"][1] * 5 >= sum(w2.weights[asset_sets.G2ward .== 3])
+end
+
 @testset "Network and Dendrogram Constraints $(:CDaR)" begin
     portfolio = Portfolio(; prices = prices, solvers = solvers)
     asset_statistics!(portfolio; calc_kurt = false)
@@ -3392,264 +3652,4 @@ end
     @test r7 <= r1 + sqrt(eps())
     @test r8 <= r1 + sqrt(eps())
     @test r9 <= r1 + length(w5.weights) * sqrt(eps())
-end
-
-@testset "Turnover" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-
-    rm = :SD
-    opt = OptimiseOpt(; rm = rm, l = l, rf = rf)
-    opt.obj = :Sharpe
-    w1 = optimise!(portfolio, opt)
-    to1 = 0.05
-    tow1 = copy(w1.weights)
-    portfolio.turnover = to1
-    portfolio.turnover_weights = tow1
-
-    opt.obj = :Min_Risk
-    w2 = optimise!(portfolio, opt)
-
-    portfolio.turnover = Inf
-    opt.obj = :Min_Risk
-    w3 = optimise!(portfolio, opt)
-    to2 = 0.031
-    tow2 = copy(w3.weights)
-    portfolio.turnover = to2
-    portfolio.turnover_weights = tow2
-
-    opt.obj = :Sharpe
-    w4 = optimise!(portfolio, opt)
-
-    portfolio.turnover = Inf
-    opt.obj = :Sharpe
-    w5 = optimise!(portfolio, opt)
-    to3 = range(; start = 0.001, stop = 0.003, length = 20)
-    tow3 = copy(w5.weights)
-    portfolio.turnover = to3
-    portfolio.turnover_weights = tow3
-
-    opt.obj = :Min_Risk
-    w6 = optimise!(portfolio, opt)
-
-    portfolio.turnover = Inf
-    opt.obj = :Min_Risk
-    w7 = optimise!(portfolio, opt)
-    to4 = [fill(0.01, 5); fill(0.03, 5); fill(0.07, 5); fill(0.04, 5)]
-    tow4 = copy(w7.weights)
-    portfolio.turnover = to4
-    portfolio.turnover_weights = tow4
-
-    opt.obj = :Sharpe
-    w8 = optimise!(portfolio, opt)
-
-    @test all(abs.(w2.weights - tow1) .<= to1)
-    @test all(abs.(w4.weights - tow2) .<= to2)
-    @test all(abs.(w6.weights - tow3) .<= to3)
-    @test all(abs.(w8.weights - tow4) .<= to4)
-end
-
-@testset "Tracking Error" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-
-    T = size(portfolio.returns, 1)
-    rm = :SD
-
-    opt = OptimiseOpt(; rm = rm, l = l, rf = rf)
-
-    opt.obj = :Sharpe
-    w1 = optimise!(portfolio, opt)
-    portfolio.kind_tracking_err = :Weights
-    te1 = 0.0005
-    tw1 = copy(w1.weights)
-    portfolio.tracking_err = te1
-    portfolio.tracking_err_weights = tw1
-
-    opt.obj = :Min_Risk
-    w2 = optimise!(portfolio, opt)
-
-    portfolio.tracking_err = Inf
-    opt.obj = :Min_Risk
-    w3 = optimise!(portfolio, opt)
-    portfolio.kind_tracking_err = :Weights
-    te2 = 0.0003
-    tw2 = copy(w3.weights)
-    portfolio.tracking_err = te2
-    portfolio.tracking_err_weights = tw2
-
-    opt.obj = :Sharpe
-    w4 = optimise!(portfolio, opt)
-
-    portfolio.tracking_err = Inf
-    opt.obj = :Sharpe
-    w5 = optimise!(portfolio, opt)
-    portfolio.kind_tracking_err = :Returns
-    te3 = 0.007
-    tw3 = vec(mean(portfolio.returns; dims = 2))
-    portfolio.tracking_err = te3
-    portfolio.tracking_err_returns = tw3
-
-    opt.obj = :Min_Risk
-    w6 = optimise!(portfolio, opt)
-
-    portfolio.tracking_err = Inf
-    opt.obj = :Min_Risk
-    w7 = optimise!(portfolio, opt)
-    portfolio.kind_tracking_err = :Returns
-    te4 = 0.0024
-    tw4 = vec(mean(portfolio.returns; dims = 2))
-    portfolio.tracking_err = te4
-    portfolio.tracking_err_returns = tw4
-
-    opt.obj = :Sharpe
-    w8 = optimise!(portfolio, opt)
-
-    @test norm(portfolio.returns * (w2.weights - tw1), 2) / sqrt(T - 1) <= te1
-    @test norm(portfolio.returns * (w4.weights - tw2), 2) / sqrt(T - 1) <= te2
-
-    @test norm(portfolio.returns * w6.weights - tw3, 2) / sqrt(T - 1) <= te3
-    @test norm(portfolio.returns * w8.weights - tw4, 2) / sqrt(T - 1) <= te4
-end
-
-@testset "Minimum Number of Effective Assets" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-
-    rm = :SD
-    opt = OptimiseOpt(; obj = :Min_Risk, rm = rm, l = l, rf = rf)
-
-    w1 = optimise!(portfolio, opt)
-    portfolio.num_assets_l = 8
-    w2 = optimise!(portfolio, opt)
-
-    portfolio.num_assets_l = 0
-    opt.obj = :Sharpe
-    w3 = optimise!(portfolio, opt)
-    portfolio.num_assets_l = 6
-    w4 = optimise!(portfolio, opt)
-
-    @test count(w2.weights .>= 2e-2) >= 8
-    @test count(w2.weights .>= 2e-2) >= count(w1.weights .>= 2e-2)
-
-    @test count(w4.weights .>= 2e-2) >= 6
-    @test count(w4.weights .>= 2e-2) >= count(w3.weights .>= 2e-2)
-end
-
-@testset "Linear Constraints" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-
-    asset_sets = DataFrame("Asset" => portfolio.assets,
-                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
-                                       3, 1],
-                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
-                                        4, 2, 1],
-                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
-                                       2, 1],
-                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
-                                        2, 2, 1],
-                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
-                                        3, 4, 1],
-                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
-                                        4, 2, 2])
-    constraints = DataFrame(:Enabled => [true, true, true, true, true],
-                            :Type => ["Each Asset in Subset", "Each Asset in Subset",
-                                      "Asset", "Subset", "Asset"],
-                            :Set => ["G2DBHT", "G2DBHT", "", "G2ward", ""],
-                            :Position => [2, 3, "AAPL", 2, "MA"],
-                            :Sign => [">=", "<=", ">=", "<=", ">="],
-                            :Weight => [0.03, 0.2, 0.032, "", ""],
-                            :Relative_Type => ["", "", "", "Asset", "Subset"],
-                            :Relative_Set => ["", "", "", "", "G2ward"],
-                            :Relative_Position => ["", "", "", "MA", 3],
-                            :Factor => ["", "", "", 2.2, 5])
-
-    A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_mtx_ineq = A
-    portfolio.b_vec_ineq = B
-
-    rm = :SD
-
-    opt = OptimiseOpt(; obj = :Min_Risk, rm = rm, l = l, rf = rf)
-    w1 = optimise!(portfolio, opt)
-
-    @test all(w1.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
-    @test all(w1.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
-    @test all(w1.weights[w1.tickers .== "AAPL"] .>= 0.032)
-    @test sum(w1.weights[asset_sets.G2ward .== 2]) <=
-          w1.weights[w1.tickers .== "MA"][1] * 2.2
-    @test w1.weights[w1.tickers .== "MA"][1] * 5 >= sum(w1.weights[asset_sets.G2ward .== 3])
-
-    opt.obj = :Sharpe
-    w2 = optimise!(portfolio, opt)
-
-    @test all(w2.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
-    @test all(w2.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
-    @test all(w2.weights[w2.tickers .== "AAPL"] .>= 0.032)
-    @test sum(w2.weights[asset_sets.G2ward .== 2]) <=
-          w2.weights[w2.tickers .== "MA"][1] * 2.2
-    @test w2.weights[w2.tickers .== "MA"][1] * 5 >= sum(w2.weights[asset_sets.G2ward .== 3])
-end
-
-@testset "Max Number of Assets" begin
-    portfolio = Portfolio(; prices = prices, solvers = solvers)
-    asset_statistics!(portfolio; calc_kurt = false)
-
-    rm = :SSD
-    opt = OptimiseOpt(; obj = :Min_Risk, rm = rm, l = l, rf = rf)
-    w1 = optimise!(portfolio, opt)
-    portfolio.num_assets_u = 5
-    w2 = optimise!(portfolio, opt)
-    sort!(w1, :weights; rev = true)
-    sort!(w2, :weights; rev = true)
-
-    portfolio.num_assets_u = 0
-    opt.obj = :Sharpe
-    w3 = optimise!(portfolio, opt)
-    portfolio.num_assets_u = 4
-    w4 = optimise!(portfolio, opt)
-    sort!(w3, :weights; rev = true)
-    sort!(w4, :weights; rev = true)
-
-    portfolio = Portfolio(; prices = prices, solvers = solvers, short = true)
-    asset_statistics!(portfolio; calc_kurt = false)
-
-    rm = :CVaR
-    opt.obj = :Min_Risk
-    opt.rm = rm
-    w5 = optimise!(portfolio, opt)
-    portfolio.num_assets_u = 7
-    w6 = optimise!(portfolio, opt)
-    sort!(w5, :weights; rev = true)
-    sort!(w6, :weights; rev = true)
-
-    portfolio.num_assets_u = 0
-    opt.obj = :Sharpe
-    w7 = optimise!(portfolio, opt)
-    portfolio.num_assets_u = 5
-    w8 = optimise!(portfolio, opt)
-    sort!(w7, :weights; rev = true)
-    sort!(w8, :weights; rev = true)
-
-    @test isempty(setdiff(w1.tickers[1:5], w2.tickers[1:5]))
-    @test isempty(setdiff(w3.tickers[1:4], w4.tickers[1:4]))
-
-    @test isempty(setdiff(w5.tickers[1:6], w6.tickers[1:6]))
-    @test isempty(setdiff(w5.tickers[end], w6.tickers[end]))
-
-    @test isempty(setdiff(w7.tickers[1:3], w8.tickers[1:3]))
-    @test isempty(setdiff(w7.tickers[(end - 1):end], w8.tickers[(end - 1):end]))
 end
