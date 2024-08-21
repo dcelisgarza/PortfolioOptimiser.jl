@@ -1471,12 +1471,10 @@ end
 function _setup_rp_rrp_return_and_obj(portfolio, kelly, T, returns, mu)
     model = portfolio.model
     mu_l = portfolio.mu_l
-
     _setup_ret(kelly, model, T, returns, mu, mu_l)
     if haskey(model, :_ret)
         @expression(model, ret, model[:_ret])
     end
-
     @objective(model, Min, model[:risk])
     return nothing
 end

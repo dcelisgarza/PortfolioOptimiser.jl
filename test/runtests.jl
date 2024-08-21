@@ -4,6 +4,10 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
+@safetestset "RP optimisation rm" begin
+    include("RPOptimisationTests_v2.jl")
+end
+
 @safetestset "Trad optimisation rm vectors" begin
     include("TradOptimisationVectorTests_v2.jl")
 end

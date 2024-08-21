@@ -1930,7 +1930,7 @@ function objective_function(port, obj, ::Trad2, class, kelly)
     _objective(obj, class, kelly, port.model, npf + rbf)
     return nothing
 end
-function objective_function(port, obj, ::Any, class, kelly)
+function objective_function(port, obj, ::WC2, class, kelly)
     rbf = zero(eltype(port.returns))
     if haskey(port.model, :sum_t_rebal)
         npf = port.model[:sum_t_rebal]
@@ -2214,8 +2214,8 @@ function _rp_class_constraints(class::FC2, port)
 end
 function rp_constraints(port, class)
     model = port.model
-    @variable(model, k)
     _rp_class_constraints(class, port)
+    @variable(model, k)
     @constraint(model, sum(model[:w]) == model[:k])
     return nothing
 end
@@ -2224,7 +2224,6 @@ function _optimise!(type::RP2, port::Portfolio2,
                     class::Union{Classic2, FM2, FC2}, w_ini::AbstractVector,
                     str_names::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
-
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
@@ -2233,7 +2232,7 @@ function _optimise!(type::RP2, port::Portfolio2,
     risk_constraints(port, MinRisk(), RP2(), rm, mu, sigma, returns)
     set_returns(nothing, NoKelly(), port.model, port.mu_l; mu = mu)
     linear_constraints(port, MinRisk())
-    objective_function(port, MinRisk(), RP2(), class, nothing)
+    @objective(model, Min, model[:risk])
     return convex_optimisation(port, nothing, RP2(), class)
 end
 function _rrp_ver_constraints(::NoRRP, model, sigma)
@@ -2298,7 +2297,7 @@ function _optimise!(type::RRP2, port::Portfolio2, ::Any, ::Any, ::Any,
     rrp_constraints(type, port, sigma)
     set_returns(nothing, NoKelly(), port.model, port.mu_l; mu = mu)
     linear_constraints(port, MinRisk())
-    objective_function(port, MinRisk(), type, class, nothing)
+    @objective(model, Min, model[:risk])
     return convex_optimisation(port, nothing, type, class)
 end
 function optimise2!(port::Portfolio2; rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
