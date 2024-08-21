@@ -4,7 +4,11 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-@safetestset "RP optimisation rm" begin
+@safetestset "WC Optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
+@safetestset "RP optimisation" begin
     include("RPOptimisationTests_v2.jl")
 end
 

@@ -21,10 +21,18 @@ end
 end
 struct MaxRet <: ObjectiveFunction end
 
+abstract type SDFormulation end
+abstract type SDSquaredFormulation <: SDFormulation end
+struct QuadSD <: SDSquaredFormulation end
+struct SOCSD <: SDSquaredFormulation end
+struct SimpleSD <: SDFormulation end
+
 abstract type WorstCaseSet end
 struct WCBox <: WorstCaseSet end
 struct WCEllipse <: WorstCaseSet end
-struct NoWC <: WorstCaseSet end
+@kwdef mutable struct NoWC <: WorstCaseSet
+    formulation::SDSquaredFormulation = SOCSD()
+end
 abstract type PortType end
 struct Trad2 <: PortType end
 struct RP2 <: PortType end
@@ -37,6 +45,7 @@ end
 @kwdef mutable struct RRP2 <: PortType
     version::RRPVersion = NoRRP()
 end
+
 @kwdef mutable struct WC2 <: PortType
     mu::WorstCaseSet = WCBox()
     cov::WorstCaseSet = WCBox()
@@ -49,12 +58,6 @@ Base.String(::RRP2) = "RRP2"
 Base.Symbol(::RRP2) = :RRP2
 Base.String(::WC2) = "WC2"
 Base.Symbol(::WC2) = :WC2
-
-abstract type SDFormulation end
-abstract type SDSquaredFormulation <: SDFormulation end
-struct QuadSD <: SDSquaredFormulation end
-struct SOCSD <: SDSquaredFormulation end
-struct SimpleSD <: SDFormulation end
 
 abstract type RetType end
 struct NoKelly <: RetType end
@@ -2539,4 +2542,5 @@ function Base.deepcopy(obj::HCPortfolio2)
 end
 
 export Portfolio2, HCPortfolio2, NoKelly, AKelly, EKelly, MinRisk, Util, SR, MaxRet, Trad2,
-       RP2, NoRRP, RegRRP, RegPenRRP, RRP2, WC2, QuadSD, SOCSD, SimpleSD, RetType
+       RP2, NoRRP, RegRRP, RegPenRRP, RRP2, WC2, QuadSD, SOCSD, SimpleSD, RetType, WCBox,
+       WCEllipse, NoWC

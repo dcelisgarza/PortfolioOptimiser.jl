@@ -1902,19 +1902,27 @@ function rebalance_constraints(port, obj)
     end
     return nothing
 end
-function _objective(::SR, ::Classic2, ::Union{AKelly, EKelly}, model, p)
+function _objective(::Trad2, ::SR, ::Classic2, ::Union{AKelly, EKelly}, model, p)
     @objective(model, Max, model[:ret] - p)
     return nothing
 end
-function _objective(::Union{SR, MinRisk}, ::Any, ::Any, model, p)
+function _objective(::Trad2, ::Union{SR, MinRisk}, ::Any, ::Any, model, p)
     @objective(model, Min, model[:risk] + p)
     return nothing
 end
-function _objective(obj::Util, ::Any, ::Any, model, p)
+function _objective(::WC2, obj::SR, ::Any, ::Any, model, p)
+    @objective(model, Max, model[:ret] - obj.rf * model[:k] - p)
+    return nothing
+end
+function _objective(::WC2, ::MinRisk, ::Any, ::Any, model, p)
+    @objective(model, Min, model[:risk] + p)
+    return nothing
+end
+function _objective(::Any, obj::Util, ::Any, ::Any, model, p)
     @objective(model, Max, model[:ret] - obj.l * model[:risk] - p)
     return nothing
 end
-function _objective(obj::MaxRet, ::Any, ::Any, model, p)
+function _objective(::Any, obj::MaxRet, ::Any, ::Any, model, p)
     @objective(model, Max, model[:ret] - p)
     return nothing
 end
@@ -1927,15 +1935,15 @@ function objective_function(port, obj, ::Trad2, class, kelly)
     if haskey(port.model, :sum_t_rebal)
         npf = port.model[:sum_t_rebal]
     end
-    _objective(obj, class, kelly, port.model, npf + rbf)
+    _objective(Trad2(), obj, class, kelly, port.model, npf + rbf)
     return nothing
 end
-function objective_function(port, obj, ::WC2, class, kelly)
+function objective_function(port, obj, type::WC2, ::Any, ::Any)
     rbf = zero(eltype(port.returns))
     if haskey(port.model, :sum_t_rebal)
         npf = port.model[:sum_t_rebal]
     end
-    _objective(obj, class, kelly, port.model, rbf)
+    _objective(type, obj, nothing, nothing, port.model, rbf)
     return nothing
 end
 function _cleanup_weights(port, ::SR, ::Union{Trad2, WC2}, ::Any)
@@ -2090,6 +2098,7 @@ end
 function _wc_risk_constraints(::WCBox, port, obj)
     _sdp(port, obj)
     model = port.model
+    N = size(port.returns, 2)
     @variable(model, Au[1:N, 1:N] .>= 0, Symmetric)
     @variable(model, Al[1:N, 1:N] .>= 0, Symmetric)
     @constraint(model, Au .- Al .== model[:W])
@@ -2098,8 +2107,10 @@ function _wc_risk_constraints(::WCBox, port, obj)
 end
 function _wc_risk_constraints(::WCEllipse, port, obj)
     _sdp(port, obj)
-    G_sigma = sqrt(portfolio.cov_sigma)
+    sigma = port.cov
+    G_sigma = sqrt(port.cov_sigma)
     model = port.model
+    N = size(port.returns, 2)
     @variable(model, E[1:N, 1:N], Symmetric)
     @constraint(model, E ∈ PSDCone())
     @expression(model, W_p_E, model[:W] .+ E)
@@ -2109,8 +2120,9 @@ function _wc_risk_constraints(::WCEllipse, port, obj)
     @expression(model, risk, tr(sigma * W_p_E) + port.k_sigma * t_ge)
     return nothing
 end
-function _wc_risk_constraints(::NoWC, port)
-    _sd_risk(port.network_method, SOCSD(), port.model, port.cov, 1, 1)
+function _wc_risk_constraints(type::NoWC, port, ::Any)
+    _sd_risk(port.network_method, type.formulation, port.model, port.cov, 1, 1)
+    @expression(port.model, risk, port.model[:sd_risk])
     return nothing
 end
 function _wc_sharpe_constraints(obj::SR, port)
@@ -2122,7 +2134,7 @@ function _wc_sharpe_constraints(::Any, ::Any)
 end
 function wc_constraints(port, obj, type)
     _wc_return_constraints(type.mu, port)
-    _wc_risk_constraints(type.cov, port)
+    _wc_risk_constraints(type.cov, port, obj)
     _wc_sharpe_constraints(obj, port)
     return nothing
 end
