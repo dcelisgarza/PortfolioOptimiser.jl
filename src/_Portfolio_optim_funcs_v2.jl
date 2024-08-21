@@ -1813,7 +1813,7 @@ function return_constraints(port, obj, kelly, class::Classic2, mu, sigma, return
                 network_method = port.network_method)
     return nothing
 end
-function return_constraints(port, obj, ::Any, ::Any, mu, sigma, returns, kelly_approx_idx)
+function return_constraints(port, obj, ::Any, ::Any, mu, sigma, returns, ::Any)
     set_returns(obj, NoKelly(), port.model, port.mu_l; mu = mu, sigma = sigma,
                 returns = returns, network_method = port.network_method)
     return nothing
