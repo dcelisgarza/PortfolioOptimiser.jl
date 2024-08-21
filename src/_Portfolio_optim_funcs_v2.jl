@@ -1855,65 +1855,70 @@ function tracking_err_constraints(args...)
     return nothing
 end
 function tracking_err_constraints(tracking_err::TrackWeight, port, returns, obj)
-    if !(isempty(isempty(tracking_err.w)) || isinf(tracking_err.e))
-        _tracking_err_constraints(obj, port.model, returns, tracking_err.e,
+    if !(isempty(isempty(tracking_err.w)) || isinf(tracking_err.err))
+        _tracking_err_constraints(obj, port.model, returns, tracking_err.err,
                                   returns * tracking_err.w)
     end
     return nothing
 end
 function tracking_err_constraints(tracking_err::TrackRet, port, returns, obj)
-    if !(isempty(isempty(tracking_err.w)) || isinf(tracking_err.e))
-        _tracking_err_constraints(obj, port.model, returns, tracking_err.e, tracking_err.w)
+    if !(isempty(isempty(tracking_err.w)) || isinf(tracking_err.err))
+        _tracking_err_constraints(obj, port.model, returns, tracking_err.err,
+                                  tracking_err.w)
     end
     return nothing
 end
-function _turnover_constraints(::Any, model, turnover, turnover_weights)
-    N = length(turnover_weights)
+function _turnover_constraints(::Any, model, turnover)
+    N = length(turnover.w)
     @variable(model, t_turnov[1:N] >= 0)
-    @expression(model, turnov, model[:w] .- turnover_weights)
+    @expression(model, turnov, model[:w] .- turnover.w)
     @constraint(model, [i = 1:N], [t_turnov[i]; turnov[i]] ∈ MOI.NormOneCone(2))
-    @constraint(model, t_turnov .<= turnover)
+    @constraint(model, t_turnov .<= turnover.val)
     return nothing
 end
-function _turnover_constraints(::SR, model, turnover, turnover_weights)
-    N = length(turnover_weights)
+function _turnover_constraints(::SR, model, turnover)
+    N = length(turnover.w)
     @variable(model, t_turnov[1:N] >= 0)
-    @expression(model, turnov, model[:w] .- turnover_weights * model[:k])
+    @expression(model, turnov, model[:w] .- turnover.w * model[:k])
     @constraint(model, [i = 1:N], [t_turnov[i]; turnov[i]] ∈ MOI.NormOneCone(2))
-    @constraint(model, t_turnov .<= turnover * model[:k])
+    @constraint(model, t_turnov .<= turnover.val * model[:k])
     return nothing
 end
-function turnover_constraints(port, obj)
-    if !(isa(port.turnover, Real) && isinf(port.turnover) ||
-         isa(port.turnover, AbstractVector) && isempty(port.turnover) ||
-         isempty(port.turnover_weights))
-        _turnover_constraints(obj, port.model, port.turnover, port.turnover_weights)
+function turnover_constraints(turnover::NoTR, ::Any, ::Any)
+    return nothing
+end
+function turnover_constraints(turnover::TR, port, obj)
+    if !(isa(turnover.val, Real) && isinf(turnover.val) ||
+         isa(turnover.val, AbstractVector) && isempty(turnover.val) ||
+         isempty(turnover.w))
+        _turnover_constraints(obj, port.model, turnover)
     end
     return nothing
 end
-function _rebalance_constraints(::Any, model, rebalance, rebalance_weights)
-    N = length(rebalance_weights)
+function _rebalance_constraints(::Any, model, rebalance)
+    N = length(rebalance.w)
     @variable(model, t_rebal[1:N] >= 0)
-    @expression(model, rebal, model[:w] .- rebalance_weights)
+    @expression(model, rebal, model[:w] .- rebalance.w)
     @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
-    @expression(model, sum_t_rebal, sum(rebalance .* t_rebal))
+    @expression(model, sum_t_rebal, sum(rebalance.val .* t_rebal))
     return nothing
 end
-function _rebalance_constraints(::SR, model, rebalance, rebalance_weights)
-    N = length(rebalance_weights)
+function _rebalance_constraints(::SR, model, rebalance)
+    N = length(rebalance.w)
     @variable(model, t_rebal[1:N] >= 0)
-    @expression(model, rebal, model[:w] .- rebalance_weights * model[:k])
+    @expression(model, rebal, model[:w] .- rebalance.w * model[:k])
     @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
-    @expression(model, sum_t_rebal, sum(rebalance .* t_rebal))
+    @expression(model, sum_t_rebal, sum(rebalance.val .* t_rebal))
     return nothing
 end
-function rebalance_constraints(port, obj)
-    rebalance = port.rebalance
-    rebalance_weights = port.rebalance_weights
-    if !(isa(port.rebalance, Real) && (isinf(port.rebalance) || iszero(port.rebalance)) ||
-         isa(port.rebalance, AbstractVector) && isempty(port.rebalance) ||
-         isempty(port.rebalance_weights))
-        _rebalance_constraints(obj, port.model, port.rebalance, port.rebalance_weights)
+function rebalance_constraints(turnover::NoTR, ::Any, ::Any)
+    return nothing
+end
+function rebalance_constraints(rebalance::TR, port, obj)
+    if !(isa(rebalance.val, Real) && (isinf(rebalance.val) || iszero(rebalance.val)) ||
+         isa(rebalance.val, AbstractVector) && isempty(rebalance.val) ||
+         isempty(rebalance.w))
+        _rebalance_constraints(obj, port.model, port.rebalance)
     end
     return nothing
 end
@@ -2084,8 +2089,8 @@ function _optimise!(::Trad2, port::Portfolio2, rm::Union{AbstractVector, <:TradR
     num_assets_constraints(port, obj)
     network_constraints(port, port.network_method, obj, Trad2())
     tracking_err_constraints(port.tracking_err, port, returns, obj)
-    turnover_constraints(port, obj)
-    rebalance_constraints(port, obj)
+    turnover_constraints(port.turnover, port, obj)
+    rebalance_constraints(port.rebalance, port, obj)
     objective_function(port, obj, Trad2(), class, kelly)
     return convex_optimisation(port, obj, Trad2(), class)
 end
@@ -2168,8 +2173,8 @@ function _optimise!(type::WC2, port::Portfolio2,
     num_assets_constraints(port, obj)
     network_constraints(port, port.network_method, obj, type)
     tracking_err_constraints(port.tracking_err, port, port.returns, obj)
-    turnover_constraints(port, obj)
-    rebalance_constraints(port, obj)
+    turnover_constraints(port.turnover, port, obj)
+    rebalance_constraints(port.rebalance, port, obj)
     objective_function(port, obj, type, nothing, nothing)
     return convex_optimisation(port, obj, type, nothing)
 end

@@ -5,7 +5,6 @@ prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-TrackWeight()
 @testset "Rebalance" begin
     portfolio = Portfolio2(; prices = prices,
                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -37,11 +36,10 @@ TrackWeight()
     @test ret1 < ret3 < ret2 < ret4
     @test sr1 < sr4 < sr2 < sr3
 
-    portfolio.rebalance = 0
-    portfolio.rebalance_weights = w3.weights
+    portfolio.rebalance = TR(; val = 0, w = w3.weights)
     w5 = optimise2!(portfolio; obj = MinRisk())
     @test isapprox(w1.weights, w5.weights)
-    portfolio.rebalance_weights = w1.weights
+    portfolio.rebalance.w = w1.weights
     w6 = optimise2!(portfolio; obj = Util(; l = l))
     w7 = optimise2!(portfolio; obj = SR(; rf = rf))
     w8 = optimise2!(portfolio; obj = MaxRet())
@@ -49,11 +47,10 @@ TrackWeight()
     @test isapprox(w3.weights, w7.weights)
     @test isapprox(w4.weights, w8.weights)
 
-    portfolio.rebalance = 1e10
-    portfolio.rebalance_weights = w3.weights
+    portfolio.rebalance = TR(; val = 1e10, w = w3.weights)
     w9 = optimise2!(portfolio; obj = MinRisk())
     @test isapprox(w9.weights, w3.weights)
-    portfolio.rebalance_weights = w1.weights
+    portfolio.rebalance.w = w1.weights
     w10 = optimise2!(portfolio; obj = Util(; l = l))
     w11 = optimise2!(portfolio; obj = SR(; rf = rf))
     w12 = optimise2!(portfolio; obj = MaxRet())
@@ -61,12 +58,11 @@ TrackWeight()
     @test isapprox(w11.weights, w1.weights)
     @test isapprox(w12.weights, w1.weights)
 
-    portfolio.rebalance = 1e-4
-    portfolio.rebalance_weights = w3.weights
+    portfolio.rebalance = TR(; val = 1e-4, w = w3.weights)
     w13 = optimise2!(portfolio; obj = MinRisk())
     @test !isapprox(w13.weights, w1.weights)
     @test !isapprox(w13.weights, w3.weights)
-    portfolio.rebalance_weights = w1.weights
+    portfolio.rebalance.w = w1.weights
     w14 = optimise2!(portfolio; obj = Util(; l = l))
     w15 = optimise2!(portfolio; obj = SR(; rf = rf))
     w16 = optimise2!(portfolio; obj = MaxRet())
@@ -77,21 +73,22 @@ TrackWeight()
     @test !isapprox(w16.weights, w1.weights)
     @test !isapprox(w16.weights, w4.weights)
 
-    portfolio.rebalance = [0.0005174248858061537, 0.0001378289720696607,
-                           1.182008035855453e-5, 0.0009118233964947257,
-                           0.0008043804574686568, 0.0005568104999737413,
-                           0.0001433167617425195, 0.0008152431443894213,
-                           0.0006805053356229013, 8.922295760840915e-5,
-                           0.0008525847915972609, 0.0009046977862414844,
-                           0.0009820771255260512, 0.0005494961009926494,
-                           3.971977944267568e-5, 0.0006942164994964002,
-                           0.000742647266054625, 0.0004077250418932119,
-                           0.00031612114608380824, 0.00028833648463458153]
-    portfolio.rebalance_weights = w3.weights
+    portfolio.rebalance = TR(;
+                             val = [0.0005174248858061537, 0.0001378289720696607,
+                                    1.182008035855453e-5, 0.0009118233964947257,
+                                    0.0008043804574686568, 0.0005568104999737413,
+                                    0.0001433167617425195, 0.0008152431443894213,
+                                    0.0006805053356229013, 8.922295760840915e-5,
+                                    0.0008525847915972609, 0.0009046977862414844,
+                                    0.0009820771255260512, 0.0005494961009926494,
+                                    3.971977944267568e-5, 0.0006942164994964002,
+                                    0.000742647266054625, 0.0004077250418932119,
+                                    0.00031612114608380824, 0.00028833648463458153],
+                             w = w3.weights)
     w13 = optimise2!(portfolio; obj = MinRisk())
     @test !isapprox(w13.weights, w3.weights)
     @test !isapprox(w13.weights, w1.weights)
-    portfolio.rebalance_weights = w1.weights
+    portfolio.rebalance.w = w1.weights
     w14 = optimise2!(portfolio; obj = Util(; l = l))
     w15 = optimise2!(portfolio; obj = SR(; rf = rf))
     w16 = optimise2!(portfolio; obj = MaxRet())
@@ -102,8 +99,10 @@ TrackWeight()
     @test !isapprox(w16.weights, w1.weights)
     @test !isapprox(w16.weights, w4.weights)
 
-    @test_throws AssertionError portfolio.rebalance = 1:19
-    @test_throws AssertionError portfolio.rebalance = 1:21
+    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:19)
+    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:21)
+    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:19)
+    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:21)
 end
 
 @testset "Turnover" begin
@@ -116,40 +115,38 @@ end
     w1 = optimise2!(portfolio; obj = SR(; rf = rf))
     to1 = 0.05
     tow1 = copy(w1.weights)
-    portfolio.turnover = to1
-    portfolio.turnover_weights = tow1
+    portfolio.turnover = TR(; val = to1, w = tow1)
     w2 = optimise2!(portfolio; obj = MinRisk())
     @test all(abs.(w2.weights - tow1) .<= to1)
 
-    portfolio.turnover = Inf
+    portfolio.turnover = NoTR()
     w3 = optimise2!(portfolio; obj = MinRisk())
     to2 = 0.031
     tow2 = copy(w3.weights)
-    portfolio.turnover = to2
-    portfolio.turnover_weights = tow2
+    portfolio.turnover = TR(; val = to2, w = tow2)
     w4 = optimise2!(portfolio; obj = SR(; rf = rf))
     @test all(abs.(w4.weights - tow2) .<= to2)
 
-    portfolio.turnover = Inf
+    portfolio.turnover = NoTR()
     w5 = optimise2!(portfolio; obj = SR(; rf = rf))
     to3 = range(; start = 0.001, stop = 0.003, length = 20)
     tow3 = copy(w5.weights)
-    portfolio.turnover = to3
-    portfolio.turnover_weights = tow3
+    portfolio.turnover = TR(; val = to3, w = tow3)
     w6 = optimise2!(portfolio; obj = MinRisk())
     @test all(abs.(w6.weights - tow3) .<= to3)
 
-    portfolio.turnover = Inf
+    portfolio.turnover = NoTR()
     w7 = optimise2!(portfolio; obj = MinRisk())
     to4 = 0.031
     tow4 = copy(w7.weights)
-    portfolio.turnover = to4
-    portfolio.turnover_weights = tow4
+    portfolio.turnover = TR(; val = to4, w = tow4)
     w8 = optimise2!(portfolio; obj = SR(; rf = rf))
     @test all(abs.(w8.weights - tow4) .<= to2)
 
-    @test_throws AssertionError portfolio.turnover = 1:19
-    @test_throws AssertionError portfolio.turnover = 1:21
+    @test_throws AssertionError portfolio.turnover = TR(; val = 1:19)
+    @test_throws AssertionError portfolio.turnover = TR(; val = 1:21)
+    @test_throws AssertionError portfolio.turnover = TR(; w = 1:19)
+    @test_throws AssertionError portfolio.turnover = TR(; w = 1:21)
 end
 
 @testset "Tracking" begin
@@ -194,6 +191,8 @@ end
 
     @test_throws AssertionError portfolio.tracking_err = TrackRet(; e = te2, w = 1:(T - 1))
     @test_throws AssertionError portfolio.tracking_err = TrackRet(; e = te2, w = 1:(T + 1))
+
+    portfolio.tracking_err = TrackRet(; e = te2, w = 1:T)
 end
 
 @testset "Min and max number of effective assets" begin

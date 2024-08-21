@@ -95,11 +95,19 @@ end
 abstract type TrackingErr end
 struct NoTracking <: TrackingErr end
 @kwdef mutable struct TrackWeight{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
-    e::T1 = 0.0
+    err::T1 = 0.0
     w::T2 = Vector{Float64}(undef, 0)
 end
 @kwdef mutable struct TrackRet{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
-    e::T1 = 0.0
+    err::T1 = 0.0
+    w::T2 = Vector{Float64}(undef, 0)
+end
+
+abstract type AbstractTR end
+struct NoTR <: AbstractTR end
+@kwdef mutable struct TR{T1 <: Union{<:Real, <:AbstractVector{<:Real}},
+                         T2 <: AbstractVector{<:Real}} <: AbstractTR
+    val::T1 = 0.0
     w::T2 = Vector{Float64}(undef, 0)
 end
 
@@ -904,12 +912,16 @@ Only relevant when `type == :WC`.
   - `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation.
 """
 mutable struct Portfolio2{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
-                          msvt, lpmt, ai, a, as, bi, b, bs, k, mnak, mnaks,
+                          #   msvt, lpmt, ai, a, as, bi, b, bs, k, 
+                          mnak, mnaks,
                           ######
                           #   skewf, sskewf,
                           ######
-                          rb, rbw, to, tobw, kte, blbw, ami, bvi, rbv, frbv, nm, amc, bvc,
-                          ler,
+                          rb,
+                          #   rbw, 
+                          to,
+                          #   tobw, 
+                          kte, blbw, ami, bvi, rbv, frbv, nm, amc, bvc, ler,
                           ######
                           #   ud, umad, usd, ucvar, urcvar, uevar, urvar,
                           #   uwr, ur, uflpm, uslpm, umd, uad, ucdar, uuci, uedar, urdar, uk,
@@ -934,23 +946,23 @@ mutable struct Portfolio2{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tr
     f_returns::tretf
     loadings::l
     loadings_opt::lo
-    msv_target::msvt
-    lpm_target::lpmt
-    alpha_i::ai
-    alpha::a
-    a_sim::as
-    beta_i::bi
-    beta::b
-    b_sim::bs
-    kappa::k
+    # msv_target::msvt
+    # lpm_target::lpmt
+    # alpha_i::ai
+    # alpha::a
+    # a_sim::as
+    # beta_i::bi
+    # beta::b
+    # b_sim::bs
+    # kappa::k
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
     # skew_factor::skewf
     # sskew_factor::sskewf
     rebalance::rb
-    rebalance_weights::rbw
+    # rebalance_weights::rbw
     turnover::to
-    turnover_weights::tobw
+    # turnover_weights::tobw
     tracking_err::kte
     bl_bench_weights::blbw
     a_mtx_ineq::ami
@@ -1293,17 +1305,18 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                     f_assets::AbstractVector = Vector{String}(undef, 0),
                     loadings::DataFrame = DataFrame(),
                     loadings_opt::Union{<:LoadingsOpt, <:RegressionType, Nothing} = nothing,
-                    msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
-                    lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
-                    alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
-                    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
-                    kappa::Real = 0.3, max_num_assets_kurt::Integer = 0,
+                    # msv_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
+                    # lpm_target::Union{<:Real, AbstractVector{<:Real}} = Inf,
+                    # alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
+                    # beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
+                    # kappa::Real = 0.3, 
+                    max_num_assets_kurt::Integer = 0,
                     max_num_assets_kurt_scale::Integer = 2,
                     # skew_factor::Real = Inf,                    sskew_factor::Real = Inf,
-                    rebalance::Union{<:Real, <:AbstractVector{<:Real}} = Inf,
-                    rebalance_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                    turnover::Union{<:Real, <:AbstractVector{<:Real}} = Inf,
-                    turnover_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                    rebalance::AbstractTR = NoTR(),
+                    # rebalance_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                    turnover::AbstractTR = NoTR(),
+                    # turnover_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                     tracking_err::TrackingErr = NoTracking(),
                     bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                     a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -1391,38 +1404,42 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
     @smart_assert(num_assets_l >= zero(num_assets_l))
     @smart_assert(num_assets_u >= zero(num_assets_u))
     @smart_assert(num_assets_u_scale >= zero(num_assets_u_scale))
-    @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
-    @smart_assert(a_sim > zero(a_sim))
-    @smart_assert(zero(beta) < beta_i < beta < one(beta))
-    @smart_assert(b_sim > zero(b_sim))
-    @smart_assert(zero(kappa) < kappa < one(kappa))
+    # @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
+    # @smart_assert(a_sim > zero(a_sim))
+    # @smart_assert(zero(beta) < beta_i < beta < one(beta))
+    # @smart_assert(b_sim > zero(b_sim))
+    # @smart_assert(zero(kappa) < kappa < one(kappa))
     @smart_assert(max_num_assets_kurt >= zero(max_num_assets_kurt))
     max_num_assets_kurt_scale = clamp(max_num_assets_kurt_scale, 1, size(returns, 2))
-    if isa(rebalance, AbstractVector) && !isempty(rebalance)
-        @smart_assert(length(rebalance) == size(returns, 2) &&
-                      all(rebalance .>= zero(rebalance)))
-    elseif isa(rebalance, Real)
-        @smart_assert(rebalance >= zero(rebalance))
+    if isa(rebalance, TR)
+        if isa(rebalance.val, Real)
+            @smart_assert(rebalance.val >= zero(rebalance.val))
+        elseif isa(rebalance.val, AbstractVector) && !isempty(rebalance.val)
+            @smart_assert(length(rebalance.val) == size(returns, 2) &&
+                          all(rebalance.val .>= zero(rebalance.val)))
+        end
+        if !isempty(rebalance.w)
+            @smart_assert(length(rebalance.w) == size(returns, 2))
+        end
     end
-    if !isempty(rebalance_weights)
-        @smart_assert(length(rebalance_weights) == size(returns, 2))
-    end
-    if isa(turnover, AbstractVector) && !isempty(turnover)
-        @smart_assert(length(turnover) == size(returns, 2) &&
-                      all(turnover .>= zero(turnover)))
-    elseif isa(turnover, Real)
-        @smart_assert(turnover >= zero(turnover))
-    end
-    if !isempty(turnover_weights)
-        @smart_assert(length(turnover_weights) == size(returns, 2))
+    if isa(turnover, TR)
+        if isa(turnover.val, Real)
+            @smart_assert(turnover.val >= zero(turnover.val))
+        elseif isa(turnover.val, AbstractVector) && !isempty(turnover.val)
+            @smart_assert(length(turnover.val) == size(returns, 2) &&
+                          all(turnover.val .>= zero(turnover.val)))
+        end
+        if !isempty(turnover.w)
+            @smart_assert(length(turnover.w) == size(returns, 2))
+        end
     end
     if isa(tracking_err, TrackWeight)
         @smart_assert(length(tracking_err.w) == size(returns, 2))
-        @smart_assert(length(tracking_err.e) >= zero(tracking_err.e))
+        @smart_assert(length(tracking_err.err) >= zero(tracking_err.err))
     end
     if isa(tracking_err, TrackRet)
         @smart_assert(length(tracking_err.w) == size(returns, 1))
-        @smart_assert(length(tracking_err.e) >= zero(tracking_err.e))
+        @smart_assert(length(tracking_err.err) >= zero(tracking_err.err))
     end
     if !isempty(bl_bench_weights)
         @smart_assert(length(bl_bench_weights) == size(returns, 2))
@@ -1535,17 +1552,16 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                       typeof(num_assets_u), typeof(num_assets_u_scale), typeof(f_assets),
                       typeof(f_timestamps), typeof(f_returns), typeof(loadings),
                       Union{<:LoadingsOpt, <:RegressionType, Nothing},
-                      Union{<:Real, <:AbstractVector{<:Real}},
-                      Union{<:Real, <:AbstractVector{<:Real}}, typeof(alpha_i),
-                      typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
-                      typeof(b_sim), typeof(kappa), typeof(max_num_assets_kurt),
-                      typeof(max_num_assets_kurt_scale),
+                      #   Union{<:Real, <:AbstractVector{<:Real}},
+                      #   Union{<:Real, <:AbstractVector{<:Real}}, typeof(alpha_i),
+                      #   typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
+                      #   typeof(b_sim), typeof(kappa), 
+                      typeof(max_num_assets_kurt), typeof(max_num_assets_kurt_scale),
                       #   typeof(skew_factor),typeof(sskew_factor), 
-                      Union{<:Real, <:AbstractVector{<:Real}}, typeof(rebalance_weights),
-                      Union{<:Real, <:AbstractVector{<:Real}}, typeof(turnover_weights),
-                      TrackingErr, typeof(bl_bench_weights), typeof(a_mtx_ineq),
-                      typeof(b_vec_ineq), typeof(risk_budget), typeof(f_risk_budget),
-                      NetworkMethods2, typeof(a_vec_cent), typeof(b_cent), typeof(mu_l),
+                      AbstractTR, AbstractTR, TrackingErr, typeof(bl_bench_weights),
+                      typeof(a_mtx_ineq), typeof(b_vec_ineq), typeof(risk_budget),
+                      typeof(f_risk_budget), NetworkMethods2, typeof(a_vec_cent),
+                      typeof(b_cent), typeof(mu_l),
                       #######
                       #   typeof(sd_u), typeof(mad_u), typeof(ssd_u), typeof(cvar_u),
                       #   typeof(rcvar_u), typeof(evar_u), typeof(rvar_u), typeof(wr_u),
@@ -1569,16 +1585,16 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                       typeof(alloc_model)}(assets, timestamps, returns, short, short_u,
                                            long_u, num_assets_l, num_assets_u,
                                            num_assets_u_scale, f_assets, f_timestamps,
-                                           f_returns, loadings, loadings_opt, msv_target,
-                                           lpm_target, alpha_i, alpha, a_sim, beta_i, beta,
-                                           b_sim, kappa, max_num_assets_kurt,
-                                           max_num_assets_kurt_scale,
+                                           f_returns, loadings, loadings_opt,
+                                           #    msv_target,
+                                           #    lpm_target, alpha_i, alpha, a_sim, beta_i, beta,
+                                           #    b_sim, kappa, 
+                                           max_num_assets_kurt, max_num_assets_kurt_scale,
                                            #    skew_factor, sskew_factor, 
-                                           rebalance, rebalance_weights, turnover,
-                                           turnover_weights, tracking_err, bl_bench_weights,
-                                           a_mtx_ineq, b_vec_ineq, risk_budget,
-                                           f_risk_budget, network_method, a_vec_cent,
-                                           b_cent, mu_l,
+                                           rebalance, turnover, tracking_err,
+                                           bl_bench_weights, a_mtx_ineq, b_vec_ineq,
+                                           risk_budget, f_risk_budget, network_method,
+                                           a_vec_cent, b_cent, mu_l,
                                            ######
                                            #    sd_u, mad_u, ssd_u, cvar_u,
                                            #    rcvar_u, evar_u, rvar_u,
@@ -1602,72 +1618,59 @@ end
 function Base.getproperty(obj::Portfolio2, sym::Symbol)
     if sym == :sum_short_long
         obj.short ? obj.long_u - obj.short_u : one(eltype(obj.returns))
-    elseif sym == :at
-        obj.alpha * size(obj.returns, 1)
-    elseif sym == :invat
-        one(typeof(obj.at)) / (obj.at)
-    elseif sym == :ln_k
-        (obj.invat^obj.kappa - obj.invat^(-obj.kappa)) / (2 * obj.kappa)
-    elseif sym == :bt
-        obj.beta * size(obj.returns, 1)
-    elseif sym == :invbt
-        one(typeof(obj.bt)) / (obj.bt)
-    elseif sym == :ln_kb
-        (obj.invbt^obj.kappa - obj.invbt^(-obj.kappa)) / (2 * obj.kappa)
-    elseif sym == :omk
-        one(typeof(obj.kappa)) - obj.kappa
-    elseif sym == :opk
-        one(typeof(obj.kappa)) + obj.kappa
-    elseif sym == :invk2
-        one(typeof(obj.kappa)) / (2 * obj.kappa)
-    elseif sym == :invk
-        one(typeof(obj.kappa)) / obj.kappa
-    elseif sym == :invopk
-        one(typeof(obj.kappa)) / obj.opk
-    elseif sym == :invomk
-        one(typeof(obj.kappa)) / obj.omk
+        # elseif sym == :at
+        #     obj.alpha * size(obj.returns, 1)
+        # elseif sym == :invat
+        #     one(typeof(obj.at)) / (obj.at)
+        # elseif sym == :ln_k
+        #     (obj.invat^obj.kappa - obj.invat^(-obj.kappa)) / (2 * obj.kappa)
+        # elseif sym == :bt
+        #     obj.beta * size(obj.returns, 1)
+        # elseif sym == :invbt
+        #     one(typeof(obj.bt)) / (obj.bt)
+        # elseif sym == :ln_kb
+        #     (obj.invbt^obj.kappa - obj.invbt^(-obj.kappa)) / (2 * obj.kappa)
+        # elseif sym == :omk
+        #     one(typeof(obj.kappa)) - obj.kappa
+        # elseif sym == :opk
+        #     one(typeof(obj.kappa)) + obj.kappa
+        # elseif sym == :invk2
+        #     one(typeof(obj.kappa)) / (2 * obj.kappa)
+        # elseif sym == :invk
+        #     one(typeof(obj.kappa)) / obj.kappa
+        # elseif sym == :invopk
+        #     one(typeof(obj.kappa)) / obj.opk
+        # elseif sym == :invomk
+        #     one(typeof(obj.kappa)) / obj.omk
     else
         getfield(obj, sym)
     end
 end
 
 function Base.setproperty!(obj::Portfolio2, sym::Symbol, val)
-    if sym == :alpha_i
-        @smart_assert(zero(val) < val < obj.alpha < one(val))
-    elseif sym == :alpha
-        @smart_assert(zero(val) < obj.alpha_i < val < one(val))
-    elseif sym == :a_sim
-        @smart_assert(val > zero(val))
-    elseif sym == :beta
-        @smart_assert(zero(val) < obj.beta_i < val < one(val))
-    elseif sym == :beta_i
-        @smart_assert(zero(val) < val < obj.beta < one(val))
-    elseif sym == :b_sim
-        @smart_assert(val > zero(val))
-    elseif sym == :kappa
-        @smart_assert(zero(val) < val < one(val))
-    elseif sym == :max_num_assets_kurt
+    if sym == :max_num_assets_kurt
         @smart_assert(val >= zero(val))
     elseif sym == :max_num_assets_kurt_scale
         val = clamp(val, 1, size(obj.returns, 2))
     elseif sym ∈ (:rebalance, :turnover)
-        if isa(val, AbstractVector) && !isempty(val)
-            @smart_assert(length(val) == size(obj.returns, 2) && all(val .>= zero(val)))
-        elseif isa(val, Real)
-            @smart_assert(val >= zero(val))
+        if isa(val, TR)
+            if isa(val.val, Real)
+                @smart_assert(val.val >= zero(val.val))
+            elseif isa(val.val, AbstractVector) && !isempty(val.val)
+                @smart_assert(length(val.val) == size(obj.returns, 2) &&
+                              all(val.val .>= zero(val.val)))
+            end
+            if !isempty(val.w)
+                @smart_assert(length(val.w) == size(obj.returns, 2))
+            end
         end
-    elseif sym ∈ (:rebalance_weights, :turnover_weights)
-        if !isempty(val)
-            @smart_assert(length(val) == size(obj.returns, 2))
-        end
-        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :tracking_err
         if isa(val, TrackWeight)
             @smart_assert(length(val.w) == size(obj.returns, 2))
-            @smart_assert(val.e >= zero(val.e))
+            @smart_assert(val.err >= zero(val.err))
         elseif isa(val, TrackRet)
             @smart_assert(length(val.w) == size(obj.returns, 1))
-            @smart_assert(val.e >= zero(val.e))
+            @smart_assert(val.err >= zero(val.err))
         end
     elseif sym == :a_mtx_ineq
         if !isempty(val)
@@ -1773,20 +1776,20 @@ function Base.deepcopy(obj::Portfolio2)
                       typeof(obj.num_assets_u_scale), typeof(obj.f_assets),
                       typeof(obj.f_timestamps), typeof(obj.f_returns), typeof(obj.loadings),
                       Union{<:LoadingsOpt, <:RegressionType, Nothing},
-                      Union{<:Real, <:AbstractVector{<:Real}},
-                      Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.alpha_i),
-                      typeof(obj.alpha), typeof(obj.a_sim), typeof(obj.beta_i),
-                      typeof(obj.beta), typeof(obj.b_sim), typeof(obj.kappa),
+                      #   Union{<:Real, <:AbstractVector{<:Real}},
+                      #   Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.alpha_i),
+                      #   typeof(obj.alpha), typeof(obj.a_sim), typeof(obj.beta_i),
+                      #   typeof(obj.beta), typeof(obj.b_sim), typeof(obj.kappa),
                       typeof(obj.max_num_assets_kurt),
                       typeof(obj.max_num_assets_kurt_scale),
                       #   typeof(obj.skew_factor), typeof(obj.sskew_factor), 
-                      Union{<:Real, <:AbstractVector{<:Real}},
-                      typeof(obj.rebalance_weights),
-                      Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.turnover_weights),
-                      TrackingErr, typeof(obj.bl_bench_weights), typeof(obj.a_mtx_ineq),
-                      typeof(obj.b_vec_ineq), typeof(obj.risk_budget),
-                      typeof(obj.f_risk_budget), NetworkMethods2, typeof(obj.a_vec_cent),
-                      typeof(obj.b_cent), typeof(obj.mu_l),
+                      #   Union{<:Real, <:AbstractVector{<:Real}},
+                      AbstractTR,
+                      #   Union{<:Real, <:AbstractVector{<:Real}}, 
+                      AbstractTR, TrackingErr, typeof(obj.bl_bench_weights),
+                      typeof(obj.a_mtx_ineq), typeof(obj.b_vec_ineq),
+                      typeof(obj.risk_budget), typeof(obj.f_risk_budget), NetworkMethods2,
+                      typeof(obj.a_vec_cent), typeof(obj.b_cent), typeof(obj.mu_l),
                       ######
                       #   typeof(obj.sd_u), typeof(obj.mad_u), typeof(obj.ssd_u),
                       #   typeof(obj.cvar_u), typeof(obj.rcvar_u), typeof(obj.evar_u),
@@ -1824,20 +1827,20 @@ function Base.deepcopy(obj::Portfolio2)
                                                deepcopy(obj.f_returns),
                                                deepcopy(obj.loadings),
                                                deepcopy(obj.loadings_opt),
-                                               deepcopy(obj.msv_target),
-                                               deepcopy(obj.lpm_target),
-                                               deepcopy(obj.alpha_i), deepcopy(obj.alpha),
-                                               deepcopy(obj.a_sim), deepcopy(obj.beta_i),
-                                               deepcopy(obj.beta), deepcopy(obj.b_sim),
-                                               deepcopy(obj.kappa),
+                                               #    deepcopy(obj.msv_target),
+                                               #    deepcopy(obj.lpm_target),
+                                               #    deepcopy(obj.alpha_i), deepcopy(obj.alpha),
+                                               #    deepcopy(obj.a_sim), deepcopy(obj.beta_i),
+                                               #    deepcopy(obj.beta), deepcopy(obj.b_sim),
+                                               #    deepcopy(obj.kappa),
                                                deepcopy(obj.max_num_assets_kurt),
                                                deepcopy(obj.max_num_assets_kurt_scale),
                                                #    deepcopy(obj.skew_factor),
                                                #    deepcopy(obj.sskew_factor),
                                                deepcopy(obj.rebalance),
-                                               deepcopy(obj.rebalance_weights),
+                                               #    deepcopy(obj.rebalance_weights),
                                                deepcopy(obj.turnover),
-                                               deepcopy(obj.turnover_weights),
+                                               #    deepcopy(obj.turnover_weights),
                                                deepcopy(obj.tracking_err),
                                                deepcopy(obj.bl_bench_weights),
                                                deepcopy(obj.a_mtx_ineq),
@@ -2527,4 +2530,5 @@ end
 
 export Portfolio2, HCPortfolio2, NoKelly, AKelly, EKelly, MinRisk, Util, SR, MaxRet, Trad2,
        RP2, NoRRP, RegRRP, RegPenRRP, RRP2, WC2, QuadSD, SOCSD, SimpleSD, RetType, WCBox,
-       WCEllipse, NoWC, TrackingErr, NoTracking, TrackWeight, TrackRet, NoNtwk, SDP2, IP2
+       WCEllipse, NoWC, TrackingErr, NoTracking, TrackWeight, TrackRet, NoNtwk, SDP2, IP2,
+       NoTR, TR
