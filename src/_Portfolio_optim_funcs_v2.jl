@@ -2260,6 +2260,7 @@ function _rrp_ver_constraints(::RegRRP, model, sigma)
     return nothing
 end
 function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
+    G = sqrt(sigma)
     @variable(model, rho)
     @constraint(model, [2 * model[:psi]; 2 * G * model[:w]; -2 * rho] ∈ SecondOrderCone())
     theta = Diagonal(sqrt.(diag(sigma)))
