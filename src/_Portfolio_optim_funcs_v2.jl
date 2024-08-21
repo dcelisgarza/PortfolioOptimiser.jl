@@ -1822,6 +1822,7 @@ function setup_tracking_err_constraints(::NoTracking, args...)
     return nothing
 end
 function _tracking_err_constraints(::Any, model, returns, tracking_err, benchmark)
+    T = size(returns, 1)
     @variable(model, t_track_err >= 0)
     @expression(model, track_err, returns * model[:w] .- benchmark)
     @constraint(model, [t_track_err; track_err] ∈ SecondOrderCone())
@@ -1829,6 +1830,7 @@ function _tracking_err_constraints(::Any, model, returns, tracking_err, benchmar
     return nothing
 end
 function _tracking_err_constraints(::SR, model, returns, tracking_err, benchmark)
+    T = size(returns, 1)
     @variable(model, t_track_err >= 0)
     @expression(model, track_err, returns * model[:w] .- benchmark * model[:k])
     @constraint(model, [t_track_err; track_err] ∈ SecondOrderCone())
@@ -2068,7 +2070,7 @@ function _optimise!(::Trad2, port::Portfolio2, rm::Union{AbstractVector, <:TradR
     weight_constraints(port, obj)
     num_assets_constraints(port, obj)
     network_constraints(port, port.network_method, obj, Trad2())
-    tracking_err_constraints(port.tracking_err, port, returns, obj)
+    tracking_err_constraints(port.kind_tracking_err, port, returns, obj)
     turnover_constraints(port, obj)
     rebalance_constraints(port, obj)
     objective_function(port, obj, Trad2(), class, kelly)

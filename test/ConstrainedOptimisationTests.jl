@@ -5,7 +5,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "Rebalance constraints" begin
+@testset "Rebalance" begin
     portfolio = Portfolio2(; prices = prices,
                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                             :params => Dict("verbose" => false,
@@ -101,6 +101,107 @@ l = 2.0
     @test !isapprox(w16.weights, w1.weights)
     @test !isapprox(w16.weights, w4.weights)
 
-    @test_throws AssertionError portfolio.rebalance = rand(19)
-    @test_throws AssertionError portfolio.rebalance = rand(21)
+    @test_throws AssertionError portfolio.rebalance = 1:19
+    @test_throws AssertionError portfolio.rebalance = 1:21
+end
+
+@testset "Turnover" begin
+    portfolio = Portfolio2(; prices = prices,
+                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                            :params => Dict("verbose" => false,
+                                                                            "max_step_fraction" => 0.75))))
+    asset_statistics2!(portfolio)
+
+    w1 = optimise2!(portfolio; obj = SR(; rf = rf))
+    to1 = 0.05
+    tow1 = copy(w1.weights)
+    portfolio.turnover = to1
+    portfolio.turnover_weights = tow1
+    w2 = optimise2!(portfolio; obj = MinRisk())
+    @test all(abs.(w2.weights - tow1) .<= to1)
+
+    portfolio.turnover = Inf
+    w3 = optimise2!(portfolio; obj = MinRisk())
+    to2 = 0.031
+    tow2 = copy(w3.weights)
+    portfolio.turnover = to2
+    portfolio.turnover_weights = tow2
+    w4 = optimise2!(portfolio; obj = SR(; rf = rf))
+    @test all(abs.(w4.weights - tow2) .<= to2)
+
+    portfolio.turnover = Inf
+    w5 = optimise2!(portfolio; obj = SR(; rf = rf))
+    to3 = range(; start = 0.001, stop = 0.003, length = 20)
+    tow3 = copy(w5.weights)
+    portfolio.turnover = to3
+    portfolio.turnover_weights = tow3
+    w6 = optimise2!(portfolio; obj = MinRisk())
+    @test all(abs.(w6.weights - tow3) .<= to3)
+
+    portfolio.turnover = Inf
+    w7 = optimise2!(portfolio; obj = MinRisk())
+    to4 = 0.031
+    tow4 = copy(w7.weights)
+    portfolio.turnover = to4
+    portfolio.turnover_weights = tow4
+    w8 = optimise2!(portfolio; obj = SR(; rf = rf))
+    @test all(abs.(w8.weights - tow4) .<= to2)
+
+    @test_throws AssertionError portfolio.turnover = 1:19
+    @test_throws AssertionError portfolio.turnover = 1:21
+end
+
+@testset "Tracking" begin
+    portfolio = Portfolio2(; prices = prices,
+                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                            :params => Dict("verbose" => false,
+                                                                            "max_step_fraction" => 0.75))))
+    asset_statistics2!(portfolio)
+    T = size(portfolio.returns, 1)
+
+    w1 = optimise2!(portfolio; obj = SR(; rf = rf))
+    te1 = 0.0005
+    tw1 = copy(w1.weights)
+    portfolio.kind_tracking_err = TrackWeight()
+    portfolio.tracking_err = te1
+    portfolio.tracking_err_weights = tw1
+    w2 = optimise2!(portfolio; obj = MinRisk())
+    @test norm(portfolio.returns * (w2.weights - tw1), 2) / sqrt(T - 1) <= te1
+
+    w3 = optimise2!(portfolio; obj = MinRisk())
+    te2 = 0.0003
+    tw2 = copy(w3.weights)
+    portfolio.kind_tracking_err = TrackWeight()
+    portfolio.tracking_err = te2
+    portfolio.tracking_err_weights = tw2
+    w4 = optimise2!(portfolio; obj = SR(; rf = rf))
+    @test norm(portfolio.returns * (w4.weights - tw2), 2) / sqrt(T - 1) <= te2
+
+    @test_throws AssertionError portfolio.tracking_err_weights = 1:19
+    @test_throws AssertionError portfolio.tracking_err_weights = 1:21
+
+    portfolio.tracking_err = Inf
+    w5 = optimise2!(portfolio; obj = SR(; rf = rf))
+    te3 = 0.007
+    tw3 = copy(w5.weights)
+    portfolio.kind_tracking_err = TrackRet()
+    portfolio.tracking_err = te3
+    tw3 = vec(mean(portfolio.returns; dims = 2))
+    portfolio.tracking_err_returns = tw3
+    w6 = optimise2!(portfolio; obj = MinRisk())
+    @test norm(portfolio.returns * w6.weights - tw3, 2) / sqrt(T - 1) <= te3
+
+    portfolio.tracking_err = Inf
+    w7 = optimise2!(portfolio; obj = MinRisk())
+    te4 = 0.0024
+    tw4 = copy(w7.weights)
+    portfolio.kind_tracking_err = TrackRet()
+    portfolio.tracking_err = te4
+    tw4 = vec(mean(portfolio.returns; dims = 2))
+    portfolio.tracking_err_returns = tw4
+    w8 = optimise2!(portfolio; obj = SR(; rf = rf))
+    @test norm(portfolio.returns * w8.weights - tw4, 2) / sqrt(T - 1) <= te4
+
+    @test_throws AssertionError portfolio.tracking_err_returns = 1:(T - 1)
+    @test_throws AssertionError portfolio.tracking_err_returns = 1:(T + 1)
 end
