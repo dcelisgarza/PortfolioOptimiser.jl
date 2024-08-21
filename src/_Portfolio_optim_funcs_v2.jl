@@ -152,6 +152,21 @@ function _sdp(port, obj)
     end
     return nothing
 end
+function _sdp(::SDP2, port, obj)
+    model = port.model
+    if !haskey(model, :W)
+        N = size(port.returns, 2)
+        @variable(model, W[1:N, 1:N], Symmetric)
+        @expression(model, M1, vcat(W, transpose(model[:w])))
+        _sdp_m2(obj, model)
+        @expression(model, M3, hcat(M1, model[:M2]))
+        @constraint(model, M3 ∈ PSDCone())
+    end
+    return nothing
+end
+function _sdp(::Any, ::Any, ::Any)
+    return nothing
+end
 function num_assets_constraints(port, ::SR)
     if port.num_assets_u > 0
         N = size(port.returns, 2)
@@ -278,9 +293,8 @@ end
 function network_constraints(network::SDP2, port, obj, ::Trad2)
     _sdp(port, obj)
     @constraint(port.model, network.A .* port.model[:W] .== 0)
-    if !haskey(port.model, :sd_risk) && hasproperty(port.network_method, :penalty)
-        @expression(port.model, network_penalty,
-                    port.network_method.penalty * tr(port.model[:W]))
+    if !haskey(port.model, :sd_risk) && hasproperty(network_method, :penalty)
+        @expression(port.model, network_penalty, network.penalty * tr(port.model[:W]))
     end
     return nothing
 end
@@ -328,7 +342,7 @@ function _sd_risk(::SDP2, ::Any, model, sigma, count::Integer, idx::Integer)
     end
     return nothing
 end
-function _sd_risk(::Any, ::SOCSD, model, sigma, count::Integer, idx::Integer)
+function _sd_risk(::Union{NoNtwk, IP2}, ::SOCSD, model, sigma, count::Integer, idx::Integer)
     G = sqrt(sigma)
     if isone(count)
         @variable(model, dev)
@@ -344,7 +358,8 @@ function _sd_risk(::Any, ::SOCSD, model, sigma, count::Integer, idx::Integer)
     end
     return nothing
 end
-function _sd_risk(::Any, ::QuadSD, model, sigma, count::Integer, idx::Integer)
+function _sd_risk(::Union{NoNtwk, IP2}, ::QuadSD, model, sigma, count::Integer,
+                  idx::Integer)
     G = sqrt(sigma)
     if isone(count)
         @variable(model, dev)
@@ -360,7 +375,8 @@ function _sd_risk(::Any, ::QuadSD, model, sigma, count::Integer, idx::Integer)
     end
     return nothing
 end
-function _sd_risk(::Any, ::SimpleSD, model, sigma, count::Integer, idx::Integer)
+function _sd_risk(::Union{NoNtwk, IP2}, ::SimpleSD, model, sigma, count::Integer,
+                  idx::Integer)
     G = sqrt(sigma)
     if isone(count)
         @variable(model, dev)
@@ -403,6 +419,7 @@ function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::Objecti
     end
     model = port.model
 
+    _sdp(port.network_method, port, obj)
     _sd_risk(port.network_method, rm.formulation, model, sigma, count, idx)
     _set_sd_risk_upper_bound(port.network_method, obj, type, model, rm.settings.ub, count,
                              idx)
