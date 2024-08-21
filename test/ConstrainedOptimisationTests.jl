@@ -1,10 +1,11 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, GLPK,
       Pajarito, JuMP, Clarabel, PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+TrackWeight()
 @testset "Rebalance" begin
     portfolio = Portfolio2(; prices = prices,
                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -162,48 +163,37 @@ end
     w1 = optimise2!(portfolio; obj = SR(; rf = rf))
     te1 = 0.0005
     tw1 = copy(w1.weights)
-    portfolio.kind_tracking_err = TrackWeight()
-    portfolio.tracking_err = te1
-    portfolio.tracking_err_weights = tw1
+    portfolio.tracking_err = TrackWeight(; e = te1, w = tw1)
     w2 = optimise2!(portfolio; obj = MinRisk())
     @test norm(portfolio.returns * (w2.weights - tw1), 2) / sqrt(T - 1) <= te1
 
     w3 = optimise2!(portfolio; obj = MinRisk())
     te2 = 0.0003
     tw2 = copy(w3.weights)
-    portfolio.kind_tracking_err = TrackWeight()
-    portfolio.tracking_err = te2
-    portfolio.tracking_err_weights = tw2
+    portfolio.tracking_err = TrackWeight(; e = te2, w = tw2)
     w4 = optimise2!(portfolio; obj = SR(; rf = rf))
     @test norm(portfolio.returns * (w4.weights - tw2), 2) / sqrt(T - 1) <= te2
+    @test_throws AssertionError portfolio.tracking_err = TrackWeight(; e = te2, w = 1:19)
+    @test_throws AssertionError portfolio.tracking_err = TrackWeight(; e = te2, w = 1:21)
 
-    @test_throws AssertionError portfolio.tracking_err_weights = 1:19
-    @test_throws AssertionError portfolio.tracking_err_weights = 1:21
-
-    portfolio.tracking_err = Inf
+    portfolio.tracking_err = NoTracking()
     w5 = optimise2!(portfolio; obj = SR(; rf = rf))
     te3 = 0.007
-    tw3 = copy(w5.weights)
-    portfolio.kind_tracking_err = TrackRet()
-    portfolio.tracking_err = te3
     tw3 = vec(mean(portfolio.returns; dims = 2))
-    portfolio.tracking_err_returns = tw3
+    portfolio.tracking_err = TrackRet(; e = te3, w = tw3)
     w6 = optimise2!(portfolio; obj = MinRisk())
     @test norm(portfolio.returns * w6.weights - tw3, 2) / sqrt(T - 1) <= te3
 
-    portfolio.tracking_err = Inf
+    portfolio.tracking_err = NoTracking()
     w7 = optimise2!(portfolio; obj = MinRisk())
     te4 = 0.0024
-    tw4 = copy(w7.weights)
-    portfolio.kind_tracking_err = TrackRet()
-    portfolio.tracking_err = te4
     tw4 = vec(mean(portfolio.returns; dims = 2))
-    portfolio.tracking_err_returns = tw4
+    portfolio.tracking_err = TrackRet(; e = te4, w = tw4)
     w8 = optimise2!(portfolio; obj = SR(; rf = rf))
     @test norm(portfolio.returns * w8.weights - tw4, 2) / sqrt(T - 1) <= te4
 
-    @test_throws AssertionError portfolio.tracking_err_returns = 1:(T - 1)
-    @test_throws AssertionError portfolio.tracking_err_returns = 1:(T + 1)
+    @test_throws AssertionError portfolio.tracking_err = TrackRet(; e = te2, w = 1:(T - 1))
+    @test_throws AssertionError portfolio.tracking_err = TrackRet(; e = te2, w = 1:(T + 1))
 end
 
 @testset "Min and max number of effective assets" begin
@@ -257,7 +247,7 @@ end
     @test_throws AssertionError portfolio.num_assets_u = -1
 end
 
-@testset "Linear Constraints" begin
+@testset "Linear" begin
     portfolio = Portfolio2(; prices = prices,
                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                             :params => Dict("verbose" => false,
@@ -312,3 +302,44 @@ end
     @test_throws AssertionError portfolio.a_mtx_ineq = rand(13, 19)
     @test_throws AssertionError portfolio.a_mtx_ineq = rand(13, 21)
 end
+
+# # @testset "Network and Dendrogram" begin
+# portfolio = Portfolio2(; prices = prices,
+#                        solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+#                                                                                           "verbose" => false,
+#                                                                                           "oa_solver" => optimizer_with_attributes(GLPK.Optimizer,
+#                                                                                                                                    MOI.Silent() => true),
+#                                                                                           "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+#                                                                                                                                       "verbose" => false,
+#                                                                                                                                       "max_step_fraction" => 0.75)))))
+# asset_statistics2!(portfolio)
+
+# A = centrality_vector2(portfolio)
+# B = connection_matrix2(portfolio)
+# C = cluster_matrix2(portfolio)
+
+# rm = SD2()
+# obj = MinRisk()
+# w1 = optimise2!(portfolio; obj = obj, rm = rm)
+# wt = [0.00791850924098073, 0.030672065216453506, 0.010501402809199123, 0.027475241969187995,
+#       0.012272329269527841, 0.03339587076426262, 1.4321532289072258e-6, 0.13984297866711365,
+#       2.4081081597353397e-6, 5.114425959766348e-5, 0.2878111114337346,
+#       1.5306036912879562e-6, 1.1917690994187655e-6, 0.12525446872321966,
+#       6.630910273840812e-6, 0.015078706008184504, 8.254970801614574e-5, 0.1930993918762575,
+#       3.0369340845779798e-6, 0.11652799957572683]
+# @test isapprox(w1.weights, wt)
+
+# portfolio.a_vec_cent = A
+# portfolio.b_cent = minimum(A)
+# w2 = optimise2!(portfolio; obj = obj, rm = rm)
+# wt = [3.5426430661259544e-11, 0.07546661314221123, 0.021373033743425803,
+#       0.027539611826011074, 0.023741467255115698, 0.12266515815974924, 2.517181275812244e-6,
+#       0.22629893782442134, 3.37118211246211e-10, 0.02416530860824232,
+#       3.3950118687352606e-10, 1.742541411959769e-6, 1.5253730188343444e-6,
+#       5.304686980295978e-11, 0.024731789616991084, 3.3711966852218057e-10,
+#       7.767147353183488e-11, 0.30008056166009706, 1.171415437554966e-10, 0.1539317317710031]
+# @test isapprox(w2.weights, wt)
+
+# portfolio.network_method = IP2()
+# w3 = optimise!(portfolio, opt)
+# # end

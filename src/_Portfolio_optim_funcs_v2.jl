@@ -1854,17 +1854,16 @@ end
 function tracking_err_constraints(args...)
     return nothing
 end
-function tracking_err_constraints(::TrackWeight, port, returns, obj)
-    if !(isempty(isempty(port.tracking_err_weights)) || isinf(port.tracking_err))
-        _tracking_err_constraints(obj, port.model, returns, port.tracking_err,
-                                  returns * port.tracking_err_weights)
+function tracking_err_constraints(tracking_err::TrackWeight, port, returns, obj)
+    if !(isempty(isempty(tracking_err.w)) || isinf(tracking_err.e))
+        _tracking_err_constraints(obj, port.model, returns, tracking_err.e,
+                                  returns * tracking_err.w)
     end
     return nothing
 end
-function tracking_err_constraints(::TrackRet, port, returns, obj)
-    if !(isempty(isempty(port.tracking_err_returns)) || isinf(port.tracking_err))
-        _tracking_err_constraints(obj, port.model, returns, port.tracking_err,
-                                  port.tracking_err_returns)
+function tracking_err_constraints(tracking_err::TrackRet, port, returns, obj)
+    if !(isempty(isempty(tracking_err.w)) || isinf(tracking_err.e))
+        _tracking_err_constraints(obj, port.model, returns, tracking_err.e, tracking_err.w)
     end
     return nothing
 end
@@ -2084,7 +2083,7 @@ function _optimise!(::Trad2, port::Portfolio2, rm::Union{AbstractVector, <:TradR
     weight_constraints(port, obj)
     num_assets_constraints(port, obj)
     network_constraints(port, port.network_method, obj, Trad2())
-    tracking_err_constraints(port.kind_tracking_err, port, returns, obj)
+    tracking_err_constraints(port.tracking_err, port, returns, obj)
     turnover_constraints(port, obj)
     rebalance_constraints(port, obj)
     objective_function(port, obj, Trad2(), class, kelly)
