@@ -2268,7 +2268,7 @@ function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
 end
 function _rrp_constraints(type::RRP2, port, sigma)
     model = port.model
-
+    N = size(port.returns, 2)
     @variable(model, psi)
     @variable(model, gamma >= 0)
     @variable(model, zeta[1:N] .>= 0)
@@ -2294,7 +2294,7 @@ function rrp_constraints(type::RRP2, port, sigma)
     end
 
     _sd_risk(nothing, SOCSD(), model, sigma, 1, 1)
-    _set_sd_risk_upper_bound(nothing, MinRisk(), type, model, rm.settings.ub, 1, 1)
+    _set_sd_risk_upper_bound(nothing, MinRisk(), type, model, Inf, 1, 1)
     _rrp_constraints(type, port, sigma)
     return nothing
 end
