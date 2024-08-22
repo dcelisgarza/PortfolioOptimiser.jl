@@ -738,12 +738,12 @@ function set_rm(port::Portfolio2, rm::RVaR2, type::Union{Trad2, RP2},
     T = size(returns, 1)
     iat = inv(rm.alpha * T)
     lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
-    opk = one(typeof(rm.kappa)) + rm.kappa
-    omk = one(typeof(rm.kappa)) - rm.kappa
-    ik2 = one(typeof(rm.kappa)) / (2 * rm.kappa)
-    ik = one(typeof(rm.kappa)) / rm.kappa
-    iopk = one(typeof(rm.kappa)) / opk
-    iomk = one(typeof(rm.kappa)) / omk
+    opk = one(rm.kappa) + rm.kappa
+    omk = one(rm.kappa) - rm.kappa
+    ik2 = inv(2 * rm.kappa)
+    ik = inv(rm.kappa)
+    iopk = inv(opk)
+    iomk = inv(omk)
 
     if !haskey(model, :X)
         @expression(model, X, returns * model[:w])
@@ -924,12 +924,12 @@ function set_rm(port::Portfolio2, rm::RDaR2, type::Union{Trad2, RP2},
     T = size(returns, 1)
     iat = inv(rm.alpha * T)
     lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
-    opk = one(typeof(rm.kappa)) + rm.kappa
-    omk = one(typeof(rm.kappa)) - rm.kappa
-    ik2 = one(typeof(rm.kappa)) / (2 * rm.kappa)
-    ik = one(typeof(rm.kappa)) / rm.kappa
-    iopk = one(typeof(rm.kappa)) / opk
-    iomk = one(typeof(rm.kappa)) / omk
+    opk = one(rm.kappa) + rm.kappa
+    omk = one(rm.kappa) - rm.kappa
+    ik2 = inv(2 * rm.kappa)
+    ik = inv(rm.kappa)
+    iopk = inv(opk)
+    iomk = inv(omk)
 
     _DaR_setup(model, returns)
     if isone(count)
@@ -1203,7 +1203,7 @@ function set_rm(port::Portfolio2, rm::GMD2, type::Union{Trad2, RP2}, obj::Object
         @constraint(model, gmd_z .+ gmd_y .== vec(sum(gmd_psi; dims = 1)))
         @constraint(model, [i = 1:M, j = 1:T],
                     [-gmd_z[i] * owa_p[i], gmd_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
-                     gmd_epsilon[j, i]] ∈ MOI.PowerCone(1 / owa_p[i]))
+                     gmd_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i])))
     end
     _set_rm_risk_upper_bound(obj, type, model, gmd_risk, rm.settings.ub)
     _set_risk_expression(model, gmd_risk, rm.settings.scale, rm.settings.flag)
@@ -1260,7 +1260,7 @@ function set_rm(port::Portfolio2, rm::TG2, type::Union{Trad2, RP2}, obj::Objecti
             @constraint(model, tg_z .+ tg_y .== vec(sum(tg_psi; dims = 1)))
             @constraint(model, [i = 1:M, j = 1:T],
                         [-tg_z[i] * owa_p[i], tg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
-                         tg_epsilon[j, i]] ∈ MOI.PowerCone(1 / owa_p[i]))
+                         tg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i])))
         end
         _set_rm_risk_upper_bound(obj, type, model, tg_risk, rm.settings.ub)
         _set_risk_expression(model, tg_risk, rm.settings.scale, rm.settings.flag)
@@ -1331,7 +1331,7 @@ function set_rm(port::Portfolio2, rm::TG2, type::Union{Trad2, RP2}, obj::Objecti
             @constraint(model, [i = 1:M, j = 1:T],
                         [-model[:tg_z][i, idx] * owa_p[i],
                          model[:tg_psi][j, i, idx] * owa_p[i] / (owa_p[i] - 1),
-                         model[:tg_epsilon][j, i, idx]] ∈ MOI.PowerCone(1 / owa_p[i]))
+                         model[:tg_epsilon][j, i, idx]] ∈ MOI.PowerCone(inv(owa_p[i])))
         end
         _set_rm_risk_upper_bound(obj, type, model, model[:tg_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:tg_risk][idx], rm.settings.scale,
@@ -1394,7 +1394,7 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
             @constraint(model, rltg_z .+ rltg_y .== vec(sum(rltg_psi; dims = 1)))
             @constraint(model, [i = 1:M, j = 1:T],
                         [-rltg_z[i] * owa_p[i], rltg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
-                         rltg_epsilon[j, i]] ∈ MOI.PowerCone(1 / owa_p[i]))
+                         rltg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i])))
 
             @variable(model, rhtg_t)
             @variable(model, rhtg_nu[1:T] .>= 0)
@@ -1421,7 +1421,7 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
             @constraint(model, rhtg_z .+ rhtg_y .== vec(sum(rhtg_psi; dims = 1)))
             @constraint(model, [i = 1:M, j = 1:T],
                         [-rhtg_z[i] * owa_p[i], rhtg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
-                         rhtg_epsilon[j, i]] ∈ MOI.PowerCone(1 / owa_p[i]))
+                         rhtg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i])))
         end
         _set_rm_risk_upper_bound(obj, type, model, rtg_risk, rm.settings.ub)
         _set_risk_expression(model, rtg_risk, rm.settings.scale, rm.settings.flag)
@@ -1514,7 +1514,7 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
             @constraint(model, [i = 1:M, j = 1:T],
                         [-model[:rltg_z][i, idx] * owa_p[i],
                          model[:rltg_psi][j, i, idx] * owa_p[i] / (owa_p[i] - 1),
-                         model[:rltg_epsilon][j, i, idx]] ∈ MOI.PowerCone(1 / owa_p[i]))
+                         model[:rltg_epsilon][j, i, idx]] ∈ MOI.PowerCone(inv(owa_p[i])))
             rhtg_w = -owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim)
             rhtg_s = sum(rhtg_w)
             rhtg_l = minimum(rhtg_w)
@@ -1539,7 +1539,7 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
             @constraint(model, [i = 1:M, j = 1:T],
                         [-model[:rhtg_z][i, idx] * owa_p[i],
                          model[:rhtg_psi][j, i, idx] * owa_p[i] / (owa_p[i] - 1),
-                         model[:rhtg_epsilon][j, i, idx]] ∈ MOI.PowerCone(1 / owa_p[i]))
+                         model[:rhtg_epsilon][j, i, idx]] ∈ MOI.PowerCone(inv(owa_p[i])))
         end
         _set_rm_risk_upper_bound(obj, type, model, model[:rtg_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:rtg_risk][idx], rm.settings.scale,
@@ -1595,7 +1595,7 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
             @constraint(model, owa_z .+ owa_y .== vec(sum(owa_psi; dims = 1)))
             @constraint(model, [i = 1:M, j = 1:T],
                         [-owa_z[i] * owa_p[i], owa_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
-                         owa_epsilon[j, i]] ∈ MOI.PowerCone(1 / owa_p[i]))
+                         owa_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i])))
         end
         _set_rm_risk_upper_bound(obj, type, model, owa_risk, rm.settings.ub)
         _set_risk_expression(model, owa_risk, rm.settings.scale, rm.settings.flag)
@@ -1672,7 +1672,7 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
             @constraint(model, [i = 1:M, j = 1:T],
                         [-model[:owa_z][i, idx] * owa_p[i],
                          model[:owa_psi][j, i, idx] * owa_p[i] / (owa_p[i] - 1),
-                         model[:owa_epsilon][j, i, idx]] ∈ MOI.PowerCone(1 / owa_p[i]))
+                         model[:owa_epsilon][j, i, idx]] ∈ MOI.PowerCone(inv(owa_p[i])))
         end
         _set_rm_risk_upper_bound(obj, type, model, model[:owa_risk][idx], rm.settings.ub)
         _set_risk_expression(model, model[:owa_risk][idx], rm.settings.scale,
@@ -2227,14 +2227,15 @@ function _factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix,
 end
 function _rp_class_constraints(::Any, port)
     model = port.model
-    if !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
+    if isempty(port.risk_budget)
+        port.risk_budget = ()
+    elseif !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
         port.risk_budget ./= sum(port.risk_budget)
     end
-    rb = port.risk_budget
-    N = length(rb)
+    N = length(port.risk_budget)
     @variable(model, w[1:N])
     @variable(model, log_w[1:N])
-    @constraint(model, dot(rb, log_w) >= 1)
+    @constraint(model, dot(port.risk_budget, log_w) >= 1)
     @constraint(model, [i = 1:N], [log_w[i], 1, w[i]] ∈ MOI.ExponentialCone())
     @constraint(model, w .>= 0)
     return nothing
@@ -2253,15 +2254,14 @@ function _rp_class_constraints(class::FC2, port)
         @expression(model, w, b1 * w1)
     end
 
-    rb = port.f_risk_budget
-    if isempty(rb) || length(rb) != N_f
-        rb = port.f_risk_budget = fill(1 / N_f, N_f)
+    if isempty(port.f_risk_budget) || length(port.f_risk_budget) != N_f
+        port.f_risk_budget = fill(inv(N_f), N_f)
     elseif !isapprox(sum(port.f_risk_budget), one(eltype(port.returns)))
         port.f_risk_budget ./= sum(port.f_risk_budget)
     end
 
     @variable(model, log_w[1:N_f])
-    @constraint(model, dot(rb, log_w) >= 1)
+    @constraint(model, dot(port.f_risk_budget, log_w) >= 1)
     @constraint(model, [i = 1:N_f], [log_w[i], 1, model[:w1][i]] ∈ MOI.ExponentialCone())
     return nothing
 end
@@ -2329,7 +2329,9 @@ end
 function rrp_constraints(type::RRP2, port, sigma)
     model = port.model
     @variable(model, k)
-    if !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
+    if isempty(port.risk_budget)
+        port.risk_budget = ()
+    elseif !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
         port.risk_budget ./= sum(port.risk_budget)
     end
 
@@ -2444,8 +2446,8 @@ function efficient_frontier!(port::Portfolio2;
         ret1 = dot(mu, w1)
         ret2 = dot(mu, w2)
     else
-        ret1 = sum(log.(one(eltype(mu)) .+ returns * w1)) / size(returns, 1)
-        ret2 = sum(log.(one(eltype(mu)) .+ returns * w2)) / size(returns, 1)
+        ret1 = sum(log.(one(mu) .+ returns * w1)) / size(returns, 1)
+        ret2 = sum(log.(one(mu) .+ returns * w2)) / size(returns, 1)
     end
 
     rmi = if !isa(rm, AbstractVector)

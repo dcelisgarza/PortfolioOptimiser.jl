@@ -1710,7 +1710,7 @@ function Base.setproperty!(obj::Portfolio2, sym::Symbol, val)
     elseif sym ∈ (:risk_budget, :bl_bench_weights)
         if isempty(val)
             N = size(obj.returns, 2)
-            val = fill(one(eltype(obj.returns)) / N, N)
+            val = fill(inv(N), N)
         else
             @smart_assert(length(val) == size(obj.returns, 2))
             if sym == :risk_budget
