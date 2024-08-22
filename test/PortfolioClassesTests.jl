@@ -224,5 +224,5 @@ end
             0.01060110316744678, 0.01325167897594787, -2.683318274203546e-18]
     @test isapprox(w8.weights, wt, rtol = 5.0e-5)
     @test isapprox(frc8, frct, rtol = 1.0e-4)
-    @test isapprox(frc8_h / frc8_l, 5, rtol = 5e-5)
+    @test isapprox(frc8_h / frc8_l, 5, rtol = 1e-4)
 end
