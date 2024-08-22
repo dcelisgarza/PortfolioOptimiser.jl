@@ -1627,6 +1627,32 @@ function calc_risk_contribution(rm::RiskMeasure, w::AbstractVector;
     end
     return rc
 end
+
+function calc_factor_risk_contribution(rm::RiskMeasure, w::AbstractVector;
+                                       X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                       assets::AbstractVector = Vector{String}(undef, 0),
+                                       F::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                       f_assets::AbstractVector = Vector{String}(undef, 0),
+                                       B::DataFrame = DataFrame(),
+                                       loadings_opt::RegressionType = ForwardReg(),
+                                       V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                       SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                       delta::Real = 1e-6, kwargs...)
+    marginal_risk = calc_risk_contribution(rm, w; X = X, V = V, SV = SV, delta = delta,
+                                           marginal = true, kwargs...)
+
+    if isempty(B)
+        B = loadings_matrix(DataFrame(F, f_assets), DataFrame(X, assets), loadings_opt)
+    end
+    b1, b2, b3, B = _factors_b1_b2_b3(B, F, loadings_opt)
+
+    rc_f = (transpose(B) * w) .* (transpose(b1) * marginal_risk)
+    rc_of = sum((transpose(b2) * w) .* (transpose(b3) * marginal_risk))
+    rc_f = [rc_f; rc_of]
+
+    return rc_f
+end
+
 function sharpe_ratio(rm::RiskMeasure, w::AbstractVector;
                       mu::AbstractVector = Vector{Float64}(undef, 0),
                       X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
@@ -1646,4 +1672,4 @@ export RiskMeasure, SD2, Variance2, MAD2, SSD2, FLPM2, SLPM2, WR2, VaR2, CVaR2, 
        RVaR2, DaR2, MDD2, ADD2, CDaR2, UCI2, EDaR2, RDaR2, DaR_r2, MDD_r2, ADD_r2, CDaR_r2,
        UCI_r2, EDaR_r2, RDaR_r2, Kurt2, SKurt2, GMD2, RG2, RCVaR2, TG2, RTG2, OWA2, DVar2,
        Skew2, SSkew2, Equal2, RiskMeasureSettings, OWASettings, calc_risk_bounds,
-       calc_risk_contribution, sharpe_ratio
+       calc_risk_contribution, sharpe_ratio, calc_factor_risk_contribution
