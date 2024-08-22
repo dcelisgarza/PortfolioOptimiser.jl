@@ -1847,7 +1847,7 @@ function _optimise_portfolio(portfolio, class, type, obj, near_opt = false)
                 weights .= abs.(weights) / sum_w
             else
                 sum_w = value(model[:k])
-                sum_w = sum_w > eps() ? sum_w : 1
+                sum_w = abs(sum_w) > eps() ? sum_w : 1
                 weights .= weights / sum_w
             end
         elseif type == :RRP

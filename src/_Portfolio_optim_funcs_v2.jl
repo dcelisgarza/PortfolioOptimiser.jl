@@ -2000,7 +2000,7 @@ end
 function _cleanup_weights(port, ::Any, ::RP2, ::FC2)
     weights = value.(port.model[:w])
     sum_w = value(port.model[:k])
-    sum_w = sum_w > eps() ? sum_w : 1
+    sum_w = abs(sum_w) > eps() ? sum_w : 1
     weights .= weights / sum_w
     return weights
 end
@@ -2191,6 +2191,7 @@ function _rebuild_B(B::DataFrame, ::Any, ::Any)
 end
 function _rebuild_B(B::DataFrame, factors::AbstractMatrix,
                     regression::DimensionReductionReg)
+    B = Matrix(B[!, setdiff(names(B), ("tickers", "const"))])
     X = transpose(factors)
     X_std = StatsBase.standardize(StatsBase.ZScoreTransform, X; dims = 2)
     model = fit(regression.pcr, X_std)
@@ -2204,7 +2205,7 @@ function _rebuild_B(B::DataFrame, factors::AbstractMatrix,
 end
 function _factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix,
                            regression::RegressionType)
-    B = _rebuild_B(B, regression, factors)
+    B = _rebuild_B(B, factors, regression)
     b1 = pinv(transpose(B))
     b2 = pinv(transpose(nullspace(transpose(B))))
     b3 = pinv(transpose(b2))
@@ -2226,6 +2227,8 @@ function _rp_class_constraints(::Any, port)
     return nothing
 end
 function _rp_class_constraints(class::FC2, port)
+    model = port.model
+    N = size(port.returns, 2)
     if class.flag
         b1, b2 = _factors_b1_b2_b3(port.loadings, port.f_returns, port.loadings_opt)[1:2]
         N_f = size(b1, 2)
