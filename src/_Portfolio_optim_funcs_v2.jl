@@ -405,6 +405,12 @@ function _dev_setup(::SDP2, model, idx::Union{Nothing, Integer} = nothing)
     end
     return nothing
 end
+function _get_ntwk_method(::Trad2, port)
+    return port.network_method
+end
+function _get_ntwk_method(args...)
+    return NoNtwk()
+end
 function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction,
                 count::Integer, idx::Integer; sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
@@ -419,10 +425,10 @@ function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::Objecti
     end
     model = port.model
 
-    _sdp(port.network_method, port, obj)
-    _sd_risk(port.network_method, rm.formulation, model, sigma, count, idx)
-    _set_sd_risk_upper_bound(port.network_method, obj, type, model, rm.settings.ub, count,
-                             idx)
+    network_method = _get_ntwk_method(Trad2(), port)
+    _sdp(network_method, port, obj)
+    _sd_risk(network_method, rm.formulation, model, sigma, count, idx)
+    _set_sd_risk_upper_bound(network_method, obj, type, model, rm.settings.ub, count, idx)
     if isone(count)
         _set_risk_expression(model, model[:sd_risk], rm.settings.scale, rm.settings.flag)
     else
@@ -2331,7 +2337,7 @@ function rrp_constraints(type::RRP2, port, sigma)
         port.risk_budget ./= sum(port.risk_budget)
     end
 
-    _sd_risk(nothing, SOCSD(), model, sigma, 1, 1)
+    _sd_risk(NoNtwk(), SOCSD(), model, sigma, 1, 1)
     _set_sd_risk_upper_bound(nothing, MinRisk(), type, model, Inf, 1, 1)
     _rrp_constraints(type, port, sigma)
     return nothing

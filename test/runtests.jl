@@ -4,12 +4,12 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-@safetestset "Constraints" begin
-    include("ConstrainedOptimisationTests.jl")
-end
-
 @safetestset "RRP Optimisation" begin
     include("RRPOptimisationTests.jl")
+end
+
+@safetestset "Constraints" begin
+    include("ConstrainedOptimisationTests.jl")
 end
 
 @safetestset "WC Optimisation" begin
