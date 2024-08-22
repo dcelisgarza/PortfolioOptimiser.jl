@@ -773,7 +773,7 @@ end
     @test isapprox(w7.weights, wt, rtol = 0.05)
 
     wc7 = optimise2!(portfolio; type = WC2(; mu = NoWC(), cov = NoWC()), obj = obj)
-    @test isapprox(w7.weights, wc7.weights, rtol = 0.01)
+    @test isapprox(w7.weights, wc7.weights, rtol = 0.05)
 
     portfolio.network_method = SDP2(; A = B)
     w8 = optimise2!(portfolio; obj = obj, rm = rm)

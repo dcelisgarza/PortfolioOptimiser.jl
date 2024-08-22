@@ -1843,16 +1843,10 @@ function set_returns(obj::SR, ::EKelly, model, mu_l::Real; mu::AbstractVector,
     end
     return nothing
 end
-function return_constraints(port, obj, kelly, class::Classic2, mu, sigma, returns,
-                            kelly_approx_idx)
+function return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     set_returns(obj, kelly, port.model, port.mu_l; mu = mu, sigma = sigma,
                 returns = returns, kelly_approx_idx = kelly_approx_idx,
                 network_method = port.network_method)
-    return nothing
-end
-function return_constraints(port, obj, ::Any, ::Any, mu, sigma, returns, ::Any)
-    set_returns(obj, NoKelly(), port.model, port.mu_l; mu = mu, sigma = sigma,
-                returns = returns, network_method = port.network_method)
     return nothing
 end
 function setup_tracking_err_constraints(::NoTracking, args...)
@@ -1945,31 +1939,31 @@ function rebalance_constraints(rebalance::TR, port, obj)
     end
     return nothing
 end
-function _objective(::Trad2, ::SR, ::Classic2, ::Union{AKelly, EKelly}, model, p)
+function _objective(::Trad2, ::SR, ::Union{AKelly, EKelly}, model, p)
     @objective(model, Max, model[:ret] - p)
     return nothing
 end
-function _objective(::Trad2, ::Union{SR, MinRisk}, ::Any, ::Any, model, p)
+function _objective(::Trad2, ::Union{SR, MinRisk}, ::Any, model, p)
     @objective(model, Min, model[:risk] + p)
     return nothing
 end
-function _objective(::WC2, obj::SR, ::Any, ::Any, model, p)
-    @objective(model, Max, model[:ret] - obj.rf * model[:k] - p)
+function _objective(::WC2, obj::SR, ::Any, model, p)
+    @objective(model, Max, model[:ret] - p)
     return nothing
 end
-function _objective(::WC2, ::MinRisk, ::Any, ::Any, model, p)
+function _objective(::WC2, ::MinRisk, ::Any, model, p)
     @objective(model, Min, model[:risk] + p)
     return nothing
 end
-function _objective(::Any, obj::Util, ::Any, ::Any, model, p)
+function _objective(::Any, obj::Util, ::Any, model, p)
     @objective(model, Max, model[:ret] - obj.l * model[:risk] - p)
     return nothing
 end
-function _objective(::Any, obj::MaxRet, ::Any, ::Any, model, p)
+function _objective(::Any, obj::MaxRet, ::Any, model, p)
     @objective(model, Max, model[:ret] - p)
     return nothing
 end
-function objective_function(port, obj, ::Trad2, class, kelly)
+function objective_function(port, obj, ::Trad2, kelly)
     npf = zero(eltype(port.returns))
     if haskey(port.model, :network_penalty)
         npf = port.model[:network_penalty]
@@ -1978,15 +1972,15 @@ function objective_function(port, obj, ::Trad2, class, kelly)
     if haskey(port.model, :sum_t_rebal)
         npf = port.model[:sum_t_rebal]
     end
-    _objective(Trad2(), obj, class, kelly, port.model, npf + rbf)
+    _objective(Trad2(), obj, kelly, port.model, npf + rbf)
     return nothing
 end
-function objective_function(port, obj, type::WC2, ::Any, ::Any)
+function objective_function(port, obj, type::WC2, ::Any)
     rbf = zero(eltype(port.returns))
     if haskey(port.model, :sum_t_rebal)
         npf = port.model[:sum_t_rebal]
     end
-    _objective(type, obj, nothing, nothing, port.model, rbf)
+    _objective(type, obj, nothing, port.model, rbf)
     return nothing
 end
 function _cleanup_weights(port, ::SR, ::Union{Trad2, WC2}, ::Any)
@@ -2105,7 +2099,7 @@ function _optimise!(::Trad2, port::Portfolio2, rm::Union{AbstractVector, <:TradR
     set_sr_k(obj, model)
     kelly_approx_idx = Int[]
     risk_constraints(port, obj, Trad2(), rm, mu, sigma, returns, kelly_approx_idx)
-    return_constraints(port, obj, kelly, class, mu, sigma, returns, kelly_approx_idx)
+    return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     linear_constraints(port, obj)
     centrality_constraints(port, obj)
     weight_constraints(port, obj)
@@ -2114,7 +2108,7 @@ function _optimise!(::Trad2, port::Portfolio2, rm::Union{AbstractVector, <:TradR
     tracking_err_constraints(port.tracking_err, port, returns, obj)
     turnover_constraints(port.turnover, port, obj)
     rebalance_constraints(port.rebalance, port, obj)
-    objective_function(port, obj, Trad2(), class, kelly)
+    objective_function(port, obj, Trad2(), kelly)
     return convex_optimisation(port, obj, Trad2(), class)
 end
 function _wc_return_constraints(::WCBox, port)
@@ -2169,6 +2163,7 @@ function _wc_risk_constraints(type::NoWC, port, ::Any)
     return nothing
 end
 function _wc_sharpe_constraints(obj::SR, port)
+    add_to_expression!(port.model[:ret], -obj.rf, port.model[:k])
     @constraint(port.model, port.model[:risk] <= 1)
     return nothing
 end
@@ -2198,7 +2193,7 @@ function _optimise!(type::WC2, port::Portfolio2,
     tracking_err_constraints(port.tracking_err, port, port.returns, obj)
     turnover_constraints(port.turnover, port, obj)
     rebalance_constraints(port.rebalance, port, obj)
-    objective_function(port, obj, type, nothing, nothing)
+    objective_function(port, obj, type, nothing)
     return convex_optimisation(port, obj, type, nothing)
 end
 function _rebuild_B(B::DataFrame, ::Any, ::Any)

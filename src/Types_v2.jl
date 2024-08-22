@@ -1747,7 +1747,10 @@ function Base.setproperty!(obj::Portfolio2, sym::Symbol, val)
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns)
-        throw(ArgumentError("$sym is related to other fields and therefore cannot be manually changed without compromising correctness, please create a new instance of Portfolio2 instead"))
+        if !isempty(val) && !isempty(getfield(obj, sym))
+            @smart_assert(size(val) == size(getfield(obj, sym)))
+        end
+        # throw(ArgumentError("$sym is related to other fields and therefore cannot be manually changed without compromising correctness, please create a new instance of Portfolio2 instead"))
     elseif sym ∈ (:mu, :fm_mu, :bl_mu, :blfm_mu, :d_mu, :latest_prices)
         if !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 2))
@@ -2529,4 +2532,4 @@ end
 export Portfolio2, HCPortfolio2, NoKelly, AKelly, EKelly, MinRisk, Util, SR, MaxRet, Trad2,
        RP2, NoRRP, RegRRP, RegPenRRP, RRP2, WC2, QuadSD, SOCSD, SimpleSD, RetType, WCBox,
        WCEllipse, NoWC, TrackingErr, NoTracking, TrackWeight, TrackRet, NoNtwk, SDP2, IP2,
-       NoTR, TR, FC2, FM2, BL2, BLFM2
+       NoTR, TR, Classic2, FC2, FM2, BL2, BLFM2
