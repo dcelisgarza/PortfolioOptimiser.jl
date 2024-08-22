@@ -229,8 +229,8 @@ function weight_constraints(port, ::SR)
         @variable(model, tw_ulong[1:N] .>= 0)
         @variable(model, tw_ushort[1:N] .>= 0)
 
-        @constraint(model, sum(tw_ulong) <= long_u * model[:k])
-        @constraint(model, sum(tw_ushort) <= short_u * model[:k])
+        @constraint(model, sum(tw_ulong) <= port.long_u * model[:k])
+        @constraint(model, sum(tw_ushort) <= port.short_u * model[:k])
 
         @constraint(model, model[:w] .<= tw_ulong)
         @constraint(model, model[:w] .>= -tw_ushort)
@@ -248,8 +248,8 @@ function weight_constraints(port, ::Any)
         @variable(model, tw_ulong[1:N] .>= 0)
         @variable(model, tw_ushort[1:N] .>= 0)
 
-        @constraint(model, sum(tw_ulong) <= long_u)
-        @constraint(model, sum(tw_ushort) <= short_u)
+        @constraint(model, sum(tw_ulong) <= port.long_u)
+        @constraint(model, sum(tw_ushort) <= port.short_u)
 
         @constraint(model, model[:w] .<= tw_ulong)
         @constraint(model, model[:w] .>= -tw_ushort)

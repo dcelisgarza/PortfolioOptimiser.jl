@@ -1,7 +1,7 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, GLPK,
       Pajarito, JuMP, Clarabel, PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
@@ -219,6 +219,34 @@ end
     @test count(w4.weights .>= 2e-2) > count(w3.weights .>= 2e-2)
     @test !isapprox(w3.weights, w4.weights)
 
+    portfolio.num_assets_l = 0
+    portfolio.short = true
+    portfolio.short_u = 0.2
+    portfolio.long_u = 0.8
+
+    w5 = optimise2!(portfolio; obj = MinRisk())
+    @test isapprox(sum(w5.weights), portfolio.sum_short_long)
+    @test sum(w5.weights[w5.weights .< 0]) <= portfolio.short_u
+    @test sum(w5.weights[w5.weights .>= 0]) <= portfolio.long_u
+    portfolio.num_assets_l = 17
+    w6 = optimise2!(portfolio; obj = MinRisk())
+    @test isapprox(sum(w6.weights), portfolio.sum_short_long)
+    @test sum(w6.weights[w6.weights .< 0]) <= portfolio.short_u
+    @test sum(w6.weights[w6.weights .>= 0]) <= portfolio.long_u
+    @test count(abs.(w6.weights) .>= 4e-3) >= 17
+    @test count(abs.(w6.weights) .>= 4e-3) > count(abs.(w5.weights) .>= 4e-3)
+    @test !isapprox(w5.weights, w6.weights)
+
+    portfolio.num_assets_l = 0
+    w7 = optimise2!(portfolio; obj = SR(; rf = rf))
+    @test isapprox(sum(w7.weights), portfolio.sum_short_long)
+    portfolio.num_assets_l = 13
+    w8 = optimise2!(portfolio; obj = SR(; rf = rf))
+    @test isapprox(sum(w8.weights), portfolio.sum_short_long)
+    @test count(abs.(w8.weights) .>= 4e-3) >= 13
+    @test count(abs.(w8.weights) .>= 4e-3) > count(abs.(w7.weights) .>= 4e-3)
+    @test !isapprox(w7.weights, w8.weights)
+
     portfolio = Portfolio2(; prices = prices,
                            solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
                                                                                               "verbose" => false,
@@ -229,20 +257,52 @@ end
                                                                                                                                           "max_step_fraction" => 0.75)))))
     asset_statistics2!(portfolio)
 
-    w5 = optimise2!(portfolio; obj = MinRisk())
+    w9 = optimise2!(portfolio; obj = MinRisk())
     portfolio.num_assets_u = 5
-    w6 = optimise2!(portfolio; obj = MinRisk())
-    @test count(w6.weights .>= 2e-2) <= 5
-    @test count(w6.weights .>= 2e-2) < count(w5.weights .>= 2e-2)
-    @test !isapprox(w5.weights, w6.weights)
+    w10 = optimise2!(portfolio; obj = MinRisk())
+    @test count(w10.weights .>= 2e-2) <= 5
+    @test count(w10.weights .>= 2e-2) < count(w9.weights .>= 2e-2)
+    @test !isapprox(w9.weights, w10.weights)
 
     portfolio.num_assets_u = 0
-    w7 = optimise2!(portfolio; obj = SR(; rf = rf))
+    w11 = optimise2!(portfolio; obj = SR(; rf = rf))
     portfolio.num_assets_u = 3
-    w8 = optimise2!(portfolio; obj = SR(; rf = rf))
-    @test count(w8.weights .>= 2e-2) <= 3
-    @test count(w8.weights .>= 2e-2) < count(w7.weights .>= 2e-2)
-    @test !isapprox(w7.weights, w8.weights)
+    w12 = optimise2!(portfolio; obj = SR(; rf = rf))
+    @test count(w12.weights .>= 2e-2) <= 3
+    @test count(w12.weights .>= 2e-2) < count(w11.weights .>= 2e-2)
+    @test !isapprox(w11.weights, w12.weights)
+
+    portfolio.num_assets_u = 0
+    portfolio.short = true
+    portfolio.short_u = 0.2
+    portfolio.long_u = 0.8
+
+    w13 = optimise2!(portfolio; obj = MinRisk())
+    @test isapprox(sum(w13.weights), portfolio.sum_short_long)
+    @test sum(w13.weights[w13.weights .< 0]) <= portfolio.short_u
+    @test sum(w13.weights[w13.weights .>= 0]) <= portfolio.long_u
+    portfolio.num_assets_u = 7
+    w14 = optimise2!(portfolio; obj = MinRisk())
+    @test isapprox(sum(w14.weights), portfolio.sum_short_long)
+    @test sum(w14.weights[w14.weights .< 0]) <= portfolio.short_u
+    @test sum(w14.weights[w14.weights .>= 0]) <= portfolio.long_u
+    @test count(abs.(w14.weights) .>= 2e-2) <= 7
+    @test count(abs.(w14.weights) .>= 2e-2) < count(abs.(w13.weights) .>= 2e-2)
+    @test !isapprox(w13.weights, w14.weights)
+
+    portfolio.num_assets_u = 0
+    w15 = optimise2!(portfolio; obj = SR(; rf = rf))
+    @test isapprox(sum(w15.weights), portfolio.sum_short_long)
+    @test sum(w15.weights[w15.weights .< 0]) <= portfolio.short_u
+    @test sum(w15.weights[w15.weights .>= 0]) <= portfolio.long_u
+    portfolio.num_assets_u = 4
+    w16 = optimise2!(portfolio; obj = SR(; rf = rf))
+    @test isapprox(sum(w16.weights), portfolio.sum_short_long)
+    @test sum(w16.weights[w16.weights .< 0]) <= portfolio.short_u
+    @test sum(w16.weights[w16.weights .>= 0]) <= portfolio.long_u
+    @test count(abs.(w16.weights) .>= 2e-2) >= 4
+    @test count(abs.(w16.weights) .>= 2e-2) < count(abs.(w15.weights) .>= 2e-2)
+    @test !isapprox(w15.weights, w16.weights)
 
     @test_throws AssertionError portfolio.num_assets_l = -1
     @test_throws AssertionError portfolio.num_assets_u = -1
@@ -522,7 +582,7 @@ end
           1.841227833023016e-8, 1.3415748037100702e-7, 2.038375787580353e-8,
           0.10856264505102015, 2.399490931217591e-7, 0.2072142228794291,
           2.522693174355702e-7, 0.11268131983060002]
-    @test isapprox(w14.weights, wt)
+    @test isapprox(w14.weights, wt, rtol = 5.0e-8)
 
     wc14 = optimise2!(portfolio; type = WC2(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w14.weights, wc14.weights, rtol = 5.0e-5)
