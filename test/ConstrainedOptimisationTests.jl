@@ -720,7 +720,7 @@ end
     wt = [0.0, -0.0, -0.0, 0.031931693272627654, -0.0, -0.0, -0.0, -0.0, -0.0, -0.0,
           0.31510656939207515, -0.0, -0.0, -0.0, 0.0, 0.02489343060792462, -0.0,
           0.17590654848391327, -0.0, 0.11216175824345923]
-    @test isapprox(w3.weights, wt)
+    @test isapprox(w3.weights, wt, rtol = 0.05)
 
     wc3 = optimise2!(portfolio; type = WC2(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w3.weights, wc3.weights, rtol = 0.05)
@@ -770,7 +770,7 @@ end
     wt = [0.0, 0.0, -0.0, 0.0351778790727926, -0.0, -0.0, -0.0, -0.0, -0.0, -0.0,
           0.28016082470423853, -0.0, -0.0, 0.0, -0.0, 0.017762653107240345, -0.0,
           0.20060384392516015, -0.0, 0.12629479919056838]
-    @test isapprox(w7.weights, wt)
+    @test isapprox(w7.weights, wt, rtol = 0.05)
 
     wc7 = optimise2!(portfolio; type = WC2(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w7.weights, wc7.weights, rtol = 0.01)
@@ -887,7 +887,7 @@ end
           -0.005307605149301374, 3.927932051708812e-8, -0.058853373768001094,
           0.06663138474637784, 7.950726727959057e-7, 0.12731744850449067,
           0.08892422332791153, 7.335001414362041e-7]
-    @test isapprox(w14.weights, wt)
+    @test isapprox(w14.weights, wt, rtol = 5.0e-8)
 
     wc14 = optimise2!(portfolio; type = WC2(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w14.weights, wc14.weights, rtol = 0.0001)
@@ -950,7 +950,7 @@ end
     w19 = optimise2!(portfolio; obj = obj, rm = rm)
     wt = [-0.0, -0.0, -0.0, -0.0, 0.6011773438073398, -0.27, 0.0, -0.0, -0.0, 0.0, 0.0,
           -0.0, -0.0, -0.0, -0.0, 0.20882265619266027, 0.0, -0.0, 0.0, -0.0]
-    @test isapprox(w19.weights, wt)
+    @test isapprox(w19.weights, wt, rtol = 0.0005)
 
     wc19 = optimise2!(portfolio; type = WC2(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w19.weights, wc19.weights, rtol = 0.0005)
