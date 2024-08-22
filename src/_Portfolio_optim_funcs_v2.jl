@@ -2241,7 +2241,7 @@ function _rp_class_constraints(::Any, port)
     return nothing
 end
 function _rp_class_constraints(class::FC2, port)
-    if class.nullflag
+    if class.flag
         b1, b2 = _factors_b1_b2_b3(port.loadings, port.f_returns, port.loadings_opt)[1:2]
         N_f = size(b1, 2)
         @variable(model, w1[1:N_f])
@@ -2446,8 +2446,8 @@ function efficient_frontier!(port::Portfolio2;
         ret1 = dot(mu, w1)
         ret2 = dot(mu, w2)
     else
-        ret1 = sum(log.(one(mu) .+ returns * w1)) / size(returns, 1)
-        ret2 = sum(log.(one(mu) .+ returns * w2)) / size(returns, 1)
+        ret1 = sum(log.(one(eltype(mu)) .+ returns * w1)) / size(returns, 1)
+        ret2 = sum(log.(one(eltype(mu)) .+ returns * w2)) / size(returns, 1)
     end
 
     rmi = if !isa(rm, AbstractVector)

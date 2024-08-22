@@ -68,8 +68,9 @@ struct EKelly <: RetType end
 abstract type PortClass end
 struct Classic2 <: PortClass end
 @kwdef mutable struct FC2 <: PortClass
-    nullflag::Bool = true
+    flag::Bool = true
 end
+
 mutable struct FM2{T1 <: Integer} <: PortClass
     type::T1
 end
@@ -88,7 +89,7 @@ mutable struct BLFM2{T1 <: Integer} <: PortClass
     type::T1
 end
 function BLFM2(; type::Integer = 1)
-    @smart_assert(type ∈ (1, 2))
+    @smart_assert(type ∈ (1, 2, 3))
     return BLFM2{typeof(type)}(type)
 end
 
@@ -2528,4 +2529,4 @@ end
 export Portfolio2, HCPortfolio2, NoKelly, AKelly, EKelly, MinRisk, Util, SR, MaxRet, Trad2,
        RP2, NoRRP, RegRRP, RegPenRRP, RRP2, WC2, QuadSD, SOCSD, SimpleSD, RetType, WCBox,
        WCEllipse, NoWC, TrackingErr, NoTracking, TrackWeight, TrackRet, NoNtwk, SDP2, IP2,
-       NoTR, TR
+       NoTR, TR, FC2, FM2, BL2, BLFM2
