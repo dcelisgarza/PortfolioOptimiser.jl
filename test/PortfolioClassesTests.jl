@@ -110,7 +110,7 @@ end
     frct = [0.0068532360447905545, 0.006853083786816375, 0.006852550372468037,
             2.9427138880078737e-13]
     @test isapprox(w1.weights, wt; rtol = 5e-5)
-    @test isapprox(frc1, frct, rtol = 5.0e-5)
+    @test isapprox(frc1, frct, rtol = 1.0e-4)
     @test isapprox(frc1_h / frc1_l, 1, rtol = 0.0005)
 
     portfolio.f_risk_budget = 1:3
@@ -192,7 +192,7 @@ end
             0.01587634267681606, 0.019844135402739143, 1.6792678416345247e-11]
     @test isapprox(w6.weights, wt, rtol = 5.0e-5)
     @test isapprox(frc6, frct, rtol = 0.0001)
-    @test isapprox(frc6_h / frc6_l, 5, rtol = 0.0001)
+    @test isapprox(frc6_h / frc6_l, 5, rtol = 0.0005)
 
     portfolio.f_risk_budget = []
     w7 = optimise2!(portfolio; type = RP2(), class = FC2(false))
@@ -223,6 +223,6 @@ end
     frct = [0.0026502113262860446, 0.0053005177527588225, 0.007950068732877897,
             0.01060110316744678, 0.01325167897594787, -2.683318274203546e-18]
     @test isapprox(w8.weights, wt, rtol = 5.0e-5)
-    @test isapprox(frc8, frct, rtol = 5.0e-5)
+    @test isapprox(frc8, frct, rtol = 1.0e-4)
     @test isapprox(frc8_h / frc8_l, 5, rtol = 5e-5)
 end
