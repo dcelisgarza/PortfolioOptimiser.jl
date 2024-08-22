@@ -293,7 +293,7 @@ end
 function network_constraints(network::SDP2, port, obj, ::Trad2)
     _sdp(port, obj)
     @constraint(port.model, network.A .* port.model[:W] .== 0)
-    if !haskey(port.model, :sd_risk) && hasproperty(network_method, :penalty)
+    if !haskey(port.model, :sd_risk) && hasproperty(port.network_method, :penalty)
         @expression(port.model, network_penalty, network.penalty * tr(port.model[:W]))
     end
     return nothing
