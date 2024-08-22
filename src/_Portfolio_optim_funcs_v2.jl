@@ -2170,6 +2170,7 @@ function _wc_sharpe_constraints(::Any, ::Any)
     return nothing
 end
 function wc_constraints(port, obj, type)
+    _sdp(port.network_method, port, obj)
     _wc_return_constraints(type.mu, port)
     _wc_risk_constraints(type.cov, port, obj)
     _wc_sharpe_constraints(obj, port)
