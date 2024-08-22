@@ -1775,14 +1775,14 @@ function set_returns(obj::Any, kelly::AKelly, model, mu_l::Real; mu::AbstractVec
     end
     return nothing
 end
-function set_returns(obj::SR, ::AKelly, model, mu_l::Real; network_method::SDP2,
-                     sigma::AbstractMatrix, kwargs...)
-    set_returns(obj, EKelly(), model, mu_l; kwargs...)
-    return nothing
+function _set_returns(network_method::SDP2, obj::SR, kelly::AKelly, model, mu_l::Real;
+                      kwargs...)
+    return set_returns(obj, EKelly(), model, mu_l; kwargs...)
 end
-function set_returns(obj::SR, kelly::AKelly, model, mu_l::Real; mu::AbstractVector,
-                     kelly_approx_idx::AbstractVector{<:Integer},
-                     network_method::Union{NoNtwk, IP2}, sigma::AbstractMatrix, kwargs...)
+function _set_returns(network_method::Union{NoNtwk, IP2}, obj::SR, kelly::AKelly, model,
+                      mu_l::Real; mu::AbstractVector,
+                      kelly_approx_idx::AbstractVector{<:Integer}, sigma::AbstractMatrix,
+                      kwargs...)
     if !isempty(mu)
         @variable(model, tapprox_kelly)
         @constraint(model, model[:risk] <= 1)
@@ -1805,6 +1805,13 @@ function set_returns(obj::SR, kelly::AKelly, model, mu_l::Real; mu::AbstractVect
         end
         _return_bounds(obj, model, mu_l)
     end
+    return nothing
+end
+function set_returns(obj::SR, kelly::AKelly, model, mu_l::Real; mu::AbstractVector,
+                     kelly_approx_idx::AbstractVector{<:Integer},
+                     network_method::NetworkMethods2, sigma::AbstractMatrix, kwargs...)
+    _set_returns(network_method, obj, kelly, model, mu_l; mu = mu,
+                 kelly_approx_idx = kelly_approx_idx, sigma = sigma, kwargs...)
     return nothing
 end
 function set_returns(obj::Any, ::EKelly, model, mu_l::Real; mu::AbstractVector,

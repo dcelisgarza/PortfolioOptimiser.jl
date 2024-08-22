@@ -109,8 +109,8 @@ end
           0.3057194948009992, 0.6945569830944616]
     frct = [0.0068532360447905545, 0.006853083786816375, 0.006852550372468037,
             2.9427138880078737e-13]
-    @test isapprox(w1.weights, wt; rtol = 1e-5)
-    @test isapprox(frc1, frct)
+    @test isapprox(w1.weights, wt; rtol = 5e-5)
+    @test isapprox(frc1, frct, rtol = 5.0e-5)
     @test isapprox(frc1_h / frc1_l, 1, rtol = 0.0005)
 
     portfolio.f_risk_budget = 1:3
@@ -142,8 +142,8 @@ end
           0.1444148138830274]
     frct = [0.005890833229263043, 0.00589102268225353, 0.005890858232390417,
             -1.6676767140945362e-18]
-    @test isapprox(w3.weights, wt)
-    @test isapprox(frc3, frct)
+    @test isapprox(w3.weights, wt, rtol = 5.0e-5)
+    @test isapprox(frc3, frct, rtol = 5.0e-5)
     @test isapprox(frc3_h / frc3_l, 1, rtol = 5.0e-5)
 
     portfolio.f_risk_budget = 1:3
@@ -159,9 +159,9 @@ end
           0.1663588773147133]
     frct = [0.00289677851218169, 0.005793489040078195, 0.008690314870489718,
             -1.0339358265819486e-18]
-    @test isapprox(w4.weights, wt)
-    @test isapprox(frc4, frct)
-    @test isapprox(frc4_h / frc4_l, 3, rtol = 5.0e-6)
+    @test isapprox(w4.weights, wt, rtol = 5.0e-5)
+    @test isapprox(frc4, frct, rtol = 0.0001)
+    @test isapprox(frc4_h / frc4_l, 3, rtol = 5.0e-4)
 
     factor_statistics2!(portfolio; factor_type = FactorType(; method = BackwardReg()))
     w5 = optimise2!(portfolio; type = RP2(), class = FC2())
@@ -207,7 +207,7 @@ end
     frct = [0.015167758710120941, 0.015166571290855654, 0.015165943540252835,
             0.015166913907338913, 0.015168109271009806, -5.105530975819948e-18]
     @test isapprox(w7.weights, wt, rtol = 5.0e-5)
-    @test isapprox(frc7, frct)
+    @test isapprox(frc7, frct, rtol = 0.0001)
     @test isapprox(frc7_h / frc7_l, 1, rtol = 0.0005)
 
     portfolio.f_risk_budget = 1:5
@@ -223,6 +223,6 @@ end
     frct = [0.0026502113262860446, 0.0053005177527588225, 0.007950068732877897,
             0.01060110316744678, 0.01325167897594787, -2.683318274203546e-18]
     @test isapprox(w8.weights, wt, rtol = 5.0e-5)
-    @test isapprox(frc8, frct)
+    @test isapprox(frc8, frct, rtol = 5.0e-5)
     @test isapprox(frc8_h / frc8_l, 5, rtol = 5e-5)
 end

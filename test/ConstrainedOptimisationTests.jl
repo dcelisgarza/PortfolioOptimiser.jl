@@ -1059,7 +1059,7 @@ end
 
     portfolio = portfolio = Portfolio2(; prices = prices,
                                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                        :params => Dict("verbose" => true))))
+                                                                        :params => Dict("verbose" => false))))
     asset_statistics2!(portfolio)
 
     rm = [SD2(; settings = RiskMeasureSettings(; flag = false)), CDaR2()]
