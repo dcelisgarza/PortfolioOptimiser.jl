@@ -392,19 +392,6 @@ function _sd_risk(::Union{NoNtwk, IP2}, ::SimpleSD, model, sigma, count::Integer
     end
     return nothing
 end
-function _dev_setup(args...)
-    return nothing
-end
-function _dev_setup(::SDP2, model, idx::Union{Nothing, Integer} = nothing)
-    if isnothing(idx)
-        @variable(model, dev)
-        @constraint(model, [model[:sd_risk], 1, dev] in MOI.PowerCone(0.5))
-    else
-        @variable(model, dev)
-        @constraint(model, [model[:sd_risk][idx], 1, dev] in MOI.PowerCone(0.5))
-    end
-    return nothing
-end
 function _get_ntwk_method(::Trad2, port)
     return port.network_method
 end
@@ -1788,9 +1775,14 @@ function set_returns(obj::Any, kelly::AKelly, model, mu_l::Real; mu::AbstractVec
     end
     return nothing
 end
+function set_returns(obj::SR, ::AKelly, model, mu_l::Real; network_method::SDP2,
+                     sigma::AbstractMatrix, kwargs...)
+    set_returns(obj, EKelly(), model, mu_l; kwargs...)
+    return nothing
+end
 function set_returns(obj::SR, kelly::AKelly, model, mu_l::Real; mu::AbstractVector,
                      kelly_approx_idx::AbstractVector{<:Integer},
-                     network_method::NetworkMethods2, sigma::AbstractMatrix, kwargs...)
+                     network_method::Union{NoNtwk, IP2}, sigma::AbstractMatrix, kwargs...)
     if !isempty(mu)
         @variable(model, tapprox_kelly)
         @constraint(model, model[:risk] <= 1)
@@ -1801,13 +1793,11 @@ function set_returns(obj::SR, kelly::AKelly, model, mu_l::Real; mu::AbstractVect
             if !haskey(model, :sd_risk)
                 _sd_risk(network_method, kelly.formulation, model, sigma, 1, 1)
             end
-            _dev_setup(network_method, model)
             @constraint(model,
                         [model[:k] + tapprox_kelly
                          2 * model[:dev]
                          model[:k] - tapprox_kelly] ∈ SecondOrderCone())
         else
-            _dev_setup(network_method, model, kelly_approx_idx[1])
             @constraint(model,
                         [model[:k] + tapprox_kelly
                          2 * model[:dev][kelly_approx_idx[1]]

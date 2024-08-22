@@ -1015,6 +1015,15 @@ end
     @test r8 <= r1
     @test r9 <= r1
 
+    portfolio = Portfolio2(; prices = prices,
+                           solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                              "verbose" => false,
+                                                                                              "oa_solver" => optimizer_with_attributes(GLPK.Optimizer,
+                                                                                                                                       MOI.Silent() => true),
+                                                                                              "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                          "verbose" => false,
+                                                                                                                                          "max_step_fraction" => 0.75)))))
+    asset_statistics2!(portfolio)
     rm = [[SD2(), SD2()]]
     w10 = optimise2!(portfolio; obj = SR(; rf = rf), rm = rm)
     r10 = calc_risk(portfolio; rm = rm[1][1])
@@ -1047,6 +1056,18 @@ end
     @test r16 <= r10
     @test r17 <= r10
     @test r18 <= r10
+
+    portfolio = portfolio = Portfolio2(; prices = prices,
+                                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                        :params => Dict("verbose" => true))))
+    asset_statistics2!(portfolio)
+
+    rm = [SD2(; settings = RiskMeasureSettings(; flag = false)), CDaR2()]
+
+    portfolio.network_method = SDP2(; A = B)
+    w19 = optimise2!(portfolio; kelly = AKelly(), obj = SR(; rf = rf), rm = rm)
+    w20 = optimise2!(portfolio; kelly = EKelly(), obj = SR(; rf = rf), rm = rm)
+    @test isapprox(w19.weights, w20.weights)
 end
 
 @testset "Network and Dendrogram non SD" begin
