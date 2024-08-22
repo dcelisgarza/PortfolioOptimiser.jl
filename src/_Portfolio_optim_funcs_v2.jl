@@ -2227,9 +2227,7 @@ function _factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix,
 end
 function _rp_class_constraints(::Any, port)
     model = port.model
-    if isempty(port.risk_budget)
-        port.risk_budget = ()
-    elseif !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
+    if !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
         port.risk_budget ./= sum(port.risk_budget)
     end
     rb = port.risk_budget
@@ -2331,9 +2329,7 @@ end
 function rrp_constraints(type::RRP2, port, sigma)
     model = port.model
     @variable(model, k)
-    if isempty(port.risk_budget)
-        port.risk_budget = ()
-    elseif !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
+    if !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
         port.risk_budget ./= sum(port.risk_budget)
     end
 

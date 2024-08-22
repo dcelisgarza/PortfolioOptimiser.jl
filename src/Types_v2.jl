@@ -1725,9 +1725,6 @@ function Base.setproperty!(obj::Portfolio2, sym::Symbol, val)
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :f_risk_budget
         if !isempty(val)
-            if sym == :risk_budget
-                @smart_assert(all(val .>= zero(eltype(obj.returns))))
-            end
             if isa(val, AbstractRange)
                 val = collect(val / sum(val))
             else
