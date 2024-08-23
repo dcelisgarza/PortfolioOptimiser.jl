@@ -969,6 +969,30 @@ function set_rm(port::Portfolio2, rm::RDaR2, type::Union{Trad2, RP2},
     end
     return nothing
 end
+#=
+function block_vec_pq(A, p, q)
+    mp, nq = size(A)
+
+    if !(mod(mp, p) == 0 && mod(nq, p) == 0)
+        throw(DimensionMismatch("size(A) = $(size(A)), must be integer multiples of (p, q) = ($p, $q)"))
+    end
+
+    m = Int(mp / p)
+    n = Int(nq / q)
+
+    A_vec = Matrix{eltype(A)}(undef, m * n, p * q)
+    for j ∈ 0:(n - 1)
+        Aj = Matrix{eltype(A)}(undef, m, p * q)
+        for i ∈ 0:(m - 1)
+            Aij = vec(A[(1 + (i * p)):((i + 1) * p), (1 + (j * q)):((j + 1) * q)])
+            Aj[i + 1, :] .= Aij
+        end
+        A_vec[(1 + (j * m)):((j + 1) * m), :] .= Aj
+    end
+
+    return A_vec
+end
+=#
 function set_rm(port::Portfolio2, rm::Kurt2, type::Union{Trad2, RP2},
                 obj::ObjectiveFunction, count::Integer, idx::Integer; kwargs...)
     model = port.model
@@ -1958,23 +1982,22 @@ function _objective(::Any, obj::MaxRet, ::Any, model, p)
     return nothing
 end
 function objective_function(port, obj, ::Trad2, kelly)
-    npf = zero(eltype(port.returns))
+    p = zero(eltype(port.returns))
     if haskey(port.model, :network_penalty)
-        npf = port.model[:network_penalty]
+        p += port.model[:network_penalty]
     end
-    rbf = zero(eltype(port.returns))
     if haskey(port.model, :sum_t_rebal)
-        rbf = port.model[:sum_t_rebal]
+        p += port.model[:sum_t_rebal]
     end
-    _objective(Trad2(), obj, kelly, port.model, npf + rbf)
+    _objective(Trad2(), obj, kelly, port.model, p)
     return nothing
 end
-function objective_function(port, obj, type::WC2, ::Any)
-    rbf = zero(eltype(port.returns))
+function objective_function(port, obj, ::WC2, ::Any)
+    p = zero(eltype(port.returns))
     if haskey(port.model, :sum_t_rebal)
-        rbf = port.model[:sum_t_rebal]
+        p += port.model[:sum_t_rebal]
     end
-    _objective(type, obj, nothing, port.model, rbf)
+    _objective(WC2(), obj, nothing, port.model, p)
     return nothing
 end
 function _cleanup_weights(port, ::SR, ::Union{Trad2, WC2}, ::Any)
@@ -2359,30 +2382,27 @@ function get_rm_string(rm::Union{AbstractVector, <:TradRiskMeasure})
     rmstr = ""
     if !isa(rm, AbstractVector)
         rstr = string(rm)
-        rstr = rstr[1:(findfirst('{', rstr) - 1)]
+        rstr = rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)]
         rmstr *= rstr
     else
+        rm = reduce(vcat, rm)
         for (i, r) ∈ enumerate(rm)
-            if !isa(r, AbstractVector)
-                rstr = string(r)
-                rstr = rstr[1:(findfirst('{', rstr) - 1)]
-                rmstr *= rstr
-            else
-                for (j, ri) ∈ enumerate(r)
-                    ristr = string(r)
-                    ristr = ristr[1:(findfirst('{', ristr) - 1)]
-                    rmstr *= ristr
-                    if j != length(r)
-                        rmstr *= '_'
-                    end
-                end
-            end
+            rstr = string(r)
+            rstr = rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)]
+            rmstr *= rstr
             if i != length(rm)
                 rmstr *= '_'
             end
         end
     end
     return Symbol(rmstr)
+end
+function get_first_rm(rm::Union{AbstractVector, <:TradRiskMeasure})
+    return rmi = if !isa(rm, AbstractVector)
+        rm
+    else
+        reduce(vcat, rm)[1]
+    end
 end
 
 function frontier_limits!(port::Portfolio2;
@@ -2442,15 +2462,7 @@ function efficient_frontier!(port::Portfolio2;
         ret2 = sum(log.(one(eltype(mu)) .+ returns * w2)) / size(returns, 1)
     end
 
-    rmi = if !isa(rm, AbstractVector)
-        rm
-    else
-        if !isa(rm[1], AbstractVector)
-            rm[1]
-        else
-            rm[1][1]
-        end
-    end
+    rmi = get_first_rm(rm)
     rmi.settings.ub = Inf
 
     set_rm_properties(rmi, port.solvers, sigma)
@@ -2469,6 +2481,7 @@ function efficient_frontier!(port::Portfolio2;
         if i == 0
             w = optimise2!(port; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
                            w_ini = w_min_ini)
+
         else
             if !isempty(w)
                 w_ini = w.weights
@@ -2517,7 +2530,7 @@ function efficient_frontier!(port::Portfolio2;
     port.frontier[rmstr] = Dict(:weights => hcat(DataFrame(; tickers = port.assets),
                                                  DataFrame(reshape(frontier, length(w1), :),
                                                            string.(range(1, i)))),
-                                :points => points, :risk => srisk, :sharpe => sharpe)
+                                :risk => srisk, :sharpe => sharpe)
 
     port.optimal = optimal1
     port.fail = fail1

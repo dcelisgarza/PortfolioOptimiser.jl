@@ -34,6 +34,20 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     end
 end
 
+@testset "Aux functions" begin
+    rm = [SD2(), [FLPM2()], [SLPM2(), WR2()]]
+
+    rm1 = PortfolioOptimiser.get_first_rm(rm)
+    rm2 = PortfolioOptimiser.get_rm_string(rm)
+    rm3 = PortfolioOptimiser.get_rm_string(WR2())
+    rm4 = PortfolioOptimiser.get_rm_string(SD2())
+
+    @test rm1 == rm[1]
+    @test rm2 == :SD2_FLPM2_SLPM2_WR2
+    @test rm3 == :WR2
+    @test rm4 == :SD2
+end
+
 @testset "Constructors and setters" begin
     @test_throws AssertionError SD2(sigma = rand(5, 3))
     @test_throws AssertionError SD2(; sigma = Matrix(undef, 0, 1))
@@ -48,14 +62,20 @@ end
     rm = VaR2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
 
     rm = CVaR2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
 
     rm = EVaR2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
     @test Symbol(rm) == :EVaR
     @test String(rm) == "EVaR"
 
@@ -64,54 +84,84 @@ end
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.kappa = 1
     @test_throws AssertionError rm.kappa = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
+    rm.kappa = 0.5
+    @test rm.kappa == 0.5
     @test Symbol(rm) == :RVaR
     @test String(rm) == "RVaR"
 
     rm = DaR2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
 
     rm = CDaR2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
 
     rm = EDaR2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test Symbol(rm) == :EDaR
     @test String(rm) == "EDaR"
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
 
     rm = RDaR2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.kappa = 1
     @test_throws AssertionError rm.kappa = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
+    rm.kappa = 0.5
+    @test rm.kappa == 0.5
     @test Symbol(rm) == :RDaR
     @test String(rm) == "RDaR"
 
     rm = DaR_r2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
 
     rm = CDaR_r2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
 
     rm = EDaR_r2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
 
     rm = RDaR_r2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.kappa = 1
     @test_throws AssertionError rm.kappa = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
+    rm.kappa = 0.5
+    @test rm.kappa == 0.5
 
     rm = RCVaR2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.beta = 1
     @test_throws AssertionError rm.beta = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
+    rm.beta = 0.5
+    @test rm.beta == 0.5
+    rm.beta = 0.5
+    @test rm.beta == 0.5
 
     rm = TG2()
     @test_throws AssertionError rm.alpha = 1
@@ -119,6 +169,12 @@ end
     @test_throws AssertionError rm.alpha_i = 1
     @test_throws AssertionError rm.alpha_i = 0
     @test_throws AssertionError rm.a_sim = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
+    rm.alpha_i = 0.05
+    @test rm.alpha_i == 0.05
+    rm.a_sim = 5
+    @test rm.a_sim == 5
 
     rm = RTG2()
     @test_throws AssertionError rm.alpha = 1
@@ -131,4 +187,16 @@ end
     @test_throws AssertionError rm.beta_i = 1
     @test_throws AssertionError rm.beta_i = 0
     @test_throws AssertionError rm.b_sim = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
+    rm.alpha_i = 0.05
+    @test rm.alpha_i == 0.05
+    rm.a_sim = 5
+    @test rm.a_sim == 5
+    rm.beta = 0.5
+    @test rm.beta == 0.5
+    rm.beta_i = 0.05
+    @test rm.beta_i == 0.05
+    rm.b_sim = 5
+    @test rm.b_sim == 5
 end

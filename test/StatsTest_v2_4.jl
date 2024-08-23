@@ -2754,3 +2754,19 @@ end
     @test_throws AssertionError ce.c2 = 0.6
     @test ce.c3 == 0.6
 end
+
+@testset "Transposes" begin
+    portfolio = Portfolio2(; prices = prices)
+    ces = [CovSemi(), CorSpearman(), CorKendall(), CorMutualInfo(), CorDistance(), CorLTD(),
+           CorGerber0(), CorGerber1(), CorGerber2(), CorSB0(), CorSB1(), CorGerberSB0(),
+           CorGerberSB1(), PortCovCor()]
+    for ce ∈ ces
+        if any(typeof(ce) .<: [CorSpearman, CorKendall])
+            continue
+        end
+        @test isapprox(cor(ce, portfolio.returns; dims = 1),
+                       cor(ce, transpose(portfolio.returns); dims = 2))
+        @test isapprox(cov(ce, portfolio.returns; dims = 1),
+                       cov(ce, transpose(portfolio.returns); dims = 2))
+    end
+end

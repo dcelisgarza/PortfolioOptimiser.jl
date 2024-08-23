@@ -110,7 +110,7 @@ function StatsBase.cor(ce::CovFull, X::AbstractMatrix; dims::Int = 1)
     return !ce.absolute ? rho : abs.(rho)
 end
 function StatsBase.cov(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
-    @smart_assert(dims ∈ (0, 1))
+    @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
     end
@@ -127,7 +127,7 @@ function StatsBase.cov(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
                      end)
 end
 function StatsBase.cor(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
-    @smart_assert(dims ∈ (0, 1))
+    @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
     end
@@ -155,7 +155,7 @@ function StatsBase.cor(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
     return !ce.absolute ? rho : abs.(rho)
 end
 function StatsBase.cor(ce::CorSpearman, X::AbstractMatrix; dims::Int = 1)
-    @smart_assert(dims ∈ (0, 1))
+    @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
     end
@@ -163,7 +163,7 @@ function StatsBase.cor(ce::CorSpearman, X::AbstractMatrix; dims::Int = 1)
     return Symmetric(cov2cor(Matrix(!ce.absolute ? rho : abs.(rho))))
 end
 function StatsBase.cor(ce::CorKendall, X::AbstractMatrix; dims::Int = 1)
-    @smart_assert(dims ∈ (0, 1))
+    @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
     end
@@ -383,14 +383,14 @@ function variation_info(X::AbstractMatrix,
     return Symmetric(var_mtx, :U)
 end
 function StatsBase.cor(ce::CorMutualInfo, X::AbstractMatrix; dims::Int = 1)
-    @smart_assert(dims ∈ (0, 1))
+    @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
     end
     return mutual_info(X, ce.bins, ce.normalise)
 end
 function StatsBase.cov(ce::CorMutualInfo, X::AbstractMatrix; dims::Int = 1)
-    @smart_assert(dims ∈ (0, 1))
+    @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
     end
@@ -453,7 +453,7 @@ function cor_distance(ce::CorDistance, X::AbstractMatrix)
     return Symmetric(rho, :U)
 end
 function StatsBase.cor(ce::CorDistance, X::AbstractMatrix; dims::Int = 1)
-    @smart_assert(dims ∈ (0, 1))
+    @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
     end
@@ -505,7 +505,7 @@ function cov_distance(ce::CorDistance, X::AbstractMatrix)
     return Symmetric(rho, :U)
 end
 function StatsBase.cov(ce::CorDistance, X::AbstractMatrix; dims::Int = 1)
-    @smart_assert(dims ∈ (0, 1))
+    @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
     end
@@ -544,14 +544,14 @@ function lower_tail_dependence(X::AbstractMatrix, alpha::Real = 0.05)
     return Symmetric(rho, :U)
 end
 function StatsBase.cor(ce::CorLTD, X::AbstractMatrix; dims::Int = 1)
-    @smart_assert(dims ∈ (0, 1))
+    @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
     end
     return lower_tail_dependence(X, ce.alpha)
 end
 function StatsBase.cov(ce::CorLTD, X::AbstractMatrix; dims::Int = 1)
-    @smart_assert(dims ∈ (0, 1))
+    @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
     end

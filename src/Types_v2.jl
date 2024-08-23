@@ -2532,4 +2532,4 @@ end
 export Portfolio2, HCPortfolio2, NoKelly, AKelly, EKelly, MinRisk, Util, SR, MaxRet, Trad2,
        RP2, NoRRP, RegRRP, RegPenRRP, RRP2, WC2, QuadSD, SOCSD, SimpleSD, RetType, WCBox,
        WCEllipse, NoWC, TrackingErr, NoTracking, TrackWeight, TrackRet, NoNtwk, SDP2, IP2,
-       NoTR, TR, Classic2, FC2, FM2, BL2, BLFM2
+       NoTR, TR, Classic2, FC2, FM2, BL2, BLFM2, NoPosdef, PosdefNearest

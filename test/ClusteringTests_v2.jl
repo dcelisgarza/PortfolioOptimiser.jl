@@ -40,6 +40,7 @@ l = 2.0
     @test isapprox(portfolio.clusters.order, ordert)
     @test isequal(portfolio.clusters.order, ordert)
     @test isequal(portfolio.k, kt)
+    @test_throws AssertionError ca.root_method = :unique
 
     ct = HClustOpt(; k = 6)
     idx, clustering, k = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)

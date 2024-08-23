@@ -226,7 +226,8 @@ end
     @test isapprox(frc8, frct, rtol = 1.0e-4)
     @test isapprox(frc8_h / frc8_l, 5, rtol = 1e-4)
 
-    portfolio.f_risk_budget = [20, 0.2, 0.2, 0.2, 0.2]
+    portfolio.f_risk_budget = [0.2, 0.2, 0.2, 0.2, 0.2]
+    portfolio.f_risk_budget[1] = 20
     w9 = optimise2!(portfolio; type = RP2(), class = FC2())
     rc9 = factor_risk_contribution(portfolio; type = :RP2)
     lrc9, hrc9 = extrema(rc9[1:4])

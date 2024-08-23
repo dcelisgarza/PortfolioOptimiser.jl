@@ -674,6 +674,11 @@ end
 
     asset_statistics2!(portfolio)
     bl_type = ABLType(; delta = nothing)
+
+    @test_throws AssertionError PortfolioOptimiser.black_litterman(bl_type,
+                                                                   portfolio.returns;
+                                                                   w = fill(inv(20), 20))
+
     black_litterman_factor_statistics2!(portfolio; P = P, Q = Q, bl_type = bl_type)
     blfm_mut = [0.0033999924007108817, 0.0020577491946595027, 0.0069096286018665515,
                 0.004207555076029281, 0.0026142257950789397, -0.0007527699772210183,
