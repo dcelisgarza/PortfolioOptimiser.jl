@@ -32,7 +32,9 @@ struct WCEllipse <: WorstCaseSet end
 @kwdef mutable struct NoWC <: WorstCaseSet
     formulation::SDSquaredFormulation = SOCSD()
 end
-abstract type PortType end
+abstract type AbstractPortType end
+abstract type PortType <: AbstractPortType end
+abstract type HCPortType <: AbstractPortType end
 struct Trad2 <: PortType end
 struct RP2 <: PortType end
 abstract type RRPVersion end
@@ -49,6 +51,9 @@ end
     mu::WorstCaseSet = WCBox()
     cov::WorstCaseSet = WCBox()
 end
+struct HRP2 <: HCPortType end
+struct HERC2 <: HCPortType end
+struct NCO2 <: HCPortType end
 Base.String(::Trad2) = "Trad2"
 Base.Symbol(::Trad2) = :Trad2
 Base.String(::RP2) = "RP2"
@@ -2067,7 +2072,9 @@ Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
   - `alloc_fail`: collection capable of storing key value pairs for storing failed optimisation attempts.
   - `alloc_model`: `JuMP.Model()` for optimising a portfolio allocation.
 """
-mutable struct HCPortfolio2{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnaks,
+mutable struct HCPortfolio2{ast, dat, r,
+                            # ai, a, as, bi, b, bs, k, ata, 
+                            mnak, mnaks,
                             # skewf, sskewf, owap, wowa, 
                             tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
                             tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv, toptpar,
@@ -2076,14 +2083,14 @@ mutable struct HCPortfolio2{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mna
     assets::ast
     timestamps::dat
     returns::r
-    alpha_i::ai
-    alpha::a
-    a_sim::as
-    beta_i::bi
-    beta::b
-    b_sim::bs
-    kappa::k
-    alpha_tail::ata
+    # alpha_i::ai
+    # alpha::a
+    # a_sim::as
+    # beta_i::bi
+    # beta::b
+    # b_sim::bs
+    # kappa::k
+    # alpha_tail::ata
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
     # skew_factor::skewf
@@ -2223,9 +2230,9 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                       ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                       timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
                       assets::AbstractVector = Vector{String}(undef, 0),
-                      alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
-                      beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
-                      kappa::Real = 0.3, alpha_tail::Real = 0.05,
+                      #   alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
+                      #   beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
+                      #   kappa::Real = 0.3, alpha_tail::Real = 0.05,
                       max_num_assets_kurt::Integer = 0,
                       max_num_assets_kurt_scale::Integer = 2,
                       #   skew_factor::Real = Inf, sskew_factor::Real = Inf,
@@ -2273,12 +2280,12 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
         returns = ret
     end
 
-    @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
-    @smart_assert(a_sim > zero(a_sim))
-    @smart_assert(zero(beta) < beta_i < beta < one(beta))
-    @smart_assert(b_sim > zero(b_sim))
-    @smart_assert(zero(kappa) < kappa < one(kappa))
-    @smart_assert(zero(alpha_tail) < alpha_tail < one(alpha_tail))
+    # @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
+    # @smart_assert(a_sim > zero(a_sim))
+    # @smart_assert(zero(beta) < beta_i < beta < one(beta))
+    # @smart_assert(b_sim > zero(b_sim))
+    # @smart_assert(zero(kappa) < kappa < one(kappa))
+    # @smart_assert(zero(alpha_tail) < alpha_tail < one(alpha_tail))
     @smart_assert(max_num_assets_kurt >= zero(max_num_assets_kurt))
     max_num_assets_kurt_scale = clamp(max_num_assets_kurt_scale, 1, size(returns, 2))
     # if !isempty(owa_w)
@@ -2342,8 +2349,8 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
 
     return HCPortfolio2{typeof(assets), typeof(timestamps), typeof(returns),
-                        typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i),
-                        typeof(beta), typeof(b_sim), typeof(kappa), typeof(alpha_tail),
+                        # typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i),
+                        # typeof(beta), typeof(b_sim), typeof(kappa), typeof(alpha_tail),
                         typeof(max_num_assets_kurt), typeof(max_num_assets_kurt_scale),
                         # typeof(skew_factor), typeof(sskew_factor), typeof(owa_p),
                         # typeof(owa_w), 
@@ -2357,8 +2364,9 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                         typeof(latest_prices), typeof(alloc_optimal),
                         Union{<:AbstractDict, NamedTuple},
                         Union{<:AbstractDict, NamedTuple}, typeof(alloc_fail),
-                        typeof(alloc_model)}(assets, timestamps, returns, alpha_i, alpha,
-                                             a_sim, beta_i, beta, b_sim, kappa, alpha_tail,
+                        typeof(alloc_model)}(assets, timestamps, returns,
+                                             # alpha_i, alpha,
+                                             #  a_sim, beta_i, beta, b_sim, kappa, alpha_tail,
                                              max_num_assets_kurt, max_num_assets_kurt_scale,
                                              #  skew_factor, sskew_factor, owa_p, owa_w, 
                                              mu, cov, kurt, skurt, L_2, S_2, skew, V, sskew,
@@ -2370,23 +2378,23 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
 end
 
 function Base.setproperty!(obj::HCPortfolio2, sym::Symbol, val)
-    if sym == :alpha_i
-        @smart_assert(zero(val) < val < obj.alpha < one(val))
-    elseif sym == :alpha
-        @smart_assert(zero(val) < obj.alpha_i < val < one(val))
-    elseif sym == :a_sim
-        @smart_assert(val > zero(val))
-    elseif sym == :beta
-        @smart_assert(zero(val) < obj.beta_i < val < one(val))
-    elseif sym == :beta_i
-        @smart_assert(zero(val) < val < obj.beta < one(val))
-    elseif sym == :b_sim
-        @smart_assert(val > zero(val))
-    elseif sym == :kappa
-        @smart_assert(zero(val) < val < one(val))
-    elseif sym == :alpha_tail
-        @smart_assert(zero(val) < val < one(val))
-    elseif sym == :max_num_assets_kurt
+    # if sym == :alpha_i
+    #     @smart_assert(zero(val) < val < obj.alpha < one(val))
+    # elseif sym == :alpha
+    #     @smart_assert(zero(val) < obj.alpha_i < val < one(val))
+    # elseif sym == :a_sim
+    #     @smart_assert(val > zero(val))
+    # elseif sym == :beta
+    #     @smart_assert(zero(val) < obj.beta_i < val < one(val))
+    # elseif sym == :beta_i
+    #     @smart_assert(zero(val) < val < obj.beta < one(val))
+    # elseif sym == :b_sim
+    #     @smart_assert(val > zero(val))
+    # elseif sym == :kappa
+    #     @smart_assert(zero(val) < val < one(val))
+    # elseif sym == :alpha_tail
+    # @smart_assert(zero(val) < val < one(val))
+    if sym == :max_num_assets_kurt
         @smart_assert(val >= zero(val))
     elseif sym == :max_num_assets_kurt_scale
         val = clamp(val, 1, size(obj.returns, 2))
@@ -2475,9 +2483,9 @@ end
 
 function Base.deepcopy(obj::HCPortfolio2)
     return HCPortfolio2{typeof(obj.assets), typeof(obj.timestamps), typeof(obj.returns),
-                        typeof(obj.alpha_i), typeof(obj.alpha), typeof(obj.a_sim),
-                        typeof(obj.beta_i), typeof(obj.beta), typeof(obj.b_sim),
-                        typeof(obj.kappa), typeof(obj.alpha_tail),
+                        # typeof(obj.alpha_i), typeof(obj.alpha), typeof(obj.a_sim),
+                        # typeof(obj.beta_i), typeof(obj.beta), typeof(obj.b_sim),
+                        # typeof(obj.kappa), typeof(obj.alpha_tail),
                         typeof(obj.max_num_assets_kurt),
                         typeof(obj.max_num_assets_kurt_scale),
                         # typeof(obj.skew_factor),
@@ -2497,11 +2505,11 @@ function Base.deepcopy(obj::HCPortfolio2)
                         typeof(obj.alloc_model)}(deepcopy(obj.assets),
                                                  deepcopy(obj.timestamps),
                                                  deepcopy(obj.returns),
-                                                 deepcopy(obj.alpha_i), deepcopy(obj.alpha),
-                                                 deepcopy(obj.a_sim), deepcopy(obj.beta_i),
-                                                 deepcopy(obj.beta), deepcopy(obj.b_sim),
-                                                 deepcopy(obj.kappa),
-                                                 deepcopy(obj.alpha_tail),
+                                                 #  deepcopy(obj.alpha_i), deepcopy(obj.alpha),
+                                                 #  deepcopy(obj.a_sim), deepcopy(obj.beta_i),
+                                                 #  deepcopy(obj.beta), deepcopy(obj.b_sim),
+                                                 #  deepcopy(obj.kappa),
+                                                 #  deepcopy(obj.alpha_tail),
                                                  deepcopy(obj.max_num_assets_kurt),
                                                  deepcopy(obj.max_num_assets_kurt_scale),
                                                  #  deepcopy(obj.skew_factor),

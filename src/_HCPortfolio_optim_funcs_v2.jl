@@ -916,97 +916,20 @@ function _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_boun
 end
 =#
 
-"""
-```julia
-optimise!
-```
-"""
-function optimise!(portfolio::HCPortfolio2; type::Symbol = :HRP, rm::Symbol = :SD,
-                   rm_o::Symbol = rm, rf::Real = 0.0, rf_o::Real = rf,
-                   nco_opt::OptimiseOpt = OptimiseOpt(;), nco_opt_o::OptimiseOpt = nco_opt,
-                   cluster::Bool = true, cluster_opt::ClusterOpt = ClusterOpt(;),
-                   asset_stat_kwargs::NamedTuple = (;
-                                                    calc_mu = if type != :NCO &&
-                                                                 rm ∈ (:Skew, :SSkew) ||
-                                                                 type == :NCO &&
-                                                                 nco_opt.rm ∈
-                                                                 (:Skew, :SSkew)
-                                                        true
-                                                    else
-                                                        false
-                                                    end, calc_cov = false,
-                                                    calc_kurt = if type != :NCO &&
-                                                                   rm ∈ (:Kurt, :SKurt) ||
-                                                                   type == :NCO &&
-                                                                   nco_opt.rm ∈
-                                                                   (:Kurt, :SKurt)
-                                                        true
-                                                    else
-                                                        false
-                                                    end,
-                                                    calc_skew = if type != :NCO &&
-                                                                   rm ∈ (:Skew, :SSkew) ||
-                                                                   type == :NCO &&
-                                                                   nco_opt.rm ∈
-                                                                   (:Skew, :SSkew)
-                                                        true
-                                                    else
-                                                        false
-                                                    end),
-                   asset_stat_kwargs_o::NamedTuple = asset_stat_kwargs,
-                   portfolio_kwargs::NamedTuple = if type != :NCO
-                       (; alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
-                        a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
-                        beta = portfolio.beta, b_sim = portfolio.b_sim,
-                        kappa = portfolio.kappa, owa_w = portfolio.owa_w,
-                        solvers = portfolio.solvers)
-                   else
-                       (; alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
-                        a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
-                        beta = portfolio.beta, b_sim = portfolio.b_sim,
-                        kappa = portfolio.kappa, owa_p = portfolio.owa_p,
-                        owa_w = portfolio.owa_w, solvers = portfolio.solvers,
-                        max_num_assets_kurt = portfolio.max_num_assets_kurt)
-                   end, portfolio_kwargs_o::NamedTuple = portfolio_kwargs,
-                   max_iter::Integer = 100, save_opt_params::Bool = false)
-    @smart_assert(type ∈ HCPortTypes)
-    @smart_assert(rm ∈ HCRiskMeasures)
-    @smart_assert(rm_o ∈ HCRiskMeasures)
-    portfolio.fail = Dict()
-
-    _hcp_save_opt_params(portfolio, type, rm, rm_o, rf, rf_o, nco_opt, nco_opt_o, cluster,
-                         cluster_opt, asset_stat_kwargs, asset_stat_kwargs_o,
-                         portfolio_kwargs, portfolio_kwargs_o, max_iter, save_opt_params)
-
-    N = size(portfolio.returns, 2)
-
-    if cluster
-        portfolio.clusters, tk = _hierarchical_clustering(portfolio, cluster_opt)
-        portfolio.k = iszero(cluster_opt.k) ? tk : cluster_opt.k
-    end
-
-    hi, lo = _get_hi_lo(type, portfolio_kwargs, portfolio_kwargs_o,
-                        eltype(portfolio.returns))
-    upper_bound, lower_bound = _setup_hr_weights(portfolio.w_max, portfolio.w_min, N, hi,
-                                                 lo)
-
-    weights = if type == :HRP
-        _recursive_bisection(portfolio; rm = rm, rf = rf, upper_bound = upper_bound,
-                             lower_bound = lower_bound, portfolio_kwargs = portfolio_kwargs)
-    elseif type == :HERC
-        _hierarchical_recursive_bisection(portfolio; rm = rm, rm_o = rm_o, rf = rf,
-                                          rf_o = rf_o, portfolio_kwargs = portfolio_kwargs,
-                                          portfolio_kwargs_o = portfolio_kwargs_o,
-                                          upper_bound = upper_bound,
-                                          lower_bound = lower_bound)
-    else
-        _nco_weights(portfolio, nco_opt, nco_opt_o; asset_stat_kwargs = asset_stat_kwargs,
-                     asset_stat_kwargs_o = asset_stat_kwargs_o,
-                     portfolio_kwargs = portfolio_kwargs,
-                     portfolio_kwargs_o = portfolio_kwargs_o)
-    end
-    retval = _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_bound,
-                                   portfolio_kwargs, portfolio_kwargs_o, max_iter)
-
-    return retval
+function _optimise!(::HRP2, port::HCPortfolio2,
+                    rm::Union{AbstractVector, <:TradRiskMeasure})
+    port.fail = Dict()
+    return nothing
 end
+function optimise2!(port::HCPortfolio2;
+                    rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
+                    type::HCPortType = HRP2(), cluster::Bool = true,
+                    hclust_alg::HClustAlg = HAClustering(),
+                    hclust_opt::HClustOpt = HClustOpt())
+    if cluster
+        cluster_assets2!(hclust_alg, port, hclust_opt)
+    end
+    return _optimise!(type, port, rm)
+end
+
+export optimise2!

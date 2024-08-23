@@ -9,7 +9,7 @@ l = 2.0
     portfolio = Portfolio2(; prices = prices,
                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                             :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.95,
+                                                                            "max_step_fraction" => 0.9,
                                                                             "max_iter" => 35))))
     asset_statistics2!(portfolio)
 

@@ -4,6 +4,14 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
+@safetestset "Efficient frontier v2" begin
+    include("EfficientFrontierTests_v2.jl")
+end
+
+# @safetestset "HC Optimistaion" begin
+#     include("HCOptimisationTests.jl")
+# end
+
 @safetestset "Constraints" begin
     include("ConstrainedOptimisationTests.jl")
 end
@@ -26,10 +34,6 @@ end
 
 @safetestset "Trad optimisation rm vectors" begin
     include("TradOptimisationVectorTests_v2.jl")
-end
-
-@safetestset "Efficient frontier v2" begin
-    include("EfficientFrontierTests_v2.jl")
 end
 
 @safetestset "Plotting v2" begin
