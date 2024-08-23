@@ -1264,6 +1264,13 @@ function _optimise!(::HERC2, port::HCPortfolio2, rmi::Union{AbstractVector, <:Ri
 
     return weights
 end
+function intra_weights(port, rm::Union{AbstractVector, <:TradRiskMeasure}, options,
+                       port_kwargs, stat_kwargs) end
+function _optimise!(type::NCO2, port::HCPortfolio2,
+                    rmi::Union{AbstractVector, <:RiskMeasure},
+                    rmo::Union{AbstractVector, <:RiskMeasure}, ::Any, ::Any)
+    return wi = intra_weights(port, rmi, type.options, type.port_kwargs, type.stat_kwargs)
+end
 function optimise2!(port::HCPortfolio2; rm::Union{AbstractVector, <:RiskMeasure} = SD2(),
                     rmo::Union{AbstractVector, <:RiskMeasure} = rm,
                     type::HCPortType = HRP2(), cluster::Bool = true,

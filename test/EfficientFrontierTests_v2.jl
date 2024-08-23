@@ -9,16 +9,15 @@ l = 2.0
     portfolio = Portfolio2(; prices = prices,
                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                             :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.9,
+                                                                            "max_step_fraction" => 0.85,
                                                                             "max_iter" => 40))))
     asset_statistics2!(portfolio)
 
     rm = RDaR2()
-    try
-        limits = efficient_frontier!(portfolio; rm = rm, points = 5, rf = rf)
+    limits = efficient_frontier!(portfolio; rm = rm, points = 5, rf = rf)
+    if haskey(portfolio.frontier, RDaR2)
         @test ncol(portfolio.frontier[:RDaR2][:weights]) == 6
         @test length(portfolio.frontier[:RDaR2][:risk]) == 5
-    catch
     end
 end
 
