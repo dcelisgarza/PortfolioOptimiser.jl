@@ -2509,7 +2509,6 @@ end
                     0.0001504967210740102], (20, 20))
     @test isapprox(portfolio.cov, covt)
 
-    w = eweights(1:size(portfolio.returns, 1), 0.03)
     @test isapprox(var(ve, portfolio.returns, w), std(ve, portfolio.returns, w) .^ 2)
     @test !isapprox(var(ve, portfolio.returns, w), var(ve, portfolio.returns))
 
