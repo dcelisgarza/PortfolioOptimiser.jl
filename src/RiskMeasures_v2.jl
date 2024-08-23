@@ -1098,6 +1098,9 @@ abstract type HCRiskMeasure <: RiskMeasure end
     scale::T1 = 1.0
     ub::T2 = Inf
 end
+@kwdef mutable struct HCRiskMeasureSettings{T1 <: Real}
+    scale::T1 = 1.0
+end
 mutable struct SD2{T1 <: Union{AbstractMatrix, Nothing}} <: TradRiskMeasure
     settings::RiskMeasureSettings
     formulation::SDFormulation
@@ -1121,12 +1124,14 @@ function calc_risk(sd::SD2, w::AbstractVector; kwargs...)
 end
 mutable struct Variance2{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
     sigma::T1
+    settings::HCRiskMeasureSettings
 end
-function Variance2(; sigma::Union{<:AbstractMatrix, Nothing} = nothing)
+function Variance2(; sigma::Union{<:AbstractMatrix, Nothing} = nothing,
+                   settings::HCRiskMeasureSettings = HCRiskMeasureSettings())
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    return Variance2{Union{<:AbstractMatrix, Nothing}}(sigma)
+    return Variance2{Union{<:AbstractMatrix, Nothing}}(sigma, settings)
 end
 function Base.setproperty!(obj::Variance2, sym::Symbol, val)
     if sym == :sigma
@@ -1176,10 +1181,12 @@ function calc_risk(::WR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
 end
 mutable struct VaR2{T1 <: Real} <: HCRiskMeasure
     alpha::T1
+    settings::HCRiskMeasureSettings
 end
-function VaR2(; alpha::Real = 0.05)
+function VaR2(; alpha::Real = 0.05,
+              settings::HCRiskMeasureSettings = HCRiskMeasureSettings())
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return VaR2{typeof(alpha)}(alpha)
+    return VaR2{typeof(alpha)}(alpha, settings)
 end
 function Base.setproperty!(obj::VaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1253,10 +1260,12 @@ function calc_risk(rvar::RVaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
 end
 mutable struct DaR2{T1 <: Real} <: HCRiskMeasure
     alpha::T1
+    settings::HCRiskMeasureSettings
 end
-function DaR2(; alpha::Real = 0.05)
+function DaR2(; alpha::Real = 0.05,
+              settings::HCRiskMeasureSettings = HCRiskMeasureSettings())
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return DaR2{typeof(alpha)}(alpha)
+    return DaR2{typeof(alpha)}(alpha, settings)
 end
 function Base.setproperty!(obj::DaR2, sym::Symbol, val)
     if sym == :alpha
@@ -1348,10 +1357,12 @@ function calc_risk(rdar::RDaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
 end
 mutable struct DaR_r2{T1 <: Real} <: HCRiskMeasure
     alpha::T1
+    settings::HCRiskMeasureSettings
 end
-function DaR_r2(; alpha::Real = 0.05)
+function DaR_r2(; alpha::Real = 0.05,
+                settings::HCRiskMeasureSettings = HCRiskMeasureSettings())
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return DaR_r2{typeof(alpha)}(alpha)
+    return DaR_r2{typeof(alpha)}(alpha, settings)
 end
 function Base.setproperty!(obj::DaR_r2, sym::Symbol, val)
     if sym == :alpha
@@ -1362,11 +1373,15 @@ end
 function calc_risk(dar::DaR_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _DaR_r(X * w, dar.alpha)
 end
-struct MDD_r2 <: HCRiskMeasure end
+@kwdef struct MDD_r2 <: HCRiskMeasure
+    settings::HCRiskMeasureSettings = HCRiskMeasureSettings()
+end
 function calc_risk(::MDD_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _MDD_r(X * w)
 end
-struct ADD_r2 <: HCRiskMeasure end
+@kwdef struct ADD_r2 <: HCRiskMeasure
+    settings::HCRiskMeasureSettings = HCRiskMeasureSettings()
+end
 function calc_risk(::ADD_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _ADD_r(X * w)
 end
@@ -1388,7 +1403,9 @@ end
 function calc_risk(cdar::CDaR_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _CDaR_r(X * w, cdar.alpha)
 end
-struct UCI_r2 <: HCRiskMeasure end
+@kwdef struct UCI_r2 <: HCRiskMeasure
+    settings::HCRiskMeasureSettings = HCRiskMeasureSettings()
+end
 function calc_risk(::UCI_r2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _UCI_r(X * w)
 end
@@ -1582,7 +1599,9 @@ end
 function calc_risk(::SSkew2, w::AbstractVector; SV::AbstractMatrix, kwargs...)
     return _Skew(w, SV)
 end
-struct Equal2 <: HCRiskMeasure end
+@kwdef struct Equal2 <: HCRiskMeasure
+    settings::HCRiskMeasureSettings = HCRiskMeasureSettings()
+end
 function calc_risk(::Equal2, w::AbstractVector; delta::Real = 0, kwargs...)
     return 1 / length(w) + delta
 end
