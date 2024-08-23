@@ -48,6 +48,14 @@ l = 2.0
     @test isapprox(hrc2 / lrc2, 20, rtol = 5.0e-5)
     @test isapprox(hrc3 / lrc3, hrc1 / lrc1, rtol = 5.0e-10)
     @test isapprox(hrc4 / lrc4, hrc2 / lrc2, rtol = 5.0e-10)
+
+    portfolio.risk_budget = []
+    portfolio.risk_budget[1] = 5
+    w3 = optimise2!(portfolio; type = RP2())
+    rc3 = calc_risk_contribution(portfolio; type = :RP2)
+    lrc5, hrc5 = extrema(rc3)
+    @test isapprox(hrc5 / lrc5, 100, rtol = 0.0005)
+    @test isapprox(sum(portfolio.risk_budget), 1)
 end
 
 @testset "MAD" begin

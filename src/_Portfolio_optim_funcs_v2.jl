@@ -412,7 +412,7 @@ function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::Objecti
     end
     model = port.model
 
-    network_method = _get_ntwk_method(Trad2(), port)
+    network_method = _get_ntwk_method(type, port)
     _sdp(network_method, port, obj)
     _sd_risk(network_method, rm.formulation, model, sigma, count, idx)
     _set_sd_risk_upper_bound(network_method, obj, type, model, rm.settings.ub, count, idx)
@@ -1846,9 +1846,6 @@ function return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_i
                 network_method = port.network_method)
     return nothing
 end
-function setup_tracking_err_constraints(::NoTracking, args...)
-    return nothing
-end
 function _tracking_err_constraints(::Any, model, returns, tracking_err, benchmark)
     T = size(returns, 1)
     @variable(model, t_track_err >= 0)
@@ -1967,7 +1964,7 @@ function objective_function(port, obj, ::Trad2, kelly)
     end
     rbf = zero(eltype(port.returns))
     if haskey(port.model, :sum_t_rebal)
-        npf = port.model[:sum_t_rebal]
+        rbf = port.model[:sum_t_rebal]
     end
     _objective(Trad2(), obj, kelly, port.model, npf + rbf)
     return nothing
@@ -1975,7 +1972,7 @@ end
 function objective_function(port, obj, type::WC2, ::Any)
     rbf = zero(eltype(port.returns))
     if haskey(port.model, :sum_t_rebal)
-        npf = port.model[:sum_t_rebal]
+        rbf = port.model[:sum_t_rebal]
     end
     _objective(type, obj, nothing, port.model, rbf)
     return nothing

@@ -13,7 +13,6 @@ l = 2.0
     asset_statistics2!(portfolio)
 
     type = RRP2(; version = NoRRP())
-    portfolio.risk_budget = []
     w1 = optimise2!(portfolio; type = type)
     rc1 = calc_risk_contribution(portfolio; type = :RRP2, rm = SD2())
     lrc1, hrc1 = extrema(rc1)
@@ -131,4 +130,11 @@ l = 2.0
     @test isapprox(w8.weights, w8t, rtol = 5.0e-7)
     @test isapprox(hrc7 / lrc7, 1, rtol = 5.0e-6)
     @test isapprox(hrc8 / lrc8, 7, rtol = 0.05)
+
+    portfolio.risk_budget[1] = 5
+    w9 = optimise2!(portfolio; type = type)
+    rc9 = calc_risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    lrc9, hrc9 = extrema(rc9)
+    @test isapprox(hrc9 / lrc9, 100, rtol = 1.0e-5)
+    @test isapprox(sum(portfolio.risk_budget), 1)
 end
