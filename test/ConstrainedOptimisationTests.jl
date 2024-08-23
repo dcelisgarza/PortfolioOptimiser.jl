@@ -36,6 +36,12 @@ l = 2.0
     @test ret1 < ret3 < ret2 < ret4
     @test sr1 < sr4 < sr2 < sr3
 
+    sr5 = sharpe_ratio(portfolio; kelly = true)
+    @test isapprox(dot(portfolio.mu, w4.weights) / calc_risk(portfolio), sr4)
+    @test isapprox(1 / size(portfolio.returns, 1) *
+                   sum(log.(1 .+ portfolio.returns * w4.weights)) / calc_risk(portfolio),
+                   sr5)
+
     portfolio.rebalance = TR(; val = 0, w = w3.weights)
     w5 = optimise2!(portfolio; obj = MinRisk())
     @test isapprox(w1.weights, w5.weights)
@@ -136,6 +142,12 @@ end
     @test r1 < r2 < r3 < r4
     @test ret1 < ret2 < ret3 < ret4
     @test sr1 < sr4 < sr3 < sr2
+
+    sr5 = sharpe_ratio(portfolio; type = :WC2, kelly = true)
+    @test isapprox(dot(portfolio.mu, w4.weights) / calc_risk(portfolio; type = :WC2), sr4)
+    @test isapprox(1 / size(portfolio.returns, 1) *
+                   sum(log.(1 .+ portfolio.returns * w4.weights)) /
+                   calc_risk(portfolio; type = :WC2), sr5)
 
     portfolio.rebalance = TR(; val = 0, w = w3.weights)
     w5 = optimise2!(portfolio; type = WC2(), obj = MinRisk())

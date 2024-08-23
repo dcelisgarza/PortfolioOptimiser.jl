@@ -232,4 +232,8 @@ end
     lrc9, hrc9 = extrema(rc9[1:4])
     @test isapprox(hrc9 / lrc9, 100, rtol = 0.0005)
     @test isapprox(sum(portfolio.f_risk_budget), 1)
+
+    portfolio.loadings = DataFrame()
+    rc10 = factor_risk_contribution(portfolio; type = :RP2)
+    @test isapprox(rc9, rc10)
 end

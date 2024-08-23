@@ -1642,7 +1642,7 @@ function factor_risk_contribution(rm::RiskMeasure, w::AbstractVector;
                                       marginal = true, kwargs...)
 
     if isempty(B)
-        B = loadings_matrix(DataFrame(F, f_assets), DataFrame(X, assets), loadings_opt)
+        B = regression(loadings_opt, DataFrame(F, f_assets), DataFrame(X, assets))
     end
     b1, b2, b3, B = _factors_b1_b2_b3(B, F, loadings_opt)
 
@@ -1660,7 +1660,7 @@ function sharpe_ratio(rm::RiskMeasure, w::AbstractVector;
                       SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
                       rf::Real = 0.0, kelly::Bool = false)
     ret = if kelly
-        1 / size(X, 1) * sum(log.(1 .+ X * w))
+        1 / size(X, 1) * sum(log.(one(eltype(X)) .+ X * w))
     else
         dot(mu, w)
     end

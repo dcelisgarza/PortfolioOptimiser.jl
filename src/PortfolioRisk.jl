@@ -25,11 +25,8 @@ function risk_contribution(portfolio::AbstractPortfolio2;
                              SV = portfolio.SV, delta = delta, marginal = marginal)
 end
 function factor_risk_contribution(portfolio::AbstractPortfolio2;
-                                  type::Symbol = if isa(portfolio, Portfolio2)
-                                      :Trad2
-                                  else
-                                      :HRP
-                                  end, rm::RiskMeasure = SD2(), delta::Real = 1e-6)
+                                  type::Symbol = isa(portfolio, Portfolio2) ? :Trad2 : :HRP,
+                                  rm::RiskMeasure = SD2(), delta::Real = 1e-6)
     set_rm_properties(rm, portfolio.solvers, portfolio.cov)
     return factor_risk_contribution(rm, portfolio.optimal[type].weights;
                                     X = portfolio.returns, assets = portfolio.assets,

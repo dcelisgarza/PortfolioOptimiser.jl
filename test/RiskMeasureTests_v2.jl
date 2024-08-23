@@ -33,3 +33,102 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
         @test isapprox(risk, calc_risk(portfolio; type = :Trad2, rm = rm), rtol = 5e-7)
     end
 end
+
+@testset "Constructors and setters" begin
+    @test_throws AssertionError SD2(sigma = rand(5, 3))
+    @test_throws AssertionError SD2(; sigma = Matrix(undef, 0, 1))
+    rm = SD2()
+    @test_throws AssertionError rm.sigma = Matrix(undef, 0, 1)
+
+    @test_throws AssertionError Variance2(sigma = rand(5, 3))
+    @test_throws AssertionError Variance2(; sigma = Matrix(undef, 0, 1))
+    rm = Variance2()
+    @test_throws AssertionError rm.sigma = Matrix(undef, 0, 1)
+
+    rm = VaR2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+
+    rm = CVaR2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+
+    rm = EVaR2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    @test Symbol(rm) == :EVaR
+    @test String(rm) == "EVaR"
+
+    rm = RVaR2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    @test_throws AssertionError rm.kappa = 1
+    @test_throws AssertionError rm.kappa = 0
+    @test Symbol(rm) == :RVaR
+    @test String(rm) == "RVaR"
+
+    rm = DaR2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+
+    rm = CDaR2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+
+    rm = EDaR2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    @test Symbol(rm) == :EDaR
+    @test String(rm) == "EDaR"
+
+    rm = RDaR2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    @test_throws AssertionError rm.kappa = 1
+    @test_throws AssertionError rm.kappa = 0
+    @test Symbol(rm) == :RDaR
+    @test String(rm) == "RDaR"
+
+    rm = DaR_r2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+
+    rm = CDaR_r2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+
+    rm = EDaR_r2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+
+    rm = RDaR_r2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    @test_throws AssertionError rm.kappa = 1
+    @test_throws AssertionError rm.kappa = 0
+
+    rm = RCVaR2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    @test_throws AssertionError rm.beta = 1
+    @test_throws AssertionError rm.beta = 0
+
+    rm = TG2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    @test_throws AssertionError rm.alpha_i = 1
+    @test_throws AssertionError rm.alpha_i = 0
+    @test_throws AssertionError rm.a_sim = 0
+
+    rm = RTG2()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    @test_throws AssertionError rm.alpha_i = 1
+    @test_throws AssertionError rm.alpha_i = 0
+    @test_throws AssertionError rm.a_sim = 0
+    @test_throws AssertionError rm.beta = 1
+    @test_throws AssertionError rm.beta = 0
+    @test_throws AssertionError rm.beta_i = 1
+    @test_throws AssertionError rm.beta_i = 0
+    @test_throws AssertionError rm.b_sim = 0
+end
