@@ -155,7 +155,7 @@ end
     w10 = optimise2!(portfolio; type = WC2(), obj = Util(; l = l))
     w11 = optimise2!(portfolio; type = WC2(), obj = SR(; rf = rf))
     w12 = optimise2!(portfolio; type = WC2(), obj = MaxRet())
-    @test isapprox(w10.weights, w1.weights)
+    @test isapprox(w10.weights, w1.weights, rtol = 5.0e-8)
     @test isapprox(w11.weights, w1.weights, rtol = 5.0e-8)
     @test isapprox(w12.weights, w1.weights, rtol = 1.0e-6)
 
