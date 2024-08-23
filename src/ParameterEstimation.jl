@@ -1787,7 +1787,7 @@ function cokurt(ke::KurtSemi, X::AbstractMatrix, mu::AbstractVector)
 
     return scokurt
 end
-function coskew(se::SkewFull, X::AbstractMatrix, mu::AbstractVector)
+function coskew(::SkewFull, X::AbstractMatrix, mu::AbstractVector)
     T, N = size(X)
     y = X .- transpose(mu)
     o = transpose(range(; start = one(eltype(y)), stop = one(eltype(y)), length = N))

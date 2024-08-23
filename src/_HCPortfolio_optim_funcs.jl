@@ -355,7 +355,6 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0,
             weights[rc] *= 1 - alpha_1
         end
     end
-
     return weights
 end
 

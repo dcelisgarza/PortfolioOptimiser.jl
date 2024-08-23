@@ -53,7 +53,12 @@ end
 end
 struct HRP2 <: HCPortType end
 struct HERC2 <: HCPortType end
-struct NCO2 <: HCPortType end
+@kwdef mutable struct NCO2 <: HCPortType
+    port_kwargs::NamedTuple = (;)
+    port_kwargs_o::NamedTuple = (;)
+    stat_kwargs::NamedTuple = (;)
+    stat_kwargs_o::NamedTuple = (;)
+end
 Base.String(::Trad2) = "Trad2"
 Base.Symbol(::Trad2) = :Trad2
 Base.String(::RP2) = "RP2"
@@ -62,6 +67,12 @@ Base.String(::RRP2) = "RRP2"
 Base.Symbol(::RRP2) = :RRP2
 Base.String(::WC2) = "WC2"
 Base.Symbol(::WC2) = :WC2
+Base.String(::HRP2) = "HRP2"
+Base.Symbol(::HRP2) = :HRP2
+Base.String(::HERC2) = "HERC2"
+Base.Symbol(::HERC2) = :HERC2
+Base.String(::NCO2) = "NCO2"
+Base.Symbol(::NCO2) = :NCO2
 
 abstract type RetType end
 struct NoKelly <: RetType end
@@ -2540,4 +2551,4 @@ end
 export Portfolio2, HCPortfolio2, NoKelly, AKelly, EKelly, MinRisk, Util, SR, MaxRet, Trad2,
        RP2, NoRRP, RegRRP, RegPenRRP, RRP2, WC2, QuadSD, SOCSD, SimpleSD, RetType, WCBox,
        WCEllipse, NoWC, TrackingErr, NoTracking, TrackWeight, TrackRet, NoNtwk, SDP2, IP2,
-       NoTR, TR, Classic2, FC2, FM2, BL2, BLFM2, NoPosdef, PosdefNearest
+       NoTR, TR, Classic2, FC2, FM2, BL2, BLFM2, NoPosdef, PosdefNearest, HRP2, HERC2, NCO2

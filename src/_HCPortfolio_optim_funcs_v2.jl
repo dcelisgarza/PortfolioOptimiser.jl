@@ -915,21 +915,266 @@ function _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_boun
     return portfolio.optimal[type]
 end
 =#
+function w_limits(type::NCO2, datatype = Float64)
+    port_kwargs = type.port_kwargs
+    port_kwargs_o = type.port_kwargs_o
+    lo, hi = if type == :NCO && (haskey(port_kwargs, :short) && port_kwargs.short ||
+                                 haskey(port_kwargs_o, :short) && port_kwargs_o.short)
+        la = nothing
+        ha = nothing
+        lb = nothing
+        hb = nothing
 
-function _optimise!(::HRP2, port::HCPortfolio2,
-                    rm::Union{AbstractVector, <:TradRiskMeasure})
-    port.fail = Dict()
+        if haskey(port_kwargs, :short) && port_kwargs.short
+            if haskey(port_kwargs, :short_u)
+                la = port_kwargs.short_u
+            end
+            if haskey(port_kwargs, :long_u)
+                ha = port_kwargs.long_u
+            end
+        end
+
+        if haskey(port_kwargs_o, :short) && port_kwargs_o.short
+            if haskey(port_kwargs_o, :short_u)
+                lb = port_kwargs_o.short_u
+            end
+            if haskey(port_kwargs_o, :long_u)
+                hb = port_kwargs_o.long_u
+            end
+        end
+
+        if isnothing(la) && isnothing(lb)
+            la = lb = 0.2 * one(datatype)
+        elseif isnothing(la)
+            la = lb
+        elseif isnothing(lb)
+            lb = la
+        end
+
+        if isnothing(ha) && isnothing(hb)
+            ha = hb = one(datatype)
+        elseif isnothing(ha)
+            ha = hb
+        elseif isnothing(hb)
+            hb = ha
+        end
+
+        -max(la, lb), max(ha, hb)
+    else
+        zero(datatype), one(datatype)
+    end
+
+    return lo, hi
+end
+function w_limits(::Any, datatype = Float64)
+    return zero(datatype), one(datatype)
+end
+function set_hc_weights(w_min, w_max, N, lo = 0.0, hi = 1.0)
+    lower_bound = if isa(w_min, AbstractVector) && isempty(w_min)
+        zeros(N)
+    elseif isa(w_min, AbstractVector) && !isempty(w_min)
+        max.(lo, w_min)
+    else
+        fill(max(lo, w_min), N)
+    end
+
+    upper_bound = if isa(w_max, AbstractVector) && isempty(w_max)
+        ones(N)
+    elseif isa(w_max, AbstractVector) && !isempty(w_max)
+        min.(hi, w_max)
+    else
+        fill(min(hi, w_max), N)
+    end
+
+    @smart_assert(all(upper_bound .>= lower_bound))
+
+    return lower_bound, upper_bound
+end
+function _get_skew(::Skew2, port, cluster, idx)
+    return view(port.skew, cluster, idx)
+end
+function _get_skew(::SSkew2, port, cluster, idx)
+    return view(port.sskew, cluster, idx)
+end
+function gen_cluster_Skew_SSkew(rm::Union{Skew2, SSkew2}, port, cluster)
+    idx = Int[]
+    N = size(port.returns, 2)
+    Nc = length(cluster)
+    sizehint!(idx, Nc^2)
+    for c ∈ cluster
+        append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
+    end
+    skew = _get_skew(rm, port, cluster, idx)
+    V = zeros(eltype(skew), Nc, Nc)
+    for i ∈ 1:Nc
+        j = (i - 1) * Nc + 1
+        k = i * Nc
+        vals, vecs = eigen(skew[:, j:k])
+        vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
+        V .-= real(vecs * Diagonal(vals) * transpose(vecs))
+    end
+    if all(iszero.(diag(V)))
+        V .= V + eps(eltype(skew)) * I
+    end
+    return V
+end
+function gen_cluster_Skew_SSkew(args...)
     return nothing
 end
-function optimise2!(port::HCPortfolio2;
-                    rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
+function naive_risk(::Equal2, returns, ::Any)
+    N = size(returns, 2)
+    return fill(inv(N), N)
+end
+function naive_risk(rm::RiskMeasure, returns, cV)
+    N = size(returns, 2)
+    inv_risk = Vector{eltype(returns)}(undef, N)
+    w = Vector{eltype(returns)}(undef, N)
+
+    for i ∈ eachindex(w)
+        w .= zero(eltype(returns))
+        w[i] = one(eltype(returns))
+        risk = calc_risk(rm, w; X = returns, V = cV, SV = cV)
+        inv_risk[i] = inv(risk)
+    end
+    return inv_risk / sum(inv_risk)
+end
+function cluster_risk(port, cluster, rm)
+    if hasproperty(rm, :sigma)
+        rm.sigma = view(port.cov, cluster, cluster)
+    end
+    cret = view(port.returns, :, cluster)
+    cV = gen_cluster_Skew_SSkew(rm, port, cluster)
+    cw = naive_risk(rm, cret, cV)
+    return calc_risk(rm, cw; X = cret, V = cV, SV = cV)
+end
+function cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
+    if !(any(w_max .< weights) || any(w_min .> weights))
+        return alpha_1
+    end
+    lmaxw = weights[lc[1]]
+    a1 = sum(w_max[lc]) / lmaxw
+    a2 = max(sum(w_min[lc]) / lmaxw, alpha_1)
+    alpha_1 = min(a1, a2)
+
+    rmaxw = weights[rc[1]]
+    a1 = sum(w_max[rc]) / rmaxw
+    a2 = max(sum(w_min[rc]) / rmaxw, 1 - alpha_1)
+    alpha_1 = one(a1) - min(a1, a2)
+    return alpha_1
+end
+function _optimise!(::HRP2, port::HCPortfolio2, rm::Union{AbstractVector, <:RiskMeasure},
+                    w_min, w_max)
+    N = size(port.returns, 2)
+    weights = ones(eltype(port.returns), N)
+    items = [port.clusters.order]
+
+    while length(items) > 0
+        items = [i[j:k] for i ∈ items
+                 for (j, k) ∈ ((1, div(length(i), 2)), (1 + div(length(i), 2), length(i)))
+                 if length(i) > 1]
+
+        for i ∈ 1:2:length(items)
+            lc = items[i]
+            rc = items[i + 1]
+
+            lrisk = zero(eltype(weights))
+            rrisk = zero(eltype(weights))
+
+            rmi = if !isa(rm, AbstractVector)
+                (rm,)
+            else
+                rm
+            end
+            for rv ∈ rmi
+                if !isa(rv, AbstractVector)
+                    rv = (rv,)
+                end
+                for r ∈ rv
+                    if hasproperty(rm, :solvers) &&
+                       (isnothing(rm.solvers) || isempty(rm.solvers))
+                        rm.solvers = port.solvers
+                    end
+                    scale = r.settings.scale
+                    # Left risk.
+                    lrisk += cluster_risk(port, lc, r) * scale
+                    # Right risk.
+                    rrisk += cluster_risk(port, rc, r) * scale
+                end
+            end
+            # Allocate weight to clusters.
+            alpha_1 = one(lrisk) - lrisk / (lrisk + rrisk)
+            # Weight constraints.
+            alpha_1 = cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
+            weights[lc] *= alpha_1
+            weights[rc] *= one(alpha_1) - alpha_1
+        end
+    end
+    return weights
+end
+function opt_weight_bounds(w_min, w_max, weights, max_iter = 100)
+    if !(any(w_max .< weights) || any(w_min .> weights))
+        return weights
+    end
+
+    for _ ∈ 1:max_iter
+        if !(any(w_max .< weights) || any(w_min .> weights))
+            break
+        end
+
+        old_w = copy(weights)
+        weights = max.(min.(weights, w_max), w_min)
+        idx = weights .< w_max .&& weights .> w_min
+        w_add = sum(max.(old_w - w_max, 0.0))
+        w_sub = sum(min.(old_w - w_min, 0.0))
+        delta = w_add + w_sub
+
+        if delta != 0
+            weights[idx] += delta * weights[idx] / sum(weights[idx])
+        end
+    end
+    return weights
+end
+function finalise_weights(type::Any, port, weights, w_min, w_max, max_iter)
+    stype = Symbol(type)
+    port.optimal[stype] = if !isempty(port.fail) || any(.!isfinite.(weights))
+        port.fail[:port] = DataFrame(; tickers = port.assets, weights = weights)
+        DataFrame()
+    else
+        weights = opt_weight_bounds(w_min, w_max, weights, max_iter)
+        weights ./= sum(weights)
+        DataFrame(; tickers = port.assets, weights = weights)
+    end
+    return port.optimal[stype]
+end
+function finalise_weights(type::NCO2, port, weights, w_min, w_max, max_iter)
+    stype = Symbol(type)
+    port_kwargs = type.port_kwargs
+    port_kwargs_o = type.port_kwargs_o
+    port.optimal[stype] = if !isempty(port.fail) || any(.!isfinite.(weights))
+        port.fail[:port] = DataFrame(; tickers = port.assets, weights = weights)
+        DataFrame()
+    elseif haskey(port_kwargs, :short) && port_kwargs.short ||
+           haskey(port_kwargs_o, :short) && port_kwargs_o.short
+        weights = opt_weight_bounds(w_min, w_max, weights, max_iter)
+        DataFrame(; tickers = port.assets, weights = weights)
+    else
+        weights = opt_weight_bounds(w_min, w_max, weights, max_iter)
+        weights ./= sum(weights)
+        DataFrame(; tickers = port.assets, weights = weights)
+    end
+    return port.optimal[stype]
+end
+function optimise2!(port::HCPortfolio2; rm::Union{AbstractVector, <:RiskMeasure} = SD2(),
                     type::HCPortType = HRP2(), cluster::Bool = true,
                     hclust_alg::HClustAlg = HAClustering(),
-                    hclust_opt::HClustOpt = HClustOpt())
+                    hclust_opt::HClustOpt = HClustOpt(), max_iter::Int = 100)
+    port.fail = Dict()
     if cluster
         cluster_assets2!(hclust_alg, port, hclust_opt)
     end
-    return _optimise!(type, port, rm)
-end
 
-export optimise2!
+    w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(port.returns, 2),
+                                  w_limits(nothing, eltype(port.returns))...)
+    weights = _optimise!(type, port, rm, w_min, w_max)
+    return finalise_weights(type, port, weights, w_min, w_max, max_iter)
+end
