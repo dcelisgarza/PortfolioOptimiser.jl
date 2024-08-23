@@ -60,8 +60,8 @@ function PO.plot_risk_contribution2(assets::AbstractVector, w::AbstractVector,
                                     percentage::Bool = false, erc_line::Bool = true,
                                     t_factor = 252, delta::Real = 1e-6,
                                     marginal::Bool = false, kwargs...)
-    rc = calc_risk_contribution(rm, w; X = X, V = V, SV = SV, delta = delta,
-                                marginal = marginal, kwargs...)
+    rc = risk_contribution(rm, w; X = X, V = V, SV = SV, delta = delta, marginal = marginal,
+                           kwargs...)
 
     DDs = (DaR2, MDD2, ADD2, CDaR2, EDaR2, RDaR2, UCI2, DaR_r2, MDD_r2, ADD_r2, CDaR_r2,
            EDaR_r2, RDaR_r2, UCI_r2)

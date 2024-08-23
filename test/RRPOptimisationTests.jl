@@ -14,12 +14,12 @@ l = 2.0
 
     type = RRP2(; version = NoRRP())
     w1 = optimise2!(portfolio; type = type)
-    rc1 = calc_risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    rc1 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
     w2 = optimise2!(portfolio; type = type)
-    rc2 = calc_risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    rc2 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.05063226479167363, 0.05124795179217185, 0.046905305668578534,
@@ -44,12 +44,12 @@ l = 2.0
     type = RRP2(; version = RegRRP())
     portfolio.risk_budget = []
     w3 = optimise2!(portfolio; type = type)
-    rc3 = calc_risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    rc3 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
     lrc3, hrc3 = extrema(rc3)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
     w4 = optimise2!(portfolio; type = type)
-    rc4 = calc_risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    rc4 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
     lrc4, hrc4 = extrema(rc4)
 
     w3t = [0.050632270730510257, 0.051247955272033616, 0.04690531847722307,
@@ -74,12 +74,12 @@ l = 2.0
     type = RRP2(; version = RegPenRRP(; penalty = 1))
     portfolio.risk_budget = []
     w5 = optimise2!(portfolio; type = type)
-    rc5 = calc_risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    rc5 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
     lrc5, hrc5 = extrema(rc5)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
     w6 = optimise2!(portfolio; type = type)
-    rc6 = calc_risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    rc6 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
     lrc6, hrc6 = extrema(rc6)
 
     w5t = [0.05063226685509387, 0.05124795374842603, 0.04690530823181724,
@@ -104,12 +104,12 @@ l = 2.0
     type = RRP2(; version = RegPenRRP(; penalty = 5))
     portfolio.risk_budget = []
     w7 = optimise2!(portfolio; type = type)
-    rc7 = calc_risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    rc7 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
     lrc7, hrc7 = extrema(rc7)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
     w8 = optimise2!(portfolio; type = type)
-    rc8 = calc_risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    rc8 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
     lrc8, hrc8 = extrema(rc8)
 
     w7t = [0.05063227092483982, 0.051247957970220706, 0.046905313223576876,
@@ -134,7 +134,7 @@ l = 2.0
     portfolio.risk_budget = []
     portfolio.risk_budget[1] = 5
     w9 = optimise2!(portfolio; type = type)
-    rc9 = calc_risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    rc9 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
     lrc9, hrc9 = extrema(rc9)
     @test isapprox(hrc9 / lrc9, 100, rtol = 0.1)
     @test isapprox(sum(portfolio.risk_budget), 1)

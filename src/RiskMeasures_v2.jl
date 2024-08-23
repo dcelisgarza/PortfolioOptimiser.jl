@@ -1586,20 +1586,20 @@ struct Equal2 <: HCRiskMeasure end
 function calc_risk(::Equal2, w::AbstractVector; delta::Real = 0, kwargs...)
     return 1 / length(w) + delta
 end
-function calc_risk_bounds(rm::RiskMeasure, w1::AbstractVector, w2::AbstractVector;
-                          X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                          V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                          SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                          delta::Real = 1e-6, scale::Bool = false, kwargs...)
+function risk_bounds(rm::RiskMeasure, w1::AbstractVector, w2::AbstractVector;
+                     X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                     V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                     SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
+                     scale::Bool = false, kwargs...)
     r1 = calc_risk(rm, w1; X = X, V = V, SV = SV, delta = delta, scale = scale, kwargs...)
     r2 = calc_risk(rm, w2; X = X, V = V, SV = SV, delta = -delta, scale = scale, kwargs...)
     return r1, r2
 end
-function calc_risk_contribution(rm::RiskMeasure, w::AbstractVector;
-                                X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                delta::Real = 1e-6, marginal::Bool = false, kwargs...)
+function risk_contribution(rm::RiskMeasure, w::AbstractVector;
+                           X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                           V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                           SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                           delta::Real = 1e-6, marginal::Bool = false, kwargs...)
     N = length(w)
     ew = eltype(w)
     rc = Vector{ew}(undef, N)
@@ -1615,8 +1615,8 @@ function calc_risk_contribution(rm::RiskMeasure, w::AbstractVector;
         w2 .= w
         w2[i] -= delta
 
-        r1, r2 = calc_risk_bounds(rm, w1, w2; X = X, V = V, SV = SV, delta = delta,
-                                  scale = true, kwargs...)
+        r1, r2 = risk_bounds(rm, w1, w2; X = X, V = V, SV = SV, delta = delta, scale = true,
+                             kwargs...)
 
         rci = if !marginal
             (r1 - r2) / (2 * delta) * w[i]
@@ -1628,18 +1628,18 @@ function calc_risk_contribution(rm::RiskMeasure, w::AbstractVector;
     return rc
 end
 
-function calc_factor_risk_contribution(rm::RiskMeasure, w::AbstractVector;
-                                       X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                       assets::AbstractVector = Vector{String}(undef, 0),
-                                       F::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                       f_assets::AbstractVector = Vector{String}(undef, 0),
-                                       B::DataFrame = DataFrame(),
-                                       loadings_opt::RegressionType = ForwardReg(),
-                                       V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                       SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                       delta::Real = 1e-6, kwargs...)
-    marginal_risk = calc_risk_contribution(rm, w; X = X, V = V, SV = SV, delta = delta,
-                                           marginal = true, kwargs...)
+function factor_risk_contribution(rm::RiskMeasure, w::AbstractVector;
+                                  X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                  assets::AbstractVector = Vector{String}(undef, 0),
+                                  F::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                  f_assets::AbstractVector = Vector{String}(undef, 0),
+                                  B::DataFrame = DataFrame(),
+                                  loadings_opt::RegressionType = ForwardReg(),
+                                  V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                  SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                  delta::Real = 1e-6, kwargs...)
+    marginal_risk = risk_contribution(rm, w; X = X, V = V, SV = SV, delta = delta,
+                                      marginal = true, kwargs...)
 
     if isempty(B)
         B = loadings_matrix(DataFrame(F, f_assets), DataFrame(X, assets), loadings_opt)
@@ -1671,5 +1671,5 @@ end
 export RiskMeasure, SD2, Variance2, MAD2, SSD2, FLPM2, SLPM2, WR2, VaR2, CVaR2, EVaR2,
        RVaR2, DaR2, MDD2, ADD2, CDaR2, UCI2, EDaR2, RDaR2, DaR_r2, MDD_r2, ADD_r2, CDaR_r2,
        UCI_r2, EDaR_r2, RDaR_r2, Kurt2, SKurt2, GMD2, RG2, RCVaR2, TG2, RTG2, OWA2, DVar2,
-       Skew2, SSkew2, Equal2, RiskMeasureSettings, OWASettings, calc_risk_bounds,
-       calc_risk_contribution, sharpe_ratio, calc_factor_risk_contribution
+       Skew2, SSkew2, Equal2, RiskMeasureSettings, OWASettings, risk_bounds,
+       risk_contribution, sharpe_ratio, factor_risk_contribution

@@ -2454,8 +2454,8 @@ function efficient_frontier!(port::Portfolio2;
     rmi.settings.ub = Inf
 
     set_rm_properties(rmi, port.solvers, sigma)
-    risk1, risk2 = calc_risk_bounds(rmi, w1, w2; X = returns, V = port.V, SV = port.SV,
-                                    delta = 0)
+    risk1, risk2 = risk_bounds(rmi, w1, w2; X = returns, V = port.V, SV = port.SV,
+                               delta = 0)
 
     mus = range(ret1; stop = ret2, length = points)
     risks = range(risk1; stop = risk2, length = points)
