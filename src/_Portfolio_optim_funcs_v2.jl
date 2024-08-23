@@ -2047,7 +2047,7 @@ function convex_optimisation(port, obj, type, class)
         try
             JuMP.optimize!(model)
         catch jump_error
-            push!(solvers_tried, key => Dict(:jump_error => jump_error))
+            push!(solvers_tried, key => Dict(:JuMP_error => jump_error))
             continue
         end
 

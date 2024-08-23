@@ -1280,6 +1280,22 @@ end
            2.229837567112617e-10, 0.22491243915854847]
     riskt1 = 0.023582366401225324
     rett1 = 0.000643224255466324
+
+    rm = [[TG2(; owa = OWASettings(; approx = true)),
+           TG2(; owa = OWASettings(; approx = false))]]
+    w10 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
+    @test all(value.(portfolio.model[:tga][:, 1]) .== 0)
+    @test all(value.(portfolio.model[:tga][:, 2]) .!= 0)
+    @test value(portfolio.model[:tg_t][1]) != 0
+    @test value(portfolio.model[:tg_t][2]) == 0
+
+    rm = [[TG2(; owa = OWASettings(; approx = false)),
+           TG2(; owa = OWASettings(; approx = true))]]
+    w11 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
+    @test all(value.(portfolio.model[:tga][:, 1]) .!= 0)
+    @test all(value.(portfolio.model[:tga][:, 2]) .== 0)
+    @test value(portfolio.model[:tg_t][1]) == 0
+    @test value(portfolio.model[:tg_t][2]) != 0
 end
 
 @testset "RTG vec" begin
@@ -1706,6 +1722,22 @@ end
     @test isapprox(w9.weights, wt, rtol = 0.005)
     @test isapprox(r9, riskt, rtol = 5.0e-5)
     @test isapprox(ret9, rett, rtol = 0.05)
+
+    rm = [[RTG2(; owa = OWASettings(; approx = true)),
+           RTG2(; owa = OWASettings(; approx = false))]]
+    w10 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
+    @test all(value.(portfolio.model[:rtga][:, 1]) .== 0)
+    @test all(value.(portfolio.model[:rtga][:, 2]) .!= 0)
+    @test value(portfolio.model[:rltg_t][1]) != 0
+    @test value(portfolio.model[:rltg_t][2]) == 0
+
+    rm = [[RTG2(; owa = OWASettings(; approx = false)),
+           RTG2(; owa = OWASettings(; approx = true))]]
+    w11 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
+    @test all(value.(portfolio.model[:rtga][:, 1]) .!= 0)
+    @test all(value.(portfolio.model[:rtga][:, 2]) .== 0)
+    @test value(portfolio.model[:rltg_t][1]) == 0
+    @test value(portfolio.model[:rltg_t][2]) != 0
 end
 
 @testset "OWA vec" begin
@@ -2151,6 +2183,22 @@ end
            2.229837567112617e-10, 0.22491243915854847]
     riskt1 = 0.023582366401225324
     rett1 = 0.000643224255466324
+
+    rm = [[OWA2(; owa = OWASettings(; approx = true)),
+           OWA2(; owa = OWASettings(; approx = false))]]
+    w10 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
+    @test all(value.(portfolio.model[:owa_a][:, 1]) .== 0)
+    @test all(value.(portfolio.model[:owa_a][:, 2]) .!= 0)
+    @test value(portfolio.model[:owa_t][1]) != 0
+    @test value(portfolio.model[:owa_t][2]) == 0
+
+    rm = [[OWA2(; owa = OWASettings(; approx = false)),
+           OWA2(; owa = OWASettings(; approx = true))]]
+    w11 = optimise2!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
+    @test all(value.(portfolio.model[:owa_a][:, 1]) .!= 0)
+    @test all(value.(portfolio.model[:owa_a][:, 2]) .== 0)
+    @test value(portfolio.model[:owa_t][1]) == 0
+    @test value(portfolio.model[:owa_t][2]) != 0
 end
 
 @testset "Add Skew and SSkew to SD" begin

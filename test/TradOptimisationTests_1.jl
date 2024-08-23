@@ -1,3 +1,28 @@
+@testset "Fail optimisation" begin
+    portfolio = Portfolio2(; prices = prices[(end - 200):end],
+                           solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
+                                                         :params => Dict("log_to_console" => false))))
+    asset_statistics2!(portfolio)
+    optimise2!(portfolio)
+
+    @test !isempty(portfolio.fail)
+    @test haskey(portfolio.fail, :HiGHS_Trad2)
+    @test haskey(portfolio.fail[:HiGHS_Trad2], :JuMP_error)
+    @test length(keys(portfolio.fail[:HiGHS_Trad2])) == 1
+
+    portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                               :params => Dict("verbose" => false,
+                                                               "max_step_fraction" => 0.75,
+                                                               "max_iter" => 100,
+                                                               "equilibrate_max_iter" => 20)))
+    rm = [[OWA2(; owa = OWASettings(; approx = false)),
+           OWA2(; owa = OWASettings(; approx = true))]]
+    optimise2!(portfolio; rm = rm)
+    @test !isempty(portfolio.fail)
+    @test haskey(portfolio.fail, :Clarabel_Trad2)
+    @test length(keys(portfolio.fail[:Clarabel_Trad2])) == 6
+end
+
 @testset "SD" begin
     portfolio = Portfolio2(; prices = prices,
                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
