@@ -2086,7 +2086,7 @@ Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
 """
 mutable struct HCPortfolio2{ast, dat, r,
                             # ai, a, as, bi, b, bs, k, ata, 
-                            mnak, mnaks,
+                            # mnak, mnaks,
                             # skewf, sskewf, owap, wowa, 
                             tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
                             tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv, toptpar,
@@ -2103,8 +2103,8 @@ mutable struct HCPortfolio2{ast, dat, r,
     # b_sim::bs
     # kappa::k
     # alpha_tail::ata
-    max_num_assets_kurt::mnak
-    max_num_assets_kurt_scale::mnaks
+    # max_num_assets_kurt::mnak
+    # max_num_assets_kurt_scale::mnaks
     # skew_factor::skewf
     # sskew_factor::sskewf
     # owa_p::owap
@@ -2245,8 +2245,8 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                       #   alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
                       #   beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim,
                       #   kappa::Real = 0.3, alpha_tail::Real = 0.05,
-                      max_num_assets_kurt::Integer = 0,
-                      max_num_assets_kurt_scale::Integer = 2,
+                      #   max_num_assets_kurt::Integer = 0,
+                      #   max_num_assets_kurt_scale::Integer = 2,
                       #   skew_factor::Real = Inf, sskew_factor::Real = Inf,
                       #   owa_p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50],
                       #   owa_w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -2298,8 +2298,8 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
     # @smart_assert(b_sim > zero(b_sim))
     # @smart_assert(zero(kappa) < kappa < one(kappa))
     # @smart_assert(zero(alpha_tail) < alpha_tail < one(alpha_tail))
-    @smart_assert(max_num_assets_kurt >= zero(max_num_assets_kurt))
-    max_num_assets_kurt_scale = clamp(max_num_assets_kurt_scale, 1, size(returns, 2))
+    # @smart_assert(max_num_assets_kurt >= zero(max_num_assets_kurt))
+    # max_num_assets_kurt_scale = clamp(max_num_assets_kurt_scale, 1, size(returns, 2))
     # if !isempty(owa_w)
     #     @smart_assert(length(owa_w) == size(returns, 1))
     # end
@@ -2363,7 +2363,7 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
     return HCPortfolio2{typeof(assets), typeof(timestamps), typeof(returns),
                         # typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i),
                         # typeof(beta), typeof(b_sim), typeof(kappa), typeof(alpha_tail),
-                        typeof(max_num_assets_kurt), typeof(max_num_assets_kurt_scale),
+                        # typeof(max_num_assets_kurt), typeof(max_num_assets_kurt_scale),
                         # typeof(skew_factor), typeof(sskew_factor), typeof(owa_p),
                         # typeof(owa_w), 
                         typeof(mu), typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2),
@@ -2379,7 +2379,7 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                         typeof(alloc_model)}(assets, timestamps, returns,
                                              # alpha_i, alpha,
                                              #  a_sim, beta_i, beta, b_sim, kappa, alpha_tail,
-                                             max_num_assets_kurt, max_num_assets_kurt_scale,
+                                             #  max_num_assets_kurt, max_num_assets_kurt_scale,
                                              #  skew_factor, sskew_factor, owa_p, owa_w, 
                                              mu, cov, kurt, skurt, L_2, S_2, skew, V, sskew,
                                              SV, bins_info, w_min, w_max, cor_method, cor,
@@ -2406,16 +2406,16 @@ function Base.setproperty!(obj::HCPortfolio2, sym::Symbol, val)
     #     @smart_assert(zero(val) < val < one(val))
     # elseif sym == :alpha_tail
     # @smart_assert(zero(val) < val < one(val))
-    if sym == :max_num_assets_kurt
-        @smart_assert(val >= zero(val))
-    elseif sym == :max_num_assets_kurt_scale
-        val = clamp(val, 1, size(obj.returns, 2))
-        # elseif sym == :owa_w
-        #     if !isempty(val)
-        #         @smart_assert(length(val) == size(obj.returns, 1))
-        #     end
-        #     val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym == :bins_info
+    # if sym == :max_num_assets_kurt
+    #     @smart_assert(val >= zero(val))
+    # elseif sym == :max_num_assets_kurt_scale
+    #     val = clamp(val, 1, size(obj.returns, 2))
+    # elseif sym == :owa_w
+    #     if !isempty(val)
+    #         @smart_assert(length(val) == size(obj.returns, 1))
+    #     end
+    #     val = convert(typeof(getfield(obj, sym)), val)
+    if sym == :bins_info
         @smart_assert(val ∈ BinMethods || isa(val, Int) && val > zero(val))
     elseif sym == :cor_method
         @smart_assert(val ∈ CorMethods)
@@ -2498,8 +2498,8 @@ function Base.deepcopy(obj::HCPortfolio2)
                         # typeof(obj.alpha_i), typeof(obj.alpha), typeof(obj.a_sim),
                         # typeof(obj.beta_i), typeof(obj.beta), typeof(obj.b_sim),
                         # typeof(obj.kappa), typeof(obj.alpha_tail),
-                        typeof(obj.max_num_assets_kurt),
-                        typeof(obj.max_num_assets_kurt_scale),
+                        # typeof(obj.max_num_assets_kurt),
+                        # typeof(obj.max_num_assets_kurt_scale),
                         # typeof(obj.skew_factor),
                         # typeof(obj.sskew_factor), typeof(obj.owa_p), typeof(obj.owa_w),
                         typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt),
@@ -2522,8 +2522,8 @@ function Base.deepcopy(obj::HCPortfolio2)
                                                  #  deepcopy(obj.beta), deepcopy(obj.b_sim),
                                                  #  deepcopy(obj.kappa),
                                                  #  deepcopy(obj.alpha_tail),
-                                                 deepcopy(obj.max_num_assets_kurt),
-                                                 deepcopy(obj.max_num_assets_kurt_scale),
+                                                 #  deepcopy(obj.max_num_assets_kurt),
+                                                 #  deepcopy(obj.max_num_assets_kurt_scale),
                                                  #  deepcopy(obj.skew_factor),
                                                  #  deepcopy(obj.sskew_factor),
                                                  #  deepcopy(obj.owa_p), deepcopy(obj.owa_w),
