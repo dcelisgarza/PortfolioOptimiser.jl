@@ -4,13 +4,13 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
+@safetestset "HC Optimistaion" begin
+    include("HCOptimisationTests.jl")
+end
+
 @safetestset "Efficient frontier v2" begin
     include("EfficientFrontierTests_v2.jl")
 end
-
-# @safetestset "HC Optimistaion" begin
-#     include("HCOptimisationTests.jl")
-# end
 
 @safetestset "Constraints" begin
     include("ConstrainedOptimisationTests.jl")
