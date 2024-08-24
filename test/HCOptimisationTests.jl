@@ -11,8 +11,9 @@ portfolio = HCPortfolio2(; prices = prices,
                                                                           "max_step_fraction" => 0.75))))
 
 asset_statistics2!(portfolio)
-@time w1 = optimise2!(portfolio; rmo = CDaR2(), rm = [SD2(), Equal2()], cluster = true,
-                      type = HERC2(), hclust_alg = DBHT(), hclust_opt = HClustOpt())
+@time w1 = optimise2!(portfolio; rm = [SD2()], rmo = SSD2(), cluster = false,
+                      type = NCO2(; options = (; obj = SR(; rf = rf))), hclust_alg = DBHT(),
+                      hclust_opt = HClustOpt())
 
 @test vec(portfolio.clusters.merges) ==
       [-14, -11, -19, -18, -17, -7, -16, -13, -1, -4, -3, -9, 10, 2, 13, 12, 6, 8, 17, -15,
@@ -42,5 +43,15 @@ asset_statistics!(portfolio2; cor_opt = CorOpt(; dist = DistOpt(; method = POCor
 
 cluster_opt = ClusterOpt(; linkage = :DBHT, genfunc = GenericFunction(; func = dbht_d))
 
-@time w1_o = optimise!(portfolio2; type = :HERC, rm = :Equal, rm_o = :CDaR, rf = rf,
+@time w1_o = optimise!(portfolio2; type = :HERC, rm = :SD, rf = rf,
                        cluster_opt = cluster_opt, cluster = true)
+
+@time w5 = optimise!(portfolio2; type = :NCO,
+                     nco_opt = OptimiseOpt(; rm = :SD, obj = :Sharpe, rf = rf, l = l),
+                     nco_opt_o = OptimiseOpt(; rm = :SSD, obj = :Sharpe, rf = rf, l = l),
+                     cluster = false, cluster_opt = cluster_opt)
+
+println(kurt_flag)
+println(skurt_flag)
+println(skew_flag)
+println(sskew_flag)

@@ -54,12 +54,11 @@ end
 struct HRP2 <: HCPortType end
 struct HERC2 <: HCPortType end
 @kwdef mutable struct NCO2 <: HCPortType
-    options::NamedTuple=(;)
-    options_o::NamedTuple=(;)
+    options::NamedTuple = (;)
+    options_o::NamedTuple = options
     port_kwargs::NamedTuple = (;)
     port_kwargs_o::NamedTuple = port_kwargs
-    stat_kwargs::NamedTuple = (;)
-    stat_kwargs_o::NamedTuple = stat_kwargs
+    stat_kwargs_o::NamedTuple = (;)
 end
 Base.String(::Trad2) = "Trad2"
 Base.Symbol(::Trad2) = :Trad2

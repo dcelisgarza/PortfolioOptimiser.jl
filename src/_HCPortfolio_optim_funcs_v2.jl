@@ -990,13 +990,14 @@ function set_hc_weights(w_min, w_max, N, lo = 0.0, hi = 1.0)
 
     return lower_bound, upper_bound
 end
-function _get_skew(::Skew2, port, cluster, idx)
+function _get_skew(::Union{Skew2, Val{true}}, port, cluster, idx)
     return view(port.skew, cluster, idx)
 end
-function _get_skew(::SSkew2, port, cluster, idx)
+function _get_skew(::Union{SSkew2, Val{false}}, port, cluster, idx)
     return view(port.sskew, cluster, idx)
 end
-function gen_cluster_Skew_SSkew(rm::Union{Skew2, SSkew2}, port, cluster)
+function gen_cluster_skew_sskew(rm::Union{Skew2, SSkew2, Val{true}, Val{false}}, port,
+                                cluster)
     idx = Int[]
     N = size(port.returns, 2)
     Nc = length(cluster)
@@ -1017,9 +1018,6 @@ function gen_cluster_Skew_SSkew(rm::Union{Skew2, SSkew2}, port, cluster)
         V .= V + eps(eltype(skew)) * I
     end
     return V
-end
-function gen_cluster_Skew_SSkew(args...)
-    return nothing
 end
 function _naive_risk(::Equal2, returns, ::Any)
     N = size(returns, 2)
@@ -1043,7 +1041,7 @@ function cluster_risk(port, cluster, rm)
         rm.sigma = view(port.cov, cluster, cluster)
     end
     cret = view(port.returns, :, cluster)
-    cV = gen_cluster_Skew_SSkew(rm, port, cluster)
+    cV = gen_cluster_skew_sskew(rm, port, cluster)
     cw = _naive_risk(rm, cret, cV)
     return calc_risk(rm, cw; X = cret, V = cV, SV = cV)
 end
@@ -1052,7 +1050,7 @@ function naive_risk(port, cluster, rm)
         rm.sigma = view(port.cov, cluster, cluster)
     end
     cret = view(port.returns, :, cluster)
-    cV = gen_cluster_Skew_SSkew(rm, port, cluster)
+    cV = gen_cluster_skew_sskew(rm, port, cluster)
     return _naive_risk(rm, cret, cV)
 end
 function cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
@@ -1242,7 +1240,7 @@ function _optimise!(::HERC2, port::HCPortfolio2, rmi::Union{AbstractVector, <:Ri
     end
 
     for i ∈ 1:(port.k)
-        cluster = idx .== i
+        cidx = idx .== i
         rm = if !isa(rmi, AbstractVector)
             (rmi,)
         else
@@ -1257,19 +1255,176 @@ function _optimise!(::HERC2, port::HCPortfolio2, rmi::Union{AbstractVector, <:Ri
                     r.solvers = port.solvers
                 end
                 scale = r.settings.scale
-                weights[cluster] .*= naive_risk(port, cluster, r) * scale
+                weights[cidx] .*= naive_risk(port, cidx, r) * scale
             end
         end
     end
 
     return weights
 end
-function intra_weights(port, rm::Union{AbstractVector, <:TradRiskMeasure}, options,
-                       port_kwargs, stat_kwargs) end
+function find_kurt_skew_rm(rm::Union{AbstractVector, <:TradRiskMeasure})
+    set_kurt = false
+    set_skurt = false
+    set_skew = false
+    set_sskew = false
+    if !isa(rm, AbstractVector)
+        set_kurt = isa(rm, Kurt2)
+        set_skurt = isa(rm, SKurt2)
+        set_skew = isa(rm, Skew2)
+        set_sskew = isa(rm, SSkew2)
+    else
+        rm_flat = reduce(vcat, rm)
+        if !isa(rm_flat, AbstractVector)
+            rm_flat = (rm_flat,)
+        end
+        for r ∈ rm_flat
+            if !set_kurt
+                set_kurt = isa(r, Kurt2)
+            end
+            if !set_skurt
+                set_skurt = isa(r, SKurt2)
+            end
+            if !set_skew
+                set_skew = isa(r, Skew2)
+            end
+            if !set_sskew
+                set_sskew = isa(r, SSkew2)
+            end
+        end
+    end
+
+    return set_kurt, set_skurt, set_skew, set_sskew
+end
+function gen_cluster_stats(port, cidx, set_kurt, set_skurt, set_skew, set_sskew)
+    cassets = port.assets[cidx]
+    cret = port.returns[:, cidx]
+    cmu = port.mu[cidx]
+    ccov = port.cov[cidx, cidx]
+    ckurt = Matrix{eltype(port.returns)}(undef, 0, 0)
+    cskurt = Matrix{eltype(port.returns)}(undef, 0, 0)
+    cV = Matrix{eltype(port.returns)}(undef, 0, 0)
+    cSV = Matrix{eltype(port.returns)}(undef, 0, 0)
+    if set_kurt || set_skurt || set_skew || set_sskew
+        idx = Int[]
+        N = size(port.returns, 2)
+        cluster = findall(cidx)
+        Nc = length(cluster)
+        sizehint!(idx, Nc^2)
+        for c ∈ cluster
+            append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
+        end
+        if set_kurt
+            ckurt = view(port.kurt, idx, idx)
+        end
+        if set_skurt
+            cskurt = view(port.skurt, idx, idx)
+        end
+        if set_skew
+            cV = gen_cluster_skew_sskew(Val(true), port, cluster)
+        end
+        if set_sskew
+            cSV = gen_cluster_skew_sskew(Val(false), port, cluster)
+        end
+    end
+    return cassets, cret, cmu, ccov, ckurt, cskurt, cV, cSV
+end
+function intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ckurt, cskurt, cV, cSV, options,
+                       port_kwargs)
+    intra_port = Portfolio2(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
+                            kurt = ckurt, skurt = cskurt, V = cV, SV = cSV,
+                            solvers = port.solvers, port_kwargs...)
+    if !isempty(ckurt) || !isempty(cskurt)
+        intra_port.L_2, intra_port.S_2 = dup_elim_sum_matrices(size(cret, 2))[2:3]
+    end
+
+    w = optimise2!(intra_port; rm = rm, options...)
+
+    if !isempty(w)
+        w = w.weights
+        success = true
+    else
+        w = zeros(eltype(cret), size(cret))
+        success = false
+    end
+
+    return w, port.fail, success
+end
+function calc_intra_weights(port, rm::Union{AbstractVector, <:TradRiskMeasure}, options,
+                            port_kwargs)
+    idx = cutree(port.clusters; k = port.k)
+    w = zeros(eltype(port.returns), size(port.returns, 2), port.k)
+    cfails = Dict{Int, Dict}()
+
+    set_kurt, set_skurt, set_skew, set_sskew = find_kurt_skew_rm(rm)
+
+    for i ∈ 1:(port.k)
+        cidx = idx .== i
+        cassets, cret, cmu, ccov, ckurt, cskurt, cV, cSV = gen_cluster_stats(port, cidx,
+                                                                             set_kurt,
+                                                                             set_skurt,
+                                                                             set_skew,
+                                                                             set_sskew)
+
+        cw, cfail, success = intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ckurt,
+                                           cskurt, cV, cSV, options, port_kwargs)
+
+        w[cidx, i] .= cw
+        if !success
+            cfails[i] = cfail
+        end
+    end
+    if !isempty(cfails)
+        port.fail[:intra] = cfails
+    end
+
+    return w
+end
+function inter_nco_opt(port, rm, cassets, cret, cmu, ccov, set_kurt, set_skurt, set_skew,
+                       set_sskew, options, port_kwargs, stat_kwargs)
+    inter_port = Portfolio2(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
+                            solvers = port.solvers, port_kwargs...)
+    asset_statistics2!(inter_port; set_cov = false, set_mu = false, set_kurt = set_kurt,
+                       set_skurt = set_skurt, set_skew = set_skew, set_sskew = set_sskew,
+                       stat_kwargs...)
+
+    w = optimise2!(inter_port; rm = rm, options...)
+
+    if !isempty(w)
+        w = w.weights
+        success = true
+    else
+        w = zeros(eltype(cret), size(cret))
+        success = false
+    end
+
+    return w, port.fail, success
+end
+function calc_inter_weights(port, wi, rm, options, port_kwargs, stat_kwargs)
+    cret = port.returns * wi
+    cmu = transpose(wi) * port.mu
+    ccov = transpose(wi) * port.cov * wi
+
+    set_kurt, set_skurt, set_skew, set_sskew = find_kurt_skew_rm(rm)
+    cw, cfail, success = inter_nco_opt(port, rm, 1:size(cret, 2), cret, cmu, ccov, set_kurt,
+                                       set_skurt, set_skew, set_sskew, options, port_kwargs,
+                                       stat_kwargs)
+
+    w = wi * cw
+
+    if !success
+        port.fail[:inter] = cfail
+    end
+
+    return w
+end
 function _optimise!(type::NCO2, port::HCPortfolio2,
                     rmi::Union{AbstractVector, <:RiskMeasure},
                     rmo::Union{AbstractVector, <:RiskMeasure}, ::Any, ::Any)
-    return wi = intra_weights(port, rmi, type.options, type.port_kwargs, type.stat_kwargs)
+    wi = calc_intra_weights(port, rmi, type.options, type.port_kwargs)
+    w = calc_inter_weights(port, wi, rmo, type.options_o, type.port_kwargs_o,
+                           type.stat_kwargs_o)
+
+    return w
 end
 function optimise2!(port::HCPortfolio2; rm::Union{AbstractVector, <:RiskMeasure} = SD2(),
                     rmo::Union{AbstractVector, <:RiskMeasure} = rm,
@@ -1283,6 +1438,6 @@ function optimise2!(port::HCPortfolio2; rm::Union{AbstractVector, <:RiskMeasure}
 
     w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(port.returns, 2),
                                   w_limits(nothing, eltype(port.returns))...)
-    weights = _optimise!(type, port, rm, rmo, w_min, w_max)
-    return finalise_weights(type, port, weights, w_min, w_max, max_iter)
+    w = _optimise!(type, port, rm, rmo, w_min, w_max)
+    return finalise_weights(type, port, w, w_min, w_max, max_iter)
 end

@@ -2386,6 +2386,9 @@ function get_rm_string(rm::Union{AbstractVector, <:TradRiskMeasure})
         rmstr *= rstr
     else
         rm = reduce(vcat, rm)
+        if !isa(rm, AbstractVector)
+            rm = (rm,)
+        end
         for (i, r) ∈ enumerate(rm)
             rstr = string(r)
             rstr = rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)]
