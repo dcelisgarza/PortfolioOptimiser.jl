@@ -1218,7 +1218,6 @@ function _optimise!(::HERC2, port::HCPortfolio2, rmi::Union{AbstractVector, <:Ri
                 if hasproperty(r, :solvers) && (isnothing(r.solvers) || isempty(r.solvers))
                     r.solvers = port.solvers
                 end
-
                 scale = r.settings.scale
                 for cluster ∈ clusters
                     _risk = cluster_risk(port, cluster, r) * scale
@@ -1244,6 +1243,7 @@ function _optimise!(::HERC2, port::HCPortfolio2, rmi::Union{AbstractVector, <:Ri
 
     for i ∈ 1:(port.k)
         cidx = idx .== i
+        clusters = findall(cidx)
         rm = if !isa(rmi, AbstractVector)
             (rmi,)
         else
@@ -1258,7 +1258,7 @@ function _optimise!(::HERC2, port::HCPortfolio2, rmi::Union{AbstractVector, <:Ri
                     r.solvers = port.solvers
                 end
                 scale = r.settings.scale
-                weights[cidx] .*= naive_risk(port, cidx, r) * scale
+                weights[cidx] .*= naive_risk(port, clusters, r) * scale
             end
         end
     end
