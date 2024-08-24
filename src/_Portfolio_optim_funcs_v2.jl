@@ -1995,15 +1995,16 @@ function set_returns(obj::Any, kelly::AKelly, model, mu_l::Real; mu::AbstractVec
                      network_method::NetworkMethods2, sigma::AbstractMatrix, kwargs...)
     if !isempty(mu)
         w = model[:w]
-        sd_risk = model[:sd_risk]
         if isnothing(kelly_approx_idx) ||
            isempty(kelly_approx_idx) ||
            iszero(kelly_approx_idx[1])
             if !haskey(model, :sd_risk)
                 _sd_risk(network_method, kelly.formulation, model, sigma)
             end
+            sd_risk = model[:sd_risk]
             @expression(model, ret, dot(mu, w) - 0.5 * sd_risk)
         else
+            sd_risk = model[:sd_risk]
             @expression(model, ret, dot(mu, w) - 0.5 * sd_risk[kelly_approx_idx[1]])
         end
         _return_bounds(obj, model, mu_l)

@@ -996,6 +996,9 @@ end
 function _get_skew(::Union{SSkew2, Val{false}}, port, cluster, idx)
     return view(port.sskew, cluster, idx)
 end
+function gen_cluster_skew_sskew(args...)
+    return Matrix(undef, 0, 0)
+end
 function gen_cluster_skew_sskew(rm::Union{Skew2, SSkew2, Val{true}, Val{false}}, port,
                                 cluster)
     idx = Int[]
