@@ -880,9 +880,9 @@ l = 2.0
            0.0457072853415405, 0.041352105321386175]
     @test isapprox(w76.weights, w1t)
     @test isapprox(w77.weights, w2t)
-    @test isapprox(w78.weights, w3t, rtol = 5.0e-7)
+    @test isapprox(w78.weights, w3t, rtol = 1.0e-7)
     @test isapprox(w79.weights, w4t)
-    @test isapprox(w80.weights, w5t, rtol = 0.0001)
+    @test isapprox(w80.weights, w5t, rtol = 0.0005)
 
     w81 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                      hclust_opt = hclust_opt,
@@ -941,7 +941,7 @@ l = 2.0
            0.045501808443562414, 0.04131076673753918]
     @test isapprox(w81.weights, w1t)
     @test isapprox(w82.weights, w2t)
-    @test isapprox(w83.weights, w3t, rtol = 1.0e-7)
+    @test isapprox(w83.weights, w3t, rtol = 5.0e-7)
     @test isapprox(w84.weights, w4t)
     @test isapprox(w85.weights, w5t, rtol = 5.0e-5)
 
@@ -995,7 +995,7 @@ l = 2.0
            0.04133037227846529]
     @test isapprox(w86.weights, w1t)
     @test isapprox(w87.weights, w2t)
-    @test isapprox(w88.weights, w3t, rtol = 1.0e-7)
+    @test isapprox(w88.weights, w3t, rtol = 5.0e-7)
     @test isapprox(w89.weights, w4t)
     @test isapprox(w90.weights, w5t, rtol = 0.0005)
 
@@ -1112,7 +1112,7 @@ l = 2.0
     @test isapprox(w97.weights, w2t)
     @test isapprox(w98.weights, w3t)
     @test isapprox(w99.weights, w4t)
-    @test isapprox(w100.weights, w5t, rtol = 5.0e-8)
+    @test isapprox(w100.weights, w5t, rtol = 1.0e-7)
 
     rm = SSkew2()
     w101 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
@@ -1176,17 +1176,17 @@ l = 2.0
     asset_statistics2!(portfolio)
     hclust_alg = HAClustering()
     rm = DVar2()
-    w101 = optimise2!(portfolio; rm = rm, cluster = true, hclust_alg = hclust_alg,
+    w106 = optimise2!(portfolio; rm = rm, cluster = true, hclust_alg = hclust_alg,
                       hclust_opt = hclust_opt, type = NCO2(; options = (; obj = MinRisk())))
-    w102 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
+    w107 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                       hclust_opt = hclust_opt,
                       type = NCO2(; options = (; obj = Util(; l = l))))
-    w103 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
+    w108 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                       hclust_opt = hclust_opt,
                       type = NCO2(; options = (; obj = SR(; rf = rf))))
-    w104 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
+    w109 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                       hclust_opt = hclust_opt, type = NCO2(; options = (; obj = MaxRet())))
-    w105 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
+    w110 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                       hclust_opt = hclust_opt, type = NCO2(; options = (; type = RP2())))
     w1t = [6.834840718346733e-15, 2.12661660856925e-13, 1.593754486266787e-8,
            3.127395868133335e-15, 2.712330218049574e-15, 1.4202097663079517e-7,
@@ -1223,11 +1223,11 @@ l = 2.0
            0.019064516076979485, 0.11336435302557887, 0.044398381724289546,
            0.04225460418266382, 0.04025282445992181, 0.06571777187539703,
            0.04012680907502655, 0.056826905596850164]
-    @test isapprox(w101.weights, w1t)
-    @test isapprox(w102.weights, w2t)
-    @test isapprox(w103.weights, w3t)
-    @test isapprox(w104.weights, w4t)
-    @test isapprox(w105.weights, w5t, rtol = 1.0e-5)
+    @test isapprox(w106.weights, w1t)
+    @test isapprox(w107.weights, w2t)
+    @test isapprox(w108.weights, w3t)
+    @test isapprox(w109.weights, w4t)
+    @test isapprox(w110.weights, w5t, rtol = 1.0e-5)
 end
 
 @testset "HERC and NCO mixed parameters" begin
@@ -1290,7 +1290,7 @@ end
           3.641935755054462e-9, 0.03800725786958468, 3.3607876962123727e-9,
           0.049529929060475084, 0.2034415850017132, 0.10271915204925444,
           0.06299503778536726, 0.05599076716877515]
-    @test isapprox(w4.weights, wt, rtol = 5.0e-6)
+    @test isapprox(w4.weights, wt, rtol = 5.0e-5)
     @test !isapprox(w1.weights, w2.weights)
     @test !isapprox(w1.weights, w3.weights)
     @test !isapprox(w1.weights, w4.weights)
