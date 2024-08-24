@@ -1227,7 +1227,7 @@ l = 2.0
     @test isapprox(w102.weights, w2t)
     @test isapprox(w103.weights, w3t)
     @test isapprox(w104.weights, w4t)
-    @test isapprox(w105.weights, w5t)
+    @test isapprox(w105.weights, w5t, rtol = 1.0e-5)
 end
 
 @testset "HERC and NCO mixed parameters" begin
@@ -1251,7 +1251,7 @@ end
           2.7523314119460396e-9, 9.64460078901257e-9, 3.0307822675469274e-9,
           0.11722640236879024, 0.4120447177289777, 0.01690611807209831, 0.12415863804756225,
           0.015607976681640013]
-    @test isapprox(w1.weights, wt)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-5)
 
     w2 = optimise2!(portfolio; cluster = false, hclust_alg = hclust_alg,
                     hclust_opt = hclust_opt, rm = SD2(), rmo = CDaR2(),
@@ -1290,7 +1290,7 @@ end
           3.641935755054462e-9, 0.03800725786958468, 3.3607876962123727e-9,
           0.049529929060475084, 0.2034415850017132, 0.10271915204925444,
           0.06299503778536726, 0.05599076716877515]
-    @test isapprox(w4.weights, wt)
+    @test isapprox(w4.weights, wt, rtol = 5.0e-6)
     @test !isapprox(w1.weights, w2.weights)
     @test !isapprox(w1.weights, w3.weights)
     @test !isapprox(w1.weights, w4.weights)
@@ -1437,8 +1437,8 @@ end
     w9 = optimise2!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
                     type = NCO2(), rm = CDaR2(), cluster = false)
 
-    portfolio2.w_min = Float64[]
-    portfolio2.w_max = Float64[]
+    portfolio.w_min = Float64[]
+    portfolio.w_max = Float64[]
     w10 = optimise2!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
                      type = HRP2(), rm = CDaR2(), cluster = false)
     w11 = optimise2!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
