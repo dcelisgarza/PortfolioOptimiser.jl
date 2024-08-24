@@ -11,7 +11,7 @@ portfolio = HCPortfolio2(; prices = prices,
                                                                           "max_step_fraction" => 0.75))))
 
 asset_statistics2!(portfolio)
-@time w1 = optimise2!(portfolio; rm = [SD2()], rmo = SSD2(), cluster = false,
+@time w1 = optimise2!(portfolio; rm = RDaR2(), cluster = false,
                       type = NCO2(; options = (; obj = SR(; rf = rf))), hclust_alg = DBHT(),
                       hclust_opt = HClustOpt())
 
@@ -47,8 +47,8 @@ cluster_opt = ClusterOpt(; linkage = :DBHT, genfunc = GenericFunction(; func = d
                        cluster_opt = cluster_opt, cluster = true)
 
 @time w5 = optimise!(portfolio2; type = :NCO,
-                     nco_opt = OptimiseOpt(; rm = :SD, obj = :Sharpe, rf = rf, l = l),
-                     nco_opt_o = OptimiseOpt(; rm = :SSD, obj = :Sharpe, rf = rf, l = l),
+                     nco_opt = OptimiseOpt(; rm = :RDaR, obj = :Sharpe, rf = rf, l = l),
+                     #    nco_opt_o = OptimiseOpt(; rm = :RDaR, obj = :Sharpe, rf = rf, l = l),
                      cluster = false, cluster_opt = cluster_opt)
 
 println(kurt_flag)
