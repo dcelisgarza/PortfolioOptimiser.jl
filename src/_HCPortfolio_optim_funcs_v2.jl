@@ -918,8 +918,8 @@ end
 function w_limits(type::NCO2, datatype = Float64)
     port_kwargs = type.port_kwargs
     port_kwargs_o = type.port_kwargs_o
-    lo, hi = if type == :NCO && (haskey(port_kwargs, :short) && port_kwargs.short ||
-                                 haskey(port_kwargs_o, :short) && port_kwargs_o.short)
+    lo, hi = if isa(type, NCO2) && (haskey(port_kwargs, :short) && port_kwargs.short ||
+                                    haskey(port_kwargs_o, :short) && port_kwargs_o.short)
         la = nothing
         ha = nothing
         lb = nothing
@@ -1439,7 +1439,7 @@ function optimise2!(port::HCPortfolio2; rm::Union{AbstractVector, <:RiskMeasure}
     end
 
     w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(port.returns, 2),
-                                  w_limits(nothing, eltype(port.returns))...)
+                                  w_limits(type, eltype(port.returns))...)
     w = _optimise!(type, port, rm, rmo, w_min, w_max)
     return finalise_weights(type, port, w, w_min, w_max, max_iter)
 end
