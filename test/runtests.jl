@@ -4,9 +4,41 @@ using SafeTestsets
     include("EntrRelRMs.jl")
 end
 
-# @safetestset "Efficient frontier v2" begin
-#     include("EfficientFrontierTests_v2.jl")
+@safetestset "Efficient frontier v2" begin
+    include("EfficientFrontierTests_v2.jl")
+end
+
+# @safetestset "HC Optimistaion" begin
+#     include("HCOptimisationTests.jl")
 # end
+
+@safetestset "Constraints" begin
+    include("ConstrainedOptimisationTests.jl")
+end
+
+@safetestset "Portfolio classes" begin
+    include("PortfolioClassesTests.jl")
+end
+
+@safetestset "RP optimisation" begin
+    include("RPOptimisationTests_v2.jl")
+end
+
+@safetestset "RRP Optimisation" begin
+    include("RRPOptimisationTests.jl")
+end
+
+@safetestset "WC Optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
+@safetestset "Trad optimisation rm vectors" begin
+    include("TradOptimisationVectorTests_v2.jl")
+end
+
+@safetestset "Plotting v2" begin
+    include("PlottingTests_v2.jl")
+end
 
 @safetestset "Trad optimisation v2" begin
     include("TradOptimisationTests_v2.jl")
@@ -39,41 +71,6 @@ end
 @safetestset "Factor Stats V2 tests" begin
     include("FactorStatsTest_v2.jl")
 end
-
-@safetestset "HC Optimistaion" begin
-    include("HCOptimisationTests.jl")
-end
-
-@safetestset "Constraints" begin
-    include("ConstrainedOptimisationTests.jl")
-end
-
-@safetestset "Portfolio classes" begin
-    include("PortfolioClassesTests.jl")
-end
-
-@safetestset "RP optimisation" begin
-    include("RPOptimisationTests_v2.jl")
-end
-
-@safetestset "RRP Optimisation" begin
-    include("RRPOptimisationTests.jl")
-end
-
-@safetestset "WC Optimisation" begin
-    include("WCOptimisationTests.jl")
-end
-
-@safetestset "Trad optimisation rm vectors" begin
-    include("TradOptimisationVectorTests_v2.jl")
-end
-
-@safetestset "Plotting v2" begin
-    include("PlottingTests_v2.jl")
-end
-
-########
-########
 
 @safetestset "HCPortfolio Optimisation" begin
     include("HCPortfolioOptimisationTests.jl")
