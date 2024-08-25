@@ -119,11 +119,14 @@ function PO.plot_risk_contribution2(port::AbstractPortfolio2,
                                     percentage::Bool = false, erc_line::Bool = true,
                                     t_factor = 252, delta::Real = 1e-6,
                                     marginal::Bool = false, kwargs...)
-    set_rm_properties(rm, port.solvers, port.cov)
-    return PO.plot_risk_contribution2(port.assets, port.optimal[type].weights, X; rm = rm,
-                                      V = port.V, SV = port.SV, percentage = percentage,
-                                      erc_line = erc_line, t_factor = t_factor,
-                                      delta = delta, marginal = marginal, kwargs...)
+    solver_flag, sigma_flag = set_rm_properties(rm, port.solvers, port.cov)
+    fig = PO.plot_risk_contribution2(port.assets, port.optimal[type].weights, X; rm = rm,
+                                     V = port.V, SV = port.SV, percentage = percentage,
+                                     erc_line = erc_line, t_factor = t_factor,
+                                     delta = delta, marginal = marginal, kwargs...)
+    unset_set_rm_properties(rm, solver_flag, sigma_flag)
+
+    return fig
 end
 
 function PO.plot_frontier2(frontier; X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),

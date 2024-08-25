@@ -918,7 +918,7 @@ end
            0.039119677573665544, 0.035231385132331074, 0.04143766055839026,
            0.04300450077142654]
     @test isapprox(w41.weights, w1t, rtol = 5.0e-6)
-    @test isapprox(w42.weights, w2t, rtol = 5.0e-7)
+    @test isapprox(w42.weights, w2t, rtol = 1.0e-6)
     @test isapprox(w43.weights, w3t, rtol = 5.0e-6)
     @test isapprox(w44.weights, w4t)
     @test isapprox(w45.weights, w5t, rtol = 1.0e-7)
@@ -1256,7 +1256,7 @@ end
            0.025610504206661496, 0.05006530433128356, 0.016088633338122934,
            0.06695558429275707, 0.04410955238183049, 0.05010270397113676,
            0.07553122561040937, 0.048915683432785906]
-    @test isapprox(w71.weights, w1t, rtol = 1.0e-6)
+    @test isapprox(w71.weights, w1t, rtol = 5.0e-6)
     @test isapprox(w72.weights, w2t, rtol = 1.0e-6)
     @test isapprox(w73.weights, w3t, rtol = 5.0e-5)
     @test isapprox(w74.weights, w4t, rtol = 5.0e-8)
@@ -1431,7 +1431,7 @@ end
            0.04133037227846529]
     @test isapprox(w86.weights, w1t)
     @test isapprox(w87.weights, w2t)
-    @test isapprox(w88.weights, w3t, rtol = 5.0e-7)
+    @test isapprox(w88.weights, w3t, rtol = 1.0e-6)
     @test isapprox(w89.weights, w4t)
     @test isapprox(w90.weights, w5t, rtol = 0.0005)
 

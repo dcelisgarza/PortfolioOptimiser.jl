@@ -1046,7 +1046,11 @@ function cluster_risk(port, cluster, rm)
     cret = view(port.returns, :, cluster)
     cV = gen_cluster_skew_sskew(rm, port, cluster)
     cw = _naive_risk(rm, cret, cV)
-    return calc_risk(rm, cw; X = cret, V = cV, SV = cV)
+    crisk = calc_risk(rm, cw; X = cret, V = cV, SV = cV)
+    if hasproperty(rm, :sigma)
+        rm.sigma = nothing
+    end
+    return crisk
 end
 function naive_risk(port, cluster, rm)
     if hasproperty(rm, :sigma)
@@ -1054,7 +1058,11 @@ function naive_risk(port, cluster, rm)
     end
     cret = view(port.returns, :, cluster)
     cV = gen_cluster_skew_sskew(rm, port, cluster)
-    return _naive_risk(rm, cret, cV)
+    crisk = _naive_risk(rm, cret, cV)
+    if hasproperty(rm, :sigma)
+        rm.sigma = nothing
+    end
+    return crisk
 end
 function cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
     if !(any(w_max .< weights) || any(w_min .> weights))
@@ -1088,14 +1096,19 @@ function _optimise!(::HRP2, port::HCPortfolio2, rm::Union{AbstractVector, <:Risk
             lrisk = zero(eltype(weights))
             rrisk = zero(eltype(weights))
             for r ∈ rm
+                solver_flag = false
                 if hasproperty(r, :solvers) && (isnothing(r.solvers) || isempty(r.solvers))
                     r.solvers = port.solvers
+                    solver_flag = true
                 end
                 scale = r.settings.scale
                 # Left risk.
                 lrisk += cluster_risk(port, lc, r) * scale
                 # Right risk.
                 rrisk += cluster_risk(port, rc, r) * scale
+                if solver_flag
+                    r.solvers = nothing
+                end
             end
             # Allocate weight to clusters.
             alpha_1 = one(lrisk) - lrisk / (lrisk + rrisk)
@@ -1192,8 +1205,10 @@ function _optimise!(::HERC2, port::HCPortfolio2, rmi::Union{AbstractVector, <:Ri
         lc = Int[]
         rc = Int[]
         for r ∈ rmo
+            solver_flag = false
             if hasproperty(r, :solvers) && (isnothing(r.solvers) || isempty(r.solvers))
                 r.solvers = port.solvers
+                solver_flag = true
             end
             scale = r.settings.scale
             for cluster ∈ clusters
@@ -1205,6 +1220,9 @@ function _optimise!(::HERC2, port::HCPortfolio2, rmi::Union{AbstractVector, <:Ri
                     rrisk += _risk
                     append!(rc, cluster)
                 end
+            end
+            if solver_flag
+                r.solvers = nothing
             end
         end
         # Allocate weight to clusters.
@@ -1221,11 +1239,16 @@ function _optimise!(::HERC2, port::HCPortfolio2, rmi::Union{AbstractVector, <:Ri
         cidx = idx .== i
         clusters = findall(cidx)
         for r ∈ rmi
+            solver_flag = false
             if hasproperty(r, :solvers) && (isnothing(r.solvers) || isempty(r.solvers))
                 r.solvers = port.solvers
+                solver_flag = true
             end
             scale = r.settings.scale
             risk[cidx] .+= naive_risk(port, clusters, r) * scale
+            if solver_flag
+                r.solvers = nothing
+            end
         end
         weights[cidx] .*= risk[cidx]
     end
@@ -1312,7 +1335,7 @@ function intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ckurt, cskurt, cV, cS
         w = w.weights
         success = true
     else
-        w = zeros(eltype(cret), size(cret))
+        w = zeros(eltype(cret), size(cret, 2))
         success = false
     end
 
@@ -1360,7 +1383,7 @@ function inter_nco_opt(port, rm, cassets, cret, cmu, ccov, set_kurt, set_skurt, 
         w = w.weights
         success = true
     else
-        w = zeros(eltype(cret), size(cret))
+        w = zeros(eltype(cret), size(cret, 2))
         success = false
     end
 

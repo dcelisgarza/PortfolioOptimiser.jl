@@ -1115,7 +1115,9 @@ function SD2(; settings::RiskMeasureSettings = RiskMeasureSettings(), formulatio
 end
 function Base.setproperty!(obj::SD2, sym::Symbol, val)
     if sym == :sigma
-        @smart_assert(size(val, 1) == size(val, 2))
+        if !isnothing(val)
+            @smart_assert(size(val, 1) == size(val, 2))
+        end
     end
     return setfield!(obj, sym, val)
 end
@@ -1135,7 +1137,9 @@ function Variance2(; sigma::Union{<:AbstractMatrix, Nothing} = nothing,
 end
 function Base.setproperty!(obj::Variance2, sym::Symbol, val)
     if sym == :sigma
-        @smart_assert(size(val, 1) == size(val, 2))
+        if !isnothing(val)
+            @smart_assert(size(val, 1) == size(val, 2))
+        end
     end
     return setfield!(obj, sym, val)
 end
