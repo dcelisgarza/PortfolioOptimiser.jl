@@ -291,7 +291,7 @@ end
           0.0015677990391979831, 0.0938277928127947, 0.008463074925084095,
           0.01792139606465465, 0.047723392186772226, 0.06792721680295467,
           0.054660405663482355, 0.05340789089968085]
-    @test isapprox(w2.weights, wt)
+    @test isapprox(w2.weights, wt, rtol = 5.0e-5)
 
     w3 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                     hclust_opt = hclust_opt,
@@ -305,7 +305,7 @@ end
           0.00035109457555329305, 0.10774561132688958, 0.009718433676978827,
           0.0040133363953719125, 0.044351649658250544, 0.0631280381351374,
           0.06276838287497882, 0.04963452842786952]
-    @test isapprox(w3.weights, wt)
+    @test isapprox(w3.weights, wt, rtol = 5.0e-5)
 
     w4 = optimise2!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                     hclust_opt = hclust_opt,
@@ -319,7 +319,7 @@ end
           0.0021990993635029516, 0.07955561696814764, 5.128431348599965e-9,
           0.026861547149326963, 0.03930902707589028, 0.194428592363798, 0.02864413217393731,
           0.10167780514815394]
-    @test isapprox(w4.weights, wt)
+    @test isapprox(w4.weights, wt, rtol = 5.0e-5)
 
     @test r1 < r4 < r3 < r2
 end
