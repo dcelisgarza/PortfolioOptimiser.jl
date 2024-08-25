@@ -1230,8 +1230,6 @@ function Base.setproperty!(obj::EVaR2, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-Base.Symbol(::EVaR2) = :EVaR
-Base.String(::EVaR2) = "EVaR"
 function calc_risk(evar::EVaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EVaR(X * w, evar.solvers, evar.alpha)
 end
@@ -1253,8 +1251,6 @@ function Base.setproperty!(obj::RVaR2, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-Base.Symbol(::RVaR2) = :RVaR
-Base.String(::RVaR2) = "RVaR"
 function calc_risk(rvar::RVaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RVaR(X * w, rvar.solvers, rvar.alpha, rvar.kappa)
 end
@@ -1327,8 +1323,6 @@ function Base.setproperty!(obj::EDaR2, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-Base.Symbol(::EDaR2) = :EDaR
-Base.String(::EDaR2) = "EDaR"
 function calc_risk(edar::EDaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EDaR(X * w, edar.solvers, edar.alpha)
 end
@@ -1350,8 +1344,6 @@ function Base.setproperty!(obj::RDaR2, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-Base.Symbol(::RDaR2) = :RDaR
-Base.String(::RDaR2) = "RDaR"
 function calc_risk(rdar::RDaR2, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RDaR(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
 end
@@ -1687,12 +1679,25 @@ function sharpe_ratio(rm::RiskMeasure, w::AbstractVector;
     return (ret - rf) / risk
 end
 
-for op ∈
-    (SD2, Variance2, MAD2, SSD2, FLPM2, SLPM2, WR2, VaR2, CVaR2, EVaR2, RVaR2, DaR2, MDD2,
-     ADD2, CDaR2, UCI2, EDaR2, RDaR2, DaR_r2, MDD_r2, ADD_r2, CDaR_r2, UCI_r2, EDaR_r2,
-     RDaR_r2, Kurt2, SKurt2, GMD2, RG2, RCVaR2, TG2, RTG2, OWA2, DVar2, Skew2, SSkew2,
-     Equal2)
-    eval(:(Base.iterate(S::$op, state = 1) = state > 1 ? nothing : (S, state + 1)))
+for (op, name) ∈
+    zip((SD2, Variance2, MAD2, SSD2, FLPM2, SLPM2, WR2, VaR2, CVaR2, EVaR2, RVaR2, DaR2,
+         MDD2, ADD2, CDaR2, UCI2, EDaR2, RDaR2, DaR_r2, MDD_r2, ADD_r2, CDaR_r2, UCI_r2,
+         EDaR_r2, RDaR_r2, Kurt2, SKurt2, GMD2, RG2, RCVaR2, TG2, RTG2, OWA2, DVar2, Skew2,
+         SSkew2, Equal2),
+        ("SD2", "Variance2", "MAD2", "SSD2", "FLPM2", "SLPM2", "WR2", "VaR2", "CVaR2",
+         "EVaR2", "RVaR2", "DaR2", "MDD2", "ADD2", "CDaR2", "UCI2", "EDaR2", "RDaR2",
+         "DaR_r2", "MDD_r2", "ADD_r2", "CDaR_r2", "UCI_r2", "EDaR_r2", "RDaR_r2", "Kurt2",
+         "SKurt2", "GMD2", "RG2", "RCVaR2", "TG2", "RTG2", "OWA2", "DVar2", "Skew2",
+         "SSkew2", "Equal2"))
+    eval(quote
+             Base.iterate(S::$op, state = 1) = state > 1 ? nothing : (S, state + 1)
+             function Base.String(s::$op)
+                 return $name
+             end
+             function Base.Symbol(::$op)
+                 return Symbol($name)
+             end
+         end)
 end
 
 export RiskMeasure, SD2, Variance2, MAD2, SSD2, FLPM2, SLPM2, WR2, VaR2, CVaR2, EVaR2,

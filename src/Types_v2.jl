@@ -60,15 +60,14 @@ struct HERC2 <: HCPortType end
     port_kwargs_o::NamedTuple = port_kwargs
     stat_kwargs_o::NamedTuple = (;)
 end
-for op ∈ (Trad2, RP2, RRP2, WC2, HRP2, HERC2, NCO2)
+for (op, name) ∈ zip((Trad2, RP2, RRP2, WC2, HRP2, HERC2, NCO2),
+                     ("Trad2", "RP2", "RRP2", "WC2", "HRP2", "HERC2", "NCO2"))
     eval(quote
-             function Base.String(s::$op)
-                 rstr = string(s)
-                 return rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)]
+             function Base.String(::$op)
+                 return $name
              end
              function Base.Symbol(s::$op)
-                 rstr = string(s)
-                 return Symbol(rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)])
+                 return Symbol($name)
              end
          end)
 end

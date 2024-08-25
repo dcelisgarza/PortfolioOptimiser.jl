@@ -2637,18 +2637,18 @@ export optimise2!
 function get_rm_string(rm::Union{AbstractVector, <:TradRiskMeasure})
     rmstr = ""
     if !isa(rm, AbstractVector)
-        rstr = string(rm)
-        rstr = rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)]
-        rmstr *= rstr
+        # rstr = string(rm)
+        # rstr = rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)]
+        rmstr *= String(rm)
     else
         rm = reduce(vcat, rm)
-        if !isa(rm, AbstractVector)
-            rm = (rm,)
-        end
+        # if !isa(rm, AbstractVector)
+        #     rm = (rm,)
+        # end
         for (i, r) ∈ enumerate(rm)
-            rstr = string(r)
-            rstr = rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)]
-            rmstr *= rstr
+            # rstr = string(r)
+            # rstr = rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)]
+            rmstr *= String(r)
             if i != length(rm)
                 rmstr *= '_'
             end

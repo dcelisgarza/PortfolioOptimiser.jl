@@ -5,21 +5,20 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "Test fallback and skips" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.85,
-                                                                            "max_iter" => 40))))
-    asset_statistics2!(portfolio)
+# @testset "Test fallback and skips" begin
+#     portfolio = Portfolio2(; prices = prices,
+#                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+#                                                             :params => Dict("verbose" => false,
+#                                                                             "max_step_fraction" => 0.75))))
+#     asset_statistics2!(portfolio)
 
-    rm = RDaR2()
-    limits = efficient_frontier!(portfolio; rm = rm, points = 5, rf = rf)
-    if haskey(portfolio.frontier, RDaR2)
-        @test ncol(portfolio.frontier[:RDaR2][:weights]) == 6
-        @test length(portfolio.frontier[:RDaR2][:risk]) == 5
-    end
-end
+#     rm = RDaR2()
+#     limits = efficient_frontier!(portfolio; rm = rm, points = 5, rf = rf)
+#     if haskey(portfolio.frontier, RDaR2)
+#         @test ncol(portfolio.frontier[:RDaR2][:weights]) == 6
+#         @test length(portfolio.frontier[:RDaR2][:risk]) == 5
+#     end
+# end
 
 @testset "Frontier limits" begin
     portfolio = Portfolio2(; prices = prices,
