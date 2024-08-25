@@ -4,6 +4,10 @@ using SafeTestsets
     include("EfficientFrontierTests_v2.jl")
 end
 
+@safetestset "Near Optimal Centering" begin
+    include("NearOptimalCenteringTests.jl")
+end
+
 @safetestset "HC Optimistaion" begin
     include("HCOptimisationTests.jl")
 end

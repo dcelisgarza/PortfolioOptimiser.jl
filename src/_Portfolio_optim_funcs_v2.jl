@@ -457,7 +457,7 @@ end
 function _get_ntwk_method(args...)
     return NoNtwk()
 end
-function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj;
                 sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
@@ -479,8 +479,8 @@ function set_rm(port::Portfolio2, rm::SD2, type::Union{Trad2, RP2}, obj::Objecti
     _set_risk_expression(model, sd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rms::AbstractVector{<:SD2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; sigma::AbstractMatrix{<:Real},
+function set_rm(port::Portfolio2, rms::AbstractVector{<:SD2}, type::Union{Trad2, RP2}, obj;
+                sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
 
@@ -505,7 +505,7 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:SD2}, type::Union{Trad2,
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::MAD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::MAD2, type::Union{Trad2, RP2}, obj;
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -521,9 +521,8 @@ function set_rm(port::Portfolio2, rm::MAD2, type::Union{Trad2, RP2}, obj::Object
     _set_risk_expression(model, mad_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rms::AbstractVector{<:MAD2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; mu::AbstractVector{<:Real},
-                returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rms::AbstractVector{<:MAD2}, type::Union{Trad2, RP2}, obj;
+                mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
     count = length(rms)
@@ -542,7 +541,7 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:MAD2}, type::Union{Trad2
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::SSD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::SSD2, type::Union{Trad2, RP2}, obj;
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -562,9 +561,8 @@ function set_rm(port::Portfolio2, rm::SSD2, type::Union{Trad2, RP2}, obj::Object
 
     return nothing
 end
-function set_rm(port::Portfolio2, rms::AbstractVector{<:SSD2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; mu::AbstractVector{<:Real},
-                returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rms::AbstractVector{<:SSD2}, type::Union{Trad2, RP2}, obj;
+                mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
     count = length(rms)
@@ -602,8 +600,8 @@ function _lpm_risk(::Any, ::Any, model, lpm, target)
     @constraint(model, lpm .>= target .- X)
     return nothing
 end
-function set_rm(port::Portfolio2, rm::FLPM2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rm::FLPM2, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
     if !haskey(model, :X)
@@ -618,7 +616,7 @@ function set_rm(port::Portfolio2, rm::FLPM2, type::Union{Trad2, RP2},
     return nothing
 end
 function set_rm(port::Portfolio2, rms::AbstractVector{<:FLPM2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+                obj; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
         w = model[:w]
@@ -636,8 +634,8 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:FLPM2}, type::Union{Trad
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::SLPM2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rm::SLPM2, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
         w = model[:w]
@@ -654,7 +652,7 @@ function set_rm(port::Portfolio2, rm::SLPM2, type::Union{Trad2, RP2},
     return nothing
 end
 function set_rm(port::Portfolio2, rms::AbstractVector{<:SLPM2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+                obj; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
         w = model[:w]
@@ -686,7 +684,7 @@ function _wr_setup(model, returns)
         @constraint(model, -X .<= wr)
     end
 end
-function set_rm(port::Portfolio2, rm::WR2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::WR2, type::Union{Trad2, RP2}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _wr_setup(model, returns)
@@ -696,7 +694,7 @@ function set_rm(port::Portfolio2, rm::WR2, type::Union{Trad2, RP2}, obj::Objecti
     _set_risk_expression(model, wr_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rm::RG2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::RG2, type::Union{Trad2, RP2}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _wr_setup(model, returns)
@@ -709,8 +707,8 @@ function set_rm(port::Portfolio2, rm::RG2, type::Union{Trad2, RP2}, obj::Objecti
     _set_risk_expression(model, rg_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
     if !haskey(model, :X)
@@ -728,7 +726,7 @@ function set_rm(port::Portfolio2, rm::CVaR2, type::Union{Trad2, RP2},
     return nothing
 end
 function set_rm(port::Portfolio2, rms::AbstractVector{<:CVaR2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+                obj; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
 
     if !haskey(model, :X)
@@ -751,8 +749,8 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:CVaR2}, type::Union{Trad
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::RCVaR2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rm::RCVaR2, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
         w = model[:w]
@@ -776,7 +774,7 @@ function set_rm(port::Portfolio2, rm::RCVaR2, type::Union{Trad2, RP2},
     return nothing
 end
 function set_rm(port::Portfolio2, rms::AbstractVector{<:RCVaR2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+                obj; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
 
     if !haskey(model, :X)
@@ -809,8 +807,8 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:RCVaR2}, type::Union{Tra
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::EVaR2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rm::EVaR2, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
         w = model[:w]
@@ -832,7 +830,7 @@ function set_rm(port::Portfolio2, rm::EVaR2, type::Union{Trad2, RP2},
     return nothing
 end
 function set_rm(port::Portfolio2, rms::AbstractVector{<:EVaR2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+                obj; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
         w = model[:w]
@@ -857,8 +855,8 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:EVaR2}, type::Union{Trad
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::RVaR2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rm::RVaR2, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
         w = model[:w]
@@ -893,7 +891,7 @@ function set_rm(port::Portfolio2, rm::RVaR2, type::Union{Trad2, RP2},
     return nothing
 end
 function set_rm(port::Portfolio2, rms::AbstractVector{<:RVaR2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+                obj; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
         w = model[:w]
@@ -951,7 +949,7 @@ function _DaR_setup(model, returns)
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::MDD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::MDD2, type::Union{Trad2, RP2}, obj;
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     T = size(returns, 1)
@@ -965,7 +963,7 @@ function set_rm(port::Portfolio2, rm::MDD2, type::Union{Trad2, RP2}, obj::Object
     _set_risk_expression(model, mdd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rm::ADD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::ADD2, type::Union{Trad2, RP2}, obj;
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     T = size(returns, 1)
@@ -977,7 +975,7 @@ function set_rm(port::Portfolio2, rm::ADD2, type::Union{Trad2, RP2}, obj::Object
     _set_risk_expression(model, add_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rm::UCI2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::UCI2, type::Union{Trad2, RP2}, obj;
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     T = size(returns, 1)
@@ -991,8 +989,8 @@ function set_rm(port::Portfolio2, rm::UCI2, type::Union{Trad2, RP2}, obj::Object
     _set_risk_expression(model, uci_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kargs...)
+function set_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     _DaR_setup(model, returns)
     T = size(returns, 1)
@@ -1007,7 +1005,7 @@ function set_rm(port::Portfolio2, rm::CDaR2, type::Union{Trad2, RP2},
     return nothing
 end
 function set_rm(port::Portfolio2, rms::AbstractVector{<:CDaR2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kargs...)
+                obj; returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     _DaR_setup(model, returns)
     T = size(returns, 1)
@@ -1026,8 +1024,8 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:CDaR2}, type::Union{Trad
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::EDaR2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rm::EDaR2, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
     _DaR_setup(model, returns)
@@ -1045,7 +1043,7 @@ function set_rm(port::Portfolio2, rm::EDaR2, type::Union{Trad2, RP2},
     return nothing
 end
 function set_rm(port::Portfolio2, rms::AbstractVector{<:EDaR2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+                obj; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _DaR_setup(model, returns)
     T = size(returns, 1)
@@ -1068,8 +1066,8 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:EDaR2}, type::Union{Trad
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::RDaR2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rm::RDaR2, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _DaR_setup(model, returns)
     T = size(returns, 1)
@@ -1102,7 +1100,7 @@ function set_rm(port::Portfolio2, rm::RDaR2, type::Union{Trad2, RP2},
     return nothing
 end
 function set_rm(port::Portfolio2, rms::AbstractVector{<:RDaR2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+                obj; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _DaR_setup(model, returns)
     T = size(returns, 1)
@@ -1166,8 +1164,7 @@ function block_vec_pq(A, p, q)
     return A_vec
 end
 =#
-function set_rm(port::Portfolio2, rm::Kurt2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; kwargs...)
+function set_rm(port::Portfolio2, rm::Kurt2, type::Union{Trad2, RP2}, obj; kwargs...)
     _sdp(port, obj)
     model = port.model
     N = size(port.returns, 2)
@@ -1207,7 +1204,7 @@ function set_rm(port::Portfolio2, rm::Kurt2, type::Union{Trad2, RP2},
     return nothing
 end
 function set_rm(port::Portfolio2, rms::AbstractVector{<:Kurt2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; kwargs...)
+                obj; kwargs...)
     _sdp(port, obj)
     model = port.model
     N = size(port.returns, 2)
@@ -1262,8 +1259,7 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:Kurt2}, type::Union{Trad
 
     return nothing
 end
-function set_rm(port::Portfolio2, rm::SKurt2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; kwargs...)
+function set_rm(port::Portfolio2, rm::SKurt2, type::Union{Trad2, RP2}, obj; kwargs...)
     _sdp(port, obj)
     model = port.model
     N = size(port.returns, 2)
@@ -1303,7 +1299,7 @@ function set_rm(port::Portfolio2, rm::SKurt2, type::Union{Trad2, RP2},
     return nothing
 end
 function set_rm(port::Portfolio2, rms::AbstractVector{<:SKurt2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; kwargs...)
+                obj; kwargs...)
     _sdp(port, obj)
     model = port.model
     N = size(port.returns, 2)
@@ -1368,7 +1364,7 @@ function _owa_setup(model, T)
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::GMD2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::GMD2, type::Union{Trad2, RP2}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -1424,7 +1420,7 @@ function set_rm(port::Portfolio2, rm::GMD2, type::Union{Trad2, RP2}, obj::Object
     _set_risk_expression(model, gmd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rm::TG2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::TG2, type::Union{Trad2, RP2}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -1479,8 +1475,8 @@ function set_rm(port::Portfolio2, rm::TG2, type::Union{Trad2, RP2}, obj::Objecti
 
     return nothing
 end
-function set_rm(port::Portfolio2, rms::AbstractVector{<:TG2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rms::AbstractVector{<:TG2}, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
         w = model[:w]
@@ -1555,7 +1551,7 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:TG2}, type::Union{Trad2,
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -1644,8 +1640,8 @@ function set_rm(port::Portfolio2, rm::RTG2, type::Union{Trad2, RP2}, obj::Object
     _set_risk_expression(model, rtg_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rms::AbstractVector{<:RTG2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rms::AbstractVector{<:RTG2}, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
         w = model[:w]
@@ -1765,7 +1761,7 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:RTG2}, type::Union{Trad2
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::ObjectiveFunction;
+function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -1819,8 +1815,8 @@ function set_rm(port::Portfolio2, rm::OWA2, type::Union{Trad2, RP2}, obj::Object
     _set_risk_expression(model, owa_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rms::AbstractVector{<:OWA2}, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rms::AbstractVector{<:OWA2}, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
         w = model[:w]
@@ -1895,8 +1891,8 @@ function set_rm(port::Portfolio2, rms::AbstractVector{<:OWA2}, type::Union{Trad2
     end
     return nothing
 end
-function set_rm(port::Portfolio2, rm::DVar2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::Portfolio2, rm::DVar2, type::Union{Trad2, RP2}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
 
@@ -1917,8 +1913,7 @@ function set_rm(port::Portfolio2, rm::DVar2, type::Union{Trad2, RP2},
     _set_risk_expression(model, dvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rm::Skew2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; kwargs...)
+function set_rm(port::Portfolio2, rm::Skew2, type::Union{Trad2, RP2}, obj; kwargs...)
     model = port.model
 
     G = real(sqrt(port.V))
@@ -1930,8 +1925,7 @@ function set_rm(port::Portfolio2, rm::Skew2, type::Union{Trad2, RP2},
     _set_risk_expression(model, skew_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio2, rm::SSkew2, type::Union{Trad2, RP2},
-                obj::ObjectiveFunction; kwargs...)
+function set_rm(port::Portfolio2, rm::SSkew2, type::Union{Trad2, RP2}, obj; kwargs...)
     model = port.model
 
     G = real(sqrt(port.SV))
@@ -2236,6 +2230,15 @@ function objective_function(port, obj, ::WC2, ::Any)
     _objective(WC2(), obj, nothing, port.model, p)
     return nothing
 end
+function objective_function(port, ::Any, ::NOC, ::Any)
+    model = port.model
+    log_ret = model[:log_ret]
+    log_risk = model[:log_risk]
+    log_w = model[:log_w]
+    log_1mw = model[:log_1mw]
+    @objective(model, Min, -log_ret - log_risk - sum(log_w + log_1mw))
+    return nothing
+end
 function _cleanup_weights(port, ::SR, ::Union{Trad2, WC2}, ::Any)
     val_k = value(port.model[:k])
     val_k = val_k > 0 ? val_k : 1
@@ -2267,7 +2270,7 @@ function _cleanup_weights(port, ::Any, ::RP2, ::FC2)
     weights .= weights / sum_w
     return weights
 end
-function _cleanup_weights(port, ::Any, ::RP2, ::Any)
+function _cleanup_weights(port, ::Any, ::Union{RP2, NOC}, ::Any)
     weights = value.(port.model[:w])
     sum_w = sum(abs.(weights))
     sum_w = sum_w > eps() ? sum_w : 1
@@ -2346,16 +2349,16 @@ function _optimise!(::Trad2, port::Portfolio2, rm::Union{AbstractVector, <:TradR
                     obj::ObjectiveFunction, kelly::RetType, class::PortClass,
                     w_ini::AbstractVector, str_names::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
-    model = port.model = JuMP.Model()
-    set_string_names_on_creation(model, str_names)
+    port.model = JuMP.Model()
+    set_string_names_on_creation(port.model, str_names)
     initial_w(port, w_ini)
-    set_sr_k(obj, model)
+    set_sr_k(obj, port.model)
+    weight_constraints(port, obj)
     kelly_approx_idx = Int[]
     risk_constraints(port, obj, Trad2(), rm, mu, sigma, returns, kelly_approx_idx)
     return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     linear_constraints(port, obj)
     centrality_constraints(port, obj)
-    weight_constraints(port, obj)
     num_assets_constraints(port, obj)
     network_constraints(port.network_method, port, obj, Trad2())
     tracking_err_constraints(port.tracking_err, port, returns, obj)
@@ -2446,11 +2449,11 @@ function _optimise!(type::WC2, port::Portfolio2,
     set_string_names_on_creation(model, str_names)
     initial_w(port, w_ini)
     set_sr_k(obj, model)
+    weight_constraints(port, obj)
     network_constraints(port.network_method, port, obj, type)
     wc_constraints(port, obj, type)
     linear_constraints(port, obj)
     centrality_constraints(port, obj)
-    weight_constraints(port, obj)
     num_assets_constraints(port, obj)
     tracking_err_constraints(port.tracking_err, port, port.returns, obj)
     turnover_constraints(port.turnover, port, obj)
@@ -2544,9 +2547,9 @@ function _optimise!(type::RP2, port::Portfolio2,
     set_string_names_on_creation(model, str_names)
     rp_constraints(port, class)
     initial_w(port, w_ini)
-    risk_constraints(port, MinRisk(), RP2(), rm, mu, sigma, returns)
+    risk_constraints(port, nothing, RP2(), rm, mu, sigma, returns)
     set_returns(nothing, NoKelly(), port.model, port.mu_l; mu = mu)
-    linear_constraints(port, MinRisk())
+    linear_constraints(port, type)
     risk = model[:risk]
     @objective(model, Min, risk)
     return convex_optimisation(port, nothing, RP2(), class)
@@ -2606,7 +2609,7 @@ function rrp_constraints(type::RRP2, port, sigma)
     end
 
     _sd_risk(NoNtwk(), SOCSD(), model, sigma)
-    _set_sd_risk_upper_bound(nothing, MinRisk(), type, model, Inf)
+    _set_sd_risk_upper_bound(nothing, nothing, type, model, Inf)
     _rrp_constraints(type, port, sigma)
     return nothing
 end
@@ -2620,7 +2623,7 @@ function _optimise!(type::RRP2, port::Portfolio2, ::Any, ::Any, ::Any,
     initial_w(port, w_ini)
     rrp_constraints(type, port, sigma)
     set_returns(nothing, NoKelly(), port.model, port.mu_l; mu = mu)
-    linear_constraints(port, MinRisk())
+    linear_constraints(port, nothing)
     risk = model[:risk]
     @objective(model, Min, risk)
     return convex_optimisation(port, nothing, type, class)
@@ -2637,17 +2640,10 @@ export optimise2!
 function get_rm_string(rm::Union{AbstractVector, <:TradRiskMeasure})
     rmstr = ""
     if !isa(rm, AbstractVector)
-        # rstr = string(rm)
-        # rstr = rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)]
         rmstr *= String(rm)
     else
         rm = reduce(vcat, rm)
-        # if !isa(rm, AbstractVector)
-        #     rm = (rm,)
-        # end
         for (i, r) ∈ enumerate(rm)
-            # rstr = string(r)
-            # rstr = rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)]
             rmstr *= String(r)
             if i != length(rm)
                 rmstr *= '_'
@@ -2668,14 +2664,7 @@ function frontier_limits!(port::Portfolio2;
                           rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
                           kelly::RetType = NoKelly(), class::PortClass = Classic2(),
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
-                          w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
-                          save_model::Bool = false)
-    optimal1 = deepcopy(port.optimal)
-    fail1 = deepcopy(port.fail)
-    if save_model
-        model1 = copy(port.model)
-    end
-
+                          w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
     w_min = optimise2!(port; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
                        w_ini = w_min_ini)
     w_max = optimise2!(port; rm = rm, obj = MaxRet(), kelly = kelly, class = class,
@@ -2685,31 +2674,23 @@ function frontier_limits!(port::Portfolio2;
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
 
     rmstr = get_rm_string(rm)
-
     port.limits[rmstr] = limits
-
-    port.optimal = optimal1
-    port.fail = fail1
-    if save_model
-        port.model = model1
-    end
 
     return port.limits[rmstr]
 end
 
-function efficient_frontier!(port::Portfolio2;
+function efficient_frontier!(port::Portfolio2; type::Union{Trad2, NOC} = Trad2(),
                              rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
                              kelly::RetType = NoKelly(), class::PortClass = Classic2(),
                              w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                              w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
-                             save_model::Bool = false, points::Integer = 20, rf::Real = 0.0)
+                             points::Integer = 20, rf::Real = 0.0)
     optimal1 = deepcopy(port.optimal)
     fail1 = deepcopy(port.fail)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
 
     fl = frontier_limits!(port; rm = rm, kelly = kelly, class = class,
-                          w_min_ini = w_min_ini, w_max_ini = w_max_ini,
-                          save_model = save_model)
+                          w_min_ini = w_min_ini, w_max_ini = w_max_ini)
     w1 = fl.w_min
     w2 = fl.w_max
 
@@ -2738,9 +2719,8 @@ function efficient_frontier!(port::Portfolio2;
     i = 0
     for (j, (r, m)) ∈ enumerate(zip(risks, mus))
         if i == 0
-            w = optimise2!(port; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
-                           w_ini = w_min_ini)
-
+            w = optimise2!(port; rm = rm, type = type, obj = MinRisk(), kelly = kelly,
+                           class = class, w_ini = w_min_ini)
         else
             if !isempty(w)
                 w_ini = w.weights
@@ -2750,51 +2730,143 @@ function efficient_frontier!(port::Portfolio2;
             else
                 rmi.settings.ub = Inf
             end
-            w = optimise2!(port; rm = rm, obj = MaxRet(), kelly = kelly, class = class,
-                           w_ini = w_ini)
+            w = optimise2!(port; rm = rm, type = type, obj = MaxRet(), kelly = kelly,
+                           class = class, w_ini = w_ini)
             # Fallback in case :Max_Ret with maximum risk bounds fails.
             if isempty(w)
                 rmi.settings.ub = Inf
                 port.mu_l = m
-                w = optimise2!(port; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
-                               w_ini = w_ini)
+                w = optimise2!(port; rm = rm, type = type, obj = MinRisk(), kelly = kelly,
+                               class = class, w_ini = w_ini)
                 port.mu_l = Inf
             end
         end
         if isempty(w)
             continue
         end
-
-        rk = calc_risk(port; X = returns, type = :Trad2, rm = rmi)
-
+        rk = calc_risk(rmi, w.weights; X = returns, V = port.V, SV = port.SV)
         append!(frontier, w.weights)
         push!(srisk, rk)
         i += 1
     end
     rmi.settings.ub = Inf
-
-    w = optimise2!(port; rm = rm, obj = SR(; rf = rf), kelly = kelly, class = class,
-                   w_ini = w_min_ini)
+    w = optimise2!(port; rm = rm, type = type, obj = SR(; rf = rf), kelly = kelly,
+                   class = class, w_ini = w_min_ini)
     sharpe = false
     if !isempty(w)
-        rk = calc_risk(port; X = returns, type = :Trad2, rm = rmi)
+        rk = calc_risk(rmi, w.weights; X = returns, V = port.V, SV = port.SV)
         append!(frontier, w.weights)
         push!(srisk, rk)
         i += 1
         sharpe = true
     end
-
     rmstr = get_rm_string(rm)
-
     port.frontier[rmstr] = Dict(:weights => hcat(DataFrame(; tickers = port.assets),
                                                  DataFrame(reshape(frontier, length(w1), :),
                                                            string.(range(1, i)))),
                                 :risk => srisk, :sharpe => sharpe)
-
     port.optimal = optimal1
     port.fail = fail1
-
     return port.frontier[rmstr]
+end
+function _noc_risks(rm::AbstractVector, port, returns, sigma, w1, w2, w3)
+    rm = reduce(vcat, rm)
+    risk1 = 0.0
+    risk2 = 0.0
+    risk3 = 0.0
+    for r ∈ rm
+        scale = r.settings.scale
+        set_rm_properties(r, port.solvers, sigma)
+        risk1 += calc_risk(r, w1; X = returns, V = port.V, SV = port.SV) * scale
+        risk2 += calc_risk(r, w2; X = returns, V = port.V, SV = port.SV) * scale
+        risk3 += calc_risk(r, w3; X = returns, V = port.V, SV = port.SV) * scale
+    end
+    return risk1, risk2, risk3
+end
+function _noc_risks(rm, port, returns, sigma, w1, w2, w3)
+    rm = reduce(vcat, rm)
+    scale = rm.settings.scale
+    set_rm_properties(rm, port.solvers, sigma)
+    risk1 = calc_risk(rm, w1; X = returns, V = port.V, SV = port.SV) * scale
+    risk2 = calc_risk(rm, w2; X = returns, V = port.V, SV = port.SV) * scale
+    risk3 = calc_risk(rm, w3; X = returns, V = port.V, SV = port.SV) * scale
+    return risk1, risk2, risk3
+end
+function noc_risk_ret(type, port, rm, obj, kelly, class, w_ini, str_names)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+
+    w1 = if isempty(type.w_min)
+        optimise2!(port; rm = rm, type = type.type, obj = MinRisk(), kelly = kelly,
+                   class = class, w_ini = type.w_min_ini).weights
+    else
+        type.w_min
+    end
+
+    w2 = if isempty(type.w_max)
+        optimise2!(port; rm = rm, type = type.type, obj = MaxRet(), kelly = kelly,
+                   class = class, w_ini = type.w_max_ini).weights
+    else
+        type.w_max
+    end
+
+    w3 = if isempty(type.w_opt)
+        optimise2!(port; rm = rm, type = type.type, obj = obj, kelly = kelly, class = class,
+                   w_ini = w_ini).weights
+    else
+        type.w_opt
+    end
+
+    if isa(kelly, NoKelly)
+        ret1 = dot(mu, w1)
+        ret2 = dot(mu, w2)
+        ret3 = dot(mu, w3)
+    else
+        ret1 = sum(log.(one(eltype(mu)) .+ returns * w1)) / size(returns, 1)
+        ret2 = sum(log.(one(eltype(mu)) .+ returns * w2)) / size(returns, 1)
+        ret3 = sum(log.(one(eltype(mu)) .+ returns * w3)) / size(returns, 1)
+    end
+
+    risk1, risk2, risk3 = _noc_risks(rm, port, returns, sigma, w1, w2, w3)
+
+    d_ret = (ret2 - ret1) / type.bins
+    d_risk = (risk2 - risk1) / type.bins
+
+    ret3 -= d_ret
+    risk3 += d_risk
+
+    return risk3, ret3
+end
+function noc_constraints(model, risk0, ret0)
+    w = model[:w]
+    risk = model[:risk]
+    ret = model[:ret]
+    N = length(w)
+    @variable(model, log_ret)
+    @variable(model, log_risk)
+    @variable(model, log_w[1:N])
+    @variable(model, log_1mw[1:N])
+    @constraint(model, [log_risk, 1, risk0 - risk] in MOI.ExponentialCone())
+    @constraint(model, [log_ret, 1, ret - ret0] in MOI.ExponentialCone())
+    @constraint(model, [i = 1:N], [log_w[i], 1, w[i]] ∈ MOI.ExponentialCone())
+    @constraint(model, [i = 1:N], [log_1mw[i], 1, 1 - w[i]] ∈ MOI.ExponentialCone())
+    return nothing
+end
+function _optimise!(type::NOC, port::Portfolio2,
+                    rm::Union{AbstractVector, <:TradRiskMeasure}, obj::ObjectiveFunction,
+                    kelly::RetType, class::PortClass, w_ini::AbstractVector,
+                    str_names::Bool)
+    risk0, ret0 = noc_risk_ret(type, port, rm, obj, kelly, class, w_ini, str_names)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+    port.model = JuMP.Model()
+    set_string_names_on_creation(port.model, str_names)
+    initial_w(port, w_ini)
+    weight_constraints(port, nothing)
+    kelly_approx_idx = Int[]
+    risk_constraints(port, nothing, Trad2(), rm, mu, sigma, returns, kelly_approx_idx)
+    return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
+    noc_constraints(port.model, risk0, ret0)
+    objective_function(port, nothing, type, nothing)
+    return convex_optimisation(port, nothing, type, class)
 end
 
 export get_rm_string

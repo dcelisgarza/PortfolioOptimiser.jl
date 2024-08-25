@@ -1697,6 +1697,12 @@ for (op, name) ∈
              function Base.Symbol(::$op)
                  return Symbol($name)
              end
+             function Base.length(::$op)
+                 return 1
+             end
+             function Base.getindex(S::$op, I::Integer...)
+                 return S
+             end
          end)
 end
 

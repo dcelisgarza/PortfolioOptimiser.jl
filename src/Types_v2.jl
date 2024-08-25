@@ -51,6 +51,18 @@ end
     mu::WorstCaseSet = WCBox()
     cov::WorstCaseSet = WCBox()
 end
+@kwdef mutable struct NOC{T1 <: Real, T2 <: AbstractVector{<:Real},
+                          T3 <: AbstractVector{<:Real}, T4 <: AbstractVector{<:Real},
+                          T5 <: AbstractVector{<:Real}, T6 <: AbstractVector{<:Real}} <:
+                      PortType
+    type::Union{WC2, Trad2} = Trad2()
+    bins::T1 = 20.0
+    w_opt::T2 = Vector{Float64}(undef, 0)
+    w_min::T3 = Vector{Float64}(undef, 0)
+    w_max::T4 = Vector{Float64}(undef, 0)
+    w_min_ini::T5 = Vector{Float64}(undef, 0)
+    w_max_ini::T6 = Vector{Float64}(undef, 0)
+end
 struct HRP2 <: HCPortType end
 struct HERC2 <: HCPortType end
 @kwdef mutable struct NCO2 <: HCPortType
@@ -60,8 +72,8 @@ struct HERC2 <: HCPortType end
     port_kwargs_o::NamedTuple = port_kwargs
     stat_kwargs_o::NamedTuple = (;)
 end
-for (op, name) ∈ zip((Trad2, RP2, RRP2, WC2, HRP2, HERC2, NCO2),
-                     ("Trad2", "RP2", "RRP2", "WC2", "HRP2", "HERC2", "NCO2"))
+for (op, name) ∈ zip((Trad2, RP2, RRP2, WC2, NOC, HRP2, HERC2, NCO2),
+                     ("Trad2", "RP2", "RRP2", "WC2", "NOC", "HRP2", "HERC2", "NCO2"))
     eval(quote
              function Base.String(::$op)
                  return $name
@@ -2546,6 +2558,7 @@ function Base.deepcopy(obj::HCPortfolio2)
 end
 
 export Portfolio2, HCPortfolio2, NoKelly, AKelly, EKelly, MinRisk, Util, SR, MaxRet, Trad2,
-       RP2, NoRRP, RegRRP, RegPenRRP, RRP2, WC2, QuadSD, SOCSD, SimpleSD, RetType, WCBox,
-       WCEllipse, NoWC, TrackingErr, NoTracking, TrackWeight, TrackRet, NoNtwk, SDP2, IP2,
-       NoTR, TR, Classic2, FC2, FM2, BL2, BLFM2, NoPosdef, PosdefNearest, HRP2, HERC2, NCO2
+       RP2, NoRRP, RegRRP, RegPenRRP, RRP2, WC2, NOC, QuadSD, SOCSD, SimpleSD, RetType,
+       WCBox, WCEllipse, NoWC, TrackingErr, NoTracking, TrackWeight, TrackRet, NoNtwk, SDP2,
+       IP2, NoTR, TR, Classic2, FC2, FM2, BL2, BLFM2, NoPosdef, PosdefNearest, HRP2, HERC2,
+       NCO2
