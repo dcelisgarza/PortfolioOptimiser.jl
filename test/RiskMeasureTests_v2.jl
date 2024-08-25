@@ -76,8 +76,8 @@ end
     @test_throws AssertionError rm.alpha = 0
     rm.alpha = 0.5
     @test rm.alpha == 0.5
-    @test Symbol(rm) == :EVaR
-    @test String(rm) == "EVaR"
+    @test Symbol(rm) == :EVaR2
+    @test String(rm) == "EVaR2"
 
     rm = RVaR2()
     @test_throws AssertionError rm.alpha = 1
@@ -88,8 +88,8 @@ end
     @test rm.alpha == 0.5
     rm.kappa = 0.5
     @test rm.kappa == 0.5
-    @test Symbol(rm) == :RVaR
-    @test String(rm) == "RVaR"
+    @test Symbol(rm) == :RVaR2
+    @test String(rm) == "RVaR2"
 
     rm = DaR2()
     @test_throws AssertionError rm.alpha = 1
@@ -106,8 +106,8 @@ end
     rm = EDaR2()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
-    @test Symbol(rm) == :EDaR
-    @test String(rm) == "EDaR"
+    @test Symbol(rm) == :EDaR2
+    @test String(rm) == "EDaR2"
     rm.alpha = 0.5
     @test rm.alpha == 0.5
 
@@ -120,8 +120,8 @@ end
     @test rm.alpha == 0.5
     rm.kappa = 0.5
     @test rm.kappa == 0.5
-    @test Symbol(rm) == :RDaR
-    @test String(rm) == "RDaR"
+    @test Symbol(rm) == :RDaR2
+    @test String(rm) == "RDaR2"
 
     rm = DaR_r2()
     @test_throws AssertionError rm.alpha = 1
