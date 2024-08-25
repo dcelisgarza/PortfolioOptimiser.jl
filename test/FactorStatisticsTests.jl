@@ -1,7 +1,5 @@
 using CovarianceEstimation, CSV, Clarabel, LinearAlgebra, PortfolioOptimiser, Statistics,
-      StatsBase, Test, TimeSeries, Logging
-
-Logging.disable_logging(Logging.Warn)
+      StatsBase, Test, TimeSeries
 
 prices_assets = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)

@@ -1,7 +1,5 @@
 using CovarianceEstimation, CSV, HiGHS, LinearAlgebra, OrderedCollections,
-      PortfolioOptimiser, SparseArrays, Statistics, StatsBase, Test, TimeSeries, Logging
-
-Logging.disable_logging(Logging.Warn)
+      PortfolioOptimiser, SparseArrays, Statistics, StatsBase, Test, TimeSeries
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 

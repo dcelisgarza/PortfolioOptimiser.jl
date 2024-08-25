@@ -54,27 +54,24 @@ end
 struct HRP2 <: HCPortType end
 struct HERC2 <: HCPortType end
 @kwdef mutable struct NCO2 <: HCPortType
-    options::NamedTuple = (;)
-    options_o::NamedTuple = options
+    opt_kwargs::NamedTuple = (;)
+    opt_kwargs_o::NamedTuple = opt_kwargs
     port_kwargs::NamedTuple = (;)
     port_kwargs_o::NamedTuple = port_kwargs
     stat_kwargs_o::NamedTuple = (;)
 end
-Base.String(::Trad2) = "Trad2"
-Base.Symbol(::Trad2) = :Trad2
-Base.String(::RP2) = "RP2"
-Base.Symbol(::RP2) = :RP2
-Base.String(::RRP2) = "RRP2"
-Base.Symbol(::RRP2) = :RRP2
-Base.String(::WC2) = "WC2"
-Base.Symbol(::WC2) = :WC2
-Base.String(::HRP2) = "HRP2"
-Base.Symbol(::HRP2) = :HRP2
-Base.String(::HERC2) = "HERC2"
-Base.Symbol(::HERC2) = :HERC2
-Base.String(::NCO2) = "NCO2"
-Base.Symbol(::NCO2) = :NCO2
-
+for op ∈ (Trad2, RP2, RRP2, WC2, HRP2, HERC2, NCO2)
+    eval(quote
+             function Base.String(s::$op)
+                 rstr = string(s)
+                 return rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)]
+             end
+             function Base.Symbol(s::$op)
+                 rstr = string(s)
+                 return Symbol(rstr[1:(findfirst(x -> (x == '{' || x == '('), rstr) - 1)])
+             end
+         end)
+end
 abstract type RetType end
 struct NoKelly <: RetType end
 @kwdef mutable struct AKelly <: RetType

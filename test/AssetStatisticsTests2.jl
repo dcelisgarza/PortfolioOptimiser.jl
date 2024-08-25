@@ -1,5 +1,5 @@
 using CovarianceEstimation, CSV, HiGHS, LinearAlgebra, OrderedCollections,
-      PortfolioOptimiser, Statistics, StatsBase, Test, TimeSeries, Logging, Distances,
+      PortfolioOptimiser, Statistics, StatsBase, Test, TimeSeries, Distances,
       NearestCorrelationMatrix
 
 import Distances: pairwise, UnionMetric
@@ -18,8 +18,6 @@ struct POCorDist2 <: Distances.UnionMetric end
 function Distances.pairwise(::POCorDist2, mtx, i)
     return 2 * mtx
 end
-
-Logging.disable_logging(Logging.Warn)
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 

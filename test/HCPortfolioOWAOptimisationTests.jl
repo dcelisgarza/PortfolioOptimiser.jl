@@ -1,12 +1,10 @@
 using CSV, Clarabel, HiGHS, LinearAlgebra, OrderedCollections, PortfolioOptimiser,
-      Statistics, Test, TimeSeries, Logging, Distances
+      Statistics, Test, TimeSeries, Distances
 
 struct POCorDist <: Distances.UnionMetric end
 function Distances.pairwise(::POCorDist, mtx, i)
     return sqrt.(clamp!((1 .- mtx) / 2, 0, 1))
 end
-
-Logging.disable_logging(Logging.Warn)
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 

@@ -1,7 +1,6 @@
 using CSV, Clarabel, DataFrames, Graphs, HiGHS, JuMP, LinearAlgebra, OrderedCollections,
-      Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries, Logging
+      Pajarito, PortfolioOptimiser, Statistics, Test, TimeSeries
 
-Logging.disable_logging(Logging.Warn)
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
