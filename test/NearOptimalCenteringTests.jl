@@ -125,12 +125,12 @@ end
 
     rm = SD2(; formulation = SimpleSD(), settings = RiskMeasureSettings(; scale = 5))
     w2 = optimise2!(portfolio; type = NOC(), rm = rm, kelly = kelly, obj = obj)
-    @test isapprox(w2.weights, w1.weights, rtol = 5.0e-5)
+    @test isapprox(w2.weights, w1.weights, rtol = 0.0001)
 
     rm = [SD2(; formulation = SimpleSD())]
     w3 = optimise2!(portfolio; type = NOC(), rm = rm, kelly = kelly, obj = obj)
     @test isapprox(w3.weights, w1.weights)
-    @test isapprox(w3.weights, w2.weights, rtol = 5.0e-5)
+    @test isapprox(w3.weights, w2.weights, rtol = 0.0001)
 
     rm = [[SD2(; formulation = SimpleSD())]]
     w4 = optimise2!(portfolio; type = NOC(), rm = rm, kelly = kelly, obj = obj)

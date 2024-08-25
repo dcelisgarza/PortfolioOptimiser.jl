@@ -2863,10 +2863,10 @@ function _optimise!(type::NOC, port::Portfolio2,
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)
     initial_w(port, w_ini)
-    weight_constraints(port, nothing)
     kelly_approx_idx = Int[]
     risk_constraints(port, nothing, Trad2(), rm, mu, sigma, returns, kelly_approx_idx)
     return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
+    weight_constraints(port, nothing)
     noc_constraints(port.model, risk0, ret0)
     objective_function(port, nothing, type, nothing)
     return convex_optimisation(port, nothing, type, class)
