@@ -353,4 +353,4 @@ vals, vecs = eigen(X)
 
 max_val = find_max_eval2(vals, 100 / 20)[1]
 
-using PortfolioOptimiser
+using PortfolioOptimiser, Makie

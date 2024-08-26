@@ -23,15 +23,23 @@ function _setup_alloc_optim(weights, investment, reinvest)
 
     return long_idx, short_idx, long_investment, short_investment, long_ratio, short_ratio
 end
-function _optimise_allocation(portfolio, tickers, latest_prices)
+function _resolve_model(model, latest_prices)
+    shares = round.(Int, value.(model[:x]))
+    cost = latest_prices .* shares
+    weights = cost / sum(cost)
+    available_funds = value(model[:r])
+
+    return shares, cost, weights, available_funds
+end
+function _optimise_allocation(portfolio, label, tickers, latest_prices)
     model = portfolio.alloc_model
     solvers = portfolio.alloc_solvers
     term_status = termination_status(model)
     solvers_tried = Dict()
 
+    fail = true
+    key = nothing
     for (key, val) ∈ solvers
-        key = Symbol(String(key))
-
         if haskey(val, :solver)
             set_optimizer(model, val[:solver])
         end
@@ -50,15 +58,13 @@ function _optimise_allocation(portfolio, tickers, latest_prices)
         end
 
         if is_solved_and_feasible(model)
+            fail = false
             break
         else
             term_status = termination_status(model)
         end
 
-        shares = round.(Int, value.(model[:x]))
-        cost = latest_prices .* shares
-        weights = cost / sum(cost)
-        available_funds = value(model[:r])
+        shares, cost, weights, available_funds = _resolve_model(model, latest_prices)
 
         push!(solvers_tried,
               key => Dict(:objective_val => objective_value(model),
@@ -69,27 +75,17 @@ function _optimise_allocation(portfolio, tickers, latest_prices)
                                                    cost = cost, weights = weights)))
     end
 
-    return solvers_tried
-end
-function _handle_alloc_errors_and_finalise(portfolio, solvers_tried, key, label,
-                                           latest_prices)
-    model = portfolio.alloc_model
     key = Symbol(string(key) * "_" * string(label))
 
-    return if is_solved_and_feasible(model)
-        shares = round.(Int, value.(model[:x]))
-        cost = latest_prices .* shares
-        weights = cost / sum(cost)
-        available_funds = value(model[:r])
-
-        (shares, cost, weights, available_funds)
-    else
+    return if fail
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._lp_sub_allocation!))"
         @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         portfolio.alloc_fail[key] = solvers_tried
 
         (String[], Vector{eltype(latest_prices)}(undef, 0),
          Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices)))
+    else
+        shares, cost, weights, available_funds = _resolve_model(model, latest_prices)
     end
 end
 function _lp_sub_allocation!(portfolio, key, label, tickers, weights, latest_prices,
@@ -125,13 +121,9 @@ function _lp_sub_allocation!(portfolio, key, label, tickers, weights, latest_pri
 
     @objective(model, Min, u + r)
 
-    solvers_tried = _optimise_allocation(portfolio, tickers, latest_prices)
-
-    shares, cost, allocated_weights, available_funds = _handle_alloc_errors_and_finalise(portfolio,
-                                                                                         solvers_tried,
-                                                                                         key,
-                                                                                         label,
-                                                                                         latest_prices)
+    shares, cost, allocated_weights, available_funds = _optimise_allocation(portfolio,
+                                                                            label, tickers,
+                                                                            latest_prices)
 
     allocated_weights *= ratio
     return tickers, shares, latest_prices, cost, allocated_weights, available_funds
