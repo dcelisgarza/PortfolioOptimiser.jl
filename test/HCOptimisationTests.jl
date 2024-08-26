@@ -411,9 +411,9 @@ end
 @testset "NCO" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
                                                              :params => Dict("verbose" => false,
-                                                                             :check_sol => (allow_local = true,
-                                                                                            allow_almost = true),
                                                                              "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
