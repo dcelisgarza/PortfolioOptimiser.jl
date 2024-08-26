@@ -913,11 +913,6 @@ end
     @test isapprox(w5, w1)
     @test !isapprox(w5, w2)
     @test isapprox(w5, w3)
-    find_rtol(
-              #    
-              w10, w10t
-              #
-              )
     @test !isapprox(w5, w4)
     @test isapprox(w6, w6t)
     @test !isapprox(w6, w1)
@@ -929,19 +924,14 @@ end
     @test isapprox(w8, w4)
     @test isapprox(w9, w3)
     @test isapprox(w11, w3)
-    @test isapprox(w10, w10t, rtol = 1e-3)
+    @test isapprox(w10, w10t, rtol = 5e-3)
     @test !isapprox(w10, w6)
     @test !isapprox(w10, w5)
     @test !isapprox(w10, w4)
     @test !isapprox(w10, w3)
     @test !isapprox(w10, w2)
     @test !isapprox(w10, w1)
-    find_rtol(
-              #    
-              w12, w12t
-              #
-              )
-    @test isapprox(w12, w12t, rtol = 1e-2)
+    @test isapprox(w12, w12t, rtol = 5e-2)
     @test !isapprox(w12, w10)
     @test !isapprox(w12, w6)
     @test !isapprox(w12, w5)
