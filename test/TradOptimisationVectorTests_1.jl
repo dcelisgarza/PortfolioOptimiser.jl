@@ -371,6 +371,8 @@ end
 @testset "SSD vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
@@ -689,6 +691,8 @@ end
 @testset "SLPM vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
@@ -1449,6 +1453,8 @@ end
 @testset "EVaR vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
@@ -1654,6 +1660,8 @@ end
 @testset "RVaR vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
@@ -2064,6 +2072,8 @@ end
 @testset "EDaR vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)

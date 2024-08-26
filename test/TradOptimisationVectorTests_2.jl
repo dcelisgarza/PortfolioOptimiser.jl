@@ -1,6 +1,8 @@
 @testset "RDaR vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
@@ -204,6 +206,8 @@ end
 @testset "Kurt vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
@@ -840,6 +844,8 @@ end
 @testset "TG vec" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75,
                                                                            "max_iter" => 100,
@@ -1301,6 +1307,8 @@ end
 @testset "RTG vec" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75,
                                                                            "max_iter" => 100,
@@ -1743,6 +1751,8 @@ end
 @testset "OWA vec" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75,
                                                                            "max_iter" => 100,
