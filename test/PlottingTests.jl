@@ -24,7 +24,7 @@ pf = plot_frontier(portfolio; kelly = NoKelly(), rm = rm)
 fw = efficient_frontier!(portfolio; rm = rm, points = 5)
 pf = plot_frontier(portfolio; rm = rm)
 
-pfa = plot_frontier_area2(fw; rm = rm, t_factor = 252)
+pfa = plot_frontier_area(fw; rm = rm, t_factor = 252)
 # end
 
 # using StatsPlots
