@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
 @safetestset "Efficient frontier v2" begin
     include("EfficientFrontierTests_v2.jl")
 end

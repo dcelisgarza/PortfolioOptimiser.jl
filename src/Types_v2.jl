@@ -492,6 +492,11 @@ end
     k::T1 = 0
     max_k::T2 = 0
 end
+abstract type AllocationMethod end
+struct LP2 <: AllocationMethod end
+@kwdef mutable struct Greedy2{T1 <: Real} <: AllocationMethod
+    rounding::T1 = 1.0
+end
 """
 ```
 AbstractPortfolio2
@@ -956,8 +961,8 @@ mutable struct Portfolio2{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tr
                           tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv, tmuf,
                           tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf, tcovl,
                           tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz, tlim, tfront,
-                          tsolv, tf, toptpar, tmod, tlp, taopt, tasolv, taoptpar, taf,
-                          tamod} <: AbstractPortfolio2
+                          tsolv, tf, tmod, tlp, taopt, talo, tasolv, taf, tamod} <:
+               AbstractPortfolio2
     assets::ast
     timestamps::dat
     returns::r
@@ -1058,13 +1063,12 @@ mutable struct Portfolio2{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tr
     limits::tlim
     frontier::tfront
     solvers::tsolv
-    opt_params::toptpar
     fail::tf
     model::tmod
     latest_prices::tlp
     alloc_optimal::taopt
+    alloc_leftover::talo
     alloc_solvers::tasolv
-    alloc_params::taoptpar
     alloc_fail::taf
     alloc_model::tamod
 end
@@ -1392,12 +1396,11 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                     z::AbstractDict = Dict(), limits::AbstractDict = Dict(),
                     frontier::AbstractDict = Dict(),
                     solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
-                    opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),
                     fail::AbstractDict = Dict(), model::JuMP.Model = JuMP.Model(),
                     latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                     alloc_optimal::AbstractDict = Dict(),
+                    alloc_leftover::AbstractDict = Dict(),
                     alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
-                    alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),
                     alloc_fail::AbstractDict = Dict(),
                     alloc_model::JuMP.Model = JuMP.Model())
     if !isempty(prices)
@@ -1604,9 +1607,8 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                       typeof(blfm_cov), typeof(cov_l), typeof(cov_u), typeof(cov_mu),
                       typeof(cov_sigma), typeof(d_mu), typeof(k_mu), typeof(k_sigma),
                       typeof(optimal), typeof(z), typeof(limits), typeof(frontier),
-                      Union{<:AbstractDict, NamedTuple}, Union{<:AbstractDict, NamedTuple},
-                      typeof(fail), typeof(model), typeof(latest_prices),
-                      typeof(alloc_optimal), Union{<:AbstractDict, NamedTuple},
+                      Union{<:AbstractDict, NamedTuple}, typeof(fail), typeof(model),
+                      typeof(latest_prices), typeof(alloc_optimal), typeof(alloc_leftover),
                       Union{<:AbstractDict, NamedTuple}, typeof(alloc_fail),
                       typeof(alloc_model)}(assets, timestamps, returns, short, short_u,
                                            long_u, num_assets_l, num_assets_u,
@@ -1635,10 +1637,9 @@ function Portfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                                            SV, f_mu, f_cov, fm_returns, fm_mu, fm_cov,
                                            bl_mu, bl_cov, blfm_mu, blfm_cov, cov_l, cov_u,
                                            cov_mu, cov_sigma, d_mu, k_mu, k_sigma, optimal,
-                                           z, limits, frontier, solvers, opt_params, fail,
-                                           model, latest_prices, alloc_optimal,
-                                           alloc_solvers, alloc_params, alloc_fail,
-                                           alloc_model)
+                                           z, limits, frontier, solvers, fail, model,
+                                           latest_prices, alloc_optimal, alloc_leftover,
+                                           alloc_solvers, alloc_fail, alloc_model)
 end
 
 function Base.getproperty(obj::Portfolio2, sym::Symbol)
@@ -1837,9 +1838,8 @@ function Base.deepcopy(obj::Portfolio2)
                       typeof(obj.d_mu), typeof(obj.k_mu), typeof(obj.k_sigma),
                       typeof(obj.optimal), typeof(obj.z), typeof(obj.limits),
                       typeof(obj.frontier), Union{<:AbstractDict, NamedTuple},
-                      Union{<:AbstractDict, NamedTuple}, typeof(obj.fail),
-                      typeof(obj.model), typeof(obj.latest_prices),
-                      typeof(obj.alloc_optimal), Union{<:AbstractDict, NamedTuple},
+                      typeof(obj.fail), typeof(obj.model), typeof(obj.latest_prices),
+                      typeof(obj.alloc_optimal), typeof(obj.alloc_leftover),
                       Union{<:AbstractDict, NamedTuple}, typeof(obj.alloc_fail),
                       typeof(obj.alloc_model)}(deepcopy(obj.assets),
                                                deepcopy(obj.timestamps),
@@ -1908,12 +1908,11 @@ function Base.deepcopy(obj::Portfolio2)
                                                deepcopy(obj.k_mu), deepcopy(obj.k_sigma),
                                                deepcopy(obj.optimal), deepcopy(obj.z),
                                                deepcopy(obj.limits), deepcopy(obj.frontier),
-                                               deepcopy(obj.solvers),
-                                               deepcopy(obj.opt_params), deepcopy(obj.fail),
+                                               deepcopy(obj.solvers), deepcopy(obj.fail),
                                                copy(obj.model), deepcopy(obj.latest_prices),
                                                deepcopy(obj.alloc_optimal),
+                                               deepcopy(obj.alloc_leftover),
                                                deepcopy(obj.alloc_solvers),
-                                               deepcopy(obj.alloc_params),
                                                deepcopy(obj.alloc_fail),
                                                copy(obj.alloc_model))
 end
@@ -1923,7 +1922,7 @@ end
 mutable struct HCPortfolio2{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mnaks, skewf,
                            sskewf, owap, wowa, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew,
                            tv, tsskew, tsv,tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt,
-                           tsolv, toptpar, tf, tlp, taopt, tasolv, taoptpar, taf, tamod} <:
+                           tsolv,  tf, tlp, taopt, tasolv, taoptpar, taf, tamod} <:
                AbstractPortfolio2
     assets::ast
     timestamps::dat
@@ -2097,9 +2096,8 @@ mutable struct HCPortfolio2{ast, dat, r,
                             # mnak, mnaks,
                             # skewf, sskewf, owap, wowa, 
                             tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
-                            tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv, toptpar,
-                            tf, tlp, taopt, tasolv, taoptpar, taf, tamod} <:
-               AbstractPortfolio2
+                            tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv, tf, tlp,
+                            taopt, talo, tasolv, taf, tamod} <: AbstractPortfolio2
     assets::ast
     timestamps::dat
     returns::r
@@ -2137,12 +2135,11 @@ mutable struct HCPortfolio2{ast, dat, r,
     k::tk
     optimal::topt
     solvers::tsolv
-    opt_params::toptpar
     fail::tf
     latest_prices::tlp
     alloc_optimal::taopt
+    alloc_leftover::talo
     alloc_solvers::tasolv
-    alloc_params::taoptpar
     alloc_fail::taf
     alloc_model::tamod
 end
@@ -2278,12 +2275,11 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                                                                     :nothing),
                       k::Integer = 0, optimal::AbstractDict = Dict(),
                       solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
-                      opt_params::Union{<:AbstractDict, NamedTuple} = Dict(),
                       fail::AbstractDict = Dict(),
                       latest_prices::AbstractVector = Vector{Float64}(undef, 0),
                       alloc_optimal::AbstractDict = Dict(),
+                      alloc_leftover::AbstractDict = Dict(),
                       alloc_solvers::Union{<:AbstractDict, NamedTuple} = Dict(),
-                      alloc_params::Union{<:AbstractDict, NamedTuple} = Dict(),
                       alloc_fail::AbstractDict = Dict(),
                       alloc_model::JuMP.Model = JuMP.Model())
     if !isempty(prices)
@@ -2379,22 +2375,26 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                         Union{Symbol, <:Integer}, Union{<:Real, <:AbstractVector{<:Real}},
                         Union{<:Real, <:AbstractVector{<:Real}}, typeof(cor_method),
                         typeof(cor), typeof(dist), typeof(clusters), typeof(k),
-                        typeof(optimal), Union{<:AbstractDict, NamedTuple},
-                        Union{<:AbstractDict, NamedTuple}, typeof(fail),
+                        typeof(optimal), Union{<:AbstractDict, NamedTuple}, typeof(fail),
                         typeof(latest_prices), typeof(alloc_optimal),
-                        Union{<:AbstractDict, NamedTuple},
-                        Union{<:AbstractDict, NamedTuple}, typeof(alloc_fail),
-                        typeof(alloc_model)}(assets, timestamps, returns,
-                                             # alpha_i, alpha,
-                                             #  a_sim, beta_i, beta, b_sim, kappa, alpha_tail,
-                                             #  max_num_assets_kurt, max_num_assets_kurt_scale,
-                                             #  skew_factor, sskew_factor, owa_p, owa_w, 
-                                             mu, cov, kurt, skurt, L_2, S_2, skew, V, sskew,
-                                             SV, bins_info, w_min, w_max, cor_method, cor,
-                                             dist, clusters, k, optimal, solvers,
-                                             opt_params, fail, latest_prices, alloc_optimal,
-                                             alloc_solvers, alloc_params, alloc_fail,
-                                             alloc_model)
+                        typeof(alloc_leftover), Union{<:AbstractDict, NamedTuple},
+                        typeof(alloc_fail), typeof(alloc_model)}(assets, timestamps,
+                                                                 returns,
+                                                                 # alpha_i, alpha,
+                                                                 #  a_sim, beta_i, beta, b_sim, kappa, alpha_tail,
+                                                                 #  max_num_assets_kurt, max_num_assets_kurt_scale,
+                                                                 #  skew_factor, sskew_factor, owa_p, owa_w, 
+                                                                 mu, cov, kurt, skurt, L_2,
+                                                                 S_2, skew, V, sskew, SV,
+                                                                 bins_info, w_min, w_max,
+                                                                 cor_method, cor, dist,
+                                                                 clusters, k, optimal,
+                                                                 solvers, fail,
+                                                                 latest_prices,
+                                                                 alloc_optimal,
+                                                                 alloc_leftover,
+                                                                 alloc_solvers, alloc_fail,
+                                                                 alloc_model)
 end
 
 function Base.setproperty!(obj::HCPortfolio2, sym::Symbol, val)
@@ -2517,48 +2517,53 @@ function Base.deepcopy(obj::HCPortfolio2)
                         Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.cor_method),
                         typeof(obj.cor), typeof(obj.dist), typeof(obj.clusters),
                         typeof(obj.k), typeof(obj.optimal),
-                        Union{<:AbstractDict, NamedTuple},
                         Union{<:AbstractDict, NamedTuple}, typeof(obj.fail),
                         typeof(obj.latest_prices), typeof(obj.alloc_optimal),
-                        Union{<:AbstractDict, NamedTuple},
-                        Union{<:AbstractDict, NamedTuple}, typeof(obj.alloc_fail),
-                        typeof(obj.alloc_model)}(deepcopy(obj.assets),
-                                                 deepcopy(obj.timestamps),
-                                                 deepcopy(obj.returns),
-                                                 #  deepcopy(obj.alpha_i), deepcopy(obj.alpha),
-                                                 #  deepcopy(obj.a_sim), deepcopy(obj.beta_i),
-                                                 #  deepcopy(obj.beta), deepcopy(obj.b_sim),
-                                                 #  deepcopy(obj.kappa),
-                                                 #  deepcopy(obj.alpha_tail),
-                                                 #  deepcopy(obj.max_num_assets_kurt),
-                                                 #  deepcopy(obj.max_num_assets_kurt_scale),
-                                                 #  deepcopy(obj.skew_factor),
-                                                 #  deepcopy(obj.sskew_factor),
-                                                 #  deepcopy(obj.owa_p), deepcopy(obj.owa_w),
-                                                 deepcopy(obj.mu), deepcopy(obj.cov),
-                                                 deepcopy(obj.kurt), deepcopy(obj.skurt),
-                                                 deepcopy(obj.L_2), deepcopy(obj.S_2),
-                                                 deepcopy(obj.skew), deepcopy(obj.V),
-                                                 deepcopy(obj.sskew), deepcopy(obj.SV),
-                                                 deepcopy(obj.bins_info),
-                                                 deepcopy(obj.w_min), deepcopy(obj.w_max),
-                                                 deepcopy(obj.cor_method),
-                                                 deepcopy(obj.cor), deepcopy(obj.dist),
-                                                 deepcopy(obj.clusters), deepcopy(obj.k),
-                                                 deepcopy(obj.optimal),
-                                                 deepcopy(obj.solvers),
-                                                 deepcopy(obj.opt_params),
-                                                 deepcopy(obj.fail),
-                                                 deepcopy(obj.latest_prices),
-                                                 deepcopy(obj.alloc_optimal),
-                                                 deepcopy(obj.alloc_solvers),
-                                                 deepcopy(obj.alloc_params),
-                                                 deepcopy(obj.alloc_fail),
-                                                 copy(obj.alloc_model))
+                        typeof(obj.alloc_leftover), Union{<:AbstractDict, NamedTuple},
+                        typeof(obj.alloc_fail), typeof(obj.alloc_model)}(deepcopy(obj.assets),
+                                                                         deepcopy(obj.timestamps),
+                                                                         deepcopy(obj.returns),
+                                                                         #  deepcopy(obj.alpha_i), deepcopy(obj.alpha),
+                                                                         #  deepcopy(obj.a_sim), deepcopy(obj.beta_i),
+                                                                         #  deepcopy(obj.beta), deepcopy(obj.b_sim),
+                                                                         #  deepcopy(obj.kappa),
+                                                                         #  deepcopy(obj.alpha_tail),
+                                                                         #  deepcopy(obj.max_num_assets_kurt),
+                                                                         #  deepcopy(obj.max_num_assets_kurt_scale),
+                                                                         #  deepcopy(obj.skew_factor),
+                                                                         #  deepcopy(obj.sskew_factor),
+                                                                         #  deepcopy(obj.owa_p), deepcopy(obj.owa_w),
+                                                                         deepcopy(obj.mu),
+                                                                         deepcopy(obj.cov),
+                                                                         deepcopy(obj.kurt),
+                                                                         deepcopy(obj.skurt),
+                                                                         deepcopy(obj.L_2),
+                                                                         deepcopy(obj.S_2),
+                                                                         deepcopy(obj.skew),
+                                                                         deepcopy(obj.V),
+                                                                         deepcopy(obj.sskew),
+                                                                         deepcopy(obj.SV),
+                                                                         deepcopy(obj.bins_info),
+                                                                         deepcopy(obj.w_min),
+                                                                         deepcopy(obj.w_max),
+                                                                         deepcopy(obj.cor_method),
+                                                                         deepcopy(obj.cor),
+                                                                         deepcopy(obj.dist),
+                                                                         deepcopy(obj.clusters),
+                                                                         deepcopy(obj.k),
+                                                                         deepcopy(obj.optimal),
+                                                                         deepcopy(obj.solvers),
+                                                                         deepcopy(obj.fail),
+                                                                         deepcopy(obj.latest_prices),
+                                                                         deepcopy(obj.alloc_optimal),
+                                                                         deepcopy(obj.alloc_leftover),
+                                                                         deepcopy(obj.alloc_solvers),
+                                                                         deepcopy(obj.alloc_fail),
+                                                                         copy(obj.alloc_model))
 end
 
 export Portfolio2, HCPortfolio2, NoKelly, AKelly, EKelly, MinRisk, Util, SR, MaxRet, Trad2,
        RP2, NoRRP, RegRRP, RegPenRRP, RRP2, WC2, NOC, QuadSD, SOCSD, SimpleSD, RetType,
        WCBox, WCEllipse, NoWC, TrackingErr, NoTracking, TrackWeight, TrackRet, NoNtwk, SDP2,
        IP2, NoTR, TR, Classic2, FC2, FM2, BL2, BLFM2, NoPosdef, PosdefNearest, HRP2, HERC2,
-       NCO2
+       NCO2, LP2, Greedy2

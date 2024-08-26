@@ -19,12 +19,6 @@ l = 2.0
 
     alloc_opt = AllocOpt(; method = :LP)
 
-    allocate!(portfolio, alloc_opt; save_opt_params = false)
-    alloc_params1 = copy(portfolio.alloc_params)
-    alloc_opt.method = :Greedy
-    allocate!(portfolio, alloc_opt; save_opt_params = false)
-    alloc_params2 = copy(portfolio.alloc_params)
-
     alloc_opt.method = :LP
     w1 = allocate!(portfolio, alloc_opt)
     alloc_opt.method = :Greedy
@@ -81,8 +75,6 @@ l = 2.0
     alloc_opt.method = :Greedy
     w19 = allocate!(portfolio, alloc_opt)
 
-    @test isempty(alloc_params1)
-    @test isempty(alloc_params2)
     @test isapprox(w0.weights, w1.weights, rtol = 0.01)
     @test isapprox(w0.weights, w2.weights, rtol = 0.01)
     @test isapprox(w0.weights, w3.weights, rtol = 0.1)
