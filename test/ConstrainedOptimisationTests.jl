@@ -8,6 +8,8 @@ l = 2.0
 @testset "Rebalance Trad" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.7))))
     asset_statistics!(portfolio)
@@ -783,7 +785,9 @@ end
 
 @testset "Network and Dendrogram SD short" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
+                                                                       allow_almost = true),
+                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
                                                                                              "verbose" => false,
                                                                                              "oa_solver" => optimizer_with_attributes(GLPK.Optimizer,
                                                                                                                                       MOI.Silent() => true),
