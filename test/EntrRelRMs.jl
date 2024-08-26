@@ -1,5 +1,5 @@
-using CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, OrderedCollections,
-      PortfolioOptimiser, Statistics, Test, TimeSeries, Logging
+using CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, PortfolioOptimiser, Statistics, Test,
+      TimeSeries, Logging
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
@@ -8,17 +8,16 @@ l = 2.0
 
 @testset "ERM and RRM logs" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio; calc_kurt = false)
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
     optimise!(portfolio)
 
-    solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                            :params => Dict("verbose" => false,
-                                                            "max_iter" => 1)))
-    solvers_mip = OrderedDict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
-                                             :params => Dict("log_to_console" => false)))
+    solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                     :params => Dict("verbose" => false, "max_iter" => 1)))
+    solvers_mip = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
+                                      :params => Dict("log_to_console" => false)))
     portfolio.solvers = solvers
     test_logger = TestLogger()
     with_logger(test_logger) do
@@ -42,11 +41,11 @@ end
 
 @testset "EVaR ERM" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio; calc_kurt = false)
-    optimise!(portfolio, OptimiseOpt(; rm = :EVaR, obj = :Sharpe))
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+    optimise!(portfolio; rm = EVaR(), obj = Sharpe())
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
 
@@ -72,11 +71,11 @@ end
 
 @testset "EDaR ERM" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                  :params => Dict("verbose" => false,
-                                                                                  "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio; calc_kurt = false)
-    optimise!(portfolio, OptimiseOpt(; rm = :EDaR, obj = :Sharpe))
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+    optimise!(portfolio; rm = EDaR(), obj = Sharpe())
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
     pushfirst!(x, 1)

@@ -39,6 +39,7 @@ function _optimise_allocation(portfolio, label, tickers, latest_prices)
 
     fail = true
     key = nothing
+    check_sol = (;)
     for (key, val) ∈ solvers
         if haskey(val, :solver)
             set_optimizer(model, val[:solver])
@@ -50,6 +51,10 @@ function _optimise_allocation(portfolio, label, tickers, latest_prices)
             end
         end
 
+        if haskey(val, :check_sol)
+            check_sol = val[:check_sol]
+        end
+
         try
             JuMP.optimize!(model)
         catch jump_error
@@ -57,7 +62,7 @@ function _optimise_allocation(portfolio, label, tickers, latest_prices)
             continue
         end
 
-        if is_solved_and_feasible(model)
+        if is_solved_and_feasible(model; check_sol...)
             fail = false
             break
         else

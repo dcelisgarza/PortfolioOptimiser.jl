@@ -2291,6 +2291,7 @@ function convex_optimisation(port, obj, type, class)
 
     fail = true
     strtype = "_" * String(type)
+    check_sol = (;)
     for (key, val) ∈ solvers
         key = Symbol(String(key) * strtype)
 
@@ -2304,6 +2305,10 @@ function convex_optimisation(port, obj, type, class)
             end
         end
 
+        if haskey(val, :check_sol)
+            check_sol = val[:check_sol]
+        end
+
         try
             JuMP.optimize!(model)
         catch jump_error
@@ -2315,7 +2320,9 @@ function convex_optimisation(port, obj, type, class)
         all_non_zero_weights = !all(isapprox.(abs.(value.(model[:w])),
                                               zero(eltype(port.returns))))
 
-        if is_solved_and_feasible(model) && all_finite_weights && all_non_zero_weights
+        if is_solved_and_feasible(model; check_sol...) &&
+           all_finite_weights &&
+           all_non_zero_weights
             fail = false
             break
         else
