@@ -1,9 +1,5 @@
 using SafeTestsets
 
-@safetestset "Plotting v2" begin
-    include("PlottingTests.jl")
-end
-
 @safetestset "Trad optimisation v2" begin
     include("TradOptimisationTests.jl")
 end
@@ -94,4 +90,8 @@ end
 
 @safetestset "Trad optimisation rm vectors" begin
     include("TradOptimisationVectorTests.jl")
+end
+
+@safetestset "Plotting v2" begin
+    include("PlottingTests.jl")
 end

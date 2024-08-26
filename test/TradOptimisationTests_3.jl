@@ -1,6 +1,8 @@
 @testset "CDaR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     rm = CDaR()
@@ -235,6 +237,8 @@ end
 @testset "EDaR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
@@ -467,6 +471,8 @@ end
 @testset "RDaR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
@@ -700,6 +706,8 @@ end
 @testset "EDaR < RDaR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)

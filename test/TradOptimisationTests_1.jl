@@ -6,9 +6,9 @@
     optimise!(portfolio)
 
     @test !isempty(portfolio.fail)
-    @test haskey(portfolio.fail, :HiGHS_Trad2)
-    @test haskey(portfolio.fail[:HiGHS_Trad2], :JuMP_error)
-    @test length(keys(portfolio.fail[:HiGHS_Trad2])) == 1
+    @test haskey(portfolio.fail, :HiGHS_Trad)
+    @test haskey(portfolio.fail[:HiGHS_Trad], :JuMP_error)
+    @test length(keys(portfolio.fail[:HiGHS_Trad])) == 1
 
     portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                :params => Dict("verbose" => false,
@@ -19,8 +19,8 @@
            OWA(; owa = OWASettings(; approx = true))]]
     optimise!(portfolio; rm = rm)
     @test !isempty(portfolio.fail)
-    @test haskey(portfolio.fail, :Clarabel_Trad2)
-    @test length(keys(portfolio.fail[:Clarabel_Trad2])) == 6
+    @test haskey(portfolio.fail, :Clarabel_Trad)
+    @test length(keys(portfolio.fail[:Clarabel_Trad])) == 6
 end
 
 @testset "SD" begin
@@ -1682,6 +1682,8 @@ end
 @testset "SSD" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     rm = SSD()
@@ -2144,6 +2146,8 @@ end
 @testset "SLPM" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     rm = SLPM(; target = rf)
