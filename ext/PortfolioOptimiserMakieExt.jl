@@ -2,15 +2,15 @@ module PortfolioOptimiserMakieExt
 using PortfolioOptimiser, Makie, SmartAsserts, Statistics, MultivariateStats, Distributions,
       Clustering, Graphs, SimpleWeightedGraphs, LinearAlgebra
 
-import PortfolioOptimiser: AbstractPortfolio
-const PO = PortfolioOptimiser
+import PortfolioOptimiser: AbstractPortfolio, RiskMeasure, RetType
 
 """
 ```
 plot_returns(timestamps, assets, returns, weights; per_asset = false, kwargs...)
 ```
 """
-function PO.plot_returns(timestamps, assets, returns, weights; per_asset = false)
+function PortfolioOptimiser.plot_returns(timestamps, assets, returns, weights;
+                                         per_asset = false)
     f = Figure()
     if per_asset
         ax = Axis(f[1, 1]; xlabel = "Date", ylabel = "Asset Cummulative Returns")
@@ -34,31 +34,40 @@ function PO.plot_returns(timestamps, assets, returns, weights; per_asset = false
     axislegend(; position = :lt, merge = true)
     return f
 end
-function PO.plot_returns(port::AbstractPortfolio,
-                         type = isa(port, HCPortfolio) ? :HRP : :Trad; per_asset = false)
-    return PO.plot_returns(port.timestamps, port.assets, port.returns,
-                           port.optimal[type].weights; per_asset = per_asset)
+function PortfolioOptimiser.plot_returns(port::AbstractPortfolio,
+                                         type = isa(port, HCPortfolio) ? :HRP : :Trad;
+                                         per_asset = false)
+    return PortfolioOptimiser.plot_returns(port.timestamps, port.assets, port.returns,
+                                           port.optimal[type].weights;
+                                           per_asset = per_asset)
 end
 
-function PO.plot_bar(assets, weights)
+function PortfolioOptimiser.plot_bar(assets, weights)
     f = Figure()
     ax = Axis(f[1, 1]; xticks = (1:length(assets), assets),
               ylabel = "Portfolio Composition, %", xticklabelrotation = pi / 2)
     barplot!(ax, weights * 100)
     return f
 end
-function PO.plot_bar(port::AbstractPortfolio, type = isa(port, HCPortfolio) ? :HRP : :Trad;
-                     kwargs...)
-    return PO.plot_bar(port.assets, port.optimal[type].weights, kwargs...)
+function PortfolioOptimiser.plot_bar(port::AbstractPortfolio,
+                                     type = isa(port, HCPortfolio) ? :HRP : :Trad;
+                                     kwargs...)
+    return PortfolioOptimiser.plot_bar(port.assets, port.optimal[type].weights, kwargs...)
 end
 
-function PO.plot_risk_contribution(assets::AbstractVector, w::AbstractVector,
-                                   X::AbstractMatrix; rm::RiskMeasure = SD(),
-                                   V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                   SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                   percentage::Bool = false, erc_line::Bool = true,
-                                   t_factor = 252, delta::Real = 1e-6,
-                                   marginal::Bool = false, kwargs...)
+function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
+                                                   w::AbstractVector, X::AbstractMatrix;
+                                                   rm::RiskMeasure = SD(),
+                                                   V::AbstractMatrix = Matrix{Float64}(undef,
+                                                                                       0,
+                                                                                       0),
+                                                   SV::AbstractMatrix = Matrix{Float64}(undef,
+                                                                                        0,
+                                                                                        0),
+                                                   percentage::Bool = false,
+                                                   erc_line::Bool = true, t_factor = 252,
+                                                   delta::Real = 1e-6,
+                                                   marginal::Bool = false, kwargs...)
     rc = risk_contribution(rm, w; X = X, V = V, SV = SV, delta = delta, marginal = marginal,
                            kwargs...)
 
@@ -111,26 +120,35 @@ function PO.plot_risk_contribution(assets::AbstractVector, w::AbstractVector,
 
     return f
 end
-function PO.plot_risk_contribution(port::AbstractPortfolio,
-                                   type = isa(port, HCPortfolio) ? :HRP : :Trad;
-                                   X = port.returns, rm::RiskMeasure = SD(),
-                                   percentage::Bool = false, erc_line::Bool = true,
-                                   t_factor = 252, delta::Real = 1e-6,
-                                   marginal::Bool = false, kwargs...)
+function PortfolioOptimiser.plot_risk_contribution(port::AbstractPortfolio,
+                                                   type = if isa(port, HCPortfolio)
+                                                       :HRP
+                                                   else
+                                                       :Trad
+                                                   end; X = port.returns,
+                                                   rm::RiskMeasure = SD(),
+                                                   percentage::Bool = false,
+                                                   erc_line::Bool = true, t_factor = 252,
+                                                   delta::Real = 1e-6,
+                                                   marginal::Bool = false, kwargs...)
     solver_flag, sigma_flag = set_rm_properties(rm, port.solvers, port.cov)
-    fig = PO.plot_risk_contribution(port.assets, port.optimal[type].weights, X; rm = rm,
-                                    V = port.V, SV = port.SV, percentage = percentage,
-                                    erc_line = erc_line, t_factor = t_factor, delta = delta,
-                                    marginal = marginal, kwargs...)
+    fig = PortfolioOptimiser.plot_risk_contribution(port.assets, port.optimal[type].weights,
+                                                    X; rm = rm, V = port.V, SV = port.SV,
+                                                    percentage = percentage,
+                                                    erc_line = erc_line,
+                                                    t_factor = t_factor, delta = delta,
+                                                    marginal = marginal, kwargs...)
     unset_set_rm_properties(rm, solver_flag, sigma_flag)
 
     return fig
 end
 
-function PO.plot_frontier(frontier; X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                          mu::AbstractVector = Vector{Float64}(undef, 0), rf::Real = 0.0,
-                          rm::RiskMeasure = SD(), kelly::RetType = NoKelly(),
-                          t_factor = 252, palette = :Spectral)
+function PortfolioOptimiser.plot_frontier(frontier;
+                                          X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                          mu::AbstractVector = Vector{Float64}(undef, 0),
+                                          rf::Real = 0.0, rm::RiskMeasure = SD(),
+                                          kelly::RetType = NoKelly(), t_factor = 252,
+                                          palette = :Spectral)
     risks = copy(frontier[:risk])
     weights = Matrix(frontier[:weights][!, 2:end])
 
@@ -179,19 +197,22 @@ function PO.plot_frontier(frontier; X::AbstractMatrix = Matrix{Float64}(undef, 0
 
     return f
 end
-function PO.plot_frontier(port::AbstractPortfolio, key = nothing;
-                          X::AbstractMatrix = port.returns, mu::AbstractVector = port.mu,
-                          rm::RiskMeasure = SD(), rf::Real = 0.0,
-                          kelly::RetType = NoKelly(), t_factor = 252, palette = :Spectral)
+function PortfolioOptimiser.plot_frontier(port::AbstractPortfolio, key = nothing;
+                                          X::AbstractMatrix = port.returns,
+                                          mu::AbstractVector = port.mu,
+                                          rm::RiskMeasure = SD(), rf::Real = 0.0,
+                                          kelly::RetType = NoKelly(), t_factor = 252,
+                                          palette = :Spectral)
     if isnothing(key)
         key = get_rm_string(rm)
     end
-    return PO.plot_frontier(port.frontier[key]; X = X, mu = mu, rf = rf, rm = rm,
-                            kelly = kelly, t_factor = t_factor, palette = palette)
+    return PortfolioOptimiser.plot_frontier(port.frontier[key]; X = X, mu = mu, rf = rf,
+                                            rm = rm, kelly = kelly, t_factor = t_factor,
+                                            palette = palette)
 end
 
-function PO.plot_frontier_area(frontier; rm::RiskMeasure = SD(), t_factor = 252,
-                               palette = :Spectral)
+function PortfolioOptimiser.plot_frontier_area(frontier; rm::RiskMeasure = SD(),
+                                               t_factor = 252, palette = :Spectral)
     risks = copy(frontier[:risk])
     assets = reshape(frontier[:weights][!, "tickers"], 1, :)
     weights = Matrix(frontier[:weights][!, 2:end])
