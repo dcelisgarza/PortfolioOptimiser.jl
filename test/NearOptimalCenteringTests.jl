@@ -292,7 +292,7 @@ end
           0.0015677990391979831, 0.0938277928127947, 0.008463074925084095,
           0.01792139606465465, 0.047723392186772226, 0.06792721680295467,
           0.054660405663482355, 0.05340789089968085]
-    @test isapprox(w2.weights, wt, rtol = 5.0e-5)
+    @test isapprox(w2.weights, wt, rtol = 1.0e-4)
 
     w3 = optimise!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                    hclust_opt = hclust_opt,

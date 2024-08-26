@@ -1,9 +1,5 @@
 using SafeTestsets
 
-@safetestset "Near Optimal Centering" begin
-    include("NearOptimalCenteringTests.jl")
-end
-
 @safetestset "HC Optimistaion" begin
     include("HCOptimisationTests.jl")
 end
@@ -94,4 +90,8 @@ end
 
 @safetestset "Efficient frontier v2" begin
     include("EfficientFrontierTests.jl")
+end
+
+@safetestset "Near Optimal Centering" begin
+    include("NearOptimalCenteringTests.jl")
 end
