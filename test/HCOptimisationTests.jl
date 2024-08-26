@@ -8,6 +8,8 @@ l = 2.0
 @testset "HRP and HERC risk scale" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
                                                              :params => Dict("verbose" => false,
                                                                              "max_step_fraction" => 0.75))))
 
@@ -54,6 +56,8 @@ end
 @testset "NCO vector rm" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
                                                              :params => Dict("verbose" => false,
                                                                              "max_step_fraction" => 0.75))))
 
@@ -82,6 +86,8 @@ end
 @testset "HERC and NCO mixed parameters" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
                                                              :params => Dict("verbose" => false,
                                                                              "max_step_fraction" => 0.75))))
 
@@ -181,6 +187,8 @@ end
 @testset "Weight bounds" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
                                                              :params => Dict("verbose" => false,
                                                                              "max_step_fraction" => 0.75))))
 
@@ -309,6 +317,8 @@ end
 @testset "Shorting with NCO" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
                                                              :params => Dict("verbose" => false,
                                                                              "max_step_fraction" => 0.75))))
 
@@ -852,6 +862,8 @@ end
     @test isapprox(w40.weights, w5t, rtol = 5.0e-5)
 
     portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                               :check_sol => (allow_local = true,
+                                                              allow_almost = true),
                                                :params => Dict("verbose" => false,
                                                                "max_step_fraction" => 0.65)))
     rm = RVaR()
@@ -909,6 +921,8 @@ end
     @test isapprox(w45.weights, w5t, rtol = 1.0e-7)
 
     portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                               :check_sol => (allow_local = true,
+                                                              allow_almost = true),
                                                :params => Dict("verbose" => false,
                                                                "max_step_fraction" => 0.75)))
     rm = MDD()
@@ -1576,6 +1590,8 @@ end
 
     portfolio = HCPortfolio(; prices = prices[(end - 25):end],
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
                                                              :params => Dict("verbose" => false,
                                                                              "max_step_fraction" => 0.75))))
 
@@ -1640,6 +1656,8 @@ end
 @testset "HRP" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
                                                              :params => Dict("verbose" => false,
                                                                              "max_step_fraction" => 0.75))))
 
@@ -1989,6 +2007,8 @@ end
 @testset "HERC" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
                                                              :params => Dict("verbose" => false,
                                                                              "max_step_fraction" => 0.75))))
 

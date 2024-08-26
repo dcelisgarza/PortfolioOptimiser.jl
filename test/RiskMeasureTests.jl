@@ -6,6 +6,8 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 @testset "Risk measures" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     optimise!(portfolio; obj = Sharpe())

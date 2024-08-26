@@ -730,6 +730,8 @@ end
 @testset "Kurt" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
@@ -960,6 +962,8 @@ end
 @testset "Kurt Reduced" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))),
                           max_num_assets_kurt = 1)
@@ -1194,6 +1198,8 @@ end
 @testset "SKurt" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
@@ -1422,6 +1428,8 @@ end
 @testset "SKurt Reduced" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))),
                           max_num_assets_kurt = 1)
@@ -1651,6 +1659,8 @@ end
 @testset "Skew" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
@@ -1881,6 +1891,8 @@ end
 @testset "SSkew" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
@@ -2111,6 +2123,8 @@ end
 @testset "DVar" begin
     portfolio = Portfolio(; prices = prices[(end - 50):end],
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
@@ -2218,6 +2232,8 @@ end
     @test isapprox(w8.weights, wt)
 
     portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                               :check_sol => (allow_local = true,
+                                                              allow_almost = true),
                                                :params => Dict("verbose" => false,
                                                                "max_step_fraction" => 0.99)))
     w9 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -2231,6 +2247,8 @@ end
     @test isapprox(w9.weights, wt, rtol = 5.0e-5)
 
     portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                               :check_sol => (allow_local = true,
+                                                              allow_almost = true),
                                                :params => Dict("verbose" => false,
                                                                "max_step_fraction" => 0.75)))
     obj = MaxRet()

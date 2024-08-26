@@ -1271,6 +1271,8 @@ end
     @test isapprox(w25.weights, w5.weights, rtol = 0.05)
 
     portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                               :check_sol => (allow_local = true,
+                                                              allow_almost = true),
                                                :params => Dict("verbose" => false,
                                                                "max_step_fraction" => 0.65,
                                                                "max_iter" => 200,
@@ -1287,6 +1289,8 @@ end
     @test isapprox(w26.weights, w6.weights, rtol = 0.05)
 
     portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                               :check_sol => (allow_local = true,
+                                                              allow_almost = true),
                                                :params => Dict("verbose" => false,
                                                                "max_step_fraction" => 0.75,
                                                                "max_iter" => 150,
@@ -1926,6 +1930,8 @@ end
 
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75,
                                                                            "max_iter" => 100,

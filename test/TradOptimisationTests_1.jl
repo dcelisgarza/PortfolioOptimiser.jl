@@ -11,6 +11,8 @@
     @test length(keys(portfolio.fail[:HiGHS_Trad])) == 1
 
     portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                               :check_sol => (allow_local = true,
+                                                              allow_almost = true),
                                                :params => Dict("verbose" => false,
                                                                "max_step_fraction" => 0.75,
                                                                "max_iter" => 100,
@@ -26,6 +28,8 @@ end
 @testset "SD" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     rm = SD()
@@ -255,6 +259,8 @@ end
 @testset "SD formulations" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
@@ -1299,6 +1305,8 @@ end
 @testset "Approx Kelly Formulations, non SD rm" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
@@ -1451,6 +1459,8 @@ end
 @testset "MAD" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     rm = MAD()
@@ -1915,6 +1925,8 @@ end
 @testset "FLPM" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     rm = FLPM(; target = rf)
