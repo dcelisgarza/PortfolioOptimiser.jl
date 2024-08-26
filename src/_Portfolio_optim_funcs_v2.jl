@@ -2628,57 +2628,6 @@ function _optimise!(type::RRP2, port::Portfolio2, ::Any, ::Any, ::Any,
     @objective(model, Min, risk)
     return convex_optimisation(port, nothing, type, class)
 end
-function optimise2!(port::Portfolio2; rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
-                    type::PortType = Trad2(), obj::ObjectiveFunction = MinRisk(),
-                    kelly::RetType = NoKelly(), class::PortClass = Classic2(),
-                    w_ini::AbstractVector = Vector{Float64}(undef, 0),
-                    str_names::Bool = false)
-    return _optimise!(type, port, rm, obj, kelly, class, w_ini, str_names)
-end
-export optimise2!
-
-function get_rm_string(rm::Union{AbstractVector, <:TradRiskMeasure})
-    rmstr = ""
-    if !isa(rm, AbstractVector)
-        rmstr *= String(rm)
-    else
-        rm = reduce(vcat, rm)
-        for (i, r) ∈ enumerate(rm)
-            rmstr *= String(r)
-            if i != length(rm)
-                rmstr *= '_'
-            end
-        end
-    end
-    return Symbol(rmstr)
-end
-function get_first_rm(rm::Union{AbstractVector, <:TradRiskMeasure})
-    return rmi = if !isa(rm, AbstractVector)
-        rm
-    else
-        reduce(vcat, rm)[1]
-    end
-end
-
-function frontier_limits!(port::Portfolio2;
-                          rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
-                          kelly::RetType = NoKelly(), class::PortClass = Classic2(),
-                          w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
-                          w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
-    w_min = optimise2!(port; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
-                       w_ini = w_min_ini)
-    w_max = optimise2!(port; rm = rm, obj = MaxRet(), kelly = kelly, class = class,
-                       w_ini = w_max_ini)
-
-    limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
-    DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
-
-    rmstr = get_rm_string(rm)
-    port.limits[rmstr] = limits
-
-    return port.limits[rmstr]
-end
-
 function efficient_frontier!(port::Portfolio2; type::Union{Trad2, NOC} = Trad2(),
                              rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
                              kelly::RetType = NoKelly(), class::PortClass = Classic2(),
@@ -2870,6 +2819,56 @@ function _optimise!(type::NOC, port::Portfolio2,
     noc_constraints(port.model, risk0, ret0)
     objective_function(port, nothing, type, nothing)
     return convex_optimisation(port, nothing, type, class)
+end
+function optimise2!(port::Portfolio2; rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
+                    type::PortType = Trad2(), obj::ObjectiveFunction = MinRisk(),
+                    kelly::RetType = NoKelly(), class::PortClass = Classic2(),
+                    w_ini::AbstractVector = Vector{Float64}(undef, 0),
+                    str_names::Bool = false)
+    return _optimise!(type, port, rm, obj, kelly, class, w_ini, str_names)
+end
+export optimise2!
+
+function get_rm_string(rm::Union{AbstractVector, <:TradRiskMeasure})
+    rmstr = ""
+    if !isa(rm, AbstractVector)
+        rmstr *= String(rm)
+    else
+        rm = reduce(vcat, rm)
+        for (i, r) ∈ enumerate(rm)
+            rmstr *= String(r)
+            if i != length(rm)
+                rmstr *= '_'
+            end
+        end
+    end
+    return Symbol(rmstr)
+end
+function get_first_rm(rm::Union{AbstractVector, <:TradRiskMeasure})
+    return rmi = if !isa(rm, AbstractVector)
+        rm
+    else
+        reduce(vcat, rm)[1]
+    end
+end
+
+function frontier_limits!(port::Portfolio2;
+                          rm::Union{AbstractVector, <:TradRiskMeasure} = SD2(),
+                          kelly::RetType = NoKelly(), class::PortClass = Classic2(),
+                          w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
+                          w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
+    w_min = optimise2!(port; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
+                       w_ini = w_min_ini)
+    w_max = optimise2!(port; rm = rm, obj = MaxRet(), kelly = kelly, class = class,
+                       w_ini = w_max_ini)
+
+    limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
+    DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
+
+    rmstr = get_rm_string(rm)
+    port.limits[rmstr] = limits
+
+    return port.limits[rmstr]
 end
 
 export get_rm_string
