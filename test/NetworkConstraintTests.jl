@@ -7,9 +7,9 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Cluster and connection matrices" begin
-    portfolio = Portfolio2(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     hclust_alg = DBHT()
-    A = cluster_matrix2(portfolio; hclust_alg = hclust_alg)
+    A = cluster_matrix(portfolio; hclust_alg = hclust_alg)
     At = reshape([0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1,
                   0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0,
                   0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0,
@@ -30,7 +30,7 @@ l = 2.0
     @test isapprox(A, At)
 
     network_type = MST(; steps = 1)
-    A = connection_matrix2(portfolio; network_type = network_type)
+    A = connection_matrix(portfolio; network_type = network_type)
     At = reshape([0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -51,7 +51,7 @@ l = 2.0
     @test isapprox(A, At)
 
     network_type = MST(; steps = 2)
-    A = connection_matrix2(portfolio; network_type = network_type)
+    A = connection_matrix(portfolio; network_type = network_type)
     At = reshape([0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0,
                   0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -72,7 +72,7 @@ l = 2.0
     @test isapprox(A, At)
 
     network_type = MST(; steps = 5)
-    A = connection_matrix2(portfolio; network_type = network_type)
+    A = connection_matrix(portfolio; network_type = network_type)
     At = reshape([0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1,
                   1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1,
@@ -93,7 +93,7 @@ l = 2.0
     @test isapprox(A, At)
 
     network_type = MST(; steps = 10)
-    A = connection_matrix2(portfolio; network_type = network_type)
+    A = connection_matrix(portfolio; network_type = network_type)
     At = reshape([0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -114,7 +114,7 @@ l = 2.0
     @test isapprox(A, At)
 
     network_type = TMFG(; steps = 1)
-    A = connection_matrix2(portfolio; network_type = network_type)
+    A = connection_matrix(portfolio; network_type = network_type)
     At = reshape([0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0,
                   0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -135,7 +135,7 @@ l = 2.0
     @test isapprox(A, At)
 
     network_type = TMFG(; steps = 2)
-    A = connection_matrix2(portfolio; network_type = network_type)
+    A = connection_matrix(portfolio; network_type = network_type)
     At = reshape([0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0,
                   0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0,
@@ -156,7 +156,7 @@ l = 2.0
     @test isapprox(A, At)
 
     network_type = TMFG(; steps = 5)
-    A = connection_matrix2(portfolio; network_type = network_type)
+    A = connection_matrix(portfolio; network_type = network_type)
     At = reshape([0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -177,7 +177,7 @@ l = 2.0
     @test isapprox(A, At)
 
     network_type = TMFG(; steps = 10)
-    A = connection_matrix2(portfolio; network_type = network_type)
+    A = connection_matrix(portfolio; network_type = network_type)
     At = reshape([0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -199,64 +199,64 @@ l = 2.0
 end
 
 @testset "Centrality Vector" begin
-    portfolio = Portfolio2(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
 
     network_type = MST(; steps = 1,
                        centrality = DegreeCentrality(; kwargs = (; normalize = false)))
-    A = centrality_vector2(portfolio; network_type = network_type)
+    A = centrality_vector(portfolio; network_type = network_type)
     At = [4.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 3.0, 1.0, 2.0,
           5.0, 1.0, 7.0, 1.0]
     @test isapprox(A, At)
 
     network_type = TMFG(; steps = 1,
                         centrality = DegreeCentrality(; kwargs = (; normalize = false)))
-    A = centrality_vector2(portfolio; network_type = network_type)
+    A = centrality_vector(portfolio; network_type = network_type)
     At = [7.0, 4.0, 4.0, 3.0, 4.0, 6.0, 3.0, 3.0, 10.0, 5.0, 3.0, 3.0, 3.0, 7.0, 3.0, 4.0,
           12.0, 4.0, 14.0, 6.0]
     @test isapprox(A, At)
 end
 
 @testset "Connected and related assets" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
-    w = optimise2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+    w = optimise!(portfolio)
 
     network_type = MST(; steps = 1)
-    C = connected_assets2(portfolio; type = :Trad2, network_type = network_type)
+    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
     @test isapprox(C, 0.15341826288065405)
 
     network_type = MST(; steps = 2)
-    C = connected_assets2(portfolio; type = :Trad2, network_type = network_type)
+    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
     @test isapprox(C, 0.26913944576609394)
 
     network_type = MST(; steps = 5)
-    C = connected_assets2(portfolio; type = :Trad2, network_type = network_type)
+    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
     @test isapprox(C, 0.8136084159385178)
 
     network_type = MST(; steps = 10)
-    C = connected_assets2(portfolio; type = :Trad2, network_type = network_type)
+    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
     @test isapprox(C, 0.827667431214267)
 
     network_type = TMFG(; steps = 1)
-    C = connected_assets2(portfolio; type = :Trad2, network_type = network_type)
+    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
     @test isapprox(C, 0.2086544834780483)
 
     network_type = TMFG(; steps = 2)
-    C = connected_assets2(portfolio; type = :Trad2, network_type = network_type)
+    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
     @test isapprox(C, 0.793855216107267)
 
     network_type = TMFG(; steps = 5)
-    C = connected_assets2(portfolio; type = :Trad2, network_type = network_type)
+    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
     @test isapprox(C, 0.827667431214267)
 
     network_type = TMFG(; steps = 10)
-    C = connected_assets2(portfolio; type = :Trad2, network_type = network_type)
+    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
     @test isapprox(C, 0.827667431214267)
 
     hclust_alg = DBHT()
-    C = related_assets2(portfolio; type = :Trad2, hclust_alg = hclust_alg)
+    C = related_assets(portfolio; type = :Trad, hclust_alg = hclust_alg)
     @test isapprox(C, 0.3171332022604018)
 end

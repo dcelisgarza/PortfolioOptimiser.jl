@@ -6,26 +6,26 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "SD" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = SD2()
+    rm = SD()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
-    rc3 = risk_contribution(portfolio; type = :RP2, rm = Variance2())
+    rc3 = risk_contribution(portfolio; type = :RP, rm = Variance())
     lrc3, hrc3 = extrema(rc3)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
-    rc4 = risk_contribution(portfolio; type = :RP2, rm = Variance2())
+    rc4 = risk_contribution(portfolio; type = :RP, rm = Variance())
     lrc4, hrc4 = extrema(rc4)
 
     w1t = [0.05063484430993387, 0.051248247145833405, 0.04690544758235205,
@@ -51,30 +51,30 @@ l = 2.0
 
     portfolio.risk_budget = []
     portfolio.risk_budget[1] = 5
-    w3 = optimise2!(portfolio; type = RP2())
-    rc3 = risk_contribution(portfolio; type = :RP2)
+    w3 = optimise!(portfolio; type = RP())
+    rc3 = risk_contribution(portfolio; type = :RP)
     lrc5, hrc5 = extrema(rc3)
     @test isapprox(hrc5 / lrc5, 100, rtol = 0.0005)
     @test isapprox(sum(portfolio.risk_budget), 1)
 end
 
 @testset "MAD" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = MAD2()
+    rm = MAD()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.05616718884171783, 0.05104482287669086, 0.050442185055943126,
@@ -98,22 +98,22 @@ end
 end
 
 @testset "SSD" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = SSD2()
+    rm = SSD()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.05053927750227942, 0.05271325589318637, 0.04504106160525596,
@@ -137,22 +137,22 @@ end
 end
 
 @testset "FLPM" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = FLPM2()
+    rm = FLPM()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.05426765863488127, 0.05096600361558761, 0.05094634029921118,
@@ -176,22 +176,22 @@ end
 end
 
 @testset "SLPM" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = SLPM2()
+    rm = SLPM()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.05078363551961249, 0.053717899741000934, 0.04576180467751134,
@@ -215,22 +215,22 @@ end
 end
 
 @testset "WR" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = WR2()
+    rm = WR()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.043757321581810414, 0.0822733742327415, 0.0436602082667364,
@@ -254,22 +254,22 @@ end
 end
 
 @testset "RG" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = RG2()
+    rm = RG()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.03141997465637757, 0.04977499477148719, 0.04187114359583626,
@@ -293,22 +293,22 @@ end
 end
 
 @testset "CVaR" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = CVaR2()
+    rm = CVaR()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04938933831427547, 0.04880564679526193, 0.04173143865012399,
@@ -332,22 +332,22 @@ end
 end
 
 @testset "RCVaR" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = RCVaR2()
+    rm = RCVaR()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.050269049067239474, 0.0477841693631293, 0.04260280490906643,
@@ -371,22 +371,22 @@ end
 end
 
 @testset "EVaR" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = EVaR2()
+    rm = EVaR()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04644453616015471, 0.06366537537969691, 0.04378771033344591,
@@ -410,22 +410,22 @@ end
 end
 
 @testset "RVaR" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = RVaR2()
+    rm = RVaR()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04549546983882415, 0.07569593834645903, 0.04395756946422178,
@@ -449,41 +449,41 @@ end
 end
 
 @testset "EVaR < RVaR < WR" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = RVaR2(; kappa = 5e-4)
-    w1 = optimise2!(portfolio; rm = rm, type = RP2())
-    rm = RVaR2(; kappa = 1 - 5e-4)
-    w2 = optimise2!(portfolio; rm = rm, type = RP2())
-    rm = EVaR2()
-    w3 = optimise2!(portfolio; rm = rm, type = RP2())
-    rm = WR2()
-    w4 = optimise2!(portfolio; rm = rm, type = RP2())
+    rm = RVaR(; kappa = 5e-4)
+    w1 = optimise!(portfolio; rm = rm, type = RP())
+    rm = RVaR(; kappa = 1 - 5e-4)
+    w2 = optimise!(portfolio; rm = rm, type = RP())
+    rm = EVaR()
+    w3 = optimise!(portfolio; rm = rm, type = RP())
+    rm = WR()
+    w4 = optimise!(portfolio; rm = rm, type = RP())
     @test isapprox(w1.weights, w3.weights, rtol = 0.01)
     @test isapprox(w2.weights, w4.weights, rtol = 1.0e-4)
 end
 
 @testset "MDD" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = MDD2()
+    rm = MDD()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = reverse(1:size(portfolio.returns, 2))
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.0832226755172904, 0.03469976232870371, 0.04178756401104356,
@@ -507,22 +507,22 @@ end
 end
 
 @testset "ADD" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = ADD2()
+    rm = ADD()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.057606462854449564, 0.048757147583333986, 0.08760313404798067,
@@ -546,22 +546,22 @@ end
 end
 
 @testset "UCI" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = UCI2()
+    rm = UCI()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.054836725033953676, 0.04136772470877948, 0.061654616064266046,
@@ -585,22 +585,22 @@ end
 end
 
 @testset "CDaR" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = CDaR2()
+    rm = CDaR()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04695113393595442, 0.03661746998944636, 0.03822542841829081,
@@ -624,22 +624,22 @@ end
 end
 
 @testset "EDaR" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = EDaR2()
+    rm = EDaR()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.05532315448250374, 0.035789843750491365, 0.04077445814199365,
@@ -663,22 +663,22 @@ end
 end
 
 @testset "RDaR" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = RDaR2()
+    rm = RDaR()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.06793604284871738, 0.03531368372759915, 0.042023447287659055,
@@ -702,38 +702,38 @@ end
 end
 
 @testset "EDaR < RDaR" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75,
-                                                                            "max_iter" => 300))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75,
+                                                                           "max_iter" => 300))))
+    asset_statistics!(portfolio)
 
     obj = MinRisk()
-    rm = RDaR2(; kappa = 5e-3)
-    w1 = optimise2!(portfolio; rm = rm, type = RP2())
-    rm = EDaR2()
-    w2 = optimise2!(portfolio; rm = rm, type = RP2())
+    rm = RDaR(; kappa = 5e-3)
+    w1 = optimise!(portfolio; rm = rm, type = RP())
+    rm = EDaR()
+    w2 = optimise!(portfolio; rm = rm, type = RP())
     @test isapprox(w1.weights, w2.weights, rtol = 0.0001)
 end
 
 @testset "Full Kurt" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = Kurt2()
+    rm = Kurt()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04622318966891087, 0.051735402412157364, 0.04439927739035058,
@@ -757,22 +757,22 @@ end
 end
 
 @testset "Reduced Kurt" begin
-    portfolio = Portfolio2(; prices = prices, max_num_assets_kurt = 1,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices, max_num_assets_kurt = 1,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = Kurt2()
+    rm = Kurt()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04591842179640149, 0.05179805405164705, 0.04434107746789892,
@@ -796,22 +796,22 @@ end
 end
 
 @testset "Full SKurt" begin
-    portfolio = Portfolio2(; prices = prices, max_num_assets_kurt = 1,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices, max_num_assets_kurt = 1,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = SKurt2()
+    rm = SKurt()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.047491170526917106, 0.054533530611338095, 0.04332743262413755,
@@ -835,22 +835,22 @@ end
 end
 
 @testset "Reduced SKurt" begin
-    portfolio = Portfolio2(; prices = prices, max_num_assets_kurt = 1,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices, max_num_assets_kurt = 1,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = SKurt2()
+    rm = SKurt()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.047491170526917106, 0.054533530611338095, 0.04332743262413755,
@@ -874,22 +874,22 @@ end
 end
 
 @testset "Skew" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = Skew2()
+    rm = Skew()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.045906673657994286, 0.07415648620070701, 0.03239691712482279,
@@ -913,22 +913,22 @@ end
 end
 
 @testset "SSkew" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = SSkew2()
+    rm = SSkew()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04762767201257773, 0.05277763009753849, 0.04313912780375195,
@@ -952,22 +952,22 @@ end
 end
 
 @testset "DVaR" begin
-    portfolio = Portfolio2(; prices = prices[(end - 50):end],
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices[(end - 50):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = DVar2()
+    rm = DVar()
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.041282715159969716, 0.04983418210656033, 0.04356426842967805,
@@ -991,22 +991,22 @@ end
 end
 
 @testset "GMD" begin
-    portfolio = Portfolio2(; prices = prices[(end - 200):end],
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices[(end - 200):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = GMD2(; owa = OWASettings(; approx = false))
+    rm = GMD(; owa = OWASettings(; approx = false))
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04803547750881911, 0.05110378808817606, 0.045744535143979456,
@@ -1028,16 +1028,16 @@ end
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.001)
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.0005)
 
-    rm = GMD2(; owa = OWASettings(; approx = true))
+    rm = GMD(; owa = OWASettings(; approx = true))
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04804176713883893, 0.05104724299739746, 0.04574875402236941,
@@ -1061,22 +1061,22 @@ end
 end
 
 @testset "TG" begin
-    portfolio = Portfolio2(; prices = prices[(end - 125):end],
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices[(end - 125):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = TG2(; owa = OWASettings(; approx = false))
+    rm = TG(; owa = OWASettings(; approx = false))
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.038764768981499845, 0.07263706983700537, 0.04228339226242435,
@@ -1098,16 +1098,16 @@ end
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.05)
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.05)
 
-    rm = TG2(; owa = OWASettings(; approx = true))
+    rm = TG(; owa = OWASettings(; approx = true))
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.038740466095828284, 0.07002876653572743, 0.04194119773895824,
@@ -1131,21 +1131,21 @@ end
 end
 
 @testset "RTG" begin
-    portfolio = Portfolio2(; prices = prices[(end - 200):end],
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices[(end - 200):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
 
-    rm = RTG2(;)
+    rm = RTG(;)
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04253504052591617, 0.04991570998894274, 0.04298361867322103,
@@ -1169,22 +1169,22 @@ end
 end
 
 @testset "OWA" begin
-    portfolio = Portfolio2(; prices = prices[(end - 200):end],
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices[(end - 200):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    rm = OWA2(; owa = OWASettings(; approx = false))
+    rm = OWA(; owa = OWASettings(; approx = false))
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04803547750881911, 0.05110378808817606, 0.045744535143979456,
@@ -1206,16 +1206,16 @@ end
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.001)
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.0005)
 
-    rm = OWA2(; owa = OWASettings(; approx = true))
+    rm = OWA(; owa = OWASettings(; approx = true))
 
     portfolio.risk_budget = []
-    w1 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc1 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = RP2(), rm = rm)
-    rc2 = risk_contribution(portfolio; type = :RP2, rm = rm)
+    w2 = optimise!(portfolio; type = RP(), rm = rm)
+    rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.04804176713883893, 0.05104724299739746, 0.04574875402236941,

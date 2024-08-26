@@ -1,21 +1,21 @@
 @testset "NoPosdef" begin
-    portfolio = Portfolio2(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     c1 = PortCovCor(; ce = CorGerber0(; posdef = NoPosdef()), posdef = NoPosdef())
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, set_cov = true, cov_type = c1)
     @test !isposdef(portfolio.cov)
 end
 
 @testset "Kurt and SKurt" begin
     cols = [:FB, :BBY, :AMD, :AMZN]
     N2 = length(cols)^2
-    portfolio = Portfolio2(; prices = prices[cols])
+    portfolio = Portfolio(; prices = prices[cols])
 
     k1 = KurtFull(;)
     sk1 = KurtSemi(;)
-    asset_statistics2!(portfolio; set_kurt = true, set_skurt = true, set_mu = false,
-                       set_skew = false, set_sskew = false, set_cov = true, kurt_type = k1,
-                       skurt_type = sk1)
+    asset_statistics!(portfolio; set_kurt = true, set_skurt = true, set_mu = false,
+                      set_skew = false, set_sskew = false, set_cov = true, kurt_type = k1,
+                      skurt_type = sk1)
 
     kurtt = reshape([7.891805256642086e-6, 2.5229087269783093e-7, 1.2833982383603358e-7,
                      4.983277127132219e-7, 2.5229087269783093e-7, 4.52866674544802e-7,
@@ -195,12 +195,12 @@ end
 end
 
 @testset "Denoise" begin
-    portfolio = HCPortfolio2(; prices = prices)
+    portfolio = HCPortfolio(; prices = prices)
 
-    c1 = PortCovCor(; denoise = DenoiseFixed())
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
-                       cor_type = c1)
+    c1 = PortCovCor(; denoise = Fixed())
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
+                      cor_type = c1)
     covt = reshape([0.00020997582228184753, 9.215148661936903e-5, 0.00011140966818696507,
                     0.00010900336743301244, 0.00012267864246049944, 5.641419327466781e-5,
                     0.00010771639507832105, 4.221612959837864e-5, 7.936368624642037e-5,
@@ -593,10 +593,10 @@ end
     @test isapprox(portfolio.cor, cort)
     @test isapprox(portfolio.dist, distt)
 
-    c1 = PortCovCor(; denoise = DenoiseFixed(; detone = true, mkt_comp = 5))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
-                       cor_type = c1)
+    c1 = PortCovCor(; denoise = Fixed(; detone = true, mkt_comp = 5))
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
+                      cor_type = c1)
     covt = reshape([6.391535259831592e-5, -1.3085018166183182e-5, -2.50781137937585e-5,
                     -1.5460071615799216e-5, -3.077882888252689e-5, 1.1951695131862666e-6,
                     -2.0503543773581085e-6, -5.458764409007375e-6, -1.178031488366191e-6,
@@ -1003,10 +1003,10 @@ end
     @test isapprox(portfolio.cor, cort)
     @test isapprox(portfolio.dist, distt)
 
-    c1 = PortCovCor(; denoise = DenoiseSpectral())
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
-                       cor_type = c1)
+    c1 = PortCovCor(; denoise = Spectral())
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
+                      cor_type = c1)
     covt = reshape([0.00020997582228184753, 0.00020169060841356004, 0.0002300054533971381,
                     0.00023167530794199114, 0.00025521795995604035, 0.00010447471507069511,
                     0.0002053900082017248, 7.709529412721291e-5, 0.0001368574836415109,
@@ -1399,10 +1399,10 @@ end
     @test isapprox(portfolio.cor, cort)
     @test isapprox(portfolio.dist, distt)
 
-    c1 = PortCovCor(; denoise = DenoiseShrink())
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
-                       cor_type = c1)
+    c1 = PortCovCor(; denoise = Shrink())
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
+                      cor_type = c1)
     covt = reshape([0.00020997582228184753, 0.00011480407173785114, 0.0001516771250115936,
                     0.00013158056612338044, 0.00016791365591156018, 6.060234938557154e-5,
                     0.0001027487355819159, 4.601164914071167e-5, 9.127450555795236e-5,
@@ -1805,12 +1805,12 @@ end
 end
 
 @testset "JLoGo" begin
-    portfolio = HCPortfolio2(; prices = prices)
+    portfolio = HCPortfolio(; prices = prices)
 
     c1 = PortCovCor(; jlogo = JLoGo())
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
-                       cor_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
+                      cor_type = c1)
     covt = reshape([0.00020997582228184732, 9.80367463317547e-5, 0.00014077374362954785,
                     0.000118227682464823, 0.000158396388639706, 4.1342495129394216e-5,
                     9.741361595383928e-5, 3.088472057695862e-5, 8.723400768938228e-5,
@@ -2210,9 +2210,9 @@ end
     @test isapprox(portfolio.dist, distt)
 
     c1 = PortCovCor(; jlogo = JLoGo(; DBHT = DBHT(; similarity = DBHTExp())))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
-                       cor_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
+                      cor_type = c1)
     covt = reshape([0.00020997582228184772, 7.92875134890947e-5, 0.00014077374362954815,
                     0.0001182276824648232, 0.0001583963886397062, 4.1352890581110885e-5,
                     9.188918763001602e-5, 3.087615089734455e-5, 9.057154203612864e-5,
@@ -2756,7 +2756,7 @@ end
 end
 
 @testset "Transposes" begin
-    portfolio = Portfolio2(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     ces = [CovSemi(), CorSpearman(), CorKendall(), CorMutualInfo(), CorDistance(), CorLTD(),
            CorGerber0(), CorGerber1(), CorGerber2(), CorSB0(), CorSB1(), CorGerberSB0(),
            CorGerberSB1(), PortCovCor()]

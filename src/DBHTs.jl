@@ -525,8 +525,8 @@ Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy 
   - `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
   - `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates 3-clique `n` is separating.
 """
-function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Unique)
-    @smart_assert(method ∈ DBHTRootMethods)
+function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real},
+                             method::DBHTRootMethod = UniqueDBHT())
     N = size(Apm, 1)
     A = Apm .!= 0
     K3, E, clique = clique3(A)
@@ -553,7 +553,7 @@ function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Uniq
     Pred = BuildHierarchy(M)
     Root = findall(Pred .== 0)
 
-    if method == :Unique
+    if isa(method, UniqueDBHT)
         if length(Root) > 1
             push!(Pred, 0)
             Pred[Root] .= length(Pred)
@@ -1062,8 +1062,7 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
   - `Z_hclust`: Z matrix in [Clustering.Hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) format.
 """
 function DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real};
-               branchorder::Symbol = :optimal, method::Symbol = :Unique)
-    @smart_assert(branchorder ∈ BranchOrderTypes)
+               branchorder::Symbol = :optimal, method::DBHTRootMethod = UniqueDBHT())
     @assert(issymmetric(D), "Distance matrix should be symmetric.")
     @assert(issymmetric(S), "Similarity matrix should be symmetric.")
 
@@ -1152,4 +1151,4 @@ function J_LoGo(sigma, separators, cliques)
     return jlogo
 end
 
-export DBHTs, PMFG_T2s, J_LoGo
+export PMFG_T2s, DBHTs, J_LoGo

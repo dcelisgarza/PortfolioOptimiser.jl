@@ -1,26 +1,5 @@
-abstract type CentralityType end
-@kwdef mutable struct DegreeCentrality <: CentralityType
-    args::Tuple = ()
-    kwargs::NamedTuple = (;)
-end
 function calc_centrality(method::DegreeCentrality, G)
     return Graphs.degree_centrality(G, method.args...; method.kwargs...)
-end
-abstract type NetworkType end
-@kwdef mutable struct TMFG{T1 <: Integer} <: NetworkType
-    similarity::DBHTSimilarity = DBHTMaxDist()
-    steps::T1 = 1
-    centrality::CentralityType = DegreeCentrality()
-end
-abstract type TreeType end
-@kwdef mutable struct KruskalTree <: TreeType
-    args::Tuple = ()
-    kwargs::NamedTuple = (;)
-end
-@kwdef mutable struct MST{T1 <: Integer} <: NetworkType
-    tree::TreeType = KruskalTree()
-    steps::T1 = 1
-    centrality::CentralityType = DegreeCentrality()
 end
 function _tree_func(::KruskalTree)
     return Graphs.kruskal_mst
@@ -46,10 +25,10 @@ function _calc_adjacency(nt::MST, X::AbstractMatrix, cor_type::PortfolioOptimise
 
     return adjacency_matrix(SimpleGraph(G[tree_func(G, nt.tree.args...; nt.tree.kwargs...)]))
 end
-function connection_matrix2(X::AbstractMatrix;
-                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                            dist_type::DistanceMethod = DistanceDefault(),
-                            network_type::NetworkType = MST())
+function connection_matrix(X::AbstractMatrix;
+                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                           dist_type::DistanceMethod = DistanceDefault(),
+                           network_type::NetworkType = MST())
     A = _calc_adjacency(network_type, X, cor_type, dist_type)
 
     A_p = similar(Matrix(A))
@@ -62,37 +41,36 @@ function connection_matrix2(X::AbstractMatrix;
 
     return A_p
 end
-function connection_matrix2(portfolio::AbstractPortfolio2;
-                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                            dist_type::DistanceMethod = DistanceDefault(),
-                            network_type::NetworkType = MST())
-    return connection_matrix2(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
-                              network_type = network_type)
-end
-function centrality_vector2(X::AbstractMatrix;
-                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                            dist_type::DistanceMethod = DistanceDefault(),
-                            network_type::NetworkType = MST())
-    Adj = connection_matrix2(X; cor_type = cor_type, dist_type = dist_type,
+function connection_matrix(portfolio::AbstractPortfolio;
+                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                           dist_type::DistanceMethod = DistanceDefault(),
+                           network_type::NetworkType = MST())
+    return connection_matrix(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
                              network_type = network_type)
+end
+function centrality_vector(X::AbstractMatrix;
+                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                           dist_type::DistanceMethod = DistanceDefault(),
+                           network_type::NetworkType = MST())
+    Adj = connection_matrix(X; cor_type = cor_type, dist_type = dist_type,
+                            network_type = network_type)
     G = SimpleGraph(Adj)
 
     return calc_centrality(network_type.centrality, G)
 end
-function centrality_vector2(portfolio::AbstractPortfolio2;
-                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                            dist_type::DistanceMethod = DistanceDefault(),
-                            network_type::NetworkType = MST())
-    return centrality_vector2(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
-                              network_type = network_type)
+function centrality_vector(portfolio::AbstractPortfolio;
+                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                           dist_type::DistanceMethod = DistanceDefault(),
+                           network_type::NetworkType = MST())
+    return centrality_vector(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
+                             network_type = network_type)
 end
-function cluster_matrix2(X::AbstractMatrix;
-                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                         dist_type::DistanceMethod = DistanceDefault(),
-                         hclust_alg::HClustAlg = HAClustering(),
-                         hclust_opt::HClustOpt = HClustOpt())
-    clusters = cluster_assets2(X; cor_type = cor_type, dist_type = dist_type,
-                               hclust_alg = hclust_alg, hclust_opt = hclust_opt)[1]
+function cluster_matrix(X::AbstractMatrix;
+                        cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                        dist_type::DistanceMethod = DistanceDefault(),
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
+    clusters = cluster_assets(X; cor_type = cor_type, dist_type = dist_type,
+                              hclust_alg = hclust_alg, hclust_opt = hclust_opt)[1]
 
     N = size(X, 2)
     A_c = Vector{Int}(undef, 0)
@@ -108,15 +86,13 @@ function cluster_matrix2(X::AbstractMatrix;
 
     return A_c
 end
-function cluster_matrix2(portfolio::AbstractPortfolio2;
-                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                         dist_type::DistanceMethod = DistanceDefault(),
-                         hclust_alg::HClustAlg = HAClustering(),
-                         hclust_opt::HClustOpt = HClustOpt())
-    return cluster_matrix2(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
-                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+function cluster_matrix(portfolio::AbstractPortfolio;
+                        cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                        dist_type::DistanceMethod = DistanceDefault(),
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
+    return cluster_matrix(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
+                          hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
-#=
 function _con_rel(A::AbstractMatrix, w::AbstractVector)
     ovec = range(; start = 1, stop = 1, length = size(A, 1))
     aw = abs.(w * transpose(w))
@@ -124,44 +100,42 @@ function _con_rel(A::AbstractMatrix, w::AbstractVector)
     C_a /= transpose(ovec) * aw * ovec
     return C_a
 end
-=#
-function connected_assets2(returns::AbstractMatrix, w::AbstractVector;
-                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                           dist_type::DistanceMethod = DistanceDefault(),
-                           network_type::NetworkType = MST())
-    A_c = connection_matrix2(returns; cor_type = cor_type, dist_type = dist_type,
-                             network_type = network_type)
+function connected_assets(returns::AbstractMatrix, w::AbstractVector;
+                          cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                          dist_type::DistanceMethod = DistanceDefault(),
+                          network_type::NetworkType = MST())
+    A_c = connection_matrix(returns; cor_type = cor_type, dist_type = dist_type,
+                            network_type = network_type)
     C_a = _con_rel(A_c, w)
     return C_a
 end
-function connected_assets2(portfolio::AbstractPortfolio2;
-                           type::Symbol = isa(portfolio, Portfolio2) ? :Trad : :HRP,
-                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                           dist_type::DistanceMethod = DistanceDefault(),
-                           network_type::NetworkType = MST())
-    return connected_assets2(portfolio.returns, portfolio.optimal[type].weights;
-                             cor_type = cor_type, dist_type = dist_type,
-                             network_type = network_type)
+function connected_assets(portfolio::AbstractPortfolio;
+                          type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                          cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                          dist_type::DistanceMethod = DistanceDefault(),
+                          network_type::NetworkType = MST())
+    return connected_assets(portfolio.returns, portfolio.optimal[type].weights;
+                            cor_type = cor_type, dist_type = dist_type,
+                            network_type = network_type)
 end
-function related_assets2(returns::AbstractMatrix, w::AbstractVector;
-                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                         dist_type::DistanceMethod = DistanceDefault(),
-                         hclust_alg::HClustAlg = HAClustering(),
-                         hclust_opt::HClustOpt = HClustOpt())
-    A_c = cluster_matrix2(returns; cor_type = cor_type, dist_type = dist_type,
-                          hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+function related_assets(returns::AbstractMatrix, w::AbstractVector;
+                        cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                        dist_type::DistanceMethod = DistanceDefault(),
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
+    A_c = cluster_matrix(returns; cor_type = cor_type, dist_type = dist_type,
+                         hclust_alg = hclust_alg, hclust_opt = hclust_opt)
     R_a = _con_rel(A_c, w)
     return R_a
 end
-function related_assets2(portfolio::AbstractPortfolio2;
-                         type::Symbol = isa(portfolio, Portfolio2) ? :Trad : :HRP,
-                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                         dist_type::DistanceMethod = DistanceDefault(),
-                         hclust_alg::HClustAlg = HAClustering(),
-                         hclust_opt::HClustOpt = HClustOpt())
-    return related_assets2(portfolio.returns, portfolio.optimal[type].weights;
-                           cor_type = cor_type, dist_type = dist_type,
-                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+function related_assets(portfolio::AbstractPortfolio;
+                        type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+                        cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                        dist_type::DistanceMethod = DistanceDefault(),
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
+    return related_assets(portfolio.returns, portfolio.optimal[type].weights;
+                          cor_type = cor_type, dist_type = dist_type,
+                          hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
-export DegreeCentrality, TMFG, KruskalTree, MST, connection_matrix2, centrality_vector2,
-       cluster_matrix2, connected_assets2, related_assets2
+
+export calc_centrality, connection_matrix, centrality_vector, cluster_matrix,
+       connected_assets, related_assets

@@ -6,40 +6,40 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 # @testset "Test fallback and skips" begin
-#     portfolio = Portfolio2(; prices = prices,
+#     portfolio = Portfolio(; prices = prices,
 #                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
 #                                                             :params => Dict("verbose" => false,
 #                                                                             "max_step_fraction" => 0.75))))
-#     asset_statistics2!(portfolio)
+#     asset_statistics!(portfolio)
 
-#     rm = RDaR2()
+#     rm = RDaR()
 #     limits = efficient_frontier!(portfolio; rm = rm, points = 5, rf = rf)
-#     if haskey(portfolio.frontier, RDaR2)
-#         @test ncol(portfolio.frontier[:RDaR2][:weights]) == 6
-#         @test length(portfolio.frontier[:RDaR2][:risk]) == 5
+#     if haskey(portfolio.frontier, RDaR)
+#         @test ncol(portfolio.frontier[:RDaR][:weights]) == 6
+#         @test length(portfolio.frontier[:RDaR][:risk]) == 5
 #     end
 # end
 
 @testset "Frontier limits" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
-    rm = [SD2(), [CVaR2()], [FLPM2(), FLPM2()]]
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+    rm = [SD(), [CVaR()], [FLPM(), FLPM()]]
 
     limits = frontier_limits!(portfolio; rm = rm)
-    w_min = optimise2!(portfolio; rm = rm, obj = MinRisk())
-    w_max = optimise2!(portfolio; rm = rm, obj = MaxRet())
+    w_min = optimise!(portfolio; rm = rm, obj = MinRisk())
+    w_max = optimise!(portfolio; rm = rm, obj = MaxRet())
 
     @test isapprox(limits.w_min, w_min.weights)
     @test isapprox(limits.w_max, w_max.weights)
 
-    rm = SD2()
+    rm = SD()
 
     limits = frontier_limits!(portfolio; rm = rm)
-    w_min = optimise2!(portfolio; rm = rm, obj = MinRisk())
-    w_max = optimise2!(portfolio; rm = rm, obj = MaxRet())
+    w_min = optimise!(portfolio; rm = rm, obj = MinRisk())
+    w_max = optimise!(portfolio; rm = rm, obj = MaxRet())
 
     @test isapprox(limits.w_min, w_min.weights)
     @test isapprox(limits.w_max, w_max.weights)
@@ -127,7 +127,7 @@ l = 2.0
                   9.521346034520438e-9, 6.948450949696298e-9, 2.1455474559055e-8,
                   6.746126701070303e-9, 0.1403252202770986, 0.21337606428897585,
                   1.0913649230997367e-7, 0.09854545984921281, 1.0105170893868348e-7], 20, :)
-    frontier2 = efficient_frontier!(portfolio; kelly = EKelly(), rm = SD2(), points = 5,
+    frontier2 = efficient_frontier!(portfolio; kelly = EKelly(), rm = SD(), points = 5,
                                     rf = rf)
     @test isapprox(Matrix(frontier2[:weights][!, 2:end]), wt, rtol = 5.0e-6)
 end

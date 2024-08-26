@@ -1,20 +1,3 @@
-"""
-```
-roundmult(val, prec [, args...] [; kwargs...])
-```
-
-Round a number to a multiple of `prec`. Uses the same defaults and has the same `args` and `kwargs` of the built-in `Base.round`.
-
-Equivalent to:
-
-```
-round(div(val, prec) * prec, args...; kwargs...)
-```
-"""
-function roundmult(val, prec, args...; kwargs...)
-    return round(div(val, prec) * prec, args...; kwargs...)
-end
-
 function _setup_alloc_optim(weights, investment, reinvest)
     long_idx = weights .>= 0
     short_idx = .!long_idx
@@ -40,7 +23,6 @@ function _setup_alloc_optim(weights, investment, reinvest)
 
     return long_idx, short_idx, long_investment, short_investment, long_ratio, short_ratio
 end
-
 function _optimise_allocation(portfolio, tickers, latest_prices)
     model = portfolio.alloc_model
     solvers = portfolio.alloc_solvers
@@ -67,10 +49,10 @@ function _optimise_allocation(portfolio, tickers, latest_prices)
             continue
         end
 
-        term_status = termination_status(model)
-
-        if term_status ∈ ValidTermination
+        if is_solved_and_feasible(model)
             break
+        else
+            term_status = termination_status(model)
         end
 
         shares = round.(Int, value.(model[:x]))
@@ -87,57 +69,29 @@ function _optimise_allocation(portfolio, tickers, latest_prices)
                                                    cost = cost, weights = weights)))
     end
 
-    return term_status, solvers_tried
+    return solvers_tried
 end
-
-function _combine_allocations!(portfolio, key, long_tickers, short_tickers, long_shares,
-                               short_shares, long_latest_prices, short_latest_prices,
-                               long_cost, short_cost, long_allocated_weights,
-                               short_allocated_weights)
-    tickers = [long_tickers; short_tickers]
-    shares = [long_shares; -short_shares]
-    latest_prices = [long_latest_prices; -short_latest_prices]
-    cost = [long_cost; -short_cost]
-    weights = [long_allocated_weights; -short_allocated_weights]
-
-    portfolio.alloc_optimal[key] = if !isempty(tickers) &&
-                                      !isempty(shares) &&
-                                      !isempty(cost) &&
-                                      !isempty(weights)
-        DataFrame(; tickers = tickers, shares = shares, price = latest_prices, cost = cost,
-                  weights = weights)
-    else
-        DataFrame()
-    end
-
-    return nothing
-end
-
-function _handle_alloc_errors_and_finalise(portfolio, term_status, solvers_tried, key,
-                                           label, latest_prices)
+function _handle_alloc_errors_and_finalise(portfolio, solvers_tried, key, label,
+                                           latest_prices)
     model = portfolio.alloc_model
     key = Symbol(string(key) * "_" * string(label))
 
-    retval = if term_status ∉ ValidTermination
-        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._lp_sub_allocation!))"
-        @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
-        portfolio.alloc_fail[key] = solvers_tried
-
-        (String[], Vector{eltype(latest_prices)}(undef, 0),
-         Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices)))
-
-    else
+    return if is_solved_and_feasible(model)
         shares = round.(Int, value.(model[:x]))
         cost = latest_prices .* shares
         weights = cost / sum(cost)
         available_funds = value(model[:r])
 
         (shares, cost, weights, available_funds)
+    else
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._lp_sub_allocation!))"
+        @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
+        portfolio.alloc_fail[key] = solvers_tried
+
+        (String[], Vector{eltype(latest_prices)}(undef, 0),
+         Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices)))
     end
-
-    return retval
 end
-
 function _lp_sub_allocation!(portfolio, key, label, tickers, weights, latest_prices,
                              investment, string_names, ratio)
     if isempty(tickers)
@@ -171,10 +125,9 @@ function _lp_sub_allocation!(portfolio, key, label, tickers, weights, latest_pri
 
     @objective(model, Min, u + r)
 
-    term_status, solvers_tried = _optimise_allocation(portfolio, tickers, latest_prices)
+    solvers_tried = _optimise_allocation(portfolio, tickers, latest_prices)
 
     shares, cost, allocated_weights, available_funds = _handle_alloc_errors_and_finalise(portfolio,
-                                                                                         term_status,
                                                                                          solvers_tried,
                                                                                          key,
                                                                                          label,
@@ -183,7 +136,28 @@ function _lp_sub_allocation!(portfolio, key, label, tickers, weights, latest_pri
     allocated_weights *= ratio
     return tickers, shares, latest_prices, cost, allocated_weights, available_funds
 end
+function _combine_allocations!(portfolio, key, long_tickers, short_tickers, long_shares,
+                               short_shares, long_latest_prices, short_latest_prices,
+                               long_cost, short_cost, long_allocated_weights,
+                               short_allocated_weights)
+    tickers = [long_tickers; short_tickers]
+    shares = [long_shares; -short_shares]
+    latest_prices = [long_latest_prices; -short_latest_prices]
+    cost = [long_cost; -short_cost]
+    weights = [long_allocated_weights; -short_allocated_weights]
 
+    portfolio.alloc_optimal[key] = if !isempty(tickers) &&
+                                      !isempty(shares) &&
+                                      !isempty(cost) &&
+                                      !isempty(weights)
+        DataFrame(; tickers = tickers, shares = shares, price = latest_prices, cost = cost,
+                  weights = weights)
+    else
+        DataFrame()
+    end
+
+    return nothing
+end
 function _lp_allocation!(portfolio, port_type, latest_prices, investment, reinvest,
                          string_names)
     key = Symbol("LP_" * string(port_type))
@@ -227,7 +201,22 @@ function _lp_allocation!(portfolio, port_type, latest_prices, investment, reinve
 
     return portfolio.alloc_optimal[key]
 end
+"""
+```
+roundmult(val, prec [, args...] [; kwargs...])
+```
 
+Round a number to a multiple of `prec`. Uses the same defaults and has the same `args` and `kwargs` of the built-in `Base.round`.
+
+Equivalent to:
+
+```
+round(div(val, prec) * prec, args...; kwargs...)
+```
+"""
+function roundmult(val, prec, args...; kwargs...)
+    return round(div(val, prec) * prec, args...; kwargs...)
+end
 function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, rounding,
                                  ratio)
     if isempty(tickers)
@@ -330,61 +319,17 @@ function _greedy_allocation!(portfolio, port_type, latest_prices, investment, ro
 
     return portfolio.alloc_optimal[key]
 end
-
-function _save_alloc_opt_params(portfolio, port_type, alloc_type, investment, rounding,
-                                reinvest, leftover, save_opt_params)
-    if !save_opt_params
-        return nothing
-    end
-
-    key = Symbol(string(alloc_type) * "_" * string(port_type))
-
-    portfolio.alloc_params[key] = Dict(:investment => investment, :rounding => rounding,
-                                       :reinvest => reinvest, :leftover => leftover)
-
-    return nothing
+function _allocate!(::LP, port, type, latest_prices, investment, reinvest, string_names)
+    return _lp_allocation!(port, type, latest_prices, investment, reinvest, string_names)
 end
-
-"""
-```julia
-allocate!(portfolio;
-          opt::AllocOpt = AllocOpt(; port_type = if isa(portfolio, Portfolio)
-                                       :Trad
-                                   else
-                                       :HRP
-                                   end, latest_prices = portfolio.latest_prices),
-          string_names = false, save_opt_params = true)
-```
-"""
-function allocate!(portfolio::AbstractPortfolio,
-                   opt::AllocOpt = AllocOpt(; port_type = if isa(portfolio, Portfolio)
-                                                :Trad
-                                            else
-                                                :HRP
-                                            end, latest_prices = portfolio.latest_prices);
-                   string_names = false, save_opt_params = true)
-    port_type = opt.port_type
-    method = opt.method
-    latest_prices = opt.latest_prices
-    if isempty(latest_prices)
-        latest_prices = portfolio.latest_prices
-    else
-        @smart_assert(length(latest_prices) == size(portfolio.returns, 2))
-    end
-    investment = opt.investment
-    rounding = opt.rounding
-    reinvest = opt.reinvest
-
-    retval = if method == :LP
-        _lp_allocation!(portfolio, port_type, latest_prices, investment, reinvest,
-                        string_names)
-    else
-        _greedy_allocation!(portfolio, port_type, latest_prices, investment, rounding,
-                            reinvest)
-    end
-
-    _save_alloc_opt_params(portfolio, port_type, method, investment, rounding, reinvest, 0,
-                           save_opt_params)
-
-    return retval
+function _allocate!(method::Greedy, port, type, latest_prices, investment, reinvest, ::Any)
+    return _greedy_allocation!(port, type, latest_prices, investment, method.rounding,
+                               reinvest)
+end
+function allocate!(port::AbstractPortfolio;
+                   type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
+                   method::AllocationMethod = LP(), latest_prices = port.latest_prices,
+                   investment::Real = 1e6, reinvest::Bool = false,
+                   string_names::Bool = false)
+    return _allocate!(method, port, type, latest_prices, investment, reinvest, string_names)
 end

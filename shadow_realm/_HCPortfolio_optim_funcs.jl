@@ -1,4 +1,3 @@
-#=
 function _naive_risk(portfolio, returns, covariance; rm = :SD, rf = 0.0,
                      portfolio_kwargs::NamedTuple = (; alpha = portfolio.alpha,
                                                      a_sim = portfolio.a_sim,
@@ -44,7 +43,7 @@ function _opt_w(portfolio, assets, returns, imu, icov, opt;
                                                 solvers = portfolio.solvers,
                                                 max_num_assets_kurt = portfolio.max_num_assets_kurt),
                 V = nothing, SV = nothing, kurt = nothing, skurt = nothing)
-    port = Portfolio2(; assets = assets, ret = returns, portfolio_kwargs...)
+    port = Portfolio(; assets = assets, ret = returns, portfolio_kwargs...)
 
     port.mu = imu
     port.cov = icov
@@ -110,7 +109,7 @@ end
 _std_silhouette_score(dist, clustering, max_k = 0)
 ```
 """
-function _std_silhouette_score(dist, clustering, max_k = 0)
+function _std_silhouette_score(dist, clustering, max_k = 0, metric = nothing)
     N = size(dist, 1)
     cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]
 
@@ -118,20 +117,17 @@ function _std_silhouette_score(dist, clustering, max_k = 0)
         max_k = ceil(Int, sqrt(size(dist, 1)))
     end
 
-    c1 = min(N, max_k) - 1
+    c1 = min(N, max_k)
     W_list = Vector{eltype(dist)}(undef, c1)
-
-    for i ∈ 1:c1
-        lvl = cluster_lvls[i + 1]
-        sl = silhouettes(lvl, dist)
+    W_list[1] = -Inf
+    for i ∈ 2:c1
+        lvl = cluster_lvls[i]
+        sl = silhouettes(lvl, dist; metric = metric)
         msl = mean(sl)
         W_list[i] = msl / std(sl; mean = msl)
     end
 
-    limit_k = floor(Int, min(max_k, sqrt(N), c1))
-    W_list = W_list[1:limit_k]
-
-    k = all(.!isfinite.(W_list)) ? length(W_list) : k = argmax(W_list) + 1
+    k = all(.!isfinite.(W_list)) ? length(W_list) : k = argmax(W_list)
 
     return k
 end
@@ -155,41 +151,34 @@ function _two_diff_gap_stat(dist, clustering, max_k = 0)
     for i ∈ 1:c1
         lvl = cluster_lvls[i]
         c2 = maximum(unique(lvl))
-        mean_dist = 0.0
+        D_list = Vector{eltype(dist)}(undef, c2)
         for j ∈ 1:c2
             cluster = findall(lvl .== j)
             cluster_dist = dist[cluster, cluster]
             if isempty(cluster_dist)
                 continue
             end
-
-            val = 0.0
-            counter = 0
             M = size(cluster_dist, 1)
+            C_list = Vector{eltype(dist)}(undef, Int(M * (M - 1) / 2))
+            k = 1
             for col ∈ 1:M
                 for row ∈ (col + 1):M
-                    val += cluster_dist[row, col]
-                    counter += 1
+                    C_list[k] = cluster_dist[row, col]
+                    k += 1
                 end
             end
-            if counter == 0
-                continue
-            end
-            mean_dist += val / counter
+            D_list[j] = k == 1 ? zero(eltype(dist)) : std(C_list; corrected = false)
         end
-        W_list[i] = mean_dist
+        W_list[i] = sum(D_list)
     end
 
-    limit_k = floor(Int, min(max_k, sqrt(N)))
-    gaps = fill(-Inf, length(W_list))
+    gaps = fill(-Inf, c1)
 
-    if length(W_list) > 2
-        gaps[3:end] .= W_list[3:end] .+ W_list[1:(end - 2)] .- 2 * W_list[2:(end - 1)]
+    if c1 > 2
+        gaps[1:(end - 2)] .= W_list[1:(end - 2)] .+ W_list[3:end] .- 2 * W_list[2:(end - 1)]
     end
 
-    gaps = gaps[1:limit_k]
-
-    k = all(isinf.(gaps)) ? length(gaps) : k = argmax(gaps) + 1
+    k = all(isinf.(gaps)) ? length(gaps) : k = argmax(gaps)
 
     return k
 end
@@ -222,7 +211,7 @@ function _hcluster_choice(corr, dist, cluster_opt::ClusterOpt)
     k = if cluster_opt.k_method == :Two_Diff
         _two_diff_gap_stat(dist, clustering, max_k)
     else
-        _std_silhouette_score(dist, clustering, max_k)
+        _std_silhouette_score(dist, clustering, max_k, cluster_opt.metric)
     end
 
     return clustering, k
@@ -233,7 +222,7 @@ end
 _hierarchical_clustering
 ```
 """
-function _hierarchical_clustering(portfolio::HCPortfolio2,
+function _hierarchical_clustering(portfolio::HCPortfolio,
                                   cluster_opt::ClusterOpt = ClusterOpt(;))
     corr = portfolio.cor
     dist = portfolio.dist
@@ -366,7 +355,6 @@ function _recursive_bisection(portfolio; rm = :SD, rf = 0.0,
             weights[rc] *= 1 - alpha_1
         end
     end
-
     return weights
 end
 
@@ -914,520 +902,98 @@ function _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_boun
 
     return portfolio.optimal[type]
 end
-=#
-function w_limits(type::NCO2, datatype = Float64)
-    port_kwargs = type.port_kwargs
-    port_kwargs_o = type.port_kwargs_o
-    lo, hi = if isa(type, NCO2) && (haskey(port_kwargs, :short) && port_kwargs.short ||
-                                    haskey(port_kwargs_o, :short) && port_kwargs_o.short)
-        la = nothing
-        ha = nothing
-        lb = nothing
-        hb = nothing
 
-        if haskey(port_kwargs, :short) && port_kwargs.short
-            if haskey(port_kwargs, :short_u)
-                la = port_kwargs.short_u
-            end
-            if haskey(port_kwargs, :long_u)
-                ha = port_kwargs.long_u
-            end
-        end
+"""
+```julia
+optimise!
+```
+"""
+function optimise!(portfolio::HCPortfolio; type::Symbol = :HRP, rm::Symbol = :SD,
+                   rm_o::Symbol = rm, rf::Real = 0.0, rf_o::Real = rf,
+                   nco_opt::OptimiseOpt = OptimiseOpt(;), nco_opt_o::OptimiseOpt = nco_opt,
+                   cluster::Bool = true, cluster_opt::ClusterOpt = ClusterOpt(;),
+                   asset_stat_kwargs::NamedTuple = (;
+                                                    calc_mu = if type != :NCO &&
+                                                                 rm ∈ (:Skew, :SSkew) ||
+                                                                 type == :NCO &&
+                                                                 nco_opt.rm ∈
+                                                                 (:Skew, :SSkew)
+                                                        true
+                                                    else
+                                                        false
+                                                    end, calc_cov = false,
+                                                    calc_kurt = if type != :NCO &&
+                                                                   rm ∈ (:Kurt, :SKurt) ||
+                                                                   type == :NCO &&
+                                                                   nco_opt.rm ∈
+                                                                   (:Kurt, :SKurt)
+                                                        true
+                                                    else
+                                                        false
+                                                    end,
+                                                    calc_skew = if type != :NCO &&
+                                                                   rm ∈ (:Skew, :SSkew) ||
+                                                                   type == :NCO &&
+                                                                   nco_opt.rm ∈
+                                                                   (:Skew, :SSkew)
+                                                        true
+                                                    else
+                                                        false
+                                                    end),
+                   asset_stat_kwargs_o::NamedTuple = asset_stat_kwargs,
+                   portfolio_kwargs::NamedTuple = if type != :NCO
+                       (; alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
+                        a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
+                        beta = portfolio.beta, b_sim = portfolio.b_sim,
+                        kappa = portfolio.kappa, owa_w = portfolio.owa_w,
+                        solvers = portfolio.solvers)
+                   else
+                       (; alpha_i = portfolio.alpha_i, alpha = portfolio.alpha,
+                        a_sim = portfolio.a_sim, beta_i = portfolio.beta_i,
+                        beta = portfolio.beta, b_sim = portfolio.b_sim,
+                        kappa = portfolio.kappa, owa_p = portfolio.owa_p,
+                        owa_w = portfolio.owa_w, solvers = portfolio.solvers,
+                        max_num_assets_kurt = portfolio.max_num_assets_kurt)
+                   end, portfolio_kwargs_o::NamedTuple = portfolio_kwargs,
+                   max_iter::Integer = 100, save_opt_params::Bool = false)
+    @smart_assert(type ∈ HCPortTypes)
+    @smart_assert(rm ∈ HCRiskMeasures)
+    @smart_assert(rm_o ∈ HCRiskMeasures)
+    portfolio.fail = Dict()
 
-        if haskey(port_kwargs_o, :short) && port_kwargs_o.short
-            if haskey(port_kwargs_o, :short_u)
-                lb = port_kwargs_o.short_u
-            end
-            if haskey(port_kwargs_o, :long_u)
-                hb = port_kwargs_o.long_u
-            end
-        end
+    _hcp_save_opt_params(portfolio, type, rm, rm_o, rf, rf_o, nco_opt, nco_opt_o, cluster,
+                         cluster_opt, asset_stat_kwargs, asset_stat_kwargs_o,
+                         portfolio_kwargs, portfolio_kwargs_o, max_iter, save_opt_params)
 
-        if isnothing(la) && isnothing(lb)
-            la = lb = 0.2 * one(datatype)
-        elseif isnothing(la)
-            la = lb
-        elseif isnothing(lb)
-            lb = la
-        end
+    N = size(portfolio.returns, 2)
 
-        if isnothing(ha) && isnothing(hb)
-            ha = hb = one(datatype)
-        elseif isnothing(ha)
-            ha = hb
-        elseif isnothing(hb)
-            hb = ha
-        end
-
-        -max(la, lb), max(ha, hb)
-    else
-        zero(datatype), one(datatype)
-    end
-
-    return lo, hi
-end
-function w_limits(::Any, datatype = Float64)
-    return zero(datatype), one(datatype)
-end
-function set_hc_weights(w_min, w_max, N, lo = 0.0, hi = 1.0)
-    lower_bound = if isa(w_min, AbstractVector) && isempty(w_min)
-        zeros(N)
-    elseif isa(w_min, AbstractVector) && !isempty(w_min)
-        max.(lo, w_min)
-    else
-        fill(max(lo, w_min), N)
-    end
-
-    upper_bound = if isa(w_max, AbstractVector) && isempty(w_max)
-        ones(N)
-    elseif isa(w_max, AbstractVector) && !isempty(w_max)
-        min.(hi, w_max)
-    else
-        fill(min(hi, w_max), N)
-    end
-
-    @smart_assert(all(upper_bound .>= lower_bound))
-
-    return lower_bound, upper_bound
-end
-function _get_skew(::Union{Skew2, Val{true}}, port, cluster, idx)
-    return view(port.skew, cluster, idx)
-end
-function _get_skew(::Union{SSkew2, Val{false}}, port, cluster, idx)
-    return view(port.sskew, cluster, idx)
-end
-function gen_cluster_skew_sskew(args...)
-    return Matrix(undef, 0, 0)
-end
-function gen_cluster_skew_sskew(rm::Union{Skew2, SSkew2, Val{true}, Val{false}}, port,
-                                cluster)
-    idx = Int[]
-    N = size(port.returns, 2)
-    Nc = length(cluster)
-    sizehint!(idx, Nc^2)
-    for c ∈ cluster
-        append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
-    end
-    skew = _get_skew(rm, port, cluster, idx)
-    V = zeros(eltype(skew), Nc, Nc)
-    for i ∈ 1:Nc
-        j = (i - 1) * Nc + 1
-        k = i * Nc
-        vals, vecs = eigen(skew[:, j:k])
-        vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
-        V .-= real(vecs * Diagonal(vals) * transpose(vecs))
-    end
-    if all(iszero.(diag(V)))
-        V .= V + eps(eltype(skew)) * I
-    end
-    return V
-end
-function _naive_risk(::Equal2, returns, ::Any)
-    N = size(returns, 2)
-    return fill(eltype(returns)(inv(N)), N)
-end
-function _naive_risk(rm::RiskMeasure, returns, cV)
-    N = size(returns, 2)
-    inv_risk = Vector{eltype(returns)}(undef, N)
-    w = Vector{eltype(returns)}(undef, N)
-
-    for i ∈ eachindex(w)
-        w .= zero(eltype(returns))
-        w[i] = one(eltype(returns))
-        risk = calc_risk(rm, w; X = returns, V = cV, SV = cV)
-        inv_risk[i] = inv(risk)
-    end
-    return inv_risk / sum(inv_risk)
-end
-function cluster_risk(port, cluster, rm)
-    if hasproperty(rm, :sigma)
-        rm.sigma = view(port.cov, cluster, cluster)
-    end
-    cret = view(port.returns, :, cluster)
-    cV = gen_cluster_skew_sskew(rm, port, cluster)
-    cw = _naive_risk(rm, cret, cV)
-    crisk = calc_risk(rm, cw; X = cret, V = cV, SV = cV)
-    if hasproperty(rm, :sigma)
-        rm.sigma = nothing
-    end
-    return crisk
-end
-function naive_risk(port, cluster, rm)
-    if hasproperty(rm, :sigma)
-        rm.sigma = view(port.cov, cluster, cluster)
-    end
-    cret = view(port.returns, :, cluster)
-    cV = gen_cluster_skew_sskew(rm, port, cluster)
-    crisk = _naive_risk(rm, cret, cV)
-    if hasproperty(rm, :sigma)
-        rm.sigma = nothing
-    end
-    return crisk
-end
-function cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
-    if !(any(w_max .< weights) || any(w_min .> weights))
-        return alpha_1
-    end
-    lmaxw = weights[lc[1]]
-    a1 = sum(w_max[lc]) / lmaxw
-    a2 = max(sum(w_min[lc]) / lmaxw, alpha_1)
-    alpha_1 = min(a1, a2)
-
-    rmaxw = weights[rc[1]]
-    a1 = sum(w_max[rc]) / rmaxw
-    a2 = max(sum(w_min[rc]) / rmaxw, 1 - alpha_1)
-    alpha_1 = one(a1) - min(a1, a2)
-    return alpha_1
-end
-function _optimise!(::HRP2, port::HCPortfolio2, rm::Union{AbstractVector, <:RiskMeasure},
-                    ::Any, w_min, w_max)
-    N = size(port.returns, 2)
-    weights = ones(eltype(port.returns), N)
-    items = [port.clusters.order]
-
-    while length(items) > 0
-        items = [i[j:k] for i ∈ items
-                 for (j, k) ∈ ((1, div(length(i), 2)), (1 + div(length(i), 2), length(i)))
-                 if length(i) > 1]
-
-        for i ∈ 1:2:length(items)
-            lc = items[i]
-            rc = items[i + 1]
-            lrisk = zero(eltype(weights))
-            rrisk = zero(eltype(weights))
-            for r ∈ rm
-                solver_flag = false
-                if hasproperty(r, :solvers) && (isnothing(r.solvers) || isempty(r.solvers))
-                    r.solvers = port.solvers
-                    solver_flag = true
-                end
-                scale = r.settings.scale
-                # Left risk.
-                lrisk += cluster_risk(port, lc, r) * scale
-                # Right risk.
-                rrisk += cluster_risk(port, rc, r) * scale
-                if solver_flag
-                    r.solvers = nothing
-                end
-            end
-            # Allocate weight to clusters.
-            alpha_1 = one(lrisk) - lrisk / (lrisk + rrisk)
-            # Weight constraints.
-            alpha_1 = cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
-            weights[lc] *= alpha_1
-            weights[rc] *= one(alpha_1) - alpha_1
-        end
-    end
-    return weights
-end
-function opt_weight_bounds(w_min, w_max, weights, max_iter = 100)
-    if !(any(w_max .< weights) || any(w_min .> weights))
-        return weights
-    end
-
-    for _ ∈ 1:max_iter
-        if !(any(w_max .< weights) || any(w_min .> weights))
-            break
-        end
-
-        old_w = copy(weights)
-        weights = max.(min.(weights, w_max), w_min)
-        idx = weights .< w_max .&& weights .> w_min
-        w_add = sum(max.(old_w - w_max, 0.0))
-        w_sub = sum(min.(old_w - w_min, 0.0))
-        delta = w_add + w_sub
-
-        if delta != 0
-            weights[idx] += delta * weights[idx] / sum(weights[idx])
-        end
-    end
-    return weights
-end
-function finalise_weights(type::Any, port, weights, w_min, w_max, max_iter)
-    stype = Symbol(type)
-    port.optimal[stype] = if !isempty(port.fail) || any(.!isfinite.(weights))
-        port.fail[:port] = DataFrame(; tickers = port.assets, weights = weights)
-        DataFrame()
-    else
-        weights = opt_weight_bounds(w_min, w_max, weights, max_iter)
-        weights ./= sum(weights)
-        DataFrame(; tickers = port.assets, weights = weights)
-    end
-    return port.optimal[stype]
-end
-function finalise_weights(type::NCO2, port, weights, w_min, w_max, max_iter)
-    stype = Symbol(type)
-    port_kwargs = type.port_kwargs
-    port_kwargs_o = type.port_kwargs_o
-    port.optimal[stype] = if !isempty(port.fail) || any(.!isfinite.(weights))
-        port.fail[:port] = DataFrame(; tickers = port.assets, weights = weights)
-        DataFrame()
-    elseif haskey(port_kwargs, :short) && port_kwargs.short ||
-           haskey(port_kwargs_o, :short) && port_kwargs_o.short
-        weights = opt_weight_bounds(w_min, w_max, weights, max_iter)
-        DataFrame(; tickers = port.assets, weights = weights)
-    else
-        weights = opt_weight_bounds(w_min, w_max, weights, max_iter)
-        weights ./= sum(weights)
-        DataFrame(; tickers = port.assets, weights = weights)
-    end
-    return port.optimal[stype]
-end
-function _optimise!(::HERC2, port::HCPortfolio2, rmi::Union{AbstractVector, <:RiskMeasure},
-                    rmo::Union{AbstractVector, <:RiskMeasure}, w_min, w_max)
-    nodes = to_tree(port.clusters)[2]
-    dists = [i.dist for i ∈ nodes]
-    nodes = nodes[sortperm(dists; rev = true)]
-
-    weights = ones(eltype(port.returns), size(port.returns, 2))
-
-    idx = cutree(port.clusters; k = port.k)
-
-    clusters = Vector{Vector{Int}}(undef, length(minimum(idx):maximum(idx)))
-    for i ∈ eachindex(clusters)
-        clusters[i] = findall(idx .== i)
-    end
-
-    # Treat each cluster as its own portfolio and optimise each one individually.
-    # Calculate the weight of each cluster relative to the other clusters.
-    for i ∈ nodes[1:(port.k - 1)]
-        if is_leaf(i)
-            continue
-        end
-
-        # Do this recursively accounting for the dendrogram structure.
-        ln = pre_order(i.left)
-        rn = pre_order(i.right)
-
-        lrisk = 0.0
-        rrisk = 0.0
-
-        lc = Int[]
-        rc = Int[]
-        for r ∈ rmo
-            solver_flag = false
-            if hasproperty(r, :solvers) && (isnothing(r.solvers) || isempty(r.solvers))
-                r.solvers = port.solvers
-                solver_flag = true
-            end
-            scale = r.settings.scale
-            for cluster ∈ clusters
-                _risk = cluster_risk(port, cluster, r) * scale
-                if issubset(cluster, ln)
-                    lrisk += _risk
-                    append!(lc, cluster)
-                elseif issubset(cluster, rn)
-                    rrisk += _risk
-                    append!(rc, cluster)
-                end
-            end
-            if solver_flag
-                r.solvers = nothing
-            end
-        end
-        # Allocate weight to clusters.
-        alpha_1 = one(lrisk) - lrisk / (lrisk + rrisk)
-        # Weight constraints.
-        alpha_1 = cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
-
-        weights[ln] *= alpha_1
-        weights[rn] *= 1 - alpha_1
-    end
-
-    risk = zeros(eltype(port.returns), size(port.returns, 2))
-    for i ∈ 1:(port.k)
-        cidx = idx .== i
-        clusters = findall(cidx)
-        for r ∈ rmi
-            solver_flag = false
-            if hasproperty(r, :solvers) && (isnothing(r.solvers) || isempty(r.solvers))
-                r.solvers = port.solvers
-                solver_flag = true
-            end
-            scale = r.settings.scale
-            risk[cidx] .+= naive_risk(port, clusters, r) * scale
-            if solver_flag
-                r.solvers = nothing
-            end
-        end
-        weights[cidx] .*= risk[cidx]
-    end
-
-    return weights
-end
-function find_kurt_skew_rm(rm::Union{AbstractVector, <:TradRiskMeasure})
-    set_kurt = false
-    set_skurt = false
-    set_skew = false
-    set_sskew = false
-    if !isa(rm, AbstractVector)
-        set_kurt = isa(rm, Kurt2)
-        set_skurt = isa(rm, SKurt2)
-        set_skew = isa(rm, Skew2)
-        set_sskew = isa(rm, SSkew2)
-    else
-        rm_flat = reduce(vcat, rm)
-        if !isa(rm_flat, AbstractVector)
-            rm_flat = (rm_flat,)
-        end
-        for r ∈ rm_flat
-            if !set_kurt
-                set_kurt = isa(r, Kurt2)
-            end
-            if !set_skurt
-                set_skurt = isa(r, SKurt2)
-            end
-            if !set_skew
-                set_skew = isa(r, Skew2)
-            end
-            if !set_sskew
-                set_sskew = isa(r, SSkew2)
-            end
-        end
-    end
-
-    return set_kurt, set_skurt, set_skew, set_sskew
-end
-function gen_cluster_stats(port, cidx, set_kurt, set_skurt, set_skew, set_sskew)
-    cassets = port.assets[cidx]
-    cret = port.returns[:, cidx]
-    cmu = port.mu[cidx]
-    ccov = port.cov[cidx, cidx]
-    ckurt = Matrix{eltype(port.returns)}(undef, 0, 0)
-    cskurt = Matrix{eltype(port.returns)}(undef, 0, 0)
-    cV = Matrix{eltype(port.returns)}(undef, 0, 0)
-    cSV = Matrix{eltype(port.returns)}(undef, 0, 0)
-    if set_kurt || set_skurt || set_skew || set_sskew
-        idx = Int[]
-        N = size(port.returns, 2)
-        cluster = findall(cidx)
-        Nc = length(cluster)
-        sizehint!(idx, Nc^2)
-        for c ∈ cluster
-            append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
-        end
-        if set_kurt
-            ckurt = view(port.kurt, idx, idx)
-        end
-        if set_skurt
-            cskurt = view(port.skurt, idx, idx)
-        end
-        if set_skew
-            cV = gen_cluster_skew_sskew(Val(true), port, cluster)
-        end
-        if set_sskew
-            cSV = gen_cluster_skew_sskew(Val(false), port, cluster)
-        end
-    end
-    return cassets, cret, cmu, ccov, ckurt, cskurt, cV, cSV
-end
-function intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ckurt, cskurt, cV, cSV,
-                       opt_kwargs, port_kwargs)
-    intra_port = Portfolio2(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
-                            kurt = ckurt, skurt = cskurt, V = cV, SV = cSV,
-                            solvers = port.solvers, port_kwargs...)
-    if !isempty(ckurt) || !isempty(cskurt)
-        intra_port.L_2, intra_port.S_2 = dup_elim_sum_matrices(size(cret, 2))[2:3]
-    end
-
-    w = optimise2!(intra_port; rm = rm, opt_kwargs...)
-    if !isempty(w)
-        w = w.weights
-        success = true
-    else
-        w = zeros(eltype(cret), size(cret, 2))
-        success = false
-    end
-
-    return w, port.fail, success
-end
-function calc_intra_weights(port, rm::Union{AbstractVector, <:TradRiskMeasure}, opt_kwargs,
-                            port_kwargs)
-    idx = cutree(port.clusters; k = port.k)
-    w = zeros(eltype(port.returns), size(port.returns, 2), port.k)
-    cfails = Dict{Int, Dict}()
-
-    set_kurt, set_skurt, set_skew, set_sskew = find_kurt_skew_rm(rm)
-
-    for i ∈ 1:(port.k)
-        cidx = idx .== i
-        cassets, cret, cmu, ccov, ckurt, cskurt, cV, cSV = gen_cluster_stats(port, cidx,
-                                                                             set_kurt,
-                                                                             set_skurt,
-                                                                             set_skew,
-                                                                             set_sskew)
-        cw, cfail, success = intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ckurt,
-                                           cskurt, cV, cSV, opt_kwargs, port_kwargs)
-        w[cidx, i] .= cw
-        if !success
-            cfails[i] = cfail
-        end
-    end
-    if !isempty(cfails)
-        port.fail[:intra] = cfails
-    end
-
-    return w
-end
-function inter_nco_opt(port, rm, cassets, cret, cmu, ccov, set_kurt, set_skurt, set_skew,
-                       set_sskew, opt_kwargs, port_kwargs, stat_kwargs)
-    inter_port = Portfolio2(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
-                            solvers = port.solvers, port_kwargs...)
-    asset_statistics2!(inter_port; set_cov = false, set_mu = false, set_kurt = set_kurt,
-                       set_skurt = set_skurt, set_skew = set_skew, set_sskew = set_sskew,
-                       stat_kwargs...)
-
-    w = optimise2!(inter_port; rm = rm, opt_kwargs...)
-
-    if !isempty(w)
-        w = w.weights
-        success = true
-    else
-        w = zeros(eltype(cret), size(cret, 2))
-        success = false
-    end
-
-    return w, port.fail, success
-end
-function calc_inter_weights(port, wi, rm, opt_kwargs, port_kwargs, stat_kwargs)
-    cret = port.returns * wi
-    cmu = transpose(wi) * port.mu
-    ccov = transpose(wi) * port.cov * wi
-
-    set_kurt, set_skurt, set_skew, set_sskew = find_kurt_skew_rm(rm)
-    cw, cfail, success = inter_nco_opt(port, rm, 1:size(cret, 2), cret, cmu, ccov, set_kurt,
-                                       set_skurt, set_skew, set_sskew, opt_kwargs,
-                                       port_kwargs, stat_kwargs)
-
-    w = wi * cw
-
-    if !success
-        port.fail[:inter] = cfail
-    end
-
-    return w
-end
-function _optimise!(type::NCO2, port::HCPortfolio2,
-                    rmi::Union{AbstractVector, <:RiskMeasure},
-                    rmo::Union{AbstractVector, <:RiskMeasure}, ::Any, ::Any)
-    wi = calc_intra_weights(port, rmi, type.opt_kwargs, type.port_kwargs)
-    w = calc_inter_weights(port, wi, rmo, type.opt_kwargs_o, type.port_kwargs_o,
-                           type.stat_kwargs_o)
-
-    return w
-end
-function optimise2!(port::HCPortfolio2; rm::Union{AbstractVector, <:RiskMeasure} = SD2(),
-                    rmo::Union{AbstractVector, <:RiskMeasure} = rm,
-                    type::HCPortType = HRP2(), cluster::Bool = true,
-                    hclust_alg::HClustAlg = HAClustering(),
-                    hclust_opt::HClustOpt = HClustOpt(), max_iter::Int = 100)
-    port.fail = Dict()
     if cluster
-        cluster_assets2!(hclust_alg, port, hclust_opt)
+        portfolio.clusters, tk = _hierarchical_clustering(portfolio, cluster_opt)
+        portfolio.k = iszero(cluster_opt.k) ? tk : cluster_opt.k
     end
 
-    lo, hi = w_limits(type, eltype(port.returns))
-    w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(port.returns, 2), lo, hi)
-    w = _optimise!(type, port, rm, rmo, w_min, w_max)
-    return finalise_weights(type, port, w, w_min, w_max, max_iter)
+    hi, lo = _get_hi_lo(type, portfolio_kwargs, portfolio_kwargs_o,
+                        eltype(portfolio.returns))
+    upper_bound, lower_bound = _setup_hr_weights(portfolio.w_max, portfolio.w_min, N, hi,
+                                                 lo)
+
+    weights = if type == :HRP
+        _recursive_bisection(portfolio; rm = rm, rf = rf, upper_bound = upper_bound,
+                             lower_bound = lower_bound, portfolio_kwargs = portfolio_kwargs)
+    elseif type == :HERC
+        _hierarchical_recursive_bisection(portfolio; rm = rm, rm_o = rm_o, rf = rf,
+                                          rf_o = rf_o, portfolio_kwargs = portfolio_kwargs,
+                                          portfolio_kwargs_o = portfolio_kwargs_o,
+                                          upper_bound = upper_bound,
+                                          lower_bound = lower_bound)
+    else
+        _nco_weights(portfolio, nco_opt, nco_opt_o; asset_stat_kwargs = asset_stat_kwargs,
+                     asset_stat_kwargs_o = asset_stat_kwargs_o,
+                     portfolio_kwargs = portfolio_kwargs,
+                     portfolio_kwargs_o = portfolio_kwargs_o)
+    end
+    retval = _finalise_hcportfolio(portfolio, type, weights, upper_bound, lower_bound,
+                                   portfolio_kwargs, portfolio_kwargs_o, max_iter)
+
+    return retval
 end

@@ -8,7 +8,7 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Loadings Matrix" begin
-    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
     nms = ["tickers", "const", "MTUM", "QUAL", "VLUE", "SIZE", "USMV"]
 
     pval = PVal()
@@ -17,9 +17,9 @@ l = 2.0
     pval.threshold = 0.5
     @test pval.threshold == 0.5
 
-    opt = ForwardReg()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    opt = FReg()
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006682666783877028, 0.0008125085541546204, 0.0009938539577313578,
@@ -44,8 +44,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = AIC()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006682666783877028, 0.0008125085541546204, 0.0009938539577313578,
@@ -72,8 +72,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = AICC()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006682666783877028, 0.0008125085541546204, 0.0009938539577313578,
@@ -100,8 +100,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = BIC()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006682666783877028, 0.0008125085541546204, 0.0009938539577313578,
@@ -125,9 +125,9 @@ l = 2.0
                  0.0, 0.0, -0.06760938082816292, 0.0]
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
-    opt.criterion = R2()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    opt.criterion = RSq()
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006605270346146956, 0.0007774242176882836, 0.0009370531829272047,
@@ -172,9 +172,9 @@ l = 2.0
                  -0.26838621903106186, -0.47591858170378665, -0.21718778672737993]
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
-    opt.criterion = AdjR2()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    opt.criterion = AdjRSq()
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006578842498376756, 0.0008125085541546204, 0.0009544324464201135,
@@ -204,9 +204,9 @@ l = 2.0
                  -0.26636451915360293, -0.4748967098697935, 0.0]
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
-    opt = BackwardReg()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    opt = BReg()
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006682666783877028, 0.0008125085541546204, 0.0009938539577313578,
@@ -233,8 +233,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = AIC()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.000709977675346524, 0.0007746382686595056, 0.000975348480044519,
@@ -263,8 +263,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = AICC()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.000709977675346524, 0.0007746382686595056, 0.000975348480044519,
@@ -293,8 +293,8 @@ l = 2.0
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
     opt.criterion = BIC()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.000709977675346524, 0.0007746382686595056, 0.000975348480044519,
@@ -314,9 +314,9 @@ l = 2.0
                  0.0, 0.0, 0.0, 0.0, 0.0]
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
-    opt.criterion = R2()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    opt.criterion = RSq()
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006605270346146956, 0.0007774242176882835, 0.0009370531829272047,
@@ -361,9 +361,9 @@ l = 2.0
                  -0.26838621903106186, -0.4759185817037862, -0.2171877867273796]
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
-    opt.criterion = AdjR2()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    opt.criterion = AdjRSq()
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006578842498376756, 0.0007841952298179896, 0.0009544324464201135,
@@ -396,9 +396,9 @@ l = 2.0
                  -0.21320123486609163]
     @test isapprox(vec(Matrix(loadings[!, 2:end])), loadingst)
 
-    opt = DimensionReductionReg()
-    loadings = loadings_matrix2(DataFrame(portfolio.f_returns, portfolio.f_assets),
-                                DataFrame(portfolio.returns, portfolio.assets), opt)
+    opt = DRR()
+    loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
+                               DataFrame(portfolio.returns, portfolio.assets), opt)
     @test names(loadings) == nms
     @test loadings[!, 1] == portfolio.assets
     loadingst = [0.0006662517554895613, 0.0007849399521007353, 0.0009459643095974261,
@@ -445,11 +445,11 @@ l = 2.0
 end
 
 @testset "Factor statistics" begin
-    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
     nms = ["tickers", "const", "MTUM", "QUAL", "VLUE", "SIZE", "USMV"]
 
     factor_type = FactorType()
-    factor_statistics2!(portfolio; factor_type = factor_type)
+    factor_statistics!(portfolio; factor_type = factor_type)
     cov_ft = reshape([8.105068334247097e-5, 6.737792030107118e-5, 6.526436064638604e-5,
                       5.172315242594955e-5, 5.51672771198704e-5, 6.737792030107118e-5,
                       6.735131559151525e-5, 6.590933068160697e-5, 5.032199930722891e-5,
@@ -640,7 +640,7 @@ end
     @test isapprox(mu_fmt, portfolio.fm_mu)
 
     factor_type.error = false
-    factor_statistics2!(portfolio; factor_type = factor_type)
+    factor_statistics!(portfolio; factor_type = factor_type)
     cov_ft = reshape([8.105068334247097e-5, 6.737792030107118e-5, 6.526436064638604e-5,
                       5.172315242594955e-5, 5.51672771198704e-5, 6.737792030107118e-5,
                       6.735131559151525e-5, 6.590933068160697e-5, 5.032199930722891e-5,
@@ -829,10 +829,10 @@ end
     @test isapprox(cov_fmt, portfolio.fm_cov)
     @test isapprox(mu_fmt, portfolio.fm_mu)
 
-    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
     factor_type = FactorType()
-    mu_type = MeanJS()
-    @time factor_statistics2!(portfolio; factor_type = factor_type, mu_type = mu_type)
+    mu_type = MuJS()
+    @time factor_statistics!(portfolio; factor_type = factor_type, mu_type = mu_type)
     cov_ft = reshape([8.105068334247097e-5, 6.737792030107118e-5, 6.526436064638604e-5,
                       5.172315242594955e-5, 5.51672771198704e-5, 6.737792030107118e-5,
                       6.735131559151525e-5, 6.590933068160697e-5, 5.032199930722891e-5,

@@ -4,25 +4,16 @@ using AverageShiftedHistograms, Clustering, DataFrames, Dates, Distances, Distri
       SimpleWeightedGraphs, PyCall, Random, SmartAsserts, SparseArrays, Statistics,
       StatsBase, TimeSeries
 
-include("Constants.jl")
 include("Types.jl")
-include("DBHTs.jl")
+include("Misc.jl")
 include("OWA.jl")
-include("Portfolio.jl")
-include("Statistics.jl")
-include("Risk_measures.jl")
-include("Constraints.jl")
-include("ExtDefinitions.jl")
-
-# Version 2.0
-include("Types_v2.jl")
+include("DBHTs.jl")
 include("ParameterEstimation.jl")
-include("RiskMeasures_v2.jl")
-include("Optimisation.jl")
-include("Statistics_v2.jl")
+include("Constraints.jl")
+include("RiskMeasures.jl")
 include("HClustering.jl")
 include("NetworkConstraints.jl")
-include("PortfolioRisk.jl")
+include("Statistics.jl")
+include("Optimisation.jl")
 include("MakieExtensionDefinitions.jl")
-
 end

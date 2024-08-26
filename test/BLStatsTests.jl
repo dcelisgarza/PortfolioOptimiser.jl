@@ -8,7 +8,7 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Black Litterman" begin
-    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -64,8 +64,8 @@ l = 2.0
     P, Q = asset_views(views_assets, asset_sets)
 
     bl_type = BLType(; delta = nothing)
-    asset_statistics2!(portfolio)
-    black_litterman_statistics2!(portfolio; P = P, Q = Q, bl_type = bl_type)
+    asset_statistics!(portfolio)
+    black_litterman_statistics!(portfolio; P = P, Q = Q, bl_type = bl_type)
 
     bl_mut = [0.8315340191495042, 0.4945628236835609, 1.7159629401277585,
               1.0416894456593815, 0.6314667966703715, -0.20757822771896367,
@@ -214,7 +214,7 @@ l = 2.0
 end
 
 @testset "Bayesian Black Litterman" begin
-    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -349,10 +349,10 @@ end
     Q ./= 252
     Q_f ./= 252
 
-    asset_statistics2!(portfolio)
+    asset_statistics!(portfolio)
     bl_type = BBLType(; delta = nothing)
-    black_litterman_factor_statistics2!(portfolio; P = P, P_f = P_f, Q = Q, Q_f = Q_f,
-                                        bl_type = bl_type)
+    black_litterman_factor_statistics!(portfolio; P = P, P_f = P_f, Q = Q, Q_f = Q_f,
+                                       bl_type = bl_type)
     blfm_mut = [0.0005447777320220783, 0.0009009255450430647, 0.001037774539033381,
                 0.0006725768525151147, 0.0017161790383038301, -0.0006266088854884492,
                 0.0013270419312161545, 0.00038952161859605566, 0.0009694159381343769,
@@ -537,7 +537,7 @@ end
 end
 
 @testset "Augmented Black Litterman" begin
-    portfolio = Portfolio2(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -672,14 +672,14 @@ end
     Q ./= 252
     Q_f ./= 252
 
-    asset_statistics2!(portfolio)
+    asset_statistics!(portfolio)
     bl_type = ABLType(; delta = nothing)
 
     @test_throws AssertionError PortfolioOptimiser.black_litterman(bl_type,
                                                                    portfolio.returns;
                                                                    w = fill(inv(20), 20))
 
-    black_litterman_factor_statistics2!(portfolio; P = P, Q = Q, bl_type = bl_type)
+    black_litterman_factor_statistics!(portfolio; P = P, Q = Q, bl_type = bl_type)
     blfm_mut = [0.0033999924007108817, 0.0020577491946595027, 0.0069096286018665515,
                 0.004207555076029281, 0.0026142257950789397, -0.0007527699772210183,
                 0.001828674419126373, 0.0004401118768130399, -0.002241992416954619,
@@ -978,9 +978,9 @@ end
     Q ./= 252
     Q_f ./= 252
 
-    asset_statistics2!(portfolio)
+    asset_statistics!(portfolio)
     bl_type = ABLType(; delta = nothing)
-    black_litterman_factor_statistics2!(portfolio; P_f = P_f, Q_f = Q_f, bl_type = bl_type)
+    black_litterman_factor_statistics!(portfolio; P_f = P_f, Q_f = Q_f, bl_type = bl_type)
     blfm_mut = [0.000603932629829369, 0.0008964903239153136, 0.0010572452079626881,
                 0.0007531135364743434, 0.0017407455529343334, -0.0006815015917490989,
                 0.0014873477773678552, 0.00038674925910267793, 0.0009189732413442589,
@@ -1290,10 +1290,10 @@ end
     Q ./= 252
     Q_f ./= 252
 
-    asset_statistics2!(portfolio)
+    asset_statistics!(portfolio)
     bl_type = ABLType(; delta = nothing)
-    black_litterman_factor_statistics2!(portfolio; P = P, Q = Q, P_f = P_f, Q_f = Q_f,
-                                        bl_type = bl_type)
+    black_litterman_factor_statistics!(portfolio; P = P, Q = Q, P_f = P_f, Q_f = Q_f,
+                                       bl_type = bl_type)
     blfm_mut = [0.004021061243001632, 0.0029024489093301955, 0.007924586475317387,
                 0.005003799073505964, 0.00433341373838738, -0.0013842148732269247,
                 0.003500502103245526, 0.0008377051470300815, -0.0013184348142208696,

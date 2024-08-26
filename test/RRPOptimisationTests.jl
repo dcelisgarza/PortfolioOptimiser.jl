@@ -6,20 +6,20 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "RRP" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false,
-                                                                            "max_step_fraction" => 0.75))))
-    asset_statistics2!(portfolio)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
 
-    type = RRP2(; version = NoRRP())
-    w1 = optimise2!(portfolio; type = type)
-    rc1 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    type = RRP(; version = BasicRRP())
+    w1 = optimise!(portfolio; type = type)
+    rc1 = risk_contribution(portfolio; type = :RRP, rm = SD())
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise2!(portfolio; type = type)
-    rc2 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    w2 = optimise!(portfolio; type = type)
+    rc2 = risk_contribution(portfolio; type = :RRP, rm = SD())
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.05063226479167363, 0.05124795179217185, 0.046905305668578534,
@@ -41,15 +41,15 @@ l = 2.0
     @test isapprox(hrc1 / lrc1, 1, rtol = 5.0e-6)
     @test isapprox(hrc2 / lrc2, 20, rtol = 5.0e-5)
 
-    type = RRP2(; version = RegRRP())
+    type = RRP(; version = RegRRP())
     portfolio.risk_budget = []
-    w3 = optimise2!(portfolio; type = type)
-    rc3 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    w3 = optimise!(portfolio; type = type)
+    rc3 = risk_contribution(portfolio; type = :RRP, rm = SD())
     lrc3, hrc3 = extrema(rc3)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w4 = optimise2!(portfolio; type = type)
-    rc4 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    w4 = optimise!(portfolio; type = type)
+    rc4 = risk_contribution(portfolio; type = :RRP, rm = SD())
     lrc4, hrc4 = extrema(rc4)
 
     w3t = [0.050632270730510257, 0.051247955272033616, 0.04690531847722307,
@@ -71,15 +71,15 @@ l = 2.0
     @test isapprox(hrc3 / lrc3, 1, rtol = 5.0e-6)
     @test isapprox(hrc4 / lrc4, 20, rtol = 5.0e-5)
 
-    type = RRP2(; version = RegPenRRP(; penalty = 1))
+    type = RRP(; version = RegPenRRP(; penalty = 1))
     portfolio.risk_budget = []
-    w5 = optimise2!(portfolio; type = type)
-    rc5 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    w5 = optimise!(portfolio; type = type)
+    rc5 = risk_contribution(portfolio; type = :RRP, rm = SD())
     lrc5, hrc5 = extrema(rc5)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w6 = optimise2!(portfolio; type = type)
-    rc6 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    w6 = optimise!(portfolio; type = type)
+    rc6 = risk_contribution(portfolio; type = :RRP, rm = SD())
     lrc6, hrc6 = extrema(rc6)
 
     w5t = [0.05063226685509387, 0.05124795374842603, 0.04690530823181724,
@@ -101,15 +101,15 @@ l = 2.0
     @test isapprox(hrc5 / lrc5, 1, rtol = 5.0e-6)
     @test isapprox(hrc6 / lrc6, 20, rtol = 5.0e-5)
 
-    type = RRP2(; version = RegPenRRP(; penalty = 5))
+    type = RRP(; version = RegPenRRP(; penalty = 5))
     portfolio.risk_budget = []
-    w7 = optimise2!(portfolio; type = type)
-    rc7 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    w7 = optimise!(portfolio; type = type)
+    rc7 = risk_contribution(portfolio; type = :RRP, rm = SD())
     lrc7, hrc7 = extrema(rc7)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w8 = optimise2!(portfolio; type = type)
-    rc8 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    w8 = optimise!(portfolio; type = type)
+    rc8 = risk_contribution(portfolio; type = :RRP, rm = SD())
     lrc8, hrc8 = extrema(rc8)
 
     w7t = [0.05063227092483982, 0.051247957970220706, 0.046905313223576876,
@@ -133,8 +133,8 @@ l = 2.0
 
     portfolio.risk_budget = []
     portfolio.risk_budget[1] = 5
-    w9 = optimise2!(portfolio; type = type)
-    rc9 = risk_contribution(portfolio; type = :RRP2, rm = SD2())
+    w9 = optimise!(portfolio; type = type)
+    rc9 = risk_contribution(portfolio; type = :RRP, rm = SD())
     lrc9, hrc9 = extrema(rc9)
     @test isapprox(hrc9 / lrc9, 100, rtol = 0.1)
     @test isapprox(sum(portfolio.risk_budget), 1)

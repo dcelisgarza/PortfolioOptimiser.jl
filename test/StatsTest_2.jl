@@ -1,9 +1,9 @@
 @testset "Mean Estimation Weighted" begin
-    portfolio = Portfolio2(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     w = eweights(size(portfolio.returns, 1), 1 / size(portfolio.returns, 1); scale = true)
 
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_skew = false, set_sskew = false, mu_type = MeanSimple(; w = w))
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false, mu_type = MuSimple(; w = w))
     mut = mut = [0.0007326728069048121, 0.0008323896049466663, 0.0009245929044292375,
                  0.0011114816832861242, 0.0018085925410211395, -0.000980457436093435,
                  0.0018949745543516653, 0.0003924001711430871, 0.0009993244353928084,
@@ -13,8 +13,8 @@
                  0.0009665136651636659, 0.0005177525977811118]
     @test isapprox(portfolio.mu, mut)
 
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_skew = false, set_sskew = false, mu_type = MeanJS(; w = w))
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false, mu_type = MuJS(; w = w))
     mut = [0.0006665834087073769, 0.0007421173424579136, 0.0008119599171440185,
            0.0009535252794310195, 0.0014815759828123638, -0.0006310862800682068,
            0.0015470090231854338, 0.00040883214481341666, 0.0008685678971406212,
@@ -24,8 +24,8 @@
            0.0008437142456650503, 0.000503784671118678]
     @test isapprox(portfolio.mu, mut)
 
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_skew = false, set_sskew = false, mu_type = MeanBS(; w = w))
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false, mu_type = MuBS(; w = w))
     mut = [0.000629216804834491, 0.0006910778722080954, 0.000748277808762074,
            0.0008642175457699145, 0.0012966825123958631, -0.0004335536356823861,
            0.0013502711118238587, 0.0004181226977271323, 0.0007946388267916507,
@@ -35,8 +35,8 @@
            0.0007742840890986804, 0.0004958872776371779]
     @test isapprox(portfolio.mu, mut)
 
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_skew = false, set_sskew = false, mu_type = MeanBOP(; w = w))
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false, mu_type = MuBOP(; w = w))
     mut = [0.0003266956329864569, 0.00036906840586197793, 0.0004082484592137591,
            0.00048766332145354433, 0.0007838874343805082, -0.00040126675768600135,
            0.0008205938419593825, 0.00018210319325694745, 0.0004400042140147731,
@@ -46,9 +46,9 @@
            0.0004260618959490966, 0.0002353693430695299]
     @test isapprox(portfolio.mu, mut)
 
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_skew = false, set_sskew = false,
-                       mu_type = MeanJS(; w = w, target = TargetVW()))
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false,
+                      mu_type = MuJS(; w = w, target = VW()))
     mut = [0.0006314353150731434, 0.0007076310010797242, 0.0007780854660656126,
            0.0009208910814841465, 0.001453568033319891, -0.0006776032486108119,
            0.001519574332094009, 0.00037142589419052, 0.0008351893881721094,
@@ -58,9 +58,9 @@
            0.0008101179940328345, 0.00046721029890300285]
     @test isapprox(portfolio.mu, mut)
 
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_skew = false, set_sskew = false,
-                       mu_type = MeanBS(; w = w, target = TargetVW()))
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false,
+                      mu_type = MuBS(; w = w, target = VW()))
     mut = [0.0005686694236730382, 0.0006302823346927553, 0.0006872528130705259,
            0.0008027274565449368, 0.0012334575851886411, -0.0004898377015029457,
            0.0012868312133591303, 0.000358422122903994, 0.000733427853365072,
@@ -70,9 +70,9 @@
            0.0007131547689268008, 0.00043587474934425044]
     @test isapprox(portfolio.mu, mut)
 
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_skew = false, set_sskew = false,
-                       mu_type = MeanBOP(; w = w, target = TargetVW()))
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false,
+                      mu_type = MuBOP(; w = w, target = VW()))
     mut = [0.0003180165581460064, 0.00036038933102152743, 0.0003995693843733086,
            0.00047898424661309383, 0.0007752083595400576, -0.00040994583252645163,
            0.0008119147671189319, 0.00017342411841649697, 0.0004313251391743226,
@@ -82,9 +82,9 @@
            0.0004173828211086461, 0.0002266902682290794]
     @test isapprox(portfolio.mu, mut)
 
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_skew = false, set_sskew = false,
-                       mu_type = MeanJS(; w = w, target = TargetSE()))
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false,
+                      mu_type = MuJS(; w = w, target = SE()))
     mut = [0.0005904457073162215, 0.0006705376321945927, 0.0007445947607898815,
            0.0008947026897521978, 0.0014546178850453212, -0.0007855300703204707,
            0.0015239993920568781, 0.00031714079864722804, 0.0008046186713196574,
@@ -94,9 +94,9 @@
            0.0007782652605002389, 0.00041782310428444106]
     @test isapprox(portfolio.mu, mut)
 
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_skew = false, set_sskew = false,
-                       mu_type = MeanBS(; w = w, target = TargetSE()))
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false,
+                      mu_type = MuBS(; w = w, target = SE()))
     mut = [0.0004627320477087477, 0.0005252017024410575, 0.0005829643702860314,
            0.000700044719011553, 0.0011367642632409232, -0.0006104938970980581,
            0.0011908800657316405, 0.0002495612029934384, 0.0006297814866454205,
@@ -106,9 +106,9 @@
            0.000609226499642575, 0.0003280908285500853]
     @test isapprox(portfolio.mu, mut)
 
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_skew = false, set_sskew = false,
-                       mu_type = MeanBOP(; w = w, target = TargetSE()))
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false,
+                      mu_type = MuBOP(; w = w, target = SE()))
     mut = [0.00031134274162377795, 0.00035371551449929896, 0.0003928955678510801,
            0.00047231043009086536, 0.0007685345430178291, -0.0004166196490486801,
            0.0008052409505967035, 0.00016675030189426855, 0.0004246513226520941,
@@ -120,17 +120,17 @@
 end
 
 @testset "Covariance Estimation" begin
-    portfolio = Portfolio2(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     rf = 0.0329 / 252
     c0 = StatsBase.SimpleCovariance(; corrected = true)
     c1 = PortCovCor(; ce = CovFull(; ce = c0))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     @test isapprox(portfolio.cov, cov(c0, portfolio.returns))
 
     c1 = PortCovCor(; ce = CovSemi(; ce = c0, target = rf))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([8.995893165803676e-5, 5.8779960427262094e-5, 7.610708392426415e-5,
                     7.471955708182314e-5, 7.355477706518688e-5, 5.0114504555514816e-5,
                     0.00010363565846836865, 3.62990058577233e-5, 6.395228984458654e-5,
@@ -269,8 +269,8 @@ end
 
     normalise = false
     c1 = PortCovCor(; ce = CorGerber0(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 0.0001429324238121688, 0.00020259807595929947,
                     0.0002031958940004113, 0.0002366171526652066, 9.684278778698481e-5,
                     0.0002896321664855674, 8.65232606459581e-5, 0.0001354653715333508,
@@ -408,8 +408,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorGerber1(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 6.23291286349971e-5, 0.00010356100488017669,
                     8.371764200660421e-5, 0.00011625833863559511, 3.878354928069673e-5,
                     9.694935263980535e-5, 3.172446547449766e-5, 5.7429751617745726e-5,
@@ -547,8 +547,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorGerber2(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 8.682790505764035e-5, 0.00013709508181508756,
                     0.00011873243685537483, 0.00015602891660814822, 5.534317884299013e-5,
                     0.00014534958252690353, 4.643510754463943e-5, 8.098054356627528e-5,
@@ -686,8 +686,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorSB0(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 0.00015171917684594493, 0.00020901458234134094,
                     0.0002035930792565737, 0.00024295791387468884, 0.0001044154040543535,
                     0.00031248060517603143, 9.000015945812259e-5, 0.00014281859164296976,
@@ -825,8 +825,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorSB1(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 0.00015171917684594493, 0.00020901458234134094,
                     0.0002035930792565737, 0.00024295791387468884, 0.0001044154040543535,
                     0.00031248060517603143, 9.000015945812259e-5, 0.00014281859164296976,
@@ -964,8 +964,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorGerberSB0(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 0.00020336718640442773, 0.00022311963565430497,
                     0.00025357733574058155, 0.00025792826083591535, 0.00015804505098612835,
                     0.0004554615114840393, 0.00014091716963080377, 0.00020098163052255401,
@@ -1103,8 +1103,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorGerberSB1(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 0.00020336718640442773, 0.00022311963565430497,
                     0.00025357733574058155, 0.00025792826083591535, 0.00015804505098612835,
                     0.0004554615114840393, 0.00014091716963080377, 0.00020098163052255401,
@@ -1243,8 +1243,8 @@ end
 
     normalise = true
     c1 = PortCovCor(; ce = CorGerber0(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 0.0001422907066898958, 0.00019789463183933395,
                     0.00020278969160037992, 0.00023067055091727947, 9.947634991047541e-5,
                     0.00028171911251416237, 8.993708315532105e-5, 0.00013642298908123434,
@@ -1382,8 +1382,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorGerber1(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 6.0361599739655027e-5, 0.00010213180134457275,
                     8.384989736522444e-5, 0.00011128793835053006, 3.9979795118900033e-5,
                     9.820639448926798e-5, 3.2824010133967134e-5, 5.615413407790034e-5,
@@ -1521,8 +1521,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorGerber2(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 8.479810572424716e-5, 0.00013481919269452974,
                     0.00011885949139879613, 0.00015023227927681826, 5.69469257116721e-5,
                     0.0001457080284042035, 4.813319113642258e-5, 8.001256659997715e-5,
@@ -1660,8 +1660,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorSB0(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 0.0001500963574559976, 0.0002054755760736773,
                     0.00020354707747575188, 0.00023828072357999673, 0.00010648413107860484,
                     0.0003092624415130563, 9.317754575746249e-5, 0.00014435503872611656,
@@ -1799,8 +1799,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorSB1(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 0.0001500963574559976, 0.0002054755760736773,
                     0.00020354707747575188, 0.00023828072357999673, 0.00010648413107860484,
                     0.0003092624415130563, 9.317754575746249e-5, 0.00014435503872611656,
@@ -1938,8 +1938,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorGerberSB0(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 0.00020178235652529235, 0.00022173021010844419,
                     0.0002517473514622632, 0.000256249815378467, 0.00015921781569191705,
                     0.0004533116258622552, 0.00014164266959536124, 0.00020051743991649564,
@@ -2077,8 +2077,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorGerberSB1(; normalise = normalise))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00020997582228184753, 0.00020178235652529235, 0.00022173021010844419,
                     0.0002517473514622632, 0.000256249815378467, 0.00015921781569191705,
                     0.0004533116258622552, 0.00014164266959536124, 0.00020051743991649564,
@@ -2217,18 +2217,18 @@ end
 end
 
 @testset "Covariance Estimation Weighted" begin
-    portfolio = Portfolio2(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     rf = 0.0329 / 252
     w = eweights(size(portfolio.returns, 1), 1 / size(portfolio.returns, 1); scale = true)
     c0 = StatsBase.SimpleCovariance(; corrected = false)
     c1 = PortCovCor(; ce = CovFull(; ce = c0, w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     @test isapprox(portfolio.cov, cov(c0, portfolio.returns, w))
 
     c1 = PortCovCor(; ce = CovSemi(; ce = c0, target = rf, w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([9.063426424831638e-5, 5.898176837602249e-5, 7.794756591549957e-5,
                     7.687503919695555e-5, 7.232029092794124e-5, 5.229490712293874e-5,
                     0.00010633541108090222, 3.705017519338975e-5, 6.414973945159227e-5,
@@ -2371,8 +2371,8 @@ end
     c1 = PortCovCor(;
                     ce = CorGerber0(; normalise = normalise, mean_w = w, ve = ve,
                                     std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184141, 0.0001333968242010015, 0.00019183773617947292,
                     0.000194277918267779, 0.00022122131074275473, 9.684191452822541e-5,
                     0.0002795608212094419, 8.831227232066488e-5, 0.0001292885716905384,
@@ -2515,8 +2515,8 @@ end
     c1 = PortCovCor(;
                     ce = CorGerber1(; normalise = normalise, mean_w = w, ve = ve,
                                     std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184141, 5.937281091275969e-5, 9.782587834558456e-5,
                     8.222580569629747e-5, 0.00010619965521802596, 3.92626947363604e-5,
                     9.459234366239403e-5, 3.2135982604116335e-5, 5.551230302710897e-5,
@@ -2656,8 +2656,8 @@ end
     c1 = PortCovCor(;
                     ce = CorGerber2(; normalise = normalise, mean_w = w, ve = ve,
                                     std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.0001986461942518414, 8.219478332583836e-5, 0.00012957422501837712,
                     0.00011564172795602978, 0.00014355301671697645, 5.58577378111604e-5,
                     0.00014144758609927822, 4.714209517479255e-5, 7.787378258010738e-5,
@@ -2795,8 +2795,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorSB0(; normalise = normalise, mean_w = w, ve = ve, std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184141, 0.0001414744096189848, 0.0001984979738288057,
                     0.00019599460950942677, 0.00022758203187090052, 0.00010465648354881212,
                     0.00030027273078807223, 9.104525327657161e-5, 0.00013672066457573267,
@@ -2934,8 +2934,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorSB1(; normalise = normalise, mean_w = w, ve = ve, std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184141, 0.0001414744096189848, 0.0001984979738288057,
                     0.00019599460950942677, 0.00022758203187090052, 0.00010465648354881212,
                     0.00030027273078807223, 9.104525327657161e-5, 0.00013672066457573267,
@@ -3075,8 +3075,8 @@ end
     c1 = PortCovCor(;
                     ce = CorGerberSB0(; normalise = normalise, mean_w = w, ve = ve,
                                       std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184141, 0.00019212136127538438, 0.00021304336242281387,
                     0.00024561713309616067, 0.00024232003372524034, 0.0001592512173979263,
                     0.0004382248899800087, 0.00014200187829679605, 0.000191907850782096,
@@ -3216,8 +3216,8 @@ end
     c1 = PortCovCor(;
                     ce = CorGerberSB1(; normalise = normalise, mean_w = w, ve = ve,
                                       std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184141, 0.00019212136127538438, 0.00021304336242281387,
                     0.00024561713309616067, 0.00024232003372524034, 0.0001592512173979263,
                     0.0004382248899800087, 0.00014200187829679605, 0.000191907850782096,
@@ -3358,8 +3358,8 @@ end
     c1 = PortCovCor(;
                     ce = CorGerber0(; normalise = normalise, mean_w = w, ve = ve,
                                     std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = covt = reshape([0.00019864619425184141, 0.00013425963953565942,
                            0.0001891853819547153, 0.00019131722793598648,
                            0.00021793690246206743, 0.00010405377510909927,
@@ -3559,8 +3559,8 @@ end
     c1 = PortCovCor(;
                     ce = CorGerber1(; normalise = normalise, mean_w = w, ve = ve,
                                     std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184141, 5.790289152962848e-5, 9.815975506348757e-5,
                     8.009967622315327e-5, 0.0001046449305357801, 4.166051041866239e-5,
                     9.565008552443358e-5, 3.3020459189550735e-5, 5.280026190699802e-5,
@@ -3700,8 +3700,8 @@ end
     c1 = PortCovCor(;
                     ce = CorGerber2(; normalise = normalise, mean_w = w, ve = ve,
                                     std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184147, 8.093606541224216e-5, 0.0001292780549739148,
                     0.00011304237705907611, 0.00014143789697986715, 5.946400028670962e-5,
                     0.00014061202738889893, 4.838719782907777e-5, 7.493255671005544e-5,
@@ -3839,8 +3839,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorSB0(; normalise = normalise, mean_w = w, ve = ve, std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184141, 0.0001417629563641093, 0.0001965230093640919,
                     0.00019253489820235343, 0.00022481564799635545, 0.00010991277038129118,
                     0.0002904341316971352, 9.331693584681004e-5, 0.0001367164622392419,
@@ -3978,8 +3978,8 @@ end
     @test isapprox(portfolio.cov, covt)
 
     c1 = PortCovCor(; ce = CorSB1(; normalise = normalise, mean_w = w, ve = ve, std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184141, 0.0001417629563641093, 0.0001965230093640919,
                     0.00019253489820235343, 0.00022481564799635545, 0.00010991277038129118,
                     0.0002904341316971352, 9.331693584681004e-5, 0.0001367164622392419,
@@ -4119,8 +4119,8 @@ end
     c1 = PortCovCor(;
                     ce = CorGerberSB0(; normalise = normalise, mean_w = w, ve = ve,
                                       std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184141, 0.0001910530604986571, 0.0002122023214575412,
                     0.0002420620403804177, 0.0002411751564510944, 0.00016135851891625692,
                     0.0004294305635579487, 0.00014207698691017726, 0.00019073585746200045,
@@ -4260,8 +4260,8 @@ end
     c1 = PortCovCor(;
                     ce = CorGerberSB1(; normalise = normalise, mean_w = w, ve = ve,
                                       std_w = w))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1)
     covt = reshape([0.00019864619425184141, 0.0001910530604986571, 0.0002122023214575412,
                     0.0002420620403804177, 0.0002411751564510944, 0.00016135851891625692,
                     0.0004294305635579487, 0.00014207698691017726, 0.00019073585746200045,
@@ -4398,24 +4398,24 @@ end
                     0.0001504967210740102], (20, 20))
     @test isapprox(portfolio.cov, covt)
 
-    portfolio = HCPortfolio2(; prices = prices)
+    portfolio = HCPortfolio(; prices = prices)
 
     c1 = PortCovCor(; ce = CorMutualInfo())
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
     @test isapprox(cov2cor(portfolio.cov), portfolio.cor)
 
     c1 = PortCovCor(; ce = CorLTD())
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
     @test isapprox(cov2cor(portfolio.cov), portfolio.cor)
 end
 
 @testset "Shrunken Cov and Cor Unweighted" begin
-    portfolio = HCPortfolio2(; prices = prices)
+    portfolio = HCPortfolio(; prices = prices)
     c1 = PortCovCor(; ce = CovFull(; ce = AnalyticalNonlinearShrinkage()))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
     covt = reshape([0.00021220452773731868, 9.720753544484786e-5, 0.00013997545949848914,
                     0.0001169268959904978, 0.00015744832592123553, 6.129768102476998e-5,
                     8.193980246950358e-5, 4.1617054642318785e-5, 8.96343936634366e-5,
@@ -4809,8 +4809,8 @@ end
     @test isapprox(portfolio.dist, distt)
 
     c1 = PortCovCor(; ce = CovFull(; ce = AnalyticalNonlinearShrinkage(), absolute = true))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, set_cov = false, cor_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, set_cov = false, cor_type = c1)
     cort = reshape([1.0, 0.45752840281833124, 0.5975929469512664, 0.39990136767830886,
                     0.5933671412470112, 0.3124963212719126, 0.13893763270422677,
                     0.2234467130695842, 0.3707288636361882, 0.3124393094386776,
@@ -5069,8 +5069,8 @@ end
     @test isapprox(portfolio.dist, distt)
 
     c1 = PortCovCor(; ce = CovSemi(; ce = AnalyticalNonlinearShrinkage()))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
     covt = reshape([9.029966416910983e-5, 5.761518179082678e-5, 7.47023979393402e-5,
                     7.37244301471064e-5, 7.212544189753388e-5, 4.903218092205771e-5,
                     0.00010165384227831244, 3.5461164468049746e-5, 6.304484184389257e-5,
@@ -5464,8 +5464,8 @@ end
     @test isapprox(portfolio.dist, distt)
 
     c1 = PortCovCor(; ce = CovSemi(; ce = AnalyticalNonlinearShrinkage(), absolute = true))
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
-                       set_skew = false, set_sskew = false, set_cov = false, cor_type = c1)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, set_cov = false, cor_type = c1)
     cort = reshape([1.0, 0.6106170231940202, 0.7251578196794722, 0.583487712122292,
                     0.6869815067790932, 0.5253329858647099, 0.43292846777020944,
                     0.4098476480852313, 0.5753962951085345, 0.5635022614449591,

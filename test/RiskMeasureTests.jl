@@ -4,11 +4,11 @@ using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 @testset "Risk measures" begin
-    portfolio = Portfolio2(; prices = prices,
-                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                            :params => Dict("verbose" => false))))
-    asset_statistics2!(portfolio)
-    optimise2!(portfolio; obj = SR())
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+    optimise!(portfolio; obj = Sharpe())
 
     risks = [0.012732818438689692, 0.009054428305486948, 0.008974573704221727,
              0.003858879045730223, 0.008278637116930432, 0.04767699262536566,
@@ -23,95 +23,62 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
              0.23276849033778024, 0.02742352667080502, 0.1529564256640314,
              0.04740180533190617, 0.18166001933455683, 0.2039781842753333]
 
-    rms = [SD2(), MAD2(), SSD2(), FLPM2(), SLPM2(), WR2(), CVaR2(), EVaR2(), RVaR2(),
-           MDD2(), ADD2(), CDaR2(), UCI2(), EDaR2(), RDaR2(), Kurt2(), SKurt2(), GMD2(),
-           RG2(), RCVaR2(), TG2(), RTG2(), OWA2(), DVar2(), Skew2(), SSkew2(), Variance2(),
-           Equal2(), VaR2(), DaR2(), DaR_r2(), MDD_r2(), ADD_r2(), CDaR_r2(), UCI_r2(),
-           EDaR_r2(), RDaR_r2()]
+    rms = [SD(), MAD(), SSD(), FLPM(), SLPM(), WR(), CVaR(), EVaR(), RVaR(), MDD(), ADD(),
+           CDaR(), UCI(), EDaR(), RDaR(), Kurt(), SKurt(), GMD(), RG(), RCVaR(), TG(),
+           RTG(), OWA(), DVar(), Skew(), SSkew(), Variance(), Equal(), VaR(), DaR(),
+           DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(), RDaR_r()]
 
     for (risk, rm) ∈ zip(risks, rms)
-        @test isapprox(risk, calc_risk(portfolio; type = :Trad2, rm = rm), rtol = 5e-7)
+        @test isapprox(risk, calc_risk(portfolio; type = :Trad, rm = rm), rtol = 5e-7)
     end
 end
 
 @testset "Aux functions" begin
-    rm = [SD2(), [FLPM2()], [SLPM2(), WR2()]]
+    rm = [SD(), [FLPM()], [SLPM(), WR()]]
 
     rm1 = PortfolioOptimiser.get_first_rm(rm)
     rm2 = PortfolioOptimiser.get_rm_string(rm)
-    rm3 = PortfolioOptimiser.get_rm_string(WR2())
-    rm4 = PortfolioOptimiser.get_rm_string(SD2())
+    rm3 = PortfolioOptimiser.get_rm_string(WR())
+    rm4 = PortfolioOptimiser.get_rm_string(SD())
 
     @test rm1 == rm[1]
     # @test rm2 == :SD2_FLPM2_SLPM2_WR2
-    # @test rm3 == :WR2
-    # @test rm4 == :SD2
+    # @test rm3 == :WR
+    # @test rm4 == :SD
 end
 
 @testset "Constructors and setters" begin
-    @test_throws AssertionError SD2(sigma = rand(5, 3))
-    @test_throws AssertionError SD2(; sigma = Matrix(undef, 0, 1))
-    rm = SD2()
+    @test_throws AssertionError SD(sigma = rand(5, 3))
+    @test_throws AssertionError SD(; sigma = Matrix(undef, 0, 1))
+    rm = SD()
     @test_throws AssertionError rm.sigma = Matrix(undef, 0, 1)
 
-    @test_throws AssertionError Variance2(sigma = rand(5, 3))
-    @test_throws AssertionError Variance2(; sigma = Matrix(undef, 0, 1))
-    rm = Variance2()
+    @test_throws AssertionError Variance(sigma = rand(5, 3))
+    @test_throws AssertionError Variance(; sigma = Matrix(undef, 0, 1))
+    rm = Variance()
     @test_throws AssertionError rm.sigma = Matrix(undef, 0, 1)
 
-    rm = VaR2()
+    rm = VaR()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     rm.alpha = 0.5
     @test rm.alpha == 0.5
 
-    rm = CVaR2()
+    rm = CVaR()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     rm.alpha = 0.5
     @test rm.alpha == 0.5
 
-    rm = EVaR2()
+    rm = EVaR()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     rm.alpha = 0.5
     @test rm.alpha == 0.5
-    @test Symbol(rm) == :EVaR2
-    @test String(rm) == "EVaR2"
+    @test Symbol(rm) == :EVaR
+    @test String(rm) == "EVaR"
 
-    rm = RVaR2()
-    @test_throws AssertionError rm.alpha = 1
-    @test_throws AssertionError rm.alpha = 0
-    @test_throws AssertionError rm.kappa = 1
-    @test_throws AssertionError rm.kappa = 0
-    rm.alpha = 0.5
-    @test rm.alpha == 0.5
-    rm.kappa = 0.5
-    @test rm.kappa == 0.5
-    @test Symbol(rm) == :RVaR2
-    @test String(rm) == "RVaR2"
-
-    rm = DaR2()
-    @test_throws AssertionError rm.alpha = 1
-    @test_throws AssertionError rm.alpha = 0
-    rm.alpha = 0.5
-    @test rm.alpha == 0.5
-
-    rm = CDaR2()
-    @test_throws AssertionError rm.alpha = 1
-    @test_throws AssertionError rm.alpha = 0
-    rm.alpha = 0.5
-    @test rm.alpha == 0.5
-
-    rm = EDaR2()
-    @test_throws AssertionError rm.alpha = 1
-    @test_throws AssertionError rm.alpha = 0
-    @test Symbol(rm) == :EDaR2
-    @test String(rm) == "EDaR2"
-    rm.alpha = 0.5
-    @test rm.alpha == 0.5
-
-    rm = RDaR2()
+    rm = RVaR()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.kappa = 1
@@ -120,28 +87,60 @@ end
     @test rm.alpha == 0.5
     rm.kappa = 0.5
     @test rm.kappa == 0.5
-    @test Symbol(rm) == :RDaR2
-    @test String(rm) == "RDaR2"
+    @test Symbol(rm) == :RVaR
+    @test String(rm) == "RVaR"
 
-    rm = DaR_r2()
+    rm = DaR()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     rm.alpha = 0.5
     @test rm.alpha == 0.5
 
-    rm = CDaR_r2()
+    rm = CDaR()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     rm.alpha = 0.5
     @test rm.alpha == 0.5
 
-    rm = EDaR_r2()
+    rm = EDaR()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    @test Symbol(rm) == :EDaR
+    @test String(rm) == "EDaR"
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
+
+    rm = RDaR()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    @test_throws AssertionError rm.kappa = 1
+    @test_throws AssertionError rm.kappa = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
+    rm.kappa = 0.5
+    @test rm.kappa == 0.5
+    @test Symbol(rm) == :RDaR
+    @test String(rm) == "RDaR"
+
+    rm = DaR_r()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     rm.alpha = 0.5
     @test rm.alpha == 0.5
 
-    rm = RDaR_r2()
+    rm = CDaR_r()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
+
+    rm = EDaR_r()
+    @test_throws AssertionError rm.alpha = 1
+    @test_throws AssertionError rm.alpha = 0
+    rm.alpha = 0.5
+    @test rm.alpha == 0.5
+
+    rm = RDaR_r()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.kappa = 1
@@ -151,7 +150,7 @@ end
     rm.kappa = 0.5
     @test rm.kappa == 0.5
 
-    rm = RCVaR2()
+    rm = RCVaR()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.beta = 1
@@ -163,7 +162,7 @@ end
     rm.beta = 0.5
     @test rm.beta == 0.5
 
-    rm = TG2()
+    rm = TG()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.alpha_i = 1
@@ -176,7 +175,7 @@ end
     rm.a_sim = 5
     @test rm.a_sim == 5
 
-    rm = RTG2()
+    rm = RTG()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.alpha_i = 1

@@ -6,7 +6,7 @@ _posdef_fix!(method::PosdefNearest, X::AbstractMatrix)
 Overload this for other posdef fix methods.
 """
 function _posdef_fix!(method::PosdefNearest, X::AbstractMatrix)
-    NCM.nearest_cor!(X, method)
+    NearestCorrelationMatrix.nearest_cor!(X, method)
     return nothing
 end
 function posdef_fix!(::NoPosdef, ::AbstractMatrix)
@@ -55,7 +55,7 @@ function _dist(de::DistanceMLP, X::AbstractMatrix, ::Any)
                                clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
                            end))
 end
-function _dist(de::DistanceMLP2, X::AbstractMatrix, ::Any)
+function _dist(de::DistanceSqMLP, X::AbstractMatrix, ::Any)
     _X = sqrt.(if !de.absolute
                    clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
                else
@@ -170,13 +170,6 @@ function StatsBase.cor(ce::CorKendall, X::AbstractMatrix; dims::Int = 1)
     rho = corkendall(X)
     return Symmetric(cov2cor(Matrix(!ce.absolute ? rho : abs.(rho))))
 end
-function DistanceVarInfo(; bins::Union{<:Integer, <:AbstractBins} = BinHGR(),
-                         normalise::Bool = true)
-    if isa(bins, Integer)
-        @smart_assert(bins > zero(bins))
-    end
-    return DistanceVarInfo(bins, normalise)
-end
 function Base.setproperty!(obj::DistanceVarInfo, sym::Symbol, val)
     if sym == :bins
         if isa(val, Integer)
@@ -184,15 +177,6 @@ function Base.setproperty!(obj::DistanceVarInfo, sym::Symbol, val)
         end
     end
     return setfield!(obj, sym, val)
-end
-function CorMutualInfo(; bins::Union{<:Integer, <:AbstractBins} = BinHGR(),
-                       normalise::Bool = true,
-                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                       std_w::Union{<:AbstractWeights, Nothing} = nothing)
-    if isa(bins, Integer)
-        @smart_assert(bins > zero(bins))
-    end
-    return CorMutualInfo(bins, normalise, ve, std_w)
 end
 function Base.setproperty!(obj::CorMutualInfo, sym::Symbol, val)
     if sym == :bins
@@ -202,16 +186,16 @@ function Base.setproperty!(obj::CorMutualInfo, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function _bin_width_func(::BinKnuth)
+function _bin_width_func(::Knuth)
     return pyimport("astropy.stats").knuth_bin_width
 end
-function _bin_width_func(::BinFreedman)
+function _bin_width_func(::Freedman)
     return pyimport("astropy.stats").freedman_bin_width
 end
-function _bin_width_func(::BinScott)
+function _bin_width_func(::Scott)
     return pyimport("astropy.stats").scott_bin_width
 end
-function _bin_width_func(::Union{BinHGR, <:Integer})
+function _bin_width_func(::Union{HGR, <:Integer})
     return nothing
 end
 function calc_num_bins(::AstroBins, xj::AbstractVector, xi::AbstractVector, j::Integer,
@@ -224,7 +208,7 @@ function calc_num_bins(::AstroBins, xj::AbstractVector, xi::AbstractVector, j::I
                      k1
                  end)
 end
-function calc_num_bins(::BinHGR, xj::AbstractVector, xi::AbstractVector, j::Integer,
+function calc_num_bins(::HGR, xj::AbstractVector, xi::AbstractVector, j::Integer,
                        i::Integer, ::Any, T::Integer)
     corr = cor(xj, xi)
     return round(Int, if isone(corr)
@@ -284,7 +268,7 @@ function _mutual_info(A::AbstractMatrix)
 end
 #=
 function mutual_variation_info(X::AbstractMatrix,
-                               bins::Union{<:AbstractBins, <:Integer} = BinKnuth(),
+                               bins::Union{<:AbstractBins, <:Integer} = Knuth(),
                                normalise::Bool = true)
     T, N = size(X)
     mut_mtx = Matrix{eltype(X)}(undef, N, N)
@@ -325,7 +309,7 @@ function mutual_variation_info(X::AbstractMatrix,
     return Symmetric(mut_mtx, :U), Symmetric(var_mtx, :U)
 end
 =#
-function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} = BinHGR(),
+function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} = HGR(),
                      normalise::Bool = true)
     T, N = size(X)
     mut_mtx = Matrix{eltype(X)}(undef, N, N)
@@ -352,8 +336,7 @@ function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} =
 
     return Symmetric(mut_mtx, :U)
 end
-function variation_info(X::AbstractMatrix,
-                        bins::Union{<:AbstractBins, <:Integer} = BinHGR(),
+function variation_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} = HGR(),
                         normalise::Bool = true)
     T, N = size(X)
     var_mtx = Matrix{eltype(X)}(undef, N, N)
@@ -511,11 +494,6 @@ function StatsBase.cov(ce::CorDistance, X::AbstractMatrix; dims::Int = 1)
     end
     return Symmetric(cov_distance(ce, X))
 end
-function CorLTD(; alpha::Real = 0.05, ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                std_w::Union{<:AbstractWeights, Nothing} = nothing)
-    @smart_assert(zero(alpha) < alpha < one(alpha))
-    return CorLTD(alpha, ve, std_w)
-end
 function Base.setproperty!(obj::CorLTD, sym::Symbol, val)
     if sym == :alpha
         @smart_assert(zero(val) <= val <= one(val))
@@ -561,36 +539,6 @@ function StatsBase.cov(ce::CorLTD, X::AbstractMatrix; dims::Int = 1)
                       std(ce.ve, X, ce.std_w; dims = 1)
                   end)
     return lower_tail_dependence(X, ce.alpha) .* (std_vec * transpose(std_vec))
-end
-function CorGerber0(; normalise::Bool = false, threshold::Real = 0.5,
-                    ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                    std_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    posdef::PosdefFix = PosdefNearest())
-    @smart_assert(zero(threshold) < threshold < one(threshold))
-    return CorGerber0{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
-end
-function CorGerber1(; normalise::Bool = false, threshold::Real = 0.5,
-                    ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                    std_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    posdef::PosdefFix = PosdefNearest())
-    @smart_assert(zero(threshold) < threshold < one(threshold))
-    return CorGerber1{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
-end
-function CorGerber2(; normalise::Bool = false, threshold::Real = 0.5,
-                    ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                    std_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    posdef::PosdefFix = PosdefNearest())
-    @smart_assert(zero(threshold) < threshold < one(threshold))
-    return CorGerber2{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
-end
-function Base.setproperty!(obj::CorGerberBasic, sym::Symbol, val)
-    if sym == :threshold
-        @smart_assert(zero(val) < val < one(val))
-    end
-    return setfield!(obj, sym, val)
 end
 function _cor_gerber_norm(ce::CorGerber0, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
@@ -803,97 +751,6 @@ function _cor_gerber(ce::CorGerber2, X::AbstractMatrix, std_vec::AbstractVector)
 
     return rho
 end
-function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
-                c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
-                ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                std_w::Union{<:AbstractWeights, Nothing} = nothing,
-                mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                posdef::PosdefFix = PosdefNearest())
-    @smart_assert(zero(threshold) < threshold < one(threshold))
-    @smart_assert(zero(c1) < c1 <= one(c1))
-    @smart_assert(zero(c2) < c2 <= one(c2))
-    @smart_assert(c3 > c2)
-    return CorSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
-                                                                                    threshold,
-                                                                                    c1, c2,
-                                                                                    c3, n,
-                                                                                    ve,
-                                                                                    std_w,
-                                                                                    mean_w,
-                                                                                    posdef)
-end
-function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
-                c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
-                ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                std_w::Union{<:AbstractWeights, Nothing} = nothing,
-                mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                posdef::PosdefFix = PosdefNearest())
-    @smart_assert(zero(threshold) < threshold < one(threshold))
-    @smart_assert(zero(c1) < c1 <= one(c1))
-    @smart_assert(zero(c2) < c2 <= one(c2))
-    @smart_assert(c3 > c2)
-    return CorSB1{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
-                                                                                    threshold,
-                                                                                    c1, c2,
-                                                                                    c3, n,
-                                                                                    ve,
-                                                                                    std_w,
-                                                                                    mean_w,
-                                                                                    posdef)
-end
-function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
-                      c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
-                      ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                      std_w::Union{<:AbstractWeights, Nothing} = nothing,
-                      mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                      posdef::PosdefFix = PosdefNearest())
-    @smart_assert(zero(threshold) < threshold < one(threshold))
-    @smart_assert(zero(c1) < c1 <= one(c1))
-    @smart_assert(zero(c2) < c2 <= one(c2))
-    @smart_assert(c3 > c2)
-    return CorGerberSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
-                                                                                          threshold,
-                                                                                          c1,
-                                                                                          c2,
-                                                                                          c3,
-                                                                                          n,
-                                                                                          ve,
-                                                                                          std_w,
-                                                                                          mean_w,
-                                                                                          posdef)
-end
-function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
-                      c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
-                      ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                      std_w::Union{<:AbstractWeights, Nothing} = nothing,
-                      mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                      posdef::PosdefFix = PosdefNearest())
-    @smart_assert(zero(threshold) < threshold < one(threshold))
-    @smart_assert(zero(c1) < c1 <= one(c1))
-    @smart_assert(zero(c2) < c2 <= one(c2))
-    @smart_assert(c3 > c2)
-    return CorGerberSB1{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
-                                                                                          threshold,
-                                                                                          c1,
-                                                                                          c2,
-                                                                                          c3,
-                                                                                          n,
-                                                                                          ve,
-                                                                                          std_w,
-                                                                                          mean_w,
-                                                                                          posdef)
-end
-function Base.setproperty!(obj::CorSB, sym::Symbol, val)
-    if sym == :threshold
-        @smart_assert(zero(val) < val < one(val))
-    elseif sym ∈ (:c1, :c2)
-        @smart_assert(zero(val) < val <= one(val) && val < obj.c3)
-    elseif sym == :c3
-        @smart_assert(val > obj.c2)
-    end
-    return setfield!(obj, sym, val)
-end
-#=
 function _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
     # Zone of confusion.
     # If the return is not a significant proportion of the standard deviation, we classify it as noise.
@@ -902,7 +759,7 @@ function _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
     end
 
     # Zone of indecision.
-    # Center returns at mu = 0 and rho = 1.
+    # Center returns at mu = 0 and sigma = 1.
     ri = abs((xi - mui) / sigmai)
     rj = abs((xj - muj) / sigmaj)
     # If the return is less than c2 standard deviations, or greater than c3 standard deviations, we can't make a call since it may be noise, or overall market forces.
@@ -915,7 +772,6 @@ function _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
 
     return kappa / (1 + gamma^n)
 end
-=#
 function _cor_gerber_norm(ce::CorSB0, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
@@ -1366,52 +1222,6 @@ function StatsBase.cov(ce::CorGerber, X::AbstractMatrix; dims::Int = 1)
     end
     return cov_gerber(ce, X)
 end
-#=
-function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
-                     rng = Random.default_rng(), seed::Union{Nothing, <:Integer} = nothing)
-    Random.seed!(rng, seed)
-
-    n = size(x, 1)
-    a = randn(rng, n + len, n)
-
-    for _ ∈ 1:iters
-        _cov = cov(a)
-        _C = cholesky(_cov)
-        a .= a * (_C.U \ I)
-        _cov = cov(a)
-        _s = transpose(sqrt.(diag(_cov)))
-        a .= (a .- mean(a; dims = 1)) ./ _s
-    end
-
-    C = cholesky(x)
-    return a * C.U
-end
-function errPDF(x, vals; kernel = ASH.Kernels.gaussian, m = 10, n = 1000, q = 1000)
-    e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
-    rg = range(e_min, e_max; length = n)
-    pdf1 = q ./ (2 * pi * x * rg) .* sqrt.(clamp.((e_max .- rg) .* (rg .- e_min), 0, Inf))
-
-    e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
-    res = ash(vals; rng = range(e_min, e_max; length = n), kernel = kernel, m = m)
-    pdf2 = [ASH.pdf(res, i) for i ∈ pdf1]
-    pdf2[.!isfinite.(pdf2)] .= 0.0
-    sse = sum((pdf2 - pdf1) .^ 2)
-
-    return sse
-end
-function find_max_eval(vals, q; kernel = ASH.Kernels.gaussian, m::Integer = 10,
-                       n::Integer = 1000, args = (), kwargs = ())
-    res = Optim.optimize(x -> errPDF(x, vals; kernel = kernel, m = m, n = n, q = q), 0.0,
-                         1.0, args...; kwargs...)
-
-    x = Optim.converged(res) ? Optim.minimizer(res) : 1.0
-
-    e_max = x * (1.0 + sqrt(1.0 / q))^2
-
-    return e_max, x
-end
-=#
-
 function duplication_matrix(n::Int)
     # cols = Int(n * (n + 1) / 2)
     # rows = n * n
@@ -1486,7 +1296,6 @@ function elimination_matrix(n::Int)
 
     return sparse(1:m, v, 1, m, nsq)
 end
-
 function summation_matrix(n::Int)
     # d = duplication_matrix(n)
     # l = elimination_matrix(n)
@@ -1562,51 +1371,21 @@ function dup_elim_sum_matrices(n::Int)
 
     return d, l, s
 end
-function denoise!(::NoDenoise, ::PosdefFix, X::AbstractMatrix, q::Real)
-    return nothing
-end
-function DenoiseFixed(; detone::Bool = false, mkt_comp::Integer = 1,
-                      kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
-                      n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
-    return DenoiseFixed{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
-                                                                                mkt_comp,
-                                                                                kernel, m,
-                                                                                n, args,
-                                                                                kwargs)
-end
-function DenoiseSpectral(; detone::Bool = false, mkt_comp::Integer = 1,
-                         kernel = AverageShiftedHistograms.Kernels.gaussian,
-                         m::Integer = 10, n::Integer = 1000, args::Tuple = (),
-                         kwargs::NamedTuple = (;))
-    return DenoiseSpectral{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
-                                                                                   mkt_comp,
-                                                                                   kernel,
-                                                                                   m, n,
-                                                                                   args,
-                                                                                   kwargs)
-end
-function DenoiseShrink(; alpha::Real = 0.0, detone::Bool = false, mkt_comp::Integer = 1,
-                       kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
-                       n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
-    @smart_assert(zero(alpha) <= alpha <= one(alpha))
-    return DenoiseShrink{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m),
-                         typeof(n)}(detone, alpha, mkt_comp, kernel, m, n, args, kwargs)
-end
-function _denoise!(::DenoiseFixed, X::AbstractMatrix, vals::AbstractVector,
-                   vecs::AbstractMatrix, num_factors::Integer)
+function _denoise!(::Fixed, X::AbstractMatrix, vals::AbstractVector, vecs::AbstractMatrix,
+                   num_factors::Integer)
     _vals = copy(vals)
     _vals[1:num_factors] .= sum(_vals[1:num_factors]) / num_factors
     X .= cov2cor(vecs * Diagonal(_vals) * transpose(vecs))
     return nothing
 end
-function _denoise!(::DenoiseSpectral, X::AbstractMatrix, vals::AbstractVector,
+function _denoise!(::Spectral, X::AbstractMatrix, vals::AbstractVector,
                    vecs::AbstractMatrix, num_factors::Integer)
     _vals = copy(vals)
     _vals[1:num_factors] .= zero(eltype(X))
     X .= cov2cor(vecs * Diagonal(_vals) * transpose(vecs))
     return nothing
 end
-function _denoise!(ce::DenoiseShrink, X::AbstractMatrix, vals::AbstractVector,
+function _denoise!(ce::Shrink, X::AbstractMatrix, vals::AbstractVector,
                    vecs::AbstractMatrix, num_factors::Integer)
     # Small
     vals_l = vals[1:num_factors]
@@ -1621,6 +1400,29 @@ function _denoise!(ce::DenoiseShrink, X::AbstractMatrix, vals::AbstractVector,
 
     X .= corr0 + ce.alpha * corr1 + (one(ce.alpha) - ce.alpha) * Diagonal(corr1)
     return nothing
+end
+function errPDF(x, vals; kernel = AverageShiftedHistograms.Kernels.gaussian, m = 10,
+                n = 1000, q = 1000)
+    e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
+    rg = range(e_min, e_max; length = n)
+    pdf1 = q ./ (2 * pi * x * rg) .* sqrt.(clamp.((e_max .- rg) .* (rg .- e_min), 0, Inf))
+    e_min, e_max = x * (1 - sqrt(1.0 / q))^2, x * (1 + sqrt(1.0 / q))^2
+    res = ash(vals; rng = range(e_min, e_max; length = n), kernel = kernel, m = m)
+    pdf2 = [AverageShiftedHistograms.pdf(res, i) for i ∈ pdf1]
+    pdf2[.!isfinite.(pdf2)] .= 0.0
+    sse = sum((pdf2 - pdf1) .^ 2)
+    return sse
+end
+function find_max_eval(vals, q; kernel = AverageShiftedHistograms.Kernels.gaussian,
+                       m::Integer = 10, n::Integer = 1000, args = (), kwargs = (;))
+    res = Optim.optimize(x -> errPDF(x, vals; kernel = kernel, m = m, n = n, q = q), 0.0,
+                         1.0, args...; kwargs...)
+
+    x = Optim.converged(res) ? Optim.minimizer(res) : 1.0
+
+    e_max = x * (1.0 + sqrt(1.0 / q))^2
+
+    return e_max, x
 end
 function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
     s = diag(X)
@@ -1656,41 +1458,26 @@ function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
 
     return nothing
 end
-function StatsBase.mean(me::MeanSimple, X::AbstractMatrix; dims::Int = 1)
+function StatsBase.mean(me::MuSimple, X::AbstractMatrix; dims::Int = 1)
     return vec(isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims))
 end
-function MeanJS(; target::MeanTarget = TargetGM(),
-                w::Union{<:AbstractWeights, Nothing} = nothing,
-                sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanJS{typeof(sigma)}(target, w, sigma)
-end
-function MeanBS(; target::MeanTarget = TargetGM(),
-                w::Union{<:AbstractWeights, Nothing} = nothing,
-                sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanBS{typeof(sigma)}(target, w, sigma)
-end
-function MeanBOP(; target::MeanTarget = TargetGM(),
-                 w::Union{<:AbstractWeights, Nothing} = nothing,
-                 sigma::AbstractMatrix = Matrix{Float64}(undef, 0, 0))
-    return MeanBOP{typeof(sigma)}(target, w, sigma)
-end
-function target_mean(::TargetGM, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
-                     T::Integer, N::Integer)
+function target_mean(::GM, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma, T::Integer,
+                     N::Integer)
     return fill(mean(mu), N)
 end
-function target_mean(::TargetVW, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
-                     T::Integer, N::Integer)
+function target_mean(::VW, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma, T::Integer,
+                     N::Integer)
     ones = range(one(eltype(sigma)); stop = one(eltype(sigma)), length = N)
     if isnothing(inv_sigma)
         inv_sigma = sigma \ I
     end
     return fill(dot(ones, inv_sigma, mu) / dot(ones, inv_sigma, ones), N)
 end
-function target_mean(::TargetSE, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
-                     T::Integer, N::Integer)
+function target_mean(::SE, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma, T::Integer,
+                     N::Integer)
     return fill(tr(sigma) / T, N)
 end
-function StatsBase.mean(me::MeanJS, X::AbstractMatrix; dims::Int = 1)
+function StatsBase.mean(me::MuJS, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (1, 2))
     T, N = dims == 1 ? size(X) : size(transpose(X))
     mu = vec(isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims))
@@ -1700,7 +1487,7 @@ function StatsBase.mean(me::MeanJS, X::AbstractMatrix; dims::Int = 1)
     alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
     return (1 - alpha) * mu + alpha * b
 end
-function StatsBase.mean(me::MeanBS, X::AbstractMatrix; dims::Int = 1)
+function StatsBase.mean(me::MuBS, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (1, 2))
     T, N = dims == 1 ? size(X) : size(transpose(X))
     mu = vec(isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims))
@@ -1710,7 +1497,7 @@ function StatsBase.mean(me::MeanBS, X::AbstractMatrix; dims::Int = 1)
     alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
     return (1 - alpha) * mu + alpha * b
 end
-function StatsBase.mean(me::MeanBOP, X::AbstractMatrix; dims::Int = 1)
+function StatsBase.mean(me::MuBOP, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (1, 2))
     T, N = dims == 1 ? size(X) : size(transpose(X))
     mu = vec(isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims))
@@ -1722,18 +1509,6 @@ function StatsBase.mean(me::MeanBOP, X::AbstractMatrix; dims::Int = 1)
     alpha /= dot(mu, inv_sigma, mu) * dot(b, inv_sigma, b) - dot(mu, inv_sigma, b)^2
     beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
     return alpha * mu + beta * b
-end
-function DBHT(; distance::DistanceMethod = DistanceMLP(),
-              similarity::DBHTSimilarity = DBHTMaxDist(), root_method::Symbol = :Unique)
-    @smart_assert(root_method ∈ DBHTRootMethods)
-
-    return DBHT(distance, similarity, root_method)
-end
-function Base.setproperty!(obj::DBHT, sym::Symbol, val)
-    if sym == :root_method
-        @smart_assert(val ∈ DBHTRootMethods)
-    end
-    return setfield!(obj, sym, val)
 end
 function jlogo!(::NoJLoGo, ::PosdefFix, ::AbstractMatrix, D = nothing)
     return nothing
@@ -1873,58 +1648,13 @@ function _get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimis
 
     return dist_type
 end
-#=
-"""
-```
-commutation_matrix(x::AbstractMatrix)
-```
-
-Generates the [commutation matrix](https://en.wikipedia.org/wiki/Commutation_matrix) for `x`.
-
-# Inputs
-
-  - `x`: matrix.
-
-# Outputs
-
-  - `y`: commutation matrix.
-"""
-function commutation_matrix(x::AbstractMatrix)
-    m, n = size(x)
-    mn = m * n
-    row = 1:mn
-    col = vec(transpose(reshape(row, m, n)))
-    data = range(; start = 1, stop = 1, length = mn)
-    com = sparse(row, col, data, mn, mn)
-    return com
+function _bootstrap_func(::StationaryBS)
+    return pyimport("arch.bootstrap").StationaryBS
 end
-
-"""
-```
-vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
-```
-
-Turns a vector of arrays into a matrix.
-
-# Inputs
-
-  - `x`: vector of arrays.
-
-# Outputs
-
-  - `y`: matrix.
-"""
-function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
-    return vcat(transpose.(x)...)
-end
-=#
-function _bootstrap_func(::StationaryBootstrap)
-    return pyimport("arch.bootstrap").StationaryBootstrap
-end
-function _bootstrap_func(::CircularBootstrap)
+function _bootstrap_func(::CircularBS)
     return pyimport("arch.bootstrap").CircularBlockBootstrap
 end
-function _bootstrap_func(::MovingBootstrap)
+function _bootstrap_func(::MovingBS)
     return pyimport("arch.bootstrap").MovingBlockBootstrap
 end
 function _sigma_mu(X::AbstractArray, cov_type::PortfolioOptimiserCovCor,
@@ -1937,7 +1667,7 @@ function _sigma_mu(X::AbstractArray, cov_type::PortfolioOptimiserCovCor,
 
     return sigma, mu
 end
-function gen_bootstrap(method::WorstCaseArch, cov_type::PortfolioOptimiserCovCor,
+function gen_bootstrap(method::ArchWC, cov_type::PortfolioOptimiserCovCor,
                        mu_type::MeanEstimator, X::AbstractMatrix)
     covs = Vector{Matrix{eltype(X)}}(undef, 0)
     sizehint!(covs, method.n_sim)
@@ -1955,7 +1685,10 @@ function gen_bootstrap(method::WorstCaseArch, cov_type::PortfolioOptimiserCovCor
 
     return covs, mus
 end
-function calc_sets(::WCBox, method::WorstCaseArch, cov_type::PortfolioOptimiserCovCor,
+function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
+    return vcat(transpose.(x)...)
+end
+function calc_sets(::Box, method::ArchWC, cov_type::PortfolioOptimiserCovCor,
                    mu_type::MeanEstimator, X::AbstractMatrix, ::Any, ::Any)
     q = method.q
     N = size(X, 2)
@@ -1973,7 +1706,7 @@ function calc_sets(::WCBox, method::WorstCaseArch, cov_type::PortfolioOptimiserC
 
     return cov_l, cov_u, d_mu, nothing, nothing
 end
-function calc_sets(::WCEllipse, method::WorstCaseArch, cov_type::PortfolioOptimiserCovCor,
+function calc_sets(::Ellipse, method::ArchWC, cov_type::PortfolioOptimiserCovCor,
                    mu_type::MeanEstimator, X::AbstractMatrix, sigma::AbstractMatrix,
                    mu::AbstractVector, ::Any, ::Any)
     covs, mus = gen_bootstrap(method, cov_type, mu_type, X)
@@ -1986,7 +1719,7 @@ function calc_sets(::WCEllipse, method::WorstCaseArch, cov_type::PortfolioOptimi
 
     return cov_sigma, cov_mu, A_sigma, A_mu
 end
-function calc_sets(::WCBox, method::WorstCaseNormal, ::Any, ::Any, X::AbstractMatrix,
+function calc_sets(::Box, method::NormalWC, ::Any, ::Any, X::AbstractMatrix,
                    sigma::AbstractMatrix, ::Any)
     Random.seed!(method.rng, method.seed)
     q = method.q
@@ -2002,7 +1735,16 @@ function calc_sets(::WCBox, method::WorstCaseNormal, ::Any, ::Any, X::AbstractMa
 
     return cov_l, cov_u, d_mu, covs, cov_mu
 end
-function calc_sets(::WCEllipse, method::WorstCaseNormal, cov_type::PortfolioOptimiserCovCor,
+function commutation_matrix(x::AbstractMatrix)
+    m, n = size(x)
+    mn = m * n
+    row = 1:mn
+    col = vec(transpose(reshape(row, m, n)))
+    data = range(; start = 1, stop = 1, length = mn)
+    com = sparse(row, col, data, mn, mn)
+    return com
+end
+function calc_sets(::Ellipse, method::NormalWC, cov_type::PortfolioOptimiserCovCor,
                    mu_type::MeanEstimator, X::AbstractMatrix, sigma::AbstractMatrix,
                    mu::AbstractVector, covs::Union{AbstractMatrix, Nothing},
                    cov_mu::Union{AbstractMatrix, Nothing})
@@ -2020,7 +1762,7 @@ function calc_sets(::WCEllipse, method::WorstCaseNormal, cov_type::PortfolioOpti
     cov_sigma = T * (I + K) * kron(cov_mu, cov_mu)
     return cov_sigma, cov_mu, A_sigma, A_mu
 end
-function calc_sets(::WCBox, method::WorstCaseDelta, ::Any, ::Any, X::AbstractMatrix,
+function calc_sets(::Box, method::DeltaWC, ::Any, ::Any, X::AbstractMatrix,
                    sigma::AbstractMatrix, mu::AbstractVector)
     d_mu = method.dmu * abs.(mu)
     cov_l = sigma - method.dcov * abs.(sigma)
@@ -2028,19 +1770,15 @@ function calc_sets(::WCBox, method::WorstCaseDelta, ::Any, ::Any, X::AbstractMat
 
     return cov_l, cov_u, d_mu, nothing, nothing
 end
-function calc_k(::WorstCaseKNormal, q::Real, X::AbstractMatrix, cov_X::AbstractMatrix)
+function calc_k(::KNormalWC, q::Real, X::AbstractMatrix, cov_X::AbstractMatrix)
     k_mus = diag(X * (cov_X \ I) * transpose(X))
     return sqrt(quantile(k_mus, 1 - q))
 end
-function calc_k(::WorstCaseKGeneral, q::Real, args...)
+function calc_k(::KGeneralWC, q::Real, args...)
     return sqrt((1 - q) / q)
 end
 function calc_k(method::Real, args...)
     return method
-end
-function PVal(; threshold::Real = 0.05)
-    @smart_assert(zero(threshold) < threshold < one(threshold))
-    return PVal{typeof(threshold)}(threshold)
 end
 function Base.setproperty!(obj::PVal, sym::Symbol, val)
     if sym == :threshold
@@ -2051,7 +1789,7 @@ end
 function MultivariateStats.fit(method::PCATarget, X::AbstractMatrix)
     return MultivariateStats.fit(MultivariateStats.PCA, X; method.kwargs...)
 end
-function prep_dim_red_reg(method::DimensionReductionReg, x::DataFrame)
+function prep_dim_red_reg(method::DRR, x::DataFrame)
     N = nrow(x)
     X = transpose(Matrix(x))
 
@@ -2064,8 +1802,8 @@ function prep_dim_red_reg(method::DimensionReductionReg, x::DataFrame)
 
     return X, x1, Vp
 end
-function _regression(method::DimensionReductionReg, X::AbstractMatrix, x1::AbstractMatrix,
-                     Vp::AbstractMatrix, y::AbstractVector)
+function _regression(method::DRR, X::AbstractMatrix, x1::AbstractMatrix, Vp::AbstractMatrix,
+                     y::AbstractVector)
     avg = if isnothing(method.mean_w)
         vec(mean(X; dims = 2))
     else
@@ -2086,7 +1824,7 @@ function _regression(method::DimensionReductionReg, X::AbstractMatrix, x1::Abstr
 
     return beta
 end
-function regression(method::DimensionReductionReg, x::DataFrame, y::DataFrame)
+function regression(method::DRR, x::DataFrame, y::DataFrame)
     features = names(x)
     rows = ncol(y)
     cols = ncol(x) + 1
@@ -2101,7 +1839,7 @@ function regression(method::DimensionReductionReg, x::DataFrame, y::DataFrame)
 
     return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
 end
-function _regression(::ForwardReg, criterion::PVal, x::DataFrame, y::AbstractVector)
+function _regression(::FReg, criterion::PVal, x::DataFrame, y::AbstractVector)
     ovec = ones(length(y))
     namesx = names(x)
 
@@ -2163,7 +1901,7 @@ function _regression(::ForwardReg, criterion::PVal, x::DataFrame, y::AbstractVec
 
     return included
 end
-function _regression(::BackwardReg, criterion::PVal, x::DataFrame, y::AbstractVector)
+function _regression(::BReg, criterion::PVal, x::DataFrame, y::AbstractVector)
     ovec = ones(length(y))
     fit_result = lm([ovec Matrix(x)], y)
 
@@ -2228,10 +1966,10 @@ end
 function _regression_criterion_func(::BIC)
     return GLM.bic
 end
-function _regression_criterion_func(::R2)
+function _regression_criterion_func(::RSq)
     return GLM.r2
 end
-function _regression_criterion_func(::AdjR2)
+function _regression_criterion_func(::AdjRSq)
     return GLM.adjr2
 end
 function _regression_threshold(::AIC)
@@ -2243,10 +1981,10 @@ end
 function _regression_threshold(::BIC)
     return Inf
 end
-function _regression_threshold(::R2)
+function _regression_threshold(::RSq)
     return -Inf
 end
-function _regression_threshold(::AdjR2)
+function _regression_threshold(::AdjRSq)
     return -Inf
 end
 function _get_forward_reg_incl_excl!(::MinValRegressionCriteria, value, excluded, included,
@@ -2269,8 +2007,7 @@ function _get_forward_reg_incl_excl!(::MaxValRegressionCriteria, value, excluded
     end
     return threshold
 end
-function _regression(::ForwardReg, criterion::RegressionCriteria, x::DataFrame,
-                     y::AbstractVector)
+function _regression(::FReg, criterion::RegressionCriteria, x::DataFrame, y::AbstractVector)
     ovec = ones(length(y))
     namesx = names(x)
 
@@ -2325,8 +2062,7 @@ function _get_backward_reg_incl!(::MaxValRegressionCriteria, value, included, th
     end
     return threshold
 end
-function _regression(::BackwardReg, criterion::RegressionCriteria, x::DataFrame,
-                     y::AbstractVector)
+function _regression(::BReg, criterion::RegressionCriteria, x::DataFrame, y::AbstractVector)
     ovec = ones(length(y))
     fit_result = lm([ovec Matrix(x)], y)
 
@@ -2392,12 +2128,12 @@ function regression(method::StepwiseRegression, x::DataFrame, y::DataFrame)
 
     return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
 end
-function loadings_matrix2(x::DataFrame, y::DataFrame, method::RegressionType = ForwardReg())
+function loadings_matrix(x::DataFrame, y::DataFrame, method::RegressionType = FReg())
     return regression(method, x, y)
 end
-function risk_factors2(x::DataFrame, y::DataFrame; factor_type::FactorType = FactorType(),
-                       cov_type::PortfolioOptimiserCovCor = PortCovCor(),
-                       mu_type::MeanEstimator = MeanSimple())
+function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = FactorType(),
+                      cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                      mu_type::MeanEstimator = MuSimple())
     B = factor_type.B
 
     if isnothing(B)
@@ -2446,24 +2182,6 @@ function risk_factors2(x::DataFrame, y::DataFrame; factor_type::FactorType = Fac
 
     return mu, sigma, returns, B
 end
-#=
-"""
-```
-_omega(P, tau_sigma)
-```
-"""
-function _omega(P, tau_sigma)
-    return Diagonal(P * tau_sigma * transpose(P))
-end
-"""
-```
-_Pi(eq, delta, sigma, w, mu, rf)
-```
-"""
-function _Pi(eq, delta, sigma, w, mu, rf)
-    return eq ? delta * sigma * w : mu .- rf
-end
-=#
 """
 ```
 _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, opt, cov_type, cov_flag = true)
@@ -2512,10 +2230,16 @@ function _bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, posdef, deno
 
     return mu, sigma, w, Pi_
 end
+function _omega(P, tau_sigma)
+    return Diagonal(P * tau_sigma * transpose(P))
+end
+function _Pi(eq, delta, sigma, w, mu, rf)
+    return eq ? delta * sigma * w : mu .- rf
+end
 function black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
                          Q::AbstractVector, w::AbstractVector;
                          cov_type::PortfolioOptimiserCovCor = PortCovCor(),
-                         mu_type::MeanEstimator = MeanSimple())
+                         mu_type::MeanEstimator = MuSimple())
     sigma, mu = _sigma_mu(X, cov_type, mu_type)
 
     T, N = size(X)
@@ -2532,7 +2256,7 @@ end
 function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
                          B::AbstractMatrix, P_f::AbstractMatrix, Q_f::AbstractVector,
                          cov_type::PortfolioOptimiserCovCor = PortCovCor(),
-                         mu_type::MeanEstimator = MeanSimple(), kwargs...)
+                         mu_type::MeanEstimator = MuSimple(), kwargs...)
     f_sigma, f_mu = _sigma_mu(F, cov_type, mu_type)
 
     f_mu .-= bl.rf
@@ -2589,9 +2313,9 @@ function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
                          Q::Union{AbstractVector, Nothing}    = nothing,
                          Q_f::Union{AbstractVector, Nothing}  = nothing,
                          cov_type::PortfolioOptimiserCovCor   = PortCovCor(;),
-                         mu_type::MeanEstimator               = MeanSimple(;),
+                         mu_type::MeanEstimator               = MuSimple(;),
                          f_cov_type::PortfolioOptimiserCovCor = PortCovCor(;),
-                         f_mu_type::MeanEstimator             = MeanSimple(;))
+                         f_mu_type::MeanEstimator             = MuSimple(;))
     asset_tuple = (!isnothing(P), !isnothing(Q))
     any_asset_provided = any(asset_tuple)
     all_asset_provided = all(asset_tuple)
@@ -2681,39 +2405,10 @@ function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
 
     return mu_a[1:N], sigma_a[1:N, 1:N], w_a[1:N]
 end
-#=
-function block_vec_pq(A, p, q)
-    mp, nq = size(A)
 
-    if !(mod(mp, p) == 0 && mod(nq, p) == 0)
-        throw(DimensionMismatch("size(A) = $(size(A)), must be integer multiples of (p, q) = ($p, $q)"))
-    end
-
-    m = Int(mp / p)
-    n = Int(nq / q)
-
-    A_vec = Matrix{eltype(A)}(undef, m * n, p * q)
-    for j ∈ 0:(n - 1)
-        Aj = Matrix{eltype(A)}(undef, m, p * q)
-        for i ∈ 0:(m - 1)
-            Aij = vec(A[(1 + (i * p)):((i + 1) * p), (1 + (j * q)):((j + 1) * q)])
-            Aj[i + 1, :] .= Aij
-        end
-        A_vec[(1 + (j * m)):((j + 1) * m), :] .= Aj
-    end
-
-    return A_vec
-end
-=#
-
-export CovFull, CovSemi, CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD,
-       CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1,
-       DistanceMLP, dist, PortCovCor, DistanceVarInfo, BinKnuth, BinFreedman, BinScott,
-       BinHGR, DistanceLog, DistanceMLP2, MeanEstimator, MeanTarget, TargetGM, TargetVW,
-       TargetSE, MeanSimple, MeanJS, MeanBS, MeanBOP, SimpleVariance, JLoGo, SkewFull,
-       SkewSemi, KurtFull, KurtSemi, DenoiseFixed, DenoiseSpectral, DenoiseShrink, NoPosdef,
-       NoJLoGo, DBHTExp, DBHT, WCType, WorstCaseArch, WorstCaseNormal, WorstCaseDelta,
-       WorstCaseKNormal, WorstCaseKGeneral, StationaryBootstrap, CircularBootstrap,
-       MovingBootstrap, loadings_matrix2, AIC, AICC, BIC, R2, AdjR2, ForwardReg,
-       BackwardReg, DimensionReductionReg, PCATarget, PVal, FactorType, risk_factors2,
-       BLType, ABLType, BBLType, HAClustering, DistanceDefault
+export posdef_fix!, dbht_similarity, dist, calc_num_bins, calc_hist_data, mutual_info,
+       variation_info, cor_distance, cov_distance, lower_tail_dependence, cov_gerber,
+       duplication_matrix, elimination_matrix, summation_matrix, dup_elim_sum_matrices,
+       errPDF, find_max_eval, denoise!, target_mean, jlogo!, cokurt, coskew, gen_bootstrap,
+       vec_of_vecs_to_mtx, calc_sets, commutation_matrix, calc_k, prep_dim_red_reg,
+       regression, loadings_matrix, risk_factors, black_litterman

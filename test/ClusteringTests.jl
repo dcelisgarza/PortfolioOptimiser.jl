@@ -5,16 +5,16 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "HC Portfolio2 Asset Clustering" begin
-    portfolio = HCPortfolio2(; prices = prices)
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_mu = false)
+@testset "HC Portfolio Asset Clustering" begin
+    portfolio = HCPortfolio(; prices = prices)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_mu = false)
 
     ca = DBHT()
-    ct = HClustOpt()
-    cluster_assets2!(ca, portfolio, ct)
+    ct = HCType()
+    cluster_assets!(ca, portfolio, ct)
 
-    idx, clustering, k = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
+    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 1, 1, 2, 3, 2, 2, 3, 2, 2, 3, 1, 1, 2, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;
@@ -42,8 +42,8 @@ l = 2.0
     @test isequal(portfolio.k, kt)
     @test_throws AssertionError ca.root_method = :unique
 
-    ct = HClustOpt(; k = 6)
-    idx, clustering, k = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
+    ct = HCType(; k = 6)
+    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 2, 1, 1, 1, 3, 2, 4, 5, 6, 3, 5, 6, 3, 3, 6, 2, 4, 5, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;
@@ -64,8 +64,8 @@ l = 2.0
     @test isequal(clustering.order, ordert)
     @test isequal(k, kt)
 
-    ct = HClustOpt(; k_method = StdSilhouette())
-    idx, clustering, k = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
+    ct = HCType(; k_method = StdSilhouette())
+    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 2, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;
@@ -86,13 +86,13 @@ l = 2.0
     @test isequal(clustering.order, ordert)
     @test isequal(k, kt)
 
-    portfolio = HCPortfolio2(; prices = prices)
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_mu = false)
+    portfolio = HCPortfolio(; prices = prices)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_mu = false)
 
-    ca = HAClustering()
-    ct = HClustOpt()
-    idx, clustering, k = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
+    ca = HAC()
+    ct = HCType()
+    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2, 2, 1]
     mergest = [-3 -1; 1 -5; -19 -9; -17 -2; -20 4; 5 2; 6 -4; -14 -6; -11 8; -10 3; 9 -18;
@@ -108,8 +108,8 @@ l = 2.0
     linkaget = :ward
     kt = 4
 
-    ct = HClustOpt(; k_method = StdSilhouette())
-    idx, clustering, k = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
+    ct = HCType(; k_method = StdSilhouette())
+    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2, 2, 1]
     mergest = [-3 -1; 1 -5; -19 -9; -17 -2; -20 4; 5 2; 6 -4; -14 -6; -11 8; -10 3; 9 -18;
@@ -133,7 +133,7 @@ l = 2.0
     @test isequal(k, kt)
 
     ct.k = 9
-    idx, clustering, k = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
+    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 2, 6, 7, 2, 8, 9, 1, 2, 5, 1]
     mergest = [-3 -1; 1 -5; -19 -9; -17 -2; -20 4; 5 2; 6 -4; -14 -6; -11 8; -10 3; 9 -18;
@@ -157,16 +157,16 @@ l = 2.0
     @test isequal(k, kt)
 end
 
-@testset "HC Portfolio2 Asset Clustering" begin
-    portfolio = Portfolio2(; prices = prices)
-    asset_statistics2!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                       set_mu = false)
+@testset "HC Portfolio Asset Clustering" begin
+    portfolio = Portfolio(; prices = prices)
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_mu = false)
 
-    ca = HAClustering()
-    ct = HClustOpt()
-    idx, clustering, k, S, D = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
+    ca = HAC()
+    ct = HCType()
+    idx, clustering, k, S, D = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
-    idx, clustering, k, S, D = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
+    idx, clustering, k, S, D = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 3, 3, 2, 3, 3, 1, 2, 2, 1]
     mergest = [-3 -1; 1 -5; -19 -9; -17 -2; -20 4; 5 2; 6 -4; -14 -6; -11 8; -10 3; 9 -18;
@@ -190,7 +190,7 @@ end
     @test isequal(k, kt)
 
     ca = DBHT()
-    idx, clustering, k, S, D = cluster_assets2(portfolio; hclust_alg = ca, hclust_opt = ct)
+    idx, clustering, k, S, D = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 1, 1, 2, 3, 2, 2, 3, 2, 2, 3, 1, 1, 2, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;

@@ -1,48 +1,48 @@
-using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, LinearAlgebra,
-      StatsPlots, GraphRecipes
+using Test, PortfolioOptimiser, DataFrames, CSV, Dates, Clarabel, LinearAlgebra, Makie,
+      TimeSeries
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
-@testset "Plotting" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-    rm = :SD
-    obj = :Min_Risk
-    w = optimise!(portfolio, OptimiseOpt(; rm = rm, obj = obj); save_opt_params = true)
-    plt1 = plot_risk_contribution(portfolio; rm = rm, percentage = true)
-    plt2 = plot_risk_contribution(portfolio; rm = rm, percentage = false)
-    frontier = efficient_frontier!(portfolio, OptimiseOpt(; rm = rm))
-    plt3 = plot_frontier(portfolio; rm = rm)
-    plt4 = plot_frontier_area(portfolio; rm = rm)
-    plt5 = plot_frontier_area(frontier; rm = rm)
-    plt6 = plot_drawdown(portfolio)
-    plt7 = plot_hist(portfolio)
-    plt8 = plot_range(portfolio)
-    plt9 = plot_returns(portfolio)
-    plt10 = plot_returns(portfolio; per_asset = true)
-    plt11 = plot_bar(portfolio)
+# using CairoMakie
+# @testset "Plot returns" begin
+portfolio = Portfolio(; prices = prices,
+                      solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                       :params => Dict("verbose" => false,
+                                                                       "max_step_fraction" => 0.75))))
+asset_statistics!(portfolio)
+rm = SD()
+obj = MinRisk()
+w1 = optimise!(portfolio; type = RP(), rm = rm, kelly = AKelly(), obj = obj)
 
-    hcportfolio = HCPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))),)
-    asset_statistics!(hcportfolio; calc_kurt = false)
-    plt12 = plot_clusters(hcportfolio;
-                          cluster_opt = ClusterOpt(; linkage = :DBHT, branchorder = :r,
-                                                   dbht_method = :Unique))
-    plt13 = plot_dendrogram(hcportfolio;
-                            cluster_opt = ClusterOpt(; linkage = :DBHT,
-                                                     branchorder = :optimal,
-                                                     dbht_method = :Unique))
-    optimise!(hcportfolio; type = :HERC,
-              cluster_opt = ClusterOpt(; linkage = :DBHT, branchorder = :optimal,
-                                       dbht_method = :Unique))
-    plt14 = plot_clusters(hcportfolio; cluster = false)
-    plt15 = plot_clusters(hcportfolio.assets, hcportfolio.returns)
-    plt16 = plot_clusters(hcportfolio.assets, hcportfolio.returns; linkage = :DBHT)
-    plt17 = plot_network(portfolio)
-    plt18 = plot_cluster_network(portfolio)
-end
+prp = plot_returns2(portfolio, :RP)
+pra = plot_returns2(portfolio, :RP; per_asset = true)
+pb = plot_bar2(portfolio, :RP)
+prc = plot_risk_contribution2(portfolio, :RP; rm = rm, percentage = true)
+fw = efficient_frontier!(portfolio; kelly = NoKelly(), rm = rm, points = 5)
+pf = plot_frontier2(portfolio; kelly = NoKelly(), rm = rm)
+
+fw = efficient_frontier!(portfolio; rm = rm, points = 5)
+pf = plot_frontier2(portfolio; rm = rm)
+
+pfa = plot_frontier_area2(fw; rm = rm, t_factor = 252)
+# end
+
+# using StatsPlots
+# using GraphRecipes
+# portfolio2 = Portfolio(; prices = prices,
+#                        solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+#                                                         :params => Dict("verbose" => false,
+#                                                                         "max_step_fraction" => 0.75))))
+# asset_statistics!(portfolio2)
+# rm = :SD
+# obj = :Min_Risk
+# fw2 = efficient_frontier!(portfolio2; points = 5)
+# prc = plot_frontier_area(fw2)
+
+# w = optimise!(portfolio2, OptimiseOpt(; type = :RP, rm = rm, obj = obj);
+#               save_opt_params = true)
+# plt1 = plot_risk_contribution(portfolio2; type = :RP, rm = rm, percentage = false)
+# prp = plot_returns2(portfolio)
+# pra = plot_returns2(portfolio; per_asset = true)
+# pb = plot_bar2(portfolio)
+# prc = plot_risk_contribution2(portfolio, :RP; rm = rm, percentage = true)

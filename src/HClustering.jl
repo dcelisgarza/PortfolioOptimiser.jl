@@ -1,37 +1,63 @@
-#=
-"""
-```
-_std_silhouette_score(dist, clustering, max_k = 0)
-```
-"""
-function _std_silhouette_score(dist, clustering, max_k = 0, metric = nothing)
-    N = size(dist, 1)
-    cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]
 
-    if iszero(max_k)
-        max_k = ceil(Int, sqrt(size(dist, 1)))
-    end
-
-    c1 = min(N, max_k)
-    W_list = Vector{eltype(dist)}(undef, c1)
-    W_list[1] = -Inf
-    for i ∈ 2:c1
-        lvl = cluster_lvls[i]
-        sl = silhouettes(lvl, dist; metric = metric)
-        msl = mean(sl)
-        W_list[i] = msl / std(sl; mean = msl)
-    end
-
-    k = all(.!isfinite.(W_list)) ? length(W_list) : k = argmax(W_list)
-
-    return k
+function is_leaf(a::ClusterNode)
+    return isnothing(a.left)
 end
+function pre_order(a::ClusterNode, func::Function = x -> x.id)
+    n = a.count
+    curNode = Vector{ClusterNode}(undef, 2 * n)
+    lvisited = Set()
+    rvisited = Set()
+    curNode[1] = a
+    k = 1
+    preorder = Int[]
 
-"""
-```
-_two_diff_gap_stat(dist, clustering, max_k = 0)
-```
-"""
+    while k >= 1
+        nd = curNode[k]
+        ndid = nd.id
+        if is_leaf(nd)
+            push!(preorder, func(nd))
+            k = k - 1
+        else
+            if ndid ∉ lvisited
+                curNode[k + 1] = nd.left
+                push!(lvisited, ndid)
+                k = k + 1
+            elseif ndid ∉ rvisited
+                curNode[k + 1] = nd.right
+                push!(rvisited, ndid)
+                k = k + 1
+                # If we've visited the left and right of this non-leaf
+                # node already, go up in the tree.
+            else
+                k = k - 1
+            end
+        end
+    end
+
+    return preorder
+end
+function to_tree(a::Hclust)
+    n = length(a.order)
+    d = Vector{ClusterNode}(undef, 2 * n - 1)
+    for i ∈ 1:n
+        d[i] = ClusterNode(i)
+    end
+    merges = a.merges
+    heights = a.heights
+    nd = nothing
+
+    for (i, height) ∈ pairs(heights)
+        fi = merges[i, 1]
+        fj = merges[i, 2]
+
+        fi = fi < 0 ? -fi : fi + n
+        fj = fj < 0 ? -fj : fj + n
+
+        nd = ClusterNode(i + n, d[fi], d[fj], height)
+        d[n + i] = nd
+    end
+    return nd, d
+end
 function _two_diff_gap_stat(dist, clustering, max_k = 0)
     N = size(dist, 1)
     cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]
@@ -77,29 +103,48 @@ function _two_diff_gap_stat(dist, clustering, max_k = 0)
 
     return k
 end
-=#
 function _calc_k(::TwoDiff, dist::AbstractMatrix, clustering, max_k::Integer)
     return _two_diff_gap_stat(dist, clustering, max_k)
+end
+function _std_silhouette_score(dist, clustering, max_k = 0, metric = nothing)
+    N = size(dist, 1)
+    cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]
+
+    if iszero(max_k)
+        max_k = ceil(Int, sqrt(size(dist, 1)))
+    end
+
+    c1 = min(N, max_k)
+    W_list = Vector{eltype(dist)}(undef, c1)
+    W_list[1] = -Inf
+    for i ∈ 2:c1
+        lvl = cluster_lvls[i]
+        sl = silhouettes(lvl, dist; metric = metric)
+        msl = mean(sl)
+        W_list[i] = msl / std(sl; mean = msl)
+    end
+
+    k = all(.!isfinite.(W_list)) ? length(W_list) : k = argmax(W_list)
+
+    return k
 end
 function _calc_k(method::StdSilhouette, dist::AbstractMatrix, clustering, max_k::Integer)
     return _std_silhouette_score(dist, clustering, max_k, method.metric)
 end
-function calc_k(hclust_opt::HClustOpt, dist::AbstractMatrix, clustering)
+function calc_k(hclust_opt::HCType, dist::AbstractMatrix, clustering)
     if !iszero(hclust_opt.k)
         return hclust_opt.k
     end
-
     return _calc_k(hclust_opt.k_method, dist, clustering, hclust_opt.max_k)
 end
-function _hcluster(ca::HAClustering, portfolio::HCPortfolio2,
-                   hclust_opt::HClustOpt = HClustOpt())
+function _hcluster(ca::HAC, portfolio::HCPortfolio, hclust_opt::HCType = HCType())
     clustering = hclust(portfolio.dist; linkage = ca.linkage,
                         branchorder = hclust_opt.branchorder)
     k = calc_k(hclust_opt, portfolio.dist, clustering)
 
     return clustering, k
 end
-function _hcluster(ca::DBHT, portfolio::HCPortfolio2, hclust_opt::HClustOpt = HClustOpt())
+function _hcluster(ca::DBHT, portfolio::HCPortfolio, hclust_opt::HCType = HCType())
     S = portfolio.cor
     D = portfolio.dist
     S = dbht_similarity(ca.similarity, S, D)
@@ -109,16 +154,16 @@ function _hcluster(ca::DBHT, portfolio::HCPortfolio2, hclust_opt::HClustOpt = HC
 
     return clustering, k
 end
-function cluster_assets2(portfolio::HCPortfolio2; hclust_alg::HClustAlg = HAClustering(),
-                         hclust_opt::HClustOpt = HClustOpt())
+function cluster_assets(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAC(),
+                        hclust_opt::HCType = HCType())
     clustering, k = _hcluster(hclust_alg, portfolio, hclust_opt)
 
     idx = cutree(clustering; k = k)
 
     return idx, clustering, k
 end
-function cluster_assets2!(ca::HClustAlg, portfolio::HCPortfolio2,
-                          hclust_opt::HClustOpt = HClustOpt())
+function cluster_assets!(ca::HClustAlg, portfolio::HCPortfolio,
+                         hclust_opt::HCType = HCType())
     clustering, k = _hcluster(ca, portfolio, hclust_opt)
 
     portfolio.clusters = clustering
@@ -126,10 +171,10 @@ function cluster_assets2!(ca::HClustAlg, portfolio::HCPortfolio2,
 
     return nothing
 end
-function _hcluster(ca::HAClustering, X::AbstractMatrix,
+function _hcluster(ca::HAC, X::AbstractMatrix,
                    cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                    dist_type::DistanceMethod = DistanceDefault(),
-                   hclust_opt::HClustOpt = HClustOpt())
+                   hclust_opt::HCType = HCType())
     dist_type = _get_default_dist(dist_type, cor_type)
     if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
         dist_type.absolute = cor_type.ce.absolute
@@ -146,7 +191,7 @@ end
 function _hcluster(ca::DBHT, X::AbstractMatrix,
                    cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                    dist_type::DistanceMethod = DistanceDefault(),
-                   hclust_opt::HClustOpt = HClustOpt())
+                   hclust_opt::HCType = HCType())
     dist_type = _get_default_dist(dist_type, cor_type)
     if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
         dist_type.absolute = cor_type.ce.absolute
@@ -161,25 +206,20 @@ function _hcluster(ca::DBHT, X::AbstractMatrix,
 
     return clustering, k, S, D
 end
-
-function cluster_assets2(X::AbstractMatrix;
-                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                         dist_type::DistanceMethod = DistanceDefault(),
-                         hclust_alg::HClustAlg = HAClustering(),
-                         hclust_opt::HClustOpt = HClustOpt())
+function cluster_assets(X::AbstractMatrix;
+                        cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                        dist_type::DistanceMethod = DistanceDefault(),
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
     clustering, k, S, D = _hcluster(hclust_alg, X, cor_type, dist_type, hclust_opt)
 
     idx = cutree(clustering; k = k)
 
     return idx, clustering, k, S, D
 end
-function cluster_assets2(portfolio::Portfolio2;
-                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                         dist_type::DistanceMethod = DistanceDefault(),
-                         hclust_alg::HClustAlg = HAClustering(),
-                         hclust_opt::HClustOpt = HClustOpt())
-    return cluster_assets2(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
-                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+function cluster_assets(portfolio::Portfolio;
+                        cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                        dist_type::DistanceMethod = DistanceDefault(),
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
+    return cluster_assets(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
+                          hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
-
-export TwoDiff, StdSilhouette, _hcluster, cluster_assets2, HClustOpt, cluster_assets2!
