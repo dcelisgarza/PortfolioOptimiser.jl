@@ -49,6 +49,7 @@ function asset_statistics2!(portfolio::AbstractPortfolio2;
             rho = cor(cor_type, returns)
             if set_cor
                 portfolio.cor = rho
+                portfolio.cor_type = cor_type
             end
         end
 

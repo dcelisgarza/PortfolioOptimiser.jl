@@ -1951,10 +1951,10 @@ mutable struct HCPortfolio2{ast, dat, r, ai, a, as, bi, b, bs, k, ata, mnak, mna
     V::tv
     sskew::tsskew
     SV::tsv
-    bins_info::tbin
+    bins::tbin
     w_min::wmi
     w_max::wma
-    cor_method::ttco
+    cor_type::ttco
     cor::tco
     dist::tdist
     clusters::tcl
@@ -2052,9 +2052,9 @@ Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
 
 ### Clustering statistics
 
-  - `bins_info`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`](@ref) for available choices.
+  - `bins`: selection criterion for computing the number of bins used to calculate the mutual and variation of information statistics, see [`mut_var_info_mtx`](@ref) for available choices.
 
-  - `cor_method`: method for estimating the codependence matrix.
+  - `cor_type`: method for estimating the codependence matrix.
   - `cor`: `Na×Na` matrix, where where `Na` is the number of assets. Set the value of the codependence matrix at instance construction.
   - `dist`:  `Na×Na` matrix, where where `Na` is the number of assets. Set the value of the distance matrix at instance construction.
   - `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters.
@@ -2095,9 +2095,9 @@ mutable struct HCPortfolio2{ast, dat, r,
                             # ai, a, as, bi, b, bs, k, ata, 
                             # mnak, mnaks,
                             # skewf, sskewf, owap, wowa, 
-                            tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
-                            tbin, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv, tf, tlp,
-                            taopt, talo, tasolv, taf, tamod} <: AbstractPortfolio2
+                            tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv, wmi,
+                            wma, ttco, tco, tdist, tcl, tk, topt, tsolv, tf, tlp, taopt,
+                            talo, tasolv, taf, tamod} <: AbstractPortfolio2
     assets::ast
     timestamps::dat
     returns::r
@@ -2125,10 +2125,9 @@ mutable struct HCPortfolio2{ast, dat, r,
     V::tv
     sskew::tsskew
     SV::tsv
-    bins_info::tbin
     w_min::wmi
     w_max::wma
-    cor_method::ttco
+    cor_type::ttco
     cor::tco
     dist::tdist
     clusters::tcl
@@ -2166,10 +2165,10 @@ HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
             V = Matrix{eltype(returns)}(undef, 0, 0),
             sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
             SV = Matrix{eltype(returns)}(undef, 0, 0),
-            bins_info::Union{Symbol, <:Integer} = :KN,
+            bins::Union{Symbol, <:Integer} = :KN,
             w_min::Union{<:Real, AbstractVector{<:Real}} = 0.0,
             w_max::Union{<:Real, AbstractVector{<:Real}} = 1.0,
-            cor_method::Symbol = :Pearson,
+            cor_type::Symbol = :Pearson,
             cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
             dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
             clusters::Clustering.Hclust = Hclust{Float64}(Matrix{Int64}(undef, 0, 2),
@@ -2219,10 +2218,10 @@ Performs data validation and creates an instance of [`HCPortfolio2`](@ref). Unio
   - `skurt`: sets `skurt`.
   - `skew`: sets `skew`.
   - `sskew`: sets `sskew`.
-  - `bins_info`: sets `bins_info`.
+  - `bins`: sets `bins`.
   - `w_min`: sets `w_min`.
   - `w_max`: sets `w_max`.
-  - `cor_method`: sets `cor_method`.
+  - `cor_type`: sets `cor_type`.
   - `cor`: sets `cor`.
   - `dist`: sets `dist`.
   - `clusters`: sets `clusters`.
@@ -2263,10 +2262,9 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                       V = Matrix{eltype(returns)}(undef, 0, 0),
                       sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                       SV = Matrix{eltype(returns)}(undef, 0, 0),
-                      bins_info::Union{Symbol, <:Integer} = :KN,
                       w_min::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
                       w_max::Union{<:Real, <:AbstractVector{<:Real}} = 1.0,
-                      cor_method::Symbol = :Pearson,
+                      cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                       cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                       dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                       clusters::Clustering.Hclust = Hclust{Float64}(Matrix{Int64}(undef, 0,
@@ -2333,8 +2331,6 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
     if !isempty(SV)
         @smart_assert(size(SV, 1) == size(SV, 2) == size(returns, 2))
     end
-    @smart_assert(bins_info ∈ BinMethods ||
-                  (isa(bins_info, Int) && bins_info > zero(bins_info)))
     if isa(w_min, Real)
         @smart_assert(all(w_min .<= w_max))
     elseif isa(w_min, AbstractVector)
@@ -2349,7 +2345,6 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
             @smart_assert(length(w_max) == size(returns, 2) && all(w_min .<= w_max))
         end
     end
-    @smart_assert(cor_method ∈ CorMethods)
     if !isempty(cor)
         @smart_assert(size(cor, 1) == size(cor, 2) == size(returns, 2))
     end
@@ -2372,8 +2367,8 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                         # typeof(owa_w), 
                         typeof(mu), typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2),
                         typeof(S_2), typeof(skew), typeof(V), typeof(sskew), typeof(SV),
-                        Union{Symbol, <:Integer}, Union{<:Real, <:AbstractVector{<:Real}},
-                        Union{<:Real, <:AbstractVector{<:Real}}, typeof(cor_method),
+                        Union{<:Real, <:AbstractVector{<:Real}},
+                        Union{<:Real, <:AbstractVector{<:Real}}, typeof(cor_type),
                         typeof(cor), typeof(dist), typeof(clusters), typeof(k),
                         typeof(optimal), Union{<:AbstractDict, NamedTuple}, typeof(fail),
                         typeof(latest_prices), typeof(alloc_optimal),
@@ -2386,10 +2381,9 @@ function HCPortfolio2(; prices::TimeArray = TimeArray(TimeType[], []),
                                                                  #  skew_factor, sskew_factor, owa_p, owa_w, 
                                                                  mu, cov, kurt, skurt, L_2,
                                                                  S_2, skew, V, sskew, SV,
-                                                                 bins_info, w_min, w_max,
-                                                                 cor_method, cor, dist,
-                                                                 clusters, k, optimal,
-                                                                 solvers, fail,
+                                                                 w_min, w_max, cor_type,
+                                                                 cor, dist, clusters, k,
+                                                                 optimal, solvers, fail,
                                                                  latest_prices,
                                                                  alloc_optimal,
                                                                  alloc_leftover,
@@ -2423,11 +2417,8 @@ function Base.setproperty!(obj::HCPortfolio2, sym::Symbol, val)
     #         @smart_assert(length(val) == size(obj.returns, 1))
     #     end
     #     val = convert(typeof(getfield(obj, sym)), val)
-    if sym == :bins_info
-        @smart_assert(val ∈ BinMethods || isa(val, Int) && val > zero(val))
-    elseif sym == :cor_method
-        @smart_assert(val ∈ CorMethods)
-    elseif sym == :k
+
+    if sym == :k
         @smart_assert(val >= zero(val))
     elseif sym ∈ (:w_min, :w_max)
         if sym == :w_min
@@ -2513,8 +2504,8 @@ function Base.deepcopy(obj::HCPortfolio2)
                         typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt),
                         typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2),
                         typeof(obj.skew), typeof(obj.V), typeof(obj.sskew), typeof(obj.SV),
-                        Union{Symbol, <:Integer}, Union{<:Real, <:AbstractVector{<:Real}},
-                        Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.cor_method),
+                        Union{<:Real, <:AbstractVector{<:Real}},
+                        Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.cor_type),
                         typeof(obj.cor), typeof(obj.dist), typeof(obj.clusters),
                         typeof(obj.k), typeof(obj.optimal),
                         Union{<:AbstractDict, NamedTuple}, typeof(obj.fail),
@@ -2543,10 +2534,9 @@ function Base.deepcopy(obj::HCPortfolio2)
                                                                          deepcopy(obj.V),
                                                                          deepcopy(obj.sskew),
                                                                          deepcopy(obj.SV),
-                                                                         deepcopy(obj.bins_info),
                                                                          deepcopy(obj.w_min),
                                                                          deepcopy(obj.w_max),
-                                                                         deepcopy(obj.cor_method),
+                                                                         deepcopy(obj.cor_type),
                                                                          deepcopy(obj.cor),
                                                                          deepcopy(obj.dist),
                                                                          deepcopy(obj.clusters),
