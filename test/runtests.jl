@@ -1,9 +1,5 @@
 using SafeTestsets
 
-@safetestset "HC Optimistaion" begin
-    include("HCOptimisationTests.jl")
-end
-
 @safetestset "Constraints" begin
     include("ConstrainedOptimisationTests.jl")
 end
@@ -94,4 +90,8 @@ end
 
 @safetestset "Near Optimal Centering" begin
     include("NearOptimalCenteringTests.jl")
+end
+
+@safetestset "HC Optimistaion" begin
+    include("HCOptimisationTests.jl")
 end

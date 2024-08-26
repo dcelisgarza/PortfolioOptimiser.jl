@@ -4,7 +4,7 @@ using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, G
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
-# :check_sol => (allow_local = true, allow_almost = true),
+
 @testset "Rebalance Trad" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -114,6 +114,8 @@ end
 @testset "Rebalance WC" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.7))))
     asset_statistics!(portfolio)
