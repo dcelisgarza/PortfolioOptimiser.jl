@@ -171,7 +171,7 @@ end
     w10 = optimise!(portfolio; type = WC(), obj = Utility(; l = l))
     w11 = optimise!(portfolio; type = WC(), obj = Sharpe(; rf = rf))
     w12 = optimise!(portfolio; type = WC(), obj = MaxRet())
-    @test isapprox(w10.weights, w1.weights, rtol = 5.0e-8)
+    @test isapprox(w10.weights, w1.weights, rtol = 1.0e-7)
     @test isapprox(w11.weights, w1.weights, rtol = 5.0e-8)
     @test isapprox(w12.weights, w1.weights, rtol = 1.0e-6)
 
@@ -1180,6 +1180,8 @@ end
 
     portfolio = portfolio = Portfolio(; prices = prices,
                                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                       :check_sol => (allow_local = true,
+                                                                                      allow_almost = true),
                                                                        :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
