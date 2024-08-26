@@ -394,7 +394,7 @@ function _sd_risk(::SDP, ::Any, model, sigma, idx::Integer)
     add_to_expression!(sd_risk[idx], tr(sigma * W))
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, ::SOCSD, model, sigma)
+function _sd_risk(::Union{NoNtwk, IP}, ::SOCSD, model::JuMP.Model, sigma::AbstractMatrix)
     G = sqrt(sigma)
     @variable(model, dev)
     @expression(model, sd_risk, dev^2)
@@ -402,12 +402,14 @@ function _sd_risk(::Union{NoNtwk, IP}, ::SOCSD, model, sigma)
     @constraint(model, [dev; G * w] ∈ SecondOrderCone())
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, model, sigma, count::Integer)
+function _sd_risk(::Union{NoNtwk, IP}, model::JuMP.Model, sigma::AbstractMatrix,
+                  count::Integer)
     @variable(model, dev[1:count])
     @expression(model, sd_risk[1:count], zero(QuadExpr))
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, ::SOCSD, model, sigma, idx::Integer)
+function _sd_risk(::Union{NoNtwk, IP}, ::SOCSD, model::JuMP.Model, sigma::AbstractMatrix,
+                  idx::Integer)
     G = sqrt(sigma)
     sd_risk = model[:sd_risk]
     dev = model[:dev]
@@ -424,7 +426,8 @@ function _sd_risk(::Union{NoNtwk, IP}, ::QuadSD, model, sigma)
     @constraint(model, [dev; G * w] ∈ SecondOrderCone())
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, ::QuadSD, model, sigma, idx::Integer)
+function _sd_risk(::Union{NoNtwk, IP}, ::QuadSD, model::JuMP.Model, sigma::AbstractMatrix,
+                  idx::Integer)
     G = sqrt(sigma)
     sd_risk = model[:sd_risk]
     w = model[:w]
@@ -433,7 +436,7 @@ function _sd_risk(::Union{NoNtwk, IP}, ::QuadSD, model, sigma, idx::Integer)
     @constraint(model, [dev[idx]; G * w] ∈ SecondOrderCone())
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, ::SimpleSD, model, sigma)
+function _sd_risk(::Union{NoNtwk, IP}, ::SimpleSD, model::JuMP.Model, sigma::AbstractMatrix)
     G = sqrt(sigma)
     @variable(model, dev)
     @expression(model, sd_risk, dev)

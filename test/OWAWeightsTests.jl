@@ -888,6 +888,17 @@ end
             0.0025004588673758488, 0.00250270158437166, 0.002504570967973925,
             0.0025060670826433933, 0.00250718999284081, 0.002507939763026922,
             0.0025083164576624765]
+
+    function find_rtol(a1, a2)
+        for rtol ∈
+            [1e-10, 5e-10, 1e-9, 5e-9, 1e-8, 5e-8, 1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4,
+             5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 2.5e-1, 5e-1, 1e0]
+            if isapprox(a1, a2; rtol = rtol)
+                println(", rtol = $(rtol)")
+                break
+            end
+        end
+    end
     @test isapprox(w1, w1t)
     @test isapprox(w2, w2t)
     @test !isapprox(w2, w1)
@@ -902,6 +913,11 @@ end
     @test isapprox(w5, w1)
     @test !isapprox(w5, w2)
     @test isapprox(w5, w3)
+    find_rtol(
+              #    
+              w10, w10t
+              #
+              )
     @test !isapprox(w5, w4)
     @test isapprox(w6, w6t)
     @test !isapprox(w6, w1)
@@ -920,6 +936,11 @@ end
     @test !isapprox(w10, w3)
     @test !isapprox(w10, w2)
     @test !isapprox(w10, w1)
+    find_rtol(
+              #    
+              w12, w12t
+              #
+              )
     @test isapprox(w12, w12t, rtol = 1e-2)
     @test !isapprox(w12, w10)
     @test !isapprox(w12, w6)
