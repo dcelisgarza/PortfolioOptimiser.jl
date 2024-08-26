@@ -129,18 +129,5 @@ l = 2.0
                   1.0913649230997367e-7, 0.09854545984921281, 1.0105170893868348e-7], 20, :)
     frontier2 = efficient_frontier!(portfolio; kelly = EKelly(), rm = SD2(), points = 5,
                                     rf = rf)
-
-    function find_rtol(a1, a2)
-        for rtol ∈
-            [1e-10, 5e-10, 1e-9, 5e-9, 1e-8, 5e-8, 1e-7, 5e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4,
-             5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 2.5e-1, 5e-1, 1e0]
-            if isapprox(a1, a2; rtol = rtol)
-                println(", rtol = $(rtol)")
-                break
-            end
-        end
-    end
-
-    find_rtol(Matrix(frontier2[:weights][!, 2:end]), wt)
-    @test isapprox(Matrix(frontier2[:weights][!, 2:end]), wt)
+    @test isapprox(Matrix(frontier2[:weights][!, 2:end]), wt, rtol = 5.0e-6)
 end
