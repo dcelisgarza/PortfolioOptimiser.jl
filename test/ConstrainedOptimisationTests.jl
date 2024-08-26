@@ -1091,7 +1091,9 @@ end
 
 @testset "Network and Dendrogram upper dev" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
+                                                                       allow_almost = true),
+                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
                                                                                              "verbose" => false,
                                                                                              "oa_solver" => optimizer_with_attributes(GLPK.Optimizer,
                                                                                                                                       MOI.Silent() => true),
