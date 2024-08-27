@@ -652,16 +652,18 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     if isa(w_min, Real)
         @smart_assert(all(w_min .<= w_max))
     elseif isa(w_min, AbstractVector)
-        if !isempty(w_min)
-            @smart_assert(length(w_min) == size(returns, 2) && all(w_min .<= w_max))
+        if isempty(w_min)
+            w_min = 0.0
         end
+        @smart_assert(length(w_min) == size(returns, 2) && all(w_min .<= w_max))
     end
     if isa(w_max, Real)
         @smart_assert(all(w_min .<= w_max))
     elseif isa(w_max, AbstractVector)
-        if !isempty(w_max)
-            @smart_assert(length(w_max) == size(returns, 2) && all(w_min .<= w_max))
+        if isempty(w_max)
+            w_max = 1.0
         end
+        @smart_assert(length(w_max) == size(returns, 2) && all(w_min .<= w_max))
     end
     if !isempty(cor)
         @smart_assert(size(cor, 1) == size(cor, 2) == size(returns, 2))
@@ -696,26 +698,23 @@ end
 function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
     if sym == :k
         @smart_assert(val >= zero(val))
-    elseif sym ∈ (:w_min, :w_max)
-        if sym == :w_min
-            smin = sym
-            smax = :w_max
-            vmin = val
-            vmax = getfield(obj, smax)
-        else
-            smin = :w_min
-            smax = sym
-            vmin = getfield(obj, smin)
-            vmax = val
-        end
-
-        lmin = length(vmin)
-        lmax = length(vmax)
-
+    elseif sym == :w_min
         if isa(val, Real)
-            @smart_assert(all(vmin .<= vmax))
+            @smart_assert(all(val .<= obj.w_max))
         elseif isa(val, AbstractVector)
-            @smart_assert(length(val) == size(obj.returns, 2) && all(vmin .<= vmax))
+            if isempty(val)
+                val = 0.0
+            end
+            @smart_assert(length(val) == size(obj.returns, 2) && all(val .<= obj.w_max))
+        end
+    elseif sym == :w_max
+        if isa(val, Real)
+            @smart_assert(all(obj.w_min .<= val))
+        elseif isa(val, AbstractVector)
+            if isempty(val)
+                val = 1.0
+            end
+            @smart_assert(length(val) == size(obj.returns, 2) && all(obj.w_min .<= val))
         end
     elseif sym ∈ (:mu, :latest_prices)
         if !isempty(val)

@@ -147,7 +147,8 @@ function PortfolioOptimiser.plot_frontier(frontier;
                                           X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                                           mu::AbstractVector = Vector{Float64}(undef, 0),
                                           rf::Real = 0.0, rm::RiskMeasure = SD(),
-                                          kelly::RetType = NoKelly(), t_factor = 252)
+                                          kelly::RetType = NoKelly(), t_factor = 252,
+                                          palette = :Spectral)
     risks = copy(frontier[:risk])
     weights = Matrix(frontier[:weights][!, 2:end])
 
@@ -200,16 +201,18 @@ function PortfolioOptimiser.plot_frontier(port::AbstractPortfolio, key = nothing
                                           X::AbstractMatrix = port.returns,
                                           mu::AbstractVector = port.mu,
                                           rm::RiskMeasure = SD(), rf::Real = 0.0,
-                                          kelly::RetType = NoKelly(), t_factor = 252)
+                                          kelly::RetType = NoKelly(), t_factor = 252,
+                                          palette = :Spectral)
     if isnothing(key)
         key = get_rm_string(rm)
     end
     return PortfolioOptimiser.plot_frontier(port.frontier[key]; X = X, mu = mu, rf = rf,
-                                            rm = rm, kelly = kelly, t_factor = t_factor)
+                                            rm = rm, kelly = kelly, t_factor = t_factor,
+                                            palette = palette)
 end
 
 function PortfolioOptimiser.plot_frontier_area(frontier; rm::RiskMeasure = SD(),
-                                               t_factor = 252)
+                                               t_factor = 252, palette = :Spectral)
     risks = copy(frontier[:risk])
     assets = reshape(frontier[:weights][!, "tickers"], 1, :)
     weights = Matrix(frontier[:weights][!, 2:end])
@@ -244,11 +247,14 @@ function PortfolioOptimiser.plot_frontier_area(frontier; rm::RiskMeasure = SD(),
 
     N = length(risks)
     weights = cumsum(weights; dims = 1)
+    colors = cgrad(palette, size(weights, 1))
     for i ∈ axes(weights, 1)
         if i == 1
-            band!(ax, risks, range(0, 0, N), weights[i, :]; label = assets[i])
+            band!(ax, risks, range(0, 0, N), weights[i, :]; label = assets[i],
+                  color = colors[i])
         else
-            band!(ax, risks, weights[i - 1, :], weights[i, :]; label = assets[i])
+            band!(ax, risks, weights[i - 1, :], weights[i, :]; label = assets[i],
+                  color = colors[i])
         end
     end
     if !isnothing(sharpe)
@@ -268,7 +274,48 @@ function PortfolioOptimiser.plot_frontier(port::AbstractPortfolio, key = nothing
 end
 
 function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
-                                          returns::AbstractMatrix; alpha::Real = 0.05,
+                                          X::AbstractMatrix; alpha::Real = 0.05,
                                           kappa::Real = 0.3,
-                                          solvers::Union{<:AbstractDict, Nothing} = nothing) end
+                                          solvers::Union{<:AbstractDict, Nothing} = nothing,
+                                          palette = :Spectral)
+    ret = X * w
+
+    prices = copy(ret)
+    pushfirst!(prices, 0)
+    prices .+= 1
+    prices = cumprod(prices)
+    popfirst!(prices)
+    prices2 = cumsum(copy(ret)) .+ 1
+
+    dd = similar(prices2)
+    peak = -Inf
+    for i ∈ eachindex(prices2)
+        if prices2[i] > peak
+            peak = prices2[i]
+        end
+        dd[i] = prices2[i] - peak
+    end
+
+    dd .*= 100
+
+    risks = [-PortfolioOptimiser._ADD_abs(ret), -PortfolioOptimiser._UCI_abs(ret),
+             -PortfolioOptimiser._DaR_abs(ret, alpha),
+             -PortfolioOptimiser._CDaR_abs(ret, alpha),
+             -PortfolioOptimiser._EDaR_abs(ret, solvers, alpha),
+             -PortfolioOptimiser._RDaR_abs(ret, solvers, alpha, kappa),
+             -PortfolioOptimiser._MDD_abs(ret)] * 100
+
+    conf = round((1 - alpha) * 100; digits = 2)
+
+    risk_labels = ("Average Drawdown: $(round(risks[1], digits = 2))%",
+                   "Ulcer Index: $(round(risks[2], digits = 2))%",
+                   "$(conf)% Confidence DaR: $(round(risks[3], digits = 2))%",
+                   "$(conf)% Confidence CDaR: $(round(risks[4], digits = 2))%",
+                   "$(conf)% Confidence EDaR: $(round(risks[5], digits = 2))%",
+                   "$(conf)% Confidence RDaR ($(round(kappa, digits=2))): $(round(risks[6], digits = 2))%",
+                   "Maximum Drawdown: $(round(risks[7], digits = 2))%")
+
+    colors = cgrad(palette)[length(risk_labels) + 1]
+    return f
+end
 end

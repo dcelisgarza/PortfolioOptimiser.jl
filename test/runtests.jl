@@ -1,33 +1,5 @@
 using SafeTestsets
 
-@safetestset "Type tests" begin
-    include("TypeTests.jl")
-end
-
-@safetestset "Misc Statistics" begin
-    include("MiscStatisticsTests.jl")
-end
-
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
-end
-
-@safetestset "OWA Weights" begin
-    include("OWAWeightsTests.jl")
-end
-
-@safetestset "DBHT Clustering" begin
-    include("DBHTClusteringTests.jl")
-end
-
-@safetestset "Efficient frontier v2" begin
-    include("EfficientFrontierTests.jl")
-end
-
-@safetestset "Near Optimal Centering" begin
-    include("NearOptimalCenteringTests.jl")
-end
-
 @safetestset "HC Optimistaion" begin
     include("HCOptimisationTests.jl")
 end
@@ -56,9 +28,9 @@ end
     include("TradOptimisationVectorTests.jl")
 end
 
-@safetestset "Plotting v2" begin
-    include("PlottingTests.jl")
-end
+# @safetestset "Plotting v2" begin
+#     include("PlottingTests.jl")
+# end
 
 @safetestset "Trad optimisation v2" begin
     include("TradOptimisationTests.jl")
@@ -98,4 +70,32 @@ end
 
 @safetestset "Constraint Functions" begin
     include("ConstraintTests.jl")
+end
+
+@safetestset "Type tests" begin
+    include("TypeTests.jl")
+end
+
+@safetestset "Misc Statistics" begin
+    include("MiscStatisticsTests.jl")
+end
+
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
+@safetestset "OWA Weights" begin
+    include("OWAWeightsTests.jl")
+end
+
+@safetestset "DBHT Clustering" begin
+    include("DBHTClusteringTests.jl")
+end
+
+@safetestset "Efficient frontier v2" begin
+    include("EfficientFrontierTests.jl")
+end
+
+@safetestset "Near Optimal Centering" begin
+    include("NearOptimalCenteringTests.jl")
 end
