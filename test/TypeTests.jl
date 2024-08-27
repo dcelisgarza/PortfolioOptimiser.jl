@@ -97,7 +97,8 @@ l = 2.0
     portfolio = Portfolio(; prices = prices, f_prices = factors,
                           rebalance = TR(; val = fill(inv(N), N)),
                           turnover = TR(; val = fill(inv(2 * N), N)),
-                          risk_budget = collect(1:N), f_risk_budget = collect(1:div(N, 2)),)
+                          risk_budget = collect(1.0:N),
+                          f_risk_budget = collect(1.0:div(N, 2)),)
     @test portfolio.rebalance.val == fill(inv(N), N)
     @test portfolio.turnover.val == fill(inv(2 * N), N)
     @test portfolio.risk_budget == collect(1:N) / sum(1:N)
