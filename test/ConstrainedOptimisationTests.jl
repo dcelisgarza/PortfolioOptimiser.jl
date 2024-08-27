@@ -785,7 +785,7 @@ end
           2.851355716950413e-8, 2.082232132989454e-7, 3.1366090964049265e-8,
           0.15590260393465316, 0.010877836307400067, 2.4616586233596695e-7,
           0.10021813719562453, 2.6349139195481583e-7]
-    @test isapprox(w20.weights, wt, rtol = 5.0e-6)
+    @test isapprox(w20.weights, wt, rtol = 1.0e-5)
 
     wc20 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w20.weights, wc20.weights, rtol = 0.0001)

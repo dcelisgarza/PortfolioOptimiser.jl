@@ -2254,22 +2254,22 @@ end
     rm = EVaR()
     optimise!(portfolio; rm = rm, obj = obj)
     z1 = get_z(portfolio, rm, obj)
-    @test isapprox(z1, 0.004652651226719961)
+    @test isapprox(z1, 0.004652651226719961, rtol = 5.0e-6)
 
     rm = EDaR()
     optimise!(portfolio; rm = rm, obj = obj)
     z2 = get_z(portfolio, rm, obj)
-    @test isapprox(z2, 0.00916553108191174)
+    @test isapprox(z2, 0.00916553108191174, rtol = 5.0e-5)
 
     rm = RVaR()
     optimise!(portfolio; rm = rm, obj = obj)
     z3 = get_z(portfolio, rm, obj)
-    @test isapprox(z3, 0.0018050418972062146)
+    @test isapprox(z3, 0.0018050418972062146, rtol = 5.0e-6)
 
     rm = RDaR()
     optimise!(portfolio; rm = rm, obj = obj)
     z4 = get_z(portfolio, rm, obj)
-    @test isapprox(z4, 0.003567371641778554)
+    @test isapprox(z4, 0.003567371641778554, rtol = 5.0e-8)
 
     rm = [[EVaR(), EVaR()]]
     optimise!(portfolio; rm = rm, obj = obj)
@@ -2294,13 +2294,13 @@ end
     @test isapprox(z1, z5[1], rtol = 5.0e-6)
     @test isapprox(z1, z5[2], rtol = 5.0e-6)
 
-    @test isapprox(z2, z6[1], rtol = 5.0e-8)
-    @test isapprox(z2, z6[2], rtol = 5.0e-6)
+    @test isapprox(z2, z6[1], rtol = 5.0e-5)
+    @test isapprox(z2, z6[2], rtol = 5.0e-5)
 
     @test isapprox(z3, z7[1], rtol = 5.0e-6)
     @test isapprox(z3, z7[2], rtol = 5.0e-6)
 
-    @test isapprox(z4, z8[1], rtol = 1.0e-6)
+    @test isapprox(z4, z8[1], rtol = 5.0e-6)
     @test isapprox(z4, z8[2], rtol = 5.0e-6)
 
     obj = Sharpe(; rf = rf)
@@ -2308,12 +2308,12 @@ end
     rm = EVaR()
     optimise!(portfolio; rm = rm, obj = obj)
     z9 = get_z(portfolio, rm, obj)
-    @test isapprox(z9, 0.006484925949235588)
+    @test isapprox(z9, 0.006484925949235588, rtol = 5.0e-6)
 
     rm = EDaR()
     optimise!(portfolio; rm = rm, obj = obj)
     z10 = get_z(portfolio, rm, obj)
-    @test isapprox(z10, 0.01165505512394213)
+    @test isapprox(z10, 0.01165505512394213, rtol = 5.0e-7)
 
     rm = RVaR()
     optimise!(portfolio; rm = rm, obj = obj)

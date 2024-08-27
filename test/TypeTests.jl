@@ -41,6 +41,7 @@ l = 2.0
     N = size(prices, 2)
     M = size(factors, 2)
     A = rand(N, N)
+    a_mtx_ineq = rand(3, N)
     skew = rand(N, N^2)
     sskew = rand(N, N^2)
     f_cov = rand(M, M)
@@ -51,23 +52,56 @@ l = 2.0
     cov_u = rand(N, N)
     cov_mu = rand(N, N)
     cov_sigma = rand(N^2, N^2)
-    portfolio = Portfolio(; prices = prices, f_prices = factors, rebalance = TR(; val = 3),
-                          turnover = TR(; val = 5),
-                          tracking_err = TrackWeight(; err = 7, w = fill(inv(N), N)),
-                          bl_bench_weights = fill(inv(2 * N), N),
-                          network_method = SDP(; A = A), a_vec_cent = fill(inv(3 * N), N),
-                          a_mtx_ineq = zeros(3, N), risk_budget = 1:N,
+    portfolio = Portfolio(; prices = prices, f_prices = factors,
+                          rebalance = TR(; val = 3, w = fill(inv(N), N)),
+                          turnover = TR(; val = 5, w = fill(inv(2 * N), N)),
+                          tracking_err = TrackWeight(; err = 7, w = fill(inv(3 * N), N)),
+                          bl_bench_weights = fill(inv(4 * N), N),
+                          network_method = SDP(; A = A), a_vec_cent = fill(inv(5 * N), N),
+                          a_mtx_ineq = a_mtx_ineq, risk_budget = 1:N,
                           f_risk_budget = 1:div(N, 2), skew = skew, sskew = sskew,
                           f_mu = fill(inv(M), M), f_cov = f_cov,
-                          fm_mu = fill(inv(5 * N), N), fm_cov = fm_cov,
-                          bl_mu = fill(inv(6 * N), N), bl_cov = bl_cov,
-                          blfm_mu = fill(inv(7 * N), N), blfm_cov = blfm_cov, cov_l = cov_l,
+                          fm_mu = fill(inv(6 * N), N), fm_cov = fm_cov,
+                          bl_mu = fill(inv(7 * N), N), bl_cov = bl_cov,
+                          blfm_mu = fill(inv(8 * N), N), blfm_cov = blfm_cov, cov_l = cov_l,
                           cov_u = cov_u, cov_mu = cov_mu, cov_sigma = cov_sigma,
-                          d_mu = fill(inv(8 * N), N))
+                          d_mu = fill(inv(9 * N), N))
     @test portfolio.rebalance.val == 3
+    @test portfolio.rebalance.w == fill(inv(N), N)
     @test portfolio.turnover.val == 5
+    @test portfolio.turnover.w == fill(inv(2 * N), N)
     @test portfolio.tracking_err.err == 7
-    @test portfolio.tracking_err.w == fill(inv(N), N)
+    @test portfolio.tracking_err.w == fill(inv(3 * N), N)
+    @test portfolio.bl_bench_weights == fill(inv(4 * N), N)
+    @test portfolio.network_method.A == A
+    @test portfolio.a_vec_cent == fill(inv(5 * N), N)
+    @test portfolio.a_mtx_ineq == a_mtx_ineq
+    @test portfolio.risk_budget == collect(1:N) / sum(1:N)
+    @test portfolio.f_risk_budget == collect(1:div(N, 2)) / sum(1:div(N, 2))
+    @test portfolio.skew == skew
+    @test portfolio.sskew == sskew
+    @test portfolio.f_mu == fill(inv(M), M)
+    @test portfolio.f_cov == f_cov
+    @test portfolio.fm_mu == fill(inv(6 * N), N)
+    @test portfolio.fm_cov == fm_cov
+    @test portfolio.bl_mu == fill(inv(7 * N), N)
+    @test portfolio.bl_cov == bl_cov
+    @test portfolio.blfm_mu == fill(inv(8 * N), N)
+    @test portfolio.blfm_cov == blfm_cov
+    @test portfolio.cov_l == cov_l
+    @test portfolio.cov_u == cov_u
+    @test portfolio.cov_mu == cov_mu
+    @test portfolio.cov_sigma == cov_sigma
+    @test portfolio.d_mu == fill(inv(9 * N), N)
+
+    portfolio = Portfolio(; prices = prices, f_prices = factors,
+                          rebalance = TR(; val = fill(inv(N), N)),
+                          turnover = TR(; val = fill(inv(2 * N), N)),
+                          risk_budget = collect(1:N), f_risk_budget = collect(1:div(N, 2)),)
+    @test portfolio.rebalance.val == fill(inv(N), N)
+    @test portfolio.turnover.val == fill(inv(2 * N), N)
+    @test portfolio.risk_budget == collect(1:N) / sum(1:N)
+    @test portfolio.f_risk_budget == collect(1:div(N, 2)) / sum(1:div(N, 2))
 
     @test_throws AssertionError Portfolio(; prices = prices, rebalance = TR(; val = -eps()))
 end

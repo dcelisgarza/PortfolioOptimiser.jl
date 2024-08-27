@@ -2182,7 +2182,7 @@ function rebalance_constraints(turnover::NoTR, ::Any, ::Any)
     return nothing
 end
 function rebalance_constraints(rebalance::TR, port, obj)
-    if !(isa(rebalance.val, Real) && (isinf(rebalance.val) || iszero(rebalance.val)) ||
+    if !(isa(rebalance.val, Real) && iszero(rebalance.val) ||
          isa(rebalance.val, AbstractVector) && isempty(rebalance.val) ||
          isempty(rebalance.w))
         _rebalance_constraints(obj, port.model, port.rebalance)
