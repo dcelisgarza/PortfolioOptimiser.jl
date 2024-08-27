@@ -1,13 +1,5 @@
 using SafeTestsets
 
-@safetestset "Entropic and Relativistic RM tests" begin
-    include("EntrRelRMs.jl")
-end
-
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
 @safetestset "Misc Statistics" begin
     include("MiscStatisticsTests.jl")
 end
@@ -94,4 +86,12 @@ end
 
 @safetestset "Factor Stats V2 tests" begin
     include("FactorStatsTest.jl")
+end
+
+@safetestset "Entropic and Relativistic RM tests" begin
+    include("EntrRelRMs.jl")
+end
+
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
 end

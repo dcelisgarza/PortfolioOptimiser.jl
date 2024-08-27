@@ -8,7 +8,7 @@ l = 2.0
 
 @testset "Misc Statistics" begin
     portfolio = Portfolio(; prices = prices)
-    asset_statistics!(portfolio; calc_kurt = false)
+    asset_statistics!(portfolio)
 
     simret1 = PortfolioOptimiser.cov_returns(portfolio.cov; iters = 5, len = 100,
                                              seed = 123456789)
