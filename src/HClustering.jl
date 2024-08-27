@@ -223,3 +223,5 @@ function cluster_assets(portfolio::Portfolio;
     return cluster_assets(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
+
+export is_leaf, pre_order, to_tree, calc_k, cluster_assets, cluster_assets!
