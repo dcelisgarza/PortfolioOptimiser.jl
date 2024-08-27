@@ -247,7 +247,7 @@ function PortfolioOptimiser.plot_frontier_area(frontier; rm::RiskMeasure = SD(),
 
     N = length(risks)
     weights = cumsum(weights; dims = 1)
-    colors = cgrad(palette, size(weights, 1))
+    colors = cgrad(palette, size(weights, 1); categorical = true, scale = true)
     for i ∈ axes(weights, 1)
         if i == 1
             band!(ax, risks, range(0, 0, N), weights[i, :]; label = assets[i],
@@ -265,12 +265,13 @@ function PortfolioOptimiser.plot_frontier_area(frontier; rm::RiskMeasure = SD(),
     axislegend(ax; position = :rc)
     return f
 end
-function PortfolioOptimiser.plot_frontier(port::AbstractPortfolio, key = nothing;
-                                          t_factor = 252)
+function PortfolioOptimiser.plot_frontier_area(port::AbstractPortfolio, key = nothing;
+                                               t_factor = 252, palette = :Spectral)
     if isnothing(key)
         key = get_rm_string(rm)
     end
-    return PortfolioOptimiser.plot_frontier(port.frontier[key]; t_factor = t_factor)
+    return PortfolioOptimiser.plot_frontier_area(port.frontier[key]; t_factor = t_factor,
+                                                 palette = palette)
 end
 
 function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
@@ -315,7 +316,7 @@ function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::Abstrac
                    "$(conf)% Confidence RDaR ($(round(kappa, digits=2))): $(round(risks[6], digits = 2))%",
                    "Maximum Drawdown: $(round(risks[7], digits = 2))%")
 
-    colors = cgrad(palette)[length(risk_labels) + 1]
+    colors = cgrad(palette, length(risk_labels) + 1; categorical = true, scale = true)
     return f
 end
 end

@@ -5,6 +5,136 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Weight bounds" begin
+    portfolio = HCPortfolio(; prices = prices,
+                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
+                                                             :params => Dict("verbose" => false,
+                                                                             "max_step_fraction" => 0.75))))
+
+    asset_statistics!(portfolio)
+    hclust_alg = HAC()
+    hclust_opt = HCType()
+
+    asset_sets = DataFrame("Asset" => portfolio.assets,
+                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                                       3, 1],
+                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
+                                        4, 2, 1],
+                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                                       2, 1],
+                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
+                                        2, 2, 1],
+                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
+                                        3, 4, 1],
+                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
+                                        4, 2, 2])
+    constraints = DataFrame("Enabled" => [true, true, true, true, true, true, false],
+                            "Type" => ["Asset", "Asset", "All Assets", "All Assets",
+                                       "Each Asset in Subset", "Each Asset in Subset",
+                                       "Asset"],
+                            "Set" => ["", "", "", "", "PDBHT", "Pward", ""],
+                            "Position" => ["WMT", "T", "", "", 3, 2, "AAPL"],
+                            "Sign" => [">=", "<=", ">=", "<=", ">=", "<=", ">="],
+                            "Weight" => [0.05, 0.04, 0.02, 0.07, 0.04, 0.08, 0.2])
+    w_min, w_max = hrp_constraints(constraints, asset_sets)
+    N = length(w_min)
+
+    portfolio.w_min = w_min
+    portfolio.w_max = w_max
+
+    w1 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                   type = HRP(), rm = CDaR(), cluster = true)
+    wt = [0.06365058210843497, 0.053794323634285435, 0.061675036869342476,
+          0.021736783382546202, 0.05913547381912344, 0.06999999999999998, 0.02, 0.07, 0.04,
+          0.04, 0.04, 0.02, 0.02, 0.06999999999999999, 0.04, 0.060007800186267495, 0.07,
+          0.07, 0.04, 0.07]
+    @test isapprox(w1.weights, wt)
+    @test all(abs.(w1.weights .- w_min) .>= -eps() * N)
+    @test all(w1.weights .<= w_max)
+
+    w2 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                   type = HERC(), rm = CDaR(), cluster = false)
+    wt = [0.07, 0.04776234586617294, 0.07, 0.024024340928672654, 0.06535883249174655, 0.04,
+          0.033027702141039166, 0.05, 0.04, 0.04443141920819796, 0.04, 0.02, 0.02,
+          0.04973697996776029, 0.04, 0.0684078172625897, 0.07, 0.0687551470785739,
+          0.06849541505524677, 0.07]
+    @test isapprox(w2.weights, wt)
+    @test all(abs.(w2.weights .- w_min) .>= -eps() * N)
+    @test all(w2.weights .<= w_max)
+
+    w3 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                   type = NCO(), rm = CDaR(), cluster = false)
+    wt = [0.08235294117647059, 0.023529411764705882, 0.08235294117647059,
+          0.023529411764705882, 0.023529411764705882, 0.047058823529411764,
+          0.023529411764705882, 0.058823529411764705, 0.047058823529411764,
+          0.047058823529411764, 0.047058823529411764, 0.023529411764705882,
+          0.023529411764705882, 0.047058823529411764, 0.047058823529411764,
+          0.023529411764705882, 0.08235294117647059, 0.08235294117647059,
+          0.08235294117647059, 0.08235294117647059]
+    @test isapprox(w3.weights, wt)
+    @test all(w3.weights .>= w_min)
+    @test !all(w3.weights .<= w_max)
+
+    portfolio.w_min = 0.03
+    portfolio.w_max = 0.07
+    w4 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                   type = HRP(), rm = CDaR(), cluster = false)
+    wt = [0.06365058210843497, 0.053794323634285435, 0.061675036869342476, 0.03,
+          0.04087225720166965, 0.04480131688257841, 0.030000000000000002, 0.07, 0.03,
+          0.0518685746904485, 0.07, 0.030000000000000006, 0.03, 0.06999999999999998, 0.03,
+          0.05154040230787044, 0.07, 0.07, 0.03179750630537009, 0.07]
+    @test isapprox(w4.weights, wt)
+    @test all(w4.weights .>= 0.03)
+    @test all(w4.weights .- 0.07 .<= eps() * N)
+
+    w5 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                   type = HERC(), rm = CDaR(), cluster = false)
+    wt = [0.07, 0.04731823124674532, 0.07, 0.03, 0.06475109825064297, 0.03,
+          0.0344529244661744, 0.03, 0.03385856962021572, 0.04311499951757443,
+          0.06505672527156531, 0.03, 0.03, 0.04826336645397842, 0.03, 0.07, 0.07,
+          0.06671806091164698, 0.0664660242614564, 0.07]
+    @test isapprox(w5.weights, wt)
+    @test all(abs.(w5.weights .- 0.03) .>= -eps() * N)
+    @test all(w5.weights .<= 0.07)
+
+    w6 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                   type = NCO(), rm = CDaR(), cluster = false)
+    wt = [0.07954545454545454, 0.03409090909090909, 0.07954545454545454,
+          0.03409090909090909, 0.03409090909090909, 0.03409090909090909,
+          0.03409090909090909, 0.03409090909090909, 0.03409090909090909,
+          0.03409090909090909, 0.07954545454545454, 0.03409090909090909,
+          0.03409090909090909, 0.03409090909090909, 0.03409090909090909,
+          0.03409090909090909, 0.07954545454545454, 0.07954545454545454,
+          0.07954545454545454, 0.07954545454545454]
+    @test isapprox(w6.weights, wt)
+    @test all(w6.weights .>= 0.03)
+    @test !all(w6.weights .<= 0.07)
+
+    portfolio.w_min = 0
+    portfolio.w_max = 1
+    w7 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                   type = HRP(), rm = CDaR(), cluster = false)
+    w8 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                   type = HERC(), rm = CDaR(), cluster = false)
+    w9 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                   type = NCO(), rm = CDaR(), cluster = false)
+
+    portfolio.w_min = Float64[]
+    portfolio.w_max = Float64[]
+    w10 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                    type = HRP(), rm = CDaR(), cluster = false)
+    w11 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                    type = HERC(), rm = CDaR(), cluster = false)
+    w12 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
+                    type = NCO(), rm = CDaR(), cluster = false)
+
+    @test isapprox(w7.weights, w10.weights)
+    @test isapprox(w8.weights, w11.weights)
+    @test isapprox(w9.weights, w12.weights)
+end
+
 @testset "Test failures" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -208,136 +338,6 @@ end
           0.024315592933065365, 0.09595494500271598]
     @test isapprox(w6.weights, wt)
     @test !isapprox(w5.weights, w6.weights)
-end
-
-@testset "Weight bounds" begin
-    portfolio = HCPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
-
-    asset_statistics!(portfolio)
-    hclust_alg = HAC()
-    hclust_opt = HCType()
-
-    asset_sets = DataFrame("Asset" => portfolio.assets,
-                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
-                                       3, 1],
-                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
-                                        4, 2, 1],
-                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
-                                       2, 1],
-                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
-                                        2, 2, 1],
-                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
-                                        3, 4, 1],
-                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
-                                        4, 2, 2])
-    constraints = DataFrame("Enabled" => [true, true, true, true, true, true, false],
-                            "Type" => ["Asset", "Asset", "All Assets", "All Assets",
-                                       "Each Asset in Subset", "Each Asset in Subset",
-                                       "Asset"],
-                            "Set" => ["", "", "", "", "PDBHT", "Pward", ""],
-                            "Position" => ["WMT", "T", "", "", 3, 2, "AAPL"],
-                            "Sign" => [">=", "<=", ">=", "<=", ">=", "<=", ">="],
-                            "Weight" => [0.05, 0.04, 0.02, 0.07, 0.04, 0.08, 0.2])
-    w_min, w_max = hrp_constraints(constraints, asset_sets)
-    N = length(w_min)
-
-    portfolio.w_min = w_min
-    portfolio.w_max = w_max
-
-    w1 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                   type = HRP(), rm = CDaR(), cluster = true)
-    wt = [0.06365058210843497, 0.053794323634285435, 0.061675036869342476,
-          0.021736783382546202, 0.05913547381912344, 0.06999999999999998, 0.02, 0.07, 0.04,
-          0.04, 0.04, 0.02, 0.02, 0.06999999999999999, 0.04, 0.060007800186267495, 0.07,
-          0.07, 0.04, 0.07]
-    @test isapprox(w1.weights, wt)
-    @test all(abs.(w1.weights .- w_min) .>= -eps() * N)
-    @test all(w1.weights .<= w_max)
-
-    w2 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                   type = HERC(), rm = CDaR(), cluster = false)
-    wt = [0.07, 0.04776234586617294, 0.07, 0.024024340928672654, 0.06535883249174655, 0.04,
-          0.033027702141039166, 0.05, 0.04, 0.04443141920819796, 0.04, 0.02, 0.02,
-          0.04973697996776029, 0.04, 0.0684078172625897, 0.07, 0.0687551470785739,
-          0.06849541505524677, 0.07]
-    @test isapprox(w2.weights, wt)
-    @test all(abs.(w2.weights .- w_min) .>= -eps() * N)
-    @test all(w2.weights .<= w_max)
-
-    w3 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                   type = NCO(), rm = CDaR(), cluster = false)
-    wt = [0.08235294117647059, 0.023529411764705882, 0.08235294117647059,
-          0.023529411764705882, 0.023529411764705882, 0.047058823529411764,
-          0.023529411764705882, 0.058823529411764705, 0.047058823529411764,
-          0.047058823529411764, 0.047058823529411764, 0.023529411764705882,
-          0.023529411764705882, 0.047058823529411764, 0.047058823529411764,
-          0.023529411764705882, 0.08235294117647059, 0.08235294117647059,
-          0.08235294117647059, 0.08235294117647059]
-    @test isapprox(w3.weights, wt)
-    @test all(w3.weights .>= w_min)
-    @test !all(w3.weights .<= w_max)
-
-    portfolio.w_min = 0.03
-    portfolio.w_max = 0.07
-    w4 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                   type = HRP(), rm = CDaR(), cluster = false)
-    wt = [0.06365058210843497, 0.053794323634285435, 0.061675036869342476, 0.03,
-          0.04087225720166965, 0.04480131688257841, 0.030000000000000002, 0.07, 0.03,
-          0.0518685746904485, 0.07, 0.030000000000000006, 0.03, 0.06999999999999998, 0.03,
-          0.05154040230787044, 0.07, 0.07, 0.03179750630537009, 0.07]
-    @test isapprox(w4.weights, wt)
-    @test all(w4.weights .>= 0.03)
-    @test all(w4.weights .- 0.07 .<= eps() * N)
-
-    w5 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                   type = HERC(), rm = CDaR(), cluster = false)
-    wt = [0.07, 0.04731823124674532, 0.07, 0.03, 0.06475109825064297, 0.03,
-          0.0344529244661744, 0.03, 0.03385856962021572, 0.04311499951757443,
-          0.06505672527156531, 0.03, 0.03, 0.04826336645397842, 0.03, 0.07, 0.07,
-          0.06671806091164698, 0.0664660242614564, 0.07]
-    @test isapprox(w5.weights, wt)
-    @test all(abs.(w5.weights .- 0.03) .>= -eps() * N)
-    @test all(w5.weights .<= 0.07)
-
-    w6 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                   type = NCO(), rm = CDaR(), cluster = false)
-    wt = [0.07954545454545454, 0.03409090909090909, 0.07954545454545454,
-          0.03409090909090909, 0.03409090909090909, 0.03409090909090909,
-          0.03409090909090909, 0.03409090909090909, 0.03409090909090909,
-          0.03409090909090909, 0.07954545454545454, 0.03409090909090909,
-          0.03409090909090909, 0.03409090909090909, 0.03409090909090909,
-          0.03409090909090909, 0.07954545454545454, 0.07954545454545454,
-          0.07954545454545454, 0.07954545454545454]
-    @test isapprox(w6.weights, wt)
-    @test all(w6.weights .>= 0.03)
-    @test !all(w6.weights .<= 0.07)
-
-    portfolio.w_min = 0
-    portfolio.w_max = 1
-    w7 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                   type = HRP(), rm = CDaR(), cluster = false)
-    w8 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                   type = HERC(), rm = CDaR(), cluster = false)
-    w9 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                   type = NCO(), rm = CDaR(), cluster = false)
-
-    portfolio.w_min = Float64[]
-    portfolio.w_max = Float64[]
-    w10 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                    type = HRP(), rm = CDaR(), cluster = false)
-    w11 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                    type = HERC(), rm = CDaR(), cluster = false)
-    w12 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                    type = NCO(), rm = CDaR(), cluster = false)
-
-    @test isapprox(w7.weights, w10.weights)
-    @test isapprox(w8.weights, w11.weights)
-    @test isapprox(w9.weights, w12.weights)
 end
 
 @testset "Shorting with NCO" begin
