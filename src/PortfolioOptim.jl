@@ -809,6 +809,44 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RCVaR}, type::Union{Trad,
     end
     return nothing
 end
+
+function adjust_model_value_for_obj(model::JuMP.Model, val, ::Sharpe)
+    return val /= value(model[:k])
+end
+function adjust_model_value_for_obj(::Any, val, ::Any)
+    return val
+end
+function get_z_from_model(model::JuMP.Model, ::EVaR, obj::ObjectiveFunction)
+    return adjust_model_value_for_obj(model, value(model[:z_evar]), obj)
+end
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EVaR},
+                          obj::ObjectiveFunction)
+    return adjust_model_value_for_obj(model, value.(model[:z_evar]), obj)
+end
+function get_z_from_model(model::JuMP.Model, ::RVaR, obj::ObjectiveFunction)
+    return adjust_model_value_for_obj(model, value(model[:z_rvar]), obj)
+end
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RVaR},
+                          obj::ObjectiveFunction)
+    return adjust_model_value_for_obj(model, value.(model[:z_rvar]), obj)
+end
+function get_z_from_model(model::JuMP.Model, ::EDaR, obj::ObjectiveFunction)
+    return adjust_model_value_for_obj(model, value(model[:z_edar]), obj)
+end
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EDaR},
+                          obj::ObjectiveFunction)
+    return adjust_model_value_for_obj(model, value.(model[:z_edar]), obj)
+end
+function get_z_from_model(model::JuMP.Model, ::RDaR, obj::ObjectiveFunction)
+    return adjust_model_value_for_obj(model, value(model[:z_rdar]), obj)
+end
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RDaR},
+                          obj::ObjectiveFunction)
+    return adjust_model_value_for_obj(model, value.(model[:z_rdar]), obj)
+end
+function get_z(portfolio::Portfolio, rm::TradRiskMeasure, obj::ObjectiveFunction)
+    return get_z_from_model(portfolio.model, rm, obj)
+end
 function set_rm(port::Portfolio, rm::EVaR, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
