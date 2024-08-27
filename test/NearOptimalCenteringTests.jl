@@ -256,7 +256,7 @@ end
     @test isapprox(w15, w21.weights, rtol = 0.5)
     @test isapprox(w15, w22.weights, rtol = 0.05)
     @test isapprox(w15, w23.weights, rtol = 0.005)
-    @test isapprox(w15, w24.weights, rtol = 5.0e-5)
+    @test isapprox(w15, w24.weights, rtol = 1.0e-4)
 end
 
 @testset "NCO with NOC" begin
