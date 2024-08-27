@@ -715,22 +715,7 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
         if isa(val, Real)
             @smart_assert(all(vmin .<= vmax))
         elseif isa(val, AbstractVector)
-            if !isempty(val)
-                @smart_assert(length(val) == size(obj.returns, 2))
-
-                if !isempty(vmin) && !isempty(vmax) && lmin == lmax
-                    @smart_assert(all(vmin .<= vmax))
-                end
-
-                if isa(getfield(obj, sym), AbstractVector) &&
-                   !isa(getfield(obj, sym), AbstractRange)
-                    val = if isa(val, AbstractRange)
-                        collect(val)
-                    else
-                        convert(typeof(getfield(obj, sym)), val)
-                    end
-                end
-            end
+            @smart_assert(length(val) == size(obj.returns, 2) && all(vmin .<= vmax))
         end
     elseif sym ∈ (:mu, :latest_prices)
         if !isempty(val)
@@ -759,11 +744,6 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
             @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    else
-        if (isa(getfield(obj, sym), AbstractArray) && isa(val, AbstractArray)) ||
-           (isa(getfield(obj, sym), Real) && isa(val, Real))
-            val = convert(typeof(getfield(obj, sym)), val)
-        end
     end
     return setfield!(obj, sym, val)
 end

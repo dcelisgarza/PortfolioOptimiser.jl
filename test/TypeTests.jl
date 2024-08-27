@@ -1,5 +1,5 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
-      PortfolioOptimiser, JuMP
+      PortfolioOptimiser, JuMP, Clustering
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
@@ -104,4 +104,70 @@ l = 2.0
     @test portfolio.f_risk_budget == collect(1:div(N, 2)) / sum(1:div(N, 2))
 
     @test_throws AssertionError Portfolio(; prices = prices, rebalance = TR(; val = -eps()))
+end
+
+@testset "HC Portfolio" begin
+    portfolio = HCPortfolio(; prices = prices,
+                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
+                                                             :params => Dict("verbose" => false,
+                                                                             "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+    cluster_assets!(portfolio)
+
+    portfolio_copy = deepcopy(portfolio)
+    for property ∈ propertynames(portfolio)
+        port2_prop = getproperty(portfolio_copy, property)
+        port_prop = getproperty(portfolio, property)
+        if isa(port_prop, JuMP.Model) ||
+           isa(port_prop, PortfolioOptimiser.PortfolioOptimiserCovCor) ||
+           isa(port_prop, Clustering.Hclust)
+            continue
+        end
+        @test isequal(port_prop, port2_prop)
+    end
+    @test portfolio_copy.clusters.merges == portfolio.clusters.merges
+    @test portfolio_copy.clusters.heights == portfolio.clusters.heights
+    @test portfolio_copy.clusters.order == portfolio.clusters.order
+
+    @test_throws AssertionError portfolio.w_min = 1:(size(portfolio.returns, 2) + 1)
+    @test_throws AssertionError portfolio.w_max = 1:(size(portfolio.returns, 2) + 1)
+
+    returns = dropmissing!(DataFrame(percentchange(prices)))
+    N = length(names(returns)) - 1
+
+    sigma = rand(N, N)
+    kurt = rand(N^2, N^2)
+    skurt = rand(N^2, N^2)
+    skew = rand(N, N^2)
+    sskew = rand(N, N^2)
+    V = rand(N, N)
+    SV = rand(N, N)
+    rho = rand(N, N)
+    delta = rand(N, N)
+
+    portfolio = HCPortfolio(; assets = setdiff(names(returns), ("timestamp",)),
+                            ret = Matrix(returns[!,
+                                                 setdiff(names(returns), ("timestamp",))]),
+                            mu = fill(inv(N), N), cov = sigma, kurt = kurt, skurt = skurt,
+                            skew = skew, sskew = sskew, V = V, SV = SV, w_min = 0.2,
+                            w_max = 0.8, cor = rho, dist = delta)
+    @test portfolio.assets == setdiff(names(returns), ("timestamp",))
+    @test portfolio.returns == Matrix(returns[!, setdiff(names(returns), ("timestamp",))])
+    @test portfolio.mu == fill(inv(N), N)
+    @test portfolio.cov == sigma
+    @test portfolio.kurt == kurt
+    @test portfolio.skurt == skurt
+    @test portfolio.skew == skew
+    @test portfolio.sskew == sskew
+    @test portfolio.V == V
+    @test portfolio.SV == SV
+    @test portfolio.cor == rho
+    @test portfolio.dist == delta
+
+    portfolio = HCPortfolio(; prices = prices, w_min = 0.01:0.01:0.2,
+                            w_max = 0.02:0.01:0.21)
+    @test portfolio.w_min == 0.01:0.01:0.2
+    @test portfolio.w_max == 0.02:0.01:0.21
 end
