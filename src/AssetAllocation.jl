@@ -190,7 +190,7 @@ function _lp_allocation!(portfolio, port_type, latest_prices, investment, reinve
                           short_shares, long_latest_prices, short_latest_prices, long_cost,
                           short_cost, long_allocated_weights, short_allocated_weights)
 
-    if !isempty(short_tickers)
+    if !isempty(short_tickers) && !isempty(portfolio.alloc_optimal[key])
         idx = [findfirst(x -> x == t, portfolio.alloc_optimal[key].tickers) for t ∈ tickers]
         portfolio.alloc_optimal[key] = portfolio.alloc_optimal[key][idx, :]
     end

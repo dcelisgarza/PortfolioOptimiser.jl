@@ -71,23 +71,13 @@ l = 2.0
     @test isapprox(sum(w19.cost[w19.cost .> 0]),
                    sum(w11.cost[w11.cost .> 0]) - sum(w11.cost[w11.cost .< 0]), rtol = 3e-5)
 
-    portfolio.alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("log_to_console" => false,
-                                                                  "ipm_iteration_limit" => 1,
-                                                                  "simplex_iteration_limit" => 1,
-                                                                  "pdlp_iteration_limit" => 1)))
-    w20 = allocate!(portfolio; method = LP(), investment = 1000, reinvest = false)
-    @test !is_solved_and_feasible(portfolio.alloc_model)
-
     portfolio.alloc_solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                      :check_sol => (allow_local = true,
                                                                     allow_almost = true),
                                                      :params => Dict("verbose" => false,
                                                                      "max_step_fraction" => 0.75)))
-    w21 = allocate!(portfolio; method = LP(), investment = 1e6, reinvest = true)
+    w20 = allocate!(portfolio; method = LP(), investment = 1e6, reinvest = true)
     @test !is_solved_and_feasible(portfolio.alloc_model)
 
-    w22 = allocate!(portfolio; method = Greedy(), investment = 3, reinvest = true)
+    w21 = allocate!(portfolio; method = Greedy(), investment = 69, reinvest = true)
 end

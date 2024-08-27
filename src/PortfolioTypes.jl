@@ -219,7 +219,6 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     end
     if !isempty(f_risk_budget)
         @smart_assert(all(f_risk_budget .>= zero(eltype(returns))))
-
         if isa(f_risk_budget, AbstractRange)
             f_risk_budget = collect(f_risk_budget / sum(f_risk_budget))
         else
