@@ -1,3 +1,23 @@
+function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
+                     rng = Random.default_rng(), seed::Union{Nothing, <:Integer} = nothing)
+    Random.seed!(rng, seed)
+
+    n = size(x, 1)
+    a = randn(rng, n + len, n)
+
+    for _ ∈ 1:iters
+        _cov = cov(a)
+        _C = cholesky(_cov)
+        a .= a * (_C.U \ I)
+        _cov = cov(a)
+        _s = transpose(sqrt.(diag(_cov)))
+        a .= (a .- mean(a; dims = 1)) ./ _s
+    end
+
+    C = cholesky(x)
+    return a * C.U
+end
+
 """
 ```
 _posdef_fix!(method::PosdefNearest, X::AbstractMatrix)
@@ -2406,9 +2426,9 @@ function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
     return mu_a[1:N], sigma_a[1:N, 1:N], w_a[1:N]
 end
 
-export posdef_fix!, dbht_similarity, dist, calc_num_bins, calc_hist_data, mutual_info,
-       variation_info, cor_distance, cov_distance, lower_tail_dependence, cov_gerber,
-       duplication_matrix, elimination_matrix, summation_matrix, dup_elim_sum_matrices,
-       errPDF, find_max_eval, denoise!, target_mean, jlogo!, cokurt, coskew, gen_bootstrap,
-       vec_of_vecs_to_mtx, calc_sets, commutation_matrix, calc_k, prep_dim_red_reg,
-       regression, loadings_matrix, risk_factors, black_litterman
+export cov_returns, posdef_fix!, dbht_similarity, dist, calc_num_bins, calc_hist_data,
+       mutual_info, variation_info, cor_distance, cov_distance, lower_tail_dependence,
+       cov_gerber, duplication_matrix, elimination_matrix, summation_matrix,
+       dup_elim_sum_matrices, errPDF, find_max_eval, denoise!, target_mean, jlogo!, cokurt,
+       coskew, gen_bootstrap, vec_of_vecs_to_mtx, calc_sets, commutation_matrix, calc_k,
+       prep_dim_red_reg, regression, loadings_matrix, risk_factors, black_litterman
