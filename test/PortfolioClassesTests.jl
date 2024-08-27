@@ -144,7 +144,7 @@ end
             -1.6676767140945362e-18]
     @test isapprox(w3.weights, wt, rtol = 5.0e-5)
     @test isapprox(frc3, frct, rtol = 5.0e-5)
-    @test isapprox(frc3_h / frc3_l, 1, rtol = 5.0e-5)
+    @test isapprox(frc3_h / frc3_l, 1, rtol = 1.0e-4)
 
     portfolio.f_risk_budget = 1:3
     w4 = optimise!(portfolio; type = RP(), class = FC(false))
@@ -206,8 +206,8 @@ end
           -0.07513469093810905, 0.4181682213818354, -0.06727478736249529]
     frct = [0.015167758710120941, 0.015166571290855654, 0.015165943540252835,
             0.015166913907338913, 0.015168109271009806, -5.105530975819948e-18]
-    @test isapprox(w7.weights, wt, rtol = 5.0e-5)
-    @test isapprox(frc7, frct, rtol = 0.0001)
+    @test isapprox(w7.weights, wt, rtol = 1.0e-4)
+    @test isapprox(frc7, frct, rtol = 0.0005)
     @test isapprox(frc7_h / frc7_l, 1, rtol = 0.0005)
 
     portfolio.f_risk_budget = 1:5

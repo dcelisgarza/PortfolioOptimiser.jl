@@ -299,12 +299,11 @@ function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::Abstrac
 
     dd .*= 100
 
-    risks = [-PortfolioOptimiser._ADD_abs(ret), -PortfolioOptimiser._UCI_abs(ret),
-             -PortfolioOptimiser._DaR_abs(ret, alpha),
-             -PortfolioOptimiser._CDaR_abs(ret, alpha),
-             -PortfolioOptimiser._EDaR_abs(ret, solvers, alpha),
-             -PortfolioOptimiser._RDaR_abs(ret, solvers, alpha, kappa),
-             -PortfolioOptimiser._MDD_abs(ret)] * 100
+    risks = [-PortfolioOptimiser._ADD(ret), -PortfolioOptimiser._UCI(ret),
+             -PortfolioOptimiser._DaR(ret, alpha), -PortfolioOptimiser._CDaR(ret, alpha),
+             -PortfolioOptimiser._EDaR(ret, solvers, alpha),
+             -PortfolioOptimiser._RDaR(ret, solvers, alpha, kappa),
+             -PortfolioOptimiser._MDD(ret)] * 100
 
     conf = round((1 - alpha) * 100; digits = 2)
 
@@ -316,7 +315,20 @@ function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::Abstrac
                    "$(conf)% Confidence RDaR ($(round(kappa, digits=2))): $(round(risks[6], digits = 2))%",
                    "Maximum Drawdown: $(round(risks[7], digits = 2))%")
 
+    f = Figure()
+    ax1 = Axis(f[1, 1]; ylabel = "Cummulative Returns")
+    ax2 = Axis(f[2, 1]; ylabel = "Percentage Drawdowns", xlabel = "Date")
+
     colors = cgrad(palette, length(risk_labels) + 1; categorical = true, scale = true)
+
+    lines!(ax1, timestamps, prices; label = "Cummulative Returns", color = colors[1])
+    lines!(ax2, timestamps, dd; label = "Uncompounded Cummulative Drawdown",
+           color = colors[1])
+    for (i, (risk, label)) ∈ enumerate(zip(risks, risk_labels))
+        hlines!(ax2, risk; xmin = 0.0, xmax = 1.0, label = label, color = colors[i + 1])
+    end
+    Legend(f[2, 2], ax2; labelsize = 10)
+
     return f
 end
 end
