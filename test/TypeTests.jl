@@ -66,6 +66,7 @@ l = 2.0
                           blfm_mu = fill(inv(8 * N), N), blfm_cov = blfm_cov, cov_l = cov_l,
                           cov_u = cov_u, cov_mu = cov_mu, cov_sigma = cov_sigma,
                           d_mu = fill(inv(9 * N), N))
+    portfolio.returns = 2 * portfolio.returns
     @test portfolio.rebalance.val == 3
     @test portfolio.rebalance.w == fill(inv(N), N)
     @test portfolio.turnover.val == 5
@@ -94,15 +95,19 @@ l = 2.0
     @test portfolio.cov_sigma == cov_sigma
     @test portfolio.d_mu == fill(inv(9 * N), N)
 
+    M = size(portfolio_copy.returns, 1)
     portfolio = Portfolio(; prices = prices, f_prices = factors,
                           rebalance = TR(; val = fill(inv(N), N)),
                           turnover = TR(; val = fill(inv(2 * N), N)),
                           risk_budget = collect(1.0:N),
-                          f_risk_budget = collect(1.0:div(N, 2)),)
+                          f_risk_budget = collect(1.0:div(N, 2)),
+                          tracking_err = TrackRet(; err = 11, w = fill(inv(100 * M), M)))
     @test portfolio.rebalance.val == fill(inv(N), N)
     @test portfolio.turnover.val == fill(inv(2 * N), N)
     @test portfolio.risk_budget == collect(1:N) / sum(1:N)
     @test portfolio.f_risk_budget == collect(1:div(N, 2)) / sum(1:div(N, 2))
+    @test portfolio.tracking_err.err == 11
+    @test portfolio.tracking_err.w == fill(inv(100 * M), M)
 
     @test_throws AssertionError Portfolio(; prices = prices, rebalance = TR(; val = -eps()))
 end
@@ -171,4 +176,21 @@ end
                             w_max = 0.02:0.01:0.21)
     @test portfolio.w_min == 0.01:0.01:0.2
     @test portfolio.w_max == 0.02:0.01:0.21
+
+    portfolio = HCPortfolio(; prices = prices, w_min = 1, w_max = 1:20)
+    @test portfolio.w_min == 1
+    @test portfolio.w_max == 1:20
+
+    portfolio = HCPortfolio(; prices = prices, w_max = 21, w_min = 1:20)
+    @test portfolio.w_min == 1:20
+    @test portfolio.w_max == 21
+
+    portfolio = HCPortfolio(; prices = prices, w_min = 1, w_max = 1:20)
+    @test portfolio.w_min == 1
+    @test portfolio.w_max == 1:20
+
+    portfolio.w_min = 1:20
+    portfolio.w_max = 21
+    @test portfolio.w_min == 1:20
+    @test portfolio.w_max == 21
 end
