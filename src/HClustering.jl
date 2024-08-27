@@ -162,9 +162,9 @@ function cluster_assets(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAC(),
 
     return idx, clustering, k
 end
-function cluster_assets!(ca::HClustAlg, portfolio::HCPortfolio,
+function cluster_assets!(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAC(),
                          hclust_opt::HCType = HCType())
-    clustering, k = _hcluster(ca, portfolio, hclust_opt)
+    clustering, k = _hcluster(hclust_alg, portfolio, hclust_opt)
 
     portfolio.clusters = clustering
     portfolio.k = k

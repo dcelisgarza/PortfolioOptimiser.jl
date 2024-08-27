@@ -1,9 +1,9 @@
 using Test, PortfolioOptimiser, DataFrames, CSV, Dates, Clarabel, LinearAlgebra, Makie,
       TimeSeries
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 
-# using CairoMakie
+using CairoMakie
 # @testset "Plot returns" begin
 portfolio = Portfolio(; prices = prices,
                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -14,7 +14,9 @@ portfolio = Portfolio(; prices = prices,
 asset_statistics!(portfolio)
 rm = SD()
 obj = MinRisk()
-w1 = optimise!(portfolio; type = RP(), rm = rm, kelly = AKelly(), obj = obj)
+w1 = optimise!(portfolio; type = RP(), rm = rm, kelly = EKelly(), obj = obj)
+fw = efficient_frontier!(portfolio; rm = rm, points = 5)
+pfa = plot_frontier_area(fw; rm = rm, t_factor = 252)
 
 prp = plot_returns(portfolio, :RP)
 pra = plot_returns(portfolio, :RP; per_asset = true)
@@ -23,10 +25,8 @@ prc = plot_risk_contribution(portfolio, :RP; rm = rm, percentage = true)
 fw = efficient_frontier!(portfolio; kelly = NoKelly(), rm = rm, points = 5)
 pf = plot_frontier(portfolio; kelly = NoKelly(), rm = rm)
 
-fw = efficient_frontier!(portfolio; rm = rm, points = 5)
 pf = plot_frontier(portfolio; rm = rm)
 
-pfa = plot_frontier_area(fw; rm = rm, t_factor = 252)
 # end
 
 # using StatsPlots

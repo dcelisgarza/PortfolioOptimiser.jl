@@ -1,3 +1,25 @@
+function block_vec_pq(A, p, q)
+    mp, nq = size(A)
+
+    if !(mod(mp, p) == 0 && mod(nq, q) == 0)
+        throw(DimensionMismatch("size(A) = $(size(A)), must be integer multiples of (p, q) = ($p, $q)"))
+    end
+
+    m = Int(mp / p)
+    n = Int(nq / q)
+
+    A_vec = Matrix{eltype(A)}(undef, m * n, p * q)
+    for j ∈ 0:(n - 1)
+        Aj = Matrix{eltype(A)}(undef, m, p * q)
+        for i ∈ 0:(m - 1)
+            Aij = vec(A[(1 + (i * p)):((i + 1) * p), (1 + (j * q)):((j + 1) * q)])
+            Aj[i + 1, :] .= Aij
+        end
+        A_vec[(1 + (j * m)):((j + 1) * m), :] .= Aj
+    end
+
+    return A_vec
+end
 function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
                      rng = Random.default_rng(), seed::Union{Nothing, <:Integer} = nothing)
     Random.seed!(rng, seed)

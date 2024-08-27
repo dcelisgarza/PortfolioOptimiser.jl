@@ -816,35 +816,31 @@ end
 function adjust_model_value_for_obj(::Any, val, ::Any)
     return val
 end
-function get_z_from_model(model::JuMP.Model, ::EVaR, obj::ObjectiveFunction)
+function get_z_from_model(model::JuMP.Model, ::EVaR, obj::Any)
     return adjust_model_value_for_obj(model, value(model[:z_evar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EVaR},
-                          obj::ObjectiveFunction)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EVaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_evar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::RVaR, obj::ObjectiveFunction)
+function get_z_from_model(model::JuMP.Model, ::RVaR, obj::Any)
     return adjust_model_value_for_obj(model, value(model[:z_rvar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RVaR},
-                          obj::ObjectiveFunction)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RVaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_rvar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::EDaR, obj::ObjectiveFunction)
+function get_z_from_model(model::JuMP.Model, ::EDaR, obj::Any)
     return adjust_model_value_for_obj(model, value(model[:z_edar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EDaR},
-                          obj::ObjectiveFunction)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EDaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_edar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::RDaR, obj::ObjectiveFunction)
+function get_z_from_model(model::JuMP.Model, ::RDaR, obj::Any)
     return adjust_model_value_for_obj(model, value(model[:z_rdar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RDaR},
-                          obj::ObjectiveFunction)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RDaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_rdar]), obj)
 end
-function get_z(portfolio::Portfolio, rm::TradRiskMeasure, obj::ObjectiveFunction)
+function get_z(portfolio::Portfolio, rm::Union{AbstractVector, <:TradRiskMeasure}, obj::Any)
     return get_z_from_model(portfolio.model, rm, obj)
 end
 function set_rm(port::Portfolio, rm::EVaR, type::Union{Trad, RP}, obj;
@@ -1175,28 +1171,6 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RDaR}, type::Union{Trad, 
         _set_risk_expression(model, rdar_risk[j], rm.settings.scale, rm.settings.flag)
     end
     return nothing
-end
-function block_vec_pq(A, p, q)
-    mp, nq = size(A)
-
-    if !(mod(mp, p) == 0 && mod(nq, p) == 0)
-        throw(DimensionMismatch("size(A) = $(size(A)), must be integer multiples of (p, q) = ($p, $q)"))
-    end
-
-    m = Int(mp / p)
-    n = Int(nq / q)
-
-    A_vec = Matrix{eltype(A)}(undef, m * n, p * q)
-    for j ∈ 0:(n - 1)
-        Aj = Matrix{eltype(A)}(undef, m, p * q)
-        for i ∈ 0:(m - 1)
-            Aij = vec(A[(1 + (i * p)):((i + 1) * p), (1 + (j * q)):((j + 1) * q)])
-            Aj[i + 1, :] .= Aij
-        end
-        A_vec[(1 + (j * m)):((j + 1) * m), :] .= Aj
-    end
-
-    return A_vec
 end
 function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RP}, obj; kwargs...)
     _sdp(port, obj)

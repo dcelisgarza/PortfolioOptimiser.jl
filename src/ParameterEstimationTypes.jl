@@ -169,10 +169,6 @@ struct ClusterNode{tid, tl, tr, td, tcnt}
                                                                                          icount)
     end
 end
-import Base.>, Base.<, Base.==
-<(a::ClusterNode, b::ClusterNode) = a.dist < b.dist
->(a::ClusterNode, b::ClusterNode) = a.dist > b.dist
-==(a::ClusterNode, b::ClusterNode) = a.dist == b.dist
 
 # ## Covariance, correlation, kurt and skew
 

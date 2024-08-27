@@ -158,4 +158,8 @@ l = 2.0
         @test isequal(l, l2)
         @test isequal(s, s2)
     end
+
+    A = rand(10, 25)
+    @test_throws DimensionMismatch PortfolioOptimiser.block_vec_pq(A, 3, 5)
+    @test_throws DimensionMismatch PortfolioOptimiser.block_vec_pq(A, 2, 3)
 end

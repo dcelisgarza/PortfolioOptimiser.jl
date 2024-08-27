@@ -2239,3 +2239,126 @@ end
     w2 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     @test isapprox(w1.weights, w2.weights, rtol = 1e-4)
 end
+
+@testset "Get value of z" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    obj = MinRisk()
+
+    rm = EVaR()
+    optimise!(portfolio; rm = rm, obj = obj)
+    z1 = get_z(portfolio, rm, obj)
+    @test isapprox(z1, 0.004652651226719961)
+
+    rm = EDaR()
+    optimise!(portfolio; rm = rm, obj = obj)
+    z2 = get_z(portfolio, rm, obj)
+    @test isapprox(z2, 0.00916553108191174)
+
+    rm = RVaR()
+    optimise!(portfolio; rm = rm, obj = obj)
+    z3 = get_z(portfolio, rm, obj)
+    @test isapprox(z3, 0.0018050418972062146)
+
+    rm = RDaR()
+    optimise!(portfolio; rm = rm, obj = obj)
+    z4 = get_z(portfolio, rm, obj)
+    @test isapprox(z4, 0.003567371641778554)
+
+    rm = [[EVaR(), EVaR()]]
+    optimise!(portfolio; rm = rm, obj = obj)
+    z5 = get_z(portfolio, rm[1], obj)
+    @test isapprox(z5[1], z5[2])
+
+    rm = [[EDaR(), EDaR()]]
+    optimise!(portfolio; rm = rm, obj = obj)
+    z6 = get_z(portfolio, rm[1], obj)
+    @test isapprox(z6[1], z6[2], rtol = 5.0e-6)
+
+    rm = [[RVaR(), RVaR()]]
+    optimise!(portfolio; rm = rm, obj = obj)
+    z7 = get_z(portfolio, rm[1], obj)
+    @test isapprox(z7[1], z7[2], rtol = 1.0e-5)
+
+    rm = [[RDaR(), RDaR()]]
+    optimise!(portfolio; rm = rm, obj = obj)
+    z8 = get_z(portfolio, rm[1], obj)
+    @test isapprox(z8[1], z8[2], rtol = 5.0e-6)
+
+    @test isapprox(z1, z5[1], rtol = 5.0e-6)
+    @test isapprox(z1, z5[2], rtol = 5.0e-6)
+
+    @test isapprox(z2, z6[1], rtol = 5.0e-8)
+    @test isapprox(z2, z6[2], rtol = 5.0e-6)
+
+    @test isapprox(z3, z7[1], rtol = 5.0e-6)
+    @test isapprox(z3, z7[2], rtol = 5.0e-6)
+
+    @test isapprox(z4, z8[1], rtol = 1.0e-6)
+    @test isapprox(z4, z8[2], rtol = 5.0e-6)
+
+    obj = Sharpe(; rf = rf)
+
+    rm = EVaR()
+    optimise!(portfolio; rm = rm, obj = obj)
+    z9 = get_z(portfolio, rm, obj)
+    @test isapprox(z9, 0.006484925949235588)
+
+    rm = EDaR()
+    optimise!(portfolio; rm = rm, obj = obj)
+    z10 = get_z(portfolio, rm, obj)
+    @test isapprox(z10, 0.01165505512394213)
+
+    rm = RVaR()
+    optimise!(portfolio; rm = rm, obj = obj)
+    z11 = get_z(portfolio, rm, obj)
+    @test isapprox(z11, 0.002530053705676598)
+
+    rm = RDaR()
+    optimise!(portfolio; rm = rm, obj = obj)
+    z12 = get_z(portfolio, rm, obj)
+    @test isapprox(z12, 0.0041978310601217435)
+
+    rm = [[EVaR(), EVaR()]]
+    optimise!(portfolio; rm = rm, obj = obj)
+    z13 = get_z(portfolio, rm[1], obj)
+    @test isapprox(z13[1], z13[2])
+
+    rm = [[EDaR(), EDaR()]]
+    optimise!(portfolio; rm = rm, obj = obj)
+    z14 = get_z(portfolio, rm[1], obj)
+    @test isapprox(z14[1], z14[2], rtol = 1.0e-7)
+
+    rm = [[RVaR(), RVaR()]]
+    optimise!(portfolio; rm = rm, obj = obj)
+    z15 = get_z(portfolio, rm[1], obj)
+    @test isapprox(z15[1], z15[2])
+
+    rm = [[RDaR(), RDaR()]]
+    optimise!(portfolio; rm = rm, obj = obj)
+    z16 = get_z(portfolio, rm[1], obj)
+    @test isapprox(z16[1], z16[2])
+
+    @test isapprox(z9, z13[1], rtol = 0.0001)
+    @test isapprox(z9, z13[2], rtol = 0.0001)
+
+    @test isapprox(z10, z14[1], rtol = 0.0001)
+    @test isapprox(z10, z14[2], rtol = 0.0001)
+
+    @test isapprox(z11, z15[1], rtol = 5.0e-6)
+    @test isapprox(z11, z15[2], rtol = 5.0e-6)
+
+    @test isapprox(z12, z16[1], rtol = 0.0001)
+    @test isapprox(z12, z16[2], rtol = 0.0001)
+
+    @test z1 < z9
+    @test z2 < z10
+    @test z3 < z11
+    @test z4 < z12
+end

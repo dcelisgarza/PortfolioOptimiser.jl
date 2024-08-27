@@ -2755,18 +2755,19 @@ end
     @test ce.c3 == 0.6
 end
 
-@testset "Transposes" begin
+@testset "Transposes and edge cases" begin
     portfolio = Portfolio(; prices = prices)
     ces = [CovSemi(), CorSpearman(), CorKendall(), CorMutualInfo(), CorDistance(), CorLTD(),
            CorGerber0(), CorGerber1(), CorGerber2(), CorSB0(), CorSB1(), CorGerberSB0(),
            CorGerberSB1(), PortCovCor()]
     for ce ∈ ces
+        @test isapprox(cor(ce, portfolio.returns; dims = 1),
+                       cor(ce, transpose(portfolio.returns); dims = 2))
         if any(typeof(ce) .<: [CorSpearman, CorKendall])
             continue
         end
-        @test isapprox(cor(ce, portfolio.returns; dims = 1),
-                       cor(ce, transpose(portfolio.returns); dims = 2))
         @test isapprox(cov(ce, portfolio.returns; dims = 1),
                        cov(ce, transpose(portfolio.returns); dims = 2))
     end
+    @test iszero(PortfolioOptimiser._mutual_info(rand(1, 1)))
 end

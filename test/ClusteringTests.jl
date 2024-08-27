@@ -12,7 +12,7 @@ l = 2.0
 
     ca = DBHT()
     ct = HCType()
-    cluster_assets!(ca, portfolio, ct)
+    cluster_assets!(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 

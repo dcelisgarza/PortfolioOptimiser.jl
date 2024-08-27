@@ -147,8 +147,7 @@ function PortfolioOptimiser.plot_frontier(frontier;
                                           X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                                           mu::AbstractVector = Vector{Float64}(undef, 0),
                                           rf::Real = 0.0, rm::RiskMeasure = SD(),
-                                          kelly::RetType = NoKelly(), t_factor = 252,
-                                          palette = :Spectral)
+                                          kelly::RetType = NoKelly(), t_factor = 252)
     risks = copy(frontier[:risk])
     weights = Matrix(frontier[:weights][!, 2:end])
 
@@ -201,18 +200,16 @@ function PortfolioOptimiser.plot_frontier(port::AbstractPortfolio, key = nothing
                                           X::AbstractMatrix = port.returns,
                                           mu::AbstractVector = port.mu,
                                           rm::RiskMeasure = SD(), rf::Real = 0.0,
-                                          kelly::RetType = NoKelly(), t_factor = 252,
-                                          palette = :Spectral)
+                                          kelly::RetType = NoKelly(), t_factor = 252)
     if isnothing(key)
         key = get_rm_string(rm)
     end
     return PortfolioOptimiser.plot_frontier(port.frontier[key]; X = X, mu = mu, rf = rf,
-                                            rm = rm, kelly = kelly, t_factor = t_factor,
-                                            palette = palette)
+                                            rm = rm, kelly = kelly, t_factor = t_factor)
 end
 
 function PortfolioOptimiser.plot_frontier_area(frontier; rm::RiskMeasure = SD(),
-                                               t_factor = 252, palette = :Spectral)
+                                               t_factor = 252)
     risks = copy(frontier[:risk])
     assets = reshape(frontier[:weights][!, "tickers"], 1, :)
     weights = Matrix(frontier[:weights][!, 2:end])
@@ -221,12 +218,10 @@ function PortfolioOptimiser.plot_frontier_area(frontier; rm::RiskMeasure = SD(),
         risks .*= sqrt(t_factor)
     end
 
-    # sharpe = nothing
-    # if frontier[:sharpe]
-    #     sharpe = risks[end]
-    #     risks = risks[1:(end - 1)]
-    #     weights = weights[:, 1:(end - 1)]
-    # end
+    sharpe = nothing
+    if frontier[:sharpe]
+        sharpe = risks[end]
+    end
 
     idx = sortperm(risks)
     risks = risks[idx]
@@ -249,7 +244,6 @@ function PortfolioOptimiser.plot_frontier_area(frontier; rm::RiskMeasure = SD(),
 
     N = length(risks)
     weights = cumsum(weights; dims = 1)
-    # colours = cgrad(palette)
     for i ∈ axes(weights, 1)
         if i == 1
             band!(ax, risks, range(0, 0, N), weights[i, :]; label = assets[i])
@@ -257,34 +251,24 @@ function PortfolioOptimiser.plot_frontier_area(frontier; rm::RiskMeasure = SD(),
             band!(ax, risks, weights[i - 1, :], weights[i, :]; label = assets[i])
         end
     end
+    if !isnothing(sharpe)
+        vlines!(ax, sharpe; ymin = 0.0, ymax = 1.0, color = :black, linewidth = 3)
+        text!(ax, (sharpe * 1.1, 0.5); text = "Max Risk\nAdjusted\nReturn Ratio",
+              align = (:left, :baseline))
+    end
     axislegend(ax; position = :rc)
-
-    # f = Figure()
-    # Axis(f[1, 1])
-
-    # xs = range(risks)
-    # ys_low = -0.2 .* sin.(xs) .- 0.25
-    # ys_high = 0.2 .* sin.(xs) .+ 0.25
-
-    # band!(xs, ys_low, ys_high)
-    # band!(xs, ys_low .- 1, ys_high .- 1; color = :red)
-    # Colorbar(f[1, 2]; label = "Risk Adjusted Return Ratio", limits = extrema(ratios),
-    #          colormap = palette)
-
-    # plt = areaplot(risks, weights; kwargs_a...)
-
-    # if !isnothing(sharpe) && show_sharpe
-    #     if !haskey(kwargs_l, :color)
-    #         kwargs_l = (kwargs_l..., color = :black)
-    #     end
-    #     if !haskey(kwargs_l, :linewidth)
-    #         kwargs_l = (kwargs_l..., linewidth = 3)
-    #     end
-    #     plot!(plt, [sharpe, sharpe], [0, 1]; label = nothing, kwargs_l...)
-    #     annotate!([sharpe * 1.1], [0.5], text("Max Risk\nAdjusted\nReturn Ratio", :left, 8))
-    # end
-
     return f
 end
+function PortfolioOptimiser.plot_frontier(port::AbstractPortfolio, key = nothing;
+                                          t_factor = 252)
+    if isnothing(key)
+        key = get_rm_string(rm)
+    end
+    return PortfolioOptimiser.plot_frontier(port.frontier[key]; t_factor = t_factor)
+end
 
+function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
+                                          returns::AbstractMatrix; alpha::Real = 0.05,
+                                          kappa::Real = 0.3,
+                                          solvers::Union{<:AbstractDict, Nothing} = nothing) end
 end

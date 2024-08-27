@@ -228,14 +228,9 @@ function opt_weight_bounds(w_min, w_max, weights, max_iter = 100)
 end
 function finalise_weights(type::Any, port, weights, w_min, w_max, max_iter)
     stype = Symbol(type)
-    port.optimal[stype] = if !isempty(port.fail) || any(.!isfinite.(weights))
-        port.fail[:port] = DataFrame(; tickers = port.assets, weights = weights)
-        DataFrame()
-    else
-        weights = opt_weight_bounds(w_min, w_max, weights, max_iter)
-        weights ./= sum(weights)
-        DataFrame(; tickers = port.assets, weights = weights)
-    end
+    weights = opt_weight_bounds(w_min, w_max, weights, max_iter)
+    weights ./= sum(weights)
+    port.optimal[stype] = DataFrame(; tickers = port.assets, weights = weights)
     return port.optimal[stype]
 end
 function finalise_weights(type::NCO, port, weights, w_min, w_max, max_iter)
@@ -413,13 +408,11 @@ function intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ckurt, cskurt, cV, cS
     w = optimise!(intra_port; rm = rm, opt_kwargs...)
     if !isempty(w)
         w = w.weights
-        success = true
     else
         w = zeros(eltype(cret), size(cret, 2))
-        success = false
     end
 
-    return w, port.fail, success
+    return w, intra_port.fail
 end
 function calc_intra_weights(port, rm::Union{AbstractVector, <:TradRiskMeasure}, opt_kwargs,
                             port_kwargs)
@@ -436,17 +429,16 @@ function calc_intra_weights(port, rm::Union{AbstractVector, <:TradRiskMeasure}, 
                                                                              set_skurt,
                                                                              set_skew,
                                                                              set_sskew)
-        cw, cfail, success = intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ckurt,
-                                           cskurt, cV, cSV, opt_kwargs, port_kwargs)
+        cw, cfail = intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ckurt, cskurt, cV,
+                                  cSV, opt_kwargs, port_kwargs)
         w[cidx, i] .= cw
-        if !success
+        if !isempty(cfail)
             cfails[i] = cfail
         end
     end
     if !isempty(cfails)
         port.fail[:intra] = cfails
     end
-
     return w
 end
 function inter_nco_opt(port, rm, cassets, cret, cmu, ccov, set_kurt, set_skurt, set_skew,
@@ -461,13 +453,11 @@ function inter_nco_opt(port, rm, cassets, cret, cmu, ccov, set_kurt, set_skurt, 
 
     if !isempty(w)
         w = w.weights
-        success = true
     else
         w = zeros(eltype(cret), size(cret, 2))
-        success = false
     end
 
-    return w, port.fail, success
+    return w, inter_port.fail
 end
 function calc_inter_weights(port, wi, rm, opt_kwargs, port_kwargs, stat_kwargs)
     cret = port.returns * wi
@@ -475,13 +465,13 @@ function calc_inter_weights(port, wi, rm, opt_kwargs, port_kwargs, stat_kwargs)
     ccov = transpose(wi) * port.cov * wi
 
     set_kurt, set_skurt, set_skew, set_sskew = find_kurt_skew_rm(rm)
-    cw, cfail, success = inter_nco_opt(port, rm, 1:size(cret, 2), cret, cmu, ccov, set_kurt,
-                                       set_skurt, set_skew, set_sskew, opt_kwargs,
-                                       port_kwargs, stat_kwargs)
+    cw, cfail = inter_nco_opt(port, rm, 1:size(cret, 2), cret, cmu, ccov, set_kurt,
+                              set_skurt, set_skew, set_sskew, opt_kwargs, port_kwargs,
+                              stat_kwargs)
 
     w = wi * cw
 
-    if !success
+    if !isempty(cfail)
         port.fail[:inter] = cfail
     end
 
@@ -489,6 +479,7 @@ function calc_inter_weights(port, wi, rm, opt_kwargs, port_kwargs, stat_kwargs)
 end
 function _optimise!(type::NCO, port::HCPortfolio, rmi::Union{AbstractVector, <:RiskMeasure},
                     rmo::Union{AbstractVector, <:RiskMeasure}, ::Any, ::Any)
+    port.fail = Dict()
     wi = calc_intra_weights(port, rmi, type.opt_kwargs, type.port_kwargs)
     w = calc_inter_weights(port, wi, rmo, type.opt_kwargs_o, type.port_kwargs_o,
                            type.stat_kwargs_o)
@@ -499,11 +490,9 @@ function optimise!(port::HCPortfolio; rm::Union{AbstractVector, <:RiskMeasure} =
                    rmo::Union{AbstractVector, <:RiskMeasure} = rm, type::HCPortType = HRP(),
                    cluster::Bool = true, hclust_alg::HClustAlg = HAC(),
                    hclust_opt::HCType = HCType(), max_iter::Int = 100)
-    port.fail = Dict()
     if cluster
-        cluster_assets!(hclust_alg, port, hclust_opt)
+        cluster_assets!(port; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
     end
-
     lo, hi = w_limits(type, eltype(port.returns))
     w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(port.returns, 2), lo, hi)
     w = _optimise!(type, port, rm, rmo, w_min, w_max)

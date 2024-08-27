@@ -37,7 +37,7 @@
     @test isapprox(r1, riskt)
     @test isapprox(ret1, rett)
 
-    rm = [[SD(), SD()]]
+    rm = [[SD(), SD(; sigma = portfolio.cov)]]
     w2 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r2 = calc_risk(portfolio; type = :Trad, rm = rm[1][1])
     ret2 = dot(portfolio.mu, w2.weights)
