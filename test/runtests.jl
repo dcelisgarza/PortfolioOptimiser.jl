@@ -1,25 +1,5 @@
 using SafeTestsets
 
-@safetestset "Clustering tests V2" begin
-    include("ClusteringTests.jl")
-end
-
-@safetestset "BL Stats V2 tests" begin
-    include("BLStatsTests.jl")
-end
-
-@safetestset "Stats V2 tests" begin
-    include("StatsTest.jl")
-end
-
-@safetestset "WC Stats V2 tests" begin
-    include("WCStatsTest.jl")
-end
-
-@safetestset "Factor Stats V2 tests" begin
-    include("FactorStatsTest.jl")
-end
-
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
 end
@@ -94,4 +74,24 @@ end
 
 @safetestset "Network constraint tests" begin
     include("NetworkConstraintTests.jl")
+end
+
+@safetestset "Clustering tests V2" begin
+    include("ClusteringTests.jl")
+end
+
+@safetestset "BL Stats V2 tests" begin
+    include("BLStatsTests.jl")
+end
+
+@safetestset "Stats V2 tests" begin
+    include("StatsTest.jl")
+end
+
+@safetestset "WC Stats V2 tests" begin
+    include("WCStatsTest.jl")
+end
+
+@safetestset "Factor Stats V2 tests" begin
+    include("FactorStatsTest.jl")
 end

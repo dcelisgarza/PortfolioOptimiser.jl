@@ -24,10 +24,10 @@ l = 2.0
     portfolio.solvers = solvers
     test_logger = TestLogger()
     with_logger(test_logger) do
-        calc_risk(portfolio; rm = :EDaR)
-        calc_risk(portfolio; rm = :RDaR)
+        calc_risk(portfolio; rm = EDaR())
+        calc_risk(portfolio; rm = RDaR())
         portfolio.solvers = solvers_mip
-        calc_risk(portfolio; rm = :RDaR)
+        calc_risk(portfolio; rm = RDaR())
         return nothing
     end
 
@@ -55,19 +55,16 @@ end
     x = portfolio.returns * portfolio.optimal[:Trad].weights
 
     alpha = 0.05
-    portfolio.alpha = alpha
     r1 = PortfolioOptimiser.ERM(x, portfolio.z[:Trad_z_evar], alpha)
-    r1t = calc_risk(portfolio; rm = :EVaR)
+    r1t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     alpha = 0.1
-    portfolio.alpha = alpha
     r2 = PortfolioOptimiser.ERM(x, portfolio.z[:Trad_z_evar], alpha)
-    r2t = calc_risk(portfolio; rm = :EVaR)
+    r2t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     alpha = 0.15
-    portfolio.alpha = alpha
     r3 = PortfolioOptimiser.ERM(x, portfolio.z[:Trad_z_evar], alpha)
-    r3t = calc_risk(portfolio; rm = :EVaR)
+    r3t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     @test isapprox(r1, r1t, rtol = 5e-6)
     @test isapprox(r2, r2t, rtol = 3e-2)
@@ -98,19 +95,16 @@ end
     popfirst!(dd)
 
     alpha = 0.05
-    portfolio.alpha = alpha
     r1 = PortfolioOptimiser.ERM(dd, portfolio.z[:Trad_z_edar], alpha)
-    r1t = calc_risk(portfolio; rm = :EDaR)
+    r1t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
 
     alpha = 0.1
-    portfolio.alpha = alpha
     r2 = PortfolioOptimiser.ERM(dd, portfolio.z[:Trad_z_edar], alpha)
-    r2t = calc_risk(portfolio; rm = :EDaR)
+    r2t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
 
     alpha = 0.15
-    portfolio.alpha = alpha
     r3 = PortfolioOptimiser.ERM(dd, portfolio.z[:Trad_z_edar], alpha)
-    r3t = calc_risk(portfolio; rm = :EDaR)
+    r3t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
 
     @test isapprox(r1, r1t, rtol = 1e-6)
     @test isapprox(r2, r2t, rtol = 5e-2)
