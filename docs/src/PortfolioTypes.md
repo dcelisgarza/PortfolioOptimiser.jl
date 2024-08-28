@@ -1,4 +1,4 @@
-# Risk Measures
+# Portfolio Optimisation
 
 ## Public
 
@@ -6,7 +6,7 @@
 Modules = [PortfolioOptimiser]
 Public = true
 Private = false
-Pages = ["Risk_measures.jl"]
+Pages = ["PortfolioTypes.jl"]
 ```
 
 ## Private
@@ -15,5 +15,5 @@ Pages = ["Risk_measures.jl"]
 Modules = [PortfolioOptimiser]
 Public = false
 Private = true
-Pages = ["Risk_measures.jl"]
+Pages = ["PortfolioTypes.jl"]
 ```

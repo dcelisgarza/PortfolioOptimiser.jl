@@ -225,7 +225,7 @@ Internal function to optimise an OWA JuMP model.
 function _optimise_JuMP_model(model, solvers)
     solvers_tried = Dict()
 
-    check_sol = (;)
+    sucess = false
     for (key, val) ∈ solvers
         if haskey(val, :solver)
             set_optimizer(model, val[:solver])
@@ -239,6 +239,8 @@ function _optimise_JuMP_model(model, solvers)
 
         if haskey(val, :check_sol)
             check_sol = val[:check_sol]
+        else
+            check_sol = (;)
         end
 
         try
@@ -249,6 +251,7 @@ function _optimise_JuMP_model(model, solvers)
         end
 
         if is_solved_and_feasible(model; check_sol...)
+            sucess = true
             break
         else
             term_status = termination_status(model)
@@ -260,7 +263,7 @@ function _optimise_JuMP_model(model, solvers)
                           :params => haskey(val, :params) ? val[:params] : missing))
     end
 
-    return solvers_tried
+    return sucess, solvers_tried
 end
 
 """
@@ -370,8 +373,8 @@ function _owa_model_setup(method, T, weights)
     return model
 end
 function _owa_model_solve(model, weights, solvers, k)
-    solvers_tried = _optimise_JuMP_model(model, solvers)
-    return if is_solved_and_feasible(model)
+    success, solvers_tried = _optimise_JuMP_model(model, solvers)
+    return if success
         phi = model[:phi]
         phis = value.(phi)
         phis ./= sum(phis)

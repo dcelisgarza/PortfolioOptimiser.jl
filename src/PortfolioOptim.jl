@@ -816,6 +816,11 @@ end
 function adjust_model_value_for_obj(::Any, val, ::Any)
     return val
 end
+"""
+```
+get_z_from_model
+```
+"""
 function get_z_from_model(model::JuMP.Model, ::EVaR, obj::Any)
     return adjust_model_value_for_obj(model, value(model[:z_evar]), obj)
 end
@@ -840,6 +845,11 @@ end
 function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RDaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_rdar]), obj)
 end
+"""
+```
+get_z
+```
+"""
 function get_z(portfolio::Portfolio, rm::Union{AbstractVector, <:TradRiskMeasure}, obj::Any)
     return get_z_from_model(portfolio.model, rm, obj)
 end
@@ -2301,9 +2311,8 @@ function convex_optimisation(port, obj, type, class)
     term_status = termination_status(model)
     solvers_tried = Dict()
 
-    fail = true
+    success = false
     strtype = "_" * String(type)
-    check_sol = (;)
     for (key, val) ∈ solvers
         key = Symbol(String(key) * strtype)
 
@@ -2319,6 +2328,8 @@ function convex_optimisation(port, obj, type, class)
 
         if haskey(val, :check_sol)
             check_sol = val[:check_sol]
+        else
+            check_sol = (;)
         end
 
         try
@@ -2335,7 +2346,7 @@ function convex_optimisation(port, obj, type, class)
         if is_solved_and_feasible(model; check_sol...) &&
            all_finite_weights &&
            all_non_zero_weights
-            fail = false
+            success = true
             break
         else
             term_status = termination_status(model)
@@ -2353,14 +2364,14 @@ function convex_optimisation(port, obj, type, class)
                                                   weights = weights)))
     end
 
-    return if fail
-        @warn("Model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
-        port.fail = solvers_tried
-        port.optimal[Symbol(type)] = DataFrame()
-    else
+    return if success
         isempty(solvers_tried) ? port.fail = Dict() : port.fail = solvers_tried
         weights = _cleanup_weights(port, obj, type, class)
         port.optimal[Symbol(type)] = DataFrame(; tickers = port.assets, weights = weights)
+    else
+        @warn("Model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
+        port.fail = solvers_tried
+        port.optimal[Symbol(type)] = DataFrame()
     end
 end
 function _optimise!(::Trad, port::Portfolio, rm::Union{AbstractVector, <:TradRiskMeasure},

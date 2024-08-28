@@ -1,5 +1,83 @@
 abstract type AbstractPortfolio end
-
+"""
+```
+mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
+                         mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, amc, bvc,
+                         ler, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
+                         tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf,
+                         tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz, tlim,
+                         tfront, tsolv, tf, tmod, tlp, taopt, talo, tasolv, taf, tamod} <:
+               AbstractPortfolio
+    assets::ast
+    timestamps::dat
+    returns::r
+    short::s
+    short_u::us
+    long_u::ul
+    num_assets_l::nal
+    num_assets_u::nau
+    num_assets_u_scale::naus
+    f_assets::tfa
+    f_timestamps::tfdat
+    f_returns::tretf
+    loadings::l
+    loadings_opt::lo
+    max_num_assets_kurt::mnak
+    max_num_assets_kurt_scale::mnaks
+    rebalance::rb
+    turnover::to
+    tracking_err::kte
+    bl_bench_weights::blbw
+    a_mtx_ineq::ami
+    b_vec_ineq::bvi
+    risk_budget::rbv
+    f_risk_budget::frbv
+    network_method::nm
+    a_vec_cent::amc
+    b_cent::bvc
+    mu_l::ler
+    mu::tmu
+    cov::tcov
+    kurt::tkurt
+    skurt::tskurt
+    L_2::tl2
+    S_2::ts2
+    skew::tskew
+    V::tv
+    sskew::tsskew
+    SV::tsv
+    f_mu::tmuf
+    f_cov::tcovf
+    fm_returns::trfm
+    fm_mu::tmufm
+    fm_cov::tcovfm
+    bl_mu::tmubl
+    bl_cov::tcovbl
+    blfm_mu::tmublf
+    blfm_cov::tcovblf
+    cov_l::tcovl
+    cov_u::tcovu
+    cov_mu::tcovmu
+    cov_sigma::tcovs
+    d_mu::tdmu
+    k_mu::tkmu
+    k_sigma::tks
+    optimal::topt
+    z::tz
+    limits::tlim
+    frontier::tfront
+    solvers::tsolv
+    fail::tf
+    model::tmod
+    latest_prices::tlp
+    alloc_optimal::taopt
+    alloc_leftover::talo
+    alloc_solvers::tasolv
+    alloc_fail::taf
+    alloc_model::tamod
+end
+```
+"""
 mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
                          mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, amc, bvc,
                          ler, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,

@@ -37,9 +37,8 @@ function _optimise_allocation(portfolio, label, tickers, latest_prices)
     term_status = termination_status(model)
     solvers_tried = Dict()
 
-    fail = true
+    success = false
     key = nothing
-    check_sol = (;)
     for (key, val) ∈ solvers
         if haskey(val, :solver)
             set_optimizer(model, val[:solver])
@@ -53,6 +52,8 @@ function _optimise_allocation(portfolio, label, tickers, latest_prices)
 
         if haskey(val, :check_sol)
             check_sol = val[:check_sol]
+        else
+            check_sol = (;)
         end
 
         try
@@ -63,7 +64,7 @@ function _optimise_allocation(portfolio, label, tickers, latest_prices)
         end
 
         if is_solved_and_feasible(model; check_sol...)
-            fail = false
+            success = true
             break
         else
             term_status = termination_status(model)
@@ -82,7 +83,7 @@ function _optimise_allocation(portfolio, label, tickers, latest_prices)
 
     key = Symbol(string(key) * "_" * string(label))
 
-    return if fail
+    return if success
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._lp_sub_allocation!))"
         @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         portfolio.alloc_fail[key] = solvers_tried

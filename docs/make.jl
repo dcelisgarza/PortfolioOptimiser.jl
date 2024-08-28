@@ -1,5 +1,4 @@
-using Documenter, DocumenterTools, DocumenterCitations, Literate, PortfolioOptimiser,
-      StatsPlots, GraphRecipes
+using Documenter, DocumenterTools, DocumenterCitations, Literate, PortfolioOptimiser
 
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
 fix_math_md(content) = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
@@ -28,21 +27,19 @@ for file ∈ code_files
 end
 
 makedocs(;
-         modules = [PortfolioOptimiser,
-                    Base.get_extension(PortfolioOptimiser, :PortfolioOptimiserPlotExt)],
+         #modules = [PortfolioOptimiser],
+         #             Base.get_extension(PortfolioOptimiser, :PortfolioOptimiserPlotExt)],
          authors = "Daniel Celis Garza",
          repo = "https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/{commit}{path}#{line}",
          sitename = "PortfolioOptimiser.jl",
          format = Documenter.HTML(; prettyurls = get(ENV, "CI", "false") == "true",
                                   canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
                                   assets = String[]),
-         pages = ["Home" => "index.md", "Examples" => examples_nav,
-                  "API" => ["Constants" => "Constants.md", "Types" => "Types.md",
-                            "DBHTs" => "DBHTs.md", "OWA" => "OWA.md",
-                            "Optimisation" => "Portfolio.md",
-                            "Statistics" => "Statistics.md",
-                            "Risk Measures" => "Risk_measures.md",
-                            "Constraints" => "Constraints.md", "Plotting" => "Plotting.md",
+         pages = ["Home" => "index.md",
+                  #   "Examples" => examples_nav,
+                  "API" => ["Risk Measures" => "RiskMeasures.md",
+                            "Portfolio Optimisation" => "PortfolioOptim.md",
+                            "Portfolio Types" => "PortfolioTypes.md",
                             "References" => "References.md"]],
          plugins = [CitationBibliography(joinpath(@__DIR__, "src", "refs.bib");
                                          style = :numeric)])
