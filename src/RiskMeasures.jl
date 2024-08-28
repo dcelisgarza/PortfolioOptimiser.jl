@@ -161,6 +161,10 @@ Compute the Value at Risk, used in [`_CVaR`](@ref).
 
   - `x`: vector of portfolio returns.
   - `α`: significance level, `α ∈ (0, 1)`.
+
+!!! warning
+
+    In-place sorts the input vector.
 """
 function _VaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
@@ -185,6 +189,10 @@ where ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)`` is the value at risk as defined in 
 
   - `x`: vector of portfolio returns.
   - `α`: significance level, `α ∈ (0, 1)`.
+
+!!! warning
+
+    In-place sorts the input vector.
 """
 function _CVaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
@@ -450,6 +458,7 @@ function _DaR(x::AbstractArray, alpha::Real = 0.05)
         end
         dd[idx] = i - peak
     end
+    popfirst!(x)
     popfirst!(dd)
     sort!(dd)
     idx = ceil(Int, alpha * T)
@@ -484,6 +493,7 @@ function _MDD(x::AbstractVector)
             val = dd
         end
     end
+    popfirst!(x)
     return val
 end
 
@@ -495,11 +505,14 @@ _ADD(x::AbstractVector)
 Compute the Average Drawdown of uncompounded cumulative returns.
 
 ```math
-\\mathrm{ADD_{a}}(\\bm{X}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{X},\\, j)\\,,```
-where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
+\\mathrm{ADD_{a}}(\\bm{X}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{X},\\, j)\\,,
 ```
+
+where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
 """
 function _ADD(x::AbstractVector)
     T = length(x)
@@ -516,6 +529,7 @@ function _ADD(x::AbstractVector)
             val += dd
         end
     end
+    popfirst!(x)
     return val / T
 end
 
@@ -527,12 +541,15 @@ _CDaR(x::AbstractVector, alpha::Real = 0.05)
 Compute the Conditional Drawdown at Risk of uncompounded cumulative returns.
 
 ```math
-\\mathrm{CDaR_{a}}(\\bm{X},\\, \\alpha) = \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{a}}(\\bm{X},\\, j) - \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha),\\, 0 \\right] \\,,```
-where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref), and ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns as defined in [`_DaR`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
-- `alpha`: significance level, `α ∈ (0, 1)`.
+\\mathrm{CDaR_{a}}(\\bm{X},\\, \\alpha) = \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{a}}(\\bm{X},\\, j) - \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha),\\, 0 \\right] \\,,
 ```
+
+where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref), and ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns as defined in [`_DaR`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+  - `alpha`: significance level, `α ∈ (0, 1)`.
 """
 function _CDaR(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
@@ -546,6 +563,7 @@ function _CDaR(x::AbstractVector, alpha::Real = 0.05)
         end
         dd[idx] = i - peak
     end
+    popfirst!(x)
     popfirst!(dd)
     sort!(dd)
     idx = ceil(Int, alpha * T)
@@ -586,7 +604,7 @@ function _UCI(x::AbstractVector)
             val += dd^2
         end
     end
-
+    popfirst!(x)
     return sqrt(val / T)
 end
 
@@ -621,6 +639,7 @@ function _EDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
         end
         dd[idx] = -(peak - i)
     end
+    popfirst!(x)
     popfirst!(dd)
     return ERM(dd, solvers, alpha)
 end
@@ -653,6 +672,7 @@ function _RDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
         end
         dd[idx] = i - peak
     end
+    popfirst!(x)
     popfirst!(dd)
     return RRM(dd, solvers, alpha, kappa)
 end
@@ -734,11 +754,14 @@ _ADD_r(x::AbstractVector)
 Compute the Average Drawdown of compounded cumulative returns.
 
 ```math
-\\mathrm{ADD_{r}}(\\bm{r}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{X},\\, j)\\,,```
-where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
+\\mathrm{ADD_{r}}(\\bm{r}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{X},\\, j)\\,,
 ```
+
+where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
 """
 function _ADD_r(x::AbstractVector)
     T = length(x)
@@ -761,18 +784,21 @@ end
 
 """
 ```
-_CDaR_r(x::AbstractVector; alpha::Real = 0.05)
+_CDaR_r(x::AbstractVector, alpha::Real = 0.05)
 ```
 
 Compute the Conditional Drawdown at Risk of compounded cumulative returns.
 
 ```math
-\\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) = \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{r}}(\\bm{X},\\, j) - \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha),\\, 0 \\right] \\,,```
-where ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref), and ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`_DaR_r`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
-- `alpha`: significance level, `α ∈ (0, 1)`.
+\\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) = \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{r}}(\\bm{X},\\, j) - \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha),\\, 0 \\right] \\,,
 ```
+
+where ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref), and ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`_DaR_r`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+  - `alpha`: significance level, `α ∈ (0, 1)`.
 """
 function _CDaR_r(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
@@ -1001,6 +1027,10 @@ Compute the _CVaR Range.
   - `x`: vector of portfolio returns.
   - `alpha`: significance level of _CVaR losses, ``α ∈ (0, 1)``.
   - `beta`: significance level of _CVaR gains, `beta in (0, 1)`.
+
+!!! warning
+
+    In-place sorts the input vector.
 """
 function _RCVaR(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
     T = length(x)
@@ -1021,6 +1051,10 @@ Compute the Tail Gini.
   - `alpha_i`: start value of the significance level of _CVaR losses, `0 <alpha_i < alpha < 1`.
   - `alpha`: end value of the significance level of _CVaR losses, ``α ∈ (0, 1)``.
   - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
+
+!!! warning
+
+    In-place sorts the input vector.
 """
 function _TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
              a_sim::Int = 100)
@@ -1046,6 +1080,10 @@ Compute the Tail Gini Range.
   - `beta_i`: start value of the significance level of _CVaR gains, `0 < beta_i < beta < 1`.
   - `beta`: end value of the significance level of _CVaR gains, `beta in (0, 1)`.
   - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
+
+!!! warning
+
+    In-place sorts the input vector.
 """
 function _RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
               a_sim::Real = 100, beta_i::Real = alpha_i, beta::Real = alpha,
@@ -1089,7 +1127,20 @@ end
 # end
 
 """
+```
 _DVar(x::AbstractVector)
+```
+
+```math
+\\begin{align*}
+\\mathrm{dVar}(\\bm{X}) &= \\mathrm{dCov}(\\bm{X},\\, \\bm{Y}) =  \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T} A_{i,\\,j}^2\\\\
+\\mathrm{dCov}(\\bm{X},\\, \\bm{Y}) &= \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T} \\sum\\limits_{j=1}^{T} A_{i,\\,j} B_{i,\\,j}\\\\
+A_{i,\\,j} &= a_{i,\\,j} - \\bar{a}_{i\\,.} - \\bar{a}_{.\\,j} + \\bar{a}_{.\\,.}\\\\
+B_{i,\\,j} &= b_{i,\\,j} - \\bar{b}_{i\\,.} - \\bar{b}_{.\\,j} + \\bar{b}_{.\\,.}\\\\
+a_{i,\\,j} &= \\lVert X_{i} - X_{j} \\rVert_{2}, \\quad \\forall i,\\, j = 1,\\, \\ldots ,\\, T\\\\
+b_{i,\\,j} &= \\lVert Y_{i} - Y_{j} \\rVert_{2}, \\quad \\forall i,\\, j = 1,\\, \\ldots ,\\, T
+\\end{align*}\\,.
+```
 """
 function _DVar(x::AbstractVector)
     T = length(x)
