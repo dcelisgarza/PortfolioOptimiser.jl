@@ -84,14 +84,14 @@ function _optimise_allocation(portfolio, label, tickers, latest_prices)
     key = Symbol(string(key) * "_" * string(label))
 
     return if success
+        shares, cost, weights, available_funds = _resolve_model(model, latest_prices)
+    else
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._lp_sub_allocation!))"
         @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         portfolio.alloc_fail[key] = solvers_tried
 
         (String[], Vector{eltype(latest_prices)}(undef, 0),
          Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices)))
-    else
-        shares, cost, weights, available_funds = _resolve_model(model, latest_prices)
     end
 end
 function _lp_sub_allocation!(portfolio, key, label, tickers, weights, latest_prices,

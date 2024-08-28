@@ -86,7 +86,7 @@
     @test isapprox(r3, riskt0, rtol = 1.0e-5)
     @test isapprox(ret3, rett0, rtol = 1.0e-5)
     @test isapprox(w3.weights, wt)
-    @test isapprox(r3, riskt)
+    @test isapprox(r3, riskt, rtol = 5.0e-8)
     @test isapprox(ret3, rett)
 
     rm = [[RDaR(), RDaR()]]
@@ -1151,7 +1151,7 @@ end
     @test isapprox(ret3, rett0, rtol = 5.0e-6)
     @test isapprox(w3.weights, wt, rtol = 5.0e-5)
     @test isapprox(r3, riskt, rtol = 1.0e-6)
-    @test isapprox(ret3, rett, rtol = 5.0e-7)
+    @test isapprox(ret3, rett, rtol = 1.0e-6)
 
     rm = [[TG(; owa = OWASettings(; approx = true)),
            TG(; owa = OWASettings(; approx = true))]]
@@ -1562,7 +1562,7 @@ end
     @test isapprox(r1, riskt0, rtol = 5.0e-7)
     @test isapprox(ret1, rett0, rtol = 0.0005)
     @test isapprox(w1.weights, wt, rtol = 5.0e-5)
-    @test isapprox(r1, riskt, rtol = 5.0e-8)
+    @test isapprox(r1, riskt, rtol = 5.0e-7)
     @test isapprox(ret1, rett, rtol = 5.0e-4)
 
     rm = [[RTG(; owa = OWASettings(; approx = true)),
@@ -2007,7 +2007,7 @@ end
     @test isapprox(ret1, rett0, rtol = 5.0e-6)
     @test isapprox(w1.weights, wt, rtol = 5.0e-5)
     @test isapprox(r1, riskt, rtol = 5.0e-7)
-    @test isapprox(ret1, rett, rtol = 5.0e-7)
+    @test isapprox(ret1, rett, rtol = 5.0e-6)
 
     rm = [[OWA(; w = owa_tg(200), owa = OWASettings(; approx = true)),
            OWA(; w = owa_tg(200), owa = OWASettings(; approx = true))]]

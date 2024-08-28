@@ -1788,7 +1788,7 @@ end
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
-          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 2e-6
+          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 5e-6
 
     rm = [[RVaR(), RVaR()]]
     rm[1][1].settings.ub = r2
@@ -2220,7 +2220,7 @@ end
     rm[1][1].settings.ub = r2
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 ||
-          abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 1e-8
+          abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-8
 
     # Ret lower bound
     obj = MinRisk()

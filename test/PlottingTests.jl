@@ -13,7 +13,7 @@ portfolio = Portfolio(; prices = prices,
                                                                        "max_step_fraction" => 0.75))))
 asset_statistics!(portfolio)
 obj = MinRisk()
-rm = SSD()
+rm = SD()
 w1 = optimise!(portfolio; type = Trad(), rm = rm, kelly = EKelly(), obj = obj)
 
 idx, clustering, k, S, D = cluster_assets(portfolio; hclust_alg = HAC(),
@@ -31,6 +31,8 @@ pdd = plot_drawdown(portfolio)
 
 fw = efficient_frontier!(portfolio; rm = rm, points = 5)
 pfa = plot_frontier_area(fw; rm = rm, t_factor = 252, palette = :Spectral)
+pfa = plot_frontier_area(fw; rm = rm, t_factor = 252, palette = :Spectral)
+plot_frontier_area(portfolio)
 
 prp = plot_returns(portfolio, :Trad)
 pra = plot_returns(portfolio, :Trad; per_asset = true)

@@ -520,11 +520,6 @@ function PortfolioOptimiser.plot_clusters(assets::AbstractVector, rho::AbstractM
     end
 
     return f
-
-    #  cluster_assets(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAC(),
-    #   hclust_opt::HCType = HCType())
-
-    return nothing
 end
 
 end
