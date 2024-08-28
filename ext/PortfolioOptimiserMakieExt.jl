@@ -266,7 +266,8 @@ function PortfolioOptimiser.plot_frontier_area(frontier; rm::RiskMeasure = SD(),
     return f
 end
 function PortfolioOptimiser.plot_frontier_area(port::AbstractPortfolio, key = nothing;
-                                               t_factor = 252, palette = :Spectral)
+                                               rm = SD(), t_factor = 252,
+                                               palette = :Spectral)
     if isnothing(key)
         key = get_rm_string(rm)
     end

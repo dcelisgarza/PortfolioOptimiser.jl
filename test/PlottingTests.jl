@@ -3,7 +3,7 @@ using Test, PortfolioOptimiser, DataFrames, CSV, Dates, Clarabel, LinearAlgebra,
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
-# using CairoMakie
+using CairoMakie
 # @testset "Plot returns" begin
 portfolio = Portfolio(; prices = prices,
                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
