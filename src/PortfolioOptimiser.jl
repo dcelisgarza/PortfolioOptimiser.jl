@@ -18,5 +18,5 @@ include("./HClustering.jl")
 include("./NetworkConstraints.jl")
 include("./Statistics.jl")
 include("./Optimisation.jl")
-include("./MakieExtensionDefinitions.jl")
+include("./PortfolioOptimiserPlotsExtDefinitions.jl")
 end

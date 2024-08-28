@@ -27,10 +27,11 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [weakdeps]
-Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+GraphRecipes = "bd48cda9-67a9-57be-86fa-5b3c104eda73"
+StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 
 [extensions]
-PortfolioOptimiserMakieExt = "Makie"
+PortfolioOptimiserPlotsExt = ["GraphRecipes", "StatsPlots"]
 
 [compat]
 julia = "1.10"
@@ -45,8 +46,6 @@ Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 Pajarito = "2f354839-79df-5901-9f0a-cdb2aac6fe30"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
-[targets]
-test = ["CSV", "Clarabel", "CovarianceEstimation", "HiGHS", "GLPK", "Logging", "Pajarito",
-        "SafeTestsets", "Test", "TimeSeries", "Makie"]
+[tartets]
+test = ["CSV","Clarabel","CovarianceEstimation","GLPK","HiGHS","Logging","Pajarito","SafeTestsets","Test"]

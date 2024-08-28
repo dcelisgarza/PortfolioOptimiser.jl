@@ -96,6 +96,6 @@ end
     include("WCOptimisationTests.jl")
 end
 
-@safetestset "Plotting v2" begin
+@safetestset "Plotting" begin
     include("PlottingTests.jl")
 end
