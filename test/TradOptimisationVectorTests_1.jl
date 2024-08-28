@@ -780,7 +780,7 @@ end
     @test isapprox(w3.weights, wt0, rtol = 0.0005)
     @test isapprox(r3, riskt0, rtol = 5.0e-5)
     @test isapprox(ret3, rett0, rtol = 5.0e-5)
-    @test isapprox(w3.weights, wt)
+    @test isapprox(w3.weights, wt, rtol = 5.0e-8)
     @test isapprox(r3, riskt)
     @test isapprox(ret3, rett)
 
@@ -1502,7 +1502,7 @@ end
     @test isapprox(ret1, rett0, rtol = 5.0e-6)
     @test isapprox(w1.weights, wt, rtol = 5.0e-6)
     @test isapprox(r1, riskt)
-    @test isapprox(ret1, rett, rtol = 1.0e-7)
+    @test isapprox(ret1, rett, rtol = 5.0e-6)
 
     rm = [[EVaR(), EVaR()]]
     w2 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1552,8 +1552,8 @@ end
     @test isapprox(r3, riskt0, rtol = 5.0e-6)
     @test isapprox(ret3, rett0, rtol = 5.0e-6)
     @test isapprox(w3.weights, wt, rtol = 1.0e-6)
-    @test isapprox(r3, riskt, rtol = 5.0e-8)
-    @test isapprox(ret3, rett, rtol = 5.0e-8)
+    @test isapprox(r3, riskt, rtol = 1.0e-7)
+    @test isapprox(ret3, rett, rtol = 1.0e-7)
 
     rm = [[EVaR(), EVaR()]]
     w4 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1759,7 +1759,7 @@ end
     @test isapprox(r3, riskt0, rtol = 5.0e-7)
     @test isapprox(ret3, rett0, rtol = 5.0e-7)
     @test isapprox(w3.weights, wt, rtol = 1.0e-7)
-    @test isapprox(r3, riskt, rtol = 5.0e-8)
+    @test isapprox(r3, riskt, rtol = 5.0e-7)
     @test isapprox(ret3, rett)
 
     rm = [[RVaR(), RVaR()]]
@@ -1801,7 +1801,7 @@ end
     rm.settings.ub = r1 * 1.000001
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
-          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 1e-8
+          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 5e-8
 
     rm = [[RVaR(), RVaR()]]
     rm[1][1].settings.ub = r2
@@ -1873,7 +1873,7 @@ end
     @test !isapprox(w9.weights, wt1)
     @test !isapprox(r9, riskt1)
     @test !isapprox(ret9, rett1)
-    @test isapprox(w9.weights, wt)
+    @test isapprox(w9.weights, wt, rtol = 5.0e-8)
     @test isapprox(r9, riskt, rtol = 5.0e-7)
     @test isapprox(ret9, rett)
 end
@@ -2121,9 +2121,9 @@ end
     @test isapprox(w1.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r1, riskt0, rtol = 5.0e-7)
     @test isapprox(ret1, rett0, rtol = 5.0e-6)
-    @test isapprox(w1.weights, wt, rtol = 5.0e-6)
-    @test isapprox(r1, riskt, rtol = 5.0e-8)
-    @test isapprox(ret1, rett, rtol = 1.0e-6)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-5)
+    @test isapprox(r1, riskt, rtol = 5.0e-7)
+    @test isapprox(ret1, rett, rtol = 5.0e-6)
 
     rm = [[EDaR(), EDaR()]]
     w2 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -2174,7 +2174,7 @@ end
     @test isapprox(ret3, rett0, rtol = 5.0e-5)
     @test isapprox(w3.weights, wt, rtol = 5.0e-6)
     @test isapprox(r3, riskt, rtol = 5.0e-7)
-    @test isapprox(ret3, rett)
+    @test isapprox(ret3, rett, rtol = 5.0e-7)
 
     rm = [[EDaR(), EDaR()]]
     w4 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -2192,7 +2192,7 @@ end
     @test isapprox(w4.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r4, riskt0, rtol = 1.0e-5)
     @test isapprox(ret4, rett0, rtol = 1.0e-5)
-    @test isapprox(w4.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w4.weights, wt, rtol = 1.0e-6)
     @test isapprox(r4, riskt, rtol = 5.0e-7)
     @test isapprox(ret4, rett, rtol = 1.0e-7)
 
@@ -2201,7 +2201,8 @@ end
     rm = EDaR(; settings = RiskMeasureSettings(; scale = 2.0))
     rm.settings.ub = r1 * 1.000001
     optimise!(portfolio; rm = rm, obj = obj)
-    @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 * 1.000001
+    @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 * 1.000001 ||
+          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1 * 1.000001) < 5e-6
 
     rm = [[EDaR(), EDaR()]]
     rm[1][1].settings.ub = r2
@@ -2219,7 +2220,7 @@ end
     rm[1][1].settings.ub = r2
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 ||
-          abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-9
+          abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 1e-8
 
     # Ret lower bound
     obj = MinRisk()

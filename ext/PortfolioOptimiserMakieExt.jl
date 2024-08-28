@@ -331,4 +331,200 @@ function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::Abstrac
 
     return f
 end
+function PortfolioOptimiser.plot_drawdown(port::AbstractPortfolio,
+                                          type = isa(port, HCPortfolio) ? :HRP : :Trad;
+                                          X = port.returns, alpha::Real = 0.05,
+                                          kappa::Real = 0.3, palette = :Spectral)
+    return PortfolioOptimiser.plot_drawdown(port.timestamps, port.optimal[type].weights, X;
+                                            alpha = alpha, kappa = kappa, port.solvers,
+                                            palette = palette)
+end
+
+function PortfolioOptimiser.plot_hist(w::AbstractVector, X::AbstractMatrix;
+                                      alpha_i::Real = 0.0001, alpha::Real = 0.05,
+                                      a_sim::Int = 100, kappa::Real = 0.3,
+                                      solvers::Union{<:AbstractDict, Nothing} = nothing,
+                                      points::Integer = ceil(Int, 4 * sqrt(size(X, 1))),
+                                      palette = :Spectral)
+    ret = X * w * 100
+    mu = mean(ret)
+    sigma = std(ret)
+
+    x = range(minimum(ret); stop = maximum(ret), length = points)
+
+    mad = PortfolioOptimiser._MAD(ret)
+    gmd = PortfolioOptimiser._GMD(ret)
+    risks = (mu, mu - sigma, mu - mad, mu - gmd, -PortfolioOptimiser._VaR(ret, alpha),
+             -PortfolioOptimiser._CVaR(ret, alpha),
+             -PortfolioOptimiser._TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim),
+             -PortfolioOptimiser._EVaR(ret, solvers, alpha),
+             -PortfolioOptimiser._RVaR(x, solvers, alpha, kappa),
+             -PortfolioOptimiser._WR(ret))
+
+    conf = round((1 - alpha) * 100; digits = 2)
+
+    risk_labels = ("Mean: $(round(risks[1], digits=2))%",
+                   "Mean - Std. Dev. ($(round(sigma, digits=2))%): $(round(risks[2], digits=2))%",
+                   "Mean - MAD ($(round(mad,digits=2))%): $(round(risks[3], digits=2))%",
+                   "Mean - GMD ($(round(gmd,digits=2))%): $(round(risks[4], digits=2))%",
+                   "$(conf)% Confidence VaR: $(round(risks[5], digits=2))%",
+                   "$(conf)% Confidence CVaR: $(round(risks[6], digits=2))%",
+                   "$(conf)% Confidence Tail Gini: $(round(risks[7], digits=2))%",
+                   "$(conf)% Confidence EVaR: $(round(risks[8], digits=2))%",
+                   "$(conf)% Confidence RVaR ($(round(kappa, digits=2))): $(round(risks[9], digits=2))%",
+                   "Worst Realisation: $(round(risks[10], digits=2))%")
+
+    D = fit(Normal, ret)
+
+    colors = cgrad(palette, length(risk_labels) + 2; categorical = true, scale = true)
+
+    f = Figure()
+    ax = Axis(f[1, 1]; ylabel = "Probability Density")
+    hist!(ax, ret; normalization = :pdf, color = colors[1])
+    for (i, (label, risk)) ∈ enumerate(zip(risk_labels, risks))
+        vlines!(ax, risk; ymin = 0.0, ymax = 1.0, color = colors[i + 1], linewidth = 3,
+                label = label)
+    end
+    lines!(ax, x, pdf.(D, x);
+           label = "Normal: μ = $(round(mean(D), digits=2))%, σ = $(round(std(D), digits=2))%",
+           color = colors[end], linewidth = 3)
+    Legend(f[1, 2], ax; labelsize = 10)
+
+    return f
+end
+
+function PortfolioOptimiser.plot_hist(port::AbstractPortfolio,
+                                      type = isa(port, HCPortfolio) ? :HRP : :Trad;
+                                      X = port.returns, alpha_i::Real = 0.0001,
+                                      alpha::Real = 0.05, a_sim::Int = 100,
+                                      kappa::Real = 0.3,
+                                      points::Integer = ceil(Int,
+                                                             4 *
+                                                             sqrt(size(port.returns, 1))),
+                                      palette = :Spectral)
+    return plot_hist(port.optimal[type].weights, X; alpha_i = alpha_i, alpha = alpha,
+                     a_sim = a_sim, kappa = kappa, solvers = port.solvers, points = points,
+                     palette = palette)
+end
+
+function PortfolioOptimiser.plot_range(w::AbstractVector, X::AbstractMatrix;
+                                       alpha_i::Real = 0.0001, alpha::Real = 0.05,
+                                       a_sim::Int = 100, beta_i::Real = alpha_i,
+                                       beta::Real = alpha, b_sim::Integer = a_sim,
+                                       palette = :Spectral)
+    ret = X * w * 100
+
+    risks = (PortfolioOptimiser._RG(ret),
+             PortfolioOptimiser._RCVaR(ret; alpha = alpha, beta = beta),
+             PortfolioOptimiser._RTG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
+                                     beta_i = beta_i, beta = beta, b_sim = b_sim))
+
+    lo_conf = 1 - alpha
+    hi_conf = 1 - beta
+    risk_labels = ("Range: $(round(risks[1], digits=2))%",
+                   "Tail Gini Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[2], digits=2))%",
+                   "CVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[3], digits=2))%")
+
+    D = fit(Normal, ret)
+    y = pdf(D, mean(D))
+    ys = (y / 4, y / 2, y * 3 / 4)
+
+    colors = cgrad(palette, length(risk_labels) + 1; categorical = true, scale = true)
+
+    f = Figure()
+    ax = Axis(f[1, 1]; ylabel = "Probability Density")
+    hist!(ax, ret; normalization = :pdf, color = colors[1])
+
+    bounds = [minimum(ret) -PortfolioOptimiser._TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) -PortfolioOptimiser._CVaR(ret, alpha);
+              maximum(ret) PortfolioOptimiser._TG(-ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) PortfolioOptimiser._CVaR(-ret, alpha)]
+
+    for i ∈ eachindex(risks)
+        lines!(ax, [bounds[1, i], bounds[1, i], bounds[2, i], bounds[2, i]],
+               [0, ys[i], ys[i], 0]; label = risk_labels[i], color = colors[i + 1],
+               linewidth = 3)
+    end
+    Legend(f[1, 2], ax; labelsize = 10)
+
+    return f
+end
+
+function PortfolioOptimiser.plot_range(port::AbstractPortfolio,
+                                       type = isa(port, HCPortfolio) ? :HRP : :Trad;
+                                       X = port.returns, alpha_i::Real = 0.0001,
+                                       alpha::Real = 0.05, a_sim::Int = 100,
+                                       beta_i::Real = alpha_i, beta::Real = alpha,
+                                       b_sim::Integer = a_sim, palette = :Spectral)
+    return plot_range(port.optimal[type].weights, X; alpha_i = alpha_i, alpha = alpha,
+                      a_sim = a_sim, beta_i = beta_i, beta = beta, b_sim = b_sim,
+                      palette = palette)
+end
+
+function PortfolioOptimiser.plot_clusters(assets::AbstractVector, rho::AbstractMatrix,
+                                          idx::AbstractVector{<:Integer},
+                                          clustering::Hclust, k::Integer,
+                                          limits::Tuple{<:Real, <:Real} = (-1, 1),
+                                          palette = :Spectral, show_clusters::Bool = true)
+    N = length(assets)
+    order = clustering.order
+    heights = clustering.heights
+
+    rho = rho[order, order]
+    assets = assets[order]
+
+    uidx = minimum(idx):maximum(idx)
+    clusters = Vector{Vector{Int}}(undef, length(uidx))
+    for i ∈ eachindex(clusters)
+        clusters[i] = findall(idx .== i)
+    end
+
+    colors = cgrad(palette, k; categorical = true)
+
+    f = Figure()
+    ax = Axis(f[1, 1]; xticks = (1:N, assets), yticks = (1:N, assets),
+              xticklabelrotation = pi / 2, yreversed = true)
+    Colorbar(f[1, 2]; label = "Correlation", limits = limits, colormap = palette)
+    heatmap!(ax, 1:N, 1:N, rho)
+
+    nodes = -clustering.merges
+    if show_clusters
+        for (i, cluster) ∈ enumerate(clusters)
+            a = [findfirst(x -> x == c, order) for c ∈ cluster]
+            a = a[.!isnothing.(a)]
+            xmin = minimum(a)
+            xmax = xmin + length(cluster)
+
+            i1 = [findfirst(x -> x == c, nodes[:, 1]) for c ∈ cluster]
+            i1 = i1[.!isnothing.(i1)]
+            i2 = [findfirst(x -> x == c, nodes[:, 2]) for c ∈ cluster]
+            i2 = i2[.!isnothing.(i2)]
+            i3 = unique([i1; i2])
+            h = min(maximum(heights[i3]) * 1.1, 1)
+
+            lines!(ax,
+                   [xmin - 0.5, xmax - 0.5, xmax - 0.5, xmax - 0.5, xmax - 0.5, xmin - 0.5,
+                    xmin - 0.5, xmin - 0.5],
+                   [xmin - 0.5, xmin - 0.5, xmin - 0.5, xmax - 0.5, xmax - 0.5, xmax - 0.5,
+                    xmax - 0.5, xmin - 0.5]; color = :black, linewidth = 3)
+
+            # plot!(dend1,
+            #       [xmin - 0.25, xmax - 0.75, xmax - 0.75, xmax - 0.75, xmax - 0.75,
+            #        xmin - 0.25, xmin - 0.25, xmin - 0.25], [0, 0, 0, h, h, h, h, 0];
+            #       color = nothing, legend = false,
+            #       fill = (0, 0.5, colours[(i - 1) % k + 1]))
+
+            # plot!(dend2, [0, 0, 0, h, h, h, h, 0],
+            #       [xmin - 0.25, xmax - 0.75, xmax - 0.75, xmax - 0.75, xmax - 0.75,
+            #        xmin - 0.25, xmin - 0.25, xmin - 0.25]; color = nothing, legend = false,
+            #       fill = (0, 0.5, colours[(i - 1) % k + 1]))
+        end
+    end
+
+    return f
+
+    #  cluster_assets(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAC(),
+    #   hclust_opt::HCType = HCType())
+
+    return nothing
+end
+
 end

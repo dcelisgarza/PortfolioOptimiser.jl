@@ -1,9 +1,9 @@
 using Test, PortfolioOptimiser, DataFrames, CSV, Dates, Clarabel, LinearAlgebra, Makie,
       TimeSeries
 
-prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
-using CairoMakie
+# using CairoMakie
 # @testset "Plot returns" begin
 portfolio = Portfolio(; prices = prices,
                       solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -12,24 +12,31 @@ portfolio = Portfolio(; prices = prices,
                                                        :params => Dict("verbose" => false,
                                                                        "max_step_fraction" => 0.75))))
 asset_statistics!(portfolio)
-rm = SD()
 obj = MinRisk()
+rm = SSD()
 w1 = optimise!(portfolio; type = Trad(), rm = rm, kelly = EKelly(), obj = obj)
 
-plot_drawdown(portfolio.timestamps, portfolio.optimal[:Trad].weights, portfolio.returns;
-              solvers = portfolio.solvers)
+idx, clustering, k, S, D = cluster_assets(portfolio; hclust_alg = HAC(),
+                                          hclust_opt = HCType(; k_method = StdSilhouette()))
+
+plot_clusters(portfolio.assets, S, idx, clustering, k, (-1, 1), :Spectral, true)
+
+plot_range(portfolio.optimal[:Trad].weights, portfolio.returns)
+
+plot_range(portfolio)
+
+plot_hist(portfolio)
+
+pdd = plot_drawdown(portfolio)
 
 fw = efficient_frontier!(portfolio; rm = rm, points = 5)
 pfa = plot_frontier_area(fw; rm = rm, t_factor = 252, palette = :Spectral)
 
-prp = plot_returns(portfolio, :RP)
-pra = plot_returns(portfolio, :RP; per_asset = true)
-pb = plot_bar(portfolio, :RP)
-prc = plot_risk_contribution(portfolio, :RP; rm = rm, percentage = true)
-fw = efficient_frontier!(portfolio; kelly = NoKelly(), rm = rm, points = 5)
-pf = plot_frontier(portfolio; kelly = NoKelly(), rm = rm)
-
-pf = plot_frontier(portfolio; rm = rm)
+prp = plot_returns(portfolio, :Trad)
+pra = plot_returns(portfolio, :Trad; per_asset = true)
+pb = plot_bar(portfolio, :Trad)
+prc = plot_risk_contribution(portfolio, :Trad; rm = rm, percentage = true)
+pf = plot_frontier(portfolio; kelly = EKelly(), rm = rm)
 
 # end
 
