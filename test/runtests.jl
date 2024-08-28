@@ -1,14 +1,10 @@
 using SafeTestsets
 
-@safetestset "Trad optimisation rm vectors" begin
-    include("TradOptimisationVectorTests.jl")
-end
-
-@safetestset "Trad optimisation v2" begin
+@safetestset "Trad optimisation" begin
     include("TradOptimisationTests.jl")
 end
 
-@safetestset "Risk measure tests V2" begin
+@safetestset "Risk measure tests" begin
     include("RiskMeasureTests.jl")
 end
 
@@ -16,23 +12,23 @@ end
     include("NetworkConstraintTests.jl")
 end
 
-@safetestset "Clustering tests V2" begin
+@safetestset "Clustering tests" begin
     include("ClusteringTests.jl")
 end
 
-@safetestset "BL Stats V2 tests" begin
+@safetestset "BL Stats tests" begin
     include("BLStatsTests.jl")
 end
 
-@safetestset "Stats V2 tests" begin
+@safetestset "Stats tests" begin
     include("StatsTest.jl")
 end
 
-@safetestset "WC Stats V2 tests" begin
+@safetestset "WC Stats tests" begin
     include("WCStatsTest.jl")
 end
 
-@safetestset "Factor Stats V2 tests" begin
+@safetestset "Factor Stats tests" begin
     include("FactorStatsTest.jl")
 end
 
@@ -64,7 +60,7 @@ end
     include("DBHTClusteringTests.jl")
 end
 
-@safetestset "Efficient frontier v2" begin
+@safetestset "Efficient frontier" begin
     include("EfficientFrontierTests.jl")
 end
 
@@ -98,4 +94,8 @@ end
 
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
+end
+
+@safetestset "Trad optimisation rm vectors" begin
+    include("TradOptimisationVectorTests.jl")
 end
