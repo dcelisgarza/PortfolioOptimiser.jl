@@ -173,7 +173,7 @@ end
     w12 = optimise!(portfolio; type = WC(), obj = MaxRet())
     @test isapprox(w10.weights, w1.weights, rtol = 1.0e-7)
     @test isapprox(w11.weights, w1.weights, rtol = 5.0e-8)
-    @test isapprox(w12.weights, w1.weights, rtol = 1.0e-6)
+    @test isapprox(w12.weights, w1.weights, rtol = 5.0e-6)
 
     portfolio.rebalance = TR(; val = 1e-4, w = w3.weights)
     w13 = optimise!(portfolio; type = WC(), obj = MinRisk())

@@ -1,5 +1,25 @@
 using SafeTestsets
 
+@safetestset "Constraints" begin
+    include("ConstrainedOptimisationTests.jl")
+end
+
+@safetestset "Portfolio classes" begin
+    include("PortfolioClassesTests.jl")
+end
+
+@safetestset "RP optimisation" begin
+    include("RPOptimisationTests.jl")
+end
+
+@safetestset "RRP Optimisation" begin
+    include("RRPOptimisationTests.jl")
+end
+
+@safetestset "WC Optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
 end
@@ -78,24 +98,4 @@ end
 
 @safetestset "HC Optimistaion" begin
     include("HCOptimisationTests.jl")
-end
-
-@safetestset "Constraints" begin
-    include("ConstrainedOptimisationTests.jl")
-end
-
-@safetestset "Portfolio classes" begin
-    include("PortfolioClassesTests.jl")
-end
-
-@safetestset "RP optimisation" begin
-    include("RPOptimisationTests.jl")
-end
-
-@safetestset "RRP Optimisation" begin
-    include("RRPOptimisationTests.jl")
-end
-
-@safetestset "WC Optimisation" begin
-    include("WCOptimisationTests.jl")
 end
