@@ -1926,7 +1926,8 @@ function set_rm(port::Portfolio, rm::DVar, type::Union{Trad, RP}, obj;
     @constraint(model, [i = 1:T, j = i:T], [Dt[i, j]; Dx[i, j]] in MOI.NormOneCone(2))
     dt = vec(Dt)
     iT2 = inv(T^2)
-    @expression(model, dvar_risk, iT2 * (dot(dt, dt) + iT2 * dot(ovec, Dt, ovec)^2))
+    @expression(model, sum_Dt, sum(Dt))
+    @expression(model, dvar_risk, iT2 * (dot(dt, dt) + iT2 * sum_Dt^2))
     _set_rm_risk_upper_bound(obj, type, model, dvar_risk, rm.settings.ub)
     _set_risk_expression(model, dvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing

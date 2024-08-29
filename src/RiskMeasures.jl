@@ -1152,7 +1152,14 @@ b_{i,\\,j} &= \\lVert Y_{i} - Y_{j} \\rVert_{2}, \\quad \\forall i,\\, j = 1,\\,
 \\end{align*}\\,,
 ```
 
-where
+where:
+
+  - ``\\bm{X}`` and ``\\bm{Y}`` are random variables, they are equal in this case as they are the portfolio returns.
+  - ``a_{i,\\,j}`` and ``b_{i,\\,j}`` are entries of a distance matrix where ``i`` and ``j`` are points in time. Each entry is defined as the Euclidean distance ``\\lVert . \\rVert_{2}`` between the value of the random variable at time ``i`` and its value at time ``j``.
+  - ``\\bar{a}_{i\\,.}`` and ``\\bar{b}_{i\\,.}`` are the ``i``-th row means of their respective matrices.
+  - ``\\bar{a}_{.\\,j}`` and ``\\bar{b}_{.\\,j}`` are the ``j``-th column means of their respective matrices.
+  - ``\\bar{a}_{.\\,.}`` and ``\\bar{b}_{.\\,.}`` are the grand means of their respective matrices.
+  - ``A_{i,\\,j}`` and ``B_{i,\\,j}`` are the doubly centered distances.
 """
 function _DVar(x::AbstractVector)
     T = length(x)
@@ -1161,7 +1168,8 @@ function _DVar(x::AbstractVector)
     ovec = range(1; stop = 1, length = T)
     D = abs.(x * transpose(ovec) - ovec * transpose(x))
     d = vec(D)
-    return invT2 * (dot(vec(d), vec(d)) + invT2 * dot(ovec, D, ovec)^2)
+    sd = sum(D)
+    return invT2 * (dot(d, d) + invT2 * sd^2)
 end
 function calc_risk(sd::SD, w::AbstractVector; kwargs...)
     return _SD(w, sd.sigma)
