@@ -58,6 +58,7 @@ function _MAD(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
     mu = isnothing(w) ? mean(x) : mean(x, w)
     return mean(abs.(x .- mu))
 end
+
 """
 ```
 _SSD(x::AbstractVector, r::Real = 0.0, w::Union{AbstractWeights, Nothing} = nothing)
@@ -204,6 +205,7 @@ function _CVaR(x::AbstractVector, alpha::Real = 0.05)
     end
     return var - sum_var / (alpha * length(x))
 end
+
 """
 ```
 ERM(x::AbstractVector, z::Real = 1.0, α::Real = 0.05)
@@ -329,6 +331,7 @@ function ERM(x::AbstractVector, solvers::Union{NamedTuple, AbstractDict},
         NaN
     end
 end
+
 """
 ```
 _EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
@@ -337,12 +340,15 @@ _EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
 Compute the Entropic Value at Risk.
 
 ```math
-\\mathrm{EVaR}(\\bm{X},\\alpha) = \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)\\right\\}\\,,```
-where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
-- `alpha`: significance level, `α ∈ (0, 1)`.
+\\mathrm{EVaR}(\\bm{X},\\alpha) = \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)\\right\\}\\,,
 ```
+
+where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+  - `alpha`: significance level, `α ∈ (0, 1)`.
 """
 function _EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     return ERM(x, solvers, alpha)
@@ -406,6 +412,7 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
         end
     end
 end
+
 """
 ```
 _RVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05, κ::Real = 0.3)
@@ -866,7 +873,8 @@ Compute the Entropic Drawdown at Risk of compounded cumulative returns.
 ```math
 \\begin{align*}
 \\mathrm{EDaR_{r}}(\\bm{X},\\alpha) &= \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\mathrm{DD_{r}}(\\bm{X}),\\, z, \\,\\alpha)\\right\\}\\\\
-\\mathrm{DD_{r}}(\\bm{X}) &= \\left\\{j \\in (0,\\, T) : \\mathrm{DD_{r}}(\\bm{X},\\, j) \\right\\}\\,,\\end{align*}
+\\mathrm{DD_{r}}(\\bm{X}) &= \\left\\{j \\in (0,\\, T) : \\mathrm{DD_{r}}(\\bm{X},\\, j) \\right\\}\\,,
+\\end{align*}
 ```
 
 where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` the drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
@@ -1131,16 +1139,20 @@ end
 _DVar(x::AbstractVector)
 ```
 
+Compute the Brownian distance variance.
+
 ```math
 \\begin{align*}
-\\mathrm{dVar}(\\bm{X}) &= \\mathrm{dCov}(\\bm{X},\\, \\bm{Y}) =  \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T} A_{i,\\,j}^2\\\\
+\\mathrm{dVar}(\\bm{X}) &= \\mathrm{dCov}(\\bm{X},\\, \\bm{X}) =  \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T}\\sum\\limits_{j=1}^{T} A_{i,\\,j}^2\\\\
 \\mathrm{dCov}(\\bm{X},\\, \\bm{Y}) &= \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T} \\sum\\limits_{j=1}^{T} A_{i,\\,j} B_{i,\\,j}\\\\
 A_{i,\\,j} &= a_{i,\\,j} - \\bar{a}_{i\\,.} - \\bar{a}_{.\\,j} + \\bar{a}_{.\\,.}\\\\
 B_{i,\\,j} &= b_{i,\\,j} - \\bar{b}_{i\\,.} - \\bar{b}_{.\\,j} + \\bar{b}_{.\\,.}\\\\
 a_{i,\\,j} &= \\lVert X_{i} - X_{j} \\rVert_{2}, \\quad \\forall i,\\, j = 1,\\, \\ldots ,\\, T\\\\
 b_{i,\\,j} &= \\lVert Y_{i} - Y_{j} \\rVert_{2}, \\quad \\forall i,\\, j = 1,\\, \\ldots ,\\, T
-\\end{align*}\\,.
+\\end{align*}\\,,
 ```
+
+where
 """
 function _DVar(x::AbstractVector)
     T = length(x)
