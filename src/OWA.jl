@@ -2,14 +2,14 @@
 ```julia
 owa_gmd(T::Integer)
 ```
-Computes the Gini Mean Difference (GMD) of a returns series [^OWA].
-# Inputs
-$_tdef
-# Outputs
-$_owaw
 
-[^OWA]:
-    [Cajas, Dany, OWA Portfolio Optimization: A Disciplined Convex Programming Framework (December 18, 2021). Available at SSRN: https://ssrn.com/abstract=3988927 or http://dx.doi.org/10.2139/ssrn.3988927](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3988927)
+Computes the Gini Mean Difference (GMD) of a returns series [^OWA].
+
+# Inputs
+
+# Outputs
+
+[^OWA]: [Cajas, Dany, OWA Portfolio Optimization: A Disciplined Convex Programming Framework (December 18, 2021). Available at SSRN: https://ssrn.com/abstract=3988927 or http://dx.doi.org/10.2139/ssrn.3988927](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3988927)
 """
 function owa_gmd(T::Integer)
     w = Vector{typeof(inv(T))}(undef, T)
@@ -23,14 +23,14 @@ end
 
 """
 ```julia
-owa_cvar(T::Integer, alpha::Real = 0.05)
+owa_cvar(T::Integer; alpha::Real = 0.05)
 ```
+
 Calculate the OWA weights corresponding to the Critical Value at Risk (CVaR) of a returns series [^OWA].
+
 # Inputs
-$_tdef
-$(_sigdef("CVaR", :a))
+
 # Outputs
-$_owaw
 """
 function owa_cvar(T::Integer, alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
@@ -45,16 +45,17 @@ end
 
 """
 ```julia
-owa_wcvar(
-    T::Integer,    alphas::AbstractVector{<:Real},    weights::AbstractVector{<:Real})
+owa_wcvar(T::Integer, alphas::AbstractVector{<:Real}, weights::AbstractVector{<:Real})
 ```
+
 Compute the OWA weights for the Weighted Conditional Value at Risk (WCVaR) of a returns series [^OWA].
+
 # Inputs
-$_tdef
-- `alphas`: `N×1` vector of significance levels of each CVaR model, where `N` is the number of models, each `$(_sigdom(:a))`.
-- `weights`: `N×1` vector of weights of each CVaR model, where `N` is the number of models.
+
+  - `alphas`: `N×1` vector of significance levels of each CVaR model, where `N` is the number of models, each .
+  - `weights`: `N×1` vector of weights of each CVaR model, where `N` is the number of models.
+
 # Outputs
-$_owaw
 """
 function owa_wcvar(T::Integer, alphas::AbstractVector{<:Real},
                    weights::AbstractVector{<:Real})
@@ -68,16 +69,14 @@ end
 
 """
 ```julia
-owa_tg(
-    T::Integer;    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Integer = 100)
+owa_tg(T::Integer; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100)
 ```
+
 Compute the OWA weights for the Tail Gini of a returns series [^OWA].
+
 # Inputs
-$_tdef
-$(_isigdef("Tail Gini losses", :a))
-$(_sigdef("Tail Gini losses", :a))
+
 # Outputs
-$_owaw
 """
 function owa_tg(T::Integer; alpha_i::Real = 1e-4, alpha::Real = 0.05, a_sim::Integer = 100)
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
@@ -102,11 +101,12 @@ end
 ```julia
 owa_wr(T::Integer)
 ```
+
 Compute the OWA weights for the Worst Realisation (WR) of a returns series [^OWA].
+
 # Inputs
-$_tdef
+
 # Outputs
-$_owaw
 """
 function owa_wr(T::Integer)
     w = zeros(typeof(inv(T)), T)
@@ -119,11 +119,12 @@ end
 ```julia
 owa_rg(T::Integer)
 ```
+
 Compute the OWA weights for the Range of a returns series [^OWA].
+
 # Inputs
-$_tdef
+
 # Outputs
-$_owaw
 """
 function owa_rg(T::Integer)
     w = zeros(typeof(inv(T)), T)
@@ -136,13 +137,12 @@ end
 ```julia
 owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = alpha)
 ```
+
 Compute the OWA weights for the CVaR Range of a returns series [^OWA].
+
 # Inputs
-$_tdef
-$(_sigdef("CVaR losses", :a))
-$(_sigdef("CVaR gains", :b))
+
 # Outputs
-$_owaw
 """
 function owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = alpha)
     w = owa_cvar(T, alpha) .- reverse(owa_cvar(T, beta))
@@ -151,18 +151,21 @@ end
 
 """
 ```julia
-owa_rwcvar(
-    T::Integer,    alphas::AbstractVector{<:Real},    weights_a::AbstractVector{<:Real},    betas::AbstractVector{<:Real} = alphas,    weights_b::AbstractVector{<:Real} = weights_b)
+owa_rwcvar(T::Integer, alphas::AbstractVector{<:Real}, weights_a::AbstractVector{<:Real};
+           betas::AbstractVector{<:Real} = alphas,
+           weights_b::AbstractVector{<:Real} = weights_b)
 ```
+
 Compute the OWA weights for the Weighted Conditional Value at Risk (WCVaR) of a returns series [^OWA].
+
 # Inputs
-$_tdef
-- `alphas`: `N×1` vector of significance levels of the losses for each CVaR model, where `N` is the number of losses models, each `$(_sigdom(:a))`.
-- `weights_a`: `N×1` vector of weights of the losses for each CVaR model, where `N` is the number of losses models.
-- `betas`: `M×1` vector of significance levels of the gains for each CVaR model, where `M` is the number of gains models, each `$(_sigdom(:b))`.
-- `weights_b`: `M×1` vector of weights of the gains for each CVaR model, where `M` is the number of gains models.
+
+  - `alphas`: `N×1` vector of significance levels of the losses for each CVaR model, where `N` is the number of losses models, each .
+  - `weights_a`: `N×1` vector of weights of the losses for each CVaR model, where `N` is the number of losses models.
+  - `betas`: `M×1` vector of significance levels of the gains for each CVaR model, where `M` is the number of gains models, each .
+  - `weights_b`: `M×1` vector of weights of the gains for each CVaR model, where `M` is the number of gains models.
+
 # Outputs
-$_owaw
 """
 function owa_rwcvar(T::Integer, alphas::AbstractVector{<:Real},
                     weights_a::AbstractVector{<:Real},
@@ -175,18 +178,15 @@ end
 
 """
 ```julia
-owa_rtg(
-    T::Integer;    alpha_i::Real = 0.0001,    alpha::Real = 0.05,    a_sim::Integer = 100,    beta_i::Real = alpha_i,    beta::Real = alpha,    b_sim::Integer = a_sim)
+owa_rtg(T::Integer; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
+        beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim)
 ```
+
 Compute the OWA weights for the Tail Gini Range of a returns series [^OWA].
+
 # Inputs
-$_tdef
-$(_isigdef("Tail Gini losses", :a))
-$(_sigdef("Tail Gini losses", :a))
-$(_isigdef("Tail Gini gains", :b))
-$(_sigdef("Tail Gini gains", :b))
+
 # Outputs
-$_owaw
 """
 function owa_rtg(T::Integer; alpha_i::Real = 0.0001, alpha::Real = 0.05,
                  a_sim::Integer = 100, beta_i::Real = alpha_i, beta::Real = alpha,
@@ -199,24 +199,33 @@ end
 
 """
 ```julia
-_optimise_owa(model, solvers)
+_optimise_JuMP_model(model, solvers)
 ```
+
 Internal function to optimise an OWA JuMP model.
+
 # Inputs
-- `model`: JuMP model.
-$(_solver_desc("the OWA L-Moment `JuMP` model."))
+
+  - `model`: JuMP model.
+
 # Outputs
-- `term_status`: JuMP termination status.
-- `solvers_tried`: Dictionary that contains a dictionary of failed optimisations. `Dict(key => Dict(...))`, where `key` is the solver key used for the iteration of `solver` that failed.
-    - If an MOI call fails on a model:
-        - `Dict(:jump_error => jump_error)`: [`JuMP`](https://jump.dev/JuMP.jl/stable/moi/reference/errors/) error code.
-    - If the optimiser fails to optimise the model satisfactorily:
-        - `Dict(:objective_val => JuMP.objective_value(model), :term_status => term_status, :params => haskey(val, :params) ? val[:params] : missing)`, where `val` is the value of the dictionary corresponding to `key`.
+
+  - `term_status`: JuMP termination status.
+
+  - `solvers_tried`: Dictionary that contains a dictionary of failed optimisations. `Dict(key => Dict(...))`, where `key` is the solver key used for the iteration of `solver` that failed.
+
+      + If an MOI call fails on a model:
+
+          * `Dict(:jump_error => jump_error)`: [`JuMP`](https://jump.dev/JuMP.jl/stable/moi/reference/errors/) error code.
+
+      + If the optimiser fails to optimise the model satisfactorily:
+
+          * `Dict(:objective_val => JuMP.objective_value(model), :term_status => term_status, :params => haskey(val, :params) ? val[:params] : missing)`, where `val` is the value of the dictionary corresponding to `key`.
 """
-function _optimise_owa(model, solvers)
-    term_status = termination_status(model)
+function _optimise_JuMP_model(model, solvers)
     solvers_tried = Dict()
 
+    sucess = false
     for (key, val) ∈ solvers
         if haskey(val, :solver)
             set_optimizer(model, val[:solver])
@@ -228,6 +237,12 @@ function _optimise_owa(model, solvers)
             end
         end
 
+        if haskey(val, :check_sol)
+            check_sol = val[:check_sol]
+        else
+            check_sol = (;)
+        end
+
         try
             JuMP.optimize!(model)
         catch jump_error
@@ -235,10 +250,11 @@ function _optimise_owa(model, solvers)
             continue
         end
 
-        term_status = termination_status(model)
-
-        if term_status ∈ ValidTermination
+        if is_solved_and_feasible(model; check_sol...)
+            sucess = true
             break
+        else
+            term_status = termination_status(model)
         end
 
         push!(solvers_tried,
@@ -247,7 +263,7 @@ function _optimise_owa(model, solvers)
                           :params => haskey(val, :params) ? val[:params] : missing))
     end
 
-    return term_status, solvers_tried
+    return sucess, solvers_tried
 end
 
 """
@@ -289,14 +305,16 @@ end
 
 """
 ```julia
-owa_l_moment(T::Integer, k::Integer = 2)
+owa_l_moment(T::Integer; k::Integer = 2)
 ```
+
 Calculates the OWA weights of the k'th linear moment (L-moment) of a returns series [OWAL](@cite).
+
 # Inputs
-$_tdef
-- `k`: order of the L-moment.
+
+  - `k`: order of the L-moment.
+
 # Outputs
-$_owaw
 """
 function owa_l_moment(T::Integer, k::Integer = 2)
     w = Vector{typeof(inv(T * k))}(undef, T)
@@ -318,85 +336,93 @@ end
 
 """
 ```julia
-owa_l_moment_crm(
-    T::Integer;    k::Integer = 2,    method::Symbol = :SD,    g::Real = 0.5,    max_phi::Real = 0.5,    solvers = Dict())
+owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::Real = 0.5,
+                 max_phi::Real = 0.5, solvers = Dict())
 ```
-Compute the OWA weights for the convex risk measure considering higher order L-moments [OWAL](@cite).
-# Inputs
-$_tdef
-- `k`: order of the L-moment, `k ≥ 2`.
-- `method`: method for computing the weights used to combine L-moments higher than 2, used in [`OWAMethods`](@ref).
-    - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
-    - `:E`: Maximum Entropy. Solver must support `MOI.RelativeEntropyCone` and `MOI.NormOneCone`.
-    - `:SS`: Minimum Sum of Squares. Solver must support `MOI.SecondOrderCone`.
-    - `:SD`: Minimum Square Distance. Solver must support `MOI.SecondOrderCone`.
-- `g`: the risk aversion coefficient.
-- `max_phi`: maximum weight constraint of the L-moments.
-$(_solver_desc("the OWA L-Moment `JuMP` model."))
-# Outputs
-$_owaw
-"""
-function owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::Real = 0.5,
-                          max_phi::Real = 0.5, solvers = Dict())
-    @smart_assert(k >= 2)
-    @smart_assert(method ∈ OWAMethods)
-    @smart_assert(zero(g) < g < one(g))
-    @smart_assert(zero(max_phi) < max_phi < one(max_phi))
 
+Compute the OWA weights for the convex risk measure considering higher order L-moments [OWAL](@cite).
+
+# Inputs
+
+  - `k`: order of the L-moment, `k ≥ 2`.
+
+  - `method`: method for computing the weights used to combine L-moments higher than 2, used in [`OWAMethods`](@ref).
+
+      + `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
+      + `:E`: Maximum Entropy. Solver must support `MOI.RelativeEntropyCone` and `MOI.NormOneCone`.
+      + `:SS`: Minimum Sum of Squares. Solver must support `MOI.SecondOrderCone`.
+      + `:SD`: Minimum Square Distance. Solver must support `MOI.SecondOrderCone`.
+  - `g`: the risk aversion coefficient.
+  - `max_phi`: maximum weight constraint of the L-moments.
+
+# Outputs
+"""
+function _owa_l_moment_crm(method::CRRA, ::Any, k, weights, ::Any)
+    return _crra_method(weights, k, method.g)
+end
+function _owa_model_setup(method, T, weights)
+    n = size(weights, 2)
+    model = JuMP.Model()
+    max_phi = method.max_phi
+    @variable(model, theta[1:T])
+    @variable(model, 0 .<= phi[1:n] .<= max_phi)
+    @constraint(model, sum(phi) == 1)
+    @constraint(model, theta .== weights * phi)
+    @constraint(model, phi[2:end] .<= phi[1:(end - 1)])
+    @constraint(model, theta[2:end] .>= theta[1:(end - 1)])
+    return model
+end
+function _owa_model_solve(model, weights, solvers, k)
+    success, solvers_tried = _optimise_JuMP_model(model, solvers)
+    return if success
+        phi = model[:phi]
+        phis = value.(phi)
+        phis ./= sum(phis)
+        w = weights * phis
+    else
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
+        @warn("$funcname: model could not be optimised satisfactorily.\nMethod: $method\nSolvers: $solvers_tried.\nReverting to crra method.")
+        w = _crra_method(weights, k, 0.5)
+    end
+end
+function _owa_l_moment_crm(method::MaxEntropy, T, k, weights, solvers)
+    model = _owa_model_setup(method, T, weights)
+    @variable(model, t)
+    @variable(model, x[1:T])
+    @constraint(model, sum(x) == 1)
+    @constraint(model, [t; ones(T); x] ∈ MOI.RelativeEntropyCone(2 * T + 1))
+    theta = model[:theta]
+    @constraint(model, [i = 1:T], [x[i]; theta[i]] ∈ MOI.NormOneCone(2))
+    @objective(model, Max, -t)
+    return _owa_model_solve(model, weights, solvers, k)
+end
+function _owa_l_moment_crm(method::MinSumSq, T, k, weights, solvers)
+    model = _owa_model_setup(method, T, weights)
+    @variable(model, t)
+    theta = model[:theta]
+    @constraint(model, [t; theta] ∈ SecondOrderCone())
+    @objective(model, Min, t)
+    return _owa_model_solve(model, weights, solvers, k)
+end
+function _owa_l_moment_crm(method::MinSqDist, T, k, weights, solvers)
+    model = _owa_model_setup(method, T, weights)
+    @variable(model, t)
+    theta = model[:theta]
+    @expression(model, theta_diff, theta[2:end] .- theta[1:(end - 1)])
+    @constraint(model, [t; theta_diff] ∈ SecondOrderCone())
+    @objective(model, Min, t)
+    return _owa_model_solve(model, weights, solvers, k)
+end
+function owa_l_moment_crm(T::Integer; k::Integer = 2, method::OWAMethods = MinSqDist(),
+                          solvers = Dict())
+    @smart_assert(k >= 2)
     rg = 2:k
     weights = Matrix{typeof(inv(T * k))}(undef, T, length(rg))
     for i ∈ rg
         wi = (-1)^i * owa_l_moment(T, i)
         weights[:, i - 1] .= wi
     end
-
-    if method == :CRRA || isempty(solvers)
-        w = _crra_method(weights, k, g)
-    else
-        n = size(weights, 2)
-        model = JuMP.Model()
-        @variable(model, theta[1:T])
-        @variable(model, 0 .<= phi[1:n] .<= max_phi)
-
-        @constraint(model, sum(phi) == 1)
-        @constraint(model, theta .== weights * phi)
-        @constraint(model, phi[2:end] .<= phi[1:(end - 1)])
-        @constraint(model, theta[2:end] .>= theta[1:(end - 1)])
-        if method == :E
-            # Maximise entropy.
-            @variable(model, t)
-            @variable(model, x[1:T])
-            @constraint(model, sum(x) == 1)
-            @constraint(model, [t; ones(T); x] ∈ MOI.RelativeEntropyCone(2 * T + 1))
-            @constraint(model, [i = 1:T], [x[i]; theta[i]] ∈ MOI.NormOneCone(2))
-            @objective(model, Max, -t)
-        elseif method == :SS
-            # Minimum sum of squares.
-            @variable(model, t)
-            @constraint(model, [t; theta] ∈ SecondOrderCone())
-            @objective(model, Min, t)
-        elseif method == :SD
-            # Minimum square distance.
-            @variable(model, t)
-            @expression(model, theta_diff, theta[2:end] .- theta[1:(end - 1)])
-            @constraint(model, [t; theta_diff] ∈ SecondOrderCone())
-            @objective(model, Min, t)
-        end
-
-        term_status, solvers_tried = _optimise_owa(model, solvers)
-        # Error handling.
-        if term_status ∉ ValidTermination
-            funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
-            @warn("$funcname: model could not be optimised satisfactorily.\nMethod: $method\nSolvers: $solvers_tried.\nReverting to crra method.")
-            w = _crra_method(weights, k, g)
-        else
-            phis = value.(phi)
-            phis ./= sum(phis)
-            w = weights * phis
-        end
-    end
-
-    return w
+    return _owa_l_moment_crm(method, T, k, weights, solvers)
 end
 
 export owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_rwcvar, owa_rtg,

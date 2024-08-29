@@ -2,16 +2,21 @@ module PortfolioOptimiser
 using AverageShiftedHistograms, Clustering, DataFrames, Dates, Distances, Distributions,
       GLM, JuMP, LinearAlgebra, MultivariateStats, NearestCorrelationMatrix, Optim, Graphs,
       SimpleWeightedGraphs, PyCall, Random, SmartAsserts, SparseArrays, Statistics,
-      StatsBase, TimeSeries, DispatchDoctor
+      StatsBase, TimeSeries
 
-include("Constants.jl")
-include("Types.jl")
-include("DBHTs.jl")
-include("OWA.jl")
-include("Portfolio.jl")
-include("Statistics.jl")
-include("Risk_measures.jl")
-include("Constraints.jl")
-include("ExtDefinitions.jl")
-
+include("./RiskMeasureTypes.jl")
+include("./ParameterEstimationTypes.jl")
+include("./OptimisationTypes.jl")
+include("./PortfolioTypes.jl")
+include("./Misc.jl")
+include("./OWA.jl")
+include("./DBHTs.jl")
+include("./ParameterEstimation.jl")
+include("./Constraints.jl")
+include("./RiskMeasures.jl")
+include("./HClustering.jl")
+include("./NetworkConstraints.jl")
+include("./Statistics.jl")
+include("./Optimisation.jl")
+include("./PortfolioOptimiserPlotsExtDefinitions.jl")
 end

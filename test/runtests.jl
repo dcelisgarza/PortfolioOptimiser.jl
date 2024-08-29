@@ -1,90 +1,101 @@
 using SafeTestsets
 
+@safetestset "Stats tests" begin
+    include("StatsTest.jl")
+end
+
+@safetestset "WC Stats tests" begin
+    include("WCStatsTest.jl")
+end
+
+@safetestset "Factor Stats tests" begin
+    include("FactorStatsTest.jl")
+end
+
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
-end
-
-@safetestset "Asset Statistics" begin
-    include("AssetStatisticsTests1.jl")
-    include("AssetStatisticsTests2.jl")
-end
-
-@safetestset "Portfolio Classic Traditional Optimisation" begin
-    include("PortfolioClassicTradTests.jl")
-end
-
-@safetestset "HCPortfolio Optimisation" begin
-    include("HCPortfolioOptimisationTests.jl")
-end
-
-@safetestset "Misc" begin
-    include("MiscTests.jl")
-end
-
-@safetestset "Portfolio Traditional Optimisation Constraints" begin
-    include("PortfolioTradConstraintTests.jl")
 end
 
 @safetestset "Constraint Functions" begin
     include("ConstraintTests.jl")
 end
 
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
-@safetestset "Efficient Frontier" begin
-    include("PortfolioEfficientFrontierTests.jl")
-end
-
-@safetestset "Asset Allocation" begin
-    include("AssetAllocationTests.jl")
-end
-
-@safetestset "BL Statistics" begin
-    include("BLStatisticsTests.jl")
-end
-
-@safetestset "Factor Statistics" begin
-    include("FactorStatisticsTests.jl")
-end
-
-@safetestset "OWA Weights" begin
-    include("OWAWeightsTests.jl")
+@safetestset "Type tests" begin
+    include("TypeTests.jl")
 end
 
 @safetestset "Misc Statistics" begin
     include("MiscStatisticsTests.jl")
 end
 
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
+@safetestset "OWA Weights" begin
+    include("OWAWeightsTests.jl")
+end
+
 @safetestset "DBHT Clustering" begin
     include("DBHTClusteringTests.jl")
 end
 
-@safetestset "Portfolio Traditional Class Picking" begin
-    include("PortfolioTradClassPickingTests.jl")
+@safetestset "Efficient frontier" begin
+    include("EfficientFrontierTests.jl")
 end
 
-@safetestset "Portfolio Classic RP OWA Optimisation" begin
-    include("PortfolioClassicRPOWATests.jl")
+@safetestset "Near Optimal Centering" begin
+    include("NearOptimalCenteringTests.jl")
 end
 
-@safetestset "HCPortfolio OWA Optimisation" begin
-    include("HCPortfolioOWAOptimisationTests.jl")
+@safetestset "HC Optimistaion" begin
+    include("HCOptimisationTests.jl")
 end
 
-@safetestset "Portfolio Classic Traditional OWA Optimisation" begin
-    include("PortfolioClassicTradOWATests.jl")
+@safetestset "Constraints" begin
+    include("ConstrainedOptimisationTests.jl")
 end
 
-@safetestset "Portfolio Classic WC Optimisation" begin
-    include("PortfolioClassicWCTests.jl")
+@safetestset "Portfolio classes" begin
+    include("PortfolioClassesTests.jl")
 end
 
-@safetestset "WC Statistics" begin
-    include("WCStatisticsTests.jl")
+@safetestset "RP optimisation" begin
+    include("RPOptimisationTests.jl")
 end
 
-@safetestset "Portfolio Classic RP Optimisation" begin
-    include("PortfolioClassicRPTests.jl")
+@safetestset "RRP Optimisation" begin
+    include("RRPOptimisationTests.jl")
+end
+
+@safetestset "WC Optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
+@safetestset "Trad optimisation rm vectors" begin
+    include("TradOptimisationVectorTests.jl")
+end
+
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests.jl")
+end
+
+@safetestset "Risk measure tests" begin
+    include("RiskMeasureTests.jl")
+end
+
+@safetestset "Network constraint tests" begin
+    include("NetworkConstraintTests.jl")
+end
+
+@safetestset "Clustering tests" begin
+    include("ClusteringTests.jl")
+end
+
+@safetestset "BL Stats tests" begin
+    include("BLStatsTests.jl")
 end

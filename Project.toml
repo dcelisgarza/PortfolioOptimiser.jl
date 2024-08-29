@@ -8,7 +8,6 @@ AverageShiftedHistograms = "77b51b56-6f8f-5c3a-9cb4-d71f9594ea6e"
 Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-DispatchDoctor = "8d63f2c5-f18a-4cf2-ba9d-b3f60fc568c8"
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
@@ -32,7 +31,7 @@ GraphRecipes = "bd48cda9-67a9-57be-86fa-5b3c104eda73"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 
 [extensions]
-PortfolioOptimiserPlotExt = ["StatsPlots", "GraphRecipes"]
+PortfolioOptimiserPlotsExt = ["GraphRecipes", "StatsPlots"]
 
 [compat]
 julia = "1.10"
@@ -44,11 +43,9 @@ CovarianceEstimation = "587fd27a-f159-11e8-2dae-1979310e6154"
 GLPK = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
 HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
-OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Pajarito = "2f354839-79df-5901-9f0a-cdb2aac6fe30"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [targets]
-test = ["CSV", "Clarabel", "CovarianceEstimation", "HiGHS", "GLPK", "Logging", "OrderedCollections", "Pajarito", "SafeTestsets", "Test", "TimeSeries", "GraphRecipes", "StatsPlots"]
+test = ["CSV", "Clarabel", "CovarianceEstimation", "GLPK", "HiGHS", "Logging", "Pajarito", "SafeTestsets", "Test"]

@@ -2,42 +2,91 @@
 ```julia
 asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
 ```
+
 Create the linear constraint matrix `A` and vector `B`:
-- ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``.
+
+  - ``\\mathbf{A} \\bm{w} \\geq \\bm{B}``.
+
 # Inputs
-- `constraints`: `Nc×10` Dataframe, where $(_ndef(:c1)). The required columns are:
-    - `Enabled`: (Bool) indicates if the constraint is enabled.
-    - `Type`: (String) specifies the object(s) to which a constraint applies:
-        - `Asset`: specific asset.
-        - `Subset`: whole class.
-        - `All Assets`: all assets.
-        - `All Subsets`: all asset classes.
-        - `Each Asset in Subset`: specific assets in a class.
-    - `Set`: (String) if `Type` is `Subset`, `All Subsets` or `Each Asset in Subset`, specifies the asset class set.
-    - `Position`: (String) name of the asset or asset class to which the constraint applies.
-    - `Sign`: (String) specifies whether the constraint is a lower or upper bound:
-        - `>=`: lower bound.
-        - `<=`: upper bound.
-    - `Weight`: (<:Real) value of the constraint.
-    - `Relative_Type`: (String) specifies to what the constraint is relative:
-        - Empty string: nothing.
-        - `Asset`: other asset.
-        - `Subset`: other class.
-    - `Relative_Set`: (String) if `Relative_Type` is `Subset`, specifies the name of the set of asset classes.
-    - `Relative_Position`: (String) name of the asset or asset class of the relative constraint.
-    - `Factor`: (<:Real) the factor of the relative constraint.
-- `asset_sets`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
-    - `Asset`: list of assets, this is the only mandatory column.
-    - Subsequent columns specify the asset class sets.
+
+  - `constraints`: `Nc×10` Dataframe, where . The required columns are:
+
+      + `Enabled`: (Bool) indicates if the constraint is enabled.
+
+      + `Type`: (String) specifies the object(s) to which a constraint applies:
+
+          * `Asset`: specific asset.
+          * `Subset`: whole class.
+          * `All Assets`: all assets.
+          * `All Subsets`: all asset classes.
+          * `Each Asset in Subset`: specific assets in a class.
+      + `Set`: (String) if `Type` is `Subset`, `All Subsets` or `Each Asset in Subset`, specifies the asset class set.
+      + `Position`: (String) name of the asset or asset class to which the constraint applies.
+      + `Sign`: (String) specifies whether the constraint is a lower or upper bound:
+
+          * `>=`: lower bound.
+          * `<=`: upper bound.
+      + `Weight`: (<:Real) value of the constraint.
+      + `Relative_Type`: (String) specifies to what the constraint is relative:
+
+          * Empty string: nothing.
+          * `Asset`: other asset.
+          * `Subset`: other class.
+      + `Relative_Set`: (String) if `Relative_Type` is `Subset`, specifies the name of the set of asset classes.
+      + `Relative_Position`: (String) name of the asset or asset class of the relative constraint.
+      + `Factor`: (<:Real) the factor of the relative constraint.
+
+  - `asset_sets`: `Na×D` DataFrame where  and `D` the number of columns.
+
+      + `Asset`: list of assets, this is the only mandatory column.
+      + Subsequent columns specify the asset class sets.
+
 # Outputs
-- `A`: `Nc×Na` matrix of constraints where $(_ndef(:c1)) and $(_ndef(:a2)).
-- `B`: `Nc×1` vector of constraints where $(_ndef(:c1)).
+
+  - `A`: `Nc×Na` matrix of constraints where  and .
+  - `B`: `Nc×1` vector of constraints where .
+
 # Examples
+
 ```julia
-asset_sets = DataFrame(
-    "Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV", "FCN", "TKO", "ZOO", "ZVO", "ZX", "ZZA", "ZZB", "ZZC"],    "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income", "Equity", "Fixed Income", "Equity"],    "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury", "Financial", "Entertainment", "Treasury", "Financial", "Financial", "Entertainment", "Technology", "Treasury"])
-constraints = DataFrame(
-    "Enabled" => [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],    "Type" => ["Subset", "All Subsets", "Asset", "Asset", "Subset", "All Assets", "Each Asset in Subset", "Asset", "All Assets", "All Assets", "Subset", "All Subsets", "All Subsets", "Each Asset in Subset", "Each Asset in Subset"],    "Set" => ["Class 1", "Class 1", "", "", "Class 2", "", "Class 1", "Class 1", "Class 2", "", "Class 1", "Class 2", "Class 2", "Class 2", "Class 1"],    "Position" => ["Equity", "Fixed Income", "BAC", "WFC", "Financial", "", "Equity", "FCN", "TKO", "ZOO", "Fixed Income", "Treasury", "Entertainment", "Treasury", "Equity"],    "Sign" => ["<=", "<=", "<=", "<=", ">=", ">=", ">=", "<=", ">=", "<=", ">=", "<=", ">=", "<=", ">="],    "Weight" => [0.6, 0.5, 0.1, "", "", 0.02, "", "", "", "", "", "", "", 0.27, ""],    "Relative_Type" => ["", "", "", "Asset", "Subset", "", "Asset", "Subset", "Asset", "Subset", "Asset", "Asset", "Subset", "", "Subset"],    "Relative_Set" => ["", "", "", "", "Class 1", "", "", "Class 1", "", "Class 2", "", "Class 2", "Class 2", "", "Class 2"],    "Relative_Position" => ["", "", "", "FB", "Fixed Income", "", "TLT", "Equity", "NTFX", "Financial", "WFC", "ZOO", "Entertainment", "", "Entertainment"],    "Factor" => ["", "", "", 1.2, 0.5, "", 0.4, 0.7, 0.21, 0.11, 0.13, -0.17, 0.23, "", -0.31])
+asset_sets = DataFrame("Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV", "FCN",
+                                   "TKO", "ZOO", "ZVO", "ZX", "ZZA", "ZZB", "ZZC"],
+                       "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
+                                     "Fixed Income", "Fixed Income", "Equity", "Equity",
+                                     "Equity", "Fixed Income", "Fixed Income", "Equity",
+                                     "Fixed Income", "Equity"],
+                       "Class 2" => ["Technology", "Technology", "Technology", "Financial",
+                                     "Financial", "Treasury", "Treasury", "Financial",
+                                     "Entertainment", "Treasury", "Financial", "Financial",
+                                     "Entertainment", "Technology", "Treasury"])
+constraints = DataFrame("Enabled" => [true, true, true, true, true, true, true, true, true,
+                                      true, true, true, true, true, true],
+                        "Type" => ["Subset", "All Subsets", "Asset", "Asset", "Subset",
+                                   "All Assets", "Each Asset in Subset", "Asset",
+                                   "All Assets", "All Assets", "Subset", "All Subsets",
+                                   "All Subsets", "Each Asset in Subset",
+                                   "Each Asset in Subset"],
+                        "Set" => ["Class 1", "Class 1", "", "", "Class 2", "", "Class 1",
+                                  "Class 1", "Class 2", "", "Class 1", "Class 2", "Class 2",
+                                  "Class 2", "Class 1"],
+                        "Position" => ["Equity", "Fixed Income", "BAC", "WFC", "Financial",
+                                       "", "Equity", "FCN", "TKO", "ZOO", "Fixed Income",
+                                       "Treasury", "Entertainment", "Treasury", "Equity"],
+                        "Sign" => ["<=", "<=", "<=", "<=", ">=", ">=", ">=", "<=", ">=",
+                                   "<=", ">=", "<=", ">=", "<=", ">="],
+                        "Weight" => [0.6, 0.5, 0.1, "", "", 0.02, "", "", "", "", "", "",
+                                     "", 0.27, ""],
+                        "Relative_Type" => ["", "", "", "Asset", "Subset", "", "Asset",
+                                            "Subset", "Asset", "Subset", "Asset", "Asset",
+                                            "Subset", "", "Subset"],
+                        "Relative_Set" => ["", "", "", "", "Class 1", "", "", "Class 1", "",
+                                           "Class 2", "", "Class 2", "Class 2", "",
+                                           "Class 2"],
+                        "Relative_Position" => ["", "", "", "FB", "Fixed Income", "", "TLT",
+                                                "Equity", "NTFX", "Financial", "WFC", "ZOO",
+                                                "Entertainment", "", "Entertainment"],
+                        "Factor" => ["", "", "", 1.2, 0.5, "", 0.4, 0.7, 0.21, 0.11, 0.13,
+                                     -0.17, 0.23, "", -0.31])
 A, B = asset_constraints(constraints, asset_sets)
 ```
 """
@@ -190,27 +239,46 @@ end
 ```julia
 factor_constraints(constraints::DataFrame, loadings::DataFrame)
 ```
+
 Create the factor constraints matrix `C` and vector `D`:
-- ``\\mathbf{C} \\bm{w} \\geq \\bm{D}``.
+
+  - ``\\mathbf{C} \\bm{w} \\geq \\bm{D}``.
+
 # Inputs
-- `constraints`: `Nc×4` Dataframe, where $(_ndef(:c1)). The required columns are:
-    - `Enabled`: (Bool) indicates if the constraint is enabled.
-    - `Factor`: (String) name of the constraint's factor.
-    - `Sign`: (String) specifies whether the constraint is a lower or upper bound:
-        - `>=`: lower bound.
-        - `<=`: upper bound.
-    - `Value`: (<:Real) the upper or lower bound of the factor's value.
-    - `Relative_Factor`: (String) factor to which the constraint is relative.
-- `loadings`: `Nl×Nf` loadings DataFrame, where `Nl` is the number of data points, and $(_ndef(:f2)).
+
+  - `constraints`: `Nc×4` Dataframe, where . The required columns are:
+
+      + `Enabled`: (Bool) indicates if the constraint is enabled.
+
+      + `Factor`: (String) name of the constraint's factor.
+      + `Sign`: (String) specifies whether the constraint is a lower or upper bound:
+
+          * `>=`: lower bound.
+          * `<=`: upper bound.
+      + `Value`: (<:Real) the upper or lower bound of the factor's value.
+      + `Relative_Factor`: (String) factor to which the constraint is relative.
+
+  - `loadings`: `Nl×Nf` loadings DataFrame, where `Nl` is the number of data points, and .
+
 # Outputs
-- `C`: `Nc×Nf` matrix of constraints where $(_ndef(:c1)) and $(_ndef(:f2)).
-- `D`: `Nc×1` vector of constraints where $(_ndef(:c1)).
+
+  - `C`: `Nc×Nf` matrix of constraints where  and .
+  - `D`: `Nc×1` vector of constraints where .
+
 # Examples
+
 ```julia
-loadings = DataFrame(
-        "const" => [0.0004, 0.0002, 0.0000, 0.0006, 0.0001, 0.0003, -0.0003],        "MTUM" => [0.1916, 1.0061, 0.8695, 1.9996, 0.0000, 0.0000, 0.0000],        "QUAL" => [0.0000, 2.0129, 1.4301, 0.0000, 0.0000, 0.0000, 0.0000],        "SIZE" => [0.0000, 0.0000, 0.0000, 0.4717, 0.0000, -0.1857, 0.0000],        "USMV" => [-0.7838, -1.6439, -1.0176, -1.4407, 0.0055, 0.5781, 0.0000],        "VLUE" => [1.4772, -0.7590, -0.4090, 0.0000, -0.0054, -0.4844, 0.9435],    )
-constraints = DataFrame(
-        "Enabled" => [true, true, true, true],        "Factor" => ["MTUM", "USMV", "VLUE", "const"],        "Sign" => ["<=", "<=", ">=", ">="],        "Value" => [0.9, -1.2, 0.3, -0.1],        "Relative_Factor" => ["USMV", "", "", "SIZE"],    )
+loadings = DataFrame("const" => [0.0004, 0.0002, 0.0000, 0.0006, 0.0001, 0.0003, -0.0003],
+                     "MTUM" => [0.1916, 1.0061, 0.8695, 1.9996, 0.0000, 0.0000, 0.0000],
+                     "QUAL" => [0.0000, 2.0129, 1.4301, 0.0000, 0.0000, 0.0000, 0.0000],
+                     "SIZE" => [0.0000, 0.0000, 0.0000, 0.4717, 0.0000, -0.1857, 0.0000],
+                     "USMV" => [-0.7838, -1.6439, -1.0176, -1.4407, 0.0055, 0.5781, 0.0000],
+                     "VLUE" => [1.4772, -0.7590, -0.4090, 0.0000, -0.0054, -0.4844, 0.9435])
+constraints = DataFrame("Enabled" => [true, true, true, true],
+                        "Factor" => ["MTUM", "USMV", "VLUE", "const"],
+                        "Sign" => ["<=", "<=", ">=", ">="],
+                        "Value" => [0.9, -1.2, 0.3, -0.1],
+                        "Relative_Factor" => ["USMV", "", "", "SIZE"])
 C, D = factor_constraints(constraints, loadings)
 ```
 """
@@ -251,38 +319,63 @@ end
 ```julia
 asset_views(views::DataFrame, asset_sets::DataFrame)
 ```
+
 Create the asset views matrix `P` and vector `Q`:
-- ``\\mathbf{P} \\bm{w} \\geq \\bm{Q}``.
+
+  - ``\\mathbf{P} \\bm{w} \\geq \\bm{Q}``.
+
 # Inputs
-- `views`: `Nv×9` DataFrame, where `Nv` is the number of views. The required columns are:
-    - `Enabled`: (Bool) indicates if the view is enabled.
-    - `Type`: (String) specifies the object(s) to which a view applies:
-        - `Asset`: specific asset.
-        - `Subset`: whole class.
-    - `Set`: (String) if `Type` is `Subset`, specifies the asset class set.
-    - `Position`: (String) name of the asset or asset class to which the view applies.
-    - `Sign`: (String) specifies whether the view is a lower or upper bound:
-        - `>=`: lower bound.
-        - `<=`: upper bound.
-    - `Return`: (<:Real) the view's return.
-    - `Relative_Type`: (String) specifies to what the view is relative:
-        - Empty string: nothing.
-        - `Asset`: other asset.
-        - `Subset`: other class.
-    - `Relative_Set`: (String) if `Relative_Type` is `Subset`, specifies the name of the set of asset classes.
-    - `Relative_Position`: (String) name of the asset or asset class of the relative view.
-- `asset_sets`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
-    - `Asset`: list of assets, this is the only mandatory column.
-    - Subsequent columns specify the asset class sets.
+
+  - `views`: `Nv×9` DataFrame, where `Nv` is the number of views. The required columns are:
+
+      + `Enabled`: (Bool) indicates if the view is enabled.
+
+      + `Type`: (String) specifies the object(s) to which a view applies:
+
+          * `Asset`: specific asset.
+          * `Subset`: whole class.
+      + `Set`: (String) if `Type` is `Subset`, specifies the asset class set.
+      + `Position`: (String) name of the asset or asset class to which the view applies.
+      + `Sign`: (String) specifies whether the view is a lower or upper bound:
+
+          * `>=`: lower bound.
+          * `<=`: upper bound.
+      + `Return`: (<:Real) the view's return.
+      + `Relative_Type`: (String) specifies to what the view is relative:
+
+          * Empty string: nothing.
+          * `Asset`: other asset.
+          * `Subset`: other class.
+      + `Relative_Set`: (String) if `Relative_Type` is `Subset`, specifies the name of the set of asset classes.
+      + `Relative_Position`: (String) name of the asset or asset class of the relative view.
+
+  - `asset_sets`: `Na×D` DataFrame where  and `D` the number of columns.
+
+      + `Asset`: list of assets, this is the only mandatory column.
+      + Subsequent columns specify the asset class sets.
+
 # Outputs
-- `P`: `Nv×Na` matrix of views where `Nv` is the number of views and $(_ndef(:a2)).
-- `Q`: `Nv×1` vector of views where `Nv` is the number of views.
+
+  - `P`: `Nv×Na` matrix of views where `Nv` is the number of views and .
+  - `Q`: `Nv×1` vector of views where `Nv` is the number of views.
+
 # Examples
+
 ```julia
-asset_sets = DataFrame(
-        "Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],    )
-views = DataFrame(
-        "Enabled" => [true, true, true, true, true],        "Type" => ["Asset", "Subset", "Subset", "Asset", "Subset"],        "Set" => ["", "Class 2", "Class 1", "", "Class 1"],        "Position" => ["WFC", "Financial", "Equity", "FB", "Fixed Income"],        "Sign" => ["<=", ">=", ">=", ">=", "<="],        "Return" => [0.3, 0.1, 0.05, 0.03, 0.017],        "Relative_Type" => ["Asset", "Subset", "Asset", "", ""],        "Relative_Set" => ["", "Class 1", "", "", ""],        "Relative_Position" => ["FB", "Fixed Income", "TLT", "", ""],    )
+asset_sets = DataFrame("Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
+                       "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
+                                     "Fixed Income", "Fixed Income"],
+                       "Class 2" => ["Technology", "Technology", "Technology", "Financial",
+                                     "Financial", "Treasury", "Treasury"])
+views = DataFrame("Enabled" => [true, true, true, true, true],
+                  "Type" => ["Asset", "Subset", "Subset", "Asset", "Subset"],
+                  "Set" => ["", "Class 2", "Class 1", "", "Class 1"],
+                  "Position" => ["WFC", "Financial", "Equity", "FB", "Fixed Income"],
+                  "Sign" => ["<=", ">=", ">=", ">=", "<="],
+                  "Return" => [0.3, 0.1, 0.05, 0.03, 0.017],
+                  "Relative_Type" => ["Asset", "Subset", "Asset", "", ""],
+                  "Relative_Set" => ["", "Class 1", "", "", ""],
+                  "Relative_Position" => ["FB", "Fixed Income", "TLT", "", ""])
 P, Q = asset_views(views, asset_sets)
 ```
 """
@@ -351,27 +444,44 @@ end
 ```julia
 factor_views(views::DataFrame, loadings::DataFrame)
 ```
+
 Create the factor views matrix `P` and vector `Q`:
-- ``\\mathbf{P} \\bm{w} \\geq \\bm{Q}``.
+
+  - ``\\mathbf{P} \\bm{w} \\geq \\bm{Q}``.
+
 # Inputs
-- `views`: `Nv×4` DataFrame, where `Nv` is the number of views. The required columns are:
-    - `Enabled`: (Bool) indicates if the view is enabled.
-    - `Factor`: (String) name of the view's factor.
-    - `Sign`: (String) specifies whether the view is a lower or upper bound:
-        - `>=`: lower bound.
-        - `<=`: upper bound.
-    - `Value`: (<:Real) the upper or lower bound of the factor's value.
-    - `Relative_Factor`: (String) factor to which the view is relative.
-- `loadings`: `Nl×Nf` loadings DataFrame, where `Nl` is the number of data points, and $(_ndef(:f2)).
+
+  - `views`: `Nv×4` DataFrame, where `Nv` is the number of views. The required columns are:
+
+      + `Enabled`: (Bool) indicates if the view is enabled.
+
+      + `Factor`: (String) name of the view's factor.
+      + `Sign`: (String) specifies whether the view is a lower or upper bound:
+
+          * `>=`: lower bound.
+          * `<=`: upper bound.
+      + `Value`: (<:Real) the upper or lower bound of the factor's value.
+      + `Relative_Factor`: (String) factor to which the view is relative.
+
+  - `loadings`: `Nl×Nf` loadings DataFrame, where `Nl` is the number of data points, and .
+
 # Outputs
-- `P`: `Nv×Nf` matrix of views where `Nv` is the number of views and $(_ndef(:f2)).
-- `Q`: `Nv×1` vector of views where `Nv` is the number of views.
+
+  - `P`: `Nv×Nf` matrix of views where `Nv` is the number of views and .
+  - `Q`: `Nv×1` vector of views where `Nv` is the number of views.
+
 # Examples
+
 ```julia
-loadings = DataFrame(
-        "const" => [0.0004, 0.0002, 0.0000, 0.0006, 0.0001, 0.0003, -0.0003],        "MTUM" => [0.1916, 1.0061, 0.8695, 1.9996, 0.0000, 0.0000, 0.0000],        "QUAL" => [0.0000, 2.0129, 1.4301, 0.0000, 0.0000, 0.0000, 0.0000],        "SIZE" => [0.0000, 0.0000, 0.0000, 0.4717, 0.0000, -0.1857, 0.0000],        "USMV" => [-0.7838, -1.6439, -1.0176, -1.4407, 0.0055, 0.5781, 0.0000],        "VLUE" => [1.4772, -0.7590, -0.4090, 0.0000, -0.0054, -0.4844, 0.9435],    )
-views = DataFrame(
-    "Enabled" => [true, true, true],    "Factor" => ["MTUM", "USMV", "VLUE"],    "Sign" => ["<=", "<=", ">="],    "Value" => [0.9, -1.2, 0.3],    "Relative_Factor" => ["USMV", "", ""])
+loadings = DataFrame("const" => [0.0004, 0.0002, 0.0000, 0.0006, 0.0001, 0.0003, -0.0003],
+                     "MTUM" => [0.1916, 1.0061, 0.8695, 1.9996, 0.0000, 0.0000, 0.0000],
+                     "QUAL" => [0.0000, 2.0129, 1.4301, 0.0000, 0.0000, 0.0000, 0.0000],
+                     "SIZE" => [0.0000, 0.0000, 0.0000, 0.4717, 0.0000, -0.1857, 0.0000],
+                     "USMV" => [-0.7838, -1.6439, -1.0176, -1.4407, 0.0055, 0.5781, 0.0000],
+                     "VLUE" => [1.4772, -0.7590, -0.4090, 0.0000, -0.0054, -0.4844, 0.9435])
+views = DataFrame("Enabled" => [true, true, true], "Factor" => ["MTUM", "USMV", "VLUE"],
+                  "Sign" => ["<=", "<=", ">="], "Value" => [0.9, -1.2, 0.3],
+                  "Relative_Factor" => ["USMV", "", ""])
 P, Q = factor_views(views, loadings)
 ```
 """
@@ -418,31 +528,52 @@ end
 ```julia
 hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
 ```
+
 Create the upper and lower bounds constraints for hierarchical risk parity portfolios.
+
 # Inputs
-- `constraints`: `Nc×4` Dataframe, where $(_ndef(:c1)). The required columns are:
-    - `Enabled`: (Bool) indicates if the constraint is enabled.
-    - `Type`: (String) specifies the object(s) to which a constraint applies:
-        - `Asset`: specific asset.
-        - `All Assets`: all assets.
-        - `Each Asset in Subset`: specific assets in a class.
-    - `Position`: (String) name of the asset or asset class to which the constraint applies.
-    - `Sign`: (String) specifies whether the constraint is a lower or upper bound:
-        - `>=`: lower bound.
-        - `<=`: upper bound.
-    - `Weight`: (<:Real) value of the constraint.
-- `asset_sets`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
-    - `Asset`: list of assets, this is the only mandatory column.
-    - Subsequent columns specify the asset class sets.
+
+  - `constraints`: `Nc×4` Dataframe, where . The required columns are:
+
+      + `Enabled`: (Bool) indicates if the constraint is enabled.
+
+      + `Type`: (String) specifies the object(s) to which a constraint applies:
+
+          * `Asset`: specific asset.
+          * `All Assets`: all assets.
+          * `Each Asset in Subset`: specific assets in a class.
+      + `Position`: (String) name of the asset or asset class to which the constraint applies.
+      + `Sign`: (String) specifies whether the constraint is a lower or upper bound:
+
+          * `>=`: lower bound.
+          * `<=`: upper bound.
+      + `Weight`: (<:Real) value of the constraint.
+
+  - `asset_sets`: `Na×D` DataFrame where  and `D` the number of columns.
+
+      + `Asset`: list of assets, this is the only mandatory column.
+      + Subsequent columns specify the asset class sets.
+
 # Outputs
-- `w_min`: `Na×1` vector of the lower bounds for asset weights.
-- `w_max`: `Na×1` vector of the upper bounds for asset weights.
+
+  - `w_min`: `Na×1` vector of the lower bounds for asset weights.
+  - `w_max`: `Na×1` vector of the upper bounds for asset weights.
+
 # Examples
+
 ```julia
-asset_sets = DataFrame(
-        "Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],    )
-constraints = DataFrame(
-    "Enabled" => [true, true, true, true, true, true],    "Type" => ["Asset", "Asset", "All Assets", "All Assets", "Each Asset in Subset", "Each Asset in Subset"],    "Set" => ["", "", "", "", "Class 1", "Class 2"],    "Position" => ["BAC", "FB", "", "", "Fixed Income", "Financial"],    "Sign" => [">=", "<=", "<=", ">=", "<=", "<="],    "Weight" => [0.02, 0.085, 0.09, 0.01, 0.07, 0.06])
+asset_sets = DataFrame("Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
+                       "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
+                                     "Fixed Income", "Fixed Income"],
+                       "Class 2" => ["Technology", "Technology", "Technology", "Financial",
+                                     "Financial", "Treasury", "Treasury"])
+constraints = DataFrame("Enabled" => [true, true, true, true, true, true],
+                        "Type" => ["Asset", "Asset", "All Assets", "All Assets",
+                                   "Each Asset in Subset", "Each Asset in Subset"],
+                        "Set" => ["", "", "", "", "Class 1", "Class 2"],
+                        "Position" => ["BAC", "FB", "", "", "Fixed Income", "Financial"],
+                        "Sign" => [">=", "<=", "<=", ">=", "<=", "<="],
+                        "Weight" => [0.02, 0.085, 0.09, 0.01, 0.07, 0.06])
 w_min, w_max = hrp_constraints(constraints, asset_sets)
 ```
 """
@@ -492,21 +623,33 @@ end
 
 """
 ```julia
-rp_constraints(
-    asset_sets::DataFrame,    type::Symbol = :Asset,    class_col::Union{String, Symbol, Nothing} = nothing)
+rp_constraints(asset_sets::DataFrame; type::Symbol = :Asset,
+               class_col::Union{String, Symbol, Nothing} = nothing)
 ```
+
 Constructs risk contribution constraint vector for the risk parity optimisation (`:RP` and `:RRP` types of [`PortTypes`]()).
+
 # Inputs
-- `asset_sets`: `Na×D` DataFrame where $(_ndef(:a2)) and `D` the number of columns.
-    - `Asset`: list of assets, this is the only mandatory column.
-    - Subsequent columns specify the asset class sets. They are only used if `type == :Subset`.
-- `class_col`: index of set of classes from `asset_sets` to use in when `type == :Subset`.
+
+  - `asset_sets`: `Na×D` DataFrame where  and `D` the number of columns.
+
+      + `Asset`: list of assets, this is the only mandatory column.
+      + Subsequent columns specify the asset class sets. They are only used if `type == :Subset`.
+
+  - `class_col`: index of set of classes from `asset_sets` to use in when `type == :Subset`.
+
 # Outputs
-- `rw`: risk contribution constraint vector.
+
+  - `rw`: risk contribution constraint vector.
+
 # Examples
+
 ```julia
-asset_sets = DataFrame(
-        "Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],        "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity", "Fixed Income", "Fixed Income"],        "Class 2" => ["Technology", "Technology", "Technology", "Financial", "Financial", "Treasury", "Treasury"],    )
+asset_sets = DataFrame("Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "SHV"],
+                       "Class 1" => ["Equity", "Equity", "Equity", "Equity", "Equity",
+                                     "Fixed Income", "Fixed Income"],
+                       "Class 2" => ["Technology", "Technology", "Technology", "Financial",
+                                     "Financial", "Treasury", "Treasury"])
 
 rw_a = rp_constraints(asset_sets, :Asset)
 rw_c = rp_constraints(asset_sets, :Subset, "Class 2")
@@ -593,153 +736,5 @@ function turnover_constraints(constraints::DataFrame, asset_sets::DataFrame)
     return turnover
 end
 
-function connection_matrix(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
-                           network_opt::NetworkOpt = NetworkOpt(;))
-    corr, dist = cor_dist_mtx(returns, cor_opt)
-
-    method = network_opt.method
-    A = if method == :TMFG
-        tmfg_genfunc = network_opt.tmfg_genfunc
-        func = tmfg_genfunc.func
-        args = tmfg_genfunc.args
-        kwargs = tmfg_genfunc.kwargs
-        corr = func(corr, dist, args...; kwargs...)
-
-        Rpm = PMFG_T2s(corr)[1]
-        adjacency_matrix(SimpleGraph(Rpm))
-    else
-        tree_genfunc = network_opt.tree_genfunc
-        func = tree_genfunc.func
-        args = tree_genfunc.args
-        kwargs = tree_genfunc.kwargs
-        G = SimpleWeightedGraph(dist)
-        adjacency_matrix(SimpleGraph(G[func(G, args...; kwargs...)]))
-    end
-
-    A_p = similar(Matrix(A))
-    fill!(A_p, zero(eltype(A_p)))
-    steps = network_opt.steps
-    for i ∈ 0:steps
-        A_p .+= A^i
-    end
-
-    A_p .= clamp!(A_p, 0, 1) - I
-
-    return A_p
-end
-
-function connection_matrix(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
-                           network_opt::NetworkOpt = NetworkOpt(;))
-    return connection_matrix(portfolio.returns; cor_opt = cor_opt,
-                             network_opt = network_opt)
-end
-
-function centrality_vector(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
-                           network_opt::NetworkOpt = NetworkOpt(;))
-    Adj = connection_matrix(returns; cor_opt = cor_opt, network_opt = network_opt)
-    G = SimpleGraph(Adj)
-
-    cent_genfunc = network_opt.cent_genfunc
-
-    func = cent_genfunc.func
-    args = cent_genfunc.args
-    kwargs = cent_genfunc.kwargs
-    V_c = func(G, args...; kwargs...)
-
-    return V_c
-end
-
-function centrality_vector(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
-                           network_opt::NetworkOpt = NetworkOpt(;))
-    return centrality_vector(portfolio.returns; cor_opt = cor_opt,
-                             network_opt = network_opt)
-end
-
-"""
-```julia
-cluster_matrix
-```
-"""
-function cluster_matrix(returns::AbstractMatrix; cor_opt::CorOpt = CorOpt(;),
-                        cluster_opt::ClusterOpt = ClusterOpt(;))
-    clusters, missing, missing = cluster_assets(returns; cor_opt = cor_opt,
-                                                cluster_opt = cluster_opt)
-
-    N = size(returns, 2)
-    A_c = Vector{Int}(undef, 0)
-    for i ∈ unique(clusters)
-        idx = clusters .== i
-        tmp = zeros(Int, N)
-        tmp[idx] .= 1
-        append!(A_c, tmp)
-    end
-
-    A_c = reshape(A_c, N, :)
-    A_c = A_c * transpose(A_c) - I
-
-    return A_c
-end
-
-"""
-```julia
-cluster_matrix
-```
-"""
-function cluster_matrix(portfolio::AbstractPortfolio; cor_opt::CorOpt = CorOpt(;),
-                        cluster_opt::ClusterOpt = ClusterOpt(;))
-    return cluster_matrix(portfolio.returns; cor_opt = cor_opt, cluster_opt = cluster_opt)
-end
-
-function _con_rel(A::AbstractMatrix, w::AbstractVector)
-    ovec = range(; start = 1, stop = 1, length = size(A, 1))
-    aw = abs.(w * transpose(w))
-    C_a = transpose(ovec) * (A .* aw) * ovec
-    C_a /= transpose(ovec) * aw * ovec
-    return C_a
-end
-
-function connected_assets(returns::AbstractMatrix, w::AbstractVector;
-                          cor_opt::CorOpt = CorOpt(;),
-                          network_opt::NetworkOpt = NetworkOpt(;))
-    A_c = connection_matrix(returns; cor_opt = cor_opt, network_opt = network_opt)
-    C_a = _con_rel(A_c, w)
-    return C_a
-end
-
-function connected_assets(portfolio::AbstractPortfolio;
-                          type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
-                          cor_opt::CorOpt = CorOpt(;),
-                          network_opt::NetworkOpt = NetworkOpt(;))
-    return connected_assets(portfolio.returns, portfolio.optimal[type].weights;
-                            cor_opt = cor_opt, network_opt = network_opt)
-end
-
-"""
-```julia
-related_assets
-```
-"""
-function related_assets(returns::AbstractMatrix, w::AbstractVector;
-                        cor_opt::CorOpt = CorOpt(;),
-                        cluster_opt::ClusterOpt = ClusterOpt(;))
-    A_c = cluster_matrix(returns; cor_opt = cor_opt, cluster_opt = cluster_opt)
-    R_a = _con_rel(A_c, w)
-    return R_a
-end
-
-"""
-```julia
-related_assets
-```
-"""
-function related_assets(portfolio::AbstractPortfolio;
-                        type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
-                        cor_opt::CorOpt = CorOpt(;),
-                        cluster_opt::ClusterOpt = ClusterOpt(;))
-    return related_assets(portfolio.returns, portfolio.optimal[type].weights;
-                          cor_opt = cor_opt, cluster_opt = cluster_opt)
-end
-
 export asset_constraints, factor_constraints, asset_views, factor_views, hrp_constraints,
-       rp_constraints, turnover_constraints, connection_matrix, centrality_vector,
-       cluster_matrix, connected_assets, related_assets, cluster_assets, cluster_assets!
+       rp_constraints, turnover_constraints
