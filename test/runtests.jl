@@ -1,25 +1,5 @@
 using SafeTestsets
 
-@safetestset "Trad optimisation" begin
-    include("TradOptimisationTests.jl")
-end
-
-@safetestset "Risk measure tests" begin
-    include("RiskMeasureTests.jl")
-end
-
-@safetestset "Network constraint tests" begin
-    include("NetworkConstraintTests.jl")
-end
-
-@safetestset "Clustering tests" begin
-    include("ClusteringTests.jl")
-end
-
-@safetestset "BL Stats tests" begin
-    include("BLStatsTests.jl")
-end
-
 @safetestset "Stats tests" begin
     include("StatsTest.jl")
 end
@@ -98,4 +78,24 @@ end
 
 @safetestset "Trad optimisation rm vectors" begin
     include("TradOptimisationVectorTests.jl")
+end
+
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests.jl")
+end
+
+@safetestset "Risk measure tests" begin
+    include("RiskMeasureTests.jl")
+end
+
+@safetestset "Network constraint tests" begin
+    include("NetworkConstraintTests.jl")
+end
+
+@safetestset "Clustering tests" begin
+    include("ClusteringTests.jl")
+end
+
+@safetestset "BL Stats tests" begin
+    include("BLStatsTests.jl")
 end
