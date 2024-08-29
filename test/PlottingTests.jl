@@ -1,7 +1,7 @@
 using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, LinearAlgebra,
       StatsPlots, GraphRecipes
 
-prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 @testset "Plotting" begin
     portfolio = Portfolio(; prices = prices,

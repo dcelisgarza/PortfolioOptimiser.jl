@@ -30,7 +30,6 @@ jobs:
             julia-arch: x86
         allow-failures:
           - 'nightly'
-          -  macOS-latest
       fail-fast: false
     env:
       PYTHON: ""
