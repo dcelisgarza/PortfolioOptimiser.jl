@@ -39,7 +39,6 @@ julia = "1.10"
 [extras]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Clarabel = "61c947e1-3e6d-4ee4-985a-eec8c727bd6e"
-CovarianceEstimation = "587fd27a-f159-11e8-2dae-1979310e6154"
 GLPK = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
 HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
@@ -47,5 +46,5 @@ Pajarito = "2f354839-79df-5901-9f0a-cdb2aac6fe30"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
-[tartets]
-test = ["CSV","Clarabel","CovarianceEstimation","GLPK","HiGHS","Logging","Pajarito","SafeTestsets","Test"]
+[targets]
+test = ["CSV","Clarabel","GLPK","HiGHS","Logging","Pajarito","SafeTestsets","Test"]
