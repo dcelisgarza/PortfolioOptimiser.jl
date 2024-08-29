@@ -39,12 +39,10 @@ function PortfolioOptimiser.plot_returns(timestamps, assets, returns, weights;
 
     return plot(timestamps, ret; kwargs...)
 end
-function PortfolioOptimiser.plot_returns(portfolio,
-                                         type = isa(portfolio, Portfolio) ? :Trad : :HRP;
+function PortfolioOptimiser.plot_returns(port, type = isa(port, Portfolio) ? :Trad : :HRP;
                                          per_asset = false, kwargs...)
-    return PortfolioOptimiser.plot_returns(portfolio.timestamps, portfolio.assets,
-                                           portfolio.returns,
-                                           portfolio.optimal[type].weights;
+    return PortfolioOptimiser.plot_returns(port.timestamps, port.assets, port.returns,
+                                           port.optimal[type].weights;
                                            per_asset = per_asset, kwargs...)
 end
 
@@ -68,11 +66,9 @@ function PortfolioOptimiser.plot_bar(assets, data; kwargs...)
 
     return bar(assets, data * 100; kwargs...)
 end
-function PortfolioOptimiser.plot_bar(portfolio::PortfolioOptimiser.AbstractPortfolio,
-                                     type = isa(portfolio, Portfolio) ? :Trad : :HRP,
-                                     kwargs...)
-    return PortfolioOptimiser.plot_bar(portfolio.assets, portfolio.optimal[type].weights,
-                                       kwargs...)
+function PortfolioOptimiser.plot_bar(port::PortfolioOptimiser.AbstractPortfolio,
+                                     type = isa(port, Portfolio) ? :Trad : :HRP, kwargs...)
+    return PortfolioOptimiser.plot_bar(port.assets, port.optimal[type].weights, kwargs...)
 end
 
 function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
@@ -471,18 +467,17 @@ function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::Abstrac
 
     return full_plt
 end
-function PortfolioOptimiser.plot_drawdown(portfolio::PortfolioOptimiser.AbstractPortfolio,
-                                          type::Symbol = if isa(portfolio, Portfolio)
+function PortfolioOptimiser.plot_drawdown(port::PortfolioOptimiser.AbstractPortfolio,
+                                          type::Symbol = if isa(port, Portfolio)
                                               :Trad
                                           else
                                               :HRP
                                           end; alpha::Real = 0.05, kappa::Real = 0.3,
                                           theme = :Dark2_5, kwargs_ret = (;),
                                           kwargs_dd = (;), kwargs_risks = (;), kwargs = (;))
-    return PortfolioOptimiser.plot_drawdown(portfolio.timestamps,
-                                            portfolio.optimal[type].weights,
-                                            portfolio.returns; alpha = alpha, kappa = kappa,
-                                            solvers = portfolio.solvers, theme = theme,
+    return PortfolioOptimiser.plot_drawdown(port.timestamps, port.optimal[type].weights,
+                                            port.returns; alpha = alpha, kappa = kappa,
+                                            solvers = port.solvers, theme = theme,
                                             kwargs_ret = kwargs_ret, kwargs_dd = kwargs_dd,
                                             kwargs_risks = kwargs_risks, kwargs = kwargs)
 end
@@ -557,23 +552,22 @@ function PortfolioOptimiser.plot_hist(w::AbstractVector, returns::AbstractMatrix
 
     return plt
 end
-function PortfolioOptimiser.plot_hist(portfolio::PortfolioOptimiser.AbstractPortfolio,
-                                      type::Symbol = if isa(portfolio, Portfolio)
+function PortfolioOptimiser.plot_hist(port::PortfolioOptimiser.AbstractPortfolio,
+                                      type::Symbol = if isa(port, Portfolio)
                                           :Trad
                                       else
                                           :HRP
                                       end;
                                       points::Integer = ceil(Int,
                                                              4 *
-                                                             sqrt(size(portfolio.returns,
-                                                                       1))),
+                                                             sqrt(size(port.returns, 1))),
                                       alpha_i::Real = 0.0001, alpha::Real = 0.05,
                                       a_sim::Int = 100, kappa::Real = 0.3,
                                       theme = :Paired_10, kwargs_h = (;),
                                       kwargs_risks = (;))
-    return PortfolioOptimiser.plot_hist(portfolio.optimal[type].weights, portfolio.returns;
+    return PortfolioOptimiser.plot_hist(port.optimal[type].weights, port.returns;
                                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
-                                        kappa = kappa, solvers = portfolio.solvers,
+                                        kappa = kappa, solvers = port.solvers,
                                         theme = theme, points = points, kwargs_h = kwargs_h,
                                         kwargs_risks = kwargs_risks)
 end
@@ -630,8 +624,8 @@ function PortfolioOptimiser.plot_range(w::AbstractVector, returns::AbstractMatri
     return plt
 end
 
-function PortfolioOptimiser.plot_range(portfolio::PortfolioOptimiser.AbstractPortfolio,
-                                       type::Symbol = if isa(portfolio, Portfolio)
+function PortfolioOptimiser.plot_range(port::PortfolioOptimiser.AbstractPortfolio,
+                                       type::Symbol = if isa(port, Portfolio)
                                            :Trad
                                        else
                                            :HRP
@@ -639,7 +633,7 @@ function PortfolioOptimiser.plot_range(portfolio::PortfolioOptimiser.AbstractPor
                                        a_sim::Int = 100, beta_i::Real = alpha_i,
                                        beta::Real = alpha, b_sim::Integer = a_sim,
                                        theme = :Set1_5, kwargs_h = (;), kwargs_risks = (;))
-    return PortfolioOptimiser.plot_range(portfolio.optimal[type].weights, portfolio.returns;
+    return PortfolioOptimiser.plot_range(port.optimal[type].weights, port.returns;
                                          alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
                                          beta_i = beta_i, beta = beta, b_sim = b_sim,
                                          theme = theme, kwargs_h = kwargs_h,
@@ -737,7 +731,7 @@ function PortfolioOptimiser.plot_clusters(port::PortfolioOptimiser.AbstractPortf
                                           cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
                                           dist_type::PortfolioOptimiser.DistanceMethod = DistanceDefault(),
                                           hclust_alg::PortfolioOptimiser.HClustAlg = HAC(),
-                                          hclust_opt::PortfolioOptimiser.HCType = HCType(),
+                                          hclust_opt::PortfolioOptimiser.HCOpt = HCOpt(),
                                           cluster::Bool = true, show_clusters = true,
                                           theme_d = :Spectral, theme_h = :Spectral,
                                           theme_h_kwargs = (;), kwargs_d1 = (;),
@@ -818,7 +812,7 @@ function PortfolioOptimiser.plot_dendrogram(port::PortfolioOptimiser.AbstractPor
                                             cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
                                             dist_type::PortfolioOptimiser.DistanceMethod = DistanceDefault(),
                                             hclust_alg::PortfolioOptimiser.HClustAlg = HAC(),
-                                            hclust_opt::PortfolioOptimiser.HCType = HCType(),
+                                            hclust_opt::PortfolioOptimiser.HCOpt = HCOpt(),
                                             cluster::Bool = true, theme = :Spectral,
                                             kwargs_d = (;), kwargs = (;))
     idx, clustering, k = if cluster || isa(port, PortfolioOptimiser.Portfolio)
@@ -834,76 +828,19 @@ function PortfolioOptimiser.plot_dendrogram(port::PortfolioOptimiser.AbstractPor
                            theme = theme, kwargs_d = kwargs_d, kwargs = kwargs)
 end
 
-#=
-
-"""
-```julia
-plot_network
-```
-"""
-function PortfolioOptimiser.plot_network(portfolio::PortfolioOptimiser.AbstractPortfolio;
-                                         cor_opt::CorOpt = CorOpt(;),
-                                         cluster_opt = opt::ClusterOpt = ClusterOpt(;
-                                                                                    k = if isa(portfolio,
-                                                                                               HCPortfolio)
-                                                                                        portfolio.k
-                                                                                    else
-                                                                                        0
-                                                                                    end,
-                                                                                    max_k = ceil(Int,
-                                                                                                 sqrt(size(portfolio.returns,
-                                                                                                           2)))),
-                                         tree::GenericFunction = GenericFunction(;
-                                                                                 func = Graphs.kruskal_mst),
-                                         allocation = false,
-                                         type = isa(portfolio, HCPortfolio) ? :HRP : :Trad,
-                                         theme = :Spectral, kwargs::NamedTuple = (;))
-    returns = portfolio.returns
-    corr, dist = cor_dist_mtx(returns, cor_opt)
-    N = size(corr, 2)
-
-    linkage = cluster_opt.linkage
-    branchorder = cluster_opt.branchorder
-
-    if linkage == :DBHT
-        dbht_method = cluster_opt.dbht_method
-
-        func = cluster_opt.genfunc.func
-        args = cluster_opt.genfunc.args
-        kwargs = cluster_opt.genfunc.kwargs
-        corr = func(dist, args...; kwargs...)
-
-        missing, Rpm, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
-                                                                             branchorder = branchorder,
-                                                                             method = dbht_method)
-        G = adjacency_matrix(SimpleGraph(Rpm))
-    else
-        tfunc = tree.func
-        targs = tree.args
-        tkwargs = tree.kwargs
-        clustering = hclust(dist; linkage = linkage,
-                            branchorder = branchorder == :default ? :r : branchorder)
-        G = SimpleWeightedGraph(dist)
-        G = adjacency_matrix(SimpleGraph(G[tfunc(G, targs...; tkwargs...)]))
-    end
-
-    tk = cluster_opt.k
-    max_k = cluster_opt.max_k
-    k = if iszero(tk)
-        if cluster_opt.k_method == :Two_Diff
-            _two_diff_gap_stat(dist, clustering, max_k)
-        else
-            _std_silhouette_score(dist, clustering, max_k)
-        end
-    else
-        tk
-    end
-    clustering_idx = cutree(clustering; k = k)
+function PortfolioOptimiser.plot_network(assets::AbstractVector, rho::AbstractMatrix,
+                                         delta::AbstractMatrix,
+                                         clustering_idx::AbstractVector{<:Integer};
+                                         k::Integer = length(unique(clustering_idx)),
+                                         network_type::PortfolioOptimiser.NetworkType = MST(),
+                                         allocation = true, w = nothing, theme = :Spectral,
+                                         kwargs = (;))
+    G = PortfolioOptimiser._calc_adjacency(network_type, rho, delta)
 
     colours = palette(theme, k)
 
     if !haskey(kwargs, :names)
-        assets = portfolio.assets
+        assets = assets
         ml = maximum(length.(assets))
         names = similar(assets)
         for (i, asset) ∈ pairs(assets)
@@ -916,7 +853,7 @@ function PortfolioOptimiser.plot_network(portfolio::PortfolioOptimiser.AbstractP
     end
 
     if !haskey(kwargs, :nodecolor)
-        nodecols = Vector{eltype(colours)}(undef, N)
+        nodecols = Vector{eltype(colours)}(undef, size(rho, 1))
         for (i, j) ∈ pairs(clustering_idx)
             nodecols[i] = colours[j]
         end
@@ -927,122 +864,38 @@ function PortfolioOptimiser.plot_network(portfolio::PortfolioOptimiser.AbstractP
         kwargs = (kwargs..., nodeshape = :circle)
     end
 
-    if allocation
-        kwargs = (kwargs..., nodeweights = portfolio.optimal[type][!, :weights])
+    if allocation && !isnothing(w)
+        kwargs = (kwargs..., nodeweights = w)
     end
 
     return graphplot(G; kwargs...)
 end
 
-"""
-```julia
-plot_cluster_network
-```
-"""
-function PortfolioOptimiser.plot_cluster_network(portfolio::PortfolioOptimiser.AbstractPortfolio;
-                                                 cor_opt::CorOpt = CorOpt(;),
-                                                 cluster_opt = opt::ClusterOpt = ClusterOpt(;
-                                                                                            k = if isa(portfolio,
-                                                                                                       HCPortfolio)
-                                                                                                portfolio.k
-                                                                                            else
-                                                                                                0
-                                                                                            end,
-                                                                                            max_k = ceil(Int,
-                                                                                                         sqrt(size(portfolio.returns,
-                                                                                                                   2)))),
-                                                 tree::GenericFunction = GenericFunction(;
-                                                                                         func = Graphs.kruskal_mst),
-                                                 allocation = false,
-                                                 type = if isa(portfolio, HCPortfolio)
-                                                     :HRP
-                                                 else
-                                                     :Trad
-                                                 end, theme = :Spectral,
-                                                 kwargs::NamedTuple = (;))
-    returns = portfolio.returns
-    corr, dist = cor_dist_mtx(returns, cor_opt)
-    N = size(corr, 2)
-
-    linkage = cluster_opt.linkage
-    branchorder = cluster_opt.branchorder
-
-    if linkage == :DBHT
-        dbht_method = cluster_opt.dbht_method
-
-        func = cluster_opt.genfunc.func
-        args = cluster_opt.genfunc.args
-        kwargs = cluster_opt.genfunc.kwargs
-        corr = func(dist, args...; kwargs...)
-
-        missing, missing, missing, missing, missing, missing, clustering = DBHTs(dist, corr;
-                                                                                 branchorder = branchorder,
-                                                                                 method = dbht_method)
+function PortfolioOptimiser.plot_network(port::PortfolioOptimiser.AbstractPortfolio,
+                                         type::Symbol = if isa(port, Portfolio)
+                                             :Trad
+                                         else
+                                             :HRP
+                                         end;
+                                         cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
+                                         dist_type::PortfolioOptimiser.DistanceMethod = DistanceDefault(),
+                                         hclust_alg::PortfolioOptimiser.HClustAlg = HAC(),
+                                         hclust_opt::PortfolioOptimiser.HCOpt = HCOpt(),
+                                         network_type::PortfolioOptimiser.NetworkType = MST(),
+                                         cluster::Bool = true, allocation::Bool = true,
+                                         theme = :Spectral, kwargs = (;))
+    idx, clustering, k, S, D = if cluster || isa(port, PortfolioOptimiser.Portfolio)
+        cluster_assets(port.returns; cor_type = cor_type, dist_type = dist_type,
+                       hclust_alg = hclust_alg, hclust_opt = hclust_opt)
     else
-        tfunc = tree.func
-        targs = tree.args
-        tkwargs = tree.kwargs
-        clustering = hclust(dist; linkage = linkage,
-                            branchorder = branchorder == :default ? :r : branchorder)
+        clustering, k, S, D = port.clusters, port.k, port.cor, port.dist
+        idx = cutree(clustering; k = k)
+        idx, clustering, k, S, D
     end
 
-    tk = cluster_opt.k
-    max_k = cluster_opt.max_k
-    k = if iszero(tk)
-        if cluster_opt.k_method == :Two_Diff
-            _two_diff_gap_stat(dist, clustering, max_k)
-        else
-            _std_silhouette_score(dist, clustering, max_k)
-        end
-    else
-        tk
-    end
-    clustering_idx = cutree(clustering; k = k)
-
-    G = Vector{Int}(undef, 0)
-    for i ∈ unique(clustering_idx)
-        idx = clustering_idx .== i
-        tmp = zeros(Int, N)
-        tmp[idx] .= 1
-        append!(G, tmp)
-    end
-
-    G = reshape(G, N, :)
-    G = G * transpose(G) - I
-
-    colours = palette(theme, k)
-
-    if !haskey(kwargs, :names)
-        assets = portfolio.assets
-        ml = maximum(length.(assets))
-        names = similar(assets)
-        for (i, asset) ∈ pairs(assets)
-            diff = ml - length(asset)
-            d, r = divrem(diff, 2)
-            name = repeat(" ", d + r + 1) * asset * repeat(" ", d + 1)
-            names[i] = name
-        end
-        kwargs = (kwargs..., names = names)
-    end
-
-    if !haskey(kwargs, :nodecolor)
-        nodecols = Vector{eltype(colours)}(undef, length(portfolio.assets))
-        for (i, j) ∈ pairs(clustering_idx)
-            nodecols[i] = colours[j]
-        end
-        kwargs = (kwargs..., nodecolor = nodecols)
-    end
-
-    if !haskey(kwargs, :nodeshape)
-        kwargs = (kwargs..., nodeshape = :circle)
-    end
-
-    if allocation
-        kwargs = (kwargs..., nodeweights = portfolio.optimal[type][!, :weights])
-    end
-
-    return graphplot(G; kwargs...)
+    return plot_network(port.assets, S, D, idx; k = k, network_type = network_type,
+                        allocation = allocation, w = port.optimal[type].weights,
+                        theme = theme, kwargs = kwargs)
 end
-=#
 
 end

@@ -1,4 +1,3 @@
-
 function is_leaf(a::ClusterNode)
     return isnothing(a.left)
 end
@@ -131,20 +130,20 @@ end
 function _calc_k(method::StdSilhouette, dist::AbstractMatrix, clustering, max_k::Integer)
     return _std_silhouette_score(dist, clustering, max_k, method.metric)
 end
-function calc_k(hclust_opt::HCType, dist::AbstractMatrix, clustering)
+function calc_k(hclust_opt::HCOpt, dist::AbstractMatrix, clustering)
     if !iszero(hclust_opt.k)
         return hclust_opt.k
     end
     return _calc_k(hclust_opt.k_method, dist, clustering, hclust_opt.max_k)
 end
-function _hcluster(ca::HAC, portfolio::HCPortfolio, hclust_opt::HCType = HCType())
+function _hcluster(ca::HAC, portfolio::HCPortfolio, hclust_opt::HCOpt = HCOpt())
     clustering = hclust(portfolio.dist; linkage = ca.linkage,
                         branchorder = hclust_opt.branchorder)
     k = calc_k(hclust_opt, portfolio.dist, clustering)
 
     return clustering, k
 end
-function _hcluster(ca::DBHT, portfolio::HCPortfolio, hclust_opt::HCType = HCType())
+function _hcluster(ca::DBHT, portfolio::HCPortfolio, hclust_opt::HCOpt = HCOpt())
     S = portfolio.cor
     D = portfolio.dist
     S = dbht_similarity(ca.similarity, S, D)
@@ -155,7 +154,7 @@ function _hcluster(ca::DBHT, portfolio::HCPortfolio, hclust_opt::HCType = HCType
     return clustering, k
 end
 function cluster_assets(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAC(),
-                        hclust_opt::HCType = HCType())
+                        hclust_opt::HCOpt = HCOpt())
     clustering, k = _hcluster(hclust_alg, portfolio, hclust_opt)
 
     idx = cutree(clustering; k = k)
@@ -163,7 +162,7 @@ function cluster_assets(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAC(),
     return idx, clustering, k
 end
 function cluster_assets!(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAC(),
-                         hclust_opt::HCType = HCType())
+                         hclust_opt::HCOpt = HCOpt())
     clustering, k = _hcluster(hclust_alg, portfolio, hclust_opt)
 
     portfolio.clusters = clustering
@@ -174,7 +173,7 @@ end
 function _hcluster(ca::HAC, X::AbstractMatrix,
                    cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                    dist_type::DistanceMethod = DistanceDefault(),
-                   hclust_opt::HCType = HCType())
+                   hclust_opt::HCOpt = HCOpt())
     dist_type = _get_default_dist(dist_type, cor_type)
     if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
         dist_type.absolute = cor_type.ce.absolute
@@ -191,7 +190,7 @@ end
 function _hcluster(ca::DBHT, X::AbstractMatrix,
                    cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                    dist_type::DistanceMethod = DistanceDefault(),
-                   hclust_opt::HCType = HCType())
+                   hclust_opt::HCOpt = HCOpt())
     dist_type = _get_default_dist(dist_type, cor_type)
     if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
         dist_type.absolute = cor_type.ce.absolute
@@ -209,7 +208,7 @@ end
 function cluster_assets(X::AbstractMatrix;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistanceMethod = DistanceDefault(),
-                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
     clustering, k, S, D = _hcluster(hclust_alg, X, cor_type, dist_type, hclust_opt)
 
     idx = cutree(clustering; k = k)
@@ -219,7 +218,7 @@ end
 function cluster_assets(portfolio::Portfolio;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistanceMethod = DistanceDefault(),
-                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
     return cluster_assets(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end

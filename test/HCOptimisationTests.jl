@@ -15,7 +15,7 @@ l = 2.0
 
     asset_statistics!(portfolio)
     hclust_alg = HAC()
-    hclust_opt = HCType()
+    hclust_opt = HCOpt()
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -249,7 +249,7 @@ end
 
     asset_statistics!(portfolio)
     hclust_alg = DBHT(; root_method = EqualDBHT())
-    hclust_opt = HCType()
+    hclust_opt = HCOpt()
 
     w1 = optimise!(portfolio; cluster = true, hclust_alg = hclust_alg,
                    hclust_opt = hclust_opt, rm = SD(), rmo = CDaR(),
@@ -350,7 +350,7 @@ end
 
     asset_statistics!(portfolio)
     hclust_alg = HAC()
-    hclust_opt = HCType()
+    hclust_opt = HCOpt()
 
     portfolio.w_min = -0.2
     portfolio.w_max = 0.8
@@ -454,7 +454,7 @@ end
 
     asset_statistics!(portfolio)
     hclust_alg = DBHT()
-    hclust_opt = HCType()
+    hclust_opt = HCOpt()
 
     rm = SD()
     w1 = optimise!(portfolio; rm = rm, cluster = true, hclust_alg = hclust_alg,
@@ -1689,7 +1689,7 @@ end
 
     asset_statistics!(portfolio)
     hclust_alg = DBHT()
-    hclust_opt = HCType()
+    hclust_opt = HCOpt()
     type = HRP()
     w1 = optimise!(portfolio; rm = SD(), cluster = true, type = type,
                    hclust_alg = hclust_alg, hclust_opt = hclust_opt)
@@ -2040,7 +2040,7 @@ end
 
     asset_statistics!(portfolio)
     hclust_alg = DBHT()
-    hclust_opt = HCType()
+    hclust_opt = HCOpt()
     type = HERC()
     w1 = optimise!(portfolio; rm = SD(), cluster = true, type = type,
                    hclust_alg = hclust_alg, hclust_opt = hclust_opt)

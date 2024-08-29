@@ -143,7 +143,7 @@ struct TwoDiff <: NumClusterMethod end
 @kwdef mutable struct StdSilhouette <: NumClusterMethod
     metric::Union{Distances.SemiMetric, Nothing} = nothing
 end
-@kwdef mutable struct HCType{T1 <: Integer, T2 <: Integer}
+@kwdef mutable struct HCOpt{T1 <: Integer, T2 <: Integer}
     branchorder::Symbol = :optimal
     k_method::NumClusterMethod = TwoDiff()
     k::T1 = 0
@@ -730,7 +730,7 @@ end
 export NoPosdef, PosdefNearest, NoDenoise, Fixed, Spectral, Shrink, DistanceMLP,
        DistanceSqMLP, DistanceLog, DistanceDefault, Knuth, Freedman, Scott, HGR,
        DistanceVarInfo, HAC, DBHTExp, DBHTMaxDist, UniqueDBHT, EqualDBHT, DBHT, TwoDiff,
-       StdSilhouette, HCType, ClusterNode, CovFull, SimpleVariance, CovSemi, CorSpearman,
+       StdSilhouette, HCOpt, ClusterNode, CovFull, SimpleVariance, CovSemi, CorSpearman,
        CorKendall, CorMutualInfo, CorDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2,
        CorSB0, CorSB1, CorGerberSB0, CorGerberSB1, NoJLoGo, JLoGo, KurtFull, KurtSemi,
        SkewFull, SkewSemi, PortCovCor, GM, VW, SE, MuSimple, MuJS, MuBS, MuBOP, Box,

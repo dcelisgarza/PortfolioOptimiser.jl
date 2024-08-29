@@ -4,26 +4,22 @@ end
 function _tree_func(::KruskalTree)
     return Graphs.kruskal_mst
 end
-function _calc_adjacency(nt::TMFG, X::AbstractMatrix, cor_type::PortfolioOptimiserCovCor,
-                         dist_type::DistanceMethod)
-    S = cor(cor_type, X)
-    dist_type = _get_default_dist(dist_type, cor_type)
-    D = dist(dist_type, S, X)
-    S = dbht_similarity(nt.similarity, S, D)
-
+function _calc_adjacency(nt::TMFG, rho::AbstractMatrix, delta::AbstractMatrix)
+    S = dbht_similarity(nt.similarity, rho, delta)
     Rpm = PMFG_T2s(S)[1]
     return adjacency_matrix(SimpleGraph(Rpm))
 end
-function _calc_adjacency(nt::MST, X::AbstractMatrix, cor_type::PortfolioOptimiserCovCor,
-                         dist_type::DistanceMethod)
+function _calc_adjacency(nt::MST, ::Any, delta::AbstractMatrix)
+    G = SimpleWeightedGraph(delta)
+    tree_func = _tree_func(nt.tree)
+    return adjacency_matrix(SimpleGraph(G[tree_func(G, nt.tree.args...; nt.tree.kwargs...)]))
+end
+function _calc_adjacency(nt::NetworkType, X::AbstractMatrix,
+                         cor_type::PortfolioOptimiserCovCor, dist_type::DistanceMethod)
     S = cor(cor_type, X)
     dist_type = _get_default_dist(dist_type, cor_type)
     D = dist(dist_type, S, X)
-
-    G = SimpleWeightedGraph(D)
-    tree_func = _tree_func(nt.tree)
-
-    return adjacency_matrix(SimpleGraph(G[tree_func(G, nt.tree.args...; nt.tree.kwargs...)]))
+    return _calc_adjacency(nt, S, D)
 end
 function connection_matrix(X::AbstractMatrix;
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -68,7 +64,7 @@ end
 function cluster_matrix(X::AbstractMatrix;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistanceMethod = DistanceDefault(),
-                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
     clusters = cluster_assets(X; cor_type = cor_type, dist_type = dist_type,
                               hclust_alg = hclust_alg, hclust_opt = hclust_opt)[1]
 
@@ -89,7 +85,7 @@ end
 function cluster_matrix(portfolio::AbstractPortfolio;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistanceMethod = DistanceDefault(),
-                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
     return cluster_matrix(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
@@ -121,7 +117,7 @@ end
 function related_assets(returns::AbstractMatrix, w::AbstractVector;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistanceMethod = DistanceDefault(),
-                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
     A_c = cluster_matrix(returns; cor_type = cor_type, dist_type = dist_type,
                          hclust_alg = hclust_alg, hclust_opt = hclust_opt)
     R_a = _con_rel(A_c, w)
@@ -131,7 +127,7 @@ function related_assets(portfolio::AbstractPortfolio;
                         type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistanceMethod = DistanceDefault(),
-                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCType = HCType())
+                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
     return related_assets(portfolio.returns, portfolio.optimal[type].weights;
                           cor_type = cor_type, dist_type = dist_type,
                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)

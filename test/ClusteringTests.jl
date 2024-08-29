@@ -11,7 +11,7 @@ l = 2.0
                       set_mu = false)
 
     ca = DBHT()
-    ct = HCType()
+    ct = HCOpt()
     cluster_assets!(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
@@ -41,7 +41,7 @@ l = 2.0
     @test isequal(portfolio.clusters.order, ordert)
     @test isequal(portfolio.k, kt)
 
-    ct = HCType(; k = 6)
+    ct = HCOpt(; k = 6)
     idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 2, 1, 1, 1, 3, 2, 4, 5, 6, 3, 5, 6, 3, 3, 6, 2, 4, 5, 1]
@@ -63,7 +63,7 @@ l = 2.0
     @test isequal(clustering.order, ordert)
     @test isequal(k, kt)
 
-    ct = HCType(; k_method = StdSilhouette())
+    ct = HCOpt(; k_method = StdSilhouette())
     idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 2, 1]
@@ -90,7 +90,7 @@ l = 2.0
                       set_mu = false)
 
     ca = HAC()
-    ct = HCType()
+    ct = HCOpt()
     idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2, 2, 1]
@@ -107,7 +107,7 @@ l = 2.0
     linkaget = :ward
     kt = 4
 
-    ct = HCType(; k_method = StdSilhouette())
+    ct = HCOpt(; k_method = StdSilhouette())
     idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2, 2, 1]
@@ -162,7 +162,7 @@ end
                       set_mu = false)
 
     ca = HAC()
-    ct = HCType()
+    ct = HCOpt()
     idx, clustering, k, S, D = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
 
     idx, clustering, k, S, D = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)

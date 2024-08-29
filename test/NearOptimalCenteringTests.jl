@@ -269,7 +269,7 @@ end
 
     asset_statistics!(portfolio)
     hclust_alg = DBHT()
-    hclust_opt = HCType()
+    hclust_opt = HCOpt()
 
     rm = SD(; formulation = SimpleSD())
     w1 = optimise!(portfolio; rm = rm, cluster = true, hclust_alg = hclust_alg,

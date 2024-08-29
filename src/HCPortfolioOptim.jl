@@ -489,7 +489,7 @@ end
 function optimise!(port::HCPortfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
                    rmo::Union{AbstractVector, <:RiskMeasure} = rm, type::HCPortType = HRP(),
                    cluster::Bool = true, hclust_alg::HClustAlg = HAC(),
-                   hclust_opt::HCType = HCType(), max_iter::Int = 100)
+                   hclust_opt::HCOpt = HCOpt(), max_iter::Int = 100)
     if cluster
         cluster_assets!(port; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
     end
