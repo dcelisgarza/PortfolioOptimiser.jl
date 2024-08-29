@@ -37,11 +37,11 @@ function connection_matrix(X::AbstractMatrix;
 
     return A_p
 end
-function connection_matrix(portfolio::AbstractPortfolio;
+function connection_matrix(port::AbstractPortfolio;
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                            dist_type::DistanceMethod = DistanceDefault(),
                            network_type::NetworkType = MST())
-    return connection_matrix(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
+    return connection_matrix(port.returns; cor_type = cor_type, dist_type = dist_type,
                              network_type = network_type)
 end
 function centrality_vector(X::AbstractMatrix;
@@ -54,11 +54,11 @@ function centrality_vector(X::AbstractMatrix;
 
     return calc_centrality(network_type.centrality, G)
 end
-function centrality_vector(portfolio::AbstractPortfolio;
+function centrality_vector(port::AbstractPortfolio;
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                            dist_type::DistanceMethod = DistanceDefault(),
                            network_type::NetworkType = MST())
-    return centrality_vector(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
+    return centrality_vector(port.returns; cor_type = cor_type, dist_type = dist_type,
                              network_type = network_type)
 end
 function cluster_matrix(X::AbstractMatrix;
@@ -82,11 +82,11 @@ function cluster_matrix(X::AbstractMatrix;
 
     return A_c
 end
-function cluster_matrix(portfolio::AbstractPortfolio;
+function cluster_matrix(port::AbstractPortfolio;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistanceMethod = DistanceDefault(),
                         hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
-    return cluster_matrix(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
+    return cluster_matrix(port.returns; cor_type = cor_type, dist_type = dist_type,
                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
 function _con_rel(A::AbstractMatrix, w::AbstractVector)
@@ -105,14 +105,13 @@ function connected_assets(returns::AbstractMatrix, w::AbstractVector;
     C_a = _con_rel(A_c, w)
     return C_a
 end
-function connected_assets(portfolio::AbstractPortfolio;
-                          type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+function connected_assets(port::AbstractPortfolio;
+                          type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                           dist_type::DistanceMethod = DistanceDefault(),
                           network_type::NetworkType = MST())
-    return connected_assets(portfolio.returns, portfolio.optimal[type].weights;
-                            cor_type = cor_type, dist_type = dist_type,
-                            network_type = network_type)
+    return connected_assets(port.returns, port.optimal[type].weights; cor_type = cor_type,
+                            dist_type = dist_type, network_type = network_type)
 end
 function related_assets(returns::AbstractMatrix, w::AbstractVector;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -123,14 +122,14 @@ function related_assets(returns::AbstractMatrix, w::AbstractVector;
     R_a = _con_rel(A_c, w)
     return R_a
 end
-function related_assets(portfolio::AbstractPortfolio;
-                        type::Symbol = isa(portfolio, Portfolio) ? :Trad : :HRP,
+function related_assets(port::AbstractPortfolio;
+                        type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistanceMethod = DistanceDefault(),
                         hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
-    return related_assets(portfolio.returns, portfolio.optimal[type].weights;
-                          cor_type = cor_type, dist_type = dist_type,
-                          hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    return related_assets(port.returns, port.optimal[type].weights; cor_type = cor_type,
+                          dist_type = dist_type, hclust_alg = hclust_alg,
+                          hclust_opt = hclust_opt)
 end
 
 export calc_centrality, connection_matrix, centrality_vector, cluster_matrix,

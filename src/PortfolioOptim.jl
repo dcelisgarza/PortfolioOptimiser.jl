@@ -850,8 +850,8 @@ end
 get_z
 ```
 """
-function get_z(portfolio::Portfolio, rm::Union{AbstractVector, <:TradRiskMeasure}, obj::Any)
-    return get_z_from_model(portfolio.model, rm, obj)
+function get_z(port::Portfolio, rm::Union{AbstractVector, <:TradRiskMeasure}, obj::Any)
+    return get_z_from_model(port.model, rm, obj)
 end
 function set_rm(port::Portfolio, rm::EVaR, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
@@ -2361,8 +2361,7 @@ function convex_optimisation(port, obj, type, class)
                           :params => haskey(val, :params) ? val[:params] : missing,
                           :finite_weights => all_finite_weights,
                           :nonzero_weights => all_non_zero_weights,
-                          :portfolio => DataFrame(; tickers = port.assets,
-                                                  weights = weights)))
+                          :port => DataFrame(; tickers = port.assets, weights = weights)))
     end
 
     return if success

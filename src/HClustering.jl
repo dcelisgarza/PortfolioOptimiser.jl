@@ -136,16 +136,16 @@ function calc_k(hclust_opt::HCOpt, dist::AbstractMatrix, clustering)
     end
     return _calc_k(hclust_opt.k_method, dist, clustering, hclust_opt.max_k)
 end
-function _hcluster(ca::HAC, portfolio::HCPortfolio, hclust_opt::HCOpt = HCOpt())
-    clustering = hclust(portfolio.dist; linkage = ca.linkage,
+function _hcluster(ca::HAC, port::HCPortfolio, hclust_opt::HCOpt = HCOpt())
+    clustering = hclust(port.dist; linkage = ca.linkage,
                         branchorder = hclust_opt.branchorder)
-    k = calc_k(hclust_opt, portfolio.dist, clustering)
+    k = calc_k(hclust_opt, port.dist, clustering)
 
     return clustering, k
 end
-function _hcluster(ca::DBHT, portfolio::HCPortfolio, hclust_opt::HCOpt = HCOpt())
-    S = portfolio.cor
-    D = portfolio.dist
+function _hcluster(ca::DBHT, port::HCPortfolio, hclust_opt::HCOpt = HCOpt())
+    S = port.cor
+    D = port.dist
     S = dbht_similarity(ca.similarity, S, D)
 
     clustering = DBHTs(D, S; branchorder = hclust_opt.branchorder, method = ca.root_method)[end]
@@ -153,20 +153,20 @@ function _hcluster(ca::DBHT, portfolio::HCPortfolio, hclust_opt::HCOpt = HCOpt()
 
     return clustering, k
 end
-function cluster_assets(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAC(),
+function cluster_assets(port::HCPortfolio; hclust_alg::HClustAlg = HAC(),
                         hclust_opt::HCOpt = HCOpt())
-    clustering, k = _hcluster(hclust_alg, portfolio, hclust_opt)
+    clustering, k = _hcluster(hclust_alg, port, hclust_opt)
 
     idx = cutree(clustering; k = k)
 
     return idx, clustering, k
 end
-function cluster_assets!(portfolio::HCPortfolio; hclust_alg::HClustAlg = HAC(),
+function cluster_assets!(port::HCPortfolio; hclust_alg::HClustAlg = HAC(),
                          hclust_opt::HCOpt = HCOpt())
-    clustering, k = _hcluster(hclust_alg, portfolio, hclust_opt)
+    clustering, k = _hcluster(hclust_alg, port, hclust_opt)
 
-    portfolio.clusters = clustering
-    portfolio.k = k
+    port.clusters = clustering
+    port.k = k
 
     return nothing
 end
@@ -215,11 +215,10 @@ function cluster_assets(X::AbstractMatrix;
 
     return idx, clustering, k, S, D
 end
-function cluster_assets(portfolio::Portfolio;
-                        cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+function cluster_assets(port::Portfolio; cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistanceMethod = DistanceDefault(),
                         hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
-    return cluster_assets(portfolio.returns; cor_type = cor_type, dist_type = dist_type,
+    return cluster_assets(port.returns; cor_type = cor_type, dist_type = dist_type,
                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
 
