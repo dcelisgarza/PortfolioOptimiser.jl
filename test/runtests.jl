@@ -1,13 +1,5 @@
 using SafeTestsets
 
-@safetestset "Stats tests" begin
-    include("StatsTest.jl")
-end
-
-@safetestset "WC Stats tests" begin
-    include("WCStatsTest.jl")
-end
-
 @safetestset "Factor Stats tests" begin
     include("FactorStatsTest.jl")
 end
@@ -98,4 +90,12 @@ end
 
 @safetestset "BL Stats tests" begin
     include("BLStatsTests.jl")
+end
+
+@safetestset "Stats tests" begin
+    include("StatsTest.jl")
+end
+
+@safetestset "WC Stats tests" begin
+    include("WCStatsTest.jl")
 end

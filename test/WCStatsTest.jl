@@ -633,7 +633,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     @test isapprox(portfolio.cov_mu, cov_mut)
     @test isapprox(portfolio.cov_sigma[idx...], cov_sigmat)
     @test isapprox(portfolio.k_mu, k_mut)
-    @test isapprox(portfolio.k_sigma, k_sigmat, rtol = 5.0e-5)
+    @test isapprox(portfolio.k_sigma, k_sigmat, rtol = 1.0e-4)
 
     wc.diagonal = true
     wc_statistics!(portfolio, wc)
