@@ -152,11 +152,11 @@ end
     @test isempty(w1)
     @test haskey(portfolio.fail, :inter)
     @test haskey(portfolio.fail, :intra)
-    @test portfolio.k == size(Matrix(portfolio.fail[:inter][:Clarabel_Trad][:portfolio]), 1)
+    @test portfolio.k == size(Matrix(portfolio.fail[:inter][:Clarabel_Trad][:port]), 1)
     @test length(keys(portfolio.fail[:intra])) == 3
     num_assets = 0
     for val ∈ values(portfolio.fail[:intra])
-        num_assets += size(Matrix(val[:Clarabel_Trad][:portfolio]), 1)
+        num_assets += size(Matrix(val[:Clarabel_Trad][:port]), 1)
     end
     @test num_assets == 20
 end
