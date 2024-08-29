@@ -31,8 +31,8 @@ jobs:
           #   julia-arch: x86
           # - os: windows-latest
           #   julia-arch: x86
-        allow-failures:
-          - 'nightly'
+        # allow-failures:
+        #   - 'nightly'
       fail-fast: false
     env:
       PYTHON: ""
