@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
 @safetestset "HC Optimistaion" begin
     include("HCOptimisationTests.jl")
 end
@@ -22,10 +26,6 @@ end
 
 @safetestset "WC Optimisation" begin
     include("WCOptimisationTests.jl")
-end
-
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
 end
 
 @safetestset "Trad optimisation rm vectors" begin
