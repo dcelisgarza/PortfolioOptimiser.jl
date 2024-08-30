@@ -2,7 +2,7 @@ using Documenter, DocumenterTools, DocumenterCitations, Literate, PortfolioOptim
 
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
 fix_math_md(content) = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
-fix_suffix(filename) = replace(filename, ".jl" => ".md")
+fix_suffix_md(filename) = replace(filename, ".jl" => ".md")
 function postprocess(cont)
     return """
            The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
@@ -10,11 +10,11 @@ function postprocess(cont)
 end
 
 example_path = joinpath(@__DIR__, "../examples/")
-build_path = joinpath(@__DIR__, "src", "examples/")
+build_path_md = joinpath(@__DIR__, "src", "examples/")
 files = readdir(example_path)
 code_files = filter(x -> endswith(x, ".jl"), files)
 data_files = filter(x -> endswith(x, ".csv"), files)
-examples_nav = fix_suffix.("./examples/" .* code_files)
+examples_nav = fix_suffix_md.("./examples/" .* code_files)
 
 for file ∈ data_files
     cp(joinpath(@__DIR__, "../examples/" * file),
@@ -22,8 +22,10 @@ for file ∈ data_files
 end
 
 for file ∈ code_files
-    Literate.markdown(example_path * file, build_path; preprocess = fix_math_md,
+    Literate.markdown(example_path * file, build_path_md; preprocess = fix_math_md,
                       postprocess = postprocess, documenter = true, credit = true)
+    Literate.notebook(example_path * file, example_path; preprocess = fix_math_md,
+                      documenter = true, credit = true)
 end
 
 makedocs(;
@@ -37,8 +39,12 @@ makedocs(;
                                   assets = String[]),
          pages = ["Home" => "index.md", "Examples" => examples_nav,
                   "API" => ["Risk Measures" => "RiskMeasures.md",
-                            "Portfolio Optimisation" => "PortfolioOptim.md",
                             "Portfolio Types" => "PortfolioTypes.md",
+                            "Parameter Estimation" => "ParameterEstimation.md",
+                            "Parameter Estimation Types" => "ParameterEstimationTypes.md",
+                            "Portfolio Statistics" => "Statistics.md",
+                            "Portfolio Optimisation" => "PortfolioOptim.md",
+                            "Asset Allocation" => "AssetAllocation.md",
                             "References" => "References.md"]],
          plugins = [CitationBibliography(joinpath(@__DIR__, "src", "refs.bib");
                                          style = :numeric)])

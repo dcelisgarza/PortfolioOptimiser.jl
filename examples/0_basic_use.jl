@@ -2,14 +2,14 @@
 
 # ## Tutorial 0: Basic use
 
-# This tutorial should serve as a minimum working example for using `PortfolioOptimiser.jl`.
+# This tutorial should serve as a minimum working example for using [`PortfolioOptimiser.jl`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/).
 
 # ### 1. Downloading the data
 
-# Because this is not financial advice, we will be downloading a mixture of assets. First we import some packages we'll need.
+# Because this is not financial advice, we will be downloading a mixture of assets. First we import some packages we'll need. We'll be using the plotting extension and for that we need GraphRecipes and StatsPlots.
 
 using MarketData, Dates, TimeSeries, PortfolioOptimiser, Clarabel, HiGHS, StatsBase,
-      Statistics
+      Statistics, GraphRecipes, StatsPlots
 
 # Then we define our list of meme stonks and a generous date range. We will only be keeping the adjusted close price. In practice it doesn't really matter because we're using daily data.
 
@@ -34,9 +34,9 @@ end
 
 prices = get_prices(assets)
 
-# ### 2. Instantiating an instance of `Portfolio`.
+# ### 2. Instantiating an instance of [`Portfolio`](@ref).
 
-# Now that we have our data we can instantiate a portfolio. We also need to give it an optimiser for the continuous optimisation and an MIP optimiser for the discrete allocation of funds, we'll use `[Clarabel.jl](https://github.com/oxfordcontrol/Clarabel.jl)` and `[HiGHS.jl](https://github.com/jump-dev/HiGHS.jl)`.
+# Now that we have our data we can instantiate a portfolio. We also need to give it an optimiser for the continuous optimisation and an MIP optimiser for the discrete allocation of funds, we'll use [`Clarabel.jl`](https://github.com/oxfordcontrol/Clarabel.jl) and [`HiGHS.jl`](https://github.com/jump-dev/HiGHS.jl).
 
 portfolio = Portfolio(; prices = prices,
                       ## Continuous optimiser.
@@ -55,7 +55,7 @@ portfolio = Portfolio(; prices = prices,
 
 # ### 3. Computing statistics
 
-# There are myriad of statistics and methods for computing said statistics. Users can define their own methods with Julia's multiple dispatch and `[StatsAPI.jl](https://github.com/JuliaStats/StatsAPI.jl)` interface.
+# There are myriad of statistics and methods for computing said statistics. Users can define their own methods with Julia's multiple dispatch and [`StatsAPI.jl`](https://github.com/JuliaStats/StatsAPI.jl) interface.
 
 # We will do a simple Mean-Variance optimisation, using the simplest methods for computing the expected returns vector and covariance matrices. Later tutorials will go more in-depth.
 
@@ -67,18 +67,18 @@ T, N = size(portfolio.returns)
 mu_type = MuSimple()
 ## mu_type = MuSimple(; w = eweights(1:T, 1/T, scale=true))
 
-# `PortCovCor` is quite special because it accepts covariance estimators, methods for fixing non positive definite matrices, denoising methods, and a graph-based approach for computing the covariance by identifying related asset groups. 
+# [`PortCovCor`](@ref) is quite special because it accepts covariance estimators, methods for fixing non positive definite matrices, denoising methods, and a graph-based approach for computing the covariance by identifying related asset groups. 
 
-# The estimators are all different, and PortfolioOptimiser offers a few of them. They all have their own parameters. They all subtype `StatBase.jl`'s covariance estimator `[CovarianceEstimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator)`, meaning `PortCovCor` can be provided with external estimators such as those in `[CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl)`, as well as user-defined methods.
+# The estimators are all different, and PortfolioOptimiser offers a few of them. They all have their own parameters. They all subtype [`StatBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator), meaning [`PortCovCor`](@ref) works with external estimators such as those in [`CovarianceEstimation.jl`](https://github.com/mateuszbaran/CovarianceEstimation.jl), as well as user-defined methods.
 
 # This defaults to the full sample covariance estimator. We can provide the estimator with some weights to compute a weighted covariance too. We'll leave other estimators for future tutorials. For the time being, feel free to play around with the weights. There is some nesting involved, but that is due to the fact that we are composing various estimators to get our desired outcome.
 
-cov_type = PortCovCor()
+cov_type = PortCovCor(;)
 ## cov_type = PortCovCor(;
 ##                       ce = CovFull(; ce = StatsBase.SimpleCovariance(; corrected = false),
 ##                                    w = eweights(1:T, 1 / T; scale = true)))
 
-# We can then call `asset_statistics!` which computes all the asset statistics. It will also compute other statistics by default but we can set some flags to stop this from happening.
+# We can then call [`asset_statistics!`](@ref) which computes all the asset statistics. It will also compute other statistics by default but we can set some flags to stop this from happening.
 
 asset_statistics!(portfolio; mu_type = mu_type, cov_type = cov_type, set_kurt = false,
                   set_skurt = false, set_skew = false, set_sskew = false);
@@ -104,11 +104,11 @@ obj = MinRisk()
 
 w1 = optimise!(portfolio; rm = rm, obj = obj)
 
-# We now have the portfolio for these assets and this period of time that minimises the variance. `PortfolioOptimiser` also lets you constrain the optimisation such that you have a minimum required return. However this will be explored in a later tutorial. 
+# We now have the portfolio for these assets and this period of time that minimises the variance. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/) also lets you constrain the optimisation such that you have a minimum required return. However this will be explored in a later tutorial. 
 
 # ### 5. Asset allocation
 
-# For now we want to know how many assets we need to buy, this only gives us the mathematically optimal weights. We have a function for this. Given that we used the price data directly, `Portfolio()` will take the last entry in the prices and use that as the current price for each asset. You can of course change this, or directly provide them as a vector to the `allocate!` function, though the order of the prices must be the same as the original asset order.
+# For now we want to know how many assets we need to buy, this only gives us the mathematically optimal weights. We have a function for this. Given that we used the price data directly, [`Portfolio`](@ref) will take the last entry in the prices and use that as the current price for each asset. You can of course change this, or directly provide them as a vector to the [`allocate!`](@ref) function, though the order of the prices must be the same as the original asset order.
 
 # For this example, lets say we have 1000 dollars. Change this value to see how the allocation changes. The larger it becomes, the closer they get to the optimal value.
 
@@ -121,6 +121,50 @@ method = LP()
 
 w2 = allocate!(portfolio; investment = investment)
 
-# ### 6. The next tutorial
+# ### 6. Plotting the portfolio
 
-# The next tutorial will follow on from this one, it will show you how you can visualise your portfolios.
+# This section is the one most bound to change as the plotting functions are still somewhat preliminary. There are a variety of plots but we'll only show the most basic ones. By default, the plots will take the mathematically optimal portfolio. Lets see what it looks like.
+
+## Plot the portfolio returns.
+plt1 = plot_returns(portfolio)
+display(plt1)
+
+## Plot the portfolio returns per asset.
+plt2 = plot_returns(portfolio; per_asset = true)
+display(plt2)
+
+## Plot the returns histogram.
+plt3 = plot_hist(portfolio)
+display(plt3)
+
+## Plot the portfolio range of returns.
+plt4 = plot_range(portfolio)
+display(plt4)
+
+## Plot portfolio drawdown.
+plt5 = plot_drawdown(portfolio)
+display(plt5)
+
+# This is, however not our actual portfolio, it is the optimal one. To plot the allocated portfolio we need to know the key it is stored under and pass that on to the plotting functions along with a flag. The key is the symbol composed of the allocation method, in this case LP() and the portfolio type, which is something we have not discussed, but defaults to Trad(), as a Symbol.
+
+display(keys(portfolio.alloc_optimal))
+
+## Plot the portfolio returns.
+plt1 = plot_returns(portfolio, :LP_Trad; allocated = true)
+display(plt1)
+
+## Plot the portfolio returns per asset.
+plt2 = plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true)
+display(plt2)
+
+## Plot the returns histogram.
+plt3 = plot_hist(portfolio, :LP_Trad; allocated = true)
+display(plt3)
+
+## Plot the portfolio range of returns.
+plt4 = plot_range(portfolio, :LP_Trad; allocated = true)
+display(plt4)
+
+## Plot portfolio drawdown.
+plt5 = plot_drawdown(portfolio, :LP_Trad; allocated = true)
+display(plt5)

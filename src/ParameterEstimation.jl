@@ -2229,7 +2229,7 @@ end
 _mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, opt, cov_type, cov_flag = true)
 ```
 
-Internal function for computing the Black Litterman statistics as defined in [`black_litterman`](@ref). See [`_denoise_logo_mtx`](@ref).
+Internal function for computing the Black Litterman statistics as defined in [`black_litterman`](@ref). See .
 
 # Inputs
 
@@ -2243,8 +2243,8 @@ Internal function for computing the Black Litterman statistics as defined in [`b
   - `delta`: variable of the same name in the Black-Litterman model.
   - `T`: variable of the same name in the Black-Litterman model.
   - `N`: variable of the same name in the Black-Litterman model.
-  - `opt`: any valid instance of `opt` for [`_denoise_logo_mtx`](@ref).
-  - `cov_type`: any valid value from [`DenoiseLoGoNames`](@ref).
+  - `opt`: any valid instance of `opt` for .
+  - `cov_type`: any valid value from .
   - `cov_flag`: whether the matrix is a covariance matrix or not.
 
 # Outputs
@@ -2278,6 +2278,14 @@ end
 function _Pi(eq, delta, sigma, w, mu, rf)
     return eq ? delta * sigma * w : mu .- rf
 end
+"""
+```
+black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
+                         Q::AbstractVector, w::AbstractVector;
+                         cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                         mu_type::MeanEstimator = MuSimple())
+```
+"""
 function black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
                          Q::AbstractVector, w::AbstractVector;
                          cov_type::PortfolioOptimiserCovCor = PortCovCor(),

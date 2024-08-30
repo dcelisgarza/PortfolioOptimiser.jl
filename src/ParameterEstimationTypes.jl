@@ -470,11 +470,26 @@ struct SkewFull <: SkewEstimator end
     target::Union{<:Real, AbstractVector{<:Real}} = 0.0
 end
 
+"""
+```
 @kwdef mutable struct PortCovCor <: PortfolioOptimiserCovCor
     ce::CovarianceEstimator = CovFull(;)
     posdef::PosdefFix = PosdefNearest(;)
     denoise::Denoise = NoDenoise(;)
     jlogo::AbstractJLoGo = NoJLoGo(;)
+end
+```
+"""
+mutable struct PortCovCor <: PortfolioOptimiserCovCor
+    ce::CovarianceEstimator
+    posdef::PosdefFix
+    denoise::Denoise
+    jlogo::AbstractJLoGo
+end
+function PortCovCor(; ce::CovarianceEstimator = CovFull(;),
+                    posdef::PosdefFix = PosdefNearest(;), denoise::Denoise = NoDenoise(;),
+                    jlogo::AbstractJLoGo = NoJLoGo(;))
+    return PortCovCor(ce, posdef, denoise, jlogo)
 end
 
 # ## Mean estimator

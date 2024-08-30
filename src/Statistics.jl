@@ -1,4 +1,19 @@
-
+"""
+```
+asset_statistics!(port::AbstractPortfolio;
+                           cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                           set_cov::Bool = true, mu_type::MeanEstimator = MuSimple(),
+                           set_mu::Bool = true, kurt_type::KurtFull = KurtFull(),
+                           set_kurt::Bool = true, skurt_type::KurtSemi = KurtSemi(),
+                           set_skurt::Bool = true, skew_type::SkewFull = SkewFull(),
+                           set_skew::Bool = true, sskew_type::SkewSemi = SkewSemi(),
+                           set_sskew::Bool = true,
+                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                           set_cor::Bool = true,
+                           dist_type::DistanceMethod = DistanceDefault(),
+                           set_dist::Bool = true)
+```
+"""
 function asset_statistics!(port::AbstractPortfolio;
                            cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                            set_cov::Bool = true, mu_type::MeanEstimator = MuSimple(),

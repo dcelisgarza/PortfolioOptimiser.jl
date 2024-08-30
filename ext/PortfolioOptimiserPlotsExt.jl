@@ -40,10 +40,14 @@ function PortfolioOptimiser.plot_returns(timestamps, assets, returns, weights;
     return plot(timestamps, ret; kwargs...)
 end
 function PortfolioOptimiser.plot_returns(port, type = isa(port, Portfolio) ? :Trad : :HRP;
-                                         per_asset = false, kwargs...)
+                                         allocated::Bool = false, per_asset::Bool = false,
+                                         kwargs...)
     return PortfolioOptimiser.plot_returns(port.timestamps, port.assets, port.returns,
-                                           port.optimal[type].weights;
-                                           per_asset = per_asset, kwargs...)
+                                           if !allocated
+                                               port.optimal[type].weights
+                                           else
+                                               port.alloc_optimal[type].weights
+                                           end; per_asset = per_asset, kwargs...)
 end
 
 function PortfolioOptimiser.plot_bar(assets, data; kwargs...)
@@ -67,8 +71,13 @@ function PortfolioOptimiser.plot_bar(assets, data; kwargs...)
     return bar(assets, data * 100; kwargs...)
 end
 function PortfolioOptimiser.plot_bar(port::PortfolioOptimiser.AbstractPortfolio,
-                                     type = isa(port, Portfolio) ? :Trad : :HRP, kwargs...)
-    return PortfolioOptimiser.plot_bar(port.assets, port.optimal[type].weights, kwargs...)
+                                     type = isa(port, Portfolio) ? :Trad : :HRP;
+                                     allocated::Bool = false, kwargs...)
+    return PortfolioOptimiser.plot_bar(port.assets, if !allocated
+                                           port.optimal[type].weights
+                                       else
+                                           port.alloc_optimal[type].weights
+                                       end, kwargs...)
 end
 
 function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
@@ -163,12 +172,17 @@ function PortfolioOptimiser.plot_risk_contribution(port::PortfolioOptimiser.Abst
                                                    percentage::Bool = false,
                                                    erc_line::Bool = true, t_factor = 252,
                                                    delta::Real = 1e-6,
-                                                   marginal::Bool = false, kwargs_bar = (;),
-                                                   kwargs_line = (;))
+                                                   marginal::Bool = false,
+                                                   allocated::Bool = false,
+                                                   kwargs_bar = (;), kwargs_line = (;))
     solver_flag, sigma_flag = set_rm_properties(rm, port.solvers, port.cov)
-    fig = PortfolioOptimiser.plot_risk_contribution(port.assets, port.optimal[type].weights,
-                                                    X; rm = rm, V = port.V, SV = port.SV,
-                                                    percentage = percentage,
+    fig = PortfolioOptimiser.plot_risk_contribution(port.assets,
+                                                    if !allocated
+                                                        port.optimal[type].weights
+                                                    else
+                                                        port.alloc_optimal[type].weights
+                                                    end, X; rm = rm, V = port.V,
+                                                    SV = port.SV, percentage = percentage,
                                                     erc_line = erc_line,
                                                     t_factor = t_factor, delta = delta,
                                                     marginal = marginal,
@@ -473,10 +487,15 @@ function PortfolioOptimiser.plot_drawdown(port::PortfolioOptimiser.AbstractPortf
                                           else
                                               :HRP
                                           end; alpha::Real = 0.05, kappa::Real = 0.3,
-                                          theme = :Dark2_5, kwargs_ret = (;),
-                                          kwargs_dd = (;), kwargs_risks = (;), kwargs = (;))
-    return PortfolioOptimiser.plot_drawdown(port.timestamps, port.optimal[type].weights,
-                                            port.returns; alpha = alpha, kappa = kappa,
+                                          allocated::Bool = false, theme = :Dark2_5,
+                                          kwargs_ret = (;), kwargs_dd = (;),
+                                          kwargs_risks = (;), kwargs = (;))
+    return PortfolioOptimiser.plot_drawdown(port.timestamps,
+                                            if !allocated
+                                                port.optimal[type].weights
+                                            else
+                                                port.alloc_optimal[type].weights
+                                            end, port.returns; alpha = alpha, kappa = kappa,
                                             solvers = port.solvers, theme = theme,
                                             kwargs_ret = kwargs_ret, kwargs_dd = kwargs_dd,
                                             kwargs_risks = kwargs_risks, kwargs = kwargs)
@@ -563,12 +582,16 @@ function PortfolioOptimiser.plot_hist(port::PortfolioOptimiser.AbstractPortfolio
                                                              sqrt(size(port.returns, 1))),
                                       alpha_i::Real = 0.0001, alpha::Real = 0.05,
                                       a_sim::Int = 100, kappa::Real = 0.3,
-                                      theme = :Paired_10, kwargs_h = (;),
-                                      kwargs_risks = (;))
-    return PortfolioOptimiser.plot_hist(port.optimal[type].weights, port.returns;
-                                        alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
-                                        kappa = kappa, solvers = port.solvers,
-                                        theme = theme, points = points, kwargs_h = kwargs_h,
+                                      allocated::Bool = false, theme = :Paired_10,
+                                      kwargs_h = (;), kwargs_risks = (;))
+    return PortfolioOptimiser.plot_hist(if !allocated
+                                            port.optimal[type].weights
+                                        else
+                                            port.alloc_optimal[type].weights
+                                        end, port.returns; alpha_i = alpha_i, alpha = alpha,
+                                        a_sim = a_sim, kappa = kappa,
+                                        solvers = port.solvers, theme = theme,
+                                        points = points, kwargs_h = kwargs_h,
                                         kwargs_risks = kwargs_risks)
 end
 
@@ -632,12 +655,16 @@ function PortfolioOptimiser.plot_range(port::PortfolioOptimiser.AbstractPortfoli
                                        end; alpha_i::Real = 0.0001, alpha::Real = 0.05,
                                        a_sim::Int = 100, beta_i::Real = alpha_i,
                                        beta::Real = alpha, b_sim::Integer = a_sim,
-                                       theme = :Set1_5, kwargs_h = (;), kwargs_risks = (;))
-    return PortfolioOptimiser.plot_range(port.optimal[type].weights, port.returns;
-                                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
-                                         beta_i = beta_i, beta = beta, b_sim = b_sim,
-                                         theme = theme, kwargs_h = kwargs_h,
-                                         kwargs_risks = kwargs_risks)
+                                       allocated::Bool = false, theme = :Set1_5,
+                                       kwargs_h = (;), kwargs_risks = (;))
+    return PortfolioOptimiser.plot_range(if !allocated
+                                             port.optimal[type].weights
+                                         else
+                                             port.alloc_optimal[type].weights
+                                         end, port.returns; alpha_i = alpha_i,
+                                         alpha = alpha, a_sim = a_sim, beta_i = beta_i,
+                                         beta = beta, b_sim = b_sim, theme = theme,
+                                         kwargs_h = kwargs_h, kwargs_risks = kwargs_risks)
 end
 
 function PortfolioOptimiser.plot_clusters(assets::AbstractVector, rho::AbstractMatrix,
@@ -732,7 +759,7 @@ function PortfolioOptimiser.plot_clusters(port::PortfolioOptimiser.AbstractPortf
                                           dist_type::PortfolioOptimiser.DistanceMethod = DistanceDefault(),
                                           hclust_alg::PortfolioOptimiser.HClustAlg = HAC(),
                                           hclust_opt::PortfolioOptimiser.HCOpt = HCOpt(),
-                                          cluster::Bool = true, show_clusters = true,
+                                          cluster::Bool = true, show_clusters::Bool = true,
                                           theme_d = :Spectral, theme_h = :Spectral,
                                           theme_h_kwargs = (;), kwargs_d1 = (;),
                                           kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;),
@@ -883,7 +910,8 @@ function PortfolioOptimiser.plot_network(port::PortfolioOptimiser.AbstractPortfo
                                          hclust_opt::PortfolioOptimiser.HCOpt = HCOpt(),
                                          network_type::PortfolioOptimiser.NetworkType = MST(),
                                          cluster::Bool = true, allocation::Bool = true,
-                                         theme = :Spectral, kwargs = (;))
+                                         allocated::Bool = false, theme = :Spectral,
+                                         kwargs = (;))
     idx, clustering, k, S, D = if cluster || isa(port, PortfolioOptimiser.Portfolio)
         cluster_assets(port.returns; cor_type = cor_type, dist_type = dist_type,
                        hclust_alg = hclust_alg, hclust_opt = hclust_opt)
@@ -894,8 +922,11 @@ function PortfolioOptimiser.plot_network(port::PortfolioOptimiser.AbstractPortfo
     end
 
     return plot_network(port.assets, S, D, idx; k = k, network_type = network_type,
-                        allocation = allocation, w = port.optimal[type].weights,
-                        theme = theme, kwargs = kwargs)
+                        allocation = allocation, w = if !allocated
+                            port.optimal[type].weights
+                        else
+                            port.alloc_optimal[type].weights
+                        end, theme = theme, kwargs = kwargs)
 end
 
 end

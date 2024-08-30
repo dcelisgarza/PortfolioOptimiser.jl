@@ -322,6 +322,15 @@ function _allocate!(method::Greedy, port, type, latest_prices, investment, reinv
     return _greedy_allocation!(port, type, latest_prices, investment, method.rounding,
                                reinvest)
 end
+"""
+```
+allocate!(port::AbstractPortfolio;
+                   type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
+                   method::AllocationMethod = LP(), latest_prices = port.latest_prices,
+                   investment::Real = 1e6, reinvest::Bool = false,
+                   string_names::Bool = false)
+```
+"""
 function allocate!(port::AbstractPortfolio;
                    type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
                    method::AllocationMethod = LP(), latest_prices = port.latest_prices,
