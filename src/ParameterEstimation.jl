@@ -1501,8 +1501,14 @@ function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
     return nothing
 end
 function StatsBase.mean(me::MuSimple, X::AbstractMatrix; dims::Int = 1)
-    return vec(isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims))
+    return isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims)
 end
+"""
+```
+target_mean(::GM, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma, T::Integer,
+                     N::Integer)
+```
+"""
 function target_mean(::GM, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma, T::Integer,
                      N::Integer)
     return fill(mean(mu), N)
@@ -1846,16 +1852,16 @@ function prep_dim_red_reg(method::DRR, x::DataFrame)
 end
 function _regression(method::DRR, X::AbstractMatrix, x1::AbstractMatrix, Vp::AbstractMatrix,
                      y::AbstractVector)
-    avg = if isnothing(method.mean_w)
-        vec(mean(X; dims = 2))
-    else
-        vec(mean(X, method.mean_w; dims = 2))
-    end
-    sdev = if isnothing(method.std_w)
-        vec(std(method.ve, X; dims = 2))
-    else
-        vec(std(method.ve, X, method.std_w; dims = 2))
-    end
+    avg = vec(if isnothing(method.mean_w)
+                  mean(X; dims = 2)
+              else
+                  mean(X, method.mean_w; dims = 2)
+              end)
+    sdev = vec(if isnothing(method.std_w)
+                   std(method.ve, X; dims = 2)
+               else
+                   std(method.ve, X, method.std_w; dims = 2)
+               end)
 
     fit_result = lm(x1, y)
     beta_pc = coef(fit_result)[2:end]

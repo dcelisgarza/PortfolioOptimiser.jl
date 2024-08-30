@@ -1,7 +1,26 @@
 using Documenter, DocumenterTools, DocumenterCitations, Literate, PortfolioOptimiser
 
+import PortfolioOptimiser: MeanEstimator, MeanTarget
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
-fix_math_md(content) = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
+function pre_process_content_md(content)
+    str = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
+    str = replace(str, r"^#note # (.*)$"m => s"""
+           # !!! note
+           #     \1""")
+    return replace(str, r"^#warning # (.*)$"m => s"""
+           # !!! warning
+           #     \1""")
+end
+function pre_process_content_nb(content)
+    str = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
+    str = replace(str, r"^#note # (.*)$"m => s"""
+           # !!! note
+           #     \1""")
+    return replace(str, r"^#warning # (.*)$"m => s"""
+    # > *warning*
+    # > \1""")
+end
+
 fix_suffix_md(filename) = replace(filename, ".jl" => ".md")
 function postprocess(cont)
     return """
@@ -22,10 +41,11 @@ for file ∈ data_files
 end
 
 for file ∈ code_files
-    Literate.markdown(example_path * file, build_path_md; preprocess = fix_math_md,
-                      postprocess = postprocess, documenter = true, credit = true)
-    Literate.notebook(example_path * file, example_path; preprocess = fix_math_md,
+    Literate.markdown(example_path * file, build_path_md;
+                      preprocess = pre_process_content_md, postprocess = postprocess,
                       documenter = true, credit = true)
+    Literate.notebook(example_path * file, example_path;
+                      preprocess = pre_process_content_nb, documenter = true, credit = true)
 end
 
 makedocs(;

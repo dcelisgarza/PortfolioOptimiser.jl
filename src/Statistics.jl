@@ -28,19 +28,24 @@ function asset_statistics!(port::AbstractPortfolio;
                            set_dist::Bool = true)
     returns = port.returns
 
-    if set_cov || set_mu && hasproperty(mu_type, :sigma)
+    if set_cov || set_mu && hasproperty(mu_type, :sigma) && isempty(mu_type.sigma)
         sigma = cov(cov_type, returns)
         if set_cov
             port.cov = sigma
         end
     end
     if set_mu || set_kurt || set_skurt || set_skew || set_sskew
-        if hasproperty(mu_type, :sigma)
+        sigma_flag = false
+        if hasproperty(mu_type, :sigma) && isempty(mu_type.sigma)
             mu_type.sigma = sigma
+            sigma_flag = true
         end
-        mu = mean(mu_type, returns)
+        mu = vec(mean(mu_type, returns))
         if set_mu
             port.mu = mu
+        end
+        if sigma_flag
+            mu_type.sigma = Matrix{eltype(sigma)}(undef, 0, 0)
         end
     end
     if set_kurt || set_skurt
