@@ -1,0 +1,159 @@
+The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+```@meta
+EditURL = "../../../examples/0_basic_use.jl"
+```
+
+# PortfolioOptimisation.jl Tutorial:
+
+## Tutorial 0: Basic use
+
+This tutorial should serve as a minimum working example for using `PortfolioOptimiser.jl`.
+
+### 1. Downloading the data
+
+Because this is not financial advice, we will be downloading a mixture of assets. First we import some packages we'll need.
+
+````@example 0_basic_use
+using MarketData, Dates, TimeSeries, PortfolioOptimiser, Clarabel, HiGHS, StatsBase,
+      Statistics
+````
+
+Then we define our list of meme stonks and a generous date range. We will only be keeping the adjusted close price. In practice it doesn't really matter because we're using daily data.
+
+````@example 0_basic_use
+assets = Symbol.(["AAL", "AAPL", "AMC", "BB", "BBY", "DELL", "DG", "DRS", "GME", "INTC",
+                  "LULU", "MARA", "MCI", "MSFT", "NKLA", "NVAX", "NVDA", "PARA", "PLNT",
+                  "SAVE", "SBUX", "SIRI", "STX", "TLRY", "TSLA"])
+
+Date_0 = DateTime(2019, 01, 01)
+Date_1 = DateTime(2023, 01, 01)
+
+function get_prices(assets)
+    prices = rename!(yahoo(assets[1], YahooOpt(; period1 = Date_0, period2 = Date_1))[:AdjClose],
+                     assets[1])
+    for asset ∈ assets[2:end]
+        sleep(rand() / 10)
+        prices = merge(prices,
+                       rename!(yahoo(asset, YahooOpt(; period1 = Date_0, period2 = Date_1))[:AdjClose],
+                               asset), :outer)
+    end
+    return prices
+end
+
+prices = get_prices(assets)
+````
+
+### 2. Instantiating an instance of `Portfolio`.
+
+Now that we have our data we can instantiate a portfolio. We also need to give it an optimiser for the continuous optimisation and an MIP optimiser for the discrete allocation of funds, we'll use `[Clarabel.jl](https://github.com/oxfordcontrol/Clarabel.jl)` and `[HiGHS.jl](https://github.com/jump-dev/HiGHS.jl)`.
+
+````@example 0_basic_use
+portfolio = Portfolio(; prices = prices,
+                      # Continuous optimiser.
+                      solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                       :check_sol => (allow_local = true,
+                                                                      allow_almost = true),
+                                                       :params => Dict("verbose" => false,
+                                                                       "max_step_fraction" => 0.7))),
+                      # MIP optimiser for the discrete allocation.
+                      alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
+                                                          :check_sol => (allow_local = true,
+                                                                         allow_almost = true),
+                                                          :params => Dict("log_to_console" => false))))
+````
+
+The constructor automatically computes the returns, sets the assets, and timestamps if you give it the price data. Users can also provide these directly, the timestamps aren't needed anywhere but plotting so they are not required. This structure contains a lot of data. But we will only show the basics for now.
+
+### 3. Computing statistics
+
+There are myriad of statistics and methods for computing said statistics. Users can define their own methods with Julia's multiple dispatch and `[StatsAPI.jl](https://github.com/JuliaStats/StatsAPI.jl)` interface.
+
+We will do a simple Mean-Variance optimisation, using the simplest methods for computing the expected returns vector and covariance matrices. Later tutorials will go more in-depth.
+
+````@example 0_basic_use
+# T is the number of observations, N the number of assets.
+T, N = size(portfolio.returns)
+````
+
+Simple mean, it also accepts weights for computing weighted means. This will compute the weighted mean for lambda = 1/T.
+
+````@example 0_basic_use
+mu_type = MuSimple()
+# mu_type = MuSimple(; w = eweights(1:T, 1/T, scale=true))
+````
+
+`PortCovCor` is quite special because it accepts covariance estimators, methods for fixing non positive definite matrices, denoising methods, and a graph-based approach for computing the covariance by identifying related asset groups.
+
+The estimators are all different, and PortfolioOptimiser offers a few of them. They all have their own parameters. They all subtype `StatBase.jl`'s covariance estimator `[CovarianceEstimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator)`, meaning `PortCovCor` can be provided with external estimators such as those in `[CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl)`, as well as user-defined methods.
+
+This defaults to the full sample covariance estimator. We can provide the estimator with some weights to compute a weighted covariance too. We'll leave other estimators for future tutorials. For the time being, feel free to play around with the weights. There is some nesting involved, but that is due to the fact that we are composing various estimators to get our desired outcome.
+
+````@example 0_basic_use
+cov_type = PortCovCor()
+# cov_type = PortCovCor(;
+#                       ce = CovFull(; ce = StatsBase.SimpleCovariance(; corrected = false),
+#                                    w = eweights(1:T, 1 / T; scale = true)))
+````
+
+We can then call `asset_statistics!` which computes all the asset statistics. It will also compute other statistics by default but we can set some flags to stop this from happening.
+
+````@example 0_basic_use
+asset_statistics!(portfolio; mu_type = mu_type, cov_type = cov_type, set_kurt = false,
+                  set_skurt = false, set_skew = false, set_sskew = false);
+nothing #hide
+````
+
+### 4. Optimising the portfolio
+
+We will only look at a vanilla optimisation in this tutorial.
+
+There are quite a few risk measures, some require statistics we have not computed, others don't require any precomputed statistics at all. You can see the risk measure has a few internal parameters, they all do. We'll only show the classic mean variance risk measure, but you can uncomment each of the next few lines in turn and try some of the others.
+
+````@example 0_basic_use
+rm = SD() # Variance
+# rm = MAD() # Mean absolute deviation
+# rm = SSD() # Semi variance
+# rm = CVaR() # Critical Value at Risk
+# rm = CDaR() # Critical Drawdown at Risk
+````
+
+There are four objective functions we can use they all serve their purpose but for the tutorial, we'll be minimising the risk. Try the other objective functions and change the parameters to see their effects.
+
+````@example 0_basic_use
+obj = MinRisk()
+# obj = MaxRet() # Only useful for maximising the return while constraining the risk to be under a given value.
+# obj = Utility(; l = 2) # Maximises the utility = return - l * risk
+# obj = Sharpe(; rf = 3.5/100/254) # Maximises the sharpe ratio = (mu - rf)/risk, where mu is the expected return.
+
+w1 = optimise!(portfolio; rm = rm, obj = obj)
+````
+
+We now have the portfolio for these assets and this period of time that minimises the variance. `PortfolioOptimiser` also lets you constrain the optimisation such that you have a minimum required return. However this will be explored in a later tutorial.
+
+### 5. Asset allocation
+
+For now we want to know how many assets we need to buy, this only gives us the mathematically optimal weights. We have a function for this. Given that we used the price data directly, `Portfolio()` will take the last entry in the prices and use that as the current price for each asset. You can of course change this, or directly provide them as a vector to the `allocate!` function, though the order of the prices must be the same as the original asset order.
+
+For this example, lets say we have 1000 dollars. Change this value to see how the allocation changes. The larger it becomes, the closer they get to the optimal value.
+
+````@example 0_basic_use
+investment = 1000
+````
+
+There are two methods we can use for allocating. The one we have chosen uses mixed-integer linear programming to discretly allocate assets. This however can only allocate discrete quantities. The second method is a greedy algorithm that allocates based on which asset has the highest difference between its mathematical optimum and current weight, it only tries to allocate based on whether you can afford it. However, it can allocate fractional shares up to an integer multiple of the value in rounding (defaults to 1). Given it is a greedy algorithm, it is not guaranteed to give an optimum solution, but will always find a solution, unlike the LP() method which can fail. Also the higher the investment, the more accurate it gets.
+
+````@example 0_basic_use
+method = LP()
+# method = Greedy(; rounding=0.5)
+
+w2 = allocate!(portfolio; investment = investment)
+````
+
+### 6. The next tutorial
+
+The next tutorial will follow on from this one, it will show you how you can visualise your portfolios.
+
+---
+
+*This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+

@@ -222,7 +222,7 @@ where ``M_{\\bm{X}}\\left(z^{-1}\\right)`` is the moment generating function of 
 # Inputs
 
   - `x`: vector.
-  - `alpha`: significance level, `α ∈ (0, 1)`.
+  - `α`: significance level, `α ∈ (0, 1)`.
   - `z`: entropic moment, can be obtained from [`get_z_from_model`](@ref) and [`get_z`](@ref) after optimising a [`Portfolio`](@ref).
 
 ```
@@ -348,7 +348,7 @@ where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure 
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha`: significance level, `α ∈ (0, 1)`.
+  - `α`: significance level, `α ∈ (0, 1)`.
 """
 function _EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     return ERM(x, solvers, alpha)
@@ -425,7 +425,7 @@ Compute the Relativistic Value at Risk.
 where ``\\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-- `alpha`: significance level, `α ∈ (0, 1)`.
+- `α`: significance level, `α ∈ (0, 1)`.
 - `κ`: relativistic deformation parameter.
 ```
 """
@@ -445,13 +445,15 @@ Compute the Drawdown at Risk of uncompounded cumulative returns.
 \\begin{align*}
 \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{a}}(\\bm{X},\\, j) \\in \\mathbb{R} : F_{\\mathrm{DD}}\\left(\\mathrm{DD_{a}}(\\bm{X},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
 \\mathrm{DD_{a}}(\\bm{X},\\, j) &= \\underset{t \\in (0,\\, j)}{\\max}\\left( \\sum\\limits_{i=0}^{t} x_{i} \\right) - \\sum\\limits_{i=0}^{j} x_{i}
-\\end{align*}\\,.
+\\end{align*}\\,
 ```
+
+where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns, and ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns.
 
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha`: significance level, `α ∈ (0, 1)`.
+  - `α`: significance level, `α ∈ (0, 1)`.
 """
 function _DaR(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
@@ -556,7 +558,7 @@ where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumula
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha`: significance level, `α ∈ (0, 1)`.
+  - `α`: significance level, `α ∈ (0, 1)`.
 """
 function _CDaR(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
@@ -633,7 +635,7 @@ where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure 
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha`: significance level, `α ∈ (0, 1)`.
+  - `α`: significance level, `α ∈ (0, 1)`.
 """
 function _EDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     pushfirst!(x, 1)
@@ -663,7 +665,7 @@ Compute the Relativistic Drawdown at Risk of uncompounded cumulative returns.
 where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the relativistic risk measure as defined in [`RRM`](@ref), and ``\\mathrm{DD_{a}}(\\bm{X})`` the drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-- `alpha`: significance level, `α ∈ (0, 1)`.
+- `α`: significance level, `α ∈ (0, 1)`.
 - `κ`: relativistic deformation parameter.
 ```
 """
@@ -686,7 +688,7 @@ end
 
 """
 ```
-_DaR_r(x::AbstractArray; alpha::Real = 0.05)
+_DaR_r(x::AbstractArray, α::Real = 0.05)
 ```
 
 Compute the Drawdown at Risk of compounded cumulative returns.
@@ -695,13 +697,15 @@ Compute the Drawdown at Risk of compounded cumulative returns.
 \\begin{align*}
 \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{r}}(\\bm{X},\\, j) \\in \\mathbb{R} : F_{\\mathrm{DD}}\\left(\\mathrm{DD_{r}}(\\bm{X},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
 \\mathrm{DD_{r}}(\\bm{X},\\, j) &= \\underset{t \\in (0,\\, j)}{\\max}\\left( \\prod\\limits_{i=0}^{t} \\left(1+x_{i}\\right) \\right) - \\prod\\limits_{i=0}^{j} \\left(1+x_{i}\\right) 
-\\end{align*}\\,.
+\\end{align*}\\,,
 ```
+
+where ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns, and ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns.
 
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha`: significance level, `α ∈ (0, 1)`.
+  - `α`: significance level, `α ∈ (0, 1)`.
 """
 function _DaR_r(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
@@ -805,7 +809,7 @@ where ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulati
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha`: significance level, `α ∈ (0, 1)`.
+  - `α`: significance level, `α ∈ (0, 1)`.
 """
 function _CDaR_r(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
@@ -882,7 +886,7 @@ where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure 
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha`: significance level, `α ∈ (0, 1)`.
+  - `α`: significance level, `α ∈ (0, 1)`.
   - `κ`: relativistic deformation parameter.
 """
 function _EDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
@@ -912,7 +916,7 @@ Compute the Relativistic Drawdown at Risk of compounded cumulative returns.
 where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, and ``\\mathrm{DD_{r}}(\\bm{X})`` the drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
-- `alpha`: significance level, `α ∈ (0, 1)`.
+- `α`: significance level, `α ∈ (0, 1)`.
 - `κ`: relativistic deformation parameter.
 ```
 """
@@ -1033,8 +1037,8 @@ Compute the _CVaR Range.
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha`: significance level of _CVaR losses, ``α ∈ (0, 1)``.
-  - `beta`: significance level of _CVaR gains, `beta in (0, 1)`.
+  - `α`: significance level of _CVaR losses, `α ∈ (0, 1)`.
+  - `β`: significance level of _CVaR gains, `β ∈ (0, 1)`.
 
 !!! warning
 
@@ -1056,8 +1060,8 @@ Compute the Tail Gini.
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `alpha_i`: start value of the significance level of _CVaR losses, `0 <alpha_i < alpha < 1`.
-  - `alpha`: end value of the significance level of _CVaR losses, ``α ∈ (0, 1)``.
+  - `alpha_i`: start value of the significance level of _CVaR losses, `0 < alpha_i < alpha < 1`.
+  - `α`: end value of the significance level of _CVaR losses, `α ∈ (0, 1)`.
   - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
 
 !!! warning
@@ -1083,10 +1087,10 @@ Compute the Tail Gini Range.
 
   - `x`: vector of portfolio returns.
   - `alpha_i`: start value of the significance level of _CVaR losses, `0 <alpha_i < alpha < 1`.
-  - `alpha`: end value of the significance level of _CVaR losses, ``α ∈ (0, 1)``.
+  - `α`: end value of the significance level of _CVaR losses, `α ∈ (0, 1)`.
   - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
   - `beta_i`: start value of the significance level of _CVaR gains, `0 < beta_i < beta < 1`.
-  - `beta`: end value of the significance level of _CVaR gains, `beta in (0, 1)`.
+  - `β`: end value of the significance level of _CVaR gains, `β ∈ (0, 1)`.
   - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 
 !!! warning
@@ -1159,7 +1163,11 @@ where:
   - ``\\bar{a}_{i\\,.}`` and ``\\bar{b}_{i\\,.}`` are the ``i``-th row means of their respective matrices.
   - ``\\bar{a}_{.\\,j}`` and ``\\bar{b}_{.\\,j}`` are the ``j``-th column means of their respective matrices.
   - ``\\bar{a}_{.\\,.}`` and ``\\bar{b}_{.\\,.}`` are the grand means of their respective matrices.
-  - ``A_{i,\\,j}`` and ``B_{i,\\,j}`` are the doubly centered distances.
+  - ``A_{i,\\,j}`` and ``B_{i,\\,j}`` are doubly centered distances.
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
 """
 function _DVar(x::AbstractVector)
     T = length(x)

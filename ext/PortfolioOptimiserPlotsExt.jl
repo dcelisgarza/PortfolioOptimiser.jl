@@ -380,20 +380,20 @@ function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::Abstrac
                                           kwargs_dd = (;), kwargs_risks = (;), kwargs = (;))
     ret = returns * w
 
-    prices = copy(ret)
-    pushfirst!(prices, 0)
-    prices .+= 1
-    prices = cumprod(prices)
-    popfirst!(prices)
-    prices2 = cumsum(copy(ret)) .+ 1
+    cret = copy(ret)
+    pushfirst!(cret, 0)
+    cret .+= 1
+    cret = cumprod(cret)
+    popfirst!(cret)
+    ucret = cumsum(copy(ret)) .+ 1
 
-    dd = similar(prices2)
+    dd = similar(ucret)
     peak = -Inf
-    for i ∈ eachindex(prices2)
-        if prices2[i] > peak
-            peak = prices2[i]
+    for i ∈ eachindex(ucret)
+        if ucret[i] > peak
+            peak = ucret[i]
         end
-        dd[i] = prices2[i] - peak
+        dd[i] = ucret[i] - peak
     end
 
     dd .*= 100
@@ -455,7 +455,7 @@ function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::Abstrac
     if !haskey(kwargs_ret, :linewidth)
         kwargs_ret = (kwargs_ret..., linewidth = 2)
     end
-    ret_plt = plot(timestamps, prices; color = colours[1], kwargs_ret...)
+    ret_plt = plot(timestamps, cret; color = colours[1], kwargs_ret...)
 
     if !haskey(kwargs, :legend_font_pointsize)
         kwargs = (kwargs..., legend_font_pointsize = 8)
