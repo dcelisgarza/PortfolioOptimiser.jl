@@ -1711,7 +1711,7 @@ function _sigma_mu(X::AbstractArray, cov_type::PortfolioOptimiserCovCor,
     if hasproperty(mu_type, :sigma)
         mu_type.sigma = sigma
     end
-    mu = mean(mu_type, X)
+    mu = vec(mean(mu_type, X))
 
     return sigma, mu
 end

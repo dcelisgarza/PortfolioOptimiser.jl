@@ -190,8 +190,12 @@ println(mu7 ./ mu1)
 ### 3.3 Covariance estimators
 
 [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) comes with quite a few covariance estimators. However, it is best to wrap them all with [`PortCovCor`](@ref). This is because it contains methods for denoising, fixing non-positive definite matrices, and using a graph-based algorithm for computing the covariance based on its relational structure.
+
+[Portfoliooptimiser](https://github.com/dcelisgarza/PortfolioOptimiser.jl)'s mean and covariance estimators are based on the idea of subtyping [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) to specialise the `cov` function. The same idea is used in 
 =#
 
+## 
+ce0 = SimpleCovariance(; corrected = true)
 ce1 = CovFull()
 ce2 = CovSemi()
 ce3 = CorMutualInfo()

@@ -1,9 +1,11 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/2_asset_statistics.jl"
 ```
 
 # Example 2: Asset statistics
+
 This tutorial follows from [Tutorial 1](https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/0_basic_use.ipynb). If something in the preamble is confusing, it is explained there.
 
 This tutorial focuses on the computation of asset statistics.
@@ -70,6 +72,7 @@ nothing #hide
 ````
 
 ## 3 Asset statistics
+
 When you first create a [`Portfolio`](@ref) in this way, it does not contain any statistics other than the returns. So we must compute them.
 
 [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) uses the [`StatsAPI.jl`](https://github.com/JuliaStats/StatsAPI.jl) interfaces through [`StatsBase.jl`](https://juliastats.org/StatsBase.jl/stable/). Meaning it is composable with other packages which use the common framework, and it also makes it easy for users to define their custom methods by using Julia's typesystem.
@@ -218,7 +221,6 @@ ce12 = CorGerberSB1()
 ce = PortCovCor(; ce = ce1)
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-
