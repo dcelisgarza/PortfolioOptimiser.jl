@@ -226,7 +226,7 @@ where ``M_{\\bm{X}}\\left(z^{-1}\\right)`` is the moment generating function of 
   - `z`: entropic moment, can be obtained from [`get_z_from_model`](@ref) and [`get_z`](@ref) after optimising a [`Portfolio`](@ref).
 
 ```
-ERM(x::AbstractVector, solvers::Union{NamedTuple, AbstractDict}, α::Real = 0.05)
+ERM(x::AbstractVector, solvers:AbstractDict, α::Real = 0.05)
 ```
 
 Compute the Entropic Risk Measure by minimising the function with respect to `z`. Used in [`_EVaR`](@ref), [`_EDaR`](@ref) and [`_EDaR_r`](@ref).
@@ -244,7 +244,7 @@ where ``\\mathcal{K}_{\\exp}`` is the exponential cone.
 # Inputs
 
   - `x`: vector of portfolio returns.
-  - `solvers`: named tuple or abstract dict containing the a JuMP-compatible solver capable of solving exponential conic problems, this argument can be formulated in various ways depending on the user's needs.
+  - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving exponential conic problems, this argument can be formulated in various ways depending on the user's needs.
 
 ```
 solvers = Dict(
@@ -265,18 +265,6 @@ The dictionary contains a key value pair for each solver (plus optional solution
   - `:solver`: defines the solver to use. One can also use [`JuMP.optimizer_with_attributes`](https://jump.dev/JuMP.jl/stable/api/JuMP/#optimizer_with_attributes) to direcly provide a solver with attributes already attached.
   - `:check_sol`: (optional) defines the keyword arguments passed on to [`JuMP.is_solved_and_feasible`](https://jump.dev/JuMP.jl/stable/api/JuMP/#is_solved_and_feasible) for accepting/rejecting solutions.
   - `:params`: (optional) defines solver-specific parameters.
-
-As long as the same structure is followed, one can use named tuples or even combinations of named tuples and abstract dictionaries.
-
-```
-solvers = (
-    Clarabel = (
-        # Solver with attributes
-        solver = optimizer_with_attributes(Clarabel.Optimizer, "verbose" => false), 
-        check_sol = (allow_local = true, allow_almost=true)
-    )
-)
-```
 
 Users are also able to provide multiple solvers by adding additional key-value pairs to the top-level dictionary/tuple as in the following snippet.
 
@@ -306,8 +294,7 @@ function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
     val = z * log(val / alpha)
     return val
 end
-function ERM(x::AbstractVector, solvers::Union{NamedTuple, AbstractDict},
-             alpha::Real = 0.05)
+function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     model = JuMP.Model()
     set_string_names_on_creation(model, false)

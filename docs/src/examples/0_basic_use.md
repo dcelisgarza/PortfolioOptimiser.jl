@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/0_basic_use.jl"
 ```
@@ -11,11 +12,42 @@ This tutorial should serve as a minimum working example for using [`PortfolioOpt
 
 ### 1. Downloading the data
 
-Because this is not financial advice, we will be downloading a mixture of assets. First we import some packages we'll need. We'll be using the plotting extension and for that we need GraphRecipes and StatsPlots.
+[`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) does not ship with supporting packages that are not integral to its internal functionality. This means users are responsible for installing packages to load and download data, [`JuMP`]()-compatible solvers, pretty printing, and the plotting functionality is an extension which requires [`GraphRecipes`](https://github.com/JuliaPlots/GraphRecipes.jl) and [`StatsPlots`](https://github.com/JuliaPlots/StatsPlots.jl).
+
+Which means we need a few extra packages to be installed. Uncomment the first two lines if these packages are not in your Julia environment.
 
 ````@example 0_basic_use
-using MarketData, Dates, TimeSeries, PortfolioOptimiser, Clarabel, HiGHS, StatsBase,
-      Statistics, GraphRecipes, StatsPlots
+# using Pkg
+# Pkg.add.(["StatsPlots", "GraphRecipes", "MarketData", "Clarabel", "HiGHS", "PrettyTables"])
+using Clarabel, DataFrames, Dates, GraphRecipes, HiGHS, MarketData, PortfolioOptimiser,
+      PrettyTables, Statistics, StatsBase, StatsPlots, TimeSeries
+
+# This is a helper function for displaying tables
+# with numbers as percentages with 3 decimal points.
+fmt1 = (v, i, j) -> begin
+    if j == 1
+        return v
+    else
+        return isa(v, Number) ? "$(round(v*100, digits=3)) %" : v
+    end
+end;
+
+fmt2 = (v, i, j) -> begin
+    if j == 5
+        return isa(v, Number) ? "$(round(v*100, digits=3)) %" : v
+    else
+        return v
+    end
+end;
+
+fmt3 = (v, i, j) -> begin
+    if j ∈ (2, 6, 7)
+        return isa(v, Number) ? "$(round(v*100, digits=3)) %" : v
+    else
+        return v
+    end
+end;
+nothing #hide
 ````
 
 Then we define our list of meme stonks and a generous date range. We will only be keeping the adjusted close price. In practice it doesn't really matter because we're using daily data.
@@ -29,13 +61,16 @@ Date_0 = DateTime(2019, 01, 01)
 Date_1 = DateTime(2023, 01, 01)
 
 function get_prices(assets)
-    prices = rename!(yahoo(assets[1], YahooOpt(; period1 = Date_0, period2 = Date_1))[:AdjClose],
-                     assets[1])
+    prices = TimeSeries.rename!(yahoo(assets[1],
+                                      YahooOpt(; period1 = Date_0, period2 = Date_1))[:AdjClose],
+                                assets[1])
     for asset ∈ assets[2:end]
         sleep(rand() / 10)
         prices = merge(prices,
-                       rename!(yahoo(asset, YahooOpt(; period1 = Date_0, period2 = Date_1))[:AdjClose],
-                               asset), :outer)
+                       TimeSeries.rename!(yahoo(asset,
+                                                YahooOpt(; period1 = Date_0,
+                                                         period2 = Date_1))[:AdjClose],
+                                          asset), :outer)
     end
     return prices
 end
@@ -78,7 +113,7 @@ T, N = size(portfolio.returns)
 Simple mean, it also accepts weights for computing weighted means. This will compute the weighted mean for lambda = 1/T.
 
 ````@example 0_basic_use
-mu_type = MuSimple()
+mu_type = MuSimple(;)
 # mu_type = MuSimple(; w = eweights(1:T, 1/T, scale=true))
 ````
 
@@ -126,6 +161,7 @@ obj = MinRisk()
 # obj = Sharpe(; rf = 3.5/100/254) # Maximises the sharpe ratio = (mu - rf)/risk, where mu is the expected return.
 
 w1 = optimise!(portfolio; rm = rm, obj = obj)
+pretty_table(w1; formatters = fmt1)
 ````
 
 We now have the portfolio for these assets and this period of time that minimises the variance. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/) also lets you constrain the optimisation such that you have a minimum required return. However this will be explored in a later tutorial.
@@ -148,6 +184,7 @@ method = LP()
 # method = Greedy(; rounding=0.5)
 
 w2 = allocate!(portfolio; investment = investment)
+pretty_table(w2; formatters = fmt2)
 ````
 
 ### 6. Plotting the portfolio
@@ -156,53 +193,55 @@ This section is the one most bound to change as the plotting functions are still
 
 ````@example 0_basic_use
 # Plot the portfolio returns.
-plt1 = plot_returns(portfolio)
-display(plt1)
+display(plot_returns(portfolio))
 
 # Plot the portfolio returns per asset.
-plt2 = plot_returns(portfolio; per_asset = true)
-display(plt2)
+display(plot_returns(portfolio; per_asset = true))
+
+# Plot portfolio composition.
+display(plot_bar(portfolio))
 
 # Plot the returns histogram.
-plt3 = plot_hist(portfolio)
-display(plt3)
+display(plot_hist(portfolio))
 
 # Plot the portfolio range of returns.
-plt4 = plot_range(portfolio)
-display(plt4)
+display(plot_range(portfolio))
 
 # Plot portfolio drawdown.
-plt5 = plot_drawdown(portfolio)
-display(plt5)
+display(plot_drawdown(portfolio))
 ````
 
 This is, however not our actual portfolio, it is the optimal one. To plot the allocated portfolio we need to know the key it is stored under and pass that on to the plotting functions along with a flag. The key is the symbol composed of the allocation method, in this case LP() and the portfolio type, which is something we have not discussed, but defaults to Trad(), as a Symbol.
 
 ````@example 0_basic_use
-display(keys(portfolio.alloc_optimal))
+# Side by side optimal portfolio vs allocated portfolio.
+pretty_table(hcat(portfolio.optimal[:Trad],
+                  DataFrames.rename!(portfolio.alloc_optimal[:LP_Trad][!, 2:end],
+                                     Dict(:weights => :alloc_weights)),
+                  DataFrame(;
+                            weight_diff = portfolio.optimal[:Trad].weights -
+                                          portfolio.alloc_optimal[:LP_Trad].weights));
+             formatters = fmt3)
 
 # Plot the portfolio returns.
-plt1 = plot_returns(portfolio, :LP_Trad; allocated = true)
-display(plt1)
+display(plot_returns(portfolio, :LP_Trad; allocated = true))
 
 # Plot the portfolio returns per asset.
-plt2 = plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true)
-display(plt2)
+display(plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true))
+
+# Plot portfolio composition.
+display(plot_bar(portfolio, :LP_Trad; allocated = true))
 
 # Plot the returns histogram.
-plt3 = plot_hist(portfolio, :LP_Trad; allocated = true)
-display(plt3)
+display(plot_hist(portfolio, :LP_Trad; allocated = true))
 
 # Plot the portfolio range of returns.
-plt4 = plot_range(portfolio, :LP_Trad; allocated = true)
-display(plt4)
+display(plot_range(portfolio, :LP_Trad; allocated = true))
 
 # Plot portfolio drawdown.
-plt5 = plot_drawdown(portfolio, :LP_Trad; allocated = true)
-display(plt5)
+display(plot_drawdown(portfolio, :LP_Trad; allocated = true))
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

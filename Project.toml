@@ -24,6 +24,7 @@ SmartAsserts = "56560af0-ab70-43fe-a531-155d81972b00"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [weakdeps]
@@ -48,4 +49,4 @@ SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["CSV", "Clarabel", "CovarianceEstimation", "GLPK", "GraphRecipes", "HiGHS", "Logging", "Pajarito", "SafeTestsets", "StatsPlots", "Test"]
+test = ["CSV", "Clarabel", "CovarianceEstimation", "GLPK", "HiGHS", "Logging", "Pajarito", "SafeTestsets", "Test"]
