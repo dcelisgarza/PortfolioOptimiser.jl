@@ -43,7 +43,7 @@ prices = get_prices(assets)</code></pre><pre class="documenter-example-output"><
 │ 2019-01-02 │ 31.9632 │ 37.7501 │ 119.143 │ 7.11 │ 44.0813 │  22.371 │ 101.37 ⋯
 │ 2019-01-03 │ 29.5817 │ 33.9899 │ 120.715 │ 6.88 │ 43.1767 │ 21.4262 │   101. ⋯
 │ 2019-01-04 │ 31.5302 │ 35.4409 │ 125.151 │ 7.23 │ 43.3823 │ 21.8487 │ 102.37 ⋯
-│ 2019-01-07 │ 32.4257 │  35.362 │ 130.512 │ 7.43 │ 45.8578 │ 21.9912 │ 106.58 ⋯
+│ 2019-01-07 │ 32.4257 │  35.362 │ 130.512 │ 7.43 │ 45.8577 │ 21.9911 │ 106.58 ⋯
 │ 2019-01-08 │ 31.9041 │ 36.0361 │ 134.672 │ 7.41 │ 47.2065 │ 22.2523 │ 107.09 ⋯
 │ 2019-01-09 │ 32.8882 │ 36.6481 │ 128.941 │ 7.47 │ 47.5601 │ 22.2855 │   109. ⋯
 │ 2019-01-10 │ 31.5302 │ 36.7652 │ 126.907 │ 7.52 │ 46.7706 │ 21.4547 │ 109.96 ⋯
@@ -55,7 +55,7 @@ prices = get_prices(assets)</code></pre><pre class="documenter-example-output"><
 │ 2022-12-27 │   12.53 │ 128.818 │    40.3 │ 3.29 │ 76.2231 │ 37.8247 │ 240.66 ⋯
 │ 2022-12-28 │   12.32 │ 124.866 │    38.4 │ 3.18 │ 74.6495 │ 37.2009 │ 238.56 ⋯
 │ 2022-12-29 │    12.7 │ 128.402 │    41.4 │ 3.26 │ 75.6458 │ 38.2182 │ 241.48 ⋯
-│ 2022-12-30 │   12.72 │ 128.719 │    40.7 │ 3.26 │ 74.6868 │ 38.6022 │ 240.30 ⋯
+│ 2022-12-30 │   12.72 │ 128.719 │    40.7 │ 3.26 │ 74.6868 │ 38.6021 │ 240.30 ⋯
 └────────────┴─────────┴─────────┴─────────┴──────┴─────────┴─────────┴─────────
 <span class="sgr36">                                                 19 columns and 993 rows omitted</span></code></pre><h2 id="2.-Instantiating-an-instance-of-[Portfolio](@ref)."><a class="docs-heading-anchor" href="#2.-Instantiating-an-instance-of-[Portfolio](@ref).">2. Instantiating an instance of <a href="../../PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a>.</a><a id="2.-Instantiating-an-instance-of-[Portfolio](@ref).-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Instantiating-an-instance-of-[Portfolio](@ref)." title="Permalink"></a></h2><pre><code class="language-julia hljs">portfolio = Portfolio(; prices = prices,
                       # Continuous optimiser.
@@ -75,24 +75,24 @@ prices = get_prices(assets)</code></pre><pre class="documenter-example-output"><
 mu1 = copy(portfolio.mu)
 cov1 = copy(portfolio.cov)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">25×25 Matrix{Float64}:
  0.00173714   0.000286463   0.00129223   …  0.000742619  0.000484063
- 0.000286463  0.000474309   0.000344099     0.000322806  0.000454059
+ 0.000286463  0.000474309   0.000344099     0.000322805  0.000454059
  0.00129223   0.000344099   0.0159654       0.00144033   0.000678017
  0.000498617  0.000374708   0.00289074      0.000797504  0.000580427
- 0.000405104  0.000285721   0.000509884     0.000421591  0.000365733
- 0.000405415  0.000289301   0.000358589  …  0.000438396  0.000376211
- 7.19776e-5   0.000138231  -1.71042e-5      0.000132469  0.000167641
- 0.000276671  0.000216877   0.000335913     0.000895187  0.000497861
+ 0.000405104  0.00028572    0.000509884     0.000421591  0.000365733
+ 0.000405415  0.000289301   0.000358588  …  0.000438396  0.000376211
+ 7.19775e-5   0.00013823   -1.71039e-5      0.000132468  0.000167641
+ 0.000276671  0.000216876   0.000335913     0.000895187  0.000497861
  0.000896022  0.000360031   0.00754261      0.00116433   0.000721856
- 0.00033074   0.00032225    0.00031253      0.000379187  0.000395759
+ 0.00033074   0.000322249   0.00031253      0.000379187  0.000395759
  ⋮                                       ⋱               
  0.000400528  0.000500485   0.000513763     0.000639132  0.000726519
- 0.000626143  0.000254047   0.0011043       0.000568599  0.000401119
+ 0.000626142  0.000254047   0.0011043       0.000568599  0.000401118
  0.000632864  0.000289447   0.000827369     0.000730763  0.000502545
  0.00138514   0.000289344   0.000830215     0.000856501  0.000514561
- 0.000356085  0.000256243   0.000228337  …  0.000353553  0.00032494
- 0.000329331  0.000206209   0.000582207     0.000342617  0.000253698
- 0.000388851  0.00028059    0.000805549     0.000387405  0.000337477
- 0.000742619  0.000322806   0.00144033      0.00513604   0.000838486
+ 0.000356085  0.000256242   0.000228336  …  0.000353554  0.00032494
+ 0.000329331  0.000206209   0.000582208     0.000342617  0.000253698
+ 0.00038885   0.00028059    0.000805548     0.000387405  0.000337477
+ 0.000742619  0.000322805   0.00144033      0.00513604   0.000838486
  0.000484063  0.000454059   0.000678017     0.000838486  0.00178689</code></pre><p>We can prove this by computing the arithmetic mean and sample covariance of the returns.</p><pre><code class="language-julia hljs">println(isapprox(mu1, vec(mean(portfolio.returns; dims = 1)))) # true
 println(isapprox(cov1, cov(portfolio.returns; dims = 1))) # true</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true
 true</code></pre><p>These statistics are not very robust, so they&#39;re not very reliable. We can make them a bit better by using weights. First we need to explain the estimators.</p><h3 id="3.1-Mean-estimators"><a class="docs-heading-anchor" href="#3.1-Mean-estimators">3.1 Mean estimators</a><a id="3.1-Mean-estimators-1"></a><a class="docs-heading-anchor-permalink" href="#3.1-Mean-estimators" title="Permalink"></a></h3><p>Lets start with the easier one, <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.MeanEstimator"><code>MeanEstimator</code></a>. There are four of these, <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.MuSimple"><code>MuSimple</code></a>, <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.MuJS"><code>MuJS</code></a>, <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.MuBS"><code>MuBS</code></a>, <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.MuBOP"><code>MuBOP</code></a>. As you can see, they are all subtypes of <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.MeanEstimator"><code>MeanEstimator</code></a>, we will use this later on to define our own method. Lets first focus on the first estimator, which is also the default.</p><p>We&#39;ve already seen its default behaviour, we know from above it&#39;s the same as the arithmetic mean. But it can take a vector of <a href="https://juliastats.org/StatsBase.jl/stable/weights/"><code>AbstractWeights</code></a>.</p><p>First lets get the number of timestamps <code>T</code>, and number of assets <code>N</code>. We&#39;ll use <code>T</code> for defining our weights.</p><pre><code class="language-julia hljs">T, N = size(portfolio.returns)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(1007, 25)</code></pre><p>There are a variety of weights, but the only ones that make sense with no prior knowledge are exponential weights. Now lets use this to compute the asset expected returns vector, we do this by passing the argument <code>mu_type = mu_type_1</code> to the function, we&#39;ve also set the <code>set_cov = false</code> so it doesn&#39;t recompute the covariance.</p><pre><code class="language-julia hljs"># Play around with the value of lambda (1/T, in the example) to see the effect it has on the weights and computed expected returns vector.
@@ -119,26 +119,26 @@ mu_type_4 = MuBOP(; target = SE(), sigma = cov1 + noise)
 asset_statistics!(portfolio; mu_type = mu_type_4, set_cov = false, set_kurt = false,
                   set_skurt = false, set_skew = false, set_sskew = false)
 mu5 = copy(portfolio.mu)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">25-element Vector{Float64}:
-  2.2656049579594602e-5
- -0.0004441840352705663
- -0.0011802562325257714
- -7.463005478609258e-5
- -0.00026502817820231537
- -0.00026030981847623044
- -0.000305272691239943
- -0.0007052341610257069
- -0.001848792278342891
-  4.925891201359625e-5
+  1.9116015579413266e-5
+ -0.00037117993194061985
+ -0.0009865645207222148
+ -6.221886234883701e-5
+ -0.0002213988415053699
+ -0.00021745417717054522
+ -0.00025504493320307006
+ -0.0005894279622613923
+ -0.0015454861923982635
+  4.135697679181991e-5
   ⋮
- -0.0006112991474762126
-  7.663590812600914e-5
- -0.0002833515293452176
-  2.3745412784069635e-5
- -0.00021868361373098477
- -7.452545685405126e-5
- -0.00023652875205826927
-  0.00023410879525915873
- -0.0008143453308746604</code></pre><p>All targets subtype <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.MeanTarget"><code>MeanTarget</code></a>. It is possible for users to define a one by creating a concrete subtype of <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.MeanTarget"><code>MeanTarget</code></a> and defining a new <a href="../../ParameterEstimation/#PortfolioOptimiser.target_mean-Tuple{GM, AbstractVector, AbstractMatrix, Any, Integer, Integer}"><code>target_mean</code></a> for the custom target.</p><pre><code class="nohighlight hljs">struct CustomMeanTarget &lt;: MeanTarget
+ -0.0005108947930749162
+  6.424525534049352e-5
+ -0.00023671798096530405
+  2.0026805210024164e-5
+ -0.000182653137137292
+ -6.21312838508243e-5
+ -0.00019757224262299437
+  0.00019589859935152448
+ -0.0006806490644985777</code></pre><p>All targets subtype <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.MeanTarget"><code>MeanTarget</code></a>. It is possible for users to define a one by creating a concrete subtype of <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.MeanTarget"><code>MeanTarget</code></a> and defining a new <a href="../../ParameterEstimation/#PortfolioOptimiser.target_mean-Tuple{GM, AbstractVector, AbstractMatrix, Any, Integer, Integer}"><code>target_mean</code></a> for the custom target.</p><pre><code class="nohighlight hljs">struct CustomMeanTarget &lt;: MeanTarget
     ...
 end
 function target_mean(ct::CustomMeanTarget, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma, T::Integer,
@@ -172,8 +172,10 @@ asset_statistics!(portfolio; mu_type = mu_type_6, set_cov = false, set_kurt = fa
                   set_skurt = false, set_skew = false, set_sskew = false)
 mu7 = copy(portfolio.mu)
 # Should be a vector going from 1 to N.
-println(mu7 ./ mu1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">[5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
-[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.000000000000002, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.000000000000004, 25.0]</code></pre><h3 id="3.3-Covariance-estimators"><a class="docs-heading-anchor" href="#3.3-Covariance-estimators">3.3 Covariance estimators</a><a id="3.3-Covariance-estimators-1"></a><a class="docs-heading-anchor-permalink" href="#3.3-Covariance-estimators" title="Permalink"></a></h3><p><a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl"><code>PortfolioOptimiser</code></a> comes with quite a few covariance estimators. However, it is best to wrap them all with <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.PortCovCor"><code>PortCovCor</code></a>. This is because it contains methods for denoising, fixing non-positive definite matrices, and using a graph-based algorithm for computing the covariance based on its relational structure.</p><pre><code class="language-julia hljs">ce1 = CovFull()
+println(mu7 ./ mu1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">[5.0, 5.0, 5.0, 5.0, 5.0, 4.999999999999999, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
+[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.000000000000004, 25.0]</code></pre><h3 id="3.3-Covariance-estimators"><a class="docs-heading-anchor" href="#3.3-Covariance-estimators">3.3 Covariance estimators</a><a id="3.3-Covariance-estimators-1"></a><a class="docs-heading-anchor-permalink" href="#3.3-Covariance-estimators" title="Permalink"></a></h3><p><a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl"><code>PortfolioOptimiser</code></a> comes with quite a few covariance estimators. However, it is best to wrap them all with <a href="../../ParameterEstimationTypes/#PortfolioOptimiser.PortCovCor"><code>PortCovCor</code></a>. This is because it contains methods for denoising, fixing non-positive definite matrices, and using a graph-based algorithm for computing the covariance based on its relational structure.</p><p><a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl">Portfoliooptimiser</a>&#39;s mean and covariance estimators are based on the idea of subtyping <a href="https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator"><code>StatsBase.CovarianceEstimator</code></a> to specialise the <code>cov</code> function. The same idea is used in</p><pre><code class="language-julia hljs">#
+ce0 = SimpleCovariance(; corrected = true)
+ce1 = CovFull()
 ce2 = CovSemi()
 ce3 = CorMutualInfo()
 ce4 = CorDistance()
@@ -186,4 +188,4 @@ ce10 = CorSB1()
 ce11 = CorGerberSB0()
 ce12 = CorGerberSB1()
 
-ce = PortCovCor(; ce = ce1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">PortCovCor(CovFull(false, StatsBase.SimpleCovariance(true), nothing), PosdefNearest(NearestCorrelationMatrix.Newton{Tuple{}, Base.Pairs{Symbol, Union{}, Tuple{}, @NamedTuple{}}}(1.0e-12, 0.01, 0.0001, 200, 20, (), Base.Pairs{Symbol, Union{}, Tuple{}, @NamedTuple{}}())), NoDenoise(), NoJLoGo())</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../1_basic_use/">« Example 1: Basic use</a><a class="docs-footer-nextpage" href="../../RiskMeasures/">Risk Measures »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.6.0 on <span class="colophon-date" title="Friday 30 August 2024 22:16">Friday 30 August 2024</span>. Using Julia version 1.10.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+ce = PortCovCor(; ce = ce1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">PortCovCor(CovFull(false, StatsBase.SimpleCovariance(true), nothing), PosdefNearest(NearestCorrelationMatrix.Newton{Tuple{}, Base.Pairs{Symbol, Union{}, Tuple{}, @NamedTuple{}}}(1.0e-12, 0.01, 0.0001, 200, 20, (), Base.Pairs{Symbol, Union{}, Tuple{}, @NamedTuple{}}())), NoDenoise(), NoJLoGo())</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../1_basic_use/">« Example 1: Basic use</a><a class="docs-footer-nextpage" href="../../RiskMeasures/">Risk Measures »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.6.0 on <span class="colophon-date" title="Friday 30 August 2024 22:43">Friday 30 August 2024</span>. Using Julia version 1.10.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
