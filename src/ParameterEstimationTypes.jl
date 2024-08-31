@@ -2,22 +2,95 @@
 
 # ## Postitive definite matrices
 
+"""
+```
 abstract type PosdefFix end
+```
+
+Abstract type for subtyping methods for fixing non positive definite matrices.
+"""
+abstract type PosdefFix end
+
+"""
+```
 struct NoPosdef <: PosdefFix end
+```
+
+Non positive definite matrices will not be fixed.
+"""
+struct NoPosdef <: PosdefFix end
+
+"""
+```
 @kwdef mutable struct PosdefNearest <: PosdefFix
     method::NearestCorrelationMatrix.NCMAlgorithm = NearestCorrelationMatrix.Newton(;
                                                                                     tau = 1e-12)
 end
+```
+
+Defines which method from [NearestCorrelationMatrix](https://github.com/adknudson/NearestCorrelationMatrix.jl) to use in [`posdef_fix!`](@ref).
+"""
+mutable struct PosdefNearest <: PosdefFix
+    method::NearestCorrelationMatrix.NCMAlgorithm
+end
+function PosdefNearest(;
+                       method::NearestCorrelationMatrix.NCMAlgorithm = NearestCorrelationMatrix.Newton(;
+                                                                                                       tau = 1e-12))
+    return PosdefNearest(method)
+end
 
 # ## Matrix denoising
 
+"""
+```
+abstract type Denoise end
+```
+
+Abstract type for subtyping denoising methods.
+"""
 abstract type Denoise end
 
+"""
+```
 struct NoDenoise <: Denoise end
-function denoise!(::NoDenoise, ::PosdefFix, X::AbstractMatrix, q::Real)
-    return nothing
-end
+```
 
+No denoising is performed in [`denoise!`](@ref).
+"""
+struct NoDenoise <: Denoise end
+
+"""
+```
+@kwdef mutable struct Fixed{T1, T2, T3, T4} <: Denoise
+    detone::Bool = false
+    mkt_comp::Integer = 1
+    kernel = AverageShiftedHistograms.Kernels.gaussian
+    m::Integer = 10
+    n::Integer = 1000
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+```
+
+Defines the parameters for using the fixed method in [`denoise!`](@ref) [MLAM; Chapter 2](@cite).
+
+# Parameters
+
+  - `detone`:
+
+      + `true`: remove the largest `mkt_comp` eigenvalues from the correlation matrix.
+
+!!! warning
+
+    Removing eigenvalues from the matrix may make it singular.
+
+  - `mkt_comp`: the number of largest eigenvalues to remove from the correlation matrix.
+  - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
+  - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
+  - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
+"""
 mutable struct Fixed{T1, T2, T3, T4} <: Denoise
     detone::Bool
     mkt_comp::T1
@@ -35,6 +108,38 @@ function Fixed(; detone::Bool = false, mkt_comp::Integer = 1,
                                                                          kwargs)
 end
 
+"""
+```
+@kwdef mutable struct Spectral{T1, T2, T3, T4} <: Denoise
+    detone::Bool = false
+    mkt_comp::Integer = 1
+    kernel = AverageShiftedHistograms.Kernels.gaussian
+    m::Integer = 10
+    n::Integer = 1000
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+```
+
+Defines the parameters for using the spectral method in [`denoise!`](@ref) [MLAM; Chapter 2](@cite).
+
+# Parameters
+
+  - `detone`:
+
+      + `true`: take only the largest `mkt_comp` eigenvalues from the correlation matrix.
+
+!!! warning
+
+    Removing eigenvalues from the matrix may make it singular.
+
+  - `mkt_comp`: the number of largest eigenvalues to keep from the correlation matrix.
+  - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
+  - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
+  - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
+"""
 mutable struct Spectral{T1, T2, T3, T4} <: Denoise
     detone::Bool
     mkt_comp::T1
@@ -53,6 +158,38 @@ function Spectral(; detone::Bool = false, mkt_comp::Integer = 1,
                                                                             args, kwargs)
 end
 
+"""
+```
+mutable struct Shrink{T1, T2, T3, T4, T5} <: Denoise
+    detone::Bool = false
+    mkt_comp::Integer = 1
+    kernel = AverageShiftedHistograms.Kernels.gaussian
+    m::Integer = 10
+    n::Integer = 1000
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+```
+
+Defines the parameters for using the shrink method in [`denoise!`](@ref) [MLAM; Chapter 2](@cite).
+
+# Parameters
+
+  - `detone`:
+
+      + `true`: take only the largest `mkt_comp` eigenvalues from the correlation matrix.
+
+!!! warning
+
+    Removing eigenvalues from the matrix may make it singular.
+
+  - `mkt_comp`: the number of largest eigenvalues to keep from the correlation matrix.
+  - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
+  - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
+  - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
+"""
 mutable struct Shrink{T1, T2, T3, T4, T5} <: Denoise
     detone::Bool
     alpha::T1
@@ -79,17 +216,105 @@ end
 
 # ## Distances
 
+"""
+```
+abstract type DistanceMethod end
+```
+
+Abstract type for subtyping methods for computing distance matrices from correlation ones.
+"""
 abstract type DistanceMethod end
 
+"""
+```
 @kwdef mutable struct DistanceMLP <: DistanceMethod
     absolute::Bool = false
 end
+```
 
+Defines the distance matrix from a correlation matrix [HRP1](@cite) in [`dist`](@ref):
+
+```math
+\\begin{align}
+    \\mathbf{D} &= 
+        \\begin{cases}
+            \\sqrt{\\dfrac{1}{2} \\left(\\mathbf{1} - \\mathbf{C}\\right)} &\\quad \\mathrm{if~ absolute = false}\\\\
+            \\\\
+            \\sqrt{\\mathbf{1} - \\lvert\\mathbf{C}\\rvert} &\\quad \\mathrm{if~ absolute = true}
+        \\end{cases}
+\\end{align}
+```
+
+Where:
+
+  - ``\\mathbf{D}``: is the `N×N` distance matrix.
+  - ``\\mathbf{C}``: is the `N×N` correlation matrix.
+  - absolute: is a flag whether the correlation is absolute.
+
+# Parameters
+
+  - `absolute`: flag for stating whether or not an absolute correlation is being used.
+"""
+mutable struct DistanceMLP <: DistanceMethod
+    absolute::Bool
+end
+function DistanceMLP(; absolute::Bool = false)
+    return DistanceMLP(absolute)
+end
+
+"""
+```
 @kwdef mutable struct DistanceSqMLP <: DistanceMethod
     absolute::Bool = false
     distance::Distances.UnionMetric = Distances.Euclidean()
     args::Tuple = ()
     kwargs::NamedTuple = (;)
+end
+```
+
+Defines the distance of distances matrix from a correlation matrix [HRP1](@cite) in [`dist`](@ref):
+
+```math
+\\begin{align}
+    \\mathbf{d} &= 
+        \\begin{cases}
+            \\sqrt{\\dfrac{1}{2} \\left(\\mathbf{1} - \\mathbf{C}\\right)} &\\quad \\mathrm{if~ absolute = false}\\\\
+            \\\\
+            \\sqrt{\\mathbf{1} - \\lvert\\mathbf{C}\\rvert} &\\quad \\mathrm{if~ absolute = true}
+        \\end{cases}\\\\
+    \\mathbf{D} &= \\mathrm{pairwise}(m,\\, \\mathbf{d})
+\\end{align}
+```
+
+Where:
+
+  - ``\\mathbf{d}``: is the `N×N` distance matrix.
+  - ``\\mathbf{C}``: is the `N×N` correlation matrix.
+  - ``\\mathrm{pairwise}``: is [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances), with its output reshaped to the appropriate shape.
+  - ``m``: is a concrete subtype of `Distances.UnionMetric` from [`Distances.jl`](https://github.com/JuliaStats/Distances.jl).
+  - ``\\mathbf{D}``: is the `N×N` distance of distances matrix.
+  - absolute: is a flag whether the correlation is absolute.
+
+# Parameters
+
+  - `absolute`: flag for stating whether or not an absolute correlation is being used.
+  - `distance`: distance metric from [`Distances.jl`](https://github.com/JuliaStats/Distances.jl).
+  - `args`: args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
+  - `kwargs`: key word args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
+
+````
+````
+"""
+mutable struct DistanceSqMLP <: DistanceMethod
+    absolute::Bool
+    distance::Distances.UnionMetric
+    args::Tuple
+    kwargs::NamedTuple
+end
+function DistanceSqMLP(; absolute::Bool = false,
+                       distance::Distances.UnionMetric = Distances.Euclidean(),
+                       args::Tuple = (), kwargs::NamedTuple = (;))
+    return DistanceSqMLP(absolute, distance, args, kwargs)
 end
 
 struct DistanceLog <: DistanceMethod end

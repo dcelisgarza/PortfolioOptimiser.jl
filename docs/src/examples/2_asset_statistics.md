@@ -1,9 +1,11 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/2_asset_statistics.jl"
 ```
 
 # Example 2: Asset statistics
+
 This tutorial follows from [Tutorial 1](https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/0_basic_use.ipynb). If something in the preamble is confusing, it is explained there.
 
 This tutorial focuses on the computation of asset statistics.
@@ -12,18 +14,9 @@ This tutorial focuses on the computation of asset statistics.
 
 ````@example 2_asset_statistics
 # using Pkg
-# Pkg.add.(["StatsPlots", "GraphRecipes", "MarketData", "Clarabel", "HiGHS", "PrettyTables", "CovarianceEstimation"])
+# Pkg.add.(["StatsPlots", "GraphRecipes", "MarketData", "Clarabel", "HiGHS", "CovarianceEstimation"])
 using Clarabel, CovarianceEstimation, DataFrames, Dates, GraphRecipes, HiGHS, MarketData,
-      PortfolioOptimiser, PrettyTables, Statistics, StatsBase, StatsPlots, TimeSeries
-
-# These are helper functions for formatting tables.
-fmt1 = (v, i, j) -> begin
-    if j == 1
-        return v
-    else
-        return isa(v, Number) ? "$(round(v*100, digits=3)) %" : v
-    end
-end;
+      PortfolioOptimiser, Statistics, StatsBase, StatsPlots, TimeSeries
 
 assets = Symbol.(["AAL", "AAPL", "AMC", "BB", "BBY", "DELL", "DG", "DRS", "GME", "INTC",
                   "LULU", "MARA", "MCI", "MSFT", "NKLA", "NVAX", "NVDA", "PARA", "PLNT",
@@ -70,6 +63,7 @@ nothing #hide
 ````
 
 ## 3 Asset statistics
+
 When you first create a [`Portfolio`](@ref) in this way, it does not contain any statistics other than the returns. So we must compute them.
 
 [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) uses the [`StatsAPI.jl`](https://github.com/JuliaStats/StatsAPI.jl) interfaces through [`StatsBase.jl`](https://juliastats.org/StatsBase.jl/stable/). Meaning it is composable with other packages which use the common framework, and it also makes it easy for users to define their custom methods by using Julia's typesystem.
@@ -143,7 +137,8 @@ noise = transpose(noise) * noise
 mu_type_4 = MuBOP(; target = SE(), sigma = cov1 + noise)
 asset_statistics!(portfolio; mu_type = mu_type_4, set_cov = false, set_kurt = false,
                   set_skurt = false, set_skew = false, set_sskew = false)
-mu5 = copy(portfolio.mu)
+mu5 = copy(portfolio.mu);
+nothing #hide
 ````
 
 All targets subtype [`MeanTarget`](@ref). It is possible for users to define a one by creating a concrete subtype of [`MeanTarget`](@ref) and defining a new [`target_mean`](@ref) for the custom target.
@@ -204,7 +199,7 @@ println(mu7 ./ mu1)
 
 [Portfoliooptimiser](https://github.com/dcelisgarza/PortfolioOptimiser.jl)'s mean and covariance estimators are based on the idea of subtyping [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) to specialise their respective functions.
 
-We will also not illustrate how to define custom methods as it follows the same principles as for the mean estimators, but instead by creating a concrete subtype (a struct) of [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) and implementing [`StatsBase.cov`](https://juliastats.org/StatsBase.jl/stable/cov/#Statistics.cov-Tuple{CovarianceEstimator,%20AbstractMatrix}) for the custom type.
+We will also not illustrate how to define custom methods as it follows the same principles as for the mean estimators, but instead by creating a concrete subtype (a struct) of [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) and implementing [`StatsBase.cov`](https://juliastats.org/StatsBase.jl/stable/cov/#Statistics.cov-Tuple%7BCovarianceEstimator,%20AbstractMatrix%7D) for the custom type.
 
 All estimators are different, some can nest other estimators, and those estimators may or may not support weights or even certain types of weights. There are so many different permutations that we will not go over an exhaustive list. For details on external methods please refer back to the documentation in their respective packages. For details on [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/)'s estimators please refer to the docs.
 
@@ -258,7 +253,8 @@ push!(ces, CorSB1())
 # Smyth-Broby-Gerber family of covariance estimators that modifies the Gerber statistics by
 # counting co-movements, scoring them, and then it multiplies the scores by the counts.
 push!(ces, CorGerberSB0())
-push!(ces, CorGerberSB1())
+push!(ces, CorGerberSB1());
+nothing #hide
 ````
 
 We then instantiate some [`PortCovCor`](@ref) estimators and push them to a vector for convenience.
@@ -302,7 +298,6 @@ display(plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
 
 The next tutorial will go over the internals of [`PortCovCor`](@ref) and how they can be used to obtain cleaner covariance matrices. Though the Gerber and its modified methods work well without anything else.
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

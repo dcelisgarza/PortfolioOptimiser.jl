@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/1_basic_use.jl"
 ```
@@ -239,7 +240,6 @@ display(plot_range(portfolio, :LP_Trad; allocated = true))
 display(plot_drawdown(portfolio, :LP_Trad; allocated = true))
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

@@ -54,6 +54,11 @@ end
 function posdef_fix!(::NoPosdef, ::AbstractMatrix)
     return nothing
 end
+"""
+```
+posdef_fix!(method::PosdefFix, X::AbstractMatrix)
+```
+"""
 function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
     if isposdef(X)
         return nothing
@@ -109,6 +114,11 @@ end
 function _dist(::DistanceLog, X::AbstractMatrix, ::Any)
     return -log.(X)
 end
+"""
+```
+dist(de::DistanceMethod, X, Y)
+```
+"""
 function dist(de::DistanceMethod, X, Y)
     return _dist(de, X, Y)
 end
@@ -1466,6 +1476,14 @@ function find_max_eval(vals, q; kernel = AverageShiftedHistograms.Kernels.gaussi
 
     return e_max, x
 end
+function denoise!(::NoDenoise, ::PosdefFix, X::AbstractMatrix, q::Real)
+    return nothing
+end
+"""
+```
+denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
+```
+"""
 function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
     s = diag(X)
     iscov = any(.!isone.(s))
