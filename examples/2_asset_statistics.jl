@@ -261,7 +261,7 @@ idx = 1
 display(plot(covs[idx]; st = :heatmap, clim = extrema(covs[idx]),
              yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
              xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5), ylim = (0.5, N + 0.5),
-             color = cgrad(:Spectral), yflip = true))
+             color = cgrad(:Spectral), yflip = true, aspect_ratio = :equal))
 
 #=
 However, it is easier to see the structure if we use the correlation. We've set the limits to go from 0 to 1 `clim = (0, 1)`, since all these assets appear to be postively correlated. Strictly speaking, only [`CorMutualInfo`](@ref), [`CorDistance`](@ref) and [`CorLTD`](@ref) are guaranteed to be only positive. More information on all the methods is found in the docs.
@@ -270,6 +270,6 @@ However, it is easier to see the structure if we use the correlation. We've set 
 display(plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
              yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
              xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5), ylim = (0.5, N + 0.5),
-             color = cgrad(:Spectral), yflip = true))
+             color = cgrad(:Spectral), yflip = true, aspect_ratio = :equal))
 
 # The next tutorial will go over the internals of [`PortCovCor`](@ref) and how they can be used to obtain cleaner covariance matrices. Though the Gerber and its modified methods work well without anything else.

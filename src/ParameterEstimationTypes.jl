@@ -328,12 +328,75 @@ Struct for computing the canonical distance for a given correlation subtype of [
 """
 struct DistanceCanonical <: DistanceMethod end
 
+"""
+```
 abstract type AbstractBins end
+```
+
+Abstract type for defining bin width estimation functions when computing [`DistanceVarInfo`](@ref) and [`CorMutualInfo`](@ref) distance and correlation matrices respectively.
+"""
+abstract type AbstractBins end
+
+"""
+```
 abstract type AstroBins <: AbstractBins end
+```
+
+Abstract type for defining bin function types using [`astropy`](https://docs.astropy.org/en/stable/visualization/histogram.html).
+"""
+abstract type AstroBins <: AbstractBins end
+
+"""
+```
 struct Knuth <: AstroBins end
+```
+
+Knuth's bin width algorithm from [`astropy`](https://docs.astropy.org/en/stable/api/astropy.stats.knuth_bin_width.html#astropy.stats.knuth_bin_width).
+"""
+struct Knuth <: AstroBins end
+
+"""
+```
 struct Freedman <: AstroBins end
+```
+
+Freedman's bin width algorithm from [`astropy`](https://docs.astropy.org/en/stable/api/astropy.stats.freedman_bin_width.html#astropy.stats.freedman_bin_width).
+"""
+struct Freedman <: AstroBins end
+
+"""
+```
 struct Scott <: AstroBins end
+```
+
+Scott's bin width algorithm from [`astropy`](https://docs.astropy.org/en/stable/api/astropy.stats.scott_bin_width.html#astropy.stats.scott_bin_width).
+"""
+struct Scott <: AstroBins end
+
+"""
+```
 struct HGR <: AbstractBins end
+```
+
+Hacine-Gharbi and Ravier's bin width algorithm [HGR](@cite).
+"""
+struct HGR <: AbstractBins end
+
+"""
+```
+@kwdef mutable struct DistanceVarInfo <: DistanceMethod
+    bins::Union{<:Integer, <:AbstractBins} = HGR()
+    normalise::Bool = true
+end
+```
+
+Defines the variation of information distance matrix.
+
+# Parameters
+
+  - `bins`: defines the bin function, or bin width directly and if so `bins > 0`.
+  - `normalise`: whether or not to normalise the variation of information.
+"""
 mutable struct DistanceVarInfo <: DistanceMethod
     bins::Union{<:Integer, <:AbstractBins}
     normalise::Bool
@@ -348,9 +411,33 @@ end
 
 # ## Clustering
 
+"""
+```
 abstract type HClustAlg end
+```
+
+Abstract type for subtyping hierarchical clustering methods.
+"""
+abstract type HClustAlg end
+
+"""
+```
 @kwdef mutable struct HAC <: HClustAlg
     linkage::Symbol = :ward
+end
+```
+
+Use a hierarchical clustering algorithm from [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
+
+# Parameters
+
+  - `linkage`: linkage type supported by [`hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
+"""
+mutable struct HAC <: HClustAlg
+    linkage::Symbol
+end
+function HAC(; linkage::Symbol = :ward)
+    return HAC(linkage)
 end
 
 abstract type DBHTSimilarity end
