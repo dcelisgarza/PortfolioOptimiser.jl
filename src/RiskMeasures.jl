@@ -181,10 +181,10 @@ _CVaR(x::AbstractVector, α::Real = 0.05)
 Compute the Conditional Value at Risk.
 
 ```math
-\\mathrm{CVaR}(\\bm{X},\\, \\alpha) = \\mathrm{VaR}(\\bm{X},\\, \\alpha) - \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\min\\left( X_{t} + \\mathrm{VaR}(\\bm{X},\\, \\alpha),\\, 0\\right)\\,,
+\\mathrm{CVaR}(\\bm{X},\\, \\alpha) = \\mathrm{VaR}(\\bm{X},\\, \\alpha) - \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\min\\left( X_{t} + \\mathrm{VaR}(\\bm{X},\\, \\alpha),\\, 0\\right)\\,.
 ```
 
-where ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)`` is the value at risk as defined in [`_VaR`](@ref).
+Where ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)`` is the value at risk as defined in [`_VaR`](@ref).
 
 # Inputs
 
@@ -214,10 +214,10 @@ ERM(x::AbstractVector, z::Real = 1.0, α::Real = 0.05)
 Compute the Entropic Risk Measure.
 
 ```math
-\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha) = z \\ln \\left(\\dfrac{M_{\\bm{X}}\\left(z^{-1}\\right)}{\\alpha} \\right)\\,,
+\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha) = z \\ln \\left(\\dfrac{M_{\\bm{X}}\\left(z^{-1}\\right)}{\\alpha} \\right)\\,
 ```
 
-where ``M_{\\bm{X}}\\left(z^{-1}\\right)`` is the moment generating function of ``\\bm{X}``.
+Where ``M_{\\bm{X}}\\left(z^{-1}\\right)`` is the moment generating function of ``\\bm{X}``.
 
 # Inputs
 
@@ -236,10 +236,10 @@ Compute the Entropic Risk Measure by minimising the function with respect to `z`
 \\underset{z,\\, t,\\, u}{\\min} & t + z \\ln\\left(\\dfrac{1}{\\alpha T}\\right)\\\\
 \\mathrm{s.t.} & z \\geq \\sum\\limits_{i=1}^{T} u_{i}\\\\
 & (-x_{i}-t,\\, z,\\, u_{i}) \\in \\mathcal{K}_{\\exp} \\, \\forall \\, i=1,\\,\\dots{},\\, T
-\\end{cases}\\,,
+\\end{cases}\\,.
 ```
 
-where ``\\mathcal{K}_{\\exp}`` is the exponential cone.
+Where ``\\mathcal{K}_{\\exp}`` is the exponential cone.
 
 # Inputs
 
@@ -327,10 +327,10 @@ _EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
 Compute the Entropic Value at Risk.
 
 ```math
-\\mathrm{EVaR}(\\bm{X},\\alpha) = \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)\\right\\}\\,,
+\\mathrm{EVaR}(\\bm{X},\\alpha) = \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)\\right\\}\\,.
 ```
 
-where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref).
+Where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref).
 
 # Inputs
 
@@ -340,6 +340,12 @@ where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure 
 function _EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     return ERM(x, solvers, alpha)
 end
+"""
+```
+RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
+             kappa::Real = 0.3)
+```
+"""
 function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
              kappa::Real = 0.3)
     @smart_assert(zero(alpha) < alpha < one(alpha))
@@ -408,13 +414,16 @@ _RVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05, κ::Real = 0
 Compute the Relativistic Value at Risk.
 
 ```math
-\\mathrm{RVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)\\,,```
-where ``\\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
-- `α`: significance level, `α ∈ (0, 1)`.
-- `κ`: relativistic deformation parameter.
+\\mathrm{RVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)\\,.
 ```
+
+Where ``\\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+  - `α`: significance level, `α ∈ (0, 1)`.
+  - `κ`: relativistic deformation parameter.
 """
 function _RVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                kappa::Real = 0.3)
@@ -432,10 +441,10 @@ Compute the Drawdown at Risk of uncompounded cumulative returns.
 \\begin{align*}
 \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{a}}(\\bm{X},\\, j) \\in \\mathbb{R} : F_{\\mathrm{DD}}\\left(\\mathrm{DD_{a}}(\\bm{X},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
 \\mathrm{DD_{a}}(\\bm{X},\\, j) &= \\underset{t \\in (0,\\, j)}{\\max}\\left( \\sum\\limits_{i=0}^{t} x_{i} \\right) - \\sum\\limits_{i=0}^{j} x_{i}
-\\end{align*}\\,
+\\end{align*}\\,.
 ```
 
-where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns, and ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns.
+Where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns, and ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns.
 
 # Inputs
 
@@ -469,11 +478,14 @@ _MDD(x::AbstractVector)
 Compute the Maximum Drawdown of uncompounded cumulative returns.
 
 ```math
-\\mathrm{MDD_{a}}(\\bm{X}) = \\underset{j \\in (0,\\, T)}{\\max} \\mathrm{DD_{a}}(\\bm{X},\\, j)\\,,```
-where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
+\\mathrm{MDD_{a}}(\\bm{X}) = \\underset{j \\in (0,\\, T)}{\\max} \\mathrm{DD_{a}}(\\bm{X},\\, j)\\,.
 ```
+
+Where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
 """
 function _MDD(x::AbstractVector)
     pushfirst!(x, 1)
@@ -501,10 +513,10 @@ _ADD(x::AbstractVector)
 Compute the Average Drawdown of uncompounded cumulative returns.
 
 ```math
-\\mathrm{ADD_{a}}(\\bm{X}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{X},\\, j)\\,,
+\\mathrm{ADD_{a}}(\\bm{X}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{X},\\, j)\\,.
 ```
 
-where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
+Where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 
 # Inputs
 
@@ -537,10 +549,10 @@ _CDaR(x::AbstractVector, alpha::Real = 0.05)
 Compute the Conditional Drawdown at Risk of uncompounded cumulative returns.
 
 ```math
-\\mathrm{CDaR_{a}}(\\bm{X},\\, \\alpha) = \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{a}}(\\bm{X},\\, j) - \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha),\\, 0 \\right] \\,,
+\\mathrm{CDaR_{a}}(\\bm{X},\\, \\alpha) = \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{a}}(\\bm{X},\\, j) - \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha),\\, 0 \\right]\\,.
 ```
 
-where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref), and ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns as defined in [`_DaR`](@ref).
+Where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref), and ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 
 # Inputs
 
@@ -579,11 +591,14 @@ _UCI(x::AbstractVector)
 Compute the Ulcer Index of uncompounded cumulative returns.
 
 ```math
-\\mathrm{UCI_{a}}(\\bm{X}) = \\left[\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{X},\\, j)^{2}\\right]^{1/2}\\,,```
-where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
+\\mathrm{UCI_{a}}(\\bm{X}) = \\left[\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{X},\\, j)^{2}\\right]^{1/2}\\,.
 ```
+
+Where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
 """
 function _UCI(x::AbstractVector)
     T = length(x)
@@ -614,10 +629,11 @@ Compute the Entropic Drawdown at Risk of uncompounded cumulative returns.
 ```math
 \\begin{align*}
 \\mathrm{EDaR_{a}}(\\bm{X},\\alpha) &= \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\mathrm{DD_{a}}(\\bm{X}),\\, z, \\,\\alpha)\\right\\}\\\\
-\\mathrm{DD_{a}}(\\bm{X}) &= \\left\\{j \\in (0,\\, T) : \\mathrm{DD_{a}}(\\bm{X},\\, j) \\right\\}\\,,\\end{align*}
+\\mathrm{DD_{a}}(\\bm{X}) &= \\left\\{j \\in (0,\\, T) : \\mathrm{DD_{a}}(\\bm{X},\\, j) \\right\\}
+\\end{align*}\\,.
 ```
 
-where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` the drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
+Where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` the drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 
 # Inputs
 
@@ -648,13 +664,16 @@ _RDaR(x::AbstractVector, solvers::AbstractDict; alpha::Real = 0.05, kappa::Real 
 Compute the Relativistic Drawdown at Risk of uncompounded cumulative returns.
 
 ```math
-\\mathrm{RDaR_{a}}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,,```
-where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the relativistic risk measure as defined in [`RRM`](@ref), and ``\\mathrm{DD_{a}}(\\bm{X})`` the drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
-- `α`: significance level, `α ∈ (0, 1)`.
-- `κ`: relativistic deformation parameter.
+\\mathrm{RDaR_{a}}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,.
 ```
+
+Where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the relativistic risk measure as defined in [`RRM`](@ref), and ``\\mathrm{DD_{a}}(\\bm{X})`` the drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+  - `α`: significance level, `α ∈ (0, 1)`.
+  - `κ`: relativistic deformation parameter.
 """
 function _RDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                kappa::Real = 0.3)
@@ -684,10 +703,10 @@ Compute the Drawdown at Risk of compounded cumulative returns.
 \\begin{align*}
 \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{r}}(\\bm{X},\\, j) \\in \\mathbb{R} : F_{\\mathrm{DD}}\\left(\\mathrm{DD_{r}}(\\bm{X},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
 \\mathrm{DD_{r}}(\\bm{X},\\, j) &= \\underset{t \\in (0,\\, j)}{\\max}\\left( \\prod\\limits_{i=0}^{t} \\left(1+x_{i}\\right) \\right) - \\prod\\limits_{i=0}^{j} \\left(1+x_{i}\\right) 
-\\end{align*}\\,,
+\\end{align*}\\,.
 ```
 
-where ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns, and ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns.
+Where ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns, and ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns.
 
 # Inputs
 
@@ -720,11 +739,14 @@ _MDD_r(x::AbstractVector)
 Compute the Maximum Drawdown of compounded cumulative returns.
 
 ```math
-\\mathrm{MDD_{r}}(\\bm{X}) = \\underset{j \\in (0,\\, T)}{\\max} \\mathrm{DD_{r}}(\\bm{X},\\, j)\\,,```
-where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
+\\mathrm{MDD_{r}}(\\bm{X}) = \\underset{j \\in (0,\\, T)}{\\max} \\mathrm{DD_{r}}(\\bm{X},\\, j)\\,.
 ```
+
+Where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
 """
 function _MDD_r(x::AbstractVector)
     x .= pushfirst!(x, 0) .+ 1
@@ -752,10 +774,10 @@ _ADD_r(x::AbstractVector)
 Compute the Average Drawdown of compounded cumulative returns.
 
 ```math
-\\mathrm{ADD_{r}}(\\bm{r}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{X},\\, j)\\,,
+\\mathrm{ADD_{r}}(\\bm{r}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{X},\\, j)\\,.
 ```
 
-where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
+Where ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 
 # Inputs
 
@@ -788,10 +810,10 @@ _CDaR_r(x::AbstractVector, alpha::Real = 0.05)
 Compute the Conditional Drawdown at Risk of compounded cumulative returns.
 
 ```math
-\\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) = \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{r}}(\\bm{X},\\, j) - \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha),\\, 0 \\right] \\,,
+\\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) = \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left[\\mathrm{DD_{r}}(\\bm{X},\\, j) - \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha),\\, 0 \\right]\\,.
 ```
 
-where ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref), and ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`_DaR_r`](@ref).
+Where ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref), and ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 
 # Inputs
 
@@ -829,11 +851,14 @@ _UCI_r(x::AbstractVector)
 Compute the Ulcer Index of compounded cumulative returns.
 
 ```math
-\\mathrm{UCI_{r}}(\\bm{X}) = \\left[\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{X},\\, j)^{2}\\right]^{1/2}\\,,```
-where ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
+\\mathrm{UCI_{r}}(\\bm{X}) = \\left[\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{X},\\, j)^{2}\\right]^{1/2}\\,.
 ```
+
+Where ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
 """
 function _UCI_r(x::AbstractVector)
     T = length(x)
@@ -864,11 +889,11 @@ Compute the Entropic Drawdown at Risk of compounded cumulative returns.
 ```math
 \\begin{align*}
 \\mathrm{EDaR_{r}}(\\bm{X},\\alpha) &= \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\mathrm{DD_{r}}(\\bm{X}),\\, z, \\,\\alpha)\\right\\}\\\\
-\\mathrm{DD_{r}}(\\bm{X}) &= \\left\\{j \\in (0,\\, T) : \\mathrm{DD_{r}}(\\bm{X},\\, j) \\right\\}\\,,
-\\end{align*}
+\\mathrm{DD_{r}}(\\bm{X}) &= \\left\\{j \\in (0,\\, T) : \\mathrm{DD_{r}}(\\bm{X},\\, j) \\right\\}
+\\end{align*}\\,.
 ```
 
-where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` the drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
+Where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref) and ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` the drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 
 # Inputs
 
@@ -899,13 +924,16 @@ _RDaR_r(x::AbstractVector, solvers::AbstractDict; alpha::Real = 0.05, kappa::Rea
 Compute the Relativistic Drawdown at Risk of compounded cumulative returns.
 
 ```math
-\\mathrm{RDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,,```
-where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, and ``\\mathrm{DD_{r}}(\\bm{X})`` the drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
-# Inputs
-- `x`: vector of portfolio returns.
-- `α`: significance level, `α ∈ (0, 1)`.
-- `κ`: relativistic deformation parameter.
+\\mathrm{RDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,.
 ```
+
+Where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, and ``\\mathrm{DD_{r}}(\\bm{X})`` the drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
+
+# Inputs
+
+  - `x`: vector of portfolio returns.
+  - `α`: significance level, `α ∈ (0, 1)`.
+  - `κ`: relativistic deformation parameter.
 """
 function _RDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                  kappa::Real = 0.3)
@@ -1127,7 +1155,7 @@ end
 
 """
 ```
-_DVar(x::AbstractVector)
+_dVar(x::AbstractVector)
 ```
 
 Compute the Brownian distance variance.
@@ -1140,23 +1168,23 @@ A_{i,\\,j} &= a_{i,\\,j} - \\bar{a}_{i\\,.} - \\bar{a}_{.\\,j} + \\bar{a}_{.\\,.
 B_{i,\\,j} &= b_{i,\\,j} - \\bar{b}_{i\\,.} - \\bar{b}_{.\\,j} + \\bar{b}_{.\\,.}\\\\
 a_{i,\\,j} &= \\lVert X_{i} - X_{j} \\rVert_{2}, \\quad \\forall i,\\, j = 1,\\, \\ldots ,\\, T\\\\
 b_{i,\\,j} &= \\lVert Y_{i} - Y_{j} \\rVert_{2}, \\quad \\forall i,\\, j = 1,\\, \\ldots ,\\, T
-\\end{align*}\\,,
+\\end{align*}\\,.
 ```
 
 where:
 
   - ``\\bm{X}`` and ``\\bm{Y}`` are random variables, they are equal in this case as they are the portfolio returns.
-  - ``a_{i,\\,j}`` and ``b_{i,\\,j}`` are entries of a distance matrix where ``i`` and ``j`` are points in time. Each entry is defined as the Euclidean distance ``\\lVert . \\rVert_{2}`` between the value of the random variable at time ``i`` and its value at time ``j``.
-  - ``\\bar{a}_{i\\,.}`` and ``\\bar{b}_{i\\,.}`` are the ``i``-th row means of their respective matrices.
-  - ``\\bar{a}_{.\\,j}`` and ``\\bar{b}_{.\\,j}`` are the ``j``-th column means of their respective matrices.
-  - ``\\bar{a}_{.\\,.}`` and ``\\bar{b}_{.\\,.}`` are the grand means of their respective matrices.
+  - ``a_{i,\\,j}`` and ``b_{i,\\,j}`` are entries of a distance matrix where ``i`` and ``j`` are points in time. Each entry is defined as the Euclidean distance ``\\lVert \\cdot \\rVert_{2}`` between the value of the random variable at time ``i`` and its value at time ``j``.
+  - ``\\bar{a}_{i,\\,\\cdot}`` and ``\\bar{b}_{i,\\,\\cdot}`` are the ``i``-th row means of their respective matrices.
+  - ``\\bar{a}_{\\cdot,\\,j}`` and ``\\bar{b}_{\\cdot,\\,j}`` are the ``j``-th column means of their respective matrices.
+  - ``\\bar{a}_{\\cdot,\\,\\cdot}`` and ``\\bar{b}_{\\cdot,\\,\\cdot}`` are the grand means of their respective matrices.
   - ``A_{i,\\,j}`` and ``B_{i,\\,j}`` are doubly centered distances.
 
 # Inputs
 
   - `x`: vector of portfolio returns.
 """
-function _DVar(x::AbstractVector)
+function _dVar(x::AbstractVector)
     T = length(x)
     invT = one(T) / T
     invT2 = invT^2
@@ -1266,8 +1294,8 @@ end
 function calc_risk(owa::OWA, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _OWA(X * w, isnothing(owa.w) ? owa_gmd(size(X, 1)) : owa.w)
 end
-function calc_risk(::DVar, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _DVar(X * w)
+function calc_risk(::dVar, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _dVar(X * w)
 end
 function calc_risk(::Skew, w::AbstractVector; V::AbstractMatrix, kwargs...)
     return _Skew(w, V)
@@ -1363,11 +1391,11 @@ end
 for (op, name) ∈
     zip((SD, Variance, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, EVaR, RVaR, DaR, MDD, ADD, CDaR,
          UCI, EDaR, RDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RDaR_r, Kurt, SKurt,
-         GMD, RG, RCVaR, TG, RTG, OWA, DVar, Skew, SSkew, Equal),
+         GMD, RG, RCVaR, TG, RTG, OWA, dVar, Skew, SSkew, Equal),
         ("SD", "Variance", "MAD", "SSD", "FLPM", "SLPM", "WR", "VaR", "CVaR", "EVaR",
          "RVaR", "DaR", "MDD", "ADD", "CDaR", "UCI", "EDaR", "RDaR", "DaR_r", "MDD_r",
          "ADD_r", "CDaR_r", "UCI_r", "EDaR_r", "RDaR_r", "Kurt", "SKurt", "GMD", "RG",
-         "RCVaR", "TG", "RTG", "OWA", "DVar", "Skew", "SSkew", "Equal"))
+         "RCVaR", "TG", "RTG", "OWA", "dVar", "Skew", "SSkew", "Equal"))
     eval(quote
              Base.iterate(S::$op, state = 1) = state > 1 ? nothing : (S, state + 1)
              function Base.String(s::$op)

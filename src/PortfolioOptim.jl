@@ -1909,7 +1909,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:OWA}, type::Union{Trad, R
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::DVar, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rm::dVar, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)

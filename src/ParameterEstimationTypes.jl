@@ -232,24 +232,21 @@ abstract type DistanceMethod end
 end
 ```
 
-Defines the distance matrix from a correlation matrix [HRP1](@cite) in [`dist`](@ref):
+Defines the distance matrix from a correlation matrix [HRP1](@cite) in [`dist`](@ref).
 
 ```math
-\\begin{align}
-    \\mathbf{D} &= 
-        \\begin{cases}
-            \\sqrt{\\dfrac{1}{2} \\left(\\mathbf{1} - \\mathbf{C}\\right)} &\\quad \\mathrm{if~ absolute = false}\\\\
-            \\\\
-            \\sqrt{\\mathbf{1} - \\lvert\\mathbf{C}\\rvert} &\\quad \\mathrm{if~ absolute = true}
-        \\end{cases}
-\\end{align}
+D_{i,\\,j} = 
+    \\begin{cases}
+        \\sqrt{\\dfrac{1}{2} \\left(\\mathbf{1} - C_{i,\\,j}\\right)} &\\quad \\mathrm{if~ absolute = false}\\\\
+        \\sqrt{1 - \\lvert C_{i,\\,j} \\rvert} &\\quad \\mathrm{if~ absolute = true}\\nonumber\\,.
+    \\end{cases}
 ```
 
 Where:
 
-  - ``\\mathbf{D}``: is the `N×N` distance matrix.
-  - ``\\mathbf{C}``: is the `N×N` correlation matrix.
-  - absolute: is a flag whether the correlation is absolute.
+  - ``D_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` distance matrix ``\\mathbf{C}``.
+  - ``C_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` correlation matrix ``\\mathbf{D}``.
+  - absolute: flag for stating whether or not an absolute correlation is being used.
 
 # Parameters
 
@@ -272,27 +269,17 @@ end
 end
 ```
 
-Defines the distance of distances matrix from a correlation matrix [HRP1](@cite) in [`dist`](@ref):
+Defines the distance of distances matrix from a correlation matrix [HRP1](@cite) in [`dist`](@ref).
 
 ```math
-\\begin{align}
-    \\mathbf{d} &= 
-        \\begin{cases}
-            \\sqrt{\\dfrac{1}{2} \\left(\\mathbf{1} - \\mathbf{C}\\right)} &\\quad \\mathrm{if~ absolute = false}\\\\
-            \\\\
-            \\sqrt{\\mathbf{1} - \\lvert\\mathbf{C}\\rvert} &\\quad \\mathrm{if~ absolute = true}
-        \\end{cases}\\\\
-    \\mathbf{D} &= \\mathrm{pairwise}(m,\\, \\mathbf{d})
-\\end{align}
+\\tilde{D}_{i,\\,j} = f_{m}\\left(\\bm{D}_{i},\\, \\bm{D}_j\\right)\\,.
 ```
 
 Where:
 
-  - ``\\mathbf{d}``: is the `N×N` distance matrix.
-  - ``\\mathbf{C}``: is the `N×N` correlation matrix.
-  - ``\\mathrm{pairwise}``: is [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances), with its output reshaped to the appropriate shape.
-  - ``m``: is a concrete subtype of `Distances.UnionMetric` from [`Distances.jl`](https://github.com/JuliaStats/Distances.jl).
-  - ``\\mathbf{D}``: is the `N×N` distance of distances matrix.
+  - ``\\bm{D}_{i}``: is the ``i``-th column/row of the `N×N` distance matrix defined in [`DistanceMLP`](@ref).
+  - ``f_{m}``: is the pairwise distance function for metric ``m``. We use the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function which computes the entire matrix at once, the output is a vector so it gets reshaped into an `N×N` matrix.
+  - ``\\tilde{D}_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` distances of distances matrix.
   - absolute: is a flag whether the correlation is absolute.
 
 # Parameters
@@ -301,9 +288,6 @@ Where:
   - `distance`: distance metric from [`Distances.jl`](https://github.com/JuliaStats/Distances.jl).
   - `args`: args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
   - `kwargs`: key word args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
-
-````
-````
 """
 mutable struct DistanceSqMLP <: DistanceMethod
     absolute::Bool
@@ -317,9 +301,32 @@ function DistanceSqMLP(; absolute::Bool = false,
     return DistanceSqMLP(absolute, distance, args, kwargs)
 end
 
+"""
+```
+struct DistanceLog <: DistanceMethod end
+```
+
+Defines the log-distance matrix from the correlation matrix.
+
+```math
+D_{i,\\,j} = -\\log\\left(C_{i,\\,j}\\right)\\,.
+```
+
+Where:
+
+  - ``D_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` log-distance matrix.
+  - ``C_{i,\\,j}``: is the  ``(i,\\,j)``-th entry of an absolute correlation matrix.
+"""
 struct DistanceLog <: DistanceMethod end
 
-struct DistanceDefault <: DistanceMethod end
+"""
+```
+struct DistanceCanonical <: DistanceMethod end
+```
+
+Struct for computing the canonical distance for a given correlation subtype of [`PortfolioOptimiserCovCor`](@ref).
+"""
+struct DistanceCanonical <: DistanceMethod end
 
 abstract type AbstractBins end
 abstract type AstroBins <: AbstractBins end
@@ -397,6 +404,11 @@ end
 
 # ## Covariance, correlation, kurt and skew
 
+"""
+```
+abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
+```
+"""
 abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
 abstract type CorPearson <: PortfolioOptimiserCovCor end
 abstract type CorRank <: PortfolioOptimiserCovCor end
@@ -1089,7 +1101,7 @@ end
 end
 
 export NoPosdef, PosdefNearest, NoDenoise, Fixed, Spectral, Shrink, DistanceMLP,
-       DistanceSqMLP, DistanceLog, DistanceDefault, Knuth, Freedman, Scott, HGR,
+       DistanceSqMLP, DistanceLog, DistanceCanonical, Knuth, Freedman, Scott, HGR,
        DistanceVarInfo, HAC, DBHTExp, DBHTMaxDist, UniqueDBHT, EqualDBHT, DBHT, TwoDiff,
        StdSilhouette, HCOpt, ClusterNode, CovFull, SimpleVariance, CovSemi, CorSpearman,
        CorKendall, CorMutualInfo, CorDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2,

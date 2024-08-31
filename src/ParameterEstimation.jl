@@ -1698,7 +1698,7 @@ function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     return Symmetric(rho)
 end
 function _get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimiserCovCor)
-    if isa(dist_type, DistanceDefault)
+    if isa(dist_type, DistanceCanonical)
         dist_type = if isa(cor_type.ce, CorMutualInfo)
             DistanceVarInfo(; bins = cor_type.ce.bins, normalise = cor_type.ce.normalise)
         elseif isa(cor_type.ce, CorLTD)

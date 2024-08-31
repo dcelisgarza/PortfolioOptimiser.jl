@@ -1623,7 +1623,7 @@ end
 
     asset_statistics!(portfolio)
     hclust_alg = HAC()
-    rm = DVar()
+    rm = dVar()
     w106 = optimise!(portfolio; rm = rm, cluster = true, hclust_alg = hclust_alg,
                      hclust_opt = hclust_opt,
                      type = NCO(; opt_kwargs = (; obj = MinRisk())))
@@ -1900,7 +1900,7 @@ end
     @test isapprox(w19.weights, wt)
 
     hclust_alg = HAC()
-    w20 = optimise!(portfolio; rm = DVar(), cluster = true, type = type,
+    w20 = optimise!(portfolio; rm = dVar(), cluster = true, type = type,
                     hclust_alg = hclust_alg, hclust_opt = hclust_opt)
     wt = [0.034616203287809656, 0.05339682894540566, 0.0277781553250953,
           0.04211296639608739, 0.05429852976387857, 0.07556907274344477,
@@ -2249,7 +2249,7 @@ end
     @test isapprox(w19.weights, wt)
 
     hclust_alg = HAC()
-    w20 = optimise!(portfolio; rm = DVar(), cluster = true, type = type,
+    w20 = optimise!(portfolio; rm = dVar(), cluster = true, type = type,
                     hclust_alg = hclust_alg, hclust_opt = hclust_opt)
     wt = [0.11814156791628717, 0.1127352219498846, 0.0948040083033778, 0.05910201284574831,
           0.0762034280232549, 0.021900080015085997, 0.005240769029403859,

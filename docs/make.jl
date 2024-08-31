@@ -1,6 +1,6 @@
 using Documenter, DocumenterTools, DocumenterCitations, Literate, PortfolioOptimiser
 
-import PortfolioOptimiser: MeanEstimator, MeanTarget
+import PortfolioOptimiser: MeanEstimator, MeanTarget, PortfolioOptimiserCovCor
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
 function pre_process_content_md(content)
     return replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```",
@@ -63,7 +63,7 @@ makedocs(;
          format = Documenter.HTML(; prettyurls = get(ENV, "CI", "false") == "true",
                                   canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
                                   assets = String[]),
-         pages = ["Home" => "index.md", "Examples" => examples_nav,
+         pages = ["Home" => "index.md", #"Examples" => examples_nav,
                   "API" => ["Risk Measures" => "RiskMeasures.md",
                             "Portfolio Types" => "PortfolioTypes.md",
                             "Parameter Estimation Types" => "ParameterEstimationTypes.md",

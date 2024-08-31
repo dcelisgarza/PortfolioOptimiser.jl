@@ -296,7 +296,7 @@ end
     w::Union{<:AbstractVector, Nothing} = nothing
 end
 
-@kwdef struct DVar <: TradRiskMeasure
+@kwdef struct dVar <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 
@@ -447,5 +447,5 @@ end
 
 export RiskMeasureSettings, HCRiskMeasureSettings, QuadSD, SOCSD, SimpleSD, SD, MAD, SSD,
        FLPM, SLPM, WR, CVaR, EVaR, RVaR, MDD, ADD, CDaR, UCI, EDaR, RDaR, Kurt, SKurt, RG,
-       RCVaR, OWASettings, GMD, TG, RTG, OWA, DVar, Skew, SSkew, Variance, VaR, DaR, DaR_r,
+       RCVaR, OWASettings, GMD, TG, RTG, OWA, dVar, Skew, SSkew, Variance, VaR, DaR, DaR_r,
        MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RDaR_r, Equal

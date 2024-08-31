@@ -10,7 +10,7 @@ asset_statistics!(port::AbstractPortfolio;
                            set_sskew::Bool = true,
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                            set_cor::Bool = true,
-                           dist_type::DistanceMethod = DistanceDefault(),
+                           dist_type::DistanceMethod = DistanceCanonical(),
                            set_dist::Bool = true)
 ```
 """
@@ -24,7 +24,7 @@ function asset_statistics!(port::AbstractPortfolio;
                            set_sskew::Bool = true,
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                            set_cor::Bool = true,
-                           dist_type::DistanceMethod = DistanceDefault(),
+                           dist_type::DistanceMethod = DistanceCanonical(),
                            set_dist::Bool = true)
     returns = port.returns
 
