@@ -201,6 +201,16 @@ end
     absolute::Bool = false
 end
 
+"""
+```
+mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
+    bins::Union{<:Integer, <:AbstractBins}
+    normalise::Bool
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+end
+```
+"""
 mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
     bins::Union{<:Integer, <:AbstractBins}
     normalise::Bool
@@ -217,15 +227,43 @@ function CorMutualInfo(; bins::Union{<:Integer, <:AbstractBins} = HGR(),
     return CorMutualInfo(bins, normalise, ve, std_w)
 end
 
-@kwdef mutable struct CorDistance <: PortfolioOptimiserCovCor
-    distance::Distances.UnionMetric = Distances.Euclidean()
-    dist_args::Tuple = ()
-    dist_kwargs::NamedTuple = (;)
-    mean_w1::Union{<:AbstractWeights, Nothing} = nothing
-    mean_w2::Union{<:AbstractWeights, Nothing} = nothing
-    mean_w3::Union{<:AbstractWeights, Nothing} = nothing
+"""
+```
+mutable struct CorDistance <: PortfolioOptimiserCovCor
+    distance::Distances.UnionMetric
+    dist_args::Tuple
+    dist_kwargs::NamedTuple
+    mean_w1::Union{<:AbstractWeights, Nothing}
+    mean_w2::Union{<:AbstractWeights, Nothing}
+    mean_w3::Union{<:AbstractWeights, Nothing}
+end
+```
+"""
+mutable struct CorDistance <: PortfolioOptimiserCovCor
+    distance::Distances.UnionMetric
+    dist_args::Tuple
+    dist_kwargs::NamedTuple
+    mean_w1::Union{<:AbstractWeights, Nothing}
+    mean_w2::Union{<:AbstractWeights, Nothing}
+    mean_w3::Union{<:AbstractWeights, Nothing}
+end
+function CorDistance(; distance::Distances.UnionMetric = Distances.Euclidean(),
+                     dist_args::Tuple = (), dist_kwargs::NamedTuple = (;),
+                     mean_w1::Union{<:AbstractWeights, Nothing} = nothing,
+                     mean_w2::Union{<:AbstractWeights, Nothing} = nothing,
+                     mean_w3::Union{<:AbstractWeights, Nothing} = nothing)
+    return CorDistance(distance, dist_args, dist_kwargs, mean_w1, mean_w2, mean_w3)
 end
 
+"""
+```
+mutable struct CorLTD <: PortfolioOptimiserCovCor
+    alpha::Real
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+end
+```
+"""
 mutable struct CorLTD <: PortfolioOptimiserCovCor
     alpha::Real
     ve::StatsBase.CovarianceEstimator
@@ -397,6 +435,22 @@ function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
                                                                                           posdef)
 end
 
+"""
+```
+mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool
+    threshold::T1
+    c1::T2
+    c2::T3
+    c3::T4
+    n::T5
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+    mean_w::Union{<:AbstractWeights, Nothing}
+    posdef::PosdefFix
+end
+```
+"""
 mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
     threshold::T1

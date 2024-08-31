@@ -3,22 +3,28 @@ using Documenter, DocumenterTools, DocumenterCitations, Literate, PortfolioOptim
 import PortfolioOptimiser: MeanEstimator, MeanTarget
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
 function pre_process_content_md(content)
-    str = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
-    str = replace(str, r"^#note # (.*)$"m => s"""
-           # !!! note
-           #     \1""")
-    return replace(str, r"^#warning # (.*)$"m => s"""
-           # !!! warning
-           #     \1""")
+    return replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```",
+                   r"^#note # (.*)$"m => s"""
+ # !!! note
+ #     \1""", r"^#warning # (.*)$"m => s"""
+             # !!! warning
+             #     \1""", r"^#tip # (.*)$"m => s"""
+             # !!! tip
+             #     \1""", r"^#info # (.*)$"m => s"""
+             # !!! info
+             #     \1""")
 end
 function pre_process_content_nb(content)
-    str = replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```")
-    str = replace(str, r"^#note # (.*)$"m => s"""
-           # !!! note
-           #     \1""")
-    return replace(str, r"^#warning # (.*)$"m => s"""
-    # > *warning*
-    # > \1""")
+    return replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```",
+                   r"^#note # (.*)$"m => s"""
+# > *note*
+# > \1""", r"^#warning # (.*)$"m => s"""
+     # > *warning*
+     # > \1""", r"^#tip # (.*)$"m => s"""
+     # > *tip*
+     # > \1""", r"^#info # (.*)$"m => s"""
+     # > *info*
+     # > \1""")
 end
 
 fix_suffix_md(filename) = replace(filename, ".jl" => ".md")

@@ -1,11 +1,9 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
-
 ```@meta
 EditURL = "../../../examples/2_asset_statistics.jl"
 ```
 
 # Example 2: Asset statistics
-
 This tutorial follows from [Tutorial 1](https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/0_basic_use.ipynb). If something in the preamble is confusing, it is explained there.
 
 This tutorial focuses on the computation of asset statistics.
@@ -72,7 +70,6 @@ nothing #hide
 ````
 
 ## 3 Asset statistics
-
 When you first create a [`Portfolio`](@ref) in this way, it does not contain any statistics other than the returns. So we must compute them.
 
 [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) uses the [`StatsAPI.jl`](https://github.com/JuliaStats/StatsAPI.jl) interfaces through [`StatsBase.jl`](https://juliastats.org/StatsBase.jl/stable/). Meaning it is composable with other packages which use the common framework, and it also makes it easy for users to define their custom methods by using Julia's typesystem.
@@ -81,11 +78,12 @@ We'll only focus on the expected returns and covariance matrix. The default para
 
 ````@example 2_asset_statistics
 asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_skew = false,
-                  set_sskew = false)
+                  set_sskew = false);
 
 # Save these for later use.
-mu1 = copy(portfolio.mu)
-cov1 = copy(portfolio.cov)
+mu1 = copy(portfolio.mu);
+cov1 = copy(portfolio.cov);
+nothing #hide
 ````
 
 We can prove this by computing the arithmetic mean and sample covariance of the returns.
@@ -141,7 +139,7 @@ mu4 = copy(portfolio.mu)
 
 # Using a custom covariance with random noise. It's not guaranteed to be positive definite.
 noise = randn(N, N) / N^2
-noise = noise' * noise
+noise = transpose(noise) * noise
 mu_type_4 = MuBOP(; target = SE(), sigma = cov1 + noise)
 asset_statistics!(portfolio; mu_type = mu_type_4, set_cov = false, set_kurt = false,
                   set_skurt = false, set_skew = false, set_sskew = false)
@@ -204,23 +202,107 @@ println(mu7 ./ mu1)
 
 [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) comes with quite a few covariance estimators. However, it is best to wrap them all with [`PortCovCor`](@ref). This is because it contains methods for denoising, fixing non-positive definite matrices, and using a graph-based algorithm for computing the covariance based on its relational structure.
 
-````@example 2_asset_statistics
-ce1 = CovFull()
-ce2 = CovSemi()
-ce3 = CorMutualInfo()
-ce4 = CorDistance()
-ce5 = CorLTD()
-ce6 = CorGerber0()
-ce7 = CorGerber1()
-ce8 = CorGerber2()
-ce9 = CorSB0()
-ce10 = CorSB1()
-ce11 = CorGerberSB0()
-ce12 = CorGerberSB1()
+[Portfoliooptimiser](https://github.com/dcelisgarza/PortfolioOptimiser.jl)'s mean and covariance estimators are based on the idea of subtyping [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) to specialise their respective functions.
 
-ce = PortCovCor(; ce = ce1)
+We will also not illustrate how to define custom methods as it follows the same principles as for the mean estimators, but instead by creating a concrete subtype (a struct) of [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) and implementing [`StatsBase.cov`](https://juliastats.org/StatsBase.jl/stable/cov/#Statistics.cov-Tuple{CovarianceEstimator,%20AbstractMatrix}) for the custom type.
+
+All estimators are different, some can nest other estimators, and those estimators may or may not support weights or even certain types of weights. There are so many different permutations that we will not go over an exhaustive list. For details on external methods please refer back to the documentation in their respective packages. For details on [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/)'s estimators please refer to the docs.
+
+As far as my recommendation/preference, I like the [`CorGerberSB1`](@ref) as it's fairly tuneable and produces less noisy matrices, but it is among the more expensive ones to compute.
+
+````@example 2_asset_statistics
+# `corrected = true` does not support weights
+ce0_a = StatsBase.SimpleCovariance(; corrected = false)
+
+# A method from [CovarianceEstimation](https://github.com/mateuszbaran/CovarianceEstimation.jl), does not support weights.
+ce0_b = CovarianceEstimation.AnalyticalNonlinearShrinkage()
+
+# Exponential weights, try something else if you wish.
+w = eweights(1:T, 1 / sqrt(T); scale = true)
+
+# Risk free rate, we will use as the minimum acceptable return for the semi covariance.
+rf = 3.5 / 100 / 252
 ````
 
-* * *
+Lets put our estimators in a vector to make programming easier.
+
+````@example 2_asset_statistics
+ces = CovarianceEstimator[]
+# Full covariance.
+push!(ces, CovFull(; ce = ce0_a, w = w))
+
+# Semi covariance, only focuses on variations that take the returns below the target value.
+push!(ces, CovSemi(; ce = ce0_b, target = rf))
+
+# This bins the data and uses the information overlap between variables.
+push!(ces, CorMutualInfo())
+
+# This computes the distance covariance.
+push!(ces, CorDistance())
+
+# This uses how closely related the lower tail of the returns are between assets.
+# It combines the idea behind the Value at Risk and rank correlation.
+push!(ces, CorLTD())
+
+# The Gerber family of robust covariance estimators that count co-movements and filters
+# large and small movements by classifying them into zones. They are a rank-based (counting) approach.
+push!(ces, CorGerber0())
+push!(ces, CorGerber1())
+push!(ces, CorGerber2())
+
+# Smyth-Broby family of covariance estimators that modifies the Gerber statistics by scoring
+# the quality of the classification of co-movements (instead of adding 1 they add a score).
+push!(ces, CorSB0())
+push!(ces, CorSB1())
+
+# Smyth-Broby-Gerber family of covariance estimators that modifies the Gerber statistics by
+# counting co-movements, scoring them, and then it multiplies the scores by the counts.
+push!(ces, CorGerberSB0())
+push!(ces, CorGerberSB1())
+````
+
+We then instantiate some [`PortCovCor`](@ref) estimators and push them to a vector for convenience.
+
+````@example 2_asset_statistics
+pces = PortCovCor[]
+for ce ∈ ces
+    push!(pces, PortCovCor(; ce = ce))
+end
+````
+
+We can now call [`asset_statistics!`](@ref) with all these different estimators.
+
+````@example 2_asset_statistics
+covs = Matrix[]
+for pce ∈ pces
+    asset_statistics!(portfolio; cov_type = pce, set_mu = false, set_kurt = false,
+                      set_skurt = false, set_skew = false, set_sskew = false)
+    push!(covs, copy(portfolio.cov))
+end
+````
+
+Try any from 1 to 12, see how different the covariances look. What happens if you change some parameter in the covariance estimators? Are there methods that give you the most obvious ones? Try to see if you can spot patterns in the relationships between certain assets (ape together strong).
+
+````@example 2_asset_statistics
+idx = 1
+display(plot(covs[idx]; st = :heatmap, clim = extrema(covs[idx]),
+             yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+             xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5), ylim = (0.5, N + 0.5),
+             color = cgrad(:Spectral), yflip = true))
+````
+
+However, it is easier to see the structure if we use the correlation. We've set the limits to go from 0 to 1 `clim = (0, 1)`, since all these assets appear to be postively correlated. Strictly speaking, only [`CorMutualInfo`](@ref), [`CorDistance`](@ref) and [`CorLTD`](@ref) are guaranteed to be only positive. More information on all the methods is found in the docs.
+
+````@example 2_asset_statistics
+display(plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
+             yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+             xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5), ylim = (0.5, N + 0.5),
+             color = cgrad(:Spectral), yflip = true))
+````
+
+The next tutorial will go over the internals of [`PortCovCor`](@ref) and how they can be used to obtain cleaner covariance matrices. Though the Gerber and its modified methods work well without anything else.
+
+---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+
