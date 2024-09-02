@@ -197,7 +197,7 @@ end
 @testset "Denoise" begin
     portfolio = HCPortfolio(; prices = prices)
 
-    c1 = PortCovCor(; denoise = Fixed())
+    c1 = PortCovCor(; denoise = DenoiseFixed())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
                       cor_type = c1)
@@ -593,7 +593,7 @@ end
     @test isapprox(portfolio.cor, cort)
     @test isapprox(portfolio.dist, distt)
 
-    c1 = PortCovCor(; denoise = Fixed(; detone = true, mkt_comp = 5))
+    c1 = PortCovCor(; denoise = DenoiseFixed(; detone = true, mkt_comp = 5))
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
                       cor_type = c1)
@@ -1003,7 +1003,7 @@ end
     @test isapprox(portfolio.cor, cort)
     @test isapprox(portfolio.dist, distt)
 
-    c1 = PortCovCor(; denoise = Spectral())
+    c1 = PortCovCor(; denoise = DenoiseSpectral())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
                       cor_type = c1)
@@ -1399,7 +1399,7 @@ end
     @test isapprox(portfolio.cor, cort)
     @test isapprox(portfolio.dist, distt)
 
-    c1 = PortCovCor(; denoise = Shrink())
+    c1 = PortCovCor(; denoise = DenoiseShrink())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
                       cor_type = c1)
@@ -1807,7 +1807,7 @@ end
 @testset "LoGo" begin
     portfolio = HCPortfolio(; prices = prices)
 
-    c1 = PortCovCor(; jlogo = LoGo())
+    c1 = PortCovCor(; logo = LoGo())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
                       cor_type = c1)
@@ -2209,7 +2209,7 @@ end
     @test isapprox(portfolio.cor, cort)
     @test isapprox(portfolio.dist, distt)
 
-    c1 = PortCovCor(; jlogo = LoGo(; similarity = DBHTExp()))
+    c1 = PortCovCor(; logo = LoGo(; similarity = DBHTExp()))
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
                       cor_type = c1)

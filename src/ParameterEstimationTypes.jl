@@ -61,7 +61,7 @@ struct NoDenoise <: Denoise end
 
 """
 ```
-@kwdef mutable struct Fixed{T1, T2, T3, T4} <: Denoise
+@kwdef mutable struct DenoiseFixed{T1, T2, T3, T4} <: Denoise
     detone::Bool = false
     mkt_comp::Integer = 1
     kernel = AverageShiftedHistograms.Kernels.gaussian
@@ -91,7 +91,7 @@ Defines the parameters for using the fixed method in [`denoise!`](@ref) [MLAM; C
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
-mutable struct Fixed{T1, T2, T3, T4} <: Denoise
+mutable struct DenoiseFixed{T1, T2, T3, T4} <: Denoise
     detone::Bool
     mkt_comp::T1
     kernel::T2
@@ -100,17 +100,19 @@ mutable struct Fixed{T1, T2, T3, T4} <: Denoise
     args::Tuple
     kwargs::NamedTuple
 end
-function Fixed(; detone::Bool = false, mkt_comp::Integer = 1,
-               kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
-               n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
-    return Fixed{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone, mkt_comp,
-                                                                         kernel, m, n, args,
-                                                                         kwargs)
+function DenoiseFixed(; detone::Bool = false, mkt_comp::Integer = 1,
+                      kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
+                      n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
+    return DenoiseFixed{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
+                                                                                mkt_comp,
+                                                                                kernel, m,
+                                                                                n, args,
+                                                                                kwargs)
 end
 
 """
 ```
-@kwdef mutable struct Spectral{T1, T2, T3, T4} <: Denoise
+@kwdef mutable struct DenoiseSpectral{T1, T2, T3, T4} <: Denoise
     detone::Bool = false
     mkt_comp::Integer = 1
     kernel = AverageShiftedHistograms.Kernels.gaussian
@@ -140,7 +142,7 @@ Defines the parameters for using the spectral method in [`denoise!`](@ref) [MLAM
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
-mutable struct Spectral{T1, T2, T3, T4} <: Denoise
+mutable struct DenoiseSpectral{T1, T2, T3, T4} <: Denoise
     detone::Bool
     mkt_comp::T1
     kernel::T2
@@ -149,18 +151,22 @@ mutable struct Spectral{T1, T2, T3, T4} <: Denoise
     args::Tuple
     kwargs::NamedTuple
 end
-function Spectral(; detone::Bool = false, mkt_comp::Integer = 1,
-                  kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
-                  n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
-    return Spectral{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
-                                                                            mkt_comp,
-                                                                            kernel, m, n,
-                                                                            args, kwargs)
+function DenoiseSpectral(; detone::Bool = false, mkt_comp::Integer = 1,
+                         kernel = AverageShiftedHistograms.Kernels.gaussian,
+                         m::Integer = 10, n::Integer = 1000, args::Tuple = (),
+                         kwargs::NamedTuple = (;))
+    return DenoiseSpectral{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
+                                                                                   mkt_comp,
+                                                                                   kernel,
+                                                                                   m, n,
+                                                                                   args,
+                                                                                   kwargs)
 end
 
 """
 ```
-@kwdef mutable struct Shrink{T1, T2, T3, T4, T5} <: Denoise
+@kwdef mutable struct DenoiseShrink{T1, T2, T3, T4, T5} <: Denoise
+    alpha::Real = 0.0
     detone::Bool = false
     mkt_comp::Integer = 1
     kernel = AverageShiftedHistograms.Kernels.gaussian
@@ -174,6 +180,8 @@ end
 Defines the parameters for using the shrink method in [`denoise!`](@ref) [MLAM; Chapter 2](@cite).
 
 # Parameters
+
+  - `alpha`: tuning parameter for how much the matrix should be shrunk, `alpha ∈ [0, 1]`.
 
   - `detone`:
 
@@ -190,9 +198,9 @@ Defines the parameters for using the shrink method in [`denoise!`](@ref) [MLAM; 
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
-mutable struct Shrink{T1, T2, T3, T4, T5} <: Denoise
-    detone::Bool
+mutable struct DenoiseShrink{T1, T2, T3, T4, T5} <: Denoise
     alpha::T1
+    detone::Bool
     mkt_comp::T2
     kernel::T3
     m::T4
@@ -200,18 +208,12 @@ mutable struct Shrink{T1, T2, T3, T4, T5} <: Denoise
     args::Tuple
     kwargs::NamedTuple
 end
-function Shrink(; alpha::Real = 0.0, detone::Bool = false, mkt_comp::Integer = 1,
-                kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
-                n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
+function DenoiseShrink(; alpha::Real = 0.0, detone::Bool = false, mkt_comp::Integer = 1,
+                       kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
+                       n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
     @smart_assert(zero(alpha) <= alpha <= one(alpha))
-    return Shrink{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
-                                                                                         alpha,
-                                                                                         mkt_comp,
-                                                                                         kernel,
-                                                                                         m,
-                                                                                         n,
-                                                                                         args,
-                                                                                         kwargs)
+    return DenoiseShrink{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m),
+                         typeof(n)}(alpha, detone, mkt_comp, kernel, m, n, args, kwargs)
 end
 
 # ## Distances
@@ -644,10 +646,25 @@ abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
 abstract type CorPearson <: PortfolioOptimiserCovCor end
 abstract type CorRank <: PortfolioOptimiserCovCor end
 
+"""
+```
 @kwdef mutable struct CovFull <: CorPearson
     absolute::Bool = false
     ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
     w::Union{<:AbstractWeights, Nothing} = nothing
+end
+```
+"""
+mutable struct CovFull <: CorPearson
+    absolute::Bool
+    ce::StatsBase.CovarianceEstimator
+    w::Union{<:AbstractWeights, Nothing}
+end
+function CovFull(; absolute::Bool = false,
+                 ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(;
+                                                                                corrected = true),
+                 w::Union{<:AbstractWeights, Nothing} = nothing)
+    return CovFull(absolute, ce, w)
 end
 
 @kwdef mutable struct SimpleVariance <: StatsBase.CovarianceEstimator
@@ -963,11 +980,24 @@ function Base.setproperty!(obj::CorSB, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-abstract type AbstractJLoGo end
-struct NoJLoGo <: AbstractJLoGo end
-@kwdef mutable struct LoGo <: AbstractJLoGo
+abstract type AbstractLoGo end
+struct NoLoGo <: AbstractLoGo end
+
+"""
+```
+@kwdef mutable struct LoGo <: AbstractLoGo
     distance::DistanceMethod = DistanceMLP()
     similarity::DBHTSimilarity = DBHTMaxDist()
+end
+```
+"""
+mutable struct LoGo <: AbstractLoGo
+    distance::DistanceMethod
+    similarity::DBHTSimilarity
+end
+function LoGo(; distance::DistanceMethod = DistanceMLP(),
+              similarity::DBHTSimilarity = DBHTMaxDist())
+    return LoGo(distance, similarity)
 end
 
 abstract type KurtEstimator end
@@ -975,14 +1005,14 @@ abstract type KurtEstimator end
 @kwdef mutable struct KurtFull <: KurtEstimator
     posdef::PosdefFix = PosdefNearest(;)
     denoise::Denoise = NoDenoise(;)
-    jlogo::AbstractJLoGo = NoJLoGo(;)
+    logo::AbstractLoGo = NoLoGo(;)
 end
 
 @kwdef mutable struct KurtSemi <: KurtEstimator
     target::Union{<:Real, AbstractVector{<:Real}} = 0.0
     posdef::PosdefFix = PosdefNearest(;)
     denoise::Denoise = NoDenoise(;)
-    jlogo::AbstractJLoGo = NoJLoGo(;)
+    logo::AbstractLoGo = NoLoGo(;)
 end
 
 abstract type SkewEstimator end
@@ -999,7 +1029,7 @@ end
     ce::CovarianceEstimator = CovFull(;)
     posdef::PosdefFix = PosdefNearest(;)
     denoise::Denoise = NoDenoise(;)
-    jlogo::AbstractJLoGo = NoJLoGo(;)
+    logo::AbstractLoGo = NoLoGo(;)
 end
 ```
 """
@@ -1007,12 +1037,12 @@ mutable struct PortCovCor <: PortfolioOptimiserCovCor
     ce::CovarianceEstimator
     posdef::PosdefFix
     denoise::Denoise
-    jlogo::AbstractJLoGo
+    logo::AbstractLoGo
 end
 function PortCovCor(; ce::CovarianceEstimator = CovFull(;),
                     posdef::PosdefFix = PosdefNearest(;), denoise::Denoise = NoDenoise(;),
-                    jlogo::AbstractJLoGo = NoJLoGo(;))
-    return PortCovCor(ce, posdef, denoise, jlogo)
+                    logo::AbstractLoGo = NoLoGo(;))
+    return PortCovCor(ce, posdef, denoise, logo)
 end
 
 # ## Mean estimator
@@ -1233,7 +1263,7 @@ abstract type BlackLittermanFactor <: BlackLitterman end
     rf::T1 = 0.0
     posdef::PosdefFix = PosdefNearest()
     denoise::Denoise = NoDenoise()
-    jlogo::AbstractJLoGo = NoJLoGo()
+    logo::AbstractLoGo = NoLoGo()
 end
 
 @kwdef mutable struct BBLType{T1 <: Real} <: BlackLittermanFactor
@@ -1252,7 +1282,7 @@ end
     rf::T1 = 0.0
     posdef::PosdefFix = PosdefNearest()
     denoise::Denoise = NoDenoise()
-    jlogo::AbstractJLoGo = NoJLoGo()
+    logo::AbstractLoGo = NoLoGo()
 end
 
 # ## Ordered Weight Array statistics
@@ -1332,14 +1362,14 @@ end
     centrality::CentralityType = DegreeCentrality()
 end
 
-export NoPosdef, PosdefNearest, NoDenoise, Fixed, Spectral, Shrink, DistanceMLP,
-       DistanceSqMLP, DistanceLog, DistanceCanonical, Knuth, Freedman, Scott, HGR,
-       DistanceVarInfo, HAC, DBHTExp, DBHTMaxDist, UniqueDBHT, EqualDBHT, DBHT, TwoDiff,
-       StdSilhouette, HCOpt, ClusterNode, CovFull, SimpleVariance, CovSemi, CorSpearman,
-       CorKendall, CorMutualInfo, CorDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2,
-       CorSB0, CorSB1, CorGerberSB0, CorGerberSB1, NoJLoGo, LoGo, KurtFull, KurtSemi,
-       SkewFull, SkewSemi, PortCovCor, GM, VW, SE, MuSimple, MuJS, MuBS, MuBOP, Box,
-       Ellipse, NoWC, StationaryBS, CircularBS, MovingBS, ArchWC, NormalWC, DeltaWC,
+export NoPosdef, PosdefNearest, NoDenoise, DenoiseFixed, DenoiseSpectral, DenoiseShrink,
+       DistanceMLP, DistanceSqMLP, DistanceLog, DistanceCanonical, Knuth, Freedman, Scott,
+       HGR, DistanceVarInfo, HAC, DBHTExp, DBHTMaxDist, UniqueDBHT, EqualDBHT, DBHT,
+       TwoDiff, StdSilhouette, HCOpt, ClusterNode, CovFull, SimpleVariance, CovSemi,
+       CorSpearman, CorKendall, CorMutualInfo, CorDistance, CorLTD, CorGerber0, CorGerber1,
+       CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1, NoLoGo, LoGo, KurtFull,
+       KurtSemi, SkewFull, SkewSemi, PortCovCor, GM, VW, SE, MuSimple, MuJS, MuBS, MuBOP,
+       Box, Ellipse, NoWC, StationaryBS, CircularBS, MovingBS, ArchWC, NormalWC, DeltaWC,
        KNormalWC, KGeneralWC, WCType, AIC, AICC, BIC, RSq, AdjRSq, PVal, PCATarget, FReg,
        BReg, DRR, FactorType, BLType, BBLType, ABLType, CRRA, MaxEntropy, MinSumSq,
        MinSqDist, DegreeCentrality, KruskalTree, TMFG, MST

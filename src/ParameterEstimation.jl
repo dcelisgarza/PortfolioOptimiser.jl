@@ -1428,21 +1428,21 @@ function dup_elim_sum_matrices(n::Int)
 
     return d, l, s
 end
-function _denoise!(::Fixed, X::AbstractMatrix, vals::AbstractVector, vecs::AbstractMatrix,
-                   num_factors::Integer)
+function _denoise!(::DenoiseFixed, X::AbstractMatrix, vals::AbstractVector,
+                   vecs::AbstractMatrix, num_factors::Integer)
     _vals = copy(vals)
     _vals[1:num_factors] .= sum(_vals[1:num_factors]) / num_factors
     X .= cov2cor(vecs * Diagonal(_vals) * transpose(vecs))
     return nothing
 end
-function _denoise!(::Spectral, X::AbstractMatrix, vals::AbstractVector,
+function _denoise!(::DenoiseSpectral, X::AbstractMatrix, vals::AbstractVector,
                    vecs::AbstractMatrix, num_factors::Integer)
     _vals = copy(vals)
     _vals[1:num_factors] .= zero(eltype(X))
     X .= cov2cor(vecs * Diagonal(_vals) * transpose(vecs))
     return nothing
 end
-function _denoise!(ce::Shrink, X::AbstractMatrix, vals::AbstractVector,
+function _denoise!(ce::DenoiseShrink, X::AbstractMatrix, vals::AbstractVector,
                    vecs::AbstractMatrix, num_factors::Integer)
     # Small
     vals_l = vals[1:num_factors]
@@ -1581,10 +1581,10 @@ function StatsBase.mean(me::MuBOP, X::AbstractMatrix; dims::Int = 1)
     beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
     return alpha * mu + beta * b
 end
-function jlogo!(::NoJLoGo, ::PosdefFix, ::AbstractMatrix, D = nothing)
+function logo!(::NoLoGo, ::PosdefFix, ::AbstractMatrix, D = nothing)
     return nothing
 end
-function jlogo!(je::LoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
+function logo!(je::LoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
     if isnothing(D)
         s = diag(X)
         iscov = any(.!isone.(s))
@@ -1614,7 +1614,7 @@ function cokurt(ke::KurtFull, X::AbstractMatrix, mu::AbstractVector)
 
     posdef_fix!(ke.posdef, cokurt)
     denoise!(ke.denoise, ke.posdef, cokurt, T / N)
-    jlogo!(ke.jlogo, ke.posdef, cokurt)
+    logo!(ke.logo, ke.posdef, cokurt)
 
     return cokurt
 end
@@ -1628,7 +1628,7 @@ function cokurt(ke::KurtSemi, X::AbstractMatrix, mu::AbstractVector)
 
     posdef_fix!(ke.posdef, scokurt)
     denoise!(ke.denoise, ke.posdef, scokurt, T / N)
-    jlogo!(ke.jlogo, ke.posdef, scokurt)
+    logo!(ke.logo, ke.posdef, scokurt)
 
     return scokurt
 end
@@ -1649,7 +1649,7 @@ function coskew(::SkewFull, X::AbstractMatrix, mu::AbstractVector)
         V .-= real(vecs * Diagonal(vals) * transpose(vecs))
         # denoise!(se.denoise, se.posdef, -real(vecs * Diagonal(vals) * transpose(vecs)),
         #          T / N)
-        # jlogo!(se.jlogo, se.posdef, -real(vecs * Diagonal(vals) * transpose(vecs)))
+        # logo!(se.logo, se.posdef, -real(vecs * Diagonal(vals) * transpose(vecs)))
     end
 
     return coskew, V
@@ -1672,7 +1672,7 @@ function coskew(se::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
         SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
         # denoise!(se.denoise, NoPosdef(), -real(vecs * Diagonal(vals) * transpose(vecs)),
         #          T / N)
-        # jlogo!(se.jlogo, NoPosdef(), -real(vecs * Diagonal(vals) * transpose(vecs)))
+        # logo!(se.logo, NoPosdef(), -real(vecs * Diagonal(vals) * transpose(vecs)))
     end
 
     return scoskew, SV
@@ -1685,7 +1685,7 @@ function StatsBase.cov(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     sigma = Matrix(cov(ce.ce, X))
     posdef_fix!(ce.posdef, sigma)
     denoise!(ce.denoise, ce.posdef, sigma, size(X, 1) / size(X, 2))
-    jlogo!(ce.jlogo, ce.posdef, sigma)
+    logo!(ce.logo, ce.posdef, sigma)
 
     return Symmetric(sigma)
 end
@@ -1697,7 +1697,7 @@ function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     rho = Matrix(cor(ce.ce, X))
     posdef_fix!(ce.posdef, rho)
     denoise!(ce.denoise, ce.posdef, rho, size(X, 1) / size(X, 2))
-    jlogo!(ce.jlogo, ce.posdef, rho)
+    logo!(ce.logo, ce.posdef, rho)
 
     return Symmetric(rho)
 end
@@ -2282,7 +2282,7 @@ Internal function for computing the Black Litterman statistics as defined in [`b
   - `w`: asset weights obtained via the Black-Litterman model.
   - `Pi_`: equilibrium excess returns after being adjusted by the views.
 """
-function _bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, posdef, denoise, jlogo)
+function _bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, posdef, denoise, logo)
     inv_tau_sigma = (tau * sigma) \ I
     inv_omega = omega \ I
     Pi_ = ((inv_tau_sigma + transpose(P) * inv_omega * P) \ I) *
@@ -2294,7 +2294,7 @@ function _bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, posdef, deno
 
     posdef_fix!(posdef, sigma)
     denoise!(denoise, posdef, sigma, T / N)
-    jlogo!(jlogo, posdef, sigma)
+    logo!(logo, posdef, sigma)
 
     w = ((delta * sigma) \ I) * Pi_
 
@@ -2327,7 +2327,7 @@ function black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
     Pi = _Pi(bl.eq, bl.delta, sigma, w, mu, bl.rf)
 
     mu, sigma, w = _bl_mu_cov_w(tau, omega, P, Pi, Q, bl.rf, sigma, bl.delta, T, N,
-                                bl.posdef, bl.denoise, bl.jlogo)[1:3]
+                                bl.posdef, bl.denoise, bl.logo)[1:3]
 
     return mu, sigma, w
 end
@@ -2465,15 +2465,14 @@ function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
     end
 
     mu_a, sigma_a, w_a, Pi_a_ = _bl_mu_cov_w(tau, omega_a, P_a, Pi_a, Q_a, bl.rf, sigma_a,
-                                             bl.delta, T, N, bl.posdef, bl.denoise,
-                                             bl.jlogo)
+                                             bl.delta, T, N, bl.posdef, bl.denoise, bl.logo)
 
     if !all_asset_provided && all_factor_provided
         mu_a = B * mu_a
         sigma_a = B * sigma_a * transpose(B)
         posdef_fix!(bl.posdef, sigma_a)
         denoise!(bl.denoise, bl.posdef, sigma_a, T / N)
-        jlogo!(bl.jlogo, bl.posdef, sigma_a)
+        logo!(bl.logo, bl.posdef, sigma_a)
         w_a = ((bl.delta * sigma_a) \ I) * B * Pi_a_
     end
 
@@ -2487,6 +2486,6 @@ end
 export cov_returns, posdef_fix!, dbht_similarity, dist, calc_num_bins, calc_hist_data,
        mutual_info, variation_info, cor_distance, cov_distance, lower_tail_dependence,
        cov_gerber, duplication_matrix, elimination_matrix, summation_matrix,
-       dup_elim_sum_matrices, errPDF, find_max_eval, denoise!, target_mean, jlogo!, cokurt,
+       dup_elim_sum_matrices, errPDF, find_max_eval, denoise!, target_mean, logo!, cokurt,
        coskew, gen_bootstrap, vec_of_vecs_to_mtx, calc_sets, commutation_matrix, calc_k_wc,
        prep_dim_red_reg, regression, loadings_matrix, risk_factors, black_litterman
