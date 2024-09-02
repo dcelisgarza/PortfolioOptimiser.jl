@@ -651,7 +651,7 @@ abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
 abstract type CorPearson <: PortfolioOptimiserCovCor end
 ```
 
-Abstract type for subtyping Pearson type covariance and correlation estimators.
+Abstract type for subtyping Pearson type covariance and correlation estimators
 """
 abstract type CorPearson <: PortfolioOptimiserCovCor end
 
@@ -659,8 +659,6 @@ abstract type CorPearson <: PortfolioOptimiserCovCor end
 ```
 abstract type CorRank <: PortfolioOptimiserCovCor end
 ```
-
-Abstract type for subtyping rank-based correlation estimators.
 """
 abstract type CorRank <: PortfolioOptimiserCovCor end
 
@@ -673,13 +671,7 @@ abstract type CorRank <: PortfolioOptimiserCovCor end
 end
 ```
 
-Structure for computing the full covariance and its Pearson correlation.
-
-# Parameters
-
-  - `absolute`: if `true` compute the absolute Pearson correlation `abs.(cor(X))`.
-  - `ce`: [covariance estimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
-  - `w`: weights for computing the covariance/correlation matrix.
+Structure for computing the full covariance.
 """
 mutable struct CovFull <: CorPearson
     absolute::Bool
@@ -732,7 +724,7 @@ mutable struct CovSemi <: CorPearson
     target::Union{<:Real, AbstractVector{<:Real}}
     w::Union{<:AbstractWeights, Nothing}
 end
-function CovSemi(; absolute::Bool = false,
+function CovSemi(absolute::Bool = false,
                  ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(;
                                                                                 corrected = true),
                  target::Union{<:Real, AbstractVector{<:Real}} = 0.0,
