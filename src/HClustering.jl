@@ -1,8 +1,19 @@
+"""
+```
+is_leaf(a::ClusterNode)
+```
+"""
 function is_leaf(a::ClusterNode)
     return isnothing(a.left)
 end
+
+"""
+```
+pre_order(a::ClusterNode, func::Function = x -> x.id)
+```
+"""
 function pre_order(a::ClusterNode, func::Function = x -> x.id)
-    n = a.count
+    n = a.level
     curNode = Vector{ClusterNode}(undef, 2 * n)
     lvisited = Set()
     rvisited = Set()
@@ -35,6 +46,12 @@ function pre_order(a::ClusterNode, func::Function = x -> x.id)
 
     return preorder
 end
+
+"""
+```
+to_tree(a::Hclust)
+```
+"""
 function to_tree(a::Hclust)
     n = length(a.order)
     d = Vector{ClusterNode}(undef, 2 * n - 1)
@@ -102,7 +119,7 @@ function _two_diff_gap_stat(dist, clustering, max_k = 0)
 
     return k
 end
-function _calc_k(::TwoDiff, dist::AbstractMatrix, clustering, max_k::Integer)
+function _calc_k_clusters(::TwoDiff, dist::AbstractMatrix, clustering, max_k::Integer)
     return _two_diff_gap_stat(dist, clustering, max_k)
 end
 function _std_silhouette_score(dist, clustering, max_k = 0, metric = nothing)
@@ -127,19 +144,25 @@ function _std_silhouette_score(dist, clustering, max_k = 0, metric = nothing)
 
     return k
 end
-function _calc_k(method::StdSilhouette, dist::AbstractMatrix, clustering, max_k::Integer)
+function _calc_k_clusters(method::StdSilhouette, dist::AbstractMatrix, clustering,
+                          max_k::Integer)
     return _std_silhouette_score(dist, clustering, max_k, method.metric)
 end
-function calc_k(hclust_opt::HCOpt, dist::AbstractMatrix, clustering)
+"""
+```
+calc_k_clusters(hclust_opt::HCOpt, dist::AbstractMatrix, clustering)
+```
+"""
+function calc_k_clusters(hclust_opt::HCOpt, dist::AbstractMatrix, clustering)
     if !iszero(hclust_opt.k)
         return hclust_opt.k
     end
-    return _calc_k(hclust_opt.k_method, dist, clustering, hclust_opt.max_k)
+    return _calc_k_clusters(hclust_opt.k_method, dist, clustering, hclust_opt.max_k)
 end
 function _hcluster(ca::HAC, port::HCPortfolio, hclust_opt::HCOpt = HCOpt())
     clustering = hclust(port.dist; linkage = ca.linkage,
                         branchorder = hclust_opt.branchorder)
-    k = calc_k(hclust_opt, port.dist, clustering)
+    k = calc_k_clusters(hclust_opt, port.dist, clustering)
 
     return clustering, k
 end
@@ -149,7 +172,7 @@ function _hcluster(ca::DBHT, port::HCPortfolio, hclust_opt::HCOpt = HCOpt())
     S = dbht_similarity(ca.similarity, S, D)
 
     clustering = DBHTs(D, S; branchorder = hclust_opt.branchorder, method = ca.root_method)[end]
-    k = calc_k(hclust_opt, D, clustering)
+    k = calc_k_clusters(hclust_opt, D, clustering)
 
     return clustering, k
 end
@@ -183,7 +206,7 @@ function _hcluster(ca::HAC, X::AbstractMatrix,
     D = dist(dist_type, S, X)
 
     clustering = hclust(D; linkage = ca.linkage, branchorder = hclust_opt.branchorder)
-    k = calc_k(hclust_opt, D, clustering)
+    k = calc_k_clusters(hclust_opt, D, clustering)
 
     return clustering, k, S, D
 end
@@ -201,7 +224,7 @@ function _hcluster(ca::DBHT, X::AbstractMatrix,
     S = dbht_similarity(ca.similarity, S, D)
 
     clustering = DBHTs(D, S; branchorder = hclust_opt.branchorder, method = ca.root_method)[end]
-    k = calc_k(hclust_opt, D, clustering)
+    k = calc_k_clusters(hclust_opt, D, clustering)
 
     return clustering, k, S, D
 end
@@ -222,4 +245,4 @@ function cluster_assets(port::Portfolio; cor_type::PortfolioOptimiserCovCor = Po
                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
 
-export is_leaf, pre_order, to_tree, calc_k, cluster_assets, cluster_assets!
+export is_leaf, pre_order, to_tree, calc_k_clusters, cluster_assets, cluster_assets!

@@ -28,7 +28,7 @@ struct NoPosdef <: PosdefFix end
 end
 ```
 
-Defines which method from [NearestCorrelationMatrix](https://github.com/adknudson/NearestCorrelationMatrix.jl) to use in [`posdef_fix!`](@ref).
+Defines which method from [`NearestCorrelationMatrix`](https://github.com/adknudson/NearestCorrelationMatrix.jl) to use in [`posdef_fix!`](@ref).
 """
 mutable struct PosdefNearest <: PosdefFix
     method::NearestCorrelationMatrix.NCMAlgorithm
@@ -85,9 +85,9 @@ Defines the parameters for using the fixed method in [`denoise!`](@ref) [MLAM; C
     Removing eigenvalues from the matrix may make it singular.
 
   - `mkt_comp`: the number of largest eigenvalues to remove from the correlation matrix.
-  - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
-  - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.ash](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
-  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [AverageShiftedHistograms.ash](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `kernel`: kernel for fitting the average shifted histograms from [`AverageShiftedHistograms.jl` Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
+  - `m`: number of adjacent histograms to smooth over [`AverageShiftedHistograms.ash`](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [`AverageShiftedHistograms.ash`](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
@@ -134,9 +134,9 @@ Defines the parameters for using the spectral method in [`denoise!`](@ref) [MLAM
     Removing eigenvalues from the matrix may make it singular.
 
   - `mkt_comp`: the number of largest eigenvalues to keep from the correlation matrix.
-  - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
-  - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
-  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `kernel`: kernel for fitting the average shifted histograms from [`AverageShiftedHistograms.jl` Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
+  - `m`: number of adjacent histograms to smooth over [`AverageShiftedHistograms.ash`](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [`AverageShiftedHistograms.ash`](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
@@ -160,7 +160,7 @@ end
 
 """
 ```
-mutable struct Shrink{T1, T2, T3, T4, T5} <: Denoise
+@kwdef mutable struct Shrink{T1, T2, T3, T4, T5} <: Denoise
     detone::Bool = false
     mkt_comp::Integer = 1
     kernel = AverageShiftedHistograms.Kernels.gaussian
@@ -184,9 +184,9 @@ Defines the parameters for using the shrink method in [`denoise!`](@ref) [MLAM; 
     Removing eigenvalues from the matrix may make it singular.
 
   - `mkt_comp`: the number of largest eigenvalues to keep from the correlation matrix.
-  - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
-  - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
-  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `kernel`: kernel for fitting the average shifted histograms from [`AverageShiftedHistograms.jl` Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
+  - `m`: number of adjacent histograms to smooth over [`AverageShiftedHistograms.ash`](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [`AverageShiftedHistograms.ash`](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
@@ -490,7 +490,7 @@ struct UniqueDBHT <: DBHTRootMethod end
 struct EqualDBHT <: DBHTRootMethod end
 ```
 
-Create a clique's root from its adjacency tree in [CliqueRoot](@ref).
+Create a clique's root from its adjacency tree in [`CliqueRoot`](@ref).
 """
 struct EqualDBHT <: DBHTRootMethod end
 
@@ -503,7 +503,7 @@ mutable struct DBHT <: HClustAlg
 end
 ```
 
-Defines the parameters for computing [`DBHTs`](@ref) and [`PMFG_T2s`](@ref) [DBHTs, PMFG](@cite).
+Defines the parameters for computing [`DBHTs`](@ref) [DBHTs](@cite).
 """
 mutable struct DBHT <: HClustAlg
     distance::DistanceMethod
@@ -516,35 +516,120 @@ function DBHT(; distance::DistanceMethod = DistanceMLP(),
     return DBHT(distance, similarity, root_method)
 end
 
+"""
+```
 abstract type NumClusterMethod end
+```
+
+Abstract type for subtyping methods for determining the number of clusters in a [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) when calling [`calc_k_clusters`](@ref).
+"""
+abstract type NumClusterMethod end
+
+"""
+```
 struct TwoDiff <: NumClusterMethod end
+```
+
+Use the two difference gap statistic for computing the number of clusters in [`calc_k_clusters`](@ref).
+"""
+struct TwoDiff <: NumClusterMethod end
+
+"""
+```
 @kwdef mutable struct StdSilhouette <: NumClusterMethod
     metric::Union{Distances.SemiMetric, Nothing} = nothing
 end
+```
+
+Use the standardised silhouette score for computing the number of clusters in [`calc_k_clusters`](@ref).
+"""
+mutable struct StdSilhouette <: NumClusterMethod
+    metric::Union{Distances.SemiMetric, Nothing}
+end
+function StdSilhouette(; metric::Union{Distances.SemiMetric, Nothing} = nothing)
+    return StdSilhouette(metric)
+end
+
+"""
+```
 @kwdef mutable struct HCOpt{T1 <: Integer, T2 <: Integer}
     branchorder::Symbol = :optimal
     k_method::NumClusterMethod = TwoDiff()
     k::T1 = 0
     max_k::T2 = 0
 end
+```
 
+Defines the options for processing clustering results in an instance of [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust).
+
+# Parameters
+
+  - `branchorder`: parameter for ordering a dendrogram's branches accepted by [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
+  - `k_method`: method subtyping [`NumClusterMethod`](@ref) for computing the number of clusters.
+  - `k`: directly provide the number of clusters, if `0` use `k_method` for computing the number of clusters.
+  - `max_k`: maximum number of clusters, if `0` defaults to `⌈sqrt(N)⌉`, where `N` is the number of assets.
+"""
+mutable struct HCOpt{T1 <: Integer, T2 <: Integer}
+    branchorder::Symbol
+    k_method::NumClusterMethod
+    k::T1
+    max_k::T2
+end
+function HCOpt(; branchorder::Symbol = :optimal, k_method::NumClusterMethod = TwoDiff(),
+               k::Integer = 0, max_k::Integer = 0)
+    return HCOpt{typeof(k), typeof(max_k)}(branchorder, k_method, k, max_k)
+end
+
+"""
+```
 struct ClusterNode{tid, tl, tr, td, tcnt}
     id::tid
     left::tl
     right::tr
-    dist::td
-    count::tcnt
+    height::td
+    level::tcnt
 
     function ClusterNode(id, left::Union{ClusterNode, Nothing} = nothing,
-                         right::Union{ClusterNode, Nothing} = nothing, dist::Real = 0.0,
-                         count::Int = 1)
-        icount = isnothing(left) ? count : (left.count + right.count)
+                         right::Union{ClusterNode, Nothing} = nothing, height::Real = 0.0,
+                         level::Int = 1)
+        ilevel = isnothing(left) ? level : (left.level + right.level)
 
-        return new{typeof(id), typeof(left), typeof(right), typeof(dist), typeof(count)}(id,
+        return new{typeof(id), typeof(left), typeof(right), typeof(height), typeof(level)}(id,
                                                                                          left,
                                                                                          right,
-                                                                                         dist,
-                                                                                         icount)
+                                                                                         height,
+                                                                                         ilevel)
+    end
+end
+```
+
+Structure for definining a cluster node. This is used for turning a clustering result into a tree, [`is_leaf`](@ref), [`pre_order`](@ref), [`to_tree`](@ref).
+
+# Parameters
+
+  - `id`: node ID.
+  - `left`: node to the left.
+  - `right`: node to the right.
+  - `height`: node height.
+  - `level`: node level.
+"""
+struct ClusterNode{tid, tl, tr, td, tcnt}
+    id::tid
+    left::tl
+    right::tr
+    height::td
+    level::tcnt
+
+    function ClusterNode(id, left::Union{ClusterNode, Nothing} = nothing,
+                         right::Union{ClusterNode, Nothing} = nothing, height::Real = 0.0,
+                         level::Int = 1)
+        ilevel = isnothing(left) ? level : (left.level + right.level)
+
+        return new{typeof(id), typeof(left), typeof(right), typeof(height), typeof(level)}(id,
+                                                                                           left,
+                                                                                           right,
+                                                                                           height,
+                                                                                           ilevel)
     end
 end
 

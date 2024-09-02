@@ -503,7 +503,7 @@ end
 
 """
 ```
-function CliqueRoot(::UniqueDBHT, Root, Pred, Nc, args...)
+CliqueRoot(::UniqueDBHT, Root, Pred, Nc, args...)
 ```
 """
 function CliqueRoot(::UniqueDBHT, Root, Pred, Nc, args...)
@@ -1086,7 +1086,7 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
       + ``\\mathbf{S} = \\exp \\circ (-\\mathbf{D})``.
 
     Where ``\\mathbf{C}`` is the correlation matrix, ``\\mathbf{D}`` the dissimilarity matrix `D`, and ``\\circ`` the Hadamard (elementwise) operator.
-  - `branchorder`: is a parameter for ordering the final dendrogram's branches accepted by [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
+  - `branchorder`: parameter for ordering the final dendrogram's branches accepted by [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
   - `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethod`](@ref).
 
       + `:Unique`: create a unique root.

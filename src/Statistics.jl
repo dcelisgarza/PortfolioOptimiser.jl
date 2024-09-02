@@ -116,8 +116,8 @@ function wc_statistics!(port::Portfolio, wc::WCType = WCType(); set_box::Bool = 
             cov_sigma .= Diagonal(cov_sigma)
         end
 
-        k_sigma = calc_k(wc.k_sigma, wc.ellipse.q, A_sigma, cov_sigma)
-        k_mu = calc_k(wc.k_mu, wc.ellipse.q, A_mu, cov_mu)
+        k_sigma = calc_k_wc(wc.k_sigma, wc.ellipse.q, A_sigma, cov_sigma)
+        k_mu = calc_k_wc(wc.k_mu, wc.ellipse.q, A_mu, cov_mu)
 
         port.cov_mu = cov_mu
         port.cov_sigma = cov_sigma

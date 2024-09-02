@@ -1840,14 +1840,14 @@ function calc_sets(::Box, method::DeltaWC, ::Any, ::Any, X::AbstractMatrix,
 
     return cov_l, cov_u, d_mu, nothing, nothing
 end
-function calc_k(::KNormalWC, q::Real, X::AbstractMatrix, cov_X::AbstractMatrix)
+function calc_k_wc(::KNormalWC, q::Real, X::AbstractMatrix, cov_X::AbstractMatrix)
     k_mus = diag(X * (cov_X \ I) * transpose(X))
     return sqrt(quantile(k_mus, 1 - q))
 end
-function calc_k(::KGeneralWC, q::Real, args...)
+function calc_k_wc(::KGeneralWC, q::Real, args...)
     return sqrt((1 - q) / q)
 end
-function calc_k(method::Real, args...)
+function calc_k_wc(method::Real, args...)
     return method
 end
 function Base.setproperty!(obj::PVal, sym::Symbol, val)
@@ -2488,5 +2488,5 @@ export cov_returns, posdef_fix!, dbht_similarity, dist, calc_num_bins, calc_hist
        mutual_info, variation_info, cor_distance, cov_distance, lower_tail_dependence,
        cov_gerber, duplication_matrix, elimination_matrix, summation_matrix,
        dup_elim_sum_matrices, errPDF, find_max_eval, denoise!, target_mean, jlogo!, cokurt,
-       coskew, gen_bootstrap, vec_of_vecs_to_mtx, calc_sets, commutation_matrix, calc_k,
+       coskew, gen_bootstrap, vec_of_vecs_to_mtx, calc_sets, commutation_matrix, calc_k_wc,
        prep_dim_red_reg, regression, loadings_matrix, risk_factors, black_litterman
