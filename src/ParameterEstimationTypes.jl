@@ -641,9 +641,25 @@ end
 ```
 abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
 ```
+
+Abstract type for subtyping covariance and correlation estimators.
 """
 abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
+
+"""
+```
 abstract type CorPearson <: PortfolioOptimiserCovCor end
+```
+
+Abstract type for subtyping Pearson type covariance and correlation estimators
+"""
+abstract type CorPearson <: PortfolioOptimiserCovCor end
+
+"""
+```
+abstract type CorRank <: PortfolioOptimiserCovCor end
+```
+"""
 abstract type CorRank <: PortfolioOptimiserCovCor end
 
 """
@@ -654,6 +670,8 @@ abstract type CorRank <: PortfolioOptimiserCovCor end
     w::Union{<:AbstractWeights, Nothing} = nothing
 end
 ```
+
+Structure for computing the full covariance.
 """
 mutable struct CovFull <: CorPearson
     absolute::Bool
@@ -700,11 +718,18 @@ end
 end
 ```
 """
-@kwdef mutable struct CovSemi <: CorPearson
-    absolute::Bool = false
-    ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    target::Union{<:Real, AbstractVector{<:Real}} = 0.0
-    w::Union{<:AbstractWeights, Nothing} = nothing
+mutable struct CovSemi <: CorPearson
+    absolute::Bool
+    ce::StatsBase.CovarianceEstimator
+    target::Union{<:Real, AbstractVector{<:Real}}
+    w::Union{<:AbstractWeights, Nothing}
+end
+function CovSemi(absolute::Bool = false,
+                 ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(;
+                                                                                corrected = true),
+                 target::Union{<:Real, AbstractVector{<:Real}} = 0.0,
+                 w::Union{<:AbstractWeights, Nothing} = nothing)
+    return CovSemi(absolute, ce, target, w)
 end
 
 @kwdef mutable struct CorSpearman <: CorRank
